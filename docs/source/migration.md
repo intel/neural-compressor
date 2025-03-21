@@ -69,7 +69,7 @@ from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion, A
 
 PostTrainingQuantConfig(
     ## model: this parameter does not need to specially be defined;
-    backend="default",  # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
+    backend="default",  # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex;
     inputs="image_tensor",  # input: same as in the conf.yaml;
     outputs="num_detections,detection_boxes,detection_scores,detection_classes",  # output: same as in the conf.yaml;
     device="cpu",  # device: same as in the conf.yaml;
@@ -178,7 +178,7 @@ from neural_compressor.config import QuantizationAwareTrainingConfig
 
 QuantizationAwareTrainingConfig(
     ## model: this parameter does not need to specially be defined;
-    backend="default",  # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
+    backend="default",  # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex;
     inputs="image_tensor",  # input: same as in the conf.yaml;
     outputs="num_detections,detection_boxes,detection_scores,detection_classes",  # output: same as in the conf.yaml;
     device="cpu",  # device: same as in the conf.yaml;
@@ -570,7 +570,7 @@ from neural_compressor.config import MixedPrecisionConfig, TuningCriterion, Accu
 
 MixedPrecisionConfig(
     ## model: this parameter does not need to specially be defined;
-    backend="default",  # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
+    backend="default",  # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex;
     inputs="image_tensor",  # input: same as in the conf.yaml;
     outputs="num_detections,detection_boxes,detection_scores,detection_classes",  # output: same as in the conf.yaml;
     device="cpu",  # device: same as in the conf.yaml;
@@ -667,7 +667,7 @@ version: 1.0
 
 model:                                               # mandatory. used to specify model specific information.
   name: ssd_mobilenet_v1                             # mandatory. the model name.
-  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_fx, pytorch_ipex, onnxrt_integer, onnxrt_qlinear or mxnet; allow new framework backend extension.
+  framework: tensorflow                              # mandatory. supported values are tensorflow, pytorch, pytorch_fx, pytorch_ipex, onnxrt_integer or onnxrt_qlinear; allow new framework backend extension.
   inputs: image_tensor                               # optional. inputs and outputs fields are only required in tensorflow.
   outputs: num_detections,detection_boxes,detection_scores,detection_classes
 
@@ -711,7 +711,7 @@ from neural_compressor.config import BenchmarkConfig
 
 BenchmarkConfig(
     ## model: this parameter does not need to specially be defined;
-    backend="default",  # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex, mxnet is currently unsupported;
+    backend="default",  # framework: set as "default" when framework was tensorflow, pytorch, pytorch_fx, onnxrt_integer and onnxrt_qlinear. Set as "ipex" when framework was pytorch_ipex;
     inputs="image_tensor",  # input: same as in the conf.yaml;
     outputs="num_detections,detection_boxes,detection_scores,detection_classes",  # output: same as in the conf.yaml;
     device="cpu",  # device: same as in the conf.yaml;

@@ -43,11 +43,6 @@ Currently, Intel® Neural Compressor supports three popular calibration algorith
     <td>minmax, kl</td>
   </tr>
   <tr>
-    <td>MXNet</td>
-    <td>minmax</td>
-    <td>minmax, kl</td>
-  </tr>
-  <tr>
     <td>OnnxRuntime</td>
     <td>minmax</td>
     <td>minmax, kl, percentile</td>

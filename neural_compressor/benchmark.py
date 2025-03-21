@@ -166,8 +166,6 @@ def run_instance(model, conf, b_dataloader=None, b_func=None):
             )
         if framework == "keras":
             framework_specific_info.update({"workspace_path": options.workspace})
-        if framework == "mxnet":
-            framework_specific_info.update({"b_dataloader": b_dataloader})
         if "onnx" in framework:
             framework_specific_info.update(
                 {"workspace_path": options.workspace, "graph_optimization": OPTIONS[framework].graph_optimization}

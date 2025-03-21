@@ -16,7 +16,6 @@ echo "torchvision version is $torchvision_version"
 echo "ipex version is $ipex_version"
 echo "onnx version is $onnx_version"
 echo "onnxruntime version is $onnxruntime_version"
-echo "mxnet version is $mxnet_version"
 
 test_case=$1
 echo -e "##[group]test case is ${test_case}"
@@ -64,14 +63,6 @@ if [[ "${onnxruntime_version}" != "" ]]; then
         pip install onnxruntime-extensions
     fi
     pip install optimum
-fi
-
-if [ "${mxnet_version}" != '' ]; then
-    pip install numpy==1.23.5
-    echo "re-install pycocotools resolve the issue with numpy..."
-    pip uninstall pycocotools -y
-    pip install --no-cache-dir pycocotools
-    pip install mxnet==${mxnet_version}
 fi
 
 # install special test env requirements

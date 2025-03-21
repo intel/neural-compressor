@@ -9,9 +9,7 @@ Transform
 
     2.2 [Pytorch](#pytorch)
 
-    2.3 [MXNet](#mxnet)
-
-    2.4 [ONNXRT](#onnxrt)
+    2.3 [ONNXRT](#onnxrt)
 
 ## Introduction
 
@@ -72,28 +70,6 @@ Neural Compressor supports built-in preprocessing methods on different framework
 | AlignImageChannel(dim) | **dim** (int): The channel number of result image | Align image channel, now just support [H,W,4]->[H,W,3] and [H,W,3]->[H,W], input image must be PIL Image. <br> This transform is going to be deprecated. | AlignImageChannel: <br> &ensp;&ensp; dim: 3 |
 | ResizeWithRatio(min_dim, max_dim, padding) | **min_dim** (int, default=800): Resizes the image such that its smaller dimension == min_dim <br> **max_dim** (int, default=1365): Ensures that the image longest side does not exceed this value <br> **padding** (bool, default=False): If true, pads image with zeros so its size is max_dim x max_dim | Resize image with aspect ratio and pad it to max shape(optional). If the image is padded, the label will be processed at the same time. The input image should be np.array. | ResizeWithRatio: <br> &ensp;&ensp; min_dim: 800 <br> &ensp;&ensp; max_dim: 1365 <br> &ensp;&ensp; padding: True |
 | LabelShift(label_shift) | **label_shift**(int, default=0): number of label shift | Convert label to label - label_shift | LabelShift: <br> &ensp;&ensp; label_shift: 0 |
-
-### MXNet
-
-| Transform | Parameters | Comments | Usage(In yaml file) |
-| :------ | :------ | :------ | :------ |
-| Resize(size, interpolation) | **size** (list or int): Size of the result <br> **interpolation** (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic' | Resize the input image to the given size | Resize: <br> &ensp;&ensp; size: 256 <br> &ensp;&ensp;  interpolation: bilinear |
-| CenterCrop(size) | **size** (list or int): Size of the result | Crop the given image at the center to the given size | CenterCrop: <br> &ensp;&ensp; size: [10, 10] # or size: 10 |
-| RandomResizedCrop(size, scale, ratio, interpolation) | **size** (list or int): Size of the result <br> **scale** (tuple or list, default=(0.08, 1.0)):range of size of the origin size cropped <br> **ratio** (tuple or list, default=(3. / 4., 4. / 3.)): range of aspect ratio of the origin aspect ratio cropped <br> **interpolation** (str, default='bilinear'):Desired interpolation type, support 'bilinear', 'nearest', 'bicubic' | Crop the given image to random size and aspect ratio | RandomResizedCrop: <br> &ensp;&ensp; size: [10, 10] # or size: 10 <br> &ensp;&ensp; scale: [0.08, 1.0] <br> &ensp;&ensp; ratio: [3. / 4., 4. / 3.] <br> &ensp;&ensp; interpolation: bilinear |
-| Normalize(mean, std) | **mean** (list, default=[0.0]):means for each channel, if len(mean)=1, mean will be broadcasted to each channel, otherwise its length should be same with the length of image shape <br> **std** (list, default=[1.0]):stds for each channel, if len(std)=1, std will be broadcasted to each channel, otherwise its length should be same with the length of image shape | Normalize a image with mean and standard deviation | Normalize: <br> &ensp;&ensp; mean: [0.0, 0.0, 0.0] <br> &ensp;&ensp; std: [1.0, 1.0, 1.0] |
-| RandomCrop(size) | **size** (list or int): Size of the result | Crop the image at a random location to the given size | RandomCrop: <br> &ensp;&ensp; size: [10, 10] # size: 10 |
-| Compose(transform_list) | **transform_list** (list of Transform objects):  list of transforms to compose | Compose several transforms together | If user uses yaml file to configure transforms, Neural Compressor will automatic call Compose to group other transforms. <br> **In user code:** <br> from neural_compressor.experimental.data  import TRANSFORMS <br> preprocess = TRANSFORMS(framework, 'preprocess') <br> resize = preprocess["Resize"] (\**args) <br> normalize = preprocess["Normalize"] (\**args) <br> compose = preprocess["Compose"] ([resize, normalize]) <br> sample = compose(sample) <br> # sample: image, label |
-| CropResize(x, y, width, height, size, interpolation) | **x** (int): Left boundary of the cropping area <br> **y** (int): Top boundary of the cropping area <br> **width** (int): Width of the cropping area <br> **height** (int): Height of the cropping area <br> **size** (list or int): resize to new size after cropping <br> **interpolation** (str, default='bilinear'): Desired interpolation type, support 'bilinear', 'nearest', 'bicubic' | Crop the input image with given location and resize it | CropResize: <br> &ensp;&ensp; x: 0 <br> &ensp;&ensp; y: 5 <br> &ensp;&ensp; width: 224 <br> &ensp;&ensp; height: 224 <br> &ensp;&ensp; size: [100, 100] # or size: 100 <br> &ensp;&ensp; interpolation: bilinear |
-| RandomHorizontalFlip() | None | Horizontally flip the given image randomly | RandomHorizontalFlip: {} |
-| RandomVerticalFlip() | None | Vertically flip the given image randomly | RandomVerticalFlip: {} |
-| CropToBoundingBox(offset_height, offset_width, target_height, target_width) | **offset_height** (int): Vertical coordinate of the top-left corner of the result in the input <br> **offset_width** (int): Horizontal coordinate of the top-left corner of the result in the input <br> **target_height** (int): Height of the result <br> **target_width** (int): Width of the result | Crop an image to a specified bounding box | CropToBoundingBox: <br> &ensp;&ensp; offset_height: 10 <br> &ensp;&ensp; offset_width: 10 <br> &ensp;&ensp; target_height: 224 <br> &ensp;&ensp; 224 |
-| ToArray() | None | Convert NDArray to numpy array | ToArray: {} |
-| ToTensor() | None | Convert an image NDArray or batch of image NDArray to a tensor NDArray | ToTensor: {} |
-| Cast(dtype) | **dtype** (str, default ='float32'): The target data type | Convert image to given dtype | Cast: <br> &ensp;&ensp; dtype: float32 |
-| Transpose(perm) | **perm** (list): A permutation of the dimensions of input image | Transpose image according perm | Transpose: <br> &ensp;&ensp; perm: [1, 2, 0] |
-| AlignImageChannel(dim) | **dim** (int): The channel number of result image | Align image channel, now just support [H,W]->[H,W,dim], [H,W,4]->[H,W,3] and [H,W,3]->[H,W]. <br> This transform is going to be deprecated. | AlignImageChannel: <br> &ensp;&ensp; dim: 3 |
-| ToNDArray() | None | Convert np.array to NDArray | ToNDArray: {} |
-| ResizeWithRatio(min_dim, max_dim, padding) | **min_dim** (int, default=800): Resizes the image such that its smaller dimension == min_dim <br> **max_dim** (int, default=1365): Ensures that the image longest side does not exceed this value <br> **padding** (bool, default=False): If true, pads image with zeros so its size is max_dim x max_dim | Resize image with aspect ratio and pad it to max shape(optional). If the image is padded, the label will be processed at the same time. The input image should be np.array. | ResizeWithRatio: <br> &ensp;&ensp; min_dim: 800 <br> &ensp;&ensp; max_dim: 1365 <br> &ensp;&ensp; padding: True |
 
 ### ONNXRT
 

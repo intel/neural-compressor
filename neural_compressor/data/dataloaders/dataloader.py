@@ -15,7 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Built-in dataloaders for multiple framework backends."""
-from .mxnet_dataloader import MXNetDataLoader
 from .onnxrt_dataloader import ONNXRTDataLoader
 from .pytorch_dataloader import PyTorchDataLoader
 from .tensorflow_dataloader import TensorflowDataLoader
@@ -24,7 +23,6 @@ DATALOADERS = {
     "tensorflow": TensorflowDataLoader,
     "tensorflow_itex": TensorflowDataLoader,
     "keras": TensorflowDataLoader,
-    "mxnet": MXNetDataLoader,
     "pytorch": PyTorchDataLoader,
     "pytorch_ipex": PyTorchDataLoader,
     "pytorch_fx": PyTorchDataLoader,
@@ -89,8 +87,7 @@ class DataLoader(object):
             "onnxrt_qdqops",
             "onnxrt_qlinearops",
             "onnxrt_integerops",
-            "mxnet",
-        ), "framework support tensorflow pytorch mxnet onnxruntime"
+        ), "framework support tensorflow pytorch onnxruntime"
         return DATALOADERS[framework](
             dataset=dataset,
             batch_size=batch_size,

@@ -12,7 +12,6 @@ from neural_compressor.data import DATALOADERS, TRANSFORMS
 from neural_compressor.utils.create_obj_from_config import create_dataset, get_postprocess
 from neural_compressor.utils.utility import LazyImport
 
-mx = LazyImport("mxnet")
 tf = LazyImport("tensorflow")
 torch = LazyImport("torch")
 torchvision = LazyImport("torchvision")
@@ -199,10 +198,7 @@ class TestTensorflowImagenetTransform(unittest.TestCase):
 class TestDataConversion(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if platform.system().lower() == "windows":
-            cls.skipTest(cls, "not support mxnet on windows yet")
         cls.img = np.random.random_sample([10, 10, 3]) * 255
-        cls.mx_trans = TRANSFORMS("mxnet", "preprocess")
         cls.pt_trans = TRANSFORMS("pytorch", "preprocess")
 
     def testToPILImage(self):
@@ -215,32 +211,18 @@ class TestDataConversion(unittest.TestCase):
         image, _ = trans((TestDataConversion.img.astype(np.uint8), None))
         self.assertTrue(isinstance(image, torch.Tensor))
 
-        trans = TestDataConversion.mx_trans["ToTensor"]()
-        image, _ = trans((mx.nd.array(TestDataConversion.img), None))
-        self.assertTrue(isinstance(image, mx.ndarray.NDArray))  # pylint: disable=no-member
-
-    def testToNDArray(self):
-        trans = TestDataConversion.mx_trans["ToNDArray"]()
-        image, _ = trans((TestDataConversion.img.astype(np.uint8), None))
-        self.assertTrue(isinstance(image, mx.ndarray.NDArray))
-
 
 class TestSameTransfoms(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        if platform.system().lower() == "windows":
-            cls.skipTest(cls, "not support mxnet on windows yet")
         cls.img = np.random.random_sample([10, 10, 3]) * 255
         cls.tf_trans = TRANSFORMS("tensorflow", "preprocess")
         cls.pt_trans = TRANSFORMS("pytorch", "preprocess")
-        cls.mx_trans = TRANSFORMS("mxnet", "preprocess")
         cls.ox_trans = TRANSFORMS("onnxrt_qlinearops", "preprocess")
-        cls.mx_img = mx.nd.array(cls.img.astype(np.uint8))
         cls.pt_img = Image.fromarray(cls.img.astype(np.uint8))
         cls.tf_img = tf.constant(cls.img)
         _ = TRANSFORMS("tensorflow", "postprocess")
         _ = TRANSFORMS("pytorch", "postprocess")
-        _ = TRANSFORMS("mxnet", "postprocess")
         _ = TRANSFORMS("onnxrt_qlinearops", "postprocess")
         _ = TRANSFORMS("onnxrt_integerops", "postprocess")
 
@@ -835,30 +817,8 @@ class TestAlignImageChannel(unittest.TestCase):
         with self.assertRaises(ValueError):
             transforms["AlignImageChannel"](**{"dim": 5})
 
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
-    def testMXNet(self):
-        transforms = TRANSFORMS("mxnet", "preprocess")
-        align = transforms["AlignImageChannel"](**{"dim": 1})
-        image, _ = align((TestAlignImageChannel.img1.astype(np.uint8), None))
-        self.assertEqual(image.shape[-1], 1)
-
-        align = transforms["AlignImageChannel"](**{"dim": 1})
-        image, _ = align((TestAlignImageChannel.img2.astype(np.uint8), None))
-        self.assertEqual(image.shape[-1], 1)
-
-        align = transforms["AlignImageChannel"](**{"dim": 3})
-        image, _ = align((TestAlignImageChannel.img3.astype(np.uint8), None))
-        self.assertEqual(image.shape[-1], 3)
-
-        align = transforms["AlignImageChannel"](**{"dim": 2})
-        self.assertRaises(ValueError, align, (TestAlignImageChannel.img1.astype(np.uint8), None))
-
-        with self.assertRaises(ValueError):
-            transforms["AlignImageChannel"](**{"dim": 5})
-
 
 class TestToArray(unittest.TestCase):
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def testParse(self):
         random_array = np.random.random_sample([10, 10, 3]) * 255
         random_array = random_array.astype(np.uint8)
@@ -867,37 +827,6 @@ class TestToArray(unittest.TestCase):
         onnx_parse = onnx_transforms["ToArray"]()
         img, _ = onnx_parse((img1, None))
         self.assertTrue(isinstance(img, np.ndarray))
-
-        mxnet_transforms = TRANSFORMS("mxnet", "preprocess")
-        mxnet_parse = mxnet_transforms["ToArray"]()
-        img, _ = mxnet_parse((mx.nd.array(random_array), None))
-        self.assertTrue(isinstance(img, np.ndarray))
-        self.assertRaises(ValueError, mxnet_parse, ([1, 2], None))
-
-
-class TestMXNetTransform(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        if platform.system().lower() == "windows":
-            cls.skipTest(cls, "not support mxnet on windows yet")
-        array = np.random.random_sample([100, 100, 3]) * 255
-        cls.img = mx.nd.array(array)
-        cls.transforms = TRANSFORMS("mxnet", "preprocess")
-
-    def testRandomCrop(self):
-        args = {"size": [50]}
-        randomcrop = TestMXNetTransform.transforms["RandomCrop"](**args)
-        compose = TestMXNetTransform.transforms["Compose"]([randomcrop])
-        image_result = compose((TestMXNetTransform.img, None))
-        self.assertEqual(image_result[0].shape, (50, 50, 3))
-
-    def testNormalize(self):
-        args = {"mean": [0.0, 0.0, 0.0], "std": [0.29, 0.24, 0.25]}
-        normalize = TestMXNetTransform.transforms["Normalize"](**args)
-        image_result = normalize((TestMXNetTransform.img, None))
-        self.assertAlmostEqual(
-            image_result[0].asnumpy()[0][0][0], (TestMXNetTransform.img.asnumpy() / [0.29])[0][0][0], places=3
-        )
 
 
 class TestONNXTransfrom(unittest.TestCase):

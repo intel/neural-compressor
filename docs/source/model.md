@@ -92,15 +92,6 @@ The Neural Compressor Model feature is used to encapsulate the behavior of model
             <td>onnx.onnx_ml_pb2.ModelProto</td>
             <td>frozen onnx</td>
         </tr>
-        <tr>
-            <td rowspan=2>MXNet</td>
-            <td>mxnet.gluon.HybridBlock</td>
-            <td>save_path.json</td>
-        </tr>
-        <tr>
-            <td>mxnet.symbol.Symbol</td>
-            <td>save_path-symbol.json and save_path-0000.params</td>
-        </tr>
     </tbody>
 </table>
 

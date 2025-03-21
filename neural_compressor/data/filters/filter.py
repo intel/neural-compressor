@@ -61,22 +61,11 @@ class PyTorchFilters(object):  # pragma: no cover
         self.filters.update(PYTORCH_FILTERS)
 
 
-@singleton
-class MXNetFilters(object):  # pragma: no cover
-    """The base filter class for MXNet framework."""
-
-    def __init__(self):
-        """Initialize the attribute of the class."""
-        self.filters = {}
-        self.filters.update(MXNET_FILTERS)
-
-
 TENSORFLOW_FILTERS = {}
 TENSORFLOW_ITEX_FILTERS = {}
 ONNXRT_IT_FILTERS = {}
 ONNXRT_QL_FILTERS = {}
 PYTORCH_FILTERS = {}
-MXNET_FILTERS = {}
 
 framework_filters = {
     "tensorflow": TensorflowFilters,
@@ -84,7 +73,6 @@ framework_filters = {
     "pytorch": PyTorchFilters,
     "pytorch_ipex": PyTorchFilters,
     "pytorch_fx": PyTorchFilters,
-    "mxnet": MXNetFilters,
     "onnxrt_qlinearops": ONNXRTQLFilters,
     "onnxrt_qdq": ONNXRTQLFilters,
     "onnxruntime": ONNXRTQLFilters,
@@ -97,7 +85,6 @@ registry_filters = {
     "pytorch": PYTORCH_FILTERS,
     "pytorch_ipex": PYTORCH_FILTERS,
     "pytorch_fx": PYTORCH_FILTERS,
-    "mxnet": MXNET_FILTERS,
     "onnxrt_integerops": ONNXRT_IT_FILTERS,
     "onnxrt_qdq": ONNXRT_QL_FILTERS,
     "onnxruntime": ONNXRT_QL_FILTERS,
@@ -109,7 +96,7 @@ class FILTERS(object):  # pragma: no cover
     """The filter register for all frameworks.
 
     Args:
-        framework (str): frameworks in ["tensorflow", "tensorflow_itex", "mxnet",
+        framework (str): frameworks in ["tensorflow", "tensorflow_itex",
                                         "onnxrt_qdq", "pytorch", "pytorch_ipex",
                                         "pytorch_fx", "onnxrt_integerops", "keras",
                                         "onnxrt_qlinearops", "onnxruntime"].
@@ -121,7 +108,6 @@ class FILTERS(object):  # pragma: no cover
             "tensorflow",
             "tensorflow_itex",
             "keras",
-            "mxnet",
             "onnxrt_qdq",
             "pytorch",
             "pytorch_ipex",
@@ -129,7 +115,7 @@ class FILTERS(object):  # pragma: no cover
             "onnxrt_integerops",
             "onnxrt_qlinearops",
             "onnxruntime",
-        ], "framework support tensorflow pytorch mxnet onnxrt"
+        ], "framework support tensorflow pytorch onnxrt"
         self.filters = framework_filters[framework]().filters
         self.framework = framework
 
@@ -147,7 +133,7 @@ def filter_registry(filter_type, framework):  # pragma: no cover
 
     Args:
         filter_type (str): fILTER registration name.
-        framework (str): support 4 framework including 'tensorflow', 'pytorch', 'mxnet', 'onnxrt'.
+        framework (str): support 4 framework including 'tensorflow', 'pytorch', 'onnxrt'.
         cls (class): The class of register.
 
     Returns:
@@ -163,12 +149,11 @@ def filter_registry(filter_type, framework):  # pragma: no cover
                 "pytorch",
                 "pytorch_ipex",
                 "pytorch_fx",
-                "mxnet",
                 "onnxrt_integerops",
                 "onnxrt_qdq",
                 "onnxrt_qlinearops",
                 "onnxruntime",
-            ], "The framework support tensorflow mxnet pytorch onnxrt"
+            ], "The framework support tensorflow pytorch onnxrt"
             if filter_type in registry_filters[single_framework].keys():
                 raise ValueError("Cannot have two transforms with the same name")
             registry_filters[single_framework][filter_type] = cls

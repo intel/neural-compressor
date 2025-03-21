@@ -188,4 +188,3 @@ Intel® Neural Compressor has unified interfaces which dispatch tasks to differe
 |TensorFlow    |&#10004;     |
 |PyTorch       |&#10004;     |
 |ONNX          |plan to support in the future |
-|MXNet         |&#10004;     |

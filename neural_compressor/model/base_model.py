@@ -28,9 +28,8 @@ class BaseModel:
         Args:
             model (object): raw model format. For Tensorflow model, could be path to frozen pb file,
                 path to ckpt or savedmodel folder, loaded estimator/graph_def/graph/keras model object.
-                For PyTorch model, it's torch.nn.model instance. For MXNet model, it's mxnet.symbol.Symbol
-                or gluon.HybirdBlock instance. For ONNX model, it's path to onnx model or loaded ModelProto
-                model object.
+                For PyTorch model, it's torch.nn.model instance. For ONNX model, it's path to onnx model
+                or loaded ModelProto model object.
         """
         self.component = None
 

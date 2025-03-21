@@ -16,7 +16,7 @@ running user cases and setting up framework capabilities, respectively.
 Here, we introduce the framework YAML file, which describes the behavior of 
 a specific framework. There is a corresponding framework YAML file for each framework supported by 
 Intel® Neural Compressor - TensorFlow
-, Intel® Extension for TensorFlow*, PyTorch, Intel® Extension for PyTorch*, ONNX Runtime, and MXNet. 
+, Intel® Extension for TensorFlow*, PyTorch, Intel® Extension for PyTorch* and ONNX Runtime. 
 
 >**Note**: Before diving to the details, we recommend that the end users do NOT make modifications
 unless they have clear requirements that can only be met by modifying the attributes. 
@@ -28,7 +28,6 @@ unless they have clear requirements that can only be met by modifying the attrib
 | TensorFlow |         &#10004;         |
 | PyTorch    |         &#10004;         |
 | ONNX       |         &#10004;         |
-| MXNet      |         &#10004;         |
 
 
 ## Get started with Framework YAML Files

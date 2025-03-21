@@ -7,9 +7,7 @@ Metrics
 
     2.2. [PyTorch](#pytorch)
     
-    2.3. [MxNet](#mxnet)
-
-    2.4. [ONNXRT](#onnxrt)
+    2.3. [ONNXRT](#onnxrt)
 
 3. [Get Started with Metric](#get-started-with-metric)
     
@@ -55,18 +53,6 @@ Neural Compressor supports some built-in metrics that are popularly used in indu
 | RMSE(compare_label)   | **compare_label** (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels.              | preds, labels   | Computes Root Mean Squared Error (RMSE) loss. |
 | MSE(compare_label)    | **compare_label** (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels.              | preds, labels   | Computes Mean Squared Error (MSE) loss. |
 | F1()                  | None              | preds, labels   | Computes the F1 score of a binary classification problem. |
-
-### MXNet
-
-| Metric                | Parameters        | Inputs          | Comments |
-| :------               | :------           | :------         | :------ |
-| topk(k)               | **k** (int, default=1): Number of top elements to look at for computing accuracy | preds, labels   | Computes top k predictions accuracy. |
-| Accuracy()            | None              | preds, labels   | Computes accuracy classification score. <br> Please refer to [MXNet docs](https://mxnet.apache.org/versions/1.7.0/api/python/docs/api/metric/index.html#mxnet.metric.Accuracy) for details. |
-| Loss()                | None              | preds, labels   | A dummy metric for directly printing loss, it calculates the average of predictions. <br> Please refer to [MXNet docs](https://mxnet.apache.org/versions/1.7.0/api/python/docs/_modules/mxnet/metric.html#Loss) for details. |
-| MAE()                 | None              | preds, labels   | Computes Mean Absolute Error (MAE) loss. <br> Please refer to [MXNet docs](https://mxnet.apache.org/versions/1.7.0/api/python/docs/api/metric/index.html#mxnet.metric.MAE) for details. |
-| RMSE(compare_label)   | **compare_label** (bool, default=True): Whether to compare label. False if there are no labels and will use FP32 preds as labels.              | preds, labels   | Computes Root Mean Squared Error (RMSE) loss. |
-| MSE()                 | None              | preds, labels   | Computes Mean Squared Error (MSE) loss. <br> Please refer to [MXNet docs](https://mxnet.apache.org/versions/1.7.0/api/python/docs/api/metric/index.html#mxnet.metric.MSE) for details. |
-| F1()                  | None              | preds, labels   | Computes the F1 score of a binary classification problem. <br> Please refer to [MXNet docs](https://mxnet.apache.org/versions/1.7.0/api/python/docs/api/metric/index.html#mxnet.metric.F1) for details. |
 
 
 ### ONNXRT

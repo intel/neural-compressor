@@ -26,7 +26,6 @@ from neural_compressor.utils.utility import LazyImport, singleton
 torch = LazyImport("torch")
 torchvision = LazyImport("torchvision")
 tf = LazyImport("tensorflow")
-mx = LazyImport("mxnet")
 np = LazyImport("numpy")
 hashlib = LazyImport("hashlib")
 gzip = LazyImport("gzip")
@@ -53,19 +52,9 @@ class PyTorchDatasets(object):  # pragma: no cover
     def __init__(self):
         """Initialize the attributes of class."""
         self.datasets = {
-            "ImageFolder": PytorchMxnetWrapDataset(torchvision.datasets.ImageFolder),
+            "ImageFolder": PytorchWrapDataset(torchvision.datasets.ImageFolder),
         }
         self.datasets.update(PYTORCH_DATASETS)
-
-
-@singleton
-class MXNetDatasets(object):  # pragma: no cover
-    """The base class of MXNet datasets class."""
-
-    def __init__(self):
-        """Initialize the attributes of class."""
-        self.datasets = {}
-        self.datasets.update(MXNET_DATASETS)
 
 
 @singleton
@@ -88,11 +77,11 @@ class ONNXRTITDatasets(object):  # pragma: no cover
         self.datasets.update(ONNXRTIT_DATASETS)
 
 
-class PytorchMxnetWrapDataset:  # pragma: no cover
-    """The base class for PyTorch and MXNet frameworks.
+class PytorchWrapDataset:  # pragma: no cover
+    """The base class for PyTorch framework.
 
     Args:
-        datafunc: The datasets class of PyTorch or MXNet.
+        datafunc: The datasets class of PyTorch.
     """
 
     def __init__(self, datafunc):
@@ -100,15 +89,15 @@ class PytorchMxnetWrapDataset:  # pragma: no cover
         self.datafunc = datafunc
 
     def __call__(self, transform=None, filter=None, *args, **kwargs):
-        """Wrap the dataset for PyTorch and MXNet framework."""
-        return PytorchMxnetWrapFunction(self.datafunc, transform=transform, filter=filter, *args, **kwargs)
+        """Wrap the dataset for PyTorch framework."""
+        return PytorchWrapFunction(self.datafunc, transform=transform, filter=filter, *args, **kwargs)
 
 
-class PytorchMxnetWrapFunction:  # pragma: no cover
-    """The Helper class for PytorchMxnetWrapDataset.
+class PytorchWrapFunction:  # pragma: no cover
+    """The Helper class for PytorchWrapDataset.
 
     Args:
-        dataset (datasets class): The datasets class of PyTorch or MXNet.
+        dataset (datasets class): The datasets class of PyTorch.
         transform (transform object):  transform to process input data.
         filter (Filter objects): filter out examples according to specific
                                  conditions.
@@ -138,7 +127,6 @@ class PytorchMxnetWrapFunction:  # pragma: no cover
 framework_datasets = {
     "tensorflow": TensorflowDatasets,
     "tensorflow_itex": TensorflowDatasets,
-    "mxnet": MXNetDatasets,
     "pytorch": PyTorchDatasets,
     "pytorch_ipex": PyTorchDatasets,
     "pytorch_fx": PyTorchDatasets,
@@ -163,7 +151,7 @@ class Datasets(object):  # pragma: no cover
 
     Args:
         framework (str): framework name, like:"tensorflow", "tensorflow_itex", "keras",
-                         "mxnet", "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops",
+                         "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops",
                          "pytorch", "pytorch_ipex", "pytorch_fx", "onnxruntime".
     """
 
@@ -173,7 +161,6 @@ class Datasets(object):  # pragma: no cover
             "tensorflow",
             "tensorflow_itex",
             "keras",
-            "mxnet",
             "onnxrt_qdq",
             "onnxrt_qlinearops",
             "onnxrt_integerops",
@@ -181,7 +168,7 @@ class Datasets(object):  # pragma: no cover
             "pytorch_ipex",
             "pytorch_fx",
             "onnxruntime",
-        ], "framework support tensorflow pytorch mxnet onnxrt"
+        ], "framework support tensorflow pytorch onnxrt"
         self.datasets = framework_datasets[framework]().datasets
 
     def __getitem__(self, dataset_type):
@@ -196,7 +183,6 @@ class Datasets(object):  # pragma: no cover
 # user/model specific datasets will be registered here
 TENSORFLOW_DATASETS = {}
 TENSORFLOWITEX_DATASETS = {}
-MXNET_DATASETS = {}
 PYTORCH_DATASETS = {}
 PYTORCHIPEX_DATASETS = {}
 PYTORCHFX_DATASETS = {}
@@ -206,7 +192,6 @@ ONNXRTIT_DATASETS = {}
 registry_datasets = {
     "tensorflow": TENSORFLOW_DATASETS,
     "tensorflow_itex": TENSORFLOWITEX_DATASETS,
-    "mxnet": MXNET_DATASETS,
     "pytorch": PYTORCH_DATASETS,
     "pytorch_ipex": PYTORCHIPEX_DATASETS,
     "pytorch_fx": PYTORCHFX_DATASETS,
@@ -223,7 +208,7 @@ def dataset_registry(dataset_type, framework, dataset_format=""):  # pragma: no 
     Args:
         cls (class): The class of register.
         dataset_type (str): The dataset registration name
-        framework (str): support 3 framework including 'tensorflow', 'pytorch', 'mxnet'
+        framework (str): support 3 framework including 'tensorflow', 'pytorch',
         data_format (str): The format dataset saved, eg 'raw_image', 'tfrecord'
 
     Returns:
@@ -235,7 +220,6 @@ def dataset_registry(dataset_type, framework, dataset_format=""):  # pragma: no 
             assert single_framework in [
                 "tensorflow",
                 "tensorflow_itex",
-                "mxnet",
                 "pytorch",
                 "pytorch_ipex",
                 "pytorch_fx",
@@ -243,7 +227,7 @@ def dataset_registry(dataset_type, framework, dataset_format=""):  # pragma: no 
                 "onnxrt_integerops",
                 "onnxrt_qdq",
                 "onnxruntime",
-            ], "The framework support tensorflow mxnet pytorch onnxrt"
+            ], "The framework support tensorflow pytorch onnxrt"
             dataset_name = dataset_type + dataset_format
             if dataset_name in registry_datasets[single_framework].keys():
                 raise ValueError("Cannot have two datasets with the same name")
@@ -509,22 +493,6 @@ class PytorchCIFAR10(CIFAR10):
         return (image, label)
 
 
-@dataset_registry(dataset_type="CIFAR10", framework="mxnet", dataset_format="")
-class MXNetCIFAR10(CIFAR10):
-    """The MXNet datasets for CIFAR10."""
-
-    def __getitem__(self, index):  # pragma: no cover
-        """Magic method.
-
-        x[i] is roughly equivalent to type(x).__getitem__(x, index)
-        """
-        image, label = self.data[index], self.targets[index]
-        image = mx.nd.array(image)
-        if self.transform is not None:
-            image, label = self.transform((image, label))
-        return (image, label)
-
-
 @dataset_registry(dataset_type="CIFAR10", framework="tensorflow, tensorflow_itex", dataset_format="")
 class TensorflowCIFAR10(CIFAR10):
     """The Tensorflow datasets for CIFAR10."""
@@ -601,22 +569,6 @@ class PytorchCIFAR100(CIFAR100):
         if self.transform is not None:
             image, label = self.transform((image, label))
         image = np.array(image)
-        return (image, label)
-
-
-@dataset_registry(dataset_type="CIFAR100", framework="mxnet", dataset_format="")
-class MXNetCIFAR100(CIFAR100):
-    """The MXNet datasets for CIFAR100."""
-
-    def __getitem__(self, index):  # pragma: no cover
-        """Magic method.
-
-        x[i] is roughly equivalent to type(x).__getitem__(x, index)
-        """
-        image, label = self.data[index], self.targets[index]
-        image = mx.nd.array(image)
-        if self.transform is not None:
-            image, label = self.transform((image, label))
         return (image, label)
 
 
@@ -753,23 +705,6 @@ class PytorchMNIST(MNIST):  # pragma: no cover
         return (image, label)
 
 
-@dataset_registry(dataset_type="MNIST", framework="mxnet", dataset_format="")
-class MXNetMNIST(MNIST):  # pragma: no cover
-    """The MXNet datasets for MNIST."""
-
-    def __getitem__(self, index):
-        """Magic method.
-
-        x[i] is roughly equivalent to type(x).__getitem__(x, index)
-        """
-        image, label = self.data[index], int(self.targets[index])
-        image = mx.nd.array(image)
-        image = image.reshape((image.shape[0], image.shape[1], 1))
-        if self.transform is not None:
-            image, label = self.transform((image, label))
-        return (image, label)
-
-
 @dataset_registry(dataset_type="MNIST", framework="tensorflow, tensorflow_itex", dataset_format="")
 class TensorflowMNIST(MNIST):  # pragma: no cover
     """The Tensorflow datasets for MNIST."""
@@ -865,23 +800,6 @@ class PytorchFashionMNIST(FashionMNIST):  # pragma: no cover
         return (image, label)
 
 
-@dataset_registry(dataset_type="FashionMNIST", framework="mxnet", dataset_format="")
-class MXNetFashionMNIST(FashionMNIST):  # pragma: no cover
-    """The MXNet Dataset for FashionMNIST."""
-
-    def __getitem__(self, index):
-        """Magic method.
-
-        x[i] is roughly equivalent to type(x).__getitem__(x, index)
-        """
-        image, label = self.data[index], int(self.targets[index])
-        image = mx.nd.array(image)
-        image = image.reshape((image.shape[0], image.shape[1], 1))
-        if self.transform is not None:
-            image, label = self.transform((image, label))
-        return (image, label)
-
-
 @dataset_registry(dataset_type="FashionMNIST", framework="tensorflow, tensorflow_itex", dataset_format="")
 class TensorflowFashionMNIST(FashionMNIST):  # pragma: no cover
     """The Tensorflow Dataset for FashionMNIST."""
@@ -962,42 +880,6 @@ class ImageFolder(Dataset):  # pragma: no cover
             if self.transform is not None:
                 image, label = self.transform((image, label))
             return (image, label)
-
-
-@dataset_registry(dataset_type="ImageFolder", framework="mxnet", dataset_format="")
-class MXNetImageFolder(ImageFolder):  # pragma: no cover
-    """The MXNet Dataset for image folder.
-
-    Expects the data folder to contain subfolders representing the classes to which
-    its images belong.
-
-    Please arrange data in this way:
-        root/class_1/xxx.png
-        root/class_1/xxy.png
-        root/class_1/xxz.png
-        ...
-        root/class_n/123.png
-        root/class_n/nsdf3.png
-        root/class_n/asd932_.png
-    Please put images of different categories into different folders.
-
-    Args: root (str): Root directory of dataset.
-          transform (transform object, default=None):  transform to process input data.
-          filter (Filter objects, default=None): filter out examples according to specific
-                                                 conditions.
-    """
-
-    def __getitem__(self, index):
-        """Magic method.
-
-        x[i] is roughly equivalent to type(x).__getitem__(x, index)
-        """
-        sample = self.image_list[index]
-        label = sample[1]
-        image = mx.image.imread(sample[0])
-        if self.transform is not None:
-            image, label = self.transform((image, label))
-        return (image, label)
 
 
 @dataset_registry(dataset_type="ImageFolder", framework="tensorflow, tensorflow_itex", dataset_format="")

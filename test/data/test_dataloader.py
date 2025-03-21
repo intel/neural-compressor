@@ -97,70 +97,6 @@ class TestBuiltinDataloader(unittest.TestCase):
             self.assertEqual(data[0][0].shape, (24, 24))
             break
 
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
-    def test_mxnet_dataset(self):
-        dataloader_args = {
-            "batch_size": 2,
-            "dataset": {"CIFAR10": {"root": "./", "train": False, "download": False}},
-            "transform": {"Resize": {"size": 24}},
-            "filter": None,
-        }
-        self.assertRaises(RuntimeError, create_dataloader, "mxnet", dataloader_args)
-
-        dataloader_args = {
-            "batch_size": 2,
-            "dataset": {"CIFAR100": {"root": "./", "train": False, "download": False}},
-            "transform": {"Resize": {"size": 24}},
-            "filter": None,
-        }
-        self.assertRaises(RuntimeError, create_dataloader, "mxnet", dataloader_args)
-
-        dataloader_args = {
-            "dataset": {"MNIST": {"root": "./test", "train": False, "download": False}},
-            "transform": {"Resize": {"size": 24}},
-            "filter": None,
-        }
-        self.assertRaises(RuntimeError, create_dataloader, "mxnet", dataloader_args)
-
-        dataloader_args = {
-            "batch_size": 2,
-            "dataset": {"MNIST": {"root": "./", "train": True, "download": True}},
-            "transform": {"Resize": {"size": 24}},
-            "filter": None,
-        }
-        dataloader = create_dataloader("mxnet", dataloader_args)
-
-        for data in dataloader:
-            self.assertEqual(len(data[0]), 2)
-            self.assertEqual(data[0][0].shape, (24, 24, 1))
-            break
-
-        dataloader_args = {
-            "batch_size": 2,
-            "dataset": {"FashionMNIST": {"root": "./", "train": False, "download": True}},
-            "transform": {"Resize": {"size": 24}},
-            "filter": None,
-        }
-        dataloader = create_dataloader("mxnet", dataloader_args)
-
-        for data in dataloader:
-            self.assertEqual(len(data[0]), 2)
-            self.assertEqual(data[0][0].shape, (24, 24, 1))
-            break
-
-        dataloader_args = {
-            "batch_size": 2,
-            "shuffle": True,
-            "dataset": {"MNIST": {"root": "./", "train": True, "download": True}},
-            "transform": {"Resize": {"size": 24}},
-            "filter": None,
-        }
-        with self.assertLogs() as cm:
-            dataloader = create_dataloader("mxnet", dataloader_args)
-        self.assertEqual(
-            cm.output, ["WARNING:root:Shuffle is not supported yet in" " MXNetDataLoader, ignoring shuffle keyword."]
-        )
-
     def test_tf_dataset(self):
         dataloader_args = {
             "batch_size": 2,
@@ -348,30 +284,6 @@ class TestImagenetRaw(unittest.TestCase):
             self.assertEqual(data[0][0].shape, (24, 24, 3))
             break
 
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
-    def test_mxnet(self):
-        import mxnet as mx
-
-        dataloader_args = {
-            "dataset": {"ImagenetRaw": {"data_path": "val", "image_list": None}},
-            "transform": {"Resize": {"size": 24}},
-            "filter": None,
-        }
-        dataloader = create_dataloader("mxnet", dataloader_args)
-        for data in dataloader:
-            self.assertEqual(data[0][0].shape, (24, 24, 3))
-            break
-
-        dataloader_args = {
-            "dataset": {"ImagenetRaw": {"data_path": "val", "image_list": "val/val.txt"}},
-            "transform": {"Resize": {"size": 24}},
-            "filter": None,
-        }
-        dataloader = create_dataloader("mxnet", dataloader_args)
-        for data in dataloader:
-            self.assertEqual(data[0][0].shape, (24, 24, 3))
-            break
-
     def test_onnx(self):
         dataloader_args = {
             "dataset": {"ImagenetRaw": {"data_path": "val", "image_list": None}},
@@ -478,19 +390,6 @@ class TestImageFolder(unittest.TestCase):
 
         for data in dataloader:
             self.assertEqual(data[0][0].shape, (3, 24, 24))
-            break
-
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
-    def test_mxnet(self):
-        dataloader_args = {
-            "dataset": {"ImageFolder": {"root": "./val"}},
-            "transform": {"Resize": {"size": 24}},
-            "filter": None,
-        }
-        dataloader = create_dataloader("mxnet", dataloader_args)
-
-        for data in dataloader:
-            self.assertEqual(data[0][0].shape, (24, 24, 3))
             break
 
     def test_onnx(self):
@@ -821,12 +720,9 @@ class TestDataloader(unittest.TestCase):
         tf.compat.v1.disable_eager_execution()
         self.test_coco_record()
 
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def test_coco_raw(self):
         import collections
         import json
-
-        import mxnet as mx
 
         from neural_compressor.data import TRANSFORMS
 
@@ -898,27 +794,6 @@ class TestDataloader(unittest.TestCase):
             self.assertEqual(image[0].shape, (100, 100, 3))
 
         args = {"COCORaw": {"root": "./", "img_dir": "", "anno_dir": "anno.json"}}
-        ds = create_dataset("mxnet", args, None, None)
-
-        def collate(batch):
-            elem = batch[0]
-            if isinstance(elem, mx.ndarray.NDArray):
-                return mx.nd.stack(*batch)
-            elif isinstance(elem, collections.abc.Sequence):
-                batch = zip(*batch)
-                return [collate(samples) for samples in batch]
-            elif isinstance(elem, collections.abc.Mapping):
-                return {key: collate([d[key] for d in batch]) for key in elem}
-            elif isinstance(elem, np.ndarray):
-                return np.stack(batch)
-            else:
-                return batch
-
-        dataloader = DATALOADERS["mxnet"](ds, collate_fn=collate)
-        for image, label in dataloader:
-            self.assertEqual(image[0].shape, (100, 100, 3))
-
-        args = {"COCORaw": {"root": "./", "img_dir": "", "anno_dir": "anno.json"}}
         ds = create_dataset("pytorch", args, None, None)
 
         def collate(batch):
@@ -941,13 +816,11 @@ class TestDataloader(unittest.TestCase):
         os.remove("test_1.jpg")
         os.remove("anno.json")
 
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
     def test_coco_npy(self):
         import collections
         import json
 
         import cv2
-        import mxnet as mx
         import numpy as np
 
         from neural_compressor.data import TRANSFORMS
@@ -1039,27 +912,6 @@ class TestDataloader(unittest.TestCase):
         args = {"COCONpy": {"root": "./", "npy_dir": "", "anno_dir": "anno.json"}}
         ds = create_dataset("onnxrt_qlinearops", args, None, None)
         dataloader = DATALOADERS["onnxrt_qlinearops"](ds)
-        for image, label in dataloader:
-            self.assertEqual(image[0].shape, (100, 100, 3))
-
-        args = {"COCONpy": {"root": "./", "npy_dir": "", "anno_dir": "anno.json"}}
-        ds = create_dataset("mxnet", args, None, None)
-
-        def collate(batch):
-            elem = batch[0]
-            if isinstance(elem, mx.ndarray.NDArray):
-                return mx.nd.stack(*batch)
-            elif isinstance(elem, collections.abc.Sequence):
-                batch = zip(*batch)
-                return [collate(samples) for samples in batch]
-            elif isinstance(elem, collections.abc.Mapping):
-                return {key: collate([d[key] for d in batch]) for key in elem}
-            elif isinstance(elem, np.ndarray):
-                return np.stack(batch)
-            else:
-                return batch
-
-        dataloader = DATALOADERS["mxnet"](ds, collate_fn=collate)
         for image, label in dataloader:
             self.assertEqual(image[0].shape, (100, 100, 3))
 
@@ -1327,25 +1179,6 @@ class TestDataloader(unittest.TestCase):
         iterator = iter(data_loader)
         data, label = next(iterator)
         self.assertEqual(data[0].shape, (2, 256, 256, 3))
-
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
-    def test_mxnet_dummy(self):
-        datasets = Datasets("mxnet")
-        transform = TRANSFORMS("mxnet", "preprocess")["Resize"](**{"size": 100})
-        dataset = datasets["dummy"](shape=(4, 256, 256, 3), transform=transform)
-
-        data_loader = DATALOADERS["mxnet"](dataset)
-        iterator = iter(data_loader)
-        data = next(iterator)
-        self.assertEqual(data[0].shape, (1, 256, 256, 3))
-        # dynamic batching
-        data_loader.batch(batch_size=2, last_batch="rollover")
-        iterator = iter(data_loader)
-        data = next(iterator)
-        self.assertEqual(data[0].shape, (2, 256, 256, 3))
-
-        dataset = datasets["dummy"](shape=(4, 256, 256, 3), label=True)
-        self.assertEqual(dataset[0][1], 0)
 
     def test_onnxrt_qlinear_dummy(self):
         datasets = Datasets("onnxrt_qlinearops")
