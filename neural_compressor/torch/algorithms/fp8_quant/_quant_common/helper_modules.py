@@ -651,7 +651,16 @@ class PatchedMoeMatmul(PatchedModuleBase):
             get_current_repr(self, "scale_input", "scale_weight"),
         )
 
-
+class PatchedMoeFP8Matmul(PatchedMoeMatmul):
+    def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        # if torch.distributed.get_rank() == 0:
+        #     import pdb; pdb.set_trace()
+        # torch.distributed.barrier()
+        # self.block_size = self.orig_mod.block_size
+        # self.scale_inv_fp8 = self.orig_mod.scale_inv_fp8
+        self.get_dequant_weight = self.orig_mod.get_dequant_weight
+    
 class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
@@ -756,11 +765,18 @@ class PatchedVllmMixtureOfExpertsOpV1(PatchedModuleBase):
                 [mod_extra_config.scale.inputs[x] for x in range(1, self.num_experts+1)],
                 self.scale_format,
             )
-            for i in range(self.num_experts):
-                self.w13_list[i].weight = self.w13_list[i].weight.squeeze().t().contiguous()
-                self.w2_list[i].weight = self.w2_list[i].weight.squeeze().t().contiguous()
+            # if torch.distributed.get_rank() == 0:
+            #     import pdb; pdb.set_trace()
+            # torch.distributed.barrier()
+            self._post_init_for_quant()
+
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.forward = self.forward_measure
+    
+    def _post_init_for_quant(self):
+        for i in range(self.num_experts):
+            self.w13_list[i].weight = self.w13_list[i].weight.squeeze().t().contiguous()
+            self.w2_list[i].weight = self.w2_list[i].weight.squeeze().t().contiguous()
 
     def forward_quant(self,
                       hidden_states,
@@ -832,6 +848,98 @@ class PatchedVllmMixtureOfExpertsOpV1(PatchedModuleBase):
             f"quant_mode:{quant_mode}, {get_current_repr(self, *member_names)}",
         )
 
+class PatchedDynamicMoeRuntimeDequantFP8(PatchedVllmMixtureOfExpertsOpV1):
+    def _post_init_for_quant(self):
+        pass
+
+    def post_process(self):
+        # if torch.distributed.get_rank() == 0:
+        #     import pdb; pdb.set_trace()
+        # torch.distributed.barrier()
+        for i in range(self.num_experts):
+            self.w13_list[i].weight = torch.nn.Parameter(self.w13_list[i].weight.squeeze().t().contiguous())
+            self.w2_list[i].weight = torch.nn.Parameter(self.w2_list[i].weight.squeeze().t().contiguous())
+
+    def forward_measure(
+        self,
+        x,
+        topk_ids,
+        topk_weights,
+        moe_n_slice,
+        n_expert_slice,
+        ep_shift,
+    ):
+        hidden_states = x
+        measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
+        # Assume moe_n_slice is 1
+        assert moe_n_slice == 1, f"moe_n_slice is {moe_n_slice}, expected 1"
+        i = 0
+        # for i in range(moe_n_slice):
+        min_expert = i * n_expert_slice
+        max_expert = (i + 1) * n_expert_slice
+        w13_list_slice = []
+        w2_list_slice = []
+        for j in range(min_expert, max_expert):
+            w13_list_slice.append(self.w13_list[j].get_dequant_weight())
+            w2_list_slice.append(self.w2_list[j].get_dequant_weight())
+
+        output, intermidiate_amax = torch.ops.hpu.mixture_of_experts.fp8_measurement_fused_weights(
+            hidden_states=x,
+            expert_routing_table=topk_ids.to(torch.int64),
+            router_weights=topk_weights.to(x.dtype),
+            w12=w13_list_slice,
+            w3=w2_list_slice,
+            permuted_weights=True,
+            activation="silu",
+            experts_min=min_expert + ep_shift,
+            experts_max=max_expert - 1 + ep_shift,
+            measurement_mode=True,  # <=============
+        )
+        output_measure_list = [output]
+        # if torch.distributed.get_rank() == 0:
+        #     import pdb; pdb.set_trace()
+        # torch.distributed.barrier()
+        for i in range(self.num_experts):
+            output_measure_list.append(intermidiate_amax[i])
+        measure_output(output_measure_list, self._mod_extra_config.outputs)
+        return output
+
+    def forward_quant(
+        self,
+        x,
+        topk_ids,
+        topk_weights,
+        moe_n_slice,
+        n_expert_slice,
+        ep_shift=None,
+    ):
+        hidden_states = x
+        expert_routing_table = topk_ids.to(torch.int64)
+        router_weights = topk_weights.to(x.dtype)
+        permuted_weights = True
+        activation = "silu"
+        experts_range = range(self.num_experts)
+        w1_list = [self.w13_list[i].weight for i in experts_range]
+        w2_list = [self.w2_list[i].weight for i in experts_range]
+        scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
+        scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
+        qinput = self.quant_input(hidden_states)
+        output = self.dynamic_moe_op(
+            hidden_states=qinput,
+            expert_routing_table=expert_routing_table,
+            router_weights=router_weights,
+            w12=w1_list,
+            w3=w2_list,
+            d_scale_w12=scale_w1,
+            d_scale_w3=scale_w2,
+            d_scale_hidden_states=self.scale_input,
+            d_scale_intermediate_hidden_states=self.scale_intermediate,
+            permuted_weights=permuted_weights,
+            activation=activation,
+            experts_min=self.experts_min,
+            experts_max=self.experts_max,
+        )
+        return output
 
 class PatchedVllmMixtureOfExpertsOpV2(PatchedVllmMixtureOfExpertsOpV1):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):

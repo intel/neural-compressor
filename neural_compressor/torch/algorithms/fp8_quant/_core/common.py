@@ -230,7 +230,9 @@ _mod_default_dict = {
     "Softmax": ModuleInfo("softmax", PatchedSoftmax),
     "ModuleFusedSDPA": ModuleInfo("fused_sdpa", PatchedModuleFusedSDPA),
     "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul),
+    "MoeFP8Matmul": ModuleInfo("linear", PatchedMoeFP8Matmul),
     "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
+    "DynamicMoeRuntimeDequantFP8": ModuleInfo("dynamic_moe", PatchedDynamicMoeRuntimeDequantFP8),
     # FIXME (Yi) revert change
     # "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
     # "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),

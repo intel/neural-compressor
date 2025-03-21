@@ -180,13 +180,16 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
     model = model.to(cur_accelerator.name())
-    for _, mod in model.named_modules():
-        if hasattr(mod, "post_process"):
-            mod.post_process()
+    postporcess_after_convert_(model)
     torch.distributed.barrier()
     convert_fp16_to_bf16(model)
     cur_accelerator.synchronize()
 
+
+def postporcess_after_convert_(model):
+    for _, mod in model.named_modules():
+        if hasattr(mod, "post_process"):
+            mod.post_process()
 
 def prepare_model_with_dummy_measurement(model, mod_list, scaling_method_name, scale_config):
     """Aim for loading, replace module with patched module for model on meta device.
