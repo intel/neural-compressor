@@ -858,6 +858,7 @@ class PatchedDynamicMoeRuntimeDequantFP8(PatchedVllmMixtureOfExpertsOpV1):
         for i in range(self.num_experts):
             self.w13_list[i].weight = torch.nn.Parameter(self.w13_list[i].weight.squeeze().t().contiguous())
             self.w2_list[i].weight = torch.nn.Parameter(self.w2_list[i].weight.squeeze().t().contiguous())
+            htcore.mark_step()
 
     def forward_measure(
         self,
@@ -917,9 +918,9 @@ class PatchedDynamicMoeRuntimeDequantFP8(PatchedVllmMixtureOfExpertsOpV1):
         router_weights = topk_weights.to(x.dtype)
         permuted_weights = True
         activation = "silu"
-        if torch.distributed.get_rank() == 0:
-            import pdb; pdb.set_trace()
-        torch.distributed.barrier()
+        # if torch.distributed.get_rank() == 0:
+        #     import pdb; pdb.set_trace()
+        # torch.distributed.barrier()
         experts_range = range(self.num_experts)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]
