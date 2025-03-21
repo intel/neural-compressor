@@ -130,6 +130,8 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
                 # const_weight->q->dq->conv2d
                 if dequantize_down_node.op == "Conv2D":
                     Helper.set_attr_int(uniform_quantize_node, "quantization_axis", 3)
+                elif dequantize_down_node.op == "DepthwiseConv2dNative":
+                    Helper.set_attr_int(uniform_quantize_node, "quantization_axis", 2)
                 # const_weight->q->dq->matmul
                 elif dequantize_down_node.op == "MatMul":
                     if str(dequantize_down_node.attr["transpose_b"])=='b: true\n':
