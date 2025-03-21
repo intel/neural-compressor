@@ -235,15 +235,18 @@ def is_tbb_available():  # pragma: no cover
         return False
     return True
 
-def show_mem_info(loglevel="info"):
+def show_mem_info(msg="", loglevel="info"):
     hpu_mem_mb = get_used_hpu_mem_MB()
     from neural_compressor.common.utils import logger
     show_fn = getattr(logger, loglevel)
     rank = torch.distributed.get_rank() if torch.distributed.is_initialized() else -1
-    show_fn(f"[Rank {rank}] Used HPU memory: {hpu_mem_mb // 1000} GB {hpu_mem_mb % 1000} MB")
+    # show_fn(f"[Rank {rank}] Used HPU memory: {hpu_mem_mb // 1000} GB {hpu_mem_mb % 1000} MB")
     cpu_mem_mb = get_used_cpu_mem_MB()
-    show_fn(f"[Rank {rank}] Used CPU memory: {cpu_mem_mb // 1000} GB {cpu_mem_mb % 1000} MB")
-    
+    # show_fn(f"[Rank {rank}] Used CPU memory: {cpu_mem_mb // 1000} GB {cpu_mem_mb % 1000} MB")
+    show_fn(
+        f"[Rank {rank}] {msg}, HPU: {hpu_mem_mb // 1000} GB {hpu_mem_mb % 1000:.2f} MB; CPU: {cpu_mem_mb // 1000} GB {cpu_mem_mb % 1000:.2f} MB"
+    )
+
 
 def get_used_hpu_mem_MB():
     """Get HPU used memory: MiB."""
