@@ -167,7 +167,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                                                                 scale_config, save_file)
                 if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant:
                     quantize_params(mod, mod_extra_config)
-                logger.debug(f"patching module {name}")
+                # logger.debug(f"patching module {name}")
                 patch_module(mod, mod_extra_config, mod_default_dict)
                 name = origin_name
                 patched_modules.append(name)
@@ -175,7 +175,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                 htcore.mark_step()
                 logger.debug("Patched module name: %s", name)
             cur_accelerator.synchronize()
-            logger.info("Patched module name: %s", name)
+            # logger.info("Patched module name: %s", name)
             # show_mem_info()
     if save_file: # cache calculated scales
         save_scales(model, scales_obj, scales_file_format, scale_file + ".npz")
