@@ -78,6 +78,7 @@ def quantize_params(mod, mod_extra_config):
         param = getattr(mod, param_name)
         if param.dtype == torch.float16:
             param = param.to(torch.bfloat16)
+        logger.debug(f"Quantizing parameter {param_name} of module {mod.__class__.__name__}")
         param = maybe_dequant_original_fp8_weight(mod, param)
         quantized_param = quantizer(param.to(cur_accelerator.name()))
         delattr(mod, param_name)

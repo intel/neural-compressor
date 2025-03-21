@@ -594,19 +594,18 @@ class PatchedMixtralMoE(PatchedModuleBase):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         # remove the MoE weights that are quanted by PatchedMoeMatmul
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            pass
-            # if hasattr(mod, "w13_weight"):
-            #     delattr(mod, "w13_weight")
-            #     setattr(mod, "w13_weight", None)
-            # if hasattr(mod, "w2_weight"):
-            #     delattr(mod, "w2_weight")
-            #     setattr(self, "w2_weight", None)
-            # if hasattr(mod, "w1_weight"):
-            #     delattr(mod, "w1_weight")
-            #     setattr(self, "w1_weight", None)
-            # if hasattr(mod, "w3_weight"):
-            #     delattr(mod, "w3_weight")
-            #     setattr(self, "w3_weight", None)
+            if hasattr(mod, "w13_weight"):
+                delattr(mod, "w13_weight")
+                setattr(mod, "w13_weight", None)
+            if hasattr(mod, "w2_weight"):
+                delattr(mod, "w2_weight")
+                setattr(self, "w2_weight", None)
+            if hasattr(mod, "w1_weight"):
+                delattr(mod, "w1_weight")
+                setattr(self, "w1_weight", None)
+            if hasattr(mod, "w3_weight"):
+                delattr(mod, "w3_weight")
+                setattr(self, "w3_weight", None)
         self.forward = self.forward_orig
 
 

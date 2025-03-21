@@ -234,7 +234,7 @@ _mod_default_dict = {
     "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
     "DynamicMoeRuntimeDequantFP8": ModuleInfo("dynamic_moe", PatchedDynamicMoeRuntimeDequantFP8),
     # FIXME (Yi) revert change
-    # "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
+    "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
     # "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
     # "VllmMixtureOfExpertsOp": (
     #     ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpV2)
