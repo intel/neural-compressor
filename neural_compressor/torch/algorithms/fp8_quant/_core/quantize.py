@@ -183,11 +183,34 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     logger.debug("Patched module types: %s", patched_module_types)
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
+    
+    
+    def inspect_tensor(tensor, msg=""):
+        
+        if "cpu" in str(tensor.device):
+            logger.info(f"{msg}: tensor dtype: {tensor.dtype}, tensor shape: {tensor.shape}, deveice: {tensor.device}")
+            # if torch.distributed.get_rank() == 0:
+            #     import pdb; pdb.set_trace()
+            # torch.distributed.barrier()
+            
+    for pname, param in model.named_parameters():
+        inspect_tensor(param, pname)
+    # check buffer
+    for bname, buffer in model.named_buffers():
+        inspect_tensor(buffer, bname)
+    show_mem_info("before move all")
     model = model.to(cur_accelerator.name())
+    show_mem_info("after move all")
     postporcess_after_convert_(model)
+    show_mem_info("after post process")
     torch.distributed.barrier()
     convert_fp16_to_bf16(model)
+    show_mem_info("after convert_fp16_to_bf16")
     cur_accelerator.synchronize()
+    show_mem_info("after synchronize")
+    if torch.distributed.get_rank() == 0:
+        import pdb; pdb.set_trace()
+    torch.distributed.barrier()
 
 
 def postporcess_after_convert_(model):

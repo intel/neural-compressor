@@ -917,6 +917,9 @@ class PatchedDynamicMoeRuntimeDequantFP8(PatchedVllmMixtureOfExpertsOpV1):
         router_weights = topk_weights.to(x.dtype)
         permuted_weights = True
         activation = "silu"
+        if torch.distributed.get_rank() == 0:
+            import pdb; pdb.set_trace()
+        torch.distributed.barrier()
         experts_range = range(self.num_experts)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]
