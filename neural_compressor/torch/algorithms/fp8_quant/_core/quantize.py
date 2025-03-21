@@ -208,15 +208,13 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     show_mem_info("after convert_fp16_to_bf16")
     cur_accelerator.synchronize()
     show_mem_info("after synchronize")
-    if torch.distributed.get_rank() == 0:
-        import pdb; pdb.set_trace()
-    torch.distributed.barrier()
-
 
 def postporcess_after_convert_(model):
     for _, mod in model.named_modules():
         if hasattr(mod, "post_process"):
             mod.post_process()
+            # Note: It is very important to synchronize after each post_process to avoid OoM.
+            cur_accelerator.synchronize()
 
 def prepare_model_with_dummy_measurement(model, mod_list, scaling_method_name, scale_config):
     """Aim for loading, replace module with patched module for model on meta device.
