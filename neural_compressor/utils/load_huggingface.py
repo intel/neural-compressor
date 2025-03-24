@@ -96,33 +96,8 @@ class OptimizedModel:
             )
             return model
         else:
-            logger.info("the quantization optimized model is loading.")
-            keys_to_ignore_on_load_unexpected = copy.deepcopy(
-                getattr(model_class, "_keys_to_ignore_on_load_unexpected", None)
-            )
-            keys_to_ignore_on_load_missing = copy.deepcopy(
-                getattr(model_class, "_keys_to_ignore_on_load_missing", None)
-            )
-
-            # Avoid unnecessary warnings resulting from quantized model initialization
-            quantized_keys_to_ignore_on_load = [
-                r"zero_point",
-                r"scale",
-                r"packed_params",
-                r"constant",
-                r"module",
-                r"best_configure",
-            ]
-            if keys_to_ignore_on_load_unexpected is None:
-                model_class._keys_to_ignore_on_load_unexpected = quantized_keys_to_ignore_on_load
-            else:
-                model_class._keys_to_ignore_on_load_unexpected.extend(quantized_keys_to_ignore_on_load)
-            missing_keys_to_ignore_on_load = [r"weight", r"bias"]
-            if keys_to_ignore_on_load_missing is None:
-                model_class._keys_to_ignore_on_load_missing = missing_keys_to_ignore_on_load
-            else:  # pragma: no cover
-                model_class._keys_to_ignore_on_load_missing.extend(missing_keys_to_ignore_on_load)
-
+            # only show logs of error level, since keys_to_ignore_on_load_unexpected is not working without specific model_class
+            transformers.logging.set_verbosity_error()
             if not os.path.isdir(model_name_or_path) and not os.path.isfile(model_name_or_path):  # pragma: no cover
                 from transformers.utils import cached_file
 
@@ -168,9 +143,6 @@ class OptimizedModel:
                 state_dict=state_dict,
                 **kwargs,
             )
-
-            model_class._keys_to_ignore_on_load_unexpected = keys_to_ignore_on_load_unexpected
-            model_class._keys_to_ignore_on_load_missing = keys_to_ignore_on_load_missing
 
             if not os.path.isdir(model_name_or_path) and not os.path.isfile(model_name_or_path):  # pragma: no cover
                 # pylint: disable=E0611
