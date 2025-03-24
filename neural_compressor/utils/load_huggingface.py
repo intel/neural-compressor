@@ -83,7 +83,7 @@ class OptimizedModel:
                 **kwargs,
             )
 
-        model_class = eval(f"transformers.{config.architectures[0]}")
+        model_class = transformers.AutoModelForSequenceClassification
         if config.torch_dtype is not torch.int8:
             model = model_class.from_pretrained(
                 model_name_or_path,
