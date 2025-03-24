@@ -847,7 +847,7 @@ class PatchedVllmMixtureOfExpertsOpV1(PatchedModuleBase):
             f"quant_mode:{quant_mode}, {get_current_repr(self, *member_names)}",
         )
 
-class PatchedDynamicMoeRuntimeDequantFP8(PatchedVllmMixtureOfExpertsOpV1):
+class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
     def _post_init_for_quant(self):
         pass
 
