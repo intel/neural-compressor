@@ -96,53 +96,8 @@ class OptimizedModel:
             )
             return model
         else:
-            # only show logs of error level, since keys_to_ignore_on_load_unexpected is not working without specific model_class
-            transformers.logging.set_verbosity_error()
-            if not os.path.isdir(model_name_or_path) and not os.path.isfile(model_name_or_path):  # pragma: no cover
-                from transformers.utils import cached_file
-
-                try:
-                    # Load from URL or cache if already cached
-                    resolved_weights_file = cached_file(
-                        model_name_or_path,
-                        filename=WEIGHTS_NAME,
-                        cache_dir=cache_dir,
-                        force_download=force_download,
-                        resume_download=resume_download,
-                        use_auth_token=use_auth_token,
-                    )
-                except EnvironmentError as err:  # pragma: no cover
-                    logger.error(err)
-                    msg = (
-                        f"Can't load weights for '{model_name_or_path}'. Make sure that:\n\n"
-                        f"- '{model_name_or_path}' is a correct model identifier "
-                        f"listed on 'https://huggingface.co/models'\n  (make sure "
-                        f"'{model_name_or_path}' is not a path to a local directory with "
-                        f"something else, in that case)\n\n- or '{model_name_or_path}' is "
-                        f"the correct path to a directory containing a file "
-                        f"named one of {WEIGHTS_NAME}\n\n"
-                    )
-                    if revision is not None:
-                        msg += (
-                            f"- or '{revision}' is a valid git identifier "
-                            f"(branch name, a tag name, or a commit id) that "
-                            f"exists for this model name as listed on its model "
-                            f"page on 'https://huggingface.co/models'\n\n"
-                        )
-                    raise EnvironmentError(msg)
-            else:
-                resolved_weights_file = os.path.join(model_name_or_path, WEIGHTS_NAME)
-            state_dict = torch.load(resolved_weights_file, {})
-            model = model_class.from_pretrained(
-                model_name_or_path,
-                cache_dir=cache_dir,
-                force_download=force_download,
-                resume_download=resume_download,
-                use_auth_token=use_auth_token,
-                revision=revision,
-                state_dict=state_dict,
-                **kwargs,
-            )
+            config.torch_dtype = torch.float32
+            model = model_class.from_config(config)
 
             if not os.path.isdir(model_name_or_path) and not os.path.isfile(model_name_or_path):  # pragma: no cover
                 # pylint: disable=E0611
