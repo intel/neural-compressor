@@ -17,6 +17,7 @@ import habana_frameworks.torch.core as htcore
 import torch
 import torch.nn as nn
 import numpy as np
+import os
 
 from .scale_methods import ops_quantizer
 from .._quant_common.quant_config import QuantMode
@@ -30,7 +31,7 @@ from .measure import load_measurements
 from .scale import scale_method_mapping, load_layer_scales, prepare_layer_scales
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
-
+LOW_CPU_MEM = os.environ.get("LOW_CPU_MEM", "0") == "1"
 cur_accelerator = auto_detect_accelerator()
 
 
@@ -133,6 +134,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     #TODO Merge with load_layer_scales
     prepare_scales_func = prepare_layer_scales if is_dynamic_quantization else load_layer_scales
     should_quantize_cond = True # In static quantization we quantize everything
+    weights = getattr(model, "weights_mapping", None)
     with torch.no_grad():
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
@@ -154,6 +156,13 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
 
                 # TODO [SW-217813]: support dynamic quantization in all ops and remove should_quantize_cond
                 if should_quantize_cond:
+                    for param_name, param in mod.named_parameters():
+                        if param.device == torch.device("meta") and weights is not None:
+                            print(".".join((name, param_name)))
+                            param.new_empty(param.shape, device="cpu")
+                            model.load_weights(
+                                [(".".join((name, param_name)), weights[".".join((name, param_name))])]
+                            )
                     mod_extra_config, save_file = prepare_scales_func(mod, name, config,
                                                                 mod_type_str, measurement,
                                                                 scales, scale_file,
@@ -173,6 +182,13 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     logger.debug("Patched module types: %s", patched_module_types)
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
+    for name, param in mod.named_parameters():
+        if param.device == torch.device("meta") and weights is not None:
+            print(name)
+            param.new_empty(param.shape, device="cpu")
+            model.load_weights(
+                [(name, weights[name])]
+            )
     model = model.to(cur_accelerator.name())
     convert_fp16_to_bf16(model)
     cur_accelerator.synchronize()
