@@ -101,6 +101,12 @@ parser.add_argument('--gptq_max_seq_length', type=int, default=2048,
 parser.add_argument("--gptq_blockwise", action="store_true",
                     help="Whether to quantize blockwise.")
 parser.add_argument("--blockwise_load_folder", default=None, type=str, help="Directory to load blockwise checkpoints from.")
+parser.add_argument("--fp8_aware", action="store_true", help="Enable an FP8-aware GPTQ quantization flow, "
+                                                             "where an intermediate FP8 quantization step is applied.")
+parser.add_argument("--hybrid_act_order", action="store_true", help="Enable constrained activation reordering: "
+                                                                    "elements can be reordered within each group "
+                                                                    "and the groups themselves can also be reordered, "
+                                                                    "but elements cannot move between groups.")
 
 # =============AWQ configs====================
 parser.add_argument("--use_auto_scale", action="store_true",
@@ -458,6 +464,8 @@ if args.quantize:
                 use_mse_search=args.woq_use_mse_search,
                 percdamp=args.gptq_percdamp,
                 act_order=args.gptq_actorder,
+                hybrid_order = args.hybrid_act_order,
+                fp8_aware = args.fp8_aware,
                 block_size=args.gptq_block_size,
                 static_groups=args.gptq_static_groups,
                 use_double_quant=False,
