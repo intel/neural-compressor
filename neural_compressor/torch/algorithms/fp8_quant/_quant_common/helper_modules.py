@@ -847,7 +847,7 @@ class PatchedVllmMixtureOfExpertsOpV1(PatchedModuleBase):
             f"quant_mode:{quant_mode}, {get_current_repr(self, *member_names)}",
         )
 
-class PatchedDynamicMoeRuntimeDequantFP8(PatchedVllmMixtureOfExpertsOpV1):
+class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
     def _post_init_for_quant(self):
         pass
 
@@ -871,15 +871,13 @@ class PatchedDynamicMoeRuntimeDequantFP8(PatchedVllmMixtureOfExpertsOpV1):
     ):
         hidden_states = x
         measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
-        # Assume moe_n_slice is 1
+        # FIXME: (Yi) Assume moe_n_slice is 1, remove it?
         assert moe_n_slice == 1, f"moe_n_slice is {moe_n_slice}, expected 1"
-        i = 0
-        # for i in range(moe_n_slice):
-        min_expert = i * n_expert_slice
-        max_expert = (i + 1) * n_expert_slice
+        min_expert = self.experts_min
+        max_expert = self.experts_max
         w13_list_slice = []
         w2_list_slice = []
-        for j in range(min_expert, max_expert):
+        for j in range(self.num_experts):
             w13_list_slice.append(self.w13_list[j].get_dequant_weight())
             w2_list_slice.append(self.w2_list[j].get_dequant_weight())
 
@@ -891,8 +889,8 @@ class PatchedDynamicMoeRuntimeDequantFP8(PatchedVllmMixtureOfExpertsOpV1):
             w3=w2_list_slice,
             permuted_weights=True,
             activation="silu",
-            experts_min=min_expert + ep_shift,
-            experts_max=max_expert - 1 + ep_shift,
+            experts_min=min_expert,
+            experts_max=max_expert,
             measurement_mode=True,  # <=============
         )
         output_measure_list = [output]
