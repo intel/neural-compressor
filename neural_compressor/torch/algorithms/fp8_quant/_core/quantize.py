@@ -135,6 +135,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     prepare_scales_func = prepare_layer_scales if is_dynamic_quantization else load_layer_scales
     should_quantize_cond = True # In static quantization we quantize everything
     weights = getattr(model, "weights_mapping", None)
+    loaded_weights = []
     with torch.no_grad():
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
@@ -157,11 +158,9 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                 # TODO [SW-217813]: support dynamic quantization in all ops and remove should_quantize_cond
                 if should_quantize_cond:
                     for param_name, param in mod.named_parameters():
-                        if param.device == torch.device("meta") and weights is not None:
-                            print(".".join((name, param_name)))
-                            param.new_empty(param.shape, device="cpu")
-                            model.load_weights(
-                                [(".".join((name, param_name)), weights[".".join((name, param_name))])]
+                        if param_name not in loaded_weights and weights is not None:
+                            model.load_weights_optional(
+                                weights, [".".join((name, param_name))]
                             )
                     mod_extra_config, save_file = prepare_scales_func(mod, name, config,
                                                                 mod_type_str, measurement,
@@ -182,12 +181,12 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     logger.debug("Patched module types: %s", patched_module_types)
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
-    for name, param in mod.named_parameters():
-        if param.device == torch.device("meta") and weights is not None:
-            print(name)
-            param.new_empty(param.shape, device="cpu")
-            model.load_weights(
-                [(name, weights[name])]
+    if torch.distributed.get_rank() == 0:
+        import pdb; pdb.set_trace()
+    for name, param in model.named_parameters():
+         if weights is not None and name in weights and name not in loaded_weights:
+            model.load_weights_optional(
+                weights, [name]
             )
     model = model.to(cur_accelerator.name())
     convert_fp16_to_bf16(model)
