@@ -3,5 +3,5 @@ onnxruntime
 torch
 torchvision
 onnxruntime-extensions>=1.14.0; python_version < '3.11'
-pillow>=8.2.0 # not directly required, pinned by Snyk to avoid a vulnerability
-transformers; python_version < '3.11'
+pillow<=11.1.0 # not directly required, pinned by Snyk to avoid a vulnerability
+transformers<=4.50.0; python_version < '3.11'
