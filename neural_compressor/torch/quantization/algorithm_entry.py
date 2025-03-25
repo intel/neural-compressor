@@ -158,8 +158,6 @@ def gptq_entry(
             "double_quant_sym": quant_config.double_quant_use_sym,
             "double_quant_group_size": quant_config.double_quant_group_size,
             "act_order": quant_config.act_order,
-            "hybrid_order": quant_config.hybrid_order,
-            "fp8_aware": quant_config.fp8_aware,
             "percdamp": quant_config.percdamp,
             "block_size": quant_config.block_size,
             "static_groups": quant_config.static_groups,

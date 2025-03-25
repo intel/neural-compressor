@@ -450,7 +450,7 @@ class WOQModelLoader:
 
     def _load_data_to_new_module(self, new_module, module_name):
         new_module_state_dict = {}
-        for key in [".qweight", ".scales", ".scale_bf16_to_fp8", ".qzeros", ".bias", ".g_idx"]:
+        for key in [".qweight", ".scales", ".qzeros", ".bias", ".g_idx"]:
             full_name = module_name + key
             if full_name in self.loaded_state_dict:
                 new_module_state_dict[key[1:]] = self.loaded_state_dict.pop(full_name)
