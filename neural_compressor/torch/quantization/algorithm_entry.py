@@ -580,8 +580,11 @@ def autoround_quantize_entry(
             dtype = quant_config.dtype
             bits = quant_config.bits
             if dtype != "int" and "int" in dtype:
-                bits = int(dtype.lstrip("int"))
-                dtype = "int"
+                if dtype == "fp8_to_int_sym":
+                    bits = 4
+                else:
+                    bits = int(dtype.lstrip("int"))
+                    dtype = "int"
             weight_config[op_name] = {
                 "data_type": dtype,
                 "bits": bits,
@@ -591,6 +594,7 @@ def autoround_quantize_entry(
                 "act_group_size": quant_config.act_group_size,
                 "act_sym": quant_config.act_sym,
                 "act_dynamic": quant_config.act_dynamic,
+                "act_data_type": quant_config.act_dtype,
             }
             enable_full_range = quant_config.enable_full_range
             batch_size = quant_config.batch_size
@@ -624,7 +628,6 @@ def autoround_quantize_entry(
             truncation = quant_config.truncation
 
     kwargs.pop("example_inputs")
-
     quantizer = get_quantizer(
         model,
         quantizer_cls=AutoRoundQuantizer,

@@ -930,6 +930,7 @@ class AutoRoundConfig(TorchBaseConfig):
         act_group_size: int = None,
         act_sym: bool = None,
         act_dynamic: bool = True,
+        act_dtype: Optional[str] = None,
         enable_full_range: bool = False,
         batch_size: int = 8,
         lr_scheduler=None,
@@ -976,6 +977,7 @@ class AutoRoundConfig(TorchBaseConfig):
             act_group_size (int): Group size for activation quantization. Default is None.
             act_sym (bool): Whether to use symmetric activation quantization. Default is None.
             act_dynamic (bool): Whether to use dynamic activation quantization. Default is True.
+            act_dtype (Optional[str]): Data type for activation quantization. Default is None.
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
             lr_scheduler: The learning rate scheduler to be used.
@@ -1022,6 +1024,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.act_group_size = act_group_size
         self.act_sym = act_sym
         self.act_dynamic = act_dynamic
+        self.act_dtype = act_dtype
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.lr_scheduler = lr_scheduler

@@ -155,6 +155,17 @@ class WOQModelLoader:
         self._model_local_dir = None  # local directory where model files are saved
         self.sharded_checkpoints = kwargs.get("sharded_checkpoints", False)
 
+    def _post_process_for_w4a8(self, woq_model):
+        # Replace the WoQ Linear with the mixed precision Linear
+        from neural_compressor.torch.algorithms.mixed_low_precision.modules import (
+            replace_hpu_woq_with_hpu_mixed_precision_linear,
+        )
+
+        w4a8_model = replace_hpu_woq_with_hpu_mixed_precision_linear(woq_model)
+        from neural_compressor.torch.utils import get_accelerator
+        w4a8_model = w4a8_model.to(get_accelerator().name())
+        return w4a8_model
+
     def load_woq_model(self):
         """Load quantized weight-only quantization model.
 
@@ -179,7 +190,9 @@ class WOQModelLoader:
             logger.info("Loading weight-only quantization model successfully.")
         else:
             raise ValueError(f"`format` in load function can only be 'huggingface' or 'default', but get {self.format}")
-
+        
+        if self._is_w4a8_model_from_auto_round():
+            model = self._post_process_for_w4a8(model)
         return model
 
     def load_inc_format_woq_model(self):
@@ -259,6 +272,22 @@ class WOQModelLoader:
 
         model.eval()
         return model
+    
+    def _is_w4a8_model_from_auto_round(self):
+        if self.quantization_config.get("data_type", None) == "fp8_to_int_sym":
+            return True
+        for layer_config in self.quantization_config.get("extra_config", {}).values():
+            if layer_config.get("data_type", None) == "fp8_to_int_sym":
+                return True
+        return False
+            
+            
+    def _update_quant_config_for_w4a8(self):
+        self.quantization_config['quant_method'] = "gptq"
+        self.quantization_config.pop("backend", None)
+
+    def _is_autoround_format_quantized_model(self):
+        return "backend" in self.quantization_config and "auto_round" in self.quantization_config["backend"]
 
     def load_hf_format_woq_model(self):
         """Load HuggingFace weight-only quantized model.
@@ -277,9 +306,10 @@ class WOQModelLoader:
         # get model class and config
         model_class, config = self._get_model_class_and_config()
         self.quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
-        if (
-            "backend" in self.quantization_config and "auto_round" in self.quantization_config["backend"]
-        ):  # # pragma: no cover
+        if self._is_w4a8_model_from_auto_round():
+            self._update_quant_config_for_w4a8()
+        if self._is_autoround_format_quantized_model():
+            # pragma: no cover
             # load autoround format quantized model
             from auto_round import AutoRoundConfig
 
@@ -436,6 +466,9 @@ class WOQModelLoader:
             module_kwargs["scale_dtype"] = convert_dtype_str2torch(
                 module_quantization_config.get("scale_dtype", "fp16")
             )
+
+        if self._is_w4a8_model_from_auto_round():
+            module_kwargs["enable_w4a8"] = True
 
         # initialize the new WeightOnlyLinearClass
         new_module = WeightOnlyLinearClass(**module_kwargs)
