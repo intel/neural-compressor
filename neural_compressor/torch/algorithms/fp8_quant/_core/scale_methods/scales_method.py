@@ -156,7 +156,7 @@ class OptScalesPts(ScalesMethod):
 
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
         self.scale = self.round_scale_method.calc(mmse_scale(tensor, self.optional_scales_list, self.lp_dtype, self.hp_dtype))
-        return  self.scale
+        return self.scale
 
 class OptScalesPcs(ScalesMethod):
     def __init__(self, round_scale_method, optional_scales_list, params, device_for_scales, backoff):

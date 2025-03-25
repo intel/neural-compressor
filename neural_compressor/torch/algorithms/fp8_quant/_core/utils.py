@@ -20,6 +20,10 @@ from .patching_common import mod_default_dict
 from .measure import prepare_model as prepare_model_for_measure
 from .quantize import quantize
 from .scale import scale_method_mapping, scaling_params
+from .common import is_runtime_scale_patching
+
+import os
+import habana_frameworks.torch.utils.experimental as htexp
 
 
 def update_mod_dict(config):
@@ -75,6 +79,22 @@ def should_quantize(config, mod_type, name):
     logger.trace(f"should_quantize {name=} {mod_type=} returning {ret}")
     return ret
 
+
+scaling_methods_list = list(scale_method_mapping.values())
+#exlude substrings of scaling methods which are not supported for runtime scale patching mode to reduce graph recompile.
+exclude_substrings = ["pcs", "smoothquant"]
+runtime_scale_patching_supported_methods_list = [method for method in scaling_methods_list if not any(substr in method for substr in exclude_substrings)]
+
+
+def set_runtime_scale_patching_mode(scaling_method_name):
+    if is_runtime_scale_patching():
+        assert (
+            scaling_method_name in runtime_scale_patching_supported_methods_list
+        ), f"Scaling method \"{scaling_method_name}\" is not supported for runtime scale patching (graph recompile reduction). Cannot set scaling attributes."
+        htexp._set_scale_attributes("hw" in scaling_method_name or scaling_method_name == "unit_scale",
+                                    scaling_methods_list.index(scaling_method_name) + 1)
+
+
 def prepare_model(model):
     """Receives the parent module to quantize.
     Replaces its submodules with patched submodules that perform calibration and quantization.
@@ -101,4 +121,5 @@ def prepare_model(model):
         scaling_method_name = scale_method_mapping[(config.cfg["scale_method"], config.cfg["observer"])]
         scaling_params[scaling_method_name].update(config.cfg["scale_params"])
         config.cfg["scale_params"] = scaling_params[scaling_method_name]
+        set_runtime_scale_patching_mode(scaling_method_name)
         return quantize(model, mod_list)

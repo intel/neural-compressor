@@ -379,5 +379,5 @@ ops_quantizer_map = {"linear": LinearOpQuantizer,
                       "row_parallel_linear": RowParallelLinearOpQuantizer
                      }
 
-def get_op_quantizer(module_type, config, mod, measurement, params):
+def get_op_quantizer(config, mod, measurement, params, module_type):
     return ops_quantizer_map[module_type](config, mod, measurement, params, module_type)
