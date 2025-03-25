@@ -204,7 +204,7 @@ def prepare_model_with_dummy_measurement(model, mod_list, scaling_method_name, s
             mode_type = config.cfg["mod_dict"][mod_type_str]
             mod_info = mod_types[mode_type]
 
-            op_obj = ops_quantizer.get_op_quantizer(mode_type, "dummy", mod, None, scale_config)
+            op_obj = ops_quantizer.get_op_quantizer("dummy", mod, None, scale_config, mode_type)
             dummy_mod_scales = op_obj.get_scales_module_config()
             dummy_mod_config = op_obj.scales_module_config_to_q_and_dq(dummy_mod_scales)
             dummy_mod_extra_config = ModuleExtraConfig(

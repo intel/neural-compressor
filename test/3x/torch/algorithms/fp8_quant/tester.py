@@ -54,6 +54,16 @@ DTYPE_TO_HPDTYPE_STR = {
     torch.float32: "FP32",
 }
 
+RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST = [
+    ScaleMethod.UNIT_SCALE,
+    ScaleMethod.HW_ALIGNED_SINGLE_SCALE,
+    ScaleMethod.MAXABS_HW,
+    ScaleMethod.MAXABS_POW2,
+    ScaleMethod.MAXABS_HW_OPT_WEIGHT,
+    ScaleMethod.MAXABS_POW2_OPT_WEIGHT,
+    ScaleMethod.MAXABS_ARBITRARY
+]
+
 # Expects to get an exception. If there's no exception, the test will fail
 def run_with_raised_exception(test_to_run, error, error_str):
     with pytest_raises(Exception) as exc:

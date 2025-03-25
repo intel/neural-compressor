@@ -19,6 +19,7 @@ import os
 import numpy as np
 import torch
 from enum import Enum, auto
+from functools import lru_cache 
 
 from .._quant_common.quant_config import get_hqt_config
 from ..utils.logger import logger
@@ -288,3 +289,8 @@ def generate_model_info(model):
 def get_device_type_for_scales(mod):
     config = get_hqt_config(mod).cfg
     return config["device_for_scales"]
+
+
+@lru_cache
+def is_runtime_scale_patching():
+    return os.getenv("RUNTIME_SCALE_PATCHING", "False").lower() in ["true", "1"]

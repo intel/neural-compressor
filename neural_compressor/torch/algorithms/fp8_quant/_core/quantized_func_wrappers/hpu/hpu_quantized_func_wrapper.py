@@ -18,6 +18,7 @@ from enum import Enum, auto
 import torch
 
 from ..quantized_func_wrapper import QuantizedFuncWrapperBase, OP_TYPE, QuantizedFuncWrapperFactory
+from ...common import is_runtime_scale_patching
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleFormat
 try:  # backwards compatibility for 1.16
     from habana_frameworks.torch.hpex.kernels import fp8_fused_sdpa
@@ -40,6 +41,8 @@ class QuantizedHpuFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
         raise NotImplementedError()
 
     def get_scalar_quantized_func(self):
+        if is_runtime_scale_patching():
+            return self.get_default_quantized_func()
         return self.get_default_quantized_func().scalar
 
     def get_quantized_func(self, scale_format):
