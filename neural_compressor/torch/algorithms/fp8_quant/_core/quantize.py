@@ -33,7 +33,7 @@ from neural_compressor.torch.utils import show_mem_info
 import time
 cur_accelerator = auto_detect_accelerator()
 
-from neural_compressor.torch.algorithms.fp8_quant._core.common import INFO_INTERVAL
+from neural_compressor.torch.algorithms.fp8_quant._core.common import INFO_INTERVAL, maybe_dequant_original_fp8_weight
 
 
 @torch.no_grad()
@@ -78,6 +78,8 @@ def quantize_params(mod, mod_extra_config):
         param = getattr(mod, param_name)
         if param.dtype == torch.float16:
             param = param.to(torch.bfloat16)
+        logger.debug(f"Quantizing parameter {param_name} of module {mod.__class__.__name__}")
+        param = maybe_dequant_original_fp8_weight(mod, param)
         quantized_param = quantizer(param.to(cur_accelerator.name()))
         delattr(mod, param_name)
         setattr(mod, param_name, nn.Parameter(quantized_param))
@@ -165,27 +167,38 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                                                                 scale_config, save_file)
                 if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant:
                     quantize_params(mod, mod_extra_config)
-                logger.debug(f"patching module {name}")
+                # logger.debug(f"patching module {name}")
                 patch_module(mod, mod_extra_config, mod_default_dict)
                 name = origin_name
                 patched_modules.append(name)
                 patched_module_types.add(type(mod))
                 htcore.mark_step()
                 logger.debug("Patched module name: %s", name)
+            cur_accelerator.synchronize()
     if save_file: # cache calculated scales
         save_scales(model, scales_obj, scales_file_format, scale_file + ".npz")
         save_scales(model, scales_obj, scales_file_format, scale_file + ".json")
     logger.debug("Patched module types: %s", patched_module_types)
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
+    
+    show_mem_info("before move all")
     model = model.to(cur_accelerator.name())
+    show_mem_info("after move all")
+    postporcess_after_convert_(model)
+    show_mem_info("after post process")
+    convert_fp16_to_bf16(model)
+    show_mem_info("after convert_fp16_to_bf16")
+    cur_accelerator.synchronize()
+    show_mem_info("after synchronize")
+    torch.distributed.barrier()
+
+def postporcess_after_convert_(model):
     for _, mod in model.named_modules():
         if hasattr(mod, "post_process"):
             mod.post_process()
-    torch.distributed.barrier()
-    convert_fp16_to_bf16(model)
-    cur_accelerator.synchronize()
-
+            # Note: It is very important to synchronize after each post_process to avoid OoM.
+            cur_accelerator.synchronize()
 
 def prepare_model_with_dummy_measurement(model, mod_list, scaling_method_name, scale_config):
     """Aim for loading, replace module with patched module for model on meta device.
