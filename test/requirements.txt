@@ -5,6 +5,7 @@ dynast==1.6.0rc1
 horovod<=0.27.0
 intel-extension-for-pytorch
 intel-tensorflow>=2.12.0
+mxnet-mkl
 neural-compressor
 onnx
 onnxruntime
