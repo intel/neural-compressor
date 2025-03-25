@@ -135,10 +135,23 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     prepare_scales_func = prepare_layer_scales if is_dynamic_quantization else load_layer_scales
     should_quantize_cond = True # In static quantization we quantize everything
     weights = getattr(model, "weights_mapping", None)
+    unloaded_weight = getattr(model, "unloaded_weight", {})
     loaded_weights = []
     with torch.no_grad():
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
+            origin_name = name
+            # print(name)
+            if "hpu_fused_moe_" in name:
+                slice_id = name.split(".")[5].split("_")[-1]
+                name = name.split(".hpu_fused_moe")[0]
+                name = ".".join((name, "_temp_expert_group_" + slice_id, "MoeOp"))
+                if "w13_list" in origin_name or "w2_list" in origin_name:
+                    slice_expert_id = origin_name.split(".")[-1]
+                    name = ".".join((name, "w13_list", slice_expert_id)) if "w13_list" in name else ".".join((name, "w2_list", slice_expert_id))
+                    # if torch.distributed.get_rank() == 0:
+                    #     import pdb;pdb.set_trace()
+                    # print(name)
             if is_dynamic_quantization:
                 # TODO [SW-217813]: support dynamic quantization in all ops and remove supported_dynamic_ops, then move outside the loop
                 should_quantize_cond = mod_type_str in supported_dynamic_ops
@@ -152,16 +165,11 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                     continue
             # When offloading weight to disk, need to transfer the weight from disk to cpu using hf_hook
             apply_hf_hook(mod)
-            if name in mod_list:
+            if origin_name in mod_list:
                 set_hqt_config(mod, config)  # set config in the module, as it consumed by the patched module
 
                 # TODO [SW-217813]: support dynamic quantization in all ops and remove should_quantize_cond
                 if should_quantize_cond:
-                    for param_name, param in mod.named_parameters():
-                        if param_name not in loaded_weights and weights is not None:
-                            model.load_weights_optional(
-                                weights, [".".join((name, param_name))]
-                            )
                     mod_extra_config, save_file = prepare_scales_func(mod, name, config,
                                                                 mod_type_str, measurement,
                                                                 scales, scale_file,
@@ -169,9 +177,17 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                                                                 scales_obj, scaling_method_name,
                                                                 scale_config, save_file)
 
-                    if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant:
+                    if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant and len(mod_extra_config.params) > 0:
+                        for param_name, param in mod.named_parameters():
+                            if weights is not None and ".".join((origin_name, param_name)) in unloaded_weight:
+                                model.load_weights_optional(
+                                    weights, [".".join((origin_name, param_name))]
+                                )
+                                unloaded_weight.remove(".".join((origin_name, param_name)))
+
                         quantize_params(mod, mod_extra_config)
                     patch_module(mod, mod_extra_config, mod_default_dict)
+                    name = origin_name
                     patched_modules.append(name)
                     patched_module_types.add(type(mod))
                     logger.debug("Patched module name: %s", name)
@@ -181,13 +197,12 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     logger.debug("Patched module types: %s", patched_module_types)
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
-    if torch.distributed.get_rank() == 0:
-        import pdb; pdb.set_trace()
-    for name, param in model.named_parameters():
-         if weights is not None and name in weights and name not in loaded_weights:
+    for param_name, param in mod.named_parameters():
+        if weights is not None and ".".join((name, param_name)) in unloaded_weight:
             model.load_weights_optional(
-                weights, [name]
+                weights, [".".join((name, param_name))]
             )
+            unloaded_weight.remove(".".join((name, param_name)))
     model = model.to(cur_accelerator.name())
     convert_fp16_to_bf16(model)
     cur_accelerator.synchronize()

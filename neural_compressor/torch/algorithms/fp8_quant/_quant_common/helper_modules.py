@@ -735,19 +735,26 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                 [mod_extra_config.scale.inputs[x] for x in range(1, self.num_experts+1)],
                 self.scale_format,
             )
+            for i in range(self.num_experts):
+                self.w13_list[i].weight.data = self.w13_list[i].weight.squeeze().contiguous()
+                self.w2_list[i].weight.data = self.w2_list[i].weight.squeeze().contiguous()
 
     def forward_quant(self,
                       hidden_states,
                       expert_routing_table,
                       router_weights,
                       permuted_weights=True,
-                      activation="silu"):
+                      activation="silu",
+                      experts_min=0,
+                      experts_max=7,
+                      ):
         experts_range = range(self.num_experts)
-        w1_list = [self.w13_list[i].weight.squeeze() for i in experts_range]
-        w2_list = [self.w2_list[i].weight.squeeze() for i in experts_range]
+        w1_list = [self.w13_list[i].weight for i in experts_range]
+        w2_list = [self.w2_list[i].weight for i in experts_range]
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
         qinput = self.quant_input(hidden_states)
+        print("!!!!!", torch.distributed.get_rank(), experts_min, experts_max)
         output = self.dynamic_moe_op(
             hidden_states=qinput,
             expert_routing_table=expert_routing_table,
@@ -758,10 +765,10 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             d_scale_w3=scale_w2,
             d_scale_hidden_states=self.scale_input,
             d_scale_intermediate_hidden_states=self.scale_intermediate,
-            permuted_weights=False,
+            permuted_weights=permuted_weights,
             activation=activation,
-            experts_min=0,
-            experts_max=7
+            experts_min=experts_min,
+            experts_max=experts_max
         )
         return output
 
@@ -794,13 +801,10 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         return output
 
     def extra_repr(self) -> str:
-        member_names = ["scale_input"]
-        for x in range(1, self.num_experts+1):
-            member_names.append("scale_intermediate["+str(x)+"]")
         return extra_representation(
             self.extra_repr_org(),
             self.class_name_org,
-            get_current_repr(self, *member_names),
+            get_current_repr(self, "scale_input", "scale_intermediate"),
         )
 
 
