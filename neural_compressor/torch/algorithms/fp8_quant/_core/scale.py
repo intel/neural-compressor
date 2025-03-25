@@ -30,8 +30,8 @@ def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, 
     )
     mod_extra_config = None
     if mod_name in scales or not config.cfg["use_stats_files"] or mod_name in measurement:
-        op_for_scale_obj = ops_quantizer.get_op_quantizer(module_type, scaling_method_name, mod,
-                                                          measurement.get(mod_name, None), scale_config)
+        op_for_scale_obj = ops_quantizer.get_op_quantizer(scaling_method_name, mod, measurement.get(mod_name, None),
+                                                          scale_config, module_type)
         if mod_name not in scales:
             logger.debug("Calculating scales for module %s", mod_name)
             # calculates scales for current module according to scalling_methods
@@ -61,7 +61,7 @@ def prepare_layer_scales(mod, mod_name, config, mod_type_str, measurement, scale
         module_type,
     )
     mod_extra_config = None
-    op_obj = ops_quantizer.get_op_quantizer(module_type, scaling_method_name, mod, None, scale_config)
+    op_obj = ops_quantizer.get_op_quantizer(scaling_method_name, mod, None, scale_config, module_type)
     logger.debug("Preparing dynamic scales for module %s", mod_name)
     # calculates scales for current module according to scaling_methods
     scales[mod_name] = op_obj.get_scales_module_config()  # ModuleConfig of scales
