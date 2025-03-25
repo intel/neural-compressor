@@ -479,7 +479,7 @@ def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_ful
     return best_clip_ratio
 
 
-def quant_weight_w_scale(weight, scale, scale_bf16_to_fp8, zp=None, group_size=-1, dtype="int", fp8_aware=False):
+def quant_weight_w_scale(weight, scale, zp=None, group_size=-1, dtype="int"):
     """Quant and dequant tensor with group size. It's an in-place function.
 
     Args:
@@ -494,11 +494,6 @@ def quant_weight_w_scale(weight, scale, scale_bf16_to_fp8, zp=None, group_size=-
     """
     device = weight.device
     scale = scale.to(device)
-    if fp8_aware:
-        weight.mul_(1 / scale_bf16_to_fp8)
-        weight = torch.clamp(weight, min=-torch.finfo(torch.float8_e4m3fnuz).max, max=torch.finfo(torch.float8_e4m3fnuz).max)
-        weight = weight.to(torch.float8_e4m3fn)
-        weight = weight.to(torch.float32)
     if zp is not None:
         zp = zp.to(device)
     # group_size = -1

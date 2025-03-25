@@ -352,8 +352,6 @@ class GPTQConfig(TorchBaseConfig):
         "quant_lm_head",
         # gptq params
         "act_order",
-        "hybrid_order",
-        "fp8_aware",
         "percdamp",
         "block_size",
         "static_groups",
@@ -381,8 +379,6 @@ class GPTQConfig(TorchBaseConfig):
         quant_lm_head: bool = False,
         # gptq params
         act_order: bool = False,
-        hybrid_order: bool = False,
-        fp8_aware: bool = False,
         percdamp: float = 0.01,
         block_size: int = 2048,
         static_groups: bool = False,
@@ -410,10 +406,6 @@ class GPTQConfig(TorchBaseConfig):
             quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
             act_order (bool): Whether to sort Hessian's diagonal values to rearrange channel-wise
                               quantization order. Default is False.
-            hybrid_order (bool): Enables activation re-ordering with no inference overhead.
-                                 Weights are re-ordered within their groups without cross-group mixing.
-            fp8_aware (bool): Whether to include an FP8 quantization step in the GPTQ process.
-                              This improves accuracy when using the W4A8 quantization scheme.
             percdamp (float): Percentage of Hessian's diagonal values' average, which will be added to
                               Hessian's diagonal to increase numerical stability. Default is 0.01.
             block_size (int): Execute GPTQ quantization per block, block shape = [C_out, block_size].
@@ -445,8 +437,6 @@ class GPTQConfig(TorchBaseConfig):
         self.double_quant_group_size = double_quant_group_size
         # gptq
         self.act_order = act_order
-        self.hybrid_order = hybrid_order
-        self.fp8_aware = fp8_aware
         self.percdamp = percdamp
         self.block_size = block_size
         self.static_groups = static_groups
