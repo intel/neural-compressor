@@ -175,8 +175,6 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
                 htcore.mark_step()
                 logger.debug("Patched module name: %s", name)
             cur_accelerator.synchronize()
-            # logger.info("Patched module name: %s", name)
-            # show_mem_info()
     if save_file: # cache calculated scales
         save_scales(model, scales_obj, scales_file_format, scale_file + ".npz")
         save_scales(model, scales_obj, scales_file_format, scale_file + ".json")
@@ -184,20 +182,6 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
     
-    
-    def inspect_tensor(tensor, msg=""):
-        
-        if "cpu" in str(tensor.device):
-            logger.info(f"{msg}: tensor dtype: {tensor.dtype}, tensor shape: {tensor.shape}, deveice: {tensor.device}")
-            # if torch.distributed.get_rank() == 0:
-            #     import pdb; pdb.set_trace()
-            # torch.distributed.barrier()
-            
-    for pname, param in model.named_parameters():
-        inspect_tensor(param, pname)
-    # check buffer
-    for bname, buffer in model.named_buffers():
-        inspect_tensor(buffer, bname)
     show_mem_info("before move all")
     model = model.to(cur_accelerator.name())
     show_mem_info("after move all")
