@@ -113,7 +113,7 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
             zero_point_value, scale_value = self._calculate_zp_and_scale(min_value, max_value, dtype, quantize_pre_node_op)
             zero_point_name = quantize_min_name[:-4] + "zero_point"
             scale_name = quantize_min_name[:-4] + "scale"
-            print("zero_point_value:", zero_point_value)
+            # print("zero_point_value:", zero_point_value)
             zero_point_node = Helper.create_constant_node(zero_point_name, zero_point_value, dtypes.int32, device="cpu")
             scale_node = Helper.create_constant_node(scale_name, scale_value, dtypes.float32, device="cpu")
 
