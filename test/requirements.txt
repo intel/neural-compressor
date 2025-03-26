@@ -2,7 +2,7 @@
 accelerate<=0.21.0
 auto-round<=0.4.6
 dynast==1.6.0rc1
-horovod<=0.27.0
+horovod
 intel-extension-for-pytorch
 intel-tensorflow>=2.12.0
 mxnet-mkl
