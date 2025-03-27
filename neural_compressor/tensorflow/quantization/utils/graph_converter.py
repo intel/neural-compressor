@@ -243,7 +243,7 @@ class GraphConverter:
         # INC needs turn off ITEX optimization pass in calibration stage.
         # TODO ITEX will provide API to replace setting environment variable.
         os.environ["ITEX_REMAPPER"] = "0"
-        
+
         sess = model.sess
         iter_op = model.iter_op
         input_tensor = model.input_tensor
@@ -332,8 +332,8 @@ class GraphConverter:
 
     def _inference_llm(self, model):
         logger.info("Start sampling on calibration dataset.")
-        f=tf.io.gfile.GFile('calib_qdq.pb','wb')
-        f.write(model.graph_def.SerializeToString()) 
+        f = tf.io.gfile.GFile("calib_qdq.pb", "wb")
+        f.write(model.graph_def.SerializeToString())
         input_tensor_names = model.input_tensor_names
         auto_trackable = model.model
         infer = auto_trackable.signatures["serving_default"]
@@ -880,7 +880,7 @@ class GraphConverter:
         )
 
         self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
-        
+
         # Find out the quantized nodes
         self.quantized_node_info = OptimizeQDQGraph(
             self._tmp_graph_def,
@@ -982,7 +982,10 @@ class GraphConverter:
 
             self._tmp_graph_def = ShareQDQForItexYPatternOptimizer(self._tmp_graph_def).do_transformation()
             # self._tmp_graph_def = MergeDuplicatedQDQOptimizer(self._tmp_graph_def).do_transformation()
-            from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.convert_qdq_to_uniform_qdq import ConvertUniformQDQOptimizer
+            from neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.convert_qdq_to_uniform_qdq import (
+                ConvertUniformQDQOptimizer,
+            )
+
             self._tmp_graph_def = ConvertUniformQDQOptimizer(self._tmp_graph_def).do_transformation()
             self._tmp_graph_def.library.CopyFrom(self.model.graph_def.library)
             self._tmp_model.graph_def = self._tmp_graph_def

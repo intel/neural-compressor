@@ -546,6 +546,7 @@ def try_loading_keras(model, input_tensor_names, output_tensor_names):  # pragma
     shutil.rmtree(temp_dir, True)
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
 
+
 def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
     """Build session with keras model.
 
@@ -572,6 +573,7 @@ def keras_session(model, input_tensor_names, output_tensor_names, **kwargs):
         graph_def, input_names, output_names = _get_graph_from_saved_model_v1(model)
 
     return graph_def_session(graph_def, input_names, output_names, **kwargs)
+
 
 def slim_session(model, input_tensor_names, output_tensor_names, **kwargs):  # pragma: no cover
     """Build session with slim model.
@@ -1302,6 +1304,7 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
         self.model_path = os.path.abspath(os.path.expanduser(self.model_path))
         if os.path.exists(self.model_path):
             import shutil
+
             shutil.rmtree(self.model_path)
         os.makedirs(self.model_path, exist_ok=True)
 
@@ -1310,8 +1313,8 @@ class TensorflowLLMModel(TensorflowSavedModelModel):
 
         if not self._sq_weight_scale_dict:
             self._auto_trackable = model
-            return 
-        
+            return
+
         for idx, weight_tensor in enumerate(model.variables):
             parsed_weight_name = self.weight_name_mapping(weight_tensor.name)
             if parsed_weight_name in self.sq_weight_scale_dict:
@@ -1378,7 +1381,6 @@ class TensorflowSubclassedKerasModel(TensorflowSavedModelModel):
         if self._keras_model:
             return self._keras_model
 
-
         root = DEFAULT_WORKSPACE + "/saved_model"
         root = os.path.abspath(os.path.expanduser(root))
         if os.path.exists(root):
@@ -1388,7 +1390,7 @@ class TensorflowSubclassedKerasModel(TensorflowSavedModelModel):
             self._load_sess(self._model, **self.kwargs)
         _, builder = self.build_saved_model(root)
         builder.save()
-        self._keras_model =  self._build_as_functional_model(root)
+        self._keras_model = self._build_as_functional_model(root)
         shutil.rmtree(root)
 
         return self._keras_model

@@ -61,14 +61,14 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
             self.quantization_max_val = 255
         else:
             raise ValueError("Unexpected data type for Quantize Op.")
-        
+
         if isinstance(max_value, float):
-            return zp, max(abs(max_value), abs(min_value))/scale_range
-        
+            return zp, max(abs(max_value), abs(min_value)) / scale_range
+
         scales = []
         zero_points = []
         for i in range(len(max_value)):
-            scales.append(max(abs(max_value[i]), abs(min_value[i]))/scale_range)
+            scales.append(max(abs(max_value[i]), abs(min_value[i])) / scale_range)
             zero_points.append(zp)
 
         return zero_points, scales
@@ -79,9 +79,7 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
         Returns:
             [graphdef]: the optimized graphdef object
         """
-        target_nodes = self.graph_analyzer.query_fusion_pattern_nodes(
-            [["QuantizeV2"], ["Dequantize"]]
-        )
+        target_nodes = self.graph_analyzer.query_fusion_pattern_nodes([["QuantizeV2"], ["Dequantize"]])
         for i in target_nodes:
             shared_quantize_node = False
             quantize_node_name = i[0]
@@ -106,7 +104,7 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
 
             uniform_quantize_node = node_def_pb2.NodeDef()
             uniform_quantize_node.op = "UniformQuantize"
-            uniform_quantize_node.name = quantize_node_name+"_UniformQuantize"
+            uniform_quantize_node.name = quantize_node_name + "_UniformQuantize"
             uniform_quantize_node.input.extend([quantize_node.input[0], scale_name, zero_point_name])
             Helper.set_attr_int(uniform_quantize_node, "quantization_min_val", self.quantization_min_val)
             Helper.set_attr_int(uniform_quantize_node, "quantization_max_val", self.quantization_max_val)
@@ -116,20 +114,21 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
                 uniform_quantize_node.attr["quantization_axis"].CopyFrom(quantize_node.attr["axis"])
             uniform_quantize_node.attr["Tout"].CopyFrom(quantize_node.attr["T"])
 
-
             uniform_dequantize_node = node_def_pb2.NodeDef()
             uniform_dequantize_node.op = "UniformDequantize"
-            uniform_dequantize_node.name = dequantize_node_name+"_UniformDequantize"
+            uniform_dequantize_node.name = dequantize_node_name + "_UniformDequantize"
 
-
-            uniform_dequantize_node.input.extend([uniform_quantize_node.name, 
-                                            scale_name, 
-                                            zero_point_name, 
-                                            ])
+            uniform_dequantize_node.input.extend(
+                [
+                    uniform_quantize_node.name,
+                    scale_name,
+                    zero_point_name,
+                ]
+            )
             Helper.set_attr_int(uniform_dequantize_node, "quantization_min_val", self.quantization_min_val)
             Helper.set_attr_int(uniform_dequantize_node, "quantization_max_val", self.quantization_max_val)
             Helper.set_attr_dtype(uniform_dequantize_node, "Tout", dtypes.float32)
-            
+
             if "quantization_axis" in quantize_node.attr:
                 uniform_dequantize_node.attr["quantization_axis"].CopyFrom(quantize_node.attr["quantization_axis"])
             if "Tin" in uniform_quantize_node.attr:
@@ -139,7 +138,7 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
 
             self.graph_analyzer.add_node(zero_point_node, None, [uniform_quantize_node.name])
             self.graph_analyzer.add_node(scale_node, None, [uniform_quantize_node.name])
-            
+
             quantize_output_node_name = set()
             for node_name in self.graph_info[quantize_node_name].outputs:
                 quantize_output_node_name.add(node_name)
@@ -164,6 +163,5 @@ class ConvertUniformQDQOptimizer(GraphRewriterBase):
 
             self.graph_analyzer.remove_node(quantize_node_name)
             self.graph_analyzer.remove_node(dequantize_node_name)
-
 
         return self.graph_analyzer.dump_graph()

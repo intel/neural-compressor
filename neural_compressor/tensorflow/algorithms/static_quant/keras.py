@@ -155,7 +155,6 @@ class KerasAdaptor:
                 else:
                     input_layer_dict[layer_name].append(layer.name)
 
-
         for layer in model.layers:
             if layer.__class__.__name__ in self.supported_op:
                 self.conv_format[layer.name] = "s8"
@@ -355,7 +354,7 @@ class KerasAdaptor:
 
         bn_fused_model.save(self.tmp_dir)
         bn_fused_model = tf.keras.models.load_model(self.tmp_dir)
-        
+
         return bn_fused_model
 
     @dump_elapsed_time("Pass quantize model")
@@ -470,7 +469,7 @@ class KerasAdaptor:
 
         model.save(self.tmp_dir)
         quantized_model = tf.keras.models.load_model(self.tmp_dir)
-        
+
         return quantized_model
 
     @dump_elapsed_time(customized_msg="Model inference")
@@ -696,6 +695,7 @@ class KerasQuery:
                 default_config = sub_data
 
         return default_config
+
     def get_version(self):
         """Get the current backend version information.
 

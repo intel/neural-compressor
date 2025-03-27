@@ -51,7 +51,13 @@ def _add_supported_quantized_objects(custom_objects):
     from neural_compressor.adaptor.keras_utils.dense import QDense
     from neural_compressor.adaptor.keras_utils.depthwise_conv2d import QDepthwiseConv2D
     from neural_compressor.adaptor.keras_utils.pool2d import QAvgPool2D, QMaxPool2D
-    from neural_compressor.adaptor.keras_utils.quantizer import DeQuantize, FakeQuant, Quantize, UniformQuantize, UniformDeQuantize
+    from neural_compressor.adaptor.keras_utils.quantizer import (
+        DeQuantize,
+        FakeQuant,
+        Quantize,
+        UniformDeQuantize,
+        UniformQuantize,
+    )
     from neural_compressor.adaptor.keras_utils.separable_conv2d import QSeparableConv2D
 
     custom_objects["Quantize"] = Quantize
@@ -386,7 +392,9 @@ class KerasAdaptor(Adaptor):
         json_model["config"]["layers"] = q_layers
         quantized_model = self._restore_model_from_json(json_model)
 
-        converted_model = self._calibrate_with_uniform_qdq(quantized_model, dataloader, self.quantize_config["calib_iteration"])
+        converted_model = self._calibrate_with_uniform_qdq(
+            quantized_model, dataloader, self.quantize_config["calib_iteration"]
+        )
 
         from neural_compressor.model.keras_model import KerasModel
 
@@ -527,7 +535,7 @@ class KerasAdaptor(Adaptor):
                 T = layer_config["T"]
                 zero_points = 0 if T == "s8" else 128
                 ranges = 127 if T == "s8" else 255
-                scales = max(abs(max_value), abs(min_value))/ranges
+                scales = max(abs(max_value), abs(min_value)) / ranges
 
                 quantize_layer = {
                     "class_name": "UniformQuantize",
@@ -582,7 +590,7 @@ class KerasAdaptor(Adaptor):
                     scales = []
                     zero_points = []
                     for i in range(len(max_value)):
-                        scales.append(max(abs(max_value[i]), abs(min_value[i]))/127)
+                        scales.append(max(abs(max_value[i]), abs(min_value[i])) / 127)
                         zero_points.append(0)
                     layer_config["scales"] = json.dumps(scales)
                     layer_config["zero_points"] = json.dumps(zero_points)

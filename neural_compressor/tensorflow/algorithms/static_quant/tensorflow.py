@@ -1106,7 +1106,7 @@ class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
                 tmp_iterations = int(math.ceil(self.calib_sampling_size / calib_batch_size))
                 calib_dataloader.batch(calib_batch_size)
                 self.quantize_config["calib_iteration"] = tmp_iterations
-               
+
                 converted_model = GraphConverter(
                     model,
                     qt_config=self.quantize_config,

@@ -164,7 +164,8 @@ class QConv2D(Conv):
             Tout=tf.qint8,
             quantization_min_val=-128,
             quantization_max_val=127,
-            quantization_axis=3,)
+            quantization_axis=3,
+        )
 
         kernel = tf.raw_ops.UniformDequantize(
             input=kernel,
@@ -173,7 +174,8 @@ class QConv2D(Conv):
             Tout=tf.float32,
             quantization_min_val=-128,
             quantization_max_val=127,
-            quantization_axis=3,)
+            quantization_axis=3,
+        )
 
         outputs = tf.keras.backend.conv2d(
             inputs,

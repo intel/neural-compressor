@@ -486,8 +486,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         for op_tuning_cfg in self.next_tune_cfg():
             # op_tuning_cfg[('resnet_model/max_pooling2d/MaxPool', 'pooling')].act_dtype='fp32'
             for k in op_tuning_cfg:
-                if k[1] == 'pooling':
-                    op_tuning_cfg[k].act_dtype='fp32'
+                if k[1] == "pooling":
+                    op_tuning_cfg[k].act_dtype = "fp32"
             tuning_start_time = time()
             self.trials_count += 1
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)

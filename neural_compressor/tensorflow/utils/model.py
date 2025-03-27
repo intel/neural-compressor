@@ -111,9 +111,8 @@ class Model(object):  # pragma: no cover
         if conf and "workspace_path" in conf:
             config["workspace_path"] = conf["workspace_path"]
         if conf and "recipes" in conf:
-            config["recipes"] = conf["recipes"] 
-
+            config["recipes"] = conf["recipes"]
 
         for item in ["scale_propagation_max_pooling", "scale_propagation_concat"]:
             if "recipes" in config and item not in config["recipes"]:
-                config["recipes"].update({item: True}) 
+                config["recipes"].update({item: True})

@@ -62,7 +62,7 @@ class GenerateGraphWithQDQPattern(GraphRewriterBase):
         self.llm_weight_minmax = llm_weight_minmax
         self.node_details = namedtuple("node_details", ["node", "output"])
         self.node_name_mapping = {}
-        self.min_max_name_value_dict={}
+        self.min_max_name_value_dict = {}
         self.check_op_list = {
             "ConcatV2",
             "Conv2D",

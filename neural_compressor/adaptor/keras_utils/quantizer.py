@@ -138,22 +138,15 @@ class DeQuantize(Layer):
 
 
 class UniformQuantize(Layer):
-    def __init__(
-        self,
-        scales,
-        zero_points,
-        T="s8",
-        quantization_axis=-1,
-        **kwargs
-    ):
+    def __init__(self, scales, zero_points, T="s8", quantization_axis=-1, **kwargs):
         super(UniformQuantize, self).__init__(**kwargs)
         T_map = {"s8": tf.qint8, "u8": tf.quint8}
         self.scales = float(scales)
         self.zero_points = int(zero_points)
         self.T = T_map[T]
         self.quantization_axis = quantization_axis
-        self.quantization_min_val = -128 if T=="s8" else 0
-        self.quantization_max_val = 127 if T=="s8" else 255
+        self.quantization_min_val = -128 if T == "s8" else 0
+        self.quantization_max_val = 127 if T == "s8" else 255
 
     def call(self, inputs):
         outputs = tf.raw_ops.UniformQuantize(
@@ -163,7 +156,8 @@ class UniformQuantize(Layer):
             Tout=self.T,
             quantization_min_val=self.quantization_min_val,
             quantization_max_val=self.quantization_max_val,
-            quantization_axis=self.quantization_axis)
+            quantization_axis=self.quantization_axis,
+        )
 
         return outputs
 
@@ -181,20 +175,15 @@ class UniformQuantize(Layer):
 
 
 class UniformDeQuantize(Layer):
-    def __init__(self, 
-                 scales,
-                 zero_points,
-                 T="s8",
-                 quantization_axis=-1,
-                 **kwargs):
+    def __init__(self, scales, zero_points, T="s8", quantization_axis=-1, **kwargs):
         super(UniformDeQuantize, self).__init__(**kwargs)
         T_map = {"s8": tf.qint8, "u8": tf.quint8}
         self.scales = float(scales)
         self.zero_points = int(zero_points)
         self.T = T_map[T]
         self.quantization_axis = quantization_axis
-        self.quantization_min_val = -128 if T=="s8" else 0
-        self.quantization_max_val = 127 if T=="s8" else 255
+        self.quantization_min_val = -128 if T == "s8" else 0
+        self.quantization_max_val = 127 if T == "s8" else 255
 
     def call(self, inputs):
         return tf.raw_ops.UniformDequantize(
@@ -204,7 +193,8 @@ class UniformDeQuantize(Layer):
             Tout=tf.float32,
             quantization_min_val=self.quantization_min_val,
             quantization_max_val=self.quantization_max_val,
-            quantization_axis=self.quantization_axis)
+            quantization_axis=self.quantization_axis,
+        )
 
     def get_config(self):
         return {
