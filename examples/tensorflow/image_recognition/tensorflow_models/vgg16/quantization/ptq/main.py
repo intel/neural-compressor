@@ -61,7 +61,6 @@ def evaluate(model, eval_dataloader, metric, postprocess=None):
         latency_list = []
         for idx, (inputs, labels) in enumerate(dataloader):
             # dataloader should keep the order and len of inputs same with input_tensor
-            print(idx)
             inputs = np.array([inputs])
             feed_dict = dict(zip(input_tensor, inputs))
 
