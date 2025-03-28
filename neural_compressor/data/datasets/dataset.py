@@ -1094,6 +1094,7 @@ class TensorflowImageRecord(IterableDataset):  # pragma: no cover
         """Build a new object of TensorflowImageRecord class."""
         from tensorflow.python.platform import gfile  # pylint: disable=no-name-in-module
 
+        print(root)
         glob_pattern = os.path.join(root, "*-*-of-*")
         file_names = gfile.Glob(glob_pattern)
         if not file_names:
