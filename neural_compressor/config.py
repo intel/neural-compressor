@@ -2361,11 +2361,11 @@ class NASConfig:
         self._search = search
 
 
-class MXNet:
-    """Base config class for MXNet."""
+class PyTorch:
+    """Base config class for PyTorch."""
 
     def __init__(self, precisions=None):
-        """Init an MXNet object."""
+        """Init an PyTorch object."""
         self._precisions = precisions
 
     @property
@@ -2383,7 +2383,7 @@ class MXNet:
         self._precisions = precisions
 
 
-class ONNX(MXNet):
+class ONNX(PyTorch):
     """Config class for ONNX."""
 
     def __init__(self, graph_optimization_level=None, precisions=None):
@@ -2408,7 +2408,7 @@ class ONNX(MXNet):
             self._graph_optimization_level = graph_optimization_level
 
 
-class TensorFlow(MXNet):
+class TensorFlow(PyTorch):
     """Config class for TensorFlow."""
 
     def __init__(self, precisions=None):
@@ -2416,19 +2416,11 @@ class TensorFlow(MXNet):
         super().__init__(precisions)
 
 
-class Keras(MXNet):
+class Keras(PyTorch):
     """Config class for Keras."""
 
     def __init__(self, precisions=None):
         """Init a Keras object."""
-        super().__init__(precisions)
-
-
-class PyTorch(MXNet):
-    """Config class for PyTorch."""
-
-    def __init__(self, precisions=None):
-        """Init a PyTorch object."""
         super().__init__(precisions)
 
 
@@ -2443,7 +2435,6 @@ onnxruntime_config = ONNX()
 tensorflow_config = TensorFlow()
 keras_config = Keras()
 pytorch_config = PyTorch()
-mxnet_config = MXNet()
 
 
 class _Config:
@@ -2460,7 +2451,6 @@ class _Config:
         onnxruntime=onnxruntime_config,
         tensorflow=tensorflow_config,
         pytorch=pytorch_config,
-        mxnet=mxnet_config,
         keras=keras_config,
     ):
         """Init a config object."""
@@ -2473,7 +2463,6 @@ class _Config:
         self._nas = nas
         self._tensorflow = tensorflow
         self._pytorch = pytorch
-        self._mxnet = mxnet
         self._keras = keras
 
     @property
@@ -2500,11 +2489,6 @@ class _Config:
     def pytorch(self):
         """Get the pytorch object."""
         return self._pytorch
-
-    @property
-    def mxnet(self):
-        """Get the mxnet object."""
-        return self._mxnet
 
     @property
     def pruning(self):

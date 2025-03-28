@@ -60,7 +60,6 @@ Sometimes the reduce_range feature, that's using 7 bit width (1 sign bit + 6 dat
 | TensorFlow    | [oneDNN](https://github.com/oneapi-src/oneDNN) | Activation (int8/uint8), Weight (int8) | - |
 | PyTorch         | [FBGEMM](https://github.com/pytorch/FBGEMM) | Activation (uint8), Weight (int8) | Activation (uint8) |
 | PyTorch(IPEX) | [oneDNN](https://github.com/oneapi-src/oneDNN)  | Activation (int8/uint8), Weight (int8) | - |
-| MXNet           | [oneDNN](https://github.com/oneapi-src/oneDNN)  | Activation (int8/uint8), Weight (int8) | - |
 | ONNX Runtime | [MLAS](https://github.com/microsoft/onnxruntime/tree/master/onnxruntime/core/mlas) | Weight (int8) | Activation (uint8) |
 
 #### Quantization Scheme in TensorFlow
@@ -76,11 +75,6 @@ Sometimes the reduce_range feature, that's using 7 bit width (1 sign bit + 6 dat
     + uint8: scale = (rmax - rmin) / (max(uint8) - min(uint8)); zero_point = min(uint8)  - round(rmin / scale)
 
 #### Quantization Scheme in IPEX
-+ Symmetric Quantization
-    + int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)
-    + uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))
-
-#### Quantization Scheme in MXNet
 + Symmetric Quantization
     + int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)
     + uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))
@@ -441,7 +435,7 @@ conf = PostTrainingQuantConfig(recipes=recipes)
 ```
 
 ### Specify Quantization Backend and Device
-Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Runtime and MXNet. The neural compressor will automatically determine which framework to use based on the model type, but for backend and device, users need to set it themselves in configure object.
+Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow and ONNX Runtime. The neural compressor will automatically determine which framework to use based on the model type, but for backend and device, users need to set it themselves in configure object.
 
 <table class="center">
     <thead>
@@ -511,13 +505,6 @@ Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow, ONNX Ru
             <td align="left">"itex"</td>
             <td align="left">cpu | gpu</td>
         </tr>  
-        <tr>
-            <td align="left">MXNet</td>
-            <td align="left">OneDNN</td>
-            <td align="left">OneDNN</td>
-            <td align="left">"default"</td>
-            <td align="left">cpu</td>
-        </tr>
     </tbody>
 </table>
 <br>

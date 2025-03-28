@@ -11,7 +11,7 @@ How to Add An Adaptor
 - [Add quantize API according to tune cfg](#add-quantize-api-according-to-tune-cfg)
 
 ## Introduction
-Intel® Neural Compressor builds the low-precision inference solution on popular deep learning frameworks such as TensorFlow, PyTorch, MXNet, Keras and ONNX Runtime. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs, each framework has own adaptor. The users can add new adaptor to set strategy capabilities.
+Intel® Neural Compressor builds the low-precision inference solution on popular deep learning frameworks such as TensorFlow, PyTorch, Keras and ONNX Runtime. The adaptor layer is the bridge between the tuning strategy and vanilla framework quantization APIs, each framework has own adaptor. The users can add new adaptor to set strategy capabilities.
 
 The document outlines the process of adding support for a new adaptor, in Intel® Neural Compressor with minimal changes. It provides instructions and code examples for implementation of a new adaptor. By following the steps outlined in the document, users can extend Intel® Neural Compressor's functionality to accommodate new adaptor and incorporate it into quantization workflows.
 

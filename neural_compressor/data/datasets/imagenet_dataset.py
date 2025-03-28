@@ -43,7 +43,6 @@ from neural_compressor.utils.utility import LazyImport
 from .dataset import Dataset, IterableDataset, dataset_registry
 
 tf = LazyImport("tensorflow")
-mx = LazyImport("mxnet")
 torch = LazyImport("torch")
 
 
@@ -126,19 +125,6 @@ class PytorchImagenetRaw(ImagenetRaw):  # pragma: no cover
                 image, label = self.transform((image, label))
             image = np.array(image)
             return (image, label)
-
-
-@dataset_registry(dataset_type="ImagenetRaw", framework="mxnet", dataset_format="")
-class MXNetImagenetRaw(ImagenetRaw):  # pragma: no cover
-    """Dataset for ImageNet data generation on mxnet backend."""
-
-    def __getitem__(self, index):
-        """Return the item of dataset according to the given index."""
-        image_path, label = self.image_list[index], self.label_list[index]
-        image = mx.image.imread(image_path)
-        if self.transform is not None:
-            image, label = self.transform((image, label))
-        return (image, label)
 
 
 @dataset_registry(

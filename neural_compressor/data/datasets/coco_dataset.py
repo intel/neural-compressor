@@ -38,7 +38,6 @@ from neural_compressor.utils.utility import LazyImport
 from .dataset import Dataset, IterableDataset, dataset_registry
 
 tf = LazyImport("tensorflow")
-mx = LazyImport("mxnet")
 torch = LazyImport("torch")
 
 
@@ -160,7 +159,7 @@ class COCORecordDataset(IterableDataset):  # pragma: no cover
 @dataset_registry(
     dataset_type="COCORaw",
     framework="onnxrt_qlinearops, \
-                    onnxrt_integerops, pytorch, mxnet, tensorflow, \
+                    onnxrt_integerops, pytorch, tensorflow, \
                     tensorflow_itex",
     dataset_format="",
 )
@@ -263,7 +262,7 @@ class COCORaw(Dataset):  # pragma: no cover
 @dataset_registry(
     dataset_type="COCONpy",
     framework="onnxrt_qlinearops, \
-                    onnxrt_integerops, pytorch, mxnet, tensorflow, \
+                    onnxrt_integerops, pytorch, tensorflow, \
                     tensorflow_itex",
     dataset_format="",
 )
