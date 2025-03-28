@@ -24,6 +24,8 @@ from ..patched_module_base import PatchedModuleBase
 from .._core.scale_handler import get_scale_dtype, ScaleFormat
 from neural_compressor.common.utils.logger import logger
 from neural_compressor.common import utils as inc_utils
+import os
+VLLM_USE_MATMUL_V1 = os.getenv("VLLM_USE_MATMUL_V1", "0") in ["1", "true"]
 
 class BMM(nn.Module):
     def __init__(self):
@@ -139,6 +141,53 @@ class PatchedMatmul(PatchedModuleBase):
             self.class_name_org,
             get_current_repr(self, "scale_input", "scale_other"),
         )
+
+
+class PatchedMatmulV1(PatchedModuleBase):
+    def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
+            self.quant_input_0 = self._mod_extra_config.inputs[0]
+            self.quant_input_1 = self._mod_extra_config.inputs[1]
+            if self.use_qdq or self.fake_quant:
+                self.forward = self.forward_qdq
+            else:
+                self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
+                self.register_scale("scale_other", mod_extra_config.scale.inputs[1], self.scale_format)
+                self.forward = self.forward_quant
+                self.matmul_fp8 = get_quantized_func_wrapper(OP_TYPE.MATMUL_GEMM, self.scale_format)
+        elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
+            self.forward = self.forward_measure
+
+    def forward_quant(self, input, other):
+        qinput = self.quant_input_0(input)
+        qother = other
+        output = self.matmul_fp8(qinput,
+                                 qother,
+                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                                 scale_input_inv=self.scale_input,
+                                 scale_other_inv=self.scale_other)
+        return output
+
+    def forward_qdq(self, input, other):
+        qinput = self.quant_input_0(input)
+        qother = self.quant_input_1(other)
+        output = torch.matmul(qinput, qother)
+        return output
+
+    def forward_measure(self, input, other):
+        measure_input((input, other), observer=self._mod_extra_config.inputs)
+        output = self.orig_mod(input, other)
+        measure_output((output,), self._mod_extra_config.outputs)
+        return output
+
+    def extra_repr(self) -> str:
+        return extra_representation(
+            self.extra_repr_org(),
+            self.class_name_org,
+            get_current_repr(self, "scale_input", "scale_other"),
+        )
+
 
 def init_linear(instance, mod_extra_config, change_forward=True):
     if instance.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
@@ -1115,6 +1164,8 @@ class PatchedVLLMKVCache(PatchedModuleBase):
                 output_cache[i] = self.dequant_output(output_cache[i])
             return output_cache
         output_cache = self.orig_mod.fetch_from_cache(quant_cache, blocks)
+        if VLLM_USE_MATMUL_V1:
+            return output_cache
         return self.dequant_output(output_cache)
     
     def extra_repr(self) -> str:
