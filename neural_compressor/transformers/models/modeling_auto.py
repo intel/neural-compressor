@@ -387,6 +387,7 @@ class _BaseINCAutoModelClass:
         sharded_metadata = None
         if transformers.__version__ >= "4.50":
             from transformers.modeling_utils import _get_resolved_checkpoint_files
+
             gguf_file = kwargs.pop("gguf_file", None)
             from_tf = kwargs.pop("from_tf", False)
             from_flax = kwargs.pop("from_flax", False)
@@ -495,7 +496,9 @@ class _BaseINCAutoModelClass:
                             "_raise_exceptions_for_missing_entries": False,
                             "_commit_hash": commit_hash,
                         }
-                        resolved_archive_file = cached_file(pretrained_model_name_or_path, filename, **cached_file_kwargs)
+                        resolved_archive_file = cached_file(
+                            pretrained_model_name_or_path, filename, **cached_file_kwargs
+                        )
 
                         # Since we set _raise_exceptions_for_missing_entries=False, we don't get an exception but a None
                         # result when internet is up, the repo and revision exist, but the file does not.
