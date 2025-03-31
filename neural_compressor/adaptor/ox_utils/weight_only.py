@@ -34,9 +34,9 @@ from neural_compressor.model.model import BaseModel
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.utils.utility import LazyImport
 
-#import compute_quant
-#from pyinstrument import Profiler
-#from line_profiler import profile
+# import compute_quant
+# from pyinstrument import Profiler
+# from line_profiler import profile
 
 ort = LazyImport("onnxruntime")
 logger = logging.getLogger("neural_compressor")
@@ -250,7 +250,8 @@ def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ra
 
     return q_weight, scale, zero_point
 
-#@profile
+
+# @profile
 def quant_tensor_1(data, num_bits=4, group_size=32):
     """Quantize tensor per group.
 
@@ -267,45 +268,45 @@ def quant_tensor_1(data, num_bits=4, group_size=32):
         scale: scale
         zero_point: zero point
     """
-    data = np.reshape(data, (-1, group_size)).astype(np.float32)   # (nb, group_size)
+    data = np.reshape(data, (-1, group_size)).astype(np.float32)  # (nb, group_size)
     nb = data.shape[0]
     maxq = 2**num_bits - 1
     minq = 0
-    sum_x2 = np.sum(data**2, axis=1, keepdims=True) # (nb, 1)
-    av_x = np.sqrt(sum_x2 / group_size) # (nb, 1)
-    weights = np.add(av_x, np.abs(data)) # (nb, group_size)
-    rmin = np.min(data, axis=1, keepdims=True) # (nb, 1)
-    rmax = np.max(data, axis=1, keepdims=True) # (nb, 1)
-    sum_w = np.sum(weights, axis=1, keepdims=True) # (nb, 1)
-    sum_x = np.sum(weights * data, axis=1, keepdims=True) # (nb, group_size)
-    iscale = np.ones(rmax.shape, dtype=data.dtype) # (nb, 1)
+    sum_x2 = np.sum(data**2, axis=1, keepdims=True)  # (nb, 1)
+    av_x = np.sqrt(sum_x2 / group_size)  # (nb, 1)
+    weights = np.add(av_x, np.abs(data))  # (nb, group_size)
+    rmin = np.min(data, axis=1, keepdims=True)  # (nb, 1)
+    rmax = np.max(data, axis=1, keepdims=True)  # (nb, 1)
+    sum_w = np.sum(weights, axis=1, keepdims=True)  # (nb, 1)
+    sum_x = np.sum(weights * data, axis=1, keepdims=True)  # (nb, group_size)
+    iscale = np.ones(rmax.shape, dtype=data.dtype)  # (nb, 1)
     mask = rmin != rmax
     iscale[mask] = (maxq - minq) / (rmax[mask] - rmin[mask])
     scale = 1 / iscale
-    quant_data = np.clip(np.round(iscale * (data - rmin)), minq, maxq) # (nb, group_size)
-    diff = scale * quant_data + rmin - data # (nb, group_size)
-    best_mad = np.sum(weights * diff ** 2, axis=1, keepdims=True) # (nb, 1)
+    quant_data = np.clip(np.round(iscale * (data - rmin)), minq, maxq)  # (nb, group_size)
+    diff = scale * quant_data + rmin - data  # (nb, group_size)
+    best_mad = np.sum(weights * diff**2, axis=1, keepdims=True)  # (nb, 1)
     nstep = 20
     rdelta = 0.1
     rrmin = -1
     for is_ in range(nstep):
-        iscale_new = np.ones(rmax.shape, dtype=data.dtype) # (nb, 1)
+        iscale_new = np.ones(rmax.shape, dtype=data.dtype)  # (nb, 1)
         factor = np.array([rrmin + rdelta * is_ + maxq - minq]).astype(data.dtype)[0]
         mask = rmin != rmax
         iscale_new[mask] = factor / (rmax[mask] - rmin[mask])
-        quant_data_new = np.clip(np.round(iscale_new * (data - rmin)), minq, maxq) # (nb, group_size)
+        quant_data_new = np.clip(np.round(iscale_new * (data - rmin)), minq, maxq)  # (nb, group_size)
         mul_weights_quant_data_new = weights * quant_data_new
-        sum_l = np.sum(mul_weights_quant_data_new, axis=1, keepdims=True) # (nb, 1)
-        sum_l2 = np.sum(mul_weights_quant_data_new * quant_data_new, axis=1, keepdims=True) # (nb, 1)
-        sum_xl = np.sum(mul_weights_quant_data_new * data, axis=1, keepdims=True) # (nb, 1)
-        D = np.subtract(sum_w * sum_l2, sum_l ** 2) # (nb, 1)
+        sum_l = np.sum(mul_weights_quant_data_new, axis=1, keepdims=True)  # (nb, 1)
+        sum_l2 = np.sum(mul_weights_quant_data_new * quant_data_new, axis=1, keepdims=True)  # (nb, 1)
+        sum_xl = np.sum(mul_weights_quant_data_new * data, axis=1, keepdims=True)  # (nb, 1)
+        D = np.subtract(sum_w * sum_l2, sum_l**2)  # (nb, 1)
 
-        this_scale = (sum_w * sum_xl - sum_x * sum_l) / D # (nb, 1)
-        this_min = (sum_l2 * sum_x - sum_l * sum_xl) / D # (nb, 1)
+        this_scale = (sum_w * sum_xl - sum_x * sum_l) / D  # (nb, 1)
+        this_min = (sum_l2 * sum_x - sum_l * sum_xl) / D  # (nb, 1)
 
-        diff = this_scale * quant_data_new + this_min - data # (nb, group_size)
-        mad = np.sum(weights * diff ** 2, axis=1, keepdims=True) # (nb, 1)
-        
+        diff = this_scale * quant_data_new + this_min - data  # (nb, group_size)
+        mad = np.sum(weights * diff**2, axis=1, keepdims=True)  # (nb, 1)
+
         mad_1 = np.array(mad)
         best_mad_1 = np.array(best_mad)
         idx_to_replace = np.where(mad_1 < best_mad_1)[0]
@@ -314,7 +315,7 @@ def quant_tensor_1(data, num_bits=4, group_size=32):
         scale[idx_to_replace] = this_scale[idx_to_replace]
         rmin[idx_to_replace] = this_min[idx_to_replace]
 
-    zero_point = np.clip((( - rmin) / scale).round(), 0, maxq).astype("uint8")
+    zero_point = np.clip(((-rmin) / scale).round(), 0, maxq).astype("uint8")
     scale = scale.astype(np.float64)
     q_weight = np.empty_like(data, dtype=scale.dtype)
     np.divide(data, scale, out=q_weight)
@@ -323,6 +324,7 @@ def quant_tensor_1(data, num_bits=4, group_size=32):
     np.clip(q_weight, minq, maxq, out=q_weight)
 
     return q_weight, scale, zero_point
+
 
 def qdq_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ratio=1.0):
     """Quant dequant tensor per group.
@@ -452,23 +454,18 @@ def rtn_quantize(
             ):  # pragma: no cover
                 # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions, supported by CPU EP
                 # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1, supported by CPU EP AND CUDA EP
-                '''
-                q_weight, scale, zp = quant_tensor(
-                        weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
-                    )
-                
-                '''
-                if node.name=="/lm_head/MatMul":
+                """q_weight, scale, zp = quant_tensor(
+
+                    weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
+                )
+                """
+                if node.name == "/lm_head/MatMul":
                     q_weight, scale, zp = quant_tensor(
                         weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
                     )
                 else:
-                    q_weight, scale, zp = quant_tensor_1(
-                        weight.T, num_bits, group_size
-                    )
-                
-               
-                
+                    q_weight, scale, zp = quant_tensor_1(weight.T, num_bits, group_size)
+
                 q_matmul_node, new_inits = make_matmul_weight_only_node(
                     node=node,
                     weight_shape=org_w_shape,
