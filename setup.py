@@ -75,7 +75,12 @@ PKG_INSTALL_CFG = {
             ],
         ),
         "package_data": {"": ["*.json"]},
-        "install_requires": fetch_requirements("requirements_pt.txt"),
+        # FIXME: (Yi) force install neural_compressor_pt
+        # "install_requires": fetch_requirements("requirements_pt.txt"),
+        "install_requires": fetch_requirements("requirements.txt"),
+        "extras_require": {
+            "pt": fetch_requirements("requirements_pt.txt"),
+        }
     },
     # 3.x tf binary build config, pip install neural-compressor-tf, install 3.x TensorFlow API.
     "neural_compressor_tf": {
