@@ -25,7 +25,6 @@ from .config import (
     QuantizationAwareTrainingConfig,
     MixedPrecisionConfig,
 )
-from .contrib import *
 from .model import *
 from .metric import *
 from .utils import options
