@@ -18,9 +18,6 @@ from typing import Union, List, Type, Optional
 from abc import abstractmethod
 import torch
 from neural_compressor.common import utils as inc_utils
-from neural_compressor.torch.algorithms.fp8_quant.utils import (
-    helper_mod_register,
-)
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     ModuleInfo,
     ModuleType,
@@ -117,8 +114,6 @@ def register_patched_module(
                         f"    device_type: {device_type}"
                     )
                 )
-                # Add the new module to the `helper_mods` dict
-                _create_and_register_helper_module_class(supported_type.__name__)
         return patch_module_cls
 
     return decorator
@@ -208,15 +203,3 @@ class PatchedModuleBase(torch.nn.Module):
         return  f"quantization_mode={self.quantization_mode}, " + \
                 f"module_info={self.get_module_info()}, " + \
                 f"module_type={self.get_module_type()}"
-
-
-def _create_and_register_helper_module_class(name):
-    @helper_mod_register(name=name)
-    class _GenericModule(torch.nn.Module):
-        def __init__(self, patched_mod, *args, **kwargs):
-            super().__init__()
-            self.__dict__.update(patched_mod.__dict__)
-            self.extra_repr = patched_mod.extra_repr_org
-
-    _GenericModule.__name__ = name
-    return _GenericModule
