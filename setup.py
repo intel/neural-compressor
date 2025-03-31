@@ -102,7 +102,9 @@ if __name__ == "__main__":
     # https://github.com/pytorch/pytorch/pull/114662
     ext_modules = []
     cmdclass = {}
-
+    
+    
+    
     if "pt" in sys.argv:
         sys.argv.remove("pt")
         cfg_key = "neural_compressor_pt"
@@ -110,7 +112,9 @@ if __name__ == "__main__":
     if "tf" in sys.argv:
         sys.argv.remove("tf")
         cfg_key = "neural_compressor_tf"
-
+    # FIXME: (Yi) force install neural_compressor_pt
+    print(f"Forcing install neural_compressor_pt")
+    cfg_key = "neural_compressor_pt"
     project_name = PKG_INSTALL_CFG[cfg_key].get("project_name")
     include_packages = PKG_INSTALL_CFG[cfg_key].get("include_packages") or {}
     package_data = PKG_INSTALL_CFG[cfg_key].get("package_data") or {}
