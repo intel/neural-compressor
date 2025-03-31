@@ -956,14 +956,23 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         output_cache = self.orig_mod(qinput, *args, **kwargs)
         return output_cache
 
-    def forward_quant(self, input, *args, **kwargs):
-        qinput = self.quant_input(input)
-        output_cache = self.orig_mod(qinput, *args, **kwargs)
+    def forward_quant(self, input, cache, *args, **kwargs):
+        if input is not None:
+            qinput = self.quant_input(input)
+            output_cache = self.orig_mod(qinput, cache, *args, **kwargs)
+        else:
+            # In cross-attention during decode stage kv cache isn't updated 
+            # so input is None and we don't store it
+            output_cache = cache
         return self.dequant_output(output_cache)
 
-    def forward_measure(self, input, *args, **kwargs):
+    def forward_measure(self, input, cache, *args, **kwargs):
+        # In cross-attention during decode stage kv cache isn't updated
+        # so input is None and we don't measure it
+        if input is None:
+            return cache
         measure_input((input, ), self._mod_extra_config.inputs)
-        output_cache = self.orig_mod(input, *args, **kwargs)
+        output_cache = self.orig_mod(input, cache, *args, **kwargs)
         measure_output((output_cache, ), self._mod_extra_config.outputs)
         return output_cache
 
