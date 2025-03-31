@@ -76,7 +76,7 @@ fi
 
 # install special test env requirements
 # common deps
-pip install cmake
+pip install cmake==3.31.6
 pip install transformers==4.50.0
 
 if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then
