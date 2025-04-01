@@ -1,5 +1,5 @@
 auto_round
-deepspeed @ git+https://github.com/HabanaAI/DeepSpeed.git@1.19.0
+deepspeed @ git+https://github.com/HabanaAI/DeepSpeed.git@1.20.0
 expecttest
 intel_extension_for_pytorch
 numpy
