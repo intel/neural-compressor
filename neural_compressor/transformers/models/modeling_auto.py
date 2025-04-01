@@ -385,191 +385,218 @@ class _BaseINCAutoModelClass:
         # index of the files.
         is_sharded = False
         sharded_metadata = None
+        if transformers.__version__ >= "4.50":
+            from transformers.modeling_utils import _get_resolved_checkpoint_files
 
-        if pretrained_model_name_or_path is not None:
-            pretrained_model_name_or_path = str(pretrained_model_name_or_path)
-            is_local = os.path.isdir(pretrained_model_name_or_path)
-            if is_local:
-                if os.path.isfile(
-                    os.path.join(
-                        pretrained_model_name_or_path,
-                        subfolder,
-                        _add_variant(WEIGHTS_NAME, variant),
-                    )
-                ):
-                    # Load from a PyTorch checkpoint
-                    archive_file = os.path.join(
-                        pretrained_model_name_or_path,
-                        subfolder,
-                        _add_variant(WEIGHTS_NAME, variant),
-                    )
-                elif os.path.isfile(
-                    os.path.join(
-                        pretrained_model_name_or_path,
-                        subfolder,
-                        _add_variant(WEIGHTS_INDEX_NAME, variant),
-                    )
-                ):
-                    # Load from a sharded PyTorch checkpoint
-                    archive_file = os.path.join(
-                        pretrained_model_name_or_path,
-                        subfolder,
-                        _add_variant(WEIGHTS_INDEX_NAME, variant),
-                    )
-                    is_sharded = True
-                elif os.path.isfile(
-                    os.path.join(
-                        pretrained_model_name_or_path,
-                        subfolder,
-                        _add_variant(SAFE_WEIGHTS_NAME, variant),
-                    )
-                ):
-                    # Load from a safetensors checkpoint
-                    archive_file = os.path.join(
-                        pretrained_model_name_or_path,
-                        subfolder,
-                        _add_variant(SAFE_WEIGHTS_NAME, variant),
-                    )
-                elif os.path.isfile(
-                    os.path.join(
-                        pretrained_model_name_or_path,
-                        subfolder,
-                        _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
-                    )
-                ):
-                    # Load from a safetensors checkpoint
-                    archive_file = os.path.join(
-                        pretrained_model_name_or_path,
-                        subfolder,
-                        _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
-                    )
-                    is_sharded = True
-            elif os.path.isfile(os.path.join(subfolder, pretrained_model_name_or_path)):
-                archive_file = pretrained_model_name_or_path
-                is_local = True
-            elif is_remote_url(pretrained_model_name_or_path):
-                filename = pretrained_model_name_or_path
-                resolved_archive_file = download_url(pretrained_model_name_or_path)
-            else:
-                if use_safetensors is not False:
-                    filename = _add_variant(SAFE_WEIGHTS_NAME, variant)
-                else:
-                    filename = _add_variant(WEIGHTS_NAME, variant)
-                try:
-                    # Load from URL or cache if already cached
-                    cached_file_kwargs = {
-                        "cache_dir": cache_dir,
-                        "force_download": force_download,
-                        "proxies": proxies,
-                        "resume_download": resume_download,
-                        "local_files_only": local_files_only,
-                        "token": token,
-                        "user_agent": user_agent,
-                        "revision": revision,
-                        "subfolder": subfolder,
-                        "_raise_exceptions_for_gated_repo": False,
-                        "_raise_exceptions_for_missing_entries": False,
-                        "_commit_hash": commit_hash,
-                    }
-                    resolved_archive_file = cached_file(pretrained_model_name_or_path, filename, **cached_file_kwargs)
-
-                    # Since we set _raise_exceptions_for_missing_entries=False, we don't get an exception but a None
-                    # result when internet is up, the repo and revision exist, but the file does not.
-                    if resolved_archive_file is None and filename == _add_variant(SAFE_WEIGHTS_NAME, variant):
-                        # Maybe the checkpoint is sharded, we try to grab the index name in this case.
-                        resolved_archive_file = cached_file(
-                            pretrained_model_name_or_path,
-                            _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
-                            **cached_file_kwargs,
-                        )
-                        if resolved_archive_file is not None:
-                            is_sharded = True
-                        elif use_safetensors:
-                            raise EnvironmentError(
-                                f"{pretrained_model_name_or_path} does not appear to have a file named"
-                                f" {_add_variant(SAFE_WEIGHTS_NAME, variant)} or "
-                                f"{_add_variant(SAFE_WEIGHTS_INDEX_NAME, variant)} "
-                                "and thus cannot be loaded with `safetensors`. Please make sure that the model has "
-                                "been saved with `safe_serialization=True` or do not set `use_safetensors=True`."
-                            )
-                        else:
-                            # This repo has no safetensors file of any kind, we switch to PyTorch.
-                            filename = _add_variant(WEIGHTS_NAME, variant)
-                            resolved_archive_file = cached_file(
-                                pretrained_model_name_or_path,
-                                filename,
-                                **cached_file_kwargs,
-                            )
-                    if resolved_archive_file is None and filename == _add_variant(WEIGHTS_NAME, variant):
-                        # Maybe the checkpoint is sharded, we try to grab the index name in this case.
-                        resolved_archive_file = cached_file(
-                            pretrained_model_name_or_path,
-                            _add_variant(WEIGHTS_INDEX_NAME, variant),
-                            **cached_file_kwargs,
-                        )
-                        if resolved_archive_file is not None:
-                            is_sharded = True
-
-                    if resolved_archive_file is None:
-                        # Otherwise, maybe there is a TF or Flax model file.  We try those to give a helpful error
-                        # message.
-                        has_file_kwargs = {
-                            "revision": revision,
-                            "proxies": proxies,
-                            "token": token,
-                        }
-                        if variant is not None and has_file(
-                            pretrained_model_name_or_path,
-                            WEIGHTS_NAME,
-                            **has_file_kwargs,
-                        ):
-                            raise EnvironmentError(
-                                f"{pretrained_model_name_or_path} does not appear to have a file named"
-                                f" {_add_variant(WEIGHTS_NAME, variant)} but there is a file without the variant"
-                                f" {variant}. Use `variant=None` to load this model from those weights."
-                            )
-                        else:
-                            raise EnvironmentError(
-                                f"{pretrained_model_name_or_path} does not appear to have a file named"
-                                f" {_add_variant(WEIGHTS_NAME, variant)}."
-                            )
-                except EnvironmentError:
-                    # Raise any environment error raise by `cached_file`. It will have a helpful error message adapted
-                    # to the original exception.
-                    raise
-                except Exception as e:
-                    # For any other exception, we throw a generic error.
-                    raise EnvironmentError(
-                        f"Can't load the model for '{pretrained_model_name_or_path}'. If you were trying to load it"
-                        " from 'https://huggingface.co/models', make sure you don't have a local directory with the"
-                        f" same name. Otherwise, make sure '{pretrained_model_name_or_path}' is the correct path to a"
-                        f" directory containing a file named {_add_variant(WEIGHTS_NAME, variant)}."
-                    ) from e
-            if is_local:
-                logger.info(f"loading weights file {archive_file}")
-                resolved_archive_file = archive_file
-            else:
-                logger.info(f"loading weights file {filename} from cache at {resolved_archive_file}")
-        else:
-            resolved_archive_file = None
-
-        # We'll need to download and cache each checkpoint shard if the checkpoint is sharded.
-        if is_sharded:
-            # rsolved_archive_file becomes a list of files that point to the different checkpoint shards in this case.
-            resolved_archive_file, sharded_metadata = get_checkpoint_shard_files(
-                pretrained_model_name_or_path,
-                resolved_archive_file,
+            gguf_file = kwargs.pop("gguf_file", None)
+            from_tf = kwargs.pop("from_tf", False)
+            from_flax = kwargs.pop("from_flax", False)
+            checkpoint_files, sharded_metadata = _get_resolved_checkpoint_files(
+                pretrained_model_name_or_path=pretrained_model_name_or_path,
+                subfolder=subfolder,
+                variant=variant,
+                gguf_file=gguf_file,
+                from_tf=from_tf,
+                from_flax=from_flax,
+                use_safetensors=use_safetensors,
                 cache_dir=cache_dir,
                 force_download=force_download,
                 proxies=proxies,
-                resume_download=resume_download,
                 local_files_only=local_files_only,
                 token=token,
                 user_agent=user_agent,
                 revision=revision,
-                subfolder=subfolder,
-                _commit_hash=commit_hash,
+                commit_hash=commit_hash,
             )
+            is_sharded = sharded_metadata is not None
+            resolved_archive_file = checkpoint_files if is_sharded else checkpoint_files[0]
+        else:
+            if pretrained_model_name_or_path is not None:
+                pretrained_model_name_or_path = str(pretrained_model_name_or_path)
+                is_local = os.path.isdir(pretrained_model_name_or_path)
+                if is_local:
+                    if os.path.isfile(
+                        os.path.join(
+                            pretrained_model_name_or_path,
+                            subfolder,
+                            _add_variant(WEIGHTS_NAME, variant),
+                        )
+                    ):
+                        # Load from a PyTorch checkpoint
+                        archive_file = os.path.join(
+                            pretrained_model_name_or_path,
+                            subfolder,
+                            _add_variant(WEIGHTS_NAME, variant),
+                        )
+                    elif os.path.isfile(
+                        os.path.join(
+                            pretrained_model_name_or_path,
+                            subfolder,
+                            _add_variant(WEIGHTS_INDEX_NAME, variant),
+                        )
+                    ):
+                        # Load from a sharded PyTorch checkpoint
+                        archive_file = os.path.join(
+                            pretrained_model_name_or_path,
+                            subfolder,
+                            _add_variant(WEIGHTS_INDEX_NAME, variant),
+                        )
+                        is_sharded = True
+                    elif os.path.isfile(
+                        os.path.join(
+                            pretrained_model_name_or_path,
+                            subfolder,
+                            _add_variant(SAFE_WEIGHTS_NAME, variant),
+                        )
+                    ):
+                        # Load from a safetensors checkpoint
+                        archive_file = os.path.join(
+                            pretrained_model_name_or_path,
+                            subfolder,
+                            _add_variant(SAFE_WEIGHTS_NAME, variant),
+                        )
+                    elif os.path.isfile(
+                        os.path.join(
+                            pretrained_model_name_or_path,
+                            subfolder,
+                            _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
+                        )
+                    ):
+                        # Load from a safetensors checkpoint
+                        archive_file = os.path.join(
+                            pretrained_model_name_or_path,
+                            subfolder,
+                            _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
+                        )
+                        is_sharded = True
+                elif os.path.isfile(os.path.join(subfolder, pretrained_model_name_or_path)):
+                    archive_file = pretrained_model_name_or_path
+                    is_local = True
+                elif is_remote_url(pretrained_model_name_or_path):
+                    filename = pretrained_model_name_or_path
+                    resolved_archive_file = download_url(pretrained_model_name_or_path)
+                else:
+                    if use_safetensors is not False:
+                        filename = _add_variant(SAFE_WEIGHTS_NAME, variant)
+                    else:
+                        filename = _add_variant(WEIGHTS_NAME, variant)
+                    try:
+                        # Load from URL or cache if already cached
+                        cached_file_kwargs = {
+                            "cache_dir": cache_dir,
+                            "force_download": force_download,
+                            "proxies": proxies,
+                            "resume_download": resume_download,
+                            "local_files_only": local_files_only,
+                            "token": token,
+                            "user_agent": user_agent,
+                            "revision": revision,
+                            "subfolder": subfolder,
+                            "_raise_exceptions_for_gated_repo": False,
+                            "_raise_exceptions_for_missing_entries": False,
+                            "_commit_hash": commit_hash,
+                        }
+                        resolved_archive_file = cached_file(
+                            pretrained_model_name_or_path, filename, **cached_file_kwargs
+                        )
+
+                        # Since we set _raise_exceptions_for_missing_entries=False, we don't get an exception but a None
+                        # result when internet is up, the repo and revision exist, but the file does not.
+                        if resolved_archive_file is None and filename == _add_variant(SAFE_WEIGHTS_NAME, variant):
+                            # Maybe the checkpoint is sharded, we try to grab the index name in this case.
+                            resolved_archive_file = cached_file(
+                                pretrained_model_name_or_path,
+                                _add_variant(SAFE_WEIGHTS_INDEX_NAME, variant),
+                                **cached_file_kwargs,
+                            )
+                            if resolved_archive_file is not None:
+                                is_sharded = True
+                            elif use_safetensors:
+                                raise EnvironmentError(
+                                    f"{pretrained_model_name_or_path} does not appear to have a file named"
+                                    f" {_add_variant(SAFE_WEIGHTS_NAME, variant)} or "
+                                    f"{_add_variant(SAFE_WEIGHTS_INDEX_NAME, variant)} "
+                                    "and thus cannot be loaded with `safetensors`. Please make sure that the model has "
+                                    "been saved with `safe_serialization=True` or do not set `use_safetensors=True`."
+                                )
+                            else:
+                                # This repo has no safetensors file of any kind, we switch to PyTorch.
+                                filename = _add_variant(WEIGHTS_NAME, variant)
+                                resolved_archive_file = cached_file(
+                                    pretrained_model_name_or_path,
+                                    filename,
+                                    **cached_file_kwargs,
+                                )
+                        if resolved_archive_file is None and filename == _add_variant(WEIGHTS_NAME, variant):
+                            # Maybe the checkpoint is sharded, we try to grab the index name in this case.
+                            resolved_archive_file = cached_file(
+                                pretrained_model_name_or_path,
+                                _add_variant(WEIGHTS_INDEX_NAME, variant),
+                                **cached_file_kwargs,
+                            )
+                            if resolved_archive_file is not None:
+                                is_sharded = True
+
+                        if resolved_archive_file is None:
+                            # Otherwise, maybe there is a TF or Flax model file.  We try those to give a helpful error
+                            # message.
+                            has_file_kwargs = {
+                                "revision": revision,
+                                "proxies": proxies,
+                                "token": token,
+                            }
+                            if variant is not None and has_file(
+                                pretrained_model_name_or_path,
+                                WEIGHTS_NAME,
+                                **has_file_kwargs,
+                            ):
+                                raise EnvironmentError(
+                                    f"{pretrained_model_name_or_path} does not appear to have a file named"
+                                    f" {_add_variant(WEIGHTS_NAME, variant)} but there is a file without the variant"
+                                    f" {variant}. Use `variant=None` to load this model from those weights."
+                                )
+                            else:
+                                raise EnvironmentError(
+                                    f"{pretrained_model_name_or_path} does not appear to have a file named"
+                                    f" {_add_variant(WEIGHTS_NAME, variant)}."
+                                )
+                    except EnvironmentError:
+                        # Raise any environment error raise by `cached_file`. It will have a helpful error message adapted
+                        # to the original exception.
+                        raise
+                    except Exception as e:
+                        # For any other exception, we throw a generic error.
+                        raise EnvironmentError(
+                            f"Can't load the model for '{pretrained_model_name_or_path}'. If you were trying to load it"
+                            " from 'https://huggingface.co/models', make sure you don't have a local directory with the"
+                            f" same name. Otherwise, make sure '{pretrained_model_name_or_path}' is the correct path to a"
+                            f" directory containing a file named {_add_variant(WEIGHTS_NAME, variant)}."
+                        ) from e
+                if is_local:
+                    logger.info(f"loading weights file {archive_file}")
+                    resolved_archive_file = archive_file
+                else:
+                    logger.info(f"loading weights file {filename} from cache at {resolved_archive_file}")
+            else:
+                resolved_archive_file = None
+
+            # We'll need to download and cache each checkpoint shard if the checkpoint is sharded.
+            if is_sharded:
+                # rsolved_archive_file becomes a list of files that point to the different checkpoint shards in this case.
+                resolved_archive_file, sharded_metadata = get_checkpoint_shard_files(
+                    pretrained_model_name_or_path,
+                    resolved_archive_file,
+                    cache_dir=cache_dir,
+                    force_download=force_download,
+                    proxies=proxies,
+                    resume_download=resume_download,
+                    local_files_only=local_files_only,
+                    token=token,
+                    user_agent=user_agent,
+                    revision=revision,
+                    subfolder=subfolder,
+                    _commit_hash=commit_hash,
+                )
 
         # set dtype to instantiate the model under:
         # 1. If torch_dtype is not None, we use that dtype
@@ -677,27 +704,36 @@ class _BaseINCAutoModelClass:
                 model, resolved_archive_file, loaded_state_dict_keys, quantization_config, is_sharded
             )
         else:
-            (
-                model,
-                missing_keys,
-                unexpected_keys,
-                mismatched_keys,
-                offload_index,
-                error_msgs,
-            ) = model_class._load_pretrained_model(
-                model,
-                None,
-                loaded_state_dict_keys,  # XXX: rename?
-                resolved_archive_file,
-                pretrained_model_name_or_path,
-                sharded_metadata=sharded_metadata,
-                _fast_init=_fast_init,
-                low_cpu_mem_usage=True,
-                offload_folder=offload_folder,
-                offload_state_dict=offload_state_dict,
-                dtype=torch_dtype,
-                keep_in_fp32_modules=[],
-            )
+            if transformers.__version__ >= "4.50":
+                model_message = model_class._load_pretrained_model(
+                    model,
+                    None,
+                    checkpoint_files,
+                    pretrained_model_name_or_path,
+                    sharded_metadata=sharded_metadata,
+                    _fast_init=_fast_init,
+                    low_cpu_mem_usage=True,
+                    disk_offload_folder=offload_folder,
+                    offload_state_dict=offload_state_dict,
+                    dtype=torch_dtype,
+                    keep_in_fp32_modules=[],
+                )
+            else:
+                model_message = model_class._load_pretrained_model(
+                    model,
+                    None,
+                    loaded_state_dict_keys,  # XXX: rename?
+                    resolved_archive_file,
+                    pretrained_model_name_or_path,
+                    sharded_metadata=sharded_metadata,
+                    _fast_init=_fast_init,
+                    low_cpu_mem_usage=True,
+                    offload_folder=offload_folder,
+                    offload_state_dict=offload_state_dict,
+                    dtype=torch_dtype,
+                    keep_in_fp32_modules=[],
+                )
+            model = model_message[0]
 
         # make sure token embedding weights are still tied if needed
         model.tie_weights()
