@@ -48,8 +48,6 @@ def fit(
                                               a path to ckpt/savedmodel folder.
                                               For PyTorch model, it's torch.nn.model
                                               instance.
-                                              For MXNet model, it's mxnet.symbol.Symbol
-                                              or gluon.HybirdBlock instance.
         conf (PostTrainingQuantConfig):       The class of PostTrainingQuantConfig containing accuracy goal,
                                               tuning objective and preferred calibration &
                                               quantization tuning space etc.

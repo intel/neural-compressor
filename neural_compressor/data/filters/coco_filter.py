@@ -44,7 +44,7 @@ class LabelBalanceCOCORecordFilter(Filter):  # pragma: no cover
 @filter_registry(
     filter_type="LabelBalanceCOCORaw",
     framework="tensorflow, \
-                 tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops",
+                 tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops",
 )
 class LabelBalanceCOCORawFilter(Filter):  # pragma: no cover
     """The label balance filter for COCO raw data."""

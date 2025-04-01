@@ -1480,8 +1480,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                     "workspace_path": options.workspace,
                 }
             )
-        if framework == "mxnet":
-            framework_specific_info.update({"q_dataloader": q_dataloader})
         if "onnx" in framework.lower():
             if self.mixed_precision_mode:
                 framework_specific_info.update({"approach": "post_training_dynamic_quant"})
