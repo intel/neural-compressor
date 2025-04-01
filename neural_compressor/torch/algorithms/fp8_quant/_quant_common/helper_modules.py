@@ -678,6 +678,13 @@ class PatchedMixtralMoE(PatchedModuleBase):
             setattr(self, "w2_weight", None)
         self.forward = self.forward_orig
 
+    def extra_repr(self) -> str:
+        return extra_representation(
+            self.extra_repr_org(),
+            self.class_name_org,
+            get_current_repr(self),
+        )
+
 
 # This patched module is called by the vllm-mixtral FusedMoE layer
 # we wrap each expert weight with this module since FusedMoE has a single tensor for all experts weights
@@ -940,6 +947,13 @@ class PatchedKVCache(PatchedModuleBase):
         measure_output((output,), self._mod_extra_config.outputs)
         return output
 
+    def extra_repr(self) -> str:
+        return extra_representation(
+            self.extra_repr_org(),
+            self.class_name_org,
+            get_current_repr(self),
+        )
+
 
 class PatchedVLLMKVCache(PatchedModuleBase):
     # Module to patch VLLMKVCache module from llama model
@@ -985,6 +999,13 @@ class PatchedVLLMKVCache(PatchedModuleBase):
             return output_cache
         output_cache = self.orig_mod.fetch_from_cache(quant_cache, blocks)
         return self.dequant_output(output_cache)
+
+    def extra_repr(self) -> str:
+        return extra_representation(
+            self.extra_repr_org(),
+            self.class_name_org,
+            get_current_repr(self),
+        )
 
 
 def init_conv(instance, mod_extra_config):
