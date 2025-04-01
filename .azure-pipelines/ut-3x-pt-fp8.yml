@@ -14,6 +14,7 @@ pr:
       - .azure-pipelines/template/docker-template.yml
       - neural_compressor/common
       - neural_compressor/torch
+      - neural_compressor/transformers
       - test/3x/torch/algorithms/fp8_quant
       - test/3x/torch/quantization/fp8_quant
       - test/3x/torch/quantization/weight_only/test_rtn.py
