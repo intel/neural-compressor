@@ -169,61 +169,11 @@ class TestMetrics(unittest.TestCase):
         F1.update(preds, labels)
         self.assertEqual(F1.result(), 0.8)
 
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
-    def test_mxnet_F1(self):
-        metrics = METRICS("mxnet")
-        F1 = metrics["F1"]()
-        preds = [0, 1, 1, 1, 1, 0]
-        labels = [0, 1, 1, 1]
-
-        F1.update(preds, labels)
-        self.assertEqual(F1.result(), 0.8)
-
     def test_onnx_topk(self):
         metrics = METRICS("onnxrt_qlinearops")
         top1 = metrics["topk"]()
         top1.reset()
         self.assertEqual(top1.result(), 0)
-        self.assertEqual(top1.result(), 0)
-        top2 = metrics["topk"](k=2)
-        top3 = metrics["topk"](k=3)
-
-        predicts = [[0, 0.2, 0.9, 0.3], [0, 0.9, 0.8, 0]]
-        single_predict = [0, 0.2, 0.9, 0.3]
-
-        labels = [[0, 1, 0, 0], [0, 0, 1, 0]]
-        sparse_labels = [2, 2]
-        single_label = 2
-
-        # test functionality of one-hot label
-        top1.update(predicts, labels)
-        top2.update(predicts, labels)
-        top3.update(predicts, labels)
-        self.assertEqual(top1.result(), 0.0)
-        self.assertEqual(top2.result(), 0.5)
-        self.assertEqual(top3.result(), 1)
-
-        # test functionality of sparse label
-        top1.update(predicts, sparse_labels)
-        top2.update(predicts, sparse_labels)
-        top3.update(predicts, sparse_labels)
-        self.assertEqual(top1.result(), 0.25)
-        self.assertEqual(top2.result(), 0.75)
-        self.assertEqual(top3.result(), 1)
-
-        # test functionality of single label
-        top1.update(single_predict, single_label)
-        top2.update(single_predict, single_label)
-        top3.update(single_predict, single_label)
-        self.assertEqual(top1.result(), 0.4)
-        self.assertEqual(top2.result(), 0.8)
-        self.assertEqual(top3.result(), 1)
-
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
-    def test_mxnet_topk(self):
-        metrics = METRICS("mxnet")
-        top1 = metrics["topk"]()
-        top1.reset()
         self.assertEqual(top1.result(), 0)
         top2 = metrics["topk"](k=2)
         top3 = metrics["topk"](k=3)
@@ -884,7 +834,6 @@ class TestMetrics(unittest.TestCase):
         self.assertRaises(ValueError, mAP.update, detection_2, ground_truth_2)
         self.assertRaises(ValueError, mAP2.update, detection_2, ground_truth_2)
 
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows now")
     def test__accuracy(self):
         predicts1 = [1, 0, 1, 1]
         labels1 = [0, 1, 1, 1]
@@ -899,21 +848,6 @@ class TestMetrics(unittest.TestCase):
         labels4 = [0, 1, 0, 0]
 
         metrics = METRICS("pytorch")
-        acc = metrics["Accuracy"]()
-        acc.update(predicts1, labels1)
-        acc_result = acc.result()
-        self.assertEqual(acc_result, 0.5)
-        acc.reset()
-        acc.update(predicts2, labels2)
-        self.assertEqual(acc.result(), 0.25)
-        acc.reset()
-        acc.update(predicts3, labels3)
-        self.assertEqual(acc.result(), 0.25)
-        acc.reset()
-        acc.update(predicts4, labels4)
-        self.assertEqual(acc.result(), 0.25)
-
-        metrics = METRICS("mxnet")
         acc = metrics["Accuracy"]()
         acc.update(predicts1, labels1)
         acc_result = acc.result()
@@ -951,17 +885,6 @@ class TestMetrics(unittest.TestCase):
         wrong_labels = [[0, 1, 1]]
         self.assertRaises(ValueError, acc.update, wrong_predictions, wrong_labels)
 
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows yet")
-    def test_mxnet_accuracy(self):
-        metrics = METRICS("mxnet")
-        acc = metrics["Accuracy"]()
-        predicts = [1, 0, 1, 1]
-        labels = [0, 1, 1, 1]
-        acc.update(predicts, labels)
-        acc_result = acc.result()
-        self.assertEqual(acc_result, 0.5)
-
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows now")
     def test_mse(self):
         predicts1 = [1, 0, 0, 1]
         labels1 = [0, 1, 0, 0]
@@ -986,15 +909,6 @@ class TestMetrics(unittest.TestCase):
         mse_result = mse.result()
         self.assertEqual(mse_result, 0.625)
 
-        metrics = METRICS("mxnet")
-        mse = metrics["MSE"]()
-        mse.update(predicts1, labels1)
-        mse_result = mse.result()
-        self.assertEqual(mse_result, 0.75)
-        mse.update(predicts2, labels2)
-        mse_result = mse.result()
-        self.assertEqual(mse_result, 0.625)
-
         metrics = METRICS("pytorch")
         mse = metrics["MSE"]()
         mse.update(predicts1, labels1)
@@ -1004,7 +918,6 @@ class TestMetrics(unittest.TestCase):
         mse_result = mse.result()
         self.assertEqual(mse_result, 0.625)
 
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows now")
     def test_mae(self):
         predicts1 = [1, 0, 0, 1]
         labels1 = [0, 1, 0, 0]
@@ -1033,15 +946,6 @@ class TestMetrics(unittest.TestCase):
         mae_result = mae.result()
         self.assertEqual(mae_result, 0.5)
 
-        metrics = METRICS("mxnet")
-        mae = metrics["MAE"]()
-        mae.update(predicts1, labels1)
-        mae_result = mae.result()
-        self.assertEqual(mae_result, 0.75)
-        mae.update(predicts2, labels2)
-        mae_result = mae.result()
-        self.assertEqual(mae_result, 0.5)
-
         metrics = METRICS("onnxrt_qlinearops")
         mae = metrics["MAE"]()
         mae.update(predicts1, labels1)
@@ -1056,7 +960,6 @@ class TestMetrics(unittest.TestCase):
         self.assertRaises(AssertionError, mae.update, [1, 2], [1])
         self.assertRaises(AssertionError, mae.update, 1, np.array([1, 2]))
 
-    @unittest.skipIf(platform.system().lower() == "windows", "not support mxnet on windows now")
     def test_rmse(self):
         predicts1 = [1, 0, 0, 1]
         labels1 = [1, 0, 0, 0]
@@ -1074,15 +977,6 @@ class TestMetrics(unittest.TestCase):
         self.assertAlmostEqual(rmse_result, np.sqrt(0.75))
 
         metrics = METRICS("pytorch")
-        rmse = metrics["RMSE"]()
-        rmse.update(predicts1, labels1)
-        rmse_result = rmse.result()
-        self.assertEqual(rmse_result, 0.5)
-        rmse.update(predicts2, labels2)
-        rmse_result = rmse.result()
-        self.assertAlmostEqual(rmse_result, np.sqrt(0.5))
-
-        metrics = METRICS("mxnet")
         rmse = metrics["RMSE"]()
         rmse.update(predicts1, labels1)
         rmse_result = rmse.result()
