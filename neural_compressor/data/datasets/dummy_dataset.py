@@ -25,7 +25,6 @@ from neural_compressor.utils.utility import LazyImport
 
 from .dataset import Dataset, dataset_registry
 
-mx = LazyImport("mxnet")
 torch = LazyImport("torch")
 
 logger = logging.getLogger("neural_compressor")
@@ -35,8 +34,7 @@ logger = logging.getLogger("neural_compressor")
     dataset_type="dummy",
     framework="tensorflow, tensorflow_itex, \
                                                    onnxrt_qlinearops, onnxrt_integerops, \
-                                                   pytorch, pytorch_ipex, pytorch_fx, \
-                                                   mxnet",
+                                                   pytorch, pytorch_ipex, pytorch_fx",
     dataset_format="",
 )
 class DummyDataset(Dataset):  # pragma: no cover

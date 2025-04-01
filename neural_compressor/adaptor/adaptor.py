@@ -17,7 +17,7 @@
 
 from abc import abstractmethod
 
-"""The framework backends supported by neural_compressor, including tensorflow, mxnet and pytorch.
+"""The framework backends supported by neural_compressor, including tensorflow and pytorch.
 
    User could add new backend support by implementing new Adaptor subclass under this directory.
    The naming convention of new Adaptor subclass should be something like ABCAdaptor, user

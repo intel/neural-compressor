@@ -26,7 +26,6 @@ from neural_compressor.utils.utility import LazyImport
 
 from .dataset import IterableDataset, dataset_registry
 
-mx = LazyImport("mxnet")
 torch = LazyImport("torch")
 
 
@@ -34,7 +33,7 @@ torch = LazyImport("torch")
     dataset_type="dummy_v2",
     framework="tensorflow, tensorflow_itex, \
                                                       onnxrt_qlinearops, onnxrt_integerops, \
-                                                      pytorch, pytorch_ipex, pytorch_fx, mxnet",
+                                                      pytorch, pytorch_ipex, pytorch_fx",
     dataset_format="",
 )
 class DummyDataset(IterableDataset):  # pragma: no cover
@@ -162,7 +161,7 @@ class DummyDataset(IterableDataset):  # pragma: no cover
     dataset_type="sparse_dummy_v2",
     framework="tensorflow, tensorflow_itex, \
                                                       onnxrt_qlinearops, onnxrt_integerops, \
-                                                      pytorch, pytorch_ipex, pytorch_fx, mxnet",
+                                                      pytorch, pytorch_ipex, pytorch_fx",
     dataset_format="",
 )
 class SparseDummyDataset(IterableDataset):  # pragma: no cover
