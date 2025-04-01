@@ -234,9 +234,6 @@ class TestSameTransfoms(unittest.TestCase):
         tf_result = tf_func((TestSameTransfoms.tf_img, None))[0]
         tf_result = tf_result.eval(session=tf.compat.v1.Session())
         self.assertEqual(tf_result[0][0][0].dtype, "int64")
-        mx_func = TestSameTransfoms.mx_trans["Cast"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))
-        self.assertEqual(mx_result[0][0][0].dtype, np.int64)
         ox_func = TestSameTransfoms.ox_trans["Cast"](**args)
         ox_result = ox_func((TestSameTransfoms.img, None))
         self.assertEqual(ox_result[0][0][0].dtype, "int64")
@@ -256,10 +253,6 @@ class TestSameTransfoms(unittest.TestCase):
         ox_func = TestSameTransfoms.ox_trans["CropToBoundingBox"](**args)
         ox_result = ox_func((TestSameTransfoms.img, None))[0]
         self.assertEqual(ox_result.shape, (5, 5, 3))
-
-        mx_func = TestSameTransfoms.mx_trans["CropToBoundingBox"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
-        self.assertEqual(mx_result.shape, (5, 5, 3))
 
         tf_func = TestSameTransfoms.tf_trans["CropToBoundingBox"](**args)
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
@@ -290,8 +283,6 @@ class TestSameTransfoms(unittest.TestCase):
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
         ox_func = TestSameTransfoms.ox_trans["Transpose"](**args)
         ox_result = ox_func((TestSameTransfoms.img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["Transpose"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         pt_transpose = TestSameTransfoms.pt_trans["Transpose"](**args)
         pt_totensor = TestSameTransfoms.pt_trans["ToTensor"]()
         pt_compose = TestSameTransfoms.pt_trans["Compose"]([pt_totensor, pt_transpose])
@@ -299,7 +290,6 @@ class TestSameTransfoms(unittest.TestCase):
 
         self.assertEqual(tf_result.shape, (3, 10, 10))
         self.assertEqual(ox_result.shape, (3, 10, 10))
-        self.assertEqual(mx_result.shape, (3, 10, 10))
         self.assertEqual(pt_result.shape, (10, 3, 10))
 
         tf_result = tf_func((TestSameTransfoms.tf_img, None))[0]
@@ -312,12 +302,8 @@ class TestSameTransfoms(unittest.TestCase):
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
         pt_func = TestSameTransfoms.pt_trans["CenterCrop"](**args)
         pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["CenterCrop"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         self.assertEqual(tf_result.shape, (4, 4, 3))
         self.assertEqual(pt_result.size, (4, 4))
-        self.assertEqual(mx_result.shape, (4, 4, 3))
-        self.assertEqual(np.array(pt_result)[0][0][0], mx_result.asnumpy()[0][0][0])
         self.assertEqual(np.array(pt_result)[0][0][0], int(tf_result[0][0][0]))
 
         tf_result = tf_func((TestSameTransfoms.tf_img, None))[0]
@@ -333,12 +319,8 @@ class TestSameTransfoms(unittest.TestCase):
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
         pt_func = TestSameTransfoms.pt_trans["CenterCrop"](**args)
         pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["CenterCrop"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         self.assertEqual(tf_result.shape, (4, 4, 3))
         self.assertEqual(pt_result.size, (4, 4))
-        self.assertEqual(mx_result.shape, (4, 4, 3))
-        self.assertEqual(np.array(pt_result)[0][0][0], mx_result.asnumpy()[0][0][0])
         self.assertEqual(np.array(pt_result)[0][0][0], int(tf_result[0][0][0]))
 
         args = {"size": [4]}
@@ -378,11 +360,8 @@ class TestSameTransfoms(unittest.TestCase):
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
         pt_func = TestSameTransfoms.pt_trans["Resize"](**{"size": [4, 5]})
         pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["Resize"](**{"size": [4, 5]})
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         self.assertEqual(tf_result.shape, (5, 4, 3))
         self.assertEqual(pt_result.size, (5, 4))
-        self.assertEqual(mx_result.shape, (4, 5, 3))
 
         tf_result = tf_func((TestSameTransfoms.tf_img, None))[0]
         tf_result = tf_result.eval(session=tf.compat.v1.Session())
@@ -393,38 +372,27 @@ class TestSameTransfoms(unittest.TestCase):
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
         pt_func = TestSameTransfoms.pt_trans["Resize"](**args)
         pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["Resize"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         self.assertEqual(tf_result.shape, (4, 4, 3))
         self.assertEqual(pt_result.size, (4, 4))
-        self.assertEqual(mx_result.shape, (4, 4, 3))
 
         args = {"size": [4]}
         tf_func = TestSameTransfoms.tf_trans["Resize"](**args)
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["Resize"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         self.assertEqual(tf_result.shape, (4, 4, 3))
-        self.assertEqual(mx_result.shape, (4, 4, 3))
 
         args = {"size": 4, "interpolation": "test"}
         with self.assertRaises(ValueError):
             TestSameTransfoms.tf_trans["Resize"](**args)
         with self.assertRaises(ValueError):
             TestSameTransfoms.pt_trans["Resize"](**args)
-        with self.assertRaises(ValueError):
-            TestSameTransfoms.mx_trans["Resize"](**args)
 
     def testRandomResizedCrop(self):
         tf_func = TestSameTransfoms.tf_trans["RandomResizedCrop"](**{"size": [4, 5]})
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
         pt_func = TestSameTransfoms.pt_trans["RandomResizedCrop"](**{"size": [4, 5]})
         pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["RandomResizedCrop"](**{"size": [4, 5]})
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         self.assertEqual(tf_result.shape, (5, 4, 3))
         self.assertEqual(pt_result.size, (5, 4))
-        self.assertEqual(mx_result.shape, (4, 5, 3))
 
         tf_result = tf_func((TestSameTransfoms.tf_img, None))[0]
         tf_result = tf_result.eval(session=tf.compat.v1.Session())
@@ -434,49 +402,36 @@ class TestSameTransfoms(unittest.TestCase):
         tf_func = TestSameTransfoms.tf_trans["RandomResizedCrop"](**args)
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
         self.assertEqual(tf_result.shape, (4, 4, 3))
-        mx_func = TestSameTransfoms.mx_trans["RandomResizedCrop"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
-        self.assertEqual(mx_result.shape, (4, 4, 3))
 
         args = {"size": 4}
         tf_func = TestSameTransfoms.tf_trans["RandomResizedCrop"](**args)
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
         pt_func = TestSameTransfoms.pt_trans["RandomResizedCrop"](**args)
         pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["RandomResizedCrop"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         self.assertEqual(tf_result.shape, (4, 4, 3))
         self.assertEqual(pt_result.size, (4, 4))
-        self.assertEqual(mx_result.shape, (4, 4, 3))
 
         args = {"size": 4, "scale": (0.8, 0.2)}
         with self.assertRaises(ValueError):
             TestSameTransfoms.tf_trans["RandomResizedCrop"](**args)
         with self.assertRaises(ValueError):
             TestSameTransfoms.pt_trans["RandomResizedCrop"](**args)
-        with self.assertRaises(ValueError):
-            TestSameTransfoms.mx_trans["RandomResizedCrop"](**args)
 
         args = {"size": 4, "interpolation": "test"}
         with self.assertRaises(ValueError):
             TestSameTransfoms.tf_trans["RandomResizedCrop"](**args)
         with self.assertRaises(ValueError):
             TestSameTransfoms.pt_trans["RandomResizedCrop"](**args)
-        with self.assertRaises(ValueError):
-            TestSameTransfoms.mx_trans["RandomResizedCrop"](**args)
 
     def testCropResize(self):
         args = {"x": 0, "y": 0, "width": 10, "height": 10, "size": [5, 5]}
         tf_func = TestSameTransfoms.tf_trans["CropResize"](**args)
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["CropResize"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         ox_func = TestSameTransfoms.ox_trans["CropResize"](**args)
         ox_result = ox_func((TestSameTransfoms.img, None))[0]
         pt_func = TestSameTransfoms.pt_trans["CropResize"](**args)
         pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
         self.assertEqual(tf_result.shape, (5, 5, 3))
-        self.assertEqual(mx_result.shape, (5, 5, 3))
         self.assertEqual(ox_result.shape, (5, 5, 3))
         self.assertEqual(pt_result.size, (5, 5))
 
@@ -487,41 +442,30 @@ class TestSameTransfoms(unittest.TestCase):
         args = {"x": 0, "y": 0, "width": 10, "height": 10, "size": 5}
         tf_func = TestSameTransfoms.tf_trans["CropResize"](**args)
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["CropResize"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         ox_func = TestSameTransfoms.ox_trans["CropResize"](**args)
         ox_result = ox_func((TestSameTransfoms.img, None))[0]
         self.assertEqual(tf_result.shape, (5, 5, 3))
-        self.assertEqual(mx_result.shape, (5, 5, 3))
         self.assertEqual(ox_result.shape, (5, 5, 3))
 
         args = {"x": 0, "y": 0, "width": 10, "height": 10, "size": [5]}
         tf_func = TestSameTransfoms.tf_trans["CropResize"](**args)
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["CropResize"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         ox_func = TestSameTransfoms.ox_trans["CropResize"](**args)
         ox_result = ox_func((TestSameTransfoms.img, None))[0]
         self.assertEqual(tf_result.shape, (5, 5, 3))
-        self.assertEqual(mx_result.shape, (5, 5, 3))
         self.assertEqual(ox_result.shape, (5, 5, 3))
 
         args = {"x": 0, "y": 0, "width": 10, "height": 10, "size": [5, 5]}
         tf_func = TestSameTransfoms.tf_trans["CropResize"](**args)
         tf_result = tf_func((TestSameTransfoms.img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["CropResize"](**args)
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         ox_func = TestSameTransfoms.ox_trans["CropResize"](**args)
         ox_result = ox_func((TestSameTransfoms.img, None))[0]
         self.assertEqual(tf_result.shape, (5, 5, 3))
-        self.assertEqual(mx_result.shape, (5, 5, 3))
         self.assertEqual(ox_result.shape, (5, 5, 3))
 
         args = {"x": 0, "y": 0, "width": 10, "height": 10, "size": 5, "interpolation": "test"}
         with self.assertRaises(ValueError):
             TestSameTransfoms.ox_trans["CropResize"](**args)
-        with self.assertRaises(ValueError):
-            TestSameTransfoms.mx_trans["CropResize"](**args)
         with self.assertRaises(ValueError):
             TestSameTransfoms.tf_trans["CropResize"](**args)
         with self.assertRaises(ValueError):
@@ -534,8 +478,6 @@ class TestSameTransfoms(unittest.TestCase):
         ox_result = ox_func((TestSameTransfoms.img, None))[0]
         pt_func = TestSameTransfoms.pt_trans["RandomHorizontalFlip"]()
         pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["RandomHorizontalFlip"]()
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         self.assertTrue(
             (np.array(TestSameTransfoms.pt_img) == np.array(pt_result)).all()
             or (np.fliplr(np.array(TestSameTransfoms.pt_img)) == np.array(pt_result)).all()
@@ -545,10 +487,6 @@ class TestSameTransfoms(unittest.TestCase):
         )
         self.assertTrue(
             (TestSameTransfoms.img == ox_result).all() or (np.fliplr(TestSameTransfoms.img) == ox_result).all()
-        )
-        self.assertTrue(
-            (TestSameTransfoms.mx_img.asnumpy() == mx_result.asnumpy()).all()
-            or (np.fliplr(TestSameTransfoms.mx_img.asnumpy()) == mx_result.asnumpy()).all()
         )
 
         tf_result = tf_func((TestSameTransfoms.tf_img, None))[0]
@@ -564,8 +502,6 @@ class TestSameTransfoms(unittest.TestCase):
         ox_result = ox_func((TestSameTransfoms.img, None))[0]
         pt_func = TestSameTransfoms.pt_trans["RandomVerticalFlip"]()
         pt_result = pt_func((TestSameTransfoms.pt_img, None))[0]
-        mx_func = TestSameTransfoms.mx_trans["RandomVerticalFlip"]()
-        mx_result = mx_func((TestSameTransfoms.mx_img, None))[0]
         self.assertTrue(
             (np.array(TestSameTransfoms.pt_img) == np.array(pt_result)).all()
             or (np.flipud(np.array(TestSameTransfoms.pt_img)) == np.array(pt_result)).all()
@@ -576,11 +512,6 @@ class TestSameTransfoms(unittest.TestCase):
         self.assertTrue(
             (TestSameTransfoms.img == ox_result).all() or (np.flipud(TestSameTransfoms.img) == ox_result).all()
         )
-        self.assertTrue(
-            (TestSameTransfoms.mx_img.asnumpy() == mx_result.asnumpy()).all()
-            or (np.flipud(TestSameTransfoms.mx_img.asnumpy()) == mx_result.asnumpy()).all()
-        )
-
         tf_result = tf_func((TestSameTransfoms.tf_img, None))[0]
         tf_result = tf_result.eval(session=tf.compat.v1.Session())
         self.assertTrue(
