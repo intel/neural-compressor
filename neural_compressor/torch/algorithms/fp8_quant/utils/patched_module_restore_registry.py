@@ -140,3 +140,10 @@ class GaudiMixtralSparseMoeBlock(torch.nn.Module):
         super().__init__()
         self.__dict__.update(patched_mod.__dict__)
         self.extra_repr = patched_mod.extra_repr_org
+
+@helper_mod_register(name="GaudiDeepseekV3MoE")
+class GaudiDeepseekV3MoE(torch.nn.Module):
+    def __init__(self, patched_mod, *args, **kwargs):
+        super().__init__()
+        self.__dict__.update(patched_mod.__dict__)
+        self.extra_repr = patched_mod.extra_repr_org
