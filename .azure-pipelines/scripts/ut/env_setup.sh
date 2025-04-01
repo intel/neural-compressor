@@ -24,7 +24,7 @@ if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
 elif [[ "${tensorflow_version}" == "spr-base" ]]; then
     pip install /tf_dataset/tf_binary/230928/tensorflow*.whl
-    pip install cmake
+    pip install cmake==3.31.6
     pip install protobuf==3.20.3
     pip install horovod==0.27.0
     if [[ $? -ne 0 ]]; then
@@ -67,7 +67,7 @@ fi
 
 # install special test env requirements
 # common deps
-pip install cmake
+pip install cmake==3.31.6
 pip install transformers==4.50.0
 
 if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then
