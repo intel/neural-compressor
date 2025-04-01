@@ -83,6 +83,7 @@ def quantize_params(mod, mod_extra_config):
         quantized_param = quantizer(param.to(cur_accelerator.name()))
         delattr(mod, param_name)
         setattr(mod, param_name, nn.Parameter(quantized_param))
+        mod._updated_weight = True
         quantized_param = getattr(mod, param_name)
         quantized_param.requires_grad_(False)
         cur_accelerator.synchronize()
