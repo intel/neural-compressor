@@ -43,8 +43,6 @@ def fit(model, conf, eval_func=None, eval_dataloader=None, eval_metric=None, **k
                                               For PyTorch model, it's torch.nn.model
                                               instance. For onnx model, it should be a path
                                               to .onnx file or onnx.onnx_ml_pb2.ModelProto.
-                                              For MXNet model, it's mxnet.symbol.Symbol
-                                              or gluon.HybirdBlock instance.
         conf (MixedPrecisionConfig):        The MixedPrecisionConfig class containing accuracy goal,
                                               tuning objective and mixed_precision tuning space etc.
         eval_func (function, optional):       The evaluation function provided by user.

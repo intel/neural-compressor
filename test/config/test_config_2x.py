@@ -3,7 +3,7 @@
 import unittest
 
 from neural_compressor import set_random_seed, set_resume_from, set_tensorboard, set_workspace
-from neural_compressor.config import BenchmarkConfig, MixedPrecisionConfig, MXNet, PostTrainingQuantConfig
+from neural_compressor.config import BenchmarkConfig, MixedPrecisionConfig, PostTrainingQuantConfig
 from neural_compressor.config import _Config as conf
 from neural_compressor.config import options
 from neural_compressor.utils.constant import *
@@ -45,11 +45,6 @@ class TestGeneralConf(unittest.TestCase):
         cfg = MixedPrecisionConfig()
         a = conf(mixed_precision=cfg)
         self.assertEqual(a.mixed_precision.precisions, ["bf16"])
-
-        cfg = MXNet()
-        cfg.precisions = "bf16"
-        a = conf(mxnet=cfg)
-        self.assertEqual(a.mxnet.precisions, ["bf16"])
 
         set_workspace("workspace_path")
         self.assertEqual(options.workspace, "workspace_path")
