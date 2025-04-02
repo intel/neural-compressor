@@ -12,18 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import gc
 import os
 import shutil
-import time
-import copy
 
 import torch
 
 from ._quant_common.quant_config import local_rank, world_size, HpDtype
-from ._core.scale_handler import update_state_dict_method
-from ._core.quantized_func_wrappers import init_quantized_func_wrapper_factory, clear_quantized_func_wrapper_factory
+from ._core.quant_dequant import QuantDequantBase
+from ._core.scale_handler import update_state_dict_method, ScaleFormat
+from ._core.quantized_func_wrappers import (
+    init_quantized_func_wrapper_factory,
+    clear_quantized_func_wrapper_factory,
+    get_quantized_func_wrapper,
+    OP_TYPE,
+)
 from .utils.logger import logger
+from neural_compressor.common import options
 from neural_compressor.torch.utils import (
     get_accelerator,
     is_optimum_habana_available,
@@ -57,11 +61,21 @@ tp_module_list = (
 
 ##################################### save ##################################
 
+def remove_rank_suffix(name, local_rank, world_size):
+    """Remove rank suffix from key name."""
+    return name.removesuffix(f"_{local_rank}_{world_size}")
+
+
+def add_rank_suffix(name, local_rank, world_size):
+    """Add rank suffix to name."""
+    return f"{name}_{local_rank}_{world_size}"
+
+
 def save_rank_model(model, folder_prefix="", **kwargs):
     """Save state_dict for model from each rank."""
     # workaround for [SW-199005] [HQT] casted fp8 tensor cannot get data pointer
     cur_accelerator.synchronize()
-    save_directory = f"{folder_prefix}_{local_rank}_{world_size}"
+    save_directory = add_rank_suffix(folder_prefix, local_rank, world_size)
     os.makedirs(save_directory, exist_ok=True)
     safe_serialization = kwargs.get("safe_serialization", True)
     max_shard_size = kwargs.get("max_shard_size", f"{MAX_FILE_SIZE}GB")
@@ -92,16 +106,14 @@ def gather_state_dict(folder_prefix, file_name, tp_mod_list=[]):
     cur_state_dict = {}
     # load state_dict
     for i in range(world_size):  # TODO: assuming tp_size == world_size
-        folder_name = f"{folder_prefix}_{i}_{world_size}"
+        folder_name = add_rank_suffix(folder_prefix, i, world_size)
         cur_file = os.path.join(folder_name, file_name)
-        if not os.path.exists(cur_file):
-            time.sleep(10)  # Waiting for other ranks to finish saving
         cur_state_dict[i] = safe_load_file(cur_file)
     # gather state_dict
     for k, v in cur_state_dict[0].items():
         if _is_in_list(k, tp_mod_list):
             for i in range(world_size):  # TODO: assuming tp_size == world_size
-                new_k = f"{k}_{i}_{world_size}"
+                new_k = add_rank_suffix(k, i, world_size)
                 gathered_state_dict[new_k] = cur_state_dict[i][k]
         else:
             gathered_state_dict[k] = cur_state_dict[0][k]
@@ -111,12 +123,12 @@ def gather_state_dict(folder_prefix, file_name, tp_mod_list=[]):
 def clean_rank_files(folder_prefix, file_name=None):
     """Clean files saved by each rank after gathering."""
     for i in range(world_size):  # TODO: assuming tp_size == world_size
-        folder_name = f"{folder_prefix}_{i}_{world_size}"
+        folder_name = add_rank_suffix(folder_prefix, i, world_size)
         if file_name is None:
             shutil.rmtree(folder_name, ignore_errors=True)
         else:
             cur_file = os.path.join(folder_name, file_name)
-            shutil.rmtree(cur_file, ignore_errors=True)
+            os.remove(cur_file)
 
 
 def parse_shard_size(size_str):
@@ -359,8 +371,12 @@ def save_for_multi_devices(model, checkpoint_dir="saved_results", format="huggin
             model, reference_model, world_size=world_size, max_shard_size=f"{MAX_FILE_SIZE}GB", output_dir=checkpoint_dir
             )
     else:
-        save_rank_model(model, folder_prefix=checkpoint_dir, **kwargs)
-        rank_directory = f"{checkpoint_dir}_{0}_{world_size}"
+        folder_prefix = os.path.join(options.workspace, checkpoint_dir)
+        save_rank_model(model, folder_prefix=folder_prefix, **kwargs)
+        # Ensure all ranks have saved their model before proceeding
+        if torch.distributed.is_initialized():
+            torch.distributed.barrier()
+        rank_directory = add_rank_suffix(folder_prefix, 0, world_size)
         files_list = find_safetensors_files(rank_directory)
         # use rank:0 process to gather checkpoint files
         if local_rank == 0:
@@ -370,11 +386,13 @@ def save_for_multi_devices(model, checkpoint_dir="saved_results", format="huggin
             # based on the safetensors file name to collect tensors from shard folders
             for file_name in files_list:
                 gathered_state_dict = gather_state_dict(
-                    folder_prefix=checkpoint_dir, file_name=file_name, tp_mod_list=tp_mod_list
+                    folder_prefix=folder_prefix, file_name=file_name, tp_mod_list=tp_mod_list
                 )
                 safe_save_file(gathered_state_dict, os.path.join(checkpoint_dir, file_name), metadata={"format": "pt"})
-                clean_rank_files(folder_prefix=checkpoint_dir, file_name=file_name)
-            clean_rank_files(folder_prefix=checkpoint_dir)
+                clean_rank_files(folder_prefix=folder_prefix, file_name=file_name)
+        if torch.distributed.is_initialized():
+            torch.distributed.barrier()
+        clean_rank_files(folder_prefix=folder_prefix)
 
 
 def save_for_single_device(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
@@ -414,6 +432,8 @@ def save(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
     """
     format = get_enum_from_format(format)
     model = process_model_for_scalar_scale(model)
+    if world_size > 1:
+        assert torch.distributed.is_initialized(), "Distributed environment is not initialized."
     if format == SaveLoadFormat.VLLM:
         check_config_for_vllm_compatible(model.qconfig[next(iter(model.qconfig))])
     if world_size > 0:
@@ -422,13 +442,17 @@ def save(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
         save_for_single_device(model, checkpoint_dir=checkpoint_dir, format=format, **kwargs)
 
     # save "quantization_config" in config.json
-    configs_mapping = model.qconfig
-    config_object = configs_mapping[next(iter(configs_mapping))]
-    update_model_config(model, format, config_object)
-    model.config.save_pretrained(checkpoint_dir)
+    if local_rank in [0, -1]:
+        # Ensure those codes run on a single rank.
+        configs_mapping = model.qconfig
+        config_object = configs_mapping[next(iter(configs_mapping))]
+        update_model_config(model, format, config_object)
+        model.config.save_pretrained(checkpoint_dir)
 
-    if hasattr(model, "generation_config") and model.generation_config is not None:
-        model.generation_config.save_pretrained(checkpoint_dir)
+        if hasattr(model, "generation_config") and model.generation_config is not None:
+            model.generation_config.save_pretrained(checkpoint_dir)
+    if torch.distributed.is_initialized():
+        torch.distributed.barrier()
 
 
 ##################################### load ##################################
@@ -529,16 +553,24 @@ def find_safetensors_files(model_name_or_path, **kwargs):
         return resolved_archive_file
 
 
-def shard_state_dict(state_dict):
+def shard_state_dict(state_dict, return_all_rank=False, src_world_size=None):
     """Shard state_dict for current local_rank."""
-    rank_state_dict = {}
-    for k, v in state_dict.items():
-        if k.endswith(f"_{local_rank}_{world_size}"):
-            new_k = k.rstrip(f"_{local_rank}_{world_size}")
-            rank_state_dict[new_k] = v.to("hpu")
-        else:
-            rank_state_dict[k] = v.to("hpu")
-    return rank_state_dict
+    def get_rank_state_dict(state_dict, local_rank, world_size):
+        rank_state_dict = {}
+        for k, v in state_dict.items():
+            new_k = remove_rank_suffix(k, local_rank, world_size)
+            rank_state_dict[new_k] = v
+        return rank_state_dict
+
+    if return_all_rank:
+        all_rank_state_dict = {}
+        for rank in range(src_world_size):
+            rank_state_dict = get_rank_state_dict(state_dict, rank, src_world_size)
+            all_rank_state_dict[rank] = rank_state_dict
+        return all_rank_state_dict
+    else:
+        return get_rank_state_dict(state_dict, local_rank, world_size)
+
 
 def split_rank_state_dict(model, gathered_state_dict):
     """Split state_dict for current local_rank."""
@@ -606,15 +638,21 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
         FP8 model.
     """
     format = get_enum_from_format(format)
+    global world_size
+    world_size = kwargs.get("world_size", world_size)
     assert format == SaveLoadFormat.HUGGINGFACE, "Currently, only huggingface models are supported."
     assert device == "hpu", "Currently, only hpu device is supported for FP8 model."
-    from safetensors.torch import load_file as safe_load_file
 
+    from safetensors.torch import load_file as safe_load_file
     from neural_compressor.torch.algorithms.fp8_quant import prep_model
 
     model, from_neuralmagic, from_neuralmagic_with_kv = load_empty_raw_model(model_name_or_path, **kwargs)
     qconfig = get_inc_fp8config(model, from_neuralmagic, from_neuralmagic_with_kv)
     qconfig.save_temp_json_file()  # generate qconfig.json_file
+    src_world_size = qconfig.world_size if hasattr(qconfig, "world_size") else world_size
+    need_unify_weights = True if src_world_size > world_size else False
+    if world_size > 1:
+        assert torch.distributed.is_initialized(), "Distributed environment is not initialized."
 
     init_quantized_func_wrapper_factory()
     # replace modules to patched modules
@@ -628,17 +666,23 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
         gathered_state_dict = safe_load_file(cur_file)
         if from_neuralmagic or from_neuralmagic_with_kv:
             gathered_state_dict = convert_weight_to_inc(state_dict=gathered_state_dict)
-        if world_size > 0:
+        if src_world_size > 1:
             # only return state_dict for the current local_rank
             if from_neuralmagic or from_neuralmagic_with_kv:
                 rank_state_dict = split_rank_state_dict(model, gathered_state_dict)
             else:
-                rank_state_dict = shard_state_dict(gathered_state_dict)
-            model.load_state_dict(rank_state_dict, assign=True, strict=False)
-            load_scale_params(model, rank_state_dict)  # ensure per-channel scale is loaded correctly
+                rank_state_dict = shard_state_dict(gathered_state_dict, return_all_rank=need_unify_weights, src_world_size=src_world_size)
+                if need_unify_weights:
+                    # Assuming: src_world_size % world_size == 0
+                    if src_world_size % world_size != 0:
+                        raise EnvironmentError(
+                            f"Original world_size: {src_world_size} must be divisible by target world_size: {world_size}."
+                        )
+                    rank_state_dict = get_new_rank_state_dict(rank_state_dict, world_size, model=model)
         else:
-            model.load_state_dict(gathered_state_dict, assign=True, strict=False)
-            load_scale_params(model, gathered_state_dict)  # ensure per-channel scale is loaded correctly
+            rank_state_dict = gathered_state_dict
+        model.load_state_dict(rank_state_dict, assign=True, strict=False)
+        load_scale_params(model, rank_state_dict)  # ensure per-channel scale is loaded correctly
     clear_quantized_func_wrapper_factory()
     model.tie_weights()
     model = model.to(cur_accelerator.name())
@@ -751,6 +795,7 @@ def update_model_config(model, format, config_object):
         model.config.quantization_config = quantization_config
     else:
         config_object.mode = "LOAD"
+        config_object.world_size = world_size  # record world_size for loading
         model.config.quantization_config = config_object
 
 
@@ -769,3 +814,125 @@ def load_scale_params(model, new_scale_params):
             # update per-tensor scale with per-channel scale
             if old_scale.shape != new_scale.shape:
                 param.data = new_scale
+
+
+def get_new_rank_state_dict(all_rank_state_dict, world_size=world_size, local_rank=local_rank, model=None):
+    """Get new rank state_dict for world_size."""
+    def dq_q_weight(weight, previous_scale, target_scale):
+        """dequantize and quantize weight with different scales."""
+        cast_to_op = get_quantized_func_wrapper(OP_TYPE.CAST_TO_FP8, ScaleFormat.CONST)
+        cast_from_op = get_quantized_func_wrapper(OP_TYPE.CAST_FROM_FP8, ScaleFormat.CONST)
+        hp_weight = cast_from_op(weight, previous_scale, torch.bfloat16)
+        # cast_to_op should use scale_inv = 1/ scale
+        fp8_weight = cast_to_op(hp_weight, 1 / target_scale, False, False, dtype=weight.dtype)
+        return fp8_weight
+
+    def reorder_dict(d):
+        """Reorder dict by moving weights to the end so that scales are process first."""
+        from collections import OrderedDict
+        without_weight = OrderedDict((k, v) for k, v in d.items() if not k.endswith('.weight'))
+        with_weight = OrderedDict((k, v) for k, v in d.items() if k.endswith('.weight'))
+        reordered_dict = OrderedDict()
+        reordered_dict.update(without_weight)
+        reordered_dict.update(with_weight)
+        return reordered_dict
+
+    def get_src_ranks(src_world_size, dst_world_size, local_rank):
+        """Get src_ranks for current local_rank. 
+            e.g.
+                If src_world_size=8, dst_world_size=2:
+                    1. local_rank=0, src_ranks=[0, 1, 2, 3]
+                    2. local_rank=1, src_ranks=[4, 5, 6, 7]
+        """
+        shard_size = src_world_size // dst_world_size
+        rank_combination = [[] for _ in range(dst_world_size)]
+        for i in range(src_world_size):
+            dst_rank =  i // shard_size
+            rank_combination[dst_rank].append(i)
+        src_ranks = rank_combination[local_rank]
+        logger.info(f"local_rank={local_rank}, src_ranks={src_ranks}")
+        return src_ranks
+
+    def adjust_local_rank_and_world_size(world_size, local_rank):
+        """Adjust world_size and local_rank for single card."""
+        if world_size in [0, -1]:
+            world_size = 1
+        if local_rank == -1:
+            local_rank = 0
+        return world_size, local_rank
+
+    def check_tp_status(target_weight_name, new_rank_state_dict, params_dict, scale):
+        """Check is_tp, is_per_channel, is_tp_output_dim for tensor paralleled weight."""
+        assert target_weight_name in params_dict, f"Weight {target_weight_name} not found in state_dict."
+        target_weight_shape = params_dict[target_weight_name].shape
+        cur_weight_shape = new_rank_state_dict[target_weight_name].shape
+        is_tp = True if target_weight_shape != cur_weight_shape else False
+        is_per_channel = True if scale.numel() != 1 else False
+        # output dim of PatchedModule is 1, LinearAllReduce is sharding input dim
+        is_tp_output_dim = True if target_weight_shape[1] != cur_weight_shape[1] else False
+        return is_tp, is_per_channel, is_tp_output_dim
+
+    def update_corresponding_weight(previous_state_dict, cur_state_dict, target_weight_name, new_scale, previous_scale, cur_scale):
+        """Update corresponding weight based on new_scale, previous_scale, cur_scale."""
+        device = cur_accelerator.name()
+        if (new_scale != previous_scale).any():
+            # update previous weight
+            previous_state_dict[target_weight_name] = dq_q_weight(previous_state_dict[target_weight_name], previous_scale, new_scale)
+        if (new_scale != cur_scale).any():
+            # update new weight
+            cur_state_dict[target_weight_name] = cur_state_dict[target_weight_name].to(device)
+            cur_state_dict[target_weight_name] = dq_q_weight(cur_state_dict[target_weight_name], cur_scale, new_scale)
+
+
+    # Ensure world_size and local_rank are meaningful even in single card
+    world_size, local_rank = adjust_local_rank_and_world_size(world_size, local_rank)
+    # get source ranks for current local_rank, source ranks are used to merge state_dict
+    src_ranks = get_src_ranks(len(all_rank_state_dict), world_size, local_rank)
+
+    # merge state_dict for current local_rank
+    params_dict = dict(model.named_parameters())
+    device = cur_accelerator.name()
+    new_rank_state_dict = {}
+    # merge state_dict for current local_rank
+    for rank in src_ranks:
+        state_dict = all_rank_state_dict[rank]
+        # reorder dict for post-process weight with all-reduced scale
+        state_dict = reorder_dict(state_dict)
+        for k, v in state_dict.items():
+            v = v.to(device)
+            if k not in new_rank_state_dict:
+                new_rank_state_dict[k] = v
+            else:
+                module_name, param_name = k.rsplit('.', 1)
+                module = get_attr(model, module_name)
+                # process scales and weights based on is_per_channel, is_tp, is_tp_output_dim
+                if hasattr(module, "scale_members") and param_name in module.scale_members:
+                    previous_scale = new_rank_state_dict[k]
+                    cur_scale = v
+                    if param_name == "scale_weight":
+                        target_weight_name = module_name + ".weight"
+                        is_tp, is_per_channel, is_tp_output_dim = check_tp_status(
+                            target_weight_name, new_rank_state_dict, params_dict, cur_scale
+                        )
+                    # select correct way to update scales and weights
+                    if param_name == "scale_weight" and is_tp and is_per_channel and is_tp_output_dim:
+                        # only cat per-channel scales and weight
+                        new_rank_state_dict[k] = torch.cat([new_rank_state_dict[k], v], dim=0)
+                    else:
+                        # select correct scale with min/max
+                        if isinstance(module, QuantDequantBase) and param_name == "scale_inv":
+                            new_rank_state_dict[k] = torch.min(new_rank_state_dict[k], v)
+                        else:
+                            new_rank_state_dict[k] = torch.max(new_rank_state_dict[k], v)
+                        # update corresponding weight based on new_scale, previous_scale, cur_scale
+                        if (previous_scale != cur_scale).any() and param_name == "scale_weight":
+                            new_scale = new_rank_state_dict[k]
+                            update_corresponding_weight(
+                                new_rank_state_dict, state_dict, target_weight_name, new_scale, previous_scale, cur_scale
+                            )
+                elif k in params_dict and params_dict[k].shape != new_rank_state_dict[k].shape:
+                    # Detect tp dim by comparing current weight shape with the one in model, it's more robust.
+                    # e.g. LinearAllReduce(input dim) and LinearLayer(output dim) are using different dims.
+                    tp_dim = 0 if params_dict[k].shape[0] != new_rank_state_dict[k].shape[0] else 1
+                    new_rank_state_dict[k] = torch.cat([new_rank_state_dict[k], v], dim=tp_dim)
+    return new_rank_state_dict
