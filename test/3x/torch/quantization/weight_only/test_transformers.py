@@ -8,6 +8,7 @@ from packaging.version import Version
 from transformers import AutoTokenizer
 
 from neural_compressor.torch.utils import get_ipex_version
+from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.transformers import (
     AutoModelForCausalLM,
     Qwen2VLForConditionalGeneration,
@@ -90,6 +91,7 @@ class TestTansformersLikeAPI:
             tokenizer=tokenizer,
             batch_size=1,
             group_size=16,
+            compute_dtype="fp32"
         )
         woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
@@ -107,7 +109,10 @@ class TestTansformersLikeAPI:
         woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
         output = woq_model(dummy_input)
-        assert isclose(float(output[0][0][0][0]), 0.18400897085666656, rel_tol=1e-04)
+        if CpuInfo().bf16:
+            assert isclose(float(output[0][0][0][0]), 0.19140625, rel_tol=1e-04)
+        else:
+            assert isclose(float(output[0][0][0][0]), 0.18400897085666656, rel_tol=1e-04)
 
     def test_save_load(self):
         model_name_or_path = self.model_name_or_path
