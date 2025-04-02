@@ -28,6 +28,7 @@ from .patching_common import generate_model_info, mod_default_dict, parent_child
 from .measure import load_measurements
 from .scale import scale_method_mapping, load_layer_scales, prepare_layer_scales
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+from neural_compressor.torch.algorithms.fp8_quant._core.common import dequant_original_fp8_weight_if_needed
 
 
 cur_accelerator = auto_detect_accelerator()
@@ -74,9 +75,12 @@ def quantize_params(mod, mod_extra_config):
         param = getattr(mod, param_name)
         if param.dtype == torch.float16:
             param = param.to(torch.bfloat16)
+        param = dequant_original_fp8_weight_if_needed(mod, param)
         quantized_param = quantizer(param.to(cur_accelerator.name()))
         delattr(mod, param_name)
         setattr(mod, param_name, nn.Parameter(quantized_param))
+        # Note: in case of re-quantize the fp8 weights, we need to set `updated_fp8_weight` to True
+        mod.updated_fp8_weight = True
         quantized_param = getattr(mod, param_name)
         quantized_param.requires_grad_(False)
         cur_accelerator.synchronize()
