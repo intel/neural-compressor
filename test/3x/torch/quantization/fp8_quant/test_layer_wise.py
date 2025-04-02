@@ -5,10 +5,7 @@ import habana_frameworks.torch.core as htcore
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
 from neural_compressor.torch.quantization import FP8Config, convert, prepare, finalize_calibration
 from neural_compressor.torch.utils import get_used_cpu_mem_MB
-import gc
 
-
-htcore.hpu_set_env()
 
 @pytest.mark.xfail(reason="https://jira.habana-labs.com/browse/SW-218939")
 def test_two_step_layer_wise():
