@@ -23,6 +23,7 @@ from .scale import scale_method_mapping, scaling_params
 from .common import is_runtime_scale_patching
 
 import os
+import re
 import habana_frameworks.torch.utils.experimental as htexp
 
 
@@ -42,8 +43,11 @@ def print_init_info(config):
     logger.info("neural_compressor_pt Configuration = %s", config)
 
 
-def is_substr(substr_list, target):
-    return any([x in target for x in substr_list])
+def is_re_match(substr_list, target):
+    for substr in substr_list:
+        if re.search(substr, target):
+            return True
+    return False
 
 
 def should_quantize(config, mod_type, name):
@@ -57,12 +61,12 @@ def should_quantize(config, mod_type, name):
         return (mod_type in allowlist_tuple)
     def allowlist_is_empty_or_allows_mod(mod_type, name, config):
         def mod_is_in_allowlist_config(mod_type, name, config):
-            return ((mod_type in config.cfg["allowlist"]["types"]) or (is_substr(config.cfg["allowlist"]["names"], name)))
+            return ((mod_type in config.cfg["allowlist"]["types"]) or (is_re_match(config.cfg["allowlist"]["names"], name)))
         def is_allowlist_completely_empty(config):
             return ((len(config.cfg["allowlist"]["names"]) == 0) and len(config.cfg["allowlist"]["types"]) == 0)
         return (mod_is_in_allowlist_config(mod_type, name, config) or is_allowlist_completely_empty(config))
     def name_is_not_blocked(name, config):
-        return (not is_substr(config.cfg["blocklist"]["names"], name))
+        return (not is_re_match(config.cfg["blocklist"]["names"], name))
     def is_static_scale_method(config):
         return config.cfg["scale_method"] not in _dynamic_scale_methods
     def quantize_dynamic_op(config, mod_type):
