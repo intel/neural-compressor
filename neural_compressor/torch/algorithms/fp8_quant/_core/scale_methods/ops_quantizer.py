@@ -17,6 +17,7 @@ from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config imp
 from .scale_method_factory import ScaleMethodFactory, QuantTensorName
 from ..common import ModuleConfig, QuantTensorType
 from ..quant_dequant import DequantOutput, QuantDequant, QuantDequantNone, QuantInput, QuantDynamicInput
+from neural_compressor.torch.algorithms.fp8_quant._core.common import dequant_original_fp8_weight_if_needed
 
 
 class BaseOpQuantizer:
@@ -98,9 +99,11 @@ class LinearOpQuantizer(BaseOpQuantizer):
         input_scales = self.calc_input_scales(num_of_inputs=1)
         output_measurement = self.measurement.outputs[0] if self.measurement is not None else []
         rescaled_weight = self.mod.weight if hasattr(self.mod, 'weight') else None
+        if rescaled_weight is not None:
+            rescaled_weight = dequant_original_fp8_weight_if_needed(self.mod, rescaled_weight)
         if self.weight_ich_scale_calc is not None:
             weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST)
-            rescaled_weight = torch.div(self.mod.weight, weight_scales_in_ch.reshape([1, -1]))
+            rescaled_weight = torch.div(rescaled_weight, weight_scales_in_ch.reshape([1, -1]))
         weights_scales_out_ch = self.weight_och_scale_calc.calc_scales(rescaled_weight, QuantTensorType.CONST)
         params_config = {"weight": weights_scales_out_ch} if (
                 self.weight_ich_scale_calc is None) \
