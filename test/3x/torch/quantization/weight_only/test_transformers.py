@@ -91,7 +91,6 @@ class TestTansformersLikeAPI:
             tokenizer=tokenizer,
             batch_size=1,
             group_size=16,
-            compute_dtype="fp32"
         )
         woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
