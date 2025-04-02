@@ -309,6 +309,8 @@ class TestRTNQuant:
         ), "The results of calling `convert` + `prepare` and calling `quantize` should be equal."
 
     # TODO: (4, True, 32, 0), group_dim=0, format not supported
+    # TODO [SW-216127]: it's not in high priority, so we can implement it later.
+    @pytest.mark.skipif(is_hpex_available(), reason="These tests are not supported on HPU for now.")
     @pytest.mark.parametrize(
         "bits, use_sym, group_size, group_dim",
         [

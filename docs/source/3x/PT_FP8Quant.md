@@ -4,7 +4,8 @@ FP8 Quantization
 1. [Introduction](#introduction)
 2. [Supported Parameters](#supported-parameters)
 3. [Get Start with FP8 Quantization](#get-start-with-fp8-quantization)
-4. [Examples](#examples)  
+4. [Optimum-habana LLM example](#optimum-habana-LLM-example)
+5. [VLLM example](#VLLM-example)
 
 ## Introduction
 
@@ -75,30 +76,216 @@ Intel Neural Compressor provides general quantization APIs to leverage HPU FP8 c
 </tbody></table>
 
 ## Get Start with FP8 Quantization
+[Demo Usage](https://github.com/intel/neural-compressor?tab=readme-ov-file#getting-started)    
+[Computer vision example](../../../examples/3.x_api/pytorch/cv/fp8_quant)
 
-### Demo Usage
+## Optimum-habana LLM example
+### Overview
+[Optimum](https://huggingface.co/docs/optimum) is an extension of Transformers that provides a set of performance optimization tools to train and run models on targeted hardware with maximum efficiency.    
+[Optimum-habana](https://github.com/huggingface/optimum-habana) is the interface between the Transformers, Diffusers libraries and Intel Gaudi AI Accelerators (HPU). It provides higher performance based on modified modeling files, and utilizes Intel Neural Compressor for FP8 quantization internally,  [running-with-fp8](https://github.com/huggingface/optimum-habana/tree/main/examples/text-generation#running-with-fp8)    
+![](./imgs/optimum-habana.png)
+### Installation
+Refer to [optimum-habana, install-the-library-and-get-example-scripts](https://github.com/huggingface/optimum-habana?tab=readme-ov-file#install-the-library-and-get-example-scripts)    
+Option to install from source,
+```
+$ git clone https://github.com/huggingface/optimum-habana
+$ cd optimum-habana && git checkout v1.14.0 (change the version)
+$ pip install -e .
+$ pip install git+https://github.com/HabanaAI/DeepSpeed.git@1.18.0
+$ cd examples/text-generation
+$ pip install -r requirements.txt
+$ pip install -r requirements_lm_eval.txt  (Option)
+```
+### Check neural_compressor code
+> optimum-habana/examples/text-generation/utils.py
+>> initialize_model() -> setup_model() -> setup_quantization() -> FP8Config/prepare()/convert() 
 
-```python
-from neural_compressor.torch.quantization import (
-    FP8Config,
-    prepare,
-    convert,
-)
-import torchvision.models as models
+### FP8 KV cache
+Introduction: [kv-cache-quantization in huggingface transformers](https://huggingface.co/blog/kv-cache-quantization)    
 
-model = models.resnet18()
-qconfig = FP8Config(fp8_config="E4M3")
-model = prepare(model, qconfig)
-# customer defined calibration
-calib_func(model)
-model = convert(model)
+BF16 KVCache Code -> [Modeling_all_models.py -> KVCache()](https://github.com/huggingface/optimum-habana/blob/main/optimum/habana/transformers/models/modeling_all_models.py)    
+
+FP8 KVCache code trace with neural compressor support, for example Llama models,    
+> optimum-habana/optimum/habana/transformers/models/llama/modeling_llama.py     
+>> GaudiLlamaForCausalLM()  -> self.model()
+>>>    GaudiLlamaModel() -> forward() -> decoder_layer() ->  GaudiLlamaDecoderLayer() forward() -> pre_attn() -> pre_attn_forward() -> self.k_cache.update     
+
+> neural_compressor/torch/algorithms/fp8_quant/_quant_common/helper_modules.py    
+>> PatchedKVCache() -> update()    
+>> PatchedModuleFusedSDPA()
+
+Models list which support FP8 KV Cache,
+```
+microsoft/Phi-3-mini-4k-instruct
+bigcode/starcoder2-3b
+Qwen/Qwen2.5-7B-Instruct|
+meta-llama/Llama-3.2-3B-Instruct
+tiiuae/falcon-7b-instruct
+mistralai/Mixtral-8x7B-Instruct-v0.1
+EleutherAI/gpt-j-6b
+mistralai/Mistral-Nemo-Instruct-2407
+...
 ```
 
-## Examples
+### Running with FP8
+Refer to [here](https://github.com/huggingface/optimum-habana/tree/main/examples/text-generation#running-with-fp8).    
+Change "--model_name_or_path" to be your model like someone in the above models list. "--use_kv_cache" is or not to enable FP8 KV cache.
 
-| Task                 | Example |
-|----------------------|---------|
-| Computer Vision (CV)      |    [Link](../../../examples/3.x_api/pytorch/cv/fp8_quant/)     |
-| Large Language Model (LLM) |    [Link](https://github.com/huggingface/optimum-habana/tree/main/examples/text-generation#running-with-fp8)     |
+### Profiling
+Add "--profiling_warmup_steps 5 --profiling_steps 2 --profiling_record_shapes" as args in the end of commandline of `run_generation.py`.     
+Refer to [torch.profiler.ProfilerActivity.HPU](https://github.com/huggingface/optimum-habana/blob/c9e1c23620618e2f260c92c46dfeb163545ec5ba/optimum/habana/utils.py#L305).    
 
-> Note: For LLM, Optimum-habana provides higher performance based on modified modeling files, so here the Link of LLM goes to Optimum-habana, which utilize Intel Neural Compressor for FP8 quantization internally.
+### FP8 Accuracy 
+"lm_eval.tasks", "lm_eval.evaluator", "lm_eval" are installed from the above requirements_lm_eval.txt. The tasks can be set and the default is ["hellaswag", "lambada_openai", "piqa", "winogrande"], [more info](https://github.com/EleutherAI/lm-evaluation-harness/)    
+
+| `Llama-3.1-8B-Instruct`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
+|---------------|---------|--------|
+| lambada_openai| 0.7299  | 0.7359 |
+| hellaswag     | 0.5892  | 0.5911 |
+| piqa          | 0.7965  | 0.7998 |
+| winogrande    | 0.7474  | 0.7372 |
+| mmlu          | 0.6599  | 0.6829 |
+
+| `Phi-3-mini-4k-instruct`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
+|---------------|---------|--------|
+| lambada_openai| 0.6420  | 0.6552 |
+| hellaswag     | 0.5866  | 0.5902 |
+| piqa          | 0.8041  | 0.8014 |
+| winogrande    | 0.7324  | 0.7348 |
+| mmlu          | 0.7035  | 0.7055 |
+
+| `Mistral-7B-Instruct-v0.2`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
+|---------------|---------|--------|
+| lambada_openai| 0.7126  | 0.7165 |
+| hellaswag     | 0.6556  | 0.6609 |
+| piqa          | 0.8014  | 0.8025 |
+| winogrande    | 0.7253  | 0.7388 |
+| mmlu          | 0.5833  | 0.5919 |
+
+| `Mistral-Nemo-Instruct-2407`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
+|---------------|---------|--------|
+| lambada_openai| 0.7568  | 0.7596 |
+| hellaswag     | 0.6273  | 0.6325 |
+| piqa          | 0.8150  | 0.8085 |
+| winogrande    | 0.7419  | 0.7482 |
+| mmlu          | 0.6684  | 0.6840 |
+
+| `bigscience/bloom-7b1`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
+|---------------|---------|--------|
+| lambada_openai| 0.5599  | 0.5731 |
+| hellaswag     | 0.4632  | 0.4639 |
+| piqa          | 0.7301  | 0.7242 |
+| winogrande    | 0.6314  | 0.6393 |
+| mmlu          | 0.2563  | 0.2572 |
+
+| `Mixtral-8x7B-Instruct-v0.1`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
+|---------------|---------|--------|
+| lambada_openai| 0.7805  | 0.7778 |
+| hellaswag     | 0.6733  | 0.6764 |
+| piqa          | 0.8324  | 0.8351 |
+| winogrande    | 0.7680  | 0.7672 |
+| mmlu          | 0.7031  | 0.7026 |
+
+| `EleutherAI/gpt-j-6b`| fp8 w/ fp8 KVCache| bf16 w/ bf16 KVCache|
+|---------------|---------|--------|
+| lambada_openai| 0.6769  | 0.6781 |
+| hellaswag     | 0.4928  | 0.4958 |
+| piqa          | 0.7557  | 0.7541 |
+| winogrande    | 0.6409  | 0.6425 |
+| mmlu          | 0.2524  | 0.2606 |
+> Notes: For gpt-j model, if `--use_kv_cache` is set to enable KVCache quantization, `--reuse_cache` should also be set.    
+
+## VLLM example
+### Overview
+![](./imgs/vllm_gaudi.png)
+
+### Installation
+Refer to [Habana vllm-fork](https://github.com/HabanaAI/vllm-fork) to install.    
+Option to install `vllm-hpu-extension`, `neural_compressor` and `vllm` from the source,
+```
+$ git clone https://github.com/HabanaAI/vllm-fork.git
+$ cd vllm-fork
+$ pip install -r requirements-hpu.txt
+$ python setup.py develop --user
+
+## Check
+$ pip list |grep vllm
+vllm                              0.6.3.dev1122+g2f43ebf5.d20241121.gaudi118 /home/fengding/vllm-fork
+vllm-hpu-extension                0.1
+
+## Validation
+$ VLLM_SKIP_WARMUP=true python3 examples/offline_inference.py
+......
+Prompt: 'Hello, my name is', Generated text: ' Kelly and I have a job to do.\nI need someone to come over'
+Prompt: 'The president of the United States is', Generated text: ' facing a sharp criticism of his handling of the coronavirus pandemic, including'
+Prompt: 'The capital of France is', Generated text: ' the capital of the Socialist Party of France (SPF), with its state-'
+Prompt: 'The future of AI is', Generated text: " in what's coming, not what's coming.\nI don't know what"
+```
+
+### Run FP8 calibration
+Refer to [vllm-hpu-extension->calibration](https://github.com/HabanaAI/vllm-hpu-extension/tree/main/calibration)    
+```
+$ git clone https://github.com/HabanaAI/vllm-hpu-extension
+$ cd vllm-hpu-extension/calibration
+
+# For Llama-3.1.8B-Instruct
+$ ./calibrate_model.sh -m meta-llama/Llama-3.1-8B-Instruct -d /home/fengding/processed-data.pkl -o ./output_llama3.1.8b.Instruct -b 128 -t 1 -l 128
+    ## Generate scale factors in ./output_llama3.1.8b.Instruct
+```
+
+### Start vllm server
+```
+$ cd vllm-fork/
+
+$ PT_HPU_ENABLE_LAZY_COLLECTIVES=true \
+PT_HPU_WEIGHT_SHARING=0 \
+VLLM_CONTIGUOUS_PA=true \
+VLLM_SKIP_WARMUP=true \
+QUANT_CONFIG=output_llama3.1.8b.Instruct/maxabs_quant_g2.json \
+python3 -m vllm.entrypoints.openai.api_server \
+--model meta-llama/Llama-3.1-8B-Instruct \
+--port 8080 \
+--gpu-memory-utilization 0.9 \
+--tensor-parallel-size 1 \
+--disable-log-requests \
+--block-size 128 \
+--quantization inc \
+--kv-cache-dtype fp8_inc \
+--device hpu \
+--weights-load-device cpu \
+--dtype bfloat16 \
+--num_scheduler_steps 16 2>&1 > vllm_serving.log &
+```
+Refer to [vllm-fork->README_GAUDI.md](https://github.com/HabanaAI/vllm-fork/blob/habana_main/README_GAUDI.md) for more details.
+
+### Start client to test
+```
+$ curl --noproxy "*" http://localhost:8080/v1/completions -H "Content-Type: application/json" -d '{"model": "meta-llama/Llama-3.1-8B-Instruct", "prompt": "San Francisco is a", "max_tokens": 100}'
+```
+
+### Run benchmark
+```
+python benchmarks/benchmark_serving.py \
+--backend vllm \
+--model meta-llama/Llama-3.1-8B-Instruct  \
+--dataset-name sonnet \
+--dataset-path benchmarks/sonnet.txt \
+--request-rate 128 \
+--num-prompts 128 \
+--port 8080 \
+--sonnet-input-len 128 \
+--sonnet-output-len 128 \
+--sonnet-prefix-len 100
+```
+
+### FP8 KV cache
+Code trace
+> vllm-fork/vllm/attention/backends/hpu_attn.py
+>> from vllm_hpu_extension.utils import Matmul, Softmax, VLLMKVCache
+>> HPUAttentionImpl() -> self.k_cache() / self.v_cache()    
+
+> neural_compressor/torch/algorithms/fp8_quant/_quant_common/helper_modules.py
+>> PatchedVLLMKVCache()
+
+> neural_compressor/torch/algorithms/fp8_quant/common.py
+>> "VLLMKVCache": ModuleInfo("kv_cache", PatchedVLLMKVCache)

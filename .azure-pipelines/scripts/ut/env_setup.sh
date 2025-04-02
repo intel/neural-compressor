@@ -37,7 +37,7 @@ fi
 
 if [[ "${itex_version}" != "" ]]; then
     pip install --upgrade intel-extension-for-tensorflow[cpu]==${itex_version}
-    pip install tf2onnx
+    pip install tf2onnx==1.16.1
 fi
 
 if [[ "${pytorch_version}" != "" ]]; then
@@ -63,7 +63,7 @@ if [[ "${onnxruntime_version}" != "" ]]; then
     else
         pip install onnxruntime-extensions
     fi
-    pip install optimum
+    pip install optimum==1.24.0
 fi
 
 if [ "${mxnet_version}" != '' ]; then
@@ -77,14 +77,14 @@ fi
 # install special test env requirements
 # common deps
 pip install cmake
-pip install transformers
+pip install transformers==4.50.0
 
 if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then
-    pip install tf_slim xgboost accelerate==0.21.0 peft
+    pip install tf_slim==1.1.0 xgboost==2.1.4 accelerate==0.21.0 peft==0.14.0
 elif [[ $(echo "${test_case}" | grep -c "nas") != 0 ]]; then
     pip install dynast==1.6.0rc1
 elif [[ $(echo "${test_case}" | grep -c "tf pruning") != 0 ]]; then
-    pip install tensorflow-addons
+    pip install tensorflow-addons==0.23.0
     # Workaround
     # horovod can't be install in the env with TF and PT together
     # so test distribute cases in the env with single fw installed
@@ -92,7 +92,7 @@ elif [[ $(echo "${test_case}" | grep -c "tf pruning") != 0 ]]; then
 fi
 
 if [[ $(echo "${test_case}" | grep -c "api") != 0 ]] || [[ $(echo "${test_case}" | grep -c "adaptor") != 0 ]]; then
-    pip install git+https://github.com/intel/auto-round.git@e24b9074af6cdb099e31c92eb81b7f5e9a4a244e
+    pip install auto-round==0.4.6
 fi
 
 # test deps

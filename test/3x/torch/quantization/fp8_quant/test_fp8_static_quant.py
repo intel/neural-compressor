@@ -3,7 +3,6 @@ import shutil
 
 import pytest
 import torch
-import torchvision
 import transformers
 
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedConv2d, PatchedLinear
@@ -35,14 +34,12 @@ def calib_func(model):
         model(example_inputs)
 
 @pytest.mark.skipif(not is_hpex_available(), reason="HPU environment is required!")
-class TestFP8StaticQuant:
+class TestFP8StaticQuantNLP:
     def setup_class(self):
         change_to_cur_file_dir()
         config = transformers.AutoConfig.from_pretrained("./model_configs/tiny_gptj.json")
         self.tiny_gptj = transformers.AutoModelForCausalLM.from_config(config)
         self.example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long).to("hpu")
-        self.resnet18 = torchvision.models.resnet18()
-        self.cv_dummy_inputs = torch.randn([1, 3, 224, 224]).to("hpu")
 
     def teardown_class(self):
         shutil.rmtree("test_ouputs", ignore_errors=True)
@@ -72,6 +69,38 @@ class TestFP8StaticQuant:
         assert (fp32_out != fp8_out).any(), "FP32 output should be different with FP8 output"
 
     @torch.no_grad()
+    def test_two_step_quant_nlp(self):
+        # step 1: measurement
+        model = copy.deepcopy(self.tiny_gptj)
+        config = FP8Config.from_json_file("test_fp8_jsons/test_measure.json")
+        model = prepare(model, config)
+        calib_func(model)
+        finalize_calibration(model)
+        assert isinstance(model.transformer.h[0].attn.k_proj, PatchedLinear), "k_proj is not observed."
+        # step 2: quantize based on measurement
+        model = copy.deepcopy(self.tiny_gptj)
+        config = FP8Config.from_json_file("test_fp8_jsons/test_hw_quant.json")
+        model = convert(model, config)
+        assert isinstance(model.transformer.h[0].attn.k_proj, PatchedLinear), "k_proj is not quantized."
+        assert (
+            model.transformer.h[0].attn.k_proj.quant_input.lp_dtype == torch.float8_e4m3fn
+        ), "k_proj input dtype is not torch.float8_e4m3fn."
+
+
+@pytest.mark.xfail(reason="[SW-219514] RuntimeError: operator torchvision::nms does not exist")
+@pytest.mark.skipif(not is_hpex_available(), reason="HPU environment is required!")
+class TestFP8StaticQuantCV:
+    def setup_class(self):
+        change_to_cur_file_dir()
+        import torchvision
+        self.resnet18 = torchvision.models.resnet18()
+        self.cv_dummy_inputs = torch.randn([1, 3, 224, 224]).to("hpu")
+
+    def teardown_class(self):
+        shutil.rmtree("test_ouputs", ignore_errors=True)
+        shutil.rmtree("saved_results", ignore_errors=True)
+
+    @torch.no_grad()
     def test_one_step_quant_cv(self):
         model = copy.deepcopy(self.resnet18)
         model.to("hpu")
@@ -92,24 +121,6 @@ class TestFP8StaticQuant:
             and model.conv1.quant_input.lp_dtype == torch.float8_e4m3fn
         ), "model is not quantized to torch.float8_e4m3fn."
         assert (fp32_out != fp8_out).any(), "FP32 output should be different with FP8 output"
-
-    @torch.no_grad()
-    def test_two_step_quant_nlp(self):
-        # step 1: measurement
-        model = copy.deepcopy(self.tiny_gptj)
-        config = FP8Config.from_json_file("test_fp8_jsons/test_measure.json")
-        model = prepare(model, config)
-        calib_func(model)
-        finalize_calibration(model)
-        assert isinstance(model.transformer.h[0].attn.k_proj, PatchedLinear), "k_proj is not observed."
-        # step 2: quantize based on measurement
-        model = copy.deepcopy(self.tiny_gptj)
-        config = FP8Config.from_json_file("test_fp8_jsons/test_hw_quant.json")
-        model = convert(model, config)
-        assert isinstance(model.transformer.h[0].attn.k_proj, PatchedLinear), "k_proj is not quantized."
-        assert (
-            model.transformer.h[0].attn.k_proj.quant_input.lp_dtype == torch.float8_e4m3fn
-        ), "k_proj input dtype is not torch.float8_e4m3fn."
 
     @torch.no_grad()
     def test_two_step_quant_cv(self):

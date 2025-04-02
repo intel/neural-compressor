@@ -957,7 +957,7 @@ class AutoRoundConfig(TorchBaseConfig):
         enable_torch_compile: bool = None,
         # mllm
         is_mllm: bool = False,
-        quant_nontext_module: Union[str, list] = None,
+        quant_nontext_module: bool = False,
         extra_data_dir: str = None,
         processor=None,
         image_processor=None,
@@ -1002,7 +1002,7 @@ class AutoRoundConfig(TorchBaseConfig):
             export_format (str, optional): The format used for exporting the quantized model. Defaults to "itrex".
             enable_norm_bias_tuning (bool): Whether to enable fast norm/layer_bias tuning.
             enable_torch_compile (bool): Whether to enable torch compile to optimize quant_block/layer, torch>=2.6 True.
-            quant_nontext_module (Union[str, list]): Whether to quantize nontext module.
+            quant_nontext_module (bool): Whether to quantize nontext module.
             extra_data_dir (str): The path for extra data such as images, audio or videos.
             is_mllm (bool): Indicates whether the model to be quantized is a multi-modal model (MLLM).
             processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or
@@ -1796,6 +1796,7 @@ from ..algorithms.fp8_quant._core.patching_common import get_white_list
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
 class FP8Config(TorchBaseConfig):
     """Config class for FP8 quantization."""
+
     name = FP8_QUANT
 
     def __init__(
@@ -1972,7 +1973,7 @@ def get_default_fp8_config_set() -> FP8Config:
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=HYBRID_GPTQ)
 class HybridGPTQConfig(FP8Config):
     """Config class for Hybrid Precision GPTQ quantization.
-    Currently supports running 4bit weights which have been quantized by GPTQ, during which 
+    Currently supports running 4bit weights which have been quantized by GPTQ, during which
     the weights have been double quantized from high precision, to fp8, to int4.
     The activations will be quantized to fp8."""
     name = HYBRID_GPTQ
@@ -2136,3 +2137,14 @@ class StaticQuantConfig(TorchBaseConfig):
         else:
             config_cls = self._model_mapping[STATIC_QUANT]
         return config_cls(*args, **kwargs)
+
+    @classmethod
+    def get_config_set_for_tuning(cls, dtype="int8"):
+        """Map to different config set for tuning."""
+        # dtype = "fp8", "int8"
+        if dtype == "fp8":
+            return cls._model_mapping[FP8_QUANT].get_config_set_for_tuning()
+        elif dtype == "int8":
+            return cls._model_mapping[STATIC_QUANT].get_config_set_for_tuning()
+        else:
+            raise ValueError(f"Unsupported dtype: {dtype}, allowed values are 'fp8' and 'int8'.")

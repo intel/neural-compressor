@@ -18,6 +18,7 @@
 
 from __future__ import annotations
 
+import copy
 import inspect
 import json
 import os
@@ -539,6 +540,7 @@ class BaseConfig(ABC):
                 tuning_param_pair = dict(zip(tuning_param_name_lst, params_values))
                 tmp_params_dict = {**not_tuning_param_pair, **tuning_param_pair}
                 new_config = self.__class__(**tmp_params_dict)
+                new_config.local_config = copy.deepcopy(self.local_config)
                 logger.info(new_config.to_dict())
                 config_list.append(new_config)
         logger.info("Expanded the %s and got %d configs.", self.__class__.name, len(config_list))
@@ -629,9 +631,13 @@ class BaseConfig(ABC):
         """
         if not isinstance(other, type(self)):
             return False
-        return self.params_list == other.params_list and all(
+
+        params_equal = self.params_list == other.params_list and all(
             getattr(self, str(attr)) == getattr(other, str(attr)) for attr in self.params_list
         )
+        local_config_equal = self.local_config == other.local_config
+        global_config_equal = self.global_config == other.global_config
+        return params_equal and local_config_equal and global_config_equal
 
 
 class ComposableConfig(BaseConfig):

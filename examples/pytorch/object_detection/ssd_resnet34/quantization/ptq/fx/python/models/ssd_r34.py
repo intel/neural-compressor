@@ -262,7 +262,7 @@ class SSD_R34(nn.Module):
             self.size=(1200,1200)
             dboxes = dboxes_R34_coco(list(self.size),[3,3,2,2,2,2])
             self.encoder = Encoder(dboxes)
-        # intitalize all weights
+        # initialize all weights
         self._init_weights()
         self.device = 1
     def _build_additional_features(self, input_channels):

@@ -13,6 +13,7 @@
 # limitations under the License.
 """Rewrite the FP32 operators to FP16 or BF16 operators."""
 
+from collections import defaultdict
 from dataclasses import dataclass
 from functools import partial
 from typing import Any, Callable, Dict, List, Tuple
@@ -25,7 +26,7 @@ from torch.fx.experimental.proxy_tensor import make_fx
 from torch.fx.subgraph_rewriter import Match
 from typing_extensions import TypeAlias
 
-from neural_compressor.common import utils
+from neural_compressor.common import logger, utils
 
 # =============================================================================
 # Search and replace patterns
@@ -50,25 +51,44 @@ class PatternPair:
 
 # key: torch func
 # value: the tuple of args
-FuncArgsMappingType: TypeAlias = Dict[TorchFuncType, Tuple[torch.Tensor, ...]]
+FuncArgsMappingType: TypeAlias = Dict[TorchFuncType, List[Tuple[torch.Tensor, ...]]]
 
 
-# Align with https://pytorch.org/docs/stable/amp.html#cpu-ops-that-can-autocast-to-bfloat16
-# TODO: complete the mapping
+# Align with xiq, as it relay on xiq's set_module_xx capability
 FN_ARGS_MAPPING: FuncArgsMappingType = {
-    torch.nn.functional.linear: (torch.randn(0, 0), torch.randn(0, 0)),  # linear w/o bias
-    torch.nn.functional.linear: (torch.randn(0, 0), torch.randn(0, 0), torch.randn(0)),  # linear w/ bias
+    # Note: ORDER is matter
+    torch.nn.functional.linear: [
+        (torch.randn(0, 0), torch.randn(0, 0)),  # linear w/o bias
+        (torch.randn(0, 0), torch.randn(0, 0), torch.randn(0)),  # linear w/ bias
+    ],
+    torch.nn.functional.conv2d: [
+        (torch.randn(1, 1, 1, 1), torch.randn(1, 1, 1, 1)),  # conv2d w/o bias
+        (torch.randn(1, 1, 1, 1), torch.randn(1, 1, 1, 1), torch.randn(1)),  # conv2d w/ bias
+    ],
+    torch.matmul: [
+        (torch.randn(0, 0), torch.randn(0, 0)),
+        (torch.randn(0, 0, 0), torch.randn(0, 0, 0)),
+        (torch.randn(0, 0, 0, 0), torch.randn(0, 0, 0, 0)),
+    ],
 }
-# TODO: complete the mapping
-FN_ATEN_OPS_MAPPING = {
-    torch.nn.functional.linear: torch.ops.aten.linear.default,
+
+# module cls <-> function name
+NN_MODULES_TO_NN_FN = {
+    torch.nn.Linear: torch.nn.functional.linear,
+    torch.nn.Conv2d: torch.nn.functional.conv2d,
 }
+
+# Use the mapping from xiq
+FN_ATEN_OPS_MAPPING = xiq._map_module_function_to_aten_operator_type()
 
 SUPPORTED_OPERATORS = FN_ATEN_OPS_MAPPING.values()
 
 
 PatternRegistryType: TypeAlias = Dict[TorchFuncType, PatternPair]
-HALF_PRECISION_PATTERN_REGISTRY: Dict[torch.dtype, PatternRegistryType] = {torch.float16: {}, torch.bfloat16: {}}
+HALF_PRECISION_PATTERN_REGISTRY: Dict[torch.dtype, PatternRegistryType] = {
+    torch.float16: defaultdict(list),
+    torch.bfloat16: defaultdict(list),
+}
 
 # FP16_PATTERN_REGISTRY: PatternRegistryType = HALF_PRECISION_PATTERN_REGISTRY[torch.float16]
 # BF16_PATTERN_REGISTRY: PatternRegistryType = HALF_PRECISION_PATTERN_REGISTRY[torch.bfloat16]
@@ -98,15 +118,18 @@ def pattern_factory(fn: TorchFuncType, fn_arg: Tuple[torch.Tensor, ...], target_
 
 
 def _register_pattern_pair(dtype: torch.dtype) -> None:
-    for fn, fn_args in FN_ARGS_MAPPING.items():
-        pattern_pair = pattern_factory(fn, fn_args)
-        HALF_PRECISION_PATTERN_REGISTRY[dtype][fn] = pattern_pair
-    utils.logger.info(
+    for fn, fn_args_lst in FN_ARGS_MAPPING.items():
+        for fn_args in fn_args_lst:
+            logger.debug(f"Registering search and replace patterns for {fn} with args: {fn_args}.")
+            pattern_pair = pattern_factory(fn, fn_args)
+            HALF_PRECISION_PATTERN_REGISTRY[dtype][fn].append(pattern_pair)
+    utils.logger.debug(
         f"Registered {len(HALF_PRECISION_PATTERN_REGISTRY[dtype])} search and replace patterns for {dtype}."
     )
 
 
 _register_pattern_pair(torch.float16)
+_register_pattern_pair(torch.bfloat16)
 
 
 def get_filter_fn(node_list, fn):
@@ -182,9 +205,10 @@ def get_unquantized_node_set(gm: torch.fx.GraphModule):
 
 def transformation(gm: torch.fx.GraphModule, node_candidate_list: List[str], target_dtype: torch.dtype = torch.float16):
     """Convert the nodes in `node_candidate_list` to `target_dtype` if possible."""
-    for pattern_pair in HALF_PRECISION_PATTERN_REGISTRY[target_dtype].values():
-        apply_single_pattern_pair(gm, pattern_pair, node_candidate_list)
-    utils.logger.info("Half precision conversion is done:")
+    for pattern_pair_lst in HALF_PRECISION_PATTERN_REGISTRY[target_dtype].values():
+        for pattern_pair in pattern_pair_lst:
+            apply_single_pattern_pair(gm, pattern_pair, node_candidate_list)
+    utils.logger.info(f"Half precision conversion({target_dtype}) completed.")
     if utils.level_name == "DEBUG":  # pragma: no cover
         gm.print_readable(True)
 
@@ -201,11 +225,11 @@ def _parse_node_candidate_set_from_user_config(config, gm):
     op_name_filters = []
     for op_type_name, config in op_type_configs.items():  # pragma: no cover
         op_type = getattr(torch.nn, op_type_name)
-        if config.act_dtype == "fp16":  # pragma: no cover
+        if config.act_dtype in ["fp16", "bf16"]:  # pragma: no cover
             filter = xpq._get_module_type_filter(op_type)
             op_type_filters.append(filter)
     for op_name, config in op_name_configs.items():
-        if config.act_dtype == "fp16":  # pragma: no cover
+        if config.act_dtype in ["fp16", "bf16"]:  # pragma: no cover
             filter = xpq._get_module_name_filter(op_name)
             op_name_filters.append(filter)
     node_set_from_user_config = set()
@@ -237,5 +261,7 @@ def get_half_precision_node_set(gm, config):
     for node in possible_node_set:
         if node.target in SUPPORTED_OPERATORS:
             half_precision_node_set.add(node)
-    utils.logger.info(f"Found {len(half_precision_node_set)} nodes to convert to half precision.")
+    utils.logger.info(
+        f"Found {len(half_precision_node_set)} nodes to convert to half precision: {half_precision_node_set}"
+    )
     return half_precision_node_set

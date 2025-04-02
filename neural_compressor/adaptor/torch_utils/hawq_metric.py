@@ -23,14 +23,11 @@ import copy
 import logging
 
 import numpy as np
-import torch.nn
-import torch.nn as nn
 from torch.quantization.quantize_fx import fuse_fx
 
 logger = logging.getLogger(__name__)
 from typing import Any, Callable, Dict, List, Optional, Set, Union
 
-import torch
 import tqdm
 
 

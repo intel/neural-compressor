@@ -845,7 +845,7 @@ def run():
         example_inputs = (X_test, lS_o_test, lS_i_test)
         assert args.inference_only, "Please set inference_only in arguments"
         from neural_compressor.torch.quantization import StaticQuantConfig, autotune, TuningConfig
-        tune_config = TuningConfig(config_set=StaticQuantConfig.get_config_set_for_tuning())
+        tune_config = TuningConfig(config_set=StaticQuantConfig.get_config_set_for_tuning(dtype="int8"))
 
         dlrm = autotune(
             dlrm, 

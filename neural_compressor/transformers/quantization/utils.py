@@ -17,6 +17,7 @@
 import json
 import math
 import os
+import re
 import types
 
 from datasets import load_dataset
@@ -33,10 +34,15 @@ from neural_compressor.torch.quantization import (
     convert,
     prepare,
 )
-from neural_compressor.torch.utils import is_ipex_available
+from neural_compressor.torch.utils import is_ipex_available, is_package_available
 
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
+
+if is_package_available("auto_round"):
+    import auto_round
+    import transformers
+    from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear as auto_round_woq_linear
 
 from typing import Union
 
@@ -126,10 +132,12 @@ def _replace_linear(
         if (
             isinstance(module, torch.nn.Linear)
             or isinstance(module, INCWeightOnlyLinear)
-            or (is_ipex_available() and isinstance(module, ipex.nn.utils._weight_prepack._IPEXLinear))
+            or (is_package_available("auto_round") and isinstance(module, auto_round_woq_linear))
         ) and (name not in modules_to_not_convert):
             # Check if the current key is not in the `modules_to_not_convert`
-            if not any(key in ".".join(current_key_name) for key in modules_to_not_convert):
+            if not any(key in ".".join(current_key_name) for key in modules_to_not_convert) and not any(
+                re.match(pattern, ".".join(current_key_name)) for pattern in modules_to_not_convert
+            ):
                 in_features = module.in_features
                 out_features = module.out_features
                 if device == "cpu" or device == torch.device("cpu") or device == "auto":
@@ -475,6 +483,54 @@ def convert_to_quantized_model(model, config, device="cpu"):
         run_fn(model, *run_args)
         model = convert(model)
     elif config.quant_method.value == "autoround":
+        if config.is_vlm is True:
+            from transformers import AutoProcessor, AutoTokenizer
+
+            from neural_compressor.torch.algorithms.weight_only.autoround import (
+                get_mllm_dataloader as get_autoround_dataloader,
+            )
+
+            tokenizer = AutoTokenizer.from_pretrained(model.config._name_or_path)
+            processor = AutoProcessor.from_pretrained(model.config._name_or_path, trust_remote_code=True)
+            (
+                dataloader,
+                template,
+                config.truncation,
+                config.batch_size,
+                config.gradient_accumulate_steps,
+                config.seq_len,
+                config.n_samples,
+            ) = get_autoround_dataloader(
+                template=None,
+                model=model,
+                tokenizer=tokenizer,
+                image_processor=None,
+                dataset=config.dataset,
+                extra_data_dir=None,
+                seqlen=config.seq_len,
+                batch_size=config.batch_size,
+                split=None,
+                apply_template=None,
+                truncation=False,
+                nsamples=config.n_samples,
+                seed=42,
+                gradient_accumulate_steps=config.gradient_accumulate_steps,
+                quant_nontext_module=config.quant_nontext_module,
+                processor=processor,
+            )
+        else:
+            from neural_compressor.torch.algorithms.weight_only.autoround import (
+                get_dataloader as get_autoround_dataloader,
+            )
+
+            dataloader = get_autoround_dataloader(
+                tokenizer=config.tokenizer,
+                seqlen=config.seq_len,
+                dataset_name=config.dataset,
+                seed=42,
+                bs=config.batch_size,
+                nsamples=config.n_samples,
+            )
         quant_config = AutoRoundConfig(
             dtype=dtype,
             bits=config.bits,
@@ -486,24 +542,59 @@ def convert_to_quantized_model(model, config, device="cpu"):
             seqlen=config.seq_len,
             nsamples=config.n_samples,
             iters=config.iters,
+            batch_size=config.batch_size,
             scale_dtype=config.scale_dtype,
             use_layer_wise=config.use_layer_wise,
+            # vlm arguments
+            is_mllm=config.is_vlm,
+            quant_nontext_module=config.quant_nontext_module,
+            truncation=config.truncation,
+            gradient_accumulate_steps=config.gradient_accumulate_steps,
+            export_format=config.export_format,
         )
+
+        # vlm set non-text module config
+        if config.is_vlm is True:
+            from neural_compressor.torch.utils.utility import (
+                find_matching_blocks,
+                get_layer_names_in_block,
+                get_multimodal_block_names,
+            )
+
+            def set_nontext_module_config(model, to_quant_block_names, config):
+                all_block_list = get_multimodal_block_names(model, quant_vision=True)
+                all_block_set = set(tuple(block) for block in all_block_list)
+                quant_block_set = set(tuple(block) for block in to_quant_block_names)
+                set_to_full_prec = list(all_block_set - quant_block_set)
+                set_to_full_prec = get_layer_names_in_block(model, to_quant_block_names=set_to_full_prec)
+                for name in set_to_full_prec:
+                    config.modules_to_not_convert.append(name)
+
+                # skip layers not in blocks
+                config.modules_to_not_convert.append("model.vision_embed_tokens.img_projection*")
+                config.modules_to_not_convert.append("transformer.visual.attn_pool.*_proj")
+                config.modules_to_not_convert.append("model.mm_projector*")
+                config.modules_to_not_convert.append("multi_modal_projector")
+                config.modules_to_not_convert.append("visual.merger")
+
+            all_blocks = get_multimodal_block_names(model, quant_config.quant_nontext_module)
+            to_quant_block_names = find_matching_blocks(model, all_blocks, quant_config.to_quant_block_names)
+            set_nontext_module_config(model, to_quant_block_names, config)
+
+            for n, m in model.named_modules():
+                if isinstance(m, torch.nn.Linear) or isinstance(m, transformers.modeling_utils.Conv1D):
+                    if m.weight.shape[0] % 32 != 0 or m.weight.shape[1] % 32 != 0:
+                        config.modules_to_not_convert.append(n)
+                        print(
+                            f"{n} will not be quantized due to its shape not being divisible by 32,"
+                            " resulting in an exporting issue to autogptq"
+                        )
         if config.modules_to_not_convert != []:
             for module in config.modules_to_not_convert:
                 module_name = ".*" + module
                 quant_config.set_local(module_name, AutoRoundConfig(dtype="fp32"))
         logger.info(f"Do AutoRound algorithm with config {quant_config}")
-        from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader as get_autoround_dataloader
 
-        dataloader = get_autoround_dataloader(
-            tokenizer=config.tokenizer,
-            seqlen=config.seq_len,
-            dataset_name=config.dataset,
-            seed=42,
-            bs=config.batch_size,
-            nsamples=config.n_samples,
-        )
         run_fn = run_fn_for_autoround
         run_args = (dataloader,)
         model = prepare(model=model, quant_config=quant_config)
@@ -569,9 +660,13 @@ def convert_to_GPTQ_checkpoints(model, quantization_config):
             new_module.n_pack = 32 // bits
             scales = module._op_context.get_scales().t().contiguous()
             bias = module._op_context.get_bias()
-            qzeros = new_module.pack_tensor_with_numpy(
-                module._op_context.get_zero_points().t().to(torch.uint8) - 1
-            ).contiguous()
+            qzeros = module._op_context.get_zero_points().t().to(torch.uint8)
+            # For group_size = -1, the dimensions of scale and qzeros will be 1
+            if len(scales.shape) == 1:
+                scales = scales.unsqueeze(0)
+            if len(qzeros.shape) == 1:
+                qzeros = qzeros.unsqueeze(0)
+            qzeros = new_module.pack_tensor_with_numpy(qzeros - 1).contiguous()
             g_idx = module._op_context.get_g_idx()
 
             new_module.qweight = qweight
