@@ -51,6 +51,7 @@ flags.DEFINE_integer('batch_size', 32, 'batch_size')
 flags.DEFINE_integer(
     'iters', 100, 'maximum iteration when evaluating performance')
 
+
 from neural_compressor import Metric
 from neural_compressor.data.transforms.transform import ComposeTransform
 from neural_compressor.data.datasets.dataset import TensorflowImageRecord
@@ -116,6 +117,7 @@ def evaluate(model):
 
 def main(_):
     if FLAGS.tune:
+        print("Here!")
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
         from neural_compressor import set_random_seed
@@ -127,7 +129,8 @@ def main(_):
             conf=config,
             calib_dataloader=calib_dataloader,
             eval_func=evaluate)
-        q_model.save(FLAGS.output_model)
+        # q_model.save(FLAGS.output_model)
+        # q_model.save("test.h5")
 
     if FLAGS.benchmark:
         from neural_compressor.benchmark import fit
