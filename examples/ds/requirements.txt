@@ -1,0 +1,6 @@
+loguru
+torch
+safetensors
+tqdm
+transformers
+psutil
