@@ -1,5 +1,4 @@
-numpy==1.26.4 ; python_version < '3.12'
-numpy<2.0 ; python_version >= '3.12'
+numpy
 prettytable
 psutil
 py-cpuinfo
