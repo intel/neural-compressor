@@ -740,13 +740,19 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.forward = self.forward_orig
+        self.ep_size = mod.ep_size
+        self.experts_min = mod.experts_min
+        self.experts_max = mod.experts_max
+        self.experts_range = mod.experts_range
+        self.num_experts = mod.num_experts
+
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.dynamic_moe_op = get_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE, self.scale_format)
             self.quant_input = self._mod_extra_config.inputs[0]
             self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
             self.register_scale(
                 "scale_intermediate",
-                [mod_extra_config.scale.inputs[x] for x in range(1, self.num_experts+1)],
+                [mod_extra_config.scale.inputs[x] for x in range(self.experts_min+1, self.experts_max +2)],
                 self.scale_format,
             )
             mod.call_dynamic_moe_op = get_call_wrapper(self, "call_dynamic_moe_quant_op")
@@ -759,12 +765,12 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
                                   router_weights,
                                   permuted_weights=False,
                                   activation="silu"):
-        w1_list = [expert.w1.weight for expert in self.experts]
-        w2_list = [expert.w2.weight for expert in self.experts]
-        w3_list = [expert.w3.weight for expert in self.experts]
-        scale_w1 = [expert.w1.scale_weight for expert in self.experts]
-        scale_w2 = [expert.w2.scale_weight for expert in self.experts]
-        scale_w3 = [expert.w3.scale_weight for expert in self.experts]
+        w1_list = [self.experts[i].w1.weight for i in self.experts_range]
+        w2_list = [self.experts[i].w2.weight for i in self.experts_range]
+        w3_list = [self.experts[i].w3.weight for i in self.experts_range]
+        scale_w1 = [self.experts[i].w1.scale_weight for i in self.experts_range]
+        scale_w2 = [self.experts[i].w2.scale_weight for i in self.experts_range]
+        scale_w3 = [self.experts[i].w3.scale_weight for i in self.experts_range]
         qinput = self.quant_input(hidden_states)
         output = self.dynamic_moe_op(
             hidden_states=qinput,
@@ -780,8 +786,8 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
             d_scale_intermediate_hidden_states=self.scale_intermediate,
             permuted_weights=False,
             activation=activation,
-            experts_min=0,
-            experts_max=7
+            experts_min=self.experts_min,
+            experts_max=self.experts_max,
         )
         return output
 
@@ -791,10 +797,11 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
                                     router_weights,
                                     permuted_weights=True,
                                     activation="silu"):
-        w1_list = [expert.w1.weight for expert in self.experts]
-        w2_list = [expert.w2.weight for expert in self.experts]
-        w3_list = [expert.w3.weight for expert in self.experts]
+        w1_list = [self.experts[i].w1.weight for i in self.experts_range]
+        w2_list = [self.experts[i].w2.weight for i in self.experts_range]
+        w3_list = [self.experts[i].w3.weight for i in self.experts_range]
         measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
+        
         output, intermidiate_amax = torch.ops.hpu.mixture_of_experts.fp8_measurement(
             hidden_states=hidden_states,
             expert_routing_table=expert_routing_table,
@@ -804,13 +811,21 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
             w2=w3_list,
             permuted_weights=permuted_weights,
             activation=activation,
-            experts_min=0,
-            experts_max=7,
+            experts_min=self.experts_min,
+            experts_max=self.experts_max,
             measurement_mode=True,
         )
-        output_measure_list = [output]
+
+
+        amax = []
         for i in range(self.num_experts):
-            output_measure_list.append(intermidiate_amax[i])
+            if i in self.experts_range:
+                amax.append(intermidiate_amax[i-self.experts_min])
+            else:
+                amax.append(torch.tensor(0, device="hpu", dtype=intermidiate_amax[0].dtype))
+
+        output_measure_list = [output] + amax
+
         measure_output(output_measure_list, self._mod_extra_config.outputs)
         return output
 
