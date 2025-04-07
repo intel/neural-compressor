@@ -865,14 +865,14 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
         x,
         topk_ids,
         topk_weights,
-        moe_n_slice,
-        n_expert_slice,
-        ep_shift,
+        moe_n_slice=None,
+        n_expert_slice=None,
+        ep_shift=None,
     ):
         hidden_states = x
         measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
         # FIXME: (Yi) Assume moe_n_slice is 1, remove it?
-        assert moe_n_slice == 1, f"moe_n_slice is {moe_n_slice}, expected 1"
+        # assert moe_n_slice == 1, f"moe_n_slice is {moe_n_slice}, expected 1"
         min_expert = self.experts_min
         max_expert = self.experts_max
         w13_list_slice = []
