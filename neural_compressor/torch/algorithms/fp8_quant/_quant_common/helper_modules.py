@@ -907,8 +907,8 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
         x,
         topk_ids,
         topk_weights,
-        moe_n_slice,
-        n_expert_slice,
+        moe_n_slice=None,
+        n_expert_slice=None,
         ep_shift=None,
     ):
         hidden_states = x
