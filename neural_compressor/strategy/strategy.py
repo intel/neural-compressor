@@ -517,7 +517,6 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
             self.algo_scheduler.reset_exec_algorithms()
             assert self.last_qmodel
             # return the last quantized model as a result. if not tune.
-            # self._not_tuning = True
             if self._not_tuning:
                 self.best_qmodel = self.last_qmodel
                 self._add_tuning_history(copy.deepcopy(tune_cfg), (-1, [0]), q_config=self.last_qmodel.q_config)
