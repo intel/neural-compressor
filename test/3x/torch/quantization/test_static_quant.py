@@ -1,3 +1,4 @@
+import os
 import copy
 import shutil
 
@@ -22,7 +23,7 @@ from neural_compressor.torch.quantization import (
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 device = auto_detect_accelerator().current_device()
-
+os.environ["FORCE_FP32"] = "1"
 
 def build_simple_torch_model():
     class Model(torch.nn.Module):

@@ -24,6 +24,7 @@ pr:
       - neural_compressor/torch
       - neural_compressor/tensorflow
       - neural_compressor/onnxrt
+      - neural_compressor/transformers
 
 pool: MODEL_PERF_TEST_TF
 

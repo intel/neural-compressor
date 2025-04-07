@@ -1,3 +1,4 @@
+import os
 import copy
 import shutil
 
@@ -9,7 +10,7 @@ from neural_compressor.torch.utils import is_ipex_available
 
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
-
+os.environ["FORCE_FP32"] = "1"
 
 class Model(torch.nn.Module):
     device = torch.device("cpu")

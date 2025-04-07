@@ -13,7 +13,6 @@ from pkg_resources import parse_version
 
 from neural_compressor.model import MODELS, Model
 from neural_compressor.model.model import get_model_fwk_name
-from neural_compressor.model.mxnet_model import MXNetModel
 from neural_compressor.model.onnx_model import ONNXModel
 
 
@@ -459,65 +458,6 @@ class TestPyTorchModel(unittest.TestCase):
         self.assertEqual("pytorch", get_model_fwk_name(PyTorchModel(ori_model)))
         self.assertEqual("pytorch", get_model_fwk_name(IPEXModel(ori_model)))
         self.assertEqual("pytorch", get_model_fwk_name(PyTorchFXModel(ori_model)))
-
-
-def load_mxnet_model(symbol_file, param_file):
-    import mxnet as mx
-
-    symbol = mx.sym.load(symbol_file)
-    save_dict = mx.nd.load(param_file)
-    arg_params = {}
-    aux_params = {}
-    for k, v in save_dict.items():
-        tp, name = k.split(":", 1)
-        if tp == "arg":
-            arg_params[name] = v
-    return symbol, arg_params, aux_params
-
-
-class TestMXNetModel(unittest.TestCase):
-    @classmethod
-    def setUpClass(self):
-        if platform.system().lower() == "windows":
-            self.skipTest(self, "not support mxnet on windows yet")
-        import mxnet as mx
-        import mxnet.gluon.nn as nn
-
-        net = nn.HybridSequential()
-        net.add(nn.Dense(128, activation="relu"))
-        net.add(nn.Dense(64, activation="relu"))
-        net.add(nn.Dense(10))
-        net.initialize()
-        net.hybridize()
-        fake_data = mx.random.uniform(shape=(1, 128, 128))
-        net(fake_data)
-        self.net = net
-
-    @classmethod
-    def tearDownClass(self):
-        os.remove("test-symbol.json")
-        os.remove("test-0000.params")
-        os.remove("test2-symbol.json")
-        os.remove("test2-0000.params")
-
-    def test_model(self):
-        import mxnet as mx
-
-        self.assertEqual("mxnet", get_model_fwk_name(self.net))
-        model = MODELS["mxnet"](self.net)
-        self.assertEqual(True, isinstance(model, MXNetModel))
-        self.assertEqual(True, isinstance(model.model, mx.gluon.HybridBlock))
-
-        model.save("./test")
-        self.assertEqual(True, os.path.exists("test-symbol.json"))
-        self.assertEqual(True, os.path.exists("test-0000.params"))
-
-        net = load_mxnet_model("test-symbol.json", "test-0000.params")
-        model.model = net
-        self.assertEqual(True, isinstance(model.model[0], mx.symbol.Symbol))
-        model.save("./test2")
-        self.assertEqual(True, os.path.exists("test2-symbol.json"))
-        self.assertEqual(True, os.path.exists("test2-0000.params"))
 
 
 if __name__ == "__main__":

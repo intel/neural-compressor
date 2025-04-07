@@ -98,15 +98,6 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
             <td align="left">&#10004;</td>
             <td align="left">:x:</td>
         </tr>  
-        <tr>
-            <td align="left">MXNet</td>
-            <td align="left">OneDNN</td>
-            <td align="left">OneDNN</td>
-            <td align="left">"default"</td>
-            <td align="left">cpu</td>
-            <td align="left">&#10004;</td>
-            <td align="left">:x:</td>
-        </tr>
     </tbody>
 </table>
 
