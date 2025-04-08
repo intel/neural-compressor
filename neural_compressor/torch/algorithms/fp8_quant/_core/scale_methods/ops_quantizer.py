@@ -14,10 +14,11 @@
 from abc import abstractmethod
 
 import torch
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import get_hqt_config
-from .scale_method_factory import ScaleMethodFactory, QuantTensorName
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import get_hqt_config, is_supported_dynamic_op
+from .scale_method_factory import ScaleMethodFactory, QuantTensorName, ScaleValueType
 from ..common import ModuleConfig, QuantTensorType
 from ..quant_dequant import DequantOutput, QuantDequant, QuantDequantNone, QuantInput, QuantDynamicInput
+from ...utils.logger import logger
 from neural_compressor.torch.algorithms.fp8_quant._core.common import dequant_original_fp8_weight_if_needed
 
 
@@ -31,6 +32,8 @@ class BaseOpQuantizer:
         self.inputs_scales_creators = []
         self.output_scales_creators = []
         self.params_scales_creators = []
+        self.is_dynamic = get_hqt_config(self.mod).cfg["dynamic_quantization"] and is_supported_dynamic_op(op_type)
+        logger.debug("%s %s", self.__class__.__name__, self.__dict__)
 
     def get_module_configuration(self):
         scale_format = get_hqt_config(self.mod).cfg["scale_format"]
@@ -60,14 +63,19 @@ class BaseOpQuantizer:
         input_scales = []
         for i in range(num_of_inputs):
             input_measurement = self.measurement.inputs[i] if self.measurement is not None else []
-            input_scales.append(
-                self.inputs_scales_creators[i].calc_scales(input_measurement, QuantTensorType.MEASUREMENTS)
-            )
+            input_scale = None
+            if not self.is_dynamic:
+                input_scale = self.inputs_scales_creators[i].calc_scales(
+                    input_measurement, QuantTensorType.MEASUREMENTS
+                )
+            input_scales.append(input_scale)
         return input_scales
 
     def calc_output_scales(self):
         output_measurement = self.measurement.outputs[0] if self.measurement is not None else []
-        output_scales = self.output_scales_creators[0].calc_scales(output_measurement, QuantTensorType.MEASUREMENTS)
+        output_scales = None
+        if not self.is_dynamic:
+            output_scales = self.output_scales_creators[0].calc_scales(output_measurement, QuantTensorType.MEASUREMENTS)
         return (output_scales,)
 
     def init_input_config(self, scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
@@ -79,7 +87,7 @@ class BaseOpQuantizer:
         else:
             input_config = []
             for input_scales_creator, s_inv in zip(self.inputs_scales_creators, scales_inv):
-                if input_scales_creator.is_dynamic:
+                if self.is_dynamic:
                     input_config.append(
                         QuantDynamicInput(input_scales_creator, lp_dtype, hp_dtype, scale_format=scale_format)
                     )
@@ -92,29 +100,38 @@ class LinearOpQuantizer(BaseOpQuantizer):
 
     def __init__(self, config, mod, measurement, params, module_type):
         super().__init__(config, mod, measurement, params, module_type)
-        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
+        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic))
         self.weight_och_scale_calc = self.scales_method_factory.get_scale_method(QuantTensorName.WEIGHT_OUT_CH)
         self.weight_ich_scale_calc = self.scales_method_factory.get_scale_method(QuantTensorName.WEIGHT_IN_CH)
-        self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
+        self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT, self.is_dynamic))
 
     def get_scales_module_config(self):
         input_scales = self.calc_input_scales(num_of_inputs=1)
         output_measurement = self.measurement.outputs[0] if self.measurement is not None else []
         rescaled_weight = self.mod.weight if hasattr(self.mod, 'weight') else None
+        if (
+            self.scales_method_factory.scale_value_type_map[QuantTensorName.WEIGHT_IN_CH]
+            is not ScaleValueType.DUMMY_SCALES
+        ):
+            # Calculating weight in hpu to support scale calculation CGUID torch.ops.hpu.calculate_scale_for_cast
+            rescaled_weight = rescaled_weight.to("hpu")
         if rescaled_weight is not None:
             rescaled_weight = dequant_original_fp8_weight_if_needed(self.mod, rescaled_weight)
         if self.weight_ich_scale_calc is not None:
             weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST)
             rescaled_weight = torch.div(rescaled_weight, weight_scales_in_ch.reshape([1, -1]))
         weights_scales_out_ch = self.weight_och_scale_calc.calc_scales(rescaled_weight, QuantTensorType.CONST)
+
         params_config = (
             {"weight": weights_scales_out_ch}
             if (self.weight_ich_scale_calc is None)
             else {"weight": {0: weights_scales_out_ch, 1: weight_scales_in_ch}}
         )
-        output_scales = self.output_scales_creators[0].calc_scales(
-            output_measurement, QuantTensorType.MEASUREMENTS, input0=weights_scales_out_ch, input1=input_scales[0]
-        )
+        output_scales = None
+        if not self.is_dynamic:
+            output_scales = self.output_scales_creators[0].calc_scales(
+                output_measurement, QuantTensorType.MEASUREMENTS, input0=weights_scales_out_ch, input1=input_scales[0]
+            )
         return ModuleConfig(
             input_scales,
             (output_scales,),

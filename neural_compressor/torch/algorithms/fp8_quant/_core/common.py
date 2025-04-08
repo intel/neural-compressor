@@ -197,3 +197,8 @@ def get_device_type_for_scales(mod):
 @lru_cache
 def is_runtime_scale_patching():
     return os.getenv("RUNTIME_SCALE_PATCHING", "False").lower() in ["true", "1"]
+
+#TODO [SW-224612]: Use cguid to calc scales and remove the check
+@lru_cache
+def is_calc_scale_with_cguid():
+    return os.getenv("CALC_SCALE_WITH_CGUID", "False").lower() in ["true", "1"]

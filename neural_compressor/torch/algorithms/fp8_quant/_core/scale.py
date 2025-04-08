@@ -86,7 +86,7 @@ scale_method_mapping = {
     (ScaleMethod.MAXABS_HW, "maxabs"): "act_maxabs_pts_pow2_hw_weight_maxabs_pts_pow2_hw",
     (ScaleMethod.MAXABS_POW2, "maxabs"): "act_maxabs_pts_pow2_weight_maxabs_pts_pow2",
     (ScaleMethod.MAXABS_ARBITRARY, "maxabs"): "act_maxabs_pts_weight_maxabs_pts_arbitrary",
-    (ScaleMethod.MAXABS_POW2_DYNAMIC, "maxabs"): "act_maxabs_pcs_dyn_pow2_weight_maxabs_pts_pow2_hw", # TODO: remove when changing config parsing
+    (ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW, "maxabs"): "act_maxabs_pcs_pow2_weight_maxabs_pts_pow2_hw", # TODO: remove when changing config parsing
     (ScaleMethod.MAXABS_HW_OPT_WEIGHT, "maxabs"): "act_maxabs_pts_hw_weight_opt_pts_hw",
     (
         ScaleMethod.MAXABS_POW2_OPT_WEIGHT,
@@ -138,7 +138,7 @@ scaling_params = {
         "input_backoff": 0.25,
         "weight_backoff": 0.5,
     },
-    "act_maxabs_pcs_dyn_pow2_weight_maxabs_pts_pow2_hw": {
+    "act_maxabs_pcs_pow2_weight_maxabs_pts_pow2_hw": {
         "input_backoff": 1.0,
         "weight_backoff": 0.5,
     },

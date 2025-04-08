@@ -14,7 +14,7 @@
 
 from .._quant_common.helper_modules import *
 # TODO [SW-217813]: support dynamic quantization in all ops and remove supported_dynamic_ops
-from .._quant_common.quant_config import QuantMode, get_hqt_config, is_supported_dynamic_op, _dynamic_scale_methods
+from .._quant_common.quant_config import QuantMode, get_hqt_config, is_supported_dynamic_op
 from ..utils.logger import logger
 from .patching_common import mod_default_dict
 from .measure import prepare_model as prepare_model_for_measure
@@ -68,10 +68,10 @@ def should_quantize(config, mod_type, name):
     def name_is_not_blocked(name, config):
         return (not is_re_match(config.cfg["blocklist"]["names"], name))
     def is_static_scale_method(config):
-        return config.cfg["scale_method"] not in _dynamic_scale_methods
+        return not config.cfg["dynamic_quantization"]
     def quantize_dynamic_op(config, mod_type):
         # TODO [SW-217813]: support dynamic quantization in all ops and remove supported_dynamic_ops
-        return config.cfg["scale_method"] in _dynamic_scale_methods and is_supported_dynamic_op(mod_type)
+        return config.cfg["dynamic_quantization"] and is_supported_dynamic_op(mod_type)
 
     ret = (
         mod_is_not_blocked(mod_type, config)
