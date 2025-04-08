@@ -49,6 +49,8 @@ def test_predefined_config(lp_dtype, scale_method, quant_mode):
     # TODO [SW-196641]: fix the following issue:
     if scale_method in SCALE_METHODS_KEY_ERROR and quant_mode == QuantMode.QUANTIZE:
         run_with_raised_exception(run_predefined_config, KeyError, "(<ScaleMethod.")
+    elif scale_method == ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
+        return run_with_raised_exception(run_predefined_config, ValueError, "Unsupported config: scale method ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW")
     # This is an expected exception, quant only methods support only quantization
     elif scale_method in SCALE_METHODS_QUANT_ONLY and quant_mode not in [QuantMode.QUANTIZE, QuantMode.LOAD]:
         run_with_raised_exception(run_predefined_config, ValueError, "Unexpected behavior. This scale method doesn't require measurements.")

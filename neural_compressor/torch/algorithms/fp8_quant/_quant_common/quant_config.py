@@ -72,7 +72,7 @@ class ScaleMethod(Enum):
     MAXABS_HW_OPT_WEIGHT = 13
     MAXABS_POW2_OPT_WEIGHT = 14
     MAXABS_ARBITRARY = 15
-    MAXABS_POW2_DYNAMIC = 16
+    ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW = 16
 
 class TrueFalse(Enum):
     TRUE = True
@@ -103,6 +103,7 @@ _config_to_enum = {
     "scale_format": ScaleFormat,
     "device_for_scales": DeviceForScalesType,
     "measure_on_hpu": TrueFalse,
+    "dynamic_quantization": TrueFalse,
 }
 
 
@@ -116,16 +117,17 @@ _configs_that_use_enum_value = [
     "use_qdq",
     "device_for_scales",
     "measure_on_hpu",
+    "dynamic_quantization",
 ]
 
 # TODO [SW-217813]: support dynamic quantization in all ops and remove
 # TODO: get a better way to list all linear ops
-supported_dynamic_ops = ["Linear"]
+supported_dynamic_ops = ["Linear", "RowParallelLinear", "ColumnParallelLinear", "MergedColumnParallelLinear", "QKVParallelLinear", "FalconLinear", "LoRACompatibleLinear", "ReplicatedLinear", "LinearLayer", "LinearAllreduce", "ScopedLinearAllReduce", "LmHeadLinearAllreduce"]
 def is_supported_dynamic_op(op_name):
     return op_name.lower() in [op.lower() for op in supported_dynamic_ops]
 
-_dynamic_scale_methods = [ScaleMethod.MAXABS_POW2_DYNAMIC]
 _quant_only_scale_methods = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
+_hw_aligned_scale_methods = [ScaleMethod.MAXABS_HW, ScaleMethod.MAXABS_HW_OPT_WEIGHT, ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2, ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2]
 _pcq_scale_methods = [
     ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
     ScaleMethod.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
@@ -172,7 +174,6 @@ def _validate_dump_path(dump_stats_path):
                 pass
 
 
-
 @dataclass
 class Fp8cfg:
     cfg: Mapping[str, Any]
@@ -209,7 +210,8 @@ class Fp8cfg:
             "recalc_scales": False,
             "scale_format": ScaleFormat.SCALAR,
             "measure_on_hpu": True,  # Determines whether to measure model on hpu device.
-            "row_parallel_linear_allreduce_quantization" : False # Turn on/off fp8 allreduce optimization detailed in SW-207602
+            "row_parallel_linear_allreduce_quantization" : False, # Turn on/off fp8 allreduce optimization detailed in SW-207602
+            "dynamic_quantization" : False # Turn on/off fp8 dynamic quantization
         }
         # assert measured_global_config['allowlist']['names'] == [''], "Allowlist names not yet implemented"
 
@@ -257,17 +259,32 @@ class Fp8cfg:
                 measured_global_config["scale_format"] = ScaleFormat.CONST
                 logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant. Reduced to 'CONST'.")
         quant_mode = measured_global_config["mode"]
+        dynamic_quantization = measured_global_config["dynamic_quantization"]
         # TODO [SW-217814]: get dynamic methods in a better way, or support file handling in dynamic mode
-        if scale_method in _dynamic_scale_methods:
+        if dynamic_quantization:
             logger.info(f"NOTE: Using dynamic scale method, only supported ops will be quantized.")
+            if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
+                measured_global_config["scale_format"] = ScaleFormat.CONST
+                logger.warning(f"Cannot use 'scale_format = SCALAR' when using dynamic quantization. Reduced to 'CONST'.")
             # TODO: "Linear only" in types still causes issues as llama7b quantizes also self_attn,
             # which should be blocked for some reason. We might then want to set measured_global_config["allowlist"]["types"] = supported_dynamic_ops
+            # TODO [SW-222725]: support HW aligned rounding in dynamic quantization
+            if scale_method in _hw_aligned_scale_methods:
+                raise ValueError(
+                    f"Unsupported config: scale method {scale_method} is not supported in dynamic quantization"
+                )
             #TODO [SW-224403]: enable dynamic quantization in row parallel allreduce
             if measured_global_config["row_parallel_linear_allreduce_quantization"]:
                 raise ValueError(f"Dynamic quantization is not supported when using row_parallel_linear_allreduce_quantization")
-        if scale_method in _quant_only_scale_methods + _dynamic_scale_methods:
+        else:
+            if scale_method == ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
+                raise ValueError(
+                    f"Unsupported config: scale method {scale_method} is supported only in dynamic quantization"
+                )
+
+        if scale_method in _quant_only_scale_methods or dynamic_quantization:
             if quant_mode in (QuantMode.QUANTIZE, QuantMode.LOAD):
-                logger.debug(f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used")
+                logger.debug(f"Quantization mode is quant, scale_method is {scale_method} or running dynamic quantization, so stats files won't be used")
                 measured_global_config["use_stats_files"] = False
             else:
                 raise ValueError(f"Quantization mode is {quant_mode}, scale_method is {scale_method} (quant only). Unexpected behavior. "

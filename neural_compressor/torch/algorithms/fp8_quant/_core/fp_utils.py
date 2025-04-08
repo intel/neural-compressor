@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import torch
+from enum import Enum
 from .common import ModuleConfig
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
 cur_accelerator = auto_detect_accelerator()
@@ -21,6 +22,27 @@ descale_fcn = lambda x, scale: torch.mul(x, scale)
 scale_fcn = lambda x, scale: torch.div(x, scale)
 cast_fcn = lambda x, dtype: x.to(dtype=dtype)
 cast_to_fp8_fcn = lambda x, dtype, scale_inv=None: torch.ops.hpu.cast_to_fp8_v2(x, scale_inv, False, False, dtype)[0]
+def calculate_scale_maxabs(x, maxMode, **kwargs):
+    return torch.ops.hpu.calculate_scale_for_cast(
+        x, maxMode.value, ScaleCalculationRoundingMode.NO_SCALE_ROUNDING.value, **kwargs
+    )
+
+
+def calculate_scale_rounding(x, scaleMode, **kwargs):
+    return torch.ops.hpu.calculate_scale_for_cast(
+        x, ScaleCalculationMaxMode.NO_MAX_CALCULATION.value, scaleMode.value, **kwargs
+    )
+
+
+class ScaleCalculationMaxMode(Enum):
+    NO_MAX_CALCULATION = 0
+    MAX_ABS_PTS_CALCULATION = 1
+    MAX_ABS_PCS_CALCULATION = 2
+
+
+class ScaleCalculationRoundingMode(Enum):
+    NO_SCALE_ROUNDING = 0
+    SCALE_TO_POW2_ROUNDING = 1
 
 GAUDI2 = INCAcceleratorType.GAUDI2
 GAUDI3 = INCAcceleratorType.GAUDI3
