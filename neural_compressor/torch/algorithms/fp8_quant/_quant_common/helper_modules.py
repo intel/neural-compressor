@@ -139,34 +139,6 @@ class PatchedMatmul(PatchedModuleBase):
             get_current_repr(self, "scale_input", "scale_other"),
         )
 
-def init_linear(instance, mod_extra_config):
-    if instance.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-        # When offloading weights to disk using device_map, the module forward is overridden.
-        # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
-        # So need to set PatchedLinear forward to be the right forward.
-        instance.weight = nn.Parameter(instance.weight.t().contiguous())
-        instance.quant_input = instance._mod_extra_config.inputs[0]
-        instance.dequant_output = instance._mod_extra_config.outputs[0]
-        # When offloading weights to disk using device_map, the module forward is overridden.
-        # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
-        # So need to set PatchedLinear forward to be the right forward.
-        if instance.use_qdq:
-            instance.dequant_weights = instance._mod_extra_config.params["weight"][1]
-        elif instance.fake_quant:
-            instance.qdq_weights = instance._mod_extra_config.params["weight"][0]
-        else:
-            instance.matmul_fp8 = get_quantized_func_wrapper(OP_TYPE.LINEAR_GEMM, instance.scale_format)
-            # input0 is None when initializing a dynamic quantization op
-            instance.register_scale("scale_input", mod_extra_config.scale.inputs[0], instance.scale_format)
-            if isinstance(mod_extra_config.scale.params["weight"], (torch.Tensor, float)):
-                instance.register_scale("scale_weight", mod_extra_config.scale.params["weight"], instance.scale_format)
-            elif isinstance(mod_extra_config.scale.params["weight"], dict):
-                # PCQ weight is calculated with actual weight [0] and ones [1]
-                # only ScaleFormat.CONST is supported for per-channel scale now.
-                instance.register_scale("scale_weight", mod_extra_config.scale.params["weight"][0], ScaleFormat.CONST)
-    elif (instance.quantization_mode == QuantMode.MEASURE) or (instance.quantization_mode == QuantMode.SHAPE):
-        init_mixture_of_experts_linears(instance)
-
 
 def init_mixture_of_experts_linears(instance):
     parent_name = instance.orig_mod_parent.__class__.__name__
@@ -178,54 +150,75 @@ def init_mixture_of_experts_linears(instance):
         measure_input((torch.tensor(0),), observer=instance._mod_extra_config.inputs)
 
 
-class PatchedLinear(PatchedModuleBase):
+class PatchedLinearBase(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        init_linear(self, mod_extra_config)
+
+
+    # TODO [SW-224538]: Move init_linear to PatchedLinearBase __init__
+    def init_linear(self, mod_extra_config):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            if not self.use_qdq and not self.fake_quant:
-                # dynamic quantization needs to get the scale from the quant_input calculation
-                # TODO [SW-217921]: find a better solution, like PatchedLinearBase, or at least move to init_linear
-                if isinstance(self.quant_input, QuantDynamicInput):
-                    self.forward = self.forward_quant_dynamic
+            # When offloading weights to disk using device_map, the module forward is overridden.
+            # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
+            # So need to set PatchedLinear forward to be the right forward.
+            self.weight = nn.Parameter(self.weight.t().contiguous())
+            self.quant_input = self._mod_extra_config.inputs[0]
+            self.dequant_output = self._mod_extra_config.outputs[0]
+            # When offloading weights to disk using device_map, the module forward is overridden.
+            # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
+            # So need to set PatchedLinear forward to be the right forward.
+            if self.use_qdq:
+                self.dequant_weights = self._mod_extra_config.params["weight"][1]
+            elif self.fake_quant:
+                self.qdq_weights = self._mod_extra_config.params["weight"][0]
+            else:
+                self.matmul_fp8 = get_quantized_func_wrapper(OP_TYPE.LINEAR_GEMM, self.scale_format)
+                # input0 is None when initializing a dynamic quantization op
+                self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
+                if isinstance(mod_extra_config.scale.params["weight"], (torch.Tensor, float)):
+                    self.register_scale("scale_weight", mod_extra_config.scale.params["weight"], self.scale_format)
+                elif isinstance(mod_extra_config.scale.params["weight"], dict):
+                    # PCQ weight is calculated with actual weight [0] and ones [1]
+                    # only ScaleFormat.CONST is supported for per-channel scale now.
+                    self.register_scale("scale_weight", mod_extra_config.scale.params["weight"][0], ScaleFormat.CONST)
+
+            self.is_dynamic_quantization = isinstance(self.quant_input, QuantDynamicInput)
+            self.quant_input_func = self.quant_input_and_get_scale_dynamic if self.is_dynamic_quantization else self.quant_input_and_get_scale_static
+        elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
+            init_mixture_of_experts_linears(self)
 
 
-    def forward_qdq(self, input):
-        if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
-        else:
-            qweight = self.dequant_weights(self.weight, )
-        qinput =  self.quant_input(input)
-        y = torch.matmul(qinput, qweight)
-        output = y + self.bias if (self.bias is not None) else y
-        return output
+    def quant_input_and_get_scale_dynamic(self, input):
+        return self.quant_input(input)
 
-    def forward_quant(self, input):
-        qinput = self.quant_input(input)
-        y = self.matmul_fp8(qinput,
-                            self.weight,
-                            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                            scale_input_inv=self.scale_input,
-                            scale_other_inv=self.scale_weight)
-        output = y + self.bias if (self.bias is not None) else y
-        return output
+    def quant_input_and_get_scale_static(self, input):
+        return self.quant_input(input), self.scale_input
 
-    # TODO [SW-217921]: find a better solution, like PatchedLinearBase, or at least move to init_linear
-    def forward_quant_dynamic(self, input):
-        qinput, scale_input = self.quant_input(input)
+    def run_linear_quant(self, input, bias):
+        qinput, scale_input = self.quant_input_func(input)
         y = self.matmul_fp8(qinput,
                             self.weight,
                             out_dtype=self._mod_extra_config.config_params["hp_dtype"],
                             scale_input_inv=scale_input,
                             scale_other_inv=self.scale_weight)
-        output = y + self.bias if (self.bias is not None) else y
+        output = y + bias if (bias is not None) else y
         return output
 
-    def forward_measure(self, input):
-        measure_input((input,), observer=self._mod_extra_config.inputs)
-        output = self.orig_mod(input)
-        measure_output((output,), self._mod_extra_config.outputs)
+    def run_linear_qdq(self, input, bias):
+        if self.fake_quant:
+            qweight = self.qdq_weights(self.weight, )
+        else:
+            qweight = self.dequant_weights(self.weight, )
+        qinput = self.quant_input(input)
+        y = torch.matmul(qinput, qweight)
+        output = y + bias if (bias is not None) else y
         return output
+
+    def forward_qdq(self, input):
+        return self.run_linear_qdq(input, self.bias)
+
+    def forward_quant(self, input):
+        return self.run_linear_quant(input, self.bias)
 
     def extra_repr(self) -> str:
         return extra_representation(
@@ -235,7 +228,19 @@ class PatchedLinear(PatchedModuleBase):
         )
 
 
-class PatchedParallelLMHead(PatchedModuleBase):
+class PatchedLinear(PatchedLinearBase):
+    def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        self.init_linear(mod_extra_config)
+
+    def forward_measure(self, input):
+        measure_input((input,), observer=self._mod_extra_config.inputs)
+        output = self.orig_mod(input)
+        measure_output((output,), self._mod_extra_config.outputs)
+        return output
+
+
+class PatchedParallelLMHead(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         # ParallelLMHead inherits from VocabParallelEmbedding (nn.module) which has a member called
@@ -245,7 +250,7 @@ class PatchedParallelLMHead(PatchedModuleBase):
         # ParallelLMHead's forward method should not be called because LMHead's weights should be used
         # in the sampler. (The forward itself throws RuntimeError exception)
         # So in order to quantize that quant_method we patch only the "apply" method.
-        init_linear(self, mod_extra_config)
+        self.init_linear(mod_extra_config)
         self.orig_linear_quant_apply = self.orig_mod.quant_method.apply
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             if self.use_qdq or self.fake_quant:
@@ -256,26 +261,10 @@ class PatchedParallelLMHead(PatchedModuleBase):
             self.quant_method.apply = self.apply_measure
 
     def apply_quant(self, layer, x, bias):
-        qinput = self.quant_input(x)
-        y = self.matmul_fp8(
-            qinput,
-            self.weight,
-            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-            scale_input_inv=self.scale_input,
-            scale_other_inv=self.scale_weight,
-        )
-        output = y + bias if (bias is not None) else y
-        return output
+        return self.run_linear_quant(x, bias)
 
     def apply_qdq(self, layer, x, bias):
-        if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
-        else:
-            qweight = self.dequant_weights(self.weight, )
-        qinput =  self.quant_input(x)
-        y = torch.matmul(qinput, qweight)
-        output = y + bias if (bias is not None) else y
-        return output
+        return self.run_linear_qdq(x, bias)
 
     def apply_measure(self, layer, x, bias):
         measure_input((x,), observer=self._mod_extra_config.inputs)
@@ -283,40 +272,21 @@ class PatchedParallelLMHead(PatchedModuleBase):
         measure_output((output,), self._mod_extra_config.outputs)
         return output
 
-    def extra_repr(self) -> str:
-        return extra_representation(
-            self.extra_repr_org(),
-            self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight"),
-        )
 
-
-class PatchedReplicatedLinear(PatchedModuleBase):
+class PatchedReplicatedLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        init_linear(self, mod_extra_config)
+        self.init_linear(mod_extra_config)
 
     def forward_qdq(self, input):
-        qinput = self.quant_input(input)
-        if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
-        else:
-            qweight = self.dequant_weights(self.weight, )
         bias = self.bias if not self.skip_bias_add else None
-        y = torch.matmul(qinput, qweight)
-        output = y + bias if (bias is not None) else y
+        output = self.run_linear_qdq(input, bias)
         output_bias = self.bias if self.skip_bias_add else None
         return output, output_bias
 
     def forward_quant(self, input):
-        qinput = self.quant_input(input)
         bias = self.bias if not self.skip_bias_add else None
-        y = self.matmul_fp8(qinput,
-                            self.weight,
-                            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                            scale_input_inv=self.scale_input,
-                            scale_other_inv=self.scale_weight)
-        output = y + bias if (bias is not None) else y
+        output = self.run_linear_quant(input, bias)
         output_bias = self.bias if self.skip_bias_add else None
         return output, output_bias
 
@@ -326,28 +296,16 @@ class PatchedReplicatedLinear(PatchedModuleBase):
         measure_output((output,), self._mod_extra_config.outputs)
         return output, output_bias
 
-    def extra_repr(self) -> str:
-        return extra_representation(
-            self.extra_repr_org(),
-            self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight"),
-        )
 
-
-class PatchedLinearAllReduce(PatchedModuleBase):
+class PatchedLinearAllReduce(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        init_linear(self, mod_extra_config)
+        self.init_linear(mod_extra_config)
         self.scoped_version = mod.__class__.__name__ == "ScopedLinearAllReduce"
 
     def forward_qdq(self, input):
         # pre_all_reduce
-        qinput = self.quant_input(input)
-        if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
-        else:
-            qweight = self.dequant_weights(self.weight, )
-        output = torch.matmul(qinput, qweight)
+        output = self.run_linear_qdq(input, None)
 
         if not self.scoped_version:
             self.all_reduce(output)
@@ -356,12 +314,8 @@ class PatchedLinearAllReduce(PatchedModuleBase):
 
     def forward_quant(self, input):
         # pre_all_reduce
-        qinput = self.quant_input(input)
-        output = self.matmul_fp8(qinput,
-                                 self.weight,
-                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                                 scale_input_inv=self.scale_input,
-                                 scale_other_inv=self.scale_weight)
+        output = self.run_linear_quant(input, None)
+        #TODO: enable dynamic quantization for output
         dqoutput = self.dequant_output(output)
         if not self.scoped_version:
             self.all_reduce(dqoutput)
@@ -388,19 +342,13 @@ class PatchedLinearAllReduce(PatchedModuleBase):
         output = input + self.bias if (self.bias is not None) else input
         return output
 
-    def extra_repr(self) -> str:
-        return extra_representation(
-            self.extra_repr_org(),
-            self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight"),
-        )
 
-
-class PatchedRowParallelLinear(PatchedModuleBase):
+class PatchedRowParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         kwargs["func_names"] = ("resolve_input", )
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        allreduce_quantization_enable = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
+        #TODO [SW-224403]: enable dynamic quantization in row parallel allreduce
+        allreduce_quantization_enable = False if self.is_dynamic_quantization else get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
         if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
             self.forward = self.forward_measure_reduce if self.reduce_results and self.tp_size > 1 else self.forward_measure_no_reduce
         
@@ -415,7 +363,7 @@ class PatchedRowParallelLinear(PatchedModuleBase):
                         self.forward = self.forward_quant_reduce_in_hp
                 else:
                     self.forward = self.forward_quant_no_reduce
-        init_linear(self, mod_extra_config)
+        self.init_linear(mod_extra_config)
         if self.quantization_mode == QuantMode.QUANTIZE:
             self.dequant_scatter_output = self._mod_extra_config.outputs[0]
             self.quant_scatter_input = self._mod_extra_config.outputs[1]
@@ -428,12 +376,7 @@ class PatchedRowParallelLinear(PatchedModuleBase):
     def forward_qdq(self, input):
         #TODO: [SW-208441] Support all_reduce_fp8 in forward_qdq in PatchedRowParallelLinear
         resolved_input = self.resolve_input(input)
-        qinput = self.quant_input(resolved_input)
-        if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
-        else:
-            qweight = self.dequant_weights(self.weight, )
-        output = torch.matmul(qinput, qweight)
+        output = self.run_linear_qdq(resolved_input, None)
 
         if self.reduce_results:
             output = self.collective_func(output)
@@ -444,12 +387,7 @@ class PatchedRowParallelLinear(PatchedModuleBase):
         Perfoms a matmul with lp inputs and returns output in hp
         """
         resolved_input = self.resolve_input(input)
-        matmul_input_lp = self.quant_input(resolved_input)
-        return self.matmul_fp8(matmul_input_lp,
-                               self.weight,
-                               out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                               scale_input_inv=self.scale_input,
-                               scale_other_inv=self.scale_weight)
+        return self.run_linear_quant(resolved_input, None)
 
     def forward_quant_no_reduce(self, input):
         matmul_output_hp = self.lp_matmul_hp(input)
@@ -533,38 +471,22 @@ class PatchedRowParallelLinear(PatchedModuleBase):
             output_bias = self.bias
         return output, output_bias
 
-    def extra_repr(self) -> str:
-        return extra_representation(
-            self.extra_repr_org(),
-            self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight"),
-        )
 
-
-class PatchedColumnParallelLinear(PatchedModuleBase):
+class PatchedColumnParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        init_linear(self, mod_extra_config)
+        self.init_linear(mod_extra_config)
 
     def forward_qdq(self, input):
-        qinput = self.quant_input(input)
-        if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
-        else:
-            qweight = self.dequant_weights(self.weight, )
-        output = torch.matmul(qinput, qweight)
+        output = self.run_linear_qdq(input, None)
         output, output_bias = self.add_bias(output)
         if self.gather_output:
             output = self.collective_func(output)
         return output, output_bias
 
     def forward_quant(self, input):
-        qinput = self.quant_input(input)
-        output = self.matmul_fp8(qinput,
-                                 self.weight,
-                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                                 scale_input_inv=self.scale_input,
-                                 scale_other_inv=self.scale_weight)
+        output = self.run_linear_quant(input, None)
+        #TODO: enable dynamic quantization for output
         dqoutput = self.dequant_output(output)
         dqoutput, dqoutput_bias = self.add_bias(dqoutput)
         if self.gather_output:
@@ -588,18 +510,11 @@ class PatchedColumnParallelLinear(PatchedModuleBase):
             output_bias = self.bias
         return output, output_bias
 
-    def extra_repr(self) -> str:
-        return extra_representation(
-            self.extra_repr_org(),
-            self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight"),
-        )
 
-
-class PatchedLmHeadLinearAllreduce(PatchedModuleBase):
+class PatchedLmHeadLinearAllreduce(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        init_linear(self, mod_extra_config)
+        self.init_linear(mod_extra_config)
 
     def forward_qdq(self, input):
         assert (
@@ -607,12 +522,7 @@ class PatchedLmHeadLinearAllreduce(PatchedModuleBase):
         ), "Please ensure that self.world_size is divisible by input.shape[-1]"
         input_shard = input.shape[-1] // self.world_size
         splittedInput = input[:, :, self.rank * input_shard : (self.rank + 1) * input_shard]
-        qinput = self.quant_input(splittedInput)
-        if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
-        else:
-            qweight = self.dequant_weights(self.weight, )
-        output = torch.matmul(qinput, qweight)
+        output = self.run_linear_qdq(splittedInput, None)
 
         if self.mp_group is not None:
             from deepspeed import comm as dist
@@ -627,12 +537,8 @@ class PatchedLmHeadLinearAllreduce(PatchedModuleBase):
         input_shard_size = get_shard_size(input.shape[-1], self.world_size, "lm_head")
         input_shard_offset = sum(get_shard_size_list(input.shape[-1], self.world_size, "lm_head")[0:self.rank])
         splittedInput = input[:, :, input_shard_offset:input_shard_offset + input_shard_size]
-        qinput = self.quant_input(splittedInput)
-        output = self.matmul_fp8(qinput,
-                                 self.weight,
-                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                                 scale_input_inv=self.scale_input,
-                                 scale_other_inv=self.scale_weight)
+        output = self.run_linear_quant(splittedInput, None)
+        #TODO: enable dynamic quantization for output
         dqoutput = self.dequant_output(output)
 
         if self.mp_group is not None:
@@ -659,13 +565,6 @@ class PatchedLmHeadLinearAllreduce(PatchedModuleBase):
         if self.bias is not None:
             output += self.bias
         return output
-
-    def extra_repr(self) -> str:
-        return extra_representation(
-            self.extra_repr_org(),
-            self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight"),
-        )
 
 
 # patched vllm FusedMoE module removing the bf16 weights of all experts
@@ -695,45 +594,26 @@ class PatchedMixtralMoE(PatchedModuleBase):
 # This patched module is called by the vllm-mixtral FusedMoE layer
 # we wrap each expert weight with this module since FusedMoE has a single tensor for all experts weights
 # this way we can calculate scales per expert and achive better accuracy
-class PatchedMoeMatmul(PatchedModuleBase):
+class PatchedMoeMatmul(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        init_linear(self, mod_extra_config)
+        self.init_linear(mod_extra_config)
         if (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             measure_input((torch.tensor(0),), observer=self._mod_extra_config.inputs)
         else:
             self.weight = self.weight.squeeze()
 
     def forward_qdq(self, input, *args, **kwargs):
-        qinput = self.quant_input(input)
-        if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
-        else:
-            qweight = self.dequant_weights(self.weight, )
-        y = torch.matmul(qinput, qweight)
-        return y
+        return self.run_linear_qdq(input, None)
 
     def forward_quant(self, input, *args, **kwargs):
-        qinput = self.quant_input(input)
-        y = self.matmul_fp8(qinput,
-                            self.weight,
-                            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                            scale_input_inv=self.scale_input,
-                            scale_other_inv=self.scale_weight)
-        return y
+        return self.run_linear_quant(input, None)
 
     def forward_measure(self, input, *args, **kwargs):
         measure_input((input,), observer=self._mod_extra_config.inputs)
         output = self.orig_mod(input, *args, **kwargs)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
-
-    def extra_repr(self) -> str:
-        return extra_representation(
-            self.extra_repr_org(),
-            self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight"),
-        )
 
 
 class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
@@ -1182,32 +1062,20 @@ class PatchedSoftmax(PatchedModuleBase):
         )
 
 
-class PatchedLoRACompatibleLinear(PatchedModuleBase):
+class PatchedLoRACompatibleLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        init_linear(self, mod_extra_config)
+        self.init_linear(mod_extra_config)
 
     def forward_qdq(self, input, scale: float = 1.0):
-        qinput = self.quant_input(input)
-        if self.fake_quant:
-            qweight = self.qdq_weights(self.weight, )
-        else:
-            qweight = self.dequant_weights(self.weight, )
-        y = torch.matmul(qinput, qweight)
-        output = y + self.bias if (self.bias is not None) else y
+        output = self.run_linear_qdq(input, self.bias)
         if self.lora_layer is not None:
             # TODO SW-174899 support lora layer quantization
             _raise_lora_layer_error(self.class_name_org)
         return output
 
     def forward_quant(self, input, scale: float = 1.0):
-        qinput = self.quant_input(input)
-        y = self.matmul_fp8(qinput,
-                            self.weight,
-                            out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                            scale_input_inv=self.scale_input,
-                            scale_other_inv=self.scale_weight)
-        output = y + self.bias if (self.bias is not None) else y
+        output = self.run_linear_quant(input, self.bias)
         if self.lora_layer is not None:
             # TODO SW-174899 support lora layer quantization
             _raise_lora_layer_error(self.class_name_org)
@@ -1218,13 +1086,6 @@ class PatchedLoRACompatibleLinear(PatchedModuleBase):
         output = self.orig_mod(input, scale)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
-
-    def extra_repr(self) -> str:
-        return extra_representation(
-            self.extra_repr_org(),
-            self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight"),
-        )
 
 
 class PatchedLoRACompatibleConv(PatchedModuleBase):

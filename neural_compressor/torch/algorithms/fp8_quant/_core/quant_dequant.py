@@ -130,9 +130,6 @@ class QuantDynamicInput(QuantDequantBase):
         scale = self.input_scales_creator.calc_scales(x, QuantTensorType.DYNAMIC)
         scale_inv = self.input_scales_creator.calc_invert_scales()
 
-        scale = create_scale_tensor(scale, self.scale_format)
-        scale_inv = create_scale_tensor(scale_inv, self.scale_format)
-
         ret = self.cast_to_op(x, scale_inv, False, False, self.lp_dtype)
 
         return ret, scale

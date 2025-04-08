@@ -119,6 +119,7 @@ _configs_that_use_enum_value = [
 ]
 
 # TODO [SW-217813]: support dynamic quantization in all ops and remove
+# TODO: get a better way to list all linear ops
 supported_dynamic_ops = ["Linear"]
 def is_supported_dynamic_op(op_name):
     return op_name.lower() in [op.lower() for op in supported_dynamic_ops]
@@ -261,6 +262,9 @@ class Fp8cfg:
             logger.info(f"NOTE: Using dynamic scale method, only supported ops will be quantized.")
             # TODO: "Linear only" in types still causes issues as llama7b quantizes also self_attn,
             # which should be blocked for some reason. We might then want to set measured_global_config["allowlist"]["types"] = supported_dynamic_ops
+            #TODO [SW-224403]: enable dynamic quantization in row parallel allreduce
+            if measured_global_config["row_parallel_linear_allreduce_quantization"]:
+                raise ValueError(f"Dynamic quantization is not supported when using row_parallel_linear_allreduce_quantization")
         if scale_method in _quant_only_scale_methods + _dynamic_scale_methods:
             if quant_mode in (QuantMode.QUANTIZE, QuantMode.LOAD):
                 logger.debug(f"Quantization mode is quant, scale_method is {scale_method}, so stats files won't be used")
