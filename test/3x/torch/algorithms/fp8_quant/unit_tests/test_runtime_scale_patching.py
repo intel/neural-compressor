@@ -89,6 +89,8 @@ def test_no_assert(scale_method, scale_format,dynamic_scale_patching, temp_direc
     model(input)
     finalize_calibration(model)
 
+    if scale_method == ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
+        return run_with_raised_exception(run_convert, ValueError, "Unsupported config: scale method ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW")
     if dynamic_scale_patching:
         os.environ["RUNTIME_SCALE_PATCHING"] = "1"
         if not scale_method in RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST:

@@ -14,8 +14,6 @@
 from enum import Enum, auto
 
 from .round_scales_function import *
-# TODO [SW-217813]: support dynamic quantization in all ops and remove supported_dynamic_ops
-from ..._quant_common.quant_config import is_supported_dynamic_op
 from ..common import get_device_type_for_scales
 from .scales_method import *
 from ...utils.logger import logger
@@ -61,6 +59,7 @@ def parse_tensor_granularity(config):
     scale_granularity = ScaleGranularity.PTS
     if "pcs" in config or "smoothquant" in config:
         scale_granularity = ScaleGranularity.PCS
+    logger.trace("parse_tensor_granularity %s %s", config, scale_granularity)
     return scale_granularity
 
 # TODO [SW-217813]: support dynamic quantization in all ops and remove op_type
@@ -78,8 +77,6 @@ def parse_tensor_scale_value_type(config, op_type):
         scale_value_type = ScaleValueType.OPT
     elif "dummy" in config:
         scale_value_type = ScaleValueType.DUMMY_SCALES
-    elif "dyn" in config and is_supported_dynamic_op(op_type):
-        scale_value_type = ScaleValueType.DYNAMIC
     logger.trace(f"parse_tensor_scale_value_type {config=} {scale_value_type=}")
     return  scale_value_type
 
@@ -121,17 +118,26 @@ class ScaleMethodFactory:
                                   QuantTensorName.WEIGHT_IN_CH: self.params.get("weight_backoff", 1.0),
                                   QuantTensorName.WEIGHT_OUT_CH: self.params.get("weight_backoff", 1.0),
                                   QuantTensorName.OUTPUT: self.params.get("output_backoff", self.params.get("input_backoff", 1.0)),} # get output_backoff, if doesn't exists use input_backoff, if doesn't exists use 1
-        logger.debug("%s %s".format(self.__class__.__name__, self.__dict__))
+        logger.trace("%s %s", self.__class__.__name__, self.__dict__)
 
     ## TODO remove after SW-217369
     ## config string example: "act_maxabs_pts_weight_opt_pts_hw", round_method = pow2_hw, scale_value_type = maxabs, granularity = pts
     # all config strings in scale.py: scale_method_mapping
     # returns MaxAbsPts obj with pow2_hw as scale_round_method
-    def get_scale_method(self, tensor_name):
-        backoff =  self.scale_backoff_map[tensor_name]
+    def get_scale_method(self, tensor_name, is_dynamic=False):
+        backoff = 1.0 if is_dynamic else self.scale_backoff_map[tensor_name]
         scale_round_method = self.scale_round_method_map[tensor_name]
         scale_value_type = self.scale_value_type_map[tensor_name]
         scale_granularity = self.scale_granularity_map[tensor_name]
+        logger.trace(
+            "get_scale_method backoff=%s scale_round_method=%s scale_value_type=%s scale_granularity=%s op_type=%s is_dynamic=%s",
+            backoff,
+            scale_round_method,
+            scale_value_type,
+            scale_granularity,
+            self.op_type,
+            is_dynamic,
+        )
 
         match (scale_value_type, scale_granularity, tensor_name, self.op_type):
             ## dummy
@@ -145,13 +151,13 @@ class ScaleMethodFactory:
                 if self.op_type in {"linear", "matmul"}:
                     if scale_value_type in {ScaleValueType.MAXABS, ScaleValueType.OPT}:
                         return MulAdditionalScales(scale_round_method, self.params, self.device_for_scales)
-                    if scale_value_type == ScaleValueType.DYNAMIC:
-                        return MulAdditionalDynamicScales(scale_round_method, self.params, self.device_for_scales)
             ## maxabs/opt in channel PTS
             case (_, ScaleGranularity.PTS, QuantTensorName.WEIGHT_IN_CH, _) \
                 if scale_value_type not in {ScaleValueType.SMOOTHQUANT_OPT, ScaleValueType.SMOOTHQUANT_MAXABS}:
                 return None
             case (ScaleValueType.MAXABS, ScaleGranularity.PTS, _, _):
+                if is_dynamic:
+                    return MaxAbsDynamicPts(scale_round_method, self.params, self.device_for_scales, backoff)
                 return MaxAbsPts(scale_round_method, self.params, self.device_for_scales, backoff)
             ## maxabs/opt in channel PCS
             case (_, ScaleGranularity.PCS, QuantTensorName.WEIGHT_IN_CH, _)\
@@ -160,6 +166,8 @@ class ScaleMethodFactory:
                 return InputChannelScale(scale_round_method, self.params, self.device_for_scales, in_channel_size)
             ## maxabs PCS
             case (ScaleValueType.MAXABS, ScaleGranularity.PCS, _, _):
+                if is_dynamic:
+                    return MaxAbsDynamicPcs(scale_round_method, self.params, self.device_for_scales, backoff)
                 return MaxAbsPcs(scale_round_method, self.params, self.device_for_scales, backoff)
             ## opt PTS
             case (ScaleValueType.OPT, ScaleGranularity.PTS, _, _):
@@ -188,8 +196,6 @@ class ScaleMethodFactory:
             case (ScaleValueType.SMOOTHQUANT_OPT, _, QuantTensorName.INPUT, _):
                 backoff_weight =  self.params.get("weight_backoff", 1)
                 return InputSmoothQuantOpt(scale_round_method, self.mod.weight, self.params, self.device_for_scales, backoff, backoff_weight)
-            case (ScaleValueType.DYNAMIC, ScaleGranularity.PCS, QuantTensorName.INPUT, _):
-                return MaxAbsDynamicPcs(scale_round_method, self.params, self.device_for_scales, backoff)
             case _:
                 raise NotImplementedError("the config: scale_round_method: " + \
                                           str(scale_round_method) +

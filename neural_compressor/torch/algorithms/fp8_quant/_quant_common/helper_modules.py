@@ -164,6 +164,7 @@ class PatchedLinearBase(PatchedModuleBase):
             self.weight = nn.Parameter(self.weight.t().contiguous())
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
+
             # When offloading weights to disk using device_map, the module forward is overridden.
             # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
             # So need to set PatchedLinear forward to be the right forward.
@@ -186,7 +187,6 @@ class PatchedLinearBase(PatchedModuleBase):
             self.quant_input_func = self.quant_input_and_get_scale_dynamic if self.is_dynamic_quantization else self.quant_input_and_get_scale_static
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             init_mixture_of_experts_linears(self)
-
 
     def quant_input_and_get_scale_dynamic(self, input):
         return self.quant_input(input)
@@ -347,11 +347,15 @@ class PatchedRowParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         kwargs["func_names"] = ("resolve_input", )
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        #TODO [SW-224403]: enable dynamic quantization in row parallel allreduce
-        allreduce_quantization_enable = False if self.is_dynamic_quantization else get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
+        # TODO [SW-224403]: Enable dynamic quantization in row parallel allreduce
+        allreduce_quantization_enable = (
+            False
+            if self.is_dynamic_quantization
+            else get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
+        )
         if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
             self.forward = self.forward_measure_reduce if self.reduce_results and self.tp_size > 1 else self.forward_measure_no_reduce
-        
+
         elif self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             if self.fake_quant or self.use_qdq:
                 self.forward = self.forward_qdq
@@ -374,7 +378,7 @@ class PatchedRowParallelLinear(PatchedLinearBase):
         self.world_size = dist.get_world_size()
 
     def forward_qdq(self, input):
-        #TODO: [SW-208441] Support all_reduce_fp8 in forward_qdq in PatchedRowParallelLinear
+        # TODO: [SW-208441] Support all_reduce_fp8 in forward_qdq in PatchedRowParallelLinear
         resolved_input = self.resolve_input(input)
         output = self.run_linear_qdq(resolved_input, None)
 

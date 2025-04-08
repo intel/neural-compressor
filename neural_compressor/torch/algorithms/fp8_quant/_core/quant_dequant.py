@@ -30,6 +30,7 @@ from .fp_utils import (
     dequantize_per_tensor_from_fp8,
     quantize_per_channel_to_fp8,
     dequantize_per_channel_from_fp8,
+    invert_scale,
 )
 from .scale_handler import create_scale_tensor
 
@@ -126,13 +127,19 @@ class QuantDynamicInput(QuantDequantBase):
 
         self.cast_to_op = get_quantized_func_wrapper(OP_TYPE.CAST_TO_FP8, self.scale_format)
 
-    def forward(self, x):
+    def calculate_scales(self, x):
         scale = self.input_scales_creator.calc_scales(x, QuantTensorType.DYNAMIC)
-        scale_inv = self.input_scales_creator.calc_invert_scales()
+        scale_inv = self.input_scales_creator.invert_scales(scale)
+        return scale, scale_inv
+
+    def forward(self, x):
+        scale, scale_inv = self.calculate_scales(x)
 
         ret = self.cast_to_op(x, scale_inv, False, False, self.lp_dtype)
 
         return ret, scale
+
+    #TODO [SW-224609]: implement forward qdq
 
     def extra_repr(self) -> str:
         repr = super(QuantDynamicInput, self).extra_repr()

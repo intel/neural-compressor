@@ -15,8 +15,11 @@ from abc import abstractmethod
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 import torch
 from . import ScaleIdentity
-from ..common import QuantTensorType
-from ..fp_utils import mmse_scale_multi, get_fullscale, mmse_scale, calc_maxabs_scale, invert_scale
+#TODO [SW-224612]: Use cguid to calc scales and remove is_calc_scale_with_cguid
+from ..common import QuantTensorType, is_calc_scale_with_cguid
+from ..fp_utils import mmse_scale_multi, get_fullscale, mmse_scale, calc_maxabs_scale, invert_scale, calculate_scale_maxabs, ScaleCalculationMaxMode
+from ...utils.logger import logger
+import os
 
 class ScalesMethod:
 
@@ -31,33 +34,70 @@ class ScalesMethod:
         self.fullscale = fullscale if fullscale is not None else get_fullscale(self.lp_dtype, device_for_scale)
         self.scale = None
         self.is_dynamic = is_dynamic
+        #TODO [SW-224612]: Use cguid to calc scales and remove check
+        self.calc_scale_with_cguid = is_calc_scale_with_cguid()
+        logger.trace("%s %s", self.__class__.__name__, self.__dict__)
 
     def __repr__(self):
         return f"{self.__class__.__name__}(round_scale_method={self.round_scale_method.__class__.__name__}, params={self.params}, " \
             f"fullscale={self.fullscale}, scale={self.scale}, is_dynamic={self.is_dynamic})"
 
     def calc_invert_scales(self):
-        return invert_scale(self.scale)
+        return self.invert_scales(self.scale)
+
+    def invert_scales(self, scale=None):
+        return invert_scale(scale)
 
     @abstractmethod
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
         raise NotImplementedError("`calc_scales` function is not implemented")
 
 
-class MaxAbsPts(ScalesMethod):
-    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None):
-        super().__init__(round_scale_method, params, device_for_scales, fullscale)
+class MaxAbsMethod(ScalesMethod):
+    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None, is_dynamic=False):
+        super().__init__(round_scale_method, params, device_for_scales, fullscale, is_dynamic)
         self.backoff = backoff
+        self.calc_maxabs_method_dict = self.get_maxabs_methods_dict()
+        logger.trace("%s %s", self.__class__.__name__, self.__dict__)
+
+    def get_maxabs_methods_dict(self):
+        return {QuantTensorType.CONST: self.calc_maxabs_for_real_tensor,
+                        QuantTensorType.MEASUREMENTS: self.calc_maxabs_for_measurement}
+
+    @abstractmethod
+    def calc_maxabs_for_real_tensor(self, tensor):
+        raise NotImplementedError("`calc_maxabs_for_real_tensor` function is not implemented")
+
+    def calc_maxabs_for_measurement(self, tensor):
+        return torch.tensor(tensor, dtype=self.hp_dtype, device=self.device).max()
+
+    def _calculate_maxabs_scale(self, tensor, tensor_type, **additional_kwargs):
+        max_abs_tensor = self.calc_maxabs_method_dict[tensor_type](tensor)
+        #TODO [SW-224612]: Use cguid to calc scales and remove check
+        if not self.calc_scale_with_cguid:
+            max_abs_tensor = calc_maxabs_scale(max_abs_tensor, self.fullscale, self.backoff)
+
+        scale = self.round_scale_method.calc(max_abs_tensor)
+        return scale
 
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        if tensor_type == QuantTensorType.CONST:
-            max_abs_input =  torch.max(
-                torch.abs(tensor.detach())).to(dtype=self.hp_dtype, device=self.device)
-        else:
-            max_abs_input = torch.tensor(tensor, dtype=self.hp_dtype ,device=self.device).max()
-        scale = calc_maxabs_scale(max_abs_input, self.fullscale, self.backoff)
-        self.scale = self.round_scale_method.calc(scale)
+        scale = self._calculate_maxabs_scale(tensor, tensor_type, **additional_kwargs)
+        self.scale = scale.copy_(scale)
         return self.scale
+
+class MaxAbsPts(MaxAbsMethod):
+    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None, is_dynamic=False):
+        super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, is_dynamic)
+        logger.trace("%s %s", self.__class__.__name__, self.__dict__)
+
+    def calc_maxabs_for_real_tensor(self, tensor):
+        #TODO [SW-224612]: Use cguid to calc scales and remove check
+        if self.calc_scale_with_cguid:
+            max_abs_tensor = calculate_scale_maxabs(tensor, ScaleCalculationMaxMode.MAX_ABS_PTS_CALCULATION, fullscale=self.fullscale, backoff=self.backoff)
+        else:
+            max_abs_tensor =  torch.max(
+                torch.abs(tensor.detach())).to(dtype=self.hp_dtype, device=self.device)
+        return max_abs_tensor
 
 
 ## MulAdditionalScales Get 2 input scales, and return their multiplication.
@@ -101,28 +141,35 @@ class DummyScales(ScalesMethod):
         self.scale = torch.tensor(1.0).to("hpu")
         return self.scale
 
-class MaxAbsPcs(ScalesMethod):
+
+class MaxAbsPcs(MaxAbsMethod):
 
     def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None, dim=1, keepdim=False, is_dynamic=False):
-        super().__init__(round_scale_method, params, device_for_scales, fullscale, is_dynamic=is_dynamic)
-        self.backoff = backoff
+        super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, is_dynamic=is_dynamic)
         self.dim = dim
         self.keepdim = keepdim
+        logger.trace("%s %s", self.__class__.__name__, self.__dict__)
 
-    def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        if tensor_type in [QuantTensorType.CONST, QuantTensorType.DYNAMIC]:
-            max_abs_input = torch.amax(torch.abs(tensor), dim=self.dim, keepdim=self.keepdim)
-            # on dynamic quantization we don't need to reshape
-            if self.dim != -1:
-                max_abs_input = max_abs_input.reshape([-1, 1])
-            if self.dim == 1:
-                max_abs_input = max_abs_input.flatten()
+    def calc_maxabs_for_real_tensor_no_reshape(self, tensor):
+        #TODO [SW-224612]: Use cguid to calc scales and remove check
+        if self.calc_scale_with_cguid:
+            max_abs_tensor = calculate_scale_maxabs(
+                tensor,
+                ScaleCalculationMaxMode.MAX_ABS_PCS_CALCULATION,
+                reduceAxis=self.dim,
+                reduceKeepdim=self.keepdim,
+                fullscale=self.fullscale,
+                backoff=self.backoff,
+            )
         else:
-            max_abs_input = torch.tensor(tensor, dtype=self.hp_dtype ,device=self.device).max()
-        scale = calc_maxabs_scale(max_abs_input, self.fullscale, self.backoff)
-        scale = self.round_scale_method.calc(scale)
-        self.scale = scale
-        return scale
+            max_abs_tensor = torch.amax(torch.abs(tensor), dim=self.dim, keepdim=self.keepdim)
+        return max_abs_tensor
+
+    def calc_maxabs_for_real_tensor(self, tensor):
+        max_abs_tensor = self.calc_maxabs_for_real_tensor_no_reshape(tensor).reshape([-1, 1])
+        if self.dim == 1:
+            max_abs_tensor = max_abs_tensor.flatten()
+        return max_abs_tensor
 
 
 ## InputChannelScale used for input channel in PCS mode
@@ -237,11 +284,34 @@ class WeightIchSmoothQuant(ScalesMethod):
 class MaxAbsDynamicPcs(MaxAbsPcs):
 
     def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None):
-        super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, dim=-1, keepdim=True, is_dynamic=True)
+        super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, -1, True, True)
+        logger.trace("%s %s", self.__class__.__name__, self.__dict__)
 
-    # returns either None when not supplying dynamic tensor (during init..)
-    # or calculates the scale
+    def get_maxabs_methods_dict(self):
+        maxabs_methods_dict = super().get_maxabs_methods_dict()
+        maxabs_methods_dict[QuantTensorType.DYNAMIC] = self.calc_maxabs_for_real_tensor_no_reshape
+        return maxabs_methods_dict
+
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        if tensor_type != QuantTensorType.DYNAMIC:
-            return None
-        return super().calc_scales(tensor, tensor_type, **additional_kwargs)
+        # In dynamic quantization the scale is changed each time,
+        # and setting scale as a member is not supported in hpu graphs and torch.compile
+        # (it can break the graph)
+        return self._calculate_maxabs_scale(tensor, tensor_type, **additional_kwargs)
+
+
+class MaxAbsDynamicPts(MaxAbsPts):
+
+    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None):
+        super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, True)
+        logger.trace("%s %s",self.__class__.__name__, self.__dict__)
+
+    def get_maxabs_methods_dict(self):
+        maxabs_methods_dict = super().get_maxabs_methods_dict()
+        maxabs_methods_dict[QuantTensorType.DYNAMIC] = self.calc_maxabs_for_real_tensor
+        return maxabs_methods_dict
+
+    def calc_scales(self, tensor, tensor_type, **additional_kwargs):
+        # In dynamic quantization the scale is changed each time,
+        # and setting scale as a member is not supported in hpu graphs and torch.compile
+        # (it can break the graph)
+        return self._calculate_maxabs_scale(tensor, tensor_type, **additional_kwargs)

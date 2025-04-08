@@ -43,7 +43,7 @@ def htexp_device_type_to_inc_acclerator_type(htexp_device_type):
     elif htexp_device_type == get_gaudi3_type():
         INCAcceleratorType.GAUDI3
     else:
-        raise ValueErro("Unexpected htexp_device_type {} ".format())
+        raise ValueError("Unexpected htexp_device_type {} ".format())
 
 device_type = [GAUDI2, GAUDI3]
 device_type_id = {GAUDI2: get_gaudi2_type(), GAUDI3: get_gaudi3_type()}
