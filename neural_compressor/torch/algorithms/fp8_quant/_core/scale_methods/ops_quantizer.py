@@ -202,13 +202,17 @@ class RowParallelLinearOpQuantizer(LinearOpQuantizer):
         return module_config
 
     def get_output_config(self, lp_dtype, hp_dtype, scale_format):
-        output_config_dq_scatter_output = DequantOutput(self.output_scales_creators[0].scale, lp_dtype, hp_dtype)
-        output_config_q_scatter_input = QuantInput(self.output_scales_creators[0].calc_invert_scales(), lp_dtype, hp_dtype)
+        scale_0 = self.output_scales_creators[0].scale
+        inv_scale_0 = self.output_scales_creators[0].calc_invert_scales()
+        output_config_dq_scatter_output = DequantOutput(scale_0, lp_dtype, hp_dtype, scale_format=scale_format)
+        output_config_q_scatter_input = QuantInput(inv_scale_0, lp_dtype, hp_dtype, scale_format=scale_format)
         output_config = [output_config_dq_scatter_output,
                          output_config_q_scatter_input]
         if self.allreduce_quantization_enabled:
-            output_config_q_gather_input = QuantInput(self.output_scales_creators[1].calc_invert_scales(), lp_dtype, hp_dtype)
-            output_config_dq_gather_output = DequantOutput(self.output_scales_creators[1].scale, lp_dtype, hp_dtype)
+            inv_scale_1 = self.output_scales_creators[1].calc_invert_scales()
+            scale_1 = self.output_scales_creators[1].scale
+            output_config_q_gather_input = QuantInput(inv_scale_1, lp_dtype, hp_dtype, scale_format=scale_format)
+            output_config_dq_gather_output = DequantOutput(scale_1, lp_dtype, hp_dtype, scale_format=scale_format)
             output_config.extend([output_config_q_gather_input, output_config_dq_gather_output])
         return output_config
 
@@ -219,7 +223,6 @@ class MatmulOpQuantizer(BaseOpQuantizer):
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
-
 
     def get_scales_module_config(self):
         input_scales = self.calc_input_scales(num_of_inputs=2)
@@ -238,7 +241,7 @@ class MatmulOpQuantizer(BaseOpQuantizer):
             use_qdq,
             fake_quant,
         )
-        
+
         # 4bit->8bit inputs, no need to quant
         if hasattr(self.mod, "no_input_quant"):
             input_config[1] = QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)
