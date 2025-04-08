@@ -39,9 +39,9 @@ def create_scale_tensor(orig_tensor, scale_format):
         return orig_tensor.to("cpu").to(torch.float)
     if scale_format == ScaleFormat.CONST:
         if isinstance(orig_tensor, torch.Tensor):
-            return torch.nn.Parameter(orig_tensor)
+            return torch.nn.Parameter(orig_tensor, requires_grad=False)
         elif isinstance(orig_tensor, list):
-            return [torch.nn.Parameter(x) for x in orig_tensor]
+            return [torch.nn.Parameter(x, requires_grad=False) for x in orig_tensor]
     elif scale_format == ScaleFormat.SCALAR:
         if isinstance(orig_tensor, (torch.Tensor, float)):
             return scale_to_scalar(orig_tensor)
