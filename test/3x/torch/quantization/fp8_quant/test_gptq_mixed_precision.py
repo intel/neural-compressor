@@ -63,7 +63,7 @@ class TestGPTQwithFP8Quant:
     Calibrates the w4a16 model on N num of samples, and compares the same samples with the hybrid model.
     """
     @torch.no_grad()
-    @pytest.mark.skip(reason="SW-223106 load model error")
+    @pytest.mark.skip(reason="This test is temporarily disabled SW-224890")
     def test_mixed_precision_gptq_fp8_quant_only_nlp(self):
         from neural_compressor.common import set_random_seed
         set_random_seed(12345)
