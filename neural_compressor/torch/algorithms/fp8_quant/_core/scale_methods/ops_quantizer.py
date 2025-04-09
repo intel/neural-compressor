@@ -95,10 +95,11 @@ class LinearOpQuantizer(BaseOpQuantizer):
         input_scales = self.calc_input_scales(num_of_inputs=1)
         output_measurement = self.measurement.outputs[0] if self.measurement is not None else []
         rescaled_weight = self.mod.weight if hasattr(self.mod, 'weight') else None
+        if rescaled_weight is not None:
+            rescaled_weight = maybe_dequant_original_fp8_weight(self.mod, rescaled_weight)
         if self.weight_ich_scale_calc is not None:
             weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST)
-            bf16_weight = maybe_dequant_original_fp8_weight(self.mod, self.mod.weight)
-            rescaled_weight = torch.div(bf16_weight, weight_scales_in_ch.reshape([1, -1]))
+            rescaled_weight = torch.div(rescaled_weight, weight_scales_in_ch.reshape([1, -1]))
         weights_scales_out_ch = self.weight_och_scale_calc.calc_scales(rescaled_weight, QuantTensorType.CONST)
         params_config = (
             {"weight": weights_scales_out_ch}
