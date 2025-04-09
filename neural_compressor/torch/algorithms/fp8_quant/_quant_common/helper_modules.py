@@ -105,7 +105,7 @@ class PatchedMatmul(PatchedModuleBase):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_input_0 = self._mod_extra_config.inputs[0]
             self.quant_input_1 = self._mod_extra_config.inputs[1]
-            if not self.use_qdq or self.fake_quant:
+            if not self.use_qdq and not self.fake_quant:
                 self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
                 self.register_scale("scale_other", mod_extra_config.scale.inputs[1], self.scale_format)
                 self.matmul_fp8 = get_quantized_func_wrapper(OP_TYPE.MATMUL_GEMM, self.scale_format)
