@@ -52,8 +52,6 @@ def generate_model_info(model):
 
     create_mod_info_recursion(model)
 
-    
-INC_DYNAMIC_MOE_EXPERTS = int(os.environ.get("INC_DYNAMIC_MOE_EXPERTS", "8"))
 
 _mod_types = {
     "linear": ModuleType(1, ["weight"], 1, False),
@@ -62,7 +60,7 @@ _mod_types = {
     "kv_cache": ModuleType(1, [], 1, False),
     "softmax": ModuleType(1, [], 1, True),
     "fused_sdpa": ModuleType(3, [], 2, True),
-    "dynamic_moe": ModuleType(1, [], 1 + INC_DYNAMIC_MOE_EXPERTS, True),
+    "dynamic_moe": ModuleType(1, [], 1 + 8, True),
 }
 
 
