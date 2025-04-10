@@ -150,6 +150,10 @@ def get_accelerator(device_name="auto"):
     from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
     accelerator = auto_detect_accelerator(device_name)
+    if os.environ.get("INC_TARGET_DEVICE", None) is not None and \
+        accelerator._name != os.environ.get("INC_TARGET_DEVICE", None).lower():
+        auto_detect_accelerator.cache_clear()
+        accelerator = auto_detect_accelerator(device_name)
     return accelerator
 
 
