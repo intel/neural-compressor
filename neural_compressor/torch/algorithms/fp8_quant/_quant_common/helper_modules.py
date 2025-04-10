@@ -348,11 +348,7 @@ class PatchedRowParallelLinear(PatchedLinearBase):
         kwargs["func_names"] = ("resolve_input", )
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         # TODO [SW-224403]: Enable dynamic quantization in row parallel allreduce
-        allreduce_quantization_enable = (
-            False
-            if self.is_dynamic_quantization
-            else get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
-        )
+        allreduce_quantization_enable = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
         if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
             self.forward = self.forward_measure_reduce if self.reduce_results and self.tp_size > 1 else self.forward_measure_no_reduce
 
