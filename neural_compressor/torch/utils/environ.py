@@ -151,10 +151,7 @@ def get_accelerator(device_name="auto"):
 
     accelerator = auto_detect_accelerator(device_name)
     inc_target_device = os.environ.get("INC_TARGET_DEVICE", None)
-    if (
-        inc_target_device is not None
-        and accelerator._name != inc_target_device.lower()
-    ):
+    if inc_target_device is not None and accelerator._name != inc_target_device.lower():
         auto_detect_accelerator.cache_clear()
         accelerator = auto_detect_accelerator(device_name)
     return accelerator
