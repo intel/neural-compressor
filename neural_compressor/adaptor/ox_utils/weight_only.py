@@ -535,9 +535,7 @@ def rtn_quantize(
                 # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions, supported by CPU EP
                 # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1, supported by CPU EP AND CUDA EP
                 if algorithm == "k_quant":
-                    q_weight, scale, zp = quant_tensor_k_quant_cuda(
-                        weight.T, num_bits, group_size
-                    )
+                    q_weight, scale, zp = quant_tensor_k_quant_cuda(weight.T, num_bits, group_size)
                 else:
                     q_weight, scale, zp = quant_tensor(
                         weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
