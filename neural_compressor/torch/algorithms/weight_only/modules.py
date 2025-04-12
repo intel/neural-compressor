@@ -68,9 +68,9 @@ class QDQLayer(torch.nn.Module):
 class UnpackedWeightOnlyLinearParams(dict):
     """Contains all unpacked weight values."""
 
-    def __init__(self, unpack_weight, scales, unpack_zp, **kwargs):
+    def __init__(self, unpack_weight, scales, scale_bf16_to_fp8, unpack_zp, **kwargs):
         """Create dict."""
-        super().__init__(int_weight=unpack_weight, scales=scales, zp=unpack_zp, **kwargs)
+        super().__init__(int_weight=unpack_weight, scales=scales, scale_bf16_to_fp8 = scale_bf16_to_fp8, zp=unpack_zp, **kwargs)
 
     def to(self, device):
         """Change device for all values."""
@@ -225,6 +225,14 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         assert compression_dim in [0, 1], (
             "Only support 0 or 1 as compression dimension, " + "0 is output channel, 1 is input channel."
         )
+        self.register_buffer(
+                "scale_bf16_to_fp8",
+                torch.zeros(
+                    1,
+                    dtype=torch.bfloat16,
+                ).to(device),
+            )
+        # scale_bf16_to_fp8 is only used in w4a8 measurement mode and currently supports only per-tensor scaling
         if self.use_optimum_format:
             self.float_type = torch.float16
             self.compression_dtype = torch.int32
@@ -302,7 +310,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             self.g_idx = None
         self.post_init()
 
-    def pack(self, int_weight, scales, zp, bias=None, g_idx=None, **kwargs):
+    def pack(self, int_weight, scales, zp, scale_bf16_to_fp8=None, bias=None, g_idx=None, **kwargs):
         """Pack int weight."""
         if self.use_optimum_format:
             self.scales = self.scales.T.contiguous()
@@ -328,6 +336,8 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 self.g_idx = self.g_idx.type(torch.int32).to(self.device)
         assert scales.shape == self.scales.shape, f"{scales.shape} != {self.scales.shape} Scale shape is mismatched."
         self.scales = scales.type(self.float_type).to(self.device)
+        if scale_bf16_to_fp8 is not None:
+            self.scale_bf16_to_fp8 = scale_bf16_to_fp8.type(self.float_type).to(self.device)
         if not self.use_optimum_format and self.compression_dim == 0:
             int_weight = int_weight.T.contiguous()
             self.qweight = self.qweight.T.contiguous()
@@ -359,6 +369,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
     def unpack(self):
         """Unpack weight and zero point."""
         scales = self.scales.T.contiguous() if self.use_optimum_format else self.scales
+        scale_bf16_to_fp8 = self.scale_bf16_to_fp8
         qweight = self.qweight.T.contiguous() if self.use_optimum_format else self.qweight
 
         device = scales.device
@@ -394,7 +405,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 # zp -= 1 may cause zp == -1, after recover it becomes 2**self.bits - 1
                 zp += 1
                 zp = torch.where(zp > (2**self.bits - 1), 0, zp)
-        return UnpackedWeightOnlyLinearParams(weight, scales, zp, g_idx=self.g_idx, bias=self.bias)
+        return UnpackedWeightOnlyLinearParams(weight, scales, scale_bf16_to_fp8, zp, g_idx=self.g_idx, bias=self.bias)
 
     def recover(self):
         """Recover fp32 weight from packed weight."""
@@ -402,6 +413,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         unpack_params_dict = self.unpack()
         weight = unpack_params_dict.get("int_weight")
         scales = unpack_params_dict.get("scales")
+        scale_bf16_to_fp8 = unpack_params_dict.get("scale_bf16_to_fp8")
         zp = unpack_params_dict.get("zp")
 
         device = scales.device
@@ -697,7 +709,13 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
                 dtype=self.float_type,
             ),
         )
-
+        self.register_buffer(
+            "scale_bf16_to_fp8",
+            torch.zeros(
+                1,
+                dtype=self.float_type,
+            ),
+        )
         if g_idx:
             self.register_buffer(
                 "g_idx",
@@ -727,7 +745,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         output = output + self.bias if self.bias is not None else output
         return output
 
-    def pack(self, int_weight, scales, zp, bias=None, g_idx=None):
+    def pack(self, int_weight, scales, zp, scale_bf16_to_fp8=None, bias=None, g_idx=None):
         """Pack weight and zero point."""
         logger.debug("Packing for HPU")
 
@@ -736,6 +754,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         qweight = int_weight.T.contiguous()
 
         self.scales = scales.to(dtype=torch.bfloat16)
+        self.scale_bf16_to_fp8 = scale_bf16_to_fp8.to(dtype=torch.bfloat16)
 
         # weights and zp are on device from unpack, need to load to cpu for packing
         self.qweight = qweight.cpu()
