@@ -416,22 +416,14 @@ class PatchedRowParallelLinear(PatchedModuleBase):
         return self.post_all_reduce(dqoutput)
 
     def forward_measure(self, input):
-        # if torch.distributed.get_rank() == 0:
-        #     import pdb; pdb.set_trace()
-        # torch.distributed.barrier()
-        # resolved_input = self.resolve_input(input)
-        # measure_input((resolved_input,), observer=self._mod_extra_config.inputs)
+        resolved_input = self.resolve_input(input)
+        measure_input((resolved_input,), observer=self._mod_extra_config.inputs)
         # output = torch.matmul(resolved_input, self.weight.transpose(-1, -2))
-        # measure_output((output,), self._mod_extra_config.outputs)
-        # if self.reduce_results:
-        #     output = self.collective_func(output)
-        # return self.post_all_reduce(output)
-
-        # FIXME: It is not fully correct here
-        measure_input((input,), observer=self._mod_extra_config.inputs)
-        output, output_bias = self.orig_mod(input)
+        output = self.orig_mod.quant_method.apply(self.orig_mod, resolved_input)
         measure_output((output,), self._mod_extra_config.outputs)
-        return output, output_bias
+        if self.reduce_results:
+            output = self.collective_func(output)
+        return self.post_all_reduce(output)
 
     def post_all_reduce(self, output):
         assert (
@@ -482,21 +474,21 @@ class PatchedColumnParallelLinear(PatchedModuleBase):
         return self.post_all_reduce(dqoutput)
 
     def forward_measure(self, input):
-        # if torch.distributed.get_rank() == 0:
-        #     import pdb; pdb.set_trace()
         measure_input((input,), observer=self._mod_extra_config.inputs)
-        # FIXME: it is not fully correct here, 
-        output, output_bias = self.orig_mod(input)
+        output = self.orig_mod.quant_method.apply(self.orig_mod, input)
         measure_output((output,), self._mod_extra_config.outputs)
+        output, output_bias = self.add_bias(output)
+        if self.gather_output:
+            output = self.collective_func(output)
         return output, output_bias
 
-        # output = torch.matmul(input, self.weight.transpose(-1, -2))
-
-        # output = torch.matmul(input, self.weight.transpose(-1, -2))
-        # measure_output((output,), self._mod_extra_config.outputs)
-        # if self.gather_output:
-        #     output = self.collective_func(output)
-        # return self.post_all_reduce(output)
+    def add_bias(self, output):
+        if not self.skip_bias_add:
+            output = output + self.bias if self.bias is not None else output
+            output_bias = None
+        else:
+            output_bias = self.bias
+        return output, output_bias
 
     def post_all_reduce(self, output):
         if not self.skip_bias_add:
