@@ -260,7 +260,7 @@ def quant_tensor_k_quant_cpu(data, num_bits=4, group_size=32):
         scale: scale
         zero_point: zero point
     """
-    data = np.reshape(data, (-1, group_size)).astype(np.float32)   # (nb, group_size)
+    data = np.reshape(data, (-1, group_size)).astype(np.float32)   # nb = data.shape[0], (nb, group_size)
     maxq = 2**num_bits - 1
     minq = 0
     sum_x2 = np.sum(data**2, axis=1, keepdims=True) # (nb, 1)
@@ -535,9 +535,7 @@ def rtn_quantize(
                 # MatMulFpQ4 support 4 bits and 32 group_size with ort 1.16.0 and 1.16.1 versions, supported by CPU EP
                 # MatMulNBits supports 4 bits and 2^n group_size with ort > 1.16.1, supported by CPU EP AND CUDA EP
                 if algorithm == "k_quant":
-                    q_weight, scale, zp = quant_tensor_k_quant_cuda(
-                        weight.T, num_bits, group_size
-                    )
+                    q_weight, scale, zp = quant_tensor_k_quant_cuda(weight.T, num_bits, group_size)
                 else:
                     q_weight, scale, zp = quant_tensor(
                         weight.T, num_bits, group_size, scheme, "uint", ratios.get(node.input[1], 1)
