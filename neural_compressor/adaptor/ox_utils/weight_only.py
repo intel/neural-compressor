@@ -249,6 +249,7 @@ def quant_tensor(data, num_bits=4, group_size=32, scheme="asym", dtype="int", ra
 
 def quant_tensor_k_quant_cpu(data, num_bits=4, group_size=32):
     """Quantize tensor per group based on k quant.
+
     Ref: https://github.com/ggml-org/llama.cpp/blob/64eda5deb9859e87a020e56bab5d2f9ca956f1de/ggml/src/ggml-quants.c
 
     Args:
@@ -321,6 +322,7 @@ def quant_tensor_k_quant_cpu(data, num_bits=4, group_size=32):
 
 def quant_tensor_k_quant_cuda(data, num_bits=4, group_size=32):
     """Quantize tensor per group based on k quant.
+
     Ref: https://github.com/ggml-org/llama.cpp/blob/64eda5deb9859e87a020e56bab5d2f9ca956f1de/ggml/src/ggml-quants.c
 
     Args:
