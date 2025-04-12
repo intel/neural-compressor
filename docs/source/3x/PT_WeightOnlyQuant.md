@@ -111,6 +111,7 @@ model = convert(model)
 |               model_path (str)        |  Model path that is used to load   state_dict per layer                                                                                    |                    |
 |               use_double_quant (bool) |  Enables double quantization                                                                                                               |  False  |
 |               act_order (bool)        |  Whether to sort Hessian's diagonal   values to rearrange channel-wise quantization order                                                  |  False  |
+|               hybrid_act_order (bool) |  Enables Group Aware activations Reordering (GAR): elements can be reordered within each group and the groups themselves can also be reordered, but elements cannot move between groups       |  False  |
 |               percdamp (float)        |  Percentage of Hessian's diagonal   values' average, which will be added to Hessian's diagonal to increase   numerical stability           |  0.01  |
 |               block_size (int)        |  Execute GPTQ quantization per   block, block shape = [C_out, block_size]                                                                  |  128     |
 |               static_groups (bool)    |  Whether to calculate group wise   quantization parameters in advance. This option mitigate actorder's extra   computational requirements. |  False  |
@@ -125,6 +126,34 @@ quant_config = GPTQConfig()
 model = prepare(model, quant_config)
 run_fn(model)  # calibration
 model = convert(model)
+```
+
+#### DPQ
+
+|  dpq_args  | comments |      default value                                                       |
+|----------|-------------|-------------------------------------------------------------------|
+|               fp8_aware (bool)        |  Enables an FP8-aware GPTQ quantization flow, where an intermediate FP8 quantization step is applied.                                     |  False
+|               protective_range (bool) |  protective range is added to prevent dequant overflow from INT4 to FP8 (WIP)                                                              |  False |
+
+``` python
+from neural_compressor.torch.quantization import prepare, convert, GPTQConfig, HybridGPTQConfig
+
+# Quantization code
+quant_config = GPTQConfig()
+quant_config.fp8_aware = True 
+model = prepare(model, quant_config)
+run_fn(model)  # calibration
+model = convert(model)
+
+# Inference code
+# This can be implemented in one or two steps. See neural-compressor-fork/examples/fp8_sample/README.md for more details.
+model = load(path_to_quantized_model)  # loading a model with 4-bit weights
+config = HybridGPTQConfig.from_json_file(path_to_measure_json)  # measure.json is required
+model = prepare(model, config)
+run_fn(model)  # to measure activation scales from BF16 to FP8
+finalize_calibration(model)
+config = HybridGPTQConfig.from_json_file(path_to_quant_json) # quant.json is required
+model = convert(model, config)  # after this step, the model is ready for W4A8 inference
 ```
 
 #### AutoRound
