@@ -196,6 +196,9 @@ class WOQModelLoader:
 
         if self._is_w4a8_model_from_auto_round():
             model = self._post_process_for_w4a8(model)
+        if self._is_w4a8_model_from_dpq(model):
+            model.dpq_quantized = True
+
         return model
 
     def load_inc_format_woq_model(self):
@@ -284,6 +287,12 @@ class WOQModelLoader:
                 return True
         return False
 
+    # check if the model was quantized using Dual Precision Quantization (DPQ)
+    def _is_w4a8_model_from_dpq(self, model):
+        for name, _ in model.named_buffers():
+            if 'scale_bf16_to_fp8' in name:
+                return True
+        return False
 
     def _update_quant_config_for_w4a8(self):
         self.quantization_config['quant_method'] = "gptq"
@@ -486,7 +495,7 @@ class WOQModelLoader:
 
     def _load_data_to_new_module(self, new_module, module_name):
         new_module_state_dict = {}
-        for key in [".qweight", ".scales", ".qzeros", ".bias", ".g_idx"]:
+        for key in [".qweight", ".scales", ".scale_bf16_to_fp8", ".qzeros", ".bias", ".g_idx"]:
             full_name = module_name + key
             if full_name in self.loaded_state_dict:
                 new_module_state_dict[key[1:]] = self.loaded_state_dict.pop(full_name)

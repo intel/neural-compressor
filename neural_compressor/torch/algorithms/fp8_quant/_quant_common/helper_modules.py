@@ -109,6 +109,8 @@ class PatchedMatmul(PatchedModuleBase):
                 self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
                 self.register_scale("scale_other", mod_extra_config.scale.inputs[1], self.scale_format)
                 self.matmul_fp8 = get_quantized_func_wrapper(OP_TYPE.MATMUL_GEMM, self.scale_format)
+                if hasattr(parent, 'scale_bf16_to_fp8') and parent.scale_bf16_to_fp8 > 0: # in DPQ we want to use the scales measured in the quantization process
+                    self.scale_other = torch.nn.Parameter(parent.scale_bf16_to_fp8)
 
     def forward_quant(self, input, other):
         qinput = self.quant_input_0(input)

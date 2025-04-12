@@ -1,0 +1,21 @@
+{
+    "mode": "QUANTIZE",
+    "observer": "maxabs",
+    "scale_method": "maxabs_pow2",
+    "blacklist": {
+        "types": [],
+        "names": [
+            "matmul_qk",
+            "matmul_av",
+            "k_cache",
+            "v_cache",
+            "fused_scaled_dot_product_attention",
+            "lm_head"
+        ]
+    },
+    "scale_params": {
+        "input_backoff": 1,
+        "weight_backoff": 1
+    },
+    "dump_stats_path": "./test_outputs/unit_test"
+}

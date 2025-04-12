@@ -25,6 +25,7 @@ class HybridGPTQQuantizer(Quantizer):
             self.quant_config = json_file[0]
 
     def prepare(self, model):
+        _prepare(model)
         return model
     
     def convert(self, model):
@@ -56,6 +57,15 @@ def _convert(model):
     # replace `HPUWeightOnlyLinear`s forward func
         if isinstance(module, HPUWeightOnlyLinear):
             module = HPUMixedPrecisionLinear.convert_from_weight_only(module)
+            set_module(model, name, module)
+
+    return model
+
+def _prepare(model):
+    for name, module in model.named_modules():
+    # replace `HPUWeightOnlyLinear`s forward func
+        if isinstance(module, HPUWeightOnlyLinear):
+            module = HPUMixedPrecisionLinear.prepare_from_weight_only(module)
             set_module(model, name, module)
 
     return model

@@ -154,6 +154,8 @@ def prepare(
 
     if hasattr(quant_config, "model_path") and quant_config.model_path == "":
         quant_config.model_path = prepared_model.name_or_path
+    if hasattr(model, 'dpq_quantized') and model.dpq_quantized and type(quant_config) == FP8Config:
+        quant_config = HybridGPTQConfig.convert_from_fp8(quant_config)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
     logger.debug(configs_mapping)
 
@@ -210,8 +212,7 @@ def convert(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-
-    if hasattr(quant_config, 'int4_weights') and quant_config.int4_weights and type(quant_config) == FP8Config:
+    if hasattr(model, 'dpq_quantized') and model.dpq_quantized and type(quant_config) == FP8Config:
         quant_config = HybridGPTQConfig.convert_from_fp8(quant_config)
     logger.debug("Convert model with config:")
     logger.debug(quant_config.to_dict())
