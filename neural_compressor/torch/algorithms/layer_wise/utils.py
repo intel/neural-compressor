@@ -157,10 +157,15 @@ def load_tensor(path, tensor_name=None, prefix=None):
         return state_dict
 
 
-def load_tensor_from_safetensors(path, tensor_name=None, device="cpu"):
+def load_tensor_from_safetensors(path, tensor_name=None, prefix=None, device="cpu"):
     """Load a tensor from safetensors file with given tensor name."""
     with safe_open(path, framework="pt", device=device) as f:
-        value = f.get_tensor(tensor_name)
+        if tensor_name in f.keys():
+            value = f.get_tensor(tensor_name)
+        elif prefix and tensor_name.replace(f"{prefix}.", "") in f.keys():
+            value = f.get_tensor(tensor_name.replace(f"{prefix}.", ""))
+        else:
+            raise ValueError(f"Tensor '{tensor_name}' not found in the file '{path}'")
     return value
 
 
@@ -212,9 +217,13 @@ def load_value(model, param_name, path, device="cpu"):
     files = os.listdir(path)
     safetensors_files = [filename for filename in files if filename.endswith(".safetensors")]
     if len(safetensors_files) == 1:
-        value = load_tensor_from_safetensors(os.path.join(path, "model.safetensors"), param_name, device=device)
+        value = load_tensor_from_safetensors(
+            os.path.join(path, "model.safetensors"), param_name, prefix=prefix, device=device
+        )
     elif len(safetensors_files) >= 2:
-        value = load_tensor_from_safetensors_shard(path, param_name, device=device)
+        value = load_tensor_from_safetensors_shard(
+            path, param_name, prefix=prefix, device=device
+        )
     elif "pytorch_model.bin.index.json" in files:
         value = load_tensor_from_shard(path, param_name, prefix)
     else:
