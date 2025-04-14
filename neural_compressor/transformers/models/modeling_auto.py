@@ -678,7 +678,8 @@ class _BaseINCAutoModelClass:
             quantization_config.weight_dtype = "int4"
             logger.warning("int4 weight_dtype is used, please change the config.json if you don't want to use it.")
 
-        init_contexts = [no_init_weights(_enable=_fast_init)]
+        init_contexts = [no_init_weights(_enable=_fast_init)]  if transformers.__version__ < "4.51" else\
+                        [no_init_weights()]
         init_contexts.append(init_empty_weights())
 
         with ContextManagers(init_contexts):

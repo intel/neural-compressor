@@ -21,6 +21,7 @@ import re
 import tempfile
 
 import torch
+import transformers
 
 from neural_compressor.common.utils import AWQ, TEQ, save_config_mapping
 from neural_compressor.torch.utils import (
@@ -846,7 +847,8 @@ class WOQModelLoader:
 
             dtype_orig = model_class._set_default_torch_dtype(torch_dtype)
 
-        init_contexts = [no_init_weights(_enable=_fast_init)]
+        init_contexts = [no_init_weights(_enable=_fast_init)]  if transformers.__version__ < "4.51" else\
+                        [no_init_weights()]
         init_contexts.append(init_empty_weights())
 
         with ContextManagers(init_contexts):
