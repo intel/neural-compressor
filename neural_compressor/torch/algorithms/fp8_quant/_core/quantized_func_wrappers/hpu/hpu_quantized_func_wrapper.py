@@ -12,8 +12,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from .._quant_common.quant_config import ScaleFormat
-from ..utils.logger import logger
 from abc import ABCMeta, abstractmethod
 from enum import Enum, auto
 

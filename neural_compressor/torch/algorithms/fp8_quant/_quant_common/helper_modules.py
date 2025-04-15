@@ -17,7 +17,7 @@ import torch.nn as nn
 import types
 import functools
 
-from .quant_config import QuantMode
+from .quant_config import QuantMode, get_hqt_config
 from .._core.quant_dequant import QuantDequant as qdq, QuantDynamicInput
 from .._core.quantized_func_wrappers import get_quantized_func_wrapper, OP_TYPE
 from ..patched_module_base import PatchedModuleBase
@@ -159,7 +159,6 @@ def init_linear(instance, mod_extra_config):
             instance.qdq_weights = instance._mod_extra_config.params["weight"][0]
         else:
             instance.matmul_fp8 = get_quantized_func_wrapper(OP_TYPE.LINEAR_GEMM, instance.scale_format)
-            instance.forward = instance.forward_quant if change_forward else instance.forward
             # input0 is None when initializing a dynamic quantization op
             instance.register_scale("scale_input", mod_extra_config.scale.inputs[0], instance.scale_format)
             if isinstance(mod_extra_config.scale.params["weight"], (torch.Tensor, float)):
