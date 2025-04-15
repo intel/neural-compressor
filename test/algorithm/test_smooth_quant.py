@@ -1230,9 +1230,11 @@ class TestTextGeneration(unittest.TestCase):
     def setUpClass(cls):
         from modeling_gptj import GPTJForCausalLM
 
-        cls.clm_model = GPTJForCausalLM.from_pretrained("hf-internal-testing/tiny-random-gptj",
-                                                        revision="b96595a4bcdeb272096214589efa0314259853a0",
-                                                        torchscript=True)
+        cls.clm_model = GPTJForCausalLM.from_pretrained(
+            "hf-internal-testing/tiny-random-gptj",
+            revision="b96595a4bcdeb272096214589efa0314259853a0",
+            torchscript=True,
+        )
 
     def test_text_generation(self):
         input_ids = torch.tensor([[531, 574, 658, 492, 156], [309, 296, 471, 817, 435], [182, 176, 756, 944, 768]])
