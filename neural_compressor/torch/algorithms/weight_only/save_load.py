@@ -21,7 +21,6 @@ import re
 import tempfile
 
 import torch
-import transformers
 from packaging.version import parse
 
 from neural_compressor.common.utils import AWQ, TEQ, save_config_mapping
@@ -811,6 +810,7 @@ class WOQModelLoader:
         return resolved_archive_file, is_sharded
 
     def _init_hf_model(self, model_class, config):
+        import transformers
         from accelerate.big_modeling import init_empty_weights
         from transformers.modeling_utils import no_init_weights
         from transformers.utils import ContextManagers
