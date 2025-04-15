@@ -38,11 +38,11 @@ import torch
 import transformers
 from accelerate import init_empty_weights
 from accelerate.utils import is_xpu_available
+from packaging.version import parse
 from transformers import AutoConfig
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import load_state_dict
 from transformers.utils import has_file, is_safetensors_available
-from packaging.version import parse
 
 from neural_compressor.common.utils import CpuInfo, logger
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
@@ -679,8 +679,11 @@ class _BaseINCAutoModelClass:
             quantization_config.weight_dtype = "int4"
             logger.warning("int4 weight_dtype is used, please change the config.json if you don't want to use it.")
 
-        init_contexts = [no_init_weights(_enable=_fast_init)]  if parse(transformers.__version__) < parse("4.51") else\
-                        [no_init_weights()]
+        init_contexts = (
+            [no_init_weights(_enable=_fast_init)]
+            if parse(transformers.__version__) < parse("4.51")
+            else [no_init_weights()]
+        )
         init_contexts.append(init_empty_weights())
 
         with ContextManagers(init_contexts):

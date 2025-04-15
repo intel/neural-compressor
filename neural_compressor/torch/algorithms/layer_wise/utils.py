@@ -221,9 +221,7 @@ def load_value(model, param_name, path, device="cpu"):
             os.path.join(path, "model.safetensors"), param_name, prefix=prefix, device=device
         )
     elif len(safetensors_files) >= 2:
-        value = load_tensor_from_safetensors_shard(
-            path, param_name, prefix=prefix, device=device
-        )
+        value = load_tensor_from_safetensors_shard(path, param_name, prefix=prefix, device=device)
     elif "pytorch_model.bin.index.json" in files:
         value = load_tensor_from_shard(path, param_name, prefix)
     else:
