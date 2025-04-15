@@ -483,7 +483,7 @@ class _Pickler:  # pragma: no cover
         The memo is the data structure that remembers which objects the
         pickler has already seen, so that shared or recursive objects
         are pickled by reference and not by value.  This method is
-        useful when re-using picklers.
+        useful when reusing picklers.
         """
         self.memo.clear()
 
