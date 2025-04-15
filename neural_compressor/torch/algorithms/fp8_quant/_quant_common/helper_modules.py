@@ -790,7 +790,10 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                       expert_routing_table,
                       router_weights,
                       permuted_weights=True,
-                      activation="silu"):
+                      activation="silu",
+                      experts_min=0,
+                      experts_max=7,
+                     ):
         experts_range = range(self.num_experts)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]
@@ -809,8 +812,8 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             d_scale_intermediate_hidden_states=self.scale_intermediate,
             permuted_weights=False,
             activation=activation,
-            experts_min=self.experts_min,
-            experts_max=self.experts_max,
+            experts_min=experts_min,
+            experts_max=experts_max,
         )
         return output
 
@@ -819,7 +822,10 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                         expert_routing_table,
                         router_weights,
                         permuted_weights=True,
-                        activation="silu"):
+                        activation="silu",
+                        experts_min=0,
+                        experts_max=7,
+                       ):
         experts_range = range(self.num_experts)
         w1_list = [self.w13_list[i].weight.squeeze() for i in experts_range]
         w2_list = [self.w2_list[i].weight.squeeze() for i in experts_range]
@@ -832,8 +838,8 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             w3=w2_list,
             permuted_weights=permuted_weights,
             activation=activation,
-            experts_min=self.experts_min,
-            experts_max=self.experts_max,
+            experts_min=experts_min,
+            experts_max=experts_max,
             measurement_mode=True,
         )
         output_measure_list = [output]
