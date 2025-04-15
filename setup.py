@@ -6,7 +6,6 @@ from io import open
 
 from setuptools import find_packages, setup
 
-
 # Remove 2x content in "__init__.py" when only 3x is installed and recover it when 2x is installed
 content_position = ("neural_compressor/__init__.py", 20)  # file path and line number
 backup_content = """from .config import (
@@ -25,31 +24,27 @@ from .utils.utility import set_random_seed, set_tensorboard, set_workspace, set_
 
 
 def delete_lines_from_file(file_path, start_line):
-    """
-    Deletes all lines from the specified start_line to the end of the file.
-    """
-    with open(file_path, 'r') as file:
+    """Deletes all lines from the specified start_line to the end of the file."""
+    with open(file_path, "r") as file:
         lines = file.readlines()
-    
+
     # Keep only lines before the start_line
-    lines = lines[:start_line - 1]
-    
-    with open(file_path, 'w') as file:
+    lines = lines[: start_line - 1]
+
+    with open(file_path, "w") as file:
         file.writelines(lines)
 
 
 def replace_lines_from_file(file_path, start_line, replacement_content):
-    """
-    Replaces all lines from the specified start_line to the end of the file with replacement_content.
-    """
-    with open(file_path, 'r') as file:
+    """Replaces all lines from the specified start_line to the end of the file with replacement_content."""
+    with open(file_path, "r") as file:
         lines = file.readlines()
-    
+
     # Keep lines before the start_line and append replacement_content
-    lines = lines[:start_line - 1]
+    lines = lines[: start_line - 1]
     lines.append(replacement_content)
-    
-    with open(file_path, 'w') as file:
+
+    with open(file_path, "w") as file:
         file.writelines(lines)
 
 
