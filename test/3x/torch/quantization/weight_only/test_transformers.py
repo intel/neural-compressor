@@ -19,6 +19,8 @@ from neural_compressor.transformers import (
     TeqConfig,
 )
 
+torch.manual_seed(42)
+
 ipex_version = get_ipex_version()
 
 try:
@@ -96,8 +98,11 @@ class TestTansformersLikeAPI:
         woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
         output = woq_model(dummy_input)
-        # The output of torch.cholesky() had changed when torch < 2.5.0
-        assert isclose(float(output[0][0][0][0]), -0.0874, abs_tol=1e-04)
+        # The output of torch.cholesky() changes on different torch version
+        if ipex_version < Version("2.5.0"):
+            assert isclose(float(output[0][0][0][0]), -0.08614, abs_tol=1e-04)
+        else:
+            assert isclose(float(output[0][0][0][0]), -0.0874, abs_tol=1e-04)
 
         # AUTOROUND
         woq_config = AutoRoundConfig(
@@ -107,7 +112,10 @@ class TestTansformersLikeAPI:
         woq_model.eval()
         output = woq_model(dummy_input)
         # The output might change when device supports bf16
-        assert isclose(float(output[0][0][0][0]), -0.0786, abs_tol=1e-04)
+        if CpuInfo().bf16:
+            assert isclose(float(output[0][0][0][0]),  -0.07275, abs_tol=1e-04)
+        else:
+            assert isclose(float(output[0][0][0][0]), -0.0786, abs_tol=1e-04)
 
     def test_save_load(self):
         model_name_or_path = self.model_name_or_path
