@@ -105,7 +105,7 @@ We also upstreamed several INT8 models into HuggingFace [model hub](https://hugg
 2. User specifies fp32 'model', calibration dataset 'q_dataloader' and a custom "eval_func" which encapsulates the evaluation dataset and metrics by itself.
 
 ## 2. Code Prepare
-We update `run_glue.py` like belows:
+We update `run_glue.py` like below:
 
 ```python
 trainer = QuestionAnsweringTrainer(

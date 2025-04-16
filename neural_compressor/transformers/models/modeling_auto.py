@@ -38,6 +38,7 @@ import torch
 import transformers
 from accelerate import init_empty_weights
 from accelerate.utils import is_xpu_available
+from packaging.version import parse
 from transformers import AutoConfig
 from transformers.configuration_utils import PretrainedConfig
 from transformers.modeling_utils import load_state_dict
@@ -678,7 +679,11 @@ class _BaseINCAutoModelClass:
             quantization_config.weight_dtype = "int4"
             logger.warning("int4 weight_dtype is used, please change the config.json if you don't want to use it.")
 
-        init_contexts = [no_init_weights(_enable=_fast_init)]
+        init_contexts = (
+            [no_init_weights(_enable=_fast_init)]
+            if parse(transformers.__version__) < parse("4.51")
+            else [no_init_weights()]
+        )
         init_contexts.append(init_empty_weights())
 
         with ContextManagers(init_contexts):
@@ -704,35 +709,36 @@ class _BaseINCAutoModelClass:
                 model, resolved_archive_file, loaded_state_dict_keys, quantization_config, is_sharded
             )
         else:
-            if transformers.__version__ >= "4.50":
-                model_message = model_class._load_pretrained_model(
+            if parse(transformers.__version__) < parse("4.50"):
+                tmp_args = (
                     model,
                     None,
-                    checkpoint_files,
-                    pretrained_model_name_or_path,
-                    sharded_metadata=sharded_metadata,
-                    _fast_init=_fast_init,
-                    low_cpu_mem_usage=True,
-                    disk_offload_folder=offload_folder,
-                    offload_state_dict=offload_state_dict,
-                    dtype=torch_dtype,
-                    keep_in_fp32_modules=[],
-                )
-            else:
-                model_message = model_class._load_pretrained_model(
-                    model,
-                    None,
-                    loaded_state_dict_keys,  # XXX: rename?
+                    loaded_state_dict_keys,
                     resolved_archive_file,
                     pretrained_model_name_or_path,
-                    sharded_metadata=sharded_metadata,
-                    _fast_init=_fast_init,
-                    low_cpu_mem_usage=True,
-                    offload_folder=offload_folder,
-                    offload_state_dict=offload_state_dict,
-                    dtype=torch_dtype,
-                    keep_in_fp32_modules=[],
                 )
+                tmp_kwargs = {
+                    "sharded_metadata": sharded_metadata,
+                    "_fast_init": _fast_init,
+                    "low_cpu_mem_usage": True,
+                    "offload_folder": offload_folder,
+                    "offload_state_dict": offload_state_dict,
+                    "dtype": torch_dtype,
+                    "keep_in_fp32_modules": [],
+                }
+            else:
+                tmp_args = (model, None, checkpoint_files, pretrained_model_name_or_path)
+                tmp_kwargs = {
+                    "sharded_metadata": sharded_metadata,
+                    "disk_offload_folder": offload_folder,
+                    "offload_state_dict": offload_state_dict,
+                    "dtype": torch_dtype,
+                }
+                if parse(transformers.__version__) < parse("4.51"):
+                    tmp_kwargs["_fast_init"] = _fast_init
+                    tmp_kwargs["low_cpu_mem_usage"] = True
+
+            model_message = model_class._load_pretrained_model(*tmp_args, **tmp_kwargs)
             model = model_message[0]
 
         # make sure token embedding weights are still tied if needed
