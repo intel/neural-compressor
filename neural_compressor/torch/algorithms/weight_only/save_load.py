@@ -21,6 +21,7 @@ import re
 import tempfile
 
 import torch
+from packaging.version import parse
 
 from neural_compressor.common.utils import AWQ, TEQ, save_config_mapping
 from neural_compressor.torch.utils import (
@@ -809,6 +810,7 @@ class WOQModelLoader:
         return resolved_archive_file, is_sharded
 
     def _init_hf_model(self, model_class, config):
+        import transformers
         from accelerate.big_modeling import init_empty_weights
         from transformers.modeling_utils import no_init_weights
         from transformers.utils import ContextManagers
@@ -846,7 +848,11 @@ class WOQModelLoader:
 
             dtype_orig = model_class._set_default_torch_dtype(torch_dtype)
 
-        init_contexts = [no_init_weights(_enable=_fast_init)]
+        init_contexts = (
+            [no_init_weights(_enable=_fast_init)]
+            if parse(transformers.__version__) < parse("4.51")
+            else [no_init_weights()]
+        )
         init_contexts.append(init_empty_weights())
 
         with ContextManagers(init_contexts):
