@@ -1965,7 +1965,7 @@ class TestCastONNXRT(unittest.TestCase):
             weights = [["input2", TensorProto.FLOAT, [2], np.random.random((2))]]
             node_infos = [["test", ["input1", "input2"], ["output"], optype, "com.microsoft"]]
             model = self.build_model(inps, outs, weights, node_infos)
-            input_data = self.build_test_data(["input1"], [(2)], ["float32"])
+            input_data = self.build_test_data(["input1"], [2], ["float32"])
             convert_model = self.get_fp16_mixed_precision_model(model)
             self.assertTrue("Cast" in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(10 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
@@ -2190,7 +2190,7 @@ class TestCastONNXRT(unittest.TestCase):
             weights = [["input2", TensorProto.FLOAT, [2], np.random.random((2))]]
             node_infos = [["test", ["input1", "input2"], ["output"], optype, "com.microsoft"]]
             model = self.build_model(inps, outs, weights, node_infos)
-            input_data = self.build_test_data(["input1"], [(2)], ["float32"])
+            input_data = self.build_test_data(["input1"], [2], ["float32"])
             convert_model = self.get_bf16_mixed_precision_model(model)
             self.assertTrue("Cast" in set([i.op_type for i in convert_model.nodes()]))
             self.assertTrue(16 in set([i.attribute[0].i for i in convert_model.nodes() if i.op_type == "Cast"]))
