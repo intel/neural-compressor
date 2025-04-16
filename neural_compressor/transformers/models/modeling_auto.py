@@ -727,7 +727,7 @@ class _BaseINCAutoModelClass:
                     "keep_in_fp32_modules": [],
                 }
             else:
-                tmp_args = (model, None, checkpoint_files)
+                tmp_args = (model, None, checkpoint_files, pretrained_model_name_or_path)
                 tmp_kwargs = {
                     "sharded_metadata": sharded_metadata,
                     "disk_offload_folder": offload_folder,
