@@ -36,7 +36,7 @@ def register_scale(patched_mod, name, scale, scale_format):
 
 def create_scale_tensor(orig_tensor, scale_format):
     if is_runtime_scale_patching() and scale_format in ScaleFormat.__members__.values():
-        return orig_tensor.to("cpu").to(torch.float)
+        return orig_tensor.to("cpu")
     if scale_format == ScaleFormat.CONST:
         if isinstance(orig_tensor, torch.Tensor):
             return torch.nn.Parameter(orig_tensor, requires_grad=False)
