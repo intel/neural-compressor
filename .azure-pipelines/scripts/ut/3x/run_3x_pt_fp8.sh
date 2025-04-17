@@ -22,6 +22,15 @@ pip install pytest-html-merger
 echo "##[endgroup]"
 pip list
 
+# run deepspeed test_save_load.py 
+echo "##[section]Run fp8 save_load test"
+echo "##[group]deepspeed test_save_load.py"
+cd /neural-compressor/test/3x/torch/quantization/fp8_quant
+deepspeed test_save_load.py
+echo "##[endgroup]"
+
+# run unit test
+echo "##[section]Run fp8 unit test"
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.3x_pt_fp8
 inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__[0])')
 cd /neural-compressor/test/3x || exit 1
