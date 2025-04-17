@@ -26,7 +26,7 @@ pip list
 echo "##[section]Run fp8 save_load test"
 echo "##[group]deepspeed test_save_load.py"
 cd /neural-compressor/test/3x/torch/quantization/fp8_quant
-deepspeed test_save_load.py
+deepspeed --num_gpus 1 test_save_load.py
 echo "##[endgroup]"
 
 # run unit test
@@ -59,8 +59,8 @@ pytest_html_merger -i ./report -o ./report.html
 cp report.html ${LOG_DIR}/
 
 if [ $(grep -c '== FAILURES ==' ${ut_log_name}) != 0 ] || [ $(grep -c '== ERRORS ==' ${ut_log_name}) != 0 ] || [ $(grep -c ' passed' ${ut_log_name}) == 0 ]; then
-    echo "Find errors in pytest case, please check the output..."
-    echo "Please search for '== FAILURES ==' or '== ERRORS =='"
+    echo "##[error]Find errors in pytest case, please check the output..."
+    echo "##[error]Please search for '== FAILURES ==' or '== ERRORS =='"
     exit 1
 fi
 
@@ -69,4 +69,4 @@ cp .coverage ${LOG_DIR}/.coverage
 cd ${LOG_DIR}
 coverage combine .coverage.*
 
-echo "UT finished successfully! "
+echo "##[section]UT finished successfully! "
