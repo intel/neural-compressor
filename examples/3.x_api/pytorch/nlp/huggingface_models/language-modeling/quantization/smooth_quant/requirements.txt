@@ -8,7 +8,7 @@ pytest
 wandb
 einops
 neural-compressor
-lm_eval
+lm_eval <= 0.4.7
 peft
 optimum-intel
 intel_extension_for_pytorch
