@@ -18,3 +18,4 @@ torch
 torchvision
 transformers<=4.50.0
 xgboost<=2.1.4
+pydantic
