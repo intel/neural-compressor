@@ -21,9 +21,20 @@ from neural_compressor.utils.utility import LazyImport
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
-logger = logging.getLogger(__name__)
 
 torch.manual_seed(42)
+
+
+class CalibDataloader:
+    """Simple calibration dataloader for testing."""
+
+    def __init__(self, data, label):
+        self.data = data
+        self.label = label
+        self.batch_size = 1  # Since we're yielding single samples
+
+    def __iter__(self):
+        yield self.data, self.label
 
 
 class ConvEncoderWithLayerScale(nn.Module):
@@ -80,17 +91,6 @@ class ConvEncoderWithLayerGamma(nn.Module):
             x = self.layer_gamma * x
         x = input + self.drop_path(x)
         return x
-
-
-class CalibDataloader:
-    """Simple calibration dataloader for testing."""
-    def __init__(self, data, label):
-        self.data = data
-        self.label = label
-        self.batch_size = 1  # Since we're yielding single samples
-
-    def __iter__(self):
-        yield self.data, self.label
 
 
 class TestPyTorchLayerScale(unittest.TestCase):
