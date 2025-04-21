@@ -238,7 +238,7 @@ def _replace_linear(
                             dtype=torch.int32,
                             device=torch.device(device),
                         )
-                    
+
                     # Note: update_g_idx is only applicable for ipex versions >=2.7
                     model._modules[name].set_weights_bias(
                         module.qweight.data if hasattr(module, "qweight") else weight,
@@ -247,7 +247,7 @@ def _replace_linear(
                             {"update_g_idx": not empty_weights}
                             if "update_g_idx" in model._modules[name].set_weights_bias.__code__.co_varnames
                             else {}
-                        )
+                        ),
                     )
                 else:
                     raise Exception("{} device Unsupported weight only quantization!".format(device))
