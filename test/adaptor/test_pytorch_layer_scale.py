@@ -1,23 +1,12 @@
-import logging
-import os
-import sys
 import unittest
 
 import torch
 import torch.nn as nn
 
-# Add the root directory to the Python path
-sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
-
 from neural_compressor import quantization
 from neural_compressor.config import PostTrainingQuantConfig
-from neural_compressor.utils import logger
-
-# Set up logging
-logging.basicConfig(level=logging.INFO)
 
 torch.manual_seed(42)
-
 
 class CalibDataloader:
     """Simple calibration dataloader for testing."""
