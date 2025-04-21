@@ -120,7 +120,11 @@ def get_fullscales_by_expbias_set(dtype, device, expbias_set):
     return [get_fullscale(dtype, device, exp_bias=eb) for eb in expbias_set]
 
 
-def get_fp8_hw_alligned_scales(dtype, device):
+def get_fp8_hw_alligned_scales_by_device(dtype, device):
+    if device not in [GAUDI2, GAUDI3]:
+        raise ValueError(
+            f"{device} is not supported"
+        )
     exp_bias_set = EXP_BIAS_SETS.get((device, dtype), None)
     return (
         None
@@ -128,13 +132,16 @@ def get_fp8_hw_alligned_scales(dtype, device):
         else [x / get_fullscale(dtype, device) for x in get_fullscales_by_expbias_set(dtype, device, exp_bias_set)]
     )
 
+def get_fp8_hw_alligned_scales(dtype):
+    inc_device_type = auto_detect_accelerator().get_inc_accelerator_type()
+    return get_fp8_hw_alligned_scales_by_device(dtype, inc_device_type)
 
 DEVICES_SCALE_FACTORS = {
     INCAcceleratorType.GAUDI2: 4,
     INCAcceleratorType.GAUDI3: 1,
 }
 FP8_143_SCALES = {
-    device: get_fp8_hw_alligned_scales(torch.float8_e4m3fn, device) for device in DEVICES_SCALE_FACTORS.keys()
+    device: get_fp8_hw_alligned_scales_by_device(torch.float8_e4m3fn, device) for device in DEVICES_SCALE_FACTORS.keys()
 }
 FP8_143_SCALES_TRAITS = {
     device: (
