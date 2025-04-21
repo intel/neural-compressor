@@ -23,7 +23,7 @@ FID metric is used to evaluate the model in this case, so we should download [tr
 python run_diffusion.py \
     --model_name_or_path lambdalabs/sd-pokemon-diffusers \
     --tune \
-    --quantization_approach PostTrainingStatic \
+    --quantization_approach static \
     --perf_tol 0.02 \
     --output_dir /tmp/diffusion_output \
     --base_images base_images \
