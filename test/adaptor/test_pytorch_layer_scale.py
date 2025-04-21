@@ -8,6 +8,7 @@ from neural_compressor.config import PostTrainingQuantConfig
 
 torch.manual_seed(42)
 
+
 class CalibDataloader:
     """Simple calibration dataloader for testing."""
 
