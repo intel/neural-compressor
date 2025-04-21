@@ -82,6 +82,17 @@ class ConvEncoderWithLayerGamma(nn.Module):
         return x
 
 
+class CalibDataloader:
+    """Simple calibration dataloader for testing."""
+    def __init__(self, data, label):
+        self.data = data
+        self.label = label
+        self.batch_size = 1  # Since we're yielding single samples
+
+    def __iter__(self):
+        yield self.data, self.label
+
+
 class TestPyTorchLayerScale(unittest.TestCase):
     @classmethod
     def setUpClass(self):
@@ -92,16 +103,6 @@ class TestPyTorchLayerScale(unittest.TestCase):
         """Test that the original layer_scale parameter causes an error."""
         model = ConvEncoderWithLayerScale()
         model.eval()
-
-        # Create a simple calibration dataloader
-        class CalibDataloader:
-            def __init__(self, data, label):
-                self.data = data
-                self.label = label
-                self.batch_size = 1  # Since we're yielding single samples
-
-            def __iter__(self):
-                yield self.data, self.label
 
         calib_dataloader = CalibDataloader(self.constant_data, self.constant_label)
 
@@ -117,16 +118,6 @@ class TestPyTorchLayerScale(unittest.TestCase):
         """Test that the renamed layer_gamma parameter works correctly."""
         model = ConvEncoderWithLayerGamma()
         model.eval()
-
-        # Create a simple calibration dataloader
-        class CalibDataloader:
-            def __init__(self, data, label):
-                self.data = data
-                self.label = label
-                self.batch_size = 1  # Since we're yielding single samples
-
-            def __iter__(self):
-                yield self.data, self.label
 
         calib_dataloader = CalibDataloader(self.constant_data, self.constant_label)
 
