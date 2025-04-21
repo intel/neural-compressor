@@ -20,7 +20,6 @@ import gc
 import math
 import os
 import re
-import time
 from collections import OrderedDict, UserDict
 from functools import partial
 
