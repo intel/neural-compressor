@@ -21,7 +21,6 @@ import re
 import types
 
 from datasets import load_dataset
-from packaging.version import Version
 
 from neural_compressor.common.utils import LazyImport, logger
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
