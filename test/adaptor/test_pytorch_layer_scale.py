@@ -93,6 +93,21 @@ class ConvEncoderWithLayerGamma(nn.Module):
         return x
 
 
+<<<<<<< HEAD
+=======
+class CalibDataloader:
+    """Simple calibration dataloader for testing."""
+
+    def __init__(self, data, label):
+        self.data = data
+        self.label = label
+        self.batch_size = 1  # Since we're yielding single samples
+
+    def __iter__(self):
+        yield self.data, self.label
+
+
+>>>>>>> eecb88944a1f2334eda4da01910116e7eb87d99f
 class TestPyTorchLayerScale(unittest.TestCase):
     @classmethod
     def setUpClass(self):
