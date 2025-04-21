@@ -40,7 +40,7 @@ ONNXRT116_VERSION = Version("1.16.0")
 ONNXRT1161_VERSION = Version("1.16.1")
 
 
-def get_blob_size(group_size, has_zp):  # pragma: no cover
+def get_blob_size(group_size, num_bits, has_zp):  # pragma: no cover
     """Get blob_size.
 
     Args:
@@ -48,11 +48,11 @@ def get_blob_size(group_size, has_zp):  # pragma: no cover
         has_zp (bool): whether zero_point is None
     """
     if Version(ort.__version__) > ONNXRT1161_VERSION:
-        blob_size = group_size // 2
+        blob_size = group_size * num_bits // 8
     elif has_zp:
-        blob_size = group_size // 2 + 4 + 1
+        blob_size = group_size * num_bits // 8 + 4 + 1
     else:
-        blob_size = group_size // 2 + 4
+        blob_size = group_size * num_bits // 8 + 4
     return blob_size
 
 
@@ -86,7 +86,7 @@ def make_matmul_weight_only_node(
         matmul_weight_only_node: MatMulFpQ4 or MatMulNBits node
         new_inits: initializers of the new node
     """
-    blob_size = get_blob_size(group_size, zero_point is not None)
+    blob_size = get_blob_size(group_size, num_bits, zero_point is not None)
     packed = np.zeros((q_weight.shape[0], blob_size), dtype="uint8")
     q_weight_name = node.input[1] + "_Q{}G{}".format(str(num_bits), str(group_size))
     input_names = [node.input[0], q_weight_name]
@@ -97,8 +97,16 @@ def make_matmul_weight_only_node(
         op_type = "MatMulNBits"
 
         # pack quantized weight
-        q_weight_pairs = q_weight[:, ::2] | q_weight[:, 1::2] << 4
-        packed[:, :] = q_weight_pairs[:, :blob_size]
+        if num_bits == 4:
+            q_weight_pairs = q_weight[:, ::2] | q_weight[:, 1::2] << 4
+            packed[:, :] = q_weight_pairs[:, :blob_size]
+        elif num_bits == 8:
+            packed = q_weight
+        else:
+            logger.error(
+                "MatMulNBits does not have kernel support for num_bits = {}.".format(num_bits)
+                )
+
         packed = np.reshape(packed, (-1, k_blocks, blob_size))
 
         # build scale tensor
@@ -115,7 +123,9 @@ def make_matmul_weight_only_node(
 
         # build zero_point tensor
         if zero_point is not None:
-            if num_bits > 4:
+            if num_bits == 8:
+                packed_zp = zero_point.astype("uint8")
+            elif num_bits > 4:
                 packed_zp = np.reshape(zero_point, (1, -1)).astype("uint8")
             else:
                 packed_zp = np.full((zero_point.shape[0] + 1) // 2, 136, dtype="uint8")
@@ -128,6 +138,7 @@ def make_matmul_weight_only_node(
                 packed_zp[even_idx // 2] = (packed_zp[even_idx // 2] & 0xF0) | zero_point[even_idx].ravel()
                 packed_zp[odd_idx // 2] = (packed_zp[odd_idx // 2] & 0x0F) | (zero_point[odd_idx].ravel() << 4)
 
+            packed_zp = np.reshape(packed_zp, (weight_shape[1], -1))
             zp_tensor = onnx.helper.make_tensor(
                 name=node.input[1] + "_zp", data_type=2, dims=packed_zp.shape, vals=packed_zp.tobytes(), raw=True
             )
@@ -463,7 +474,7 @@ def rtn_quantize(
     ratios={},
     accuracy_level=0,
     providers=["CPUExecutionProvider"],
-    algorithm="rtn",
+    algorithm="k_quant",
 ):
     """Quant the model with round to nearst method.
 
@@ -527,7 +538,8 @@ def rtn_quantize(
 
             weight = pad_tensor(weight, group_size, k_blocks)
 
-            satisfy_MatMulNBits_condition = Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4
+            enable_MatMulNBits_8bits = True
+            satisfy_MatMulNBits_condition = (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (enable_MatMulNBits_8bits and num_bits == 8)
             satisfy_MatMulFpQ4_condition = (
                 Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
             )
