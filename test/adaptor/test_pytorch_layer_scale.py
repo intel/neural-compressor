@@ -1,4 +1,3 @@
-import copy
 import logging
 import os
 import sys
@@ -10,14 +9,9 @@ import torch.nn as nn
 # Add the root directory to the Python path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.dirname(os.path.abspath(__file__)))))
 
-import neural_compressor.adaptor.pytorch as pytorch_util
 from neural_compressor import quantization
-from neural_compressor.adaptor import FRAMEWORKS
-from neural_compressor.adaptor.pytorch import PyTorchAdaptor
 from neural_compressor.config import PostTrainingQuantConfig
-from neural_compressor.model.torch_model import PyTorchModel
 from neural_compressor.utils import logger
-from neural_compressor.utils.utility import LazyImport
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)
