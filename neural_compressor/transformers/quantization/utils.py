@@ -35,7 +35,10 @@ from neural_compressor.torch.quantization import (
     convert,
     prepare,
 )
-from neural_compressor.torch.utils import  is_package_available
+from neural_compressor.torch.utils import is_ipex_available, is_package_available
+
+if is_ipex_available():
+    import intel_extension_for_pytorch as ipex
 
 if is_package_available("auto_round"):
     import auto_round
