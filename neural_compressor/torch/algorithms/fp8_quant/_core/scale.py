@@ -17,6 +17,7 @@ from .patching_common import mod_default_dict
 from ..model_configs import ModuleConfig, ModuleExtraConfig
 from .scale_methods import ops_quantizer
 from .._quant_common.quant_config import ScaleMethod
+from .fp_utils import get_fp8_hw_alligned_scales
 import torch
 
 
@@ -76,7 +77,6 @@ def prepare_layer_scales(mod, mod_name, config, mod_type_str, measurement, scale
             scale_config,
             )
     return mod_extra_config, save_file
-
 
 scale_method_mapping = {
     (ScaleMethod.UNIT_SCALE, "maxabs"): "unit_scale",
@@ -158,7 +158,7 @@ scaling_params = {
     "act_maxabs_pts_hw_weight_opt_pts_hw": {
         "input_backoff": 0.25,
         "weight_backoff": 0.5,
-        "weight_scales": [2.0**s for s in [4, 0, -4, -8]],
+        "weight_scales": get_fp8_hw_alligned_scales(torch.float8_e4m3fn)
     },
     "smoothquant_weights_maxabs_pow2": {
         "input_backoff": 0.25,
