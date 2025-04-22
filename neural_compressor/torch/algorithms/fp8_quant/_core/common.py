@@ -22,18 +22,7 @@ from enum import Enum, auto
 from functools import lru_cache 
 from .._quant_common.quant_config import get_hqt_config
 from ..utils.logger import logger
-from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
-    ModuleInfo,
-    ModuleConfig,
-    ModuleType,
-    ModuleExtraConfig,
-    get_patched_module_table,
-    get_patched_module_type_table,
-)
-from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
-deepspeed_exists = False
-if importlib.util.find_spec("deepspeed"):  # check if deepspeed is installed
-    deepspeed_exists = True
+from neural_compressor.torch.algorithms.fp8_quant.model_configs import ModuleConfig
 
 UNMEASURED_MODELS = "UnmeasuredModels"
 
