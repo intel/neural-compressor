@@ -69,7 +69,6 @@ def run_fn(model, dataloader):
         else:
             model(data)
 
-@pytest.mark.skip(reason="SW-217321 pytorch inductor error")
 @pytest.mark.skipif(is_habana_framework_installed(), reason="These tests are not supported on HPU for now.")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRoundCPU:
@@ -284,7 +283,6 @@ class TestAutoRoundCPU:
     #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
 
 
-@pytest.mark.skip(reason="SW-217321 pytorch inductor error")
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")
 @pytest.mark.skipif(os.getenv("PT_HPU_LAZY_MODE", "0") == "1", reason="Lazy mode is enabled")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
@@ -366,7 +364,7 @@ class TestAutoRoundHPU:
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):
         fp32_model = copy.deepcopy(self.tiny_llama_model)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", scale_dtype="fp32")
         if quant_lm_head is False:
             quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -377,7 +375,7 @@ class TestAutoRoundHPU:
         run_fn(model, self.dataloader)
         q_model = convert(model)
         assert "model.layers.0.self_attn.k_proj" in q_model.autoround_config.keys()
-        assert "scale" in q_model.autoround_config["model.layers.0.self_attn.k_proj"].keys()
+        assert "scale_dtype" in q_model.autoround_config["model.layers.0.self_attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["model.layers.0.self_attn.k_proj"]["scale_dtype"]
         assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
         if quant_lm_head is True:
@@ -385,7 +383,9 @@ class TestAutoRoundHPU:
 
     def test_int4_dtype(self):
         fp32_model = copy.deepcopy(self.tiny_llama_model)
-        quant_config = AutoRoundConfig(dtype="int4", nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(
+            dtype="int4", nsamples=32, seqlen=10, iters=10, act_dtype="fp32", scale_dtype="fp32"
+        )
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # prepare + convert API
@@ -393,14 +393,14 @@ class TestAutoRoundHPU:
         run_fn(model, self.dataloader)
         q_model = convert(model)
         assert "model.layers.0.self_attn.k_proj" in q_model.autoround_config.keys()
-        assert "scale" in q_model.autoround_config["model.layers.0.self_attn.k_proj"].keys()
+        assert "scale_dtype" in q_model.autoround_config["model.layers.0.self_attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["model.layers.0.self_attn.k_proj"]["scale_dtype"]
         assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
 
     def test_autoround_with_quantize_API(self):
         model = copy.deepcopy(self.tiny_llama_model)
 
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", scale_dtype="fp32")
         quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
 
         logger.info(f"Test AutoRound with config {quant_config}")
