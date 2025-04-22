@@ -73,7 +73,7 @@ def test_save_vllm_compatible_model():
     tokenizer = transformers.AutoTokenizer.from_pretrained(name)
     tokenizer.save_pretrained("saved_results_qwen")
 
-
+@pytest.mark.skip(reason="[SW-226589] Skip this test since the model was updated")
 def test_load_model_provided_by_neuralmagic():
     model_name_or_path = "neuralmagic/Qwen2-0.5B-Instruct-FP8"
     hpu_mem0 = get_used_hpu_mem_MB()
