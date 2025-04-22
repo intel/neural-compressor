@@ -388,7 +388,7 @@ if args.accuracy:
                         model_args=model_args,
                         tasks = args.tasks,
                         device = "cpu",
-                        batch_size = args.eval_batch_size
+                        batch_size = args.eval_batch_size,
                         add_bos_token = args.add_bos_token,)
     results = evaluate(args)
     for task_name in args.tasks.split(","):
