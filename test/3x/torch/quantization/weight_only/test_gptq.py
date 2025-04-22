@@ -184,7 +184,7 @@ class TestGPTQQuant:
         # compare atol, this case is an ideal case.
         assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
 
-
+    @pytest.mark.skipif(is_hpex_available(), reason="These tests are not supported on HPU for now.")
     def test_block_wise(self):
         from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE
         from neural_compressor.torch import load_empty_model
