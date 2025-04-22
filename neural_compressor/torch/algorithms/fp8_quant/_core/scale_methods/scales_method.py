@@ -285,6 +285,7 @@ class MaxAbsDynamicPcs(MaxAbsPcs):
 
     def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None):
         super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, -1, True, True)
+        self.eps = torch.tensor(torch.finfo(torch.bfloat16).tiny)
         logger.trace("%s %s", self.__class__.__name__, self.__dict__)
 
     def get_maxabs_methods_dict(self):
@@ -296,7 +297,11 @@ class MaxAbsDynamicPcs(MaxAbsPcs):
         # In dynamic quantization the scale is changed each time,
         # and setting scale as a member is not supported in hpu graphs and torch.compile
         # (it can break the graph)
-        return self._calculate_maxabs_scale(tensor, tensor_type, **additional_kwargs)
+        scale = self._calculate_maxabs_scale(tensor, tensor_type, **additional_kwargs)
+        # print(f"{scale=} {self.eps=}")
+        # scale = torch.clamp(scale, min=self.eps)
+        scale = torch.max(scale, self.eps)
+        return scale
 
 
 class MaxAbsDynamicPts(MaxAbsPts):
