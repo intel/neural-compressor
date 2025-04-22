@@ -40,6 +40,7 @@ parser.add_argument(
     type=str,
     help="tasks list for accuracy validation",
 )
+parser.add_argument("--add_bos_token", action="store_true", help="whether to add bos token for accuracy validation.")
 # ============WeightOnlyQuant configs===============
 parser.add_argument("--woq", action="store_true")
 parser.add_argument(
@@ -387,7 +388,8 @@ if args.accuracy:
                         model_args=model_args,
                         tasks = args.tasks,
                         device = "cpu",
-                        batch_size = args.eval_batch_size)
+                        batch_size = args.eval_batch_size
+                        add_bos_token = args.add_bos_token,)
     results = evaluate(args)
     for task_name in args.tasks.split(","):
         if task_name == "wikitext":
