@@ -887,7 +887,7 @@ class WOQModelLoader:
         from transformers.modeling_utils import no_init_weights
         from transformers.utils import ContextManagers
 
-        _fast_init = self.kwargs.pop("_fast_init", True)
+        _ = self.kwargs.pop("_fast_init", True)
         torch_dtype = self.kwargs.pop("torch_dtype", "auto")
         is_sharded = self.kwargs.pop("is_sharded", False)
         sharded_metadata = self.kwargs.pop("sharded_metadata", None)
@@ -919,8 +919,8 @@ class WOQModelLoader:
                     assert False, f'`torch_dtype` can be either `torch.dtype` or `"auto"`, but received {torch_dtype}'
 
             dtype_orig = model_class._set_default_torch_dtype(torch_dtype)
-
-        init_contexts = [no_init_weights(_enable=_fast_init)]
+        # [SW-226754] Fix it when we merge back to public INC
+        init_contexts = [no_init_weights()]
         init_contexts.append(init_empty_weights())
 
         with ContextManagers(init_contexts):
