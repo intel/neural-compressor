@@ -224,7 +224,8 @@ class RAWGPTQuantizer(object):
             use_max_length (bool): set all sequence length to be same length.
             max_seq_length (int): the same length of all sequence length.
             dataloader: an iterable containing calibration datasets, contains (inputs, targets)
-            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            use_layer_wise (bool): Whether to load weights and quantize per layer. Defaults to False.
+            use_block_wise (bool): Whether to load weights and quantize per block. Defaults to False.
             model_path (str): Model path that is used to load state_dict per layer.
             quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers. Defaults to False.
             device (str): cpu or cuda.
@@ -288,6 +289,7 @@ class RAWGPTQuantizer(object):
                                         If None, all layers will be considered.
                                         Layers not specified in this list will be retained in memory
                                         but will not undergo quantization.
+            layerwise (bool): Whether to apply layer-wise quantization.
         """
         import os
 

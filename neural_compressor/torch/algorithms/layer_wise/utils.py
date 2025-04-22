@@ -256,6 +256,12 @@ def load_module(model, module_name, path, device="cpu"):
         set_module_tensor_to_device(model, param_name, device, value)
 
 def load_first_layer_only(user_model, model_name):
+    """load first layer only.
+
+    Args:
+        user_model (torch.nn.Module): input model
+        model_name (str): model name or path
+    """
     for name, m in user_model.named_modules():
         if ('layers' not in name or 'layers.0' in name) and len(name) > 0 and len(list(m.named_children())) == 0:
             load_module(user_model, name, get_path(model_name), device="hpu" if is_hpex_available() else "cpu")
@@ -331,6 +337,7 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
 
 
 def clean_module_weight(module):
+    """Clean module weight."""
     hpu_available = is_hpex_available()
     """Clean module weight."""
     if isinstance(module, QDQLayer):
