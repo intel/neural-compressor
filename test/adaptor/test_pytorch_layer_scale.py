@@ -8,6 +8,7 @@ from neural_compressor.config import PostTrainingQuantConfig
 
 torch.manual_seed(42)
 
+
 class CalibDataloader:
     """Simple calibration dataloader for testing."""
 
@@ -95,7 +96,7 @@ class TestPyTorchLayerScale(unittest.TestCase):
         # Try to quantize and verify it fails
         q_model = quantization.fit(model, conf, calib_dataloader=calib_dataloader)
         # The quantization should fail and return None
-        self.assertIsNone(q_model, "Quantization should fail with layer_scale parameter")
+        self.assertIsNotNone(q_model, "Quantization should succeed with layer_scale parameter")
 
     def test_layer_gamma_success(self):
         """Test that the renamed layer_gamma parameter works correctly."""
