@@ -129,6 +129,7 @@ def get_ipex_version():
 
 
 TORCH_VERSION_2_2_2 = Version("2.2.2")
+TORCH_VERSION_2_6 = Version("2.6")
 
 
 def get_torch_version():
