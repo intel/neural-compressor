@@ -70,6 +70,8 @@ def export_model_for_pt2e_quant(
                 exported_model = export_func(  # pylint: disable=E1123
                     model, args=example_inputs, dynamic_shapes=dynamic_shapes
                 )
+            if cur_version >= TORCH_VERSION_2_6:
+                exported_model = exported_model.module()
             exported_model._exported = True
             logger.info("Exported the model to Aten IR successfully.")
     except Exception as e:
