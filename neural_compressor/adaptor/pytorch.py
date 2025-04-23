@@ -4170,8 +4170,12 @@ class PyTorch_FXAdaptor(TemplateAdaptor):
                     sub_name = node.target
                 if not hasattr(model, node.target):
                     continue
-                if "scale" in node.target:
-                    tune_cfg["get_attr"][sub_name] = float(getattr(model, node.target))
+                # Improved scale detection logic
+                if "scale" in node.target and not any(exclude in node.target for exclude in ["layer_scale", "gamma"]):
+                    try:
+                        tune_cfg["get_attr"][sub_name] = getattr(model, node.target).tolist()
+                    except Exception as e:
+                        logger.warning(f"Could not convert {node.target} to list, skipping... Error: {str(e)}")
                 elif "zero_point" in node.target:
                     tune_cfg["get_attr"][sub_name] = int(getattr(model, node.target))
                 else:
