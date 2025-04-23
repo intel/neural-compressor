@@ -9,3 +9,4 @@ psutil
 pytest
 torchvision
 transformers
+datasets

@@ -629,7 +629,7 @@ def convert_to_quantized_model(model, config, device="cpu"):
 def convert_to_GPTQ_checkpoints(model, quantization_config):
     from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear as ipex_cpu_linear
 
-    from neural_compressor.adaptor.torch_utils.util import set_module
+    from neural_compressor.torch.utils import set_module
     from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 
     dtype = "int4" if quantization_config.bits == 4 else "int8"
