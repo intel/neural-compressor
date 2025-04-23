@@ -935,7 +935,7 @@ class AutoRoundConfig(TorchBaseConfig):
         act_group_size: int = None,
         act_sym: bool = None,
         act_dynamic: bool = True,
-        act_dtype: Optional[str] = None,
+        act_dtype: Optional[str] = "int",
         enable_full_range: bool = False,
         batch_size: int = 8,
         lr_scheduler=None,
