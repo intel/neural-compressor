@@ -16,7 +16,7 @@ import copy
 import json
 import time
 from functools import lru_cache
-from typing import Union, Optional
+from typing import Optional, Union
 
 import torch
 
@@ -206,10 +206,10 @@ class AutoRoundQuantizer(Quantizer):
         self.template = template
         self.truncation = truncation
         self.enable_w4afp8 = self._is_w4afp8()
-    
+
     def _is_w4afp8(self):
         return any([v.get("data_type", None) == "fp8_to_int_sym" for v in self.quant_config.values()])
-    
+
     def prepare(self, model: torch.nn.Module, *args, **kwargs):
         """Prepares a given model for quantization.
 

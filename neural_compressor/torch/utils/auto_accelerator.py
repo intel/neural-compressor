@@ -41,14 +41,16 @@ PRIORITY_XPU = 95
 PRIORITY_CUDA = 90
 PRIORITY_CPU = 80
 
+
 class INCAcceleratorType(Enum):
     CUDA = auto()
     CPU = auto()
-    EXTERNAL_ACCELERATOR_MAX = auto() # differentiate between external to intel accelerators
+    EXTERNAL_ACCELERATOR_MAX = auto()  # differentiate between external to intel accelerators
     XPU = auto()
-    GAUDI_MIN = auto() # differentiate between any gaudi to xpu
+    GAUDI_MIN = auto()  # differentiate between any gaudi to xpu
     GAUDI2 = auto()
     GAUDI3 = auto()
+
 
 class AcceleratorRegistry:
     """Accelerator Registry."""
@@ -160,7 +162,7 @@ class Auto_Accelerator(ABC):  # pragma: no cover
         pass
 
     @abstractmethod
-    def get_inc_accelerator_type(self)->INCAcceleratorType:
+    def get_inc_accelerator_type(self) -> INCAcceleratorType:
         """Synchronize the accelerator."""
         pass
 

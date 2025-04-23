@@ -39,9 +39,9 @@ from neural_compressor.common.utils import (
     AWQ,
     DEFAULT_WHITE_LIST,
     FP8_QUANT,
-    HYBRID_GPTQ,
     GPTQ,
     HQQ,
+    HYBRID_GPTQ,
     MIXED_PRECISION,
     MX_QUANT,
     OP_NAME_OR_MODULE_TYPE,
@@ -473,7 +473,13 @@ class GPTQConfig(TorchBaseConfig):
         """
         if not self.quant_lm_head:
             self.set_local(
-                LM_HEAD_NAMES, GPTQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path, use_block_wise=self.use_block_wise)
+                LM_HEAD_NAMES,
+                GPTQConfig(
+                    dtype="fp32",
+                    use_layer_wise=self.use_layer_wise,
+                    model_path=self.model_path,
+                    use_block_wise=self.use_block_wise,
+                ),
             )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
@@ -1968,23 +1974,24 @@ def get_default_fp8_config_set() -> FP8Config:
 
 ######################## Hybrid GPTQ Quant Config ###############################
 
+
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=HYBRID_GPTQ)
 class HybridGPTQConfig(FP8Config):
     """Config class for Hybrid Precision GPTQ quantization.
-    Currently supports running 4bit weights which have been quantized by GPTQ, during which 
+
+    Currently supports running 4bit weights which have been quantized by GPTQ, during which
     the weights have been double quantized from high precision, to fp8, to int4.
-    The activations will be quantized to fp8."""
+    The activations will be quantized to fp8.
+    """
+
     name = HYBRID_GPTQ
 
     def __init__(
         self,
         **kwargs,
     ):
-        """Initializing Hybrid GPTQ Config.
-
-        """
+        """Initializing Hybrid GPTQ Config."""
         super().__init__(**kwargs)
-
 
     @staticmethod
     def convert_from_fp8(config):
@@ -1993,6 +2000,7 @@ class HybridGPTQConfig(FP8Config):
             setattr(new_self, attr, value)
         new_self.int4_weights = True
         return new_self
+
 
 ######################## MixedPrecision Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=MIXED_PRECISION)
