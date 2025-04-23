@@ -22,7 +22,6 @@ $BOLD_YELLOW && echo "collect coverage for baseline" && $RESET
 cd /neural-compressor
 cp -r /neural-compressor/.azure-pipelines .azure-pipelines-pr
 git config --global --add safe.directory /neural-compressor
-git reset --hard
 git fetch
 git checkout master
 rm -rf build dist *egg-info
