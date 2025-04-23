@@ -14,7 +14,7 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
-from neural_compressor.torch.utils import accelerator, is_hpex_available
+from neural_compressor.torch.utils import accelerator, is_hpu_available
 
 device = accelerator.name()
 
@@ -184,7 +184,7 @@ class TestGPTQQuant:
         # compare atol, this case is an ideal case.
         assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
 
-
+    @pytest.mark.skipif(not is_hpu_available(), reason="These tests are not supported on HPU for now.")
     def test_block_wise(self):
         from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE
         from neural_compressor.torch import load_empty_model
@@ -225,7 +225,7 @@ class TestGPTQQuant:
 
         kwargs = {'sharded_checkpoints': True}
 
-        loaded_model = load(LWQ_WORKSPACE+"/checkpoint/", copy.deepcopy(self.tiny_gptj), **kwargs)
+        loaded_model = load(LWQ_WORKSPACE+"/checkpoint/", copy.deepcopy(self.tiny_gptj), **kwargs).to(device)
 
         out = loaded_model(self.example_inputs)[0]
 
@@ -298,7 +298,7 @@ class TestGPTQQuant:
         ), "true_sequential=True doesn't help accuracy, maybe is reasonable, please double check."
 
     # TODO [SW-216127]: it's not in high priority, so we can implement it later.
-    @pytest.mark.skipif(is_hpex_available(), reason="These tests are not supported on HPU for now.")
+    @pytest.mark.skipif(is_hpu_available(), reason="These tests are not supported on HPU for now.")
     def test_quant_lm_head(self):
         # quant_lm_head=False
         model = copy.deepcopy(self.tiny_gptj)
@@ -367,7 +367,7 @@ class TestGPTQQuant:
             assert torch.allclose(atol_false, atol_true, atol=0.008), "atol is very close, double checked the logic."
 
     # TODO [SW-216127]: it's not in high priority, so we can implement it later.
-    @pytest.mark.skipif(is_hpex_available(), reason="These tests are not supported on HPU for now.")
+    @pytest.mark.skipif(is_hpu_available(), reason="These tests are not supported on HPU for now.")
     def test_conv1d(self):
         from transformers import GPT2Model, GPT2Tokenizer
 

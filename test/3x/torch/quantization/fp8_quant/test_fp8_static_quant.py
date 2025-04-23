@@ -16,7 +16,7 @@ from neural_compressor.torch.quantization import (
     save,
     load
 )
-from neural_compressor.torch.utils import is_hpex_available, get_used_hpu_mem_MB
+from neural_compressor.torch.utils import is_hpu_available, get_used_hpu_mem_MB
 
 
 def change_to_cur_file_dir():
@@ -33,7 +33,7 @@ def calib_func(model):
     for i in range(2):
         model(example_inputs)
 
-@pytest.mark.skipif(not is_hpex_available(), reason="HPU environment is required!")
+@pytest.mark.skipif(not is_hpu_available(), reason="HPU environment is required!")
 class TestFP8StaticQuantNLP:
     def setup_class(self):
         change_to_cur_file_dir()
@@ -88,7 +88,7 @@ class TestFP8StaticQuantNLP:
 
 
 @pytest.mark.xfail(reason="[SW-219514] RuntimeError: operator torchvision::nms does not exist")
-@pytest.mark.skipif(not is_hpex_available(), reason="HPU environment is required!")
+@pytest.mark.skipif(not is_hpu_available(), reason="HPU environment is required!")
 class TestFP8StaticQuantCV:
     def setup_class(self):
         change_to_cur_file_dir()
