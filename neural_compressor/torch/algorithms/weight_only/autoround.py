@@ -422,6 +422,7 @@ def get_mllm_dataloader(
         template=template,
         model=model,
         tokenizer=tokenizer,
+        processor=processor,
         image_processor=image_processor,
         dataset=dataset,
         extra_data_dir=extra_data_dir,
