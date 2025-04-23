@@ -18,6 +18,7 @@
 from .version import __version__
 
 import os
+
 if not os.environ.get("INC_3X_ONLY", False):
     # import 2x of neural_compressor
     from .config import (
