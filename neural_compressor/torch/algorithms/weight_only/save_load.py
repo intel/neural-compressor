@@ -68,40 +68,42 @@ def save(model, output_dir="./saved_results", format=SaveLoadFormat.DEFAULT, **k
     os.makedirs(output_dir, exist_ok=True)
     cur_accelerator.synchronize()
     if format == SaveLoadFormat.HUGGINGFACE:  # pragma: no cover
-        config = model.config
-        config_file = "quantize_config.json"
-        quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
-        if (quantization_config and "backend" in quantization_config and "auto_round" in quantization_config["backend"]):
-            safe_serialization = kwargs.get("safe_serialization", True)
-            tokenizer = kwargs.get("tokenizer", None)
-            max_shard_size = kwargs.get("max_shard_size", "5GB")
-            if tokenizer is not None:
-                tokenizer.save_pretrained(output_dir)
-            del model.save
-            model.save_pretrained(output_dir, max_shard_size=max_shard_size, safe_serialization=safe_serialization, state_dict=model.state_dict() if 'model_state_dict' not in kwargs else kwargs['model_state_dict'])
-            with open(os.path.join(output_dir, config_file), "w", encoding="utf-8") as f:
-                json.dump(quantization_config, f, indent=2)
-            return
-
-    output_folder = os.path.abspath(os.path.expanduser(output_dir))
-    qmodel_weight_file_path = os.path.join(output_folder, WEIGHT_NAME)
-    qconfig_file_path = os.path.join(output_folder, QCONFIG_NAME)
-    # saving process
-    save_config_mapping(model.qconfig, qconfig_file_path)
-
-    # MethodType 'save' not in state_dict
-    del model.save
-    if 'blockwise' in kwargs:
-        from neural_compressor.torch.algorithms.layer_wise import save_layers_in_shards_iteratively, LWQ_WORKSPACE
-        checkpoints_folder = kwargs.get("blockwise_load_folder", None)
-        if not checkpoints_folder:
-            checkpoints_folder = LWQ_WORKSPACE
-        save_layers_in_shards_iteratively(checkpoints_folder, output_folder, layers_per_shard=8)
-    else:
-        model_state_dict = model.state_dict() # if 'model_state_dict' not in kwargs else kwargs['model_state_dict']
-        torch.save(model_state_dict, qmodel_weight_file_path)
-        logger.info("Save quantized model weight to {}.".format(qmodel_weight_file_path))
-    logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
+        quantization_config_file = "quantize_config.json"
+        safe_serialization = kwargs.get("safe_serialization", True)
+        max_shard_size = kwargs.get("max_shard_size", f"{MAX_FILE_SIZE}GB")
+        if not hasattr(model.config, "quantization_config"):
+            quantization_config = change_config_to_hf_format(model.qconfig)
+            model.config.quantization_config = quantization_config
+        # save model state_dict and config.json
+        model.save_pretrained(output_dir, max_shard_size=max_shard_size, safe_serialization=safe_serialization)
+        # save quantize_config.json
+        with open(os.path.join(output_dir, quantization_config_file), "w", encoding="utf-8") as f:
+            json.dump(quantization_config, f, indent=2)
+        # save generation_config.json
+        if hasattr(model, "generation_config") and model.generation_config is not None:
+            model.generation_config.save_pretrained(output_dir)
+        # save tokenizer
+        tokenizer = kwargs.get("tokenizer", None)
+        if tokenizer is not None:
+            tokenizer.save_pretrained(output_dir)
+        return
+    elif format == SaveLoadFormat.DEFAULT:
+        output_folder = os.path.abspath(os.path.expanduser(output_dir))
+        qmodel_weight_file_path = os.path.join(output_folder, WEIGHT_NAME)
+        qconfig_file_path = os.path.join(output_folder, QCONFIG_NAME)
+        # saving process
+        save_config_mapping(model.qconfig, qconfig_file_path)
+        if 'blockwise' in kwargs:
+            from neural_compressor.torch.algorithms.layer_wise import save_layers_in_shards_iteratively, LWQ_WORKSPACE
+            checkpoints_folder = kwargs.get("blockwise_load_folder", None)
+            if not checkpoints_folder:
+                checkpoints_folder = LWQ_WORKSPACE
+            save_layers_in_shards_iteratively(checkpoints_folder, output_folder, layers_per_shard=8)
+        else:
+            model_state_dict = model.state_dict() # if 'model_state_dict' not in kwargs else kwargs['model_state_dict']
+            torch.save(model_state_dict, qmodel_weight_file_path)
+            logger.info("Save quantized model weight to {}.".format(qmodel_weight_file_path))
+        logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
 
 
 def load(model_name_or_path, original_model=None, format=SaveLoadFormat.DEFAULT, device="cpu", **kwargs):

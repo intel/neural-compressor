@@ -20,8 +20,6 @@ import gc
 import json
 import os
 
-
-
 import torch
 from accelerate.utils import set_module_tensor_to_device
 from safetensors import safe_open
@@ -29,11 +27,8 @@ from safetensors import safe_open
 from neural_compressor.common import options
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.torch.utils.utility import dowload_hf_model
-from neural_compressor.torch.utils import is_hpex_available
+from neural_compressor.torch.utils import is_hpu_available
 from safetensors.torch import save_file
-
-if is_hpex_available():
-    import habana_frameworks
 
 from .load import load
 
@@ -264,7 +259,7 @@ def load_first_layer_only(user_model, model_name):
     """
     for name, m in user_model.named_modules():
         if ('layers' not in name or 'layers.0' in name) and len(name) > 0 and len(list(m.named_children())) == 0:
-            load_module(user_model, name, get_path(model_name), device="hpu" if is_hpex_available() else "cpu")
+            load_module(user_model, name, get_path(model_name), device="hpu" if is_hpu_available() else "cpu")
 
 def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_path=None, indicated_layers=None):
     """Register weight hooks for model.
@@ -338,8 +333,6 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
 
 def clean_module_weight(module):
     """Clean module weight."""
-    hpu_available = is_hpex_available()
-    """Clean module weight."""
     if isinstance(module, QDQLayer):
         submodule = module.module
     else:
@@ -360,8 +353,9 @@ def clean_module_weight(module):
             else:
                 param_cls = type(submodule._parameters[n])
                 kwargs = submodule._parameters[n].__dict__
-                if hpu_available:
-                    if param_cls == habana_frameworks.torch.core.weight_sharing.HabanaParameterWrapper:
+                if is_hpu_available:
+                    from habana_frameworks.torch.core import weight_sharing
+                    if param_cls == weight_sharing.HabanaParameterWrapper:
                         try:
                             kwargs.pop('change_device_placement')
                         except KeyError:
@@ -466,7 +460,7 @@ def load_model_from_shards_with_safetensors(shard_dir, bin_index_file):
     for shard_file in shard_files:
         shard_path = os.path.join(shard_dir, shard_file)
         print(f"Loading shard from {shard_path}")
-        shard_state_dict = load_file(shard_path, device="hpu" if is_hpex_available() else "cpu")
+        shard_state_dict = load_file(shard_path, device="hpu" if is_hpu_available() else "cpu")
         full_state_dict.update(shard_state_dict)
     
     return full_state_dict

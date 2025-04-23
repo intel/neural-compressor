@@ -10,7 +10,7 @@ import transformers
 from transformers import AutoTokenizer
 from datasets import load_dataset
 from neural_compressor.torch.quantization import FP8Config, convert, finalize_calibration, prepare, HybridGPTQConfig
-from neural_compressor.torch.utils import is_hpex_available, get_accelerator
+from neural_compressor.torch.utils import is_hpu_available, get_accelerator
 from neural_compressor.torch.quantization.save_load_entry import load
 
 
@@ -42,7 +42,7 @@ def calib_func(model, dataset, tokenizer=None):
         cur_accelerator.synchronize()
         logits.append(logs.detach().cpu())
 
-@pytest.mark.skipif(not is_hpex_available(), reason="HPU environment is required!")
+@pytest.mark.skipif(not is_hpu_available(), reason="HPU environment is required!")
 class TestGPTQwithFP8Quant:
     def setup_class(self):
         change_to_cur_file_dir()
