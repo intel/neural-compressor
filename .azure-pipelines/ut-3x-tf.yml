@@ -44,6 +44,7 @@ stages:
 
   - stage: TensorFlow_baseline
     displayName: Unit Test 3x TensorFlow baseline
+    continueOnError: true
     dependsOn: []
     jobs:
       - job:

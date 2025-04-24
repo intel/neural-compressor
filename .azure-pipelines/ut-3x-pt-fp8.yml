@@ -50,6 +50,7 @@ stages:
 
   - stage: Torch_habana_baseline
     displayName: Torch 3x Habana FP8 baseline
+    continueOnError: true
     dependsOn: []
     jobs:
       - job:

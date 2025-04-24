@@ -48,6 +48,7 @@ stages:
 
   - stage: Torch_baseline
     displayName: Unit Test 3x Torch baseline
+    continueOnError: true
     dependsOn: []
     jobs:
       - job:
