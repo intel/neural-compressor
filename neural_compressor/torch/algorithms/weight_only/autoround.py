@@ -412,6 +412,7 @@ def get_mllm_dataloader(
 
     dataloader, batch_size, gradient_accumulate_steps = get_mllm_dataloader(
         template=template,
+        processor=processor,
         model=model,
         tokenizer=tokenizer,
         image_processor=image_processor,
