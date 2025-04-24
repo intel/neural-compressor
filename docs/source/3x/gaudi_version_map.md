@@ -31,4 +31,10 @@
             <td>v1.20</td>
         </tr>
     </tbody>
+    <tbody>
+        <tr>
+            <td>v3.4</td>
+            <td>v1.21</td>
+        </tr>
+    </tbody>
 </table>
