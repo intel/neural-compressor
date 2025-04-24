@@ -133,11 +133,11 @@ stages:
 
   - stage: Adaptor_base
     displayName: Unit Test FWKs adaptor baseline
-    continueOnError: true
     dependsOn: []
     jobs:
       - job:
         displayName: Test FWKs adaptor baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -149,11 +149,11 @@ stages:
 
   - stage: API_base
     displayName: Unit Test User facing API baseline
-    continueOnError: true
     dependsOn: []
     jobs:
       - job:
         displayName: Test User facing API baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -165,11 +165,11 @@ stages:
 
   - stage: Pruning_base
     displayName: Unit Test Pruning baseline
-    continueOnError: true
     dependsOn: []
     jobs:
       - job:
         displayName: Test PyTorch Pruning baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -180,6 +180,7 @@ stages:
               repo: $(REPO)
       - job:
         displayName: Test TensorFlow Pruning baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -191,11 +192,11 @@ stages:
 
   - stage: TFNewAPI_base
     displayName: Unit Test TF newAPI baseline
-    continueOnError: true
     dependsOn: []
     jobs:
       - job:
         displayName: Test TF newAPI baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -207,11 +208,11 @@ stages:
 
   - stage: ITEX_base
     displayName: Unit Test ITEX baseline
-    continueOnError: true
     dependsOn: []
     jobs:
       - job:
         displayName: Test ITEX baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -223,11 +224,11 @@ stages:
 
   - stage: Others_base
     displayName: Unit Test other cases baseline
-    continueOnError: true
     dependsOn: []
     jobs:
       - job:
         displayName: Test other cases baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:

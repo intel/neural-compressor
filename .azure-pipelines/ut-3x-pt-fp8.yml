@@ -50,11 +50,11 @@ stages:
 
   - stage: Torch_habana_baseline
     displayName: Torch 3x Habana FP8 baseline
-    continueOnError: true
     dependsOn: []
     jobs:
       - job:
         displayName: Torch 3x Habana FP8 baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:

@@ -48,11 +48,11 @@ stages:
 
   - stage: Torch_baseline
     displayName: Unit Test 3x Torch baseline
-    continueOnError: true
     dependsOn: []
     jobs:
       - job:
         displayName: Unit Test 3x Torch baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
