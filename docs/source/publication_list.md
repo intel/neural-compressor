@@ -1,6 +1,7 @@
-Full Publications/Events (89)
+Full Publications/Events (90)
 ==========
-## 2025 (3)
+## 2025 (4)
+* Blog by Intel: [Intel® Data Center Al Solutions and Llama 4 Herd Performance Insights](https://www.intel.com/content/www/us/en/developer/articles/technical/llama4-performance-on-intel-hardware.html) (Apr 2025)
 * arXiv: [Faster Inference of LLMs using FP8 on the Intel Gaudi](https://arxiv.org/abs/2503.09975) (Mar 2025)
 * PyTorch landscape: [PyTorch general optimizations](https://landscape.pytorch.org/) (Mar 2025)
 * Blog on SqueezeBits: [[Intel Gaudi] #4. FP8 Quantization](https://blog.squeezebits.com/intel-gaudi-4-fp8-quantization--40269) (Jan 2025)
