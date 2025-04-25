@@ -93,14 +93,15 @@ def save(model, output_dir="./saved_results", format=SaveLoadFormat.DEFAULT, **k
         qconfig_file_path = os.path.join(output_folder, QCONFIG_NAME)
         # saving process
         save_config_mapping(model.qconfig, qconfig_file_path)
-        if 'blockwise' in kwargs:
-            from neural_compressor.torch.algorithms.layer_wise import save_layers_in_shards_iteratively, LWQ_WORKSPACE
+        if "blockwise" in kwargs:
+            from neural_compressor.torch.algorithms.layer_wise import LWQ_WORKSPACE, save_layers_in_shards_iteratively
+
             checkpoints_folder = kwargs.get("blockwise_load_folder", None)
             if not checkpoints_folder:
                 checkpoints_folder = LWQ_WORKSPACE
             save_layers_in_shards_iteratively(checkpoints_folder, output_folder, layers_per_shard=8)
         else:
-            model_state_dict = model.state_dict() # if 'model_state_dict' not in kwargs else kwargs['model_state_dict']
+            model_state_dict = model.state_dict()  # if 'model_state_dict' not in kwargs else kwargs['model_state_dict']
             torch.save(model_state_dict, qmodel_weight_file_path)
             logger.info("Save quantized model weight to {}.".format(qmodel_weight_file_path))
         logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))

@@ -259,7 +259,7 @@ def load_first_layer_only(user_model, model_name):
         model_name (str): model name or path
     """
     for name, m in user_model.named_modules():
-        if ('layers' not in name or 'layers.0' in name) and len(name) > 0 and len(list(m.named_children())) == 0:
+        if ("layers" not in name or "layers.0" in name) and len(name) > 0 and len(list(m.named_children())) == 0:
             load_module(user_model, name, get_path(model_name), device="hpu" if is_hpu_available() else "cpu")
 
 
@@ -357,6 +357,7 @@ def clean_module_weight(module):
                 kwargs = submodule._parameters[n].__dict__
                 if is_hpu_available:
                     from habana_frameworks.torch.core import weight_sharing
+
                     if param_cls == weight_sharing.HabanaParameterWrapper:
                         try:
                             kwargs.pop("change_device_placement")
