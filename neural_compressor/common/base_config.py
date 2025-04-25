@@ -189,6 +189,7 @@ class BaseConfig(ABC):
 
     name = BASE_CONFIG
     params_list = []
+    _is_initialized = False
 
     def __init__(self, white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST) -> None:
         """Initialize the BaseConfig.
@@ -220,6 +221,14 @@ class BaseConfig(ABC):
                 f"The white list should be one of {DEFAULT_WHITE_LIST}, {EMPTY_WHITE_LIST},"
                 " a not empty list, but got {self.white_list}"
             )
+        self._is_initialized = True
+
+    def __setattr__(self, name, value):
+        """Override the setattr function to propagate updates."""
+        super().__setattr__(name, value)
+        if self._is_initialized and name in self.params_list:
+            self._is_initialized = False
+            self._post_init()
 
     @property
     def white_list(self):
