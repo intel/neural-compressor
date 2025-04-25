@@ -123,4 +123,3 @@ def test_xpu_quantized_func_wrapper():
     assert patched_my_linear.matmul_fp8._quantized_func_ == torch.ops.torch_ipex.fp8_gemm
 
     clear_quantized_func_wrapper_factory()
-

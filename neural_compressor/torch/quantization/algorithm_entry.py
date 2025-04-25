@@ -23,9 +23,9 @@ from neural_compressor.common.utils import (
     AUTOROUND,
     AWQ,
     FP8_QUANT,
-    HYBRID_GPTQ,
     GPTQ,
     HQQ,
+    HYBRID_GPTQ,
     MIXED_PRECISION,
     MX_QUANT,
     RTN,
@@ -40,13 +40,13 @@ from neural_compressor.torch.quantization import (
     FP8Config,
     GPTQConfig,
     HQQConfig,
+    HybridGPTQConfig,
     MixedPrecisionConfig,
     MXQuantConfig,
     RTNConfig,
     SmoothQuantConfig,
     StaticQuantConfig,
     TEQConfig,
-    HybridGPTQConfig
 )
 from neural_compressor.torch.utils import (
     dump_model_op_stats,
@@ -727,6 +727,7 @@ def fp8_entry(
     postprocess_model(model, mode, quantizer)
     return model
 
+
 ###################### Habana MixedPrecision Algo Entry ##################################
 @register_algo(HYBRID_GPTQ)
 @torch.no_grad()
@@ -744,7 +745,7 @@ def hybrid_gptq_entry(
     quantizer = get_quantizer(model, quantizer_cls=HybridGPTQQuantizer, quant_config=configs_mapping)
     model = quantizer.execute(model, mode=mode)
 
-    fp8_entry(model, configs_mapping, mode,  *args,  **kwargs)
+    fp8_entry(model, configs_mapping, mode, *args, **kwargs)
     return model
 
 

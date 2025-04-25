@@ -44,7 +44,7 @@ from neural_compressor.torch.quantization.config import (
     get_woq_tuning_config,
     DynamicQuantConfig,
     get_default_dynamic_config,
-    HybridGPTQConfig
+    HybridGPTQConfig,
 )
 
 from neural_compressor.torch.quantization.autotune import (
