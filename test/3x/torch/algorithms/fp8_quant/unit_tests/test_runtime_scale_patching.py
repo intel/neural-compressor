@@ -11,7 +11,6 @@ from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config imp
 from neural_compressor.torch.quantization import FP8Config, convert, prepare, finalize_calibration
 
 os.environ["PT_HPU_WEIGHT_SHARING"] = "0"
-htcore.hpu_inference_set_env()
 
 
 class TinyBlock(torch.nn.Module):
