@@ -25,6 +25,7 @@ cd /neural-compressor/test/3x || exit 1
 rm -rf tensorflow
 rm -rf torch/algorithms/fp8_quant
 rm -rf torch/quantization/fp8_quant
+rm -rf torch/algorithms/fp8_quant_xpu
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
