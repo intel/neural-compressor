@@ -29,9 +29,9 @@ from neural_compressor.torch.utils import (
     HPU_WEIGHT_NAME,
     LM_HEAD_NAMES,
     QCONFIG_NAME,
-    WEIGHT_NAME,
-    SHARDED_WEIGHT_NAME,
     SHARDED_HPU_WEIGHT_NAME,
+    SHARDED_WEIGHT_NAME,
+    WEIGHT_NAME,
     SaveLoadFormat,
     get_accelerator,
     get_enum_from_format,
@@ -71,14 +71,19 @@ def save(model, output_dir="./saved_results", format=SaveLoadFormat.DEFAULT, **k
         config = model.config
         config_file = "quantize_config.json"
         quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
-        if (quantization_config and "backend" in quantization_config and "auto_round" in quantization_config["backend"]):
+        if quantization_config and "backend" in quantization_config and "auto_round" in quantization_config["backend"]:
             safe_serialization = kwargs.get("safe_serialization", True)
             tokenizer = kwargs.get("tokenizer", None)
             max_shard_size = kwargs.get("max_shard_size", "5GB")
             if tokenizer is not None:
                 tokenizer.save_pretrained(output_dir)
             del model.save
-            model.save_pretrained(output_dir, max_shard_size=max_shard_size, safe_serialization=safe_serialization, state_dict=model.state_dict() if 'model_state_dict' not in kwargs else kwargs['model_state_dict'])
+            model.save_pretrained(
+                output_dir,
+                max_shard_size=max_shard_size,
+                safe_serialization=safe_serialization,
+                state_dict=model.state_dict() if "model_state_dict" not in kwargs else kwargs["model_state_dict"],
+            )
             with open(os.path.join(output_dir, config_file), "w", encoding="utf-8") as f:
                 json.dump(quantization_config, f, indent=2)
             return
@@ -91,14 +96,15 @@ def save(model, output_dir="./saved_results", format=SaveLoadFormat.DEFAULT, **k
 
     # MethodType 'save' not in state_dict
     del model.save
-    if 'blockwise' in kwargs:
-        from neural_compressor.torch.algorithms.layer_wise import save_layers_in_shards_iteratively, LWQ_WORKSPACE
+    if "blockwise" in kwargs:
+        from neural_compressor.torch.algorithms.layer_wise import LWQ_WORKSPACE, save_layers_in_shards_iteratively
+
         checkpoints_folder = kwargs.get("blockwise_load_folder", None)
         if not checkpoints_folder:
             checkpoints_folder = LWQ_WORKSPACE
         save_layers_in_shards_iteratively(checkpoints_folder, output_folder, layers_per_shard=8)
     else:
-        model_state_dict = model.state_dict() # if 'model_state_dict' not in kwargs else kwargs['model_state_dict']
+        model_state_dict = model.state_dict()  # if 'model_state_dict' not in kwargs else kwargs['model_state_dict']
         torch.save(model_state_dict, qmodel_weight_file_path)
         logger.info("Save quantized model weight to {}.".format(qmodel_weight_file_path))
     logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
@@ -164,6 +170,7 @@ class WOQModelLoader:
 
         w4a8_model = replace_hpu_woq_with_hpu_mixed_precision_linear(woq_model)
         from neural_compressor.torch.utils import get_accelerator
+
         w4a8_model = w4a8_model.to(get_accelerator().name())
         return w4a8_model
 
@@ -191,7 +198,7 @@ class WOQModelLoader:
             logger.info("Loading weight-only quantization model successfully.")
         else:
             raise ValueError(f"`format` in load function can only be 'huggingface' or 'default', but get {self.format}")
-        
+
         if self._is_w4a8_model_from_auto_round():
             model = self._post_process_for_w4a8(model)
         return model
@@ -240,11 +247,13 @@ class WOQModelLoader:
             print("loading sharded checkpoints")
             if self._use_hpu_module():
                 from safetensors.torch import load_file
+
                 self.loaded_state_dict = load_file(qmodel_weight_file_path, device=self.device)
             else:
                 from neural_compressor.torch.algorithms.layer_wise import load_model_from_shards_with_safetensors
+
                 shard_dir = os.path.abspath(os.path.expanduser(self.model_name_or_path))
-                bin_index_file = os.path.join(shard_dir, 'model_bin_index.json')
+                bin_index_file = os.path.join(shard_dir, "model_bin_index.json")
                 self.loaded_state_dict = load_model_from_shards_with_safetensors(shard_dir, bin_index_file)
         else:
             self.loaded_state_dict = torch.load(qmodel_weight_file_path)
@@ -273,7 +282,7 @@ class WOQModelLoader:
 
         model.eval()
         return model
-    
+
     def _is_w4a8_model_from_auto_round(self):
         if self.quantization_config.get("data_type", None) == "fp8_to_int_sym":
             return True
@@ -281,10 +290,9 @@ class WOQModelLoader:
             if layer_config.get("data_type", None) == "fp8_to_int_sym":
                 return True
         return False
-            
-            
+
     def _update_quant_config_for_w4a8(self):
-        self.quantization_config['quant_method'] = "gptq"
+        self.quantization_config["quant_method"] = "gptq"
         self.quantization_config.pop("backend", None)
 
     def _is_autoround_format_quantized_model(self):
