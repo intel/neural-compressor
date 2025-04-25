@@ -355,7 +355,7 @@ def clean_module_weight(module):
             else:
                 param_cls = type(submodule._parameters[n])
                 kwargs = submodule._parameters[n].__dict__
-                if is_hpu_available:
+                if is_hpu_available():
                     from habana_frameworks.torch.core import weight_sharing
 
                     if param_cls == weight_sharing.HabanaParameterWrapper:
