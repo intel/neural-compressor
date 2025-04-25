@@ -15,9 +15,8 @@ from abc import abstractmethod
 
 import torch
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import get_hqt_config
-from ..common import ModuleConfig
-from .scale_method_factory import QuantTensorName, ScaleMethodFactory
-from .scales_method import QuantTensorType
+from .scale_method_factory import ScaleMethodFactory, QuantTensorName
+from ..common import ModuleConfig, QuantTensorType
 from ..quant_dequant import DequantOutput, QuantDequant, QuantDequantNone, QuantInput, QuantDynamicInput
 from neural_compressor.torch.algorithms.fp8_quant._core.common import dequant_original_fp8_weight_if_needed
 

@@ -131,6 +131,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     save_file = False
     patched_modules = []
     patched_module_types = set()
+    device = torch.device(cur_accelerator.name())
     # TODO [SW-217814]: improve config parsing
     is_dynamic_quantization = "dyn" in scaling_method_name
     #TODO Merge with load_layer_scales

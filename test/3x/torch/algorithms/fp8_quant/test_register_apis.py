@@ -177,7 +177,7 @@ def change_to_cur_file_dir():
     current_directory = os.path.dirname(current_file_path)
     os.chdir(current_directory)
 
-## TODO enable after adding support in user scaling method: SW-217369
+## TODO enable after SW-217369
 @pytest.mark.skip(reason="This test is temporarily disabled")
 class TestRegisterAPIs:
     def teardown_class(self):
