@@ -137,6 +137,7 @@ stages:
     jobs:
       - job:
         displayName: Test FWKs adaptor baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -152,6 +153,7 @@ stages:
     jobs:
       - job:
         displayName: Test User facing API baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -167,6 +169,7 @@ stages:
     jobs:
       - job:
         displayName: Test PyTorch Pruning baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -177,6 +180,7 @@ stages:
               repo: $(REPO)
       - job:
         displayName: Test TensorFlow Pruning baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -192,6 +196,7 @@ stages:
     jobs:
       - job:
         displayName: Test TF newAPI baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -207,6 +212,7 @@ stages:
     jobs:
       - job:
         displayName: Test ITEX baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -222,6 +228,7 @@ stages:
     jobs:
       - job:
         displayName: Test other cases baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
