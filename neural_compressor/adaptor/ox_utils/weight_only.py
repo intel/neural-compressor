@@ -103,9 +103,7 @@ def make_matmul_weight_only_node(
         elif num_bits == 8:
             packed = q_weight
         else:
-            logger.error(
-                "MatMulNBits does not have kernel support for num_bits = {}.".format(num_bits)
-                )
+            logger.error("MatMulNBits does not have kernel support for num_bits = {}.".format(num_bits))
 
         packed = np.reshape(packed, (-1, k_blocks, blob_size))
 
@@ -273,44 +271,44 @@ def quant_tensor_k_quant_cpu(data, num_bits=4, group_size=32):
         scale: scale
         zero_point: zero point
     """
-    data = np.reshape(data, (-1, group_size)).astype(np.float32)   # nb = data.shape[0], (nb, group_size)
+    data = np.reshape(data, (-1, group_size)).astype(np.float32)  # nb = data.shape[0], (nb, group_size)
     maxq = 2**num_bits - 1
     minq = 0
-    sum_x2 = np.sum(data**2, axis=1, keepdims=True) # (nb, 1)
-    av_x = np.sqrt(sum_x2 / group_size) # (nb, 1)
-    weights = np.add(av_x, np.abs(data)) # (nb, group_size)
-    rmin = np.min(data, axis=1, keepdims=True) # (nb, 1)
-    rmax = np.max(data, axis=1, keepdims=True) # (nb, 1)
-    sum_w = np.sum(weights, axis=1, keepdims=True) # (nb, 1)
-    sum_x = np.sum(weights * data, axis=1, keepdims=True) # (nb, group_size)
-    iscale = np.ones(rmax.shape, dtype=data.dtype) # (nb, 1)
+    sum_x2 = np.sum(data**2, axis=1, keepdims=True)  # (nb, 1)
+    av_x = np.sqrt(sum_x2 / group_size)  # (nb, 1)
+    weights = np.add(av_x, np.abs(data))  # (nb, group_size)
+    rmin = np.min(data, axis=1, keepdims=True)  # (nb, 1)
+    rmax = np.max(data, axis=1, keepdims=True)  # (nb, 1)
+    sum_w = np.sum(weights, axis=1, keepdims=True)  # (nb, 1)
+    sum_x = np.sum(weights * data, axis=1, keepdims=True)  # (nb, group_size)
+    iscale = np.ones(rmax.shape, dtype=data.dtype)  # (nb, 1)
     mask = rmin != rmax
     iscale[mask] = (maxq - minq) / (rmax[mask] - rmin[mask])
     scale = 1 / iscale
-    quant_data = np.clip(np.round(iscale * (data - rmin)), minq, maxq) # (nb, group_size)
-    diff = scale * quant_data + rmin - data # (nb, group_size)
-    best_mad = np.sum(weights * diff ** 2, axis=1, keepdims=True) # (nb, 1)
+    quant_data = np.clip(np.round(iscale * (data - rmin)), minq, maxq)  # (nb, group_size)
+    diff = scale * quant_data + rmin - data  # (nb, group_size)
+    best_mad = np.sum(weights * diff**2, axis=1, keepdims=True)  # (nb, 1)
     nstep = 20
     rdelta = 0.1
     # nstep * rdelta = -2 * rrmin, maxq - minq = 2**num_bits - 1
     rrmin = -1
     for is_ in range(nstep):
-        iscale_new = np.ones(rmax.shape, dtype=data.dtype) # (nb, 1)
+        iscale_new = np.ones(rmax.shape, dtype=data.dtype)  # (nb, 1)
         factor = np.array([rrmin + rdelta * is_ + maxq - minq]).astype(data.dtype)[0]
         mask = rmin != rmax
         iscale_new[mask] = factor / (rmax[mask] - rmin[mask])
-        quant_data_new = np.clip(np.round(iscale_new * (data - rmin)), minq, maxq) # (nb, group_size)
+        quant_data_new = np.clip(np.round(iscale_new * (data - rmin)), minq, maxq)  # (nb, group_size)
         mul_weights_quant_data_new = weights * quant_data_new
-        sum_l = np.sum(mul_weights_quant_data_new, axis=1, keepdims=True) # (nb, 1)
-        sum_l2 = np.sum(mul_weights_quant_data_new * quant_data_new, axis=1, keepdims=True) # (nb, 1)
-        sum_xl = np.sum(mul_weights_quant_data_new * data, axis=1, keepdims=True) # (nb, 1)
-        D = np.subtract(sum_w * sum_l2, sum_l ** 2) # (nb, 1)
+        sum_l = np.sum(mul_weights_quant_data_new, axis=1, keepdims=True)  # (nb, 1)
+        sum_l2 = np.sum(mul_weights_quant_data_new * quant_data_new, axis=1, keepdims=True)  # (nb, 1)
+        sum_xl = np.sum(mul_weights_quant_data_new * data, axis=1, keepdims=True)  # (nb, 1)
+        D = np.subtract(sum_w * sum_l2, sum_l**2)  # (nb, 1)
 
-        this_scale = (sum_w * sum_xl - sum_x * sum_l) / D # (nb, 1)
-        this_min = (sum_l2 * sum_x - sum_l * sum_xl) / D # (nb, 1)
+        this_scale = (sum_w * sum_xl - sum_x * sum_l) / D  # (nb, 1)
+        this_min = (sum_l2 * sum_x - sum_l * sum_xl) / D  # (nb, 1)
 
-        diff = this_scale * quant_data_new + this_min - data # (nb, group_size)
-        mad = np.sum(weights * diff ** 2, axis=1, keepdims=True) # (nb, 1)
+        diff = this_scale * quant_data_new + this_min - data  # (nb, group_size)
+        mad = np.sum(weights * diff**2, axis=1, keepdims=True)  # (nb, 1)
 
         mad_1 = np.array(mad)
         best_mad_1 = np.array(best_mad)
@@ -539,7 +537,9 @@ def rtn_quantize(
             weight = pad_tensor(weight, group_size, k_blocks)
 
             enable_MatMulNBits_8bits = True
-            satisfy_MatMulNBits_condition = (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (enable_MatMulNBits_8bits and num_bits == 8)
+            satisfy_MatMulNBits_condition = (Version(ort.__version__) > ONNXRT1161_VERSION and num_bits == 4) or (
+                enable_MatMulNBits_8bits and num_bits == 8
+            )
             satisfy_MatMulFpQ4_condition = (
                 Version(ort.__version__) >= ONNXRT116_VERSION and num_bits == 4 and group_size == 32
             )
