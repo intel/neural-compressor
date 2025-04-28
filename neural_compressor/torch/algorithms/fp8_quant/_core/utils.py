@@ -91,7 +91,7 @@ runtime_scale_patching_supported_methods_list = [method for method in scaling_me
 
 
 def set_runtime_scale_patching_mode(scaling_method_name):
-    if is_runtime_scale_patching():
+    if is_runtime_scale_patching() and hasattr(htexp, "_set_scale_attributes"):
         assert (
             scaling_method_name in runtime_scale_patching_supported_methods_list
         ), f"Scaling method \"{scaling_method_name}\" is not supported for runtime scale patching (graph recompile reduction). Cannot set scaling attributes."
