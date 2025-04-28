@@ -91,7 +91,10 @@ def preprocess_quant_config(model, quant_config, mode="prepare", example_inputs=
     else:
         model_info = quant_config.get_model_info(model=model)
 
-    if hasattr(quant_config, "model_path") and quant_config.model_path == "" and hasattr(model, "name_or_path"):
+    if (
+        (hasattr(quant_config, "model_path") and quant_config.model_path == "")
+        or isinstance(quant_config, ComposableConfig)
+    ) and hasattr(model, "name_or_path"):
         quant_config.model_path = model.name_or_path
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
     logger.debug(configs_mapping)
