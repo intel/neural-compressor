@@ -692,6 +692,13 @@ class ComposableConfig(BaseConfig):
             self.config_list.append(other)
         return self
 
+    def __setattr__(self, name, value):
+        """Override the setattr function to propagate updates."""
+        ABC.__setattr__(self, name, value)
+        for config in self.config_list:
+            if hasattr(config, name):
+                setattr(config, name, value)
+
     def to_dict(self, params_list=[], operator2str=None):
         """Converts the configuration object to a dictionary.
 
