@@ -266,9 +266,9 @@ class Fp8cfg:
             # TODO: "Linear only" in types still causes issues as llama7b quantizes also self_attn,
             # which should be blocked for some reason. We might then want to set measured_global_config["allowlist"]["types"] = supported_dynamic_ops
             # TODO [SW-222725]: support HW aligned rounding in dynamic quantization
-            if scale_method in _hw_aligned_scale_methods:
+            if scale_method in _hw_aligned_scale_methods or scale_method in _quant_only_scale_methods:
                 raise ValueError(
-                    f"Unsupported config: scale method {scale_method} is not supported in dynamic quantization"
+                    f"Unsupported config: scale_method {scale_method} is not supported in dynamic quantization"
                 )
             #TODO [SW-224403]: enable dynamic quantization in row parallel allreduce
             if measured_global_config["row_parallel_linear_allreduce_quantization"]:
@@ -276,7 +276,7 @@ class Fp8cfg:
         else:
             if scale_method == ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
                 raise ValueError(
-                    f"Unsupported config: scale method {scale_method} is supported only in dynamic quantization"
+                    f"Unsupported config: scale_method {scale_method} is supported only in dynamic quantization"
                 )
 
         if scale_method in _quant_only_scale_methods or dynamic_quantization:
@@ -353,7 +353,7 @@ class Fp8cfg:
             # Currently, only maxabs_hw is supported for a different device scales configuration
             if measured_global_config["scale_method"] != ScaleMethod.MAXABS_HW:
                 raise ValueError(
-                    f"Unsupported config: scale_method: {measured_global_config['scale_method']} "
+                    f"Unsupported config: scale_method {measured_global_config['scale_method']} "
                     f"for scale device overriding: {measured_global_config['device_for_scales']}"
                 )
             if not (
