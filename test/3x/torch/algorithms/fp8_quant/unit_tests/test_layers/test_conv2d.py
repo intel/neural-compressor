@@ -61,10 +61,10 @@ def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
             device_type=device_type,
         )
     if get_device_type() != device_type_id[device_type] and scale_method != ScaleMethod.MAXABS_HW:
-        return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method: ")
+        return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
     elif device_type_id[device_type] != get_device_type():
         if not (device_type_id[device_type] == get_gaudi2_type() and is_gaudi3()):
             return run_with_raised_exception(run, ValueError, "Unsupported config: device_for_scales=")
     elif scale_method == ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
-            return run_with_raised_exception(run, ValueError, "Unsupported config: scale method ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW")
+            return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW")
     return run()

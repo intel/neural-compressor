@@ -52,7 +52,7 @@ def temp_directory():
 @pytest.mark.parametrize("scale_format", ["SCALAR", "CONST"])
 @pytest.mark.parametrize("dynamic_scale_patching", [True, False])
 def test_no_assert(scale_method, scale_format,dynamic_scale_patching, temp_directory):
-    if scale_method in SCALE_METHODS_KEY_ERROR:
+    if scale_method in SCALE_METHODS_KEY_ERROR :
         pytest.xfail("KeyError")
     model = TinyModel()
     model.eval()
@@ -90,7 +90,7 @@ def test_no_assert(scale_method, scale_format,dynamic_scale_patching, temp_direc
     finalize_calibration(model)
 
     if scale_method == ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
-        return run_with_raised_exception(run_convert, ValueError, "Unsupported config: scale method ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW")
+        return run_with_raised_exception(run_convert, ValueError, "Unsupported config: scale_method")
     if dynamic_scale_patching:
         os.environ["RUNTIME_SCALE_PATCHING"] = "1"
         if not scale_method in RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST:
