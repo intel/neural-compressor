@@ -47,11 +47,21 @@ def load_config_mapping(qconfig_file_path, config_name_mapping):  # pragma: no c
     Returns:
         config_mapping (dict): config mapping.
     """
+
+    def _fetch_from_string(key):
+        """Return op_name and op_type from key, such as "('transformer.h.0.attn.k_proj', 'Linear')"."""
+        import re
+
+        match = re.match(r"\('(.+)', '(.+)'\)", key)
+        if match:
+            op_name, op_type = match.groups()
+        return op_name, op_type
+
     config_mapping = {}
     with open(qconfig_file_path, "r") as f:
         per_op_qconfig = json.load(f)
     for key, value in per_op_qconfig.items():
-        op_name, op_type = eval(key)
+        op_name, op_type = _fetch_from_string(key)
         # value here is a dict, so we convert it to an object with config_name_mapping,
         # which is defined in a specific framework.
         config_name = next(iter(value))
