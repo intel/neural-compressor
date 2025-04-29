@@ -55,7 +55,9 @@ def load_config_mapping(qconfig_file_path, config_name_mapping):  # pragma: no c
         match = re.match(r"\('(.+)', '(.+)'\)", key)
         if match:
             op_name, op_type = match.groups()
-        return op_name, op_type
+            return op_name, op_type
+        else:
+            raise ValueError(f"Invalid key format: {key}. Expected format: \"('op_name', 'op_type')\".")
 
     config_mapping = {}
     with open(qconfig_file_path, "r") as f:
