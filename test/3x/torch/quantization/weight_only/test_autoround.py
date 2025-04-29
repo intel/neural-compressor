@@ -310,7 +310,8 @@ class TestAutoRoundHPU:
     def setup_method(self, method):
         torch.compiler.reset()
         logger.info(f"Running TestAutoRound test: {method.__name__}")
-    
+
+    @pytest.mark.skip(reason="Disabled, see JIRA: https://jira.habana-labs.com/browse/SW-227554")
     def test_autoround_w4a8(self):
         fp32_model = copy.deepcopy(self.tiny_llama_model)
         quant_config = AutoRoundConfig(
