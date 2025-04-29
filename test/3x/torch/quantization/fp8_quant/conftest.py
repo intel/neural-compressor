@@ -2,6 +2,8 @@ import os
 # Ensure that the HPU is in lazy mode and weight sharing is disabled
 os.environ.setdefault("PT_HPU_LAZY_MODE", "1")
 os.environ.setdefault("PT_HPU_WEIGHT_SHARING", "0")
+# Ensure that only 3x of INC is imported
+os.environ.setdefault("INC_3X_ONLY", "1")
 
 
 def pytest_sessionstart():
