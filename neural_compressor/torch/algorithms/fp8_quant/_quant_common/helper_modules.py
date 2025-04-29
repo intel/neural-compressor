@@ -773,6 +773,7 @@ class PatchedVllmMixtureOfExpertsOpV1(PatchedModuleBase):
                       hidden_states,
                       expert_routing_table,
                       router_weights,
+                      layer=None,
                       permuted_weights=True,
                       activation="silu"):
         experts_range = range(self.num_experts)
@@ -802,6 +803,7 @@ class PatchedVllmMixtureOfExpertsOpV1(PatchedModuleBase):
                         hidden_states,
                         expert_routing_table,
                         router_weights,
+                        layer=None,
                         permuted_weights=True,
                         activation="silu"):
         experts_range = range(self.num_experts)
