@@ -21,10 +21,9 @@ from .measure import prepare_model as prepare_model_for_measure
 from .quantize import quantize
 from .scale import scale_method_mapping, scaling_params
 from .common import is_runtime_scale_patching
-
+from neural_compressor.torch.utils.auto_accelerator import is_any_gaudi_accelerator
 import os
 import re
-import habana_frameworks.torch.utils.experimental as htexp
 
 
 def update_mod_dict(config):
@@ -91,6 +90,7 @@ runtime_scale_patching_supported_methods_list = [method for method in scaling_me
 
 
 def set_runtime_scale_patching_mode(scaling_method_name):
+    import habana_frameworks.torch.utils.experimental as htexp # importing in local scope since it is gaudi specific
     if is_runtime_scale_patching():
         assert (
             scaling_method_name in runtime_scale_patching_supported_methods_list
@@ -125,5 +125,7 @@ def prepare_model(model):
         scaling_method_name = scale_method_mapping[(config.cfg["scale_method"], config.cfg["observer"])]
         scaling_params[scaling_method_name].update(config.cfg["scale_params"])
         config.cfg["scale_params"] = scaling_params[scaling_method_name]
-        set_runtime_scale_patching_mode(scaling_method_name)
+
+        if is_any_gaudi_accelerator(config.cfg["device_type"]):
+            set_runtime_scale_patching_mode(scaling_method_name)
         return quantize(model, mod_list)

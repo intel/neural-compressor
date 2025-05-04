@@ -461,3 +461,7 @@ def auto_detect_accelerator(device_name="auto") -> Auto_Accelerator:
 # INC_TARGET_DEVICE = "CPU" python ...
 # or
 # CUDA_VISIBLE_DEVICES="" python ...
+
+
+def is_any_gaudi_accelerator(acc_type: INCAcceleratorType):
+    return acc_type.value > INCAcceleratorType.GAUDI_MIN.value
