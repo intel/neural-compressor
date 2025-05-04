@@ -16,6 +16,8 @@ import torch
 from enum import Enum
 from .common import ModuleConfig
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
+from neural_compressor.torch.utils import logger
+
 cur_accelerator = auto_detect_accelerator()
 
 descale_fcn = lambda x, scale: torch.mul(x, scale)
@@ -122,9 +124,8 @@ def get_fullscales_by_expbias_set(dtype, device, expbias_set):
 
 def get_fp8_hw_alligned_scales_by_device(dtype, device):
     if device not in [GAUDI2, GAUDI3]:
-        raise ValueError(
-            f"{device} is not supported"
-        )
+        logger.warning("hw aligned scales not supported for device {}".format(device))
+        return None # only Gaudis support hw aligned scales
     exp_bias_set = EXP_BIAS_SETS.get((device, dtype), None)
     return (
         None
@@ -157,6 +158,10 @@ def calc_maxabs_scale(xmaxabs, fullscale, backoff=1):
     return scale
 
 def mmse_scale_multi(x, ref_scale, scales, lp_dtype, hp_dtype):
+    if not scales:
+        raise ValueError(
+            "got empty scale list. it is possible that scale method isn't supported by current device."
+        )
     # TODO: SW-176672 move weights to hpu before the scale calculations
     x = x.to("hpu")
     Nch = x.shape[-1]
@@ -180,6 +185,10 @@ def mmse_scale_multi(x, ref_scale, scales, lp_dtype, hp_dtype):
 
 
 def mmse_scale(x, scales, lp_dtype, hp_dtype):
+    if not scales:
+        raise ValueError(
+            "got empty scale list. it is possible that scale method isn't supported by current device."
+        )
     # TODO: SW-176672 move weights to hpu before the scale calculations
     x = x.to("hpu")
     opt_err = torch.ones(1, dtype=hp_dtype, device=x.device) * torch.inf
