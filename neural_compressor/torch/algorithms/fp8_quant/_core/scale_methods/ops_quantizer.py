@@ -333,6 +333,16 @@ class KVCacheOpQuantizer(BaseOpQuantizer):
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
         self.output_scales_creators.append(self.inputs_scales_creators[0])
 
+    # TODO: Remove after implementing lp_dtype in OHF.
+    def init_input_config(self, scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
+        input_config = super().init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, False, fake_quant)
+        if use_qdq:
+            input_config.extend([
+                QuantDequant(s_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq)
+                for s_inv in scales_inv
+            ])
+        return input_config
+
     def get_scales_module_config(self):
         input_scales = self.calc_input_scales(num_of_inputs=1)
         self.output_scales_creators[0].scale = self.inputs_scales_creators[0].scale
@@ -345,11 +355,13 @@ class KVCacheOpQuantizer(BaseOpQuantizer):
         input_scales_inv = [
             self.inputs_scales_creators[i].calc_invert_scales() for i in range(len(self.inputs_scales_creators))
         ]
-        input_config = super().init_input_config(
+        # TODO: After implementing lp_dtype in OHF can call:
+        # `super().init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, False, fake_quant)`
+        input_config = self.init_input_config(
             input_scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant
         )
         output_config = [
-            DequantOutput(self.output_scales_creators[0].scale, lp_dtype, hp_dtype, scale_format=scale_format)
+            DequantOutput(self.output_scales_creators[0].scale, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=False)
         ]
         return ModuleConfig(input_config, output_config)
 
