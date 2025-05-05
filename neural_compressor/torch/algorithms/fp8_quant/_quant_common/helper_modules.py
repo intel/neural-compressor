@@ -869,6 +869,7 @@ class PatchedKVCache(PatchedModuleBase):
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
             if self.use_qdq:
+                self.qdq_input = self._mod_extra_config.inputs[1]
                 self.update = self.update_qdq
                 mod.update = self.update_qdq
             else:
@@ -885,8 +886,23 @@ class PatchedKVCache(PatchedModuleBase):
 
     # overwrite update function of original module to force quant and dequant of cache input and output
     def update_qdq(self, prev, cur, dim, idx, inp_seq_len):
-        qinput = self.quant_input(cur)
-        output = self.org_update(prev, qinput, dim, idx, inp_seq_len)
+        """
+         Explanation:  If we want to optimize index_copy so it would run in fp8 instead of bf16
+                       we need the tensors to be in fp8 before calling index_copy.
+                       Also the `prev` and `curr` tensors need to be of the same dtype - and quanting them both
+                       from bf16 is no help, best we can do is have prev be initialized an fp8 tensor from the start.
+                       Since the initilization of `prev` is done in OHF (and that is not implemented yet) we
+                       currently need to support both options until the implementation in OHF is done, then
+                       can we remove the support for the bf16 `prev` option (the else here). 
+        """
+        if prev.dtype == torch.float8_e4m3fn:
+            qcurr = self.quant_input(cur)
+            qoutput = self.org_update(prev, qcurr, dim, idx, inp_seq_len)
+            output = self.dequant_output(qoutput)
+        # TODO: remove the `else` part once the lp_dtype is implemented in OHF
+        else:
+            curr = self.qdq_input(cur)
+            output = self.org_update(prev, curr, dim, idx, inp_seq_len)
         return output
 
     # overwrite update function of original module to force quant and dequant of cache input and output
