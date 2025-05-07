@@ -478,8 +478,10 @@ class WOQModelLoader:
 
         has_remote_code = hasattr(config, "auto_map") and AutoModelForCausalLM.__name__ in config.auto_map
 
-        if hasattr(config, "_model_type") and hasattr(AutoModelForCausalLM, "_model_mapping"):
-            has_local_code = has_remote_code and (config._model_type in AutoModelForCausalLM._model_mapping.keys())
+        has_local_code = (
+            hasattr(AutoModelForCausalLM, "_model_mapping")
+            and type(config) in AutoModelForCausalLM._model_mapping.keys()
+        )
 
         trust_remote_code = resolve_trust_remote_code(
             trust_remote_code,
