@@ -25,9 +25,9 @@ unless they have clear requirements that can only be met by modifying the attrib
 
 | Framework  | YAML Configuration Files |
 |------------|:------------------------:|
-| TensorFlow |         &#10004;         |
+| TensorFlow (Deprecated) |         &#10004;         |
 | PyTorch    |         &#10004;         |
-| ONNX       |         &#10004;         |
+| ONNX (Deprecated)       |         &#10004;         |
 
 
 ## Get started with Framework YAML Files

@@ -23,7 +23,7 @@ Intel provides a quantization-aware training (QAT) method that incorporates a no
 
 ### Distillation for Quantization Support Matrix
 
-|**Algorithm**                      |**PyTorch**   |**TensorFlow** |
+|**Algorithm**                      |**PyTorch**   |**TensorFlow (Deprecated)** |
 |---------------------------------|:--------:|:---------:|
 |Distillation for Quantization    |&#10004;  |&#10006;   |
 

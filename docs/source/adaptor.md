@@ -24,9 +24,9 @@ tuning strategy and vanilla framework quantization APIs.
 
 |Framework     |Adaptor      |
 |--------------|:-----------:|
-|TensorFlow    |&#10004;     |
+|TensorFlow (Deprecated)    |&#10004;     |
 |PyTorch       |&#10004;     |
-|ONNX          |&#10004;     |
+|ONNX (Deprecated)          |&#10004;     |
 
 
 ## Working Flow

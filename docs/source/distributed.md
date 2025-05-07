@@ -16,7 +16,7 @@ Distributed Training and Inference (Evaluation)
 
     4.1. [Pytorch Examples](#pytorch-examples)
 
-    4.2. [Tensorflow Examples](#tensorflow-examples)
+    4.2. [Tensorflow Examples](#tensorflow-examples) (Deprecated)
 ## Introduction
 
 Neural Compressor uses [horovod](https://github.com/horovod/horovod) for distributed training.
@@ -33,8 +33,8 @@ Distributed training and inference are supported in PyTorch and TensorFlow curre
 |------------|---------|:-------------------:|
 | PyTorch    | QAT     |       &#10004;      |
 | PyTorch    | PTQ     |       &#10004;      |
-| TensorFlow | PTQ     |       &#10004;      |
-| Keras      | Pruning |       &#10004;      |
+| TensorFlow (Deprecated) | PTQ     |       &#10004;      |
+| Keras (Deprecated)      | Pruning |       &#10004;      |
 
 ## Get Started with Distributed Training and Inference API
 To enable distributed training or inference, the steps are:
@@ -168,7 +168,7 @@ Horovodrun requires user set up SSH on all hosts without any prompts. To do dist
 - PyTorch example-2: QAT (Quantization Aware Training)
   - Please follow this README.md exactly：[QAT](../../examples/pytorch/image_recognition/torchvision_models/quantization/qat/eager/distributed)
 
-### TensorFlow Examples:
+### TensorFlow Examples: (Deprecated)
 - TensorFlow example-1: 'ResNet50 V1.0' PTQ (Post Training Quantization) with distributed inference    
   - Step-1: Please cd (change directory) to the [TensorFlow Image Recognition Example](../../examples/tensorflow/image_recognition) and follow the readme to run PTQ, ensure that PTQ of 'ResNet50 V1.0' can be successfully executed.
   - Step-2: We only need to modify the [resnet50_v1.yaml](../../examples/tensorflow/image_recognition/tensorflow_models/quantization/ptq/resnet50_v1.yaml), add a line 'distributed: True' in the 'evaluation' field.
