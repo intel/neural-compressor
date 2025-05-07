@@ -478,7 +478,9 @@ class WOQModelLoader:
 
         has_remote_code = hasattr(config, "auto_map") and AutoModelForCausalLM.__name__ in config.auto_map
 
-        has_local_code = type(config) in AutoModelForCausalLM._model_mapping.keys()
+        if hasattr(config, "_model_type") and hasattr(AutoModelForCausalLM, "_model_mapping"):
+            has_local_code = has_remote_code and (config._model_type in AutoModelForCausalLM._model_mapping.keys())
+
         trust_remote_code = resolve_trust_remote_code(
             trust_remote_code,
             self.model_name_or_path,
@@ -601,6 +603,7 @@ class WOQModelLoader:
         # if hpu format tensor can be used directly, then update resolved_archive_file to the hpu format tensor file
         if self._use_hpu_module():
             resolved_archive_file = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
+            is_sharded = False
 
         logger.info(f"Find weight file {resolved_archive_file}")
 
