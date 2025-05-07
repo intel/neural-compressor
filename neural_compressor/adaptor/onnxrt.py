@@ -57,6 +57,7 @@ class ONNXRUNTIMEAdaptor(Adaptor):
     """
 
     def __init__(self, framework_specific_info):
+        logger.warning("ONNXRUNTIMEAdaptor is deprecated and may be removed in future versions.")
         super().__init__(framework_specific_info)
         self.__config_dict = {}
         self.quantizable_ops = []

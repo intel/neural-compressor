@@ -73,6 +73,7 @@ class KerasAdaptor(Adaptor):
     """The keras class of framework adaptor layer."""
 
     def __init__(self, framework_specific_info):
+        logger.warning("KerasAdaptor is deprecated and may be removed in future versions.")
         super(KerasAdaptor, self).__init__(framework_specific_info)
         self.framework_specific_info = framework_specific_info
         self.approach = deep_get(self.framework_specific_info, "approach", False)

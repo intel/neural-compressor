@@ -83,6 +83,7 @@ class TensorFlowAdaptor(Adaptor):
         Args:
             framework_specific_info: framework specific info passed from strategy.
         """
+        logger.warning("TensorFlowAdaptor is deprecated and may be removed in future versions.")
         super().__init__(framework_specific_info)
 
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
