@@ -96,5 +96,5 @@ python main.py -t -a resnet18 --ipex --pretrained /path/to/imagenet --Intel GPU
 or
 ```shell
 bash run_quant.sh --input_model=resnet18 --dataset_location=/path/to/imagenet
-bash run_benchmark.sh --input_model=resnet18 --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false --Intel GPU=true/false
+bash run_benchmark.sh --input_model=resnet18 --dataset_location=/path/to/imagenet --mode=performance/accuracy --int8=true/false --xpu=true/false
 ```
