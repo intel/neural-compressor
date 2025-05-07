@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This example load a RoBERTa model and confirm its accuracy and speed based on [GLUE data](https://gluebenchmark.com/). 

@@ -1,4 +1,4 @@
-# Step-by-Step
+# Step-by-Step (Deprecated)
 
 This example load an image classification model from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on MNIST dataset.
 

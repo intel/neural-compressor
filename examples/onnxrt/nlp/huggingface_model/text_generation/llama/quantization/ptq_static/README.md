@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This example confirms llama's accuracy and speed based on [lambada](https://huggingface.co/datasets/lambada).
