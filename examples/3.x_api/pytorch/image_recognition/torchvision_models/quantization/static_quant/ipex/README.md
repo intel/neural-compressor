@@ -34,7 +34,7 @@ source {DPCPPROOT}/env/vars.sh
 source {MKLROOT}/env/vars.sh
 source {CCLROOT}/env/vars.sh
 source {MPIROOT}/env/vars.sh
-python -c "import torch; import intel_extension_for_pytorch as ipex; print(torch.__version__); print(ipex.__version__); [print(f'[{i}]: {torch.Intel GPU.get_device_properties(i)}') for i in range(torch.Intel GPU.device_count())];"
+python -c "import torch; import intel_extension_for_pytorch as ipex; print(torch.__version__); print(ipex.__version__); [print(f'[{i}]: {torch.xpu.get_device_properties(i)}') for i in range(torch.xpu.device_count())];"
 ```
 Please also refer to this [tutorial](https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=gpu&version=v2.1.30%2bIntel GPU&os=linux%2fwsl2&package=conda) to check system requirements and install dependencies.
 
