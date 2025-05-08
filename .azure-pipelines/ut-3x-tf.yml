@@ -13,6 +13,7 @@ pr:
       - test/3x/tensorflow
       - test/3x/common
       - setup.py
+      - requirements.txt
       - requirements_tf.txt
       - .azure-pipelines/scripts/ut/3x/run_3x_tf.sh
       - .azure-pipelines/template/docker-template.yml

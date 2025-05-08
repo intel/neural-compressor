@@ -20,6 +20,7 @@ pr:
       - test/3x/torch/quantization/weight_only/test_rtn.py
       - test/3x/torch/quantization/weight_only/test_load.py
       - setup.py
+      - requirements.txt
       - requirements_pt.txt
 
 pool: GAUDI

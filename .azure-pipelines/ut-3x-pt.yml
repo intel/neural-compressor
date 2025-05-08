@@ -14,6 +14,7 @@ pr:
       - test/3x/torch
       - test/3x/common
       - setup.py
+      - requirements.txt
       - requirements_pt.txt
       - .azure-pipelines/ut-3x-pt.yml
       - .azure-pipelines/template/docker-template.yml
