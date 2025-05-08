@@ -26,7 +26,7 @@ Please refer to [intel/intel-extension-for-pytorch(github.com)](https://github.c
    ```
 
 ### Install IPEX Intel GPU
-Please build an IPEX docker container according to the [official guide](https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=gpu&version=v2.1.30%2bIntel GPU&os=linux%2fwsl2&package=docker).
+Please build an IPEX docker container according to the [official guide](https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=gpu&version=v2.1.30%2bxpu&os=linux%2fwsl2&package=docker).
 
 You can run a simple sanity test to double confirm if the correct version is installed, and if the software stack can get correct hardware information onboard your system. The command should return PyTorch and IPEX versions installed, as well as GPU card(s) information detected.
 ```bash
