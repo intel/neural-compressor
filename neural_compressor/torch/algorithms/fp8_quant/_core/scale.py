@@ -30,7 +30,7 @@ def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, 
         module_type,
     )
     mod_extra_config = None
-    if mod_name in scales or not config.cfg["use_stats_files"] or mod_name in measurement:
+    if (mod_name in scales or not config.cfg["use_stats_files"] or mod_name in measurement) and mod_default_dict[mod_type_str].should_measure_and_quant:
         op_for_scale_obj = ops_quantizer.get_op_quantizer(scaling_method_name, mod, measurement.get(mod_name, None),
                                                           scale_config, module_type)
         if mod_name not in scales:
