@@ -95,7 +95,7 @@ pip install neural-compressor-tf
     ```Shell
     git clone https://github.com/intel/neural-compressor.git
     cd neural-compressor
-    pip install -r requirements_TF.txt # for TensorFlow framework extension API
+    pip install -r requirements_tf.txt # for TensorFlow framework extension API
     export INC_TF_ONLY=1
     pip install -e .
     ```
