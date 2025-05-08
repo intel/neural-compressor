@@ -95,22 +95,15 @@ PKG_INSTALL_CFG = {
 
 
 if __name__ == "__main__":
-    cfg_key = "neural_compressor"
+    if os.environ.get("INC_PT_ONLY", False):
+        cfg_key = "neural_compressor_pt"
+    elif os.environ.get("INC_TF_ONLY", False):
+        cfg_key = "neural_compressor_tf"
+    else:
+        cfg_key = "neural_compressor"
 
-    # Temporary implementation of fp8 tensor saving and loading
-    # Will remove after Habana torch applies below patch:
-    # https://github.com/pytorch/pytorch/pull/114662
     ext_modules = []
     cmdclass = {}
-
-    if "pt" in sys.argv:
-        sys.argv.remove("pt")
-        cfg_key = "neural_compressor_pt"
-
-    if "tf" in sys.argv:
-        sys.argv.remove("tf")
-        cfg_key = "neural_compressor_tf"
-
     project_name = PKG_INSTALL_CFG[cfg_key].get("project_name")
     include_packages = PKG_INSTALL_CFG[cfg_key].get("include_packages") or {}
     package_data = PKG_INSTALL_CFG[cfg_key].get("package_data") or {}
