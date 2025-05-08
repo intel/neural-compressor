@@ -6,14 +6,11 @@ from neural_compressor.torch.quantization import FP8Config, convert, prepare, fi
 from neural_compressor.torch.utils import get_used_cpu_mem_MB
 
 
-htcore.hpu_set_env()
-
-
 def test_two_step_layer_wise():
     # layer-wise is based on memory mapping technique and https://github.com/huggingface/transformers/pull/31771
-    # Workaround of [SW-208658]: Memory mapping is blocked unreasonably
-    tmp_deterministic_algorithms_flag = torch.are_deterministic_algorithms_enabled()
-    torch.use_deterministic_algorithms(False)
+    # Workaround of [SW-208658]: torch.use_deterministic_algorithms(True) will break memory mapping
+    tmp_memory_flag = torch.utils.deterministic.fill_uninitialized_memory
+    torch.utils.deterministic.fill_uninitialized_memory = False
     model_name = "facebook/opt-350m"
     config = AutoConfig.from_pretrained(model_name)
     # requires transformers >= 4.43.0, torch_dtype=config.torch_dtype
@@ -40,4 +37,4 @@ def test_two_step_layer_wise():
     cpu_mem2 = get_used_cpu_mem_MB()
     model = convert(new_model, qconfig)
     assert (cpu_mem2 - cpu_mem0) < 100, "model with memory mapping should use no more than 100MiB."
-    torch.use_deterministic_algorithms(tmp_deterministic_algorithms_flag)
+    torch.utils.deterministic.fill_uninitialized_memory = tmp_memory_flag

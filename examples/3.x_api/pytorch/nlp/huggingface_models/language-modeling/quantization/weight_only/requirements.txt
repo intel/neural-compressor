@@ -13,3 +13,4 @@ peft
 auto_round
 numba
 tbb
+safetensors >= 0.5.3

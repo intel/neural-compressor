@@ -41,6 +41,7 @@ from neural_compressor.common.utils import (
     FP8_QUANT,
     GPTQ,
     HQQ,
+    HYBRID_GPTQ,
     MIXED_PRECISION,
     MX_QUANT,
     OP_NAME_OR_MODULE_TYPE,
@@ -345,6 +346,7 @@ class GPTQConfig(TorchBaseConfig):
         "double_quant_group_size",
         # layer wise params
         "use_layer_wise",
+        "use_block_wise",
         "model_path",
         # quant lm_head
         "quant_lm_head",
@@ -365,6 +367,7 @@ class GPTQConfig(TorchBaseConfig):
         use_mse_search: bool = False,
         # layer wise
         use_layer_wise: bool = False,
+        use_block_wise: bool = False,
         model_path: str = "",
         # double quant
         use_double_quant: bool = False,
@@ -393,6 +396,7 @@ class GPTQConfig(TorchBaseConfig):
             group_size (int): Size of weight groups. Default is 32.
             use_mse_search (bool): Enables mean squared error (MSE) search. Default is False.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            use_block_wise (bool): Enables quantize model per block. Defaults to False. Used for large GPU/HPU.
             model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization. Default is False.
             double_quant_dtype (str): Data type for double_quant scale. Default is "int".
@@ -423,6 +427,7 @@ class GPTQConfig(TorchBaseConfig):
         self.use_mse_search = use_mse_search
         # layer wise
         self.use_layer_wise = use_layer_wise
+        self.use_block_wise = use_block_wise
         self.model_path = model_path
         # double quant
         self.use_double_quant = use_double_quant
@@ -468,7 +473,13 @@ class GPTQConfig(TorchBaseConfig):
         """
         if not self.quant_lm_head:
             self.set_local(
-                LM_HEAD_NAMES, GPTQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path)
+                LM_HEAD_NAMES,
+                GPTQConfig(
+                    dtype="fp32",
+                    use_layer_wise=self.use_layer_wise,
+                    model_path=self.model_path,
+                    use_block_wise=self.use_block_wise,
+                ),
             )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
@@ -924,6 +935,7 @@ class AutoRoundConfig(TorchBaseConfig):
         act_group_size: int = None,
         act_sym: bool = None,
         act_dynamic: bool = True,
+        act_dtype: Optional[str] = "int",
         enable_full_range: bool = False,
         batch_size: int = 8,
         lr_scheduler=None,
@@ -970,6 +982,7 @@ class AutoRoundConfig(TorchBaseConfig):
             act_group_size (int): Group size for activation quantization. Default is None.
             act_sym (bool): Whether to use symmetric activation quantization. Default is None.
             act_dynamic (bool): Whether to use dynamic activation quantization. Default is True.
+            act_dtype (Optional[str]): Data type for activation quantization. Default is None.
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
             lr_scheduler: The learning rate scheduler to be used.
@@ -1016,6 +1029,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.act_group_size = act_group_size
         self.act_sym = act_sym
         self.act_dynamic = act_dynamic
+        self.act_dtype = act_dtype
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.lr_scheduler = lr_scheduler
@@ -1806,6 +1820,7 @@ class FP8Config(TorchBaseConfig):
         use_qdq: bool = False,
         scale_format: str = "scalar",
         measure_on_hpu: bool = True,
+        int4_weights: bool = False,
         **kwargs,
     ):
         """Initializing FP8Config.
@@ -1824,6 +1839,7 @@ class FP8Config(TorchBaseConfig):
             measure_exclude (str, optional): Select INPUT/OUTPUT to be exculded by measurement. Defaults to "OUTPUT".
             fake_quant (bool, optional): whether to execute fake quantization, a little bit different with use_qdq, used for training. Defaults to False.
             use_qdq (bool, optional): whether to execute Q/DQ quantization. Defaults to False.
+            int4_weights (bool, optional): Expect 4bit weights or not. Defaults to False.
         """
         super().__init__()
         self.dump_stats_path = dump_stats_path
@@ -1839,6 +1855,7 @@ class FP8Config(TorchBaseConfig):
         self._json_file = None
         self.fake_quant = str(fake_quant)
         self.use_qdq = str(use_qdq)
+        self.int4_weights = int4_weights  # FIXME should be inferred
         self.scale_format = scale_format
         self.measure_on_hpu = measure_on_hpu
         # add kwargs
@@ -1953,6 +1970,36 @@ def get_default_fp8_config_set() -> FP8Config:
         the default fp8 config.
     """
     return FP8Config.get_config_set_for_tuning()
+
+
+######################## Hybrid GPTQ Quant Config ###############################
+
+
+@register_config(framework_name=FRAMEWORK_NAME, algo_name=HYBRID_GPTQ)
+class HybridGPTQConfig(FP8Config):
+    """Config class for Hybrid Precision GPTQ quantization.
+
+    Currently supports running 4bit weights which have been quantized by GPTQ, during which
+    the weights have been double quantized from high precision, to fp8, to int4.
+    The activations will be quantized to fp8.
+    """
+
+    name = HYBRID_GPTQ
+
+    def __init__(
+        self,
+        **kwargs,
+    ):
+        """Initializing Hybrid GPTQ Config."""
+        super().__init__(**kwargs)
+
+    @staticmethod
+    def convert_from_fp8(config):
+        new_self = HybridGPTQConfig()
+        for attr, value in vars(config).items():
+            setattr(new_self, attr, value)
+        new_self.int4_weights = True
+        return new_self
 
 
 ######################## MixedPrecision Config ###############################

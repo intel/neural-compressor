@@ -7,7 +7,7 @@ import torch
 import transformers
 
 from neural_compressor.torch.quantization import load
-from neural_compressor.torch.utils import SaveLoadFormat, accelerator, is_hpex_available
+from neural_compressor.torch.utils import SaveLoadFormat, accelerator, is_hpu_available
 
 device = accelerator.current_device_name()
 
@@ -55,7 +55,7 @@ class TestHFModelLoad:
         output = qmodel(self.example_inputs.to("cpu"))[0]
         assert len(output) > 0, "Not loading the model correctly"
 
-    @pytest.mark.skipif(not is_hpex_available(), reason="no hpex in environment here.")
+    @pytest.mark.skipif(not is_hpu_available(), reason="no hpex in environment here.")
     def test_load_hf_woq_model_hpu(self):
         # use huggingface model_id (format=huggingface, device="hpu")
         # first load: linear -> INCWeightOnlyLinear -> HPUWeightOnlyLinear, save hpu_model.safetensors to local cache dir
@@ -88,7 +88,7 @@ class TestHFModelLoad:
             output1, output2
         ), "The model loaded the second time is different from the model loaded the first time"
 
-    @pytest.mark.skipif(not is_hpex_available(), reason="no hpex in environment here.")
+    @pytest.mark.skipif(not is_hpu_available(), reason="no hpex in environment here.")
     def test_load_hf_woq_model_hpu_special_case(self):
         # this model contains tensors sharing memory
         model = load(

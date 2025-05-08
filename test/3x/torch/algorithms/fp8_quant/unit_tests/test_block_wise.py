@@ -1,4 +1,5 @@
 import copy
+import pytest
 import torch
 
 import habana_frameworks.torch.core as htcore

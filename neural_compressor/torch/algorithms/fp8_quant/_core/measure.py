@@ -15,7 +15,6 @@
 import json
 import os
 
-import habana_frameworks.torch.core as htcore
 import numpy as np
 import torch
 
@@ -32,6 +31,7 @@ from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     OBSERVER_PARAMS,
     IMOD_DICT,
 )
+from neural_compressor.torch.algorithms.fp8_quant._core.common import dequant_original_fp8_weight_if_needed
 cur_accelerator = auto_detect_accelerator()
 
 
@@ -107,6 +107,9 @@ def prepare_model(model, mod_list=None):
         d_shapes = load_file(shapes_fname, ShapeList, False)
     else:
         d_shapes = None
+    # TODO SW-220992: Add dependency check for observer, just like maxabs_per_channel is dependent on shape
+    if not d_shapes and observer_class == OBSERVER_TYPES["maxabs_per_channel"]:
+        raise RuntimeError("Required shape files are missing from measurement directory")
     gmod_list.extend(mod_list)
     generate_model_info(model)
     register_patched_measure_modules(model, mod_list, observer_class, d_shapes)
@@ -143,6 +146,10 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                 patched_types.add(type(mod))
 
                 set_hqt_config(mod, top_level_config)  # set config in the module, as it consumed by the patched module
+                if mod_type == "dynamic_moe" and hasattr(mod, "num_experts"):
+                    # override default number of outputs for dynamic moe
+                    mod_types[mod_type].num_outputs = mod.num_experts+1
+                    logger.warning(f"Dynamic moe num_outputs set to {mod.num_experts+1}")
                 mod_extra_config = (
                     init_measure_object(
                         mod,
@@ -160,6 +167,7 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                 if pmod._mod_extra_config:
                     for param_name in pmod._mod_extra_config.params:
                         param = getattr(pmod, param_name)
+                        param = dequant_original_fp8_weight_if_needed(pmod.orig_mod, param)
                         if config["measure_on_hpu"]:
                             param = param.to(cur_accelerator.name())
                         pmod._mod_extra_config.params[param_name].measure(param)

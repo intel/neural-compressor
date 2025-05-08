@@ -74,6 +74,11 @@ def is_hpex_available():
     return _hpex_available
 
 
+def is_hpu_available():
+    """Returns whether hpex is available."""
+    return get_accelerator().name() == "hpu"
+
+
 ## check optimum
 if is_package_available("optimum"):
     _optimum_available = True

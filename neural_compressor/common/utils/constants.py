@@ -34,6 +34,7 @@ HQQ = "hqq"  # pragma: no cover
 TEQ = "teq"  # pragma: no cover
 AUTOROUND = "autoround"
 FP8_QUANT = "fp8_quant"
+HYBRID_GPTQ = "hybrid_gptq"
 MX_QUANT = "mx_quant"
 MIXED_PRECISION = "mixed_precision"
 
@@ -51,12 +52,13 @@ from enum import Enum
 
 
 class Mode(Enum):
-    """Enumeration class representing different modes of the quantizer execution."""
+    """Enumeration class representing different modes of the quantization."""
 
     PREPARE = "prepare"
     CONVERT = "convert"
     QUANTIZE = "quantize"
     LOAD = "load"
+    SAVE = "save"
 
 
 SERVER_PROCESSOR_BRAND_KEY_WORLD_LST = ["Xeon"]

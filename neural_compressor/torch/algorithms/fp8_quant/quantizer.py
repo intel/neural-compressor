@@ -23,7 +23,11 @@ from neural_compressor.torch.algorithms.fp8_quant import (
     update_mode,
     with_patched_module,
 )
-from neural_compressor.torch.algorithms.fp8_quant._core.quantized_hpu_ops import QuantizedFuncWrapperFactory
+
+from neural_compressor.torch.algorithms.fp8_quant._core.quantized_func_wrappers import (
+    init_quantized_func_wrapper_factory,
+    clear_quantized_func_wrapper_factory
+)
 
 
 class FP8Quantizer(Quantizer):
@@ -34,21 +38,22 @@ class FP8Quantizer(Quantizer):
             assert len(json_file) > 0, "Cannot get json file from config."
             self.quant_config = json_file[0]
         # singleton object to create quantized func wrapper objects.
-        # creation logic is invoked from get_hpu_quantized_func_wrapper function
-        self.quantized_func_wrapper_factory = QuantizedFuncWrapperFactory()
+        # creation logic is invoked from get_quantized_func_wrapper function
+        init_quantized_func_wrapper_factory()
 
     def prepare(self, model):
         _prepare(model, self.quant_config)
-        self.quantized_func_wrapper_factory.clear()
         return model
 
     def convert(self, model):
-        if with_patched_module(model):  # if model was calibrated on hpu
-            finish_measurements(model)  # dump the measurements into files to be loaded in _convert
-            # for INC flow, it calls `prepare` and then `convert` user-facing API in one run
-            restore_patched_module(model)
-        _convert(model, self.quant_config)
-        self.quantized_func_wrapper_factory.clear()
+        try:
+            if with_patched_module(model):  # if model was calibrated on hpu
+                finish_measurements(model)  # dump the measurements into files to be loaded in _convert
+                # for INC flow, it calls `prepare` and then `convert` user-facing API in one run
+                restore_patched_module(model)
+            _convert(model, self.quant_config)
+        finally:
+            clear_quantized_func_wrapper_factory() #TODO FSW-13813 maybe can wrap it with context manager
         return model
 
 

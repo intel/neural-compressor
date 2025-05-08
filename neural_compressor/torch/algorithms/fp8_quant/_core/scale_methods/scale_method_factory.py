@@ -19,6 +19,7 @@ from ..._quant_common.quant_config import is_supported_dynamic_op
 from ..common import get_device_type_for_scales
 from .scales_method import *
 from ...utils.logger import logger
+from ..._quant_common.quant_config import get_hqt_config
 
 
 class QuantTensorName(Enum):
@@ -88,10 +89,14 @@ class ScaleMethodFactory:
     ## config string example: "act_maxabs_pts_weight_opt_pts_hw", round_method = pow2_hw, scale_value_type = maxabs, granularity = pts
     # all config strings in scale.py: scale_method_mapping
     def __init__(self, config, params, mod, op_type):
-        self.params = params
+        # params is `get_hqt_config(model).cfg["scale_params"]`, we copy in order not to damage it for other modules
+        self.params = params.copy()
         self.mod = mod
         self.device_for_scales = get_device_type_for_scales(mod)
         self.op_type = op_type
+        if op_type == "row_parallel_linear" and get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]:
+             self.params["output_backoff"] = 1
+
 
         if "weight" in config and "smoothquant" not in config:
             parts = config.split("weight", 1)
@@ -112,10 +117,10 @@ class ScaleMethodFactory:
                                      QuantTensorName.WEIGHT_OUT_CH: parse_tensor_scale_value_type(config_weight, self.op_type),
                                      QuantTensorName.WEIGHT_IN_CH: parse_tensor_scale_value_type(config_weight, self.op_type),
                                      QuantTensorName.OUTPUT: parse_tensor_scale_value_type(config_out, self.op_type)}
-        self.scale_backoff_map = {QuantTensorName.INPUT: self.params.get("input_backoff", 1),
-                                  QuantTensorName.WEIGHT_IN_CH: self.params.get("weight_backoff", 1),
-                                  QuantTensorName.WEIGHT_OUT_CH: self.params.get("weight_backoff", 1),
-                                  QuantTensorName.OUTPUT: self.params.get("input_backoff", 1),}
+        self.scale_backoff_map = {QuantTensorName.INPUT: self.params.get("input_backoff", 1.0),
+                                  QuantTensorName.WEIGHT_IN_CH: self.params.get("weight_backoff", 1.0),
+                                  QuantTensorName.WEIGHT_OUT_CH: self.params.get("weight_backoff", 1.0),
+                                  QuantTensorName.OUTPUT: self.params.get("output_backoff", self.params.get("input_backoff", 1.0)),} # get output_backoff, if doesn't exists use input_backoff, if doesn't exists use 1
         logger.debug("%s %s".format(self.__class__.__name__, self.__dict__))
 
     ## TODO remove after SW-217369

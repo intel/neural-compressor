@@ -33,6 +33,7 @@ config_name_mapping = {
 }
 
 
+@log_process(mode=Mode.SAVE)
 def save(model, checkpoint_dir="saved_results", format="default"):
     """Save quantized model.
 
@@ -133,7 +134,7 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
                 from neural_compressor.torch.algorithms import weight_only
 
                 qmodel = weight_only.load(
-                    model_name_or_path, original_model, format=SaveLoadFormat.DEFAULT, device=device
+                    model_name_or_path, original_model, format=SaveLoadFormat.DEFAULT, device=device, **kwargs
                 )
                 return qmodel.to(device)
     elif format == SaveLoadFormat.HUGGINGFACE:

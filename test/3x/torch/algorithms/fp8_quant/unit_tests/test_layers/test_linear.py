@@ -21,8 +21,14 @@ def get_test_vectors(*, dtype: torch.dtype, N: int, D_in: int, atol: float = 0.0
 @pytest.mark.parametrize("scale_method", ScaleMethod)
 @pytest.mark.parametrize("device_type", device_type)
 @pytest.mark.parametrize("scale_format", ScaleFormat)
+@pytest.mark.parametrize("use_hpu_graphs", [True, False], ids=["use_hpu_graphs", "no_hpu_graphs"])
 def test_linear_accuracy(
-    hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethod, device_type: str, scale_format: ScaleFormat
+    hp_dtype: torch.dtype,
+    lp_dtype: torch.dtype,
+    scale_method: ScaleMethod,
+    device_type: str,
+    scale_format: ScaleFormat,
+    use_hpu_graphs: bool,
 ):
     if scale_method in SCALE_METHODS_KEY_ERROR:
         pytest.xfail("KeyError")
@@ -56,6 +62,7 @@ def test_linear_accuracy(
             quant_modes=quant_modes,
             device_type=device_type,
             scale_format=scale_format,
+            use_hpu_graphs=use_hpu_graphs,
         )
     if get_device_type() != device_type_id[device_type] and scale_method != ScaleMethod.MAXABS_HW:
         return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method: ")

@@ -312,6 +312,56 @@ class TestAutoRoundHPU:
     def setup_method(self, method):
         torch.compiler.reset()
         logger.info(f"Running TestAutoRound test: {method.__name__}")
+    
+    def test_autoround_w4a8(self):
+        fp32_model = copy.deepcopy(self.tiny_llama_model)
+        quant_config = AutoRoundConfig(
+            nsamples=32,
+            seqlen=10,
+            iters=2,
+            scale_dtype="bf16",
+            dtype="fp8_to_int_sym",
+            act_bits=8,
+            act_group_size=-1,
+            act_dtype="fp8_sym",
+            act_dynamic=False,   
+        )
+
+        quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
+        logger.info(f"Test AutoRound with config {quant_config}")
+
+        # prepare + convert API
+        model = prepare(model=fp32_model, quant_config=quant_config)
+
+        run_fn(model, self.dataloader)
+        q_model = convert(model)
+        assert q_model is not None, "Quantization failed!"
+        # We quantize the model with compile mode, if we want to run the model directly, 
+        # we need use the compile mode as well.
+        # We can use the lazy mode but need to restart the python process.
+        from neural_compressor.torch.algorithms.weight_only.save_load import load
+
+        model = load(
+            model_name_or_path="temp_auto_round",
+            original_model=copy.deepcopy(self.tiny_llama_model),
+            device="hpu",
+            format="huggingface",
+        )
+        print(f"loaded model {model}")
+        from neural_compressor.torch.algorithms.mixed_low_precision.modules import HPUMixedPrecisionLinear
+        has_hpu_mixed_precision_module = False
+        for name, module in model.named_modules():
+            if isinstance(module, HPUMixedPrecisionLinear):
+                has_hpu_mixed_precision_module = True
+                break
+        assert has_hpu_mixed_precision_module, "loading compressed model failed."
+        model.eval()
+        model = model.to(torch.bfloat16)
+        model = torch.compile(model, backend="hpu_backend")
+        out = model(self.inp.to("hpu"))[0]
+        print(f"out: {out}")
+        assert out is not None, "Loading compressed model failed."
+
 
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):

@@ -54,6 +54,8 @@ UNIT_MAPPING = {"KB": 1024, "MB": 1024**2, "GB": 1024**3, "TB": 1024**4, "B": 1}
 HPU_SAFE_WEIGHTS_NAME = "hpu_model.safetensors"
 WEIGHT_NAME = "quantized_weight.pt"
 HPU_WEIGHT_NAME = "quantized_hpu_weight.pt"
+SHARDED_WEIGHT_NAME = "model_bin_index.json"
+SHARDED_HPU_WEIGHT_NAME = "quantized_hpu_weight.safetensors"
 QCONFIG_NAME = "qconfig.json"
 
 

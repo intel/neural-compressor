@@ -13,7 +13,7 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
-from neural_compressor.torch.utils import accelerator, is_hpex_available
+from neural_compressor.torch.utils import accelerator, is_hpu_available
 
 device = accelerator.name()
 
@@ -310,7 +310,7 @@ class TestRTNQuant:
 
     # TODO: (4, True, 32, 0), group_dim=0, format not supported
     # TODO [SW-216127]: it's not in high priority, so we can implement it later.
-    @pytest.mark.skipif(is_hpex_available(), reason="These tests are not supported on HPU for now.")
+    @pytest.mark.skipif(is_hpu_available(), reason="These tests are not supported on HPU for now.")
     @pytest.mark.parametrize(
         "bits, use_sym, group_size, group_dim",
         [

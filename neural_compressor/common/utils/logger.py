@@ -161,6 +161,8 @@ def _get_log_msg(mode):
         log_msg = "Conversion"
     elif mode == Mode.LOAD:  # pragma: no cover
         log_msg = "Loading"
+    elif mode == Mode.SAVE:  # pragma: no cover
+        log_msg = "Saving"
     return log_msg
 
 

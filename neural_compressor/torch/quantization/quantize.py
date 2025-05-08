@@ -20,7 +20,12 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.utils import Mode, call_counter, log_process
-from neural_compressor.torch.quantization.config import INT8StaticQuantConfig, SmoothQuantConfig
+from neural_compressor.torch.quantization.config import (
+    FP8Config,
+    HybridGPTQConfig,
+    INT8StaticQuantConfig,
+    SmoothQuantConfig,
+)
 from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
 
@@ -38,6 +43,62 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
         Bool: True or False.
     """
     return any(config.name == algo_name for config in configs_mapping.values())
+
+
+def preprocess_quant_config(model, quant_config, mode="prepare", example_inputs=None, run_fn=None):
+    """Preprocess the quantization configuration.
+
+    Args:
+        model: a float model to be quantized.
+        quant_config: a quantization configuration.
+        mode (str, optional): Which mode is in use currently. Defaults to "prepare".
+        run_fn: a calibration function for calibrating the model. Defaults to None.
+        example_inputs: used to trace torch model.
+
+    Returns:
+        model: model to be quantized.
+        OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+    """
+    registered_configs = config_registry.get_cls_configs()
+    if isinstance(quant_config, dict):
+        quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
+        logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
+    else:
+        assert isinstance(
+            quant_config, BaseConfig
+        ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
+    logger.debug("Quantize model with config:")
+    logger.debug(quant_config.to_dict())
+
+    if is_ipex_available and (
+        isinstance(quant_config, INT8StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
+    ):
+        if mode == "quantize":
+            if isinstance(quant_config, SmoothQuantConfig):
+                from neural_compressor.torch.algorithms.smooth_quant import TorchSmoothQuant
+
+                sq = TorchSmoothQuant(
+                    model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True
+                )
+                model.sq_info = sq
+                model = sq.transform(
+                    alpha=quant_config.alpha,
+                    folding=quant_config.folding,
+                    auto_alpha_args=quant_config.auto_alpha_args,
+                    scale_sharing=quant_config.scale_sharing,
+                )
+        model_info = quant_config.get_model_info(model, example_inputs)
+    else:
+        model_info = quant_config.get_model_info(model=model)
+
+    if (
+        (hasattr(quant_config, "model_path") and quant_config.model_path == "")
+        or isinstance(quant_config, ComposableConfig)
+    ) and hasattr(model, "name_or_path"):
+        quant_config.model_path = model.name_or_path
+    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+    logger.debug(configs_mapping)
+    return model, configs_mapping
 
 
 @log_process(mode=Mode.QUANTIZE)
@@ -63,41 +124,11 @@ def quantize(
         The quantized model.
     """
     q_model = model if inplace else copy.deepcopy(model)
-    registered_configs = config_registry.get_cls_configs()
-    if isinstance(quant_config, dict):
-        quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
-        logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
-    else:
-        assert isinstance(
-            quant_config, BaseConfig
-        ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.debug("Quantize model with config:")
-    logger.debug(quant_config.to_dict())
-    # select quantization algo according to config
-
-    if is_ipex_available and (
-        isinstance(quant_config, INT8StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
-    ):
-        if isinstance(quant_config, SmoothQuantConfig):
-            from neural_compressor.torch.algorithms.smooth_quant import TorchSmoothQuant
-
-            sq = TorchSmoothQuant(
-                q_model, dataloader=None, example_inputs=example_inputs, q_func=run_fn, record_max_info=True
-            )
-            q_model.sq_info = sq
-            q_model = sq.transform(
-                alpha=quant_config.alpha,
-                folding=quant_config.folding,
-                auto_alpha_args=quant_config.auto_alpha_args,
-                scale_sharing=quant_config.scale_sharing,
-            )
-
-        model_info = quant_config.get_model_info(q_model, example_inputs)
-    else:
-        model_info = quant_config.get_model_info(model=q_model)
-    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
-    logger.debug(configs_mapping)
+    q_model, configs_mapping = preprocess_quant_config(
+        q_model, quant_config, mode="quantize", example_inputs=example_inputs, run_fn=run_fn
+    )
     for algo_name, algo_func in algos_mapping.items():
+        # select quantization algo according to config
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
             q_model = algo_func(
@@ -133,29 +164,11 @@ def prepare(
         prepared and calibrated module.
     """
     prepared_model = model if inplace else copy.deepcopy(model)
-    registered_configs = config_registry.get_cls_configs()
-    if isinstance(quant_config, dict):
-        quant_config = ComposableConfig.from_dict(quant_config, config_registry=registered_configs[FRAMEWORK_NAME])
-        logger.info(f"Parsed a config dict to construct the quantization config: {quant_config}.")
-    else:
-        assert isinstance(
-            quant_config, BaseConfig
-        ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
-    logger.debug("Prepare model with config:")
-    logger.debug(quant_config.to_dict())
-
-    # select quantization algo according to config
-    if is_ipex_available and (
-        isinstance(quant_config, INT8StaticQuantConfig) or isinstance(quant_config, SmoothQuantConfig)
-    ):
-        model_info = quant_config.get_model_info(prepared_model, example_inputs)
-    else:
-        model_info = quant_config.get_model_info(model=prepared_model)
-    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
-    logger.debug(configs_mapping)
-
-    # TODO: Need to consider composableConfig situation
+    prepared_model, configs_mapping = preprocess_quant_config(
+        prepared_model, quant_config, mode="prepare", example_inputs=example_inputs
+    )
     for algo_name, algo_func in algos_mapping.items():
+        # select quantization algo according to config
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to prepare model with {algo_name}.")
             prepared_model = algo_func(
@@ -207,6 +220,9 @@ def convert(
         assert isinstance(
             quant_config, BaseConfig
         ), f"Please pass a dict or config instance as the quantization configuration, but got {type(quant_config)}."
+
+    if hasattr(quant_config, "int4_weights") and quant_config.int4_weights and type(quant_config) == FP8Config:
+        quant_config = HybridGPTQConfig.convert_from_fp8(quant_config)
     logger.debug("Convert model with config:")
     logger.debug(quant_config.to_dict())
 

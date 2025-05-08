@@ -30,6 +30,20 @@ from neural_compressor.torch.utils import accelerator, can_pack_with_numba, logg
 from .utility import quant_tensor
 
 
+class Matmul(torch.nn.Module):
+    """Basic module for matmul."""
+
+    def __init__(
+        self,
+    ) -> None:
+        """Init the Matmul object."""
+        super().__init__()
+
+    def forward(self, X, Y):
+        """Forward function."""
+        return torch.matmul(X, Y)
+
+
 class QDQLayer(torch.nn.Module):
     """Quantized and dequantized layer."""
 
@@ -77,6 +91,8 @@ class WeightOnlyLinear(torch.nn.Module):
         bits,
         group_size,
         device,
+        scale_dtype,
+        **kwargs,
     ):
         """Initialization."""
         super().__init__()
@@ -86,6 +102,22 @@ class WeightOnlyLinear(torch.nn.Module):
         self.bits = bits
         self.group_size = group_size if group_size != -1 else in_features
         self.device = device
+        self.scale_dtype = scale_dtype
+        self.kwargs = kwargs
+        self.enable_w4a8 = kwargs.get("enable_w4a8", False)
+
+    def _post_init_for_w4a8(self):
+        scale_dtype = self.scale_dtype
+        self.act_scales = torch.nn.Parameter(torch.zeros((1,), dtype=scale_dtype), requires_grad=False)
+        bf16_to_fp8_scales_shape = (1,)
+        self.w_bf16_to_fp8_scale = torch.nn.Parameter(
+            torch.zeros(bf16_to_fp8_scales_shape, dtype=scale_dtype), requires_grad=False
+        )
+
+    def post_init(self):
+        """Initialization for W4A8 usage."""
+        if self.enable_w4a8:
+            self._post_init_for_w4a8()
 
     @abstractmethod
     def pack(self, *args, **kwargs):
@@ -166,6 +198,8 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             bits,
             group_size,
             device,
+            scale_dtype=scale_dtype,
+            **kwargs,
         )
         self.use_optimum_format = use_optimum_format
         if "int" not in self.dtype:  # for nf4, fp4
@@ -266,6 +300,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             self.register_buffer("g_idx", torch.zeros(in_features, dtype=torch.int32).to(device))
         else:
             self.g_idx = None
+        self.post_init()
 
     def pack(self, int_weight, scales, zp, bias=None, g_idx=None, **kwargs):
         """Pack int weight."""
@@ -624,6 +659,8 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             bits,
             group_size,
             device,
+            scale_dtype=scale_dtype,
+            **kwargs,
         )
         self.float_type = torch.bfloat16
         self.compression_dim = compression_dim
@@ -672,6 +709,8 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         self.half_indim = self.in_features // 2
 
         self.wf = torch.tensor(list(range(0, 32, self.bits)), dtype=torch.int32).unsqueeze(0)
+        self.matmul_internal = Matmul()
+        self.post_init()
 
     def forward(self, input):
         """The forward function of HPUWeighOnlyLinear."""
@@ -681,7 +720,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         qweight = self.qweight
         zeros = self.qzeros
         weight = torch.ops.hpu.convert_from_uint4(qweight, scales, zeros, input_dtype)
-        output = torch.matmul(input, weight)
+        output = self.matmul_internal(input, weight)
         output = output.to(dtype=input_dtype).reshape(
             output_shape
         )  # A cast is needed here as for some reason the vecquant2matmul_faster_old still allocate a float32 output.

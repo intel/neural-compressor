@@ -16,7 +16,7 @@ import copy
 import json
 import time
 from functools import lru_cache
-from typing import Union
+from typing import Optional, Union
 
 import torch
 
@@ -77,6 +77,7 @@ class AutoRoundQuantizer(Quantizer):
         act_group_size: int = None,
         act_sym: bool = None,
         act_dynamic: bool = True,
+        act_data_type: Optional[str] = None,
         low_cpu_mem_usage: bool = False,
         export_format: str = "itrex",
         # v0.4
@@ -192,6 +193,7 @@ class AutoRoundQuantizer(Quantizer):
         self.act_group_size = act_group_size
         self.act_sym = act_sym
         self.act_dynamic = act_dynamic
+        self.act_data_type = act_data_type
         self.low_cpu_mem_usage = low_cpu_mem_usage
         self.export_format = export_format
         self.enable_norm_bias_tuning = enable_norm_bias_tuning
@@ -203,6 +205,10 @@ class AutoRoundQuantizer(Quantizer):
         self.image_processor = image_processor
         self.template = template
         self.truncation = truncation
+        self.enable_w4afp8 = self._is_w4afp8()
+
+    def _is_w4afp8(self):
+        return any([v.get("data_type", None) == "fp8_to_int_sym" for v in self.quant_config.values()])
 
     def prepare(self, model: torch.nn.Module, *args, **kwargs):
         """Prepares a given model for quantization.
@@ -306,7 +312,9 @@ class AutoRoundQuantizer(Quantizer):
             )
         model, weight_config = rounder.quantize()
         model.autoround_config = weight_config
-        if "itrex" in self.export_format:
+        if self.enable_w4afp8:
+            return rounder.save_quantized(output_dir="temp_auto_round", inplace=True)
+        elif "itrex" in self.export_format:
             model = pack_model(model, weight_config, device=self.device, inplace=True)
         else:  # pragma: no cover
             model = rounder.save_quantized(output_dir=None, format=self.export_format, device=self.device, inplace=True)

@@ -19,13 +19,20 @@ import os
 import numpy as np
 import torch
 from enum import Enum, auto
-
+from functools import lru_cache 
 from .._quant_common.quant_config import get_hqt_config
 from ..utils.logger import logger
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import ModuleConfig
 
 UNMEASURED_MODELS = "UnmeasuredModels"
 
+def dequant_original_fp8_weight_if_needed(mod: torch.nn.Module, param: torch.Tensor) -> torch.Tensor:
+    if param.dtype in [torch.float8_e4m3fn]:
+        if hasattr(mod, "get_dequant_weights_func"):
+            dequant_weights_func = mod.get_dequant_weights_func()
+            if dequant_weights_func is not None:
+                param = dequant_weights_func(mod)
+    return param
 
 class QuantTensorType(Enum):
     MEASUREMENTS = auto()
@@ -185,3 +192,8 @@ format_functions_rec = lambda k: functools.partial(rec_fn, fn=format_functions[k
 def get_device_type_for_scales(mod):
     config = get_hqt_config(mod).cfg
     return config["device_for_scales"]
+
+
+@lru_cache
+def is_runtime_scale_patching():
+    return os.getenv("RUNTIME_SCALE_PATCHING", "False").lower() in ["true", "1"]

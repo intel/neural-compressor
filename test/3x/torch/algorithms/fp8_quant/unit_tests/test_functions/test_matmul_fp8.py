@@ -6,9 +6,11 @@ import pytest
 import torch
 
 from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import FP8_143_SCALES
-from neural_compressor.torch.algorithms.fp8_quant._core.quantized_hpu_ops import QuantizedHpuMatmul
+from neural_compressor.torch.algorithms.fp8_quant._core.quantized_func_wrappers.hpu.hpu_quantized_func_wrapper import (
+    QuantizedHpuMatmul
+)
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleFormat
-
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 def run_test_matmul_fp8(
     *,
     hp_dtype: torch.dtype,
@@ -34,8 +36,8 @@ def run_test_matmul_fp8(
 
 
 def get_fp8_143_scales():
-    device_type = htexp._get_device_type()
-    return FP8_143_SCALES[device_type]
+    inc_device_type = auto_detect_accelerator().get_inc_accelerator_type()
+    return FP8_143_SCALES[inc_device_type]
 
 
 def get_scales_pairs_not_both_hw_aligned() -> Iterable[Tuple[float, float]]:

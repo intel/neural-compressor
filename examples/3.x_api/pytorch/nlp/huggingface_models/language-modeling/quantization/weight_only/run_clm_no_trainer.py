@@ -1,11 +1,10 @@
 import argparse
 import os
 import sys
+import gc
 
 sys.path.append('./')
 import time
-import json
-import re
 import torch
 from datasets import load_dataset
 from functools import lru_cache
@@ -15,6 +14,7 @@ from torch.nn.functional import pad
 from torch.utils.data import DataLoader
 from transformers import AutoModelForCausalLM, AutoConfig, AutoTokenizer
 from neural_compressor.torch.utils import is_hpex_available
+from neural_compressor.common.utils import LazyImport
 
 
 if is_hpex_available():
@@ -98,6 +98,9 @@ parser.add_argument('--gptq_max_seq_length', type=int, default=2048,
                     help='Calibration dataset sequence max length, '
                         'this should align with your model config, '
                         'and your dataset builder args: args.pad_max_length.')
+parser.add_argument("--gptq_blockwise", action="store_true",
+                    help="Whether to quantize blockwise.")
+parser.add_argument("--blockwise_load_folder", default=None, type=str, help="Directory to load blockwise checkpoints from.")
 
 # =============AWQ configs====================
 parser.add_argument("--use_auto_scale", action="store_true",
@@ -150,6 +153,10 @@ parser.add_argument("--double_quant_group_size", type=int, default=256,
 
 args = parser.parse_args()
 calib_size = 1
+quant_start_time = time.time()
+
+if args.use_hf_format:
+    assert not args.blockwise_gptq, "blockwise_gptq is not supported with use_hf_format"
 
 
 def compare_versions(v1, v2):
@@ -268,7 +275,7 @@ class Evaluator:
         return acc
 
 
-def get_user_model():
+def get_user_model(empty_model=False):
     torchscript = False
     if args.woq_algo in ["AWQ", "TEQ"]:
         torchscript = True
@@ -281,16 +288,28 @@ def get_user_model():
             args.model,
             trust_remote_code=args.trust_remote_code,
             attn_implementation=args.autoround_attn_implementation,
-            revision=args.revision,
+            revision=args.revision
         )
     else:
-        user_model = AutoModelForCausalLM.from_pretrained(
-            args.model,
-            torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
-            trust_remote_code=args.trust_remote_code,
-            revision=args.revision,
-        )
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
+        from neural_compressor.torch.algorithms.layer_wise import load_first_layer_only
+        config = AutoConfig.from_pretrained(args.model)
+        
+        if empty_model or args.gptq_blockwise:
+            from accelerate import init_empty_weights
+            with init_empty_weights():
+                user_model = AutoModelForCausalLM.from_config(config)
+        
+        if args.gptq_blockwise:  # if block-wise, load only first block and peripherals
+            load_first_layer_only(user_model, args.model)
+
+        elif not empty_model:
+            user_model = AutoModelForCausalLM.from_pretrained(
+                args.model,
+                torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
+                trust_remote_code=args.trust_remote_code,
+                revision=args.revision,
+            )
+    tokenizer = AutoTokenizer.from_pretrained(args.model) 
     user_model = user_model.float()
     if args.woq_algo == 'AutoRound':
         user_model.to(torch.float32)
@@ -303,8 +322,6 @@ def get_user_model():
         from peft import PeftModel
         user_model = PeftModel.from_pretrained(user_model, args.peft_model_id)
 
-    # to channels last
-    user_model = user_model.to(memory_format=torch.channels_last)
     user_model.eval()
     return user_model, tokenizer
 
@@ -450,6 +467,8 @@ if args.quantize:
                 double_quant_use_sym=args.double_quant_use_sym,
                 double_quant_group_size=args.double_quant_group_size,
                 quant_lm_head=args.quant_lm_head,
+                use_layer_wise=False,
+                use_block_wise=args.gptq_blockwise
             )
         user_model = prepare(model=user_model, quant_config=quant_config)
         run_fn_for_gptq(user_model, dataloader_for_calibration)
@@ -554,31 +573,47 @@ if args.quantize:
             example_inputs=example_inputs,
         )
 
-    print("saving weight-only quantized model")
-    if args.use_hf_format:
-        user_model.save(args.output_dir, format="huggingface")
+    if args.gptq_blockwise:
+        from neural_compressor.torch.algorithms.layer_wise import LWQ_WORKSPACE
+        kwargs = {'blockwise': True, 'blockwise_load_folder': args.blockwise_load_folder}
+        user_model.save(args.output_dir, **kwargs)
         tokenizer.save_pretrained(args.output_dir)
-    else:
-        user_model.save(args.output_dir)
-    print("saved weight-only quantized model")
+        config = AutoConfig.from_pretrained(args.model)
+        config.save_pretrained(args.output_dir)
 
+        if not args.blockwise_load_folder:
+            import shutil
+            shutil.rmtree(LWQ_WORKSPACE, ignore_errors=True)
+        args.gptq_blockwise = False # no need to do block-wise after quant (affects get_user_model)
+    else:
+        if args.use_hf_format:
+            user_model.save(args.output_dir, format="huggingface")
+            tokenizer.save_pretrained(args.output_dir)
+        else:
+            user_model.save(args.output_dir)
+    print(f'Quantization took: {time.time() - quant_start_time} seconds')
 
 if args.load:
-    print("load weight-only quantized model")
-
-    from neural_compressor.torch.quantization import load
     if args.use_hf_format:
         user_model = load(args.model, format="huggingface", device=device)
     else:
-        user_model, _ = get_user_model()
+        from neural_compressor.torch.quantization import load
+        kwargs = {'sharded_checkpoints': True} if args.gptq_blockwise else {}
+        empty_model = False
+        if args.gptq_blockwise:
+            empty_model = True
+            args.gptq_blockwise = False
+
+        user_model, _ = get_user_model(empty_model=empty_model)
+        tokenizer = AutoTokenizer.from_pretrained(args.model)
         config = AutoConfig.from_pretrained(args.model)
+        
         user_model = load(
             os.path.abspath(os.path.expanduser(args.output_dir)),
             user_model,
-            device=device,
+            device="hpu" if is_hpex_available() else "cpu", **kwargs
         )
         setattr(user_model, "config", config)
-    tokenizer = AutoTokenizer.from_pretrained(args.model)
 else:
     user_model, tokenizer = get_user_model()
 

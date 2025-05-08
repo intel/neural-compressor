@@ -36,6 +36,10 @@ __all__ = [
 # Patched Module Configurations
 # ==-------------------------------------------------------------------------==
 class ModuleInfo:
+    """
+    Configures a relation between a ModuleType key (from `_mod_types` dict in `common.py`)
+    to a PatchedModule class.
+    """
     def __init__(self, type, patched_module, should_measure_and_quant=True):
         self.type = type
         self.patched_module = patched_module
@@ -50,6 +54,12 @@ class ModuleInfo:
 
 
 class ModuleConfig:
+    """
+    Used to encapsulate measure/quant data and consumed by ModuleExtraConfig(s)
+    2 use cases:
+    1. Hold the calculated scales per op-tensor
+    2. Holds the quant/dequant ops per op-tensors
+    """
     def __init__(self, inputs=(None,), outputs=(None,), params=None):
         self.inputs = inputs
         self.outputs = outputs
@@ -57,6 +67,12 @@ class ModuleConfig:
 
 
 class ModuleExtraConfig:
+    """
+    Used to encapsulate measure/quant data and consumed by PatchedModule(s)
+    2 use cases:
+    1. Holds the observers per op-tensors (MEASURE mode)
+    2. Holds the scale values and quant/dequant ops per op-tensor (QUANT mode)
+    """
     def __init__(self, inputs=(None,), outputs=(None,), params=None, scale=None, config_params=None):
         self.inputs = inputs
         self.outputs = outputs
@@ -66,6 +82,14 @@ class ModuleExtraConfig:
 
 
 class ModuleType:
+    """
+    Describes the module's tensor related structure for quantization.
+
+    self.num_inputs - Number inputs to be quantizeds (e.g. input of Linear).
+    self.param_names - Names of module's const data tensors (e.g. weights of Linear). <Usage explanation>
+    self.num_outputs - Number outputs to be quantizeds (e.g. output of Linear).
+    self.required_output - Whether to measure the outputs or not.
+    """
     def __init__(self, num_inputs, param_names, num_outputs, required_output):
         self.num_inputs = num_inputs
         self.param_names = param_names
