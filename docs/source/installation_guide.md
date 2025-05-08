@@ -83,7 +83,6 @@ pip install neural-compressor-tf
   ```
 
 - [PyTorch only]
-
     ```Shell
     git clone https://github.com/intel/neural-compressor.git
     cd neural-compressor

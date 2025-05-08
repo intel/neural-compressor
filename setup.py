@@ -95,6 +95,8 @@ PKG_INSTALL_CFG = {
 
 
 if __name__ == "__main__":
+    if os.environ.get("INC_PT_ONLY", False) and os.environ.get("INC_TF_ONLY", False):
+        raise ValueError("Both INC_PT_ONLY and INC_TF_ONLY are set. Please set only one.")
     if os.environ.get("INC_PT_ONLY", False):
         cfg_key = "neural_compressor_pt"
     elif os.environ.get("INC_TF_ONLY", False):
