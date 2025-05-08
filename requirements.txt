@@ -12,3 +12,4 @@ pyyaml
 requests
 schema
 scikit-learn
+setuptools==69.5.1
