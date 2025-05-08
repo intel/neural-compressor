@@ -91,7 +91,7 @@ bash run_benchmark.sh --input_model=resnext101_32x16d_wsl --dataset_location=/pa
 ### 1. ResNet18 With Intel PyTorch Extension
 
 ```shell
-python main.py -t -a resnet18 --ipex --pretrained /path/to/imagenet --Intel GPU
+python main.py -t -a resnet18 --ipex --pretrained /path/to/imagenet --xpu
 ```
 or
 ```shell
