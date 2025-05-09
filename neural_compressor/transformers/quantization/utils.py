@@ -206,14 +206,8 @@ def _replace_linear(
                         device=device,
                         use_optimum_format=getattr(module, "use_optimum_format", True),
                     )
-                    if quantization_config.quant_method.value == "gptq":
-                        g_idx = getattr(
-                            module,
-                            "g_idx",
-                            torch.zeros(in_features, dtype=torch.int32).to(device),
-                        )
-                    else:
-                        g_idx = None
+                    # g_idx is only present when using GPTQ quantization method
+                    g_idx = module.g_idx if hasattr(module, "g_idx") else None
                     model._modules[name].set_scales_zps_gidx(
                         (
                             module.scales
