@@ -70,6 +70,7 @@ def build_woq_model(model, quantization_config):
                 not getattr(quantization_config, "sym", False),
             )
             use_optimum_format = True
+            g_idx = hasattr(m, "g_idx") and m.g_idx is not None
 
             with init_empty_weights():
                 new_module = INCWeightOnlyLinear(
@@ -80,7 +81,7 @@ def build_woq_model(model, quantization_config):
                     group_size=quantization_config.group_size,
                     zp=zp,
                     bias=m.bias is not None,
-                    g_idx=True,
+                    g_idx=g_idx,
                     use_optimum_format=use_optimum_format,
                 )
             set_module(model, n, new_module)
