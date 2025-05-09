@@ -1,4 +1,4 @@
-# Step-by-Step
+# Step-by-Step (Deprecated)
 
 This example load LayoutLM model and confirm its accuracy and speed based on [FUNSD](https://huggingface.co/datasets/nielsr/funsd) dataset.
 

@@ -5,7 +5,7 @@
 * [torch_woq](/examples/helloworld/torch_woq): apply the weight-only quantization to LLMs.
 * [torch_static_quant](/examples/helloworld/torch_static_quant): apply the static quantization to non-LLMs.
 
-## Tensorflow Examples
+## Tensorflow Examples (Deprecated)
 ### Prerequisite
 Enter the following commands to prepare a dataset and pretrained models for the included Hello World examples:
 

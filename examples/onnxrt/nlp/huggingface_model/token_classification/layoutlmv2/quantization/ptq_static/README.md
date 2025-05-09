@@ -1,4 +1,4 @@
-# Step-by-Step
+# Step-by-Step (Deprecated)
 
 This example quantizes the [LayoutLMv2](https://huggingface.co/microsoft/layoutlmv2-base-uncased) model that is fine-tuned on the [FUNSD](https://huggingface.co/datasets/nielsr/funsd) dataset.
 

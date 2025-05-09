@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This example show how to export, quantize and evaluate 2 [DETR](https://huggingface.co/docs/transformers/model_doc/detr) R18 models on [PubTables-1M](https://huggingface.co/datasets/bsmock/pubtables-1m) dataset, one for table detection and one for table structure recognition, dubbed Table Transformers.

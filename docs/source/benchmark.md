@@ -1,5 +1,7 @@
-Benchmarking
-============
+Benchmarking (Deprecated)
+===============
+> Since version >= 3.3, this functionality has been replaced by [incbench](https://github.com/intel/neural-compressor/blob/master/docs/source/3x/benchmark.md), which is easier to use.
+----------------------------
 1. [Introduction](#Introduction)
 2. [Benchmark Support Matrix](#Benchmark-Support-Matrix)
 3. [Get Started with Benchmark](#Get-Started-with-Benchmark)

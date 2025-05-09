@@ -1,4 +1,4 @@
-# Step-by-Step
+# Step-by-Step (Deprecated)
 
 This example load a face recognition model from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [Refined MS-Celeb-1M](https://s3.amazonaws.com/onnx-model-zoo/arcface/dataset/faces_ms1m_112x112.zip).
 

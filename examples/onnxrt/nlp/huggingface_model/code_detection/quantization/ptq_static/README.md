@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This example quantizes the [microsoft/codebert-base](https://huggingface.co/microsoft/codebert-base) fine-tuned on the the [code defect detection](https://github.com/microsoft/CodeXGLUE/tree/main/Code-Code/Defect-detection#codexglue----defect-detection) task.

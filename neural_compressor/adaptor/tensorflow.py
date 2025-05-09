@@ -23,6 +23,7 @@ from collections import OrderedDict, UserDict
 
 import numpy as np
 import yaml
+from deprecated import deprecated
 
 from ..data.dataloaders.base_dataloader import BaseDataLoader
 from ..utils import logger
@@ -55,6 +56,7 @@ spr_base_verions = (
 )
 
 
+@deprecated(reason="TensorFlowAdaptor is deprecated and may be removed in future versions.", version="3.4")
 @adaptor_registry
 class TensorFlowAdaptor(Adaptor):
     """Adaptor Layer for stock tensorflow and spr-base."""

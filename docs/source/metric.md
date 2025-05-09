@@ -3,11 +3,11 @@ Metrics
 1. [Introduction](#introduction)
 2. [Supported Built-in Metric Matrix](#supported-built-in-metric-matrix)
 
-    2.1. [TensorFlow](#tensorflow)
+    2.1. [TensorFlow (Deprecated)](#tensorflow)
 
     2.2. [PyTorch](#pytorch)
     
-    2.3. [ONNXRT](#onnxrt)
+    2.3. [ONNXRT (Deprecated)](#onnxrt)
 
 3. [Get Started with Metric](#get-started-with-metric)
     

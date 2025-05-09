@@ -31,10 +31,10 @@ Of cause, users can also use frameworks own dataloader in Neural Compressor.
 
 | Framework     | Status     |
 |---------------|:----------:|
-| TensorFlow    |  &#10004;  |
-| Keras         |  &#10004;  |
+| TensorFlow (Deprecated)    |  &#10004;  |
+| Keras (Deprecated)         |  &#10004;  |
 | PyTorch       |  &#10004;  |
-| ONNX Runtime   |  &#10004;  |
+| ONNX Runtime (Deprecated)   |  &#10004;  |
 
 ## Get Started with DataLoader
 

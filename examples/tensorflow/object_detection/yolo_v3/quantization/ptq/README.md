@@ -1,4 +1,4 @@
-This document describes the step-by-step to reproduce Yolo-v3 tuning result with Neural Compressor. This example can run on Intel CPUs and GPUs.
+This document describes the step-by-step to reproduce Yolo-v3 tuning result with Neural Compressor. This example can run on Intel CPUs and GPUs. (Deprecated)
 
 # Prerequisite
 

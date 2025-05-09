@@ -1,4 +1,4 @@
-tf_example7 example
+tf_example7 example (Deprecated)
 =====================
 This example is used to demonstrate how to quantize a TensorFlow model with dummy dataset.
 

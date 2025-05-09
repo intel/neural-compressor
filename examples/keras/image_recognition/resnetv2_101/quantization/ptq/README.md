@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This document is used to enable Tensorflow Keras resnetv2_101 model quantization and benchmark using Intel® Neural Compressor.

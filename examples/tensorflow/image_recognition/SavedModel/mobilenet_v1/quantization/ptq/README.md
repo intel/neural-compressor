@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This document is used to enable Tensorflow mobilenetv1 SavedModel format using Intel® Neural Compressor.

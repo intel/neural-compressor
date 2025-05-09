@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This document list steps of reproducing Vision Transformer model tuning results via Neural Compressor.

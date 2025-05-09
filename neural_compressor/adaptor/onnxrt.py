@@ -30,6 +30,7 @@ from typing import Dict
 
 import numpy as np
 import yaml
+from deprecated import deprecated
 from packaging.version import Version
 
 from neural_compressor.adaptor.adaptor import Adaptor, adaptor_registry
@@ -48,6 +49,7 @@ ONNXRT112_VERSION = Version("1.12.0")
 logger = logging.getLogger("neural_compressor")
 
 
+@deprecated(reason="ONNXRUNTIMEAdaptor is deprecated and may be removed in future versions.", version="3.4")
 @adaptor_registry
 class ONNXRUNTIMEAdaptor(Adaptor):
     """The ONNXRT adaptor layer, do onnx-rt quantization, calibration, inspect layer tensors.

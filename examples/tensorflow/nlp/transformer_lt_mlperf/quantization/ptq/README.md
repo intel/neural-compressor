@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning zoo result of Transformer_LT_mlperf. Part of the inference code is based on the transformer mlperf evaluation code. Detailed information on mlperf benchmark can be found in [mlcommons/training](https://github.com/mlperf/training/tree/master/translation/tensorflow/transformer).

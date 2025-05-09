@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This document is used to enable Tensorflow Keras model VGG16 quantization and benchmark using Intel® Neural Compressor.

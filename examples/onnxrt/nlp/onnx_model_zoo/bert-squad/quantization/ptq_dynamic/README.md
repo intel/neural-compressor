@@ -1,4 +1,4 @@
-# Step-by-Step
+# Step-by-Step (Deprecated)
 
 This example load a language translation model and confirm its accuracy and speed based on [SQuAD](<(https://rajpurkar.github.io/SQuAD-explorer/)>) task.
 

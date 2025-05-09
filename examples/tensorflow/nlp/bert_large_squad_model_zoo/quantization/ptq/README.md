@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning result of Intel® Model Zoo bert large model on squad v1.1 task.

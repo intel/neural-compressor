@@ -48,7 +48,7 @@ Here is the workflow of our export API for PyTorch/Tensorflow FP32/INT8 model.
     <td>QOperator/QDQ INT8</td>
   </tr>
   <tr>
-    <td rowspan="3">TensorFlow</td>
+    <td rowspan="3">TensorFlow (Deprecated)</td>
     <td>FP32</td>
     <td>FP32</td>
   </tr>

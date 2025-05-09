@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This document is used to list steps of reproducing TensorFlow keras model resnet50_fashion quantization and benchmark using Intel® Neural Compressor.
