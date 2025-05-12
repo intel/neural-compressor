@@ -284,14 +284,19 @@ def get_user_model():
             revision=args.revision,
         )
     else:
+        config = AutoConfig.from_pretrained(
+            args.model,
+            trust_remote_code=args.trust_remote_code,
+            revision=args.revision,
+        )
         user_model = AutoModelForCausalLM.from_pretrained(
             args.model,
             torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
             trust_remote_code=args.trust_remote_code,
             revision=args.revision,
+            torch_dtype=config.torch_dtype,  # use original dtype to leverage mmap
         )
     tokenizer = AutoTokenizer.from_pretrained(args.model)
-    user_model = user_model.float()
     if args.woq_algo == 'AutoRound':
         user_model.to(torch.float32)
 

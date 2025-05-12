@@ -55,6 +55,9 @@ function run_tuning {
     elif [ "${topology}" = "llama2_7b_gptq_int4" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length"
+    elif [ "${topology}" = "llama2_70b_gptq_int4" ]; then
+        model_name_or_path="meta-llama/Llama-2-70b-hf"
+        extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length"
     elif [ "${topology}" = "llama2_7b_gptq_nf4_dq_bnb" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length"

@@ -77,6 +77,8 @@ function run_benchmark {
         model_name_or_path="facebook/opt-125m"
     elif [ "${topology}" = "opt_125m_woq_gptq_int4_dq_ggml" ]; then
         model_name_or_path="facebook/opt-125m"
+    elif [ "${topology}" = "llama2_70b_gptq_int4" ]; then
+        model_name_or_path="meta-llama/Llama-2-70b-hf"
     elif [ "${topology}" = "llama2_7b_gptq_int4" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
     elif [ "${topology}" = "llama2_7b_gptq_nf4_dq_bnb" ]; then
