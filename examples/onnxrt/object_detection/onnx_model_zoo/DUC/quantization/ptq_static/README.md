@@ -1,4 +1,4 @@
-# Step-by-Step
+# Step-by-Step (Deprecated)
 
 This example load an object detection model converted from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [cityscapes dataset](https://www.cityscapes-dataset.com/downloads/).
 

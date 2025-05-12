@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This document is used to list steps of reproducing TensorFlow style transfer Intel® Neural Compressor tuning zoo result.

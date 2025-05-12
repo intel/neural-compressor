@@ -23,6 +23,7 @@ from collections import OrderedDict, UserDict
 
 import numpy as np
 import yaml
+from deprecated import deprecated
 
 from ..data.dataloaders.base_dataloader import BaseDataLoader
 from ..utils import logger
@@ -68,6 +69,7 @@ def _add_supported_quantized_objects(custom_objects):
     return custom_objects
 
 
+@deprecated(reason="KerasAdaptor is deprecated and may be removed in future versions.", version="3.4")
 @adaptor_registry
 class KerasAdaptor(Adaptor):
     """The keras class of framework adaptor layer."""
