@@ -16,9 +16,9 @@
 # limitations under the License.
 # ==============================================================================
 
-from neural_compressor.experimental.data.dataloaders.fetcher import FETCHERS
-from neural_compressor.experimental.data.dataloaders.sampler import BatchSampler
-from neural_compressor.experimental.data.dataloaders.default_dataloader import DefaultDataLoader
+from neural_compressor.data.dataloaders.fetcher import FETCHERS
+from neural_compressor.data.dataloaders.sampler import BatchSampler
+from neural_compressor.data.dataloaders.default_dataloader import DefaultDataLoader
 
 # special dataloader for oob wide_deep model
 class WidedeepDataloader(DefaultDataLoader):

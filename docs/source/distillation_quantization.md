@@ -66,7 +66,6 @@ def training_func_for_nc(model):
 In this case, the launcher code is like the following:
 
 ```python
-from neural_compressor.experimental import common, Distillation, Quantization
 from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
 from neural_compressor import QuantizationAwareTrainingConfig
 from neural_compressor.training import prepare_compression

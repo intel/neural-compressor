@@ -166,10 +166,7 @@ if args.int8:
     model = tf.saved_model.load(int8_folder)    # tensorflow.python.trackable.autotrackable.AutoTrackable object
 else:
     print("benchmaking fp32 model")
-    model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
-    from neural_compressor.experimental import common
-
-    os.environ["TF_USE_LEGACY_KERAS"]="False"
-    model = common.Model(model).model # tensorflow.python.trackable.autotrackable.AutoTrackable object
+    print("Benchmaking fp32 model is not longer supported in this example. please go to 3.x_api examples or raise issue to us.")
+    exit(0)
 
 evaluator.evaluate_tf_v1(model)
