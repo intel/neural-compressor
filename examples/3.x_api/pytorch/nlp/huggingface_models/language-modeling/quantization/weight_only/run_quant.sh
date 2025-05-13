@@ -55,9 +55,6 @@ function run_tuning {
     elif [ "${topology}" = "llama2_7b_gptq_int4" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length"
-    elif [ "${topology}" = "llama2_70b_gptq_int4" ]; then
-        model_name_or_path="meta-llama/Llama-2-70b-hf"
-        extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length"
     elif [ "${topology}" = "llama2_7b_gptq_nf4_dq_bnb" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length"
@@ -108,6 +105,9 @@ function run_tuning {
         extra_cmd=$extra_cmd" --woq_algo AutoTune --woq_bits 4"
     elif [ "${topology}" = "llama3_1_8b_gptq_int4_hf" ]; then
         model_name_or_path="/mnt/weka/data/pytorch/llama3.1/Meta-Llama-3.1-8B-Instruct/"
+        extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length --use_hf_format"
+    elif [ "${topology}" = "llama2_70b_gptq_int4_hf" ]; then
+        model_name_or_path="/mnt/weka/data/pytorch/llama2/Llama-2-70b-hf"
         extra_cmd=$extra_cmd" --woq_algo GPTQ --woq_bits 4 --woq_group_size 128 --woq_scheme asym --woq_use_mse_search --gptq_use_max_length --use_hf_format"
     fi
 
