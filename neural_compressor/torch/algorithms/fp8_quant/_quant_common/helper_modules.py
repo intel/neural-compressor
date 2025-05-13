@@ -964,17 +964,12 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         measure_output((output_cache, ), self._mod_extra_config.outputs)
         return output_cache
 
-    def fetch_from_cache(self, cache, blocks, permutations=None):
+    def fetch_from_cache(self, cache, blocks):
         # TODO: Remove this workaround in next release [SW-221595]
         if cache.dtype != self.lp_dtype:
             quant_cache = self.quant_input(cache)
         else:
             quant_cache = cache
-        if permutations:
-            output_cache = self.orig_mod.fetch_from_cache(quant_cache, blocks, permutations)
-            for i in range(len(output_cache)):
-                output_cache[i] = self.dequant_output(output_cache[i])
-            return output_cache
         output_cache = self.orig_mod.fetch_from_cache(quant_cache, blocks)
         return self.dequant_output(output_cache)
 
