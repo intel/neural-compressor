@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This document list steps of reproducing vgg19 model tuning and benchmark results via Neural Compressor.

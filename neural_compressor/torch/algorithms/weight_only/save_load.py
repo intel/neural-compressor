@@ -29,6 +29,8 @@ from neural_compressor.torch.utils import (
     HPU_WEIGHT_NAME,
     LM_HEAD_NAMES,
     QCONFIG_NAME,
+    SHARDED_HPU_WEIGHT_NAME,
+    SHARDED_WEIGHT_NAME,
     WEIGHT_NAME,
     SaveLoadFormat,
     get_accelerator,
@@ -86,19 +88,23 @@ def save(model, output_dir="./saved_results", format=SaveLoadFormat.DEFAULT, **k
             tokenizer.save_pretrained(output_dir)
         return
     elif format == SaveLoadFormat.DEFAULT:
-        qmodel_weight_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), WEIGHT_NAME)
-        qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(output_dir)), QCONFIG_NAME)
+        output_folder = os.path.abspath(os.path.expanduser(output_dir))
+        qmodel_weight_file_path = os.path.join(output_folder, WEIGHT_NAME)
+        qconfig_file_path = os.path.join(output_folder, QCONFIG_NAME)
         # saving process
         save_config_mapping(model.qconfig, qconfig_file_path)
+        if "blockwise" in kwargs:
+            from neural_compressor.torch.algorithms.layer_wise import LWQ_WORKSPACE, save_layers_in_shards_iteratively
 
-        # MethodType 'save' not in state_dict
-        del model.save
-        torch.save(model.state_dict(), qmodel_weight_file_path)
-
-        logger.info("Save quantized model weight to {}.".format(qmodel_weight_file_path))
+            checkpoints_folder = kwargs.get("blockwise_load_folder", None)
+            if not checkpoints_folder:
+                checkpoints_folder = LWQ_WORKSPACE
+            save_layers_in_shards_iteratively(checkpoints_folder, output_folder, layers_per_shard=8)
+        else:
+            model_state_dict = model.state_dict()  # if 'model_state_dict' not in kwargs else kwargs['model_state_dict']
+            torch.save(model_state_dict, qmodel_weight_file_path)
+            logger.info("Save quantized model weight to {}.".format(qmodel_weight_file_path))
         logger.info("Save configuration of quantized model to {}.".format(qconfig_file_path))
-    else:
-        raise ValueError(f"`format` in save function can only be 'huggingface' or 'default', but get {format}")
 
 
 def load(model_name_or_path, original_model=None, format=SaveLoadFormat.DEFAULT, device="cpu", **kwargs):
@@ -151,6 +157,19 @@ class WOQModelLoader:
         self.loaded_state_dict_keys = []
         self._should_save_hpu_format_tensor = False
         self._model_local_dir = None  # local directory where model files are saved
+        self.sharded_checkpoints = kwargs.get("sharded_checkpoints", False)
+
+    def _post_process_for_w4a8(self, woq_model):
+        # Replace the WoQ Linear with the mixed precision Linear
+        from neural_compressor.torch.algorithms.mixed_low_precision.modules import (
+            replace_hpu_woq_with_hpu_mixed_precision_linear,
+        )
+
+        w4a8_model = replace_hpu_woq_with_hpu_mixed_precision_linear(woq_model)
+        from neural_compressor.torch.utils import get_accelerator
+
+        w4a8_model = w4a8_model.to(get_accelerator().name())
+        return w4a8_model
 
     def load_woq_model(self):
         """Load quantized weight-only quantization model.
@@ -177,6 +196,8 @@ class WOQModelLoader:
         else:
             raise ValueError(f"`format` in load function can only be 'huggingface' or 'default', but get {self.format}")
 
+        if self._is_w4a8_model_from_auto_round():
+            model = self._post_process_for_w4a8(model)
         return model
 
     def load_inc_format_woq_model(self):
@@ -188,9 +209,20 @@ class WOQModelLoader:
         )
         # if hpu format tensor can be used directly, then update qmodel_weight_file_path to the hpu format tensor file
         if self._use_hpu_module():
-            qmodel_weight_file_path = os.path.join(
-                os.path.abspath(os.path.expanduser(self.model_name_or_path)), HPU_WEIGHT_NAME
-            )
+            print(f"sharded_checkpoints = {self.sharded_checkpoints}")
+            if self.sharded_checkpoints:
+                qmodel_weight_file_path = os.path.join(
+                    os.path.abspath(os.path.expanduser(self.model_name_or_path)), SHARDED_HPU_WEIGHT_NAME
+                )
+            else:
+                qmodel_weight_file_path = os.path.join(
+                    os.path.abspath(os.path.expanduser(self.model_name_or_path)), HPU_WEIGHT_NAME
+                )
+        else:
+            if self.sharded_checkpoints:
+                qmodel_weight_file_path = os.path.join(
+                    os.path.abspath(os.path.expanduser(self.model_name_or_path)), SHARDED_WEIGHT_NAME
+                )
         assert os.path.exists(qmodel_weight_file_path), (
             "Cannot load model weight from path {}. "
             "Please make sure '{}' file is saved in your '{}' directory ".format(
@@ -208,7 +240,21 @@ class WOQModelLoader:
         )
 
         # get loaded state_dict
-        self.loaded_state_dict = torch.load(qmodel_weight_file_path)
+        if self.sharded_checkpoints:
+            print("loading sharded checkpoints")
+            if self._use_hpu_module():
+                from safetensors.torch import load_file
+
+                self.loaded_state_dict = load_file(qmodel_weight_file_path, device=self.device)
+            else:
+                from neural_compressor.torch.algorithms.layer_wise import load_model_from_shards_with_safetensors
+
+                shard_dir = os.path.abspath(os.path.expanduser(self.model_name_or_path))
+                bin_index_file = os.path.join(shard_dir, "model_bin_index.json")
+                self.loaded_state_dict = load_model_from_shards_with_safetensors(shard_dir, bin_index_file)
+        else:
+            self.loaded_state_dict = torch.load(qmodel_weight_file_path)
+
         self.loaded_state_dict_keys = list(set(self.loaded_state_dict.keys()))
 
         # get qconfig
@@ -216,6 +262,7 @@ class WOQModelLoader:
             self.quantization_config = json.load(file)
 
         # build weight-only quantization model with WeightOnlyLinear module
+        print("Building WOQ model")
         model = self._build_woq_model()
 
         # load remaining pretrained weight to weight-only quantization model
@@ -227,10 +274,26 @@ class WOQModelLoader:
 
         # save hpu format tensor to local directory
         if self._should_save_hpu_format_tensor:
+            print("saving optimized hpu model")
             self._save_hpu_format_tensor(model)
 
         model.eval()
         return model
+
+    def _is_w4a8_model_from_auto_round(self):
+        if self.quantization_config.get("data_type", None) == "fp8_to_int_sym":
+            return True
+        for layer_config in self.quantization_config.get("extra_config", {}).values():
+            if layer_config.get("data_type", None) == "fp8_to_int_sym":
+                return True
+        return False
+
+    def _update_quant_config_for_w4a8(self):
+        self.quantization_config["quant_method"] = "gptq"
+        self.quantization_config.pop("backend", None)
+
+    def _is_autoround_format_quantized_model(self):
+        return "backend" in self.quantization_config and "auto_round" in self.quantization_config["backend"]
 
     def load_hf_format_woq_model(self):
         """Load HuggingFace weight-only quantized model.
@@ -249,9 +312,10 @@ class WOQModelLoader:
         # get model class and config
         model_class, config = self._get_model_class_and_config()
         self.quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
-        if (
-            "backend" in self.quantization_config and "auto_round" in self.quantization_config["backend"]
-        ):  # # pragma: no cover
+        if self._is_w4a8_model_from_auto_round():
+            self._update_quant_config_for_w4a8()
+        if self._is_autoround_format_quantized_model():
+            # pragma: no cover
             # load autoround format quantized model
             from auto_round import AutoRoundConfig
 
@@ -409,6 +473,9 @@ class WOQModelLoader:
                 module_quantization_config.get("scale_dtype", "fp16")
             )
 
+        if self._is_w4a8_model_from_auto_round():
+            module_kwargs["enable_w4a8"] = True
+
         # initialize the new WeightOnlyLinearClass
         new_module = WeightOnlyLinearClass(**module_kwargs)
 
@@ -478,7 +545,11 @@ class WOQModelLoader:
 
         has_remote_code = hasattr(config, "auto_map") and AutoModelForCausalLM.__name__ in config.auto_map
 
-        has_local_code = type(config) in AutoModelForCausalLM._model_mapping.keys()
+        has_local_code = (
+            hasattr(AutoModelForCausalLM, "_model_mapping")
+            and type(config) in AutoModelForCausalLM._model_mapping.keys()
+        )
+
         trust_remote_code = resolve_trust_remote_code(
             trust_remote_code,
             self.model_name_or_path,
@@ -601,6 +672,7 @@ class WOQModelLoader:
         # if hpu format tensor can be used directly, then update resolved_archive_file to the hpu format tensor file
         if self._use_hpu_module():
             resolved_archive_file = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
+            is_sharded = False
 
         logger.info(f"Find weight file {resolved_archive_file}")
 
@@ -920,8 +992,12 @@ class WOQModelLoader:
             save_file(state_dict, filename=filename, metadata={"format": "pt"})
             logger.debug(f"Save hpu format tensor to {filename}")
         elif self.format == SaveLoadFormat.DEFAULT:
-            qmodel_weight_file_path = os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)
-            torch.save(model.state_dict(), qmodel_weight_file_path)
+            if self.sharded_checkpoints:
+                qmodel_weight_file_path = os.path.join(self._model_local_dir, SHARDED_HPU_WEIGHT_NAME)
+                save_file(model.state_dict(), qmodel_weight_file_path)
+            else:
+                qmodel_weight_file_path = os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)
+                torch.save(model.state_dict(), qmodel_weight_file_path)
             logger.debug(f"Save hpu format tensor to {qmodel_weight_file_path}")
 
     def _use_hpu_module(self):  # pragma: no cover
@@ -941,8 +1017,12 @@ class WOQModelLoader:
                     self.kwargs["resolved_archive_file"] = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
                     return True
             elif self.format == SaveLoadFormat.DEFAULT:
-                if os.path.exists(os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)):
-                    return True
+                if self.sharded_checkpoints:
+                    if os.path.exists(os.path.join(self._model_local_dir, SHARDED_HPU_WEIGHT_NAME)):
+                        return True
+                else:
+                    if os.path.exists(os.path.join(self._model_local_dir, HPU_WEIGHT_NAME)):
+                        return True
         return False
 
 

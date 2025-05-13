@@ -1,4 +1,5 @@
 import copy
+import os
 import shutil
 
 import pytest
@@ -13,7 +14,7 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
-from neural_compressor.torch.utils import accelerator, is_hpex_available
+from neural_compressor.torch.utils import accelerator, is_hpu_available
 
 device = accelerator.name()
 
@@ -183,7 +184,62 @@ class TestGPTQQuant:
         # compare atol, this case is an ideal case.
         assert atol_false > atol_true, "act_order=True doesn't help accuracy, maybe is reasonable, please double check."
 
-    @pytest.mark.skipif(is_hpex_available(), reason="These tests are not supported on HPU for now.")
+    @pytest.mark.skipif(not is_hpu_available(), reason="These tests are not supported on HPU for now.")
+    def test_block_wise(self):
+        from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE
+        from neural_compressor.torch import load_empty_model
+        from neural_compressor.torch.algorithms.layer_wise import load_first_layer_only
+        from neural_compressor.torch.quantization import load
+        from neural_compressor.torch.utils import get_used_cpu_mem_MB, get_used_hpu_mem_MB
+
+        model_name = "hf-internal-testing/tiny-random-GPTJForCausalLM"
+        model = copy.deepcopy(self.tiny_gptj)
+        quant_config = GPTQConfig()
+        cpu_mem0 = get_used_cpu_mem_MB()
+        hpu_mem0 = get_used_hpu_mem_MB()
+
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        cpu_mem_diff = get_used_cpu_mem_MB() - cpu_mem0
+        hpu_mem_diff = get_used_hpu_mem_MB() - hpu_mem0
+        q_label = model(self.example_inputs)[0]
+
+        model = load_empty_model(model_name)
+        load_first_layer_only(model, model_name)
+
+        quant_config = GPTQConfig(
+            use_block_wise=True,
+            model_path=model_name,
+        )
+        cpu_mem0 = get_used_cpu_mem_MB()
+        hpu_mem0 = get_used_hpu_mem_MB()
+        model = prepare(model, quant_config)
+        run_fn(model)
+        model = convert(model)
+        cpu_mem_block_diff = get_used_cpu_mem_MB() - cpu_mem0
+        hpu_mem_block_diff = get_used_hpu_mem_MB() - hpu_mem0
+        
+        kwargs = {'blockwise': True, 'blockwise_load_folder': None}
+        model.save(LWQ_WORKSPACE+"/checkpoint/", **kwargs)
+
+        kwargs = {'sharded_checkpoints': True}
+
+        loaded_model = load(LWQ_WORKSPACE+"/checkpoint/", copy.deepcopy(self.tiny_gptj), **kwargs).to(device)
+
+        out = loaded_model(self.example_inputs)[0]
+
+
+        # remove lwq tmp directory
+        shutil.rmtree(LWQ_WORKSPACE, ignore_errors=True)
+        
+        assert torch.allclose(
+            out, q_label, atol=0.05
+        ), f"block-wise and none-blockwise shouold be almost identical."    
+
+        assert cpu_mem_diff > cpu_mem_block_diff, "block-wise should reduce memory."
+        assert hpu_mem_diff > hpu_mem_block_diff, "block-wise should reduce memory."
+
     @pytest.mark.parametrize("quant_lm_head", [False, True])
     def test_layer_wise(self, quant_lm_head):
         model = copy.deepcopy(self.tiny_gptj)
@@ -242,7 +298,7 @@ class TestGPTQQuant:
         ), "true_sequential=True doesn't help accuracy, maybe is reasonable, please double check."
 
     # TODO [SW-216127]: it's not in high priority, so we can implement it later.
-    @pytest.mark.skipif(is_hpex_available(), reason="These tests are not supported on HPU for now.")
+    @pytest.mark.skipif(is_hpu_available(), reason="These tests are not supported on HPU for now.")
     def test_quant_lm_head(self):
         # quant_lm_head=False
         model = copy.deepcopy(self.tiny_gptj)
@@ -311,7 +367,7 @@ class TestGPTQQuant:
             assert torch.allclose(atol_false, atol_true, atol=0.008), "atol is very close, double checked the logic."
 
     # TODO [SW-216127]: it's not in high priority, so we can implement it later.
-    @pytest.mark.skipif(is_hpex_available(), reason="These tests are not supported on HPU for now.")
+    @pytest.mark.skipif(is_hpu_available(), reason="These tests are not supported on HPU for now.")
     def test_conv1d(self):
         from transformers import GPT2Model, GPT2Tokenizer
 

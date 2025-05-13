@@ -20,6 +20,11 @@ from .patching_common import mod_default_dict
 from .measure import prepare_model as prepare_model_for_measure
 from .quantize import quantize
 from .scale import scale_method_mapping, scaling_params
+from .common import is_runtime_scale_patching
+
+import os
+import re
+import habana_frameworks.torch.utils.experimental as htexp
 
 
 def update_mod_dict(config):
@@ -38,8 +43,11 @@ def print_init_info(config):
     logger.info("neural_compressor_pt Configuration = %s", config)
 
 
-def is_substr(substr_list, target):
-    return any([x in target for x in substr_list])
+def is_re_match(substr_list, target):
+    for substr in substr_list:
+        if re.search(substr, target):
+            return True
+    return False
 
 
 def should_quantize(config, mod_type, name):
@@ -53,12 +61,12 @@ def should_quantize(config, mod_type, name):
         return (mod_type in allowlist_tuple)
     def allowlist_is_empty_or_allows_mod(mod_type, name, config):
         def mod_is_in_allowlist_config(mod_type, name, config):
-            return ((mod_type in config.cfg["allowlist"]["types"]) or (is_substr(config.cfg["allowlist"]["names"], name)))
+            return ((mod_type in config.cfg["allowlist"]["types"]) or (is_re_match(config.cfg["allowlist"]["names"], name)))
         def is_allowlist_completely_empty(config):
             return ((len(config.cfg["allowlist"]["names"]) == 0) and len(config.cfg["allowlist"]["types"]) == 0)
         return (mod_is_in_allowlist_config(mod_type, name, config) or is_allowlist_completely_empty(config))
     def name_is_not_blocked(name, config):
-        return (not is_substr(config.cfg["blocklist"]["names"], name))
+        return (not is_re_match(config.cfg["blocklist"]["names"], name))
     def is_static_scale_method(config):
         return config.cfg["scale_method"] not in _dynamic_scale_methods
     def quantize_dynamic_op(config, mod_type):
@@ -74,6 +82,22 @@ def should_quantize(config, mod_type, name):
     )
     logger.trace(f"should_quantize {name=} {mod_type=} returning {ret}")
     return ret
+
+
+scaling_methods_list = list(scale_method_mapping.values())
+#exlude substrings of scaling methods which are not supported for runtime scale patching mode to reduce graph recompile.
+exclude_substrings = ["pcs", "smoothquant"]
+runtime_scale_patching_supported_methods_list = [method for method in scaling_methods_list if not any(substr in method for substr in exclude_substrings)]
+
+
+def set_runtime_scale_patching_mode(scaling_method_name):
+    if is_runtime_scale_patching() and hasattr(htexp, "_set_scale_attributes"):
+        assert (
+            scaling_method_name in runtime_scale_patching_supported_methods_list
+        ), f"Scaling method \"{scaling_method_name}\" is not supported for runtime scale patching (graph recompile reduction). Cannot set scaling attributes."
+        htexp._set_scale_attributes("hw" in scaling_method_name or scaling_method_name == "unit_scale",
+                                    scaling_methods_list.index(scaling_method_name) + 1)
+
 
 def prepare_model(model):
     """Receives the parent module to quantize.
@@ -101,4 +125,5 @@ def prepare_model(model):
         scaling_method_name = scale_method_mapping[(config.cfg["scale_method"], config.cfg["observer"])]
         scaling_params[scaling_method_name].update(config.cfg["scale_params"])
         config.cfg["scale_params"] = scaling_params[scaling_method_name]
+        set_runtime_scale_patching_mode(scaling_method_name)
         return quantize(model, mod_list)

@@ -12,13 +12,9 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import copy
 import json
-import os
 import tempfile
 from collections import namedtuple
-from pathlib import Path
-from typing import Union
 
 import torch
 
@@ -78,22 +74,16 @@ def get_patched_mod_list():
 
 
 def restore_patched_module(patched_model):
-    from neural_compressor.torch.algorithms.fp8_quant.utils import helper_mods
-
     patched_mod_list = get_patched_mod_list()
-
     parent_child_mod_dict = generate_model_info(patched_model)
+    # restore the original module
     with torch.no_grad():
         for name, patched_mod in patched_model.named_modules():
             patched_mod_type_str = patched_mod.__class__.__name__
             if patched_mod_type_str in patched_mod_list:
                 parent = parent_child_mod_dict[patched_mod].parent
                 name = parent_child_mod_dict[patched_mod].name
-                class_name_org = (
-                    getattr(patched_mod, "class_name_org", None) or patched_mod.__class__.__name__.split("Patched")[-1]
-                )
-                patched_mod.__dict__.pop("forward", None)
-                origin_mod = helper_mods[class_name_org](patched_mod)
+                origin_mod = patched_mod.orig_mod
                 setattr(parent, name, origin_mod)
 
 

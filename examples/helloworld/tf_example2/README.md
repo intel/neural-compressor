@@ -1,4 +1,4 @@
-tf_example2 example
+tf_example2 example (Deprecated)
 =====================
 
 Step-by-Step

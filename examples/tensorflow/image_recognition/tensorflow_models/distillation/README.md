@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This document list steps of demo the usage of tensorflow distillation via Neural Compressor.

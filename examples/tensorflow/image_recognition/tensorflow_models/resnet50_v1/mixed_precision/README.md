@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This document list steps of reproducing resnet50_v1 model mix precision optimization and benchmark results via Neural Compressor.

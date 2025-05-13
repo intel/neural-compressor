@@ -18,7 +18,7 @@ from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import FP8_143_
 
 class ScaleToPow2:
     def calc(self, scale):
-        scale_pow2 = 2 ** torch.ceil(torch.log2(scale))
+        scale_pow2 = 2.0 ** torch.ceil(torch.log2(scale))
         return scale_pow2
 
 
@@ -56,7 +56,7 @@ class ScaleToHwAligned:
         min_scale, max_scale, scale_factor = FP8_143_SCALES_TRAITS[self.device_type]
         scale_pow2_hw = torch.minimum(
             torch.maximum(
-                2 ** (torch.ceil(torch.log2(scale_pow2) / scale_factor) * scale_factor),
+                2.0 ** (torch.ceil(torch.log2(scale_pow2) / scale_factor) * scale_factor),
                 torch.tensor(min_scale, dtype=scale.dtype, device=scale.device),
                 ),
             torch.tensor(max_scale, dtype=scale.dtype, device=scale.device),

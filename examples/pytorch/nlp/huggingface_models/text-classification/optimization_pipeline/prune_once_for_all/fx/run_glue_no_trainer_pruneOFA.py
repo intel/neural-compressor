@@ -582,7 +582,6 @@ def main():
         logger.info('='*30 + 'Teacher model on validation set' + '='*30)
         evaluation(teacher_model, accelerator, eval_dataloader, metric)
 
-        # from neural_compressor.experimental import Distillation
         from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig
         distillation_criterion = KnowledgeDistillationLossConfig(temperature=args.temperature,
                                                                  loss_types=args.loss_types,
