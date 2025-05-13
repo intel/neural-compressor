@@ -25,7 +25,6 @@ import numpy as np
 import tensorflow.compat.v1 as tf
 from PIL import Image
 import time
-from neural_compressor.experimental import Quantization
 from neural_compressor.data import DataLoader, Datasets
 from neural_compressor.adaptor.tf_utils.util import _parse_ckpt_bn_input
 
