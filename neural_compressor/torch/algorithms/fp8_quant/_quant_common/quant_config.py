@@ -24,7 +24,7 @@ from typing import Any, Mapping
 import torch
 
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
-from ..utils.logger import logger
+from neural_compressor.torch.utils import logger
 
 try:
     world_size = torch.distributed.get_world_size()
@@ -224,6 +224,25 @@ class Fp8cfg:
                     measured_global_config["blocklist"] = custom_config[keys]
                 else:
                     measured_global_config[keys] = custom_config[keys]
+
+        INC_MEASUREMENT_DUMP_PATH_PREFIX = os.getenv("INC_MEASUREMENT_DUMP_PATH_PREFIX", None)
+        if INC_MEASUREMENT_DUMP_PATH_PREFIX is not None:
+            dump_stats_path = os.path.join(INC_MEASUREMENT_DUMP_PATH_PREFIX, measured_global_config["dump_stats_path"])
+            measured_global_config["dump_stats_path"] = dump_stats_path
+            logger.info(
+                f"INC_MEASUREMENT_DUMP_PATH_PREFIX is set to {INC_MEASUREMENT_DUMP_PATH_PREFIX}, dump_stats_path is set to {dump_stats_path}"
+            )
+        # check if the directory exists
+
+        dir_path = os.path.dirname(measured_global_config["dump_stats_path"])
+        if not os.path.exists(dir_path):
+            raise ValueError(
+                (
+                    f"The measurement dump directory '{dir_path}' does not exist,"
+                    f" the path is determined by the environment variable INC_MEASUREMENT_DUMP_PATH_PREFIX"
+                    f" and the dump_stats_path in the quantization config file."
+                )
+            )
 
         # If seperate_measure_files is True (default value), then it is assumed that there are multiple distinct measure and scale files
         # and they are stored in / loaded from paths with the correct index as a suffix. Else, only one is searched for.
