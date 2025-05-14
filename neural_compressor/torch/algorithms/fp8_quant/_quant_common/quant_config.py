@@ -119,10 +119,13 @@ _configs_that_use_enum_value = [
 ]
 
 # TODO [SW-217813]: support dynamic quantization in all ops and remove
-# TODO: get a better way to list all linear ops
-supported_dynamic_ops = ["Linear", "RowParallelLinear", "ColumnParallelLinear", "MergedColumnParallelLinear", "QKVParallelLinear", "FalconLinear", "LoRACompatibleLinear", "ReplicatedLinear", "LinearLayer", "LinearAllreduce", "ScopedLinearAllReduce", "LmHeadLinearAllreduce"]
-def is_supported_dynamic_op(op_name):
-    return op_name.lower() in [op.lower() for op in supported_dynamic_ops]
+# TODO [SW-228723]: get a better way to list all linear ops, like set in ModuleInfo if supports dynamic
+supported_dynamic_ops = ["linear", "row_parallel_linear"]
+def is_supported_dynamic_op(op_type):
+    ret = op_type.lower() in [op.lower() for op in supported_dynamic_ops]
+    logger.trace("Checking if %s is supported for dynamic quantization: %s", op_type, ret)
+    return ret
+
 
 _quant_only_scale_methods = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
 _hw_aligned_scale_methods = [ScaleMethod.MAXABS_HW, ScaleMethod.MAXABS_HW_OPT_WEIGHT, ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2, ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2]
