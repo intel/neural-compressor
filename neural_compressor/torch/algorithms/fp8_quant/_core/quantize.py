@@ -20,8 +20,8 @@ import numpy as np
 from .scale_methods import ops_quantizer
 from .._quant_common.quant_config import QuantMode
 from .._quant_common.helper_modules import PatchedUnmeasuredModule
-# TODO [SW-217813]: support dynamic quantization in all ops and remove supported_dynamic_ops
-from .._quant_common.quant_config import get_hqt_config, set_hqt_config, supported_dynamic_ops
+# TODO [SW-217813]: support dynamic quantization in all ops and remove is_supported_dynamic_op
+from .._quant_common.quant_config import get_hqt_config, set_hqt_config, is_supported_dynamic_op
 from ..utils.logger import logger
 from .common import convert_scales_to_tensors_dict, save_scales, load_scales
 from .patching_common import generate_model_info, mod_default_dict, parent_child_mod_dict
@@ -133,16 +133,13 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     patched_module_types = set()
     device = torch.device(cur_accelerator.name())
     # TODO [SW-217814]: improve config parsing
-    is_dynamic_quantization = "dyn" in scaling_method_name
+    is_dynamic_quantization = config.cfg["dynamic_quantization"]
     #TODO Merge with load_layer_scales
     prepare_scales_func = prepare_layer_scales if is_dynamic_quantization else load_layer_scales
     should_quantize_cond = True # In static quantization we quantize everything
     with torch.no_grad():
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
-            if is_dynamic_quantization:
-                # TODO [SW-217813]: support dynamic quantization in all ops and remove supported_dynamic_ops, then move outside the loop
-                should_quantize_cond = mod_type_str in supported_dynamic_ops
 
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
                 if mod_default_dict[mod_type_str].should_measure_and_quant:
@@ -155,6 +152,9 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
             apply_hf_hook(mod)
             if name in mod_list:
                 set_hqt_config(mod, config)  # set config in the module, as it consumed by the patched module
+                if is_dynamic_quantization:
+                    # TODO [SW-217813]: support dynamic quantization in all ops and remove supports_dynamic_quant, then move outside the loop
+                    should_quantize_cond = is_supported_dynamic_op(mod_default_dict[mod_type_str].type)
 
                 # TODO [SW-217813]: support dynamic quantization in all ops and remove should_quantize_cond
                 if should_quantize_cond:

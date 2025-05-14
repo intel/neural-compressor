@@ -367,9 +367,9 @@ class PatchedRowParallelLinear(PatchedLinearBase):
                     self.forward = self.forward_quant_no_reduce
         self.init_linear(mod_extra_config)
         if self.quantization_mode == QuantMode.QUANTIZE:
-            self.dequant_scatter_output = self._mod_extra_config.outputs[0]
-            self.quant_scatter_input = self._mod_extra_config.outputs[1]
             if allreduce_quantization_enable:
+                self.dequant_scatter_output = self._mod_extra_config.outputs[0]
+                self.quant_scatter_input = self._mod_extra_config.outputs[1]
                 self.quant_gather_input = self._mod_extra_config.outputs[2]
                 self.dequant_gather_output = self._mod_extra_config.outputs[3]
         from torch import distributed as dist

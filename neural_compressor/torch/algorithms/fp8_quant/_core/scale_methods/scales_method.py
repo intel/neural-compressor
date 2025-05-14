@@ -81,8 +81,7 @@ class MaxAbsMethod(ScalesMethod):
         return scale
 
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        scale = self._calculate_maxabs_scale(tensor, tensor_type, **additional_kwargs)
-        self.scale = scale.copy_(scale)
+        self.scale = self._calculate_maxabs_scale(tensor, tensor_type, **additional_kwargs)
         return self.scale
 
 class MaxAbsPts(MaxAbsMethod):
