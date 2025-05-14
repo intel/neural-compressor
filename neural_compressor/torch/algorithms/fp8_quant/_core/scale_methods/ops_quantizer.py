@@ -201,6 +201,8 @@ class RowParallelLinearOpQuantizer(LinearOpQuantizer):
             self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
 
     def init_scales_from_module_config(self, module):
+        if not self.allreduce_quantization_enabled:
+            return super().init_scales_from_module_config(module)
         for idx, input in enumerate(module.inputs):
             if self.inputs_scales_creators[idx].scale is None:
                 self.inputs_scales_creators[idx].scale = input
@@ -219,18 +221,19 @@ class RowParallelLinearOpQuantizer(LinearOpQuantizer):
         return module_config
 
     def get_output_config(self, lp_dtype, hp_dtype, scale_format):
+        if not self.allreduce_quantization_enabled:
+            return super().get_output_config(lp_dtype, hp_dtype, scale_format)
         scale_0 = self.output_scales_creators[0].scale
         inv_scale_0 = self.output_scales_creators[0].calc_invert_scales()
         output_config_dq_scatter_output = DequantOutput(scale_0, lp_dtype, hp_dtype, scale_format=scale_format)
         output_config_q_scatter_input = QuantInput(inv_scale_0, lp_dtype, hp_dtype, scale_format=scale_format)
         output_config = [output_config_dq_scatter_output,
                          output_config_q_scatter_input]
-        if self.allreduce_quantization_enabled:
-            inv_scale_1 = self.output_scales_creators[1].calc_invert_scales()
-            scale_1 = self.output_scales_creators[1].scale
-            output_config_q_gather_input = QuantInput(inv_scale_1, lp_dtype, hp_dtype, scale_format=scale_format)
-            output_config_dq_gather_output = DequantOutput(scale_1, lp_dtype, hp_dtype, scale_format=scale_format)
-            output_config.extend([output_config_q_gather_input, output_config_dq_gather_output])
+        inv_scale_1 = self.output_scales_creators[1].calc_invert_scales()
+        scale_1 = self.output_scales_creators[1].scale
+        output_config_q_gather_input = QuantInput(inv_scale_1, lp_dtype, hp_dtype, scale_format=scale_format)
+        output_config_dq_gather_output = DequantOutput(scale_1, lp_dtype, hp_dtype, scale_format=scale_format)
+        output_config.extend([output_config_q_gather_input, output_config_dq_gather_output])
         return output_config
 
 class MatmulOpQuantizer(BaseOpQuantizer):

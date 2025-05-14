@@ -62,8 +62,7 @@ def parse_tensor_granularity(config):
     logger.trace("parse_tensor_granularity %s %s", config, scale_granularity)
     return scale_granularity
 
-# TODO [SW-217813]: support dynamic quantization in all ops and remove op_type
-def parse_tensor_scale_value_type(config, op_type):
+def parse_tensor_scale_value_type(config):
     scale_value_type = ScaleValueType.MAXABS
     if "unit" in config or "single" in config:
         scale_value_type = ScaleValueType.FIXED_VALUE
@@ -109,11 +108,10 @@ class ScaleMethodFactory:
                                       QuantTensorName.WEIGHT_OUT_CH: parse_tensor_granularity(config_weight),
                                       QuantTensorName.WEIGHT_IN_CH: parse_tensor_granularity(config_weight),
                                       QuantTensorName.OUTPUT: parse_tensor_granularity(config_out)}
-        # TODO [SW-217813]: support dynamic quantization in all ops and remove op_type
-        self.scale_value_type_map = {QuantTensorName.INPUT: parse_tensor_scale_value_type(config_act, self.op_type),
-                                     QuantTensorName.WEIGHT_OUT_CH: parse_tensor_scale_value_type(config_weight, self.op_type),
-                                     QuantTensorName.WEIGHT_IN_CH: parse_tensor_scale_value_type(config_weight, self.op_type),
-                                     QuantTensorName.OUTPUT: parse_tensor_scale_value_type(config_out, self.op_type)}
+        self.scale_value_type_map = {QuantTensorName.INPUT: parse_tensor_scale_value_type(config_act),
+                                     QuantTensorName.WEIGHT_OUT_CH: parse_tensor_scale_value_type(config_weight),
+                                     QuantTensorName.WEIGHT_IN_CH: parse_tensor_scale_value_type(config_weight),
+                                     QuantTensorName.OUTPUT: parse_tensor_scale_value_type(config_out)}
         self.scale_backoff_map = {QuantTensorName.INPUT: self.params.get("input_backoff", 1.0),
                                   QuantTensorName.WEIGHT_IN_CH: self.params.get("weight_backoff", 1.0),
                                   QuantTensorName.WEIGHT_OUT_CH: self.params.get("weight_backoff", 1.0),
