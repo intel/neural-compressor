@@ -233,9 +233,10 @@ class Fp8cfg:
                 f"INC_MEASUREMENT_DUMP_PATH_PREFIX is set to {INC_MEASUREMENT_DUMP_PATH_PREFIX}, dump_stats_path is set to {dump_stats_path}"
             )
         # check if the directory exists
-
+        
         dir_path = os.path.dirname(measured_global_config["dump_stats_path"])
-        if not os.path.exists(dir_path):
+        abs_path = os.path.abspath(dir_path)
+        if not (os.path.exists(dir_path) or os.path.exists(abs_path)):
             raise ValueError(
                 (
                     f"The measurement dump directory '{dir_path}' does not exist,"
