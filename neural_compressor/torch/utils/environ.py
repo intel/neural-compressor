@@ -33,7 +33,7 @@ except:
 
 
 
-INC_FORCE_NAIVE_SCALING = os.getenv("INC_FORCE_NAIVE_SCALING", "0") in ["1", "true", "True"]
+INC_FORCE_NAIVE_SCALING = os.getenv("INC_FORCE_NAIVE_SCALING", "0").lower() in ["1", "true"]
 
 
 ################ Check imported sys.module first to decide behavior #################
