@@ -3,7 +3,8 @@ import typing
 import pytest
 import torch
 
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod, ScaleFormat, _hw_aligned_scale_methods, _quant_only_scale_methods
+from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods.scale_method_config import ScaleMethodString
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleFormat
 from neural_compressor.torch.algorithms.fp8_quant._core.scale_handler import scale_to_scalar
 from neural_compressor.torch.algorithms.fp8_quant._core.quant_dequant import QuantDynamicInput
 
@@ -11,7 +12,6 @@ from ...test_hpu_utils import *
 from ...tester import *
 
 
-SUPPORTED_DYNAMIC_SCALES= [ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW]
 # Test Class to support restoration of calculated scale during runtime with dynamic quantization to test it correctness.
 # This is a workaround to avoid saving the scale in the original QuantDynamicInput class as scale saving may cause unwanted graph breaks in torch.compile or issues with hpu_graph.
 class TestQuantDynamicInput(QuantDynamicInput):
@@ -43,15 +43,15 @@ def check_tests_to_skip(scale_method, scale_format, dynamic_quantization, device
         pytest.xfail("KeyError")
     # TODO [SW-215692]: Fix segfault
     if scale_format == ScaleFormat.CONST or dynamic_quantization:
-        if scale_method in [ScaleMethod.MAXABS_HW_OPT_WEIGHT, ScaleMethod.MAXABS_POW2_OPT_WEIGHT]:
+        if scale_method in [ScaleMethodString.MAXABS_HW_OPT_WEIGHT, ScaleMethodString.MAXABS_POW2_OPT_WEIGHT]:
             pytest.xfail("Segfault")
     # TODO [SW-225900] HW_ALIGNED_SINGLE_SCALE on gaudi3 fails in test_linear unit test
-    if scale_method == ScaleMethod.HW_ALIGNED_SINGLE_SCALE and device_type == GAUDI3:
+    if scale_method == ScaleMethodString.HW_ALIGNED_SINGLE_SCALE and device_type == GAUDI3:
        pytest.xfail("NoAccuracy")
 
 @pytest.mark.parametrize("hp_dtype", [torch.bfloat16, torch.float32], ids=["bf16", "fp32"])
 @pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn], ids=["fp8_e4m3fn"])
-@pytest.mark.parametrize("scale_method", ScaleMethod)
+@pytest.mark.parametrize("scale_method", ScaleMethodString)
 @pytest.mark.parametrize("device_type", device_type)
 @pytest.mark.parametrize("scale_format", ScaleFormat)
 @pytest.mark.parametrize("use_hpu_graphs", [True, False], ids=["use_hpu_graphs", "no_hpu_graphs"])
@@ -59,7 +59,7 @@ def check_tests_to_skip(scale_method, scale_format, dynamic_quantization, device
 def test_linear_accuracy(
     hp_dtype: torch.dtype,
     lp_dtype: torch.dtype,
-    scale_method: ScaleMethod,
+    scale_method: ScaleMethodString,
     device_type: str,
     scale_format: ScaleFormat,
     use_hpu_graphs: bool,
@@ -69,15 +69,15 @@ def test_linear_accuracy(
     quant_modes = QUANT_MODES_DEFAULT
     atol = 0.022
     rtol = 0.175
-    if scale_method == ScaleMethod.MAXABS_ARBITRARY:
+    if scale_method == ScaleMethodString.MAXABS_ARBITRARY:
         atol = 0.078
         rtol = 0.3
     if scale_method in SCALE_METHODS_QUANT_ONLY or dynamic_quantization:
         quant_modes = QUANT_MODES_QUANT_ONLY
-        if scale_method == ScaleMethod.HW_ALIGNED_SINGLE_SCALE:
+        if scale_method == ScaleMethodString.HW_ALIGNED_SINGLE_SCALE:
             atol = 1.0
             rtol = 1.0
-        elif scale_method == ScaleMethod.UNIT_SCALE:
+        elif scale_method == ScaleMethodString.UNIT_SCALE:
             atol = 1.0
             rtol = 0.5
     N = 1
@@ -102,7 +102,7 @@ def test_linear_accuracy(
             dynamic_quantization=dynamic_quantization
         )
 
-    if scale_method == ScaleMethod.MAXABS_HW:
+    if scale_method == ScaleMethodString.MAXABS_HW:
         if device_type_id[device_type] == get_gaudi3_type() and is_gaudi2():
             # Gaudi3 scales not supported on Gaudi2 so "device_for_scales:Gaudi3" is not supported on Gaudi2 run
             return run_with_raised_exception(run, ValueError, "Unsupported config: device_for_scales=")
@@ -112,7 +112,7 @@ def test_linear_accuracy(
             return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
 
     if dynamic_quantization:
-        if scale_method in _hw_aligned_scale_methods or scale_method in _quant_only_scale_methods:
+        if scale_method in HW_ALIGNED_SCALE_METHODS or scale_method in QUANT_ONLY_SCALE_METHODS:
             # When in dynamic quantization we don't support hw aligned scale methods and unit scale
             return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
     else :
@@ -124,14 +124,14 @@ def test_linear_accuracy(
 
 @pytest.mark.parametrize("hp_dtype", [torch.bfloat16, torch.float32], ids=["bf16", "fp32"])
 @pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn], ids=["fp8_e4m3fn"])
-@pytest.mark.parametrize("scale_method", ScaleMethod)
+@pytest.mark.parametrize("scale_method", ScaleMethodString)
 @pytest.mark.parametrize("device_type", device_type)
 @pytest.mark.parametrize("scale_format", ScaleFormat)
 @pytest.mark.parametrize("use_hpu_graphs", [True, False], ids=["use_hpu_graphs", "no_hpu_graphs"])
 def test_linear_dynamic_quantization(
     hp_dtype: torch.dtype,
     lp_dtype: torch.dtype,
-    scale_method: ScaleMethod,
+    scale_method: ScaleMethodString,
     device_type: str,
     scale_format: ScaleFormat,
     use_hpu_graphs: bool
@@ -179,9 +179,9 @@ def test_linear_dynamic_quantization(
                 assert previous_input_dynamic_scale != current_input_dynamic_scale, f"input scales in dynamic quantization should differ in different tensors {previous_input_dynamic_scale=} {current_input_dynamic_scale=}"
             previous_input_dynamic_scale = current_input_dynamic_scale
 
-    if (device_type_id[device_type] == get_gaudi3_type() and is_gaudi2() and scale_method == ScaleMethod.MAXABS_HW):
+    if (device_type_id[device_type] == get_gaudi3_type() and is_gaudi2() and scale_method == ScaleMethodString.MAXABS_HW):
         return run_with_raised_exception(run, ValueError, "Unsupported config: device_for_scales=")
-    if (get_device_type() != device_type_id[device_type]) or scale_method in _hw_aligned_scale_methods or scale_method in _quant_only_scale_methods:
+    if (get_device_type() != device_type_id[device_type]) or scale_method in HW_ALIGNED_SCALE_METHODS or scale_method in QUANT_ONLY_SCALE_METHODS:
         return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
 
     return run()

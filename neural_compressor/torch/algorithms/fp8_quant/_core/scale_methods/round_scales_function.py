@@ -17,7 +17,15 @@ from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import FP8_143_
 #TODO [SW-224612]: Use cguid to calc scales and remoce check
 from ..common import is_calc_scale_with_cguid
 
+scale_round_method_registry = {}
 
+def register_scale_round_method(name):
+    def decorator(cls):
+        scale_round_method_registry[name] = cls
+        return cls
+    return decorator
+ 
+@register_scale_round_method("POW2")
 class ScaleToPow2:
     def __init__(self):
         #TODO [SW-224612]: Use cguid to calc scales and remove check
@@ -33,11 +41,12 @@ class ScaleToPow2:
         scale_pow2 = 2.0 ** torch.ceil(torch.log2(scale))
         return scale_pow2
 
-
+@register_scale_round_method("IDENTITY")
 class ScaleIdentity:
     def calc(self, scale):
         return scale
 
+@register_scale_round_method("HW_ALIGNED_FIXED")
 class ScaleHwAlignedFixed:
     def __init__(self, device_type):
         self.device_type = device_type
@@ -45,6 +54,7 @@ class ScaleHwAlignedFixed:
         hw_aligned_single_scale = FP8_143_SCALES[self.device_type][0]
         return hw_aligned_single_scale
 
+@register_scale_round_method("SCALE_UNIT")
 class ScaleUnit:
     def calc(self, scale):
         return 1.0
@@ -60,6 +70,7 @@ class ScaleUnit:
 # for Gaudi2 the range is 16^-2..16^1 so we change 2 with 16 and remember that:
 # 16 = 2^4, log16(m)=log2(m)/log2(16)=log2(m)/4, and we get:
 # we choose s=16^ciel(log16(m))=2^4^ciel(log2(m)/4)=2^(4*ciel(log2(m)/4))=2^(ciel(log2(m)/4)*4)
+@register_scale_round_method("HW_ALIGNED")
 class ScaleToHwAligned:
     def __init__(self, device_type):
         self.device_type = device_type

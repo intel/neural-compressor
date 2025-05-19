@@ -20,7 +20,8 @@ import torch
 
 from abc import abstractmethod
 
-from .._quant_common.quant_config import MeasureExclude, QuantMode, ScaleMethod, get_hqt_config, set_hqt_config
+from .._quant_common.quant_config import MeasureExclude, QuantMode, get_hqt_config, set_hqt_config
+from .scale_methods.scale_method_config import ScaleMethodString
 from ..utils.logger import logger
 from .common import load_file, save_file, ShapeList
 from .patching_common import generate_model_info, mod_default_dict, mod_types, parent_child_mod_dict
@@ -281,7 +282,7 @@ def load_measurements(model, fname):
     d = load_file(
         fname_np,
         np.ndarray,
-        fail_on_file_not_exist=(config["scale_method"] != ScaleMethod.UNIT_SCALE),
+        fail_on_file_not_exist=(config["scale_method"] != ScaleMethodString.UNIT_SCALE),
     )
     from collections import defaultdict
 

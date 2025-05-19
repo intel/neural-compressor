@@ -3,12 +3,12 @@ import typing
 import pytest
 import torch
 
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod, _hw_aligned_scale_methods, _quant_only_scale_methods
+from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods.scale_method_config import ScaleMethodString
 
 from ...test_hpu_utils import *
 from ...tester import *
 
-SUPPORTED_DYNAMIC_SCALES= [ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW]
+SUPPORTED_DYNAMIC_SCALES= [ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW]
 
 
 def get_test_vectors(*, dtype: torch.dtype, atol) -> typing.Iterable[TestVector]:
@@ -51,10 +51,10 @@ class Matmul(torch.nn.Module):
 
 @pytest.mark.parametrize("hp_dtype", [torch.bfloat16, torch.float32], ids=["bf16", "fp32"])
 @pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn], ids=["fp8_e4m3fn"])
-@pytest.mark.parametrize("scale_method", ScaleMethod)
+@pytest.mark.parametrize("scale_method", ScaleMethodString)
 @pytest.mark.parametrize("device_type", device_type)
 @pytest.mark.parametrize("dynamic_quantization", [True, False], ids=["dynamic_quantization", "static_quantization"])
-def test_matmul_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethod, device_type: str, dynamic_quantization: bool):
+def test_matmul_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethodString, device_type: str, dynamic_quantization: bool):
     # TODO [SW-196641]: fix the following issues:
     if scale_method in SCALE_METHODS_KEY_ERROR:
         pytest.xfail("KeyError")
@@ -62,7 +62,7 @@ def test_matmul_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
     atol = 0.2
     if scale_method in SCALE_METHODS_QUANT_ONLY or dynamic_quantization:
         quant_modes = QUANT_MODES_QUANT_ONLY
-        if scale_method == ScaleMethod.HW_ALIGNED_SINGLE_SCALE:
+        if scale_method == ScaleMethodString.HW_ALIGNED_SINGLE_SCALE:
             atol = 1.0
     def run():
         run_accuracy_test(
@@ -75,7 +75,7 @@ def test_matmul_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
             dynamic_quantization=dynamic_quantization,
         )
 
-    if scale_method == ScaleMethod.MAXABS_HW:
+    if scale_method == ScaleMethodString.MAXABS_HW:
         if device_type_id[device_type] == get_gaudi3_type() and is_gaudi2():
             # Gaudi3 scales not supported on Gaudi2 so "device_for_scales:Gaudi3" is not supported on Gaudi2 run
             return run_with_raised_exception(run, ValueError, "Unsupported config: device_for_scales=")
@@ -85,7 +85,7 @@ def test_matmul_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
             return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
 
     if dynamic_quantization:
-        if scale_method in _hw_aligned_scale_methods or scale_method in _quant_only_scale_methods:
+        if scale_method in HW_ALIGNED_SCALE_METHODS or scale_method in QUANT_ONLY_SCALE_METHODS:
             # When in dynamic quantization we don't support hw aligned scale methods and unit scale
             return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
     else :
