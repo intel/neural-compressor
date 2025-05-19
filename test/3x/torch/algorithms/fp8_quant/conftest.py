@@ -5,7 +5,8 @@ def pytest_sessionstart():
     import torch
 
     htcore.hpu_set_env()
-    os.environ.setdefault("INC_3X_ONLY", "1")
+    # Ensure that only 3x PyTorch part of INC is imported
+    os.environ.setdefault("INC_PT_ONLY", "1")
 
     # Use reproducible results
     torch.use_deterministic_algorithms(True)

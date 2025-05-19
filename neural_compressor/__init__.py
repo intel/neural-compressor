@@ -18,8 +18,8 @@
 from .version import __version__
 
 import os
-if not os.environ.get("INC_3X_ONLY", False):
-    # import 2x of neural_compressor
+
+if not (os.environ.get("INC_PT_ONLY", False) or os.environ.get("INC_TF_ONLY", False)):
     from .config import (
         DistillationConfig,
         PostTrainingQuantConfig,
