@@ -32,7 +32,8 @@ class BaseOpQuantizer:
         self.inputs_scales_creators = []
         self.output_scales_creators = []
         self.params_scales_creators = []
-        self.is_dynamic = get_hqt_config(self.mod).cfg["dynamic_quantization"] and is_supported_dynamic_op(op_type)
+        self.is_dynamic = get_hqt_config(mod).cfg["dynamic_quantization"] and is_supported_dynamic_op(op_type)
+
         logger.debug("%s %s", self.__class__.__name__, self.__dict__)
 
     def get_module_configuration(self):
@@ -100,6 +101,8 @@ class LinearOpQuantizer(BaseOpQuantizer):
 
     def __init__(self, config, mod, measurement, params, module_type):
         super().__init__(config, mod, measurement, params, module_type)
+        if module_type == "row_parallel_linear" and get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]:
+            self.scales_method_factory.output_scale_method_config.backoff = 1.0
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic))
         self.weight_och_scale_calc = self.scales_method_factory.get_scale_method(QuantTensorName.WEIGHT_OUT_CH)
         self.weight_ich_scale_calc = self.scales_method_factory.get_scale_method(QuantTensorName.WEIGHT_IN_CH)
@@ -109,10 +112,7 @@ class LinearOpQuantizer(BaseOpQuantizer):
         input_scales = self.calc_input_scales(num_of_inputs=1)
         output_measurement = self.measurement.outputs[0] if self.measurement is not None else []
         rescaled_weight = self.mod.weight if hasattr(self.mod, 'weight') else None
-        if (
-            self.scales_method_factory.scale_value_type_map[QuantTensorName.WEIGHT_IN_CH]
-            is not ScaleValueType.DUMMY_SCALES
-        ):
+        if self.scales_method_factory.scale_method_config_map[QuantTensorName.WEIGHT_IN_CH].scale_value_type != ScaleValueType.DUMMY_SCALES:
             # Calculating weight in hpu to support scale calculation CGUID torch.ops.hpu.calculate_scale_for_cast
             rescaled_weight = rescaled_weight.to("hpu")
         if rescaled_weight is not None:
