@@ -545,9 +545,12 @@ class WOQModelLoader:
         # Autofactory
         kwargs_orig = copy.deepcopy(self.kwargs)
         trust_remote_code = self.kwargs.pop("trust_remote_code", None)
+        revision = self.kwargs.get("revision", "main")
         kwarg_attn_imp = self.kwargs.pop("attn_implementation", None)
 
-        config = AutoConfig.from_pretrained(self.model_name_or_path, trust_remote_code=trust_remote_code)
+        config = AutoConfig.from_pretrained(
+            self.model_name_or_path, trust_remote_code=trust_remote_code, revision=revision
+        )
         # quantization_config = config.quantization_config
 
         if kwarg_attn_imp is not None and config._attn_implementation != kwarg_attn_imp:  # pragma: no cover
