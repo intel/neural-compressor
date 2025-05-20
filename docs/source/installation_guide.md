@@ -82,24 +82,6 @@ pip install neural-compressor-tf
   [optional] pip install -r requirements_tf.txt # for TensorFlow framework extension API
   ```
 
-- [PyTorch only]
-    ```Shell
-    git clone https://github.com/intel/neural-compressor.git
-    cd neural-compressor
-    pip install -r requirements_pt.txt # for PyTorch framework extension API
-    export INC_PT_ONLY=1
-    pip install -e .
-    ```
-
-- [TensorFlow only]
-    ```Shell
-    git clone https://github.com/intel/neural-compressor.git
-    cd neural-compressor
-    pip install -r requirements_tf.txt # for TensorFlow framework extension API
-    export INC_TF_ONLY=1
-    pip install -e .
-    ```
-
 ### Install from AI Kit
 
 The Intel® Neural Compressor library is released as part of the [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html) (AI Kit). The AI Kit provides a consolidated package of Intel's latest deep learning and machine optimizations all in one place for ease of development. Along with Neural Compressor, the AI Kit includes Intel-optimized versions of deep learning frameworks (such as TensorFlow and PyTorch) and high-performing Python libraries to streamline end-to-end data science and AI workflows on Intel architectures.
