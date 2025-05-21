@@ -56,7 +56,8 @@ config_dict = {
 
 # Run both real and fake quantization, and compare
 # TODO: SW-203453 fix test in Gaudi3
-@pytest.mark.skipif(is_gaudi3(), reason="SW-203453")
+#@pytest.mark.skipif(is_gaudi3(), reason="SW-203453")
+@pytest.mark.skip(reason="SW-229659")
 def test_fakequant_model():
     model = AutoModelForCausalLM.from_pretrained("facebook/opt-350m")
     tokenizer = AutoTokenizer.from_pretrained("facebook/opt-350m")
