@@ -228,8 +228,8 @@ def run_accuracy_test(
         }[mode]
 
         for vector in vectors:
-            reference_output = reference_model(*(input.clone() for input in vector.inputs)).to(float)
-            quantized_output = quantized_model(*(input.clone() for input in vector.inputs)).to(float)
+            reference_output = reference_model(*(input.clone() for input in vector.inputs)).cpu().to(float)
+            quantized_output = quantized_model(*(input.clone() for input in vector.inputs)).cpu().to(float)
 
             # Override tolerance values given by the caller
             tolerance = {
