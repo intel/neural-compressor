@@ -207,6 +207,7 @@ def mmse_scale(x, scales, lp_dtype, hp_dtype):
 
 
 def manipulate_scales(scales, func):
+    """Applies a function to the inputs, outputs, and weights of the ModuleConfig object."""
     new_inputs = [func(input) for input in scales.inputs]
     new_outputs = [func(output) for output in scales.outputs]
     new_weights = {}
@@ -223,12 +224,18 @@ def manipulate_scales(scales, func):
 
 
 def invert_scale(x):
+    """Inverts the scale of the input tensor, list of tensors, or tuple of tensors."""
+    def invert(x):
+        if isinstance(x, torch.Tensor):
+            return torch.reciprocal(x)
+        return 1.0 / x
     if x is None:
         return None
     if isinstance(x, (list, tuple)):
-        return [1 / x_i for x_i in x]
-    return 1 / x
+        return type(x)(invert(x_i) for x_i in x)
+    return invert(x)
 
 
 def invert_scales(scales):
+    """Inverts the scales of the input ModuleConfig object."""
     return manipulate_scales(scales, invert_scale)
