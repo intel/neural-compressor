@@ -29,7 +29,7 @@ parser.add_argument("--seed", type=int, default=42, help="Seed for sampling the 
 parser.add_argument(
     "--approach", type=str, default="static", help="Select from ['dynamic', 'static', 'weight-only']"
 )
-parser.add_argument("--int8", action="store_true")
+parser.add_argument("--optimized", action="store_true")
 parser.add_argument("--ipex", action="store_true", help="Use intel extension for pytorch.")
 parser.add_argument("--load", action="store_true", help="Load quantized model.")
 parser.add_argument("--accuracy", action="store_true")
@@ -217,8 +217,8 @@ if args.quantize:
 
 
 if args.load:
-    if args.int8 or args.int8_bf16_mixed:
-        print("load int8 model")
+    if args.optimized or args.int8_bf16_mixed:
+        print("load optimized model")
         from neural_compressor.torch.quantization import load
 
         tokenizer = AutoTokenizer.from_pretrained(args.model)

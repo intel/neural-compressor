@@ -59,7 +59,7 @@ arg_parser.add_argument('--dataset_location', dest='dataset_location',
                           help='location of calibration dataset and evaluate dataset')
 arg_parser.add_argument('--batch_size', type=int, default=32, dest='batch_size', help='batch_size of benchmark')
 arg_parser.add_argument('--iters', type=int, default=100, dest='iters', help='interations')
-arg_parser.add_argument('--int8', dest='int8', action='store_true', help='whether to use int8 model for benchmark')
+arg_parser.add_argument('--optimized', dest='optimized', action='store_true', help='whether to use optimized model for benchmark')
 args = arg_parser.parse_args()
 
 def evaluate(model, eval_dataloader, preprocess=None):
@@ -161,7 +161,7 @@ class eval_classifier_optimized_graph:
             )
             dataloader = TFDataLoader(dataset=dataset, batch_size=args.batch_size)
 
-            if args.int8 or args.input_graph.endswith("-tune.pb"):
+            if args.optimized or args.input_graph.endswith("-tune.pb"):
                 input_graph = args.input_graph
             else:
                 sm = saved_model_pb2.SavedModel()
