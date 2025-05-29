@@ -236,14 +236,16 @@ class Fp8cfg:
         
         dir_path = os.path.dirname(measured_global_config["dump_stats_path"])
         abs_path = os.path.abspath(dir_path)
-        if not (os.path.exists(dir_path) or os.path.exists(abs_path)):
-            raise ValueError(
-                (
-                    f"The measurement dump directory '{dir_path}' does not exist,"
-                    f" the path is determined by the environment variable INC_MEASUREMENT_DUMP_PATH_PREFIX"
-                    f" and the dump_stats_path in the quantization config file."
+        quant_mode = measured_global_config["mode"]
+        if quant_mode == QuantMode.QUANTIZE:
+            if not (os.path.exists(dir_path) or os.path.exists(abs_path)):
+                raise ValueError(
+                    (
+                        f"The measurement dump directory '{dir_path}' does not exist,"
+                        f" the path is determined by the environment variable INC_MEASUREMENT_DUMP_PATH_PREFIX"
+                        f" and the dump_stats_path in the quantization config file."
+                    )
                 )
-            )
 
         # If seperate_measure_files is True (default value), then it is assumed that there are multiple distinct measure and scale files
         # and they are stored in / loaded from paths with the correct index as a suffix. Else, only one is searched for.
