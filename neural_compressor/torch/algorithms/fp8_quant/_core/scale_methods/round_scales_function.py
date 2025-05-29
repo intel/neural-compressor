@@ -15,7 +15,7 @@ import torch
 
 from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import FP8_143_SCALES, FP8_143_SCALES_TRAITS, calculate_scale_rounding, ScaleCalculationRoundingMode
 #TODO [SW-224612]: Use cguid to calc scales and remoce check
-from ..common import is_calc_scale_with_cguid
+from ..common import is_calc_scale_rounding_with_cguid
 
 scale_round_method_registry = {}
 
@@ -29,7 +29,7 @@ def register_scale_round_method(name):
 class ScaleToPow2:
     def __init__(self):
         #TODO [SW-224612]: Use cguid to calc scales and remove check
-        if is_calc_scale_with_cguid():
+        if is_calc_scale_rounding_with_cguid():
             self.calc = self.calc_with_cguid
 
     #TODO [SW-224612]: Use cguid to calc scales and remove special function
@@ -38,7 +38,7 @@ class ScaleToPow2:
         return scale_pow2
 
     def calc(self, scale):
-        scale_pow2 = 2.0 ** torch.ceil(torch.log2(scale))
+        scale_pow2 = torch.exp2(torch.ceil(torch.log2(scale)))
         return scale_pow2
 
 @register_scale_round_method("IDENTITY")

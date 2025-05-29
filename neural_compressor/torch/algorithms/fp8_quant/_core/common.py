@@ -203,3 +203,8 @@ def is_runtime_scale_patching():
 @lru_cache
 def is_calc_scale_with_cguid():
     return os.getenv("CALC_SCALE_WITH_CGUID", "False").lower() in ["true", "1"]
+
+#TODO [SW-224612]: Use cguid to calc scales and remove the check
+@lru_cache
+def is_calc_scale_rounding_with_cguid():
+    return is_calc_scale_with_cguid() and os.getenv("CALC_ROUNDING_WITH_CGUID", "False").lower() in ["true", "1"]
