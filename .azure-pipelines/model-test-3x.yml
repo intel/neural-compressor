@@ -15,6 +15,7 @@ pr:
       - setup.py
       - requirements_pt.txt
       - .azure-pipelines/scripts/models
+      - .azure-pipelines/scripts/install_nc.sh
       - .azure-pipelines/model-test-3x.yml
       - .azure-pipelines/template/docker-template.yml
 
