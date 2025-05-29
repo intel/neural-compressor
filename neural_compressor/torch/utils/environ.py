@@ -32,6 +32,10 @@ except:
     world_size = int(os.getenv("WORLD_SIZE", "-1"))
 
 
+
+INC_FORCE_NAIVE_SCALING = os.getenv("INC_FORCE_NAIVE_SCALING", "0").lower() in ["1", "true"]
+
+
 ################ Check imported sys.module first to decide behavior #################
 def is_ipex_imported() -> bool:
     """Check whether intel_extension_for_pytorch is imported."""

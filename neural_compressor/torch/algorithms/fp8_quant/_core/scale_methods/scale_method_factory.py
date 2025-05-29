@@ -16,7 +16,8 @@ from abc import ABC, abstractmethod
 from .round_scales_function import *
 from ..common import get_device_type_for_scales
 from .scales_method import *
-
+from neural_compressor.torch.utils import environ
+from neural_compressor.common.utils import logger
 
 class QuantTensorName(Enum):
     INPUT = auto()
@@ -40,6 +41,9 @@ class ScaleValueType(Enum):
 
 def parse_rounding_method(config, device_for_scales):
     round_method = ScaleIdentity()
+    if environ.INC_FORCE_NAIVE_SCALING:
+        logger.warning_once("Enabled naive scaling")
+        return round_method
     if "single" in config and "hw" in config:
         round_method = ScaleHwAlignedFixed(device_for_scales)
     elif "unit" in config:
