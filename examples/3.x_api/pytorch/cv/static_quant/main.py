@@ -86,8 +86,8 @@ parser.add_argument('-r', "--accuracy", dest='accuracy', action='store_true',
                     help='For accuracy measurement only.')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                     help='path to checkpoint tuned by Neural Compressor (default: ./)')
-parser.add_argument('--int8', dest='int8', action='store_true',
-                    help='Load int8 model.')
+parser.add_argument('--optimized', dest='optimized', action='store_true',
+                    help='Load optimized model.')
 parser.add_argument("--calib_iters", default=128, type=int,
                     help="For calibration only.")
 parser.add_argument("--iters", default=100, type=int,
@@ -222,7 +222,7 @@ def main():
         return
     
     if args.performance or args.accuracy:
-        if args.int8:
+        if args.optimized:
             from neural_compressor.torch.quantization import load
             q_model = load(args.tuned_checkpoint)
             

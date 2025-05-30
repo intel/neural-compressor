@@ -406,12 +406,12 @@ def trace_or_load_model(args, dlrm, test_ld, inplace=True):
             if args.inference_only:
                 dlrm.emb_l.bfloat16()
             dlrm = ipex.optimize(dlrm, dtype=torch.bfloat16, inplace=inplace)
-        elif args.int8 and not args.tune:
+        elif args.optimized and not args.tune:
             if args.num_cpu_cores != 0:
                 torch.set_num_threads(args.num_cpu_cores)
             from neural_compressor.torch.quantization import load
             dlrm = load(args.save_model)
-        elif args.int8 and args.tune:
+        elif args.optimized and args.tune:
             dlrm = dlrm
         else:
             dlrm = ipex.optimize(dlrm, dtype=torch.float, inplace=True, auto_kernel_selection=True)
@@ -674,7 +674,7 @@ def run():
     parser.add_argument("--ipex-interaction", action="store_true", default=False)
     parser.add_argument("--ipex-merged-emb", action="store_true", default=False)
     parser.add_argument("--num-warmup-iters", type=int, default=1000)
-    parser.add_argument("--int8", action="store_true", default=False)
+    parser.add_argument("--optimized", action="store_true", default=False)
     parser.add_argument("--dist-backend", type=str, default="ccl")
     parser.add_argument("--tune", action="store_true", default=False)
     parser.add_argument("--benchmark", action="store_true", default=False)
@@ -820,7 +820,7 @@ def run():
     if args.tune:
         # evaluation
         def eval_func(model):
-            args.int8 = getattr(model, "is_quantized", False)
+            args.optimized = getattr(model, "is_quantized", False)
             with torch.no_grad():
                 return inference(
                     args,
@@ -828,7 +828,7 @@ def run():
                     best_acc_test,
                     best_auc_test,
                     test_ld,
-                    trace=args.int8
+                    trace=args.optimized
                 )
 
         # calibration

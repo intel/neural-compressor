@@ -28,7 +28,7 @@ import time
 sys.path.insert(0, './')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--int8', action='store_true', help="eval fp32 model or int8 model")
+parser.add_argument('--optimized', action='store_true', help="eval fp32 model or optimized model")
 parser.add_argument('--model_name_or_path', type=str, default='facebook/opt-125m')
 parser.add_argument('--batch_size', type=int, default=16)
 parser.add_argument('--warmup', type=int, default=10)
@@ -173,13 +173,13 @@ eval_dataset = load_dataset('lambada', split='validation')
 
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
-if args.int8:
-    print("benchmarking int8 model")
-    int8_folder = model_name.split('/')[-1] + "_int8"
-    if not os.path.exists(int8_folder):
-        print(f"could not find int8 folder {int8_folder} ")
+if args.optimized:
+    print("benchmarking optimized model")
+    optimized_folder = model_name.split('/')[-1] + "_int8"
+    if not os.path.exists(optimized_folder):
+        print(f"could not find optimized folder {optimized_folder} ")
         exit()
-    model = tf.saved_model.load(int8_folder)    # tensorflow.python.trackable.autotrackable.AutoTrackable object
+    model = tf.saved_model.load(optimized_folder)    # tensorflow.python.trackable.autotrackable.AutoTrackable object
 else:
     print("benchmaking fp32 model")
     model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)

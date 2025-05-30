@@ -35,8 +35,8 @@ function init_params {
       --iters=*)
           iters=$(echo ${var} |cut -f2 -d=)
       ;;
-      --int8=*)
-          int8=$(echo ${var} |cut -f2 -d=)
+      --optimized=*)
+          optimized=$(echo ${var} |cut -f2 -d=)
       ;;
       --config=*)
           tuned_checkpoint=$(echo $var |cut -f2 -d=)
@@ -94,7 +94,7 @@ function run_benchmark {
         python_cmd="deepspeed --num_gpus 8"
     fi
 
-    if [[ ${int8} == "true" ]]; then
+    if [[ ${optimized} == "true" ]]; then
         ${python_cmd} quantize.py \
             --model ${tuned_checkpoint} \
             --load\

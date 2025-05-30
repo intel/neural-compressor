@@ -36,8 +36,8 @@ function init_params {
       --iters=*)
           iters=$(echo ${var} |cut -f2 -d=)
       ;;
-      --int8=*)
-          int8=$(echo ${var} |cut -f2 -d=)
+      --optimized=*)
+          optimized=$(echo ${var} |cut -f2 -d=)
       ;;
       --config=*)
           tuned_checkpoint=$(echo $var |cut -f2 -d=)
@@ -238,7 +238,7 @@ function run_benchmark {
             script="run_generation_cpu_woq.py"
         fi
     fi
-    if [[ ${int8} == "true" ]] && [[ "$model_source" != "huggingface" ]]; then
+    if [[ ${optimized} == "true" ]] && [[ "$model_source" != "huggingface" ]]; then
         model_name_or_path=$tuned_checkpoint
     fi
     if [[ $backend == "neuralspeed" ]]; then
