@@ -248,7 +248,7 @@ class TestTansformersLikeAPI:
         else:    
             from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear
 
-        if Version(transformers.__version__) >= Version("4.52.3"):
+        if Version(transformers.__version__) >= Version("4.52"):
             assert isinstance(woq_model.model.language_model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "replacing model failed."
         else:
             assert isinstance(woq_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "replacing model failed."
@@ -258,7 +258,7 @@ class TestTansformersLikeAPI:
         
         #load
         loaded_model = Qwen2VLForConditionalGeneration.from_pretrained("transformers_vlm_tmp")
-        if Version(transformers.__version__) >= Version("4.52.3"):
+        if Version(transformers.__version__) >= Version("4.52"):
             assert isinstance(loaded_model.model.language_model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "loaing model failed."
         else:
             assert isinstance(loaded_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "loaing model failed."
