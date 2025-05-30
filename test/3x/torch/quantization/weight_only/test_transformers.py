@@ -247,15 +247,21 @@ class TestTansformersLikeAPI:
             from intel_extension_for_pytorch.nn.utils._quantize_convert import WeightOnlyQuantizedLinear
         else:    
             from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear
-        assert isinstance(woq_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "replacing model failed."
+
+        if Version(transformers.__version__) >= Version("4.52.3"):
+            assert isinstance(woq_model.model.language_model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "replacing model failed."
+        else:
+            assert isinstance(woq_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "replacing model failed."
         
         #save
         woq_model.save_pretrained("transformers_vlm_tmp")
         
         #load
         loaded_model = Qwen2VLForConditionalGeneration.from_pretrained("transformers_vlm_tmp")
-        assert isinstance(loaded_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "loaing model failed."
-        
+        if Version(transformers.__version__) >= Version("4.52.3"):
+            assert isinstance(loaded_model.model.language_model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "loaing model failed."
+        else:
+            assert isinstance(loaded_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "loaing model failed."
         # phi-3-vision-128k-instruct, disable as CI consumes too much time
         # woq_config = AutoRoundConfig(
         #     bits=4, 
