@@ -376,7 +376,7 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
         num_of_inputs = len(self.measurement.inputs) if self.measurement is not None else 1
         num_of_experts = self.mod.num_experts if self.mod.num_experts is not None else 8
         self.inputs_scales_creators = [
-            self.scales_method_factory.get_scale_method(QuantTensorName.INPUT)
+            self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, is_dynamic=self.is_dynamic)
             for i in range(num_of_inputs + num_of_experts)
         ]
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))

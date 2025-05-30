@@ -198,6 +198,8 @@ class PatchedLinearBase(PatchedModuleBase):
 
     def run_linear_quant(self, input, bias):
         qinput, scale_input = self.quant_input_func(input)
+        # FIXME: (Yi) remove it ?
+        scale_input = scale_input.to(self.scale_weight.dtype)
         y = self.matmul_fp8(qinput,
                             self.weight,
                             out_dtype=self._mod_extra_config.config_params["hp_dtype"],
@@ -737,11 +739,16 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                 [mod_extra_config.scale.inputs[x] for x in range(1, self.num_experts+1)],
                 self.scale_format,
             )
+            # FIXME: (Yi) move it to PatchedModuleBase?
+            self.is_dynamic_quantization = isinstance(self.quant_input, QuantDynamicInput)
+            if self.is_dynamic_quantization:
+                self.forward = self.forward_dynamic_quant
 
     def forward_quant(self,
                       hidden_states,
                       expert_routing_table,
                       router_weights,
+                      layer=None,
                       permuted_weights=True,
                       activation="silu"):
         experts_range = range(self.num_experts)
@@ -760,6 +767,36 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             d_scale_w3=scale_w2,
             d_scale_hidden_states=self.scale_input,
             d_scale_intermediate_hidden_states=self.scale_intermediate,
+            permuted_weights=False,
+            activation=activation,
+            experts_min=self.experts_min,
+            experts_max=self.experts_max,
+        )
+        return output
+
+    def forward_dynamic_quant(
+        self, hidden_states, expert_routing_table, router_weights, permuted_weights=True, layer=None, activation="silu"
+    ):
+        # self.scale_input: quantize the input
+        # self.scale_intermediate: None
+        # FIXME: (Yi) remove layer and notes
+        experts_range = range(self.num_experts)
+        w1_list = [self.w13_list[i].weight for i in experts_range]
+        w2_list = [self.w2_list[i].weight for i in experts_range]
+        scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
+        scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
+        qinput_fp8, input_scale = self.quant_input(hidden_states)
+        output = torch.ops.hpu.mixture_of_experts(
+            hidden_states=qinput_fp8,
+            expert_routing_table=expert_routing_table,
+            router_weights=router_weights,
+            w12=w1_list,
+            w3=w2_list,
+            d_scale_w12=scale_w1,
+            d_scale_w3=scale_w2,
+            # d_scale_hidden_states=self.scale_input,
+            d_scale_hidden_states=input_scale,
+            # d_scale_intermediate_hidden_states=self.scale_intermediate,
             permuted_weights=False,
             activation=activation,
             experts_min=self.experts_min,
