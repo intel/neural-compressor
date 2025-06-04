@@ -21,27 +21,6 @@ from neural_compressor.common.utils.save_load import save_config_mapping, load_c
 from neural_compressor.common.utils.utility import *
 
 
-# FIXME: (Yi) REMOVE BELOW CODE
-import os
-
-DEEPSEEK_EXPERTS = 256
-VLLM_TP_SIZE = int(os.getenv("VLLM_TP_SIZE", "8"))
-VLLM_EP_SIZE = int(os.getenv("VLLM_EP_SIZE", VLLM_TP_SIZE))
-NUM_EXPERTS_PER_EP_RANK = DEEPSEEK_EXPERTS // VLLM_EP_SIZE  # 32
-VLLM_MOE_N_SLICE = int(os.getenv("VLLM_MOE_N_SLICE", 8))
-NUM_EXPERTS_PER_GROUP_PER_RANK = NUM_EXPERTS_PER_EP_RANK // VLLM_MOE_N_SLICE # 4
-FUSED_MOE_EXPERTS = NUM_EXPERTS_PER_GROUP_PER_RANK  # 4
-
-logger.warning_once(
-    (
-        f"INC uses VLLM_TP_SIZE={VLLM_TP_SIZE},\n"
-        f"VLLM_EP_SIZE={VLLM_EP_SIZE},\n"
-        f"NUM_EXPERTS_PER_EP_RANK={NUM_EXPERTS_PER_EP_RANK},\n"
-        f"VLLM_MOE_N_SLICE={VLLM_MOE_N_SLICE},\n"
-        f"NUM_EXPERTS_PER_GROUP_PER_RANK={NUM_EXPERTS_PER_GROUP_PER_RANK},\n"
-        f"FUSED_MOE_EXPERTS={FUSED_MOE_EXPERTS}"
-    )
-)
 
 import sys
 import pdb

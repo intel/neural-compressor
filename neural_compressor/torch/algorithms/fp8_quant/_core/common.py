@@ -32,7 +32,6 @@ from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     get_patched_module_table,
     get_patched_module_type_table,
 )
-from neural_compressor.common import utils as inc_utils
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
 deepspeed_exists = False
 if importlib.util.find_spec("deepspeed"):  # check if deepspeed is installed
@@ -59,7 +58,7 @@ _mod_types = {
     "dynamic_moe": ModuleType(
         1,
         [],
-        inc_utils.FUSED_MOE_EXPERTS + 1,  # FIXME (Yi) # one output, FUSED_MOE_EXPERTS weights
+        8 + 1,
         True,
     ),
 }
