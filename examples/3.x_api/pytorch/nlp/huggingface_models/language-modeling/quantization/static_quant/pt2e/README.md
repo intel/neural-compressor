@@ -32,7 +32,7 @@ python run_clm_no_trainer.py --model facebook/opt-125m --quantize --output_dir q
 python run_clm_no_trainer.py --model facebook/opt-125m --accuracy  --tasks lambada_openai
 
 # Measure the accuracy of the quantized model
-python run_clm_no_trainer.py --model facebook/opt-125m --accuracy  --tasks lambada_openai --int8 --output_dir qmodel_save_path 
+python run_clm_no_trainer.py --model facebook/opt-125m --accuracy  --tasks lambada_openai --optimized --output_dir qmodel_save_path 
 ```
 
 #### Performance
@@ -41,5 +41,5 @@ python run_clm_no_trainer.py --model facebook/opt-125m --accuracy  --tasks lamba
 python run_clm_no_trainer.py --model facebook/opt-125m --performance
 
 # Measure the performance of the quantized model
-python run_clm_no_trainer.py --model facebook/opt-125m --performance --int8 --output_dir qmodel_save_path 
+python run_clm_no_trainer.py --model facebook/opt-125m --performance --optimized --output_dir qmodel_save_path 
 ```

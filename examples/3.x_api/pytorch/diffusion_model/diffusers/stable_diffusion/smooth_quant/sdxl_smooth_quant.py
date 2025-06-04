@@ -339,7 +339,7 @@ def main():
     )
     parser.add_argument("--quantize", action="store_true")
     parser.add_argument("--load", action="store_true")
-    parser.add_argument("--int8", action="store_true", help="Load quantized model.")
+    parser.add_argument("--optimized", action="store_true", help="Load quantized model.")
     parser.add_argument("--performance", action="store_true")
     parser.add_argument("--n_steps", type=int, default=20)
     parser.add_argument("--batch-size", type=int, default=1)
@@ -404,7 +404,7 @@ def main():
         q_unet.save(args.output_dir)
     
     if args.load:
-        if args.int8:
+        if args.optimized:
             from neural_compressor.torch.quantization import load
             q_unet = load(os.path.abspath(os.path.expanduser(args.output_dir)))
         else:
