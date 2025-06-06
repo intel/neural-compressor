@@ -60,7 +60,7 @@ from ..utils import AutoRoundConfig, AwqConfig, GPTQConfig, RtnConfig, TeqConfig
 
 def build_woq_model(model, quantization_config):
     bits = quantization_config.bits
-    g_idx = hasattr(quantization_config, "desc_act") and quantization_config.desc_act is True
+    g_idx = getattr(quantization_config, "desc_act", False)
     for n, m in model.named_modules():
         if n in quantization_config.modules_to_not_convert:
             continue
