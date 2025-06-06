@@ -11,4 +11,4 @@ neural-compressor
 lm_eval <= 0.4.7
 peft
 optimum-intel
-intel_extension_for_pytorch == 2.1.1
+intel_extension_for_pytorch == 2.1.100
