@@ -374,7 +374,13 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
     def __init__(self, config, mod, measurement, params, module_type):
         super().__init__(config, mod, measurement, params, module_type)
         num_of_inputs = len(self.measurement.inputs) if self.measurement is not None else 1
-        num_of_experts = self.mod.num_experts if self.mod.num_experts is not None else 8
+        if hasattr(self.mod, "local_num_experts"):
+            num_of_experts = self.mod.local_num_experts
+        elif hasattr(self.mod, "num_experts"):
+            num_of_experts = self.mod.num_experts
+        else:
+            num_of_experts = 8
+        
         self.inputs_scales_creators = [
             self.scales_method_factory.get_scale_method(QuantTensorName.INPUT)
             for i in range(num_of_inputs + num_of_experts)
@@ -383,7 +389,12 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
 
     def get_scales_module_config(self):
         num_of_inputs = len(self.measurement.inputs) if self.measurement is not None else 1
-        num_of_experts = self.mod.num_experts if self.mod.num_experts is not None else 8
+        if hasattr(self.mod, "local_num_experts"):
+            num_of_experts = self.mod.local_num_experts
+        elif hasattr(self.mod, "num_experts"):
+            num_of_experts = self.mod.num_experts
+        else:
+            num_of_experts = 8
         input_scales = self.calc_input_scales(num_of_inputs=num_of_inputs)
         for i in range(num_of_experts):
             output_measurement = self.measurement.outputs[i + 1] if self.measurement is not None else []
@@ -407,6 +418,7 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
         output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
         return ModuleConfig(input_config, output_config)
 
+    
 
 ops_quantizer_map = {"linear": LinearOpQuantizer,
                       "matmul": MatmulOpQuantizer,
