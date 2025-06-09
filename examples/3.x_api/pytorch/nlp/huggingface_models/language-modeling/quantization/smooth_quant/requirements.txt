@@ -2,7 +2,7 @@ accelerate
 protobuf
 sentencepiece != 0.1.92
 datasets >= 1.1.3
-torch == 2.1.2
+torch == 2.7.0
 transformers == 4.50.1  # TODO: ILITV-3858
 pytest
 wandb
@@ -11,4 +11,4 @@ neural-compressor
 lm_eval <= 0.4.7
 peft
 optimum-intel
-intel_extension_for_pytorch == 2.1.100
+intel_extension_for_pytorch == 2.7.0
