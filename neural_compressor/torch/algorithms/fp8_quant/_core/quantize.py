@@ -139,6 +139,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     should_quantize_cond = True # In static quantization we quantize everything
     with torch.no_grad():
         for name, mod in model.named_modules():
+            name = name.replace("_orig_mod.", "")  # remove _orig_mod part added by dynamo mechanism
             mod_type_str = mod.__class__.__name__
             if is_dynamic_quantization:
                 # TODO [SW-217813]: support dynamic quantization in all ops and remove supported_dynamic_ops, then move outside the loop
