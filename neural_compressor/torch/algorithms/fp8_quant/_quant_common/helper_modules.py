@@ -730,13 +730,14 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         # Get the `experts_min` and `experts_max` from the original module if they exist
         self.experts_min = self.orig_mod.experts_min if hasattr(self.orig_mod, "experts_min") else 0
         self.experts_max = self.orig_mod.experts_max if hasattr(self.orig_mod, "experts_max") else 7
+        self.experts_used = self.local_num_experts if hasattr(self.orig_mod, "local_num_experts") else self.num_experts
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.dynamic_moe_op = get_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, self.scale_format)
             self.quant_input = self._mod_extra_config.inputs[0]
             self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
             self.register_scale(
                 "scale_intermediate",
-                [mod_extra_config.scale.inputs[x] for x in range(1, self.num_experts+1)],
+                [mod_extra_config.scale.inputs[x] for x in range(1, self.experts_used+1)],
                 self.scale_format,
             )
             # FIXME: (Yi) move it to PatchedModuleBase?
@@ -751,7 +752,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                       layer=None,
                       permuted_weights=True,
                       activation="silu"):
-        experts_range = range(self.num_experts)
+        experts_range = range(self.experts_used)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
@@ -810,7 +811,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                         router_weights,
                         permuted_weights=True,
                         activation="silu"):
-        experts_range = range(self.num_experts)
+        experts_range = range(self.experts_used)
         w1_list = [self.w13_list[i].weight.squeeze() for i in experts_range]
         w2_list = [self.w2_list[i].weight.squeeze() for i in experts_range]
         measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
@@ -857,7 +858,8 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOp):
         x,
         topk_ids,
         topk_weights,
-    ):
+        permuted_weights=True,
+        activation="silu"):
         hidden_states = x
         measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
         min_expert = self.experts_min
@@ -874,14 +876,14 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOp):
             router_weights=topk_weights.to(x.dtype),
             w12=w13_list_slice,
             w3=w2_list_slice,
-            permuted_weights=True,
-            activation="silu",
+            permuted_weights=permuted_weights,
+            activation=activation,
             experts_min=min_expert,
             experts_max=max_expert,
             measurement_mode=True,
         )
         output_measure_list = [output]
-        for i in range(self.num_experts):
+        for i in range(self.experts_used):
             output_measure_list.append(intermidiate_amax[i])
         measure_output(output_measure_list, self._mod_extra_config.outputs)
         return output
@@ -1002,7 +1004,10 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         return output_cache
 
     def fetch_from_cache(self, cache, blocks):
-        quant_cache = self.quant_input(cache)
+        if cache.dtype != self.lp_dtype:
+            quant_cache = self.quant_input(cache)
+        else:
+            quant_cache = cache
         output_cache = self.orig_mod.fetch_from_cache(quant_cache, blocks)
         return self.dequant_output(output_cache)
 
