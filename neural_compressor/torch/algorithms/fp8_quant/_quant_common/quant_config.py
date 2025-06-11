@@ -111,6 +111,8 @@ def is_supported_dynamic_op(op_type):
     return ret
 
 
+
+
 def get_hqt_config(mod) -> Fp8cfg:
     return mod.__hqt_config__
 

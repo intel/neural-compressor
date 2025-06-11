@@ -198,8 +198,6 @@ class PatchedLinearBase(PatchedModuleBase):
 
     def run_linear_quant(self, input, bias):
         qinput, scale_input = self.quant_input_func(input)
-        # FIXME: (Yi) remove it ?
-        scale_input = scale_input.to(self.scale_weight.dtype)
         y = self.matmul_fp8(qinput,
                             self.weight,
                             out_dtype=self._mod_extra_config.config_params["hp_dtype"],
@@ -748,7 +746,6 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                       hidden_states,
                       expert_routing_table,
                       router_weights,
-                      layer=None,
                       permuted_weights=True,
                       activation="silu"):
         experts_range = range(self.experts_used)
