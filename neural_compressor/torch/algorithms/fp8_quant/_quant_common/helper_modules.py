@@ -741,6 +741,11 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             self.is_dynamic_quantization = isinstance(self.quant_input, QuantDynamicInput)
             if self.is_dynamic_quantization:
                 self.forward = self.forward_dynamic_quant
+                # FIXME: (Yi) move to hpu_quantized_func_wrapper.py
+                if self.scale_format == ScaleFormat.CONST:
+                    self.dynamic_moe_op = torch.ops.hpu.mixture_of_experts.fp8_fused_weights_dynamic
+                else:
+                    self.dynamic_moe_op = torch.ops.hpu.mixture_of_experts.fp8_fused_weights_scalars_dynamic
 
     def forward_quant(self,
                       hidden_states,
@@ -784,7 +789,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
         qinput_fp8, input_scale = self.quant_input(hidden_states)
-        output = torch.ops.hpu.mixture_of_experts(
+        output = self.dynamic_moe_op(
             hidden_states=qinput_fp8,
             expert_routing_table=expert_routing_table,
             router_weights=router_weights,
