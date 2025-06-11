@@ -784,7 +784,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
         qinput_fp8, input_scale = self.quant_input(hidden_states)
-        output = self.dynamic_moe_op(
+        output = torch.ops.hpu.mixture_of_experts(
             hidden_states=qinput_fp8,
             expert_routing_table=expert_routing_table,
             router_weights=router_weights,
