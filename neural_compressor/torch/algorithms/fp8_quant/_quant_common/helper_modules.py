@@ -740,7 +740,6 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                 [mod_extra_config.scale.inputs[x] for x in range(1, self.experts_used+1)],
                 self.scale_format,
             )
-            # FIXME: (Yi) move it to PatchedModuleBase?
             self.is_dynamic_quantization = isinstance(self.quant_input, QuantDynamicInput)
             if self.is_dynamic_quantization:
                 self.forward = self.forward_dynamic_quant
@@ -778,16 +777,17 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
     def forward_dynamic_quant(
         self, hidden_states, expert_routing_table, router_weights, permuted_weights=True, layer=None, activation="silu"
     ):
-        # self.scale_input: quantize the input
-        # self.scale_intermediate: None
-        # FIXME: (Yi) remove layer and notes
+        # This is the dynamic version of the forward_quant method.
+        # Compared to the `forward_quant` method, the main differences are:
+        #   1) The input, `quant_input`, is of type `QuantDynamicInput`.
+        #   2) There is no need to pass the `d_scale_intermediate_hidden_states` to the dynamic moe op.
         experts_range = range(self.num_experts)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
         qinput_fp8, input_scale = self.quant_input(hidden_states)
-        output = torch.ops.hpu.mixture_of_experts(
+        output = self.dynamic_moe_op(
             hidden_states=qinput_fp8,
             expert_routing_table=expert_routing_table,
             router_weights=router_weights,
@@ -795,9 +795,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             w3=w2_list,
             d_scale_w12=scale_w1,
             d_scale_w3=scale_w2,
-            # d_scale_hidden_states=self.scale_input,
             d_scale_hidden_states=input_scale,
-            # d_scale_intermediate_hidden_states=self.scale_intermediate,
             permuted_weights=False,
             activation=activation,
             experts_min=self.experts_min,
