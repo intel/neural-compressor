@@ -1223,6 +1223,7 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
         valid_seq_len=None,
         seq_padding_type="None",
     ):
+        sm_mode = softmax_mode if softmax_mode == "fp32" else "None"
         qinput = self.quant_q(q).detach()
         kinput = self.quant_k(k).detach()
         vinput = self.quant_v(v).detach()
@@ -1234,8 +1235,7 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
             dropout_p=dropout_p,
             is_causal=is_causal,
             scale=scale,
-            # fp8_fused_sdpa in fp8 mode supports only FastSoftmax
-            softmax_mode="None",
+            softmax_mode=sm_mode,
             d_scale_q=self.scale_q,
             d_scale_k=self.scale_k,
             d_scale_v=self.scale_v,
