@@ -47,10 +47,10 @@ function run_tuning {
         extra_cmd=$extra_cmd" --ipex --sq --alpha 0.5"
     elif [ "${topology}" = "llama2_7b_ipex_sq" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
-        extra_cmd=$extra_cmd" --ipex --sq --alpha 0.8"
+        extra_cmd=$extra_cmd" --ipex --sq --alpha 0.65"
     elif [ "${topology}" = "gpt_j_ipex_sq" ]; then
         model_name_or_path="EleutherAI/gpt-j-6b"
-        extra_cmd=$extra_cmd" --ipex --sq --alpha 1.0"
+        extra_cmd=$extra_cmd" --ipex --sq --alpha 0.5"
     fi
 
     python -u run_clm_no_trainer.py \
