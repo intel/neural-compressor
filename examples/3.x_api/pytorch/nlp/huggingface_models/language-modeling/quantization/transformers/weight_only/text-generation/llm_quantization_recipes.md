@@ -31,7 +31,7 @@ The scripts [run_generation_cpu_woq.py](./run_generation_cpu_woq.py) provide Wei
 cd examples/huggingface/pytorch/text-generation/quantization
 pip install -r requirements.txt
 pip install neural-compressor==3.1
-pip install torch==2.4.0+cpu --index-url https://download.pytorch.org/whl/cpu
+pip install torch==2.4.0 --index-url https://download.pytorch.org/whl/cpu
 pip install transformers==4.43.0
 ```
 
