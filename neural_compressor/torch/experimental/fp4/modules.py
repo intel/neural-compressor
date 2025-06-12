@@ -28,7 +28,12 @@ class NVFP4Linear(torch.nn.Module):
         self.weight = torch.nn.Parameter(qdq_weight)
 
     def forward(self, x):
-        qdq_x = full_quant(x)[0]
+        x_shape = x.shape
+        if len(x_shape) == 1:
+            x = x.view(1, -1)
+            qdq_x = full_quant(x)[0].reshape(x_shape)
+        else:
+            qdq_x = full_quant(x)[0]
         return torch.nn.functional.linear(qdq_x, self.weight, self.bias)
 
 class NVFP4EmbeddingBag(torch.nn.Module):
@@ -41,10 +46,15 @@ class NVFP4EmbeddingBag(torch.nn.Module):
         qdq_weight = full_quant(orig_layer.weight)[0]
         self.weight = torch.nn.Parameter(qdq_weight)
 
-    def forward(self, input, offsets=None, per_sample_weights=None):
-        qdq_input = full_quant(input)[0]
+    def forward(self, x, offsets=None, per_sample_weights=None):
+        x_shape = x.shape
+        if len(x_shape) == 1:
+            x = x.view(1, -1)
+            qdq_x = full_quant(x)[0].reshape(x_shape)
+        else:
+            qdq_x = full_quant(x)[0]
         return torch.nn.functional.embedding_bag(
-            qdq_input, self.weight, offsets=offsets, mode=self.mode,
+            qdq_x, self.weight, offsets=offsets, mode=self.mode,
             scale_grad_by_freq=self.scale_grad_by_freq,
             sparse=self.sparse, per_sample_weights=per_sample_weights
         )
