@@ -730,7 +730,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         self.experts_max = self.orig_mod.experts_max if hasattr(self.orig_mod, "experts_max") else 7
         self.experts_used = self.local_num_experts if hasattr(self.orig_mod, "local_num_experts") else self.num_experts
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            self.dynamic_moe_op = get_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, self.scale_format)
+
             self.quant_input = self._mod_extra_config.inputs[0]
             self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
             self.register_scale(
@@ -739,13 +739,11 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                 self.scale_format,
             )
             self.is_dynamic_quantization = isinstance(self.quant_input, QuantDynamicInput)
+            self.dynamic_moe_op = get_quantized_func_wrapper(
+                OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, scale_format=self.scale_format, is_dynamic=self.is_dynamic_quantization
+            )
             if self.is_dynamic_quantization:
                 self.forward = self.forward_dynamic_quant
-                # FIXME: (Yi) move to hpu_quantized_func_wrapper.py
-                if self.scale_format == ScaleFormat.CONST:
-                    self.dynamic_moe_op = torch.ops.hpu.mixture_of_experts.fp8_fused_weights_dynamic
-                else:
-                    self.dynamic_moe_op = torch.ops.hpu.mixture_of_experts.fp8_fused_weights_scalars_dynamic
 
     def forward_quant(self,
                       hidden_states,
