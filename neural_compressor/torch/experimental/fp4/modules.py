@@ -25,7 +25,7 @@ class NVFP4Linear(torch.nn.Module):
         self.extra_repr = orig_layer.extra_repr
         # qdq weight
         qdq_weight = full_quant(orig_layer.weight)[0]
-        self.weight = torch.nn.Parameter(qdq_weight.t().contiguous())
+        self.weight = torch.nn.Parameter(qdq_weight)
 
     def forward(self, x):
         qdq_x = full_quant(x)[0]
