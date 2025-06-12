@@ -94,6 +94,7 @@ from torch.quantization import QuantWrapper, QuantStub, DeQuantStub, \
 exc = getattr(builtins, "IOError", "FileNotFoundError")
 
 
+
 class AverageMeter(object):
     """Computes and stores the average and current value"""
     def __init__(self, name, fmt=':f'):
@@ -824,7 +825,7 @@ if __name__ == "__main__":
                 )
         else:
             # when targeting inference on CPU
-            ld_model = torch.load(args.load_model, map_location=torch.device('cpu'))
+            ld_model = torch.load(args.load_model, map_location=torch.device('cpu'), weights_only=False)
         dlrm.load_state_dict(ld_model["state_dict"])
         ld_j = ld_model["iter"]
         ld_k = ld_model["epoch"]
@@ -898,37 +899,8 @@ if __name__ == "__main__":
     if args.tune:
         print('tune')
         dlrm.eval()
-        from neural_compressor import PostTrainingQuantConfig, quantization
-        conf = PostTrainingQuantConfig()
-        q_model = quantization.fit(
-                            dlrm,
-                            conf=conf,
-                            calib_dataloader=eval_dataloader,
-                            eval_func=eval_func
-                            )
-        q_model.save(args.tuned_checkpoint)
-        exit(0)
-    
-    dlrm.eval()
-    if args.int8:
-        from neural_compressor.utils.pytorch import load
-        import os
-        dlrm = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
-                    dlrm,
-                    dataloader=eval_dataloader)
-        dlrm.eval()
-    
-    if args.benchmark:
-        from neural_compressor.config import BenchmarkConfig
-        from neural_compressor import benchmark
-        b_conf = BenchmarkConfig(
-                                 cores_per_instance=4,
-                                 num_of_instance=1
-                                 )
-        benchmark.fit(dlrm, b_conf, b_func=eval_func)
-        exit(0)
-    
-    if args.accuracy_only:
+        from neural_compressor.torch.experimental.fp4.nvfp4 import qdq_model
+        qdq_dlrm = qdq_model(dlrm)
         eval_func(dlrm)
         exit(0)
 

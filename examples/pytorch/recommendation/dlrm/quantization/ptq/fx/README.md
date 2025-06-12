@@ -33,10 +33,18 @@ PyTorch 1.10 or higher version is needed with pytorch_fx backend.
 [MLPerf repo](https://github.com/mlcommons/inference/tree/master/recommendation/dlrm/pytorch#more-information-about-the-model-weights)
 
 # Run
+
+
+    "dlrm_fx": {
+      "model_src_dir": "recommendation/dlrm/quantization/ptq/fx",
+      "dataset_location": "/mnt/local_disk3/dataset/dlrm/dlrm/input",
+      "input_model": "/mnt/local_disk3/dataset/dlrm/dlrm/dlrm_weight/tb00_40M.pt",
+      "main_script": "dlrm_s_pytorch_tune.py",
+      "batch_size": 16384
 ### tune with INC
   ```shell
-  cd examples/pytorch/recommendation/dlrm/quantization/ptq/fx
-  bash run_quant.sh --input_model="/path/of/pretrained/model" --dataset_location="/path/of/dataset"
+cd examples/pytorch/recommendation/dlrm/quantization/ptq/fx
+bash run_quant.sh --input_model=/mnt/local_disk3/dataset/dlrm/dlrm/dlrm_weight/tb00_40M.pt --dataset_location=/mnt/local_disk3/dataset/dlrm/dlrm/input
   ```
 
 ### benchmark
