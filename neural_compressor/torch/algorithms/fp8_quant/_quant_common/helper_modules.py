@@ -781,7 +781,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
     ):
         # This is the dynamic version of the forward_quant method.
         # Compared to the `forward_quant` method, the main differences are:
-        #   1) The input, `quant_input`, is of type `QuantDynamicInput`.
+        #   1) The `quant_input` is of type `QuantDynamicInput`.
         #   2) There is no need to pass the `d_scale_intermediate_hidden_states` to the dynamic moe op.
         experts_range = range(self.num_experts)
         w1_list = [self.w13_list[i].weight for i in experts_range]
