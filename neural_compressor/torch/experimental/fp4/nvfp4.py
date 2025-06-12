@@ -13,12 +13,15 @@
 # limitations under the License.
 
 import torch
-from auto_round.data_type.nvfp import full_quant
 from neural_compressor.torch.utils import set_module
-from neural_compressor.torch.experimental.fp4.modules import NVFP4Linear
+from neural_compressor.torch.experimental.fp4.modules import (
+    NVFP4Linear,
+    NVFP4EmbeddingBag,
+)
 
 NVFP4_MODULE_MAPPING = {
     torch.nn.Linear: NVFP4Linear,
+    torch.nn.EmbeddingBag: NVFP4EmbeddingBag,
 }
 
 
