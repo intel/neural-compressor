@@ -35,23 +35,3 @@ def qdq_model(model, dtype="nvfp4"):
             qdq_module = NVFP4_MODULE_MAPPING[module.__class__](module)
             set_module(model, name, qdq_module)
     return model
-
-def qdq_module_weights(module):
-    """
-    Quantize and dequantize the weights of a module using NVFP4.
-
-    Args:
-        module (torch.nn.Module): The module whose weights are to be quantized and dequantized.
-    """
-    if hasattr(module, 'weight'):
-        # Quantize the weight
-        qdq_weight = full_quant(module.weight)
-        module.weight.copy_(qdq_weight)
-        # Dequantize the weight
-        module.weight.data = module.weight_qdq.dequantize()
-
-
-def qdq_module_forward(module):
-
-
-
