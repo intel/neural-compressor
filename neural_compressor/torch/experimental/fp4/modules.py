@@ -15,13 +15,14 @@
 import torch
 from auto_round.data_type.nvfp import full_quant
 
+
 # "NVFP" stands for NVIDIA FP4, which is an accepted abbreviation in this context.
 class NVFP4Linear(torch.nn.Module):
     def __init__(self, orig_layer):
         super().__init__()
         # migrate attributes from the original layer
         self.__dict__.update(orig_layer.__dict__)
-        __repr__ = orig_layer.__repr__
+        self.extra_repr = orig_layer.extra_repr
         # qdq weight
         qdq_weight = full_quant(orig_layer.weight)[0]
         self.weight = torch.nn.Parameter(qdq_weight.t().contiguous())
@@ -35,7 +36,7 @@ class NVFP4EmbeddingBag(torch.nn.Module):
         super().__init__()
         # migrate attributes from the original layer
         self.__dict__.update(orig_layer.__dict__)
-        __repr__ = orig_layer.__repr__
+        self.extra_repr = orig_layer.extra_repr
         # qdq weight
         qdq_weight = full_quant(orig_layer.weight)[0]
         self.weight = torch.nn.Parameter(qdq_weight)
