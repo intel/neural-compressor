@@ -901,7 +901,8 @@ if __name__ == "__main__":
         dlrm.eval()
         from neural_compressor.torch.experimental.fp4.nvfp4 import qdq_model
         qdq_dlrm = qdq_model(dlrm)
-        eval_func(dlrm)
+        print(qdq_dlrm)
+        eval_func(qdq_dlrm)
         exit(0)
 
 
