@@ -158,9 +158,6 @@ class QuantizedHPUCastToFP8(QuantizedHpuFuncWrapperBase):
 
 class QuantizedHPUCastFromFP8(QuantizedHpuFuncWrapperBase):
 
-    def __init__(self, scale_format):
-        super().__init__(scale_format)
-
     def get_default_quantized_func(self):
         return torch.ops.hpu.cast_from_fp8
 
