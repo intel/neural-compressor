@@ -4,6 +4,22 @@
 
 Currently, we support [NVFP4_MODULE_MAPPING](./nvfp4.py) and modules in this mapping will be replaced with the `NVFP4` one. Both weights and activations will be quantized to `NVFP4`.
 
+## Requirement
+
+```shell
+# Install auto-round from source
+cd ~
+git clone https://github.com/intel/auto-round.git
+cd auto-round
+pip install -e .
+# Install neural-compressor from source
+cd ~
+git clone https://github.com/intel/neural-compressor.git
+cd neural-compressor
+git checkout xinhe/nvfp4
+INC_PT_ONLY=1 pip install -e .
+```
+
 ## Usage
 ```python
 from neural_compressor.torch.experimental.fp4.nvfp4 import qdq_model
