@@ -17,11 +17,13 @@ from neural_compressor.torch.utils import set_module
 from neural_compressor.torch.experimental.fp4.modules import (
     NVFP4Linear,
     NVFP4EmbeddingBag,
+    FP8EmbeddingBag,
 )
 
 NVFP4_MODULE_MAPPING = {
     torch.nn.Linear: NVFP4Linear,
-    torch.nn.EmbeddingBag: NVFP4EmbeddingBag,
+    # torch.nn.EmbeddingBag: NVFP4EmbeddingBag,
+    torch.nn.EmbeddingBag: FP8EmbeddingBag,
 }
 
 
