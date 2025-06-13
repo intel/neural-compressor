@@ -59,8 +59,8 @@ class NVFP4EmbeddingBag(torch.nn.Module):
             sparse=self.sparse, per_sample_weights=per_sample_weights
         )
 
-def qdq_fp8(x, dtype=torch.float8_e4m3):
-    if dtype == torch.float8_e4m3 and (x > 448 or x < -448):
+def qdq_fp8(x, dtype=torch.float8_e4m3fn):
+    if dtype == torch.float8_e4m3fn and x.abs().max() > 448:
         raise ValueError("FP8 quantization is only supported for values in the range [-448, 448].")
     return x.to(dtype).to(torch.float32)
 
