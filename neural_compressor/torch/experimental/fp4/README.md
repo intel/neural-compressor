@@ -4,7 +4,7 @@
 
 Currently, we support [NVFP4_MODULE_MAPPING](./nvfp4.py) and modules in this mapping will be replaced with the `NVFP4` one. Both weights and activations will be quantized to `NVFP4`.
 
-## Requirement
+## Requirements
 
 ```shell
 # Install auto-round from source
@@ -30,7 +30,6 @@ qdq_m = qdq_model(m)
 ```python
 import torch
 
-
 class M(torch.nn.Module):
     def __init__(self):
         super().__init__()
@@ -41,19 +40,18 @@ class M(torch.nn.Module):
         return x
 
 m = M()
+input = torch.randn(2, 10)
 
 with torch.no_grad():
-    label = m(torch.randn(2, 10))
+    label = m(input)
     print(label)
 
     from neural_compressor.torch.experimental.fp4.nvfp4 import qdq_model
     qdq_m = qdq_model(m)
-    print(qdq_m)
-    # M(
-    #   (linear): NVFP4Linear(in_features=10, out_features=1, bias=True)
-    # )
-
-    out = m(torch.randn(2, 10))
+    out = qdq_m(input)
     print(out)
 
+# qdq_m: M(
+#   (linear): NVFP4Linear(in_features=10, out_features=1, bias=True)
+# )
 ```
