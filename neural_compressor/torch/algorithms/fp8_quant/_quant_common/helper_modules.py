@@ -349,6 +349,8 @@ class PatchedRowParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         kwargs["func_names"] = ("resolve_input", )
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        from .._core.vllm_functions import get_vllm_row_parallel_collective_func
+        self.row_parallel_collective_func = get_vllm_row_parallel_collective_func()
         # TODO [SW-224403]: Enable dynamic quantization in row parallel allreduce
         allreduce_quantization_enable = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
         if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
@@ -381,7 +383,7 @@ class PatchedRowParallelLinear(PatchedLinearBase):
         output = self.run_linear_qdq(resolved_input, None)
 
         if self.reduce_results:
-            output = self.collective_func(output)
+            output = self.row_parallel_collective_func(output)
         return self.bias_add(output)
 
     def lp_matmul_hp(self, input):
@@ -402,12 +404,12 @@ class PatchedRowParallelLinear(PatchedLinearBase):
         if input.shape[1] == 1:
             allreduce_output_hp = self.quant_all_reduce_sum(matmul_output_hp)
         else:
-            allreduce_output_hp = self.collective_func(matmul_output_hp)
+            allreduce_output_hp = self.row_parallel_collective_func(matmul_output_hp)
         return self.bias_add(allreduce_output_hp)
 
     def forward_quant_reduce_in_hp(self, input):
         matmul_output_hp = self.lp_matmul_hp(input)
-        all_reduce_output_hp = self.collective_func(matmul_output_hp)
+        all_reduce_output_hp = self.row_parallel_collective_func(matmul_output_hp)
         return self.bias_add(all_reduce_output_hp)
 
     def measure_input_and_matmul(self, input):
@@ -426,7 +428,7 @@ class PatchedRowParallelLinear(PatchedLinearBase):
         output = self.measure_input_and_matmul(input)
         max_output = output.clone()
         dist.all_reduce(max_output, op=dist.ReduceOp.MAX)
-        all_reduce_output = self.collective_func(output)
+        all_reduce_output = self.row_parallel_collective_func(output)
         measure_output((max_output, all_reduce_output,), self._mod_extra_config.outputs)
         return self.bias_add(all_reduce_output)
 
@@ -478,12 +480,14 @@ class PatchedColumnParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.init_linear(mod_extra_config)
+        from .._core.vllm_functions import get_vllm_column_parallel_collective_func
+        self.column_parallel_collective_func = get_vllm_column_parallel_collective_func()
 
     def forward_qdq(self, input):
         output = self.run_linear_qdq(input, None)
         output, output_bias = self.add_bias(output)
         if self.gather_output:
-            output = self.collective_func(output)
+            output = self.column_parallel_collective_func(output)
         return output, output_bias
 
     def forward_quant(self, input):
@@ -492,7 +496,7 @@ class PatchedColumnParallelLinear(PatchedLinearBase):
         dqoutput = self.dequant_output(output)
         dqoutput, dqoutput_bias = self.add_bias(dqoutput)
         if self.gather_output:
-            dqoutput = self.collective_func(dqoutput)
+            dqoutput = self.column_parallel_collective_func(dqoutput)
         return dqoutput, dqoutput_bias
 
     def forward_measure(self, input):
@@ -501,7 +505,7 @@ class PatchedColumnParallelLinear(PatchedLinearBase):
         measure_output((output,), self._mod_extra_config.outputs)
         output, output_bias = self.add_bias(output)
         if self.gather_output:
-            output = self.collective_func(output)
+            output = self.column_parallel_collective_func(output)
         return output, output_bias
 
     def add_bias(self, output):
