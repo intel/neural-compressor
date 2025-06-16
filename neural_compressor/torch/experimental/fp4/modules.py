@@ -117,6 +117,7 @@ class FP8EmbeddingBag(torch.nn.Module):
             qdq_x = qdq_fp8(x, per_channel=False)[0].reshape(x_shape)
         else:
             qdq_x = qdq_fp8(x, per_channel=False)[0]
+        qdq_x = torch.clip(qdq_x, 0, self.num_embeddings-1)
         return torch.nn.functional.embedding_bag(
             qdq_x, self.weight, offsets=offsets, mode=self.mode,
             scale_grad_by_freq=self.scale_grad_by_freq,
