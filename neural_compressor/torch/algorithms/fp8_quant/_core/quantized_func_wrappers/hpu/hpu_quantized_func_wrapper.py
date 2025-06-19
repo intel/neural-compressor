@@ -64,7 +64,7 @@ class QuantizedHpuFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
         else:
             if scale_format == ScaleFormat.SCALAR:
                 return self.get_scalar_quantized_func()
-            else
+            else:
                 return self.get_default_quantized_func()
 
     def __call__(self, *args, **kwargs):
