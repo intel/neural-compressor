@@ -54,20 +54,18 @@ class QuantizedHpuFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
         return self.get_default_quantized_func()
 
     def get_quantized_func(self, scale_format, is_dynamic=False):
+        if scale_format not in [ScaleFormat.SCALAR, ScaleFormat.CONST]:
+            raise ValueError("Unsupported scale format - {}".format(scale_format))
         if is_dynamic:
             if scale_format == ScaleFormat.SCALAR:
                 return self.get_dynamic_scalar_quantized_func()
-            elif scale_format == ScaleFormat.CONST:
-                return self.get_dynamic_quantized_func()
             else:
-                raise ValueError("Unexpected scale format - {} for dynamic quantized function".format(scale_format))
+                return self.get_dynamic_quantized_func()
         else:
             if scale_format == ScaleFormat.SCALAR:
                 return self.get_scalar_quantized_func()
-            elif scale_format == ScaleFormat.CONST:
+            else
                 return self.get_default_quantized_func()
-            else:
-                raise ValueError("Unexpected scale format - {}".format(scale_format))
 
     def __call__(self, *args, **kwargs):
         return self._quantized_func_(*args, **kwargs)
