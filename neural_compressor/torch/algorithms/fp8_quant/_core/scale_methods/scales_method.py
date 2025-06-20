@@ -296,8 +296,6 @@ class MaxAbsDynamicPcs(MaxAbsPcs):
         # and setting scale as a member is not supported in hpu graphs and torch.compile
         # (it can break the graph)
         scale = self._calculate_maxabs_scale(tensor, tensor_type, **additional_kwargs)
-        # print(f"{scale=} {self.eps=}")
-        # scale = torch.clamp(scale, min=self.eps)
         scale = torch.max(scale, self.eps)
         return scale
 
