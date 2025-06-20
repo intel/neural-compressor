@@ -57,6 +57,8 @@ parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa
                     help="Tasks for accuracy validation.")
 parser.add_argument("--peft_model_id", type=str, default=None,
                     help="Model name or path of peft model")
+parser.add_argument("--use_mmap", action="store_true",
+                    help="Enable memory mapping to load model in shared host memory.")
 
 # ============WeightOnly configs===============
 parser.add_argument("--woq_algo", default="RTN",
@@ -285,7 +287,7 @@ def get_user_model(empty_model=False):
     if args.woq_algo in ["AWQ", "TEQ"]:
         torchscript = True
     if args.woq_algo == "AutoRound" and is_habana_framework_installed():
-        logger.info("Quantizing model with AutoRound on HPU")
+        print("Quantizing model with AutoRound on HPU")
         if args.quantize:
             check_torch_compile_with_hpu_backend()
             set_envs_for_torch_compile_with_hpu_backend()
@@ -297,7 +299,11 @@ def get_user_model(empty_model=False):
         )
     else:
         from neural_compressor.torch.algorithms.layer_wise import load_first_layer_only
-        config = AutoConfig.from_pretrained(args.model)
+        config = AutoConfig.from_pretrained(
+            args.model,
+            trust_remote_code=args.trust_remote_code,
+            revision=args.revision,
+        )
         
         if empty_model or args.gptq_blockwise:
             from accelerate import init_empty_weights
@@ -313,6 +319,7 @@ def get_user_model(empty_model=False):
                 torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
                 trust_remote_code=args.trust_remote_code,
                 revision=args.revision,
+                torch_dtype=config.torch_dtype if args.use_mmap else torch.float32
             )
     tokenizer = AutoTokenizer.from_pretrained(args.model) 
     user_model = user_model.float()

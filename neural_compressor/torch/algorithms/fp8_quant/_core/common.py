@@ -20,7 +20,6 @@ import numpy as np
 import torch
 from enum import Enum, auto
 from functools import lru_cache 
-from .._quant_common.quant_config import get_hqt_config
 from ..utils.logger import logger
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import ModuleConfig
 
@@ -76,6 +75,7 @@ def load_npz(fname):
 
 
 def save_file(model, d, source_format, fname, mode):
+    from .._quant_common.quant_config import get_hqt_config
     config = get_hqt_config(model)
     logger.debug("Saving %s file: %s", mode, fname)
     ext = os.path.splitext(fname)[1]
@@ -190,6 +190,7 @@ format_functions_rec = lambda k: functools.partial(rec_fn, fn=format_functions[k
 
 
 def get_device_type_for_scales(mod):
+    from .._quant_common.quant_config import get_hqt_config
     config = get_hqt_config(mod).cfg
     return config["device_for_scales"]
 
@@ -202,3 +203,8 @@ def is_runtime_scale_patching():
 @lru_cache
 def is_calc_scale_with_cguid():
     return os.getenv("CALC_SCALE_WITH_CGUID", "False").lower() in ["true", "1"]
+
+#TODO [SW-224612]: Use cguid to calc scales and remove the check
+@lru_cache
+def is_calc_scale_rounding_with_cguid():
+    return is_calc_scale_with_cguid() and os.getenv("CALC_ROUNDING_WITH_CGUID", "False").lower() in ["true", "1"]

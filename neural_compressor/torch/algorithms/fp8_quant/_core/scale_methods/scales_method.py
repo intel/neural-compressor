@@ -14,12 +14,11 @@
 from abc import abstractmethod
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 import torch
-from . import ScaleIdentity
+from .round_scales_function import ScaleIdentity
 #TODO [SW-224612]: Use cguid to calc scales and remove is_calc_scale_with_cguid
 from ..common import QuantTensorType, is_calc_scale_with_cguid
 from ..fp_utils import mmse_scale_multi, get_fullscale, mmse_scale, calc_maxabs_scale, invert_scale, calculate_scale_maxabs, ScaleCalculationMaxMode
 from ...utils.logger import logger
-import os
 
 class ScalesMethod:
 
@@ -81,8 +80,7 @@ class MaxAbsMethod(ScalesMethod):
         return scale
 
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        scale = self._calculate_maxabs_scale(tensor, tensor_type, **additional_kwargs)
-        self.scale = scale.copy_(scale)
+        self.scale = self._calculate_maxabs_scale(tensor, tensor_type, **additional_kwargs)
         return self.scale
 
 class MaxAbsPts(MaxAbsMethod):
@@ -228,11 +226,11 @@ class OptScalesPcs(ScalesMethod):
 
 
 class InputSmoothQuantMaxAbs(ScalesMethod):
-    def __init__(self, round_scale_method, weight, params, device_for_scales, backoff):
+    def __init__(self, round_scale_method, weight, params, device_for_scales, backoff, alpha):
         super().__init__(round_scale_method, params, device_for_scales)
         self.round_scale_method = round_scale_method
         self.weight = weight
-        self.alpha = params["alpha"]
+        self.alpha = alpha
         self.backoff = backoff
         self.device_for_scales = device_for_scales
 
@@ -252,11 +250,11 @@ class InputSmoothQuantMaxAbs(ScalesMethod):
         return self.scale
 
 class InputSmoothQuantOpt(ScalesMethod):
-    def __init__(self, round_scale_method, weight, params, device_for_scales, backoff, backoff_weight):
+    def __init__(self, round_scale_method, weight, params, device_for_scales, backoff, backoff_weight, alpha):
         super().__init__(round_scale_method, params, device_for_scales)
         self.round_scale_method = round_scale_method
         self.weight = weight
-        self.alpha = params["alpha"]
+        self.alpha = alpha
         self.backoff = backoff
         self.backoff_weight = backoff_weight
         self.device_for_scales = device_for_scales

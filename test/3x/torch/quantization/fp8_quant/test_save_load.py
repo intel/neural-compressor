@@ -33,7 +33,7 @@ def compare_parameters_buffers(model1, model2, atol=1e-8):
     for k, v in dict1.items():
         assert k in dict2, "k not in dict2"
         assert v.dtype == dict2[k].dtype, f"dtype of {k} is differnt.\n{v.dtype}\n{dict2[k].dtype}"
-        assert torch.allclose(v, dict2[k], atol=atol), f"{k} is differnt in model1 and model2.\n" + f"{v}\n" + f"{dict2[k]}\n"
+        assert torch.allclose(v.float(), dict2[k].float(), atol=atol), f"{k} is differnt in model1 and model2.\n" + f"{v}\n" + f"{dict2[k]}\n"
 
 
 @torch.no_grad()
@@ -72,8 +72,10 @@ def test_save_vllm_compatible_model():
     generation_config.save_pretrained("saved_results_qwen")
     tokenizer = transformers.AutoTokenizer.from_pretrained(name)
     tokenizer.save_pretrained("saved_results_qwen")
+    shutil.rmtree("saved_results_qwen", ignore_errors=True)
+    shutil.rmtree("nc_workspace", ignore_errors=True)
 
-
+@pytest.mark.skip(reason="[SW-226589] Skip this test since the model was updated")
 def test_load_model_provided_by_neuralmagic():
     model_name_or_path = "neuralmagic/Qwen2-0.5B-Instruct-FP8"
     hpu_mem0 = get_used_hpu_mem_MB()

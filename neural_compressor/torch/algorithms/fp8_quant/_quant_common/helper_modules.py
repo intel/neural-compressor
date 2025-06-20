@@ -349,6 +349,8 @@ class PatchedRowParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         kwargs["func_names"] = ("resolve_input", )
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        from .._core.vllm_functions import get_vllm_row_parallel_collective_func
+        self.row_parallel_collective_func = get_vllm_row_parallel_collective_func()
         # TODO [SW-224403]: Enable dynamic quantization in row parallel allreduce
         allreduce_quantization_enable = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
         if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
@@ -367,9 +369,9 @@ class PatchedRowParallelLinear(PatchedLinearBase):
                     self.forward = self.forward_quant_no_reduce
         self.init_linear(mod_extra_config)
         if self.quantization_mode == QuantMode.QUANTIZE:
-            self.dequant_scatter_output = self._mod_extra_config.outputs[0]
-            self.quant_scatter_input = self._mod_extra_config.outputs[1]
             if allreduce_quantization_enable:
+                self.dequant_scatter_output = self._mod_extra_config.outputs[0]
+                self.quant_scatter_input = self._mod_extra_config.outputs[1]
                 self.quant_gather_input = self._mod_extra_config.outputs[2]
                 self.dequant_gather_output = self._mod_extra_config.outputs[3]
         from torch import distributed as dist
@@ -381,7 +383,7 @@ class PatchedRowParallelLinear(PatchedLinearBase):
         output = self.run_linear_qdq(resolved_input, None)
 
         if self.reduce_results:
-            output = self.collective_func(output)
+            output = self.row_parallel_collective_func(output)
         return self.bias_add(output)
 
     def lp_matmul_hp(self, input):
@@ -402,12 +404,12 @@ class PatchedRowParallelLinear(PatchedLinearBase):
         if input.shape[1] == 1:
             allreduce_output_hp = self.quant_all_reduce_sum(matmul_output_hp)
         else:
-            allreduce_output_hp = self.collective_func(matmul_output_hp)
+            allreduce_output_hp = self.row_parallel_collective_func(matmul_output_hp)
         return self.bias_add(allreduce_output_hp)
 
     def forward_quant_reduce_in_hp(self, input):
         matmul_output_hp = self.lp_matmul_hp(input)
-        all_reduce_output_hp = self.collective_func(matmul_output_hp)
+        all_reduce_output_hp = self.row_parallel_collective_func(matmul_output_hp)
         return self.bias_add(all_reduce_output_hp)
 
     def measure_input_and_matmul(self, input):
@@ -426,7 +428,7 @@ class PatchedRowParallelLinear(PatchedLinearBase):
         output = self.measure_input_and_matmul(input)
         max_output = output.clone()
         dist.all_reduce(max_output, op=dist.ReduceOp.MAX)
-        all_reduce_output = self.collective_func(output)
+        all_reduce_output = self.row_parallel_collective_func(output)
         measure_output((max_output, all_reduce_output,), self._mod_extra_config.outputs)
         return self.bias_add(all_reduce_output)
 
@@ -478,12 +480,14 @@ class PatchedColumnParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.init_linear(mod_extra_config)
+        from .._core.vllm_functions import get_vllm_column_parallel_collective_func
+        self.column_parallel_collective_func = get_vllm_column_parallel_collective_func()
 
     def forward_qdq(self, input):
         output = self.run_linear_qdq(input, None)
         output, output_bias = self.add_bias(output)
         if self.gather_output:
-            output = self.collective_func(output)
+            output = self.column_parallel_collective_func(output)
         return output, output_bias
 
     def forward_quant(self, input):
@@ -492,7 +496,7 @@ class PatchedColumnParallelLinear(PatchedLinearBase):
         dqoutput = self.dequant_output(output)
         dqoutput, dqoutput_bias = self.add_bias(dqoutput)
         if self.gather_output:
-            dqoutput = self.collective_func(dqoutput)
+            dqoutput = self.column_parallel_collective_func(dqoutput)
         return dqoutput, dqoutput_bias
 
     def forward_measure(self, input):
@@ -501,7 +505,7 @@ class PatchedColumnParallelLinear(PatchedLinearBase):
         measure_output((output,), self._mod_extra_config.outputs)
         output, output_bias = self.add_bias(output)
         if self.gather_output:
-            output = self.collective_func(output)
+            output = self.column_parallel_collective_func(output)
         return output, output_bias
 
     def add_bias(self, output):
@@ -728,13 +732,14 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         # Get the `experts_min` and `experts_max` from the original module if they exist
         self.experts_min = self.orig_mod.experts_min if hasattr(self.orig_mod, "experts_min") else 0
         self.experts_max = self.orig_mod.experts_max if hasattr(self.orig_mod, "experts_max") else 7
+        self.experts_used = self.local_num_experts if hasattr(self.orig_mod, "local_num_experts") else self.num_experts
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.dynamic_moe_op = get_quantized_func_wrapper(OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, self.scale_format)
             self.quant_input = self._mod_extra_config.inputs[0]
             self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
             self.register_scale(
                 "scale_intermediate",
-                [mod_extra_config.scale.inputs[x] for x in range(1, self.num_experts+1)],
+                [mod_extra_config.scale.inputs[x] for x in range(1, self.experts_used+1)],
                 self.scale_format,
             )
 
@@ -744,7 +749,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                       router_weights,
                       permuted_weights=True,
                       activation="silu"):
-        experts_range = range(self.num_experts)
+        experts_range = range(self.experts_used)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
@@ -773,7 +778,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                         router_weights,
                         permuted_weights=True,
                         activation="silu"):
-        experts_range = range(self.num_experts)
+        experts_range = range(self.experts_used)
         w1_list = [self.w13_list[i].weight.squeeze() for i in experts_range]
         w2_list = [self.w2_list[i].weight.squeeze() for i in experts_range]
         measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
@@ -820,7 +825,8 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOp):
         x,
         topk_ids,
         topk_weights,
-    ):
+        permuted_weights=True,
+        activation="silu"):
         hidden_states = x
         measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
         min_expert = self.experts_min
@@ -837,14 +843,14 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOp):
             router_weights=topk_weights.to(x.dtype),
             w12=w13_list_slice,
             w3=w2_list_slice,
-            permuted_weights=True,
-            activation="silu",
+            permuted_weights=permuted_weights,
+            activation=activation,
             experts_min=min_expert,
             experts_max=max_expert,
             measurement_mode=True,
         )
         output_measure_list = [output]
-        for i in range(self.num_experts):
+        for i in range(self.experts_used):
             output_measure_list.append(intermidiate_amax[i])
         measure_output(output_measure_list, self._mod_extra_config.outputs)
         return output
@@ -869,6 +875,7 @@ class PatchedKVCache(PatchedModuleBase):
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
             if self.use_qdq:
+                self.qdq_input = self._mod_extra_config.inputs[1]
                 self.update = self.update_qdq
                 mod.update = self.update_qdq
             else:
@@ -885,8 +892,23 @@ class PatchedKVCache(PatchedModuleBase):
 
     # overwrite update function of original module to force quant and dequant of cache input and output
     def update_qdq(self, prev, cur, dim, idx, inp_seq_len):
-        qinput = self.quant_input(cur)
-        output = self.org_update(prev, qinput, dim, idx, inp_seq_len)
+        """
+         Explanation:  If we want to optimize index_copy so it would run in fp8 instead of bf16
+                       we need the tensors to be in fp8 before calling index_copy.
+                       Also the `prev` and `curr` tensors need to be of the same dtype - and quanting them both
+                       from bf16 is no help, best we can do is have prev be initialized an fp8 tensor from the start.
+                       Since the initilization of `prev` is done in OHF (and that is not implemented yet) we
+                       currently need to support both options until the implementation in OHF is done, then
+                       can we remove the support for the bf16 `prev` option (the else here). 
+        """
+        if prev.dtype == torch.float8_e4m3fn:
+            qcurr = self.quant_input(cur)
+            qoutput = self.org_update(prev, qcurr, dim, idx, inp_seq_len)
+            output = self.dequant_output(qoutput)
+        # TODO: remove the `else` part once the lp_dtype is implemented in OHF
+        else:
+            curr = self.qdq_input(cur)
+            output = self.org_update(prev, curr, dim, idx, inp_seq_len)
         return output
 
     # overwrite update function of original module to force quant and dequant of cache input and output
@@ -948,17 +970,11 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         measure_output((output_cache, ), self._mod_extra_config.outputs)
         return output_cache
 
-    def fetch_from_cache(self, cache, blocks, permutations=None):
-        # TODO: Remove this workaround in next release [SW-221595]
+    def fetch_from_cache(self, cache, blocks):
         if cache.dtype != self.lp_dtype:
             quant_cache = self.quant_input(cache)
         else:
             quant_cache = cache
-        if permutations:
-            output_cache = self.orig_mod.fetch_from_cache(quant_cache, blocks, permutations)
-            for i in range(len(output_cache)):
-                output_cache[i] = self.dequant_output(output_cache[i])
-            return output_cache
         output_cache = self.orig_mod.fetch_from_cache(quant_cache, blocks)
         return self.dequant_output(output_cache)
 
@@ -1211,6 +1227,7 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
         valid_seq_len=None,
         seq_padding_type="None",
     ):
+        sm_mode = softmax_mode if softmax_mode == "fp32" else "None"
         qinput = self.quant_q(q).detach()
         kinput = self.quant_k(k).detach()
         vinput = self.quant_v(v).detach()
@@ -1222,8 +1239,7 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
             dropout_p=dropout_p,
             is_causal=is_causal,
             scale=scale,
-            # fp8_fused_sdpa in fp8 mode supports only FastSoftmax
-            softmax_mode="None",
+            softmax_mode=sm_mode,
             d_scale_q=self.scale_q,
             d_scale_k=self.scale_k,
             d_scale_v=self.scale_v,

@@ -541,9 +541,12 @@ class WOQModelLoader:
         # Autofactory
         kwargs_orig = copy.deepcopy(self.kwargs)
         trust_remote_code = self.kwargs.pop("trust_remote_code", None)
+        revision = self.kwargs.get("revision", "main")
         kwarg_attn_imp = self.kwargs.pop("attn_implementation", None)
 
-        config = AutoConfig.from_pretrained(self.model_name_or_path, trust_remote_code=trust_remote_code)
+        config = AutoConfig.from_pretrained(
+            self.model_name_or_path, trust_remote_code=trust_remote_code, revision=revision
+        )
         # quantization_config = config.quantization_config
 
         if kwarg_attn_imp is not None and config._attn_implementation != kwarg_attn_imp:  # pragma: no cover
@@ -551,7 +554,11 @@ class WOQModelLoader:
 
         has_remote_code = hasattr(config, "auto_map") and AutoModelForCausalLM.__name__ in config.auto_map
 
-        has_local_code = type(config) in AutoModelForCausalLM._model_mapping.keys()
+        has_local_code = (
+            hasattr(AutoModelForCausalLM, "_model_mapping")
+            and type(config) in AutoModelForCausalLM._model_mapping.keys()
+        )
+        
         trust_remote_code = resolve_trust_remote_code(
             trust_remote_code,
             self.model_name_or_path,
@@ -674,6 +681,7 @@ class WOQModelLoader:
         # if hpu format tensor can be used directly, then update resolved_archive_file to the hpu format tensor file
         if self._use_hpu_module():
             resolved_archive_file = os.path.join(self._model_local_dir, HPU_SAFE_WEIGHTS_NAME)
+            is_sharded = False
 
         logger.info(f"Find weight file {resolved_archive_file}")
 
@@ -887,7 +895,7 @@ class WOQModelLoader:
         from transformers.modeling_utils import no_init_weights
         from transformers.utils import ContextManagers
 
-        _fast_init = self.kwargs.pop("_fast_init", True)
+        _ = self.kwargs.pop("_fast_init", True)
         torch_dtype = self.kwargs.pop("torch_dtype", "auto")
         is_sharded = self.kwargs.pop("is_sharded", False)
         sharded_metadata = self.kwargs.pop("sharded_metadata", None)
@@ -919,8 +927,8 @@ class WOQModelLoader:
                     assert False, f'`torch_dtype` can be either `torch.dtype` or `"auto"`, but received {torch_dtype}'
 
             dtype_orig = model_class._set_default_torch_dtype(torch_dtype)
-
-        init_contexts = [no_init_weights(_enable=_fast_init)]
+        # [SW-226754] Fix it when we merge back to public INC
+        init_contexts = [no_init_weights()]
         init_contexts.append(init_empty_weights())
 
         with ContextManagers(init_contexts):

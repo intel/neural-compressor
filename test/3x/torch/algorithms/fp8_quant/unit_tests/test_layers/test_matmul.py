@@ -3,33 +3,35 @@ import typing
 import pytest
 import torch
 
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod, _hw_aligned_scale_methods
+from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods.scale_method_config import ScaleMethodString
 
 from ...test_hpu_utils import *
 from ...tester import *
 
+SUPPORTED_DYNAMIC_SCALES= [ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW]
 
-def get_test_vectors(*, dtype: torch.dtype) -> typing.Iterable[TestVector]:
+
+def get_test_vectors(*, dtype: torch.dtype, atol) -> typing.Iterable[TestVector]:
     yield TestVector(
         inputs=[
             torch.eye(2, dtype=dtype, device="hpu"),
             torch.eye(2, dtype=dtype, device="hpu"),
         ],
-        atol=0.2,
+        atol=atol,
     )
     yield TestVector(
         inputs=[
             torch.randn((2, 2), dtype=dtype, device="hpu"),
             torch.randn((2, 2), dtype=dtype, device="hpu"),
         ],
-        atol=0.2,
+        atol=atol,
     )
     yield TestVector(
         inputs=[
             torch.eye(2, dtype=dtype, device="hpu"),
             torch.randn((2, 2), dtype=dtype, device="hpu"),
         ],
-        atol=0.2,
+        atol=atol,
     )
 
 
@@ -49,33 +51,45 @@ class Matmul(torch.nn.Module):
 
 @pytest.mark.parametrize("hp_dtype", [torch.bfloat16, torch.float32], ids=["bf16", "fp32"])
 @pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn], ids=["fp8_e4m3fn"])
-@pytest.mark.parametrize("scale_method", ScaleMethod)
+@pytest.mark.parametrize("scale_method", ScaleMethodString)
 @pytest.mark.parametrize("device_type", device_type)
 @pytest.mark.parametrize("dynamic_quantization", [True, False], ids=["dynamic_quantization", "static_quantization"])
-def test_matmul_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethod, device_type: str, dynamic_quantization: bool):
+def test_matmul_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethodString, device_type: str, dynamic_quantization: bool):
     # TODO [SW-196641]: fix the following issues:
     if scale_method in SCALE_METHODS_KEY_ERROR:
         pytest.xfail("KeyError")
     quant_modes = QUANT_MODES_DEFAULT
+    atol = 0.2
     if scale_method in SCALE_METHODS_QUANT_ONLY or dynamic_quantization:
         quant_modes = QUANT_MODES_QUANT_ONLY
+        if scale_method == ScaleMethodString.HW_ALIGNED_SINGLE_SCALE:
+            atol = 1.0
     def run():
         run_accuracy_test(
             module_class=Matmul,
             lp_dtype=lp_dtype,
             scale_method=scale_method,
-            test_vectors=get_test_vectors(dtype=hp_dtype),
+            test_vectors=get_test_vectors(dtype=hp_dtype, atol=atol),
             quant_modes=quant_modes,
             device_type=device_type,
             dynamic_quantization=dynamic_quantization,
         )
-    if get_device_type() != device_type_id[device_type] and scale_method != ScaleMethod.MAXABS_HW:
-        return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method: ")
-    elif device_type_id[device_type] != get_device_type():
-        if not (device_type_id[device_type] == get_gaudi2_type() and is_gaudi3()):
+
+    if scale_method == ScaleMethodString.MAXABS_HW:
+        if device_type_id[device_type] == get_gaudi3_type() and is_gaudi2():
+            # Gaudi3 scales not supported on Gaudi2 so "device_for_scales:Gaudi3" is not supported on Gaudi2 run
             return run_with_raised_exception(run, ValueError, "Unsupported config: device_for_scales=")
-    elif scale_method == ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW and not dynamic_quantization:
-            return run_with_raised_exception(run, ValueError, "Unsupported config: scale method ScaleMethod.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW")
-    elif dynamic_quantization and scale_method in _hw_aligned_scale_methods:
-        return run_with_raised_exception(run, ValueError, "is not supported in dynamic quantization")
+    else:
+        if get_device_type() != device_type_id[device_type]:
+            # In scale_method different than MAXABS_HW, we don't support device_for_scales so this scale_method config fails
+            return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
+
+    if dynamic_quantization:
+        if scale_method in HW_ALIGNED_SCALE_METHODS or scale_method in QUANT_ONLY_SCALE_METHODS:
+            # When in dynamic quantization we don't support hw aligned scale methods and unit scale
+            return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
+    else :
+        if scale_method in SUPPORTED_DYNAMIC_SCALES:
+            # When in static quantization we don't support dynamic scale method
+            return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
     return run()

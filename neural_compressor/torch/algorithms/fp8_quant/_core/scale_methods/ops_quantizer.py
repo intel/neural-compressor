@@ -32,7 +32,8 @@ class BaseOpQuantizer:
         self.inputs_scales_creators = []
         self.output_scales_creators = []
         self.params_scales_creators = []
-        self.is_dynamic = get_hqt_config(self.mod).cfg["dynamic_quantization"] and is_supported_dynamic_op(op_type)
+        self.is_dynamic = get_hqt_config(mod).cfg["dynamic_quantization"] and is_supported_dynamic_op(op_type)
+
         logger.debug("%s %s", self.__class__.__name__, self.__dict__)
 
     def get_module_configuration(self):
@@ -100,6 +101,8 @@ class LinearOpQuantizer(BaseOpQuantizer):
 
     def __init__(self, config, mod, measurement, params, module_type):
         super().__init__(config, mod, measurement, params, module_type)
+        if module_type == "row_parallel_linear" and get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]:
+            self.scales_method_factory.output_scale_method_config.backoff = 1.0
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic))
         self.weight_och_scale_calc = self.scales_method_factory.get_scale_method(QuantTensorName.WEIGHT_OUT_CH)
         self.weight_ich_scale_calc = self.scales_method_factory.get_scale_method(QuantTensorName.WEIGHT_IN_CH)
@@ -109,10 +112,7 @@ class LinearOpQuantizer(BaseOpQuantizer):
         input_scales = self.calc_input_scales(num_of_inputs=1)
         output_measurement = self.measurement.outputs[0] if self.measurement is not None else []
         rescaled_weight = self.mod.weight if hasattr(self.mod, 'weight') else None
-        if (
-            self.scales_method_factory.scale_value_type_map[QuantTensorName.WEIGHT_IN_CH]
-            is not ScaleValueType.DUMMY_SCALES
-        ):
+        if self.scales_method_factory.scale_method_config_map[QuantTensorName.WEIGHT_IN_CH].scale_value_type != ScaleValueType.DUMMY_SCALES:
             # Calculating weight in hpu to support scale calculation CGUID torch.ops.hpu.calculate_scale_for_cast
             rescaled_weight = rescaled_weight.to("hpu")
         if rescaled_weight is not None:
@@ -201,6 +201,8 @@ class RowParallelLinearOpQuantizer(LinearOpQuantizer):
             self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
 
     def init_scales_from_module_config(self, module):
+        if not self.allreduce_quantization_enabled:
+            return super().init_scales_from_module_config(module)
         for idx, input in enumerate(module.inputs):
             if self.inputs_scales_creators[idx].scale is None:
                 self.inputs_scales_creators[idx].scale = input
@@ -219,18 +221,19 @@ class RowParallelLinearOpQuantizer(LinearOpQuantizer):
         return module_config
 
     def get_output_config(self, lp_dtype, hp_dtype, scale_format):
+        if not self.allreduce_quantization_enabled:
+            return super().get_output_config(lp_dtype, hp_dtype, scale_format)
         scale_0 = self.output_scales_creators[0].scale
         inv_scale_0 = self.output_scales_creators[0].calc_invert_scales()
         output_config_dq_scatter_output = DequantOutput(scale_0, lp_dtype, hp_dtype, scale_format=scale_format)
         output_config_q_scatter_input = QuantInput(inv_scale_0, lp_dtype, hp_dtype, scale_format=scale_format)
         output_config = [output_config_dq_scatter_output,
                          output_config_q_scatter_input]
-        if self.allreduce_quantization_enabled:
-            inv_scale_1 = self.output_scales_creators[1].calc_invert_scales()
-            scale_1 = self.output_scales_creators[1].scale
-            output_config_q_gather_input = QuantInput(inv_scale_1, lp_dtype, hp_dtype, scale_format=scale_format)
-            output_config_dq_gather_output = DequantOutput(scale_1, lp_dtype, hp_dtype, scale_format=scale_format)
-            output_config.extend([output_config_q_gather_input, output_config_dq_gather_output])
+        inv_scale_1 = self.output_scales_creators[1].calc_invert_scales()
+        scale_1 = self.output_scales_creators[1].scale
+        output_config_q_gather_input = QuantInput(inv_scale_1, lp_dtype, hp_dtype, scale_format=scale_format)
+        output_config_dq_gather_output = DequantOutput(scale_1, lp_dtype, hp_dtype, scale_format=scale_format)
+        output_config.extend([output_config_q_gather_input, output_config_dq_gather_output])
         return output_config
 
 class MatmulOpQuantizer(BaseOpQuantizer):
@@ -333,6 +336,16 @@ class KVCacheOpQuantizer(BaseOpQuantizer):
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
         self.output_scales_creators.append(self.inputs_scales_creators[0])
 
+    # TODO: Remove after implementing lp_dtype in OHF.
+    def init_input_config(self, scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
+        input_config = super().init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, False, fake_quant)
+        if use_qdq:
+            input_config.extend([
+                QuantDequant(s_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq)
+                for s_inv in scales_inv
+            ])
+        return input_config
+
     def get_scales_module_config(self):
         input_scales = self.calc_input_scales(num_of_inputs=1)
         self.output_scales_creators[0].scale = self.inputs_scales_creators[0].scale
@@ -345,11 +358,13 @@ class KVCacheOpQuantizer(BaseOpQuantizer):
         input_scales_inv = [
             self.inputs_scales_creators[i].calc_invert_scales() for i in range(len(self.inputs_scales_creators))
         ]
-        input_config = super().init_input_config(
+        # TODO: After implementing lp_dtype in OHF can call:
+        # `super().init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, False, fake_quant)`
+        input_config = self.init_input_config(
             input_scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant
         )
         output_config = [
-            DequantOutput(self.output_scales_creators[0].scale, lp_dtype, hp_dtype, scale_format=scale_format)
+            DequantOutput(self.output_scales_creators[0].scale, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=False)
         ]
         return ModuleConfig(input_config, output_config)
 
@@ -359,7 +374,13 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
     def __init__(self, config, mod, measurement, params, module_type):
         super().__init__(config, mod, measurement, params, module_type)
         num_of_inputs = len(self.measurement.inputs) if self.measurement is not None else 1
-        num_of_experts = self.mod.num_experts if self.mod.num_experts is not None else 8
+        if hasattr(self.mod, "local_num_experts"):
+            num_of_experts = self.mod.local_num_experts
+        elif hasattr(self.mod, "num_experts"):
+            num_of_experts = self.mod.num_experts
+        else:
+            num_of_experts = 8
+        
         self.inputs_scales_creators = [
             self.scales_method_factory.get_scale_method(QuantTensorName.INPUT)
             for i in range(num_of_inputs + num_of_experts)
@@ -368,7 +389,12 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
 
     def get_scales_module_config(self):
         num_of_inputs = len(self.measurement.inputs) if self.measurement is not None else 1
-        num_of_experts = self.mod.num_experts if self.mod.num_experts is not None else 8
+        if hasattr(self.mod, "local_num_experts"):
+            num_of_experts = self.mod.local_num_experts
+        elif hasattr(self.mod, "num_experts"):
+            num_of_experts = self.mod.num_experts
+        else:
+            num_of_experts = 8
         input_scales = self.calc_input_scales(num_of_inputs=num_of_inputs)
         for i in range(num_of_experts):
             output_measurement = self.measurement.outputs[i + 1] if self.measurement is not None else []
@@ -392,6 +418,7 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
         output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
         return ModuleConfig(input_config, output_config)
 
+    
 
 ops_quantizer_map = {"linear": LinearOpQuantizer,
                       "matmul": MatmulOpQuantizer,

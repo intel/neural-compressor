@@ -15,34 +15,49 @@ import torch
 import habana_frameworks.torch as ht
 from neural_compressor.torch.algorithms.fp8_quant._core.patching_common import mod_default_dict
 from neural_compressor.torch.algorithms.fp8_quant._core.utils import should_quantize
+from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods.scale_method_config import ScaleMethodString
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import (
     Fp8cfg,
     QuantMode,
-    ScaleMethod,
     ScaleFormat,
     get_hqt_config,
 )
 
 from neural_compressor.torch.quantization import prepare, convert, FP8Config # user level API
 
+SUPPORTED_DYNAMIC_SCALES= [
+    ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW
+]
+
+HW_ALIGNED_SCALE_METHODS = [
+    ScaleMethodString.MAXABS_HW,
+    ScaleMethodString.MAXABS_HW_OPT_WEIGHT,
+    ScaleMethodString.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2,
+    ScaleMethodString.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2
+]
+
+QUANT_ONLY_SCALE_METHODS = [
+    ScaleMethodString.UNIT_SCALE,
+    ScaleMethodString.HW_ALIGNED_SINGLE_SCALE
+]
+
 # TODO [SW-196641]: fix the following issues:
 SCALE_METHODS_SEGFAULT = [
-    ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2,
-    ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2,
-    ScaleMethod.MAXABS_HW_OPT_WEIGHT,
-    ScaleMethod.MAXABS_POW2_OPT_WEIGHT,
+    ScaleMethodString.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2,
+    ScaleMethodString.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2,
+    ScaleMethodString.MAXABS_HW_OPT_WEIGHT,
+    ScaleMethodString.MAXABS_POW2_OPT_WEIGHT,
 ]
 SCALE_METHODS_KEY_ERROR = [
-    ScaleMethod.MAX,
-    ScaleMethod.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
-    ScaleMethod.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
-    ScaleMethod.SMOOTHQUANT_OPT,
+    ScaleMethodString.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
+    ScaleMethodString.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2,
+    ScaleMethodString.SMOOTHQUANT_OPT,
 ]
 SCALE_METHODS_COMPILATION_ERROR = [
-    ScaleMethod.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2,
-    ScaleMethod.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2,
+    ScaleMethodString.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2,
+    ScaleMethodString.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2,
 ]
-SCALE_METHODS_QUANT_ONLY = [ScaleMethod.UNIT_SCALE, ScaleMethod.HW_ALIGNED_SINGLE_SCALE]
+SCALE_METHODS_QUANT_ONLY = [ScaleMethodString.UNIT_SCALE, ScaleMethodString.HW_ALIGNED_SINGLE_SCALE]
 
 QUANT_MODES_DEFAULT = [QuantMode.MEASURE, QuantMode.QUANTIZE]
 QUANT_MODES_QUANT_ONLY = [QuantMode.QUANTIZE]
@@ -54,13 +69,13 @@ DTYPE_TO_HPDTYPE_STR = {
 }
 
 RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST = [
-    ScaleMethod.UNIT_SCALE,
-    ScaleMethod.HW_ALIGNED_SINGLE_SCALE,
-    ScaleMethod.MAXABS_HW,
-    ScaleMethod.MAXABS_POW2,
-    ScaleMethod.MAXABS_HW_OPT_WEIGHT,
-    ScaleMethod.MAXABS_POW2_OPT_WEIGHT,
-    ScaleMethod.MAXABS_ARBITRARY
+    ScaleMethodString.UNIT_SCALE,
+    ScaleMethodString.HW_ALIGNED_SINGLE_SCALE,
+    ScaleMethodString.MAXABS_HW,
+    ScaleMethodString.MAXABS_POW2,
+    ScaleMethodString.MAXABS_HW_OPT_WEIGHT,
+    ScaleMethodString.MAXABS_POW2_OPT_WEIGHT,
+    ScaleMethodString.MAXABS_ARBITRARY
 ]
 
 # Expects to get an exception. If there's no exception, the test will fail
@@ -145,7 +160,7 @@ def run_accuracy_test(
     module_args: typing.Sequence = (),
     module_kwargs: typing.Mapping = {},
     lp_dtype: torch.dtype,
-    scale_method: ScaleMethod,
+    scale_method: ScaleMethodString,
     measure_vectors: typing.Optional[typing.Iterable[TestVector]] = None,
     test_vectors: typing.Iterable[TestVector],
     seed: typing.Optional[int] = None,
@@ -213,8 +228,8 @@ def run_accuracy_test(
         }[mode]
 
         for vector in vectors:
-            reference_output = reference_model(*(input.clone() for input in vector.inputs)).to(float)
-            quantized_output = quantized_model(*(input.clone() for input in vector.inputs)).to(float)
+            reference_output = reference_model(*(input.clone() for input in vector.inputs)).cpu().to(float)
+            quantized_output = quantized_model(*(input.clone() for input in vector.inputs)).cpu().to(float)
 
             # Override tolerance values given by the caller
             tolerance = {
@@ -287,7 +302,7 @@ dir_path = os.path.dirname(os.path.realpath(__file__))
 TEST_ONLY_OUTPUT_DIRECTORY = f"{dir_path}/test/3x/torch/algorithms/fp8_quant/output/"
 
 
-def get_test_unique_dump_path(scale_method: ScaleMethod):
+def get_test_unique_dump_path(scale_method: ScaleMethodString):
     # This is a unique id of the test including the parameters, thanks to pytest.
     # TODO: make sure this globally-ever unique (probably add global init timestamp)
     unique_test_id = os.environ.get("PYTEST_CURRENT_TEST")
@@ -297,7 +312,7 @@ def get_test_unique_dump_path(scale_method: ScaleMethod):
 def _get_test_only_config(
     *,
     mode: QuantMode,
-    scale_method: ScaleMethod,
+    scale_method: ScaleMethodString,
     lp_dtype: torch.dtype,
     device_type: str = get_device_name(),
     scale_format: ScaleFormat = ScaleFormat.SCALAR,
@@ -330,7 +345,7 @@ def _get_test_only_config(
 def get_internal_config(
     *,
     mode: QuantMode,
-    scale_method: ScaleMethod,
+    scale_method: ScaleMethodString,
     lp_dtype: torch.dtype,
     device_type: str = get_device_name(),
     **kwargs
@@ -344,7 +359,7 @@ def get_internal_config(
 def get_API_level_config(
     *,
     mode: QuantMode,
-    scale_method: ScaleMethod,
+    scale_method: ScaleMethodString,
     lp_dtype: torch.dtype,
     device_type: str = get_device_name(),
     scale_format: ScaleFormat = ScaleFormat.SCALAR,
