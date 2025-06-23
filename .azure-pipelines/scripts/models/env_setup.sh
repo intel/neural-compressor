@@ -52,10 +52,6 @@ log_dir="/neural-compressor/.azure-pipelines/scripts/models"
 if [[ "${inc_new_api}" == "3x"* ]]; then
     pip install cmake==3.31.6
     WORK_SOURCE_DIR="/neural-compressor/examples/3.x_api/${framework}"
-    git clone https://github.com/intel/intel-extension-for-transformers.git /itrex
-    cd /itrex
-    pip install -r requirements.txt
-    pip install -v .
 else
     WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
 fi

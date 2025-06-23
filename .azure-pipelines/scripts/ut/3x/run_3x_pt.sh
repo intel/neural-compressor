@@ -12,8 +12,7 @@ echo "##[section]import check pass"
 # install requirements
 echo "##[group]set up UT env..."
 export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
-pip install -r /neural-compressor/test/3x/torch/requirements.txt
-pip install torch==2.7.0 torchvision==0.22.0 # For auto-round
+pip install -r /neural-compressor/test/3x/torch/requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 pip install pytest-cov
 pip install pytest-html
 echo "##[endgroup]"
