@@ -95,6 +95,8 @@ class eval_classifier_optimized_graph:
             from neural_compressor import quantization
             from neural_compressor.config import PostTrainingQuantConfig
             from neural_compressor.utils.create_obj_from_config import create_dataloader
+            from neural_compressor.config import AccuracyCriterion
+            accuracy_criterion = AccuracyCriterion(criterion='absolute', tolerable_loss=0.5)  
             calib_dataloader_args = {
                 'batch_size': 10,
                 'dataset': {"ImageRecord": {'root':args.dataset_location}},
@@ -111,7 +113,7 @@ class eval_classifier_optimized_graph:
                 'filter': None
             }
             eval_dataloader = create_dataloader('tensorflow', eval_dataloader_args)
-            conf = PostTrainingQuantConfig(calibration_sampling_size=[50, 100])
+            conf = PostTrainingQuantConfig(backend="itex", calibration_sampling_size=[50, 100], accuracy_criterion=accuracy_criterion)
             from neural_compressor import Metric
             top1 = Metric(name="topk", k=1)
             q_model = quantization.fit(args.input_graph, conf=conf, calib_dataloader=calib_dataloader,
