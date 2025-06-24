@@ -12,10 +12,11 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import gc
+
 import torch
 import torch.nn as nn
 import numpy as np
+import os
 
 from .scale_methods import ops_quantizer
 from .._quant_common.quant_config import QuantMode
@@ -30,7 +31,7 @@ from .scale import load_layer_scales
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 from neural_compressor.torch.algorithms.fp8_quant._core.common import dequant_original_fp8_weight_if_needed
 from .scale_methods.scale_method_factory import ScaleValueType
-from .scale_methods.scale_method_config import ScaleMethodConfig, ACTIVATION, WEIGHT, DEFAULT
+from .scale_methods.scale_method_config import ScaleMethodConfig, find_node_scale_method_config, CfgStr, dump_scale_method_config_by_mod_map
 
 cur_accelerator = auto_detect_accelerator()
 
@@ -132,11 +133,10 @@ def prepare_model(model, mod_list, measurement, scale_file, scale_method_config,
     save_file = False
     patched_modules = []
     patched_module_types = set()
-
+    scale_method_config_by_mod_map = {}
     is_dynamic_quantization = config.cfg["dynamic_quantization"]
 
     should_quantize_cond = True # In static quantization we quantize everything
-    scale_method_config_default = scale_method_config[DEFAULT] #TODO: [SW-228539]	Support setting scale method per node in INC FP8
     with torch.no_grad():
         for name, mod in model.named_modules():
             mod_type_str = mod.__class__.__name__
@@ -158,12 +158,13 @@ def prepare_model(model, mod_list, measurement, scale_file, scale_method_config,
 
                 # TODO [SW-217813]: support dynamic quantization in all ops and remove should_quantize_cond
                 if should_quantize_cond:
+                    scale_method_config_node = find_node_scale_method_config(scale_method_config, name, mod_type_str)
                     mod_extra_config, save_file = load_layer_scales(mod, name, config,
                                                                 mod_type_str, measurement,
                                                                 scales, scale_file,
                                                                 scales_file_format,
-                                                                scales_obj, scale_method_config_default,
-                                                                scale_config, save_file)
+                                                                scales_obj, scale_method_config_node,
+                                                                scale_config, save_file, scale_method_config_by_mod_map)
 
                     if not config.cfg["fake_quant"] and mod_default_dict[mod_type_str].should_measure_and_quant:
                         quantize_params(mod, mod_extra_config)
@@ -174,6 +175,11 @@ def prepare_model(model, mod_list, measurement, scale_file, scale_method_config,
     if save_file: # cache calculated scales
         save_scales(model, scales_obj, scales_file_format, scale_file + ".npz")
         save_scales(model, scales_obj, scales_file_format, scale_file + ".json")
+    scale_method_config_dump_path = os.environ.get("SCALE_METHOD_CONFIG_DUMP_PATH", None)
+    if scale_method_config_dump_path is not None:
+        if not os.path.exists(os.path.dirname(scale_method_config_dump_path)):
+            raise FileNotFoundError(f"Scale method config dump path {scale_method_config_dump_path} does not exist.")
+        dump_scale_method_config_by_mod_map(scale_method_config_by_mod_map, scale_method_config_dump_path)
     logger.debug("Patched module types: %s", patched_module_types)
     logger.debug("Patched modules: %s", patched_modules)
     logger.debug("Total patched modules: %d", len(patched_modules))
@@ -261,8 +267,8 @@ def quantize(model, mod_list):
         prepare_model(model, mod_list, measurement, scale_file, scale_method_config, scale_config)
     elif config.cfg["mode"] == QuantMode.LOAD:
         # no measurement and scale file
-        scale_method_config = {ACTIVATION: ScaleMethodConfig(scale_value_type=ScaleValueType.DUMMY_SCALES),
-                               WEIGHT: ScaleMethodConfig(scale_value_type=ScaleValueType.DUMMY_SCALES)}
+        scale_method_config = {CfgStr.ACTIVATION: ScaleMethodConfig(scale_value_type=ScaleValueType.DUMMY_SCALES),
+                               CfgStr.WEIGHT: ScaleMethodConfig(scale_value_type=ScaleValueType.DUMMY_SCALES)}
         prepare_model_with_dummy_measurement(model, mod_list, scale_method_config, scale_config)
     else:
         raise Exception("unexpected mode, expected QuantMode.QUANTIZE or QuantMode.LOAD")

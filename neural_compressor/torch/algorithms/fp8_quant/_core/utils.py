@@ -19,7 +19,7 @@ from ..utils.logger import logger
 from .patching_common import mod_default_dict
 from .measure import prepare_model as prepare_model_for_measure
 from .quantize import quantize
-from .scale_methods.scale_method_config import get_scale_method_from_config, ScaleMethodString, DEFAULT
+from .scale_methods.scale_method_config import get_scale_method_from_config, ScaleMethodString, CfgStr
 from .common import is_runtime_scale_patching
 from neural_compressor.torch.utils.auto_accelerator import is_any_gaudi_accelerator
 import os
@@ -91,7 +91,7 @@ runtime_scale_patching_supported_methods_list = [method for method in scaling_me
 
 def set_runtime_scale_patching_mode(scale_method_config):
     import habana_frameworks.torch.utils.experimental as htexp # importing in local scope since it is gaudi specific
-    scale_method = get_scale_method_from_config(scale_method_config[DEFAULT])
+    scale_method = get_scale_method_from_config(scale_method_config[CfgStr.DEFAULT])
     if is_runtime_scale_patching():
         assert (
             scale_method.name in runtime_scale_patching_supported_methods_list
