@@ -25,8 +25,8 @@ import torch
 
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
 from ..utils.logger import logger
-from .._core.scale_methods.scale_method_config import get_scale_method_from_config, parse_scale_method_config, ScaleMethodString, ACTIVATION, WEIGHT, DEFAULT
-from .._core.scale_methods.scale_method_factory import ScaleGranularity, ScaleValueType, ScaleRoundMethod
+from .._core.scale_methods.scale_method_parser import parse_scale_method, validate_and_populate_scale_method, convert_scale_method_strings_to_enum
+from .._core.scale_methods.scale_method_config import get_scale_method_from_config, check_scale_method_fields, ScaleMethodString, CfgStr, ScaleGranularity, ScaleValueType, ScaleRoundMethod
 
 try:
     world_size = torch.distributed.get_world_size()
@@ -111,8 +111,6 @@ def is_supported_dynamic_op(op_type):
     return ret
 
 
-
-
 def get_hqt_config(mod) -> Fp8cfg:
     return mod.__hqt_config__
 
@@ -188,11 +186,14 @@ class Fp8cfg:
             "row_parallel_linear_allreduce_quantization" : False, # Turn on/off fp8 allreduce optimization detailed in SW-207602
             "dynamic_quantization" : False # Turn on/off fp8 dynamic quantization
         }
-        # assert measured_global_config['allowlist']['names'] == [''], "Allowlist names not yet implemented"
-
         # go over all user-defined keys from json, handle various cases
         for keys in custom_config:
             if keys in _config_to_enum.keys():
+                if keys == "scale_method" and isinstance(custom_config[keys], dict):
+                    # TODO: SW-230643 Add hash_id to file name in new scale method config
+                    measured_global_config["recalc_scales"] = True
+                    measured_global_config["scale_method"] = convert_scale_method_strings_to_enum(custom_config[keys])
+                    continue
                 custom_config[keys] = _get_enum_from_string(_config_to_enum[keys], custom_config[keys], keys)
                 if keys in _configs_that_use_enum_value:
                     custom_config[keys] = custom_config[keys].value
@@ -213,16 +214,10 @@ class Fp8cfg:
                     measured_global_config["blocklist"] = custom_config[keys]
                 else:
                     measured_global_config[keys] = custom_config[keys]
+        measured_global_config["scale_method"] = parse_scale_method(measured_global_config["scale_method"])
+        scale_method_config = measured_global_config["scale_method"]
+        validate_and_populate_scale_method(scale_method_config)
 
-        measured_global_config["scale_method"] = parse_scale_method_config(measured_global_config["scale_method"])
-        scale_method_config = measured_global_config["scale_method"][DEFAULT]
-        scale_method = get_scale_method_from_config(scale_method_config)
-
-        if scale_method is None:
-            raise ValueError(
-                f"Unsupported config: given scale method config {scale_method_config} is not supported. "
-                f"Please check the list of supported scale methods."
-            ) #TODO: Support custom scale methods
 
         # If seperate_measure_files is True (default value), then it is assumed that there are multiple distinct measure and scale files
         # and they are stored in / loaded from paths with the correct index as a suffix. Else, only one is searched for.
@@ -232,13 +227,13 @@ class Fp8cfg:
         # set device_for_scales config for gaudi device only
         if measured_global_config["device_type"].value > INCAcceleratorType.GAUDI_MIN.value:
             logger.debug("setting device for scales config")
-            Fp8cfg.set_gaudi_device_for_scales(custom_config, measured_global_config, scale_method)
+            Fp8cfg.set_gaudi_device_for_scales(custom_config, measured_global_config, scale_method_config)
 
         if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
-            if scale_method_config[WEIGHT].granularity == ScaleGranularity.PCS or scale_method_config[ACTIVATION].granularity == ScaleGranularity.PCS:
+            if check_scale_method_fields(scale_method_config, granularity_weight=ScaleGranularity.PCS, reducer=any) or \
+               check_scale_method_fields(scale_method_config, granularity_activation=ScaleGranularity.PCS, reducer=any):
                 measured_global_config["scale_format"] = ScaleFormat.CONST
-                logger.warning(f"Cannot use 'scale_format = SCALAR' when using PCQ (Per Channel Quantization, "
-                               f"e.g. {scale_method}) value for 'scale_method'. Reduced to 'CONST'.")
+                logger.warning(f"Cannot use 'scale_format = SCALAR' when using PCQ (Per Channel Quantization), Reduced to 'CONST'.")
             if measured_global_config["fake_quant"]:
                 measured_global_config["scale_format"] = ScaleFormat.CONST
                 logger.warning(f"Cannot use 'scale_format = SCALAR' when using fake_quant. Reduced to 'CONST'.")
@@ -253,27 +248,28 @@ class Fp8cfg:
             # TODO: "Linear only" in types still causes issues as llama7b quantizes also self_attn,
             # which should be blocked for some reason. We might then want to set measured_global_config["allowlist"]["types"] = supported_dynamic_ops
             # TODO [SW-222725]: support HW aligned rounding in dynamic quantization
-            if scale_method_config[ACTIVATION].rounding_method == ScaleRoundMethod.HW_ALIGNED or \
-                (scale_method_config[WEIGHT].scale_value_type == ScaleValueType.FIXED_VALUE and scale_method_config[ACTIVATION].scale_value_type == ScaleValueType.FIXED_VALUE):
+            if check_scale_method_fields(scale_method_config, rounding_method_activation= ScaleRoundMethod.HW_ALIGNED, reducer=any) or \
+                check_scale_method_fields(scale_method_config, scale_value_type_activation= ScaleValueType.FIXED_VALUE, scale_value_type_weight= ScaleValueType.FIXED_VALUE, reducer=any):
                 raise ValueError(
-                    f"Unsupported config: scale_method {scale_method} is not supported in dynamic quantization"
+                    f"Unsupported config: scale_method {scale_method_config} is not supported in dynamic quantization"
                 )
+            if quant_mode not in (QuantMode.QUANTIZE, QuantMode.LOAD):
+                raise ValueError(f"Quantization mode is {quant_mode}, but dynamic quantization is only supported in QUANTIZE or LOAD mode")
+            measured_global_config["use_stats_files"] = False
             #TODO [SW-224403]: enable dynamic quantization in row parallel allreduce
             if measured_global_config["row_parallel_linear_allreduce_quantization"]:
                 raise ValueError(f"Dynamic quantization is not supported when using row_parallel_linear_allreduce_quantization")
         else:
-            if scale_method == ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
+            if check_scale_method_fields(scale_method_config, scale_method= ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW, reducer=any):
                 raise ValueError(
-                    f"Unsupported config: scale_method {scale_method} is supported only in dynamic quantization"
+                    f"Unsupported config: scale_method ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW is supported only in dynamic quantization"
                 )
 
-        if scale_method_config[WEIGHT].scale_value_type == ScaleValueType.FIXED_VALUE and scale_method_config[ACTIVATION].scale_value_type == ScaleValueType.FIXED_VALUE or dynamic_quantization:
-            if quant_mode in (QuantMode.QUANTIZE, QuantMode.LOAD):
-                logger.debug(f"Quantization mode is quant, scale_method is {scale_method} or running dynamic quantization, so stats files won't be used")
+        if (dynamic_quantization or
+            check_scale_method_fields(scale_method_config, scale_value_type_activation= ScaleValueType.FIXED_VALUE, scale_value_type_weight= ScaleValueType.FIXED_VALUE, reducer=all)) and \
+            quant_mode in (QuantMode.QUANTIZE, QuantMode.LOAD):
+                logger.debug(f"Quantization mode is QUANTIZE or LOAD and all scale_method are quant only so stats files won't be used")
                 measured_global_config["use_stats_files"] = False
-            else:
-                raise ValueError(f"Quantization mode is {quant_mode}, scale_method is {scale_method} (quant only). Unexpected behavior. "
-                                  "This scale method doesn't require measurements.")
         else:
             measured_global_config["use_stats_files"] = True
             base_name = os.path.basename(measured_global_config["dump_stats_path"])
@@ -291,7 +287,7 @@ class Fp8cfg:
                 + "_hooks_"
                 + measured_global_config["observer"]
                 + "_"
-                + scale_method.name
+                + get_scale_method_from_config(measured_global_config["scale_method"][CfgStr.DEFAULT]).name #TODO SW-230643 Add hash_id to file name in new scale method config
                 + worker_st
             )
             if (quant_mode == QuantMode.MEASURE) or (
@@ -339,10 +335,9 @@ class Fp8cfg:
 
         elif measured_global_config["device_for_scales"] != measured_global_config["device_type"]:
             # Currently, only maxabs_hw is supported for a different device scales configuration
-            if scale_method != ScaleMethodString.MAXABS_HW:
+            if not check_scale_method_fields(scale_method_dict=scale_method, scale_method= ScaleMethodString.MAXABS_HW, reducer=all):
                 raise ValueError(
-                    f"Unsupported config: scale_method: {measured_global_config['scale_method']['default']} "
-                    f"for scale device overriding: {measured_global_config['device_for_scales']}"
+                    f"Unsupported config: scale_method: {scale_method} for scale device overriding: {measured_global_config['device_for_scales']}"
                 )
             if not (
                 measured_global_config["device_for_scales"] == INCAcceleratorType.GAUDI2

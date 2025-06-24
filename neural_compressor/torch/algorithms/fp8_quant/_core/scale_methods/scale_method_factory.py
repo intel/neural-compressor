@@ -17,9 +17,7 @@ from .round_scales_function import *
 from ..common import get_device_type_for_scales
 from .scales_method import *
 from ...utils.logger import logger
-
-ACTIVATION = "activation"
-WEIGHT = "weight"
+from .scale_method_config import ScaleRoundMethod, ScaleValueType, ScaleGranularity, CfgStr
 
 class QuantTensorName(Enum):
     INPUT = auto()
@@ -27,25 +25,6 @@ class QuantTensorName(Enum):
     WEIGHT_IN_CH = auto()
     OUTPUT = auto()
 
-class ScaleGranularity(Enum):
-    PTS = auto()
-    PCS = auto()
-
-class ScaleValueType(Enum):
-    MAXABS = auto()
-    FIXED_VALUE = auto()
-    OPT = auto()
-    SMOOTHQUANT_MAXABS = auto()
-    SMOOTHQUANT_OPT = auto()
-    SMOOTHQUANT_WEAK = auto()
-    DUMMY_SCALES = auto()
-
-class ScaleRoundMethod(Enum):
-    IDENTITY = auto()
-    POW2 = auto()
-    HW_ALIGNED = auto()
-    HW_ALIGNED_FIXED = auto()
-    SCALE_UNIT = auto()
 
 HW_ALIGNED_ROUND_METHODS = [ScaleRoundMethod.HW_ALIGNED, ScaleRoundMethod.HW_ALIGNED_FIXED]
 
@@ -58,8 +37,8 @@ class ScaleMethodFactory:
         self.device_for_scales = get_device_type_for_scales(mod)
         self.op_type = op_type
 
-        input_scale_method_config = config[ACTIVATION]
-        weight_scale_method_config = config[WEIGHT]
+        input_scale_method_config = config[CfgStr.ACTIVATION]
+        weight_scale_method_config = config[CfgStr.WEIGHT]
         output_scale_method_config = input_scale_method_config
 
         self.scale_method_config_map = {

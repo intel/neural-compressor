@@ -1817,7 +1817,7 @@ class FP8Config(TorchBaseConfig):
         blocklist: dict = {"names": [], "types": ()},
         allowlist: dict = {"names": [], "types": get_white_list()},
         mode: str = "AUTO",
-        scale_method: str = "maxabs_hw",
+        scale_method: Union[str, dict] = "maxabs_hw",
         scale_params: dict = {},
         observer: str = "maxabs",
         mod_dict: dict = {},
@@ -1837,7 +1837,7 @@ class FP8Config(TorchBaseConfig):
             blocklist (dict, optional): Whether to skip fp8 quantization for specific op names or types, name could be substring. Defaults to {"names": [], "types": ()}.
             allowlist (dict, optional): Whether to execute fp8 quantization for specific op names or types. Defaults to {"names": [], "types": FP8_WHITE_LIST}.
             mode (str, optional): Choose the quantization mode. Defaults to "AUTO".
-            scale_method (str, optional): Select method used to generate scale from calibration info. Defaults to "maxabs_hw".
+            scale_method (str or dict, optional): Select method used to generate scale from calibration info. Can be a string or a dict. Defaults to "maxabs_hw".
             scale_params (dict, optional): _description_. Defaults to {}.
             observer (str, optional): Params of scales. Defaults to "maxabs".
             mod_dict (dict, optional): The dict of modules to quantize. Defaults to {}.

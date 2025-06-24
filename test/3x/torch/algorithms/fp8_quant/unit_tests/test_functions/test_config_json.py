@@ -53,21 +53,18 @@ def test_predefined_config(lp_dtype, scale_method, quant_mode):
         pytest.xfail("KeyError")
     elif scale_method == ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
         return run_with_raised_exception(run_predefined_config, ValueError, "Unsupported config: scale_method")
-    # This is an expected exception, quant only methods support only quantization
-    elif scale_method in SCALE_METHODS_QUANT_ONLY and quant_mode not in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-        run_with_raised_exception(run_predefined_config, ValueError, "Unexpected behavior. This scale method doesn't require measurements.")
     # This is an expected exception, as test is not measuring before
     elif scale_method not in SCALE_METHODS_QUANT_ONLY:
         if quant_mode == QuantMode.QUANTIZE:
             run_with_raised_exception(run_predefined_config, FileNotFoundError, "Failed to load file ")
         # TODO [SW-196641]: fix the following issue:
-        elif quant_mode == QuantMode.SHAPE:
-            error_message = (
-                "cannot access local variable 'fname_base' where it is not associated with a value"
-                if sys.version_info >= (3, 11)
-                else "local variable 'fname_base' referenced before assignment"
-            )
-            run_with_raised_exception(run_predefined_config, UnboundLocalError, error_message)
+    elif quant_mode == QuantMode.SHAPE:
+        error_message = (
+            "cannot access local variable 'fname_base' where it is not associated with a value"
+            if sys.version_info >= (3, 11)
+            else "local variable 'fname_base' referenced before assignment"
+        )
+        run_with_raised_exception(run_predefined_config, UnboundLocalError, error_message)
     else:
         run_predefined_config()
 
