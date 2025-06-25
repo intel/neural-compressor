@@ -365,11 +365,6 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         qweight = self.qweight.T.contiguous() if self.use_optimum_format else self.qweight
 
         device = scales.device
-        if self.g_idx is None:
-            # used for recovering fp32_weight
-            self.g_idx = torch.tensor([i // self.group_size for i in range(self.in_features)], dtype=torch.int32).to(
-                device
-            )
         # unpack weight
         if not self.use_optimum_format and self.compression_dim == 0:
             qweight = qweight.T.contiguous()
@@ -413,6 +408,11 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         fp32_weight = torch.zeros(self.out_features, self.in_features, dtype=self.float_type).to(device)
 
         # recover fp32 weight
+        if self.g_idx is None:
+            # used for recovering fp32_weight
+            self.g_idx = torch.tensor([i // self.group_size for i in range(self.in_features)], dtype=torch.int32).to(
+                device
+            )
         if zp is not None:
             # recover fp32 weight with int_weight, scale, and zero_point
             for idx in range(self.in_features):
@@ -729,7 +729,8 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         scales = self.scales
         qweight = self.qweight
         zeros = self.qzeros
-        weight = torch.ops.hpu.convert_from_uint4(qweight, scales, zeros, input_dtype)
+        g_idx = self.g_idx
+        weight = torch.ops.hpu.convert_from_uint4(qweight, scales, zeros, input_dtype, g_idx)
         output = self.matmul_internal(input, weight)
         output = output.to(dtype=input_dtype).reshape(
             output_shape
@@ -759,6 +760,9 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
 
         if bias is not None:
             self.bias = bias.to("hpu").to(torch.bfloat16)
+
+        if g_idx is not None:
+            self.g_idx = g_idx.to("hpu").to(torch.int32)
 
     def unpack(self):
         """Unpack weight and zero point."""

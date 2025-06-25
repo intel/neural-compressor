@@ -470,7 +470,7 @@ class WOQModelLoader:
         module_kwargs["group_size"] = module_quantization_config.get("group_size", 32)
 
         # spceific initialization kwargs
-        module_kwargs["g_idx"] = True if name + ".g_idx" in self.loaded_state_dict_keys else False
+        module_kwargs["g_idx"] = module_quantization_config.get("desc_act", False)
         module_kwargs["zp"] = True if name + ".qzeros" in self.loaded_state_dict_keys else False
         module_kwargs["use_optimum_format"] = True
         module_kwargs["bias"] = linear_module.bias is not None
