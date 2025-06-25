@@ -36,6 +36,7 @@ from neural_compressor.torch.utils import (
     SaveLoadFormat,
     get_enum_from_format,
     UNIT_MAPPING,
+    write_json_file,
 )
 
 
@@ -390,8 +391,13 @@ def save(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
         # Ensure those codes run on a single rank.
         configs_mapping = model.qconfig
         config_object = configs_mapping[next(iter(configs_mapping))]
-        update_model_config(model, format, config_object)
-        model.config.save_pretrained(checkpoint_dir)
+        config_object.mode = "LOAD"
+        config_object.world_size = world_size  # record world_size for loading
+        # Flux pipeline has FrozenDict as config
+        if not isinstance(model.config, dict):
+            update_model_config(model, format, config_object)
+            model.config.save_pretrained(checkpoint_dir)
+        write_json_file(os.path.join(checkpoint_dir, "quantization_config.json"), config_object.to_dict())
 
         if hasattr(model, "generation_config") and model.generation_config is not None:
             model.generation_config.save_pretrained(checkpoint_dir)
@@ -405,16 +411,31 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
     """Initialize BF16 model with meta tensor."""
     import transformers
     from accelerate import init_empty_weights
-    config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
+
+    # Handling model objects not in AutoModelForCausalLM
+    model = kwargs.get("original_model", None)
+    # Handle Flux pipeline without AutoConfig
+    try:
+        config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
+        quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
+        hp_dtype = config.torch_dtype
+    except:
+        config, hp_dtype = model.config, torch.bfloat16
+        quantization_config = kwargs.get("quantization_config", None)
+        setattr(model.config, "quantization_config", quantization_config)
+
+    if quantization_config is not None and "hp_dtype" in quantization_config:
+        hp_dtype = HpDtype[quantization_config["hp_dtype"].upper()].value
+
     # fp8 model provided by neuralmagic.
     if (
-        "quant_method" in config.quantization_config
-        and config.quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
+        "quant_method" in quantization_config
+        and quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
     ):
         from_neuralmagic = True
         if (
-            "kv_cache_scheme" in config.quantization_config
-            and config.quantization_config["kv_cache_scheme"] is not None
+            "kv_cache_scheme" in quantization_config
+            and quantization_config["kv_cache_scheme"] is not None
         ):
             from_neuralmagic_with_kv = True
         else:
@@ -431,16 +452,13 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
         else:
             raise ValueError("Please install optimum-habana to load fp8 kv cache model.")
 
-    from neural_compressor.torch.utils import get_non_persistent_buffers, load_non_persistent_buffers
-
-    hp_dtype = config.torch_dtype
-    if hasattr(config, "quantization_config") and "hp_dtype" in config.quantization_config:
-        hp_dtype = HpDtype[config.quantization_config["hp_dtype"].upper()].value
-    if world_size > 1:
-        import deepspeed
-
+    if model is None:
         with init_empty_weights(include_buffers=False):
             model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=hp_dtype)
+    if world_size > 1:
+        import deepspeed
+        from neural_compressor.torch.utils import get_non_persistent_buffers, load_non_persistent_buffers
+
         # TODO: [SW-199728] [DeepSpeed] Buffers initialized by model are not correct after tensor parallel
         # get_non_persistent_buffers and load_non_persistent_buffers are workarounds of [SW-199728]
         non_persistent_buffers = get_non_persistent_buffers(model)
@@ -451,16 +469,13 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
         model = deepspeed.init_inference(model, **ds_inference_kwargs)
         model = model.module
         load_non_persistent_buffers(model, non_persistent_buffers)
-    else:
-        with init_empty_weights(include_buffers=False):
-            model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=hp_dtype)
     model.to(hp_dtype)
 
     try:
         generation_config = transformers.GenerationConfig.from_pretrained(model_name_or_path, **kwargs)
         model.generation_config = generation_config
     except:  # Since model.generation_config is optional, relaxed exceptions can handle more situations.
-        logger.warning("model.generation_config is not loaded correctly.")
+        logger.warning("model.generation_config may not be loaded correctly.")
     return model, from_neuralmagic, from_neuralmagic_with_kv
 
 
@@ -635,7 +650,8 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
         model.load_state_dict(rank_state_dict, assign=True, strict=False)
         load_scale_params(model, rank_state_dict)  # ensure per-channel scale is loaded correctly
     clear_quantized_func_wrapper_factory()
-    model.tie_weights()
+    if hasattr(model, "tie_weights"):
+        model.tie_weights()
     model = model.to(cur_accelerator.name())
     model = model.eval()
     cur_accelerator.synchronize()
@@ -745,8 +761,6 @@ def update_model_config(model, format, config_object):
         quantization_config = convert_config_to_vllm_compatible(config_object)
         model.config.quantization_config = quantization_config
     else:
-        config_object.mode = "LOAD"
-        config_object.world_size = world_size  # record world_size for loading
         model.config.quantization_config = config_object
 
 
