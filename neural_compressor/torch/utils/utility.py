@@ -13,7 +13,8 @@
 # limitations under the License.
 """Intel Neural Compressor PyTorch utilities."""
 
-
+import os
+import json
 import enum
 import importlib
 from collections import UserDict
@@ -311,8 +312,6 @@ def get_processor_type_from_user_config(user_processor_type: Optional[Union[str,
 
 def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
     """Download hugging face model from hf hub."""
-    import os
-
     from huggingface_hub.constants import DEFAULT_REVISION, HUGGINGFACE_HUB_CACHE
     from huggingface_hub.file_download import REGEX_COMMIT_HASH, repo_folder_name
     from huggingface_hub.utils import EntryNotFoundError
@@ -356,8 +355,6 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
 
 def load_empty_model(pretrained_model_name_or_path, cls=None, **kwargs):
     """Load a empty model."""
-    import os
-
     from accelerate import init_empty_weights
     from transformers import AutoConfig, AutoModelForCausalLM
     from transformers.models.auto.auto_factory import _BaseAutoModelClass
@@ -741,3 +738,20 @@ def get_enum_from_format(format):
             return obj
     raise ValueError(
         f"Invalid format value ('{format}'). Enter one of [{[m.name for m in SaveLoadFormat]}]")
+
+
+def read_json_file(file_path):
+    """Read a JSON file and return its content."""
+    if not file_path or not os.path.exists(file_path):
+        raise FileNotFoundError(f"File {file_path} does not exist.")
+    with open(file_path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def write_json_file(file_path, data):
+    """Write data to a JSON file."""
+    if not file_path:
+        raise ValueError("File path cannot be empty.")
+    with open(file_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+    logger.info(f"Data written to {file_path} successfully.")
