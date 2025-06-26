@@ -152,7 +152,7 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
                 if mod_type == "dynamic_moe" and hasattr(mod, "num_experts"):
                     # override default number of outputs for dynamic moe
                     mod_types[mod_type].num_outputs = mod.num_experts+1
-                    logger.warning(f"Dynamic moe num_outputs set to {mod.num_experts+1}")
+                    logger.warning_once(f"Dynamic moe num_outputs set to {mod.num_experts+1}")
                 mod_extra_config = (
                     init_measure_object(
                         mod,

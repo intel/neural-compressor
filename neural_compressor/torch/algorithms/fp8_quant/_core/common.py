@@ -59,7 +59,7 @@ _mod_types = {
     "dynamic_moe": ModuleType(
         1,
         [],
-        inc_utils.FUSED_MOE_EXPERTS + 1,  # FIXME (Yi) # one output, FUSED_MOE_EXPERTS weights
+        8 + 1,  # FIXME (Yi) # one output, FUSED_MOE_EXPERTS weights
         True,
     ),
 }
