@@ -73,10 +73,10 @@ class QuantizedFuncWrapperFactory():
 
 
     @classmethod
-    def get_quantized_func_wrapper_object(cls, op_type, scale_format):
+    def get_quantized_func_wrapper_object(cls, op_type, scale_format, is_dynamic=False):
         if op_type not in cls.__quantized_func_wrapper_instances:
             quantized_wrapper_class = cls.__device_func_wrappers_mapping[op_type]
-            cls.__quantized_func_wrapper_instances[op_type] = quantized_wrapper_class(scale_format)
+            cls.__quantized_func_wrapper_instances[op_type] = quantized_wrapper_class(scale_format, is_dynamic)
 
         return cls.__quantized_func_wrapper_instances[op_type]
 

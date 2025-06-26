@@ -83,7 +83,8 @@ _mod_default_dict = {
     "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul),
     "MoeFP8Matmul": ModuleInfo("linear", PatchedMoeFP8Matmul),
     "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
-    "FusedMoE": ModuleInfo("matmul", PatchedMixtralMoE, False),
+    # Note: `no_quantize_op` indicates that this module is patched but does not require measurement or quantization.
+    "FusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False),
     "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
     "VllmMixtureOfExpertsOp": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOp),
     "VllmMixtureOfExpertsOpFP8": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8),

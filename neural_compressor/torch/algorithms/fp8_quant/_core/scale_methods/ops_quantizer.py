@@ -382,7 +382,7 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
             num_of_experts = 8
         
         self.inputs_scales_creators = [
-            self.scales_method_factory.get_scale_method(QuantTensorName.INPUT)
+            self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, is_dynamic=self.is_dynamic)
             for i in range(num_of_inputs + num_of_experts)
         ]
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
