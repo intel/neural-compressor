@@ -42,6 +42,14 @@ UNMEASURED_MODELS = "UnmeasuredModels"
 
 INFO_INTERVAL = 30 # seconds
 
+def maybe_dequant_original_fp8_weight(mod: torch.nn.Module, param: torch.Tensor):
+    if param.dtype in [torch.float8_e4m3fn]:
+        if hasattr(mod, "get_dequant_weights_func"):
+            dequant_weights_func = mod.get_dequant_weights_func()
+            if dequant_weights_func is not None:
+                param = dequant_weights_func(mod)
+    return param
+
 _mod_types = {
     "linear": ModuleType(1, ["weight"], 1, False),
     "matmul": ModuleType(2, [], 1, False),
@@ -51,7 +59,7 @@ _mod_types = {
     "dynamic_moe": ModuleType(
         1,
         [],
-        inc_utils.FUSED_MOE_EXPERTS + 1,  # FIXME (Yi) # one output, FUSED_MOE_EXPERTS weights
+        8 + 1,  # FIXME (Yi) # one output, FUSED_MOE_EXPERTS weights
         True,
     ),
 }
@@ -222,15 +230,17 @@ _mod_default_dict = {
     "Softmax": ModuleInfo("softmax", PatchedSoftmax),
     "ModuleFusedSDPA": ModuleInfo("fused_sdpa", PatchedModuleFusedSDPA),
     "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul),
+    "MoeFP8Matmul": ModuleInfo("linear", PatchedMoeFP8Matmul),
     "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
+    "VllmMixtureOfExpertsOpFP8": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8),
     # FIXME (Yi) revert change
     "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
-    "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
-    "VllmMixtureOfExpertsOp": (
-        ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpV2)
-        if os.getenv("LOW_CPU_MEM", "0") == "1"
-        else ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpV1)
-    ),
+    # "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
+    # "VllmMixtureOfExpertsOp": (
+    #     ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpV2)
+    #     if os.getenv("LOW_CPU_MEM", "0") == "1"
+    #     else ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpV1)
+    # ),
 }
 
 
