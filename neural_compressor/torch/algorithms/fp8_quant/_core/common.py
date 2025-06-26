@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2025 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -202,7 +202,7 @@ def is_runtime_scale_patching():
 #TODO [SW-224612]: Use cguid to calc scales and remove the check
 @lru_cache
 def is_calc_scale_with_cguid():
-    return os.getenv("CALC_SCALE_WITH_CGUID", "False").lower() in ["true", "1"]
+    return os.getenv("CALC_SCALE_WITH_CGUID", "True").lower() in ["true", "1"]
 
 #TODO [SW-224612]: Use cguid to calc scales and remove the check
 @lru_cache
