@@ -24,8 +24,8 @@ from .quantized_func_wrapper import QuantizedFuncWrapperFactory
 Functions to interact with QuantizedFuncWrapperFactory singleton object
 """
 
-def get_quantized_func_wrapper(op_type, scale_format):
-    return QuantizedFuncWrapperFactory.get_quantized_func_wrapper_object(op_type, scale_format)
+def get_quantized_func_wrapper(op_type, scale_format, is_dynamic=False):
+    return QuantizedFuncWrapperFactory.get_quantized_func_wrapper_object(op_type, scale_format, is_dynamic)
 
 
 def init_quantized_func_wrapper_factory():
