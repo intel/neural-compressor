@@ -74,7 +74,7 @@ def load_npz(fname):
     return d["arr_0"].item()
 
 
-def save_file(model, d, source_format, fname, mode):
+def save_file(model, d, source_format, fname, mode, num_samples=0):
     from .._quant_common.quant_config import get_hqt_config
     config = get_hqt_config(model)
     logger.debug("Saving %s file: %s", mode, fname)
@@ -87,6 +87,8 @@ def save_file(model, d, source_format, fname, mode):
         "Mode": mode,
         "Nodes": dc,
     }
+    if num_samples > 0:
+        df = { "NumSamples": num_samples, **df}
     try:
         file_functions[ext]['save'](df, fname)
     except:

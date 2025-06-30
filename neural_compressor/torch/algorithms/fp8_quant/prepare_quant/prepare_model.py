@@ -15,7 +15,7 @@
 import os
 from typing import Optional
 
-from .._core.measure import save_measurements
+from .._core.save_measure import save_measurements
 from .._core.utils import prepare_model
 from .._quant_common.quant_config import Fp8cfg, _read_config_from_file, set_hqt_config
 

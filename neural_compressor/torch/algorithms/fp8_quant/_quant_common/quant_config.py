@@ -184,7 +184,8 @@ class Fp8cfg:
             "scale_format": ScaleFormat.SCALAR,
             "measure_on_hpu": True,  # Determines whether to measure model on hpu device.
             "row_parallel_linear_allreduce_quantization" : False, # Turn on/off fp8 allreduce optimization detailed in SW-207602
-            "dynamic_quantization" : False # Turn on/off fp8 dynamic quantization
+            "dynamic_quantization" : False, # Turn on/off fp8 dynamic quantization
+            "calibration_sample_interval" : 0 # number of samples to process before dumping measurements, 0 means no automatic dumping
         }
         # go over all user-defined keys from json, handle various cases
         for keys in custom_config:
