@@ -347,7 +347,6 @@ class PatchedLinearAllReduce(PatchedLinearBase):
 
 class PatchedRowParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        kwargs["func_names"] = ("resolve_input", )
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         from .._core.vllm_functions import get_vllm_row_parallel_collective_func
         self.row_parallel_collective_func = get_vllm_row_parallel_collective_func()
@@ -376,6 +375,19 @@ class PatchedRowParallelLinear(PatchedLinearBase):
                 self.dequant_gather_output = self._mod_extra_config.outputs[3]
         from torch import distributed as dist
         self.world_size = dist.get_world_size()
+
+    def resolve_input(self, input_):
+        """
+        this code is copied from vllm RowParallelLinear forward method
+        """
+        if self.input_is_parallel:
+            input_parallel = input_
+        else:
+            tp_rank = get_tensor_model_parallel_rank()
+            splitted_input = split_tensor_along_last_dim(
+                input_, num_partitions=self.tp_size)
+            input_parallel = splitted_input[tp_rank].contiguous()
+        return input_parallel
 
     def forward_qdq(self, input):
         # TODO: [SW-208441] Support all_reduce_fp8 in forward_qdq in PatchedRowParallelLinear
