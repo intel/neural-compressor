@@ -5,7 +5,7 @@ import shutil
 import copy
 import habana_frameworks.torch.core as htcore
 
-from ..tester import RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST, SCALE_METHODS_KEY_ERROR, run_with_raised_exception
+from ..tester import RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST, run_with_raised_exception
 from neural_compressor.torch.algorithms.fp8_quant._core.common import is_runtime_scale_patching
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethodString
 from neural_compressor.torch.quantization import FP8Config, convert, prepare, finalize_calibration
@@ -52,8 +52,6 @@ def temp_directory():
 @pytest.mark.parametrize("scale_format", ["SCALAR", "CONST"])
 @pytest.mark.parametrize("dynamic_scale_patching", [True, False])
 def test_no_assert(scale_method, scale_format,dynamic_scale_patching, temp_directory):
-    if scale_method in SCALE_METHODS_KEY_ERROR :
-        pytest.xfail("KeyError")
     model = TinyModel()
     model.eval()
     model = model.to("hpu").to(torch.bfloat16)

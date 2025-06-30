@@ -39,8 +39,6 @@ def get_test_vectors(*, dtype: torch.dtype, N: int, D_in: int, atol: float = 0.0
     )
 
 def check_tests_to_skip(scale_method, scale_format, dynamic_quantization, device_type = None):
-    if scale_method in SCALE_METHODS_KEY_ERROR:
-        pytest.xfail("KeyError")
     # TODO [SW-215692]: Fix segfault
     if scale_format == ScaleFormat.CONST or dynamic_quantization:
         if scale_method in [ScaleMethodString.MAXABS_HW_OPT_WEIGHT, ScaleMethodString.MAXABS_POW2_OPT_WEIGHT]:

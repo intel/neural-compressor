@@ -9,7 +9,7 @@ import neural_compressor.torch.algorithms.fp8_quant as fp8_quant
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import QuantMode
 from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods.scale_method_config import ScaleMethodString
-from ...tester import run_with_raised_exception, get_internal_config, SCALE_METHODS_QUANT_ONLY, SCALE_METHODS_KEY_ERROR
+from ...tester import run_with_raised_exception, get_internal_config, SCALE_METHODS_QUANT_ONLY
 from ...test_hpu_utils import *
 
 class Model(torch.nn.Module):
@@ -49,9 +49,8 @@ def test_predefined_config(lp_dtype, scale_method, quant_mode):
         prepare_model._prep_model_with_predefined_config(model, config=config)
         fp8_quant.finish_measurements(model)
 
-    if scale_method in SCALE_METHODS_KEY_ERROR and quant_mode == QuantMode.QUANTIZE:
-        pytest.xfail("KeyError")
-    elif scale_method == ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
+
+    if scale_method == ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
         return run_with_raised_exception(run_predefined_config, ValueError, "Unsupported config: scale_method")
     # This is an expected exception, as test is not measuring before
     elif scale_method not in SCALE_METHODS_QUANT_ONLY:
