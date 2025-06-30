@@ -55,9 +55,6 @@ class Matmul(torch.nn.Module):
 @pytest.mark.parametrize("device_type", device_type)
 @pytest.mark.parametrize("dynamic_quantization", [True, False], ids=["dynamic_quantization", "static_quantization"])
 def test_matmul_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethodString, device_type: str, dynamic_quantization: bool):
-    # TODO [SW-196641]: fix the following issues:
-    if scale_method in SCALE_METHODS_KEY_ERROR:
-        pytest.xfail("KeyError")
     quant_modes = QUANT_MODES_DEFAULT
     atol = 0.2
     if scale_method in SCALE_METHODS_QUANT_ONLY or dynamic_quantization:

@@ -24,13 +24,10 @@ class ScaleMethodString(Enum):
     HW_ALIGNED_SINGLE_SCALE = auto()
     MAXABS_HW = auto()
     MAXABS_POW2 = auto()
-    SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2 = auto()
-    WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2 = auto()
     ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2 = auto()
     ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2 = auto()
     ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2 = auto()
     ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2 = auto()
-    SMOOTHQUANT_OPT = auto()
     MAXABS_HW_OPT_WEIGHT = auto()
     MAXABS_POW2_OPT_WEIGHT = auto()
     MAXABS_ARBITRARY = auto()
@@ -44,9 +41,6 @@ class ScaleValueType(Enum):
     MAXABS = auto()
     FIXED_VALUE = auto()
     OPT = auto()
-    SMOOTHQUANT_MAXABS = auto()
-    SMOOTHQUANT_OPT = auto()
-    SMOOTHQUANT_WEAK = auto()
     DUMMY_SCALES = auto()
 
 class ScaleRoundMethod(Enum):
@@ -150,16 +144,6 @@ scale_method_config_mapping = {
         CfgStr.WEIGHT:     ScaleMethodConfig(granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5),
         CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method= ScaleRoundMethod.HW_ALIGNED, backoff= 0.25)
     },
-    ScaleMethodString.SMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2:
-    {
-        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type = ScaleValueType.SMOOTHQUANT_MAXABS, granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5),
-        CfgStr.ACTIVATION: ScaleMethodConfig(scale_value_type = ScaleValueType.SMOOTHQUANT_MAXABS, granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.25, params={"alpha": 0.5})
-    },
-    ScaleMethodString.WEAKSMOOTHQUANT_WEIGHTS_OUTPUT_CHANNEL_MAXABS_POW2:
-    {
-        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type = ScaleValueType.SMOOTHQUANT_WEAK, granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5),
-        CfgStr.ACTIVATION: ScaleMethodConfig(scale_value_type = ScaleValueType.SMOOTHQUANT_WEAK, granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.25, params={"alpha": 0.5})
-    },
     ScaleMethodString.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2:
     {
         CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type = ScaleValueType.OPT, granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5, params={"weight_scales": [2.0**s for s in range(-3, 5)]}),
@@ -174,11 +158,6 @@ scale_method_config_mapping = {
     {
         CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type = ScaleValueType.OPT, granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5, params={"weight_scales": [2.0**s for s in range(-3, 5)]}),
         CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method= ScaleRoundMethod.POW2, backoff= 0.25)
-    },
-    ScaleMethodString.SMOOTHQUANT_OPT: 
-    {
-        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type = ScaleValueType.SMOOTHQUANT_OPT, granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5, params={"transformed_weight_scales": [2.0**s for s in range(-3, 5)]}),
-        CfgStr.ACTIVATION: ScaleMethodConfig(scale_value_type = ScaleValueType.SMOOTHQUANT_OPT, granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.25,  params={"alpha": 0.5})
     },
 }
 

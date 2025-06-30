@@ -26,8 +26,6 @@ def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
     # TODO [SW-196641]: fix the following issues:
     if scale_method in SCALE_METHODS_SEGFAULT:
         pytest.skip("Not supported")
-    if scale_method in SCALE_METHODS_KEY_ERROR:
-        pytest.xfail("KeyError")
     if scale_method in SCALE_METHODS_COMPILATION_ERROR:
         pytest.xfail("Graph compile error")
     quant_modes = QUANT_MODES_DEFAULT

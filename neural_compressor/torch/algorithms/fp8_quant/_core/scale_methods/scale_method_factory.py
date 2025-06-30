@@ -87,8 +87,7 @@ class ScaleMethodFactory:
                     if scale_value_type in {ScaleValueType.MAXABS, ScaleValueType.OPT}:
                         return MulAdditionalScales(scale_round_method, self.params, self.device_for_scales)
             ## maxabs/opt in channel PTS
-            case (_, ScaleGranularity.PTS, QuantTensorName.WEIGHT_IN_CH, _) \
-                if scale_value_type not in {ScaleValueType.SMOOTHQUANT_OPT, ScaleValueType.SMOOTHQUANT_MAXABS}:
+            case (_, ScaleGranularity.PTS, QuantTensorName.WEIGHT_IN_CH, _):
                 return None
             case (ScaleValueType.MAXABS, ScaleGranularity.PTS, _, _):
                 if is_dynamic:
@@ -111,28 +110,6 @@ class ScaleMethodFactory:
             case (ScaleValueType.OPT, ScaleGranularity.PCS, _, _):
                 opt_list_of_scales = self.scale_method_config_map[tensor_type].params["weight_scales"]
                 return OptScalesPcs(scale_round_method, opt_list_of_scales, self.params, self.device_for_scales, backoff)
-            ## smooth quant
-            case (_, ScaleGranularity.PCS, QuantTensorName.WEIGHT_IN_CH, _) \
-                if scale_value_type in {ScaleValueType.SMOOTHQUANT_OPT, ScaleValueType.SMOOTHQUANT_MAXABS}:
-                return WeightIchSmoothQuant(scale_round_method, self.params, self.device_for_scales)
-            case (_,  ScaleGranularity.PCS, QuantTensorName.OUTPUT, _) \
-                if scale_value_type in {ScaleValueType.SMOOTHQUANT_OPT, ScaleValueType.SMOOTHQUANT_MAXABS} \
-                   and self.op_type in {"linear", "matmul"}:
-                return UseFirstAdditionalScales(scale_round_method, self.params, self.device_for_scales)
-            ## SMOOTHQUANT_MAXABS input and weight out channel
-            case (ScaleValueType.SMOOTHQUANT_MAXABS, ScaleGranularity.PCS, QuantTensorName.WEIGHT_OUT_CH, _):
-                return MaxAbsPcs(scale_round_method, self.params, self.device_for_scales, backoff)
-            case (ScaleValueType.SMOOTHQUANT_MAXABS, ScaleGranularity.PCS, QuantTensorName.INPUT, _):
-                alpha = self.scale_method_config_map[QuantTensorName.INPUT].params["alpha"]
-                return InputSmoothQuantMaxAbs(scale_round_method, self.mod.weight, self.params, self.device_for_scales, backoff, alpha)
-            ## SMOOTHQUANT_OPT input and weight out channel
-            case (ScaleValueType.SMOOTHQUANT_OPT, _, QuantTensorName.WEIGHT_OUT_CH, _):
-                opt_list_of_scales = self.scale_method_config_map[tensor_type].params["transformed_weight_scales"]
-                return OptScalesPcs(scale_round_method, opt_list_of_scales, self.params, self.device_for_scales, backoff)
-            case (ScaleValueType.SMOOTHQUANT_OPT, _, QuantTensorName.INPUT, _):
-                backoff_weight =  self.scale_method_config_map[QuantTensorName.WEIGHT_OUT_CH].backoff
-                alpha = self.scale_method_config_map[QuantTensorName.INPUT].params["alpha"]
-                return InputSmoothQuantOpt(scale_round_method, self.mod.weight, self.params, self.device_for_scales, backoff, backoff_weight, alpha)
             case _:
                 raise NotImplementedError("the config: scale_round_method: " + \
                                           str(scale_round_method) +
