@@ -37,7 +37,7 @@ fp8_config = {
 def check_tests_to_skip(scale_method, scale_value_type_weight = None, scale_value_type_activation = None):
     if scale_value_type_weight == ScaleValueType.DUMMY_SCALES or scale_value_type_activation == ScaleValueType.DUMMY_SCALES:
         pytest.xfail("Dummy scales is not a scale method")
-    if scale_method in SCALE_METHODS_KEY_ERROR or scale_method in SUPPORTED_DYNAMIC_SCALES:
+    if scale_method in SUPPORTED_DYNAMIC_SCALES:
         pytest.xfail("Key error")
 
 @pytest.mark.parametrize("scale_granularity_weight", ScaleGranularity)

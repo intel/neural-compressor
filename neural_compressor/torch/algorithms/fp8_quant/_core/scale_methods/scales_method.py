@@ -225,60 +225,6 @@ class OptScalesPcs(ScalesMethod):
         return self.scale
 
 
-class InputSmoothQuantMaxAbs(ScalesMethod):
-    def __init__(self, round_scale_method, weight, params, device_for_scales, backoff, alpha):
-        super().__init__(round_scale_method, params, device_for_scales)
-        self.round_scale_method = round_scale_method
-        self.weight = weight
-        self.alpha = alpha
-        self.backoff = backoff
-        self.device_for_scales = device_for_scales
-
-    def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        weight_scale_in_ch = MaxAbsPcs(ScaleIdentity(), self.params, self.device_for_scales, 1.0, 1.0, dim=0).calc_scales(
-            self.weight, QuantTensorType.CONST)
-        input_range = torch.tensor(tensor, dtype=self.hp_dtype, device=self.device)
-        input_scale = MaxAbsPts(ScaleIdentity(), self.params, self.device_for_scales, 1.0, 1.0).calc_scales(tensor,
-                                                                                                            QuantTensorType.MEASUREMENTS)
-        input_scale = (input_scale ** self.alpha) / (weight_scale_in_ch ** (1 - self.alpha))
-        input_scale = self.round_scale_method.calc(input_scale)
-        input_range_post = input_range / input_scale
-        input_scale_post = calc_maxabs_scale(input_range_post.max(), self.fullscale, self.backoff)
-        input_scale_post = self.round_scale_method.calc(input_scale_post)
-        input_scale = input_scale * input_scale_post
-        self.scale = input_scale
-        return self.scale
-
-class InputSmoothQuantOpt(ScalesMethod):
-    def __init__(self, round_scale_method, weight, params, device_for_scales, backoff, backoff_weight, alpha):
-        super().__init__(round_scale_method, params, device_for_scales)
-        self.round_scale_method = round_scale_method
-        self.weight = weight
-        self.alpha = alpha
-        self.backoff = backoff
-        self.backoff_weight = backoff_weight
-        self.device_for_scales = device_for_scales
-
-    def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        weight_scale_in_ch = MaxAbsPcs(ScaleIdentity(), self.params, self.device_for_scales, self.backoff_weight,
-                                       self.fullscale, dim=0).calc_scales(self.weight, QuantTensorType.CONST)
-        input_scale = MaxAbsPts(ScaleIdentity(), self.params, self.device_for_scales, self.backoff,
-                                self.fullscale).calc_scales(tensor, QuantTensorType.MEASUREMENTS)
-        input_scale = (input_scale ** self.alpha) / (weight_scale_in_ch ** (1 - self.alpha))
-        input_scale = self.round_scale_method.calc(input_scale)
-        self.scale = input_scale
-        return self.scale
-
-
-class WeightIchSmoothQuant(ScalesMethod):
-    def __init__(self, round_scale_method, params, device_for_scales):
-        super().__init__(round_scale_method, params, device_for_scales)
-
-    def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        self.scale = 1 / tensor
-        return self.scale
-
-
 class MaxAbsDynamicPcs(MaxAbsPcs):
 
     def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None):
