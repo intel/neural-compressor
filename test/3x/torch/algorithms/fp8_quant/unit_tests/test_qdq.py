@@ -179,8 +179,11 @@ def test_PatchedSoftmax():
 
 # Run both real quant and qdq quantization, and compare
 def test_qdq_model():
-    model = AutoModelForCausalLM.from_pretrained("facebook/opt-350m")
-    tokenizer = AutoTokenizer.from_pretrained("facebook/opt-350m")
+    model = AutoModelForCausalLM.from_pretrained(
+        "stas/tiny-random-llama-2",
+        torch_dtype=torch.bfloat16
+    )
+    tokenizer = AutoTokenizer.from_pretrained("stas/tiny-random-llama-2")
     model_quant, model_qdq = prepare_model_to_compare(model, config_dict, config_dict_qdq, "model")
 
     inp_calib = torch.arange(0, 100000, 1, dtype=torch.int).to("hpu").reshape(-1, 10)
@@ -211,8 +214,8 @@ def test_qdq_model():
         output_tmp = model_tmp(**inputs).logits.cpu()
         output_qdq_tmp = model_qdq_tmp(**inputs).logits.cpu()
 
-    assert torch.allclose(output_quant, output_tmp, rtol=0.01), f"Loading quantized model failed"
-    assert torch.allclose(output_qdq, output_qdq_tmp, rtol=0.01), f"Loading fake quantized model failed"
+    assert torch.allclose(output_quant, output_tmp, atol=0.002), f"Loading quantized model failed"
+    assert torch.allclose(output_qdq, output_qdq_tmp, atol=0.002), f"Loading fake quantized model failed"
     shutil.rmtree("model_tmp", ignore_errors=True)
     shutil.rmtree("model_qdq_tmp", ignore_errors=True)
 
