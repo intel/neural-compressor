@@ -54,8 +54,11 @@ config_dict_scalar = {
 
 # Run both real and fake quantization, and compare
 def test_scalar_model():
-    model_const = AutoModelForCausalLM.from_pretrained("facebook/opt-350m")
-    tokenizer = AutoTokenizer.from_pretrained("facebook/opt-350m")
+    model_const = AutoModelForCausalLM.from_pretrained(
+        "stas/tiny-random-llama-2",
+        torch_dtype=torch.bfloat16,
+        )
+    tokenizer = AutoTokenizer.from_pretrained("stas/tiny-random-llama-2")
 
     model_scalar = copy.deepcopy(model_const)
     config_const = FP8Config.from_dict(config_dict_const)

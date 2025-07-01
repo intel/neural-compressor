@@ -97,7 +97,7 @@ def test_load_model_provided_by_neuralmagic():
     assert isinstance(gen_ids, torch.Tensor)
 
 def init_model(world_size):
-    name = "facebook/opt-350m"
+    name = "stas/tiny-random-llama-2"
     dtype = torch.bfloat16
     if world_size > 0:
         # Do not use random weights since multi-processes will get different weights for Embedding
