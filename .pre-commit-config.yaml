@@ -107,8 +107,6 @@ repos:
         files: (.*\.py)$
         exclude: |
           (?x)^(
-              neural_compressor/conf/config.py|
-              neural_compressor/conf/pythonic_config.py|
               examples/.+|
               neural_compressor/torch/algorithms/fp8_quant/.+|
               test/3x/torch/.+
@@ -124,7 +122,6 @@ repos:
         exclude: |
           (?x)^(
               examples/.+|
-              docs/source-app|
               neural_compressor/torch/algorithms/fp8_quant/.+|
               test/3x/torch/.+
           )$
