@@ -13,7 +13,6 @@
 # limitations under the License.
 
 import gc
-import habana_frameworks.torch.core as htcore
 import torch
 import torch.nn as nn
 import numpy as np
@@ -29,6 +28,7 @@ from .patching_common import generate_model_info, mod_default_dict, parent_child
 from .measure import load_measurements
 from .scale import scale_method_mapping, load_layer_scales, prepare_layer_scales
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+from neural_compressor.torch.algorithms.fp8_quant._core.common import dequant_original_fp8_weight_if_needed
 
 
 cur_accelerator = auto_detect_accelerator()
@@ -75,9 +75,12 @@ def quantize_params(mod, mod_extra_config):
         param = getattr(mod, param_name)
         if param.dtype == torch.float16:
             param = param.to(torch.bfloat16)
+        param = dequant_original_fp8_weight_if_needed(mod, param)
         quantized_param = quantizer(param.to(cur_accelerator.name()))
         delattr(mod, param_name)
         setattr(mod, param_name, nn.Parameter(quantized_param))
+        # Note: in case of re-quantize the fp8 weights, we need to set `updated_fp8_weight` to True
+        mod.updated_fp8_weight = True
         quantized_param = getattr(mod, param_name)
         quantized_param.requires_grad_(False)
         cur_accelerator.synchronize()
@@ -128,6 +131,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
     save_file = False
     patched_modules = []
     patched_module_types = set()
+    device = torch.device(cur_accelerator.name())
     # TODO [SW-217814]: improve config parsing
     is_dynamic_quantization = "dyn" in scaling_method_name
     #TODO Merge with load_layer_scales
@@ -143,7 +147,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scaling_method_name,
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
                 if mod_default_dict[mod_type_str].should_measure_and_quant:
                     if not config.cfg["ignore_modules_wo_measures"]:
-                        patch_module(mod, None, None, PatchedUnmeasuredModule(name))
+                        patch_module(mod, None, None, PatchedUnmeasuredModule(name, mod))
                     else:
                         logger.debug("Module %s was not quantized.", name)
                     continue
@@ -205,7 +209,7 @@ def prepare_model_with_dummy_measurement(model, mod_list, scaling_method_name, s
             mode_type = config.cfg["mod_dict"][mod_type_str]
             mod_info = mod_types[mode_type]
 
-            op_obj = ops_quantizer.get_op_quantizer(mode_type, "dummy", mod, None, scale_config)
+            op_obj = ops_quantizer.get_op_quantizer("dummy", mod, None, scale_config, mode_type)
             dummy_mod_scales = op_obj.get_scales_module_config()
             dummy_mod_config = op_obj.scales_module_config_to_q_and_dq(dummy_mod_scales)
             dummy_mod_extra_config = ModuleExtraConfig(

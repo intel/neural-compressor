@@ -25,6 +25,7 @@ from neural_compressor.common.utils import (
     FP8_QUANT,
     GPTQ,
     HQQ,
+    HYBRID_GPTQ,
     MIXED_PRECISION,
     MX_QUANT,
     RTN,
@@ -39,6 +40,7 @@ from neural_compressor.torch.quantization import (
     FP8Config,
     GPTQConfig,
     HQQConfig,
+    HybridGPTQConfig,
     MixedPrecisionConfig,
     MXQuantConfig,
     RTNConfig,
@@ -164,6 +166,7 @@ def gptq_entry(
     kwargs.update(
         {
             "use_layer_wise": quant_config.use_layer_wise,
+            "use_block_wise": quant_config.use_block_wise,
             "model_path": quant_config.model_path,
             "quant_lm_head": quant_config.quant_lm_head,
         }
@@ -577,8 +580,11 @@ def autoround_quantize_entry(
             dtype = quant_config.dtype
             bits = quant_config.bits
             if dtype != "int" and "int" in dtype:
-                bits = int(dtype.lstrip("int"))
-                dtype = "int"
+                if dtype == "fp8_to_int_sym":
+                    bits = 4
+                else:
+                    bits = int(dtype.lstrip("int"))
+                    dtype = "int"
             weight_config[op_name] = {
                 "data_type": dtype,
                 "bits": bits,
@@ -588,6 +594,7 @@ def autoround_quantize_entry(
                 "act_group_size": quant_config.act_group_size,
                 "act_sym": quant_config.act_sym,
                 "act_dynamic": quant_config.act_dynamic,
+                "act_data_type": quant_config.act_dtype,
             }
             enable_full_range = quant_config.enable_full_range
             batch_size = quant_config.batch_size
@@ -621,7 +628,6 @@ def autoround_quantize_entry(
             truncation = quant_config.truncation
 
     kwargs.pop("example_inputs")
-
     quantizer = get_quantizer(
         model,
         quantizer_cls=AutoRoundQuantizer,
@@ -719,6 +725,27 @@ def fp8_entry(
     model.qconfig = configs_mapping
     model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
+    return model
+
+
+###################### Habana MixedPrecision Algo Entry ##################################
+@register_algo(HYBRID_GPTQ)
+@torch.no_grad()
+def hybrid_gptq_entry(
+    model: torch.nn.Module,
+    configs_mapping: Dict[Tuple[str], FP8Config],
+    mode: Mode = Mode.QUANTIZE,
+    *args,
+    **kwargs,
+) -> torch.nn.Module:
+    """The main entry to apply w4a8 gptq quantization."""
+
+    from neural_compressor.torch.algorithms.mixed_low_precision import HybridGPTQQuantizer
+
+    quantizer = get_quantizer(model, quantizer_cls=HybridGPTQQuantizer, quant_config=configs_mapping)
+    model = quantizer.execute(model, mode=mode)
+
+    fp8_entry(model, configs_mapping, mode, *args, **kwargs)
     return model
 
 

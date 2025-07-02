@@ -592,7 +592,7 @@ def main():
         import torchvision.transforms as transforms
         import torch
 
-        from neural_compressor.experimental.data.datasets.coco_dataset import COCONpy
+        from neural_compressor.data.datasets.coco_dataset import COCONpy
         dataset = COCONpy(root='./', npy_dir='preprocessed/coco-1200-pt/NCHW/val2017/',
             anno_dir='convert_dataset/annotations/instances_val2017.json')
         dataloader = torch.utils.data.DataLoader(dataset, batch_size=1)
@@ -613,7 +613,7 @@ def main():
         import torchvision.datasets as dset
         import torchvision.transforms as transforms
         import torch
-        from neural_compressor.experimental.data.datasets.coco_dataset import COCONpy
+        from neural_compressor.data.datasets.coco_dataset import COCONpy
         int8_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
                           raw_model,
                           dataloader=None)

@@ -15,6 +15,7 @@
 import torch
 import types
 from .._quant_common.quant_config import ScaleFormat
+from .common import is_runtime_scale_patching
 
 
 def add_scale_registry(patched_mod):
@@ -34,6 +35,8 @@ def register_scale(patched_mod, name, scale, scale_format):
 
 
 def create_scale_tensor(orig_tensor, scale_format):
+    if is_runtime_scale_patching() and scale_format in ScaleFormat.__members__.values():
+        return orig_tensor.to("cpu").to(torch.float)
     if scale_format == ScaleFormat.CONST:
         if isinstance(orig_tensor, torch.Tensor):
             return torch.nn.Parameter(orig_tensor)

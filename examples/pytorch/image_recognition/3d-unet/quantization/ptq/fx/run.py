@@ -145,7 +145,6 @@ def eval_func(model):
 
 sys.path.insert(0, os.path.join(os.getcwd(), "nnUnet"))
 from nnunet.training.model_restore import load_model_and_checkpoint_files
-from neural_compressor.experimental import Quantization, common
 import pickle
 
 

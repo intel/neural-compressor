@@ -2,23 +2,26 @@ Examples
 ==========
 Intel® Neural Compressor validated examples with multiple compression techniques, including quantization, pruning, knowledge distillation and orchestration. Part of the validated cases can be found in the example tables, and the release data is available [here](../docs/source/validated_model_list.md).
 
-# Quick Get Started Notebook Examples
-* [Quick Get Started Notebook of Intel® Neural Compressor for ONNXRuntime](/examples/notebook/onnxruntime/Quick_Started_Notebook_of_INC_for_ONNXRuntime.ipynb)
+> Note: `3.x_api` here is the target example folder for version >= 3.0, which contains pytorch and tensorflow related examples. TensorFlow and ONNX related examples here are no longer maintained. 
 
-* [Quick Get Started Notebook of Intel® Neural Compressor for Tensorflow](/examples/notebook/tensorflow/resnet/resnet_quantization.ipynb)
+
+# Quick Get Started Notebook Examples
+* [Quick Get Started Notebook of Intel® Neural Compressor for ONNXRuntime (Deprecated)](/examples/notebook/onnxruntime/Quick_Started_Notebook_of_INC_for_ONNXRuntime.ipynb)
+
+* [Quick Get Started Notebook of Intel® Neural Compressor for Tensorflow (Deprecated)](/examples/notebook/tensorflow/resnet/resnet_quantization.ipynb)
 
 # Helloworld Examples
 * [torch_llm](/examples/helloworld/torch_llm): apply the weight-only quantization to LLMs.
 * [torch_non_llm](/examples/helloworld/torch_non_llm): apply the static quantization to non-LLMs.
-* [tf_example1](/examples/helloworld/tf_example1): quantize with built-in dataloader and metric.
-* [tf_example2](/examples/helloworld/tf_example2): quantize keras model with customized metric and dataloader.
-* [tf_example3](/examples/helloworld/tf_example3): convert model with mix precision.
-* [tf_example4](/examples/helloworld/tf_example4): quantize checkpoint with dummy dataloader.
-* [tf_example5](/examples/helloworld/tf_example5): config performance and accuracy measurement.
-* [tf_example6](/examples/helloworld/tf_example6): use default user-facing APIs to quantize a pb model.
-* [tf_example7](/examples/helloworld/tf_example7): quantize and benchmark with pure python API.
+* [tf_example1 (Deprecated)](/examples/helloworld/tf_example1): quantize with built-in dataloader and metric.
+* [tf_example2 (Deprecated)](/examples/helloworld/tf_example2): quantize keras model with customized metric and dataloader.
+* [tf_example3 (Deprecated)](/examples/helloworld/tf_example3): convert model with mix precision.
+* [tf_example4 (Deprecated)](/examples/helloworld/tf_example4): quantize checkpoint with dummy dataloader.
+* [tf_example5 (Deprecated)](/examples/helloworld/tf_example5): config performance and accuracy measurement.
+* [tf_example6 (Deprecated)](/examples/helloworld/tf_example6): use default user-facing APIs to quantize a pb model.
+* [tf_example7 (Deprecated)](/examples/helloworld/tf_example7): quantize and benchmark with pure python API.
 
-# TensorFlow Examples
+# TensorFlow Examples (Deprecated)
 ## Quantization
 <table>
 <thead>
@@ -494,7 +497,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>bert-large-uncased-whole-word-masking-finetuned-squad</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex(xpu)</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/fx">fx</a> / <a href="./pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex">ipex(Intel GPU)</a></td>
   </tr>
   <tr>
     <td>distilbert-base-uncased-distilled-squad</td>
@@ -968,7 +971,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </tbody>
 </table>
 
-# ONNX Runtime Examples
+# ONNX Runtime Examples (Deprecated)
 ## Quantization
 
 <table>
@@ -1346,7 +1349,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
 # Notebook Examples
 
-* [Performance of FP32 Vs. INT8 ResNet50 Model](/examples/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly.
-* [Intel® Neural Compressor Sample for TensorFlow*](/examples/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
-* [Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids](/examples/notebook/tensorflow/vgg19_ibean): an End-To-End pipeline to train VGG19 model by transfer learning based on pre-trained model from [TensorFlow Hub](https://tfhub.dev); quantize it by Intel® Neural Compressor on Intel® Gen4 Xeon® Sapphire Rapids.
+* [Performance of FP32 Vs. INT8 ResNet50 Model (Deprecated)](/examples/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly.
+* [Intel® Neural Compressor Sample for TensorFlow* (Deprecated)](/examples/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
+* [Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids (Deprecated)](/examples/notebook/tensorflow/vgg19_ibean): an End-To-End pipeline to train VGG19 model by transfer learning based on pre-trained model from [TensorFlow Hub](https://tfhub.dev); quantize it by Intel® Neural Compressor on Intel® Gen4 Xeon® Sapphire Rapids.
 

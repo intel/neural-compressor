@@ -13,15 +13,16 @@
 # limitations under the License.
 
 import importlib.util
-
+import os
 from ..model_configs import ModuleInfo, ModuleType
 from .._quant_common.helper_modules import *
+from ..utils.logger import logger
 
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     get_patched_module_table,
     get_patched_module_type_table,
 )
-from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
 deepspeed_exists = False
 if importlib.util.find_spec("deepspeed"):  # check if deepspeed is installed
     deepspeed_exists = True
@@ -51,13 +52,15 @@ def generate_model_info(model):
 
     create_mod_info_recursion(model)
 
+
 _mod_types = {
     "linear": ModuleType(1, ["weight"], 1, False),
+    "row_parallel_linear": ModuleType(1, ["weight"], 2, True),
     "matmul": ModuleType(2, [], 1, False),
     "kv_cache": ModuleType(1, [], 1, False),
     "softmax": ModuleType(1, [], 1, True),
     "fused_sdpa": ModuleType(3, [], 2, True),
-    "dynamic_moe": ModuleType(1, [], 9, True),
+    "dynamic_moe": ModuleType(1, [], 1 + 8, True),
 }
 
 
@@ -65,7 +68,7 @@ _mod_default_dict = {
     "Matmul": ModuleInfo("matmul", PatchedMatmul),
     "Linear": ModuleInfo("linear", PatchedLinear),
     "ParallelLMHead": ModuleInfo("linear", PatchedParallelLMHead),
-    "RowParallelLinear": ModuleInfo("linear", PatchedRowParallelLinear),
+    "RowParallelLinear": ModuleInfo("row_parallel_linear", PatchedRowParallelLinear),
     "ColumnParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear),
     "MergedColumnParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear),
     "QKVParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear),
@@ -78,10 +81,12 @@ _mod_default_dict = {
     "Softmax": ModuleInfo("softmax", PatchedSoftmax),
     "ModuleFusedSDPA": ModuleInfo("fused_sdpa", PatchedModuleFusedSDPA),
     "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul),
+    "MoeFP8Matmul": ModuleInfo("linear", PatchedMoeFP8Matmul),
     "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
     "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
     "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
     "VllmMixtureOfExpertsOp": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOp),
+    "VllmMixtureOfExpertsOpFP8": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8),
 }
 
 
@@ -99,10 +104,8 @@ if deepspeed_exists:
 @functools.lru_cache(maxsize=None)
 def _import_hpu_modules():
     from neural_compressor.torch.algorithms.fp8_quant.patched_module_base import (
-        PATCHED_MODULE_TABLE,
-        PATCHED_MODULE_TYPES_TABLE,
+        PATCHED_MODULE_TABLE, PATCHED_MODULE_TYPES_TABLE
     )
-
     cur_accelerator = auto_detect_accelerator()
     if not cur_accelerator.current_device_name().startswith("hpu"):
         return
@@ -110,4 +113,26 @@ def _import_hpu_modules():
     PATCHED_MODULE_TYPES_TABLE["hpu"].update(_mod_types)
 
 
-_import_hpu_modules()
+@functools.lru_cache(maxsize=None)
+def _import_xpu_modules():
+    from neural_compressor.torch.algorithms.fp8_quant.patched_module_base import (
+        PATCHED_MODULE_TABLE, PATCHED_MODULE_TYPES_TABLE
+    )
+    cur_accelerator = auto_detect_accelerator()
+    if not cur_accelerator.current_device_name().startswith("xpu"):
+        return
+    PATCHED_MODULE_TABLE["xpu"].update({"Linear": ModuleInfo("linear", PatchedLinear),
+                                        "Matmul": ModuleInfo("matmul", PatchedMatmul),})
+    PATCHED_MODULE_TYPES_TABLE["xpu"].update({"linear": _mod_types["linear"]})
+
+@functools.lru_cache(maxsize=None)
+def _import_device_modules():
+    cur_accelerator_type = auto_detect_accelerator().get_inc_accelerator_type()
+    if cur_accelerator_type.value > INCAcceleratorType.GAUDI_MIN.value:
+        _import_hpu_modules()
+    elif cur_accelerator_type == INCAcceleratorType.XPU:
+        _import_xpu_modules()
+    else:
+        logger.warning("No HPU or XPU devices were detected. No Patched Modules available.")
+
+_import_device_modules()

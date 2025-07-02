@@ -60,7 +60,7 @@ parser.add_argument('--resume', default='', type=str, metavar='PATH',
 parser.add_argument('-e', '--evaluate', dest='evaluate', action='store_true',
                     help='evaluate model on validation set')
 parser.add_argument('-t', '--tune', dest='tune', action='store_true',
-                    help='tune best int8 model on calibration dataset')
+                    help='tune best fp8 model on calibration dataset')
 parser.add_argument('--pretrained', dest='pretrained', action='store_true',
                     help='use pre-trained model')
 parser.add_argument('--world-size', default=-1, type=int,
@@ -94,7 +94,7 @@ parser.add_argument('-r', "--accuracy", dest='accuracy', action='store_true',
                     help='For accuracy measurement only.')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                     help='path to checkpoint tuned by Neural Compressor (default: ./)')
-parser.add_argument('--int8', dest='int8', action='store_true',
+parser.add_argument('--optimized', dest='optimized', action='store_true',
                     help='run benchmark')
 parser.add_argument('--device', default='hpu', type=str,
                     help='use hpu device for fp8 quantization')
@@ -205,7 +205,7 @@ def main():
     
     if args.performance or args.accuracy:
         model.eval()
-        if args.int8:
+        if args.optimized:
             from neural_compressor.utils.pytorch import load
             new_model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)),
                              model,

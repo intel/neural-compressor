@@ -13,14 +13,17 @@
 # limitations under the License.
 
 import torch
-import habana_frameworks.torch.core as htcore
-import habana_frameworks.torch.utils.experimental as htexp
 from .common import ModuleConfig
-from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
 cur_accelerator = auto_detect_accelerator()
 
-GAUDI2 = htexp.synDeviceType.synDeviceGaudi2
-GAUDI3 = htexp.synDeviceType.synDeviceGaudi3
+descale_fcn = lambda x, scale: torch.mul(x, scale)
+scale_fcn = lambda x, scale: torch.div(x, scale)
+cast_fcn = lambda x, dtype: x.to(dtype=dtype)
+cast_to_fp8_fcn = lambda x, dtype, scale_inv=None: torch.ops.hpu.cast_to_fp8_v2(x, scale_inv, False, False, dtype)[0]
+
+GAUDI2 = INCAcceleratorType.GAUDI2
+GAUDI3 = INCAcceleratorType.GAUDI3
 
 EXP_WIDTH = {
     torch.float32: 8,
@@ -65,22 +68,30 @@ MAX_RANGE = {
     torch.bfloat16: torch.finfo(torch.bfloat16).max,
     torch.float8_e4m3fn: torch.finfo(torch.float8_e4m3fn).max,
     # float8_e4m3fn data type is 8-bit floating point consist of Exponent: 4, Mantissa: 3, bias: 7. It's supported by Gaudi3.
-    torch.float8_e5m2: torch.finfo(torch.float8_e5m2).max,
+    torch.float8_e5m2: torch.finfo(torch.float8_e5m2).max
     # float8_e5m2 data type is 8-bit floating point consist of Exponent: 5, Mantissa: 2, bias: 15. IEEE 754, with NaN and inf.
-    torch.float8_e4m3fnuz: torch.finfo(torch.float8_e4m3fnuz).max,
-    # float8_e4m3fnuz data type is 8-bit floating point consist of Exponent: 4, Mantissa: 3, bias: 8 with 1 sign bit. It's supported by Gaudi2.
 }
-
+# TODO FSW-12066 solve fp_utils
+try:
+    MAX_RANGE[torch.float8_e4m3fnuz] = torch.finfo(torch.float8_e4m3fnuz).max
+    # float8_e4m3fnuz data type is 8-bit floating point consist of Exponent: 4, Mantissa: 3, bias: 8 with 1 sign bit. It's supported by Gaudi2.
+except AttributeError as e:
+    pass
 
 def get_fullscale(dtype, device, exp_bias=None):
     default_exp_bias = get_default_exp_bias(dtype)
+    fullscale = 1
     if device == GAUDI2 and dtype == torch.float8_e4m3fn:
-        fullscale = MAX_RANGE[torch.float8_e4m3fnuz]
+        # TODO FSW-12066 solve fp_utils
+        try:
+            fullscale = MAX_RANGE[torch.float8_e4m3fnuz]
+        except AttributeError as e:
+            pass
     else:
         fullscale = MAX_RANGE[dtype]
     exp_bias = default_exp_bias if exp_bias is None else exp_bias
     fullscale = fullscale * (2 ** (default_exp_bias - exp_bias))
-    return fullscale
+    return float(fullscale)
 
 
 def get_fullscales_by_expbias_set(dtype, device, expbias_set):
@@ -97,8 +108,8 @@ def get_fp8_hw_alligned_scales(dtype, device):
 
 
 DEVICES_SCALE_FACTORS = {
-    htexp.synDeviceType.synDeviceGaudi2: 4,
-    htexp.synDeviceType.synDeviceGaudi3: 1,
+    INCAcceleratorType.GAUDI2: 4,
+    INCAcceleratorType.GAUDI3: 1,
 }
 FP8_143_SCALES = {
     device: get_fp8_hw_alligned_scales(torch.float8_e4m3fn, device) for device in DEVICES_SCALE_FACTORS.keys()

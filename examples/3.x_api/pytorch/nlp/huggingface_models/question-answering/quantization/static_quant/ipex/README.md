@@ -29,7 +29,7 @@ python run_qa.py \
     --output_dir ./savedresult
 ```
 
-## 2. Quantization with XPU
+## 2. Quantization with Intel GPU
 ### 2.1 Environment Setting
 Please build an IPEX docker container according to the [official guide](https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=gpu&version=v2.1.30%2bxpu&os=linux%2fwsl2&package=docker).
 

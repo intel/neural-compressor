@@ -37,8 +37,8 @@ function init_params {
       --iters=*)
           iters=$(echo ${var} |cut -f2 -d=)
       ;;
-      --int8=*)
-          int8=$(echo ${var} |cut -f2 -d=)
+      --optimized=*)
+          optimized=$(echo ${var} |cut -f2 -d=)
       ;;
       --config=*)
           tuned_checkpoint=$(echo $var |cut -f2 -d=)
@@ -66,7 +66,7 @@ function run_benchmark {
         exit 1
     fi
 
-    if [[ ${int8} == "true" ]]; then
+    if [[ ${optimized} == "true" ]]; then
         extra_cmd=$extra_cmd" --load"
     fi
     echo $extra_cmd
@@ -78,6 +78,8 @@ function run_benchmark {
     elif [ "${topology}" = "opt_125m_woq_gptq_int4_dq_ggml" ]; then
         model_name_or_path="facebook/opt-125m"
     elif [ "${topology}" = "llama2_7b_gptq_int4" ]; then
+        model_name_or_path="meta-llama/Llama-2-7b-hf"
+    elif [ "${topology}" = "llama2_7b_gptq_int4_blockwise" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"
     elif [ "${topology}" = "llama2_7b_gptq_nf4_dq_bnb" ]; then
         model_name_or_path="meta-llama/Llama-2-7b-hf"

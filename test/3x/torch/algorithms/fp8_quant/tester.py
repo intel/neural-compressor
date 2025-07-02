@@ -54,6 +54,16 @@ DTYPE_TO_HPDTYPE_STR = {
     torch.float32: "FP32",
 }
 
+RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST = [
+    ScaleMethod.UNIT_SCALE,
+    ScaleMethod.HW_ALIGNED_SINGLE_SCALE,
+    ScaleMethod.MAXABS_HW,
+    ScaleMethod.MAXABS_POW2,
+    ScaleMethod.MAXABS_HW_OPT_WEIGHT,
+    ScaleMethod.MAXABS_POW2_OPT_WEIGHT,
+    ScaleMethod.MAXABS_ARBITRARY
+]
+
 # Expects to get an exception. If there's no exception, the test will fail
 def run_with_raised_exception(test_to_run, error, error_str):
     with pytest_raises(Exception) as exc:
@@ -108,6 +118,7 @@ def run_accuracy_test(
     quant_modes: typing.Iterable[list] = QUANT_MODES_DEFAULT,
     device_type: str = get_device_name(),
     scale_format: ScaleFormat = ScaleFormat.SCALAR,
+    use_hpu_graphs: bool = True,
 ):
     """Run both the reference and the quantized versions of this module,
     and compare the outputs on every test vector.
@@ -162,7 +173,8 @@ def run_accuracy_test(
 
         _assert_quantized_correctly(reference_model=reference_model, quantized_model=quantized_model)
 
-        quantized_model = ht.hpu.wrap_in_hpu_graph(quantized_model)
+        if use_hpu_graphs:
+            quantized_model = ht.hpu.wrap_in_hpu_graph(quantized_model)
 
         vectors = {
             QuantMode.MEASURE: measure_vectors,

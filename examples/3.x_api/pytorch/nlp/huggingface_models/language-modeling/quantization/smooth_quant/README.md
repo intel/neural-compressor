@@ -49,7 +49,7 @@ python run_clm_no_trainer.py \
 ```
 
 ### LLAMA2-7b/13b/70b
->Note: LLAMA requires IPEX requirements >= 2.1 to get better accuracy.
+>Note: LLAMA requires IPEX requirements >= 2.1 to get better accuracy. LLAMA requires transformers < 4.48.0.
 #### Quantization
 
 ```bash

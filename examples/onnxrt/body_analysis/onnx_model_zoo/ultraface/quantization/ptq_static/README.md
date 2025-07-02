@@ -1,4 +1,4 @@
-# Step-by-Step
+# Step-by-Step (Deprecated)
 
 This example load an model converted from [ONNX Model Zoo](https://github.com/onnx/models) and confirm its accuracy and speed based on [WIDER FACE dataset (Validation Images)](http://shuoyang1213.me/WIDERFACE/).
 

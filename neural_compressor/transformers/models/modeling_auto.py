@@ -60,6 +60,7 @@ from ..utils import AutoRoundConfig, AwqConfig, GPTQConfig, RtnConfig, TeqConfig
 
 def build_woq_model(model, quantization_config):
     bits = quantization_config.bits
+    g_idx = getattr(quantization_config, "desc_act", False)
     for n, m in model.named_modules():
         if n in quantization_config.modules_to_not_convert:
             continue
@@ -80,7 +81,7 @@ def build_woq_model(model, quantization_config):
                     group_size=quantization_config.group_size,
                     zp=zp,
                     bias=m.bias is not None,
-                    g_idx=True,
+                    g_idx=g_idx,
                     use_optimum_format=use_optimum_format,
                 )
             set_module(model, n, new_module)

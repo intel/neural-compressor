@@ -4,8 +4,8 @@ test_case="run basic pt pruning"
 echo "${test_case}"
 
 echo "specify fwk version..."
-export pytorch_version='2.4.0+cpu'
-export torchvision_version='0.18.0+cpu'
+export pytorch_version='2.4.0'
+export torchvision_version='0.18.0'
 export ipex_version='2.4.0+cpu'
 
 echo "set up UT env..."

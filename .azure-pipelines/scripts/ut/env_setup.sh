@@ -40,11 +40,11 @@ if [[ "${itex_version}" != "" ]]; then
 fi
 
 if [[ "${pytorch_version}" != "" ]]; then
-    pip install torch==${pytorch_version} -f https://download.pytorch.org/whl/torch_stable.html
+    pip install torch==${pytorch_version} --index-url https://download.pytorch.org/whl/cpu
 fi
 
 if [[ "${torchvision_version}" != "" ]]; then
-    pip install torchvision==${torchvision_version} -f https://download.pytorch.org/whl/torch_stable.html
+    pip install torchvision==${torchvision_version} --index-url https://download.pytorch.org/whl/cpu
 fi
 
 if [[ "${ipex_version}" != "" ]]; then

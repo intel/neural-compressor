@@ -24,7 +24,7 @@ sh run_quant.sh --alpha=0.44
 ```
 To load a quantized model:
 ```bash
-python sdxl_smooth_quant.py --model_name_or_path stabilityai/stable-diffusion-xl-base-1.0 --quantize --load --int8
+python sdxl_smooth_quant.py --model_name_or_path stabilityai/stable-diffusion-xl-base-1.0 --quantize --load --optimized
 ```
 or
 ```bash
@@ -79,5 +79,5 @@ python clip/clip_score.py \
 ```
 Or you can use the bash script for all steps above:
 ```bash
-sh run_benchmark.sh --mode=accuracy --int8=true
+sh run_benchmark.sh --mode=accuracy --optimized=true
 ```

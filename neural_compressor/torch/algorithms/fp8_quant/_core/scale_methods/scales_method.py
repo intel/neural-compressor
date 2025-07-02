@@ -12,21 +12,22 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 from abc import abstractmethod
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 import torch
 from . import ScaleIdentity
 from ..common import QuantTensorType
 from ..fp_utils import mmse_scale_multi, get_fullscale, mmse_scale, calc_maxabs_scale, invert_scale
 
-
 class ScalesMethod:
-    def __init__(
-        self, round_scale_method, params, device_for_scale, fullscale=None, device=torch.device("hpu"), is_dynamic=False
-    ):
+
+    curr_device = auto_detect_accelerator()
+
+    def __init__(self, round_scale_method, params, device_for_scale, fullscale=None, is_dynamic=False):
         self.round_scale_method = round_scale_method
         self.params = params
         self.hp_dtype = self.params["hp_dtype"]
         self.lp_dtype = self.params["lp_dtype"]
-        self.device = device
+        self.device = torch.device(self.curr_device.name())
         self.fullscale = fullscale if fullscale is not None else get_fullscale(self.lp_dtype, device_for_scale)
         self.scale = None
         self.is_dynamic = is_dynamic
@@ -110,7 +111,7 @@ class MaxAbsPcs(ScalesMethod):
 
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
         if tensor_type in [QuantTensorType.CONST, QuantTensorType.DYNAMIC]:
-            max_abs_input = torch.max(torch.abs(tensor), dim=self.dim, keepdim=self.keepdim)[0]
+            max_abs_input = torch.amax(torch.abs(tensor), dim=self.dim, keepdim=self.keepdim)
             # on dynamic quantization we don't need to reshape
             if self.dim != -1:
                 max_abs_input = max_abs_input.reshape([-1, 1])
@@ -155,7 +156,7 @@ class OptScalesPts(ScalesMethod):
 
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
         self.scale = self.round_scale_method.calc(mmse_scale(tensor, self.optional_scales_list, self.lp_dtype, self.hp_dtype))
-        return  self.scale
+        return self.scale
 
 class OptScalesPcs(ScalesMethod):
     def __init__(self, round_scale_method, optional_scales_list, params, device_for_scales, backoff):

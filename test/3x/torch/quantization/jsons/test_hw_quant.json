@@ -1,0 +1,17 @@
+{
+    "mode": "QUANTIZE",
+    "observer": "maxabs",
+    "scale_method": "MAXABS_POW2",
+    "allowlist": {
+        "types": [],
+        "names": []
+    },
+    "blocklist": {
+        "types": [],
+        "names": [
+            "lm_head"
+        ]
+    },
+    "dump_stats_path": "./test_outputs/unit_test",
+    "int4_weights": "True"
+}

@@ -98,8 +98,8 @@ class ModelArguments:
         default=False,
         metadata={"help": "Whether or not to apply quantization."},
     )
-    int8: bool = field(
-        default=False, metadata={"help": "use int8 model to get accuracy or benchmark"}
+    optimized: bool = field(
+        default=False, metadata={"help": "use optimized model to get accuracy or benchmark"}
     )
     benchmark: bool = field(
         default=False, metadata={"help": "get benchmark instead of accuracy"}
@@ -699,8 +699,8 @@ def main():
         return
 
     model.eval()
-    if model_args.int8:
-        print("load int8 model")
+    if model_args.optimized:
+        print("load optimized model")
         from neural_compressor.torch.quantization import load
         model = load(os.path.abspath(os.path.expanduser(training_args.output_dir)))
     else:

@@ -13,7 +13,7 @@ echo "##[section]import check pass"
 echo "##[group]set up UT env..."
 export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
 pip install -r /neural-compressor/test/3x/torch/requirements.txt
-pip install torch==2.6.0 torchvision==0.21.0 # For auto-round
+pip install torch==2.7.0 torchvision==0.22.0 # For auto-round
 pip install pytest-cov
 pip install pytest-html
 echo "##[endgroup]"
@@ -25,6 +25,7 @@ cd /neural-compressor/test/3x || exit 1
 rm -rf tensorflow
 rm -rf torch/algorithms/fp8_quant
 rm -rf torch/quantization/fp8_quant
+rm -rf torch/algorithms/fp8_quant_xpu
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
