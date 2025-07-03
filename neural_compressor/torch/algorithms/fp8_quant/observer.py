@@ -18,6 +18,7 @@ from typing import Dict, Optional, Any
 from abc import abstractmethod, ABC
 import os
 import torch
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     ModuleConfig,
     OBSERVER_TYPES,
@@ -32,9 +33,10 @@ __all__ = [
     "register_observer",
 ]
 
+cur_device = auto_detect_accelerator().current_device_name()
 
 class ObserverBase(ABC):
-    def __init__(self, name, mod, d_shape=None, params=None, device="hpu"):
+    def __init__(self, name, mod, d_shape=None, params=None, device=cur_device):
         self.name = name
         self.mod = mod
         self.state = None
@@ -103,7 +105,7 @@ def register_module_config_for_observer(module_name, inputs_param=(None,), outpu
 @register_observer(observer_type="maxabs")
 class MaxAbsObserver(ObserverBase):
 
-    def __init__(self, name, mod, d_shape=None, params=None, device="hpu"):
+    def __init__(self, name, mod, d_shape=None, params=None, device=cur_device):
         super().__init__(name=name, mod=mod, device=device)
         self.first = True
         config = get_hqt_config(mod).cfg
@@ -121,7 +123,7 @@ class MaxAbsObserver(ObserverBase):
 @register_module_config_for_observer(module_name="matmul", inputs_param=({"dim": -1}, {"dim": -2},), outputs_param=({"dim": -1},))
 @register_observer(observer_type="maxabs_per_channel")
 class MaxAbsPerChannelObserver(ObserverBase):
-    def __init__(self, name, mod, d_shape=None, params=None, device="hpu"):
+    def __init__(self, name, mod, d_shape=None, params=None, device=cur_device):
         super().__init__(name=name, mod=mod, device=device)
         self.first = True
         self.dim = params["dim"] if (params is not None) and ("dim" in params) else -1
@@ -141,7 +143,7 @@ class MaxAbsPerChannelObserver(ObserverBase):
         self.shape = list(x.shape)
         return state
 
-    def init_state_from_shape(self, x_shape, device="hpu"):
+    def init_state_from_shape(self, x_shape, device=cur_device):
         device = device
         Nch = x_shape[self.dim]
         self.Nch = Nch
@@ -171,7 +173,7 @@ class MaxAbsPerChannelObserver(ObserverBase):
 
 @register_observer(observer_type="save")
 class SaveObserver(ObserverBase):
-    def __init__(self, name, mod, d_shape=None, params=None, device="hpu"):
+    def __init__(self, name, mod, d_shape=None, params=None, device=cur_device):
         super().__init__(name=name, mod=mod, device=device)
         self.first = True
         self.cnt = -1
@@ -187,7 +189,7 @@ class SaveObserver(ObserverBase):
         self.shape = list(x.shape)
         return state
 
-    def init_state_from_shape(self, x_shape, device="hpu"):
+    def init_state_from_shape(self, x_shape, device=cur_device):
         state = torch.zeros((1, 1), device=device, dtype=torch.float32)
         self.first = False
         return state
@@ -203,7 +205,7 @@ class SaveObserver(ObserverBase):
 
 @register_observer(observer_type="shape")
 class ShapeObserver(ObserverBase):
-    def __init__(self, name, mod, d_shape=None, params=None, device="hpu"):
+    def __init__(self, name, mod, d_shape=None, params=None, device=cur_device):
         super().__init__(name=name, mod=mod, device=device)
 
     def init_state(self, x):
@@ -213,7 +215,7 @@ class ShapeObserver(ObserverBase):
         state = torch.tensor(x.shape, device=device, dtype=torch.int32).reshape((1, Ndim))
         return state
 
-    def init_state_from_shape(self, x_shape, device="hpu"):
+    def init_state_from_shape(self, x_shape, device=cur_device):
         logger.info("ShapeObserver doesn't support init_state_from_shape")
         return
 

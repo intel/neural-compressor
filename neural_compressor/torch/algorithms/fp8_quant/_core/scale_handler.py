@@ -16,6 +16,9 @@ import torch
 import types
 from .._quant_common.quant_config import ScaleFormat
 from .common import is_runtime_scale_patching
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
+cur_device = auto_detect_accelerator().current_device_name()
 
 
 def add_scale_registry(patched_mod):
@@ -83,7 +86,7 @@ def get_scale_dtype(scale):
         raise Exception(f"Unexpected scale instance type: {type(scale).__name__}, expected Torch.tensor or float number")
 
 
-def get_param_scales_from_scalar(patched_mod, prefix, dtype=torch.bfloat16, device=torch.device('hpu')):
+def get_param_scales_from_scalar(patched_mod, prefix, dtype=torch.bfloat16, device=cur_device):
     """Get all scales in param_list, used for saving scalar scales"""
     scale_dict = {}
     for name in patched_mod.scale_members:
@@ -95,7 +98,7 @@ def get_param_scales_from_scalar(patched_mod, prefix, dtype=torch.bfloat16, devi
     return scale_dict
 
 
-def get_param_scales_from_list(patched_mod, prefix, dtype=torch.bfloat16, device=torch.device('hpu')):
+def get_param_scales_from_list(patched_mod, prefix, dtype=torch.bfloat16, device=cur_device):
     """Get all scales in param_list, used for saving scalar scales"""
     scale_dict = {}
     for name in patched_mod.scale_members:
@@ -141,7 +144,7 @@ def set_param_scales_into_list(patched_mod, state_dict):
 def get_state_dict(patched_mod, *args, destination=None, prefix='', keep_vars=False):
     """replace torch.nn.Module.state_dict"""
     cur_state_dict = torch.nn.Module.state_dict(patched_mod, *args, destination=destination, prefix=prefix, keep_vars=keep_vars)
-    device = torch.device('hpu')
+    device = cur_device
     dtype = patched_mod.hp_dtype
     if patched_mod.scale_format == ScaleFormat.SCALAR:
         scale_dict = get_param_scales_from_scalar(patched_mod, prefix, dtype=dtype, device=device)

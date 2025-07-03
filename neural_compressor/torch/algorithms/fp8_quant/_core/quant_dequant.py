@@ -47,13 +47,14 @@ class QuantDequantBase(nn.Module):
             self.qdq_init()
 
     def qdq_init(self):
-        import habana_frameworks.torch.utils.experimental as htexp
-        if htexp._get_device_type() == htexp.synDeviceType.synDeviceGaudi2 and self.lp_dtype == torch.float8_e4m3fn:
-            self.quant_min = int(torch.finfo(torch.float8_e4m3fnuz).min)
-            self.quant_max = int(torch.finfo(torch.float8_e4m3fnuz).max)
-        else:
-            self.quant_min = int(torch.finfo(self.lp_dtype).min)
-            self.quant_max = int(torch.finfo(self.lp_dtype).max)
+        self.quant_min = int(torch.finfo(self.lp_dtype).min)
+        self.quant_max = int(torch.finfo(self.lp_dtype).max)
+
+        if cur_accelerator.current_device_name() == "hpu":
+            import habana_frameworks.torch.utils.experimental as htexp
+            if htexp._get_device_type() == htexp.synDeviceType.synDeviceGaudi2 and self.lp_dtype == torch.float8_e4m3fn:
+                self.quant_min = int(torch.finfo(torch.float8_e4m3fnuz).min)
+                self.quant_max = int(torch.finfo(torch.float8_e4m3fnuz).max)
 
         if self.scale_format == ScaleFormat.CONST:
             self.zero_point = nn.Parameter(torch.tensor(0.))
@@ -98,7 +99,8 @@ class QuantInput(QuantDequantBase):
                 else quantize_per_tensor_to_fp8
             )
 
-        self.cast_to_op = get_quantized_func_wrapper(OP_TYPE.CAST_TO_FP8, self.scale_format)
+        else:
+            self.cast_to_op = get_quantized_func_wrapper(OP_TYPE.CAST_TO_FP8, self.scale_format)
 
     def forward(self, x):
         return self.cast_to_op(x, self.scale_inv, False, False, self.lp_dtype)
@@ -156,8 +158,8 @@ class DequantOutput(QuantDequantBase):
                 if self.scale_format == ScaleFormat.CONST and self.scale.numel() > 1
                 else dequantize_per_tensor_from_fp8
             )
-
-        self.cast_from_op = get_quantized_func_wrapper(OP_TYPE.CAST_FROM_FP8, self.scale_format)
+        else:
+            self.cast_from_op = get_quantized_func_wrapper(OP_TYPE.CAST_FROM_FP8, self.scale_format)
 
     def forward(self, x):
         return self.cast_from_op(x, self.scale, self.hp_dtype)
@@ -185,8 +187,9 @@ class QuantDequant(QuantDequantBase):
         super(QuantDequant, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
         self.register_scale("scale_inv", scale_inv, self.scale_format)
         self.register_scale("scale", 1 / scale_inv, self.scale_format)
-        self.cast_to_op = get_quantized_func_wrapper(OP_TYPE.CAST_TO_FP8, self.scale_format)
-        self.cast_from_op = get_quantized_func_wrapper(OP_TYPE.CAST_FROM_FP8, self.scale_format)
+        if not self.use_qdq:
+            self.cast_to_op = get_quantized_func_wrapper(OP_TYPE.CAST_TO_FP8, self.scale_format)
+            self.cast_from_op = get_quantized_func_wrapper(OP_TYPE.CAST_FROM_FP8, self.scale_format)
 
     def forward(self, x, *args, **kwargs):
         y = self.cast_to_op(x, self.scale_inv, False, False, self.lp_dtype)

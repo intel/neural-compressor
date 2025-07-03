@@ -136,7 +136,7 @@ class UseFirstAdditionalScales(ScalesMethod):
 # used when running with dummy measurement (prepare_model_with_dummy_measurement)
 class DummyScales(ScalesMethod):
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        self.scale = torch.tensor(1.0).to("hpu")
+        self.scale = torch.tensor(1.0).to(self.device)
         return self.scale
 
 

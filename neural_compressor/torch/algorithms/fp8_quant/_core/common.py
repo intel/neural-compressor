@@ -22,6 +22,9 @@ from enum import Enum, auto
 from functools import lru_cache 
 from ..utils.logger import logger
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import ModuleConfig
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
+cur_device = auto_detect_accelerator().current_device_name()
 
 UNMEASURED_MODELS = "UnmeasuredModels"
 
@@ -161,7 +164,7 @@ def load_scales(fname, target_format):
     return d
 
 
-def convert_scales_to_tensors_dict(scales_obj, scales_file_format, hp_dtype, device="hpu"):
+def convert_scales_to_tensors_dict(scales_obj, scales_file_format, hp_dtype, device=cur_device):
     scales_temp = {k: scales_obj[k].__dict__ for k in scales_obj}
     scales_temp = format_functions_rec((scales_file_format, torch.Tensor))(scales_temp)
     scales_temp = rec_fn(scales_temp, lambda x: x.to(dtype=hp_dtype, device=device))

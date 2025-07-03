@@ -37,6 +37,9 @@ def init_quantized_func_wrapper_factory():
     elif device_name == "xpu":
         from .xpu.xpu_quantized_func_wrapper import init_xpu_quantized_func_wrapper_factory
         init_xpu_quantized_func_wrapper_factory()
+    elif device_name == "cpu":
+        # only support QDQ now
+        pass
     else:
         raise ValueError("Unknown device type - {}".format(device_name))
 
