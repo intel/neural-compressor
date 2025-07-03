@@ -167,6 +167,7 @@ class PatchedLinearBase(PatchedModuleBase):
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
 
+
             # When offloading weights to disk using device_map, the module forward is overridden.
             # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
             # So need to set PatchedLinear forward to be the right forward.
@@ -583,6 +584,53 @@ class PatchedLmHeadLinearAllreduce(PatchedLinearBase):
         if self.bias is not None:
             output += self.bias
         return output
+
+
+class PatchedEmbeddingBag(PatchedModuleBase):
+    def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
+            if self.use_qdq:
+                self.dequant_weights = self._mod_extra_config.params["weight"][1]
+                if isinstance(mod_extra_config.scale.params["weight"], (torch.Tensor, float)):
+                    self.register_scale("scale_weight", mod_extra_config.scale.params["weight"], self.scale_format)
+                elif isinstance(mod_extra_config.scale.params["weight"], dict):
+                    # PCQ weight is calculated with actual weight [0] and ones [1]
+                    # only ScaleFormat.CONST is supported for per-channel scale now.
+                    self.register_scale("scale_weight", mod_extra_config.scale.params["weight"][0], ScaleFormat.CONST)
+            else:
+                raise ValueError("EmbeddingBag is only supported QDQ mode now!")
+
+    def forward_qdq(self, input, offsets, *args, **kwargs):
+        qweight = self.dequant_weights(self.weight, )
+
+        return torch.nn.functional.embedding_bag(
+            input=input,
+            offsets=offsets,
+            weight=qweight,
+            max_norm=self.max_norm,
+            norm_type=self.norm_type,
+            scale_grad_by_freq=self.scale_grad_by_freq,
+            mode=self.mode,
+            sparse=self.sparse,
+            include_last_offset=self.include_last_offset,
+            padding_idx=self.padding_idx,
+            *args,
+            **kwargs,
+        )
+
+    def forward_measure(self, input, *args, **kwargs):
+        measure_input((input,), observer=self._mod_extra_config.inputs)
+        output = self.orig_mod(input, *args, **kwargs)
+        measure_output((output,), self._mod_extra_config.outputs)
+        return output
+
+    def extra_repr(self) -> str:
+        return extra_representation(
+            self.extra_repr_org(),
+            self.class_name_org,
+            get_current_repr(self, "scale_weight"),
+        )
 
 
 # patched vllm FusedMoE module removing the bf16 weights of all experts

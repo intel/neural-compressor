@@ -607,7 +607,7 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
     global world_size
     world_size = kwargs.get("world_size", world_size)
     assert format == SaveLoadFormat.HUGGINGFACE, "Currently, only huggingface models are supported."
-    assert device == "hpu", "Currently, only hpu device is supported for FP8 model."
+    assert device in ["hpu", "cpu"], "Currently, only hpu & cpu device is supported for FP8 model."
 
     from safetensors.torch import load_file as safe_load_file
     from neural_compressor.torch.algorithms.fp8_quant import prep_model
