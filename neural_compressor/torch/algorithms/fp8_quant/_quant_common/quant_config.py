@@ -220,6 +220,9 @@ class Fp8cfg:
         validate_and_populate_scale_method(scale_method_config)
 
 
+        if auto_detect_accelerator().current_device_name() == "cpu" and not measured_global_config["use_qdq"]:
+            raise ValueError("For FP8 quantization, only QDQ mode is supported on CPU device.")
+
         # If seperate_measure_files is True (default value), then it is assumed that there are multiple distinct measure and scale files
         # and they are stored in / loaded from paths with the correct index as a suffix. Else, only one is searched for.
         measured_global_config["local_rank"] = (
@@ -229,6 +232,11 @@ class Fp8cfg:
         if measured_global_config["device_type"].value > INCAcceleratorType.GAUDI_MIN.value:
             logger.debug("setting device for scales config")
             Fp8cfg.set_gaudi_device_for_scales(custom_config, measured_global_config, scale_method_config)
+
+        if auto_detect_accelerator().current_device_name() == "cpu" and \
+           check_scale_method_fields(scale_method_config, granularity_weight=ScaleGranularity.PCS, reducer=any):
+            # for PCQ, there is some issue in dequantize_per_channel op on CPU device
+            raise ValueError("Don't support FP8 PCQ (Per Channel Quantization) on CPU device now")
 
         if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
             if check_scale_method_fields(scale_method_config, granularity_weight=ScaleGranularity.PCS, reducer=any) or \
@@ -242,6 +250,8 @@ class Fp8cfg:
         dynamic_quantization = measured_global_config["dynamic_quantization"]
         # TODO [SW-217814]: get dynamic methods in a better way, or support file handling in dynamic mode
         if dynamic_quantization:
+            if auto_detect_accelerator().current_device_name() == "cpu":
+                raise ValueError("Currently CPU device doesn't support dynamic quantization")
             logger.info(f"NOTE: Using dynamic scale method, only supported ops will be quantized.")
             if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
                 measured_global_config["scale_format"] = ScaleFormat.CONST

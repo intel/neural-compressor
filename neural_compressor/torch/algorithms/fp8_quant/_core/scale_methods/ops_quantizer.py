@@ -20,6 +20,8 @@ from ..common import ModuleConfig, QuantTensorType
 from ..quant_dequant import DequantOutput, QuantDequant, QuantDequantNone, QuantInput, QuantDynamicInput
 from ...utils.logger import logger
 from neural_compressor.torch.algorithms.fp8_quant._core.common import dequant_original_fp8_weight_if_needed
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+cur_device = auto_detect_accelerator().current_device_name()
 
 
 class BaseOpQuantizer:
@@ -114,7 +116,7 @@ class LinearOpQuantizer(BaseOpQuantizer):
         rescaled_weight = self.mod.weight if hasattr(self.mod, 'weight') else None
         if self.scales_method_factory.scale_method_config_map[QuantTensorName.WEIGHT_IN_CH].scale_value_type != ScaleValueType.DUMMY_SCALES:
             # Calculating weight in hpu to support scale calculation CGUID torch.ops.hpu.calculate_scale_for_cast
-            rescaled_weight = rescaled_weight.to("hpu")
+            rescaled_weight = rescaled_weight.to(cur_device)
         if rescaled_weight is not None:
             rescaled_weight = dequant_original_fp8_weight_if_needed(self.mod, rescaled_weight)
         if self.weight_ich_scale_calc is not None:
@@ -420,13 +422,78 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
 
     
 
+class EmbeddingOpQuantizer(BaseOpQuantizer):
+
+    def __init__(self, config, mod, measurement, params, module_type):
+        super().__init__(config, mod, measurement, params, module_type)
+        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
+        self.weight_och_scale_calc = self.scales_method_factory.get_scale_method(QuantTensorName.WEIGHT_OUT_CH)
+        self.weight_ich_scale_calc = self.scales_method_factory.get_scale_method(QuantTensorName.WEIGHT_IN_CH)
+        self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
+
+    def get_scales_module_config(self):
+        weight = self.mod.weight if hasattr(self.mod, 'weight') else None
+        input_scales = self.calc_input_scales(num_of_inputs=1)
+
+        if self.weight_ich_scale_calc is not None:
+            weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST)
+            weight = torch.div(weight, weight_scales_in_ch.reshape([1, -1]))
+        weights_scales_out_ch = self.weight_och_scale_calc.calc_scales(weight, QuantTensorType.CONST)
+
+        params_config = (
+            {"weight": weights_scales_out_ch}
+            if (self.weight_ich_scale_calc is None)
+            else {"weight": {0: weights_scales_out_ch, 1: weight_scales_in_ch}}
+        )
+        return ModuleConfig(
+            (),
+            (),
+            params_config,
+        )
+
+    def init_weight_config(self, scales, scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
+        if use_qdq:
+            # to ensure the weights to be loaded to the device in fp8
+            weight_config = [
+                QuantInput(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq),
+                DequantOutput(scales, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq),
+            ]
+        else:
+            raise ValueError("For FP8 quantization, {} only supports QDQ mode now!".format(self.mod.__class__.__name__))
+        return weight_config
+
+    def init_weights_from_module(self, params_config):
+        if isinstance(params_config, dict):
+            self.weight_och_scale_calc.scale = params_config[0]
+            self.weight_ich_scale_calc.scale = params_config[1]
+        else:
+            self.weight_och_scale_calc.scale = params_config
+
+    def scales_module_config_to_q_and_dq(self, module):
+        self.init_scales_from_module_config(module)
+        self.init_weights_from_module(module.params["weight"])
+        scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = self.get_module_configuration()
+        weight_config = self.init_weight_config(
+            self.weight_och_scale_calc.scale,
+            self.weight_och_scale_calc.calc_invert_scales(),
+            lp_dtype,
+            hp_dtype,
+            scale_format,
+            use_qdq,
+            fake_quant,
+        )
+        params_config = {"weight": weight_config}
+        return ModuleConfig([], [], params_config)
+
+
 ops_quantizer_map = {"linear": LinearOpQuantizer,
                       "matmul": MatmulOpQuantizer,
                       "fused_sdpa": FsdpaOpQuantizer,
                       "softmax": SoftmaxOpQuantizer,
                       "kv_cache": KVCacheOpQuantizer,
                       "dynamic_moe": DynamicMoeOpQuantizer,
-                      "row_parallel_linear": RowParallelLinearOpQuantizer
+                      "row_parallel_linear": RowParallelLinearOpQuantizer,
+                      "embedding": EmbeddingOpQuantizer,
                      }
 
 def get_op_quantizer(config, mod, measurement, params, module_type):
