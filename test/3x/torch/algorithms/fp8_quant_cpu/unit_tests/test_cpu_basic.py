@@ -13,6 +13,7 @@
 # limitations under the License.
 
 import os
+import shutil
 import pytest
 import torch
 
@@ -22,6 +23,7 @@ from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules i
 from neural_compressor.torch.quantization import (
     FP8Config,
     convert,
+    prepare,
 )
 
 
@@ -37,27 +39,28 @@ class MyModel(torch.nn.Module):
         return self.my_linear(out)
 
 @pytest.mark.parametrize("scale_format", ["const", "scalar"])
-def test_cpu_basic_flow(scale_format):
+@pytest.mark.parametrize("scale_method", ["unit_scale", "MAXABS_ARBITRARY", "ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2"])
+def test_cpu_basic_flow(scale_format, scale_method):
     # test convert flow
-    my_model = MyModel()
-    my_model = my_model.to("cpu")
-    print(my_model)
-    qconfig = FP8Config(fp8_config="E4M3", scale_method="unit_scale", scale_format=scale_format, use_qdq=True)
-    my_model = convert(my_model, qconfig)
-    print(my_model)
-    for _, mod in my_model.named_modules():
+    model = MyModel()
+    model = model.to("cpu")
+    qconfig = FP8Config(fp8_config="E4M3", scale_method=scale_method, scale_format=scale_format, use_qdq=True)
+    if scale_method in ["unit_scale"]:
+        model = convert(model, qconfig)
+    else:
+        model = prepare(model, qconfig)
+        model(torch.tensor([0], dtype=torch.long), torch.tensor([0], dtype=torch.long))
+        model = convert(model)
+    for _, mod in model.named_modules():
         if isinstance(mod, PatchedLinear):
             assert isinstance(mod.quant_input, QuantDequant), "Linear is not quantized with QDQ mode"
         if isinstance(mod, PatchedEmbeddingBag):
             assert not hasattr(mod, "quant_input"), "EmbeddingBag is not weight-only quantized"
+    shutil.rmtree("hqt_output", ignore_errors=True)
 
 def test_cpu_quant_flow():
     my_model = MyModel()
     my_model = my_model.to("cpu")
     qconfig = FP8Config(fp8_config="E4M3", scale_method="unit_scale", scale_format="const")
-    with pytest.raises(ValueError):
-        my_model = convert(my_model, qconfig)
-
-    qconfig = FP8Config(fp8_config="E4M3", scale_method="ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2", scale_format="const")
     with pytest.raises(ValueError):
         my_model = convert(my_model, qconfig)

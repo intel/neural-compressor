@@ -138,7 +138,7 @@ class PatchedMatmul(PatchedModuleBase):
         return extra_representation(
             self.extra_repr_org(),
             self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_other"),
+            get_current_repr(self, "scale_input", "scale_other") if not self.use_qdq else "",
         )
 
 
@@ -227,7 +227,7 @@ class PatchedLinearBase(PatchedModuleBase):
         return extra_representation(
             self.extra_repr_org(),
             self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight"),
+            get_current_repr(self, "scale_input", "scale_weight") if not self.use_qdq else "",
         )
 
 
@@ -1135,7 +1135,7 @@ class PatchedConv2d(PatchedModuleBase):
         return extra_representation(
             self.extra_repr_org(),
             self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight"),
+            get_current_repr(self, "scale_input", "scale_weight") if not self.use_qdq else "",
         )
 
 
@@ -1171,7 +1171,7 @@ class PatchedSoftmax(PatchedModuleBase):
         return extra_representation(
             self.extra_repr_org(),
             self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_output"),
+            get_current_repr(self, "scale_input", "scale_output") if not self.use_qdq else "",
         )
 
 
@@ -1252,7 +1252,7 @@ class PatchedLoRACompatibleConv(PatchedModuleBase):
         return extra_representation(
             self.extra_repr_org(),
             self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight"),
+            get_current_repr(self, "scale_input", "scale_weight") if not self.use_qdq else "",
         )
 
 
