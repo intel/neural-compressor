@@ -49,7 +49,7 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
             <td align="left">:x:</td>
         </tr>
         <tr>
-            <td rowspan="4" align="left">ONNX Runtime</td>
+            <td rowspan="4" align="left">ONNX Runtime (Deprecated)</td>
             <td align="left">CPUExecutionProvider</td>
             <td align="left">MLAS</td>
             <td align="left">"default"</td>
@@ -82,7 +82,7 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
             <td align="left">:x:</td>
         </tr>
         <tr>
-            <td rowspan="2" align="left">Tensorflow</td>
+            <td rowspan="2" align="left">Tensorflow (Deprecated)</td>
             <td align="left">Tensorflow</td>
             <td align="left">OneDNN</td>
             <td align="left">"default"</td>
@@ -98,15 +98,6 @@ The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Coope
             <td align="left">&#10004;</td>
             <td align="left">:x:</td>
         </tr>  
-        <tr>
-            <td align="left">MXNet</td>
-            <td align="left">OneDNN</td>
-            <td align="left">OneDNN</td>
-            <td align="left">"default"</td>
-            <td align="left">cpu</td>
-            <td align="left">&#10004;</td>
-            <td align="left">:x:</td>
-        </tr>
     </tbody>
 </table>
 

@@ -78,7 +78,7 @@ PT_ENABLE_INT64_SUPPORT=1 PT_HPU_LAZY_MODE=0 python run_clm_no_trainer.py \
 > [!TIP]
 > We use `torch.compile`  to accelerate the quantization process of AutoRound on HPU.
 > Please set the following environment variables before running the command:
-> `PT_ENABLE_INT64_SUPPORT=true` and `PT_HPU_LAZY_MODE=0`.
+> `PT_ENABLE_INT64_SUPPORT=1` and `PT_HPU_LAZY_MODE=0`.
 
 
 ### Evaluation (CPU)

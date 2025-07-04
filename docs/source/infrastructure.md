@@ -34,11 +34,11 @@ Intel® Neural Compressor has unified interfaces which dispatch tasks to differe
             <td align="center"><a href="https://pytorch.org/docs/stable/quantization.html#eager-mode-quantization">PyTorch Eager</a>/<a href="https://pytorch.org/docs/stable/quantization.html#prototype-fx-graph-mode-quantization">PyTorch FX</a>/<a href="https://github.com/intel/intel-extension-for-pytorch">IPEX</a></td>
         </tr>
         <tr>
-            <td align="center">TensorFlow</td>
+            <td align="center">TensorFlow (Deprecated)</td>
             <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
         </tr>
         <tr>
-            <td align="center">ONNX Runtime</td>
+            <td align="center">ONNX Runtime (Deprecated)</td>
             <td align="center"><a href="https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/quantize.py">QLinearops/QDQ</a></td>
         </tr>
         <tr>
@@ -47,7 +47,7 @@ Intel® Neural Compressor has unified interfaces which dispatch tasks to differe
             <td align="center"><a href="https://pytorch.org/docs/stable/quantization.html#eager-mode-quantization">PyTorch eager mode</a>/<a href="https://pytorch.org/docs/stable/quantization.html#prototype-fx-graph-mode-quantization">PyTorch fx mode</a>/<a href="https://github.com/intel/intel-extension-for-pytorch">IPEX</a></td>
         </tr>
         <tr>
-            <td align="center">ONNX Runtime</td>
+            <td align="center">ONNX Runtime (Deprecated)</td>
             <td align="center"><a href="https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/quantize.py">QIntegerops</a></td>
         </tr>  
         <tr>
@@ -56,7 +56,7 @@ Intel® Neural Compressor has unified interfaces which dispatch tasks to differe
             <td align="center"><a href="https://pytorch.org/docs/stable/quantization.html#eager-mode-quantization">PyTorch eager mode</a>/<a href="https://pytorch.org/docs/stable/quantization.html#prototype-fx-graph-mode-quantization">PyTorch fx mode</a>/<a href="https://github.com/intel/intel-extension-for-pytorch">IPEX</a></td>
         </tr>
         <tr>
-            <td align="center">TensorFlow</td>
+            <td align="center">TensorFlow (Deprecated)</td>
             <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
         </tr>
     </tbody>
@@ -79,7 +79,7 @@ Intel® Neural Compressor has unified interfaces which dispatch tasks to differe
     <td rowspan="3">Unstructured Pruning</td>
     <td rowspan="3">Element-wise</td>
     <td>Magnitude</td>
-    <td>PyTorch, TensorFlow</td>
+    <td>PyTorch, TensorFlow (Deprecated)</td>
   </tr>
   <tr>
     <td>Pattern Lock</td>
@@ -185,7 +185,6 @@ Intel® Neural Compressor has unified interfaces which dispatch tasks to differe
 [Mixed precision](mixed_precision.md):
 |Framework     |         |
 |--------------|:-----------:|
-|TensorFlow    |&#10004;     |
+|TensorFlow (Deprecated)    |&#10004;     |
 |PyTorch       |&#10004;     |
-|ONNX          |plan to support in the future |
-|MXNet         |&#10004;     |
+|ONNX (Deprecated)          |plan to support in the future |

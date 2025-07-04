@@ -34,7 +34,6 @@ OPTIONS = {
     "pytorch": None,
     "pytorch_fx": None,
     "pytorch_ipex": None,
-    "mxnet": None,
     "onnxrt_integerops": onnxrt,
     "onnxrt_qlinearops": onnxrt,
     "onnxrt_qdq": onnxrt,

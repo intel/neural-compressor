@@ -37,6 +37,20 @@ class Matmul(torch.nn.Module):
         """Forward function."""
         return torch.matmul(X, Y)
 
+class Matmul(torch.nn.Module):
+    """Basic module for matmul."""
+
+    def __init__(
+        self,
+    ) -> None:
+        """Init the Matmul object."""
+        super().__init__()
+
+    def forward(self, X, Y):
+        """Forward function."""
+        return torch.matmul(X, Y)
+
+
 class QDQLayer(torch.nn.Module):
     """Quantized and dequantized layer."""
 
@@ -108,6 +122,7 @@ class WeightOnlyLinear(torch.nn.Module):
         )
 
     def post_init(self):
+        """Initialization for W4A8 usage."""
         if self.enable_w4a8:
             self._post_init_for_w4a8()
 

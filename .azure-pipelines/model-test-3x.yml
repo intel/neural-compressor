@@ -10,10 +10,12 @@ pr:
     include:
       - neural_compressor/common
       - neural_compressor/torch
+      - neural_compressor/transformers
       - examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only
       - setup.py
       - requirements_pt.txt
       - .azure-pipelines/scripts/models
+      - .azure-pipelines/scripts/install_nc.sh
       - .azure-pipelines/model-test-3x.yml
       - .azure-pipelines/template/docker-template.yml
 
@@ -32,7 +34,6 @@ parameters:
     default:
       - opt_125m_woq_gptq_int4
       - opt_125m_woq_gptq_nf4_dq_bnb
-      - opt_125m_woq_gptq_int4_dq_ggml
 
 stages:
   - stage: PyTorchModels

@@ -26,16 +26,16 @@ import torch
 import torch.nn as nn
 from tqdm import tqdm
 
+from neural_compressor.torch.algorithms.layer_wise import get_path, load_value, set_module_tensor_to_device
 from neural_compressor.torch.utils import (
     get_accelerator,
     get_model_device,
+    get_used_cpu_mem_MB,
     is_transformers_imported,
     logger,
     set_module,
 )
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
-from neural_compressor.torch.algorithms.layer_wise import load_value, set_module_tensor_to_device, get_path
-from neural_compressor.torch.utils import get_used_cpu_mem_MB
 
 from .modules import INCWeightOnlyLinear
 
@@ -128,7 +128,7 @@ def trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn
     return gptq_related_blocks
 
 def find_all_layers(module, name=""):
-    """Get all layers"""    
+    """Get all layers."""
     if len(list(module.named_children())) == 0:
         return {name: module}
     res = {}
@@ -224,7 +224,8 @@ class RAWGPTQuantizer(object):
             use_max_length (bool): set all sequence length to be same length.
             max_seq_length (int): the same length of all sequence length.
             dataloader: an iterable containing calibration datasets, contains (inputs, targets)
-            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            use_layer_wise (bool): Whether to load weights and quantize per layer. Defaults to False.
+            use_block_wise (bool): Whether to load weights and quantize per block. Defaults to False.
             model_path (str): Model path that is used to load state_dict per layer.
             quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers. Defaults to False.
             device (str): cpu or cuda.
@@ -290,6 +291,7 @@ class RAWGPTQuantizer(object):
                                         If None, all layers will be considered.
                                         Layers not specified in this list will be retained in memory
                                         but will not undergo quantization.
+            layerwise (bool): Whether to apply layer-wise quantization.
         """
         import os
 
@@ -576,7 +578,7 @@ class RAWGPTQuantizer(object):
         true_sequential_map = self.analyze_true_sequential(self.gptq_related_blocks["transformers"][0])
         logger.info(f"Sequential Name: {true_sequential_map}")
         tblock_length = len(self.gptq_related_blocks["transformers"])
-        for param in self.model.parameters(): 
+        for param in self.model.parameters():
             param.requires_grad = False
 
         cpu_mem_0 = get_used_cpu_mem_MB()
@@ -585,8 +587,8 @@ class RAWGPTQuantizer(object):
             start_iter = time.time()
             logger.debug(f"Memory usage increase CPU: {get_used_cpu_mem_MB() - cpu_mem_0}")
             logger.info(f"Quantizing layer {block_idx + 1} / {tblock_length}..")
-            transformer_block = self.gptq_related_blocks["transformers"][block_idx]   
- 
+            transformer_block = self.gptq_related_blocks["transformers"][block_idx]
+
             # Step2.1: obtain all layers (Linear, Conv2d, etc) in the block which can be quantized.
             # device = 'cpu'
 
@@ -602,12 +604,12 @@ class RAWGPTQuantizer(object):
             # block weights are meta tensors, load them from disk
             if self.use_block_wise:
                 for n in find_all_layer_names(transformer_block):
-                    param_name = f"model.layers.{block_idx}." + n + '.weight'
+                    param_name = f"model.layers.{block_idx}." + n + ".weight"
                     try:
-                        value = load_value(self.model, param_name, self.model_path, 'cpu')
-                        set_module_tensor_to_device(transformer_block.get_submodule(n), 'weight', 'cpu', value)
+                        value = load_value(self.model, param_name, self.model_path, "cpu")
+                        set_module_tensor_to_device(transformer_block.get_submodule(n), "weight", "cpu", value)
                     except:
-                        pass # only load w
+                        pass  # only load w
 
             if not self.use_layer_wise:  # pragma: no cover
                 # if we do not apply layer-wise feature, we still place the entire block on the GPU
@@ -649,7 +651,7 @@ class RAWGPTQuantizer(object):
                     full_layer_name = self.get_full_layer_name(layer_name, block_idx)
                     weight_config_this_layer = self.get_layer_config(full_layer_name)
                     if self.use_layer_wise:  # pragma: no cover
-                        W = load_value(self.model, full_layer_name + ".weight", self.model_path, self.device)                    
+                        W = load_value(self.model, full_layer_name + ".weight", self.model_path, self.device)
                     else:
                         if "hpu" in str(self.device):  # pragma: no cover
                             # [SW-206677] memory is not release when module is moved out of HPU
@@ -761,8 +763,6 @@ class RAWGPTQuantizer(object):
                     transformer_block = transformer_block.cpu()
                     self.gptq_related_blocks["transformers"][block_idx] = transformer_block
                 # Step 2.6: export to compressed model
-                # [SW-206677] memory is not release when module is moved out of HPU
-                # Workaround of [SW-206677]: Packing logic happens on CPU
                 for layer_name in sequential_layers:
                     weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
                     gptq_scale = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["scale"].cpu()
@@ -857,10 +857,10 @@ class RAWGPTQuantizer(object):
 
                         for key, value in state_dict.items():
                             # Filter out tensors that are on the 'meta' device
-                            if value.device.type != 'meta':
+                            if value.device.type != "meta":
                                 aux_state_dict[key] = value
 
-                        torch.save(aux_state_dict, LWQ_WORKSPACE + f"/auxilaries.pt")
+                        torch.save(aux_state_dict, LWQ_WORKSPACE + "/auxiliaries.pt")
 
                 del gptq_for_this_block
                 accelerator.synchronize()
@@ -934,7 +934,6 @@ class RAWGPTQuantizer(object):
             for layer_name in sub_layers:
                 full_layer_name = self.gptq_related_blocks["transformers_post"]["name"]
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
-                # TODO: remove it when cholesky_inverse on HPU is ready
                 if "hpu" in self.device:
                     W = W.to("cpu")
                 scale, scale_bf16_to_fp8,  zp, Q = gptq_post_block[layer_name].fasterquant(
@@ -981,8 +980,6 @@ class RAWGPTQuantizer(object):
                 gptq_post_block[layer_name].free()
 
             # 2.7.2 lm_head: export to compressed model
-            # [SW-206677] memory is not release when module is moved out of HPU
-            # Workaround of [SW-206677]: Packing logic happens on CPU
             for layer_name in sub_layers:
                 full_layer_name = self.gptq_related_blocks["transformers_post"]["name"]
                 weight_config_this_layer = self.get_layer_config(full_layer_name)

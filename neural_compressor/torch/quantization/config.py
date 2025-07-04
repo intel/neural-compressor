@@ -361,35 +361,35 @@ class GPTQConfig(TorchBaseConfig):
     ]
 
     def __init__(
-        self,
-        dtype: str = "int",
-        bits: int = 4,
-        use_sym: bool = True,
-        group_size: int = 32,
-        use_mse_search: bool = False,
-        # layer wise
-        use_layer_wise: bool = False,
-        use_block_wise: bool = False,
-        model_path: str = "",
-        # double quant
-        use_double_quant: bool = False,
-        double_quant_dtype: str = "int",
-        double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
-        double_quant_use_sym: bool = False,
-        double_quant_group_size: int = 256,
-        # double quant
-        quant_lm_head: bool = False,
-        # gptq params
-        act_order: bool = False,
-        hybrid_order: bool = False,
-        fp8_aware: bool = False,
-        percdamp: float = 0.01,
-        block_size: int = 2048,
-        static_groups: bool = False,
-        true_sequential: bool = False,
-        # Tuning space
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        **kwargs,
+            self,
+            dtype: str = "int",
+            bits: int = 4,
+            use_sym: bool = True,
+            group_size: int = 32,
+            use_mse_search: bool = False,
+            # layer wise
+            use_layer_wise: bool = False,
+            use_block_wise: bool = False,
+            model_path: str = "",
+            # double quant
+            use_double_quant: bool = False,
+            double_quant_dtype: str = "int",
+            double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
+            double_quant_use_sym: bool = False,
+            double_quant_group_size: int = 256,
+            # double quant
+            quant_lm_head: bool = False,
+            # gptq params
+            act_order: bool = False,
+            hybrid_order: bool = False,
+            fp8_aware: bool = False,
+            percdamp: float = 0.01,
+            block_size: int = 2048,
+            static_groups: bool = False,
+            true_sequential: bool = False,
+            # Tuning space
+            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+            **kwargs,
     ):
         """Init GPTQ weight-only quantization config.
 
@@ -427,7 +427,6 @@ class GPTQConfig(TorchBaseConfig):
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
                                                                  Default is DEFAULT_WHITE_LIST.
         """
-        assert not quant_lm_head, "GPTQ doesn't support lm_head quantization currently, it's coming soon!"
         super().__init__(white_list=white_list)
         self.dtype = dtype
         self.bits = bits
@@ -470,7 +469,7 @@ class GPTQConfig(TorchBaseConfig):
         cls.supported_configs = supported_configs
 
     def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+            self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         """Convert the configuration to a mapping.
 
@@ -484,7 +483,13 @@ class GPTQConfig(TorchBaseConfig):
         """
         if not self.quant_lm_head:
             self.set_local(
-                LM_HEAD_NAMES, GPTQConfig(dtype="fp32", use_layer_wise=self.use_layer_wise, model_path=self.model_path, use_block_wise=self.use_block_wise)
+                LM_HEAD_NAMES,
+                GPTQConfig(
+                    dtype="fp32",
+                    use_layer_wise=self.use_layer_wise,
+                    model_path=self.model_path,
+                    use_block_wise=self.use_block_wise,
+                ),
             )
         config_mapping = super().to_config_mapping(config_list, model_info)
         return config_mapping
@@ -581,31 +586,31 @@ class AWQConfig(TorchBaseConfig):
     name = AWQ
 
     def __init__(
-        self,
-        dtype: str = "int",
-        bits: int = 4,
-        use_sym: bool = True,
-        group_size: int = 32,
-        group_dim: int = 1,
-        use_full_range: bool = False,
-        use_mse_search: bool = False,
-        use_layer_wise: bool = False,
-        model_path: str = "",
-        # double quant
-        use_double_quant: bool = False,
-        double_quant_dtype: str = "int",
-        double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
-        double_quant_use_sym: bool = True,
-        double_quant_group_size: int = 256,
-        # quant lm_head
-        quant_lm_head: bool = False,
-        # awq
-        use_auto_scale: bool = True,
-        use_auto_clip: bool = True,
-        folding: bool = False,
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        absorb_layer_dict: dict = {},
-        **kwargs,
+            self,
+            dtype: str = "int",
+            bits: int = 4,
+            use_sym: bool = True,
+            group_size: int = 32,
+            group_dim: int = 1,
+            use_full_range: bool = False,
+            use_mse_search: bool = False,
+            use_layer_wise: bool = False,
+            model_path: str = "",
+            # double quant
+            use_double_quant: bool = False,
+            double_quant_dtype: str = "int",
+            double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
+            double_quant_use_sym: bool = True,
+            double_quant_group_size: int = 256,
+            # quant lm_head
+            quant_lm_head: bool = False,
+            # awq
+            use_auto_scale: bool = True,
+            use_auto_clip: bool = True,
+            folding: bool = False,
+            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+            absorb_layer_dict: dict = {},
+            **kwargs,
     ):
         """Init AWQ weight-only quantization config.
 
@@ -671,7 +676,7 @@ class AWQConfig(TorchBaseConfig):
         cls.supported_configs = supported_configs
 
     def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+            self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         """Convert the configuration to a mapping.
 
@@ -761,28 +766,28 @@ class TEQConfig(TorchBaseConfig):
     name = TEQ
 
     def __init__(
-        self,
-        dtype: str = "int",
-        bits: int = 4,
-        use_sym: bool = True,
-        group_size: int = 32,
-        group_dim: int = 1,
-        use_full_range: bool = False,
-        use_mse_search: bool = False,
-        use_layer_wise: bool = False,
-        # double quant
-        use_double_quant: bool = False,
-        double_quant_dtype: str = "int",
-        double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
-        double_quant_use_sym: bool = True,
-        double_quant_group_size: int = 256,
-        # quant lm_head
-        quant_lm_head: bool = False,
-        # teq
-        absorb_to_layer: dict = {},
-        folding: bool = True,
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        **kwargs,
+            self,
+            dtype: str = "int",
+            bits: int = 4,
+            use_sym: bool = True,
+            group_size: int = 32,
+            group_dim: int = 1,
+            use_full_range: bool = False,
+            use_mse_search: bool = False,
+            use_layer_wise: bool = False,
+            # double quant
+            use_double_quant: bool = False,
+            double_quant_dtype: str = "int",
+            double_quant_bits: int = 8,  # not available when double_quant_dtype is not 'int'
+            double_quant_use_sym: bool = True,
+            double_quant_group_size: int = 256,
+            # quant lm_head
+            quant_lm_head: bool = False,
+            # teq
+            absorb_to_layer: dict = {},
+            folding: bool = True,
+            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+            **kwargs,
     ):
         """Init TEQ weight-only quantization config.
 
@@ -842,7 +847,7 @@ class TEQConfig(TorchBaseConfig):
         cls.supported_configs = supported_configs
 
     def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+            self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         """Convert the configuration to a mapping.
 
@@ -930,51 +935,51 @@ class AutoRoundConfig(TorchBaseConfig):
     name = AUTOROUND
 
     def __init__(
-        self,
-        dtype: str = "int",
-        bits: int = 4,
-        use_sym: bool = False,
-        group_size: int = 128,
-        # AUTOROUND
-        act_bits: int = 32,
-        act_group_size: int = None,
-        act_sym: bool = None,
-        act_dynamic: bool = True,
-        act_dtype: Optional[str] = None,
-        enable_full_range: bool = False,
-        batch_size: int = 8,
-        lr_scheduler=None,
-        enable_quanted_input: bool = True,
-        enable_minmax_tuning: bool = True,
-        lr: float = None,
-        minmax_lr: float = None,
-        low_gpu_mem_usage: bool = False,
-        iters: int = 200,
-        seqlen: int = 2048,
-        nsamples: int = 128,
-        sampler: str = "rand",
-        seed: int = 42,
-        nblocks: int = 1,
-        gradient_accumulate_steps: int = 1,
-        not_use_best_mse: bool = False,
-        dynamic_max_gap: int = -1,
-        scale_dtype: str = "fp16",
-        use_layer_wise: bool = False,
-        to_quant_block_names: list = None,
-        export_format: str = "itrex",
-        # v0.4
-        enable_norm_bias_tuning: bool = False,
-        enable_torch_compile: bool = None,
-        # mllm
-        is_mllm: bool = False,
-        quant_nontext_module: bool = False,
-        extra_data_dir: str = None,
-        processor=None,
-        image_processor=None,
-        template=None,
-        truncation: bool = False,
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        **kwargs,
+            self,
+            dtype: str = "int",
+            bits: int = 4,
+            use_sym: bool = False,
+            group_size: int = 128,
+            # AUTOROUND
+            act_bits: int = 32,
+            act_group_size: int = None,
+            act_sym: bool = None,
+            act_dynamic: bool = True,
+            act_dtype: Optional[str] = "int",
+            enable_full_range: bool = False,
+            batch_size: int = 8,
+            lr_scheduler=None,
+            enable_quanted_input: bool = True,
+            enable_minmax_tuning: bool = True,
+            lr: float = None,
+            minmax_lr: float = None,
+            low_gpu_mem_usage: bool = False,
+            iters: int = 200,
+            seqlen: int = 2048,
+            nsamples: int = 128,
+            sampler: str = "rand",
+            seed: int = 42,
+            nblocks: int = 1,
+            gradient_accumulate_steps: int = 1,
+            not_use_best_mse: bool = False,
+            dynamic_max_gap: int = -1,
+            scale_dtype: str = "fp16",
+            use_layer_wise: bool = False,
+            to_quant_block_names: list = None,
+            export_format: str = "itrex",
+            # v0.4
+            enable_norm_bias_tuning: bool = False,
+            enable_torch_compile: bool = None,
+            # mllm
+            is_mllm: bool = False,
+            quant_nontext_module: bool = False,
+            extra_data_dir: str = None,
+            processor=None,
+            image_processor=None,
+            template=None,
+            truncation: bool = False,
+            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+            **kwargs,
     ):
         """Init AUTOROUND weight-only quantization config.
 
@@ -1153,15 +1158,15 @@ class MXQuantConfig(TorchBaseConfig):
     name = MX_QUANT
 
     def __init__(
-        self,
-        w_dtype: str = "int8",
-        act_dtype: str = "int8",
-        out_dtype: str = "bfloat16",
-        blocksize: int = 32,
-        round_method: str = "nearest",
-        weight_only: bool = False,
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        **kwargs,
+            self,
+            w_dtype: str = "int8",
+            act_dtype: str = "int8",
+            out_dtype: str = "bfloat16",
+            blocksize: int = 32,
+            round_method: str = "nearest",
+            weight_only: bool = False,
+            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+            **kwargs,
     ):
         """Init MX quantization config.
 
@@ -1281,17 +1286,17 @@ class DynamicQuantConfig(TorchBaseConfig):
     supported_configs: List[OperatorConfig] = []
 
     def __init__(
-        self,
-        w_dtype: str = "int8",
-        w_sym: bool = True,
-        w_granularity: str = "per_tensor",
-        w_algo: str = "minmax",
-        act_dtype: str = "uint8",
-        act_sym: bool = False,
-        act_granularity: str = "per_tensor",
-        act_algo: str = "kl",
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        **kwargs,
+            self,
+            w_dtype: str = "int8",
+            w_sym: bool = True,
+            w_granularity: str = "per_tensor",
+            w_algo: str = "minmax",
+            act_dtype: str = "uint8",
+            act_sym: bool = False,
+            act_granularity: str = "per_tensor",
+            act_algo: str = "kl",
+            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+            **kwargs,
     ):
         """Init Dynamic Quant Configs."""
         super().__init__(white_list=white_list)
@@ -1327,7 +1332,7 @@ class DynamicQuantConfig(TorchBaseConfig):
         return None
 
     def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+            self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         """Convert the configuration to a mapping.
 
@@ -1377,19 +1382,19 @@ class INT8StaticQuantConfig(TorchBaseConfig):
     supported_configs: List[OperatorConfig] = []
 
     def __init__(
-        self,
-        w_dtype: str = "int8",
-        w_sym: bool = True,
-        w_granularity: str = "per_channel",
-        w_algo: str = "minmax",
-        act_dtype: str = "uint8",
-        act_sym: bool = False,
-        act_granularity: str = "per_tensor",
-        act_algo: str = "minmax",
-        excluded_precisions: list = [],
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        model_info: Optional[List[Tuple[str, Callable]]] = None,
-        **kwargs,
+            self,
+            w_dtype: str = "int8",
+            w_sym: bool = True,
+            w_granularity: str = "per_channel",
+            w_algo: str = "minmax",
+            act_dtype: str = "uint8",
+            act_sym: bool = False,
+            act_granularity: str = "per_tensor",
+            act_algo: str = "minmax",
+            excluded_precisions: list = [],
+            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+            model_info: Optional[List[Tuple[str, Callable]]] = None,
+            **kwargs,
     ):
         """Init StaticQuant Config.
 
@@ -1484,7 +1489,7 @@ class INT8StaticQuantConfig(TorchBaseConfig):
                 return INT8StaticQuantConfig.get_model_info_for_ipex_xpu(self, model)
 
     def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+            self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         """Convert the configuration to a mapping.
 
@@ -1540,29 +1545,29 @@ class SmoothQuantConfig(TorchBaseConfig):
     supported_configs: List[OperatorConfig] = []
 
     def __init__(
-        self,
-        w_dtype: str = "int8",
-        w_sym: bool = True,
-        w_granularity: str = "per_channel",
-        w_algo: str = "minmax",
-        act_dtype: str = "uint8",
-        act_sym: bool = False,
-        act_granularity: str = "per_tensor",
-        act_algo: str = "minmax",
-        excluded_precisions: list = [],
-        alpha: float = 0.5,
-        folding: bool = False,
-        # below for autotune
-        scale_sharing: bool = False,
-        init_alpha: float = 0.5,
-        alpha_min: float = 0.0,
-        alpha_max: float = 1.0,
-        alpha_step: float = 0.1,
-        shared_criterion: str = "max",
-        do_blockwise: bool = False,
-        auto_alpha_args: dict = None,
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        **kwargs,
+            self,
+            w_dtype: str = "int8",
+            w_sym: bool = True,
+            w_granularity: str = "per_channel",
+            w_algo: str = "minmax",
+            act_dtype: str = "uint8",
+            act_sym: bool = False,
+            act_granularity: str = "per_tensor",
+            act_algo: str = "minmax",
+            excluded_precisions: list = [],
+            alpha: float = 0.5,
+            folding: bool = False,
+            # below for autotune
+            scale_sharing: bool = False,
+            init_alpha: float = 0.5,
+            alpha_min: float = 0.0,
+            alpha_max: float = 1.0,
+            alpha_step: float = 0.1,
+            shared_criterion: str = "max",
+            do_blockwise: bool = False,
+            auto_alpha_args: dict = None,
+            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+            **kwargs,
     ):
         """Init SmoothQuant Config.
 
@@ -1694,16 +1699,16 @@ class HQQConfig(TorchBaseConfig):
     supported_configs: List[OperatorConfig] = []
 
     def __init__(
-        self,
-        dtype: str = "int",
-        bits: int = 4,
-        group_size: int = 64,
-        quant_zero: bool = True,
-        quant_scale: bool = False,
-        scale_quant_group_size: int = 128,
-        quant_lm_head: bool = False,
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        **kwargs,
+            self,
+            dtype: str = "int",
+            bits: int = 4,
+            group_size: int = 64,
+            quant_zero: bool = True,
+            quant_scale: bool = False,
+            scale_quant_group_size: int = 128,
+            quant_lm_head: bool = False,
+            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+            **kwargs,
     ):
         """Initialize HQQConfig.
 
@@ -1759,7 +1764,7 @@ class HQQConfig(TorchBaseConfig):
         return filter_result
 
     def to_config_mapping(
-        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+            self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
     ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
         """Convert the configuration to a mapping.
 
@@ -1810,23 +1815,24 @@ class FP8Config(TorchBaseConfig):
     name = FP8_QUANT
 
     def __init__(
-        self,
-        dump_stats_path: str = "./hqt_output/measure",
-        fp8_config: str = "E4M3",
-        hp_dtype: str = "bf16",
-        blocklist: dict = {"names": [], "types": ()},
-        allowlist: dict = {"names": [], "types": get_white_list()},
-        mode: str = "AUTO",
-        scale_method: Union[str, dict] = "maxabs_hw",
-        scale_params: dict = {},
-        observer: str = "maxabs",
-        mod_dict: dict = {},
-        measure_exclude: str = "OUTPUT",
-        fake_quant: bool = False,
-        use_qdq: bool = False,
-        scale_format: str = "scalar",
-        measure_on_hpu: bool = True,
-        **kwargs,
+            self,
+            dump_stats_path: str = "./hqt_output/measure",
+            fp8_config: str = "E4M3",
+            hp_dtype: str = "bf16",
+            blocklist: dict = {"names": [], "types": ()},
+            allowlist: dict = {"names": [], "types": get_white_list()},
+            mode: str = "AUTO",
+            scale_method: Union[str, dict] = "maxabs_hw",
+            scale_params: dict = {},
+            observer: str = "maxabs",
+            mod_dict: dict = {},
+            measure_exclude: str = "OUTPUT",
+            fake_quant: bool = False,
+            use_qdq: bool = False,
+            scale_format: str = "scalar",
+            measure_on_hpu: bool = True,
+            int4_weights: bool = False,
+            **kwargs,
     ):
         """Initializing FP8Config.
 
@@ -1927,8 +1933,8 @@ class FP8Config(TorchBaseConfig):
         filter_result = []
         for op_name, module in model.named_modules():
             if (
-                module.__class__.__name__ in get_white_list()
-                or module.__class__.__name__.split("Patched")[-1] in get_white_list()
+                    module.__class__.__name__ in get_white_list()
+                    or module.__class__.__name__.split("Patched")[-1] in get_white_list()
             ):
                 pair = (op_name, module.__class__.__name__)
                 filter_result.append(pair)
@@ -1977,30 +1983,33 @@ def get_default_fp8_config_set() -> FP8Config:
 
 ######################## Hybrid GPTQ Quant Config ###############################
 
+
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=HYBRID_GPTQ)
 class HybridGPTQConfig(FP8Config):
     """Config class for Hybrid Precision GPTQ quantization.
+
     Currently supports running 4bit weights which have been quantized by GPTQ, during which
     the weights have been double quantized from high precision, to fp8, to int4.
-    The activations will be quantized to fp8."""
+    The activations will be quantized to fp8.
+    """
+
     name = HYBRID_GPTQ
 
     def __init__(
-        self,
-        **kwargs,
+            self,
+            **kwargs,
     ):
-        """Initializing Hybrid GPTQ Config.
-
-        """
+        """Initializing Hybrid GPTQ Config."""
         super().__init__(**kwargs)
-
 
     @staticmethod
     def convert_from_fp8(config):
         new_self = HybridGPTQConfig()
         for attr, value in vars(config).items():
             setattr(new_self, attr, value)
+        new_self.int4_weights = True
         return new_self
+
 
 ######################## MixedPrecision Config ###############################
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=MIXED_PRECISION)
@@ -2020,10 +2029,10 @@ class MixedPrecisionConfig(TorchBaseConfig):
     )
 
     def __init__(
-        self,
-        dtype: Union[str, List[str]] = "fp16",
-        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        **kwargs,
+            self,
+            dtype: Union[str, List[str]] = "fp16",
+            white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+            **kwargs,
     ):
         """Init MixedPrecision config.
 
@@ -2133,9 +2142,9 @@ class StaticQuantConfig(TorchBaseConfig):
     _model_mapping = CONFIGS_FOR_STATIC_QUANT_MAPPING
 
     def __new__(
-        self,
-        *args,
-        **kwargs,
+            self,
+            *args,
+            **kwargs,
     ):
         dtype = kwargs.get("fp8_config", None)
         if dtype is not None:

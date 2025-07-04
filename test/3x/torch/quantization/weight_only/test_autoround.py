@@ -69,6 +69,7 @@ def run_fn(model, dataloader):
         else:
             model(data)
 
+@pytest.mark.skip(reason="SW-217321 pytorch inductor error")
 @pytest.mark.skipif(is_habana_framework_installed(), reason="These tests are not supported on HPU for now.")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRoundCPU:
@@ -289,7 +290,7 @@ class TestAutoRoundCPU:
 class TestAutoRoundHPU:
     @classmethod
     def setup_class(self):
-        
+
         model_name = "TheBloke/Llama-2-7B-Chat-GPTQ"
         from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaConfig
         from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
@@ -323,7 +324,7 @@ class TestAutoRoundHPU:
             act_bits=8,
             act_group_size=-1,
             act_dtype="fp8_sym",
-            act_dynamic=False,   
+            act_dynamic=False,
         )
 
         quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
@@ -335,7 +336,7 @@ class TestAutoRoundHPU:
         run_fn(model, self.dataloader)
         q_model = convert(model)
         assert q_model is not None, "Quantization failed!"
-        # We quantize the model with compile mode, if we want to run the model directly, 
+        # We quantize the model with compile mode, if we want to run the model directly,
         # we need use the compile mode as well.
         # We can use the lazy mode but need to restart the python process.
         from neural_compressor.torch.algorithms.weight_only.save_load import load

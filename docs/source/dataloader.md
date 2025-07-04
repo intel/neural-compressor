@@ -31,11 +31,10 @@ Of cause, users can also use frameworks own dataloader in Neural Compressor.
 
 | Framework     | Status     |
 |---------------|:----------:|
-| TensorFlow    |  &#10004;  |
-| Keras         |  &#10004;  |
-| MXNet         |  &#10004;  |
+| TensorFlow (Deprecated)    |  &#10004;  |
+| Keras (Deprecated)         |  &#10004;  |
 | PyTorch       |  &#10004;  |
-| ONNX Runtime   |  &#10004;  |
+| ONNX Runtime (Deprecated)   |  &#10004;  |
 
 ## Get Started with DataLoader
 
@@ -45,7 +44,7 @@ Acceptable parameters for `DataLoader` API including:
 
 | Parameter     | Description     |
 |---------------|:----------:|
-|framework (str)| different frameworks, such as `tensorflow`, `tensorflow_itex`, `keras`, `mxnet`, `pytorch` and `onnxruntime`.|
+|framework (str)| different frameworks, such as `tensorflow`, `tensorflow_itex`, `keras`, `pytorch` and `onnxruntime`.|
 |dataset (object)| A dataset object from which to get data. Dataset must implement `__iter__` or `__getitem__` method.|
 |batch_size (int, optional)| How many samples per batch to load. Defaults to 1.|
 |collate_fn (Callable, optional)| Callable function that processes the batch you want to return from your dataloader. Defaults to None.|

@@ -206,14 +206,8 @@ def _replace_linear(
                         device=device,
                         use_optimum_format=getattr(module, "use_optimum_format", True),
                     )
-                    if quantization_config.quant_method.value == "gptq":
-                        g_idx = getattr(
-                            module,
-                            "g_idx",
-                            torch.zeros(in_features, dtype=torch.int32).to(device),
-                        )
-                    else:
-                        g_idx = None
+                    # g_idx is only present when using GPTQ quantization method
+                    g_idx = module.g_idx if hasattr(module, "g_idx") else None
                     model._modules[name].set_scales_zps_gidx(
                         (
                             module.scales
@@ -238,9 +232,16 @@ def _replace_linear(
                             dtype=torch.int32,
                             device=torch.device(device),
                         )
+
+                    # Note: update_g_idx is only applicable for ipex versions >=2.7
                     model._modules[name].set_weights_bias(
                         module.qweight.data if hasattr(module, "qweight") else weight,
                         None if module.bias is None else module.bias.data,
+                        **(
+                            {"update_g_idx": not empty_weights}
+                            if "update_g_idx" in model._modules[name].set_weights_bias.__code__.co_varnames
+                            else {}
+                        ),
                     )
                 else:
                     raise Exception("{} device Unsupported weight only quantization!".format(device))
@@ -622,8 +623,8 @@ def convert_to_quantized_model(model, config, device="cpu"):
 def convert_to_GPTQ_checkpoints(model, quantization_config):
     from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear as ipex_cpu_linear
 
-    from neural_compressor.adaptor.torch_utils.util import set_module
     from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
+    from neural_compressor.torch.utils import set_module
 
     dtype = "int4" if quantization_config.bits == 4 else "int8"
     bits = quantization_config.bits

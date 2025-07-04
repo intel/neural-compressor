@@ -102,7 +102,7 @@ parser.add_argument('-r', "--accuracy", dest='accuracy', action='store_true',
                     help='For accuracy measurement only.')
 parser.add_argument("--tuned_checkpoint", default='./saved_results', type=str, metavar='PATH',
                     help='path to checkpoint tuned by Neural Compressor (default: ./)')
-parser.add_argument('--int8', dest='int8', action='store_true',
+parser.add_argument('--optimized', dest='optimized', action='store_true',
                     help='run benchmark')
 parser.add_argument('--ipex', dest='ipex', action='store_true',
                     help='tuning or benchmark with Intel PyTorch Extension')
@@ -196,7 +196,7 @@ def main_worker(gpu, ngpus_per_node, args):
             else:
                 model = quantize_models.__dict__[args.arch]()
 
-    if args.ipex and not args.int8:
+    if args.ipex and not args.optimized:
         model = model.to(memory_format=torch.channels_last)
 
     if not torch.cuda.is_available():
@@ -333,8 +333,8 @@ def main_worker(gpu, ngpus_per_node, args):
 
     if args.performance or args.accuracy:
         model.eval()
-        if args.int8:
-            print("load int8 model")
+        if args.optimized:
+            print("load optimized model")
             from neural_compressor.torch.quantization import load
             model = load(os.path.abspath(os.path.expanduser(args.tuned_checkpoint)))
         else:

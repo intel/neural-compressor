@@ -29,7 +29,8 @@ parser.add_argument("--seed", type=int, default=42, help="Seed for sampling the 
 parser.add_argument(
     "--approach", type=str, default="static", help="Select from ['dynamic', 'static', 'weight-only']"
 )
-parser.add_argument("--int8", action="store_true")
+parser.add_argument("--optimized", action="store_true")
+parser.add_argument("--autotune", action="store_true", help="Use autotune to find the best alpha for SmoothQuant.")
 parser.add_argument("--ipex", action="store_true", help="Use intel extension for pytorch.")
 parser.add_argument("--load", action="store_true", help="Load quantized model.")
 parser.add_argument("--accuracy", action="store_true")
@@ -204,21 +205,31 @@ if args.quantize:
 
     example_inputs = get_example_inputs(user_model, calib_dataloader)
 
-    from neural_compressor.torch.quantization import SmoothQuantConfig, autotune, TuningConfig
-    tune_config = TuningConfig(config_set=SmoothQuantConfig.get_config_set_for_tuning())
-    user_model = autotune(
-        user_model, 
-        tune_config=tune_config,
-        eval_fn=eval_func,
-        run_fn=run_fn,
-        example_inputs=example_inputs,
-    )
+    if args.autotune:
+        from neural_compressor.torch.quantization import SmoothQuantConfig, autotune, TuningConfig
+        tune_config = TuningConfig(config_set=SmoothQuantConfig.get_config_set_for_tuning())
+        user_model = autotune(
+            user_model, 
+            tune_config=tune_config,
+            eval_fn=eval_func,
+            run_fn=run_fn,
+            example_inputs=example_inputs,
+        )
+    else:        
+        from neural_compressor.torch.quantization import SmoothQuantConfig, prepare, convert
+        args.alpha = eval(args.alpha)
+        excluded_precisions = [] if args.int8_bf16_mixed else ["bf16"]
+        quant_config = SmoothQuantConfig(alpha=args.alpha, folding=False, excluded_precisions=excluded_precisions)
+
+        user_model = prepare(model=user_model, quant_config=quant_config, example_inputs=example_inputs)
+        run_fn(user_model)
+        user_model = convert(user_model)
     user_model.save(args.output_dir)
 
 
 if args.load:
-    if args.int8 or args.int8_bf16_mixed:
-        print("load int8 model")
+    if args.optimized or args.int8_bf16_mixed:
+        print("load optimized model")
         from neural_compressor.torch.quantization import load
 
         tokenizer = AutoTokenizer.from_pretrained(args.model)

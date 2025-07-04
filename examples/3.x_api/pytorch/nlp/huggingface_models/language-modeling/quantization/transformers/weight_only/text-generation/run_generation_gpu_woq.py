@@ -50,6 +50,7 @@ parser.add_argument("--save_accuracy_path", default=None,
                     help="Save accuracy results path.")
 parser.add_argument("--tasks", default="lambada_openai", type=str, \
                     help="tasks list for accuracy validation")
+parser.add_argument("--add_bos_token", action="store_true", help="whether to add bos token for accuracy validation.")
 # ============WeightOnlyQuant configs===============
 parser.add_argument("--bits", type=int, default=4, choices=[4])
 parser.add_argument("--woq", action="store_true")
@@ -339,7 +340,8 @@ if args.accuracy:
                         user_model = user_model,
                         tasks = args.tasks,
                         device = args.device,
-                        batch_size = args.eval_batch_size)
+                        batch_size = args.eval_batch_size,
+                        add_bos_token = args.add_bos_token,)
     results = evaluate(args)
     for task_name in args.tasks.split(","):
         if task_name == "wikitext":

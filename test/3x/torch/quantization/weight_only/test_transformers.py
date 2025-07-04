@@ -8,6 +8,7 @@ from packaging.version import Version
 from transformers import AutoTokenizer
 
 from neural_compressor.torch.utils import get_ipex_version
+from neural_compressor.utils.utility import CpuInfo
 from neural_compressor.transformers import (
     AutoModelForCausalLM,
     Qwen2VLForConditionalGeneration,
@@ -17,6 +18,8 @@ from neural_compressor.transformers import (
     RtnConfig,
     TeqConfig,
 )
+
+torch.manual_seed(42)
 
 ipex_version = get_ipex_version()
 
@@ -29,7 +32,7 @@ except ImportError:
 
 class TestTansformersLikeAPI:
     def setup_class(self):
-        self.model_name_or_path = "hf-internal-testing/tiny-random-gptj"
+        self.model_name_or_path = "hf-tiny-model-private/tiny-random-GPTJForCausalLM"
         self.autoawq_model = "casperhansen/opt-125m-awq"
         self.prompt = "One day, the little girl"
         self.generate_kwargs = dict(do_sample=False, temperature=0.9, num_beams=4)
@@ -57,8 +60,9 @@ class TestTansformersLikeAPI:
         woq_model.eval()
 
         output = woq_model(dummy_input)[0]
-        assert torch.allclose(output, label, atol=0.1), "Accuracy gap atol > 0.1 is unexpected."
-        assert isclose(float(output[0][0][0]), 0.17786270380020142, rel_tol=1e-04)
+        assert torch.allclose(output, label, atol=0.12), "Accuracy gap atol > 0.1 is unexpected."
+        # label[0][0][0] = -0.0910
+        assert isclose(float(output[0][0][0]), -0.1006, abs_tol=1e-04)
 
         # AWQ
         woq_config = AwqConfig(
@@ -68,14 +72,14 @@ class TestTansformersLikeAPI:
         woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
         output = woq_model(dummy_input)
-        assert isclose(float(output[0][0][0][0]), 0.19592927396297455, rel_tol=1e-04)
+        assert isclose(float(output[0][0][0][0]), -0.1045, abs_tol=1e-04)
 
         # TEQ
         woq_config = TeqConfig(bits=4, n_samples=5, batch_size=1, seq_len=512, group_size=16, tokenizer=tokenizer)
         woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
         output = woq_model(dummy_input)
-        assert isclose(float(output[0][0][0][0]), 0.17786270380020142, rel_tol=1e-04)
+        assert isclose(float(output[0][0][0][0]), -0.1006, abs_tol=1e-04)
 
         # GPTQ
         woq_config = GPTQConfig(
@@ -94,11 +98,11 @@ class TestTansformersLikeAPI:
         woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
         output = woq_model(dummy_input)
-        # Since the output of torch.cholesky() has changed in different Torch versions
+        # The output of torch.cholesky() changes on different torch version
         if ipex_version < Version("2.5.0"):
-            assert isclose(float(output[0][0][0][0]), 0.17234990000724792, rel_tol=1e-04)
+            assert isclose(float(output[0][0][0][0]), -0.08614, abs_tol=1e-04)
         else:
-            assert isclose(float(output[0][0][0][0]), 0.17049233615398407, rel_tol=1e-04)
+            assert isclose(float(output[0][0][0][0]), -0.0874, abs_tol=1e-04)
 
         # AUTOROUND
         woq_config = AutoRoundConfig(
@@ -107,7 +111,11 @@ class TestTansformersLikeAPI:
         woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
         output = woq_model(dummy_input)
-        assert isclose(float(output[0][0][0][0]), 0.18400897085666656, rel_tol=1e-04)
+        # The output might change when device supports bf16
+        if CpuInfo().bf16:
+            assert isclose(float(output[0][0][0][0]),  -0.07275, abs_tol=1e-04)
+        else:
+            assert isclose(float(output[0][0][0][0]), -0.0786, abs_tol=1e-04)
 
     def test_save_load(self):
         model_name_or_path = self.model_name_or_path
@@ -204,6 +212,7 @@ class TestTansformersLikeAPI:
         woq_output_download = woq_model(dummy_input)[0]
         assert torch.equal(woq_output_download, woq_output)
 
+    @pytest.mark.skipif(Version(transformers.__version__) > Version("4.52.0"), reason="modeling_opt.py changed.")
     def test_loading_autoawq_model(self):
         user_model = AutoModelForCausalLM.from_pretrained(self.autoawq_model)
         tokenizer = AutoTokenizer.from_pretrained(self.autoawq_model)
@@ -239,15 +248,21 @@ class TestTansformersLikeAPI:
             from intel_extension_for_pytorch.nn.utils._quantize_convert import WeightOnlyQuantizedLinear
         else:    
             from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear
-        assert isinstance(woq_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "replacing model failed."
+
+        if Version(transformers.__version__) >= Version("4.52"):
+            assert isinstance(woq_model.model.language_model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "replacing model failed."
+        else:
+            assert isinstance(woq_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "replacing model failed."
         
         #save
         woq_model.save_pretrained("transformers_vlm_tmp")
         
         #load
         loaded_model = Qwen2VLForConditionalGeneration.from_pretrained("transformers_vlm_tmp")
-        assert isinstance(loaded_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "loaing model failed."
-        
+        if Version(transformers.__version__) >= Version("4.52"):
+            assert isinstance(loaded_model.model.language_model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "loaing model failed."
+        else:
+            assert isinstance(loaded_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "loaing model failed."
         # phi-3-vision-128k-instruct, disable as CI consumes too much time
         # woq_config = AutoRoundConfig(
         #     bits=4, 

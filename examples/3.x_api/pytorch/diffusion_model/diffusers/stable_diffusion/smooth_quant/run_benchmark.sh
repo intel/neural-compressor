@@ -20,8 +20,8 @@ function init_params {
       --iters=*)
           iters=$(echo $var | cut -f2 -d=)
       ;;
-      --int8=*)
-          int8=$(echo $var | cut -f2 -d=)
+      --optimized=*)
+          optimized=$(echo $var | cut -f2 -d=)
       ;;
       --mode=*)
           mode=$(echo $var | cut -f2 -d=)
@@ -43,16 +43,13 @@ function run_benchmark {
     latent="latents.pt"
     base_output_dir="./output/"
 
-    if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd" --int8"
+    if [[ ${optimized} == "true" ]]; then
+        extra_cmd=$extra_cmd" --optimized"
     fi
     echo $extra_cmd
 
     if [[ ${mode} == "performance" ]]; then
       extra_cmd=$extra_cmd" --performance"
-      if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd" --int8"
-      fi
       echo $extra_cmd
 
       python -u sdxl_smooth_quant.py \
@@ -60,9 +57,6 @@ function run_benchmark {
         --latent ${latent} \
         ${extra_cmd}
     else
-      if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd" --int8"
-      fi
       echo $extra_cmd
 
       python -u sdxl_smooth_quant.py \

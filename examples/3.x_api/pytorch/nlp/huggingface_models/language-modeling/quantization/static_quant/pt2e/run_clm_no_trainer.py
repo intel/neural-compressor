@@ -18,7 +18,7 @@ parser.add_argument("--output_dir", nargs="?", default="")
 parser.add_argument("--quantize", action="store_true")
 parser.add_argument("--approach", type=str, default='static',
                     help="Select from ['dynamic', 'static', 'weight-only']")
-parser.add_argument("--int8", action="store_true")
+parser.add_argument("--optimized", action="store_true")
 parser.add_argument("--accuracy", action="store_true")
 parser.add_argument("--performance", action="store_true")
 parser.add_argument("--calib_iters", default=2, type=int,
@@ -102,9 +102,9 @@ if args.quantize:
         converted_model.save(example_inputs=example_inputs, output_dir = args.output_dir)
 
 
-if args.int8:
+if args.optimized:
     if args.output_dir:
-        print("Load int8 model.")
+        print("Load optimized model.")
         from neural_compressor.torch.quantization import load
         model_config = user_model.config
         user_model = load(args.output_dir)

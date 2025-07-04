@@ -246,6 +246,7 @@ class MatmulOpQuantizer(BaseOpQuantizer):
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
 
+
     def get_scales_module_config(self):
         input_scales = self.calc_input_scales(num_of_inputs=2)
 
@@ -382,7 +383,7 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
             num_of_experts = self.mod.num_experts
         else:
             num_of_experts = 8
-        
+
         self.inputs_scales_creators = [
             self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, is_dynamic=self.is_dynamic)
             for i in range(num_of_inputs + num_of_experts)
@@ -420,7 +421,7 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
         output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
         return ModuleConfig(input_config, output_config)
 
-    
+
 
 class EmbeddingOpQuantizer(BaseOpQuantizer):
 

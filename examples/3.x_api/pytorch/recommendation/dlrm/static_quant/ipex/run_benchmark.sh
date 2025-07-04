@@ -34,8 +34,8 @@ function init_params {
       --iters=*)
           iters=$(echo ${var} |cut -f2 -d=)
       ;;
-      --int8=*)
-          int8=$(echo ${var} |cut -f2 -d=)
+      --optimized=*)
+          optimized=$(echo ${var} |cut -f2 -d=)
       ;;
       --config=*)
           tuned_checkpoint=$(echo $var |cut -f2 -d=)
@@ -61,9 +61,9 @@ function run_tuning {
     CORES=`lscpu | grep Core | awk '{print $4}'`
 
     ARGS=""
-    if [[ ${int8} == "true" ]]; then
-        echo "running int8 path"
-        ARGS="$ARGS --int8"
+    if [[ ${optimized} == "true" ]]; then
+        echo "running optimized path"
+        ARGS="$ARGS --optimized"
     else
         echo "running fp32 path"
     fi

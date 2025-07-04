@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 
 This example load [BERT Pre-Training of Image Transformers](https://arxiv.org/abs/2106.08254)(BEiT) model and confirm its accuracy and performance based on [ImageNet-1k dataset](http://www.image-net.org/). You need to download this dataset yourself.

@@ -42,7 +42,7 @@ PyTorch 1.11 or higher version is needed with pytorch_fx backend.
 
 ### benchmark
 ```shell
-bash run_benchmark.sh --input_model="/path/of/pretrained/model" --dataset_location="/path/of/dataset" --mode=accuracy --int8=true
+bash run_benchmark.sh --input_model="/path/of/pretrained/model" --dataset_location="/path/of/dataset" --mode=accuracy --optimized=true
 ```
 
 

@@ -37,8 +37,8 @@ function init_params {
       --iters=*)
           iters=$(echo ${var} |cut -f2 -d=)
       ;;
-      --int8=*)  # [ILITV-3954]: Update `--int8` flag to `--optimized` flag
-          int8=$(echo ${var} |cut -f2 -d=)
+      --optimized=*)
+          optimized=$(echo ${var} |cut -f2 -d=)
       ;;
       --config=*)
           tuned_checkpoint=$(echo $var |cut -f2 -d=)
@@ -66,7 +66,7 @@ function run_benchmark {
         exit 1
     fi
 
-    if [[ ${int8} == "true" ]]; then
+    if [[ ${optimized} == "true" ]]; then
         extra_cmd=$extra_cmd" --load"
     fi
     echo $extra_cmd
@@ -111,14 +111,14 @@ function run_benchmark {
     elif [ "${topology}" = "opt_125m_woq_autotune_int4" ]; then
         model_name_or_path="facebook/opt-125m"
     elif [ "${topology}" = "llama3_1_8b_gptq_int4_hf" ]; then
-        if [[ ${int8} == "true" ]]; then
-            model_name_or_path=${tuned_checkpoint}
+        if [[ ${optimized} == "true" ]]; then
+        model_name_or_path=${tuned_checkpoint}
         else
             model_name_or_path="/mnt/weka/data/pytorch/llama3.1/Meta-Llama-3.1-8B-Instruct/"
         fi
         extra_cmd=$extra_cmd" --woq_algo GPTQ --use_hf_format"
     elif [ "${topology}" = "llama2_70b_gptq_int4_hf" ]; then
-        if [[ ${int8} == "true" ]]; then
+        if [[ ${optimized} == "true" ]]; then
             model_name_or_path=${tuned_checkpoint}
         else
             model_name_or_path="/mnt/weka/data/pytorch/llama2/Llama-2-70b-hf"

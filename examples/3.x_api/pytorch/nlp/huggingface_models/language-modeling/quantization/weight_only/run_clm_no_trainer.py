@@ -119,6 +119,7 @@ parser.add_argument("--folding", action="store_true",
                     help="Allow insert mul before linear when the scale cannot be absorbed by last layer for TEQ/AWQ.")
 parser.add_argument('--absorb_layer_dict', type=dict, default={},
                     help="The layer dict that scale can be absorbed for TEQ/AWQ.")
+
 # ============AUTOROUND configs==============
 parser.add_argument(
     "--lr",
@@ -181,8 +182,8 @@ def check_torch_compile_with_hpu_backend():
     assert TORCH_VERSION_AT_LEAST_2_4, "Please use torch>=2.4.0 to use torch compile with HPU backend."
     if os.environ.get("PT_HPU_LAZY_MODE") != "0":
         raise ValueError("Please set `PT_HPU_LAZY_MODE=0` to use torch compile with HPU backend.")
-    if os.environ.get("PT_ENABLE_INT64_SUPPORT") != "true":
-        raise ValueError("Please set `PT_ENABLE_INT64_SUPPORT=true` to use torch compile with HPU backend.")
+    if os.environ.get("PT_ENABLE_INT64_SUPPORT") != "1":
+        raise ValueError("Please set `PT_ENABLE_INT64_SUPPORT=1` to use torch compile with HPU backend.")
 
 
 def set_envs_for_torch_compile_with_hpu_backend():

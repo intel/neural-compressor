@@ -16,6 +16,7 @@ from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.algorithms.mixed_low_precision.modules import HPUMixedPrecisionLinear
 from neural_compressor.torch.algorithms.weight_only.modules import HPUWeightOnlyLinear
 
+
 class HybridGPTQQuantizer(Quantizer):
     def __init__(self, quant_config):
         super().__init__(quant_config)
@@ -27,10 +28,11 @@ class HybridGPTQQuantizer(Quantizer):
     def prepare(self, model):
         _prepare(model)
         return model
-    
+
     def convert(self, model):
         _convert(model)
         return model
+
 
 def set_module(model, op_name, new_module):
     """Set module with a given op name.
@@ -52,9 +54,10 @@ def set_module(model, op_name, new_module):
             module = module
     setattr(module, name_list[-1], new_module)
 
+
 def _convert(model):
     for name, module in model.named_modules():
-    # replace `HPUWeightOnlyLinear`s forward func
+        # replace `HPUWeightOnlyLinear`s forward func
         if isinstance(module, HPUWeightOnlyLinear):
             module = HPUMixedPrecisionLinear.convert_from_weight_only(module)
             set_module(model, name, module)

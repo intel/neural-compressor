@@ -4,6 +4,7 @@ import torch
 import shutil
 import copy
 import habana_frameworks.torch.core as htcore
+import habana_frameworks.torch.utils.experimental as htexp
 
 from ..tester import RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST, run_with_raised_exception
 from neural_compressor.torch.algorithms.fp8_quant._core.common import is_runtime_scale_patching
@@ -48,6 +49,7 @@ def temp_directory():
     shutil.rmtree(temp_dir)
 
 
+@pytest.mark.skipif(not hasattr(htexp, "_set_scale_attributes"), reason="scale attributes not supported")
 @pytest.mark.parametrize("scale_method", ScaleMethodString)
 @pytest.mark.parametrize("scale_format", ["SCALAR", "CONST"])
 @pytest.mark.parametrize("dynamic_scale_patching", [True, False])

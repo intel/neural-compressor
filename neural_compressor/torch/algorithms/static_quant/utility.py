@@ -400,8 +400,8 @@ def get_quantizable_ops_recursively(model, example_inputs):  # pragma: no cover
                     quantizable_ops.append((tuple(name), unify_op_type_mapping_ipex[ipex_op_type]))
                     map_op_name_to_fqn[(tuple(name), ipex_op_type)] = module_fqn
                     if "class" in ipex_op_type:  # "<class 'torch.nn.modules.activation.ReLU'>"
-                        op_type = ipex_op_type.split("'")[1]
-                        op_name_info.append((module_fqn, eval(op_type).__name__))
+                        _, class_name = ipex_op_type.strip(">").split("'")[1].rsplit(".", 1)
+                        op_name_info.append((module_fqn, class_name))
                     elif "method" in ipex_op_type:  # "<method 'add' of 'torch._C._TensorBase' objects>"
                         method = ipex_op_type.split("'")[1]
                         op_name_info.append((module_fqn, method))

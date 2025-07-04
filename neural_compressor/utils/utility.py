@@ -55,7 +55,6 @@ required_libs = {
     "onnxrt_qlinearops": ["onnx", "onnxruntime"],
     "onnxrt_integerops": ["onnx", "onnxruntime"],
     "onnxruntime": ["onnx", "onnxruntime"],
-    "mxnet": ["mxnet"],
 }
 
 
@@ -240,13 +239,13 @@ class CpuInfo(object):
             max_extension_support = cpuid.get_max_extension_support()
             if max_extension_support >= 7:
                 ecx = cpuid._run_asm(
-                    b"\x31\xC9",  # xor ecx, ecx
-                    b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\x89\xC8" b"\xC3",  # mov eax, 7  # cpuid  # mov ax, cx  # ret
+                    b"\x31\xc9",  # xor ecx, ecx
+                    b"\xb8\x07\x00\x00\x00" b"\x0f\xa2" b"\x89\xc8" b"\xc3",  # mov eax, 7  # cpuid  # mov ax, cx  # ret
                 )
                 self._vnni = bool(ecx & (1 << 11))
                 eax = cpuid._run_asm(
-                    b"\xB9\x01\x00\x00\x00",  # mov ecx, 1
-                    b"\xB8\x07\x00\x00\x00" b"\x0f\xa2" b"\xC3",  # mov eax, 7  # cpuid  # ret
+                    b"\xb9\x01\x00\x00\x00",  # mov ecx, 1
+                    b"\xb8\x07\x00\x00\x00" b"\x0f\xa2" b"\xc3",  # mov eax, 7  # cpuid  # ret
                 )
                 self._bf16 = bool(eax & (1 << 5))
         self._info = info
@@ -439,12 +438,6 @@ def recover(fp32_model, tuning_history_path, num, **kwargs):
 
         tf_fp32_model = Model(fp32_model)
         tune_index_qmodel = adaptor.recover_tuned_model(tf_fp32_model, q_config)
-        return tune_index_qmodel
-    elif "mxnet" in framework:
-        from neural_compressor.model import Model
-
-        mx_fp32_model = Model(fp32_model)
-        tune_index_qmodel = adaptor.recover_tuned_model(mx_fp32_model, q_config)
         return tune_index_qmodel
 
 

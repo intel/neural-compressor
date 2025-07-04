@@ -16,7 +16,7 @@ import copy
 import json
 import time
 from functools import lru_cache
-from typing import Union, Optional
+from typing import Optional, Union
 
 import torch
 
@@ -35,6 +35,7 @@ _is_auto_round_available()
 
 from auto_round import AutoRound, AutoRoundMLLM  # pylint: disable=E0401
 from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
+from auto_round.mllm import lmms_eval, mllm_eval
 from auto_round.mllm.template import Template, get_template
 
 from neural_compressor.torch.algorithms import Quantizer
@@ -205,10 +206,10 @@ class AutoRoundQuantizer(Quantizer):
         self.template = template
         self.truncation = truncation
         self.enable_w4afp8 = self._is_w4afp8()
-    
+
     def _is_w4afp8(self):
         return any([v.get("data_type", None) == "fp8_to_int_sym" for v in self.quant_config.values()])
-    
+
     def prepare(self, model: torch.nn.Module, *args, **kwargs):
         """Prepares a given model for quantization.
 
@@ -419,6 +420,7 @@ def get_mllm_dataloader(
 
     dataloader, batch_size, gradient_accumulate_steps = get_mllm_dataloader(
         template=template,
+        processor=processor,
         model=model,
         tokenizer=tokenizer,
         image_processor=image_processor,

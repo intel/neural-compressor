@@ -35,8 +35,8 @@ function init_params {
       --iters=*)
           iters=$(echo ${var} |cut -f2 -d=)
       ;;
-      --int8=*)
-          int8=$(echo ${var} |cut -f2 -d=)
+      --optimized=*)
+          optimized=$(echo ${var} |cut -f2 -d=)
       ;;
       --config=*)
           tuned_checkpoint=$(echo $var |cut -f2 -d=)
@@ -63,8 +63,8 @@ function run_benchmark {
         echo "Error: No such mode: ${mode}"
         exit 1
     fi
-    if [[ ${int8} == "true" ]]; then
-        extra_cmd=$extra_cmd" --int8"
+    if [[ ${optimized} == "true" ]]; then
+        extra_cmd=$extra_cmd" --optimized"
     fi
     echo $extra_cmd
 

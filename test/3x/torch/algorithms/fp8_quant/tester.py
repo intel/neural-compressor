@@ -15,10 +15,10 @@ import torch
 import habana_frameworks.torch as ht
 from neural_compressor.torch.algorithms.fp8_quant._core.patching_common import mod_default_dict
 from neural_compressor.torch.algorithms.fp8_quant._core.utils import should_quantize
-from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods.scale_method_config import ScaleMethodString
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import (
     Fp8cfg,
     QuantMode,
+    ScaleMethodString,
     ScaleFormat,
     get_hqt_config,
 )

@@ -74,6 +74,11 @@ def is_hpex_available():
     return _hpex_available
 
 
+def is_hpu_available():
+    """Returns whether hpex is available."""
+    return get_accelerator().name() == "hpu"
+
+
 ## check optimum
 if is_package_available("optimum"):
     _optimum_available = True
@@ -129,6 +134,7 @@ def get_ipex_version():
 
 
 TORCH_VERSION_2_2_2 = Version("2.2.2")
+TORCH_VERSION_2_7_0 = Version("2.7.0")
 
 
 def get_torch_version():
@@ -150,6 +156,10 @@ def get_accelerator(device_name="auto"):
     from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
     accelerator = auto_detect_accelerator(device_name)
+    inc_target_device = os.environ.get("INC_TARGET_DEVICE", None)
+    if inc_target_device is not None and accelerator._name != inc_target_device.lower():
+        auto_detect_accelerator.cache_clear()
+        accelerator = auto_detect_accelerator(device_name)
     return accelerator
 
 
@@ -249,6 +259,7 @@ def get_used_hpu_mem_MB():
 def get_used_cpu_mem_MB():
     """Get the amount of CPU memory used by the current process in MiB (Mebibytes)."""
     import psutil
+
     process = psutil.Process()
     mem_info = process.memory_info()
     used_cpu_mem = round(mem_info.rss / 1024**2, 3)

@@ -16,7 +16,6 @@ echo "torchvision version is $torchvision_version"
 echo "ipex version is $ipex_version"
 echo "onnx version is $onnx_version"
 echo "onnxruntime version is $onnxruntime_version"
-echo "mxnet version is $mxnet_version"
 
 test_case=$1
 echo -e "##[group]test case is ${test_case}"
@@ -25,7 +24,7 @@ if [[ "${tensorflow_version}" == *"-official" ]]; then
     pip install tensorflow==${tensorflow_version%-official}
 elif [[ "${tensorflow_version}" == "spr-base" ]]; then
     pip install /tf_dataset/tf_binary/230928/tensorflow*.whl
-    pip install cmake
+    pip install cmake==3.31.6
     pip install protobuf==3.20.3
     pip install horovod==0.27.0
     if [[ $? -ne 0 ]]; then
@@ -41,11 +40,11 @@ if [[ "${itex_version}" != "" ]]; then
 fi
 
 if [[ "${pytorch_version}" != "" ]]; then
-    pip install torch==${pytorch_version} -f https://download.pytorch.org/whl/torch_stable.html
+    pip install torch==${pytorch_version} --index-url https://download.pytorch.org/whl/cpu
 fi
 
 if [[ "${torchvision_version}" != "" ]]; then
-    pip install torchvision==${torchvision_version} -f https://download.pytorch.org/whl/torch_stable.html
+    pip install torchvision==${torchvision_version} --index-url https://download.pytorch.org/whl/cpu
 fi
 
 if [[ "${ipex_version}" != "" ]]; then
@@ -66,17 +65,9 @@ if [[ "${onnxruntime_version}" != "" ]]; then
     pip install optimum==1.24.0
 fi
 
-if [ "${mxnet_version}" != '' ]; then
-    pip install numpy==1.23.5
-    echo "re-install pycocotools resolve the issue with numpy..."
-    pip uninstall pycocotools -y
-    pip install --no-cache-dir pycocotools
-    pip install mxnet==${mxnet_version}
-fi
-
 # install special test env requirements
 # common deps
-pip install cmake
+pip install cmake==3.31.6
 pip install transformers==4.50.0
 
 if [[ $(echo "${test_case}" | grep -c "others") != 0 ]];then

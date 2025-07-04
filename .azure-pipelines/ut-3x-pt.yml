@@ -10,6 +10,7 @@ pr:
     include:
       - neural_compressor/common
       - neural_compressor/torch
+      - neural_compressor/transformers
       - test/3x/torch
       - test/3x/common
       - setup.py
@@ -51,6 +52,7 @@ stages:
     jobs:
       - job:
         displayName: Unit Test 3x Torch baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:

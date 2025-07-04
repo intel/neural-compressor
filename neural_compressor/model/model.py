@@ -24,7 +24,6 @@ import sys
 from neural_compressor.config import options
 from neural_compressor.model.base_model import BaseModel
 from neural_compressor.model.keras_model import KerasModel
-from neural_compressor.model.mxnet_model import MXNetModel
 from neural_compressor.model.onnx_model import ONNXModel
 from neural_compressor.model.tensorflow_model import (
     TensorflowBaseModel,
@@ -43,7 +42,6 @@ if importlib.util.find_spec("torch"):
 
 torch = LazyImport("torch")
 tf = LazyImport("tensorflow")
-mx = LazyImport("mxnet")
 onnx = LazyImport("onnx")
 ort = LazyImport("onnxruntime")
 yaml = LazyImport("yaml")
@@ -55,7 +53,6 @@ MODELS = {
     "tensorflow_itex": TensorflowModel,
     "tensorflow_qat": TensorflowQATModel,
     "keras": KerasModel,
-    "mxnet": MXNetModel,
     "pytorch": PyTorchModel if TORCH else None,
     "pytorch_ipex": IPEXModel if TORCH else None,
     "pytorch_fx": PyTorchFXModel if TORCH else None,
@@ -124,16 +121,6 @@ def get_model_fwk_name(model):
         else:
             return "tensorflow"
 
-    def _is_mxnet(model):
-        try:
-            is_mxnet = isinstance(model, mx.gluon.HybridBlock) or (
-                hasattr(model, "__len__") and len(model) > 1 and isinstance(model[0], mx.symbol.Symbol)
-            )
-        except:
-            return "NA"
-        else:
-            return "mxnet" if is_mxnet else "NA"
-
     if isinstance(model, str):
         absmodel = os.path.abspath(os.path.expanduser(model))
         assert os.path.exists(absmodel) or os.path.exists(
@@ -147,7 +134,7 @@ def get_model_fwk_name(model):
     if isinstance(model, TensorflowBaseModel):
         return "tensorflow"
 
-    checker = [_is_tensorflow, _is_pytorch, _is_onnxruntime, _is_mxnet]
+    checker = [_is_tensorflow, _is_pytorch, _is_onnxruntime]
     for handler in checker:
         fwk_name = handler(model)
         if fwk_name != "NA":
@@ -169,9 +156,8 @@ class Model(object):
         Args:
             root (object): raw model format. For Tensorflow model, could be path to frozen pb file,
                 path to ckpt or savedmodel folder, loaded estimator/graph_def/graph/keras model object.
-                For PyTorch model, it's torch.nn.model instance. For MXNet model, it's mxnet.symbol.Symbol
-                or gluon.HybirdBlock instance. For ONNX model, it's path to onnx model or loaded ModelProto
-                model object.
+                For PyTorch model, it's torch.nn.model instance. For ONNX model, it's path to onnx model
+                or loaded ModelProto model object.
 
         Returns:
             BaseModel: neural_compressor built-in model

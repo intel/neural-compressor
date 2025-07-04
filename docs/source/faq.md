@@ -33,12 +33,12 @@ torch._C._LinAlgError: linalg.cholesky: The factorization could not be completed
 Try increasing `percdamp` (percent of the average Hessian diagonal to use for dampening), 
 or increasing `nsamples` (the number of calibration samples).
 #### Issue 7:  
-If you run GPTQ quantization with transformers-like API on xpu device, then you may encounter the following error:  
+If you run GPTQ quantization with transformers-like API on Intel GPU device, then you may encounter the following error:  
 ```shell
 [ERROR][modeling_auto.py:128] index 133 is out of bounds for dimension 0 with size 128
 [ERROR][modeling_auto.py:129] Saved low bit model loading failed, please check your model.
 HINT:
-XPU device does not support `g_idx` for GPTQ quantization now. Please stay tuned.
+Intel GPU device does not support `g_idx` for GPTQ quantization now. Please stay tuned.
 You can set desc_act=False.
 ```
 #### Issue 8:

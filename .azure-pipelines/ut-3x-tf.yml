@@ -48,6 +48,7 @@ stages:
     jobs:
       - job:
         displayName: Unit Test 3x TensorFlow baseline
+        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:

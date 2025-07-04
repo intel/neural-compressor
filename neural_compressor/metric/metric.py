@@ -28,7 +28,6 @@ from neural_compressor.utils.utility import LazyImport, singleton
 
 torch = LazyImport("torch")
 tf = LazyImport("tensorflow")
-mx = LazyImport("mxnet")
 transformers = LazyImport("transformers")
 
 
@@ -81,31 +80,6 @@ class PyTorchMetrics(object):
 
 
 @singleton
-class MXNetMetrics(object):
-    """MXNet metrics collection.
-
-    Attributes:
-        metrics: A dict to maintain all metrics for MXNet model.
-    """
-
-    def __init__(self) -> None:
-        """Initialize the metrics collection."""
-        from neural_compressor.adaptor.mxnet_utils.util import check_mx_version
-
-        if check_mx_version("2.0.0"):
-            import mxnet.gluon.metric as mx_metrics
-        else:
-            import mxnet.metric as mx_metrics
-        self.metrics = {
-            "Accuracy": WrapMXNetMetric(mx_metrics.Accuracy),
-            "MAE": WrapMXNetMetric(mx_metrics.MAE),
-            "MSE": WrapMXNetMetric(mx_metrics.MSE),
-            "Loss": WrapMXNetMetric(mx_metrics.Loss),
-        }
-        self.metrics.update(MXNET_METRICS)
-
-
-@singleton
 class ONNXRTQLMetrics(object):
     """ONNXRT QLinear metrics collection.
 
@@ -137,7 +111,6 @@ framework_metrics = {
     "tensorflow": TensorflowMetrics,
     "tensorflow_itex": TensorflowMetrics,
     "keras": TensorflowMetrics,
-    "mxnet": MXNetMetrics,
     "pytorch": PyTorchMetrics,
     "pytorch_ipex": PyTorchMetrics,
     "pytorch_fx": PyTorchMetrics,
@@ -151,7 +124,6 @@ framework_metrics = {
 TENSORFLOW_METRICS = {}
 TENSORFLOW_ITEX_METRICS = {}
 KERAS_METRICS = {}
-MXNET_METRICS = {}
 PYTORCH_METRICS = {}
 ONNXRT_QL_METRICS = {}
 ONNXRT_IT_METRICS = {}
@@ -160,7 +132,6 @@ registry_metrics = {
     "tensorflow": TENSORFLOW_METRICS,
     "tensorflow_itex": TENSORFLOW_ITEX_METRICS,
     "keras": KERAS_METRICS,
-    "mxnet": MXNET_METRICS,
     "pytorch": PYTORCH_METRICS,
     "pytorch_ipex": PYTORCH_METRICS,
     "pytorch_fx": PYTORCH_METRICS,
@@ -194,9 +165,8 @@ class METRICS(object):
             "onnxrt_qdq",
             "onnxrt_qlinearops",
             "onnxrt_integerops",
-            "mxnet",
             "onnxruntime",
-        ), "framework support tensorflow pytorch mxnet onnxrt"
+        ), "framework support tensorflow pytorch onnxrt"
         self.metrics = framework_metrics[framework]().metrics
 
     def __getitem__(self, metric_type: str):
@@ -227,7 +197,7 @@ def metric_registry(metric_type: str, framework: str):
     """Decorate for registering all Metric subclasses.
 
     The cross-framework metric is supported by specifying the framework param
-    as one of tensorflow, pytorch, mxnet, onnxrt.
+    as one of tensorflow, pytorch, onnxrt.
 
     Args:
         metric_type: The metric type.
@@ -243,7 +213,6 @@ def metric_registry(metric_type: str, framework: str):
                 "tensorflow",
                 "tensorflow_itex",
                 "keras",
-                "mxnet",
                 "onnxrt_qlinearops",
                 "onnxrt_integerops",
                 "onnxrt_qdq",
@@ -251,7 +220,7 @@ def metric_registry(metric_type: str, framework: str):
                 "pytorch",
                 "pytorch_ipex",
                 "pytorch_fx",
-            ], "The framework support tensorflow mxnet pytorch onnxrt"
+            ], "The framework support tensorflow pytorch onnxrt"
 
             if metric_type in registry_metrics[single_framework].keys():
                 raise ValueError("Cannot have two metrics with the same name")
@@ -371,35 +340,6 @@ class WrapPyTorchMetric(BaseMetric):
         return self._metric.compute()
 
 
-class WrapMXNetMetric(BaseMetric):
-    """The wrapper of Metric class for MXNet."""
-
-    def update(self, preds, labels=None, sample_weight=None):
-        """Convert the prediction to MXNet array.
-
-        Args:
-            preds: The prediction result.
-            labels: The reference. Defaults to None.
-            sample_weight: The sampling weight. Defaults to None.
-        """
-        preds = mx.nd.array(preds)
-        labels = mx.nd.array(labels)
-        self._metric.update(labels=labels, preds=preds)
-
-    def reset(self):
-        """Clear the predictions and labels."""
-        self._metric.reset()
-
-    def result(self):
-        """Evaluate the difference between predictions and labels.
-
-        Returns:
-            acc: The evaluated result.
-        """
-        acc_name, acc = self._metric.get()
-        return acc
-
-
 class WrapONNXRTMetric(BaseMetric):
     """The wrapper of Metric class for ONNXRT."""
 
@@ -501,7 +441,7 @@ def _shape_validate(preds, labels):
     return preds, labels
 
 
-@metric_registry("F1", "tensorflow, tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
+@metric_registry("F1", "tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops")
 class F1(BaseMetric):
     """F1 score of a binary classification problem.
 
@@ -813,7 +753,7 @@ class MAE(BaseMetric):
         return aes_sum / aes_size
 
 
-@metric_registry("RMSE", "tensorflow, tensorflow_itex, pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
+@metric_registry("RMSE", "tensorflow, tensorflow_itex, pytorch, onnxrt_qlinearops, onnxrt_integerops")
 class RMSE(BaseMetric):
     """Computes Root Mean Squared Error (RMSE) loss.
 
@@ -990,7 +930,7 @@ class TensorflowTopK(BaseMetric):
         return self.num_correct / self.num_sample
 
 
-@metric_registry("topk", "pytorch, mxnet, onnxrt_qlinearops, onnxrt_integerops")
+@metric_registry("topk", "pytorch, onnxrt_qlinearops, onnxrt_integerops")
 class GeneralTopK(BaseMetric):
     """Compute Top-k Accuracy classification score.
 

@@ -1,3 +1,4 @@
+import os
 import copy
 import shutil
 
@@ -9,7 +10,7 @@ from neural_compressor.torch.utils import is_ipex_available
 
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
-
+os.environ["FORCE_FP32"] = "1"
 
 class Model(torch.nn.Module):
     device = torch.device("cpu")
@@ -196,12 +197,6 @@ class TestSmoothQuant:
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
         q_model.save("saved_results")
-
-        quant_config.folding = True
-        fp32_model = copy.deepcopy(model)
-        q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
-        assert q_model is not None, "Quantization failed!"
-        q_model.save("saved_results")
         inc_out = q_model(example_inputs)
 
         from neural_compressor.torch.algorithms.smooth_quant import recover_model_from_json
@@ -215,6 +210,7 @@ class TestSmoothQuant:
 
         # compare saved json file
         fp32_model = copy.deepcopy(model)
+        # quant_config.folding = True is not allowed to recover with json because it will update model weights
         loaded_model = recover_model_from_json(fp32_model, "saved_results/qconfig.json", example_inputs=example_inputs)
         loaded_out = loaded_model(example_inputs)
         assert torch.allclose(inc_out, loaded_out, atol=1e-05), "Unexpected result. Please double check."

@@ -41,7 +41,7 @@ class TFDataDataLoader(BaseDataLoader):  # pragma: no cover
 
     In tensorflow1.x dataloader is coupled with the graph, but it also support feed_dict
     method to do session run, this dataloader is designed to satisfy the usage of feed dict
-    in tf1.x. Although it's a general dataloader and can be used in MXNet and PyTorch.
+    in tf1.x. Although it's a general dataloader and can be used in PyTorch.
 
     Args:
         dataset: obj. wrapper of needed data.

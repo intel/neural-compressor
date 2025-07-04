@@ -37,7 +37,7 @@ class QuantizedXPUMatmul(QuantizedXPUFuncWrapperBase):
     def __call__(self, input, other, out=None, out_dtype=torch.bfloat16, scale_input_inv=None, scale_other_inv=None):
         # TODO FSW-11669 modify call arguments once fp8_gemm_v2 is implemented
         # Current ipex ops fp8_gemm API is misaligned to hpu ops API.
-        # below args are according to ipex ops to allow basic unit testing, but won't support intergartion in
+        # below args are according to ipex ops to allow basic unit testing, but won't support integration in
         # INC patched modules.
         return self._quantized_func_(input,
                                      torch.bfloat16,

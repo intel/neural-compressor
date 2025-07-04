@@ -1,1 +1,0 @@
-from .textvqa import TextVQAEvaluator
