@@ -63,11 +63,62 @@ class QuantizedXPUCastFromFP8Base(QuantizedXPUFuncWrapperBase):
         return torch.ops.torch_ipex.cast_from_fp8
 
 
+class QuantizedXPUQuant(QuantizedXpuFuncWrapperBase):
+
+    def get_default_quantized_func(self):
+        return torch.ops.quantized_decomposed.quantize_per_tensor
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+    def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn):
+        return self._quantized_func_(input, scale, zero_point, quant_min, quant_max, dtype=dtype)
+
+
+class QuantizedXPUDeQuant(QuantizedXpuFuncWrapperBase):
+
+    def get_default_quantized_func(self):
+        return torch.ops.quantized_decomposed.dequantize_per_tensor
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+    def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn, out_dtype=torch.bfloat16):
+        return self._quantized_func_(input, scale, zero_point, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype)
+
+
+class QuantizedXPUQuantPC(QuantizedXpuFuncWrapperBase):
+
+    def get_default_quantized_func(self):
+        return torch.ops.quantized_decomposed.quantize_per_channel
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+    def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn):
+        return self._quantized_func_(input, scale, zero_point, axis, quant_min, quant_max, dtype=dtype)
+
+
+class QuantizedXPUDeQuantPC(QuantizedXpuFuncWrapperBase):
+
+    def get_default_quantized_func(self):
+        return torch.ops.quantized_decomposed.dequantize_per_channel
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+    def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn, out_dtype=torch.bfloat16):
+        return self._quantized_func_(input, scale, zero_point, axis, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype)
+
 _OP_TYPE_XPU_QUANTIZED_WRAPPER_CLASSES = {
                                           OP_TYPE.LINEAR_GEMM : QuantizedXPUMatmul,
                                           OP_TYPE.MATMUL_GEMM : QuantizedXPUMatmul,
                                           OP_TYPE.CAST_TO_FP8 : QuantizedXPUCastToFP8Base,
-                                          OP_TYPE.CAST_FROM_FP8 : QuantizedXPUCastFromFP8Base
+                                          OP_TYPE.CAST_FROM_FP8 : QuantizedXPUCastFromFP8Base,
+                                          OP_TYPE.QUANT: QuantizedXPUQuant,
+                                          OP_TYPE.DEQUANT: QuantizedXPUDeQuant,
+                                          OP_TYPE.QUANT_PC: QuantizedXPUQuantPC,
+                                          OP_TYPE.DEQUANT_PC: QuantizedXPUDeQuantPC,
                                          }
 
 

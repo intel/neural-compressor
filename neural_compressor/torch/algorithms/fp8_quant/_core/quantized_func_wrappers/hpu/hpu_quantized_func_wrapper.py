@@ -174,6 +174,54 @@ class QuantizedHpuDynamicMoeFusedWeights(QuantizedHpuFuncWrapperBase):
         return torch.ops.hpu.mixture_of_experts.fp8_fused_weights_dynamic
 
 
+class QuantizedHPUQuant(QuantizedHpuFuncWrapperBase):
+
+    def get_default_quantized_func(self):
+        return torch.ops.quantized_decomposed.quantize_per_tensor
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+    def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn):
+        return self._quantized_func_(input, scale, zero_point, quant_min, quant_max, dtype=dtype)
+
+
+class QuantizedHPUDeQuant(QuantizedHpuFuncWrapperBase):
+
+    def get_default_quantized_func(self):
+        return torch.ops.quantized_decomposed.dequantize_per_tensor
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+    def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn, out_dtype=torch.bfloat16):
+        return self._quantized_func_(input, scale, zero_point, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype)
+
+
+class QuantizedHPUQuantPC(QuantizedHpuFuncWrapperBase):
+
+    def get_default_quantized_func(self):
+        return torch.ops.quantized_decomposed.quantize_per_channel
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+    def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn):
+        return self._quantized_func_(input, scale, zero_point, axis, quant_min, quant_max, dtype=dtype)
+
+
+class QuantizedHPUDeQuantPC(QuantizedHpuFuncWrapperBase):
+
+    def get_default_quantized_func(self):
+        return torch.ops.quantized_decomposed.dequantize_per_channel
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+    def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn, out_dtype=torch.bfloat16):
+        return self._quantized_func_(input, scale, zero_point, axis, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype)
+
+
 _OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES = {OP_TYPE.LINEAR_GEMM : QuantizedHpuMatmul,
                                           OP_TYPE.MATMUL_GEMM: QuantizedHpuMatmul,
                                           OP_TYPE.SOFTMAX : QuantizedHpuSoftmax,
@@ -183,6 +231,10 @@ _OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES = {OP_TYPE.LINEAR_GEMM : QuantizedHpuMatm
                                           OP_TYPE.CAST_FROM_FP8 : QuantizedHPUCastFromFP8,
                                           OP_TYPE.DYNAMIC_MOE: QuantizedHpuDynamicMoe,
                                           OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS: QuantizedHpuDynamicMoeFusedWeights,
+                                          OP_TYPE.QUANT: QuantizedHPUQuant,
+                                          OP_TYPE.DEQUANT: QuantizedHPUDeQuant,
+                                          OP_TYPE.QUANT_PC: QuantizedHPUQuantPC,
+                                          OP_TYPE.DEQUANT_PC: QuantizedHPUDeQuantPC,
                                           }
 
 def init_hpu_quantized_func_wrapper_factory():

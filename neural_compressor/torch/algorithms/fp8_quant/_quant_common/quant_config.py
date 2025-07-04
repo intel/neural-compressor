@@ -233,12 +233,10 @@ class Fp8cfg:
             logger.debug("setting device for scales config")
             Fp8cfg.set_gaudi_device_for_scales(custom_config, measured_global_config, scale_method_config)
 
-        if auto_detect_accelerator().current_device_name() == "cpu" and \
-           check_scale_method_fields(scale_method_config, granularity_weight=ScaleGranularity.PCS, reducer=any):
-            # for PCQ, there is some issue in dequantize_per_channel op on CPU device
-            raise ValueError("Don't support FP8 PCQ (Per Channel Quantization) on CPU device now")
-
         if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
+            if auto_detect_accelerator().current_device_name() == "cpu":
+                measured_global_config["scale_format"] = ScaleFormat.CONST
+                logger.warning(f"Cannot use 'scale_format = SCALAR' when running FP8 quantization on CPU device")
             if check_scale_method_fields(scale_method_config, granularity_weight=ScaleGranularity.PCS, reducer=any) or \
                check_scale_method_fields(scale_method_config, granularity_activation=ScaleGranularity.PCS, reducer=any):
                 measured_global_config["scale_format"] = ScaleFormat.CONST
