@@ -27,6 +27,10 @@ class OP_TYPE(Enum):
     CAST_FROM_FP8 = auto()
     DYNAMIC_MOE = auto()
     DYNAMIC_MOE_FUSED_WEIGHTS = auto()
+    QUANT = auto()
+    DEQUANT = auto()
+    QUANT_PC = auto()
+    DEQUANT_PC = auto()
 
 
 class QuantizedFuncWrapperBase(ABC):

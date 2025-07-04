@@ -25,13 +25,6 @@ cur_accelerator = auto_detect_accelerator()
 from .._core.scale_handler import add_scale_registry, get_scale_dtype
 from .._quant_common.quant_config import ScaleFormat
 from .common import QuantTensorType
-from .fp_utils import (
-    quantize_per_tensor_to_fp8,
-    dequantize_per_tensor_from_fp8,
-    quantize_per_channel_to_fp8,
-    dequantize_per_channel_from_fp8,
-    invert_scale,
-)
 from .scale_handler import create_scale_tensor
 
 
@@ -93,17 +86,13 @@ class QuantInput(QuantDequantBase):
         self.register_scale("scale_inv", scale_inv, self.scale_format)
         if self.use_qdq:
             self.register_scale("scale", 1 / self.scale_inv, self.scale_format)
-            self.quantize_op = (
-                quantize_per_channel_to_fp8
-                if self.scale_format == ScaleFormat.CONST and self.scale.numel() > 1
-                else quantize_per_tensor_to_fp8
-            )
-
+            op_type = OP_TYPE.QUANT_PC if self.scale_format == ScaleFormat.CONST and self.scale.numel() > 1 else OP_TYPE.QUANT
         else:
-            self.cast_to_op = get_quantized_func_wrapper(OP_TYPE.CAST_TO_FP8, self.scale_format)
+            op_type = OP_TYPE.CAST_TO_FP8
+        self.quantize_op = get_quantized_func_wrapper(op_type, self.scale_format)
 
     def forward(self, x):
-        return self.cast_to_op(x, self.scale_inv, False, False, self.lp_dtype)
+        return self.quantize_op(x, self.scale_inv, False, False, self.lp_dtype)
 
     def forward_qdq(self, x):
         return self.quantize_op(
@@ -153,16 +142,13 @@ class DequantOutput(QuantDequantBase):
         super(DequantOutput, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
         self.register_scale("scale", scale, self.scale_format)
         if self.use_qdq:
-            self.dequantize_op = (
-                dequantize_per_channel_from_fp8
-                if self.scale_format == ScaleFormat.CONST and self.scale.numel() > 1
-                else dequantize_per_tensor_from_fp8
-            )
+            op_type = OP_TYPE.DEQUANT_PC if self.scale_format == ScaleFormat.CONST and self.scale.numel() > 1 else OP_TYPE.DEQUANT
         else:
-            self.cast_from_op = get_quantized_func_wrapper(OP_TYPE.CAST_FROM_FP8, self.scale_format)
+            op_type = OP_TYPE.CAST_FROM_FP8
+        self.dequantize_op = get_quantized_func_wrapper(op_type, self.scale_format)
 
     def forward(self, x):
-        return self.cast_from_op(x, self.scale, self.hp_dtype)
+        return self.dequantize_op(x, self.scale, self.hp_dtype)
 
     def forward_qdq(self, x):
         return self.dequantize_op(
@@ -187,22 +173,29 @@ class QuantDequant(QuantDequantBase):
         super(QuantDequant, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
         self.register_scale("scale_inv", scale_inv, self.scale_format)
         self.register_scale("scale", 1 / scale_inv, self.scale_format)
-        if not self.use_qdq:
-            self.cast_to_op = get_quantized_func_wrapper(OP_TYPE.CAST_TO_FP8, self.scale_format)
-            self.cast_from_op = get_quantized_func_wrapper(OP_TYPE.CAST_FROM_FP8, self.scale_format)
+        self.quantize_op = (
+           get_quantized_func_wrapper(OP_TYPE.QUANT, self.scale_format)
+           if self.use_qdq
+           else get_quantized_func_wrapper(OP_TYPE.CAST_TO_FP8, self.scale_format)
+        )
+        self.dequantize_op = (
+           get_quantized_func_wrapper(OP_TYPE.DEQUANT, self.scale_format)
+           if self.use_qdq
+           else get_quantized_func_wrapper(OP_TYPE.CAST_FROM_FP8, self.scale_format)
+        )
 
     def forward(self, x, *args, **kwargs):
-        y = self.cast_to_op(x, self.scale_inv, False, False, self.lp_dtype)
+        y = self.quantize_op(x, self.scale_inv, False, False, self.lp_dtype)
         # mark_step is needed so fuser won't remove 2 consecutive casts.
         # will be removed once SW-196431 is implemented
         # Call cur_accelerator.synchronize() which will call mark_step() as well
         cur_accelerator.synchronize()
-        z = self.cast_from_op(y, self.scale, self.hp_dtype)
+        z = self.dequantize_op(y, self.scale, self.hp_dtype)
         cur_accelerator.synchronize()
         return z
 
     def forward_qdq(self, x, *args, **kwargs):
-        y = quantize_per_tensor_to_fp8(
+        y = self.quantize_op(
             x,
             scale=self.scale,
             zero_point=self.zero_point,
@@ -210,7 +203,7 @@ class QuantDequant(QuantDequantBase):
             quant_max=self.quant_max,
             dtype=self.lp_dtype,
         )
-        z = dequantize_per_tensor_from_fp8(
+        z = self.dequantize_op(
             y,
             scale=self.scale,
             zero_point=self.zero_point,
