@@ -690,6 +690,7 @@ def make_contiguous(model):
         if param.data.ndimension() > 1:
             param.data = param.data.contiguous()
 
+
 def save_low_bit_for_inc(self, save_directory: Union[str, os.PathLike], push_to_hub: bool = False, **kwargs):
 
     assert hasattr(self, "quantization_config"), "Detected this model is not a low-bit model."

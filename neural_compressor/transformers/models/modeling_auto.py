@@ -214,7 +214,9 @@ class _BaseINCAutoModelClass:
                 quantization_config.post_init_xpu()
             if (device_map == "cpu" or device_map == torch.device("cpu")) and model.config.model_type == "chatglm":
                 model = model.float()
-            model = convert_to_quantized_model(model, quantization_config, device=device_map, for_inference=for_inference)
+            model = convert_to_quantized_model(
+                model, quantization_config, device=device_map, for_inference=for_inference
+            )
             if isinstance(quantization_config, AwqConfig):
                 quantization_config.backend = "inc"
             quantization_config.remove_redundant_parameters()
