@@ -1,0 +1,5 @@
+torch>=2.7.0
+intel_extension_for_pytorch>=2.7.0
+transformers>=4.51.3
+datasets
+evaluate
