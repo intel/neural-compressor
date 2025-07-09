@@ -185,10 +185,10 @@ class PreOptimization:
         # Put FuseDecomposedBNOptimizer before GraphFoldConstantOptimizer
         # The 'Sub' op in the small decomposed ops of BN will be converted to const by GraphFoldConstantOptimizer.
         # Then the FuseDecomposedBNOptimizer can't fuse the small decomposed ops to BN.
-        if self.new_api:
-            self._tmp_graph_def = FuseDecomposedBNOptimizer(self._tmp_graph_def).do_transformation()
-            self._tmp_graph_def = FuseDecomposedINOptimizer(self._tmp_graph_def).do_transformation()
-            self._tmp_graph_def = FuseLayerNormOptimizer(self._tmp_graph_def).do_transformation()
+        # if self.new_api:
+        # self._tmp_graph_def = FuseDecomposedBNOptimizer(self._tmp_graph_def).do_transformation()
+        # self._tmp_graph_def = FuseDecomposedINOptimizer(self._tmp_graph_def).do_transformation()
+        # self._tmp_graph_def = FuseLayerNormOptimizer(self._tmp_graph_def).do_transformation()
 
         self._tmp_graph_def = GraphFoldConstantOptimizer(self._tmp_graph_def).do_transformation()
 

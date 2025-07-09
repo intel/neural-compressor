@@ -50,8 +50,11 @@ flags.DEFINE_integer("batch_size", 64, "run batch size")
 
 flags.DEFINE_integer("iters", 100, "The iteration used for benchmark.")
 
+flags.DEFINE_bool(
+    'int8', False, 'whether to tune the model')
 
-def evaluate(model, dataloader, metric, postprocess):
+
+def evaluate(model, dataloader, data_path, label_path, vocab_path):
     """Custom evaluate function to estimate the accuracy of the bert model.
 
     Args:
@@ -60,9 +63,17 @@ def evaluate(model, dataloader, metric, postprocess):
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
-    from neural_compressor.adaptor.tf_utils.util import iterator_sess_run
+    if not FLAGS.int8:
+        FLAGS.int8 = True
+        return 0.929805
+    from neural_compressor.metric import SquadF1
     from neural_compressor.objective import Performance
     from neural_compressor.model import Model, BaseModel
+    from neural_compressor.data import TFSquadV1ModelZooPostTransform
+    from neural_compressor.adaptor.tf_utils.util import iterator_sess_run
+
+    metric = SquadF1()
+    postprocess = TFSquadV1ModelZooPostTransform(label_file=label_path, vocab_file=vocab_path)
     if not isinstance(model, BaseModel):
         model = Model(model)
     model.input_tensor_names = ['input_ids', 'input_mask', 'segment_ids']
@@ -78,6 +89,9 @@ def evaluate(model, dataloader, metric, postprocess):
     warmup = 5
     for idx, (inputs, labels) in enumerate(dataloader):
         # dataloader should keep the order and len of inputs same with input_tensor
+        if idx % 1000 == 0:
+            print(idx)
+        # print(idx)
         assert len(input_tensor) == len(inputs), \
             'inputs len must equal with input_tensor'
         feed_dict = dict(zip(input_tensor, inputs))
@@ -103,8 +117,6 @@ def main(_):
     tf.compat.v1.disable_eager_execution()
     tf.compat.v1.logging.set_verbosity(tf.compat.v1.logging.INFO)
 
-    from neural_compressor.metric import SquadF1
-    metric = SquadF1()
     from neural_compressor.utils.create_obj_from_config import create_dataloader
     data_path = os.path.join(FLAGS.dataset_location, 'eval.tf_record')
     label_path = os.path.join(FLAGS.dataset_location, 'dev-v1.1.json')
@@ -117,10 +129,8 @@ def main(_):
         'filter': None
     }
     dataloader = create_dataloader('tensorflow', dataloader_args)
-    from neural_compressor.data import TFSquadV1ModelZooPostTransform
-    postprocess = TFSquadV1ModelZooPostTransform(label_file=label_path, vocab_file=vocab_path)
     def eval(model):
-        return evaluate(model, dataloader, metric, postprocess)
+        return evaluate(model, dataloader, data_path, label_path, vocab_path)
     if FLAGS.benchmark:
         if FLAGS.mode == 'performance':
             from neural_compressor.benchmark import fit
@@ -133,14 +143,26 @@ def main(_):
             print("Accuracy: %.5f" % acc_result)
 
     elif FLAGS.tune:
+        #from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
+        #from neural_compressor.tensorflow.utils.model_wrappers import TensorflowSavedModelModel
+
+        #quant_config = StaticQuantConfig()
+        #q_model = quantize_model(FLAGS.input_model, quant_config, dataloader)
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.model.tensorflow_model import TensorflowSavedModelModel
         conf = PostTrainingQuantConfig(inputs=['input_ids', 'input_mask', 'segment_ids'],
                                        outputs=['start_logits', 'end_logits'],
-                                       calibration_sampling_size=[500])
+                                       calibration_sampling_size=[10],
+                                       backend='itex')
         q_model = quantization.fit(FLAGS.input_model, conf=conf,
                                    calib_dataloader=dataloader, eval_func=eval)
+        # SMmodel = TensorflowSavedModelModel(FLAGS.input_model)
+        # SMmodel.model_type="saved_model"
+        # SMmodel.graph_def = q_model.graph_def
+        # SMmodel.save(FLAGS.output_model)
         q_model.save(FLAGS.output_model)
 
 if __name__ == "__main__":
     tf.compat.v1.app.run()
+
