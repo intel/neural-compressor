@@ -705,7 +705,7 @@ def save_low_bit_for_inc(self, save_directory: Union[str, os.PathLike], push_to_
     make_contiguous(self)
 
     self.save_pretrained(save_directory=save_directory, push_to_hub=push_to_hub, **kwargs)
-    self.save_pretrained = types.MethodType(save_low_bit, self)
+    self.save_pretrained = types.MethodType(save_low_bit_for_inc, self)
     # We conveniently save all the keys of the model to have them on hand,
     # so that when using 'low_cpumem load',
     # it's not necessary to load the entire model to extract its keys
