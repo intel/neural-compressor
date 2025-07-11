@@ -409,6 +409,7 @@ class _BaseINCAutoModelClass:
                 user_agent=user_agent,
                 revision=revision,
                 commit_hash=commit_hash,
+                is_remote_code=True,
             )
             is_sharded = sharded_metadata is not None
             resolved_archive_file = checkpoint_files if is_sharded else checkpoint_files[0]
