@@ -605,7 +605,7 @@ def convert_to_quantized_model(model, config, device="cpu", for_inference=True):
     model.eval()
     if not for_inference:
         # return inc model
-        if config.use_layer_wise and not (q_model.device == device or q_model.device.type == device):
+        if config.use_layer_wise and not (model.device == device or model.device.type == device):
             logger.warning(
                 "Do not convert device to avoid out of memory. Recommend using saved quantized model to inference."
             )
