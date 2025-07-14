@@ -415,7 +415,11 @@ class _BaseINCAutoModelClass:
                 user_agent=user_agent,
                 revision=revision,
                 commit_hash=commit_hash,
-                is_remote_code=True,
+                **(
+                    {"is_remote_code": True}
+                    if "is_remote_code" in _get_resolved_checkpoint_files.__code__.co_varnames
+                    else {}
+                )
             )
             is_sharded = sharded_metadata is not None
             resolved_archive_file = checkpoint_files if is_sharded else checkpoint_files[0]
