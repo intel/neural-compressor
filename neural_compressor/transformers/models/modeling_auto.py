@@ -54,6 +54,7 @@ from ..quantization.utils import (
     repack_awq_and_load_state_dict,
     replace_linear,
     save_low_bit,
+    save_low_bit_for_inc,
 )
 from ..utils import AutoRoundConfig, AwqConfig, GPTQConfig, RtnConfig, TeqConfig
 
@@ -101,6 +102,7 @@ class _BaseINCAutoModelClass:
         config = kwargs.pop("config", None)
 
         quantization_config = kwargs.pop("quantization_config", None)
+        for_inference = kwargs.pop("for_inference", True)
         if not isinstance(config, PretrainedConfig):
             config, _ = AutoConfig.from_pretrained(
                 pretrained_model_name_or_path,
@@ -212,7 +214,9 @@ class _BaseINCAutoModelClass:
                 quantization_config.post_init_xpu()
             if (device_map == "cpu" or device_map == torch.device("cpu")) and model.config.model_type == "chatglm":
                 model = model.float()
-            model = convert_to_quantized_model(model, quantization_config, device=device_map)
+            model = convert_to_quantized_model(
+                model, quantization_config, device=device_map, for_inference=for_inference
+            )
             if isinstance(quantization_config, AwqConfig):
                 quantization_config.backend = "inc"
             quantization_config.remove_redundant_parameters()
@@ -234,8 +238,10 @@ class _BaseINCAutoModelClass:
             device_map = torch.device(device_map) if isinstance(device_map, str) else device_map
             model.hf_device_map = {"": device_map}
         model.quantization_config = quantization_config
-
-        model.save_pretrained = types.MethodType(save_low_bit, model)
+        if for_inference:
+            model.save_pretrained = types.MethodType(save_low_bit, model)
+        else:
+            model.save_pretrained = types.MethodType(save_low_bit_for_inc, model)
         logger.info("WeightOnlyQuant done.")
         return model
 
@@ -409,7 +415,11 @@ class _BaseINCAutoModelClass:
                 user_agent=user_agent,
                 revision=revision,
                 commit_hash=commit_hash,
-                is_remote_code=True,
+                **(
+                    {"is_remote_code": True}
+                    if "is_remote_code" in _get_resolved_checkpoint_files.__code__.co_varnames
+                    else {}
+                ),
             )
             is_sharded = sharded_metadata is not None
             resolved_archive_file = checkpoint_files if is_sharded else checkpoint_files[0]
