@@ -473,7 +473,7 @@ class WOQModelLoader:
         module_kwargs["bits"] = module_quantization_config.get("bits", 4)
         module_kwargs["group_size"] = module_quantization_config.get("group_size", 32)
 
-        # spceific initialization kwargs
+        # specific initialization kwargs
         module_kwargs["g_idx"] = module_quantization_config.get("desc_act", False)
         module_kwargs["zp"] = True if name + ".qzeros" in self.loaded_state_dict_keys else False
         module_kwargs["use_optimum_format"] = True
@@ -494,6 +494,12 @@ class WOQModelLoader:
 
         # update mapped woqlinear module if needed
         new_module = self._update_mapped_woqlinear_modules(name, new_module, module_kwargs)
+
+        # [SW-234528]: if g_idx is not None, then check whether the g_idx is ordered
+        if isinstance(new_module, HPUWeightOnlyLinear) and new_module.g_idx is not None:
+            # if g_idx is ordered, then set g_idx to None
+            if new_module.is_g_idx_ordered(new_module.g_idx, new_module.group_size):
+                setattr(new_module, "g_idx", None)
 
         set_module(self.original_model, name, new_module)
 
