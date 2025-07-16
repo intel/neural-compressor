@@ -26,6 +26,7 @@ parser.add_argument(
 )
 parser.add_argument("--output_dir", nargs="?", default="./saved_results")
 parser.add_argument("--quant_lm_head", action="store_true",  help="whether to quant the lm_head layer in transformers")
+parser.add_argument("--for_inference", action="store_true",  help="whether to replace ipex linear for inference ")
 # ============Benchmark configs==============
 parser.add_argument("--benchmark", action="store_true")
 parser.add_argument("--benchmark_iters", default=100, type=int, help="num iters for benchmark")
@@ -299,6 +300,7 @@ if quantization_config is not None:
         quantization_config=quantization_config,
         trust_remote_code=args.trust_remote_code,
         _commit_hash=args._commit_hash,
+        for_inference=args.for_inference,
     )
 elif args.load_in_4bit or args.load_in_8bit:
     user_model = AutoModelForCausalLM.from_pretrained(
