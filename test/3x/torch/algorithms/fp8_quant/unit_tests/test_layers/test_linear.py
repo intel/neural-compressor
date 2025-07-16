@@ -167,7 +167,7 @@ def test_linear_dynamic_quantization(
 
         for vector in test_vectors:
             dynamic_quantized_output = dynamic_quantized_model(*(input.clone() for input in vector.inputs)).to(float)
-            # We save the calculated scale after the dynamic_quantized_model run the current input and calculates new scale. 
+            # We save the calculated scale after the dynamic_quantized_model run the current input and calculates new scale.
             # In next iteration, we will have a new scale stored in the class.
             current_input_dynamic_scale = dynamic_quantized_model.inner.quant_input.input_scale
 

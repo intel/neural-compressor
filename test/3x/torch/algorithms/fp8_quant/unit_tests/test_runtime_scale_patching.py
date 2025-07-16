@@ -12,6 +12,7 @@ from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config imp
 from neural_compressor.torch.quantization import FP8Config, convert, prepare, finalize_calibration
 
 os.environ["PT_HPU_WEIGHT_SHARING"] = "0"
+htcore.hpu_inference_set_env()
 
 
 class TinyBlock(torch.nn.Module):
@@ -48,6 +49,7 @@ def temp_directory():
     shutil.rmtree(temp_dir)
 
 
+@pytest.mark.skipif(not hasattr(htexp, "_set_scale_attributes"), reason="scale attributes not supported")
 @pytest.mark.parametrize("scale_method", ScaleMethodString)
 @pytest.mark.parametrize("scale_format", ["SCALAR", "CONST"])
 @pytest.mark.parametrize("dynamic_scale_patching", [True, False])
