@@ -994,7 +994,7 @@ class PatchedKVCache(PatchedModuleBase):
                        from bf16 is no help, best we can do is have prev be initialized an fp8 tensor from the start.
                        Since the initilization of `prev` is done in OHF (and that is not implemented yet) we
                        currently need to support both options until the implementation in OHF is done, then
-                       can we remove the support for the bf16 `prev` option (the else here). 
+                       can we remove the support for the bf16 `prev` option (the else here).
         """
         if prev.dtype == torch.float8_e4m3fn:
             qcurr = self.quant_input(cur)

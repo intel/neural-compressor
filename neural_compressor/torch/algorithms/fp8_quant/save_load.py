@@ -475,7 +475,7 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
         generation_config = transformers.GenerationConfig.from_pretrained(model_name_or_path, **kwargs)
         model.generation_config = generation_config
     except:  # Since model.generation_config is optional, relaxed exceptions can handle more situations.
-        logger.warning("model.generation_config may not be loaded correctly.")
+        logger.warning("model.generation_config is not loaded correctly.")
     return model, from_neuralmagic, from_neuralmagic_with_kv
 
 
