@@ -755,6 +755,24 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
 
     def pack(self, int_weight, scales, zp, scale_bf16_to_fp8=None, bias=None, g_idx=None):
         """Pack weight and zero point."""
+
+        # This is a temporary workaround; a ticket has been opened to find a better solution: SW-234528.
+        def is_g_idx_ordered(g_idx: torch.Tensor, group_size: int) -> bool:
+            """Check if g_idx is ordered according to group_size."""
+            # Case 1: per channel quantization, one group for an entire vector
+            if group_size == -1:
+                return True
+            # Case 2: the g_idx is in order, which means no shuffle is needed.
+            # E.g., g_idx = [0, 0, 1, 1, 2, 2] for group_size=2.
+            if g_idx.numel() % group_size != 0:
+                raise ValueError("The length of g_idx must be divisible by group_size.")
+            
+            for i in range(0, g_idx.numel(), group_size):
+                if len(torch.unique(g_idx[i:i + group_size])) != 1:
+                    return False
+            return True
+
+
         logger.debug("Packing for HPU")
 
         scales = scales.T.contiguous()
@@ -776,8 +794,10 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         if bias is not None:
             self.bias = bias.to("hpu").to(torch.bfloat16)
 
-        if g_idx is not None:
+        if g_idx is not None and not is_g_idx_ordered(g_idx, self.group_size):
             self.g_idx = g_idx.to("hpu").to(torch.int32)
+        else:
+            self.g_idx = None
 
     def unpack(self):
         """Unpack weight and zero point."""
