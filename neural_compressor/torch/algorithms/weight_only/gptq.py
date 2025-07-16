@@ -1348,9 +1348,10 @@ class Quantizer(nn.Module):
 
 
     def compute_local_perms(self, diag_H, groupsize):
-        """
-        For each group, compute a permutation that orders the indices in descending order
-        based on the corresponding diagonal values of H.
+        """Compute local permutations for each group of weights.
+
+        For each group, compute a permutation that orders the indices in descending order based on 
+        the corresponding diagonal values of H.
 
         Args:
             diag_H (Tensor): 1D tensor representing the diagonal of the Hessian.
@@ -1372,9 +1373,10 @@ class Quantizer(nn.Module):
         return local_perms
 
     def compute_global_perm(self, diag_H, groupsize):
-        """
-        Compute a permutation for the groups themselves. Here we choose the maximum diagonal value
-        within each group as the group metric and sort the groups in descending order.
+        """Compute a permutation for the groups themselves.
+
+        Here we choose the maximum diagonal value within each group as the group metric 
+        and sort the groups in descending order.
 
         Args:
             diag_H (Tensor): 1D tensor representing the diagonal of the Hessian.
@@ -1396,8 +1398,7 @@ class Quantizer(nn.Module):
         return global_perm
 
     def compose_final_perm(self, local_perms, global_perm, groupsize):
-        """
-        Compose the final overall permutation from the local and global permutations.
+        """Compose the final overall permutation from the local and global permutations.
 
         Args:
             local_perms (list of Tensors): Local permutation for each group.
@@ -1421,8 +1422,7 @@ class Quantizer(nn.Module):
         return torch.tensor(final_perm, dtype=torch.long)
 
     def invert_perm(self, perm):
-        """
-        Compute the inverse of a permutation vector.
+        """Compute the inverse of a permutation vector.
 
         Args:
             perm (Tensor): A 1D tensor containing a permutation of indices.
@@ -1435,7 +1435,7 @@ class Quantizer(nn.Module):
         return inv
 
     def find_params_fp8(self, x, fullscale=torch.tensor(torch.finfo(torch.float8_e4m3fnuz).max), scaling_method='pow2'):
-        """Find scales for bf16 to fp8 quantization"""
+        """Find scales for bf16 to fp8 quantization."""
         x_maxabs = torch.max(torch.abs(x))
         scale = x_maxabs / (fullscale)
         min_scaling_factor = float(1.0 / (fullscale * 512.0))  ##hard coded, copy from vllm, also appears in AutoRound

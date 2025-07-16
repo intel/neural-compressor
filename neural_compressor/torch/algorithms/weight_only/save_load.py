@@ -900,7 +900,7 @@ class WOQModelLoader:
         from transformers.modeling_utils import no_init_weights
         from transformers.utils import ContextManagers
 
-        _ = self.kwargs.pop("_fast_init", True)
+        _fast_init = self.kwargs.pop("_fast_init", True)
         torch_dtype = self.kwargs.pop("torch_dtype", "auto")
         is_sharded = self.kwargs.pop("is_sharded", False)
         sharded_metadata = self.kwargs.pop("sharded_metadata", None)
