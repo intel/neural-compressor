@@ -748,7 +748,6 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
 
     def pack(self, int_weight, scales, zp, scale_bf16_to_fp8=None, bias=None, g_idx=None):
         """Pack weight and zero point."""
-
         # This is a temporary workaround; a ticket has been opened to find a better solution: SW-234528.
         def is_g_idx_ordered(g_idx: torch.Tensor, group_size: int) -> bool:
             """Check if g_idx is ordered according to group_size."""
