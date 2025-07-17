@@ -645,11 +645,6 @@ class PatchedMoeMatmul(PatchedModuleBase):
 class PatchedMoeFP8Matmul(PatchedMoeMatmul):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        # if torch.distributed.get_rank() == 0:
-        #     import pdb; pdb.set_trace()
-        # torch.distributed.barrier()
-        # self.block_size = self.orig_mod.block_size
-        # self.scale_inv_fp8 = self.orig_mod.scale_inv_fp8
         self.get_dequant_weight = self.orig_mod.get_dequant_weight
     
 class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
@@ -756,9 +751,6 @@ class PatchedVllmMixtureOfExpertsOpV1(PatchedModuleBase):
                 [mod_extra_config.scale.inputs[x] for x in range(1, self.num_experts+1)],
                 self.scale_format,
             )
-            # if torch.distributed.get_rank() == 0:
-            #     import pdb; pdb.set_trace()
-            # torch.distributed.barrier()
             self._post_init_for_quant()
 
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
@@ -844,9 +836,6 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
         pass
 
     def post_process(self):
-        # if torch.distributed.get_rank() == 0:
-        #     import pdb; pdb.set_trace()
-        # torch.distributed.barrier()
         for i in range(self.num_experts):
             self.w13_list[i].weight = torch.nn.Parameter(self.w13_list[i].weight.squeeze().t().contiguous())
             self.w2_list[i].weight = torch.nn.Parameter(self.w2_list[i].weight.squeeze().t().contiguous())
@@ -886,9 +875,6 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
             measurement_mode=True,  # <=============
         )
         output_measure_list = [output]
-        # if torch.distributed.get_rank() == 0:
-        #     import pdb; pdb.set_trace()
-        # torch.distributed.barrier()
         for i in range(self.num_experts):
             output_measure_list.append(intermidiate_amax[i])
         measure_output(output_measure_list, self._mod_extra_config.outputs)
@@ -908,9 +894,6 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
         router_weights = topk_weights.to(x.dtype)
         permuted_weights = True
         activation = "silu"
-        # if torch.distributed.get_rank() == 0:
-        #     import pdb; pdb.set_trace()
-        # torch.distributed.barrier()
         experts_range = range(self.num_experts)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]

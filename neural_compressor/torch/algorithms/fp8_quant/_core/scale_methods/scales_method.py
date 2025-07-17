@@ -19,6 +19,9 @@ from . import ScaleIdentity
 from ..common import torch
 from ..fp_utils import mmse_scale_multi, get_fullscale, mmse_scale, calc_maxabs_scale, invert_scale
 
+import os
+INC_FORCE_SCALE_FP32 = os.getenv("INC_FORCE_SCALE_FP32", "0").lower() in ("1", "true", "yes", "on")
+
 class QuantTensorType(Enum):
     MEASUREMENTS = auto()
     CONST = auto()
@@ -30,7 +33,7 @@ class ScalesMethod:
     def __init__(self, round_scale_method, params, device_for_scale, fullscale=None):
         self.round_scale_method = round_scale_method
         self.params = params
-        self.hp_dtype = self.params["hp_dtype"]
+        self.hp_dtype = torch.float32 if INC_FORCE_SCALE_FP32 else params["hp_dtype"]
         self.lp_dtype = self.params["lp_dtype"]
         self.device = torch.device(self.curr_device.name())
         self.fullscale = fullscale if fullscale is not None else get_fullscale(self.lp_dtype, device_for_scale)
