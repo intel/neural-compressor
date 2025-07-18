@@ -36,7 +36,11 @@ def update_mod_dict(config):
 def print_init_info(config):
     import importlib.metadata
 
-    versionStr = importlib.metadata.version("neural_compressor_pt")
+    try:
+        versionStr = importlib.metadata.version("neural_compressor_pt")
+    except:
+        # in case the backend specific package is not installed, we can still get the git revision
+        versionStr = importlib.metadata.version("neural_compressor")
     locationStr = versionStr.find("git") + 3
     logger.info("neural_compressor_pt Git revision = %s", versionStr[locationStr:])
     logger.info("neural_compressor_pt Configuration = %s", config)
