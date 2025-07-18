@@ -9,7 +9,7 @@ This document describes the step-by-step instructions for FP8 quantization for [
 ### 1. Environment
 
 ```shell
-bash steup.sh
+bash setup.sh
 pip install -r requirements.txt
 ```
 
