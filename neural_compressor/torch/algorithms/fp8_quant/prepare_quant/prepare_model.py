@@ -13,14 +13,34 @@
 # limitations under the License.
 
 import os
+import torch
 from typing import Optional
 
-from .._core.save_measure import save_measurements
-from .._core.utils import prepare_model
-from .._quant_common.quant_config import Fp8cfg, _read_config_from_file, set_hqt_config
+
+_world_size = -1
+_local_rank = -1
 
 
-def _prep_model_with_predefined_config(model, *, config: Fp8cfg):
+def get_world_size():
+    global _world_size
+    if _world_size == -1:
+        if torch.distributed.is_initialized():
+            _world_size = torch.distributed.get_world_size()
+    return _world_size
+
+
+def get_local_rank():
+    global _local_rank
+    if _local_rank == -1:
+        if torch.distributed.is_initialized():
+            _local_rank = torch.distributed.get_rank()
+    return _local_rank
+
+
+def _prep_model_with_predefined_config(model, *, config):
+    from .._core.utils import prepare_model
+    from .._quant_common.quant_config import set_hqt_config
+
     set_hqt_config(model, config)
     prepare_model(model)
 
@@ -31,6 +51,8 @@ def prep_model(model, config_path: Optional[str] = None):
     If `config_path` is not given or `None`,
     instead perform the legacy behavior of checking for env variable `QUANT_CONFIG`.
     """
+    from .._quant_common.quant_config import Fp8cfg, _read_config_from_file
+
     if config_path is None:
         config_path = os.getenv("QUANT_CONFIG")
         if config_path is None:
@@ -44,4 +66,6 @@ def prep_model(model, config_path: Optional[str] = None):
 
 
 def finish_measurements(model):
+    from .._core.save_measure import save_measurements
+
     save_measurements(model)
