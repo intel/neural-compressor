@@ -70,7 +70,9 @@ class UnpackedWeightOnlyLinearParams(dict):
 
     def __init__(self, unpack_weight, scales, scale_bf16_to_fp8, unpack_zp, **kwargs):
         """Create dict."""
-        super().__init__(int_weight=unpack_weight, scales=scales, scale_bf16_to_fp8 = scale_bf16_to_fp8, zp=unpack_zp, **kwargs)
+        super().__init__(
+            int_weight=unpack_weight, scales=scales, scale_bf16_to_fp8=scale_bf16_to_fp8, zp=unpack_zp, **kwargs
+        )
 
     def to(self, device):
         """Change device for all values."""
@@ -226,12 +228,12 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             "Only support 0 or 1 as compression dimension, " + "0 is output channel, 1 is input channel."
         )
         self.register_buffer(
-                "scale_bf16_to_fp8",
-                torch.zeros(
-                    1,
-                    dtype=torch.bfloat16,
-                ).to(device),
-            )
+            "scale_bf16_to_fp8",
+            torch.zeros(
+                1,
+                dtype=torch.bfloat16,
+            ).to(device),
+        )
         # scale_bf16_to_fp8 is only used in w4a8 measurement mode and currently supports only per-tensor scaling
         if self.use_optimum_format:
             self.float_type = torch.float16
@@ -754,9 +756,9 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             return True
         if g_idx.numel() % group_size != 0:
             raise ValueError("The length of g_idx must be divisible by group_size.")
-        
+
         for i in range(0, g_idx.numel(), group_size):
-            if len(torch.unique(g_idx[i:i + group_size])) != 1:
+            if len(torch.unique(g_idx[i : i + group_size])) != 1:
                 return False
         return True
 

@@ -140,7 +140,7 @@ from neural_compressor.torch.quantization import prepare, convert, GPTQConfig, H
 
 # Quantization code
 quant_config = GPTQConfig()
-quant_config.fp8_aware = True 
+quant_config.fp8_aware = True
 model = prepare(model, quant_config)
 run_fn(model)  # calibration
 model = convert(model)
@@ -152,7 +152,7 @@ config = HybridGPTQConfig.from_json_file(path_to_measure_json)  # measure.json i
 model = prepare(model, config)
 run_fn(model)  # to measure activation scales from BF16 to FP8
 finalize_calibration(model)
-config = HybridGPTQConfig.from_json_file(path_to_quant_json) # quant.json is required
+config = HybridGPTQConfig.from_json_file(path_to_quant_json)  # quant.json is required
 model = convert(model, config)  # after this step, the model is ready for W4A8 inference
 ```
 
