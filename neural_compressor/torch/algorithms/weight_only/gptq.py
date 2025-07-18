@@ -837,7 +837,14 @@ class RAWGPTQuantizer(object):
                         g_idx=gptq_perm is not None,
                         device="cpu",
                     )
-                    new_module.pack(int_weight, gptq_scale, gptq_zp, gptq_scale_bf16_to_fp8, bias, gptq_perm)
+                    new_module.pack(
+                        int_weight,
+                        gptq_scale,
+                        gptq_zp,
+                        bias,
+                        scale_bf16_to_fp8=gptq_scale_bf16_to_fp8,
+                        g_idx=gptq_perm,
+                    )
                     set_module(transformer_block, layer_name, new_module)
                     accelerator.synchronize()
 
@@ -1059,7 +1066,14 @@ class RAWGPTQuantizer(object):
                     g_idx=gptq_perm is not None,
                     device="cpu",
                 )
-                new_module.pack(int_weight, gptq_scale, gptq_zp, gptq_scale_bf16_to_fp8, bias, gptq_perm)
+                new_module.pack(
+                    int_weight,
+                    gptq_scale,
+                    gptq_zp,
+                    bias,
+                    scale_bf16_to_fp8=gptq_scale_bf16_to_fp8,
+                    g_idx=gptq_perm,
+                )
                 set_module(self.model, layer_name, new_module)
 
         # Clear temporary workspace

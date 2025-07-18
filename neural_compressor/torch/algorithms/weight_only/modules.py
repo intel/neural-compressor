@@ -312,7 +312,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             self.g_idx = None
         self.post_init()
 
-    def pack(self, int_weight, scales, zp, scale_bf16_to_fp8=None, bias=None, g_idx=None, **kwargs):
+    def pack(self, int_weight, scales, zp, bias, scale_bf16_to_fp8=None, g_idx=None, **kwargs):
         """Pack int weight."""
         if self.use_optimum_format:
             self.scales = self.scales.T.contiguous()
