@@ -220,8 +220,13 @@ class Fp8cfg:
         validate_and_populate_scale_method(scale_method_config)
 
 
-        if auto_detect_accelerator().current_device_name() == "cpu" and not measured_global_config["use_qdq"]:
-            raise ValueError("For FP8 quantization, only QDQ mode is supported on CPU device.")
+        if auto_detect_accelerator().current_device_name() == "cpu":
+            if not measured_global_config["use_qdq"]:
+                raise ValueError("For FP8 quantization, only QDQ mode is supported on CPU device.")
+            if measured_global_config["scale_format"] == ScaleFormat.CONST and \
+                check_scale_method_fields(scale_method_config, granularity_weight=ScaleGranularity.PTS, reducer=any):
+                    measured_global_config["scale_format"] = ScaleFormat.SCALAR
+                    logger.warning(f"FP8 per-tensor quantization on CPU device requires 'scale_format = SCALAR'")
 
         # If seperate_measure_files is True (default value), then it is assumed that there are multiple distinct measure and scale files
         # and they are stored in / loaded from paths with the correct index as a suffix. Else, only one is searched for.
@@ -234,9 +239,6 @@ class Fp8cfg:
             Fp8cfg.set_gaudi_device_for_scales(custom_config, measured_global_config, scale_method_config)
 
         if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
-            if auto_detect_accelerator().current_device_name() == "cpu":
-                measured_global_config["scale_format"] = ScaleFormat.CONST
-                logger.warning(f"Cannot use 'scale_format = SCALAR' when running FP8 quantization on CPU device")
             if check_scale_method_fields(scale_method_config, granularity_weight=ScaleGranularity.PCS, reducer=any) or \
                check_scale_method_fields(scale_method_config, granularity_activation=ScaleGranularity.PCS, reducer=any):
                 measured_global_config["scale_format"] = ScaleFormat.CONST
