@@ -10,3 +10,4 @@ psutil
 pytest
 torchvision
 transformers
+torchao
