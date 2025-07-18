@@ -78,4 +78,3 @@ def test_save_load():
         out2 = new_model(example_input)[0].cpu()
     assert (out1==out2).all(), \
             f"The output of the model is different after save and load with scale_method: {scale_method}"
-

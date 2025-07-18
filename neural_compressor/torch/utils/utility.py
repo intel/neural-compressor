@@ -13,10 +13,10 @@
 # limitations under the License.
 """Intel Neural Compressor PyTorch utilities."""
 
-import os
-import json
 import enum
 import importlib
+import json
+import os
 from collections import UserDict
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
@@ -721,8 +721,7 @@ def get_enum_from_format(format):
             return obj
         elif format.upper() == obj.name:
             return obj
-    raise ValueError(
-        f"Invalid format value ('{format}'). Enter one of [{[m.name for m in SaveLoadFormat]}]")
+    raise ValueError(f"Invalid format value ('{format}'). Enter one of [{[m.name for m in SaveLoadFormat]}]")
 
 
 def read_json_file(file_path):

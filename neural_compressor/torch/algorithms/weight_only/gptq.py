@@ -735,7 +735,9 @@ class RAWGPTQuantizer(object):
                         sequential_layers[layer_name].weight.data = Q
                     gptq_config[self.get_full_layer_name(layer_name, block_idx)] = {"scale": scale}
                     if weight_config_this_layer["fp8_aware"]:
-                        gptq_config[self.get_full_layer_name(layer_name, block_idx)]["scale_bf16_to_fp8"] = scale_bf16_to_fp8
+                        gptq_config[self.get_full_layer_name(layer_name, block_idx)][
+                            "scale_bf16_to_fp8"
+                        ] = scale_bf16_to_fp8
                     if not weight_config_this_layer["sym"]:
                         gptq_config[self.get_full_layer_name(layer_name, block_idx)]["zero"] = zp
                     if weight_config_this_layer["act_order"]:  # save perm for restoring the weights
@@ -768,7 +770,9 @@ class RAWGPTQuantizer(object):
                     weight_config_this_layer = self.get_layer_config(self.get_full_layer_name(layer_name, block_idx))
                     gptq_scale = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["scale"].cpu()
                     if weight_config_this_layer["fp8_aware"]:
-                        gptq_scale_bf16_to_fp8 = gptq_config[self.get_full_layer_name(layer_name, block_idx)]["scale_bf16_to_fp8"].cpu()
+                        gptq_scale_bf16_to_fp8 = gptq_config[self.get_full_layer_name(layer_name, block_idx)][
+                            "scale_bf16_to_fp8"
+                        ].cpu()
                     else:
                         gptq_scale_bf16_to_fp8 = None
                     if not weight_config_this_layer["sym"]:
@@ -793,6 +797,7 @@ class RAWGPTQuantizer(object):
                     if is_transformers_imported() and isinstance(sequential_layers[layer_name], transformers.Conv1D):
                         Q = Q.t_().contiguous()
                     from .utility import quant_weight_w_scale
+
                     Q = quant_weight_w_scale(
                         Q,
                         gptq_scale,
@@ -800,7 +805,7 @@ class RAWGPTQuantizer(object):
                         gptq_zp,
                         weight_config_this_layer["group_size"],
                         dtype=weight_config_this_layer["dtype"],
-                        fp8_aware=weight_config_this_layer["fp8_aware"]
+                        fp8_aware=weight_config_this_layer["fp8_aware"],
                     )
                     if weight_config_this_layer["act_order"]:
                         invperm = torch.argsort(gptq_perm)
@@ -940,7 +945,7 @@ class RAWGPTQuantizer(object):
                 weight_config_this_layer = self.get_layer_config(full_layer_name)
                 if "hpu" in self.device:
                     W = W.to("cpu")
-                scale, scale_bf16_to_fp8,  zp, Q = gptq_post_block[layer_name].fasterquant(
+                scale, scale_bf16_to_fp8, zp, Q = gptq_post_block[layer_name].fasterquant(
                     W,
                     blocksize=weight_config_this_layer["block_size"],
                     percdamp=weight_config_this_layer["percdamp"],
@@ -1121,7 +1126,17 @@ class GPTQ:
         # self.H += 2 / self.nsamples * inp.matmul(inp.t())
         self.H += inp.matmul(inp.t())  # H = X*X, which should be a sym matrix
 
-    def fasterquant(self, W, blocksize=128, percdamp=0.01, groupsize=-1, act_order=False, hybrid_order=False , fp8_aware=False, static_groups=False):
+    def fasterquant(
+        self,
+        W,
+        blocksize=128,
+        percdamp=0.01,
+        groupsize=-1,
+        act_order=False,
+        hybrid_order=False,
+        fp8_aware=False,
+        static_groups=False,
+    ):
         """Run quantization.
 
         Args:
@@ -1206,10 +1221,14 @@ class GPTQ:
         scale_bf16_to_fp8 = torch.tensor([-1])  # initialization
 
         if fp8_aware:
-            fullscale = torch.finfo(torch.float8_e4m3fnuz).max  # Use Gaudi2's dynamic range as it is lower than Gaudi3's
+            fullscale = torch.finfo(
+                torch.float8_e4m3fnuz
+            ).max  # Use Gaudi2's dynamic range as it is lower than Gaudi3's
             # protective range is added to prevent dequant overflow from INT4 to FP8
             protective_range = fullscale - (fullscale / self.quantizer.maxq)
-            self.quantizer.find_params_fp8(W, fullscale=protective_range, scaling_method='pow2') # scaling method is hard coded
+            self.quantizer.find_params_fp8(
+                W, fullscale=protective_range, scaling_method="pow2"
+            )  # scaling method is hard coded
             scale_bf16_to_fp8 = torch.atleast_1d(self.quantizer.scale_bf16_to_fp8)
             W_8 = torch.clamp(W / scale_bf16_to_fp8, min=-protective_range, max=protective_range)
             W_8 = W_8.to(torch.float8_e4m3fn).float()
@@ -1243,10 +1262,17 @@ class GPTQ:
                             idx = perm[idx]
                         self.quantizer = groups[idx // groupsize]
                 if fp8_aware:
-                    w_8 = (w / scale_bf16_to_fp8)
-                    hat_w_8 = self.quantizer.quantize(w_8.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq)
-                    hat_w_8 = torch.clamp(hat_w_8, min=-protective_range, max=protective_range).to(torch.float8_e4m3fn).float().flatten()
-                    q =  scale_bf16_to_fp8 * hat_w_8
+                    w_8 = w / scale_bf16_to_fp8
+                    hat_w_8 = self.quantizer.quantize(
+                        w_8.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq
+                    )
+                    hat_w_8 = (
+                        torch.clamp(hat_w_8, min=-protective_range, max=protective_range)
+                        .to(torch.float8_e4m3fn)
+                        .float()
+                        .flatten()
+                    )
+                    q = scale_bf16_to_fp8 * hat_w_8
                 else:
                     q = self.quantizer.quantize(
                         w.unsqueeze(1), self.quantizer.scale, self.quantizer.zero, self.quantizer.maxq
@@ -1282,9 +1308,9 @@ class GPTQ:
             Q = Q[:, inv_final]
             inv_global_perm = self.quantizer.invert_perm(global_perm)
             inv_global_perm_list = inv_global_perm.tolist()
-            temp_scale = [ scale[i] for i in inv_global_perm_list ]
+            temp_scale = [scale[i] for i in inv_global_perm_list]
             scale = temp_scale
-            temp_zero = [ zero[i] for i in inv_global_perm_list ]
+            temp_zero = [zero[i] for i in inv_global_perm_list]
             zero = temp_zero
 
         if act_order:
@@ -1346,11 +1372,10 @@ class Quantizer(nn.Module):
         if trits:
             self.maxq = -1
 
-
     def compute_local_perms(self, diag_H, groupsize):
         """Compute local permutations for each group of weights.
 
-        For each group, compute a permutation that orders the indices in descending order based on 
+        For each group, compute a permutation that orders the indices in descending order based on
         the corresponding diagonal values of H.
 
         Args:
@@ -1375,7 +1400,7 @@ class Quantizer(nn.Module):
     def compute_global_perm(self, diag_H, groupsize):
         """Compute a permutation for the groups themselves.
 
-        Here we choose the maximum diagonal value within each group as the group metric 
+        Here we choose the maximum diagonal value within each group as the group metric
         and sort the groups in descending order.
 
         Args:
@@ -1434,20 +1459,20 @@ class Quantizer(nn.Module):
         inv[perm] = torch.arange(perm.numel(), device=perm.device)
         return inv
 
-    def find_params_fp8(self, x, fullscale=torch.tensor(torch.finfo(torch.float8_e4m3fnuz).max), scaling_method='pow2'):
+    def find_params_fp8(self, x, fullscale=torch.tensor(torch.finfo(torch.float8_e4m3fnuz).max), scaling_method="pow2"):
         """Find scales for bf16 to fp8 quantization."""
         x_maxabs = torch.max(torch.abs(x))
         scale = x_maxabs / (fullscale)
         min_scaling_factor = float(1.0 / (fullscale * 512.0))  ##hard coded, copy from vllm, also appears in AutoRound
         scale = torch.clip(scale, min=min_scaling_factor)
-        if scaling_method == 'arbitrary':
+        if scaling_method == "arbitrary":
             self.scale_bf16_to_fp8 = scale.to(torch.bfloat16).float()
             return
         scale = 2 ** torch.ceil(torch.log2(scale))
-        if scaling_method == 'pow2':
+        if scaling_method == "pow2":
             self.scale_bf16_to_fp8 = scale.to(torch.bfloat16).float()
             return
-        if scaling_method == 'hw':
+        if scaling_method == "hw":
             min_scale, max_scale, scale_factor = 0.00390625, 16, 4
             scale = torch.minimum(
                 torch.maximum(
@@ -1458,7 +1483,6 @@ class Quantizer(nn.Module):
             )
             self.scale_bf16_to_fp8 = scale.to(torch.bfloat16).float()
             return
-
 
     def find_params(self, x, weight=False):
         """Find scale and zero for weight."""
@@ -1597,7 +1621,6 @@ class Quantizer(nn.Module):
                 return (x > scale / 2).float() * scale + (x < zero / 2).float() * zero
             q = torch.clamp(torch.round(x / scale) + zero, 0, maxq)
             return scale * (q - zero)
-
 
     def ready(self):
         """Quantizer is ready.
