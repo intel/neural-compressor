@@ -2,10 +2,11 @@ FP8 Quantization
 =======
 
 1. [Introduction](#introduction)
-2. [Supported Parameters](#supported-parameters)
-3. [Get Start with FP8 Quantization](#get-start-with-fp8-quantization)
-4. [Optimum-habana LLM example](#optimum-habana-LLM-example)
-5. [VLLM example](#VLLM-example)
+2. [Support Matrix](#support-matrix)
+3. [Supported Parameters](#supported-parameters)
+4. [Get Start with FP8 Quantization](#get-start-with-fp8-quantization)
+5. [Optimum-habana LLM example](#optimum-habana-LLM-example)
+6. [VLLM example](#VLLM-example)
 
 ## Introduction
 
@@ -17,7 +18,20 @@ Float point 8 (FP8) is a promising data type for low precision quantization whic
 
 Intel Gaudi2, also known as HPU, provides this data type capability for low precision quantization, which includes `E4M3` and `E5M2`. For more information about these two data type, please refer to [link](https://arxiv.org/abs/2209.05433).
 
-Intel Neural Compressor provides general quantization APIs to leverage HPU FP8 capability. with simple  with lower memory usage and lower compute cost, 8 bit model
+To harness FP8 capabilities — offering reduced memory usage and lower computational costs — Intel Neural Compressor provides general quantization APIs to generate FP8 models.
+
+## Support Matrix
+
+| Hardware | FP8 mode | FP8 QDQ mode |
+| :------- |:--------|:---------|
+| HPU      | &#10004; | &#10004; |
+| CPU      | &#10005; | &#10004; |
+
+For FP8 mode, tensors are all represented in FP8 format and kernels are replaced to FP8 version explicitly.
+
+For FP8 QDQ mode, activations are still in high precision and quant/dequant pairs are inserted. Frameworks can compile and fuse operators of FP8 QDQ model based on their own capability.
+
+During runtime, Intel Neural Compressor will detect hardware automatically and the priority is HPU > CPU.
 
 ## Supported Parameters
 
