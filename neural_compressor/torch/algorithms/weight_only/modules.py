@@ -25,7 +25,13 @@ import torch
 from torch.autograd import Function
 from torch.nn import functional as F
 
-from neural_compressor.torch.utils import accelerator, can_pack_with_numba, logger
+from neural_compressor.torch.utils import (
+    Version,
+    accelerator,
+    can_pack_with_numba,
+    get_hpex_version,
+    logger,
+)
 
 from .utility import quant_tensor
 
@@ -725,6 +731,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             )
         else:
             self.g_idx = None
+        self.support_g_idx = True if get_hpex_version() >= Version("1.23.0") else False
 
         self.half_indim = self.in_features // 2
 
@@ -740,7 +747,11 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         qweight = self.qweight
         zeros = self.qzeros
         g_idx = self.g_idx
-        weight = torch.ops.hpu.convert_from_uint4(qweight, scales, zeros, input_dtype, g_idx)
+        if self.support_g_idx:
+            weight = torch.ops.hpu.convert_from_uint4(qweight, scales, zeros, input_dtype, g_idx)
+        else:
+            # The released docker 1.22.0 only supports 4 arguments
+            weight = torch.ops.hpu.convert_from_uint4(qweight, scales, zeros, input_dtype)
         output = self.matmul_internal(input, weight)
         output = output.to(dtype=input_dtype).reshape(
             output_shape
