@@ -352,6 +352,8 @@ class GPTQConfig(TorchBaseConfig):
         "quant_lm_head",
         # gptq params
         "act_order",
+        "hybrid_order",
+        "fp8_aware",
         "percdamp",
         "block_size",
         "static_groups",
@@ -379,6 +381,8 @@ class GPTQConfig(TorchBaseConfig):
         quant_lm_head: bool = False,
         # gptq params
         act_order: bool = False,
+        hybrid_order: bool = False,
+        fp8_aware: bool = False,
         percdamp: float = 0.01,
         block_size: int = 2048,
         static_groups: bool = False,
@@ -406,6 +410,10 @@ class GPTQConfig(TorchBaseConfig):
             quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
             act_order (bool): Whether to sort Hessian's diagonal values to rearrange channel-wise
                               quantization order. Default is False.
+            hybrid_order (bool): Enables activation re-ordering with no inference overhead.
+                                 Weights are re-ordered within their groups without cross-group mixing.
+            fp8_aware (bool): Whether to include an FP8 quantization step in the GPTQ process.
+                              This improves accuracy when using the W4A8 quantization scheme.
             percdamp (float): Percentage of Hessian's diagonal values' average, which will be added to
                               Hessian's diagonal to increase numerical stability. Default is 0.01.
             block_size (int): Execute GPTQ quantization per block, block shape = [C_out, block_size].
@@ -437,6 +445,8 @@ class GPTQConfig(TorchBaseConfig):
         self.double_quant_group_size = double_quant_group_size
         # gptq
         self.act_order = act_order
+        self.hybrid_order = hybrid_order
+        self.fp8_aware = fp8_aware
         self.percdamp = percdamp
         self.block_size = block_size
         self.static_groups = static_groups
@@ -1791,10 +1801,7 @@ def get_default_hqq_config() -> HQQConfig:
 
 
 ######################## FP8 Quant Config ###############################
-if is_hpex_available():
-    from neural_compressor.torch.algorithms.fp8_quant._core.patching_common import get_white_list
-else:
-    get_white_list = lambda: []
+from neural_compressor.torch.algorithms.fp8_quant._core.patching_common import get_white_list
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=FP8_QUANT)
@@ -1811,7 +1818,7 @@ class FP8Config(TorchBaseConfig):
         blocklist: dict = {"names": [], "types": ()},
         allowlist: dict = {"names": [], "types": get_white_list()},
         mode: str = "AUTO",
-        scale_method: str = "maxabs_hw",
+        scale_method: Union[str, dict] = "maxabs_hw",
         scale_params: dict = {},
         observer: str = "maxabs",
         mod_dict: dict = {},
@@ -1820,7 +1827,6 @@ class FP8Config(TorchBaseConfig):
         use_qdq: bool = False,
         scale_format: str = "scalar",
         measure_on_hpu: bool = True,
-        int4_weights: bool = False,
         **kwargs,
     ):
         """Initializing FP8Config.
@@ -1832,14 +1838,13 @@ class FP8Config(TorchBaseConfig):
             blocklist (dict, optional): Whether to skip fp8 quantization for specific op names or types, name could be substring. Defaults to {"names": [], "types": ()}.
             allowlist (dict, optional): Whether to execute fp8 quantization for specific op names or types. Defaults to {"names": [], "types": FP8_WHITE_LIST}.
             mode (str, optional): Choose the quantization mode. Defaults to "AUTO".
-            scale_method (str, optional): Select method used to generate scale from calibration info. Defaults to "maxabs_hw".
+            scale_method (str or dict, optional): Select method used to generate scale from calibration info. Can be a string or a dict. Defaults to "maxabs_hw".
             scale_params (dict, optional): _description_. Defaults to {}.
             observer (str, optional): Params of scales. Defaults to "maxabs".
             mod_dict (dict, optional): The dict of modules to quantize. Defaults to {}.
             measure_exclude (str, optional): Select INPUT/OUTPUT to be exculded by measurement. Defaults to "OUTPUT".
             fake_quant (bool, optional): whether to execute fake quantization, a little bit different with use_qdq, used for training. Defaults to False.
             use_qdq (bool, optional): whether to execute Q/DQ quantization. Defaults to False.
-            int4_weights (bool, optional): Expect 4bit weights or not. Defaults to False.
         """
         super().__init__()
         self.dump_stats_path = dump_stats_path
@@ -1855,7 +1860,6 @@ class FP8Config(TorchBaseConfig):
         self._json_file = None
         self.fake_quant = str(fake_quant)
         self.use_qdq = str(use_qdq)
-        self.int4_weights = int4_weights  # FIXME should be inferred
         self.scale_format = scale_format
         self.measure_on_hpu = measure_on_hpu
         # add kwargs
@@ -1998,7 +2002,6 @@ class HybridGPTQConfig(FP8Config):
         new_self = HybridGPTQConfig()
         for attr, value in vars(config).items():
             setattr(new_self, attr, value)
-        new_self.int4_weights = True
         return new_self
 
 

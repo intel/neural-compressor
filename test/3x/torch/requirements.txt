@@ -8,5 +8,6 @@ peft
 prettytable
 psutil
 pytest
+torchao
 torchvision
 transformers

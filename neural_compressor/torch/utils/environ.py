@@ -79,6 +79,21 @@ def is_hpu_available():
     return get_accelerator().name() == "hpu"
 
 
+def get_hpex_version():
+    """Return ipex version if ipex exists."""
+    if is_hpex_available():
+        try:
+            import habana_frameworks.torch
+
+            hpex_version = habana_frameworks.torch.__version__
+        except ValueError as e:  # pragma: no cover
+            assert False, "Got an unknown version of habana_frameworks.torch: {}".format(e)
+        version = Version(hpex_version)
+        return version
+    else:
+        return None
+
+
 ## check optimum
 if is_package_available("optimum"):
     _optimum_available = True

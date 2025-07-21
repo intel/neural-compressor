@@ -33,8 +33,8 @@ class QuantizedHpuFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
     Concrete class may override base class methods in case custom op logic is unique, see examples in concrete
     classes below.
     """
-    def __init__(self, scale_format):
-        self._quantized_func_ = self.get_quantized_func(scale_format)
+    def __init__(self, scale_format, is_dynamic=False):
+        self._quantized_func_ = self.get_quantized_func(scale_format, is_dynamic)
 
     @abstractmethod
     def get_default_quantized_func(self):
@@ -45,17 +45,30 @@ class QuantizedHpuFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
             return self.get_default_quantized_func()
         return self.get_default_quantized_func().scalar
 
-    def get_quantized_func(self, scale_format):
-        if scale_format == ScaleFormat.SCALAR:
-                return self.get_scalar_quantized_func()
-        elif scale_format == ScaleFormat.CONST:
-            return self.get_default_quantized_func()
+    def get_dynamic_scalar_quantized_func(self):
+        # By default, dynamic scalar quantized function is the same as scalar quantized function.
+        return self.get_scalar_quantized_func()
+
+    def get_dynamic_quantized_func(self):
+        # By default, dynamic quantized function is the same as default quantized function.
+        return self.get_default_quantized_func()
+
+    def get_quantized_func(self, scale_format, is_dynamic=False):
+        if scale_format not in [ScaleFormat.SCALAR, ScaleFormat.CONST]:
+            raise ValueError("Unsupported scale format - {}".format(scale_format))
+        if is_dynamic:
+            if scale_format == ScaleFormat.SCALAR:
+                return self.get_dynamic_scalar_quantized_func()
+            else:
+                return self.get_dynamic_quantized_func()
         else:
-            raise ValueError("Unexpected scale format - {}".format(scale_format))
+            if scale_format == ScaleFormat.SCALAR:
+                return self.get_scalar_quantized_func()
+            else:
+                return self.get_default_quantized_func()
 
     def __call__(self, *args, **kwargs):
         return self._quantized_func_(*args, **kwargs)
-
 
 
 class QuantizedHpuMatmul(QuantizedHpuFuncWrapperBase):
@@ -134,7 +147,6 @@ class QuantizedHpuDynamicMoe(QuantizedHpuFuncWrapperBase):
     def get_scalar_quantized_func(self):
         return torch.ops.hpu.mixture_of_experts.fp8_scalars
 
-
 class QuantizedHPUCastToFP8(QuantizedHpuFuncWrapperBase):
     def get_default_quantized_func(self):
         return torch.ops.hpu.cast_to_fp8_v2
@@ -144,17 +156,70 @@ class QuantizedHPUCastToFP8(QuantizedHpuFuncWrapperBase):
 
 class QuantizedHPUCastFromFP8(QuantizedHpuFuncWrapperBase):
 
-    def __init__(self, scale_format):
-        super().__init__(scale_format)
-
     def get_default_quantized_func(self):
         return torch.ops.hpu.cast_from_fp8
+
 
 class QuantizedHpuDynamicMoeFusedWeights(QuantizedHpuFuncWrapperBase):
     def get_default_quantized_func(self):
         return torch.ops.hpu.mixture_of_experts.fp8_fused_weights
+
     def get_scalar_quantized_func(self):
         return torch.ops.hpu.mixture_of_experts.fp8_fused_weights_scalars
+
+    def get_dynamic_scalar_quantized_func(self):
+        return torch.ops.hpu.mixture_of_experts.fp8_fused_weights_scalars_dynamic
+
+    def get_dynamic_quantized_func(self):
+        return torch.ops.hpu.mixture_of_experts.fp8_fused_weights_dynamic
+
+
+class QuantizedHPUQuant(QuantizedHpuFuncWrapperBase):
+
+    def get_default_quantized_func(self):
+        return torch.ops.quantized_decomposed.quantize_per_tensor
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+    def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn):
+        return self._quantized_func_(input, scale, zero_point, quant_min, quant_max, dtype=dtype)
+
+
+class QuantizedHPUDeQuant(QuantizedHpuFuncWrapperBase):
+
+    def get_default_quantized_func(self):
+        return torch.ops.quantized_decomposed.dequantize_per_tensor
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+    def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn, out_dtype=torch.bfloat16):
+        return self._quantized_func_(input, scale, zero_point, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype)
+
+
+class QuantizedHPUQuantPC(QuantizedHpuFuncWrapperBase):
+
+    def get_default_quantized_func(self):
+        return torch.ops.quantized_decomposed.quantize_per_channel
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+    def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn):
+        return self._quantized_func_(input, scale, zero_point, axis, quant_min, quant_max, dtype=dtype)
+
+
+class QuantizedHPUDeQuantPC(QuantizedHpuFuncWrapperBase):
+
+    def get_default_quantized_func(self):
+        return torch.ops.quantized_decomposed.dequantize_per_channel
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+    def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn, out_dtype=torch.bfloat16):
+        return self._quantized_func_(input, scale, zero_point, axis, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype)
 
 
 _OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES = {OP_TYPE.LINEAR_GEMM : QuantizedHpuMatmul,
@@ -166,6 +231,10 @@ _OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES = {OP_TYPE.LINEAR_GEMM : QuantizedHpuMatm
                                           OP_TYPE.CAST_FROM_FP8 : QuantizedHPUCastFromFP8,
                                           OP_TYPE.DYNAMIC_MOE: QuantizedHpuDynamicMoe,
                                           OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS: QuantizedHpuDynamicMoeFusedWeights,
+                                          OP_TYPE.QUANT: QuantizedHPUQuant,
+                                          OP_TYPE.DEQUANT: QuantizedHPUDeQuant,
+                                          OP_TYPE.QUANT_PC: QuantizedHPUQuantPC,
+                                          OP_TYPE.DEQUANT_PC: QuantizedHPUDeQuantPC,
                                           }
 
 def init_hpu_quantized_func_wrapper_factory():

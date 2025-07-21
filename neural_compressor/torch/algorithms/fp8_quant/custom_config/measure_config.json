@@ -1,6 +1,5 @@
 {
     "mode": "MEASURE",
-    "scale_method": "MAX",
     "quantize_weight": true,
     "dump_stats_path": "./run_outputs/fp8/stats",
     "allowlist": {

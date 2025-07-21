@@ -16,6 +16,9 @@ import torch
 import types
 from .._quant_common.quant_config import ScaleFormat
 from .common import is_runtime_scale_patching
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
+cur_device = auto_detect_accelerator().current_device_name()
 
 
 def add_scale_registry(patched_mod):
@@ -33,23 +36,30 @@ def register_scale(patched_mod, name, scale, scale_format):
     patched_mod.scale_members.add(name)
     setattr(patched_mod, name, scale)
 
+def create_scale_tensor(orig_scales, scale_format):
+    if scale_format not in ScaleFormat.__members__.values():
+        raise ValueError(f"Invalid scale format: {scale_format}")
 
-def create_scale_tensor(orig_tensor, scale_format):
-    if is_runtime_scale_patching() and scale_format in ScaleFormat.__members__.values():
-        return orig_tensor.to("cpu").to(torch.float)
-    if scale_format == ScaleFormat.CONST:
-        if isinstance(orig_tensor, torch.Tensor):
-            return torch.nn.Parameter(orig_tensor)
-        elif isinstance(orig_tensor, list):
-            return [torch.nn.Parameter(x) for x in orig_tensor]
-    elif scale_format == ScaleFormat.SCALAR:
-        if isinstance(orig_tensor, (torch.Tensor, float)):
-            return scale_to_scalar(orig_tensor)
-        elif isinstance(orig_tensor, list):
-            return [scale_to_scalar(x) for x in orig_tensor]
+    # dynamic quantization case, need to avoid it if possible - see SW-230996
+    if orig_scales is None:
+        return
+    try:
+        scale_creation_func = scale_to_cpu if is_runtime_scale_patching() else _scale_creation_funcs_map[scale_format]
+    except KeyError:
+        raise KeyError(f"Scale format {scale_format} isn't in _scale_creation_funcs_map")
+
+    if isinstance(orig_scales, (torch.Tensor, float)):
+        return scale_creation_func(orig_scales)
+    elif isinstance(orig_scales, list):
+        return [scale_creation_func(x) for x in orig_scales]
     else:
         raise ValueError("unexpected scale format value {}".format(scale_format))
 
+def scale_to_cpu(scale_tensor):
+    return scale_tensor.to("cpu")
+
+def scale_to_const(scale_tensor):
+    return torch.nn.Parameter(scale_tensor, requires_grad=False)
 
 # scalar scale is a performance optimization for LLM layers in small BS
 def scale_to_scalar(scale):
@@ -63,6 +73,7 @@ def scale_to_scalar(scale):
     else:
         raise Exception(f"Unexpected scale instance type: {type(scale).__name__}, expected Torch.tensor or float number")
 
+_scale_creation_funcs_map = {ScaleFormat.SCALAR: scale_to_scalar, ScaleFormat.CONST: scale_to_const}
 
 def get_scale_dtype(scale):
     if isinstance(scale, torch.Tensor):  # tensor case
@@ -75,7 +86,7 @@ def get_scale_dtype(scale):
         raise Exception(f"Unexpected scale instance type: {type(scale).__name__}, expected Torch.tensor or float number")
 
 
-def get_param_scales_from_scalar(patched_mod, prefix, dtype=torch.bfloat16, device=torch.device('hpu')):
+def get_param_scales_from_scalar(patched_mod, prefix, dtype=torch.bfloat16, device=cur_device):
     """Get all scales in param_list, used for saving scalar scales"""
     scale_dict = {}
     for name in patched_mod.scale_members:
@@ -87,7 +98,7 @@ def get_param_scales_from_scalar(patched_mod, prefix, dtype=torch.bfloat16, devi
     return scale_dict
 
 
-def get_param_scales_from_list(patched_mod, prefix, dtype=torch.bfloat16, device=torch.device('hpu')):
+def get_param_scales_from_list(patched_mod, prefix, dtype=torch.bfloat16, device=cur_device):
     """Get all scales in param_list, used for saving scalar scales"""
     scale_dict = {}
     for name in patched_mod.scale_members:
@@ -133,7 +144,7 @@ def set_param_scales_into_list(patched_mod, state_dict):
 def get_state_dict(patched_mod, *args, destination=None, prefix='', keep_vars=False):
     """replace torch.nn.Module.state_dict"""
     cur_state_dict = torch.nn.Module.state_dict(patched_mod, *args, destination=destination, prefix=prefix, keep_vars=keep_vars)
-    device = torch.device('hpu')
+    device = cur_device
     dtype = patched_mod.hp_dtype
     if patched_mod.scale_format == ScaleFormat.SCALAR:
         scale_dict = get_param_scales_from_scalar(patched_mod, prefix, dtype=dtype, device=device)
