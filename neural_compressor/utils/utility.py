@@ -393,6 +393,12 @@ def get_all_fp32_data(data):
 
 
 def get_tuning_history(history_path):
+    """Get tuning history.
+
+    Args:
+        tuning_history_path: The tuning history path, which need users to assign
+    """
+
     class SafeUnpickler(pickle.Unpickler):
         def find_class(self, module, name):
             # Allowed built-in types
@@ -437,6 +443,14 @@ def get_tuning_history(history_path):
                         __import__(part)
                     except ImportError:
                         continue
+                mod = sys.modules.get(module)
+                if mod and hasattr(mod, name):
+                    return getattr(mod, name)
+
+            # Allow all numpy classes
+            if module.startswith("numpy."):
+                import numpy
+
                 mod = sys.modules.get(module)
                 if mod and hasattr(mod, name):
                     return getattr(mod, name)
