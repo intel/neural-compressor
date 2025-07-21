@@ -17,6 +17,7 @@
 import importlib
 import os
 import sys
+from functools import lru_cache
 
 import torch
 from packaging.version import Version
@@ -79,19 +80,20 @@ def is_hpu_available():
     return get_accelerator().name() == "hpu"
 
 
-def get_hpex_version():
+@lru_cache(None)
+def is_hpex_support_g_idx():
     """Return ipex version if ipex exists."""
     if is_hpex_available():
         try:
             import habana_frameworks.torch
+            import torch
 
-            hpex_version = habana_frameworks.torch.__version__
+            schema = torch._C._get_schema("hpu::convert_from_int4", "")
+            return "group_index" in str(schema)
         except ValueError as e:  # pragma: no cover
-            assert False, "Got an unknown version of habana_frameworks.torch: {}".format(e)
-        version = Version(hpex_version)
-        return version
+            return False
     else:
-        return None
+        return False
 
 
 ## check optimum
