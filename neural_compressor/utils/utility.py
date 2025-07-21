@@ -401,6 +401,7 @@ def get_tuning_history(history_path):
 
     class SafeUnpickler(pickle.Unpickler):
         def find_class(self, module, name):
+            print(f"Unpickling module:{module} name: {name}...")
             # Allowed built-in types
             allowed_builtins = {
                 "dict",
