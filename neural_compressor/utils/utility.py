@@ -419,7 +419,6 @@ def get_tuning_history(history_path):
                 "type",
                 "object",
                 "bytearray",
-                "bytes",
                 "ellipsis",
                 "filter",
                 "map",
