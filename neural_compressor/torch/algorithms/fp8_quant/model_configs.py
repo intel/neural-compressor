@@ -65,6 +65,9 @@ class ModuleConfig:
         self.outputs = outputs
         self.params = params if params is not None else {}
 
+    def __repr__(self):
+        return f"(inputs={self.inputs}, outputs={self.outputs}, params={self.params})"
+
 
 class ModuleExtraConfig:
     """
@@ -79,6 +82,9 @@ class ModuleExtraConfig:
         self.params = params if params is not None else {}
         self.scale = scale
         self.config_params = config_params if config_params is not None else {}
+
+    def __repr__(self):
+        return f"(inputs={self.inputs}, outputs={self.outputs}, params={self.params}, scale={self.scale}, config_params={self.config_params})"
 
 
 class ModuleType:

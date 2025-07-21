@@ -12,15 +12,14 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-import json
-import os
-
 import numpy as np
 import torch
 
 from abc import abstractmethod
 
-from .._quant_common.quant_config import MeasureExclude, QuantMode, ScaleMethod, get_hqt_config, set_hqt_config
+from .._quant_common.quant_config import MeasureExclude, QuantMode, get_hqt_config, set_hqt_config
+from .save_measure import gmod_list
+from .scale_methods.scale_method_config import ScaleMethodString
 from ..utils.logger import logger
 from .common import load_file, save_file, ShapeList
 from .patching_common import generate_model_info, mod_default_dict, mod_types, parent_child_mod_dict
@@ -32,10 +31,9 @@ from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
     IMOD_DICT,
 )
 from neural_compressor.torch.algorithms.fp8_quant._core.common import dequant_original_fp8_weight_if_needed
+
+
 cur_accelerator = auto_detect_accelerator()
-
-
-gmod_list = []
 
 
 def patch_module_measure(mod, mconfig, mod_dict):
@@ -114,6 +112,12 @@ def prepare_model(model, mod_list=None):
     generate_model_info(model)
     register_patched_measure_modules(model, mod_list, observer_class, d_shapes)
 
+def setup_calibration_counter(model, config):
+    # used for automatically dumping measurements
+    calibration_sample_interval = int(config["calibration_sample_interval"])
+    if calibration_sample_interval > 0:
+        from .save_measure import add_calibration_samples_counter
+        add_calibration_samples_counter(model, calibration_sample_interval)
 
 def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=None):
     """Replace the submodules of the model that appear in mod_list with a patched submodule that uses the given observer_class
@@ -128,6 +132,7 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
     """
     top_level_config = get_hqt_config(model)
     config = top_level_config.cfg
+    setup_calibration_counter(model, config)
     skip_outputs_measurements = config["measure_exclude"] & (MeasureExclude.OUTPUT | MeasureExclude.ALL)
     patched_types = set()
     non_patched_types = set()
@@ -186,94 +191,6 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
     cur_accelerator.synchronize()
 
 
-def is_measure_done(mod_extra_config):
-    # check if measurements were collected by observer
-    for obs in ([] if mod_extra_config.inputs is None else mod_extra_config.inputs) + (
-        [] if mod_extra_config.outputs is None else mod_extra_config.outputs
-    ):
-        if obs.is_used():
-            return True
-    return False
-
-
-def get_mod_extra_config_dict(model):
-    mcd = {}
-    for name, mod in model.named_modules():
-        if hasattr(mod, "_mod_extra_config") and mod._mod_extra_config:
-            if is_measure_done(mod._mod_extra_config):
-                name = name.replace("_orig_mod.", "")  # remove _orig_mod part added by dynamo mechanism
-                mcd[name] = mod._mod_extra_config
-            else:
-                logger.debug(
-                    "Layer '%s' has no measurements therefore it can't be quantized during quantization.",
-                    name,
-                )
-    return mcd
-
-
-def measure_control_to_state_dict(mcd):
-    sd = {}
-    sdl = {}
-    for mname in mcd:
-        sd[mname] = dict()
-        sdl[mname] = dict()
-        sd[mname]["inputs"] = [
-            mcd[mname].inputs[i].state.detach().cpu().float().numpy()
-            for i in range(len(mcd[mname].inputs))
-            if mcd[mname].inputs[i].state is not None
-        ]
-        sdl[mname]["inputs"] = [
-            mcd[mname].inputs[i].state.detach().cpu().float().numpy().tolist()
-            for i in range(len(mcd[mname].inputs))
-            if mcd[mname].inputs[i].state is not None
-        ]
-        if mcd[mname].outputs:
-            sd[mname]["outputs"] = [
-                mcd[mname].outputs[i].state.detach().cpu().float().numpy()
-                for i in range(len(mcd[mname].outputs))
-                if mcd[mname].outputs[i].state is not None
-            ]
-            sdl[mname]["outputs"] = [
-                mcd[mname].outputs[i].state.detach().cpu().float().numpy().tolist()
-                for i in range(len(mcd[mname].outputs))
-                if mcd[mname].outputs[i].state is not None
-            ]
-        if len(mcd[mname].params) > 0:
-            sd[mname]["params"] = dict()
-            sdl[mname]["params"] = dict()
-            for param_name in mcd[mname].params:
-                if mcd[mname].params[param_name].state is not None:
-                    sd[mname]["params"][param_name] = mcd[mname].params[param_name].state.detach().cpu().float().numpy()
-                    sdl[mname]["params"][param_name] = (
-                        mcd[mname].params[param_name].state.detach().cpu().float().numpy().tolist()
-                    )
-    return sd, sdl
-
-
-def save_measurements(model, fname=None):
-    config = get_hqt_config(model).cfg
-    if config["mode"] in [QuantMode.MEASURE, QuantMode.SHAPE]:
-        if fname is None:
-            if ("measure_file" in config) and (config["measure_file"] is not None):
-                fname_base = config["measure_file"]
-                measure_type = "DynamicRange"
-            elif ("shape_file" in config) and (config["shape_file"] is not None) and (config["observer"] == "shape"):
-                fname_base = config["shape_file"]
-                measure_type = "Shape"
-            fname_np = fname_base + ".npz"
-            fname_list = fname_base + ".json"
-        else:
-            logger.warning("'fname' is not None - Measurements/Shapes will not be saved")
-            return
-        mcd = get_mod_extra_config_dict(model)
-        sd, sdl = measure_control_to_state_dict(mcd)
-
-        logger.info("Dumping measurements")
-        save_file(model, sd, np.ndarray, fname_np, measure_type)
-        save_file(model, sdl, list, fname_list, measure_type)
-        save_json(gmod_list, fname_base + "_mod_list.json")
-
-
 def load_measurements(model, fname):
     config = get_hqt_config(model).cfg
     source_fname = fname if fname is not None else config["measure_file"]
@@ -281,7 +198,7 @@ def load_measurements(model, fname):
     d = load_file(
         fname_np,
         np.ndarray,
-        fail_on_file_not_exist=(config["scale_method"] != ScaleMethod.UNIT_SCALE),
+        fail_on_file_not_exist=(config["scale_method"] != ScaleMethodString.UNIT_SCALE),
     )
     from collections import defaultdict
 

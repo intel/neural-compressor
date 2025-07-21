@@ -13,14 +13,38 @@
 # limitations under the License.
 
 import torch
+from enum import Enum
 from .common import ModuleConfig
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
+from neural_compressor.torch.utils import logger
+
 cur_accelerator = auto_detect_accelerator()
 
 descale_fcn = lambda x, scale: torch.mul(x, scale)
 scale_fcn = lambda x, scale: torch.div(x, scale)
 cast_fcn = lambda x, dtype: x.to(dtype=dtype)
 cast_to_fp8_fcn = lambda x, dtype, scale_inv=None: torch.ops.hpu.cast_to_fp8_v2(x, scale_inv, False, False, dtype)[0]
+def calculate_scale_maxabs(x, maxMode, **kwargs):
+    return torch.ops.hpu.calculate_scale_for_cast(
+        x, maxMode.value, ScaleCalculationRoundingMode.NO_SCALE_ROUNDING.value, **kwargs
+    )
+
+
+def calculate_scale_rounding(x, scaleMode, **kwargs):
+    return torch.ops.hpu.calculate_scale_for_cast(
+        x, ScaleCalculationMaxMode.NO_MAX_CALCULATION.value, scaleMode.value, **kwargs
+    )
+
+
+class ScaleCalculationMaxMode(Enum):
+    NO_MAX_CALCULATION = 0
+    MAX_ABS_PTS_CALCULATION = 1
+    MAX_ABS_PCS_CALCULATION = 2
+
+
+class ScaleCalculationRoundingMode(Enum):
+    NO_SCALE_ROUNDING = 0
+    SCALE_TO_POW2_ROUNDING = 1
 
 GAUDI2 = INCAcceleratorType.GAUDI2
 GAUDI3 = INCAcceleratorType.GAUDI3
@@ -98,7 +122,10 @@ def get_fullscales_by_expbias_set(dtype, device, expbias_set):
     return [get_fullscale(dtype, device, exp_bias=eb) for eb in expbias_set]
 
 
-def get_fp8_hw_alligned_scales(dtype, device):
+def get_fp8_hw_alligned_scales_by_device(dtype, device):
+    if device not in [GAUDI2, GAUDI3]:
+        logger.warning("hw aligned scales not supported for device {}".format(device))
+        return None # only Gaudis support hw aligned scales
     exp_bias_set = EXP_BIAS_SETS.get((device, dtype), None)
     return (
         None
@@ -106,13 +133,16 @@ def get_fp8_hw_alligned_scales(dtype, device):
         else [x / get_fullscale(dtype, device) for x in get_fullscales_by_expbias_set(dtype, device, exp_bias_set)]
     )
 
+def get_fp8_hw_alligned_scales(dtype):
+    inc_device_type = auto_detect_accelerator().get_inc_accelerator_type()
+    return get_fp8_hw_alligned_scales_by_device(dtype, inc_device_type)
 
 DEVICES_SCALE_FACTORS = {
     INCAcceleratorType.GAUDI2: 4,
     INCAcceleratorType.GAUDI3: 1,
 }
 FP8_143_SCALES = {
-    device: get_fp8_hw_alligned_scales(torch.float8_e4m3fn, device) for device in DEVICES_SCALE_FACTORS.keys()
+    device: get_fp8_hw_alligned_scales_by_device(torch.float8_e4m3fn, device) for device in DEVICES_SCALE_FACTORS.keys()
 }
 FP8_143_SCALES_TRAITS = {
     device: (
@@ -128,6 +158,10 @@ def calc_maxabs_scale(xmaxabs, fullscale, backoff=1):
     return scale
 
 def mmse_scale_multi(x, ref_scale, scales, lp_dtype, hp_dtype):
+    if not scales:
+        raise ValueError(
+            "got empty scale list. it is possible that scale method isn't supported by current device."
+        )
     # TODO: SW-176672 move weights to hpu before the scale calculations
     x = x.to("hpu")
     Nch = x.shape[-1]
@@ -151,6 +185,10 @@ def mmse_scale_multi(x, ref_scale, scales, lp_dtype, hp_dtype):
 
 
 def mmse_scale(x, scales, lp_dtype, hp_dtype):
+    if not scales:
+        raise ValueError(
+            "got empty scale list. it is possible that scale method isn't supported by current device."
+        )
     # TODO: SW-176672 move weights to hpu before the scale calculations
     x = x.to("hpu")
     opt_err = torch.ones(1, dtype=hp_dtype, device=x.device) * torch.inf
@@ -169,6 +207,7 @@ def mmse_scale(x, scales, lp_dtype, hp_dtype):
 
 
 def manipulate_scales(scales, func):
+    """Applies a function to the inputs, outputs, and weights of the ModuleConfig object."""
     new_inputs = [func(input) for input in scales.inputs]
     new_outputs = [func(output) for output in scales.outputs]
     new_weights = {}
@@ -185,12 +224,18 @@ def manipulate_scales(scales, func):
 
 
 def invert_scale(x):
+    """Inverts the scale of the input tensor, list of tensors, or tuple of tensors."""
+    def invert(x):
+        if isinstance(x, torch.Tensor):
+            return torch.reciprocal(x)
+        return 1.0 / x
     if x is None:
         return None
     if isinstance(x, (list, tuple)):
-        return [1 / x_i for x_i in x]
-    return 1 / x
+        return type(x)(invert(x_i) for x_i in x)
+    return invert(x)
 
 
 def invert_scales(scales):
+    """Inverts the scales of the input ModuleConfig object."""
     return manipulate_scales(scales, invert_scale)

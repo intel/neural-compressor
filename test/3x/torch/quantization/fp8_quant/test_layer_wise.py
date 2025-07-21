@@ -11,10 +11,10 @@ def test_two_step_layer_wise():
     # Workaround of [SW-208658]: torch.use_deterministic_algorithms(True) will break memory mapping
     tmp_memory_flag = torch.utils.deterministic.fill_uninitialized_memory
     torch.utils.deterministic.fill_uninitialized_memory = False
-    model_name = "facebook/opt-350m"
+    model_name = "facebook/opt-125m"
     config = AutoConfig.from_pretrained(model_name)
     # requires transformers >= 4.43.0, torch_dtype=config.torch_dtype
-    # facebook/opt-350m parameters on disk is in torch.float16 dtype
+    # facebook/opt-125m parameters on disk is in torch.float16 dtype
     cpu_mem0 = get_used_cpu_mem_MB()
     model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=config.torch_dtype, use_safetensors=True)
     cpu_mem1 = get_used_cpu_mem_MB()
@@ -31,7 +31,7 @@ def test_two_step_layer_wise():
         model(inputs.input_ids * 10)  # use x10 due to backoff creating a difference
     finalize_calibration(model)
 
-    # fp16 llama2-7b is converted to bf16 during quantization layer-by-layer.
+    # fp16 facebook/opt-125m is converted to bf16 during quantization layer-by-layer.
     cpu_mem0 = get_used_cpu_mem_MB()
     new_model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=config.torch_dtype, use_safetensors=True)
     cpu_mem2 = get_used_cpu_mem_MB()

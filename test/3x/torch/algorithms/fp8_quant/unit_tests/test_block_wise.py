@@ -16,8 +16,8 @@ torch.manual_seed(1)
 
 # Run real quantization, and compare
 def test_block_wise_measurement():
-    model_name = "facebook/opt-350m"
-    model_normal = AutoModelForCausalLM.from_pretrained(model_name)
+    model_name = "stas/tiny-random-llama-2"
+    model_normal = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=torch.bfloat16)
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     model_block_wise = copy.deepcopy(model_normal)
@@ -33,7 +33,7 @@ def test_block_wise_measurement():
     # for calibration
     with torch.no_grad():
         model_normal(inputs.input_ids * 10)  # use x10 due to backoff creating a difference
-        block_wise_calibration(model_block_wise, inputs.input_ids * 10)
+        block_wise_calibration(model_block_wise, data=inputs.input_ids * 10)
         cur_accelerator.synchronize()
         mem3 = get_used_hpu_mem_MB()
 

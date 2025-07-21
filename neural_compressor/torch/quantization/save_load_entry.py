@@ -26,7 +26,7 @@ from neural_compressor.torch.quantization.config import (
     RTNConfig,
     TEQConfig,
 )
-from neural_compressor.torch.utils import SaveLoadFormat, get_enum_from_format
+from neural_compressor.torch.utils import SaveLoadFormat, get_enum_from_format, read_json_file
 
 config_name_mapping = {
     FP8_QUANT: FP8Config,
@@ -112,6 +112,8 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
         from neural_compressor.common.base_config import ConfigRegistry
 
         qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), "qconfig.json")
+        if not os.path.exists(qconfig_file_path):
+            raise ValueError("qconfig.json file is necessary for the default format.")
         with open(qconfig_file_path, "r") as f:
             per_op_qconfig = json.load(f)
 
@@ -140,15 +142,37 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
     elif format == SaveLoadFormat.HUGGINGFACE:
         import transformers
 
-        config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
+        try:
+            config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
+            quantization_config = config.quantization_config
+        except:
+            quantization_config_file = "quantization_config.json"
+            # for Flux pipeline
+            if os.path.exists(model_name_or_path):
+                # If the model_name_or_path is a local path, try to load the config from there
+                quantization_config_path = os.path.join(model_name_or_path, quantization_config_file)
+            else:
+                # If the model_name_or_path is a Hugging Face model ID, try to download the config
+                from huggingface_hub import hf_hub_download
+
+                quantization_config_path = hf_hub_download(
+                    repo_id=model_name_or_path,
+                    filename=quantization_config_file,
+                    revision=kwargs.get("revision", "main"),
+                )
+            quantization_config = read_json_file(quantization_config_path)
+            kwargs["quantization_config"] = quantization_config
+
+        if original_model is not None:
+            kwargs["original_model"] = original_model
         # use config to check which algorithm is used.
         if (
-            "fp8_config" in config.quantization_config
+            "fp8_config" in quantization_config
             or
             # for FP8 LLMs for vLLM (https://huggingface.co/neuralmagic).
             (
-                "quant_method" in config.quantization_config
-                and config.quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
+                "quant_method" in quantization_config
+                and quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
             )
         ):
             from neural_compressor.torch.algorithms import fp8_quant
@@ -160,4 +184,4 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             qmodel = weight_only.load(model_name_or_path, format=SaveLoadFormat.HUGGINGFACE, device=device, **kwargs)
             return qmodel.to(device)
     else:
-        assert False, "This code path should never be reached."
+        assert False, "Unexpected format: {} occurred during model loading".format(format)

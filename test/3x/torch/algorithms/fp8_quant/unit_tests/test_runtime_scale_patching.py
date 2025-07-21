@@ -6,12 +6,13 @@ import copy
 import habana_frameworks.torch.core as htcore
 import habana_frameworks.torch.utils.experimental as htexp
 
-from ..tester import RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST, SCALE_METHODS_KEY_ERROR, run_with_raised_exception
+from ..tester import RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST, run_with_raised_exception
 from neural_compressor.torch.algorithms.fp8_quant._core.common import is_runtime_scale_patching
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethodString
 from neural_compressor.torch.quantization import FP8Config, convert, prepare, finalize_calibration
 
 os.environ["PT_HPU_WEIGHT_SHARING"] = "0"
+htcore.hpu_inference_set_env()
 
 
 class TinyBlock(torch.nn.Module):
@@ -49,12 +50,10 @@ def temp_directory():
 
 
 @pytest.mark.skipif(not hasattr(htexp, "_set_scale_attributes"), reason="scale attributes not supported")
-@pytest.mark.parametrize("scale_method", ScaleMethod)
+@pytest.mark.parametrize("scale_method", ScaleMethodString)
 @pytest.mark.parametrize("scale_format", ["SCALAR", "CONST"])
 @pytest.mark.parametrize("dynamic_scale_patching", [True, False])
 def test_no_assert(scale_method, scale_format,dynamic_scale_patching, temp_directory):
-    if scale_method in SCALE_METHODS_KEY_ERROR:
-        pytest.xfail("KeyError")
     model = TinyModel()
     model.eval()
     model = model.to("hpu").to(torch.bfloat16)
@@ -90,6 +89,8 @@ def test_no_assert(scale_method, scale_format,dynamic_scale_patching, temp_direc
     model(input)
     finalize_calibration(model)
 
+    if scale_method == ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
+        return run_with_raised_exception(run_convert, ValueError, "Unsupported config: scale_method")
     if dynamic_scale_patching:
         os.environ["RUNTIME_SCALE_PATCHING"] = "1"
         if not scale_method in RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST:

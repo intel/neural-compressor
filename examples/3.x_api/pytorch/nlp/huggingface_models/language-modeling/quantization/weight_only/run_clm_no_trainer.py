@@ -57,6 +57,8 @@ parser.add_argument("--tasks", default="lambada_openai,hellaswag,winogrande,piqa
                     help="Tasks for accuracy validation.")
 parser.add_argument("--peft_model_id", type=str, default=None,
                     help="Model name or path of peft model")
+parser.add_argument("--use_mmap", action="store_true",
+                    help="Enable memory mapping to load model in shared host memory.")
 
 # ============WeightOnly configs===============
 parser.add_argument("--woq_algo", default="RTN",
@@ -101,6 +103,12 @@ parser.add_argument('--gptq_max_seq_length', type=int, default=2048,
 parser.add_argument("--gptq_blockwise", action="store_true",
                     help="Whether to quantize blockwise.")
 parser.add_argument("--blockwise_load_folder", default=None, type=str, help="Directory to load blockwise checkpoints from.")
+parser.add_argument("--fp8_aware", action="store_true", help="Enable an FP8-aware GPTQ quantization flow, "
+                                                             "where an intermediate FP8 quantization step is applied.")
+parser.add_argument("--hybrid_act_order", action="store_true", help="Enable Group Aware activation Reordering (GAR): "
+                                                                    "elements can be reordered within each group "
+                                                                    "and the groups themselves can also be reordered, "
+                                                                    "but elements cannot move between groups.")
 
 # =============AWQ configs====================
 parser.add_argument("--use_auto_scale", action="store_true",
@@ -292,7 +300,11 @@ def get_user_model(empty_model=False):
         )
     else:
         from neural_compressor.torch.algorithms.layer_wise import load_first_layer_only
-        config = AutoConfig.from_pretrained(args.model)
+        config = AutoConfig.from_pretrained(
+            args.model,
+            trust_remote_code=args.trust_remote_code,
+            revision=args.revision,
+        )
         
         if empty_model or args.gptq_blockwise:
             from accelerate import init_empty_weights
@@ -308,6 +320,7 @@ def get_user_model(empty_model=False):
                 torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
                 trust_remote_code=args.trust_remote_code,
                 revision=args.revision,
+                torch_dtype=config.torch_dtype if args.use_mmap else torch.float32
             )
     tokenizer = AutoTokenizer.from_pretrained(args.model) 
     user_model = user_model.float()
@@ -459,6 +472,8 @@ if args.quantize:
                 use_mse_search=args.woq_use_mse_search,
                 percdamp=args.gptq_percdamp,
                 act_order=args.gptq_actorder,
+                hybrid_order = args.hybrid_act_order,
+                fp8_aware = args.fp8_aware,
                 block_size=args.gptq_block_size,
                 static_groups=args.gptq_static_groups,
                 use_double_quant=False,
