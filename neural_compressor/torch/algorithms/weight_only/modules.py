@@ -25,7 +25,13 @@ import torch
 from torch.autograd import Function
 from torch.nn import functional as F
 
-from neural_compressor.torch.utils import accelerator, can_pack_with_numba, logger
+from neural_compressor.torch.utils import (
+    Version,
+    accelerator,
+    can_pack_with_numba,
+    get_hpex_version,
+    logger,
+)
 
 from .utility import quant_tensor
 
@@ -68,9 +74,11 @@ class QDQLayer(torch.nn.Module):
 class UnpackedWeightOnlyLinearParams(dict):
     """Contains all unpacked weight values."""
 
-    def __init__(self, unpack_weight, scales, unpack_zp, **kwargs):
+    def __init__(self, unpack_weight, scales, scale_bf16_to_fp8, unpack_zp, **kwargs):
         """Create dict."""
-        super().__init__(int_weight=unpack_weight, scales=scales, zp=unpack_zp, **kwargs)
+        super().__init__(
+            int_weight=unpack_weight, scales=scales, scale_bf16_to_fp8=scale_bf16_to_fp8, zp=unpack_zp, **kwargs
+        )
 
     def to(self, device):
         """Change device for all values."""
@@ -225,6 +233,14 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         assert compression_dim in [0, 1], (
             "Only support 0 or 1 as compression dimension, " + "0 is output channel, 1 is input channel."
         )
+        self.register_buffer(
+            "scale_bf16_to_fp8",
+            torch.zeros(
+                1,
+                dtype=torch.bfloat16,
+            ).to(device),
+        )
+        # scale_bf16_to_fp8 is only used in w4a8 measurement mode and currently supports only per-tensor scaling
         if self.use_optimum_format:
             self.float_type = torch.float16
             self.compression_dtype = torch.int32
@@ -302,7 +318,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             self.g_idx = None
         self.post_init()
 
-    def pack(self, int_weight, scales, zp, bias=None, g_idx=None, **kwargs):
+    def pack(self, int_weight, scales, zp, bias, scale_bf16_to_fp8=None, g_idx=None, **kwargs):
         """Pack int weight."""
         if self.use_optimum_format:
             self.scales = self.scales.T.contiguous()
@@ -328,6 +344,8 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 self.g_idx = self.g_idx.type(torch.int32).to(self.device)
         assert scales.shape == self.scales.shape, f"{scales.shape} != {self.scales.shape} Scale shape is mismatched."
         self.scales = scales.type(self.float_type).to(self.device)
+        if scale_bf16_to_fp8 is not None:
+            self.scale_bf16_to_fp8 = scale_bf16_to_fp8.type(self.float_type).to(self.device)
         if not self.use_optimum_format and self.compression_dim == 0:
             int_weight = int_weight.T.contiguous()
             self.qweight = self.qweight.T.contiguous()
@@ -359,14 +377,10 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
     def unpack(self):
         """Unpack weight and zero point."""
         scales = self.scales.T.contiguous() if self.use_optimum_format else self.scales
+        scale_bf16_to_fp8 = self.scale_bf16_to_fp8
         qweight = self.qweight.T.contiguous() if self.use_optimum_format else self.qweight
 
         device = scales.device
-        if self.g_idx is None:
-            # used for recovering fp32_weight
-            self.g_idx = torch.tensor([i // self.group_size for i in range(self.in_features)], dtype=torch.int32).to(
-                device
-            )
         # unpack weight
         if not self.use_optimum_format and self.compression_dim == 0:
             qweight = qweight.T.contiguous()
@@ -394,7 +408,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
                 # zp -= 1 may cause zp == -1, after recover it becomes 2**self.bits - 1
                 zp += 1
                 zp = torch.where(zp > (2**self.bits - 1), 0, zp)
-        return UnpackedWeightOnlyLinearParams(weight, scales, zp, g_idx=self.g_idx, bias=self.bias)
+        return UnpackedWeightOnlyLinearParams(weight, scales, scale_bf16_to_fp8, zp, g_idx=self.g_idx, bias=self.bias)
 
     def recover(self):
         """Recover fp32 weight from packed weight."""
@@ -402,6 +416,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         unpack_params_dict = self.unpack()
         weight = unpack_params_dict.get("int_weight")
         scales = unpack_params_dict.get("scales")
+        scale_bf16_to_fp8 = unpack_params_dict.get("scale_bf16_to_fp8")
         zp = unpack_params_dict.get("zp")
 
         device = scales.device
@@ -409,6 +424,11 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         fp32_weight = torch.zeros(self.out_features, self.in_features, dtype=self.float_type).to(device)
 
         # recover fp32 weight
+        if self.g_idx is None:
+            # used for recovering fp32_weight
+            self.g_idx = torch.tensor([i // self.group_size for i in range(self.in_features)], dtype=torch.int32).to(
+                device
+            )
         if zp is not None:
             # recover fp32 weight with int_weight, scale, and zero_point
             for idx in range(self.in_features):
@@ -697,7 +717,13 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
                 dtype=self.float_type,
             ),
         )
-
+        self.register_buffer(
+            "scale_bf16_to_fp8",
+            torch.zeros(
+                1,
+                dtype=self.float_type,
+            ),
+        )
         if g_idx:
             self.register_buffer(
                 "g_idx",
@@ -705,6 +731,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             )
         else:
             self.g_idx = None
+        self.support_g_idx = True if get_hpex_version() >= Version("1.23.0") else False
 
         self.half_indim = self.in_features // 2
 
@@ -719,7 +746,12 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         scales = self.scales
         qweight = self.qweight
         zeros = self.qzeros
-        weight = torch.ops.hpu.convert_from_uint4(qweight, scales, zeros, input_dtype)
+        g_idx = self.g_idx
+        if self.support_g_idx:
+            weight = torch.ops.hpu.convert_from_uint4(qweight, scales, zeros, input_dtype, g_idx)
+        else:
+            # The released docker 1.22.0 only supports 4 arguments
+            weight = torch.ops.hpu.convert_from_uint4(qweight, scales, zeros, input_dtype)
         output = self.matmul_internal(input, weight)
         output = output.to(dtype=input_dtype).reshape(
             output_shape
@@ -727,7 +759,21 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         output = output + self.bias if self.bias is not None else output
         return output
 
-    def pack(self, int_weight, scales, zp, bias=None, g_idx=None):
+    # [SW-234528]: This is a temporary workaround; remove it when find a better solution.
+    @staticmethod
+    def is_g_idx_ordered(g_idx: torch.Tensor, group_size: int) -> bool:
+        """Check if g_idx is ordered according to group_size."""
+        if group_size == -1:
+            return True
+        if g_idx.numel() % group_size != 0:
+            raise ValueError("The length of g_idx must be divisible by group_size.")
+
+        for i in range(0, g_idx.numel(), group_size):
+            if len(torch.unique(g_idx[i : i + group_size])) != 1:
+                return False
+        return True
+
+    def pack(self, int_weight, scales, zp, scale_bf16_to_fp8=None, bias=None, g_idx=None):
         """Pack weight and zero point."""
         logger.debug("Packing for HPU")
 
@@ -736,6 +782,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
         qweight = int_weight.T.contiguous()
 
         self.scales = scales.to(dtype=torch.bfloat16)
+        self.scale_bf16_to_fp8 = scale_bf16_to_fp8.to(dtype=torch.bfloat16)
 
         # weights and zp are on device from unpack, need to load to cpu for packing
         self.qweight = qweight.cpu()
@@ -748,6 +795,9 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
 
         if bias is not None:
             self.bias = bias.to("hpu").to(torch.bfloat16)
+
+        if g_idx is not None:
+            self.g_idx = g_idx.to("hpu").to(torch.int32)
 
     def unpack(self):
         """Unpack weight and zero point."""

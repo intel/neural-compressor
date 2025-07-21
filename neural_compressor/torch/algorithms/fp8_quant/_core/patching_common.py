@@ -61,6 +61,7 @@ _mod_types = {
     "softmax": ModuleType(1, [], 1, True),
     "fused_sdpa": ModuleType(3, [], 2, True),
     "dynamic_moe": ModuleType(1, [], 1 + 8, True),
+    "embedding": ModuleType(1, ["weight"], 1, False),
 }
 
 
@@ -83,7 +84,8 @@ _mod_default_dict = {
     "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul),
     "MoeFP8Matmul": ModuleInfo("linear", PatchedMoeFP8Matmul),
     "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
-    "FusedMoE": ModuleInfo("linear", PatchedMixtralMoE, False),
+    # Note: `no_quantize_op` indicates that this module is patched but does not require measurement or quantization.
+    "FusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False),
     "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
     "VllmMixtureOfExpertsOp": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOp),
     "VllmMixtureOfExpertsOpFP8": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8),
@@ -125,6 +127,22 @@ def _import_xpu_modules():
                                         "Matmul": ModuleInfo("matmul", PatchedMatmul),})
     PATCHED_MODULE_TYPES_TABLE["xpu"].update({"linear": _mod_types["linear"]})
 
+
+@functools.lru_cache(maxsize=None)
+def _import_cpu_modules():
+    from neural_compressor.torch.algorithms.fp8_quant.patched_module_base import (
+        PATCHED_MODULE_TABLE, PATCHED_MODULE_TYPES_TABLE
+    )
+    cur_accelerator = auto_detect_accelerator()
+    if not cur_accelerator.current_device_name().startswith("cpu"):
+        return
+    PATCHED_MODULE_TABLE["cpu"].update({"Linear": ModuleInfo("linear", PatchedLinear),
+                                        "Conv2d": ModuleInfo("linear", PatchedConv2d),
+                                        "EmbeddingBag": ModuleInfo("embedding", PatchedEmbeddingBag),
+                                        })
+    PATCHED_MODULE_TYPES_TABLE["cpu"].update({"linear": _mod_types["linear"], "embedding": _mod_types["embedding"]})
+
+
 @functools.lru_cache(maxsize=None)
 def _import_device_modules():
     cur_accelerator_type = auto_detect_accelerator().get_inc_accelerator_type()
@@ -132,6 +150,8 @@ def _import_device_modules():
         _import_hpu_modules()
     elif cur_accelerator_type == INCAcceleratorType.XPU:
         _import_xpu_modules()
+    elif cur_accelerator_type == INCAcceleratorType.CPU:
+        _import_cpu_modules()
     else:
         logger.warning("No HPU or XPU devices were detected. No Patched Modules available.")
 

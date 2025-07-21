@@ -36,6 +36,7 @@ from neural_compressor.torch.utils import (
     SaveLoadFormat,
     get_enum_from_format,
     UNIT_MAPPING,
+    write_json_file,
 )
 
 
@@ -60,7 +61,6 @@ tp_module_list = (
 
 
 ##################################### save ##################################
-
 def remove_rank_suffix(name, local_rank, world_size):
     """Remove rank suffix from key name."""
     return name.removesuffix(f"_{local_rank}_{world_size}")
@@ -291,54 +291,6 @@ def convert_config_to_vllm_compatible(config):
     }
     return quantization_config
 
-def gather_and_save_model(tp_model, original_model, world_size, max_shard_size, output_dir):
-    """
-    Merge the weights of a DeepSpeed Tensor Parallel model into the original model
-    and save them as sharded safetensors files.
-
-    Args:
-        tp_model: DeepSpeed tensor parallel model.
-        original_model: The original unsharded model.
-        world_size: The model parallelism size.
-        max_shard_size: The maximum size of each shard in bytes.
-        output_dir: The directory to save the files.
-    """
-    import deepspeed
-    merged_state_dict = {}
-
-    for name, tp_param in tp_model.named_parameters():
-        if "scale" not in name:
-            param = original_model.state_dict()[name].t()
-            if len(param.shape) != 0 and tp_param.shape != param.shape:
-                # Perform all-gather to merge tensor parallel parameters
-                tensor_list = [torch.zeros_like(tp_param) for _ in range(world_size)]
-                deepspeed.comm.all_gather(tensor_list, tp_param)
-                if local_rank == 0:
-                    if tp_param.shape[0] != param.shape[0]:
-                        merged_param = torch.cat(tensor_list, dim=0)
-                    elif tp_param.shape[1] != param.shape[1]:
-                        merged_param = torch.cat(tensor_list, dim=1)
-                    logger.info(f"[Rank {local_rank}] Merging parameter: {name}")
-            else:
-                if local_rank == 0:
-                    # No merging needed if shapes match
-                    merged_param = tp_param
-                    logger.info(f"[Rank {local_rank}] No merging needed for parameter: {name}")
-        else:
-            deepspeed.comm.all_reduce(tp_param, op=deepspeed.comm.ReduceOp.MAX)
-            if local_rank == 0:
-                merged_param = tp_param
-                logger.info(f"[Rank {local_rank}] No merging needed for parameter: {name}")
-        # Update the merged state dict
-        if local_rank == 0:
-            merged_state_dict[name] = merged_param
-
-    # Save the merged state dict as sharded safetensors files (only on rank 0)
-    if local_rank == 0:
-        logger.info(f"[Rank {local_rank}] Saving model shards to {output_dir}...")
-        merged_state_dict = convert_weight_to_vllm_compatible(state_dict=merged_state_dict)
-        save_state_dict_sharded_safetensors(merged_state_dict, output_dir, f"{MAX_FILE_SIZE}GB")
-
 
 def check_config_for_vllm_compatible(config):
     """
@@ -362,37 +314,30 @@ def save_for_multi_devices(model, checkpoint_dir="saved_results", format="huggin
         format (str, optional): defaults to 'huggingface'.
     """
     from safetensors.torch import save_file as safe_save_file
-    if format == SaveLoadFormat.VLLM:
-        import transformers
-        from accelerate import init_empty_weights
-        with init_empty_weights(include_buffers=False):
-            reference_model = transformers.AutoModelForCausalLM.from_config(model.config)
-        gather_and_save_model(
-            model, reference_model, world_size=world_size, max_shard_size=f"{MAX_FILE_SIZE}GB", output_dir=checkpoint_dir
+    folder_prefix = os.path.join(options.workspace, checkpoint_dir)
+    save_rank_model(model, folder_prefix=folder_prefix, **kwargs)
+    # Ensure all ranks have saved their model before proceeding
+    if torch.distributed.is_initialized():
+        torch.distributed.barrier()
+    rank_directory = add_rank_suffix(folder_prefix, 0, world_size)
+    files_list = find_safetensors_files(rank_directory)
+    # use rank:0 process to gather checkpoint files
+    if local_rank == 0:
+        tp_mod_list = find_tp_mod_list(model)
+        os.makedirs(checkpoint_dir, exist_ok=True)
+        # get the safetensors file list from one folder
+        # based on the safetensors file name to collect tensors from shard folders
+        for file_name in files_list:
+            gathered_state_dict = gather_state_dict(
+                folder_prefix=folder_prefix, file_name=file_name, tp_mod_list=tp_mod_list
             )
-    else:
-        folder_prefix = os.path.join(options.workspace, checkpoint_dir)
-        save_rank_model(model, folder_prefix=folder_prefix, **kwargs)
-        # Ensure all ranks have saved their model before proceeding
-        if torch.distributed.is_initialized():
-            torch.distributed.barrier()
-        rank_directory = add_rank_suffix(folder_prefix, 0, world_size)
-        files_list = find_safetensors_files(rank_directory)
-        # use rank:0 process to gather checkpoint files
-        if local_rank == 0:
-            tp_mod_list = find_tp_mod_list(model)
-            os.makedirs(checkpoint_dir, exist_ok=True)
-            # get the safetensors file list from one folder
-            # based on the safetensors file name to collect tensors from shard folders
-            for file_name in files_list:
-                gathered_state_dict = gather_state_dict(
-                    folder_prefix=folder_prefix, file_name=file_name, tp_mod_list=tp_mod_list
-                )
-                safe_save_file(gathered_state_dict, os.path.join(checkpoint_dir, file_name), metadata={"format": "pt"})
-                clean_rank_files(folder_prefix=folder_prefix, file_name=file_name)
-        if torch.distributed.is_initialized():
-            torch.distributed.barrier()
-        clean_rank_files(folder_prefix=folder_prefix)
+            if format == SaveLoadFormat.VLLM:
+                gathered_state_dict = update_to_vllm_compatible(model, gathered_state_dict)
+            safe_save_file(gathered_state_dict, os.path.join(checkpoint_dir, file_name), metadata={"format": "pt"})
+            clean_rank_files(folder_prefix=folder_prefix, file_name=file_name)
+    if torch.distributed.is_initialized():
+        torch.distributed.barrier()
+    clean_rank_files(folder_prefix=folder_prefix)
 
 
 def save_for_single_device(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
@@ -446,8 +391,13 @@ def save(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
         # Ensure those codes run on a single rank.
         configs_mapping = model.qconfig
         config_object = configs_mapping[next(iter(configs_mapping))]
-        update_model_config(model, format, config_object)
-        model.config.save_pretrained(checkpoint_dir)
+        config_object.mode = "LOAD"
+        config_object.world_size = world_size  # record world_size for loading
+        # Flux pipeline has FrozenDict as config
+        if not isinstance(model.config, dict):
+            update_model_config(model, format, config_object)
+            model.config.save_pretrained(checkpoint_dir)
+        write_json_file(os.path.join(checkpoint_dir, "quantization_config.json"), config_object.to_dict())
 
         if hasattr(model, "generation_config") and model.generation_config is not None:
             model.generation_config.save_pretrained(checkpoint_dir)
@@ -461,16 +411,31 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
     """Initialize BF16 model with meta tensor."""
     import transformers
     from accelerate import init_empty_weights
-    config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
+
+    # Handling model objects not in AutoModelForCausalLM
+    model = kwargs.get("original_model", None)
+    # Handle Flux pipeline without AutoConfig
+    try:
+        config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
+        quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
+        hp_dtype = config.torch_dtype
+    except:
+        config, hp_dtype = model.config, torch.bfloat16
+        quantization_config = kwargs.get("quantization_config", None)
+        setattr(model.config, "quantization_config", quantization_config)
+
+    if quantization_config is not None and "hp_dtype" in quantization_config:
+        hp_dtype = HpDtype[quantization_config["hp_dtype"].upper()].value
+
     # fp8 model provided by neuralmagic.
     if (
-        "quant_method" in config.quantization_config
-        and config.quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
+        "quant_method" in quantization_config
+        and quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
     ):
         from_neuralmagic = True
         if (
-            "kv_cache_scheme" in config.quantization_config
-            and config.quantization_config["kv_cache_scheme"] is not None
+            "kv_cache_scheme" in quantization_config
+            and quantization_config["kv_cache_scheme"] is not None
         ):
             from_neuralmagic_with_kv = True
         else:
@@ -487,16 +452,13 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
         else:
             raise ValueError("Please install optimum-habana to load fp8 kv cache model.")
 
-    from neural_compressor.torch.utils import get_non_persistent_buffers, load_non_persistent_buffers
-
-    hp_dtype = config.torch_dtype
-    if hasattr(config, "quantization_config") and "hp_dtype" in config.quantization_config:
-        hp_dtype = HpDtype[config.quantization_config["hp_dtype"].upper()].value
-    if world_size > 1:
-        import deepspeed
-
+    if model is None:
         with init_empty_weights(include_buffers=False):
             model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=hp_dtype)
+    if world_size > 1:
+        import deepspeed
+        from neural_compressor.torch.utils import get_non_persistent_buffers, load_non_persistent_buffers
+
         # TODO: [SW-199728] [DeepSpeed] Buffers initialized by model are not correct after tensor parallel
         # get_non_persistent_buffers and load_non_persistent_buffers are workarounds of [SW-199728]
         non_persistent_buffers = get_non_persistent_buffers(model)
@@ -507,9 +469,6 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
         model = deepspeed.init_inference(model, **ds_inference_kwargs)
         model = model.module
         load_non_persistent_buffers(model, non_persistent_buffers)
-    else:
-        with init_empty_weights(include_buffers=False):
-            model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=hp_dtype)
     model.to(hp_dtype)
 
     try:
@@ -558,6 +517,9 @@ def shard_state_dict(state_dict, return_all_rank=False, src_world_size=None):
     def get_rank_state_dict(state_dict, local_rank, world_size):
         rank_state_dict = {}
         for k, v in state_dict.items():
+            if k.endswith(f"_{world_size}") and not k.endswith(f"_{local_rank}_{world_size}"):
+                # only collect current rank state_dict and common state_dict (e.g., embedding)
+                continue
             new_k = remove_rank_suffix(k, local_rank, world_size)
             rank_state_dict[new_k] = v
         return rank_state_dict
@@ -621,7 +583,11 @@ def get_inc_fp8config(model, from_neuralmagic=False, from_neuralmagic_with_kv=Fa
                 allowlist = {"types": ["Linear", "LinearLayer", "LinearAllreduce"], "names": []}
         qconfig = FP8Config(mode="LOAD", allowlist=allowlist, blocklist=blocklist, scale_format="CONST")
     else:
-        qconfig = FP8Config.from_dict(model.config.quantization_config)
+        if hasattr(model, "qconfig") and model.qconfig is not None:
+            configs_mapping = model.qconfig
+            qconfig = configs_mapping[next(iter(configs_mapping))]
+        else:
+            qconfig = FP8Config.from_dict(model.config.quantization_config)
     return qconfig
 
 
@@ -641,7 +607,7 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
     global world_size
     world_size = kwargs.get("world_size", world_size)
     assert format == SaveLoadFormat.HUGGINGFACE, "Currently, only huggingface models are supported."
-    assert device == "hpu", "Currently, only hpu device is supported for FP8 model."
+    assert device in ["hpu", "cpu"], "Currently, only hpu & cpu device is supported for FP8 model."
 
     from safetensors.torch import load_file as safe_load_file
     from neural_compressor.torch.algorithms.fp8_quant import prep_model
@@ -678,13 +644,14 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
                         raise EnvironmentError(
                             f"Original world_size: {src_world_size} must be divisible by target world_size: {world_size}."
                         )
-                    rank_state_dict = get_new_rank_state_dict(rank_state_dict, world_size, model=model)
+                    rank_state_dict = get_new_rank_state_dict(rank_state_dict, model, world_size)
         else:
             rank_state_dict = gathered_state_dict
         model.load_state_dict(rank_state_dict, assign=True, strict=False)
         load_scale_params(model, rank_state_dict)  # ensure per-channel scale is loaded correctly
     clear_quantized_func_wrapper_factory()
-    model.tie_weights()
+    if hasattr(model, "tie_weights"):
+        model.tie_weights()
     model = model.to(cur_accelerator.name())
     model = model.eval()
     cur_accelerator.synchronize()
@@ -794,8 +761,6 @@ def update_model_config(model, format, config_object):
         quantization_config = convert_config_to_vllm_compatible(config_object)
         model.config.quantization_config = quantization_config
     else:
-        config_object.mode = "LOAD"
-        config_object.world_size = world_size  # record world_size for loading
         model.config.quantization_config = config_object
 
 
@@ -816,8 +781,16 @@ def load_scale_params(model, new_scale_params):
                 param.data = new_scale
 
 
-def get_new_rank_state_dict(all_rank_state_dict, world_size=world_size, local_rank=local_rank, model=None):
-    """Get new rank state_dict for world_size."""
+def get_new_rank_state_dict(all_rank_state_dict, model, world_size=world_size, local_rank=local_rank):
+    """Get new rank state_dict for world_size.
+
+    Args:
+        all_rank_state_dict (dict): {0: state_dict, 1: state_dict, ...} for all ranks.
+        model (torch.nn.Module): A quantized model with empty weights in load mode.
+        world_size (int, optional): Target world size. Defaults to world_size.
+        local_rank (int, optional): Current local rank. Defaults to local_rank.
+    """
+
     def dq_q_weight(weight, previous_scale, target_scale):
         """dequantize and quantize weight with different scales."""
         cast_to_op = get_quantized_func_wrapper(OP_TYPE.CAST_TO_FP8, ScaleFormat.CONST)
@@ -936,3 +909,34 @@ def get_new_rank_state_dict(all_rank_state_dict, world_size=world_size, local_ra
                     tp_dim = 0 if params_dict[k].shape[0] != new_rank_state_dict[k].shape[0] else 1
                     new_rank_state_dict[k] = torch.cat([new_rank_state_dict[k], v], dim=tp_dim)
     return new_rank_state_dict
+
+
+def update_to_vllm_compatible(model, gathered_state_dict):
+    """update gathered_state_dict to vllm compatible format.
+
+    Args:
+        model (model): the quantized model.
+        gathered_state_dict (dict): state_dict for all ranks.
+    Returns:
+        gathered_state_dict (dict): vllm compatible state_dict.
+    """
+    # for example, tp = 2, make
+    # 'model.layers.21.mlp.down_proj.weight_0_2', 'model.layers.21.mlp.down_proj.weight_1_2'
+    #  --> 'model.layers.21.mlp.down_proj.weight'
+    import transformers
+    from accelerate import init_empty_weights
+    from neural_compressor.torch.algorithms.fp8_quant import prep_model
+
+    with init_empty_weights(include_buffers=False):
+        reference_model = transformers.AutoModelForCausalLM.from_config(model.config)
+    # replace modules with patched modules
+    inc_config = get_inc_fp8config(model)
+    inc_config.mode = "LOAD"
+    inc_config.save_temp_json_file()
+    prep_model(reference_model, inc_config.json_file)
+    # gather weights into 1 rank
+    rank_state_dict = shard_state_dict(gathered_state_dict, return_all_rank=True, src_world_size=world_size)
+    rank_state_dict = get_new_rank_state_dict(rank_state_dict, reference_model, world_size=1)
+    # rename param names
+    gathered_state_dict = convert_weight_to_vllm_compatible(state_dict=rank_state_dict)
+    return gathered_state_dict

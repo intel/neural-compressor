@@ -198,6 +198,9 @@ class WOQModelLoader:
 
         if self._is_w4a8_model_from_auto_round():
             model = self._post_process_for_w4a8(model)
+        if self._is_w4a8_model_from_dpq(model):
+            model.dpq_quantized = True
+
         return model
 
     def load_inc_format_woq_model(self):
@@ -285,6 +288,13 @@ class WOQModelLoader:
             return True
         for layer_config in self.quantization_config.get("extra_config", {}).values():
             if layer_config.get("data_type", None) == "fp8_to_int_sym":
+                return True
+        return False
+
+    # check if the model was quantized using Dual Precision Quantization (DPQ)
+    def _is_w4a8_model_from_dpq(self, model):
+        for name, _ in model.named_buffers():
+            if "scale_bf16_to_fp8" in name:
                 return True
         return False
 
@@ -463,8 +473,8 @@ class WOQModelLoader:
         module_kwargs["bits"] = module_quantization_config.get("bits", 4)
         module_kwargs["group_size"] = module_quantization_config.get("group_size", 32)
 
-        # spceific initialization kwargs
-        module_kwargs["g_idx"] = True if name + ".g_idx" in self.loaded_state_dict_keys else False
+        # specific initialization kwargs
+        module_kwargs["g_idx"] = module_quantization_config.get("desc_act", False)
         module_kwargs["zp"] = True if name + ".qzeros" in self.loaded_state_dict_keys else False
         module_kwargs["use_optimum_format"] = True
         module_kwargs["bias"] = linear_module.bias is not None
@@ -485,11 +495,17 @@ class WOQModelLoader:
         # update mapped woqlinear module if needed
         new_module = self._update_mapped_woqlinear_modules(name, new_module, module_kwargs)
 
+        # [SW-234528]: if g_idx is not None, then check whether the g_idx is ordered
+        if isinstance(new_module, HPUWeightOnlyLinear) and new_module.g_idx is not None:
+            # if g_idx is ordered, then set g_idx to None
+            if new_module.is_g_idx_ordered(new_module.g_idx, new_module.group_size):
+                setattr(new_module, "g_idx", None)
+
         set_module(self.original_model, name, new_module)
 
     def _load_data_to_new_module(self, new_module, module_name):
         new_module_state_dict = {}
-        for key in [".qweight", ".scales", ".qzeros", ".bias", ".g_idx"]:
+        for key in [".qweight", ".scales", ".scale_bf16_to_fp8", ".qzeros", ".bias", ".g_idx"]:
             full_name = module_name + key
             if full_name in self.loaded_state_dict:
                 new_module_state_dict[key[1:]] = self.loaded_state_dict.pop(full_name)
@@ -535,9 +551,12 @@ class WOQModelLoader:
         # Autofactory
         kwargs_orig = copy.deepcopy(self.kwargs)
         trust_remote_code = self.kwargs.pop("trust_remote_code", None)
+        revision = self.kwargs.get("revision", "main")
         kwarg_attn_imp = self.kwargs.pop("attn_implementation", None)
 
-        config = AutoConfig.from_pretrained(self.model_name_or_path, trust_remote_code=trust_remote_code)
+        config = AutoConfig.from_pretrained(
+            self.model_name_or_path, trust_remote_code=trust_remote_code, revision=revision
+        )
         # quantization_config = config.quantization_config
 
         if kwarg_attn_imp is not None and config._attn_implementation != kwarg_attn_imp:  # pragma: no cover

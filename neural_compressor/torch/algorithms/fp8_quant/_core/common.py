@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2025 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -20,9 +20,11 @@ import numpy as np
 import torch
 from enum import Enum, auto
 from functools import lru_cache 
-from .._quant_common.quant_config import get_hqt_config
 from ..utils.logger import logger
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import ModuleConfig
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
+cur_device = auto_detect_accelerator().current_device_name()
 
 UNMEASURED_MODELS = "UnmeasuredModels"
 
@@ -75,7 +77,8 @@ def load_npz(fname):
     return d["arr_0"].item()
 
 
-def save_file(model, d, source_format, fname, mode):
+def save_file(model, d, source_format, fname, mode, num_samples=0):
+    from .._quant_common.quant_config import get_hqt_config
     config = get_hqt_config(model)
     logger.debug("Saving %s file: %s", mode, fname)
     ext = os.path.splitext(fname)[1]
@@ -87,6 +90,8 @@ def save_file(model, d, source_format, fname, mode):
         "Mode": mode,
         "Nodes": dc,
     }
+    if num_samples > 0:
+        df = { "NumSamples": num_samples, **df}
     try:
         file_functions[ext]['save'](df, fname)
     except:
@@ -159,7 +164,7 @@ def load_scales(fname, target_format):
     return d
 
 
-def convert_scales_to_tensors_dict(scales_obj, scales_file_format, hp_dtype, device="hpu"):
+def convert_scales_to_tensors_dict(scales_obj, scales_file_format, hp_dtype, device=cur_device):
     scales_temp = {k: scales_obj[k].__dict__ for k in scales_obj}
     scales_temp = format_functions_rec((scales_file_format, torch.Tensor))(scales_temp)
     scales_temp = rec_fn(scales_temp, lambda x: x.to(dtype=hp_dtype, device=device))
@@ -190,6 +195,7 @@ format_functions_rec = lambda k: functools.partial(rec_fn, fn=format_functions[k
 
 
 def get_device_type_for_scales(mod):
+    from .._quant_common.quant_config import get_hqt_config
     config = get_hqt_config(mod).cfg
     return config["device_for_scales"]
 
@@ -197,3 +203,13 @@ def get_device_type_for_scales(mod):
 @lru_cache
 def is_runtime_scale_patching():
     return os.getenv("RUNTIME_SCALE_PATCHING", "False").lower() in ["true", "1"]
+
+#TODO [SW-224612]: Use cguid to calc scales and remove the check
+@lru_cache
+def is_calc_scale_with_cguid():
+    return os.getenv("CALC_SCALE_WITH_CGUID", "True").lower() in ["true", "1"]
+
+#TODO [SW-224612]: Use cguid to calc scales and remove the check
+@lru_cache
+def is_calc_scale_rounding_with_cguid():
+    return is_calc_scale_with_cguid() and os.getenv("CALC_ROUNDING_WITH_CGUID", "False").lower() in ["true", "1"]

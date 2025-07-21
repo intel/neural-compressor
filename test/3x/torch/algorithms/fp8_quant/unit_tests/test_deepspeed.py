@@ -3,7 +3,7 @@ import typing
 import pytest
 import torch
 
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethod
+from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods.scale_method_config import ScaleMethodString
 
 from ..tester import TestVector, run_accuracy_test
 
@@ -81,6 +81,6 @@ def test_deepspeed_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype):
         module_class=TinyModel,
         test_vectors=get_test_vectors(dtype=hp_dtype),
         lp_dtype=lp_dtype,
-        scale_method=ScaleMethod.MAXABS_HW,
+        scale_method=ScaleMethodString.MAXABS_HW,
         module_kwargs={"dtype": hp_dtype, "mp_size": world_size},
     )
