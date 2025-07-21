@@ -396,7 +396,7 @@ def get_tuning_history(history_path):
     """Get tuning history.
 
     Args:
-        tuning_history_path: The tuning history path, which need users to assign
+        history_path: The tuning history path, which need users to assign
     """
 
     class SafeUnpickler(pickle.Unpickler):
@@ -435,7 +435,7 @@ def get_tuning_history(history_path):
                 return OrderedDict
 
             # Allow specific neural_compressor classes
-            if module.startswith("neural_compressor."):
+            if module.startswith("neural_compressor"):
                 # Validate class name exists in module
                 mod_path = module.replace(".__", " ")  # Handle submodules
                 for part in mod_path.split():
@@ -448,8 +448,7 @@ def get_tuning_history(history_path):
                     return getattr(mod, name)
 
             # Allow all numpy classes
-            if module.startswith("numpy."):
-                import numpy
+            if module.startswith("numpy"):
 
                 mod = sys.modules.get(module)
                 if mod and hasattr(mod, name):
