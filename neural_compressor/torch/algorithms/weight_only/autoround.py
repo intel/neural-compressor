@@ -34,7 +34,6 @@ def _is_auto_round_available():
 _is_auto_round_available()
 
 from auto_round import AutoRound, AutoRoundMLLM  # pylint: disable=E0401
-from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
 from auto_round.mllm import lmms_eval, mllm_eval
 from auto_round.mllm.template import Template, get_template
 
@@ -79,7 +78,7 @@ class AutoRoundQuantizer(Quantizer):
         act_dynamic: bool = True,
         act_data_type: Optional[str] = None,
         low_cpu_mem_usage: bool = False,
-        export_format: str = "itrex",
+        export_format: str = "auto_round:auto_gptq",
         # v0.4
         enable_norm_bias_tuning: bool = False,
         enable_torch_compile: bool = None,
@@ -151,6 +150,8 @@ class AutoRoundQuantizer(Quantizer):
             act_dynamic (bool): Whether to use dynamic activation quantization. Default is True.
             enable_norm_bias_tuning (bool): Whether to enable fast norm/layer_bias tuning.
             enable_torch_compile (bool): Whether to enable torch compile to optimize quant_block/layer, torch>=2.6 True.
+            export_format (str, optional): The format used for exporting the quantized model. Defaults to 
+                "auto_round:auto_gptq".
             quant_nontext_module (bool): Whether to quantize nontext module.
             is_mllm (bool): Indicates whether the model to be quantized is a multi-modal model (MLLM).
             extra_data_dir (str): The path for extra data such as images, audio or videos.
@@ -314,8 +315,6 @@ class AutoRoundQuantizer(Quantizer):
         model.autoround_config = weight_config
         if self.enable_w4afp8:
             return rounder.save_quantized(output_dir="temp_auto_round", inplace=True)
-        elif "itrex" in self.export_format:
-            model = pack_model(model, weight_config, device=self.device, inplace=True)
         else:  # pragma: no cover
             model = rounder.save_quantized(output_dir=None, format=self.export_format, device=self.device, inplace=True)
 

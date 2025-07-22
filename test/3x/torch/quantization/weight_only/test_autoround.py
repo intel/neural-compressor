@@ -52,7 +52,7 @@ torch.backends.__allow_nonbracketed_mutation_flag = True
 
 try:
     import auto_round
-    from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear
+    from auto_round_extension.torch.qlinear_torch_zp import QuantLinear
 
     auto_round_installed = True
 except ImportError:
@@ -112,9 +112,9 @@ class TestAutoRoundCPU:
         assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
         assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
-        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
+        assert isinstance(q_model.transformer.h[0].attn.k_proj, QuantLinear), "packing model failed."
         if quant_lm_head is True:
-            assert isinstance(q_model.lm_head, WeightOnlyLinear), "quantization for lm_head failed."
+            assert isinstance(q_model.lm_head, QuantLinear), "quantization for lm_head failed."
 
     def test_int4_dtype(self):
         fp32_model = copy.deepcopy(self.gptj)
@@ -131,7 +131,7 @@ class TestAutoRoundCPU:
         assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
         assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
-        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
+        assert isinstance(q_model.transformer.h[0].attn.k_proj, QuantLinear), "packing model failed."
 
     def test_autoround_with_quantize_API(self):
         gpt_j_model = copy.deepcopy(self.gptj)
@@ -150,12 +150,12 @@ class TestAutoRoundCPU:
         )
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
-        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
+        assert isinstance(q_model.transformer.h[0].attn.k_proj, QuantLinear), "packing model failed."
 
     def test_save_and_load(self):
         fp32_model = copy.deepcopy(self.gptj)
         # known issue: scale_dtype="fp32" will cause accuracy gap between quantized model
-        # (using auto-round WeightOnlyLinear) and reloaded model (using INCWeightOnlyLinear)
+        # (using auto-round QuantLinear) and reloaded model (using INCWeightOnlyLinear)
         quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp16")
         # quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -195,7 +195,7 @@ class TestAutoRoundCPU:
         q_model = convert(model)
         out2 = q_model(**encoded_input)[0]
         assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
-        assert isinstance(q_model.h[0].attn.c_attn, WeightOnlyLinear), "loading compressed model failed."
+        assert isinstance(q_model.h[0].attn.c_attn, QuantLinear), "loading compressed model failed."
 
     def test_utils(self):
         from neural_compressor.torch.utils.utility import (
@@ -220,7 +220,7 @@ class TestAutoRoundCPU:
         q_model = convert(model)
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
-        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
+        assert isinstance(q_model.transformer.h[0].attn.k_proj, QuantLinear), "packing model failed."
 
     def test_mllm(self):
         input = torch.randn(1, 32)
@@ -266,7 +266,7 @@ class TestAutoRoundCPU:
         model = prepare(model=model, quant_config=quant_config)
         run_fn(model, dataloader)
         q_model = convert(model)
-        assert isinstance(q_model.model.layers[0].mlp.up_proj, WeightOnlyLinear), "model quantization failed."
+        assert isinstance(q_model.model.layers[0].mlp.up_proj, QuantLinear), "model quantization failed."
 
     # def test_autoround_format_export(self):
     #     from neural_compressor.torch.quantization import load
@@ -379,9 +379,9 @@ class TestAutoRoundHPU:
         assert "model.layers.0.self_attn.k_proj" in q_model.autoround_config.keys()
         assert "scale_dtype" in q_model.autoround_config["model.layers.0.self_attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["model.layers.0.self_attn.k_proj"]["scale_dtype"]
-        assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
+        assert isinstance(q_model.model.layers[0].self_attn.k_proj, QuantLinear), "packing model failed."
         if quant_lm_head is True:
-            assert isinstance(q_model.lm_head, WeightOnlyLinear), "quantization for lm_head failed."
+            assert isinstance(q_model.lm_head, QuantLinear), "quantization for lm_head failed."
 
     def test_int4_dtype(self):
         fp32_model = copy.deepcopy(self.tiny_llama_model)
@@ -397,7 +397,7 @@ class TestAutoRoundHPU:
         assert "model.layers.0.self_attn.k_proj" in q_model.autoround_config.keys()
         assert "scale_dtype" in q_model.autoround_config["model.layers.0.self_attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["model.layers.0.self_attn.k_proj"]["scale_dtype"]
-        assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
+        assert isinstance(q_model.model.layers[0].self_attn.k_proj, QuantLinear), "packing model failed."
 
     def test_autoround_with_quantize_API(self):
         model = copy.deepcopy(self.tiny_llama_model)
@@ -414,4 +414,4 @@ class TestAutoRoundHPU:
             run_fn=run_fn,
             run_args=(self.dataloader,),
         )
-        assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
+        assert isinstance(q_model.model.layers[0].self_attn.k_proj, QuantLinear), "packing model failed."
