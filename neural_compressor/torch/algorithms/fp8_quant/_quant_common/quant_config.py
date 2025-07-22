@@ -25,15 +25,10 @@ import torch
 
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
 from ..utils.logger import logger
+from ..prepare_quant.prepare_model import get_world_size, get_local_rank
 from .._core.scale_methods.scale_method_parser import parse_scale_method, validate_and_populate_scale_method, convert_scale_method_strings_to_enum
 from .._core.scale_methods.scale_method_config import get_scale_method_from_config, check_scale_method_fields, ScaleMethodString, CfgStr, ScaleGranularity, ScaleValueType, ScaleRoundMethod
 
-try:
-    world_size = torch.distributed.get_world_size()
-    local_rank = torch.distributed.get_rank()
-except:
-    local_rank = int(os.getenv("LOCAL_RANK", "-1"))
-    world_size = int(os.getenv("WORLD_SIZE", "-1"))
 
 class QuantMode(Enum):
     NONE = 0
@@ -153,6 +148,8 @@ class Fp8cfg:
     cfg: Mapping[str, Any]
 
     def parse(custom_config: Mapping[str, str]) -> Fp8cfg:
+        world_size = get_world_size()
+        local_rank = get_local_rank()
         measured_global_config = {
             "dump_stats_path": "stats",
             "fp8_config": torch.float8_e4m3fn,  # The parameters of the chosen Quantization methed
