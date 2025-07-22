@@ -91,6 +91,39 @@ class KerasAdaptor:
             os.makedirs(DEFAULT_WORKSPACE)
         self.tmp_dir = (DEFAULT_WORKSPACE + "tmp_model.keras") if self.keras3 else (DEFAULT_WORKSPACE + "tmp_model")
 
+    def _check_itex(self):
+        """Check if the Intel® Extension for TensorFlow has been installed."""
+        try:
+            import intel_extension_for_tensorflow
+        except:
+            raise ImportError(
+                "The Intel® Extension for TensorFlow is not installed. "
+                "Please install it to run models on ITEX backend"
+            )
+
+    def convert_bf16(self):
+        """Execute the BF16 conversion."""
+        tf.keras.mixed_precision.set_global_policy("mixed_bfloat16")
+        model = self.pre_optimized_model
+
+        for layer in model.layers:
+            if layer.name in self.bf16_ops:
+                layer.dtype = "mixed_bfloat16"
+
+        model.save(self.tmp_dir)
+        converted_model = tf.keras.models.load_model(self.tmp_dir)
+        tf.keras.mixed_precision.set_global_policy("float32")
+
+        return converted_model
+
+    # (TODO) choose the properly quantize mode
+    def _check_quantize_mode(self, model):
+        """Check what quantize mode to use."""
+        for layer in model.layers:
+            if "ReLU" in layer.__class__.__name__:
+                return "MIN_FIRST"
+        return "SCALED"
+
     def _set_weights(self, qmodel, layer_weights):
         """Set fp32 weights to qmodel."""
         for qlayer in qmodel.layers:
@@ -265,11 +298,18 @@ class KerasAdaptor:
                 beta = bn_weight[1]
                 mean = bn_weight[2]
             else:
-                gamma = 1.0
-                beta = bn_weight[0]
-                mean = bn_weight[1]
-                if conv_type == "DepthwiseConv2D":
-                    var = bn_weight[2].reshape(1, 1, bn_weight[2].shape[0], 1)
+                if (
+                    idx > 0
+                    and layer.__class__.__name__ == "BatchNormalization"
+                    and fp32_layers[idx - 1].__class__.__name__ == "Conv2D"
+                ):
+                    conv_name = fp32_layers[idx - 1].name
+                    conv_weight = self.conv_weights[conv_name]
+                    bn_weight = self.bn_weights[layer.name]
+                    conv_type = fp32_layers[idx - 1].__class__.__name__
+
+                    self.layer_weights[conv_name] = fuse_conv_bn(conv_weight, bn_weight, conv_type, layer.epsilon)
+                    self.fold_conv.append(conv_name)
                 else:
                     var = bn_weight[2].reshape(1, 1, 1, bn_weight[2].shape[0])
 
@@ -432,6 +472,59 @@ class KerasAdaptor:
 
         return quantized_model
 
+    @dump_elapsed_time(customized_msg="Model inference")
+    def evaluate(
+        self,
+        model,
+        dataloader,
+        postprocess=None,
+        metrics=None,
+        measurer=None,
+        iteration=-1,
+        fp32_baseline=False,
+    ):
+        """The function is used to run evaluation on validation dataset.
+
+        Args:
+            model (object): The model to do calibration.
+            dataloader (generator): generate the data and labels.
+            postprocess (object, optional): process the result from the model
+            metric (object, optional): Depends on model category. Defaults to None.
+            measurer (object, optional): for precise benchmark measurement.
+            iteration(int, optional): control steps of mini-batch
+            fp32_baseline (boolean, optional): only for compare_label=False pipeline
+        """
+        # use keras object
+        keras_model = model.model
+        logger.info("Start to evaluate the Keras model.")
+        results = []
+        for idx, (inputs, labels) in enumerate(dataloader):
+            # use predict on batch
+            if measurer is not None:
+                measurer.start()
+                predictions = keras_model.predict_on_batch(inputs)
+                measurer.end()
+            else:
+                predictions = keras_model.predict_on_batch(inputs)
+
+            if self.fp32_preds_as_label:
+                self.fp32_results.append(predictions) if fp32_baseline else results.append(predictions)
+
+            if postprocess is not None:
+                predictions, labels = postprocess((predictions, labels))
+            if metrics:
+                for metric in metrics:
+                    if not hasattr(metric, "compare_label") or (
+                        hasattr(metric, "compare_label") and metric.compare_label
+                    ):
+                        metric.update(predictions, labels)
+            if idx + 1 == iteration:
+                break
+
+        acc = 0 if metrics is None else [metric.result() for metric in metrics]
+
+        return acc if not isinstance(acc, list) or len(acc) > 1 else acc[0]
+
     def query_fw_capability(self, model):
         """The function is used to return framework tuning capability.
 
@@ -514,7 +607,7 @@ class KerasAdaptor:
         """Parse tune_config and set framework variables.
 
         Args:
-            tuning_cfg (dict): The dict of tuning config.
+            tuning_cfg (dict): The dict of tunning config.
         """
         self.quantize_config["calib_iteration"] = tuning_cfg["calib_iteration"]
         self.quantize_config["device"] = self.device
@@ -602,6 +695,31 @@ class KerasQuery:
                 default_config = sub_data
 
         return default_config
+
+    def get_version(self):
+        """Get the current backend version information.
+
+        Returns:
+            [string]: version string.
+        """
+        return self.cur_config["version"]["name"]
+
+    def get_precisions(self):
+        """Get supported precisions for current backend.
+
+        Returns:
+            [string list]: the precisions' name.
+        """
+        return self.cur_config["precisions"]["names"]
+
+    def get_op_types(self):
+        """Get the supported op types by all precisions.
+
+        Returns:
+            [dictionary list]: A list composed of dictionary which key is precision
+            and value is the op types.
+        """
+        return self.cur_config["ops"]
 
     def get_quantization_capability(self):
         """Get the supported op types' quantization capability.
@@ -762,6 +880,9 @@ class KerasSurgery:
             if self.keras3:
                 layer._inbound_nodes.clear()
 
+            if self.keras3:
+                layer._inbound_nodes.clear()
+
             cur_layer = q_layer_dict[layer.name] if q_layer_dict and layer.name in q_layer_dict else layer
             x = cur_layer(input_tensors)
             output_tensor_dict[layer.name] = x
@@ -771,5 +892,40 @@ class KerasSurgery:
 
         if not self.model_outputs:
             self.model_outputs.append(x)
+
+        return tf.keras.models.Model(inputs=self.model.inputs, outputs=self.model_outputs)
+
+    def insert_quant_layers(self, q_layer_dict=None):
+        """Insert FakeQuant or QDQ layers before the target layers and replace
+           Keras layers to Quantized layers.
+
+        Args:
+            q_layer_dict: The dict mapping from layers to be replacement to the quantized layers.
+        """
+        self.input_layer_dict = self._create_input_dict()
+        output_tensor_dict = {"keras.Input": self.model.input}
+
+        for idx, layer in enumerate(self.model.layers):
+            if layer.__class__.__name__ == "InputLayer":
+                output_tensor_dict[layer.name] = output_tensor_dict["keras.Input"]
+                continue
+
+            input_tensors = (
+                output_tensor_dict["keras.Input"]
+                if idx == 0
+                else [output_tensor_dict[input_layer] for input_layer in self.input_layer_dict[layer.name]]
+            )
+            while isinstance(input_tensors, list) and len(input_tensors) == 1:
+                input_tensors = input_tensors[0]
+
+            if self.keras3:
+                layer._inbound_nodes.clear()
+
+            cur_layer = q_layer_dict[layer.name] if q_layer_dict and layer.name in q_layer_dict else layer
+            x = cur_layer(input_tensors)
+
+            output_tensor_dict[layer.name] = x
+            if layer.name in self.model.output_names:
+                self.model_outputs.append(x)
 
         return tf.keras.models.Model(inputs=self.model.inputs, outputs=self.model_outputs)
