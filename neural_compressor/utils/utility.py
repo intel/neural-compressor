@@ -133,7 +133,7 @@ class SafeUnpickler(pickle.Unpickler):
                 return getattr(mod, name)
 
         # Allow all numpy classes
-        allowed_classes = ["nummpy", "torch", "tensorflow", "onnx", "onnxruntime"]
+        allowed_classes = ["numpy", "torch", "tensorflow", "onnx", "onnxruntime"]
         for allowed_class in allowed_classes:
             if module.startswith(allowed_class):
                 try:
