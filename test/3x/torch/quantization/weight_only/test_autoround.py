@@ -69,7 +69,6 @@ def run_fn(model, dataloader):
         else:
             model(data)
 
-@pytest.mark.skip(reason="SW-217321 pytorch inductor error")
 @pytest.mark.skipif(is_habana_framework_installed(), reason="These tests are not supported on HPU for now.")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRoundCPU:
