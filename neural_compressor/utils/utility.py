@@ -85,6 +85,75 @@ def version1_lte_version2(version1, version2):
     return parse_version(version1) < parse_version(version2) or parse_version(version1) == parse_version(version2)
 
 
+class SafeUnpickler(pickle.Unpickler):
+    def find_class(self, module, name):
+        # Allowed built-in types
+        allowed_builtins = {
+            "dict",
+            "list",
+            "tuple",
+            "set",
+            "frozenset",
+            "str",
+            "bytes",
+            "int",
+            "float",
+            "complex",
+            "bool",
+            "NoneType",
+            "slice",
+            "type",
+            "object",
+            "bytearray",
+            "ellipsis",
+            "filter",
+            "map",
+            "range",
+            "reversed",
+            "zip",
+        }
+        if module == "builtins" and name in allowed_builtins:
+            return getattr(builtins, name)
+
+        # Allow collections.OrderedDict
+        if module == "collections" and name == "OrderedDict":
+            return OrderedDict
+
+        # Allow specific neural_compressor classes
+        if module.startswith("neural_compressor"):
+            # Validate class name exists in module
+            mod_path = module.replace(".__", " ")  # Handle submodules
+            for part in mod_path.split():
+                try:
+                    __import__(part)
+                except ImportError:
+                    continue
+            mod = sys.modules.get(module)
+            if mod and hasattr(mod, name):
+                return getattr(mod, name)
+
+        # Allow all numpy classes
+        allowed_classes = ["nummpy", "torch", "tensorflow", "onnx", "onnxruntime"]
+        for allowed_class in allowed_classes:
+            if module.startswith(allowed_class):
+                try:
+                    mod = importlib.import_module(module)
+                    return getattr(mod, name)
+                except (ImportError, AttributeError):
+                    continue
+
+        # Block all other classes
+        raise pickle.UnpicklingError(f"Unsafe class: {module}.{name}")
+
+
+def _safe_pickle_load(fp):
+    """Load a pickle file safely."""
+    try:
+        return SafeUnpickler(fp).load()
+    except Exception as e:
+        raise pickle.UnpicklingError(f"Failed to unpickle file: {e}")
+
+
 class LazyImport(object):
     """Lazy import python module till use."""
 
@@ -398,66 +467,8 @@ def get_tuning_history(history_path):
     Args:
         history_path: The tuning history path, which need users to assign
     """
-
-    class SafeUnpickler(pickle.Unpickler):
-        def find_class(self, module, name):
-            # Allowed built-in types
-            allowed_builtins = {
-                "dict",
-                "list",
-                "tuple",
-                "set",
-                "frozenset",
-                "str",
-                "bytes",
-                "int",
-                "float",
-                "complex",
-                "bool",
-                "NoneType",
-                "slice",
-                "type",
-                "object",
-                "bytearray",
-                "ellipsis",
-                "filter",
-                "map",
-                "range",
-                "reversed",
-                "zip",
-            }
-            if module == "builtins" and name in allowed_builtins:
-                return getattr(builtins, name)
-
-            # Allow collections.OrderedDict
-            if module == "collections" and name == "OrderedDict":
-                return OrderedDict
-
-            # Allow specific neural_compressor classes
-            if module.startswith("neural_compressor"):
-                # Validate class name exists in module
-                mod_path = module.replace(".__", " ")  # Handle submodules
-                for part in mod_path.split():
-                    try:
-                        __import__(part)
-                    except ImportError:
-                        continue
-                mod = sys.modules.get(module)
-                if mod and hasattr(mod, name):
-                    return getattr(mod, name)
-
-            # Allow all numpy classes
-            if module.startswith("numpy"):
-
-                mod = sys.modules.get(module)
-                if mod and hasattr(mod, name):
-                    return getattr(mod, name)
-
-            # Block all other classes
-            raise pickle.UnpicklingError(f"Unsafe class: {module}.{name}")
-
     with open(history_path, "rb") as f:
-        strategy_object = SafeUnpickler(f).load()
+        strategy_object = _safe_pickle_load(f)
         tuning_history = strategy_object.tuning_history
         return tuning_history
 
@@ -626,7 +637,7 @@ def load_data_from_pkl(path, filename):
     try:
         file_path = os.path.join(path, filename)
         with open(file_path, "rb") as fp:
-            data = pickle.load(fp)
+            data = _safe_pickle_load(fp)
             return data
     except FileExistsError:
         logging.getLogger("neural_compressor").info("Can not open %s." % path)
@@ -933,7 +944,7 @@ def get_tensors_info(workload_location, model_type: str = "optimized") -> dict:
     if not os.path.exists(tensors_path):
         raise Exception("Could not find tensor data for specified optimization.")
     with open(tensors_path, "rb") as tensors_pickle:
-        dump_tensor_result = pickle.load(tensors_pickle)
+        dump_tensor_result = _safe_pickle_load(tensors_pickle)
     return dump_tensor_result
 
 
@@ -1159,7 +1170,7 @@ def get_op_list(minmax_file_path, input_model_tensors, optimized_model_tensors) 
         list of OpEntry elements
     """
     with open(minmax_file_path, "rb") as min_max_file:
-        min_max_data: dict = pickle.load(min_max_file)
+        min_max_data: dict = _safe_pickle_load(min_max_file)
 
     op_list: List[OpEntry] = []
 
