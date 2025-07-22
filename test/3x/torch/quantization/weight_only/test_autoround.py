@@ -265,7 +265,7 @@ class TestAutoRoundCPU:
         model = prepare(model=model, quant_config=quant_config)
         run_fn(model, dataloader)
         q_model = convert(model)
-        assert isinstance(q_model.model.layers[0].mlp.up_proj, WeightOnlyLinear), "model quantization failed."
+        assert isinstance(q_model.language_model.model.layers[0].mlp.up_proj, WeightOnlyLinear), "model quantization failed."
 
     # def test_autoround_format_export(self):
     #     from neural_compressor.torch.quantization import load
