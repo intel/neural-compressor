@@ -90,7 +90,7 @@ def is_hpex_support_g_idx():
 
             schema = torch._C._get_schema("hpu::convert_from_int4", "")
             return "group_index" in str(schema)
-        except ValueError as e:  # pragma: no cover
+        except:  # pragma: no cover
             return False
     else:
         return False
