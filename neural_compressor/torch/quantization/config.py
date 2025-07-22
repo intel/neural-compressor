@@ -1045,6 +1045,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.act_dtype = act_dtype
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
+        self.amp = amp
         self.lr_scheduler = lr_scheduler
         self.enable_quanted_input = enable_quanted_input
         self.enable_minmax_tuning = enable_minmax_tuning

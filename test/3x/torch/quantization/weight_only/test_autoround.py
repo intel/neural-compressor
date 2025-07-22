@@ -69,7 +69,6 @@ def run_fn(model, dataloader):
         else:
             model(data)
 
-@pytest.mark.skip(reason="SW-217321 pytorch inductor error")
 @pytest.mark.skipif(is_habana_framework_installed(), reason="These tests are not supported on HPU for now.")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRoundCPU:
@@ -97,7 +96,7 @@ class TestAutoRoundCPU:
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):
         fp32_model = copy.deepcopy(self.gptj)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32", amp=False)
         if quant_lm_head is False:
             quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -118,7 +117,7 @@ class TestAutoRoundCPU:
 
     def test_int4_dtype(self):
         fp32_model = copy.deepcopy(self.gptj)
-        quant_config = AutoRoundConfig(dtype="int4", nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(dtype="int4", nsamples=32, seqlen=10, iters=10, scale_dtype="fp32", amp=False)
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # prepare + convert API
@@ -136,7 +135,7 @@ class TestAutoRoundCPU:
     def test_autoround_with_quantize_API(self):
         gpt_j_model = copy.deepcopy(self.gptj)
 
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32", amp=False)
         quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
 
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -189,7 +188,7 @@ class TestAutoRoundCPU:
         text = "Replace me by any text you'd like."
         encoded_input = tokenizer(text, return_tensors="pt")
         out1 = model(**encoded_input)[0]
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32", amp=False)
         model = prepare(model=model, quant_config=quant_config)
         run_fn(model, self.dataloader)
         q_model = convert(model)
@@ -272,7 +271,7 @@ class TestAutoRoundCPU:
     #     from neural_compressor.torch.quantization import load
     #     from auto_gptq.nn_modules.qlinear.qlinear_triton import QuantLinear
     #     gpt_j_model = copy.deepcopy(self.gptj)
-    #     quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32", export_format="auto_round:gptq")
+    #     quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32", amp=False, export_format="auto_round:gptq")
     #     logger.info(f"Test AutoRound with config {quant_config}")
     #     model = prepare(model=gpt_j_model, quant_config=quant_config)
     #     run_fn(model, self.dataloader)
@@ -366,7 +365,7 @@ class TestAutoRoundHPU:
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):
         fp32_model = copy.deepcopy(self.tiny_llama_model)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", scale_dtype="fp32", amp=False)
         if quant_lm_head is False:
             quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -386,7 +385,7 @@ class TestAutoRoundHPU:
     def test_int4_dtype(self):
         fp32_model = copy.deepcopy(self.tiny_llama_model)
         quant_config = AutoRoundConfig(
-            dtype="int4", nsamples=32, seqlen=10, iters=10, act_dtype="fp32", scale_dtype="fp32"
+            dtype="int4", nsamples=32, seqlen=10, iters=10, act_dtype="fp32", scale_dtype="fp32", amp=False
         )
         logger.info(f"Test AutoRound with config {quant_config}")
 
@@ -402,7 +401,7 @@ class TestAutoRoundHPU:
     def test_autoround_with_quantize_API(self):
         model = copy.deepcopy(self.tiny_llama_model)
 
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", scale_dtype="fp32", amp=False)
         quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
 
         logger.info(f"Test AutoRound with config {quant_config}")
