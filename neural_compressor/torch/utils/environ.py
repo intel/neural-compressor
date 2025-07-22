@@ -82,7 +82,7 @@ def is_hpu_available():
 
 @lru_cache(None)
 def is_hpex_support_g_idx():
-    """Return ipex version if ipex exists."""
+    """Check if HPEX supports group_index in the schema of hpu::convert_from_int4."""
     if is_hpex_available():
         try:
             import habana_frameworks.torch
