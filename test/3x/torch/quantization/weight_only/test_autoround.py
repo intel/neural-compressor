@@ -184,7 +184,7 @@ class TestAutoRoundCPU:
         from transformers import GPT2Model, GPT2Tokenizer
 
         tokenizer = GPT2Tokenizer.from_pretrained("sshleifer/tiny-gpt2")
-        model = GPT2Model.from_pretrained("sshleifer/tiny-gpt2")
+        model = GPT2Model.from_pretrained("sshleifer/tiny-gpt2", use_cache=False)
         text = "Replace me by any text you'd like."
         encoded_input = tokenizer(text, return_tensors="pt")
         out1 = model(**encoded_input)[0]
