@@ -633,6 +633,12 @@ class PatchedEmbeddingBag(PatchedModuleBase):
         )
 
 
+def copy_all_properties(obj1, obj2):
+    for name, attr in obj1.__class__.__dict__.items():
+        if isinstance(attr, property):
+            setattr(obj2.__class__, name, attr)
+
+
 # patched vllm FusedMoE module removing the bf16 weights of all experts
 # measure and quant of the weights is done per expert using PatchedMoeMatmul
 # therefore it is configured: ModuleInfo.should_measure_and_quant = False
@@ -648,6 +654,21 @@ class PatchedMixtralMoE(PatchedModuleBase):
             setattr(self, "w13_weight", None)
             setattr(self, "w2_weight", None)
         self.forward = self.forward_orig
+        copy_all_properties(mod, self)
+
+    # copied from https://github.com/HabanaAI/vllm-fork/blob/93b8bad8478451349d0c76b3116d3ad863a3b48e/vllm/model_executor/layers/fused_moe/layer.py#L1429
+    def maybe_all_reduce_tensor_model_parallel(
+            self, final_hidden_states: torch.Tensor):
+        """
+        The pplx combine kernel reduces across GPU ranks by default.
+        """
+        if (self.use_pplx_kernels or self.use_deepep_ht_kernels
+                or self.use_deepep_ll_kernels):
+            return final_hidden_states
+        else:
+            from .._core.vllm_functions import get_vllm_row_parallel_collective_func
+            tensor_model_parallel_all_reduce = get_vllm_row_parallel_collective_func()
+            return tensor_model_parallel_all_reduce(final_hidden_states)
 
     def extra_repr(self) -> str:
         return extra_representation(
