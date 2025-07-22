@@ -109,7 +109,7 @@ class TestAutoRoundCPU:
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
         assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
-        assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
+        assert "scale_dtype" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
         assert isinstance(q_model.transformer.h[0].attn.k_proj, QuantLinear), "packing model failed."
         if quant_lm_head is True:
@@ -128,7 +128,7 @@ class TestAutoRoundCPU:
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
         assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
-        assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
+        assert "scale_dtype" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
         assert isinstance(q_model.transformer.h[0].attn.k_proj, QuantLinear), "packing model failed."
 
