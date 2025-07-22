@@ -85,8 +85,18 @@ def version1_lte_version2(version1, version2):
     return parse_version(version1) < parse_version(version2) or parse_version(version1) == parse_version(version2)
 
 
-class SafeUnpickler(pickle.Unpickler):
+class _SafeUnpickler(pickle.Unpickler):
     def find_class(self, module, name):
+        """Find a class in a module.
+
+        Args:
+            module (str): The module name.
+            name (str): The class name.
+
+        Returns:
+            The class if it is safe to unpickle, otherwise raises UnpicklingError.
+        """
+
         # Allowed built-in types
         allowed_builtins = {
             "dict",
@@ -149,7 +159,7 @@ class SafeUnpickler(pickle.Unpickler):
 def _safe_pickle_load(fp):
     """Load a pickle file safely."""
     try:
-        return SafeUnpickler(fp).load()
+        return _SafeUnpickler(fp).load()
     except Exception as e:
         raise pickle.UnpicklingError(f"Failed to unpickle file: {e}")
 
