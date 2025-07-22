@@ -236,7 +236,7 @@ class TestAutoRoundCPU:
             model=model,
             tokenizer=tokenizer,
             image_processor=None,
-            dataset="liuhaotian/llava_conv_58k",
+            dataset="NeelNanda/pile-10k",
             extra_data_dir=None,
             seqlen=32,
             batch_size=1,
