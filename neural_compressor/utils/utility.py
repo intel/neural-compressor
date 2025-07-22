@@ -96,7 +96,6 @@ class _SafeUnpickler(pickle.Unpickler):
         Returns:
             The class if it is safe to unpickle, otherwise raises UnpicklingError.
         """
-
         # Allowed built-in types
         allowed_builtins = {
             "dict",
