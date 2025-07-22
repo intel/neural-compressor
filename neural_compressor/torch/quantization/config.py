@@ -948,6 +948,7 @@ class AutoRoundConfig(TorchBaseConfig):
         act_dtype: Optional[str] = "int",
         enable_full_range: bool = False,
         batch_size: int = 8,
+        amp: bool = True,
         lr_scheduler=None,
         enable_quanted_input: bool = True,
         enable_minmax_tuning: bool = True,
@@ -995,6 +996,7 @@ class AutoRoundConfig(TorchBaseConfig):
             act_dtype (Optional[str]): Data type for activation quantization. Default is None.
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
+            amp (bool): Whether to use automatic mixed precision (default is True).
             lr_scheduler: The learning rate scheduler to be used.
             enable_quanted_input (bool): Whether to use quantized input data (default is True).
             enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
@@ -1014,7 +1016,8 @@ class AutoRoundConfig(TorchBaseConfig):
               have different choices.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             to_quant_block_names (list): A list whose elements are list of block's layer names to be quantized.
-            export_format (str, optional): The format used for exporting the quantized model. Defaults to "itrex".
+            export_format (str, optional): The format used for exporting the quantized model. Defaults to 
+              "auto_round:auto_gptq".
             enable_norm_bias_tuning (bool): Whether to enable fast norm/layer_bias tuning.
             enable_torch_compile (bool): Whether to enable torch compile to optimize quant_block/layer, torch>=2.6 True.
             quant_nontext_module (bool): Whether to quantize nontext module.
@@ -1042,6 +1045,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.act_dtype = act_dtype
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
+        self.amp = amp
         self.lr_scheduler = lr_scheduler
         self.enable_quanted_input = enable_quanted_input
         self.enable_minmax_tuning = enable_minmax_tuning
