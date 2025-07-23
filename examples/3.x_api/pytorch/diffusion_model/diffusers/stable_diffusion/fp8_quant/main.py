@@ -70,7 +70,6 @@ def main():
         use_qdq=True,
         scale_method="MAXABS_ARBITRARY",
         dump_stats_path=args.calib_out_dir,
-        blocklist={"types": ["Conv2d"]},
         hp_dtype="fp32",
     )
 
