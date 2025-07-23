@@ -156,7 +156,6 @@ class PatchedLinearBase(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
 
-
     # TODO [SW-224538]: Move init_linear to PatchedLinearBase __init__
     def init_linear(self, mod_extra_config):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
@@ -227,7 +226,7 @@ class PatchedLinearBase(PatchedModuleBase):
         return extra_representation(
             self.extra_repr_org(),
             self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight") if not self.use_qdq else "",
+            get_current_repr(self, "scale_input", "scale_weight") if not self.use_qdq else get_current_repr(self),
         )
 
 
