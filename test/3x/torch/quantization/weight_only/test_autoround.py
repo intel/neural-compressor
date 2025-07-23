@@ -221,6 +221,7 @@ class TestAutoRoundCPU:
         assert torch.allclose(out, self.label, atol=1e-1)
         assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
 
+    @pytest.mark.skipif(Version(auto_round.__version__) <= Version("0.5.1"), reason="visual layer_name not processed.")
     def test_mllm(self):
         input = torch.randn(1, 32)
         from transformers import AutoProcessor, AutoTokenizer, Qwen2VLForConditionalGeneration
