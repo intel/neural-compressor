@@ -24,7 +24,7 @@ from neural_compressor.torch.quantization import (
     finalize_calibration,
     prepare,
 )
-from dlrm_model import IPEX_DLRM_DCN, replace_crossnet
+from dlrm_model import OPTIMIZED_DLRM_DCN, replace_crossnet
 from data_process.dlrm_dataloader import get_dataloader
 
 
@@ -325,7 +325,7 @@ def construct_model(args):
         for feature_idx, feature_name in enumerate(DEFAULT_CAT_NAMES)
     ]
 
-    dcn_init_fn = IPEX_DLRM_DCN
+    dcn_init_fn = OPTIMIZED_DLRM_DCN
     dlrm_model = dcn_init_fn(
         embedding_bag_collection=EmbeddingBagCollection(
             tables=eb_configs, device=torch.device("cpu")
