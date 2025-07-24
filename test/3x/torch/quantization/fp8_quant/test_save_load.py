@@ -4,7 +4,7 @@ import deepspeed
 import torch
 import transformers
 
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import local_rank, world_size
+from neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model import get_world_size, get_local_rank
 from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedLinear
 from neural_compressor.torch.utils import get_used_hpu_mem_MB
@@ -45,6 +45,7 @@ def calib_func(model):
 
 def test_save_vllm_compatible_model():
     name = "Qwen/Qwen2-0.5B-Instruct"
+    world_size = get_world_size()
     if world_size > 0:
         # Do not use random weights since multi-processes will get different weights for Embedding
         model = transformers.AutoModelForCausalLM.from_pretrained(name)
@@ -77,6 +78,7 @@ def test_save_vllm_compatible_model():
 
 @pytest.mark.skip(reason="[SW-226589] Skip this test since the model was updated")
 def test_load_model_provided_by_neuralmagic():
+    world_size = get_world_size()
     model_name_or_path = "neuralmagic/Qwen2-0.5B-Instruct-FP8"
     hpu_mem0 = get_used_hpu_mem_MB()
     model = load(model_name_or_path, format="huggingface", device="hpu")
@@ -117,6 +119,8 @@ def init_model(world_size):
 @torch.no_grad()
 @pytest.mark.parametrize("scale_method", ["maxabs_hw", "act_maxabs_hw_weights_pcs_maxabs_pow2"])
 def test_default_save_load(scale_method):
+    world_size = get_world_size()
+    local_rank = get_local_rank()
     example_inputs = torch.tensor([[10, 20]], dtype=torch.long).to("hpu")
     model = init_model(world_size)
     # The default value of model.generation_config.max_length in transformers is 20

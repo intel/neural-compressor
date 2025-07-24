@@ -26,10 +26,9 @@ from torch.autograd import Function
 from torch.nn import functional as F
 
 from neural_compressor.torch.utils import (
-    Version,
     accelerator,
     can_pack_with_numba,
-    get_hpex_version,
+    is_hpex_support_g_idx,
     logger,
 )
 
@@ -731,7 +730,7 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             )
         else:
             self.g_idx = None
-        self.support_g_idx = True if get_hpex_version() >= Version("1.23.0") else False
+        self.support_g_idx = is_hpex_support_g_idx()
 
         self.half_indim = self.in_features // 2
 
