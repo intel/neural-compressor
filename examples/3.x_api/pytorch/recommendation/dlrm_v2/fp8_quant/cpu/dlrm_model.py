@@ -200,7 +200,7 @@ class InteractionDCNArchWithoutCat(InteractionDCNArch):
         return self.crossnet(concat_dense_sparse)
 
 
-class IPEX_DLRM_DCN(DLRM_DCN):
+class OPTIMIZED_DLRM_DCN(DLRM_DCN):
     """
     Recsys model with DCN modified from the original model from "Deep Learning Recommendation
     Model for Personalization and Recommendation Systems"
