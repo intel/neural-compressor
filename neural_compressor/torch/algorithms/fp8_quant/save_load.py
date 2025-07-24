@@ -17,7 +17,7 @@ import shutil
 
 import torch
 
-from ._quant_common.quant_config import local_rank, world_size, HpDtype
+from ._quant_common.quant_config import HpDtype
 from ._core.quant_dequant import QuantDequantBase
 from ._core.scale_handler import update_state_dict_method, ScaleFormat
 from ._core.quantized_func_wrappers import (
@@ -26,6 +26,7 @@ from ._core.quantized_func_wrappers import (
     get_quantized_func_wrapper,
     OP_TYPE,
 )
+from .prepare_quant.prepare_model import get_world_size, get_local_rank
 from .utils.logger import logger
 from neural_compressor.common import options
 from neural_compressor.torch.utils import (
@@ -75,7 +76,7 @@ def save_rank_model(model, folder_prefix="", **kwargs):
     """Save state_dict for model from each rank."""
     # workaround for [SW-199005] [HQT] casted fp8 tensor cannot get data pointer
     cur_accelerator.synchronize()
-    save_directory = add_rank_suffix(folder_prefix, local_rank, world_size)
+    save_directory = add_rank_suffix(folder_prefix, get_local_rank(), get_world_size())
     os.makedirs(save_directory, exist_ok=True)
     safe_serialization = kwargs.get("safe_serialization", True)
     max_shard_size = kwargs.get("max_shard_size", f"{MAX_FILE_SIZE}GB")
@@ -95,6 +96,8 @@ def find_tp_mod_list(model):
 def gather_state_dict(folder_prefix, file_name, tp_mod_list=[]):
     """Gather state_dict from files saved by each rank."""
     from safetensors.torch import load_file as safe_load_file
+
+    world_size = get_world_size()
 
     def _is_in_list(name, tp_mod_list):
         for tp_name in tp_mod_list:
@@ -122,6 +125,7 @@ def gather_state_dict(folder_prefix, file_name, tp_mod_list=[]):
 
 def clean_rank_files(folder_prefix, file_name=None):
     """Clean files saved by each rank after gathering."""
+    world_size = get_world_size()
     for i in range(world_size):  # TODO: assuming tp_size == world_size
         folder_name = add_rank_suffix(folder_prefix, i, world_size)
         if file_name is None:
@@ -375,6 +379,8 @@ def save(model, checkpoint_dir="saved_results", format="huggingface", **kwargs):
         checkpoint_dir (str, optional): path to checkpoint. Defaults to "saved_results".
         format (str, optional): defaults to 'huggingface'.
     """
+    world_size = get_world_size()
+    local_rank = get_local_rank()
     format = get_enum_from_format(format)
     model = process_model_for_scalar_scale(model)
     if world_size > 1:
@@ -455,6 +461,7 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
     if model is None:
         with init_empty_weights(include_buffers=False):
             model = transformers.AutoModelForCausalLM.from_config(config, torch_dtype=hp_dtype)
+    world_size = get_world_size()
     if world_size > 1:
         import deepspeed
         from neural_compressor.torch.utils import get_non_persistent_buffers, load_non_persistent_buffers
@@ -604,8 +611,7 @@ def load(model_name_or_path, format="huggingface", device="hpu", **kwargs):
         FP8 model.
     """
     format = get_enum_from_format(format)
-    global world_size
-    world_size = kwargs.get("world_size", world_size)
+    world_size = kwargs.get("world_size", get_world_size())
     assert format == SaveLoadFormat.HUGGINGFACE, "Currently, only huggingface models are supported."
     assert device in ["hpu", "cpu"], "Currently, only hpu & cpu device is supported for FP8 model."
 
@@ -781,7 +787,7 @@ def load_scale_params(model, new_scale_params):
                 param.data = new_scale
 
 
-def get_new_rank_state_dict(all_rank_state_dict, model, world_size=world_size, local_rank=local_rank):
+def get_new_rank_state_dict(all_rank_state_dict, model, world_size=get_world_size(), local_rank=get_local_rank()):
     """Get new rank state_dict for world_size.
 
     Args:
