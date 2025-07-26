@@ -139,6 +139,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scale_method_config,
     should_quantize_cond = True # In static quantization we quantize everything
     with torch.no_grad():
         for name, mod in model.named_modules():
+            name = name.replace("_orig_mod.", "")  # remove _orig_mod part added by dynamo mechanism
             mod_type_str = mod.__class__.__name__
 
             if name in mod_list and name not in scales and config.cfg["use_stats_files"] and name not in measurement:
