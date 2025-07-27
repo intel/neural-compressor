@@ -149,6 +149,7 @@ class MaxAbsPcs(MaxAbsMethod):
         super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, is_dynamic=is_dynamic)
         self.dim = dim
         self.keepdim = keepdim
+        self.eps = torch.tensor(torch.finfo(torch.bfloat16).tiny, device=self.device)
         logger.trace("%s %s", self.__class__.__name__, self.__dict__)
 
     def calc_scale_from_const_tensor_no_reshape(self, tensor):
@@ -165,6 +166,7 @@ class MaxAbsPcs(MaxAbsMethod):
         else:
             maxabs_tensor = torch.amax(torch.abs(tensor), dim=self.dim, keepdim=self.keepdim)
             scale_tensor = calc_scale_from_maxabs(maxabs_tensor, self.fullscale, self.backoff)
+            scale_tensor = torch.max(scale_tensor, self.eps)
         return scale_tensor
 
     def calc_scale_from_const_tensor(self, tensor):
