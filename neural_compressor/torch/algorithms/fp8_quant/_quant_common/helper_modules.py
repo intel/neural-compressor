@@ -777,6 +777,12 @@ class PatchedVllmMixtureOfExpertsOpV1(PatchedModuleBase):
             self.w13_list[i].weight = self.w13_list[i].weight.squeeze().t().contiguous()
             self.w2_list[i].weight = self.w2_list[i].weight.squeeze().t().contiguous()
 
+    def _get_extra_kwargs(self, tokens_num: int):
+        kwargs = {}
+        if hasattr(self.orig_mod, "_get_extra_kwargs"):
+            kwargs = self.orig_mod._get_extra_kwargs(tokens_num)
+        return kwargs
+
     def forward_quant(self,
                       hidden_states,
                       expert_routing_table,
@@ -784,6 +790,8 @@ class PatchedVllmMixtureOfExpertsOpV1(PatchedModuleBase):
                       layer=None,
                       permuted_weights=True,
                       activation="silu"):
+        tokens_num, hidden_dim = hidden_states.shape
+        extra_kwargs = self._get_extra_kwargs(tokens_num)
         experts_range = range(self.num_experts)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]
@@ -914,6 +922,8 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
         ep_shift=None,
     ):
         hidden_states = x
+        tokens_num, hidden_dim = hidden_states.shape
+        extra_kwargs = self._get_extra_kwargs(tokens_num)
         expert_routing_table = topk_ids.to(torch.int64)
         router_weights = topk_weights.to(x.dtype)
         permuted_weights = True
@@ -941,6 +951,7 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
             activation=activation,
             experts_min=self.experts_min,
             experts_max=self.experts_max,
+            **extra_kwargs,
         )
         return output
 
