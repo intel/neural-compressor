@@ -106,6 +106,7 @@ def main(_):
         from neural_compressor import quantization
         from neural_compressor.config import PostTrainingQuantConfig
         config = PostTrainingQuantConfig(
+            backend="itex",
             inputs=["image_tensor"],
             outputs=["num_detections", "detection_boxes", "detection_scores", "detection_classes"],
             calibration_sampling_size=[10, 50, 100, 200])
