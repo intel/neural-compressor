@@ -9,9 +9,6 @@ Stable Diffusion quantization and inference best known configurations with stati
 |  Inference   |    PyTorch    |       https://huggingface.co/stabilityai/stable-diffusion-2-1       |           -           |         -          |
 
 # Pre-Requisite
-* Installation of PyTorch and [Intel Extension for PyTorch](https://intel.github.io/intel-extension-for-pytorch/#installation)
-
-
 
 ### Datasets
 
@@ -26,6 +23,7 @@ bash download_dataset.sh
 quantization
 ```shell
 python main.py \
+    --model_name_or_path stabilityai/stable-diffusion-2-1 \
     --dataset_path=${DATASET_DIR} \
     --quantized_model_path=${INT8_MODEL} \
     --compile_inductor \
@@ -35,6 +33,7 @@ python main.py \
 inference
 ```shell
 python main.py \
+    --model_name_or_path stabilityai/stable-diffusion-2-1 \
     --dataset_path=${DATASET_DIR} \
     --precision=int8-bf16 \
     --benchmark \
