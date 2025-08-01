@@ -16,6 +16,7 @@
 
 from typing import Union, List, Type, Optional
 from abc import abstractmethod
+import copy
 import torch
 from neural_compressor.common import utils as inc_utils
 from neural_compressor.torch.algorithms.fp8_quant.model_configs import (
@@ -37,8 +38,18 @@ def get_call_wrapper(cls_instance, func_name):
         return getattr(cls_instance, func_name)(*args, **kwargs)
     return call_wrapper
 
+def copy_all_properties_(pacthed_obj, orig_obj):
+    for name, attr in orig_obj.__class__.__dict__.items():
+        if hasattr(pacthed_obj.__class__, name):
+            continue
+
+        if isinstance(attr, property):
+            attr_copy = copy.deepcopy(attr)
+            setattr(pacthed_obj.__class__, name, attr_copy)
+
 def set_attrs_from_orig_model(cls_instance, mod, parent, mod_extra_config, *func_names):
     cls_instance.__dict__.update(mod.__dict__)
+    copy_all_properties_(cls_instance, mod)
     config = get_hqt_config(cls_instance)
     cls_instance.extra_repr_org = mod.extra_repr
     cls_instance.class_name_org = mod.__class__.__name__
