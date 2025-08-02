@@ -17,7 +17,7 @@ import torch.nn as nn
 import copy
 import types
 import habana_frameworks.torch.core as htcore
-from .quant_config import QuantMode
+from .quant_config import QuantMode, moe_kwargs
 from .._core.quant_dequant import QuantDequant as qdq
 from .._core.quantized_func_wrappers import get_quantized_func_wrapper, OP_TYPE
 from ..patched_module_base import PatchedModuleBase
@@ -914,6 +914,7 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
             activation=activation,
             experts_min=self.experts_min,
             experts_max=self.experts_max,
+            **moe_kwargs
         )
         return output
 

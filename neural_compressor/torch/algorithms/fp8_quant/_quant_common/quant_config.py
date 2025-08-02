@@ -26,6 +26,22 @@ import torch
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator, INCAcceleratorType
 from neural_compressor.torch.utils import logger
 
+from functools import lru_cache
+
+
+@lru_cache()
+def get_moe_kwargs():
+    import os
+    chunk_size = int(os.environ.get("PT_HPU_MOE_THRESHOLD", 256))
+    kwargs = {
+        "chunk_size": chunk_size,
+        "total_experts": 256,
+    }
+    logger.warning(f"Using MoE chunk size: {chunk_size}. ")
+    return kwargs
+
+moe_kwargs = get_moe_kwargs()
+
 try:
     world_size = torch.distributed.get_world_size()
     local_rank = torch.distributed.get_rank()
