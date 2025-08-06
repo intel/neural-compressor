@@ -99,10 +99,10 @@ _configs_that_use_enum_value = [
 
 # TODO [SW-217813]: support dynamic quantization in all ops and remove
 # TODO [SW-228723]: get a better way to list all linear ops, like set in ModuleInfo if supports dynamic
-supported_dynamic_ops = ["linear", "row_parallel_linear", "no_quantize_op", "dynamic_moe"]
-def is_supported_dynamic_op(op_type):
-    ret = op_type.lower() in [op.lower() for op in supported_dynamic_ops]
-    logger.trace("Checking if %s is supported for dynamic quantization: %s", op_type, ret)
+supported_dynamic_ops = ["Linear", "RowParallelLinear", "ColumnParallelLinear", "MergedColumnParallelLinear", "QKVParallelLinear", "FalconLinear", "LoRACompatibleLinear", "ReplicatedLinear", "LinearLayer", "LinearAllreduce", "ScopedLinearAllReduce", "LmHeadLinearAllreduce", "FusedMoE", "GaudiMixtralSparseMoeBlock", "VllmMixtureOfExpertsOp", "VllmMixtureOfExpertsOpFP8"]
+def is_supported_dynamic_op(op_str):
+    ret = op_str in supported_dynamic_ops
+    logger.trace("Checking if %s is supported for dynamic quantization: %s", op_str, ret)
     return ret
 
 
