@@ -348,7 +348,7 @@ class PatchedLinearAllReduce(PatchedLinearBase):
 class PatchedRowParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        from .._core.vllm_functions import get_vllm_row_parallel_collective_func
+        from .._core.external_func_impl import get_vllm_row_parallel_collective_func
         self.row_parallel_collective_func = get_vllm_row_parallel_collective_func()
         # TODO [SW-224403]: Enable dynamic quantization in row parallel allreduce
         allreduce_quantization_enable = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
@@ -492,7 +492,7 @@ class PatchedColumnParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.init_linear(mod_extra_config)
-        from .._core.vllm_functions import get_vllm_column_parallel_collective_func
+        from .._core.external_func_impl import get_vllm_column_parallel_collective_func
         self.column_parallel_collective_func = get_vllm_column_parallel_collective_func()
 
     def forward_qdq(self, input):
@@ -658,7 +658,7 @@ class PatchedMixtralMoE(PatchedModuleBase):
                 or self.use_deepep_ll_kernels):
             return final_hidden_states
         else:
-            from .._core.vllm_functions import get_vllm_row_parallel_collective_func
+            from .._core.external_func_impl import get_vllm_row_parallel_collective_func
             tensor_model_parallel_all_reduce = get_vllm_row_parallel_collective_func()
             return tensor_model_parallel_all_reduce(final_hidden_states)
 
