@@ -80,6 +80,7 @@ _mod_default_dict = {
     "LoRACompatibleLinear": ModuleInfo("linear", PatchedLoRACompatibleLinear),
     "LoRACompatibleConv": ModuleInfo("linear", PatchedLoRACompatibleConv),
     "Softmax": ModuleInfo("softmax", PatchedSoftmax),
+    "BlockSoftmaxConstMax": ModuleInfo("softmax", PatchedBlockSoftmaxConstMax),
     "ModuleFusedSDPA": ModuleInfo("fused_sdpa", PatchedModuleFusedSDPA),
     "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul),
     "MoeFP8Matmul": ModuleInfo("linear", PatchedMoeFP8Matmul),
@@ -124,7 +125,7 @@ def _import_xpu_modules():
     if not cur_accelerator.current_device_name().startswith("xpu"):
         return
     PATCHED_MODULE_TABLE["xpu"].update({"Linear": ModuleInfo("linear", PatchedLinear),
-                                        "Matmul": ModuleInfo("matmul", PatchedMatmul),})
+                                        "Matmul": ModuleInfo("matmul", PatchedMatmul), })
     PATCHED_MODULE_TYPES_TABLE["xpu"].update({"linear": _mod_types["linear"]})
 
 
@@ -154,5 +155,6 @@ def _import_device_modules():
         _import_cpu_modules()
     else:
         logger.warning("No HPU or XPU devices were detected. No Patched Modules available.")
+
 
 _import_device_modules()
