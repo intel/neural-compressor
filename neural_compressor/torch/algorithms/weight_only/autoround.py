@@ -166,7 +166,7 @@ class AutoRoundQuantizer(Quantizer):
             The quantized model.
         """
         super().__init__(quant_config)
-        self.tokenizer = "Placeholder" # for AutoRound initialization
+        self.tokenizer = "Placeholder"  # for AutoRound initialization
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.amp = amp
