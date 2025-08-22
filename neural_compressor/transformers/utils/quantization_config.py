@@ -475,7 +475,7 @@ class TeqConfig(INCQuantizationConfigMixin):
         n_samples: int = 128,
         seq_len: int = 2048,
         sym: bool = True,
-        folding: bool = False, # TODO, add folding support for transformers >= 4.55.2
+        folding: bool = False,  # TODO, add folding support for transformers >= 4.55.2
         absorb_layer_dict: dict = {},
         quant_lm_head: bool = False,
         **kwargs,
