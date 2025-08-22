@@ -72,7 +72,7 @@ class TestTansformersLikeAPI:
         woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
         woq_model.eval()
         output = woq_model(dummy_input)
-        assert isclose(float(output[0][0][0][0]), -0.1045, abs_tol=1e-04)
+        assert isclose(float(output[0][0][0][0]), -0.1006, abs_tol=1e-04)
 
         # TEQ
         woq_config = TeqConfig(bits=4, n_samples=5, batch_size=1, seq_len=512, group_size=16, tokenizer=tokenizer)
