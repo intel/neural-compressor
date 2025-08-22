@@ -458,6 +458,7 @@ def convert_to_quantized_model(model, config, device="cpu", for_inference=True):
             group_size=config.group_size,
             use_layer_wise=config.use_layer_wise,
             quant_lm_head=config.quant_lm_head,
+            folding=config.folding,
             absorb_to_layer=config.absorb_layer_dict,
         )
         if config.modules_to_not_convert != []:
