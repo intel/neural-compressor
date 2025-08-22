@@ -1,0 +1,6 @@
+diffusers
+tqdm
+torch-fidelity
+torchmetrics
+pycocotools
+transformers
