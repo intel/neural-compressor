@@ -95,22 +95,23 @@ PKG_INSTALL_CFG = {
 
 
 if __name__ == "__main__":
-    # for setuptools>=80.0.0, `INC_PT_ONLY=1 pip install -e .`
-    if os.environ.get("INC_PT_ONLY", False) and os.environ.get("INC_TF_ONLY", False):
-        raise ValueError("Both INC_PT_ONLY and INC_TF_ONLY are set. Please set only one.")
-    if os.environ.get("INC_PT_ONLY", False):
-        cfg_key = "neural_compressor_pt"
-    elif os.environ.get("INC_TF_ONLY", False):
-        cfg_key = "neural_compressor_tf"
-    else:
-        cfg_key = "neural_compressor"
-    # for setuptools < 80.0.0, `python setup.py develop pt`
-    if "pt" in sys.argv:
-        sys.argv.remove("pt")
-        cfg_key = "neural_compressor_pt"
-    if "tf" in sys.argv:
-        sys.argv.remove("tf")
-        cfg_key = "neural_compressor_tf"
+    # # for setuptools>=80.0.0, `INC_PT_ONLY=1 pip install -e .`
+    # if os.environ.get("INC_PT_ONLY", False) and os.environ.get("INC_TF_ONLY", False):
+    #     raise ValueError("Both INC_PT_ONLY and INC_TF_ONLY are set. Please set only one.")
+    # if os.environ.get("INC_PT_ONLY", False):
+    #     cfg_key = "neural_compressor_pt"
+    # elif os.environ.get("INC_TF_ONLY", False):
+    #     cfg_key = "neural_compressor_tf"
+    # else:
+    #     cfg_key = "neural_compressor"
+    # # for setuptools < 80.0.0, `python setup.py develop pt`
+    # if "pt" in sys.argv:
+    #     sys.argv.remove("pt")
+    #     cfg_key = "neural_compressor_pt"
+    # if "tf" in sys.argv:
+    #     sys.argv.remove("tf")
+    #     cfg_key = "neural_compressor_tf"
+    cfg_key = "neural_compressor_pt"
 
     ext_modules = []
     cmdclass = {}
