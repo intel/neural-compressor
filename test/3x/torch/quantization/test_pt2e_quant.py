@@ -15,7 +15,7 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
-from neural_compressor.torch.utils import GT_OR_EQUAL_TORCH_VERSION_2_5, TORCH_VERSION_2_2_2, get_torch_version
+from neural_compressor.torch.utils import GT_OR_EQUAL_TORCH_VERSION_2_5, TORCH_VERSION_2_2_2, TORCH_VERSION_2_7_0, get_torch_version
 
 torch.manual_seed(0)
 
@@ -200,6 +200,7 @@ class TestPT2EQuantization:
         assert out is not None
 
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
+    @pytest.mark.skipif(get_torch_version() >= TORCH_VERSION_2_7_0, reason="Export API does not support DynamicCache")
     def test_prepare_and_convert_on_llm(self, force_not_import_ipex):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 

@@ -7,7 +7,7 @@ import torch
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
 from neural_compressor.torch.export import export_model_for_pt2e_quant
-from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
+from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version, TORCH_VERSION_2_7_0
 
 
 class TestW8A8PT2EQuantizer:
@@ -70,6 +70,7 @@ class TestW8A8PT2EQuantizer:
         assert out is not None
 
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
+    @pytest.mark.skipif(get_torch_version() >= TORCH_VERSION_2_7_0, reason="Export API does not support DynamicCache")
     def test_quantizer_on_llm(self):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
