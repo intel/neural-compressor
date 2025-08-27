@@ -89,6 +89,7 @@ _mod_default_dict = {
     "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
     "VllmMixtureOfExpertsOp": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOp),
     "VllmMixtureOfExpertsOpFP8": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8),
+    "VllmMixtureOfExpertsOpFP8PerChannel": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8),
 }
 
 
