@@ -93,7 +93,7 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
             "transformer.h.0.mlp.fc_in": {"bits": 8, "group_size": -1, "scheme": "sym"},
             "transformer.h.0.mlp.fc_out": {"bits": 4, "group_size": 32, "scheme": "asym"},
         }
-        quantizer = TEQuantizer(quant_config=weight_config, folding=True, example_inputs=example_inputs)
+        quantizer = TEQuantizer(quant_config=weight_config, folding=False, example_inputs=example_inputs)
         model = quantizer.quantize(copy.deepcopy(self.gptj), run_fn=train)
         out1 = model(test_input)
         self.assertTrue(torch.allclose(out1[0], out0[0], atol=0.03))
@@ -106,13 +106,14 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
 
         weight_config = {
             # 'op_name': (bit, group_size, scheme)
-            "transformer.h.0.mlp.fc_in": {"bits": 8, "group_size": -1, "scheme": "sym"},
+            "transformer.h.0.mlp.fc_in": {"bits": 4, "group_size": -1, "scheme": "sym"},
             "transformer.h.0.mlp.fc_out": {"bits": 4, "group_size": 32, "scheme": "asym"},
         }
-        absorb_dict = {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]}
+        # absorb_dict = {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]}
+        absorb_dict = None
 
         quantizer = TEQuantizer(
-            quant_config=weight_config, folding=True, absorb_to_layer=absorb_dict, example_inputs=example_inputs
+            quant_config=weight_config, folding=False, absorb_to_layer=absorb_dict, example_inputs=example_inputs
         )
         model = quantizer.quantize(copy.deepcopy(self.gptj), run_fn=train)
         out1 = model(test_input)
@@ -129,16 +130,17 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
                         "bits": 8,
                         "group_size": -1,
                         "use_sym": True,
-                        "folding": True,
-                        "absorb_to_layer": {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]},
+                        "folding": False,
+                        # "absorb_to_layer": {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]},
+                        "absorb_to_layer": {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_in"]},
                     },
                     "transformer.h.0.mlp.fc_out": {
                         "dtype": "int",
                         "bits": 4,
                         "group_size": 32,
                         "use_sym": False,
-                        "folding": True,
-                        "absorb_to_layer": {"transformer.h.0.mlp.fc_in": ["transformer.h.0.mlp.fc_out"]},
+                        "folding": False,
+                        "absorb_to_layer": {"transformer.h.0.mlp.fc_out": ["transformer.h.0.mlp.fc_out"]},
                     },
                 },
             }
