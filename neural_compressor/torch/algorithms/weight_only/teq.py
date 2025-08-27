@@ -180,6 +180,9 @@ class TrainableEquivalentTransformation:
             else:
                 new_module = MulLinear(layer, scale)
                 set_module(self.model, layer_name, new_module)
+            if not self.weight_config.get(layer_name):  # pragma: no cover
+                logger.info(f"Absorb scale out of absorbed layer {layer_name} not in weight config, skip.")
+                return
             self.weight_config[layer_name + ".linear"] = self.weight_config[layer_name]
             return
 

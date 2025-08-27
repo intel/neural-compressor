@@ -207,15 +207,32 @@ class TestPT2EQuantization:
         model = AutoModelForCausalLM.from_pretrained(model_name)
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         input_ids = tokenizer("Hello, my dog is cute", return_tensors="pt")["input_ids"]
-        example_inputs = (input_ids,)
-        model = export(model, example_inputs=example_inputs)
+        # example_inputs = (input_ids,)
+        # model = export(model, example_inputs=example_inputs)
+        from transformers import DynamicCache
+        example_inputs =                 {
+                    "input_ids": input_ids,
+                    "attention_mask": None,
+                    "past_key_values": DynamicCache(),
+                    "use_cache": True,
+                }
+        with torch.no_grad():
+            ep = torch.export.export_for_training(
+                model,
+                (),
+                example_inputs,
+                strict=False,
+            )
+        model = ep.module()
+        model._exported = True
+        model.dynamic_shapes = None
 
         quant_config = get_default_static_config()
         # prepare
         prepare_model = prepare(model, quant_config)
         # calibrate
         for i in range(2):
-            prepare_model(*example_inputs)
+            prepare_model(**example_inputs)
         # convert
         converted_model = convert(prepare_model)
         # inference
@@ -223,7 +240,7 @@ class TestPT2EQuantization:
 
         config.freezing = True
         opt_model = torch.compile(converted_model)
-        out = opt_model(*example_inputs)
+        out = opt_model(**example_inputs)
         assert out.logits is not None
 
     @staticmethod

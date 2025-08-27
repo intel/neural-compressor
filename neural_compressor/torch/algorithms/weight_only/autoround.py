@@ -166,7 +166,7 @@ class AutoRoundQuantizer(Quantizer):
             The quantized model.
         """
         super().__init__(quant_config)
-        self.tokenizer = None
+        self.tokenizer = "Placeholder"  # for AutoRound initialization
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.amp = amp
@@ -236,7 +236,7 @@ class AutoRoundQuantizer(Quantizer):
         if self.is_mllm:
             rounder = AutoRoundMLLM(
                 model,
-                tokenizer=None,
+                tokenizer=self.tokenizer,
                 processor=self.processor,
                 image_processor=self.image_processor,
                 layer_config=self.quant_config,
@@ -277,7 +277,7 @@ class AutoRoundQuantizer(Quantizer):
         else:
             rounder = AutoRound(
                 model=model,
-                tokenizer=None,
+                tokenizer=self.tokenizer,
                 dataset=dataloader,
                 layer_config=self.quant_config or {},
                 enable_full_range=self.enable_full_range,
