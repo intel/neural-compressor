@@ -841,6 +841,12 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
             self.w2_list[i].weight = torch.nn.Parameter(self.w2_list[i].weight.squeeze().t().contiguous())
             htcore.mark_step()
 
+    def _get_extra_kwargs(self, tokens_num: int):
+        kwargs = {}
+        if hasattr(self.orig_mod, "_get_extra_kwargs"):
+            kwargs = self.orig_mod._get_extra_kwargs(tokens_num)
+        return kwargs
+
     def forward_measure(
         self,
         x,
@@ -900,6 +906,9 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
         qinput = self.quant_input(hidden_states)
+
+        tokens_num, hidden_dim = hidden_states.shape
+        extra_kwargs = self._get_extra_kwargs(tokens_num)
         output = self.dynamic_moe_op(
             hidden_states=qinput,
             expert_routing_table=expert_routing_table,
@@ -914,6 +923,7 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOpV1):
             activation=activation,
             experts_min=self.experts_min,
             experts_max=self.experts_max,
+            **extra_kwargs
         )
         return output
 
