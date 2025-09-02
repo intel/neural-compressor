@@ -937,7 +937,7 @@ class WOQModelLoader:
                 else:  # pragma: no cover
                     assert False, f'`torch_dtype` can be either `torch.dtype` or `"auto"`, but received {torch_dtype}'
 
-            dtype_orig = model_class._set_default_torch_dtype(torch_dtype)
+            dtype_orig = model_class._set_default_dtype(torch_dtype)
 
         init_contexts = (
             [no_init_weights(_enable=_fast_init)]
