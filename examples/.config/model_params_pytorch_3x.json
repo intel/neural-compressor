@@ -244,6 +244,14 @@
       "batch_size": 1,
       "iters": 10
     },
+    "sd21_static_fp8_qdq":{
+      "model_src_dir": "diffusion_model/diffusers/stable_diffusion/fp8_quant",
+      "dataset_location": "/tf_dataset2/datasets/coco2017/coco/",
+      "input_model": "",
+      "main_script": "main.py",
+      "batch_size": 1,
+      "iters": 10
+    },
     "resnet18_mixed_precision": {
       "model_src_dir": "cv/mixed_precision",
       "dataset_location": "/tf_dataset/pytorch/ImageNet/raw",
