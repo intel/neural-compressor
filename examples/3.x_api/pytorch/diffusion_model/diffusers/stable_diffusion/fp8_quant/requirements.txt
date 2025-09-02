@@ -1,0 +1,7 @@
+diffusers
+neural-compressor-pt
+tqdm
+torch-fidelity
+torchmetrics
+pycocotools
+transformers
