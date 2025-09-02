@@ -1,0 +1,6 @@
+numpy
+neural-compressor-pt
+torchmetrics
+pyre_extensions
+torchsnapshot
+tqdm

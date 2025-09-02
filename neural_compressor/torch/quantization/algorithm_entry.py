@@ -600,6 +600,7 @@ def autoround_quantize_entry(
             }
             enable_full_range = quant_config.enable_full_range
             batch_size = quant_config.batch_size
+            amp = quant_config.amp
             lr_scheduler = quant_config.lr_scheduler
             enable_quanted_input = quant_config.enable_quanted_input
             enable_minmax_tuning = quant_config.enable_minmax_tuning
@@ -636,6 +637,7 @@ def autoround_quantize_entry(
         quant_config=weight_config,
         enable_full_range=enable_full_range,
         batch_size=batch_size,
+        amp=amp,
         lr_scheduler=lr_scheduler,
         enable_quanted_input=enable_quanted_input,
         enable_minmax_tuning=enable_minmax_tuning,
