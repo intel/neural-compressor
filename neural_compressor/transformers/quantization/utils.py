@@ -578,7 +578,7 @@ def convert_to_quantized_model(model, config, device="cpu", for_inference=True):
             set_nontext_module_config(model, to_quant_block_names, config)
 
             for n, m in model.named_modules():
-                if isinstance(m, torch.nn.Linear) or isinstance(m, transformers.modeling_utils.Conv1D):
+                if isinstance(m, torch.nn.Linear) or isinstance(m, transformers.pytorch_utils.Conv1D):
                     if m.weight.shape[0] % 32 != 0 or m.weight.shape[1] % 32 != 0:
                         config.modules_to_not_convert.append(n)
                         print(
