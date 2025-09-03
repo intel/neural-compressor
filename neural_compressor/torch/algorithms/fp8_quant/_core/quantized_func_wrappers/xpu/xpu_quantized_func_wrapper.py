@@ -63,7 +63,7 @@ class QuantizedXPUCastFromFP8Base(QuantizedXPUFuncWrapperBase):
         return torch.ops.torch_ipex.cast_from_fp8
 
 
-class QuantizedXPUQuant(QuantizedXpuFuncWrapperBase):
+class QuantizedXPUQuant(QuantizedXPUFuncWrapperBase):
 
     def get_default_quantized_func(self):
         return torch.ops.quantized_decomposed.quantize_per_tensor
@@ -75,7 +75,7 @@ class QuantizedXPUQuant(QuantizedXpuFuncWrapperBase):
         return self._quantized_func_(input, scale, zero_point, quant_min, quant_max, dtype=dtype)
 
 
-class QuantizedXPUDeQuant(QuantizedXpuFuncWrapperBase):
+class QuantizedXPUDeQuant(QuantizedXPUFuncWrapperBase):
 
     def get_default_quantized_func(self):
         return torch.ops.quantized_decomposed.dequantize_per_tensor
@@ -87,7 +87,7 @@ class QuantizedXPUDeQuant(QuantizedXpuFuncWrapperBase):
         return self._quantized_func_(input, scale, zero_point, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype)
 
 
-class QuantizedXPUQuantPC(QuantizedXpuFuncWrapperBase):
+class QuantizedXPUQuantPC(QuantizedXPUFuncWrapperBase):
 
     def get_default_quantized_func(self):
         return torch.ops.quantized_decomposed.quantize_per_channel
@@ -99,7 +99,7 @@ class QuantizedXPUQuantPC(QuantizedXpuFuncWrapperBase):
         return self._quantized_func_(input, scale, zero_point, axis, quant_min, quant_max, dtype=dtype)
 
 
-class QuantizedXPUDeQuantPC(QuantizedXpuFuncWrapperBase):
+class QuantizedXPUDeQuantPC(QuantizedXPUFuncWrapperBase):
 
     def get_default_quantized_func(self):
         return torch.ops.quantized_decomposed.dequantize_per_channel
