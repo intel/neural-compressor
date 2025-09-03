@@ -75,24 +75,18 @@ class TestW8A8PT2EQuantizer:
 
         model_name = "facebook/opt-125m"
         model = AutoModelForCausalLM.from_pretrained(model_name)
+        model_config = model.config
         tokenizer = AutoTokenizer.from_pretrained(model_name)
-        input_ids = tokenizer("Hello, my dog is cute", return_tensors="pt")["input_ids"]
+        inputs = tokenizer("Hello, my dog is cute", return_tensors="pt")
         # example_inputs = (input_ids,)
         # model = export_model_for_pt2e_quant(model, example_inputs=example_inputs)
+        attention_mask = inputs.attention_mask
+        input_ids = inputs.input_ids
+
+
+        from transformers.integrations.executorch import export_with_dynamic_cache
         from transformers import DynamicCache
-        example_inputs =                 {
-                    "input_ids": input_ids,
-                    "attention_mask": None,
-                    "past_key_values": DynamicCache(),
-                    "use_cache": True,
-                }
-        with torch.no_grad():
-            ep = torch.export.export_for_training(
-                model,
-                (),
-                example_inputs,
-                strict=False,
-            )
+        ep = export_with_dynamic_cache(model, input_ids, attention_mask)
         model = ep.module()
         model._exported = True
 
@@ -102,7 +96,12 @@ class TestW8A8PT2EQuantizer:
         prepare_model = w8a8_static_quantizer.prepare(model)
         # calibrate
         for i in range(2):
-            prepare_model(**example_inputs)
+            prepare_model(
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                past_key_values=DynamicCache(config=model_config),
+                use_cache=True,
+            )
         # convert
         converted_model = w8a8_static_quantizer.convert(prepare_model)
         # inference
@@ -110,7 +109,11 @@ class TestW8A8PT2EQuantizer:
 
         config.freezing = True
         opt_model = torch.compile(converted_model)
-        out = opt_model(**example_inputs)
+        out = opt_model(input_ids=input_ids,
+            attention_mask=attention_mask,
+            past_key_values=DynamicCache(config=model_config),
+            use_cache=True,
+            )
         assert out.logits is not None
 
     @patch("neural_compressor.torch.algorithms.pt2e_quant.core.logger.error")
