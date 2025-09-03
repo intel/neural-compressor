@@ -82,8 +82,8 @@ class TestW8A8PT2EQuantizer:
         # model = export_model_for_pt2e_quant(model, example_inputs=example_inputs)
         attention_mask = inputs.attention_mask
         input_ids = inputs.input_ids
-       
-        
+
+
         from transformers.integrations.executorch import export_with_dynamic_cache
         from transformers import DynamicCache
         ep = export_with_dynamic_cache(model, input_ids, attention_mask)
