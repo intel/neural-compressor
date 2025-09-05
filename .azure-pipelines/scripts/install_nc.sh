@@ -17,7 +17,7 @@ if [[ $1 = *"3x_pt"* ]]; then
     fi
     pip install --no-deps dist/neural_compressor*.whl --force-reinstall
 elif [[ $1 = *"3x_tf"* ]]; then
-	pip install tensorflow==2.15.1
+	pip install tensorflow==2.19.0
     python -m pip install --no-cache-dir -r requirements.txt
     python -m pip install --no-cache-dir -r requirements_tf.txt
     python setup.py bdist_wheel
