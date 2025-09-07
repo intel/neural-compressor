@@ -34,7 +34,8 @@ class ScalesMethod:
         self.scale = None
         self.is_dynamic = is_dynamic
         #TODO [SW-224612]: Use cguid to calc scales and remove check
-        self.calc_scale_with_cguid = is_calc_scale_with_cguid()
+        #TODO [SW-239725]: Re-enable scale calculation in cguid for static quantization
+        self.calc_scale_with_cguid = is_calc_scale_with_cguid() if is_dynamic else False
         logger.trace("%s %s", self.__class__.__name__, self.__dict__)
 
     def __repr__(self):
