@@ -681,7 +681,7 @@ class PatchedMoeMatmul(PatchedLinearBase):
         if (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             measure_input((torch.tensor(0),), observer=self._mod_extra_config.inputs)
         else:
-            self.weight = torch.nn.Parameter(self.weight.squeeze(), requires_grad=False)
+            self.weight = torch.nn.Parameter(self.weight.squeeze().t(), requires_grad=False)
 
     def forward_qdq(self, input, *args, **kwargs):
         return self.run_linear_qdq(input, None)
@@ -837,29 +837,6 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         w12_bias_lst = [self.w13_list[i].bias for i in experts_range]
         w3_bias_lst = [self.w2_list[i].bias for i in experts_range]
         qinput = self.quant_input(hidden_states)
-        # output = self.dynamic_moe_op
-        """
-        hpu::mixture_of_experts.bias_fp8_fused_weights(
-            Tensor hidden_states,
-            Tensor expert_routing_table,
-            Tensor router_weights,
-            Tensor[] w12,
-            Tensor[] w3,
-            Tensor[] w12_bias,
-            Tensor[] w3_bias,
-            Tensor d_scale_hidden_states,
-            Tensor[] d_scale_intermediate_hidden_states,
-            Tensor[] d_scale_w12,
-            Tensor[] d_scale_w3, 
-                *, 
-            bool permuted_weights,
-            int experts_min,
-            int experts_max,
-            int chunk_size=0,
-            int total_experts=0,
-            float alpha=1.702,
-            float limit=7.) -> Tensor
-        """
         kwargs = {
             "w12_bias": w12_bias_lst,
             "w3_bias": w3_bias_lst,
