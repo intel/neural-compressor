@@ -9,6 +9,7 @@ We provide the inference benchmarking script `run_generation.py` for large langu
 python version requests equal or higher than 3.9 due to [text evaluation library](https://github.com/EleutherAI/lm-evaluation-harness/tree/master) limitation, the dependent packages are listed in requirements, we recommend create environment as the following steps.
 
 ```bash
+pip install oneccl_bind_pt==2.4.0 --index-url https://pytorch-extension.intel.com/release-whl/stable/cpu/us/
 pip install -r requirements_cpu_woq.txt
 ```
 
