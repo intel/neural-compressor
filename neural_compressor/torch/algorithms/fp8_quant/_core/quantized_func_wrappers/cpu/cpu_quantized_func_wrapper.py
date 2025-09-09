@@ -15,7 +15,10 @@
 from ..quantized_func_wrapper import QuantizedFuncWrapperBase, OP_TYPE, QuantizedFuncWrapperFactory
 
 import torch
-import torchao
+from torchao.quantization.quant_primitives import (
+    _quantize_affine_float8,
+    _dequantize_affine_float8,
+)
 
 from abc import ABCMeta
 
@@ -32,7 +35,7 @@ class QuantizedCPUFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
 class QuantizedCPUQuant(QuantizedCPUFuncWrapperBase):
 
     def get_default_quantized_func(self):
-        return torch.ops.torchao.quantize_affine_float8
+        return _quantize_affine_float8
 
     def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn):
         return self._quantized_func_(tensor=input, scale=torch.tensor(scale), float8_dtype=dtype)
@@ -41,7 +44,7 @@ class QuantizedCPUQuant(QuantizedCPUFuncWrapperBase):
 class QuantizedCPUQuantPC(QuantizedCPUFuncWrapperBase):
 
     def get_default_quantized_func(self):
-        return torch.ops.torchao.quantize_affine_float8
+        return _quantize_affine_float8
 
     def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn):
         return self._quantized_func_(tensor=input, scale=scale.view((-1, 1)), float8_dtype=dtype)
@@ -50,7 +53,7 @@ class QuantizedCPUQuantPC(QuantizedCPUFuncWrapperBase):
 class QuantizedCPUDeQuant(QuantizedCPUFuncWrapperBase):
 
     def get_default_quantized_func(self):
-        return torch.ops.torchao.dequantize_affine_float8
+        return _dequantize_affine_float8
 
     def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn, out_dtype=torch.bfloat16):
         return self._quantized_func_(tensor=input, scale=torch.tensor(scale), output_dtype=out_dtype)
@@ -59,7 +62,7 @@ class QuantizedCPUDeQuant(QuantizedCPUFuncWrapperBase):
 class QuantizedCPUDeQuantPC(QuantizedCPUFuncWrapperBase):
 
     def get_default_quantized_func(self):
-        return torch.ops.torchao.dequantize_affine_float8
+        return _dequantize_affine_float8
 
     def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn, out_dtype=torch.bfloat16):
         return self._quantized_func_(tensor=input, scale=scale.view((1, -1)), output_dtype=out_dtype)
