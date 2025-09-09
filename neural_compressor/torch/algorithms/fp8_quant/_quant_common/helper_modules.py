@@ -147,7 +147,7 @@ class PatchedMatmul(PatchedModuleBase):
 
 def init_mixture_of_experts_linears(instance):
     parent_name = instance.orig_mod_parent.__class__.__name__
-    if parent_name == "MixtralBlockSparseTop2MLP":
+    if parent_name == "MixtralBlockSparseTop2MLP" or parent_name == "GaudiDeepseekV3MLP":
         # this linear is part of MixtureOfExperts block
         # MoE linears hold the weights but their forward logic is done using the dynamic op
         # therefore no measure object is saved causing no quant object as well
@@ -242,8 +242,8 @@ class PatchedLinear(PatchedLinearBase):
         output = self.orig_mod(input)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
-
-
+    
+    
 class PatchedParallelLMHead(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
@@ -800,6 +800,101 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
         )
 
 
+class PatchedGaudiDeepseekV3MoE(PatchedGaudiMixtralSparseMoeBlock):
+    """The patched module for the Optimum Habana DeepseekV3MoE BF16 and FP8 models.
+    
+    This MoE module differs from the Mixtral MoE by chunking the Gaudi mixture of 
+    experts op for models like DeepSeek with large number of experts. The
+    size of the chunks is set using SLICE_MAX_EXPERT environment variable.
+
+    For FP8 models, we need to requantize weights as follows:
+    - At measurement stage, we dequantize the FP8 weights to BF16.
+    - At quantization stage, we use the same `forward_quant` method for both BF16 and FP.
+    """
+    def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+
+        # Check if FP8 model
+        self._is_fp8 = False
+        if hasattr(mod.config, "quantization_config"):
+            if hasattr(mod.config.quantization_config, "quant_method"):
+                self._is_fp8 = (mod.config.quantization_config.quant_method == 'fp8')
+                
+    def call_dynamic_moe_quant_op(self,
+                                  hidden_states,
+                                  expert_routing_table,
+                                  router_weights,
+                                  permuted_weights=False,
+                                  activation="silu"):
+        
+        gate_proj_list = [self.experts[i].gate_proj.weight for i in self.experts_range]
+        down_proj_list = [self.experts[i].down_proj.weight for i in self.experts_range]
+        up_proj_list = [self.experts[i].up_proj.weight for i in self.experts_range]
+        scale_gate_proj = [self.experts[i].gate_proj.scale_weight for i in self.experts_range]
+        scale_down_proj = [self.experts[i].down_proj.scale_weight for i in self.experts_range]
+        scale_up_proj = [self.experts[i].up_proj.scale_weight for i in self.experts_range]
+        qinput = self.quant_input(hidden_states)
+        return self.dynamic_moe_op(
+            hidden_states=qinput,
+            expert_routing_table=expert_routing_table,
+            router_weights=router_weights,
+            w1=gate_proj_list,
+            w2=up_proj_list,
+            w3=down_proj_list,
+            d_scale_w1=scale_gate_proj,
+            d_scale_w2=scale_up_proj,
+            d_scale_w3=scale_down_proj,
+            d_scale_hidden_states=self.scale_input,
+            d_scale_intermediate_hidden_states=self.scale_intermediate,
+            permuted_weights=False,
+            activation=activation,
+            experts_min=self.experts_min,
+            experts_max=self.experts_max,
+        )
+        
+    def call_dynamic_moe_measure_op(self,
+                                    hidden_states,
+                                    expert_routing_table,
+                                    router_weights,
+                                    permuted_weights=True,
+                                    activation="silu"):
+        if self._is_fp8:
+            gate_proj_list = [self.experts[i].gate_proj.get_dequant_weight() for i in self.experts_range]
+            down_proj_list = [self.experts[i].down_proj.get_dequant_weight() for i in self.experts_range]
+            up_proj_list = [self.experts[i].up_proj.get_dequant_weight() for i in self.experts_range]
+        else:
+            gate_proj_list = [self.experts[i].gate_proj.weight for i in self.experts_range]
+            down_proj_list = [self.experts[i].down_proj.weight for i in self.experts_range]
+            up_proj_list = [self.experts[i].up_proj.weight for i in self.experts_range]
+        
+        measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
+        output, intermediate_amax = torch.ops.hpu.mixture_of_experts.fp8_measurement(
+            hidden_states=hidden_states,
+            expert_routing_table=expert_routing_table,
+            router_weights=router_weights,
+            w1=gate_proj_list,
+            w2=up_proj_list,
+            w3=down_proj_list,
+            permuted_weights=permuted_weights,
+            activation=activation,
+            experts_min=self.experts_min,
+            experts_max=self.experts_max,
+            measurement_mode=True,
+        )
+
+        amax = []
+        for i in range(self.num_experts):
+            if i in self.experts_range:
+                amax.append(intermediate_amax[i-self.experts_min])
+            else:
+                amax.append(torch.tensor(0, device="hpu", dtype=intermediate_amax[0].dtype))
+
+        output_measure_list = [output] + amax
+
+        measure_output(output_measure_list, self._mod_extra_config.outputs)
+        return output
+
+    
 class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)

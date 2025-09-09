@@ -88,6 +88,8 @@ _mod_default_dict = {
     # Note: `no_quantize_op` indicates that this module is patched but does not require measurement or quantization.
     "FusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False),
     "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
+    "GaudiDeepseekV3MoE": ModuleInfo("dynamic_moe", PatchedGaudiDeepseekV3MoE),
+    "GaudiFP8Linear": ModuleInfo("linear", PatchedMoeFP8Matmul),
     "VllmMixtureOfExpertsOp": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOp),
     "VllmMixtureOfExpertsOpFP8": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8),
 }
