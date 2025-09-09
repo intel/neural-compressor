@@ -118,11 +118,11 @@ class LinearOpQuantizer(BaseOpQuantizer):
         input_scales = self.calc_input_scales(num_of_inputs=1)
         output_measurement = self.measurement.outputs[0] if self.measurement is not None else []
         rescaled_weight = self.mod.weight if hasattr(self.mod, 'weight') else None
+        if rescaled_weight is not None:
+            rescaled_weight = dequant_original_fp8_weight_if_needed(self.mod, rescaled_weight)
         if self.scales_method_factory.scale_method_config_map[QuantTensorName.WEIGHT_IN_CH].scale_value_type != ScaleValueType.DUMMY_SCALES:
             # Calculating weight in hpu to support scale calculation CGUID torch.ops.hpu.calculate_scale_for_cast
             rescaled_weight = rescaled_weight.to(cur_device)
-        if rescaled_weight is not None:
-            rescaled_weight = dequant_original_fp8_weight_if_needed(self.mod, rescaled_weight)
         if self.weight_ich_scale_calc is not None:
             weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST)
             rescaled_weight = torch.div(rescaled_weight, weight_scales_in_ch.reshape([1, -1]))
