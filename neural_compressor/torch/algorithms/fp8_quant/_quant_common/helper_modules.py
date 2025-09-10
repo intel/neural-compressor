@@ -681,7 +681,7 @@ class PatchedMoeMatmul(PatchedLinearBase):
         if (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             measure_input((torch.tensor(0),), observer=self._mod_extra_config.inputs)
         else:
-            self.weight = torch.nn.Parameter(self.weight.squeeze().t(), requires_grad=False)
+            self.weight = torch.nn.Parameter(self.weight.squeeze().t().contiguous(), requires_grad=False)
 
     def forward_qdq(self, input, *args, **kwargs):
         return self.run_linear_qdq(input, None)
