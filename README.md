@@ -5,7 +5,7 @@ Intel® Neural Compressor
 <h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, and ONNX Runtime)</h3>
 
 [![python](https://img.shields.io/badge/python-3.8%2B-blue)](https://github.com/intel/neural-compressor)
-[![version](https://img.shields.io/badge/release-3.4.1-green)](https://github.com/intel/neural-compressor/releases)
+[![version](https://img.shields.io/badge/release-3.5-green)](https://github.com/intel/neural-compressor/releases)
 [![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
 [![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/intel/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
@@ -56,7 +56,7 @@ To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, p
 
 Run a container with an interactive shell, [more info](https://docs.habana.ai/en/latest/Installation_Guide/Additional_Installation/Docker_Installation.html#docker-installation)
 ```
-docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host vault.habana.ai/gaudi-docker/1.21.0/ubuntu24.04/habanalabs/pytorch-installer-2.6.0:latest
+docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host vault.habana.ai/gaudi-docker/1.22.0/ubuntu24.04/habanalabs/pytorch-installer-2.7.1:latest
 ```
 
 > Note: Since Habana software >= 1.21.0, `PT_HPU_LAZY_MODE=0` is the default setting. However, most low-precision functions (such as `convert_from_uint4`) do not support this setting. Therefore, we recommend setting `PT_HPU_LAZY_MODE=1` to maintain compatibility.
