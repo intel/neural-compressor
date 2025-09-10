@@ -37,6 +37,7 @@ from neural_compressor.torch.utils import SaveLoadFormat, is_optimum_habana_avai
 
 if is_transformers_imported():
     import transformers
+
     SUPPORTED_LAYERS = [nn.Linear, transformers.pytorch_utils.Conv1D]
 else:
     SUPPORTED_LAYERS = [nn.Conv1d, nn.Linear]
