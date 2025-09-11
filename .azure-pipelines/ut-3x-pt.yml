@@ -52,7 +52,6 @@ stages:
     jobs:
       - job:
         displayName: Unit Test 3x Torch baseline
-        continueOnError: true
         steps:
           - template: template/ut-template.yml
             parameters:
