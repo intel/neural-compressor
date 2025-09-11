@@ -359,7 +359,7 @@ class HFLM(TemplateLM):
     @property
     def model(self):
         # returns the model, unwrapping it if using Accelerate
-        if hasattr(self, "accelerator"):
+        if hasattr(self, "accelerator") and self._model is not None:
             return self.accelerator.unwrap_model(self._model)
         else:
             return self._model
