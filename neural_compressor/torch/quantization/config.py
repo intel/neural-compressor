@@ -971,6 +971,9 @@ class AutoRoundConfig(TorchBaseConfig):
         # v0.4
         enable_norm_bias_tuning: bool = False,
         enable_torch_compile: bool = None,
+        # v0.7
+        scheme: str | dict = "W4A16",
+        device_map: str = None,
         # mllm
         is_mllm: bool = False,
         quant_nontext_module: bool = False,
@@ -1029,6 +1032,8 @@ class AutoRoundConfig(TorchBaseConfig):
             image_processor (Processor): Image processor for special model like llava.
             template (Template): The template to specify process for different mllms.
             truncation (bool): Activates truncation to cut input sequences longer than `max_length` to `max_length`.
+            device_map: The device to be used for tuning.
+            scheme (str| dict | QuantizationScheme ): A preset scheme that defines the quantization configurations.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
               Default is DEFAULT_WHITE_LIST.
         """
@@ -1073,6 +1078,8 @@ class AutoRoundConfig(TorchBaseConfig):
         self.image_processor = image_processor
         self.template = template
         self.truncation = truncation
+        self.scheme = scheme
+        self.device_map = device_map
         self._post_init()
 
     @classmethod
