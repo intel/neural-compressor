@@ -349,9 +349,7 @@ def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42
     """
     from auto_round.calib_dataset import get_dataloader  # pylint: disable=E0401
 
-    dataloader = get_dataloader(
-        tokenizer, seqlen, dataset_name=dataset_name, seed=seed, bs=bs, nsamples=nsamples
-    )
+    dataloader = get_dataloader(tokenizer, seqlen, dataset_name=dataset_name, seed=seed, bs=bs, nsamples=nsamples)
     return dataloader
 
 
