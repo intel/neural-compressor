@@ -247,7 +247,7 @@ class TestAutoRoundCPU:
             seed=42,
             nsamples=1,
             gradient_accumulate_steps=1,
-            quant_nontext_module=False,
+            quant_nontext_module=True,
             processor=processor,
         )
         quant_config = AutoRoundConfig(
@@ -258,7 +258,7 @@ class TestAutoRoundCPU:
             batch_size=batch_size,
             iters=1,
             seqlen=seqlen,
-            quant_nontext_module=False,
+            quant_nontext_module=True,
             truncation=truncation,
             gradient_accumulate_steps=gradient_accumulate_steps,
         )
@@ -283,6 +283,21 @@ class TestAutoRoundCPU:
     #     q_model.save(output_dir="saved_results_tiny-random-GPTJForCausalLM", format="huggingface")
     #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
 
+    @pytest.mark.parametrize("scheme", ["MXFP4", "NVFP4"])
+    def test_scheme(self, scheme):
+        fp32_model = copy.deepcopy(self.gptj)
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp16", 
+                                       scheme=scheme, export_format="llm_compressor")
+        logger.info(f"Test AutoRound with config {quant_config}")
+
+        # quantizer execute
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        run_fn(model, self.dataloader)
+        q_model = convert(model)
+        out = q_model(self.inp)[0]
+        assert q_model is not None, "Quantization failed!"
+        assert q_model.transformer.h[0].attn.k_proj.bits is 4
+        assert torch.allclose(out, self.label, atol=1e-1)
 
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")
 @pytest.mark.skipif(os.getenv("PT_HPU_LAZY_MODE", "0") == "1", reason="Lazy mode is enabled")

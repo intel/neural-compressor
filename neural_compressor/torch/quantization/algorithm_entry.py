@@ -629,6 +629,8 @@ def autoround_quantize_entry(
             image_processor = quant_config.image_processor
             template = quant_config.template
             truncation = quant_config.truncation
+            scheme = quant_config.scheme
+            device_map = quant_config.device_map
 
     kwargs.pop("example_inputs")
     quantizer = get_quantizer(
@@ -666,6 +668,8 @@ def autoround_quantize_entry(
         image_processor=image_processor,
         template=template,
         truncation=truncation,
+        scheme=scheme,
+        device_map=device_map,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping

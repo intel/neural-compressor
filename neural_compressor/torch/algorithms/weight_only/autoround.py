@@ -37,6 +37,7 @@ from auto_round import AutoRound, AutoRoundMLLM  # pylint: disable=E0401
 from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
 from auto_round.mllm import lmms_eval, mllm_eval
 from auto_round.mllm.template import Template, get_template
+from auto_round.schemes import QuantizationScheme
 
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, logger
@@ -53,7 +54,7 @@ class AutoRoundQuantizer(Quantizer):
         enable_full_range: bool = False,  ##for symmetric, TODO support later
         batch_size: int = 8,
         amp: bool = True,
-        device: str = None,
+        device_map: str = None,
         lr_scheduler=None,
         dataset: Union[str, list, tuple, torch.utils.data.DataLoader] = "NeelNanda/pile-10k",
         enable_quanted_input: bool = True,
@@ -91,6 +92,8 @@ class AutoRoundQuantizer(Quantizer):
         processor=None,
         template: Union[str, Template] = None,
         truncation: bool = False,
+        # 0.7
+        scheme: Union[str, dict, QuantizationScheme] = "W4A16",
         **kwargs,
     ):
         """Init a AutQRoundQuantizer object.
@@ -122,7 +125,7 @@ class AutoRoundQuantizer(Quantizer):
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
             amp (bool): Whether to use automatic mixed precision (default is True).
-            device: The device to be used for tuning (default is "auto").
+            device_map: The device to be used for tuning (default is None).
             lr_scheduler: The learning rate scheduler to be used.
             dataset (str): The default dataset name (default is "NeelNanda/pile-10k").
             enable_quanted_input (bool): Whether to use the output of the previous quantized block as
@@ -161,6 +164,7 @@ class AutoRoundQuantizer(Quantizer):
             image_processor (Processor): Image processor for special model like llava.
             template (Template): The template to specify process for different mllms.
             truncation (bool): Activates truncation to cut input sequences longer than `max_length` to `max_length`.
+            scheme (str| dict | QuantizationScheme ): A preset scheme that defines the quantization configurations.
 
         Returns:
             The quantized model.
@@ -205,6 +209,8 @@ class AutoRoundQuantizer(Quantizer):
         self.image_processor = image_processor
         self.template = template
         self.truncation = truncation
+        self.scheme = scheme
+        self.device_map = device_map
         self.enable_w4afp8 = self._is_w4afp8()
 
     def _is_w4afp8(self):
@@ -237,12 +243,13 @@ class AutoRoundQuantizer(Quantizer):
             rounder = AutoRoundMLLM(
                 model,
                 tokenizer=self.tokenizer,
+                scheme=self.scheme,
                 processor=self.processor,
                 image_processor=self.image_processor,
                 layer_config=self.quant_config,
                 batch_size=self.batch_size,
                 amp=self.amp,
-                device=self.device,
+                device_map=self.device_map,
                 lr_scheduler=self.lr_scheduler,
                 dataset=dataloader,
                 extra_data_dir=self.extra_data_dir,
@@ -278,12 +285,13 @@ class AutoRoundQuantizer(Quantizer):
             rounder = AutoRound(
                 model=model,
                 tokenizer=self.tokenizer,
+                scheme=self.scheme,
                 dataset=dataloader,
                 layer_config=self.quant_config or {},
                 enable_full_range=self.enable_full_range,
                 batch_size=self.batch_size,
                 amp=self.amp,
-                device=self.device,
+                device_map=self.device_map,
                 lr_scheduler=self.lr_scheduler,
                 enable_quanted_input=self.enable_quanted_input,
                 enable_minmax_tuning=self.enable_minmax_tuning,
@@ -317,7 +325,7 @@ class AutoRoundQuantizer(Quantizer):
         elif "itrex" in self.export_format:
             model = pack_model(model, weight_config, device=self.device, inplace=True)
         else:  # pragma: no cover
-            model = rounder.save_quantized(output_dir=None, format=self.export_format, device=self.device, inplace=True)
+            model = rounder.save_quantized(output_dir="temp_auto_round", format=self.export_format, inplace=True)
 
         return model
 
@@ -341,9 +349,7 @@ def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42
     """
     from auto_round.calib_dataset import get_dataloader  # pylint: disable=E0401
 
-    dataloader = get_dataloader(
-        tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=seed, bs=bs, nsamples=nsamples
-    )
+    dataloader = get_dataloader(tokenizer, seqlen, dataset_name=dataset_name, seed=seed, bs=bs, nsamples=nsamples)
     return dataloader
 
 
