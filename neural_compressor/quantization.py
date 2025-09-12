@@ -25,10 +25,10 @@ from .config import _Config, options
 from .data import check_dataloader
 from .metric import register_customer_metric
 from .model import Model
+from .security.sandbox import secure_eval_func
 from .strategy import STRATEGIES
 from .utils import logger
 from .utils.utility import dump_class_attrs, time_limit
-from .security.sandbox import secure_eval_func
 
 
 def fit(

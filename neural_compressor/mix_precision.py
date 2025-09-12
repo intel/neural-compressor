@@ -27,10 +27,10 @@ from neural_compressor.metric import register_customer_metric
 
 from .config import _Config, options
 from .model import Model
+from .security.sandbox import secure_eval_func
 from .strategy import STRATEGIES
 from .utils import alias_param, logger
 from .utils.utility import CpuInfo, time_limit
-from .security.sandbox import secure_eval_func
 
 
 @alias_param("conf", param_alias="config")

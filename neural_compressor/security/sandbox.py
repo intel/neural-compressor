@@ -1,7 +1,22 @@
-import os
+# Copyright (c) 2025 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import inspect
 import multiprocessing as mp
+import os
 from types import FunctionType
+
 from ..utils import logger
 
 _FORBIDDEN_PATTERNS = [
@@ -19,6 +34,7 @@ _FORBIDDEN_PATTERNS = [
     "__import__(",
 ]
 
+
 def _static_check(func):
     try:
         src = inspect.getsource(func)
@@ -29,6 +45,7 @@ def _static_check(func):
     for p in _FORBIDDEN_PATTERNS:
         if p in lowered:
             raise ValueError(f"Unsafe token detected in eval_func: {p}")
+
 
 def _wrap_subprocess(func, timeout):
     def wrapper(model, *args, **kwargs):
@@ -57,9 +74,10 @@ def _wrap_subprocess(func, timeout):
     wrapper.__name__ = getattr(func, "__name__", "secure_eval_wrapper")
     return wrapper
 
+
 def secure_eval_func(user_func, timeout=300):
-    """
-    Return a secured version of user eval_func.
+    """Return a secured version of user eval_func.
+
     Controlled by env NC_EVAL_SANDBOX (default=1 to enable).
     """
     enable = os.getenv("NC_EVAL_SANDBOX", "1") == "1"
@@ -77,6 +95,7 @@ def secure_eval_func(user_func, timeout=300):
     try:
         mp.get_context("spawn")  # ensure spawn context available
         import pickle
+
         pickle.dumps(user_func)
     except Exception:
         logger.warning("eval_func not picklable; cannot sandbox. Running directly (re-enable by refactoring).")
