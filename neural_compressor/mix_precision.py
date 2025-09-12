@@ -30,6 +30,7 @@ from .model import Model
 from .strategy import STRATEGIES
 from .utils import alias_param, logger
 from .utils.utility import CpuInfo, time_limit
+from .security.sandbox import secure_eval_func
 
 
 @alias_param("conf", param_alias="config")
@@ -90,6 +91,12 @@ def fit(model, conf, eval_func=None, eval_dataloader=None, eval_metric=None, **k
             "please modify precision or excluded_precisions to make it understandable."
         )
         sys.exit(0)
+
+    if eval_func is not None:
+        try:
+            eval_func = secure_eval_func(eval_func, timeout=getattr(conf.tuning_criterion, "timeout", 300))
+        except Exception as e:
+            raise RuntimeError(f"Rejected unsafe eval_func: {e}")
 
     wrapped_model = Model(model, conf=conf)
 

@@ -28,6 +28,7 @@ from .model import Model
 from .strategy import STRATEGIES
 from .utils import logger
 from .utils.utility import dump_class_attrs, time_limit
+from .security.sandbox import secure_eval_func
 
 
 def fit(
@@ -152,6 +153,12 @@ def fit(
         metric = register_customer_metric(eval_metric, conf.framework)
     else:
         metric = None
+
+    if eval_func is not None:
+        try:
+            eval_func = secure_eval_func(eval_func, timeout=getattr(conf.tuning_criterion, "timeout", 300))
+        except Exception as e:
+            raise RuntimeError(f"Rejected unsafe eval_func: {e}")
 
     config = _Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
     strategy_name = conf.tuning_criterion.strategy
