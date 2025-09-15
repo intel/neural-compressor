@@ -82,9 +82,6 @@ def secure_eval_func(user_func, timeout=300):
         _static_check(user_func)
     except ValueError as e:
         raise
-    if not enable:
-        logger.info("Sandbox disabled (NC_EVAL_SANDBOX!=1); eval_func will run directly.")
-        return user_func
     # Check picklability for subprocess
     try:
         mp.get_context("spawn")  # ensure spawn context available
