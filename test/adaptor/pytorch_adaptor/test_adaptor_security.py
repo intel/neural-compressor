@@ -92,5 +92,6 @@ class TestAdaptSecurity(unittest.TestCase):
             fit(model=dummy_model, conf=conf, eval_func=exploit)
         self.assertIn("Rejected unsafe eval_func", str(ctx.exception))
 
+
 if __name__ == "__main__":
     unittest.main()
