@@ -74,8 +74,7 @@ def _wrap_subprocess(func, timeout):
 
 
 def secure_eval_func(user_func, timeout=300):
-    """Return a secured version of user eval_func.
-    """
+    """Return a secured version of user eval_func."""
     if not isinstance(user_func, FunctionType):
         logger.warning("Provided eval_func is not a plain function; security checks limited.")
         return user_func
