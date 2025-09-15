@@ -15,8 +15,10 @@
 import os
 import torch
 from typing import Optional
+from neural_compressor.torch.algorithms.fp8_quant.utils.logger import logger
 
-
+# Enable retrieval of rank information from the Tensor Parallel (TP) group
+INC_ENABLE_TP_RANK_INFO = os.getenv("INC_ENABLE_TP_RANK_INFO", "0").lower() in ("1", "true", "yes")
 _world_size = -1
 _local_rank = -1
 
@@ -25,7 +27,14 @@ def get_world_size():
     global _world_size
     if _world_size == -1:
         if torch.distributed.is_initialized():
-            _world_size = torch.distributed.get_world_size()
+            if INC_ENABLE_TP_RANK_INFO:
+                logger.warning("Getting world size from tensor parallel group")
+                from .._core.vllm_functions import get_vllm_tensor_model_parallel_world_size_func
+
+                _world_size = get_vllm_tensor_model_parallel_world_size_func()()
+            else:
+                _world_size = torch.distributed.get_world_size()
+    logger.info(f"get_world_size: {_world_size}")
     return _world_size
 
 
@@ -33,7 +42,14 @@ def get_local_rank():
     global _local_rank
     if _local_rank == -1:
         if torch.distributed.is_initialized():
-            _local_rank = torch.distributed.get_rank()
+            if INC_ENABLE_TP_RANK_INFO:
+                logger.warning("Getting world size from tensor parallel group")
+                from .._core.vllm_functions import get_vllm_tensor_model_parallel_rank_func
+
+                _local_rank = get_vllm_tensor_model_parallel_rank_func()()
+            else:
+                _local_rank = torch.distributed.get_rank()
+    logger.info(f"get_local_rank: {_local_rank}")
     return _local_rank
 
 
