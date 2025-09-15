@@ -14,7 +14,6 @@
 
 import inspect
 import multiprocessing as mp
-import os
 from types import FunctionType
 
 from ..utils import logger
@@ -30,7 +29,6 @@ _FORBIDDEN_PATTERNS = [
     "Popen(",
     "system(",
     "exec(",
-    "eval(",
     "__import__(",
 ]
 
@@ -77,10 +75,7 @@ def _wrap_subprocess(func, timeout):
 
 def secure_eval_func(user_func, timeout=300):
     """Return a secured version of user eval_func.
-
-    Controlled by env NC_EVAL_SANDBOX (default=1 to enable).
     """
-    enable = os.getenv("NC_EVAL_SANDBOX", "1") == "1"
     if not isinstance(user_func, FunctionType):
         logger.warning("Provided eval_func is not a plain function; security checks limited.")
         return user_func
