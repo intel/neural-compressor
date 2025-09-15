@@ -677,6 +677,7 @@ class PatchedMixtralMoE(PatchedModuleBase):
 class PatchedMoeMatmul(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        self.scale_format = ScaleFormat.CONST
         self.init_linear(mod_extra_config)
         if (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             measure_input((torch.tensor(0),), observer=self._mod_extra_config.inputs)
@@ -799,7 +800,7 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
             get_current_repr(self, *member_names),
         )
 
-
+from .._quant_common.quant_config import ScaleFormat
 class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
@@ -807,6 +808,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         self.experts_min = self.orig_mod.experts_min if hasattr(self.orig_mod, "experts_min") else 0
         self.experts_max = self.orig_mod.experts_max if hasattr(self.orig_mod, "experts_max") else 7
         self.experts_used = self.local_num_experts if hasattr(self.orig_mod, "local_num_experts") else self.num_experts
+        self.scale_format = ScaleFormat.CONST
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
 
             self.quant_input = self._mod_extra_config.inputs[0]
