@@ -39,6 +39,7 @@ stages:
     jobs:
       - job:
         displayName: Torch 3x Habana FP8
+        timeoutInMinutes: 120
         steps:
           - template: template/ut-template.yml
             parameters:
@@ -54,7 +55,7 @@ stages:
     jobs:
       - job:
         displayName: Torch 3x Habana FP8 baseline
-        continueOnError: true
+        timeoutInMinutes: 120
         steps:
           - template: template/ut-template.yml
             parameters:
