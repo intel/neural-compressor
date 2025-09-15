@@ -94,7 +94,7 @@ def fit(model, conf, eval_func=None, eval_dataloader=None, eval_metric=None, **k
 
     if eval_func is not None:
         try:
-            eval_func = secure_eval_func(eval_func, timeout=getattr(conf.tuning_criterion, "timeout", 300))
+            eval_func = secure_eval_func(eval_func)
         except Exception as e:
             raise RuntimeError(f"Rejected unsafe eval_func: {e}")
 

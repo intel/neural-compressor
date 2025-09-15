@@ -45,7 +45,7 @@ def _static_check(func):
             raise ValueError(f"Unsafe token detected in eval_func: {p}")
 
 
-def _wrap_subprocess(func, timeout):
+def _wrap_subprocess(func):
     def wrapper(model, *args, **kwargs):
         q = mp.Queue()
 
@@ -58,7 +58,7 @@ def _wrap_subprocess(func, timeout):
 
         p = mp.Process(target=_target)
         p.start()
-        p.join(timeout)
+        p.join()
         if p.is_alive():
             p.terminate()
             raise TimeoutError("eval_func execution timeout.")
@@ -73,7 +73,7 @@ def _wrap_subprocess(func, timeout):
     return wrapper
 
 
-def secure_eval_func(user_func, timeout=300):
+def secure_eval_func(user_func):
     """Return a secured version of user eval_func."""
     if not isinstance(user_func, FunctionType):
         logger.warning("Provided eval_func is not a plain function; security checks limited.")
@@ -91,4 +91,4 @@ def secure_eval_func(user_func, timeout=300):
     except Exception:
         logger.warning("eval_func not picklable; cannot sandbox. Running directly (re-enable by refactoring).")
         return user_func
-    return _wrap_subprocess(user_func, timeout)
+    return _wrap_subprocess(user_func)
