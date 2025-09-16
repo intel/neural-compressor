@@ -9,7 +9,6 @@ from neural_compressor import PostTrainingQuantConfig
 from neural_compressor.mix_precision import fit
 from neural_compressor.security import secure_eval_func
 
-
 # class DummyModel:
 #     def __call__(self, x):
 #         return x
