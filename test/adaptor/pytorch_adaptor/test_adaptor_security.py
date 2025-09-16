@@ -15,13 +15,6 @@ class DummyModel:
         return x
 
 
-def _set_env(key, val):
-    if val is None:
-        os.environ.pop(key, None)
-    else:
-        os.environ[key] = val
-
-
 def boom_picklable(model):
     raise ValueError("inner boom (picklable)")
 
@@ -77,14 +70,14 @@ def exploit(model):
     return 1.0
 
 
-class DummyModel(nn.Module):
+class DummyTorchModel(nn.Module):
     def forward(self, x):
         return x
 
 
 class TestAdaptSecurity(unittest.TestCase):
     def test_security(self):
-        dummy_model = DummyModel()
+        dummy_model = DummyTorchModel()
         conf = PostTrainingQuantConfig()
         conf.precisions = ["fp32"]
         conf.excluded_precisions = []
