@@ -82,13 +82,14 @@ def secure_eval_func(user_func):
         _static_check(user_func)
     except ValueError as e:
         raise
-    # Check picklability for subprocess
-    try:
-        mp.get_context("spawn")  # ensure spawn context available
-        import pickle
+    return user_func
+    # # Check picklability for subprocess
+    # try:
+    #     mp.get_context("spawn")  # ensure spawn context available
+    #     import pickle
 
-        pickle.dumps(user_func)
-    except Exception:
-        logger.warning("eval_func not picklable; cannot sandbox. Running directly (re-enable by refactoring).")
-        return user_func
-    return _wrap_subprocess(user_func)
+    #     pickle.dumps(user_func)
+    # except Exception:
+    #     logger.warning("eval_func not picklable; cannot sandbox. Running directly (re-enable by refactoring).")
+    #     return user_func
+    # return _wrap_subprocess(user_func)
