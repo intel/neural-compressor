@@ -4,7 +4,7 @@ import shutil
 import pytest
 import torch
 import transformers
-from packaging.version import Version
+from packaging.version import Version, parse
 import os
 from functools import lru_cache
 
@@ -290,6 +290,7 @@ class TestAutoRoundCPU:
     #     q_model.save(output_dir="saved_results_tiny-random-GPTJForCausalLM", format="huggingface")
     #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
 
+    @pytest.mark.skipif(parse(auto_round.__version__) > parse("0.7.0"))
     @pytest.mark.skipif(not ct_installed, reason="compressed-tensors module is not installed")
     @pytest.mark.parametrize("scheme", ["MXFP4", "NVFP4"])
     def test_scheme(self, scheme):
