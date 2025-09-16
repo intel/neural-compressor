@@ -290,13 +290,21 @@ class TestAutoRoundCPU:
     #     q_model.save(output_dir="saved_results_tiny-random-GPTJForCausalLM", format="huggingface")
     #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
 
-    @pytest.mark.skipif(parse(auto_round.__version__) <= parse("0.7.0"))
-    @pytest.mark.skipif(not ct_installed, reason="compressed-tensors module is not installed")
+    @pytest.mark.skipif(parse(auto_round.__version__) <= parse("0.7.0"),
+                        reason="Export with llm_compressor format does not return a model.")
+    @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
     @pytest.mark.parametrize("scheme", ["MXFP4", "NVFP4"])
     def test_scheme(self, scheme):
         fp32_model = copy.deepcopy(self.gptj)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp16", 
-                                       scheme=scheme, export_format="llm_compressor")
+        quant_config = AutoRoundConfig(
+            nsamples=32,
+            seqlen=10,
+            iters=10,
+            amp=False,
+            scale_dtype="fp16",
+            scheme=scheme,
+            export_format="llm_compressor",
+        )
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # quantizer execute
