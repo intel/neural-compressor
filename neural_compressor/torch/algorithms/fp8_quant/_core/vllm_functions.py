@@ -17,11 +17,17 @@
 # and protect from import errors in case vLLM is not installed.
 
 try:
-    from vllm.distributed import (tensor_model_parallel_all_gather,
-                                  tensor_model_parallel_all_reduce)
+    from vllm.distributed import (
+        tensor_model_parallel_all_gather,
+        tensor_model_parallel_all_reduce,
+        get_tensor_model_parallel_rank,
+        get_tensor_model_parallel_world_size,
+    )
 except ImportError:
     tensor_model_parallel_all_gather = None
     tensor_model_parallel_all_reduce = None
+    get_tensor_model_parallel_rank = None
+    get_tensor_model_parallel_world_size = None
 
 def get_vllm_column_parallel_collective_func():
     assert tensor_model_parallel_all_gather is not None, "Couldn't import vllm function tensor_model_parallel_all_gather"
@@ -30,3 +36,11 @@ def get_vllm_column_parallel_collective_func():
 def get_vllm_row_parallel_collective_func():
     assert tensor_model_parallel_all_reduce is not None, "Couldn't import vllm function tensor_model_parallel_all_reduce"
     return tensor_model_parallel_all_reduce
+
+def get_vllm_tensor_model_parallel_rank_func():
+    assert get_tensor_model_parallel_rank is not None, "Couldn't import vllm function get_tensor_model_parallel_rank"
+    return get_tensor_model_parallel_rank
+
+def get_vllm_tensor_model_parallel_world_size_func():
+    assert get_tensor_model_parallel_world_size is not None, "Couldn't import vllm function get_tensor_model_parallel_world_size"
+    return get_tensor_model_parallel_world_size
