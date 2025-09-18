@@ -29,7 +29,7 @@ from .config import _Config, options
 from .model import Model
 from .strategy import STRATEGIES
 from .utils import alias_param, logger
-from .utils.utility import CpuInfo, time_limit
+from .utils.utility import CpuInfo, secure_check_eval_func, time_limit
 
 
 @alias_param("conf", param_alias="config")
@@ -90,6 +90,8 @@ def fit(model, conf, eval_func=None, eval_dataloader=None, eval_metric=None, **k
             "please modify precision or excluded_precisions to make it understandable."
         )
         sys.exit(0)
+
+    secure_check_eval_func(eval_func)
 
     wrapped_model = Model(model, conf=conf)
 

@@ -27,7 +27,7 @@ from .metric import register_customer_metric
 from .model import Model
 from .strategy import STRATEGIES
 from .utils import logger
-from .utils.utility import dump_class_attrs, time_limit
+from .utils.utility import dump_class_attrs, secure_check_eval_func, time_limit
 
 
 def fit(
@@ -152,6 +152,8 @@ def fit(
         metric = register_customer_metric(eval_metric, conf.framework)
     else:
         metric = None
+
+    secure_check_eval_func(eval_func)
 
     config = _Config(quantization=conf, benchmark=None, pruning=None, distillation=None, nas=None)
     strategy_name = conf.tuning_criterion.strategy
