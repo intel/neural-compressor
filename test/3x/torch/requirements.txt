@@ -1,4 +1,5 @@
 auto_round
+compressed-tensors
 datasets
 deepspeed @ git+https://github.com/HabanaAI/DeepSpeed.git@1.22.0
 expecttest
