@@ -918,12 +918,20 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             if self.is_dynamic_quantization:
                 self.forward = self.forward_dynamic_quant
 
+    def _get_extra_kwargs(self, tokens_num: int):
+        kwargs = {}
+        if hasattr(self.orig_mod, "_get_extra_kwargs"):
+            kwargs = self.orig_mod._get_extra_kwargs(tokens_num)
+        return kwargs
+
     def forward_quant(self,
                       hidden_states,
                       expert_routing_table,
                       router_weights,
                       permuted_weights=True,
                       activation="silu"):
+        tokens_num, hidden_dim = hidden_states.shape
+        extra_kwargs = self._get_extra_kwargs(tokens_num)
         experts_range = range(self.experts_used)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]
@@ -944,6 +952,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             activation=activation,
             experts_min=self.experts_min,
             experts_max=self.experts_max,
+            **extra_kwargs,
         )
         return output
 
