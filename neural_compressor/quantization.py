@@ -18,6 +18,7 @@
 import os
 import pickle
 import random
+
 import numpy as np
 
 from .config import _Config, options
@@ -26,7 +27,7 @@ from .metric import register_customer_metric
 from .model import Model
 from .strategy import STRATEGIES
 from .utils import logger
-from .utils.utility import dump_class_attrs, time_limit, secure_check_eval_func
+from .utils.utility import dump_class_attrs, secure_check_eval_func, time_limit
 
 
 def fit(

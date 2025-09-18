@@ -29,7 +29,7 @@ from .config import _Config, options
 from .model import Model
 from .strategy import STRATEGIES
 from .utils import alias_param, logger
-from .utils.utility import CpuInfo, time_limit, secure_check_eval_func
+from .utils.utility import CpuInfo, secure_check_eval_func, time_limit
 
 
 @alias_param("conf", param_alias="config")

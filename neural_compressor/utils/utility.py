@@ -25,6 +25,7 @@ import _thread
 import ast
 import builtins
 import importlib
+import inspect
 import logging
 import os
 import os.path as osp
@@ -39,6 +40,7 @@ from contextlib import contextmanager
 from enum import Enum
 from functools import wraps
 from tempfile import NamedTemporaryFile
+from types import FunctionType
 from typing import Any, Dict, List, Optional
 
 import cpuinfo
@@ -46,9 +48,6 @@ import numpy as np
 import prettytable as pt
 import psutil
 from pkg_resources import parse_version
-
-import inspect
-from types import FunctionType
 
 from neural_compressor.utils import logger
 
@@ -1285,6 +1284,7 @@ def check_key_exist(data, key):
                 return True
     return False
 
+
 # for eval_func
 _FORBIDDEN_PATTERNS = [
     "import os",
@@ -1299,6 +1299,7 @@ _FORBIDDEN_PATTERNS = [
     "exec(",
     "__import__(",
 ]
+
 
 def _static_check(func):
     try:
