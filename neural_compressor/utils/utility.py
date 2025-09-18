@@ -47,6 +47,9 @@ import prettytable as pt
 import psutil
 from pkg_resources import parse_version
 
+import inspect
+from types import FunctionType
+
 from neural_compressor.utils import logger
 
 required_libs = {
@@ -1281,3 +1284,40 @@ def check_key_exist(data, key):
             if check_key_exist(item, key):
                 return True
     return False
+
+# for eval_func
+_FORBIDDEN_PATTERNS = [
+    "import os",
+    "import subprocess",
+    "import sys",
+    "subprocess.",
+    "os.system",
+    "os.popen",
+    "popen(",
+    "Popen(",
+    "system(",
+    "exec(",
+    "__import__(",
+]
+
+def _static_check(func):
+    try:
+        src = inspect.getsource(func)
+    except (OSError, IOError):  # pragma: no cover
+        logger.warning("Cannot read source of eval_func; skip static scan.")
+        return
+    lowered = src.lower()
+    for p in _FORBIDDEN_PATTERNS:
+        if p in lowered:
+            raise ValueError(f"Unsafe token detected in eval_func: {p}")
+
+
+def secure_check_eval_func(user_func):
+    """Return a secured version of user eval_func."""
+    if not isinstance(user_func, FunctionType) or user_func is None:
+        logger.warning("Provided eval_func is not a plain function; security checks limited.")
+        return user_func
+    try:
+        _static_check(user_func)
+    except ValueError as e:
+        raise RuntimeError(f"Rejected unsafe eval_func: {e}")

@@ -27,10 +27,9 @@ from neural_compressor.metric import register_customer_metric
 
 from .config import _Config, options
 from .model import Model
-from .security.sandbox import secure_eval_func
 from .strategy import STRATEGIES
 from .utils import alias_param, logger
-from .utils.utility import CpuInfo, time_limit
+from .utils.utility import CpuInfo, time_limit, secure_check_eval_func
 
 
 @alias_param("conf", param_alias="config")
@@ -92,11 +91,7 @@ def fit(model, conf, eval_func=None, eval_dataloader=None, eval_metric=None, **k
         )
         sys.exit(0)
 
-    if eval_func is not None:
-        try:
-            eval_func = secure_eval_func(eval_func)
-        except Exception as e:
-            raise RuntimeError(f"Rejected unsafe eval_func: {e}")
+    secure_check_eval_func(eval_func)
 
     wrapped_model = Model(model, conf=conf)
 
