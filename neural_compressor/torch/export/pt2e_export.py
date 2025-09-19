@@ -13,13 +13,20 @@
 # limitations under the License.
 """Export model for quantization."""
 
+from functools import partial
 from typing import Any, Dict, Optional, Tuple, Union
 
 import torch
 from torch.fx.graph_module import GraphModule
 
 from neural_compressor.common.utils import logger
-from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, TORCH_VERSION_2_7_0, get_torch_version, is_ipex_imported
+from neural_compressor.torch.utils import (
+    TORCH_VERSION_2_2_2,
+    TORCH_VERSION_2_7_0,
+    TORCH_VERSION_2_8_0,
+    get_torch_version,
+    is_ipex_imported,
+)
 
 __all__ = ["export", "export_model_for_pt2e_quant"]
 
@@ -52,7 +59,10 @@ def export_model_for_pt2e_quant(
             # Note 1: `capture_pre_autograd_graph` is also a short-term API, it will be
             # updated to use the official `torch.export` API when that is ready.
             cur_version = get_torch_version()
-            if cur_version >= TORCH_VERSION_2_7_0:
+            if cur_version >= TORCH_VERSION_2_8_0:
+                export_func = torch.export.export
+                export_func = partial(export_func, strict=True)
+            elif cur_version >= TORCH_VERSION_2_7_0:
                 export_func = torch.export.export_for_training
             else:
                 export_func = torch._export.capture_pre_autograd_graph
