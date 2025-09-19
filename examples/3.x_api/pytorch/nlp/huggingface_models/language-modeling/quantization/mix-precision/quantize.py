@@ -76,7 +76,6 @@ if __name__ == "__main__":
     parser.add_argument("--accuracy", action="store_true", help="accuracy measurement")
     parser.add_argument("--local_rank", type=int, default=0, metavar="N", help="Local process rank.")
     parser.add_argument("--batch_size", default=4, type=int, help="batch size for accuracy measurement.")
-    parser.add_argument("--num_fewshot", default=0, type=int, help="num_fewshot of lm_eval.")
     parser.add_argument(
         "--mxfp8_mod_list",
         type=str,
@@ -155,6 +154,7 @@ if __name__ == "__main__":
     # set dtype to BF16 for HPU inference performance
     model = model.to(torch.bfloat16)
     model = model.eval().to(device)
+
     print(model)
 
     if args.accuracy:
@@ -174,7 +174,6 @@ if __name__ == "__main__":
                 tasks=tasks,
                 device="hpu",
                 pad_to_buckets=True,
-                num_fewshot=args.num_fewshot,
                 limit=args.limit,
                 add_bos_token=True,
             )
@@ -213,7 +212,6 @@ if __name__ == "__main__":
                 results = lm_eval.simple_evaluate(
                     lm,
                     tasks=args.tasks,
-                    num_fewshot=args.num_fewshot,
                     limit=args.limit,
                 )
                 for task_name, task_results in results["results"].items():
@@ -231,7 +229,6 @@ if __name__ == "__main__":
                 results_gsm8k = lm_eval.simple_evaluate(
                     lm,
                     tasks=["gsm8k"],
-                    num_fewshot=args.num_fewshot,
                     limit=args.limit,
                 )
                 for task_name, task_results in results_gsm8k["results"].items():
