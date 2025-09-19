@@ -1,0 +1,2242 @@
+{
+    "model.layers.0.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.0.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.0.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.0.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.0.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.0.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.0.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.1.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.1.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.1.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.1.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.1.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.1.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.1.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.2.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.2.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.2.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.2.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.2.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.2.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.2.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.3.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.3.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.3.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.3.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.3.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.3.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.3.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.4.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.4.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.4.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.4.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.4.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.4.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.4.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.5.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.5.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.5.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.5.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.5.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.5.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.5.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.6.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.6.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.6.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.6.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.6.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.6.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.6.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.7.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.7.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.7.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.7.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.7.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.7.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.7.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.8.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.8.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.8.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.8.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.8.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.8.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.8.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.9.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.9.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.9.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.9.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.9.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.9.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.9.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.10.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.10.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.10.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.10.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.10.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.10.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.10.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.11.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.11.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.11.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.11.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.11.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.11.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.11.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.12.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.12.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.12.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.12.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.12.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.12.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.12.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.13.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.13.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.13.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.13.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.13.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.13.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.13.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.14.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.14.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.14.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.14.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.14.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.14.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.14.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.15.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.15.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.15.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.15.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.15.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.15.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.15.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.16.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.16.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.16.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.16.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.16.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.16.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.16.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.17.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.17.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.17.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.17.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.17.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.17.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.17.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.18.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.18.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.18.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.18.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.18.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.18.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.18.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.19.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.19.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.19.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.19.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.19.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.19.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.19.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.20.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.20.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.20.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.20.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.20.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.20.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.20.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.21.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.21.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.21.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.21.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.21.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.21.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.21.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.22.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.22.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.22.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.22.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.22.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.22.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.22.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.23.self_attn.q_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.23.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.23.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.23.self_attn.o_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.23.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.23.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.23.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.24.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.24.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.24.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.24.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.24.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.24.mlp.up_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.24.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.25.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.25.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.25.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.25.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.25.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.25.mlp.up_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.25.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.26.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.26.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.26.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.26.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.26.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.26.mlp.up_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.26.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.27.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.27.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.27.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.27.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.27.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.27.mlp.up_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.27.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.28.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.28.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.28.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.28.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.28.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.28.mlp.up_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.28.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.29.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.29.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.29.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.29.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.29.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.29.mlp.up_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.29.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.30.self_attn.q_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.30.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.30.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.30.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.30.mlp.gate_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.30.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.30.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.31.self_attn.q_proj": {
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 4,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.31.self_attn.k_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.31.self_attn.v_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.31.self_attn.o_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.31.mlp.gate_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.31.mlp.up_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    },
+    "model.layers.31.mlp.down_proj": {
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
+        "group_size": 32,
+        "sym": true,
+        "act_bits": 8,
+        "act_group_size": 32,
+        "act_sym": true
+    }
+}
