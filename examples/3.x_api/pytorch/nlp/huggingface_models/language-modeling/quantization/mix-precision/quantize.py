@@ -63,7 +63,6 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model_name_or_path", type=str, default="meta-llama/Meta-Llama-3.1-8B-Instruct", help="model name or path"
     )
-    parser.add_argument("--device", type=str, default="hpu", help="device")
     parser.add_argument("--dtype", type=str, default="mx_fp4", choices=["mx_fp4", "mx_fp8", "nv_fp2", "fp4_v2"], help="data type")
     parser.add_argument("--quantize", action="store_true", help="whether to quantize model")
     parser.add_argument("--use_recipe", action="store_true", help="whether to use recipe to quantize model")
@@ -104,6 +103,7 @@ if __name__ == "__main__":
     print("Target data type:", args.dtype)
 
     model, tokenizer = initialize_model_and_tokenizer(args.model_name_or_path)
+    device="hpu" if is_hpex_available() else "cuda"
 
     if args.quantize:
         if args.quant_lm_head:
@@ -117,7 +117,7 @@ if __name__ == "__main__":
         autoround = AutoRound(
             model,
             tokenizer,
-            device=args.device,
+            device=device,
             device_map="tp" if world_size > 1 else None,
             iters=args.iters,
             seqlen=args.seqlen,
@@ -154,7 +154,7 @@ if __name__ == "__main__":
 
     # set dtype to BF16 for HPU inference performance
     model = model.to(torch.bfloat16)
-    model = model.eval().to(args.device)
+    model = model.eval().to(device)
     print(model)
 
     if args.accuracy:

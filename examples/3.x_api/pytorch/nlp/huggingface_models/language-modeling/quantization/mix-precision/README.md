@@ -15,8 +15,9 @@ python quantize.py  --model_name_or_path facebook/opt-125m --quantize --dtype mx
 ## Mix-precision Quantization (MXFP4 + MXFP8， Target bits: 6)
 
 ```bash
+# Llama 3.1 8B
 python quantize.py  \
-    --model_name_or_path meta-llama/Meta-Llama-3.1-8B-Instruct \
+    --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
     --quantize \
     --dtype mx_fp4 \
     --use_recipe \
@@ -25,17 +26,14 @@ python quantize.py  \
     --batch_size 8
 
 
-
-
-deepspeed --include="localhost:0,1,2,3,4,5,6,7" --master_port=29500 quantize.py  \
-    --model_name_or_path /git_lfs/data/pytorch/llama3.3/Meta-Llama-3.3-70B-Instruct/ \
+# Llama 3.3 70B
+deepspeed --include="localhost:4,5,6,7" --master_port=29500 quantize.py  \
+    --model_name_or_path meta-llama/Llama-3.3-70B-Instruct/ \
     --quantize \
     --dtype mx_fp4 \
     --use_recipe \
     --recipe_file recipes/Meta-Llama-3.3-70B-Instruct_6bits.json \
     --accuracy \
-    --batch_size 2 2>&1|tee 70b.log
-
-
+    --batch_size 8
 ```
 
