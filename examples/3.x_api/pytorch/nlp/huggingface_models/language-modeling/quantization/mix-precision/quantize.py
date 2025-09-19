@@ -25,7 +25,7 @@ os.environ.setdefault("PT_HPU_WEIGHT_SHARING", "0")
 if int(os.getenv("WORLD_SIZE", "0")) > 0:
     os.environ.setdefault("PT_HPU_LAZY_ACC_PAR_MODE", "0")
     os.environ.setdefault("PT_HPU_ENABLE_LAZY_COLLECTIVES", "true")
-from neural_compressor.torch.utils import is_hpex_available
+from neural_compressor.torch.utils import is_hpex_available, world_size
 from auto_round import AutoRound
 
 if is_hpex_available():
@@ -42,7 +42,6 @@ def initialize_model_and_tokenizer(model_name_or_path):
     # using memory mapping with torch_dtype=config.torch_dtype
     model = transformers.AutoModelForCausalLM.from_pretrained(model_name_or_path, torch_dtype=config.torch_dtype)
     # shard model for multi-cards and enable hpu graph
-    from neural_compressor.torch.utils import local_rank, logger, world_size
 
     if world_size > 1:
         ds_inference_kwargs = {
@@ -119,6 +118,7 @@ if __name__ == "__main__":
             model,
             tokenizer,
             device=args.device,
+            device_map="tp" if world_size > 1 else None,
             iters=args.iters,
             seqlen=args.seqlen,
             nsamples=args.nsamples,
