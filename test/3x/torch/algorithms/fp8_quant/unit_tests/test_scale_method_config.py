@@ -50,7 +50,7 @@ def test_scale_method_as_dict(
     scale_granularity_weight: ScaleGranularity,
     scale_value_type_weight: ScaleValueType,
     scale_round_method_weight: ScaleRoundMethod,
-    scale_granularity_activation: ScaleGranularity,    
+    scale_granularity_activation: ScaleGranularity,
     scale_value_type_activation: ScaleValueType,
     scale_round_method_activation: ScaleRoundMethod,):
 
@@ -177,7 +177,7 @@ def make_scale_method_config_and_expected(
     }
     configs = extract_weight_activation_configs(*scale_methods)
     config_map = {}
-    
+
     # Build the configuration first
     for name, (weight_cfg, activation_cfg), sm in zip(override_names, configs, scale_methods):
         scale_method[override_key][name] = {
@@ -194,21 +194,21 @@ def make_scale_method_config_and_expected(
         }
         # Store the scale method for this override
         config_map[name] = scale_method_config_mapping[sm]
-    
+
     # Now build expected_configs by examining each module in the model
     expected_configs = {}
     model = M()
     for node_name, module in model.named_modules():
         if not node_name:  # Skip the root module
             continue
-            
+
         # Get layer_type (class name)
         layer_type = module.__class__.__name__
-        
+
         # Extract layer index if present
         layer_match = re.search(CfgStr.LAYERS_SLASH_PATTERN.value, node_name)
         layer_index = layer_match.group(1) if layer_match else None
-        
+
         # Determine which scale method would be used for this module
         if override_key == "nodes" and node_name in config_map:
             # Direct node match

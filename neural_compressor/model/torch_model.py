@@ -567,7 +567,7 @@ class PyTorchModel(PyTorchBaseModel):
                     device=device,
                     use_optimum_format=use_optimum_format,
                 )
-                new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, gptq_perm)
+                new_module.pack(int_weight, gptq_scale, gptq_zp, m.bias, g_idx=gptq_perm)
                 set_module(self.model, k, new_module)
         elif autoround_config:
             if orig_device == "xpu":
@@ -602,7 +602,7 @@ class PyTorchModel(PyTorchBaseModel):
                         device=device,
                         use_optimum_format=use_optimum_format,
                     )
-                    new_module.pack(int_weight, autoround_scale, autoround_zp, m.bias, None)
+                    new_module.pack(int_weight, autoround_scale, autoround_zp, m.bias)
                     set_module(self.model, k, new_module)
             else:
                 from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401

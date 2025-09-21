@@ -35,7 +35,7 @@ class QuantizedCPUQuant(QuantizedCPUFuncWrapperBase):
         return torch.ops.torchao.quantize_affine_float8
 
     def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn):
-        return self._quantized_func_(tensor=input, scale=scale, float8_dtype=dtype)
+        return self._quantized_func_(tensor=input, scale=torch.tensor(scale), float8_dtype=dtype)
 
 
 class QuantizedCPUQuantPC(QuantizedCPUFuncWrapperBase):
@@ -53,7 +53,7 @@ class QuantizedCPUDeQuant(QuantizedCPUFuncWrapperBase):
         return torch.ops.torchao.dequantize_affine_float8
 
     def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn, out_dtype=torch.bfloat16):
-        return self._quantized_func_(tensor=input, scale=scale, output_dtype=out_dtype)
+        return self._quantized_func_(tensor=input, scale=torch.tensor(scale), output_dtype=out_dtype)
 
 
 class QuantizedCPUDeQuantPC(QuantizedCPUFuncWrapperBase):

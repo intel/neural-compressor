@@ -52,6 +52,7 @@ def pack_array_with_numba_b4_c32(
         )
     return packed_array
 
+
 @register_pack_func(4, 16)
 @numba.jit(nopython=True, parallel=True)
 def pack_array_with_numba_b4_c16(
@@ -67,6 +68,7 @@ def pack_array_with_numba_b4_c16(
         )
     return packed_array
 
+
 @register_pack_func(4, 8)
 @numba.jit(nopython=True, parallel=True)
 def pack_array_with_numba_b4_c8(
@@ -76,6 +78,7 @@ def pack_array_with_numba_b4_c8(
     for i in range(new_in_features):
         packed_array[:, i] = ((raw_array[:, i * n_pack + 1] & 0b1111) << 4) | (raw_array[:, i * n_pack] & 0b1111)
     return packed_array
+
 
 @register_pack_func(4, 64)
 @numba.jit(nopython=True, parallel=True)
@@ -104,6 +107,7 @@ def pack_array_with_numba_b4_c64(
         )
     return packed_array
 
+
 @register_pack_func(8, 32)
 @numba.jit(nopython=True, parallel=True)
 def pack_array_with_numba_b8_c32(
@@ -118,6 +122,7 @@ def pack_array_with_numba_b8_c32(
             | (raw_array[:, i * n_pack] & 0b11111111)
         )
     return packed_array
+
 
 @register_pack_func(8, 16)
 @numba.jit(nopython=True, parallel=True)
@@ -134,6 +139,7 @@ def pack_array_with_numba_b8_c16(
         )
     return packed_array
 
+
 @register_pack_func(8, 8)
 @numba.jit(nopython=True, parallel=True)
 def pack_array_with_numba_b8_c8(
@@ -143,6 +149,7 @@ def pack_array_with_numba_b8_c8(
     for i in range(new_in_features):
         packed_array[:, i] = raw_array[:, i * n_pack] & 0b11111111
     return packed_array
+
 
 @register_pack_func(8, 64)
 @numba.jit(nopython=True, parallel=True)
@@ -162,6 +169,7 @@ def pack_array_with_numba_b8_c64(
             | (raw_array[:, i * n_pack] & 0b11111111)
         )
     return packed_array
+
 
 @register_pack_func(2, 32)
 @numba.jit(nopython=True, parallel=True)
@@ -190,6 +198,7 @@ def pack_array_with_numba_b2_c32(
         )
     return packed_array
 
+
 @register_pack_func(2, 16)
 @numba.jit(nopython=True, parallel=True)
 def pack_array_with_numba_b2_c16(
@@ -209,6 +218,7 @@ def pack_array_with_numba_b2_c16(
         )
     return packed_array
 
+
 @register_pack_func(2, 8)
 @numba.jit(nopython=True, parallel=True)
 def pack_array_with_numba_b2_c8(
@@ -223,6 +233,7 @@ def pack_array_with_numba_b2_c8(
             | (raw_array[:, i * n_pack] & 0b11)
         )
     return packed_array
+
 
 @register_pack_func(2, 64)
 @numba.jit(nopython=True, parallel=True)

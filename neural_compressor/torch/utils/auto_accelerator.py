@@ -51,15 +51,6 @@ class INCAcceleratorType(Enum):
     GAUDI2 = auto()
     GAUDI3 = auto()
 
-class INCAcceleratorType(Enum):
-    CUDA = auto()
-    CPU = auto()
-    EXTERNAL_ACCELERATOR_MAX = auto()  # differentiate between external to intel accelerators
-    XPU = auto()
-    GAUDI_MIN = auto()  # differentiate between any gaudi to xpu
-    GAUDI2 = auto()
-    GAUDI3 = auto()
-
 
 class AcceleratorRegistry:
     """Accelerator Registry."""

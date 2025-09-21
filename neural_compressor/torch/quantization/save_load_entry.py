@@ -32,6 +32,7 @@ config_name_mapping = {
     FP8_QUANT: FP8Config,
 }
 
+
 @log_process(mode=Mode.SAVE)
 def save(model, checkpoint_dir="saved_results", format="default"):
     """Save quantized model.
@@ -112,7 +113,7 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
 
         qconfig_file_path = os.path.join(os.path.abspath(os.path.expanduser(model_name_or_path)), "qconfig.json")
         if not os.path.exists(qconfig_file_path):
-            raise ValueError(f"qconfig.json file is necessary for the default format.")
+            raise ValueError("qconfig.json file is necessary for the default format.")
         with open(qconfig_file_path, "r") as f:
             per_op_qconfig = json.load(f)
 
@@ -166,11 +167,12 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             kwargs["original_model"] = original_model
         # use config to check which algorithm is used.
         if (
-            "fp8_config" in quantization_config or
+            "fp8_config" in quantization_config
+            or
             # for FP8 LLMs for vLLM (https://huggingface.co/neuralmagic).
             (
-                "quant_method" in quantization_config and
-                quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
+                "quant_method" in quantization_config
+                and quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
             )
         ):
             from neural_compressor.torch.algorithms import fp8_quant

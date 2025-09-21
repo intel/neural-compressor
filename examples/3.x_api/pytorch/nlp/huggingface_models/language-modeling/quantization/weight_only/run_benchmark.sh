@@ -112,7 +112,7 @@ function run_benchmark {
         model_name_or_path="facebook/opt-125m"
     elif [ "${topology}" = "llama3_1_8b_gptq_int4_hf" ]; then
         if [[ ${optimized} == "true" ]]; then
-        model_name_or_path=${tuned_checkpoint}
+            model_name_or_path=${tuned_checkpoint}
         else
             model_name_or_path="/mnt/weka/data/pytorch/llama3.1/Meta-Llama-3.1-8B-Instruct/"
         fi

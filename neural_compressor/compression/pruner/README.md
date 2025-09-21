@@ -336,7 +336,7 @@ The following section exemplifies how to use hooks in user pass-in training func
   ```
   [**Stable Option** ]Insert Hook functions in your codes. 
   ```python
-  """ All you need is to insert following API functions to your codes:
+  """All you need is to insert following API functions to your codes:
   on_train_begin() # Setup pruners
   on_step_begin() # Prune weights
   on_before_optimizer_step() # Do weight regularization

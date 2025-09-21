@@ -294,7 +294,7 @@ class WOQModelLoader:
     # check if the model was quantized using Dual Precision Quantization (DPQ)
     def _is_w4a8_model_from_dpq(self, model):
         for name, _ in model.named_buffers():
-            if 'scale_bf16_to_fp8' in name:
+            if "scale_bf16_to_fp8" in name:
                 return True
         return False
 

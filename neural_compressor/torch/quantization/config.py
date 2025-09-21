@@ -39,9 +39,9 @@ from neural_compressor.common.utils import (
     AWQ,
     DEFAULT_WHITE_LIST,
     FP8_QUANT,
-    HYBRID_GPTQ,
     GPTQ,
     HQQ,
+    HYBRID_GPTQ,
     MIXED_PRECISION,
     MX_QUANT,
     OP_NAME_OR_MODULE_TYPE,
@@ -948,6 +948,7 @@ class AutoRoundConfig(TorchBaseConfig):
             act_dtype: Optional[str] = "int",
             enable_full_range: bool = False,
             batch_size: int = 8,
+        amp: bool = True,
             lr_scheduler=None,
             enable_quanted_input: bool = True,
             enable_minmax_tuning: bool = True,
@@ -995,6 +996,7 @@ class AutoRoundConfig(TorchBaseConfig):
             act_dtype (Optional[str]): Data type for activation quantization. Default is None.
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
+            amp (bool): Whether to use automatic mixed precision (default is True).
             lr_scheduler: The learning rate scheduler to be used.
             enable_quanted_input (bool): Whether to use quantized input data (default is True).
             enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
@@ -1042,6 +1044,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.act_dtype = act_dtype
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
+        self.amp = amp
         self.lr_scheduler = lr_scheduler
         self.enable_quanted_input = enable_quanted_input
         self.enable_minmax_tuning = enable_minmax_tuning
@@ -1134,9 +1137,9 @@ def get_default_AutoRound_config(processor_type: Optional[Union[str, torch_utils
         processor_type (Optional[Union[str, torch_utils.ProcessorType]], optional): The user-specified processor type.
             Defaults to None.
 
-    Returns:
+        Returns:
         AutoRoundConfig: AutoRoundConfig
-    """
+        """
     process_type = torch_utils.get_processor_type_from_user_config(processor_type)
     return AutoRoundConfig.get_predefined_configs()[process_type]
 

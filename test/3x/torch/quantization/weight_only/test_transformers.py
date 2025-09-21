@@ -8,7 +8,7 @@ from packaging.version import Version
 from transformers import AutoTokenizer
 
 from neural_compressor.torch.utils import get_ipex_version
-from neural_compressor.utils.utility import CpuInfo
+from neural_compressor.common.utils.utility import CpuInfo
 from neural_compressor.transformers import (
     AutoModelForCausalLM,
     Qwen2VLForConditionalGeneration,
@@ -277,3 +277,34 @@ class TestTansformersLikeAPI:
         # model_name = "microsoft/Phi-3-vision-128k-instruct"
         # woq_model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=woq_config, trust_remote_code=True, attn_implementation='eager')
         # assert isinstance(woq_model.model.layers[0].self_attn.o_proj, WeightOnlyQuantizedLinear), "quantizaion failed."
+
+    def test_save_load_for_inc_model(self):
+        model_name_or_path = self.model_name_or_path
+
+        fp32_model = AutoModelForCausalLM.from_pretrained(model_name_or_path)
+        dummy_input = fp32_model.dummy_inputs["input_ids"]
+
+        # RTN
+        woq_config = RtnConfig(bits=4, group_size=16)
+        woq_model = AutoModelForCausalLM.from_pretrained(
+            model_name_or_path,
+            quantization_config=woq_config,
+        )
+        woq_output = woq_model(dummy_input)[0]
+
+        # RTN
+        woq_config = RtnConfig(bits=4, group_size=16)
+        woq_model = AutoModelForCausalLM.from_pretrained(
+            model_name_or_path,
+            quantization_config=woq_config,
+            for_inference=False,
+        )
+
+        # save
+        output_dir = "./transformers_tmp"
+        woq_model.save_pretrained(output_dir)
+
+        # load
+        loaded_model = AutoModelForCausalLM.from_pretrained(output_dir)
+        loaded_output = loaded_model(dummy_input)[0]
+        assert torch.equal(woq_output, loaded_output), "loaded output should be same. Please double check."

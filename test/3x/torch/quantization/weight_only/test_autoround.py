@@ -100,7 +100,7 @@ class TestAutoRoundCPU:
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):
         fp32_model = copy.deepcopy(self.gptj)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
         if quant_lm_head is False:
             quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -113,7 +113,7 @@ class TestAutoRoundCPU:
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
         assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
-        assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
+        assert "scale_dtype" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
         assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
         if quant_lm_head is True:
@@ -121,7 +121,7 @@ class TestAutoRoundCPU:
 
     def test_int4_dtype(self):
         fp32_model = copy.deepcopy(self.gptj)
-        quant_config = AutoRoundConfig(dtype="int4", nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(dtype="int4", nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # prepare + convert API
@@ -132,14 +132,14 @@ class TestAutoRoundCPU:
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
         assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
-        assert "scale" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
+        assert "scale_dtype" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
         assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
         assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
 
     def test_autoround_with_quantize_API(self):
         gpt_j_model = copy.deepcopy(self.gptj)
 
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
         quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
 
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -159,7 +159,7 @@ class TestAutoRoundCPU:
         fp32_model = copy.deepcopy(self.gptj)
         # known issue: scale_dtype="fp32" will cause accuracy gap between quantized model
         # (using auto-round WeightOnlyLinear) and reloaded model (using INCWeightOnlyLinear)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp16")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp16")
         # quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
 
@@ -188,11 +188,11 @@ class TestAutoRoundCPU:
         from transformers import GPT2Model, GPT2Tokenizer
 
         tokenizer = GPT2Tokenizer.from_pretrained("sshleifer/tiny-gpt2")
-        model = GPT2Model.from_pretrained("sshleifer/tiny-gpt2")
+        model = GPT2Model.from_pretrained("sshleifer/tiny-gpt2", use_cache=False)
         text = "Replace me by any text you'd like."
         encoded_input = tokenizer(text, return_tensors="pt")
         out1 = model(**encoded_input)[0]
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
         model = prepare(model=model, quant_config=quant_config)
         run_fn(model, self.dataloader)
         q_model = convert(model)
@@ -210,7 +210,7 @@ class TestAutoRoundCPU:
         fp32_model = copy.deepcopy(self.gptj)
         to_quant_block_names = get_multimodal_block_names(fp32_model, quant_vision=True)
         quant_config = AutoRoundConfig(
-            nsamples=32, seqlen=10, iters=10, scale_dtype="fp16", to_quant_block_names=to_quant_block_names
+            nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp16", to_quant_block_names=to_quant_block_names
         )
         logger.info(f"Test AutoRound with config {quant_config}")
         device = detect_device("auto")
@@ -225,6 +225,8 @@ class TestAutoRoundCPU:
         assert torch.allclose(out, self.label, atol=1e-1)
         assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
 
+    @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
+    #@pytest.mark.skipif(Version(auto_round.__version__) <= Version("0.5.1"), reason="visual layer_name not processed.")
     def test_mllm(self):
         input = torch.randn(1, 32)
         from transformers import AutoProcessor, AutoTokenizer, Qwen2VLForConditionalGeneration
@@ -240,7 +242,7 @@ class TestAutoRoundCPU:
             model=model,
             tokenizer=tokenizer,
             image_processor=None,
-            dataset="liuhaotian/llava_conv_58k",
+            dataset="NeelNanda/pile-10k",
             extra_data_dir=None,
             seqlen=32,
             batch_size=1,
@@ -269,13 +271,13 @@ class TestAutoRoundCPU:
         model = prepare(model=model, quant_config=quant_config)
         run_fn(model, dataloader)
         q_model = convert(model)
-        assert isinstance(q_model.model.layers[0].mlp.up_proj, WeightOnlyLinear), "model quantization failed."
+        assert isinstance(q_model.language_model.layers[0].mlp.up_proj, WeightOnlyLinear), "model quantization failed."
 
     # def test_autoround_format_export(self):
     #     from neural_compressor.torch.quantization import load
     #     from auto_gptq.nn_modules.qlinear.qlinear_triton import QuantLinear
     #     gpt_j_model = copy.deepcopy(self.gptj)
-    #     quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, scale_dtype="fp32", export_format="auto_round:gptq")
+    #     quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32", export_format="auto_round:gptq")
     #     logger.info(f"Test AutoRound with config {quant_config}")
     #     model = prepare(model=gpt_j_model, quant_config=quant_config)
     #     run_fn(model, self.dataloader)
@@ -369,7 +371,7 @@ class TestAutoRoundHPU:
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):
         fp32_model = copy.deepcopy(self.tiny_llama_model)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", amp=False ,scale_dtype="fp32")
         if quant_lm_head is False:
             quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -389,7 +391,7 @@ class TestAutoRoundHPU:
     def test_int4_dtype(self):
         fp32_model = copy.deepcopy(self.tiny_llama_model)
         quant_config = AutoRoundConfig(
-            dtype="int4", nsamples=32, seqlen=10, iters=10, act_dtype="fp32", scale_dtype="fp32"
+            dtype="int4", nsamples=32, seqlen=10, iters=10, act_dtype="fp32", amp=False ,scale_dtype="fp32"
         )
         logger.info(f"Test AutoRound with config {quant_config}")
 
@@ -405,7 +407,7 @@ class TestAutoRoundHPU:
     def test_autoround_with_quantize_API(self):
         model = copy.deepcopy(self.tiny_llama_model)
 
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", amp=False ,scale_dtype="fp32")
         quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
 
         logger.info(f"Test AutoRound with config {quant_config}")

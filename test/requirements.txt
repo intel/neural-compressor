@@ -16,5 +16,5 @@ tf2onnx<=1.16.1
 tf_slim<=1.1.0
 torch
 torchvision
-transformers<=4.50.0
+transformers<=4.52.1
 xgboost<=2.1.4

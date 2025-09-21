@@ -185,7 +185,7 @@ def main():
     if args.performance or args.accuracy:
         model.eval()
         if args.optimized:
-            new_model = torch.load(args.tuned_checkpoint)
+            new_model = torch.load(args.tuned_checkpoint, weights_only=False)
         else:
             new_model = model
         if args.performance or args.accuracy:
