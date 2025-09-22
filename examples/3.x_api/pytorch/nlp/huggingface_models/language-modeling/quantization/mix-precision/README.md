@@ -2,6 +2,15 @@
  
 In this examples, you can verify the accuracy on HPU/CUDA device with emulation of MXFP4, MXFP8, NVFP4 and NVFP4+.
 
+## Requirement
+
+```bash
+# neural-compressor-pt
+INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@xinhe/mx_recipe
+# auto-round
+pip install git+https://github.com/intel/auto-round.git@xinhe/llama_tmp
+```
+
 ## Quantization
 
 ### Demo 
@@ -21,9 +30,9 @@ python quantize.py  \
     --quantize \
     --dtype mx_fp4 \
     --use_recipe \
-    --recipe_file recipes/Meta-Llama-3.1-8B-Instruct_6bits.json \
+    --recipe_file recipes/Meta-Llama-3.1-8B-Instruct_7bits.json \
     --accuracy \
-    --batch_size 8
+    --batch_size 32
 
 
 # Llama 3.3 70B
@@ -34,6 +43,6 @@ deepspeed --include="localhost:4,5,6,7" --master_port=29500 quantize.py  \
     --use_recipe \
     --recipe_file recipes/Meta-Llama-3.3-70B-Instruct_6bits.json \
     --accuracy \
-    --batch_size 8
+    --batch_size 32
 ```
 

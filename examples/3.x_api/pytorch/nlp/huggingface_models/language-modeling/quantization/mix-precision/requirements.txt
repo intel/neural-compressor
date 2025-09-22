@@ -1,6 +1,4 @@
 transformers
 torch
-neural-compressor-pt
 lm-eval
-auto-round
 datasets
