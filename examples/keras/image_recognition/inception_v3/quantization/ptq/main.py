@@ -118,10 +118,13 @@ def main(_):
     if FLAGS.tune:
         from neural_compressor.quantization import fit
         from neural_compressor.config import PostTrainingQuantConfig
+        from neural_compressor.config import AccuracyCriterion
         from neural_compressor import set_random_seed
         set_random_seed(9527)
+        accuracy_criterion = AccuracyCriterion(criterion='absolute') 
+
         config = PostTrainingQuantConfig(backend='itex', 
-            calibration_sampling_size=[50, 100])
+            calibration_sampling_size=[50, 100], accuracy_criterion=accuracy_criterion)
         q_model = fit(
             model=FLAGS.input_model,
             conf=config,

@@ -21,6 +21,9 @@ SPR_BASE_VERSIONS = (
     "2.14.0202335",
     "2.14.dev202335",
     "2.15.0202341",
+    "2.16.1",
+    "2.17.0",
+    "2.18.0",
 )
 
 TENSORFLOW_DEFAULT_CONFIG = {
@@ -45,7 +48,6 @@ UNIFY_OP_TYPE_MAPPING = {
     "Conv3D": "conv3d",
     "DepthwiseConv2dNative": "conv2d",
     "FusedBatchNormV3": "batchnorm",
-    "FusedBatchNorm": "batchnorm",
     "_MklFusedInstanceNorm": "instancenorm",
     "MaxPool": "pooling",
     "MaxPool3D": "pooling",

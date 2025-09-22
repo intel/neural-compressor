@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2023 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ def static_quant_entry(
     if isinstance(model, KerasModel):
         assert valid_keras_format(model.model), "Only Sequential or Functional models are supported now."
         framework = KerasAdaptor
-    elif TFConfig.global_config["backend"] == "itex":
+    elif framework_specific_info["backend"] == "itex":
         framework = Tensorflow_ITEXAdaptor
     else:
         framework = TensorFlowAdaptor

@@ -120,13 +120,13 @@ class StaticQuantConfig(BaseConfig):
         """Get concrete node names for supported operators."""
         white_list = [
             "Dense",
-            "Conv2D",
-            "DepthwiseConv2D",
-            "SeparableConv2D",
-            "AvgPool2D",
-            "AveragePooling2D",
-            "MaxPool2D",
-            "MaxPooling2D",
+            # "Conv2d",
+            # "DepthwiseConv2D",
+            # "SeparableConv2D",
+            # "AvgPool2D",
+            # "AveragePooling2D",
+            # "MaxPool2D",
+            # "MaxPooling2D",
         ]
         filter_result = []
 

@@ -25,35 +25,21 @@ from tensorflow.keras.layers import AveragePooling2D, MaxPooling2D
 
 class QAvgPool2D(AveragePooling2D):
     def __init__(
-        self,
-        pool_size=(2, 2),
-        strides=None,
-        padding="valid",
-        data_format=None,
-        min_value=-10000,
-        max_value=10000,
-        **kwargs
+        self, pool_size=(2, 2), strides=None, padding="valid", data_format=None, scales=78.7, zero_points=0, **kwargs
     ):
         super(QAvgPool2D, self).__init__(
             pool_size=pool_size, strides=strides, padding=padding, data_format=data_format, **kwargs
         )
-        self.min_value = json.loads(min_value)
-        self.max_value = json.loads(max_value)
+        self.scales = json.loads(scales)
+        self.zero_points = json.loads(zero_points)
 
 
 class QMaxPool2D(MaxPooling2D):
     def __init__(
-        self,
-        pool_size=(2, 2),
-        strides=None,
-        padding="valid",
-        data_format=None,
-        min_value=-10000,
-        max_value=10000,
-        **kwargs
+        self, pool_size=(2, 2), strides=None, padding="valid", data_format=None, scales=78.7, zero_points=0, **kwargs
     ):
         super(QMaxPool2D, self).__init__(
             pool_size=pool_size, strides=strides, padding=padding, data_format=data_format, **kwargs
         )
-        self.min_value = json.loads(min_value)
-        self.max_value = json.loads(max_value)
+        self.scales = json.loads(scales)
+        self.zero_points = json.loads(zero_points)

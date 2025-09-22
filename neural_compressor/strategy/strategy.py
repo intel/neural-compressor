@@ -379,7 +379,8 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         # query capability and build tuning space
         self.capability = self.capability or self.adaptor.query_fw_capability(self.model)
         logger.debug(self.capability)
-        self.tuning_space = self.tuning_space or self.build_tuning_space(self.config)
+        # self.tuning_space = self.tuning_space or self.build_tuning_space(self.config)
+        self.tuning_space = self.build_tuning_space(self.config)
         self.algo_scheduler = self.algo_scheduler or self._initialize_algo_scheduler()
         self._eval_baseline()
 
@@ -483,6 +484,10 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         self._prepare_tuning()
         traverse_start_time = time()
         for op_tuning_cfg in self.next_tune_cfg():
+            # op_tuning_cfg[('resnet_model/max_pooling2d/MaxPool', 'pooling')].act_dtype='fp32'
+            for k in op_tuning_cfg:
+                if k[1] == "pooling":
+                    op_tuning_cfg[k].act_dtype = "fp32"
             tuning_start_time = time()
             self.trials_count += 1
             tune_cfg = self._tune_cfg_converter(op_tuning_cfg)

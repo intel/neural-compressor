@@ -111,11 +111,11 @@ class StaticQuantConfig(BaseConfig):
         """Register supported config."""
         supported_configs = []
         static_quant_config = StaticQuantConfig(
-            weight_dtype=["int8", "bf16", "fp32"],
+            weight_dtype=["int8", "fp32"],
             weight_sym=[True, False],
             weight_granularity=["per_tensor", "per_channel"],
             weight_algorithm=["minmax", "kl"],
-            act_dtype=["int8", "bf16", "fp32"],
+            act_dtype=["int8", "fp32"],
             act_sym=[True, False],
             act_granularity=["per_tensor"],
             act_algorithm=["minmax", "kl"],
@@ -141,11 +141,10 @@ class StaticQuantConfig(BaseConfig):
     def get_model_info(self, model) -> List[Tuple[str, Callable]]:
         """Get concrete node names for supported operators."""
         white_list = [
+            "MatMul",
             "Conv2D",
-            "FusedBatchNormV3",
             "Conv3D",
             "_MklFusedInstanceNorm",
-            "MatMul",
             "BatchMatMul",
             "BatchMatMulV2",
             "DepthwiseConv2dNative",
@@ -155,8 +154,9 @@ class StaticQuantConfig(BaseConfig):
             "MaxPool",
             "MaxPool3D",
             "AvgPool",
+            "_MklFusedInstanceNorm",
             "Conv2DBackpropInput",
-            "Conv3DBackpropInputV2",
+            "Conv2DBackpropInputV2",
         ]
         for key in self._local_config.keys():
             if key in white_list:

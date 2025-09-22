@@ -49,6 +49,7 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
         )
 
         padding_tensor_dict = {}
+
         for node_combination in target_nodes:
             conv_name = node_combination[1]
 
@@ -59,16 +60,16 @@ class FusePadWithConv2DOptimizer(GraphRewriterBase):
 
             is_perchannel = self.cfg[conv_name][0]
 
-            # Line 55 to line 65 should be removed once the TFDO enabling the single quantized
-            # conv2D supporting.
-            if len(pattern) == 2:
-                # TODO we need to enable single quantizedconv2d with s8 input.
-                if not is_perchannel and not cur_graph.has_positive_input(conv_name):
-                    continue
-                # TFDO has the limitation that the single QuantizedConv2DPerchannel doesn't
-                # support padding_list filed.
-                if is_perchannel:
-                    continue
+            # # Line 55 to line 65 should be removed once the TFDO enabling the single quantized
+            # # conv2D supporting.
+            # if len(pattern) == 2:
+            #     # TODO we need to enable single quantizedconv2d with s8 input.
+            #     if not is_perchannel and not cur_graph.has_positive_input(conv_name):
+            #         continue
+            #     # TFDO has the limitation that the single QuantizedConv2DPerchannel doesn't
+            #     # support padding_list filed.
+            #     if is_perchannel:
+            #         continue
 
             if conv_name in self.excluded_conv:
                 continue

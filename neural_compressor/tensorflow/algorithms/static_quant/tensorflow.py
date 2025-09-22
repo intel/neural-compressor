@@ -161,7 +161,6 @@ class TensorFlowAdaptor:
             if "activation" in tuning_cfg["op"][each_op_info]:
                 is_asymmetric = tuning_cfg["op"][each_op_info]["activation"]["scheme"] == "asym"
             self.quantize_config["op_wise_config"][op_name] = (is_perchannel, algorithm, is_asymmetric, weight_bit)
-
         self.fp32_ops = fp32_ops
         self.bf16_ops = bf16_ops
 
@@ -731,8 +730,326 @@ class TensorFlowAdaptor:
                 res[op[1]] = {"activation": {"dtype": ["bf16"]}, "weight": {"dtype": ["bf16"]}}
         return res
 
+    def _pre_hook_for_qat(self, dataloader=None):
+        """Pre hook for QAT."""
+        self.model.model = self.qat_convert(self.model.model)
 
-class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):  # pragma: no cover
+    def _post_hook_for_qat(self):
+        """Post hook for QAT."""
+        pass
+
+    def _pre_eval_hook(self, model):
+        """Pre evaluation hook."""
+        return model
+
+    # Add keyword arguments unpacking
+    def _post_eval_hook(self, model, **kwargs):
+        """Post evaluation hook."""
+        pass
+
+    def save(self, model, path):
+        """Save model to the path."""
+        pass
+
+    # this function is used to convert keras QAT model to pb in old QAT implementation,
+    # and it's not used in refactored QAT
+    def convert(self, model, source, destination):  # pragma: no cover
+        """The function is used to convert a source model format to another.
+
+        Args:
+            model (neural_compressor.model): base model to be converted.
+            source (string): The source model format.
+            destination (string): The destination model format.
+        """
+        assert source.lower() == "qat" and destination.lower() == "default"
+        capability = self._query_fw_capability(model)
+
+        quantize_config = {"op_wise_config": {}}
+        for each_op_info in capability["opwise"]:
+            is_perchannel = False
+            weight_bit = 7.0
+            for op_cap in capability["opwise"][each_op_info]:
+                if "activation" in op_cap and "quant_mode" in op_cap["activation"]:
+                    activation = op_cap["activation"]
+                    if "weight" in op_cap:
+                        weight = op_cap["weight"]
+                        is_perchannel = True if weight["granularity"][0] == "per_channel" else False
+                    algorithm = activation["algorithm"][0]
+                    is_asymmetric = False
+                    if "activation" in op_cap:
+                        is_asymmetric = True if activation["scheme"][0] == "asym" else False
+
+                    quantize_config["op_wise_config"][each_op_info[0]] = (
+                        is_perchannel,
+                        algorithm,
+                        is_asymmetric,
+                        weight_bit,
+                    )
+        from neural_compressor.tensorflow.quantization.utils.graph_converter import GraphConverter
+
+        tmp_graphdef = copy.deepcopy(model.graph_def)
+        for i in tmp_graphdef.node:
+            if i.op == "Const" and i.input:
+                i.ClearField("input")
+        model.graph_def = tmp_graphdef
+        converter = GraphConverter(
+            model,
+            qt_config=quantize_config,
+            int8_sequences=self.op_wise_sequences,
+            fake_quant=True,
+            new_api=self.new_api,
+            performance_only=self.performance_only,
+            use_bf16=self.use_bf16,
+        )
+
+        return converter.convert()
+
+    def qat_convert(self, model, quantize_recipe=None):
+        """Convert a fp32 'tf.keras' model to be a int8 one with quantization aware training implementation.
+
+        Args:
+            model (tf.keras.Model): The model to be quantized, expected to be a Keras Functional or Sequential model.
+            quantize_recipe (dict): A dict that decide whether given layers should be quantized.
+
+        Returns:
+            converted_model (tf.keras.Model): Quantized model with fake quant nodes inserted.
+        """
+        assert isinstance(model, tf.keras.Model), (
+            "The model to be converted is expected to be "
+            "a `tf.keras.Model` instance. You should not pass an instance of type: {input}.".format(
+                input=model.__class__.__name__
+            )
+        )
+
+        assert model.__class__.__name__ in [
+            "Functional",
+            "Sequential",
+        ], "Only `Functional` or `Sequential` keras model is supported for QAT."
+
+        from neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_config import global_config
+        from neural_compressor.tensorflow.quantization.utils.quantize_graph.qat.quantize_helper import (
+            init_quantize_config,
+            qat_clone_function,
+        )
+
+        config = init_quantize_config(model, quantize_recipe)
+        q_model = tf.keras.models.clone_model(model, input_tensors=None, clone_function=qat_clone_function)
+        global_config.clear()
+
+        return q_model
+
+    @dump_elapsed_time("Pass recover model")
+    def recover_tuned_model(self, model, q_config):
+        """Execute the recover process on the specified model.
+
+        Args:
+            tune_cfg (dict): quantization configuration
+            model (tf.compat.v1.GraphDef): fp32 model
+            q_config (dict): recover configuration
+
+        Returns:
+            tf.compat.v1.GraphDef: the quantized model
+        """
+        from neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.pre_optimize import PreOptimization
+
+        self.pre_optimizer_handle = PreOptimization(model, self.new_api, self.device)
+        self.pre_optimized_model = self.pre_optimizer_handle.get_optimized_model(self.itex_mode)
+        model.graph_def = self.pre_optimized_model.graph_def
+
+        from neural_compressor.tensorflow.quantization.utils.graph_converter_without_calib import (
+            GraphConverterWithoutCalib,
+        )
+
+        converter = GraphConverterWithoutCalib(
+            model,
+            recover_config=q_config,
+            new_api=self.new_api,
+            performance_only=self.performance_only,
+            use_bf16=self.use_bf16,
+        )
+
+        return converter.convert_without_calib()
+
+    def diagnosis_helper(self, fp32_model, quan_model, tune_cfg, save_path):
+        """Tensorflow diagnosis helper function."""
+        from neural_compressor.tensorflow.quantization.utils.utility import tf_diagnosis_helper
+
+        return tf_diagnosis_helper(fp32_model, quan_model, tune_cfg, save_path)
+
+    def get_output_op_names(self, qmodel):
+        """Get the oupur OPs's names."""
+        from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
+
+        graph_def = GraphAnalyzer().parse_graph(qmodel.graph_def)
+        output_op_names = set()
+
+        def _add_output_op_name(opname):
+            if opname.endswith("_dequantize"):
+                output_op_names.add(opname[: -len("_dequantize")])  # pylint: disable=no-member
+            elif opname.endswith("__dequant"):
+                pass
+            else:
+                output_op_names.add(opname)  # pylint: disable=no-member
+
+        for output_opname in qmodel.output_node_names:
+            op_count = 0
+            stack = [output_opname]
+            while stack:
+                opname = stack.pop()
+                while True:
+                    op_count += 1
+                    if opname not in graph_def:
+                        break
+                    op = graph_def[opname]
+                    if op.node.op == "Dequantize":
+                        _add_output_op_name(opname)
+                        break
+                    next_opnames = op.node.input
+                    if not next_opnames:
+                        break
+                    elif len(next_opnames) > 1:
+                        stack += next_opnames[1:]
+
+                    opname = next_opnames[0]
+
+        output_op_names = list(output_op_names)
+        logger.debug(f"output op names: {output_op_names}")
+        return output_op_names
+
+    def calculate_op_sensitivity(
+        self, model, dataloader, tune_cfg, output_op_names, confidence_batches, fallback=True, requantize_cfgs=None
+    ):
+        """Compute the op sensitivity.
+
+        The sensitivity metric is the mse between the output of the last quantized op of
+        the quantized model and the output of its corresponding op in the fp32 model.
+
+          1. Backup the tune cfg
+          2. Fallback each int8 op and compute its mse if use fallback (with 'fallback == True'),
+            or re-quantize each fp32 op(fallen back in the previous stage) and compute its MSE if not.
+          3. Sorted op name list according to its MSE
+
+        Args:
+          fp32_model: The fp32 model.
+          dataloader: the dataloader with full dataset.
+          tune_cfg: tuning config
+          fallback: denote fallback stage or re-quantize stage
+          requantize_cfgs: the dict of tuning configs for all re-quantizable ops
+
+        Returns:
+          A list of op names, sorted by its MSE sensitivity.
+        """
+        fp32_op_cfg = {"activation": {"dtype": "fp32", "quant_mode": "fp32"}, "weight": {"dtype": "fp32"}}
+
+        if fallback:
+            ops_list = [
+                op
+                for op, config in tune_cfg["op"].items()
+                if config["activation"]["quant_mode"] in ("static", "dynamic")
+            ]
+            replace_cfgs = {op: fp32_op_cfg for op in tune_cfg["op"]}
+        else:
+            ops_list = [
+                op
+                for op, config in tune_cfg["op"].items()
+                if config["activation"]["quant_mode"] == "fp32" and op in requantize_cfgs
+            ]
+            replace_cfgs = requantize_cfgs
+
+        # Step2. compute mse
+        mse_result = self._get_mse_order(
+            model, deepcopy(tune_cfg), replace_cfgs, ops_list, dataloader, output_op_names, confidence_batches
+        )
+
+        # Step3. sort
+        mse_order = [op for op, _ in sorted(mse_result.items(), key=lambda i: i[1])]
+        logger.debug("Dump MSE order:")
+        for op in mse_order:
+            logger.debug(f"{op}: {mse_result[op]}")
+        return mse_order
+
+    def _get_mse_order(
+        self, fp32_model, tune_cfg, replace_cfgs, ops_lst, dataloader, output_op_names, confidence_batches
+    ):
+        """Compute MSE."""
+        op_cfg = tune_cfg["op"]
+        mse_result = {}
+        partial_dataloader = self._partial_dataloader(dataloader, confidence_batches)
+
+        fp32_output = self._inference_model_on_batches(fp32_model, tune_cfg, partial_dataloader, output_op_names)
+
+        for op in ops_lst:
+            # backup and set replace tuning config
+            backup_cfg = op_cfg[op]
+            op_cfg[op] = replace_cfgs[op]
+
+            # quantize and inference the model
+            q_model = self.quantize(tune_cfg, fp32_model, partial_dataloader)
+            q_output = self._inference_model_on_batches(q_model, tune_cfg, partial_dataloader, output_op_names)
+
+            mse_result[op] = self._calculate_mse(fp32_output, q_output)
+
+            # recover tune_cfg
+            op_cfg[op] = backup_cfg
+
+        return mse_result
+
+    def _partial_dataset_of(self, dataloader, confidence_batches):
+        """Partial dataset."""
+        from neural_compressor.tensorflow.utils import DummyDataset, DummyDatasetV2
+
+        if isinstance(dataloader.dataset, DummyDataset) or isinstance(dataloader.dataset, DummyDatasetV2):
+            assert isinstance(confidence_batches, int)
+            ds = copy.deepcopy(dataloader.dataset)
+            ds.dataset = ds.dataset[:confidence_batches]
+            return ds
+        else:
+            return dataloader.dataset.take(confidence_batches)
+
+    def _partial_dataloader(self, dataloader, confidence_batches):
+        """Partial dataloader."""
+        return type(dataloader)(
+            dataset=self._partial_dataset_of(dataloader, confidence_batches),
+            batch_size=dataloader.batch_size,
+            last_batch=dataloader.last_batch,
+            collate_fn=dataloader.collate_fn,
+            sampler=dataloader.sampler,
+            batch_sampler=dataloader.batch_sampler,
+            num_workers=dataloader.num_workers,
+            pin_memory=dataloader.pin_memory,
+            shuffle=dataloader.shuffle,
+            distributed=dataloader.distributed,
+        )
+
+    def _calculate_mse(self, fp32_output, q_output):
+        """MSE calculation."""
+        result = []
+        for i, j in zip(fp32_output, q_output):
+            result.append(np.square(i - j).mean())
+        return np.array(result).mean()
+
+    def _inference_model_on_batches(self, model, tune_cfg, dataloader, output_op_names):
+        """Inference model on batches."""
+        from neural_compressor.tensorflow.quantization.utils.utility import generate_feed_dict
+
+        input_tensors = model.input_tensor
+        output_tensors = []
+        for op in output_op_names:
+            for tensor in model.graph.get_operation_by_name(op).outputs:
+                output_tensors.append(tensor)
+
+        predictions = []
+        for index, (inputs, _) in enumerate(dataloader):
+            feed_dict = generate_feed_dict(input_tensors, inputs)
+
+            pred = model.sess.run(output_tensors, feed_dict)
+            for item in pred:
+                predictions.append(item)
+
+        return predictions
+
+
+class Tensorflow_ITEXAdaptor(TensorFlowAdaptor):
     """Tensorflow ITEX Adaptor Class."""
 
     def __init__(self, framework_specific_info):
