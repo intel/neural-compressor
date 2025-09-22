@@ -75,7 +75,8 @@ if __name__ == "__main__":
     parser.add_argument("--quant_lm_head", action="store_true", help="whether to quantize lm_head")
     parser.add_argument("--accuracy", action="store_true", help="accuracy measurement")
     parser.add_argument("--local_rank", type=int, default=0, metavar="N", help="Local process rank.")
-    parser.add_argument("--batch_size", default=4, type=int, help="batch size for accuracy measurement.")
+    parser.add_argument("--batch_size", default=32, type=int, help="batch size for autoround tuning.")
+    parser.add_argument("--eval_batch_size", default=64, type=int, help="batch size for accuracy evaluation.")
     parser.add_argument(
         "--mxfp8_mod_list",
         type=str,
@@ -121,6 +122,7 @@ if __name__ == "__main__":
             iters=args.iters,
             seqlen=args.seqlen,
             nsamples=args.nsamples,
+            batch_size=args.batch_size,
             low_gpu_mem_usage=True,
             group_size=32 if "mx" in args.dtype else 16,
             data_type=args.dtype,
@@ -202,23 +204,7 @@ if __name__ == "__main__":
             import lm_eval
             from lm_eval.models.huggingface import HFLM
 
-            if test_normal:
-                lm = HFLM(
-                    pretrained=model,
-                    tokenizer=tokenizer,
-                    add_bos_token=True,
-                    batch_size=args.batch_size,
-                )
-                results = lm_eval.simple_evaluate(
-                    lm,
-                    tasks=args.tasks,
-                    limit=args.limit,
-                )
-                for task_name, task_results in results["results"].items():
-                    if task_name in ["hellaswag", "lambada_openai", "piqa", "winogrande", "mmlu"]:
-                        accu = task_results["acc,none"]
-                        all_accuracy[task_name] = accu
-            ########################## gms8k #########################
+            ########################## gms8k (ahead of normal tasks) #########################
             if test_gsm8k:
                 lm = HFLM(
                     pretrained=model,
@@ -235,6 +221,22 @@ if __name__ == "__main__":
                     accu = task_results["exact_match,strict-match"]
                     all_accuracy[task_name] = accu
             ########################## gms8k end #########################
+            if test_normal:
+                lm = HFLM(
+                    pretrained=model,
+                    tokenizer=tokenizer,
+                    add_bos_token=True,
+                    batch_size=args.batch_size,
+                )
+                results = lm_eval.simple_evaluate(
+                    lm,
+                    tasks=args.tasks,
+                    limit=args.limit,
+                )
+                for task_name, task_results in results["results"].items():
+                    if task_name in ["hellaswag", "lambada_openai", "piqa", "winogrande", "mmlu"]:
+                        accu = task_results["acc,none"]
+                        all_accuracy[task_name] = accu
             for task_name, accu in all_accuracy.items():
                 print(f"Accuracy for {task_name}: {accu:.4f}")
             print(f"Overall accuracy: {sum(all_accuracy.values())/len(all_accuracy):.4f}")
