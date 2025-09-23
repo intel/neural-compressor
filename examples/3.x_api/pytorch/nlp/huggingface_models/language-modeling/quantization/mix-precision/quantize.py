@@ -159,8 +159,6 @@ if __name__ == "__main__":
     model = model.to(torch.bfloat16)
     model = model.eval().to(device)
 
-    print(model)
-
     if args.accuracy:
         if is_hpex_available():
             # HPU needs padding to buckets for better performance
