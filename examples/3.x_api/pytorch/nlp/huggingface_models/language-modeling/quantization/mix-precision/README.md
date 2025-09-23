@@ -15,7 +15,7 @@ pip install git+https://github.com/intel/auto-round.git@xinhe/llama_tmp
 
 ### Demo 
 
-``` python
+```bash
 python quantize.py  --model_name_or_path facebook/opt-125m --quantize --dtype mx_fp4 --batch_size 8 --accuracy
 ```
 
