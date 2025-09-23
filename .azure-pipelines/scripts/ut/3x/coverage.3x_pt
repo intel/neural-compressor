@@ -1,6 +1,12 @@
 [run]
 branch = True
 
+[paths]
+source =
+    neural_compressor/
+    */site-packages/neural_compressor/
+    */dist-packages/neural_compressor/
+
 [report]
 include =
  */neural_compressor/common/*
