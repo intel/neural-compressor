@@ -481,6 +481,7 @@ def convert_to_quantized_model(model, config, device="cpu", for_inference=True):
         model = convert(model)
     elif config.quant_method.value == "autoround":
         from auto_round.utils import is_mllm_model
+
         if is_mllm_model(model):
             from transformers import AutoProcessor, AutoTokenizer
 

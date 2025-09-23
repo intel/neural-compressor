@@ -34,10 +34,10 @@ def _is_auto_round_available():
 _is_auto_round_available()
 
 from auto_round import AutoRound, AutoRoundMLLM  # pylint: disable=E0401
+from auto_round.compressors.mllm.eval import lmms_eval, mllm_eval
+from auto_round.compressors.mllm.template import Template, get_template
 from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
 from auto_round.schemes import QuantizationScheme
-from auto_round.compressors.mllm.eval import mllm_eval, lmms_eval
-from auto_round.compressors.mllm.template import Template, get_template
 
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, logger
