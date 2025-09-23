@@ -19,6 +19,7 @@ pr:
       - .azure-pipelines/template/docker-template.yml
       - .azure-pipelines/scripts/install_nc.sh
       - .azure-pipelines/scripts/ut/3x/run_3x_pt.sh
+      - .azure-pipelines/scripts/ut/3x/coverage.3x_pt
 
 pool: ICX-16C
 
