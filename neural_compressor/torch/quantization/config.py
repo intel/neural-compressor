@@ -975,7 +975,6 @@ class AutoRoundConfig(TorchBaseConfig):
         scheme: str | dict = "W4A16",
         device_map: str = None,
         # mllm
-        is_mllm: bool = False,
         quant_nontext_module: bool = False,
         extra_data_dir: str = None,
         processor=None,
@@ -1024,7 +1023,6 @@ class AutoRoundConfig(TorchBaseConfig):
             enable_torch_compile (bool): Whether to enable torch compile to optimize quant_block/layer, torch>=2.6 True.
             quant_nontext_module (bool): Whether to quantize nontext module.
             extra_data_dir (str): The path for extra data such as images, audio or videos.
-            is_mllm (bool): Indicates whether the model to be quantized is a multi-modal model (MLLM).
             processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or
               decode the data that groups several modalities (among text, vision and audio).
               This is handled by objects called processors, which group together two or more processing objects such
@@ -1071,7 +1069,6 @@ class AutoRoundConfig(TorchBaseConfig):
         self.export_format = export_format
         self.enable_norm_bias_tuning = enable_norm_bias_tuning
         self.enable_torch_compile = enable_torch_compile
-        self.is_mllm = is_mllm
         self.quant_nontext_module = quant_nontext_module
         self.extra_data_dir = extra_data_dir
         self.processor = processor

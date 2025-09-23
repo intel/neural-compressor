@@ -223,7 +223,6 @@ def tune(args):
         use_auto_mapping = True
 
     woq_config = AutoRoundConfig(
-        is_vlm=True,
         bits=args.bits,
         sym=not args.asym,
         group_size=args.group_size,

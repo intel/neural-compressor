@@ -622,7 +622,6 @@ def autoround_quantize_entry(
             export_format = quant_config.export_format
             enable_norm_bias_tuning = quant_config.enable_norm_bias_tuning
             enable_torch_compile = quant_config.enable_torch_compile
-            is_mllm = quant_config.is_mllm
             quant_nontext_module = quant_config.quant_nontext_module
             extra_data_dir = quant_config.extra_data_dir
             processor = quant_config.processor
@@ -661,7 +660,6 @@ def autoround_quantize_entry(
         export_format=export_format,
         enable_norm_bias_tuning=enable_norm_bias_tuning,
         enable_torch_compile=enable_torch_compile,
-        is_mllm=is_mllm,
         quant_nontext_module=quant_nontext_module,
         extra_data_dir=extra_data_dir,
         processor=processor,

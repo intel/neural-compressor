@@ -260,7 +260,6 @@ class TestAutoRoundCPU:
         quant_config = AutoRoundConfig(
             bits=4,
             group_size=128,
-            is_mllm=True,
             nsamples=1,
             batch_size=batch_size,
             iters=1,

@@ -480,7 +480,8 @@ def convert_to_quantized_model(model, config, device="cpu", for_inference=True):
         run_fn(model, *run_args)
         model = convert(model)
     elif config.quant_method.value == "autoround":
-        if config.is_vlm is True:
+        from auto_round.utils import is_mllm_model
+        if is_mllm_model(model):
             from transformers import AutoProcessor, AutoTokenizer
 
             from neural_compressor.torch.algorithms.weight_only.autoround import (
@@ -543,7 +544,6 @@ def convert_to_quantized_model(model, config, device="cpu", for_inference=True):
             scale_dtype=config.scale_dtype,
             use_layer_wise=config.use_layer_wise,
             # vlm arguments
-            is_mllm=config.is_vlm,
             quant_nontext_module=config.quant_nontext_module,
             truncation=config.truncation,
             gradient_accumulate_steps=config.gradient_accumulate_steps,
@@ -551,7 +551,7 @@ def convert_to_quantized_model(model, config, device="cpu", for_inference=True):
         )
 
         # vlm set non-text module config
-        if config.is_vlm is True:
+        if is_mllm_model(model):
             from neural_compressor.torch.utils.utility import (
                 find_matching_blocks,
                 get_layer_names_in_block,

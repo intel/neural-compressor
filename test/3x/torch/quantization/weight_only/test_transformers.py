@@ -234,7 +234,6 @@ class TestTansformersLikeAPI:
         woq_config = AutoRoundConfig(
             bits=4, 
             group_size=128,
-            is_vlm=True,
             dataset="NeelNanda/pile-10k",  
             iters=1,
             n_samples=1,
@@ -267,7 +266,6 @@ class TestTansformersLikeAPI:
         # woq_config = AutoRoundConfig(
         #     bits=4, 
         #     group_size=128,
-        #     is_vlm=True,
         #     dataset="liuhaotian/llava_conv_58k",
         #     iters=2,
         #     n_samples=5,

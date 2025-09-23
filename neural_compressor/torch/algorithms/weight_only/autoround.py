@@ -35,9 +35,9 @@ _is_auto_round_available()
 
 from auto_round import AutoRound, AutoRoundMLLM  # pylint: disable=E0401
 from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
-from auto_round.mllm import lmms_eval, mllm_eval
-from auto_round.mllm.template import Template, get_template
 from auto_round.schemes import QuantizationScheme
+from auto_round.compressors.mllm.eval import mllm_eval, lmms_eval
+from auto_round.compressors.mllm.template import Template, get_template
 
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, logger
@@ -85,7 +85,6 @@ class AutoRoundQuantizer(Quantizer):
         enable_norm_bias_tuning: bool = False,
         enable_torch_compile: bool = None,
         # mllm
-        is_mllm: bool = False,
         quant_nontext_module: bool = False,
         extra_data_dir: str = None,
         image_processor=None,
@@ -155,7 +154,6 @@ class AutoRoundQuantizer(Quantizer):
             enable_norm_bias_tuning (bool): Whether to enable fast norm/layer_bias tuning.
             enable_torch_compile (bool): Whether to enable torch compile to optimize quant_block/layer, torch>=2.6 True.
             quant_nontext_module (bool): Whether to quantize nontext module.
-            is_mllm (bool): Indicates whether the model to be quantized is a multi-modal model (MLLM).
             extra_data_dir (str): The path for extra data such as images, audio or videos.
             processor (transformers.AutoProcessor): Any multi-modal model will require an object to encode or
                 decode the data that groups several modalities (among text, vision and audio).
@@ -202,7 +200,6 @@ class AutoRoundQuantizer(Quantizer):
         self.export_format = export_format
         self.enable_norm_bias_tuning = enable_norm_bias_tuning
         self.enable_torch_compile = enable_torch_compile
-        self.is_mllm = is_mllm
         self.quant_nontext_module = quant_nontext_module
         self.extra_data_dir = extra_data_dir
         self.processor = processor
@@ -239,85 +236,48 @@ class AutoRoundQuantizer(Quantizer):
         """
         dataloader = CapturedDataloader(model.args_list, model.kwargs_list)
         model = model.orig_model
-        if self.is_mllm:
-            rounder = AutoRoundMLLM(
-                model,
-                tokenizer=self.tokenizer,
-                scheme=self.scheme,
-                processor=self.processor,
-                image_processor=self.image_processor,
-                layer_config=self.quant_config,
-                batch_size=self.batch_size,
-                amp=self.amp,
-                device_map=self.device_map,
-                lr_scheduler=self.lr_scheduler,
-                dataset=dataloader,
-                extra_data_dir=self.extra_data_dir,
-                template=self.template,
-                quant_nontext_module=self.quant_nontext_module,
-                enable_quanted_input=self.enable_quanted_input,
-                enable_minmax_tuning=self.enable_minmax_tuning,
-                lr=self.lr,
-                minmax_lr=self.minmax_lr,
-                low_gpu_mem_usage=self.low_gpu_mem_usage,
-                low_cpu_mem_usage=self.low_gpu_mem_usage,
-                iters=self.iters,
-                seqlen=self.seqlen,
-                nsamples=self.nsamples,
-                sampler=self.sampler,
-                seed=self.seed,
-                nblocks=self.nblocks,
-                gradient_accumulate_steps=self.gradient_accumulate_steps,
-                not_use_best_mse=self.not_use_best_mse,
-                dynamic_max_gap=self.dynamic_max_gap,
-                data_type=self.data_type,
-                scale_dtype=self.scale_dtype,
-                act_bits=self.act_bits,
-                act_group_size=self.act_group_size,
-                act_sym=self.act_sym,
-                act_dynamic=self.act_dynamic,
-                to_quant_block_names=self.to_quant_block_names,
-                enable_norm_bias_tuning=self.enable_norm_bias_tuning,
-                truncation=self.truncation,
-                enable_torch_compile=self.enable_torch_compile,
-            )
-        else:
-            rounder = AutoRound(
-                model=model,
-                tokenizer=self.tokenizer,
-                scheme=self.scheme,
-                dataset=dataloader,
-                layer_config=self.quant_config or {},
-                enable_full_range=self.enable_full_range,
-                batch_size=self.batch_size,
-                amp=self.amp,
-                device_map=self.device_map,
-                lr_scheduler=self.lr_scheduler,
-                enable_quanted_input=self.enable_quanted_input,
-                enable_minmax_tuning=self.enable_minmax_tuning,
-                lr=self.lr,
-                minmax_lr=self.minmax_lr,
-                low_gpu_mem_usage=self.low_gpu_mem_usage,
-                iters=self.iters,
-                seqlen=self.seqlen,
-                nsamples=self.nsamples,
-                sampler=self.sampler,
-                seed=self.seed,
-                nblocks=self.nblocks,
-                gradient_accumulate_steps=self.gradient_accumulate_steps,
-                not_use_best_mse=self.not_use_best_mse,
-                dynamic_max_gap=self.dynamic_max_gap,
-                data_type=self.data_type,
-                scale_dtype=self.scale_dtype,
-                to_quant_block_names=self.to_quant_block_names,
-                act_bits=self.act_bits,
-                act_group_size=self.act_group_size,
-                act_sym=self.act_sym,
-                act_dynamic=self.act_dynamic,
-                low_cpu_mem_usage=self.low_cpu_mem_usage,
-                enable_norm_bias_tuning=self.enable_norm_bias_tuning,
-                enable_torch_compile=self.enable_torch_compile,
-            )
+        rounder = AutoRound(
+            model,
+            tokenizer=self.tokenizer,
+            scheme=self.scheme,
+            processor=self.processor,
+            image_processor=self.image_processor,
+            layer_config=self.quant_config,
+            enable_full_range=self.enable_full_range,
+            batch_size=self.batch_size,
+            amp=self.amp,
+            device_map=self.device_map,
+            lr_scheduler=self.lr_scheduler,
+            dataset=dataloader,
+            extra_data_dir=self.extra_data_dir,
+            template=self.template,
+            quant_nontext_module=self.quant_nontext_module,
+            enable_quanted_input=self.enable_quanted_input,
+            enable_minmax_tuning=self.enable_minmax_tuning,
+            lr=self.lr,
+            minmax_lr=self.minmax_lr,
+            low_gpu_mem_usage=self.low_gpu_mem_usage,
+            low_cpu_mem_usage=self.low_gpu_mem_usage,
+            iters=self.iters,
+            seqlen=self.seqlen,
+            nsamples=self.nsamples,
+            sampler=self.sampler,
+            seed=self.seed,
+            nblocks=self.nblocks,
+            gradient_accumulate_steps=self.gradient_accumulate_steps,
+            not_use_best_mse=self.not_use_best_mse,
+            dynamic_max_gap=self.dynamic_max_gap,
+            data_type=self.data_type,
+            scale_dtype=self.scale_dtype,
+            act_bits=self.act_bits,
+            act_group_size=self.act_group_size,
+            act_sym=self.act_sym,
+            act_dynamic=self.act_dynamic,
+            to_quant_block_names=self.to_quant_block_names,
+            enable_norm_bias_tuning=self.enable_norm_bias_tuning,
+            truncation=self.truncation,
+            enable_torch_compile=self.enable_torch_compile,
+        )
         model, weight_config = rounder.quantize()
         model.autoround_config = weight_config
         if self.enable_w4afp8:
@@ -389,8 +349,8 @@ def get_mllm_dataloader(
         DataLoader: The DataLoader for the calibrated datasets.
     """
     from auto_round.calib_dataset import CALIB_DATASETS
-    from auto_round.mllm.autoround_mllm import _only_text_test
-    from auto_round.mllm.mllm_dataset import get_mllm_dataloader  # pylint: disable=E0401
+    from auto_round.compressors.mllm.compressor import _only_text_test
+    from auto_round.compressors.mllm.dataset import get_mllm_dataloader  # pylint: disable=E0401
 
     template = template if template is not None else model.config.model_type
     template = get_template(
