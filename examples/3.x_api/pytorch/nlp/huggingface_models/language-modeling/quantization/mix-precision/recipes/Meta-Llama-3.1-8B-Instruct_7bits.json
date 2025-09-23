@@ -1610,12 +1610,12 @@
         "act_sym": true
     },
     "model.layers.23.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
-        "bits": 8,
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
         "group_size": 32,
         "sym": true,
-        "act_bits": 8,
+        "act_bits": 4,
         "act_group_size": 32,
         "act_sym": true
     },
@@ -1640,12 +1640,12 @@
         "act_sym": true
     },
     "model.layers.23.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
-        "bits": 8,
+        "data_type": "mx_fp4",
+        "act_data_type": "mx_fp4",
+        "bits": 4,
         "group_size": 32,
         "sym": true,
-        "act_bits": 8,
+        "act_bits": 4,
         "act_group_size": 32,
         "act_sym": true
     },
@@ -1720,12 +1720,12 @@
         "act_sym": true
     },
     "model.layers.24.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
-        "bits": 4,
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
         "group_size": 32,
         "sym": true,
-        "act_bits": 4,
+        "act_bits": 8,
         "act_group_size": 32,
         "act_sym": true
     },
@@ -1800,12 +1800,12 @@
         "act_sym": true
     },
     "model.layers.25.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
-        "bits": 4,
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
         "group_size": 32,
         "sym": true,
-        "act_bits": 4,
+        "act_bits": 8,
         "act_group_size": 32,
         "act_sym": true
     },
@@ -2080,12 +2080,12 @@
         "act_sym": true
     },
     "model.layers.29.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
-        "bits": 4,
+        "data_type": "mx_fp8",
+        "act_data_type": "mx_fp8",
+        "bits": 8,
         "group_size": 32,
         "sym": true,
-        "act_bits": 4,
+        "act_bits": 8,
         "act_group_size": 32,
         "act_sym": true
     },
