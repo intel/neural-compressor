@@ -1,0 +1,40 @@
+# Copyright (C) 2024 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+name: PR Agent
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review]  # [opened, synchronize, reopened, ready_for_review]
+  issue_comment:
+    types: [created]  # [created, edited]
+
+jobs:
+  review:
+    runs-on: agent
+
+    permissions:
+      contents: read
+      pull-requests: write
+      issues: write
+
+    steps:
+      - name: Check LLM Server
+        env:
+          OPENAI_API_BASE: ${{ secrets.OPENAI_API_BASE }}
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+          MODEL: ${{ secrets.MODEL_NAME }}
+        run: |
+          curl -sf "$OPENAI_API_BASE/models" -H "Authorization: Bearer $OPENAI_KEY"
+      - name: Run PR-Agent
+        uses: qodo-ai/pr-agent@main
+        env:
+          OPENAI_API_BASE: ${{ secrets.OPENAI_API_BASE }}
+          OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
+          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+          config.model: "openai/${{ secrets.MODEL_NAME }}"
+          config.custom_model_max_tokens: "4196"
+
+          github_action_config.auto_review: "true"
+          github_action_config.auto_describe: "true"
+          github_action_config.auto_improve: "true"
