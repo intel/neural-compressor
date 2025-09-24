@@ -12,6 +12,7 @@ pr:
       - .azure-pipelines/scripts/install_nc.sh
       - .azure-pipelines/ut-3x-pt-fp8.yml
       - .azure-pipelines/template/docker-template.yml
+      - .azure-pipelines/scripts/ut/3x/coverage.3x_pt_fp8
       - neural_compressor/common
       - neural_compressor/torch
       - neural_compressor/transformers
