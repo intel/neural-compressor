@@ -31,7 +31,7 @@ jobs:
         env:
           OPENAI_API_BASE: ${{ secrets.OPENAI_API_BASE }}
           OPENAI_KEY: ${{ secrets.OPENAI_KEY }}
-          GITHUB_TOKEN: ${{ secrets.MY_GITHUB_TOKEN }}
+          GITHUB_TOKEN: ${{ secrets.PR_GITHUB_TOKEN }}
           config.model: "openai/${{ secrets.MODEL_NAME }}"
           config.custom_model_max_tokens: "4196"
 
