@@ -1,6 +1,6 @@
 # Run
  
-In this examples, you can verify the accuracy on HPU/CUDA device with emulation of MXFP4, MXFP8, NVFP4 and NVFP4+.
+In this examples, you can verify the accuracy on HPU/CUDA device with emulation of MXFP4, MXFP8, NVFP4 and uNVFP4.
 
 ## Requirement
 
@@ -16,33 +16,50 @@ pip install git+https://github.com/intel/auto-round.git@xinhe/llama_tmp
 ### Demo 
 
 ```bash
-python quantize.py  --model_name_or_path facebook/opt-125m --quantize --dtype mx_fp4 --batch_size 8 --accuracy
+python quantize.py  --model_name_or_path facebook/opt-125m --quantize --dtype MXFP4 --batch_size 8 --accuracy
 ```
 
-> Note: `--dtype` supports `mx_fp4`(MXFP4), `mx_fp8`(MXFP8), `nv_fp4`(NVFP4), `fp4_v2`(NVFP4+)
+> Note: `--dtype` supports `MXFP4`, `MXFP8`, `NVFP4`, `uNVFP4`
 
-## Mix-precision Quantization (MXFP4 + MXFP8， Target bits: 6)
+## Mix-precision Quantization (MXFP4 + MXFP8)
 
 ```bash
 # Llama 3.1 8B
 python quantize.py  \
     --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
     --quantize \
-    --dtype mx_fp4 \
+    --dtype MXFP4 \
     --use_recipe \
     --recipe_file recipes/Meta-Llama-3.1-8B-Instruct_7bits.json \
     --accuracy \
     --batch_size 32
 
-
 # Llama 3.3 70B
 deepspeed --include="localhost:4,5,6,7" --master_port=29500 quantize.py  \
     --model_name_or_path meta-llama/Llama-3.3-70B-Instruct/ \
     --quantize \
-    --dtype mx_fp4 \
+    --dtype MXFP4 \
     --use_recipe \
     --recipe_file recipes/Meta-Llama-3.3-70B-Instruct_6bits.json \
     --accuracy \
     --batch_size 32
 ```
+
+## vLLM usage
+NVFP4 is supported by vLLM already, the saved model in this example follows the `llm_compressor` format, please refer to the usage in the public vLLM document.
+
+MXFP4 is enabled in a forked repo, usages as below:
+```bash
+# Install the forked vLLM for MXFP4
+
+# Command to save model:
+python quantize.py  --model_name_or_path facebook/opt-125m --quantize --dtype MXFP4 --batch_size 8 --save --save_path opt-125m-mxfp4
+
+# Command to evaluate with vLLM:
+
+```
+
+> Notes:
+> 1. model quantized with deepspeed tensor parallel is not supported to be saved.
+> 2. model quantized with recipe is not supported to be saved.
 

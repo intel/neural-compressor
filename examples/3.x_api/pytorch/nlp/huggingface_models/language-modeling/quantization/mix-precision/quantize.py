@@ -67,7 +67,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--model_name_or_path", type=str, default="meta-llama/Meta-Llama-3.1-8B-Instruct", help="model name or path"
     )
-    parser.add_argument("--dtype", type=str, default="mx_fp4", choices=["mx_fp4", "mx_fp8", "nv_fp2", "fp4_v2"], help="data type")
+    parser.add_argument("--dtype", type=str, default="MXFP4", choices=["MXFP4", "MXFP8", "NVFP4", "NVFP4+", "uNVFP4"], help="data type")
     parser.add_argument("--quantize", action="store_true", help="whether to quantize model")
     parser.add_argument("--use_recipe", action="store_true", help="whether to use recipe to quantize model")
     parser.add_argument("--recipe_file", type=str, default="recipes/Meta-Llama-3.1-8B-Instruct_6bits.json", help="path of recipe file")
@@ -80,13 +80,6 @@ if __name__ == "__main__":
     parser.add_argument("--accuracy", action="store_true", help="accuracy measurement")
     parser.add_argument("--local_rank", type=int, default=0, metavar="N", help="Local process rank.")
     parser.add_argument("--batch_size", default=32, type=int, help="batch size for accuracy evaluation.")
-    parser.add_argument(
-        "--mxfp8_mod_list",
-        type=str,
-        nargs="*",
-        default=[],  # 默认值
-        help="List of module names or patterns for MXFP8 quantization.",
-    )
     parser.add_argument(
         "--tasks",
         type=str,
@@ -109,6 +102,14 @@ if __name__ == "__main__":
     device="hpu" if is_hpex_available() else "cuda"
 
     if args.quantize:
+        autoround_dtype_mapping = {
+            "MXFP4": "mx_fp4",
+            "MXFP8": "mx_fp8",
+            "NVFP4": "nv_fp4",
+            "uNVFP4": "fp4_v2",
+            "NVFP4+": "fp4_v2",
+        }
+        args.dtype = autoround_dtype_mapping[args.dtype]
         if args.quant_lm_head:
             lm_head_config = {
                 "group_size": 32 if "mx" in args.dtype else 16,
@@ -155,11 +156,10 @@ if __name__ == "__main__":
         autoround.quantize()
         model = autoround.model
 
-    # set dtype to BF16 for HPU inference performance
-    model = model.to(torch.bfloat16)
-    model = model.eval().to(device)
-
     if args.accuracy:
+        # set dtype to BF16 for HPU inference performance
+        model = model.to(torch.bfloat16)
+        model = model.eval().to(device)
         if is_hpex_available():
             # HPU needs padding to buckets for better performance
             # Generation tasks, such as gsm8k and mmlu-pro, may get OOM.
@@ -240,3 +240,12 @@ if __name__ == "__main__":
             for task_name, accu in all_accuracy.items():
                 print(f"Accuracy for {task_name}: {accu:.4f}")
             print(f"Overall accuracy: {sum(all_accuracy.values())/len(all_accuracy):.4f}")
+
+    if args.save:
+        if world_size > 1:
+            assert False, "model quantized with deepspeed tensor parallel is not supported to be saved."
+        elif args.use_recipe:
+            assert False, "model quantized with recipe is not supported to be saved."
+        else:
+            autoround.save_quantized(args.save_path, format="llm_compressor")
+        print(f"Quantized model is saved to {args.save_path}")
