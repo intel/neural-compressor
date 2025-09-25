@@ -247,7 +247,7 @@ if __name__ == "__main__":
         else:
             # using auto_round format to save mx_fp4 and mx_fp8 model
             if world_size > 1:
-                output_dir = args.save_path + "/" + args.local_rank + "." + args.world_size
+                output_dir = args.save_path + "/" + args.local_rank + "_" + args.world_size
                 autoround.save_quantized(output_dir, format="auto_round")
             else:
                 autoround.save_quantized(args.save_path, format="auto_round")
