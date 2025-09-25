@@ -34,8 +34,7 @@ from neural_compressor.torch.quantization import (
     convert,
     prepare,
 )
-from neural_compressor.torch.utils import is_ipex_available, is_package_available, get_accelerator
-
+from neural_compressor.torch.utils import get_accelerator, is_ipex_available, is_package_available
 
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
