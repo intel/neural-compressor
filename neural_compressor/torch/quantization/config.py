@@ -981,6 +981,7 @@ class AutoRoundConfig(TorchBaseConfig):
         image_processor=None,
         template=None,
         truncation: bool = False,
+        quant_lm_head: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
     ):
@@ -1077,6 +1078,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.truncation = truncation
         self.scheme = scheme
         self.device_map = device_map
+        self.quant_lm_head = quant_lm_head
         self._post_init()
 
     @classmethod
@@ -1110,6 +1112,24 @@ class AutoRoundConfig(TorchBaseConfig):
                 filter_result.append(pair)
         logger.debug(f"Get model info: {filter_result}")
         return filter_result
+    
+    def to_config_mapping(
+        self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
+    ) -> OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]:
+        """Convert the configuration to a mapping.
+
+        Args:
+            config_list (List[BaseConfig]): List of base configurations. Default is None.
+            model_info (List[Tuple[str, str]]): List of tuples containing the name and type of each module in the model.
+                Default is None.
+
+        Returns:
+            OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+        """
+        if not self.quant_lm_head:
+            self.set_local(LM_HEAD_NAMES, AutoRoundConfig(dtype="fp32"))
+        config_mapping = super().to_config_mapping(config_list, model_info)
+        return config_mapping
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "AutoRoundConfig", List["AutoRoundConfig"]]:

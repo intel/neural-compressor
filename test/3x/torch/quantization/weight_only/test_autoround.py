@@ -103,9 +103,7 @@ class TestAutoRoundCPU:
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):
         fp32_model = copy.deepcopy(self.gptj)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
-        if quant_lm_head is False:
-            quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32", quant_lm_head=quant_lm_head)
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # prepare + convert API
@@ -397,9 +395,7 @@ class TestAutoRoundHPU:
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):
         fp32_model = copy.deepcopy(self.tiny_llama_model)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", amp=False ,scale_dtype="fp32")
-        if quant_lm_head is False:
-            quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", amp=False ,scale_dtype="fp32", quant_lm_head=quant_lm_head)
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # prepare + convert API
