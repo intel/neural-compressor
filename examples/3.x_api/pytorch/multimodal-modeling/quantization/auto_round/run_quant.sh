@@ -26,8 +26,11 @@ function init_params {
           input_model=$(echo $var |cut -f2 -d=)
       ;;
        --output_model=*)
-           tuned_checkpoint=$(echo $var |cut -f2 -d=)
-       ;;
+          tuned_checkpoint=$(echo $var |cut -f2 -d=)
+      ;;
+      --scheme=*)
+          scheme=$(echo $var |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -46,16 +49,25 @@ function run_tuning {
 
     if [ "${topology}" = "phi3_vlm_128k_autoround_int4" ]; then
         model_name_or_path="microsoft/Phi-3-vision-128k-instruct"
+    	python -u mllm.py \
+    	    --model ${model_name_or_path} \
+    	    --dataset ${DATASET_NAME} \
+    	    --quantize \
+    	    --iters ${iters} \
+    	    --output_dir ${tuned_checkpoint} \
+    	    --batch_size ${batch_size} \
+    	    ${extra_cmd}
+    elif [ "${topology}" = "llama4" ]; then
+	python -u llama4.py \
+	    --model ${input_model} \
+	    --dataset ${DATASET_NAME} \
+	    --quantize \
+	    --iters ${iters} \
+	    --scheme ${scheme} \
+	    --output_dir ${tuned_checkpoint} \
+	    --batch_size ${batch_size} \
+	    ${extra_cmd}
     fi
-
-    python -u mllm.py \
-        --model ${model_name_or_path} \
-        --dataset ${DATASET_NAME} \
-        --quantize \
-        --iters ${iters} \
-        --output_dir ${tuned_checkpoint} \
-        --batch_size ${batch_size} \
-        ${extra_cmd}
 }
 
 main "$@"
