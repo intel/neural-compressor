@@ -34,7 +34,8 @@ from neural_compressor.torch.quantization import (
     convert,
     prepare,
 )
-from neural_compressor.torch.utils import is_ipex_available, is_package_available
+from neural_compressor.torch.utils import is_ipex_available, is_package_available, get_accelerator
+
 
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
@@ -530,11 +531,14 @@ def convert_to_quantized_model(model, config, device="cpu", for_inference=True):
                 bs=config.batch_size,
                 nsamples=config.n_samples,
             )
+
+        device_map = get_accelerator().current_device_name()
         quant_config = AutoRoundConfig(
             dtype=dtype,
             bits=config.bits,
             use_sym=config.sym,
             group_size=config.group_size,
+            device_map=device_map,
             enable_quanted_input=not config.disable_quanted_input,
             lr=config.lr,
             minmax_lr=config.minmax_lr,
