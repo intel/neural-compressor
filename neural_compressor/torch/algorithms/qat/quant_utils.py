@@ -17,17 +17,19 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Utils for quantization"""
+"""Utils for quantization."""
 
 import types
+from typing import Any
+
 import torch
 import torch.nn as nn
-from typing import Any
+
 from .quant_linear import QuantLinear
 
 
 def convert(module: nn.Module, quant_cfg=None, quant_module=None):
-    """Convert the model to a quantized one with quant config"""
+    """Convert the model to a quantized one with quant config."""
 
     # update class
     original_cls = type(module)
@@ -71,6 +73,7 @@ def get_quant_config(scheme: str) -> dict[str, Any]:
     # TODO: support more quant config
     try:
         from auto_round.export.export_to_llmcompressor.config import initialize_quantization
+
         quantization_config = initialize_quantization(scheme=scheme)
         quantization_config = quantization_config.to_dict()
         quantization_config["provider"] = "auto-round"
@@ -102,9 +105,7 @@ def get_quantization_format(module) -> str | None:
             return "MXFP8"
 
         # Raise error for unsupported num_bits
-        raise NotImplementedError(
-            f"Unsupported quantizer with num_bits: {weight_quantizer.num_bits}"
-        )
+        raise NotImplementedError(f"Unsupported quantizer with num_bits: {weight_quantizer.num_bits}")
 
     quantization = _get_quantization_from_layer(module)
     if quantization != None:

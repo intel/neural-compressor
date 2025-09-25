@@ -25,6 +25,7 @@ import torch.nn as nn
 
 from .tensor_quantizer import TensorQuantizer
 
+
 class QuantLinear(nn.Module):
     """Quantized version of nn.Linear."""
 
@@ -37,7 +38,7 @@ class QuantLinear(nn.Module):
         return out
 
     def _setup(self, quant_cfg: "QuantizationSchem"):
-        """Init quantizer"""
+        """Init quantizer."""
         self.weight_quantizer = TensorQuantizer(
             data_type=quant_cfg.data_type,
             block_size=quant_cfg.group_size,
@@ -73,9 +74,11 @@ class QuantLinear(nn.Module):
 
     def __repr__(self):
         """Overriding the __repr__ method, makes the output more concise and meaningful."""
-        return f"QuantLinear(\n" \
-               f"  in_features={self.in_features}, out_features={self.out_features}, bias={self.bias is not None}\n" \
-               f"  (input_quantizer): {self.input_quantizer}\n" \
-               f"  (output_quantizer): {self.output_quantizer}\n" \
-               f"  (weight_quantizer): {self.weight_quantizer}\n" \
-               f")"
+        return (
+            f"QuantLinear(\n"
+            f"  in_features={self.in_features}, out_features={self.out_features}, bias={self.bias is not None}\n"
+            f"  (input_quantizer): {self.input_quantizer}\n"
+            f"  (output_quantizer): {self.output_quantizer}\n"
+            f"  (weight_quantizer): {self.weight_quantizer}\n"
+            f")"
+        )

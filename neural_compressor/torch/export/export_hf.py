@@ -11,18 +11,18 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Export quantized hf model to compatible formats"""
+"""Export quantized hf model to compatible formats."""
 
 import tempfile
-from pathlib import Path
 import warnings
+from pathlib import Path
 from typing import Any
+
 import torch
 import torch.nn as nn
 
-def _export_quantized_weight(
-    sub_module: nn.Module, quantization_format: str = None, weight_name: str = "weight"
-):
+
+def _export_quantized_weight(sub_module: nn.Module, quantization_format: str = None, weight_name: str = "weight"):
     """For the given weight attr of the sub_module, export the quantization info of it.
 
     The export includes converting weight tensor to correct quantized values and quantized dtype,
@@ -32,9 +32,7 @@ def _export_quantized_weight(
         return
 
     weight: nn.Parameter = getattr(sub_module, weight_name)
-    weight_quantizer = getattr(
-        sub_module, "weight_quantizer"
-    )
+    weight_quantizer = getattr(sub_module, "weight_quantizer")
 
     qdq_weight, scale = weight_quantizer._fake_quantize(weight)
 
@@ -45,9 +43,8 @@ def _export_quantized_weight(
 
     setattr(sub_module, weight_name, nn.Parameter(quantized_weight, requires_grad=False))
 
-def _export_hf_checkpoint(
-    model: nn.Module, scheme: str | None = None
-) -> tuple[dict[str, Any], dict[str, Any]]:
+
+def _export_hf_checkpoint(model: nn.Module, scheme: str | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
     """Exports the torch model to the packed checkpoint with original HF naming.
 
     The packed checkpoint will be consumed by the TensorRT-LLM unified converter.
@@ -69,6 +66,7 @@ def _export_hf_checkpoint(
     layer_pool = {f"model.layers.{name}": sub_module for name, sub_module in root.named_modules()}
 
     from ..algorithms.qat.quant_utils import get_quant_config, get_quantization_format, is_quantlinear
+
     # compressored config
     quant_config = get_quant_config(scheme=scheme)
 
@@ -80,15 +78,10 @@ def _export_hf_checkpoint(
 
     quantized_state_dict = model.state_dict()
 
-
     return quantized_state_dict, quant_config
 
 
-def export_hf2compressored_model(
-    model: nn.Module,
-    export_dir: Path | str = tempfile.gettempdir(),
-    scheme: str = None
-):
+def export_hf2compressored_model(model: nn.Module, export_dir: Path | str = tempfile.gettempdir(), scheme: str = None):
     """Exports the torch model to the packed checkpoint with original HF naming.
 
     The packed checkpoint will be consumed by the VLLM.
@@ -105,8 +98,6 @@ def export_hf2compressored_model(
 
     except Exception as e:
         warnings.warn(
-            "Cannot export model and config, the state"
-            " can be saved with torch.save for further inspection."
+            "Cannot export model and config, the state" " can be saved with torch.save for further inspection."
         )
         raise e
-

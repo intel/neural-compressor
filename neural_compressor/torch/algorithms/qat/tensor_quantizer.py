@@ -17,7 +17,6 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
 """TensorQuantizer Module."""
 
 import torch
@@ -27,6 +26,7 @@ try:
     from auto_round.data_type import get_quant_func
 except ImportError:
     get_quant_func = None
+
 
 class TensorQuantizer(nn.Module):
     """Tensor quantizer module."""
@@ -59,9 +59,9 @@ class TensorQuantizer(nn.Module):
         # enable quantizer
         self.enable()
 
-        assert get_quant_func is not None, (
-                f"The quantization function is imported from AutoRound, please intall it. 'pip install auto-round'"
-            )
+        assert (
+            get_quant_func is not None
+        ), "The quantization function is imported from AutoRound, please install it. 'pip install auto-round'"
 
         # self.data_type will be overided 'mx_fp' -> 'mx_fp8'
         self.quant_func, self.data_type = get_quant_func(self.data_type, self.num_bits, self.sym)
@@ -146,13 +146,14 @@ class TensorQuantizer(nn.Module):
         self._disabled = False
 
     def weight_pack(self, weight, scale):
-        """pack weight and scale when saving."""
+        """Pack weight and scale when saving."""
         original_shape = weight.shape
 
         # TODO: support more quantization format
         if self.data_type == "mx_fp8":
-            qweight = (weight.reshape(-1, self.block_size) \
-                    / torch.exp2(scale.float()).reshape(-1, 1)).to(torch.float8_e4m3fn)
+            qweight = (weight.reshape(-1, self.block_size) / torch.exp2(scale.float()).reshape(-1, 1)).to(
+                torch.float8_e4m3fn
+            )
 
             e8m0_scale = (scale + 127).to(torch.uint8)
             return qweight.reshape(original_shape), e8m0_scale
