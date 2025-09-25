@@ -984,7 +984,7 @@ class AutoRoundConfig(TorchBaseConfig):
         template=None,
         truncation: bool = False,
         quant_lm_head: bool = False,
-        #v0.8
+        # v0.8
         enable_adam: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
@@ -1041,15 +1041,15 @@ class AutoRoundConfig(TorchBaseConfig):
               Default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
-        
+
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
         self.bits = bits
         self.group_size = group_size
         self.use_sym = use_sym
         self.dtype = dtype
-        self.act_bits= act_bits
-        self.act_group_size= act_group_size
+        self.act_bits = act_bits
+        self.act_group_size = act_group_size
         self.act_sym = act_sym
         self.act_dtype = act_dtype
         self.act_dynamic = act_dynamic
@@ -1117,7 +1117,6 @@ class AutoRoundConfig(TorchBaseConfig):
                 result[param] = value
         return result
 
-    
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
         """Get information about the model.
