@@ -18,7 +18,6 @@ import os
 import torch
 import transformers
 
-
 # For reproducibility
 torch.manual_seed(42)
 torch.use_deterministic_algorithms(True, warn_only=False)
@@ -242,10 +241,14 @@ if __name__ == "__main__":
             print(f"Overall accuracy: {sum(all_accuracy.values())/len(all_accuracy):.4f}")
 
     if args.save:
-        if world_size > 1:
-            assert False, "model quantized with deepspeed tensor parallel is not supported to be saved."
-        elif args.use_recipe:
-            assert False, "model quantized with recipe is not supported to be saved."
-        else:
+        if args.dtype == "nv_fp4":
+            # using llm_compressor format to save nv_fp4 model
             autoround.save_quantized(args.save_path, format="llm_compressor")
+        else:
+            # using auto_round format to save mx_fp4 and mx_fp8 model
+            if world_size > 1:
+                output_dir = args.save_path + "/" + args.local_rank + "." + args.world_size
+                autoround.save_quantized(output_dir, format="auto_round")
+            else:
+                autoround.save_quantized(args.save_path, format="auto_round")
         print(f"Quantized model is saved to {args.save_path}")
