@@ -4,7 +4,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 #
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2025 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -70,7 +70,7 @@ class TensorQuantizer(nn.Module):
             # E8M0 scales (exponent)
             self.register_buffer(
                 "scale",
-                torch.empty(scale_shape[0], scale_shape.shape[1] // self.block_size, dtype=torch.uint8, device=device),
+                torch.empty(scale_shape[0], scale_shape[1] // self.block_size, dtype=torch.uint8, device=device),
             )
             self.save_scale = True
         else:
@@ -132,6 +132,9 @@ class TensorQuantizer(nn.Module):
 
         return q, shared_exp
 
+    def _real_quantize(self, inputs: torch.Tensor):
+        raise NotImplementedError("This method hasn't be implemented.")
+
     @property
     def fake_quant(self):
         """Return True if fake quantization is used."""
@@ -156,7 +159,7 @@ class TensorQuantizer(nn.Module):
             )
 
             e8m0_scale = (scale + 127).to(torch.uint8)
-            return qweight.reshape(original_shape), e8m0_scale
+            return qweight.reshape(original_shape), e8m0_scale.reshape(original_shape[0], -1)
 
     def __repr__(self):
         if self._disabled or not self._if_quant:

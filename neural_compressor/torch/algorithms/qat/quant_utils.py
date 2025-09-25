@@ -4,7 +4,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 #
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2025 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -108,12 +108,12 @@ def get_quantization_format(module) -> str | None:
         raise NotImplementedError(f"Unsupported quantizer with num_bits: {weight_quantizer.num_bits}")
 
     quantization = _get_quantization_from_layer(module)
-    if quantization != None:
+    if quantization is not None:
         return quantization
 
     for _, layer in module.named_children():
         format = get_quantization_format(layer)
-        if format != None:
+        if format is not None:
             return format
 
     return None

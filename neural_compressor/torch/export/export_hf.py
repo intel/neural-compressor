@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2025 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ def _export_quantized_weight(sub_module: nn.Module, quantization_format: str = N
     The export includes converting weight tensor to correct quantized values and quantized dtype,
     and registering scaling factors.
     """
-    if quantization_format == None:
+    if quantization_format is None:
         return
 
     weight: nn.Parameter = getattr(sub_module, weight_name)
@@ -39,7 +39,7 @@ def _export_quantized_weight(sub_module: nn.Module, quantization_format: str = N
     # TODO: support more scale dtype when there are other quantization format except mxfp8/mxfp4
     quantized_weight, e8m0_scale = weight_quantizer.weight_pack(qdq_weight, scale)
 
-    sub_module.register_buffer("weight_scale", e8m0_scale.reshape(*weight.shape[:-1], -1))
+    sub_module.register_buffer("weight_scale", e8m0_scale)
 
     setattr(sub_module, weight_name, nn.Parameter(quantized_weight, requires_grad=False))
 
@@ -72,7 +72,7 @@ def _export_hf_checkpoint(model: nn.Module, scheme: str | None = None) -> tuple[
 
     for name, sub_module in layer_pool.items():
         quantization_format = get_quantization_format(sub_module)
-        if quantization_format != None:
+        if quantization_format is not None:
             if is_quantlinear(sub_module):
                 _export_quantized_weight(sub_module, quantization_format)
 
@@ -98,6 +98,6 @@ def export_hf2compressored_model(model: nn.Module, export_dir: Path | str = temp
 
     except Exception as e:
         warnings.warn(
-            "Cannot export model and config, the state" " can be saved with torch.save for further inspection."
+            "Cannot export model and config, the state can be saved with torch.save for further inspection."
         )
         raise e

@@ -4,7 +4,7 @@
 # Copyright (c) Microsoft Corporation.
 # Licensed under the MIT License.
 #
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2025 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@
 
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 
 from .tensor_quantizer import TensorQuantizer
 
