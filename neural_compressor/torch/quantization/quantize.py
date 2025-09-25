@@ -151,7 +151,7 @@ def prepare(
     quant_config: BaseConfig | dict | None = None,
     inplace: bool = True,
     example_inputs: Any = None,
-    qat: bool = False
+    qat: bool = False,
 ):
     """Prepare the model for calibration.
 
@@ -187,6 +187,7 @@ def prepare(
         return prepared_model
     else:
         from ..algorithms.qat.quant_utils import replace_with_quant_linear
+
         return replace_with_quant_linear(model, quant_config)
 
 

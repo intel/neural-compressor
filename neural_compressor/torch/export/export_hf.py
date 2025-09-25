@@ -97,7 +97,5 @@ def export_hf2compressored_model(model: nn.Module, export_dir: Path | str = temp
         model.config.save_pretrained(export_dir)
 
     except Exception as e:
-        warnings.warn(
-            "Cannot export model and config, the state can be saved with torch.save for further inspection."
-        )
+        warnings.warn("Cannot export model and config, the state can be saved with torch.save for further inspection.")
         raise e
