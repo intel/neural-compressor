@@ -43,13 +43,21 @@ from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, logger
 
 from .utility import CapturedDataloader, InputCaptureModule
-
-
 class AutoRoundQuantizer(Quantizer):
     """AutoRound Quantizer."""
-
     def __init__(
         self,
+        bits: int = None,
+        group_size: int = None,
+        sym: bool = None,
+        data_type: str = None,
+        act_bits: int = None,
+        act_group_size: int = None,
+        act_sym: bool = None,
+        act_data_type: str = None,
+        act_dynamic: bool = None,
+        super_bits: int = None,
+        super_group_size: int = None,
         quant_config: dict = {},
         enable_full_range: bool = False,  ##for symmetric, TODO support later
         batch_size: int = 8,
@@ -71,14 +79,8 @@ class AutoRoundQuantizer(Quantizer):
         gradient_accumulate_steps: int = 1,
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
-        data_type: str = "int",
         scale_dtype: str = "fp16",
         to_quant_block_names: list = None,
-        act_bits: int = 32,
-        act_group_size: int = None,
-        act_sym: bool = None,
-        act_dynamic: bool = True,
-        act_data_type: Optional[str] = None,
         low_cpu_mem_usage: bool = False,
         export_format: str = "itrex",
         # v0.4
@@ -168,12 +170,24 @@ class AutoRoundQuantizer(Quantizer):
             The quantized model.
         """
         super().__init__(quant_config)
-        self.tokenizer = "Placeholder"  # for AutoRound initialization
+        self.tokenizer = kwargs.pop("tokenizer", "Placeholder")  # for AutoRound initialization
         self.enable_full_range = enable_full_range
+        self.bits = bits
+        self.group_size = group_size
+        self.sym = sym
+        self.data_type = data_type
+        self.act_bits= act_bits
+        self.act_group_size= act_group_size
+        self.act_sym = act_sym
+        self.act_data_type = act_data_type
+        self.act_dynamic = act_dynamic
+        self.super_bits = super_bits
+        self.super_group_size = super_group_size
         self.batch_size = batch_size
         self.amp = amp
         self.device = get_accelerator(kwargs.pop("device", "auto")).name()
         self.lr_scheduler = lr_scheduler
+        self.dataset = dataset
         self.enable_quanted_input = enable_quanted_input
         self.enable_minmax_tuning = enable_minmax_tuning
         self.lr = lr
@@ -188,14 +202,8 @@ class AutoRoundQuantizer(Quantizer):
         self.gradient_accumulate_steps = gradient_accumulate_steps
         self.not_use_best_mse = not_use_best_mse
         self.dynamic_max_gap = dynamic_max_gap
-        self.data_type = data_type
         self.scale_dtype = scale_dtype
         self.to_quant_block_names = to_quant_block_names
-        self.act_bits = act_bits
-        self.act_group_size = act_group_size
-        self.act_sym = act_sym
-        self.act_dynamic = act_dynamic
-        self.act_data_type = act_data_type
         self.low_cpu_mem_usage = low_cpu_mem_usage
         self.export_format = export_format
         self.enable_norm_bias_tuning = enable_norm_bias_tuning
@@ -210,7 +218,7 @@ class AutoRoundQuantizer(Quantizer):
         self.device_map = device_map
         self.enable_w4afp8 = self._is_w4afp8()
 
-    def _is_w4afp8(self):
+    def _is_w4afp8(self) -> bool:
         return any([v.get("data_type", None) == "fp8_to_int_sym" for v in self.quant_config.values()])
 
     def prepare(self, model: torch.nn.Module, *args, **kwargs):
@@ -234,21 +242,37 @@ class AutoRoundQuantizer(Quantizer):
         Returns:
             The quantized model.
         """
-        dataloader = CapturedDataloader(model.args_list, model.kwargs_list)
+
+        tokenizer = getattr(model.orig_model, "tokenizer", None)
+        if tokenizer is not None:
+            delattr(model.orig_model, "tokenizer")
+        else:
+            tokenizer = "Placeholder"
+            self.dataset = CapturedDataloader(model.args_list, model.kwargs_list)
         model = model.orig_model
         rounder = AutoRound(
             model,
-            tokenizer=self.tokenizer,
+            bits=self.bits,
+            data_type=self.data_type,
+            group_size=self.group_size,
+            sym=self.sym,
+            act_bits=self.act_bits,
+            act_group_size=self.act_group_size,
+            act_sym=self.act_sym,
+            act_data_type=self.act_data_type,
+            act_dynamic=self.act_dynamic,
+            super_bits=self.super_bits,
+            super_group_size=self.super_group_size,
+            tokenizer=tokenizer,
             scheme=self.scheme,
             processor=self.processor,
             image_processor=self.image_processor,
-            layer_config=self.quant_config,
             enable_full_range=self.enable_full_range,
             batch_size=self.batch_size,
             amp=self.amp,
             device_map=self.device_map,
             lr_scheduler=self.lr_scheduler,
-            dataset=dataloader,
+            dataset=self.dataset,
             extra_data_dir=self.extra_data_dir,
             template=self.template,
             quant_nontext_module=self.quant_nontext_module,
@@ -267,12 +291,7 @@ class AutoRoundQuantizer(Quantizer):
             gradient_accumulate_steps=self.gradient_accumulate_steps,
             not_use_best_mse=self.not_use_best_mse,
             dynamic_max_gap=self.dynamic_max_gap,
-            data_type=self.data_type,
             scale_dtype=self.scale_dtype,
-            act_bits=self.act_bits,
-            act_group_size=self.act_group_size,
-            act_sym=self.act_sym,
-            act_dynamic=self.act_dynamic,
             to_quant_block_names=self.to_quant_block_names,
             enable_norm_bias_tuning=self.enable_norm_bias_tuning,
             truncation=self.truncation,
@@ -285,7 +304,8 @@ class AutoRoundQuantizer(Quantizer):
         elif "itrex" in self.export_format:
             model = pack_model(model, weight_config, device=self.device, inplace=True)
         else:  # pragma: no cover
-            model = rounder.save_quantized(output_dir="temp_auto_round", format=self.export_format, inplace=True)
+            pass
+            # model = rounder.save_quantized(output_dir="temp_auto_round", format=self.export_format, inplace=False)
 
         return model
 

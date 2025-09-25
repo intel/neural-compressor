@@ -25,6 +25,7 @@ from neural_compressor.torch.quantization.config import (
     HybridGPTQConfig,
     INT8StaticQuantConfig,
     SmoothQuantConfig,
+    AutoRoundConfig,
 )
 from neural_compressor.torch.utils import is_ipex_available, logger
 from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mapping, get_model_info
@@ -88,6 +89,12 @@ def preprocess_quant_config(model, quant_config, mode="prepare", example_inputs=
                     scale_sharing=quant_config.scale_sharing,
                 )
         model_info = quant_config.get_model_info(model, example_inputs)
+    elif isinstance(quant_config, AutoRoundConfig):
+        _tokenizer_backup = getattr(quant_config, "tokenizer", None)
+        if _tokenizer_backup is not None:
+            setattr(model, "tokenizer", _tokenizer_backup)
+            delattr(quant_config, "tokenizer")
+        model_info = quant_config.get_model_info(model=model)
     else:
         model_info = quant_config.get_model_info(model=model)
 

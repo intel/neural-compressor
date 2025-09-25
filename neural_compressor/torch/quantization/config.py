@@ -936,16 +936,18 @@ class AutoRoundConfig(TorchBaseConfig):
 
     def __init__(
         self,
-        dtype: str = "int",
-        bits: int = 4,
-        use_sym: bool = False,
-        group_size: int = 128,
-        # AUTOROUND
-        act_bits: int = 32,
+        bits: int = None,
+        group_size: int = None,
+        use_sym: bool = None,
+        dtype: str = None,
+        act_bits: int = None,
         act_group_size: int = None,
         act_sym: bool = None,
-        act_dynamic: bool = True,
-        act_dtype: Optional[str] = "int",
+        act_dtype: str = None,
+        act_dynamic: bool = None,
+        super_bits: int = None,
+        super_group_size: int = None,
+        # AUTOROUND
         enable_full_range: bool = False,
         batch_size: int = 8,
         amp: bool = True,
@@ -970,10 +972,10 @@ class AutoRoundConfig(TorchBaseConfig):
         export_format: str = "itrex",
         # v0.4
         enable_norm_bias_tuning: bool = False,
-        enable_torch_compile: bool = None,
+        enable_torch_compile: bool = False,
         # v0.7
         scheme: str | dict = "W4A16",
-        device_map: str = None,
+        device_map: [str, int, torch.device, dict] = 0,
         # mllm
         quant_nontext_module: bool = False,
         extra_data_dir: str = None,
@@ -982,6 +984,8 @@ class AutoRoundConfig(TorchBaseConfig):
         template=None,
         truncation: bool = False,
         quant_lm_head: bool = False,
+        #v0.8
+        enable_adam: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
     ):
@@ -1037,17 +1041,20 @@ class AutoRoundConfig(TorchBaseConfig):
               Default is DEFAULT_WHITE_LIST.
         """
         super().__init__(white_list=white_list)
-        self.dtype = dtype
-        self.bits = bits
-        self.use_sym = use_sym
-        self.group_size = group_size
-        self.act_bits = act_bits
-        self.act_group_size = act_group_size
-        self.act_sym = act_sym
-        self.act_dynamic = act_dynamic
-        self.act_dtype = act_dtype
+        
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
+        self.bits = bits
+        self.group_size = group_size
+        self.use_sym = use_sym
+        self.dtype = dtype
+        self.act_bits= act_bits
+        self.act_group_size= act_group_size
+        self.act_sym = act_sym
+        self.act_dtype = act_dtype
+        self.act_dynamic = act_dynamic
+        self.super_bits = super_bits
+        self.super_group_size = super_group_size
         self.amp = amp
         self.lr_scheduler = lr_scheduler
         self.enable_quanted_input = enable_quanted_input
@@ -1079,6 +1086,9 @@ class AutoRoundConfig(TorchBaseConfig):
         self.scheme = scheme
         self.device_map = device_map
         self.quant_lm_head = quant_lm_head
+        # add kwargs
+        for k, v in kwargs.items():
+            setattr(self, k, v)
         self._post_init()
 
     @classmethod
@@ -1095,6 +1105,19 @@ class AutoRoundConfig(TorchBaseConfig):
         supported_configs.append(OperatorConfig(config=linear_AUTOROUND_config, operators=operators))
         cls.supported_configs = supported_configs
 
+    def get_params_dict(self):
+        """Get a dictionary containing the parameters and their values for the current instance.
+
+        Returns:
+            A dictionary containing the parameters and their values.
+        """
+        result = dict()
+        for param, value in self.__dict__.items():
+            if param not in ["_global_config", "_local_config", "_white_list", "tokenizer"]:
+                result[param] = value
+        return result
+
+    
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
         """Get information about the model.

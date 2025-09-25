@@ -86,11 +86,11 @@ class TestAutoRoundCPU:
             torchscript=True,
         )
         self.inp = torch.ones([1, 10], dtype=torch.long)
-        tokenizer = transformers.AutoTokenizer.from_pretrained(
+        self.tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
         from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
-        self.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
+        self.dataloader = get_dataloader(self.tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
         self.label = self.gptj(self.inp)[0]
 
     @classmethod
@@ -140,7 +140,8 @@ class TestAutoRoundCPU:
     def test_autoround_with_quantize_API(self):
         gpt_j_model = copy.deepcopy(self.gptj)
 
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
+        quant_config = AutoRoundConfig(dtype="int", bits=4, act_dtype="int", act_bits=32,nsamples=32, seqlen=10,
+                        iters=10, use_sym=False, group_size=128, amp=False ,scale_dtype="fp32")
         quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
 
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -160,8 +161,9 @@ class TestAutoRoundCPU:
         fp32_model = copy.deepcopy(self.gptj)
         # known issue: scale_dtype="fp32" will cause accuracy gap between quantized model
         # (using auto-round WeightOnlyLinear) and reloaded model (using INCWeightOnlyLinear)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp16")
-        # quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
+        quant_config = AutoRoundConfig(dtype="int", bits=4, act_dtype="int", act_bits=32,nsamples=32, seqlen=10,
+                        iters=10, use_sym=False, group_size=128, amp=False ,scale_dtype="fp16")
+        quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # quantizer execute
@@ -294,6 +296,7 @@ class TestAutoRoundCPU:
     def test_scheme(self, scheme):
         fp32_model = copy.deepcopy(self.gptj)
         quant_config = AutoRoundConfig(
+            tokenizer=self.tokenizer,
             nsamples=32,
             seqlen=10,
             iters=10,
@@ -306,13 +309,26 @@ class TestAutoRoundCPU:
 
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
-        run_fn(model, self.dataloader)
         q_model = convert(model)
         out = q_model(self.inp)[0]
-        assert q_model is not None, "Quantization failed!"
-        assert q_model.transformer.h[0].attn.k_proj.bits is 4
-        assert torch.allclose(out, self.label, atol=1e-1)
-
+        
+        from auto_round import AutoRound
+        fp32_model = copy.deepcopy(self.gptj)
+        ar = AutoRound(
+            model=fp32_model,
+            tokenizer=self.tokenizer,
+            nsamples=32,
+            seqlen=10,
+            iters=10,
+            amp=False,
+            scale_dtype="fp16",
+            scheme=scheme,
+            export_format="llm_compressor",
+        )
+        ar.quantize()
+        out_ar = ar.model(self.inp)[0]
+        assert torch.all(out.eq(out_ar))
+        
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")
 @pytest.mark.skipif(os.getenv("PT_HPU_LAZY_MODE", "0") == "1", reason="Lazy mode is enabled")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")

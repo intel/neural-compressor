@@ -579,24 +579,33 @@ def autoround_quantize_entry(
         if quant_config.name != AUTOROUND or quant_config.dtype == "fp32":
             continue
         else:
-            dtype = quant_config.dtype
             bits = quant_config.bits
-            if dtype != "int" and "int" in dtype:
-                if dtype == "fp8_to_int_sym":
+            group_size = quant_config.group_size
+            sym = quant_config.use_sym
+            data_type = quant_config.dtype
+            act_bits= quant_config.act_bits
+            act_group_size= quant_config.act_group_size
+            act_sym = quant_config.act_sym
+            act_data_type = quant_config.act_dtype
+            act_dynamic = quant_config.act_dynamic
+            super_bits = quant_config.super_bits
+            super_group_size = quant_config.super_group_size
+            if data_type is not None and data_type != "int" and "int" in data_type:
+                if data_type == "fp8_to_int_sym":
                     bits = 4
                 else:
-                    bits = int(dtype.lstrip("int"))
-                    dtype = "int"
+                    bits = int(data_type.lstrip("int"))
+                    data_type = "int"
             weight_config[op_name] = {
-                "data_type": dtype,
+                "data_type": data_type,
                 "bits": bits,
-                "sym": quant_config.use_sym,
-                "group_size": quant_config.group_size,
-                "act_bits": quant_config.act_bits,
-                "act_group_size": quant_config.act_group_size,
-                "act_sym": quant_config.act_sym,
-                "act_dynamic": quant_config.act_dynamic,
-                "act_data_type": quant_config.act_dtype,
+                "sym": sym,
+                "group_size": group_size,
+                "act_bits": act_bits,
+                "act_group_size": act_group_size,
+                "act_sym": act_sym,
+                "act_dynamic": act_dynamic,
+                "act_data_type": act_data_type,
             }
             enable_full_range = quant_config.enable_full_range
             batch_size = quant_config.batch_size
@@ -636,6 +645,17 @@ def autoround_quantize_entry(
         model,
         quantizer_cls=AutoRoundQuantizer,
         quant_config=weight_config,
+        bits=bits,
+        data_type=data_type,
+        group_size=group_size,
+        sym=sym,
+        act_bits=act_bits,
+        act_group_size=act_group_size,
+        act_sym=act_sym,
+        act_data_type=act_data_type,
+        act_dynamic=act_dynamic,
+        super_bits=super_bits,
+        super_group_size=super_group_size,
         enable_full_range=enable_full_range,
         batch_size=batch_size,
         amp=amp,
