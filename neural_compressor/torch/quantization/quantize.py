@@ -207,6 +207,7 @@ def prepare_qat(
     assert model.training, "prepare_qat only works on models in training mode"
 
     from .config import get_default_qat_module_mappings
+
     if mapping is None:
         mapping = get_default_qat_module_mappings()
 
