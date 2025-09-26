@@ -38,7 +38,7 @@ class QuantLinear(nn.Module):
         out = self.output_quantizer(out)
         return out
 
-    def _setup(self, quant_cfg: "QuantizationSchem"):
+    def _setup(self, quant_cfg):
         """Init quantizer."""
         self.weight_quantizer = TensorQuantizer(
             data_type=quant_cfg.data_type,

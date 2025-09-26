@@ -57,7 +57,6 @@ def _export_hf_checkpoint(model: nn.Module, scheme: str | None = None) -> tuple[
         post_state_dict: Dict containing quantized weights
         quant_config: config information to export hf_quant_cfg.json
     """
-
     # Create a model layer pool
     # If `model.model` exists use that, otherwise use `model` itself, e.g., Nemotron-H
     root = getattr(model, "model", model)
@@ -86,7 +85,6 @@ def export_hf2compressored_model(model: nn.Module, export_dir: Path | str = temp
 
     The packed checkpoint will be consumed by the VLLM.
     """
-
     export_dir = Path(export_dir)
     export_dir.mkdir(parents=True, exist_ok=True)
 
