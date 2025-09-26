@@ -58,7 +58,8 @@ class AutoRoundQuantizer(Quantizer):
         act_dynamic: bool = None,
         super_bits: int = None,
         super_group_size: int = None,
-        quant_config: dict = {},
+        quant_config: dict = {}, # for INC
+        layer_config: dict[str, Union[str, dict, QuantizationScheme]] = None,
         enable_full_range: bool = False,  ##for symmetric, TODO support later
         batch_size: int = 8,
         amp: bool = True,
@@ -120,6 +121,7 @@ class AutoRoundQuantizer(Quantizer):
                     bits (int): Number of bits for quantization (default is 4).
                     group_size (int): Size of the quantization group (default is 128).
                     sym (bool): Whether to use symmetric quantization. (default is None).
+            layer_config (dict, optional): Layer-wise quantization config. Defaults to None.
             bits (int): Number of bits for quantization (default is 4).
             group_size (int): Size of the quantization group (default is 128).
             sym (bool): Whether symmetric quantization is to be used (default is False).
@@ -170,6 +172,8 @@ class AutoRoundQuantizer(Quantizer):
             The quantized model.
         """
         super().__init__(quant_config)
+        self.layer_config =  layer_config
+        self.output_dir = kwargs.pop("output_dir", "temp_auto_round")
         self.tokenizer = kwargs.pop("tokenizer", "Placeholder")  # for AutoRound initialization
         self.enable_full_range = enable_full_range
         self.bits = bits
@@ -252,6 +256,7 @@ class AutoRoundQuantizer(Quantizer):
         model = model.orig_model
         rounder = AutoRound(
             model,
+            layer_config=self.layer_config,
             bits=self.bits,
             data_type=self.data_type,
             group_size=self.group_size,
@@ -300,13 +305,11 @@ class AutoRoundQuantizer(Quantizer):
         model, weight_config = rounder.quantize()
         model.autoround_config = weight_config
         if self.enable_w4afp8:
-            return rounder.save_quantized(output_dir="temp_auto_round", inplace=True)
+            return rounder.save_quantized(output_dir=self.output_dir, inplace=True)
         elif "itrex" in self.export_format:
             model = pack_model(model, weight_config, device=self.device, inplace=True)
         else:  # pragma: no cover
-            pass
-            # model = rounder.save_quantized(output_dir="temp_auto_round", format=self.export_format, inplace=False)
-
+            model = rounder.save_quantized(output_dir=self.output_dir, format=self.export_format, inplace=True)
         return model
 
 

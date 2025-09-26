@@ -294,39 +294,75 @@ class TestAutoRoundCPU:
     @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
     @pytest.mark.parametrize("scheme", ["MXFP4", "NVFP4"])
     def test_scheme(self, scheme):
-        fp32_model = copy.deepcopy(self.gptj)
+        # INC API
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        inp = torch.ones([1, 10], dtype=torch.long)
+        tokenizer = AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+
+        output_dir = "./saved_inc"
         quant_config = AutoRoundConfig(
-            tokenizer=self.tokenizer,
+            tokenizer=tokenizer,
             nsamples=32,
             seqlen=10,
             iters=10,
             amp=False,
             scale_dtype="fp16",
             scheme=scheme,
-            export_format="llm_compressor",
+            export_format="auto_round",
+            output_dir=output_dir, # default is "temp_auto_round"
         )
-        logger.info(f"Test AutoRound with config {quant_config}")
 
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
-        q_model = convert(model)
-        out = q_model(self.inp)[0]
+        inc_model = convert(model)
+        inc_model = AutoModelForCausalLM.from_pretrained(
+            output_dir,
+            torch_dtype="auto",
+            device_map="auto",
+        )
+        out = inc_model(inp)[0]
         
+        # AutoRound API
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        fp32_model = transformers.AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        inp = torch.ones([1, 10], dtype=torch.long)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
         from auto_round import AutoRound
-        fp32_model = copy.deepcopy(self.gptj)
         ar = AutoRound(
             model=fp32_model,
-            tokenizer=self.tokenizer,
+            tokenizer=tokenizer,
             nsamples=32,
             seqlen=10,
             iters=10,
             amp=False,
             scale_dtype="fp16",
             scheme=scheme,
-            export_format="llm_compressor",
         )
+        quantized_model_path = "./saved_ar"
         ar.quantize()
-        out_ar = ar.model(self.inp)[0]
+        model = ar.save_quantized(output_dir=quantized_model_path, inplace=True, format="auto_round")
+        model = AutoModelForCausalLM.from_pretrained(
+            quantized_model_path,
+            torch_dtype="auto",
+            device_map="auto",
+        )
+        tokenizer = AutoTokenizer.from_pretrained(quantized_model_path)
+        out_ar = model(inp)[0]
+        assert torch.all(out_ar.eq(out))
+        shutil.rmtree(output_dir, ignore_errors=True)
+        shutil.rmtree(quantized_model_path, ignore_errors=True)
+
         assert torch.all(out.eq(out_ar))
         
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")

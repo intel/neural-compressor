@@ -607,6 +607,8 @@ def autoround_quantize_entry(
                 "act_dynamic": act_dynamic,
                 "act_data_type": act_data_type,
             }
+            layer_config = quant_config.to_dict().get("layer_config", None)
+            output_dir = quant_config.to_dict().get("output_dir", "temp_auto_round")
             enable_full_range = quant_config.enable_full_range
             batch_size = quant_config.batch_size
             amp = quant_config.amp
@@ -656,6 +658,8 @@ def autoround_quantize_entry(
         act_dynamic=act_dynamic,
         super_bits=super_bits,
         super_group_size=super_group_size,
+        layer_config=layer_config,
+        output_dir=output_dir,
         enable_full_range=enable_full_range,
         batch_size=batch_size,
         amp=amp,
