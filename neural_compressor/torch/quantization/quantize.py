@@ -148,10 +148,9 @@ def quantize(
 @log_process(mode=Mode.PREPARE)
 def prepare(
     model: torch.nn.Module,
-    quant_config: BaseConfig | dict | None = None,
+    quant_config: BaseConfig,
     inplace: bool = True,
     example_inputs: Any = None,
-    qat: bool = False,
 ):
     """Prepare the model for calibration.
 
@@ -166,29 +165,49 @@ def prepare(
     Returns:
         prepared and calibrated module.
     """
-    if not qat:
-        prepared_model = model if inplace else copy.deepcopy(model)
-        prepared_model, configs_mapping = preprocess_quant_config(
-            prepared_model, quant_config, mode="prepare", example_inputs=example_inputs
-        )
-        for algo_name, algo_func in algos_mapping.items():
-            # select quantization algo according to config
-            if need_apply(configs_mapping, algo_name):
-                logger.info(f"Start to prepare model with {algo_name}.")
-                prepared_model = algo_func(
-                    prepared_model,
-                    configs_mapping,
-                    example_inputs=example_inputs,
-                    mode=Mode.PREPARE,
-                )
-                setattr(prepared_model, "is_prepared", True)
-        setattr(prepared_model, "quant_config", quant_config)
-        setattr(prepared_model, "example_inputs", example_inputs)
-        return prepared_model
-    else:
-        from ..algorithms.qat.quant_utils import replace_with_quant_linear
+    prepared_model = model if inplace else copy.deepcopy(model)
+    prepared_model, configs_mapping = preprocess_quant_config(
+        prepared_model, quant_config, mode="prepare", example_inputs=example_inputs
+    )
+    for algo_name, algo_func in algos_mapping.items():
+        # select quantization algo according to config
+        if need_apply(configs_mapping, algo_name):
+            logger.info(f"Start to prepare model with {algo_name}.")
+            prepared_model = algo_func(
+                prepared_model,
+                configs_mapping,
+                example_inputs=example_inputs,
+                mode=Mode.PREPARE,
+            )
+            setattr(prepared_model, "is_prepared", True)
+    setattr(prepared_model, "quant_config", quant_config)
+    setattr(prepared_model, "example_inputs", example_inputs)
+    return prepared_model
 
-        return replace_with_quant_linear(model, quant_config)
+
+@log_process(mode=Mode.PREPARE)
+def prepare_qat(
+    model: torch.nn.Module,
+    quant_config: dict,
+    inplace: bool = True,
+):
+    r"""
+    Prepares a copy of the model for quantization calibration or
+    quantization-aware training and converts it to quantized version.
+
+    Quantization configuration should be assigned preemptively
+    to individual submodules in `.qconfig` attribute.
+
+    Args:
+        model: input model to be modified in-place
+        quant_config: quantization config that maps float modules to quantized modules to be
+                 replaced.
+        inplace: carry out model transformations in-place, the original module
+                 is mutated
+    """
+    from ..algorithms.qat.quant_utils import replace_with_quant_linear
+
+    return replace_with_quant_linear(model, quant_config)
 
 
 @log_process(mode=Mode.CONVERT)
