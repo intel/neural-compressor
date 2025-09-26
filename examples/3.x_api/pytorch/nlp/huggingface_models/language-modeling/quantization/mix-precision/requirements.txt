@@ -1,0 +1,4 @@
+transformers
+torch
+lm-eval
+datasets
