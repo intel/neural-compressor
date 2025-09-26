@@ -61,7 +61,7 @@ class AutoRoundQuantizer(Quantizer):
         act_dynamic: bool = None,
         super_bits: int = None,
         super_group_size: int = None,
-        quant_config: dict = {}, # for INC
+        quant_config: dict = {},  # for INC
         layer_config: dict[str, Union[str, dict, QuantizationScheme]] = None,
         enable_full_range: bool = False,  ##for symmetric, TODO support later
         batch_size: int = 8,
@@ -175,7 +175,7 @@ class AutoRoundQuantizer(Quantizer):
             The quantized model.
         """
         super().__init__(quant_config)
-        self.layer_config =  layer_config
+        self.layer_config = layer_config
         self.output_dir = kwargs.pop("output_dir", "temp_auto_round")
         self.tokenizer = kwargs.pop("tokenizer", "Placeholder")  # for AutoRound initialization
         self.enable_full_range = enable_full_range
