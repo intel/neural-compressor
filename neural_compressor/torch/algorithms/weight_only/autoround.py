@@ -43,8 +43,11 @@ from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, logger
 
 from .utility import CapturedDataloader, InputCaptureModule
+
+
 class AutoRoundQuantizer(Quantizer):
     """AutoRound Quantizer."""
+
     def __init__(
         self,
         bits: int = None,
@@ -180,8 +183,8 @@ class AutoRoundQuantizer(Quantizer):
         self.group_size = group_size
         self.sym = sym
         self.data_type = data_type
-        self.act_bits= act_bits
-        self.act_group_size= act_group_size
+        self.act_bits = act_bits
+        self.act_group_size = act_group_size
         self.act_sym = act_sym
         self.act_data_type = act_data_type
         self.act_dynamic = act_dynamic

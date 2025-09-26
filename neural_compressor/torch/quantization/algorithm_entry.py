@@ -583,8 +583,8 @@ def autoround_quantize_entry(
             group_size = quant_config.group_size
             sym = quant_config.use_sym
             data_type = quant_config.dtype
-            act_bits= quant_config.act_bits
-            act_group_size= quant_config.act_group_size
+            act_bits = quant_config.act_bits
+            act_group_size = quant_config.act_group_size
             act_sym = quant_config.act_sym
             act_data_type = quant_config.act_dtype
             act_dynamic = quant_config.act_dynamic
