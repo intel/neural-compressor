@@ -60,6 +60,30 @@ def replace_with_quant_linear(model, quant_cfg=None):
     return model
 
 
+def get_quant_config_with_scheme(scheme: str):
+    """get quantization config."""
+
+    try:
+        # use scheme definitions from AutoRound since we utilize the quantization functions now
+        from auto_round.schemes import preset_name_to_scheme
+        quant_cfg = preset_name_to_scheme(scheme)
+        return quant_cfg
+    except ImportError:
+        return None
+        
+
+def convert_model_with_mapping(model, mapping=None):
+    """process mapping to quant config."""
+    # key is torch module, TODO: support more key format, like layer name.
+    for key in mapping:
+        # TODO: support more torch modules
+        if isinstance(key, nn.Linear):
+            quant_cfg = get_quant_config_with_scheme(mapping[key])
+            if quant_cfg is None:
+                continue
+            replace_with_quant_linear(model, quant_cfg)
+
+        
 def get_quant_config(scheme: str) -> dict[str, Any]:
     """Generate quantization config for a torch model.
 

@@ -188,7 +188,7 @@ def prepare(
 @log_process(mode=Mode.PREPARE)
 def prepare_qat(
     model: torch.nn.Module,
-    quant_config: dict,
+    mapping=None,
     inplace: bool = True,
 ):
     r"""Prepares a copy of the model for quantization calibration or
@@ -204,9 +204,15 @@ def prepare_qat(
         inplace: carry out model transformations in-place, the original module
                  is mutated
     """
-    from ..algorithms.qat.quant_utils import replace_with_quant_linear
+    assert model.training, "prepare_qat only works on models in training mode"
 
-    return replace_with_quant_linear(model, quant_config)
+    from .config import get_default_qat_module_mappings
+    if mapping is None:
+        mapping = get_default_qat_module_mappings()
+
+    from ..algorithms.qat.quant_utils import convert_model_with_mapping
+
+    return convert_model_with_mapping(model, mapping)
 
 
 @log_process(mode=Mode.CONVERT)

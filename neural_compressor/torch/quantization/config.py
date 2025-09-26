@@ -24,6 +24,7 @@ from collections import OrderedDict
 from typing import Callable, Dict, List, NamedTuple, Optional
 from typing import OrderedDict as OrderedDictType
 from typing import Tuple, Union
+import copy
 
 import torch
 
@@ -2167,3 +2168,14 @@ class StaticQuantConfig(TorchBaseConfig):
             return cls._model_mapping[STATIC_QUANT].get_config_set_for_tuning()
         else:
             raise ValueError(f"Unsupported dtype: {dtype}, allowed values are 'fp8' and 'int8'.")
+
+# TODO: support more mappings configurations.
+# Default map for swapping float module to qat modules
+DEFAULT_QAT_MODULE_MAPPINGS: dict[Callable, Any] = {
+    torch.nn.Linear: "MXFP8",
+}
+
+def get_default_qat_module_mappings() -> dict[Callable, Any]:
+    """Get default module mapping for quantization aware training"""
+    return copy.deepcopy(DEFAULT_QAT_MODULE_MAPPINGS)
+
