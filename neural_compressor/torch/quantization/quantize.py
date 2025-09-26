@@ -191,8 +191,7 @@ def prepare_qat(
     quant_config: dict,
     inplace: bool = True,
 ):
-    r"""
-    Prepares a copy of the model for quantization calibration or
+    r"""Prepares a copy of the model for quantization calibration or
     quantization-aware training and converts it to quantized version.
 
     Quantization configuration should be assigned preemptively
