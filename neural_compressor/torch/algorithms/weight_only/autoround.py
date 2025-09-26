@@ -249,7 +249,6 @@ class AutoRoundQuantizer(Quantizer):
         Returns:
             The quantized model.
         """
-
         tokenizer = getattr(model.orig_model, "tokenizer", None)
         if tokenizer is not None:
             delattr(model.orig_model, "tokenizer")
