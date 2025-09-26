@@ -75,6 +75,7 @@ if __name__ == "__main__":
     parser.add_argument("--nsamples", default=128, type=int, help="number of samples for autoround.")
     parser.add_argument("--save", action="store_true", help="whether to save the quantized model")
     parser.add_argument("--save_path", type=str, default="saved_results", help="path to save the quantized model")
+    parser.add_argument("--save_format", type=str, default="auto_round", help="format to save the quantized model")
     parser.add_argument("--quant_lm_head", action="store_true", help="whether to quantize lm_head")
     parser.add_argument("--accuracy", action="store_true", help="accuracy measurement")
     parser.add_argument("--local_rank", type=int, default=0, metavar="N", help="Local process rank.")
@@ -243,12 +244,12 @@ if __name__ == "__main__":
     if args.save:
         if args.dtype == "nv_fp4":
             # using llm_compressor format to save nv_fp4 model
-            autoround.save_quantized(args.save_path, format="llm_compressor")
+            autoround.save_quantized(args.save_path, format=args.save_format)
         else:
             # using auto_round format to save mx_fp4 and mx_fp8 model
             if world_size > 1:
                 output_dir = args.save_path + "/" + args.local_rank + "_" + args.world_size
-                autoround.save_quantized(output_dir, format="auto_round")
+                autoround.save_quantized(output_dir, format=args.save_format)
             else:
-                autoround.save_quantized(args.save_path, format="auto_round")
-        print(f"Quantized model is saved to {args.save_path}")
+                autoround.save_quantized(args.save_path, format=args.save_format)
+        print(f"Quantized model in {args.save_format} format is saved to {args.save_path}")

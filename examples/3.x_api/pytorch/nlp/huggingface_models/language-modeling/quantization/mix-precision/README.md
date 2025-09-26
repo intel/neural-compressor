@@ -55,6 +55,7 @@ deepspeed --include="localhost:4,5,6,7" --master_port=29500 quantize.py  \
 > Note: 
 > 1. Quantization applies `--dtype` for all blocks in the model by removing `--use_recipe`.
 > 2. Setting `--quant_lm_head` applies `--dtype` for the lm_head layer.
+> 3. Setting `--iters 0` skips AutoRound tuning and uses RTN method.
 
 ## vLLM usage
 NVFP4 is supported by vLLM already, the saved model in this example follows the `llm_compressor` format, please refer to the usage in the public vLLM document.
@@ -64,7 +65,7 @@ MXFP4 is enabled in a forked repo, usages as below:
 # Install the forked vLLM for MXFP4
 
 # Command to save model:
-python quantize.py  --model_name_or_path facebook/opt-125m --quantize --dtype MXFP4 --batch_size 8 --save --save_path opt-125m-mxfp4
+python quantize.py  --model_name_or_path facebook/opt-125m --quantize --dtype MXFP4 --batch_size 8 --save --save_path opt-125m-mxfp4 --save_format llm_compressor
 
 # Command to evaluate with vLLM:
 
