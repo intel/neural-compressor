@@ -163,4 +163,3 @@ def test_tensor_quantizer_scale_persistence():
     assert tq.scale.dtype == torch.uint8
     # Heuristic: at least one non-zero (if all zero it may still be valid, but improbable)
     assert (tq.scale != 0).any() or (shared_exp == 0).all()
-
