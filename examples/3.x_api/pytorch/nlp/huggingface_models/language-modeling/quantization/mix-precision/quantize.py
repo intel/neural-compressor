@@ -68,6 +68,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--dtype", type=str, default="MXFP4", choices=["MXFP4", "MXFP8", "NVFP4", "NVFP4+", "uNVFP4"], help="data type")
     parser.add_argument("--quantize", action="store_true", help="whether to quantize model")
+    parser.add_argument("--device_map", type=str, default=None, help="device map for model")
     parser.add_argument("--use_recipe", action="store_true", help="whether to use recipe to quantize model")
     parser.add_argument("--recipe_file", type=str, default="recipes/Meta-Llama-3.1-8B-Instruct_6bits.json", help="path of recipe file")
     parser.add_argument("--iters", default=200, type=int, help="iters for autoround.")
@@ -122,7 +123,7 @@ if __name__ == "__main__":
             model,
             tokenizer,
             device=device,
-            device_map="tp" if world_size > 1 else None,
+            device_map="tp" if world_size > 1 else args.device_map,
             iters=args.iters,
             seqlen=args.seqlen,
             nsamples=args.nsamples,
@@ -248,6 +249,8 @@ if __name__ == "__main__":
         else:
             # using auto_round format to save mx_fp4 and mx_fp8 model
             if world_size > 1:
+                print(f"Suggest to save model without sharding for better reload experience.")
+                print(f"Setting`--device_map 0,1,2,3` provides pipeline parallel instead of deepspeed tensor parallel.")
                 output_dir = args.save_path + "/" + args.local_rank + "_" + args.world_size
                 autoround.save_quantized(output_dir, format=args.save_format)
             else:
