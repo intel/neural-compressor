@@ -20,7 +20,7 @@ import transformers
 
 # For reproducibility
 torch.manual_seed(42)
-torch.use_deterministic_algorithms(True, warn_only=False)
+torch.use_deterministic_algorithms(True, warn_only=True)
 ######################## HPU Memory Optimization ###########################
 # ensure that unnecessary memory is released during quantization.
 os.environ.setdefault("PT_HPU_LAZY_MODE", "1")
