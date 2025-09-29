@@ -25,7 +25,7 @@ hf download meta-llama/Llama-4-Scout-17B-16E-Instruct --local-dir Llama-4-Scout-
 ## 1. Quantization
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=llama4_mxfp4 --input_model=/huggingface/Llama-4-Scout-17B-16E-Instruct/ --iters=0
+CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=llama4_mxfp4 --input_model=Llama-4-Scout-17B-16E-Instruct/ --iters=0
 ```
 
 
