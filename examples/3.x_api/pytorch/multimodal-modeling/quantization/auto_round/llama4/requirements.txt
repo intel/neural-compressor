@@ -1,5 +1,5 @@
-auto-tound==0.8.0
-lm-eval
+auto-round @ git+https://github.com/intel/auto-round@v0.8.0rc
+lm-eval==0.4.9.1
 setuptools_scm
 torchao==0.12.0
 triton==3.3.1
