@@ -21,6 +21,7 @@ import torch
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.utils import Mode, call_counter, log_process
 from neural_compressor.torch.quantization.config import (
+    AutoRoundConfig,
     FP8Config,
     HybridGPTQConfig,
     INT8StaticQuantConfig,
@@ -88,6 +89,12 @@ def preprocess_quant_config(model, quant_config, mode="prepare", example_inputs=
                     scale_sharing=quant_config.scale_sharing,
                 )
         model_info = quant_config.get_model_info(model, example_inputs)
+    elif isinstance(quant_config, AutoRoundConfig):
+        _tokenizer_backup = getattr(quant_config, "tokenizer", None)
+        if _tokenizer_backup is not None:
+            setattr(model, "tokenizer", _tokenizer_backup)
+            delattr(quant_config, "tokenizer")
+        model_info = quant_config.get_model_info(model=model)
     else:
         model_info = quant_config.get_model_info(model=model)
 
