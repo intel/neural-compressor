@@ -24,7 +24,7 @@ import json
 from collections import OrderedDict
 from typing import Callable, Dict, List, NamedTuple, Optional
 from typing import OrderedDict as OrderedDictType
-from typing import Tuple, Union
+from typing import Tuple, Union, Any
 
 import torch
 

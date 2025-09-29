@@ -26,6 +26,7 @@ import torch
 import torch.nn as nn
 
 from .quant_linear import QuantLinear
+from .tensor_quantizer import TensorQuantizer 
 
 
 def convert(module: nn.Module, quant_cfg=None, quant_module=None):
@@ -66,7 +67,6 @@ def get_quant_config_with_scheme(scheme: str):
     try:
         # use scheme definitions from AutoRound since we utilize the quantization functions now
         from auto_round.schemes import preset_name_to_scheme
-
         quant_cfg = preset_name_to_scheme(scheme)
         return quant_cfg
     except ImportError:
@@ -78,11 +78,14 @@ def convert_model_with_mapping(model, mapping=None):
     # key is torch module, TODO: support more key format, like layer name.
     for key in mapping:
         # TODO: support more torch modules
-        if isinstance(key, nn.Linear):
+        if key == nn.Linear:
             quant_cfg = get_quant_config_with_scheme(mapping[key])
             if quant_cfg is None:
                 continue
             replace_with_quant_linear(model, quant_cfg)
+
+    replaced_modules = sum(isinstance(m, TensorQuantizer) for _, m in model.named_modules())
+    print(f"Inserted {replaced_modules} quantizers")
 
 
 def get_quant_config(scheme: str) -> dict[str, Any]:
