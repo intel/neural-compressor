@@ -51,7 +51,7 @@ function run_benchmark {
         model="vllm"
     fi
 
-    VLLM_USE_STANDALONE_COMPILE=0 VLLM_WORKER_MULTIPROC_METHOD=spawn \
+    NCCL_NVLS_ENABLE=0 VLLM_USE_STANDALONE_COMPILE=0 VLLM_WORKER_MULTIPROC_METHOD=spawn \
     lm_eval --model ${model} \
             --model_args pretrained=${input_model},tensor_parallel_size=${tp_size},${extra_model_args},enable_expert_parallel=True \
             --tasks ${tasks} \
