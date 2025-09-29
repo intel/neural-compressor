@@ -26,7 +26,7 @@ import torch
 import torch.nn as nn
 
 from .quant_linear import QuantLinear
-from .tensor_quantizer import TensorQuantizer 
+from .tensor_quantizer import TensorQuantizer
 
 
 def convert(module: nn.Module, quant_cfg=None, quant_module=None):
@@ -67,6 +67,7 @@ def get_quant_config_with_scheme(scheme: str):
     try:
         # use scheme definitions from AutoRound since we utilize the quantization functions now
         from auto_round.schemes import preset_name_to_scheme
+
         quant_cfg = preset_name_to_scheme(scheme)
         return quant_cfg
     except ImportError:

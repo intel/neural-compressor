@@ -22,9 +22,9 @@ import copy
 import importlib
 import json
 from collections import OrderedDict
-from typing import Callable, Dict, List, NamedTuple, Optional
+from typing import Any, Callable, Dict, List, NamedTuple, Optional
 from typing import OrderedDict as OrderedDictType
-from typing import Tuple, Union, Any
+from typing import Tuple, Union
 
 import torch
 
