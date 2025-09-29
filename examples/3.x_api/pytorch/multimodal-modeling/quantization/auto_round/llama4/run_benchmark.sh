@@ -36,13 +36,16 @@ function init_params {
 function run_benchmark {
 
     extra_model_args=""
+    extra_cmd=""
 
     if [ "${topology}" = "llama4_mxfp4" ]; then
-        extra_model_args="max_model_len=8192,max_num_seqs=1024,max_gen_toks=2048,kv_cache_dtype=auto"
+        extra_model_args="max_model_len=8192,max_num_seqs=1024,max_gen_toks=2048,kv_cache_dtype=auto,gpu_memory_utilization=0.7"
+        extra_cmd="--gen_kwargs max_gen_toks=2048"
     fi
 
-    if [ "${tasks}" == *"chartqa"* || "${tasks}" == *"mmmu_val"* ]; then
+    if [[ "${tasks}" == *"chartqa"* || "${tasks}" == *"mmmu_val"* ]]; then
         model="vllm-vlm"
+        extra_cmd=${extra_cmd}" --apply_chat_template"
     else
         model="vllm"
     fi
@@ -51,7 +54,8 @@ function run_benchmark {
     lm_eval --model ${model} \
             --model_args pretrained=${input_model},tensor_parallel_size=${tp_size},${extra_model_args},enable_expert_parallel=True \
             --tasks ${tasks} \
-            --batch_size ${batch_size}
+            --batch_size ${batch_size} \
+            ${extra_cmd}
 }
 
 main "$@"

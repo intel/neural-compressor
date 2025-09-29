@@ -41,6 +41,7 @@ function init_params {
 function run_tuning {
     extra_cmd=""
     tuned_checkpoint=${tuned_checkpoint:="saved_results"}
+    iters=${iters:=0}
 
     if [ "${topology}" = "llama4_mxfp4" ]; then
         extra_cmd="--fp_layers lm-head,self_attn,router,vision_model,multi_modal_projector,shared_expert --scheme MXFP4"
@@ -50,7 +51,7 @@ function run_tuning {
         --model ${input_model} \
         --iters ${iters}  \
         --format "llm_compressor"  \
-        --output_dir ${tuned_checkpoint}
+        --output_dir ${tuned_checkpoint} \
         ${extra_cmd}
 }
 
