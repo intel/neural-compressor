@@ -19,6 +19,7 @@ pip install -r /neural-compressor/test/3x/torch/requirements.txt
 pip install pytest-cov
 pip install pytest-html
 pip install pytest-html-merger
+pip install beautifulsoup4==4.13.5
 echo "##[endgroup]"
 pip list
 
