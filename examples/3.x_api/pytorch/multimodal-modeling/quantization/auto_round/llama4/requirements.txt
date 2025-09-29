@@ -1,5 +1,4 @@
 auto-tound==0.8.0
-compressed-tensors
 lm-eval
 setuptools_scm
 torchao==0.12.0
