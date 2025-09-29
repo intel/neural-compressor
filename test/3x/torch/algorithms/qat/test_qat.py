@@ -8,6 +8,7 @@ import pytest
 auto_round = pytest.importorskip("auto_round")
 
 from neural_compressor.torch.quantization.quantize import prepare_qat
+from neural_compressor.torch.algorithms.qat.tensor_quantizer import TensorQuantizer
 
 
 def setup_seed(seed):
