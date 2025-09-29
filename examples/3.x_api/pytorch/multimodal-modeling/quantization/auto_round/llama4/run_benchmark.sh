@@ -37,6 +37,7 @@ function run_benchmark {
 
     extra_model_args=""
     extra_cmd=""
+    batch_size=${batch_size:=1}
 
     if [ "${topology}" = "llama4_mxfp4" ]; then
         extra_model_args="max_model_len=8192,max_num_seqs=1024,max_gen_toks=2048,kv_cache_dtype=auto,gpu_memory_utilization=0.7"
