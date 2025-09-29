@@ -84,14 +84,14 @@ if __name__ == "__main__":
     parser.add_argument(
         "--tasks",
         type=str,
-        nargs="+",  # 接受一个或多个字符串作为列表
+        nargs="+",
         default=[
             "piqa",
             "hellaswag",
             "mmlu",
             "winogrande",
             "lambada_openai",
-        ],  # 默认值
+        ],
         help="tasks for accuracy validation, text-generation and code-generation tasks are different.",
     )
     parser.add_argument("--limit", type=int, default=None, help="number of samples for accuracy evaluation")

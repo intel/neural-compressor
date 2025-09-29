@@ -9,6 +9,8 @@ In this examples, you can verify the accuracy on HPU/CUDA device with emulation 
 pip install neural-compressor-pt==3.6
 # auto-round
 pip install auto-round==0.8.0
+# others
+pip install -r requirements.txt
 ```
 
 ## Quantization

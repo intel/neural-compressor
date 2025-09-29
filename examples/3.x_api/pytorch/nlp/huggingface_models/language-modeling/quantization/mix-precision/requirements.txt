@@ -1,5 +1,5 @@
-transformers
-torch
-lm-eval
-datasets
-deepspeed
+transformers==4.56.2
+torch==2.7.0
+lm_eval==0.4.9.1
+datasets==3.6.0
+deepspeed==0.17.6
