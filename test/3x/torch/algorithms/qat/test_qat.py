@@ -60,4 +60,8 @@ def test_train():
 
     optimizer.zero_grad()
     loss.backward()
+
+    # check the grad
+    for name, param in model.named_parameters():
+        assert param.grad is not None
     optimizer.step()
