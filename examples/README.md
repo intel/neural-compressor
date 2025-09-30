@@ -6,9 +6,9 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
 
 # Quick Get Started Notebook Examples
-* [Quick Get Started Notebook of Intel® Neural Compressor for ONNXRuntime (Deprecated)](/examples/notebook/onnxruntime/Quick_Started_Notebook_of_INC_for_ONNXRuntime.ipynb)
+* [Quick Get Started Notebook of Intel® Neural Compressor for ONNXRuntime (Deprecated)](/examples/deprecated/notebook/onnxruntime/Quick_Started_Notebook_of_INC_for_ONNXRuntime.ipynb)
 
-* [Quick Get Started Notebook of Intel® Neural Compressor for Tensorflow (Deprecated)](/examples/notebook/tensorflow/resnet/resnet_quantization.ipynb)
+* [Quick Get Started Notebook of Intel® Neural Compressor for Tensorflow (Deprecated)](/examples/deprecated/notebook/tensorflow/resnet/resnet_quantization.ipynb)
 
 # Helloworld Examples
 * [torch_llm](/examples/deprecated/helloworld/torch_woq): apply the weight-only quantization to LLMs.
@@ -1350,7 +1350,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
 # Notebook Examples
 
-* [Performance of FP32 Vs. INT8 ResNet50 Model (Deprecated)](/examples/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly.
-* [Intel® Neural Compressor Sample for TensorFlow* (Deprecated)](/examples/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
-* [Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids (Deprecated)](/examples/notebook/tensorflow/vgg19_ibean): an End-To-End pipeline to train VGG19 model by transfer learning based on pre-trained model from [TensorFlow Hub](https://tfhub.dev); quantize it by Intel® Neural Compressor on Intel® Gen4 Xeon® Sapphire Rapids.
+* [Performance of FP32 Vs. INT8 ResNet50 Model (Deprecated)](/examples/deprecated/notebook/perf_fp32_int8_tf): compare existed FP32 & INT8 ResNet50 model directly.
+* [Intel® Neural Compressor Sample for TensorFlow* (Deprecated)](/examples/deprecated/notebook/tensorflow/alexnet_mnist): an End-To-End pipeline to build up a CNN model by TensorFlow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.
+* [Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids (Deprecated)](/examples/deprecated/notebook/tensorflow/vgg19_ibean): an End-To-End pipeline to train VGG19 model by transfer learning based on pre-trained model from [TensorFlow Hub](https://tfhub.dev); quantize it by Intel® Neural Compressor on Intel® Gen4 Xeon® Sapphire Rapids.
 
