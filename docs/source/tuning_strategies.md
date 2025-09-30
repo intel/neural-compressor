@@ -495,7 +495,7 @@ To use Distributed Tuning, the number of processes should be specified to be gre
 ```shell
 mpirun -np <number_of_processes> <RUN_CMD>
 ```
-An example of distributed tuning can be reached at [ptq_static_mrpc](../../examples/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx).
+An example of distributed tuning can be reached at [ptq_static_mrpc](../../examples/deprecated/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx).
 
 
 ## Customize a New Tuning Strategy

@@ -177,7 +177,7 @@ q_model = quantization.fit(model, conf, eval_func=eval_func, calib_dataloader=da
 q_model.save("saved_results")
 ```
 
-Refer to this [link](../../examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only) for an example of WOQ algorithms tuning on ONNX Llama models.
+Refer to this [link](../../examples/deprecated/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only) for an example of WOQ algorithms tuning on ONNX Llama models.
 
 
 

@@ -14,7 +14,7 @@ pr:
       - .azure-pipelines/model-test.yml
       - .azure-pipelines/template/docker-template.yml
       - .azure-pipelines/scripts/models
-      - examples/tensorflow/oob_models/quantization/ptq
+      - examples/deprecated/tensorflow/oob_models/quantization/ptq
       - .azure-pipelines/model-test.yml
       - .azure-pipelines/scripts/fwk_version.sh
       - .azure-pipelines/scripts/install_nc.sh

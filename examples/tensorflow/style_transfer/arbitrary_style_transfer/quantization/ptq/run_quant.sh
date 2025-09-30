@@ -38,7 +38,7 @@ function run_tuning {
     content_images=$(echo ${dataset_location} | awk -F ',' '{print $2}')
     echo "$style_images, $content_images"
 
-    python style_tune.py \
+    python main.py \
             --input_model "${input_model}" \
             --style_images_paths "${style_images}" \
             --content_images_paths "${content_images}" \

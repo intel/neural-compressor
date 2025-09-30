@@ -95,4 +95,4 @@ q_model = quantization.fit(fp32_model_path, conf, calib_dataloader=dataloader)
 q_model.save(int8_model_path)
 ```
 
-Refer to [ONNX Runtime llama-2 LWQ example](../../examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only)
+Refer to [ONNX Runtime llama-2 LWQ example](../../examples/deprecated/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only)

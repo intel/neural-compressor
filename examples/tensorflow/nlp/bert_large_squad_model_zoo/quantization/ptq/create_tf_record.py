@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -113,7 +113,7 @@ class InputFeatures(object):
     self.is_impossible = is_impossible
 
 
-def read_squad_examples(input_file, is_training):
+def read_squad_examples(input_file, is_training=None):
   """Read a SQuAD json file into a list of SquadExample."""
   with tf.io.gfile.GFile(input_file, "r") as reader:
     input_data = json.load(reader)["data"]
@@ -196,8 +196,8 @@ def read_squad_examples(input_file, is_training):
 
 
 def convert_examples_to_features(examples, tokenizer, max_seq_length,
-                                 doc_stride, max_query_length, is_training,
-                                 output_fn):
+                                 doc_stride, max_query_length, is_training=None,
+                                 output_fn=None):
   """Loads a data file into a list of `InputBatch`s."""
 
   unique_id = 1000000000

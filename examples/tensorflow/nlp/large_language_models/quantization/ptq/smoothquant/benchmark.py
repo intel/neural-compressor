@@ -1,3 +1,20 @@
+#
+# -*- coding: utf-8 -*-
+#
+# Copyright (c) 2024 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+#
 import os.path
 import transformers
 import tensorflow as tf
@@ -11,7 +28,7 @@ import time
 sys.path.insert(0, './')
 
 parser = argparse.ArgumentParser()
-parser.add_argument('--int8', action='store_true', help="eval fp32 model or int8 model")
+parser.add_argument('--optimized', action='store_true', help="eval fp32 model or optimized model")
 parser.add_argument('--model_name_or_path', type=str, default='facebook/opt-125m')
 parser.add_argument('--batch_size', type=int, default=16)
 parser.add_argument('--warmup', type=int, default=10)
@@ -47,7 +64,6 @@ class Evaluator:
         return tf.constant(1 - (input_ids==1).numpy().astype(int))
     
     def evaluate_tf_v1(self, model):
-        # return 0.99 # TODO debug remove
         total, hit = 0, 0
         index = 1
         infer = model.signatures["serving_default"]
@@ -157,16 +173,18 @@ eval_dataset = load_dataset('lambada', split='validation')
 
 evaluator = Evaluator(eval_dataset, tokenizer, 'cpu')
 
-if args.int8:
-    print("benchmarking int8 model")
-    int8_folder = model_name.split('/')[-1] + "_int8"
-    if not os.path.exists(int8_folder):
-        print(f"could not find int8 folder {int8_folder} ")
+if args.optimized:
+    print("benchmarking optimized model")
+    optimized_folder = model_name.split('/')[-1] + "_int8"
+    if not os.path.exists(optimized_folder):
+        print(f"could not find optimized folder {optimized_folder} ")
         exit()
-    model = tf.saved_model.load(int8_folder)    # tensorflow.python.trackable.autotrackable.AutoTrackable object
+    model = tf.saved_model.load(optimized_folder)    # tensorflow.python.trackable.autotrackable.AutoTrackable object
 else:
     print("benchmaking fp32 model")
-    print("Benchmaking fp32 model is not longer supported in this example. please go to 3.x_api examples or raise issue to us.")
-    exit(0)
+    model = transformers.TFAutoModelForCausalLM.from_pretrained(model_name)
+    from neural_compressor.tensorflow import Model
+
+    model = Model(model).model # tensorflow.python.trackable.autotrackable.AutoTrackable object
 
 evaluator.evaluate_tf_v1(model)

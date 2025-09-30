@@ -35,7 +35,7 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    python inference.py \
+    python main.py \
             --input_graph ${input_model} \
             --evaluation_data_location ${dataset_location}/eval_processed_data.tfrecords \
             --calibration_data_location ${dataset_location}/train_processed_data.tfrecords \

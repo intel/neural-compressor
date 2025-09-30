@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -276,6 +276,10 @@ def evaluate(model, tf_eval_dataset=mydata):
     iteration = run_args.iteration
     correct = 0
     latency_list = []
+    from neural_compressor.tensorflow.utils import BaseModel
+
+    if isinstance(model, BaseModel):
+        model = model.model
     infer = model.signatures["serving_default"]
     for idx, data in enumerate(tf_eval_dataset):
         input_ids = tf.convert_to_tensor([data[:-1]], dtype=tf.int32)
@@ -316,35 +320,26 @@ def main():
     with train_args.strategy.scope():
         options = tf.data.Options()
         options.experimental_distribute.auto_shard_policy = tf.data.experimental.AutoShardPolicy.OFF
-        from neural_compressor import Model
+        from neural_compressor.tensorflow import Model
         model = Model(run_args.input_model, modelType='llm_saved_model')
 
         if run_args.tune:
-            from neural_compressor.config import AccuracyCriterion
-            from neural_compressor import quantization, PostTrainingQuantConfig
+            from neural_compressor.tensorflow import StaticQuantConfig, SmoothQuantConfig, autotune
+            from neural_compressor.tensorflow.quantization import TuningConfig
+            from neural_compressor.tensorflow.utils import BaseDataLoader
 
             calib_dataloader = MyDataloader(mydata, batch_size=run_args.batch_size)  
-            recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': 0.52705}}
-            conf = PostTrainingQuantConfig(quant_level=1, 
-                                            excluded_precisions=["bf16"],##use basic tuning
-                                            recipes=recipes,
-                                            calibration_sampling_size=[1],
-                                            accuracy_criterion=AccuracyCriterion()
-                                            )
-            
+            quant_config = [SmoothQuantConfig(alpha=0.52705), StaticQuantConfig(act_dtype="int8", weight_dtype="int8")]
+            tune_config = TuningConfig(config_set=quant_config, max_trials=1)
             model.weight_name_mapping = weight_name_mapping
-            q_model = quantization.fit( model,
-                                        conf,
-                                        eval_func=evaluate,
-                                        calib_dataloader=calib_dataloader)
-
+            q_model = autotune(model, 
+                               tune_config, 
+                               eval_fn=evaluate,
+                               calib_dataloader=calib_dataloader)
             q_model.save(run_args.output_model)
         if run_args.benchmark:
             if run_args.mode == "performance":
-                from neural_compressor.benchmark import fit
-                from neural_compressor.config import BenchmarkConfig
-                conf = BenchmarkConfig(warmup=10, iteration=run_args.iteration, cores_per_instance=4, num_of_instance=1)
-                fit(model, conf, b_func=evaluate)
+                evaluate(model.model)
             elif run_args.mode == "accuracy":
                 acc_result = evaluate(model.model)
                 print("Batch size = %d" % run_args.batch_size)

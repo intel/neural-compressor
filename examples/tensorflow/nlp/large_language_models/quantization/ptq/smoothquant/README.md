@@ -1,4 +1,4 @@
-Step-by-Step (Deprecated)
+Step-by-Step
 ============
 
 This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor quantization and smooth quantization of language models such as OPT and GPT2.

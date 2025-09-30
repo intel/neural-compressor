@@ -1,0 +1,19 @@
+accelerate
+datasets
+transformers
+seqeval
+tensorboard
+sentencepiece
+timm
+fvcore
+Pillow
+einops
+textdistance
+shapely
+protobuf
+torch
+torchvision
+setuptools
+onnx
+onnxruntime
+onnxruntime-extensions; python_version < '3.11'

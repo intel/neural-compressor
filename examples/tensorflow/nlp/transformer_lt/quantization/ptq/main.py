@@ -30,7 +30,7 @@ from argparse import ArgumentParser
 from utils import metrics
 from utils import tokenizer
 from utils.tokenizer import Subtokenizer
-from neural_compressor.data import DataLoader
+from neural_compressor.tensorflow.utils import BaseDataLoader
 
 flags = tf.compat.v1.flags
 FLAGS = flags.FLAGS
@@ -143,9 +143,7 @@ def eval_func(infer_graph, iteration=-1):
         'model/Transformer/strided_slice_19:0')
 
     ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-    dataloader = DataLoader(framework='tensorflow', dataset=ds,
-                                batch_size=FLAGS.batch_size, collate_fn=collate_fn)
-
+    dataloader = BaseDataLoader(dataset=ds, batch_size=FLAGS.batch_size, collate_fn=collate_fn)
     config = tf.compat.v1.ConfigProto()
     config.use_per_session_threads = 1
     config.inter_op_parallelism_threads = 1
@@ -189,7 +187,6 @@ def eval_func(infer_graph, iteration=-1):
                     except:
                         decode.append(subtokenizer.decode(otr))
         bleu_eval.update(decode, labels)
-        print('Accuracy is {:.3f}'.format(bleu_eval.result()))
         return bleu_eval.result()
 
 class Dataset(object):
@@ -235,16 +232,16 @@ class Dataset(object):
 def main(_):
     graph = load_graph(FLAGS.input_graph)
     if FLAGS.tune:
-        from neural_compressor import quantization
-        from neural_compressor.config import PostTrainingQuantConfig
-        ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-        calib_dataloader = DataLoader(framework='tensorflow', dataset=ds, \
-                                        batch_size=FLAGS.batch_size, collate_fn=collate_fn,)										
-        conf = PostTrainingQuantConfig(inputs=['input_tensor'],
-                                        outputs=['model/Transformer/strided_slice_19'],
-                                        calibration_sampling_size=[500])       
-        q_model = quantization.fit(graph, conf=conf, calib_dataloader=calib_dataloader,
-                    eval_func=eval_func)
+        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model, Model
+
+        dataset = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
+        calib_dataloader = BaseDataLoader(dataset=dataset, batch_size=FLAGS.batch_size, collate_fn=collate_fn)
+
+        quant_config = StaticQuantConfig()
+        model = Model(graph)
+        model.input_tensor_names = ['input_tensor']
+        model.output_tensor_names = ['model/Transformer/strided_slice_19']
+        q_model = quantize_model(model, quant_config, calib_dataloader)
         try:
             q_model.save(FLAGS.output_model)
         except Exception as e:
@@ -253,13 +250,9 @@ def main(_):
     if FLAGS.benchmark:
         assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
         "Benchmark only supports performance or accuracy mode."
-        from neural_compressor.benchmark import fit
-        from neural_compressor.config import BenchmarkConfig
-        if FLAGS.mode == 'performance':
-            conf = BenchmarkConfig(cores_per_instance=28, num_of_instance=1)
-            fit(graph, conf, b_func=eval_func)
-        elif FLAGS.mode == 'accuracy':
-            eval_func(graph)
+        acc = eval_func(graph)
+        if FLAGS.mode == 'accuracy':
+            print('Accuracy is {:.3f}'.format(acc))
 
 if __name__ == "__main__":
     tf.compat.v1.app.run()
