@@ -1,6 +1,6 @@
 Examples
 ==========
-Intel® Neural Compressor validated examples with multiple compression techniques, including quantization, pruning, knowledge distillation and orchestration. Part of the validated cases can be found in the example tables, and the release data is available [here](../docs/source/validated_model_list.md).
+Intel® Neural Compressor validated examples with multiple compression techniques, including quantization, pruning, knowledge distillation and orchestration. Part of the validated cases can be found in the example tables, and the release data is available [here](../../docs/source/validated_model_list.md).
 
 > Note: `3.x_api` here is the target example folder for version >= 3.0, which contains pytorch and tensorflow related examples. TensorFlow and ONNX related examples here are no longer maintained. 
 

@@ -496,7 +496,7 @@ The pruning technique  is validated on typical models across various domains (in
 
   Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../examples/deprecated/pytorch/image_recognition/ResNet50/pruning/eager/).
 
-Please refer to [pruning examples](../../examples/README.md#Pruning-1) for more information.
+Please refer to [pruning examples](../../examples/deprecated/README.md#Pruning-1) for more information.
 
 ## Sparse Model Deployment
 
