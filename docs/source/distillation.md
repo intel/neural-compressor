@@ -107,7 +107,7 @@ model = training_func_for_nc(model)
 eval_func(model)
 ```
 
-For Intermediate Layer Knowledge Distillation or Self Distillation, the only difference to above launcher code is that `distil_loss_conf` should be set accordingly as shown below. More detailed settings can be found in this [example](../../examples/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/distillation_for_quantization/fx/run_glue_no_trainer.py#L510) for Intermediate Layer Knowledge Distillation and this [example](../../examples/pytorch/image_recognition/torchvision_models/self_distillation/eager/main.py#L344) for Self Distillation.
+For Intermediate Layer Knowledge Distillation or Self Distillation, the only difference to above launcher code is that `distil_loss_conf` should be set accordingly as shown below. More detailed settings can be found in this [example](../../examples/deprecated/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/distillation_for_quantization/fx/run_glue_no_trainer.py#L510) for Intermediate Layer Knowledge Distillation and this [example](../../examples/deprecated/pytorch/image_recognition/torchvision_models/self_distillation/eager/main.py#L344) for Self Distillation.
 
 ```python
 from neural_compressor.config import (

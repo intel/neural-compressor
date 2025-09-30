@@ -91,7 +91,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
   An advantage of channel pruning is that in some particular structure(feed forward parts in Transformers etc.), pruned channels can be removed permanently from original weights without influencing other dense channels. Via this process, we can decrease these weights' size and obtain direct improvements of inference speed, without using hardware related optimization tools like [Intel Extension for Transformers](https://github.com/intel/intel-extension-for-transformers). 
 
 
-  We name this process as <span id="click">**Model Auto Slim**(experimental feature)</span> and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Currently this method is under development and only supports some particular structures. Please refer more details of such method in this [model slim example](../../examples/pytorch/nlp/huggingface_models/question-answering/model_slim/).
+  We name this process as <span id="click">**Model Auto Slim**(experimental feature)</span> and currently we have validated that this process can significantly improve some popular transformer model's inference speed. Currently this method is under development and only supports some particular structures. Please refer more details of such method in this [model slim example](../../examples/deprecated/pytorch/nlp/huggingface_models/question-answering/model_slim/).
 
 - Unstructured Pruning
 
@@ -478,23 +478,23 @@ The pruning technique  is validated on typical models across various domains (in
 
 - Text Classification
 
-  Sparsity is implemented in different pruning patterns of MRPC and SST-2 tasks [Text-classification examples](../../examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager).
+  Sparsity is implemented in different pruning patterns of MRPC and SST-2 tasks [Text-classification examples](../../examples/deprecated/pytorch/nlp/huggingface_models/text-classification/pruning/eager).
 
 - Question Answering
 
-  Multiple examples of sparse models were obtained on the SQuAD-v1.1 dataset [Question-answering examples](../../examples/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
+  Multiple examples of sparse models were obtained on the SQuAD-v1.1 dataset [Question-answering examples](../../examples/deprecated/pytorch/nlp/huggingface_models/question-answering/pruning/eager).
 
 - Language Translation (Experimental, sparsity 0.8, pattern 4x1, BLEU 25.63(dense) vs 24.35(sparse))
 
-  Pruning Flan-T5-small model on English-Romanian translation task [Translation examples](../../examples/pytorch/nlp/huggingface_models/translation/pruning/eager).
+  Pruning Flan-T5-small model on English-Romanian translation task [Translation examples](../../examples/deprecated/pytorch/nlp/huggingface_models/translation/pruning/eager).
 
 - Object Detection (Experimental, sparsity 0.8, pattern 4x1, mAP 0.404(dense) vs 0.381(sparse))
 
-  Pruning on YOLOv5 model using coco dataset [Object-detection examples](../../examples/pytorch/object_detection/yolo_v5/pruning/eager).
+  Pruning on YOLOv5 model using coco dataset [Object-detection examples](../../examples/deprecated/pytorch/object_detection/yolo_v5/pruning/eager).
 
 - Image Recognition (Experimental, sparsity 0.75, pattern 2x1, top1 acc 0.801(dense) vs 0.7895(sparse))
 
-  Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../examples/pytorch/image_recognition/ResNet50/pruning/eager/).
+  Pruning on ResNet50 model using ImageNet dataset [Image-recognition examples](../../examples/deprecated/pytorch/image_recognition/ResNet50/pruning/eager/).
 
 Please refer to [pruning examples](../../examples/README.md#Pruning-1) for more information.
 
