@@ -1,6 +1,6 @@
 # Run
  
-In this examples, you can verify the accuracy on HPU/CUDA device with emulation of MXFP4, MXFP8, NVFP4 and uNVFP4.
+In this example, you can verify the accuracy on HPU/CUDA device with emulation of MXFP4, MXFP8, NVFP4 and uNVFP4.
 
 ## Requirement
 
@@ -9,7 +9,16 @@ In this examples, you can verify the accuracy on HPU/CUDA device with emulation 
 pip install neural-compressor-pt==3.6
 # auto-round
 pip install auto-round==0.8.0
-# others
+# other requirements
+pip install -r requirements.txt
+```
+**Before neural-compressor v3.6 and auto-round v0.8.0 release, please install from source for the latest updates:**
+```bash 
+# neural-compressor-pt
+INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@v3.6rc
+# auto-round
+pip install git+https://github.com/intel/auto-round.git@v0.8.0rc
+# other requirements
 pip install -r requirements.txt
 ```
 
@@ -85,7 +94,7 @@ export no_proxy="localhost, 127.0.0.1, ::1"
 curl -X POST http://localhost:7777/v1/completions \
      -H "Content-Type: application/json" \
      -d '{
-           "model": "/data0/suyue/Llama-3.3-70B-Instruct-MXFP4",
+           "model": "/model_path/Llama-3.3-70B-Instruct-MXFP4",
            "prompt": "Solve the following math problem step by step: What is 25 + 37? Please answer directly with the result.",
            "max_tokens": 100,
            "temperature": 0.7,
