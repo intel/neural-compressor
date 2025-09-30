@@ -11,15 +11,15 @@ Intel® Neural Compressor validated examples with multiple compression technique
 * [Quick Get Started Notebook of Intel® Neural Compressor for Tensorflow (Deprecated)](/examples/notebook/tensorflow/resnet/resnet_quantization.ipynb)
 
 # Helloworld Examples
-* [torch_llm](/examples/helloworld/torch_llm): apply the weight-only quantization to LLMs.
-* [torch_non_llm](/examples/helloworld/torch_non_llm): apply the static quantization to non-LLMs.
-* [tf_example1 (Deprecated)](/examples/helloworld/tf_example1): quantize with built-in dataloader and metric.
-* [tf_example2 (Deprecated)](/examples/helloworld/tf_example2): quantize keras model with customized metric and dataloader.
-* [tf_example3 (Deprecated)](/examples/helloworld/tf_example3): convert model with mix precision.
-* [tf_example4 (Deprecated)](/examples/helloworld/tf_example4): quantize checkpoint with dummy dataloader.
-* [tf_example5 (Deprecated)](/examples/helloworld/tf_example5): config performance and accuracy measurement.
-* [tf_example6 (Deprecated)](/examples/helloworld/tf_example6): use default user-facing APIs to quantize a pb model.
-* [tf_example7 (Deprecated)](/examples/helloworld/tf_example7): quantize and benchmark with pure python API.
+* [torch_llm](/examples/deprecated/helloworld/torch_woq): apply the weight-only quantization to LLMs.
+* [torch_non_llm](/examples/deprecated/helloworld/torch_static_quant): apply the static quantization to non-LLMs.
+* [tf_example1 (Deprecated)](/examples/deprecated/helloworld/tf_example1): quantize with built-in dataloader and metric.
+* [tf_example2 (Deprecated)](/examples/deprecated/helloworld/tf_example2): quantize keras model with customized metric and dataloader.
+* [tf_example3 (Deprecated)](/examples/deprecated/helloworld/tf_example3): convert model with mix precision.
+* [tf_example4 (Deprecated)](/examples/deprecated/helloworld/tf_example4): quantize checkpoint with dummy dataloader.
+* [tf_example5 (Deprecated)](/examples/deprecated/helloworld/tf_example5): config performance and accuracy measurement.
+* [tf_example6 (Deprecated)](/examples/deprecated/helloworld/tf_example6): use default user-facing APIs to quantize a pb model.
+* [tf_example7 (Deprecated)](/examples/deprecated/helloworld/tf_example7): quantize and benchmark with pure python API.
 
 # TensorFlow Examples (Deprecated)
 ## Quantization
@@ -171,6 +171,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Post-Training Static Quantization</td>
     <td><a href="./tensorflow/image_recognition/SavedModel/efficientnet_v2_b0/quantization/ptq">SavedModel</a></td>
   </tr>
+  <tr>
     <td>BERT base MRPC</td>
     <td>Natural Language Processing</td>
     <td>Post-Training Static Quantization</td>
