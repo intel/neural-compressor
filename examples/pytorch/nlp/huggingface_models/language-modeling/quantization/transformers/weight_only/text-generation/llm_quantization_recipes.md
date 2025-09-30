@@ -2,7 +2,7 @@
 
 This document describes the step-by-step instructions to run large language models (LLMs) on 5th Gen Intel® Xeon® Scalable Processor (codenamed Emerald Rapids) with [PyTorch](https://pytorch.org/).
 
-The scripts [run_generation_cpu_woq.py](./run_generation_cpu_woq.py) provide Weight-Only Quantization based on [Intel® Neural Compressor](https://github.com/intel/neural-compressor) and return last word prediction accuracy by [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness/tree/master).
+The scripts [run_generation_cpu_woq.py](run_generation_cpu_woq.py) provide Weight-Only Quantization based on [Intel® Neural Compressor](https://github.com/intel/neural-compressor) and return last word prediction accuracy by [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness/tree/master).
 
 # Validated Models
 

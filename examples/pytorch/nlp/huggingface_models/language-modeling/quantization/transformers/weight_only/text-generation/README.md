@@ -1,6 +1,6 @@
 # Step-by-Step
 We provide a Transformers-like API for model compression using the `WeightOnlyQuant` with `Rtn/Awq/Teq/GPTQ/AutoRound` algorithms, besides we provide use ipex to use intel extension for pytorch to accelerate the model.
-We provide the inference benchmarking script `run_generation.py` for large language models, the default search algorithm is beam search with `num_beams = 4`. [Here](./llm_quantization_recipes.md) are some well accuracy and performance optimized models we validated, more models are working in progress.
+We provide the inference benchmarking script `run_generation.py` for large language models, the default search algorithm is beam search with `num_beams = 4`. [Here](llm_quantization_recipes.md) are some well accuracy and performance optimized models we validated, more models are working in progress.
 
 # Quantization for CPU device
 
