@@ -58,7 +58,7 @@ args = arg_parser.parse_args()
 def prepare_Dataset():
     data_location = args.dataset_location
     pretrained_model = args.input_graph
-    data = dataloader.load_data(prefix=data_location+'/ppi')
+    data = dataloader.load_data(prefix=data_location + '/ppi')
     G = data[0]
     features = data[1]
     id_map = data[2]
@@ -70,13 +70,13 @@ def prepare_Dataset():
 
     context_pairs = data[3]
     placeholders = utils.construct_placeholders(num_classes)
-    minibatch = utils.NodeMinibatchIterator(G, 
-            id_map,
-            placeholders, 
-            class_map,
-            num_classes,
-            batch_size=args.batch_size,
-            context_pairs = context_pairs)
+    minibatch = utils.NodeMinibatchIterator(G,
+                                            id_map,
+                                            placeholders,
+                                            class_map,
+                                            num_classes,
+                                            batch_size=args.batch_size,
+                                            context_pairs = context_pairs)
     return minibatch
 
 class CustomDataset(object):
