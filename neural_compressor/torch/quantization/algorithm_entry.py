@@ -693,7 +693,7 @@ def autoround_quantize_entry(
         truncation=truncation,
         scheme=scheme,
         device_map=device_map,
-        quant_lm_head = quant_lm_head,
+        quant_lm_head=quant_lm_head,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping

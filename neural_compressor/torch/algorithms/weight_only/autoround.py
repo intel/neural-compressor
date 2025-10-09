@@ -306,7 +306,7 @@ class AutoRoundQuantizer(Quantizer):
             enable_norm_bias_tuning=self.enable_norm_bias_tuning,
             truncation=self.truncation,
             enable_torch_compile=self.enable_torch_compile,
-            quant_lm_head=self.quant_lm_head
+            quant_lm_head=self.quant_lm_head,
         )
         model, weight_config = rounder.quantize()
         model.autoround_config = weight_config
