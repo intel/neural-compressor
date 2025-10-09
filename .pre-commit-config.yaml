@@ -22,8 +22,6 @@ repos:
       - id: check-yaml
         exclude: |
           (?x)^(
-            conda_meta/|
-            neural_compressor/template/pruning.yaml|
             neural_compressor/adaptor/tensorflow_itex.yaml|
             neural_compressor/adaptor/tensorflow.yaml
           )$
@@ -118,7 +116,7 @@ repos:
       - id: blacken-docs
         args: [--line-length=120, --skip-errors]
         additional_dependencies:
-          - black==25.1.0
+          - black==25.9.0
         exclude: |
           (?x)^(
               examples/.+|
@@ -137,8 +135,6 @@ repos:
           (?x)^(
               examples/.*(txt|patch)|
               examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static/prompt.json|
-              examples/notebook/dynas/ResNet50_Quantiation_Search_Supernet_NAS.ipynb|
-              examples/notebook/dynas/Transformer_LT_Supernet_NAS.ipynb|
               neural_compressor/torch/algorithms/fp8_quant/internal/diffusion_evaluation/SR_evaluation/imagenet1000_clsidx_to_labels.txt|
               neural_compressor/evaluation/hf_eval/datasets/cnn_validation.json|
               neural_compressor/torch/algorithms/fp8_quant/.+|
