@@ -641,6 +641,7 @@ def autoround_quantize_entry(
             truncation = quant_config.truncation
             scheme = quant_config.scheme
             device_map = quant_config.device_map
+            quant_lm_head = quant_config.quant_lm_head
 
     kwargs.pop("example_inputs")
     quantizer = get_quantizer(
@@ -692,6 +693,7 @@ def autoround_quantize_entry(
         truncation=truncation,
         scheme=scheme,
         device_map=device_map,
+        quant_lm_head = quant_lm_head,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping

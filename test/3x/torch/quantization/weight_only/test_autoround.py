@@ -102,8 +102,14 @@ class TestAutoRoundCPU:
 
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):
+        # AutoRound does not yet support the actual use of quant_lm_head 
+        # https://github.com/intel/auto-round/blob/7b8e280f5b789fe861fe95eac971de0805ce4c62/auto_round/compressors/base.py#L438-L442
         fp32_model = copy.deepcopy(self.gptj)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32", quant_lm_head=quant_lm_head)
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
+        if quant_lm_head is True:
+            layer_config = {"lm_head": {"data_type": "int"}}
+            quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32", 
+                                           quant_lm_head=quant_lm_head, layer_config=layer_config)
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # prepare + convert API

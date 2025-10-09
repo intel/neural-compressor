@@ -67,6 +67,7 @@ class AutoRoundQuantizer(Quantizer):
         batch_size: int = 8,
         amp: bool = True,
         device_map: str = None,
+        quant_lm_head: bool = False,
         lr_scheduler=None,
         dataset: Union[str, list, tuple, torch.utils.data.DataLoader] = "NeelNanda/pile-10k",
         enable_quanted_input: bool = True,
@@ -132,6 +133,7 @@ class AutoRoundQuantizer(Quantizer):
             batch_size (int): Batch size for training (default is 8).
             amp (bool): Whether to use automatic mixed precision (default is True).
             device_map: The device to be used for tuning (default is None).
+            quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers. (default is False).
             lr_scheduler: The learning rate scheduler to be used.
             dataset (str): The default dataset name (default is "NeelNanda/pile-10k").
             enable_quanted_input (bool): Whether to use the output of the previous quantized block as
@@ -223,6 +225,7 @@ class AutoRoundQuantizer(Quantizer):
         self.truncation = truncation
         self.scheme = scheme
         self.device_map = device_map
+        self.quant_lm_head = quant_lm_head
         self.enable_w4afp8 = self._is_w4afp8()
 
     def _is_w4afp8(self) -> bool:
@@ -303,6 +306,7 @@ class AutoRoundQuantizer(Quantizer):
             enable_norm_bias_tuning=self.enable_norm_bias_tuning,
             truncation=self.truncation,
             enable_torch_compile=self.enable_torch_compile,
+            quant_lm_head=self.quant_lm_head
         )
         model, weight_config = rounder.quantize()
         model.autoround_config = weight_config
