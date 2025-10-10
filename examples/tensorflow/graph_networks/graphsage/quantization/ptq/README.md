@@ -1,4 +1,4 @@
-Step-by-Step (Deprecated)
+Step-by-Step
 ============
 
 This document is used to list steps of reproducing TensorFlow Object Detection models tuning results. This example can run on Intel CPUs and GPUs.
@@ -61,18 +61,6 @@ unzip ppi.zip
 
 # Run
 
-## Quantization Config
-
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
-
-```
-config = PostTrainingQuantConfig(
-    device="gpu",
-    backend="itex",
-    ...
-    )
-```
-
 ## 1. Quantization
   
   ```shell
@@ -99,23 +87,18 @@ For graphsage, we applied the latter one because our philosophy is to enable the
 After prepare step is done, we just need update main.py like below.
 ```python
     if args.tune:
-        from neural_compressor import quantization
-        from neural_compressor.data import DataLoader
-        from neural_compressor.config import PostTrainingQuantConfig  
+        from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
+        from neural_compressor.tensorflow.utils import BaseDataLoader
+
         dataset = CustomDataset()
-        calib_dataloader=DataLoader(framework='tensorflow', dataset=dataset, \
-                                    batch_size=1, collate_fn = collate_function)          
-        conf = PostTrainingQuantConfig()
-        q_model = quantization.fit(args.input_graph, conf=conf, \
-                                    calib_dataloader=calib_dataloader, eval_func=evaluate)
+        calib_dataloader = BaseDataLoader(dataset=dataset, batch_size=1, collate_fn=collate_function)
+        quant_config = StaticQuantConfig()
+        q_model = quantize_model(args.input_graph, quant_config, calib_dataloader)
         q_model.save(args.output_graph)
 
     if args.benchmark:
         if args.mode == 'performance':
-            from neural_compressor.benchmark import fit
-            from neural_compressor.config import BenchmarkConfig
-            conf = BenchmarkConfig()
-            fit(args.input_graph, conf, b_func=evaluate)
+            evaluate(args.input_graph)
         elif args.mode == 'accuracy':
             acc_result = evaluate(args.input_graph)
             print("Batch size = %d" % args.batch_size)

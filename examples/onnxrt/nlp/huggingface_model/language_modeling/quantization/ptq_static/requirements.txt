@@ -1,8 +1,0 @@
-transformers
-accelerate
-onnx
-onnxruntime
-coloredlogs
-torch
-sympy
-onnxruntime-extensions; python_version < '3.11'

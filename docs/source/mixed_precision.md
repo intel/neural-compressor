@@ -160,8 +160,8 @@ converted_model.save("./path/to/save/")
   
 ## Examples
 
-- Quick started with [helloworld example](/examples/helloworld/tf_example3)
-- PyTorch [ResNet18](/examples/pytorch/image_recognition/torchvision_models/mixed_precision/resnet18)
-- IPEX [DistilBERT base](/examples/pytorch/nlp/huggingface_models/question-answering/mixed_precision/ipex)
-- Tensorflow [ResNet50](/examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/mixed_precision)
-- ONNX Runtime [Bert base](/examples/onnxrt/nlp/huggingface_model/text_classification/mix_precision)
+- Quick started with [helloworld example](/examples/deprecated/helloworld/tf_example3)
+- PyTorch [ResNet18](/examples/deprecated/pytorch/image_recognition/torchvision_models/mixed_precision/resnet18)
+- IPEX [DistilBERT base](/examples/deprecated/pytorch/nlp/huggingface_models/question-answering/mixed_precision/ipex)
+- Tensorflow [ResNet50](/examples/deprecated/tensorflow/image_recognition/tensorflow_models/resnet50_v1/mixed_precision)
+- ONNX Runtime [Bert base](/examples/deprecated/onnxrt/nlp/huggingface_model/text_classification/mix_precision)

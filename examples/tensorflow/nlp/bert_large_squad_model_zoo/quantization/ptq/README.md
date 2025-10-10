@@ -1,4 +1,4 @@
-Step-by-Step (Deprecated)
+Step-by-Step
 ============
 
 This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning result of Intel® Model Zoo bert large model on squad v1.1 task.
@@ -74,7 +74,7 @@ bash prepare_dataset.sh --output_dir=./data
 ### Convert the dataset to TF Record format
 After the dataset is downloaded by either of ways above, the dataset should be converted to files of TF Record format.
 ```shell
-python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v1.1.json --output_file=./eval.tf_record
+python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v1.1.json --output_file=data/eval.tf_record
 ```
 
 # Run Command
@@ -82,22 +82,11 @@ python create_tf_record.py --vocab_file=data/vocab.txt --predict_file=data/dev-v
 
 ## Quantization
   ```shell
-  bash run_quant.sh --input_model=./fp32_bert_squad.pb --output_model=./bert_squad_int8.pb --dataset_location=/path/to/evaluation/dataset
+  bash run_quant.sh --input_model=./fp32_bert_squad.pb --output_model=./bert_squad_int8.pb --dataset_location=data
   ```
-
-### Quantization Config
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
-
-```
-config = PostTrainingQuantConfig(
-    device="gpu",
-    backend="itex",
-    ...
-    )
-```
 
 ## Benchmark
   ```shell
-  bash run_benchmark.sh --input_model=./bert_squad_int8.pb --mode=accuracy --dataset_location=/path/to/evaluation/dataset --batch_size=64
-  bash run_benchmark.sh --input_model=./bert_squad_int8.pb --mode=performance --dataset_location=/path/to/evaluation/dataset --batch_size=64
+  bash run_benchmark.sh --input_model=./bert_squad_int8.pb --mode=accuracy --dataset_location=data --batch_size=64
+  bash run_benchmark.sh --input_model=./bert_squad_int8.pb --mode=performance --dataset_location=data --batch_size=64
   ```

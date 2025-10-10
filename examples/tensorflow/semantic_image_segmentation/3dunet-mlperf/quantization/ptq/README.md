@@ -1,4 +1,4 @@
-Step-by-Step (Deprecated)
+Step-by-Step
 ============
 
 This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning zoo result of 3dunet-mlperf.
@@ -14,9 +14,9 @@ This example can run on Intel CPUs and GPUs.
 pip install neural-compressor
 ```
 
-### Install Intel Tensorflow
+### Install requirements
 ```shell
-pip install intel-tensorflow
+pip install -r requirements.txt
 ```
 > Note: Validated TensorFlow [Version](/docs/source/installation_guide.md#validated-software-environment).
 
@@ -59,27 +59,18 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 
 
 # Run command
-
-## Quantization
-
-
-### Quantization Config
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
-
-```
-config = PostTrainingQuantConfig(
-   device="gpu",
-   backend="itex",
-   ...
-   )
-```
-
-
-## Benchmark
+Please set the following environment variables before running quantization or benchmark commands:
 
 * `export nnUNet_preprocessed=<path/to/build>/build/preprocessed_data`
 * `export nnUNet_raw_data_base=<path/to/build>/build/raw_data`
 * `export RESULTS_FOLDER=<path/to/build>/build/result`
-* `pip install -r requirements.txt`
-* `python run_accuracy.py --input-model=<path/to/model_file> --data-location=<path/to/dataset> --calib-preprocess=<path/to/calibrationset> --iters=100 --batch-size=1 --mode=benchmark --bfloat16 0`
 
+## Quantization
+
+`bash run_quant.sh --input_model=3dunet_dynamic_ndhwc.pb --dataset_location=<path/to/build>/build --output_model=3dunet_dynamic_ndhwc_int8.pb`
+
+## Benchmark
+
+`bash run_benchmark.sh --input_model=3dunet_dynamic_ndhwc_int8.pb --dataset_location=<path/to/build>/build --batch_size=100 --iters=500 --mode=benchmark`
+
+`bash run_benchmark.sh --input_model=3dunet_dynamic_ndhwc_int8.pb --dataset_location=<path/to/build>/build --batch_size=1 --mode=accuracy`

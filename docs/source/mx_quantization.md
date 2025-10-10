@@ -118,7 +118,7 @@ user_model = quantize(model=user_model, quant_config=quant_config)
   
 ## Examples
 
-- PyTorch [huggingface models](/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/mx)
+- PyTorch [huggingface models](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/mx)
 
 
 ## Reference
