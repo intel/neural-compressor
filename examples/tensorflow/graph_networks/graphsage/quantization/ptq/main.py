@@ -1,7 +1,7 @@
 #
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2023 Intel Corporation
+# Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -58,7 +58,7 @@ args = arg_parser.parse_args()
 def prepare_Dataset():
     data_location = args.dataset_location
     pretrained_model = args.input_graph
-    data = dataloader.load_data(prefix=data_location+'/ppi')
+    data = dataloader.load_data(prefix=data_location + '/ppi')
     G = data[0]
     features = data[1]
     id_map = data[2]
@@ -70,13 +70,13 @@ def prepare_Dataset():
 
     context_pairs = data[3]
     placeholders = utils.construct_placeholders(num_classes)
-    minibatch = utils.NodeMinibatchIterator(G, 
-            id_map,
-            placeholders, 
-            class_map,
-            num_classes,
-            batch_size=args.batch_size,
-            context_pairs = context_pairs)
+    minibatch = utils.NodeMinibatchIterator(G,
+                                            id_map,
+                                            placeholders,
+                                            class_map,
+                                            num_classes,
+                                            batch_size=args.batch_size,
+                                            context_pairs = context_pairs)
     return minibatch
 
 class CustomDataset(object):
@@ -110,7 +110,7 @@ def evaluate(model):
     Returns:
         accuracy (float): evaluation result, the larger is better.
     """
-    from neural_compressor.model import Model
+    from neural_compressor.tensorflow import Model
     model = Model(model)
     output_tensor = model.output_tensor if len(model.output_tensor)>1 else \
                         model.output_tensor[0]
@@ -163,27 +163,22 @@ class eval_graphsage_optimized_graph:
 
     def run(self):
         """This is neural_compressor function include tuning, export and benchmark option."""
-        from neural_compressor import set_random_seed
+        from neural_compressor.common import set_random_seed
         set_random_seed(9527)
         
         if args.tune:
-            from neural_compressor import quantization
-            from neural_compressor.data import DataLoader
-            from neural_compressor.config import PostTrainingQuantConfig  
+            from neural_compressor.tensorflow import StaticQuantConfig, quantize_model
+            from neural_compressor.tensorflow.utils import BaseDataLoader
+
             dataset = CustomDataset()
-            calib_dataloader=DataLoader(framework='tensorflow', dataset=dataset, \
-                                        batch_size=1, collate_fn = collate_function)          
-            conf = PostTrainingQuantConfig()
-            q_model = quantization.fit(args.input_graph, conf=conf, \
-                                       calib_dataloader=calib_dataloader, eval_func=evaluate)
+            calib_dataloader = BaseDataLoader(dataset=dataset, batch_size=1, collate_fn=collate_function)
+            quant_config = StaticQuantConfig()
+            q_model = quantize_model(args.input_graph, quant_config, calib_dataloader)
             q_model.save(args.output_graph)
 
         if args.benchmark:
             if args.mode == 'performance':
-                from neural_compressor.benchmark import fit
-                from neural_compressor.config import BenchmarkConfig
-                conf = BenchmarkConfig()
-                fit(args.input_graph, conf, b_func=evaluate)
+                evaluate(args.input_graph)
             elif args.mode == 'accuracy':
                 acc_result = evaluate(args.input_graph)
                 print("Batch size = %d" % args.batch_size)

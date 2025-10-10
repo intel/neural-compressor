@@ -1,4 +1,4 @@
-Step-by-Step (Deprecated)
+Step-by-Step
 ============
 
 This document is used to list steps of reproducing TensorFlow Wide & Deep tuning zoo result.
@@ -41,7 +41,7 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 
 ### Install Additional Dependency packages
 ```shell
-cd examples/tensorflow/recommendation/wide_deep_large_ds/quantization/ptq
+cd examples/3.x_api/tensorflow/recommendation/wide_deep_large_ds/quantization/ptq
 pip install -r requirements.txt
 ```
 
@@ -86,17 +86,6 @@ Two .tfrecords files are generated and will be used later on:
   ```shell
   bash run_quant.sh --dataset_location=/path/to/datasets --input_model=/path/to/wide_deep_fp32_pretrained_model.pb --output_model=./wnd_int8_opt.pb
   ```
-
-### Quantization Config
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
-
-```
-config = PostTrainingQuantConfig(
-        device="gpu",
-        backend="itex",
-        ...
-        )
-```
 
 ## Benchmark
   ```

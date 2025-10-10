@@ -58,9 +58,9 @@ function check_results() {
 log_dir="/neural-compressor/.azure-pipelines/scripts/models"
 SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
 if [[ "${inc_new_api}" == "3x"* ]]; then
-    WORK_SOURCE_DIR="/neural-compressor/examples/3.x_api/${framework}"
-else
     WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
+else
+    WORK_SOURCE_DIR="/neural-compressor/examples/deprecated/${framework}"
 fi
 $BOLD_YELLOW && echo "processing ${framework}-${fwk_ver}-${model}" && $RESET
 

@@ -1,5 +1,0 @@
-numpy
-matplotlib
-tensorflow
-tensorflow-hub
-tensorflow-datasets

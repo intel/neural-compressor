@@ -1,4 +1,4 @@
-Step-by-Step (Deprecated)
+Step-by-Step
 ============
 
 This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning zoo result of Transformer-LT. This example can run on Intel CPUs and GPUs.
@@ -50,30 +50,30 @@ tar -zxvf transformer_lt_official_fp32_pretrained_model.tar.gz
 Dataset is in data folder, pretrained model is in graph folder.
 
 #### Automatic dataset & model download
-Run the `prepare_dataset_model.sh` script located in `examples/tensorflow/nlp/transformer_lt/quantization/ptq`.
+Run the `prepare_dataset_model.sh` script located in `examples/3.x_api/tensorflow/nlp/transformer_lt/quantization/ptq`.
 
 ```shell
-cd examples/tensorflow/nlp/transformer_lt/quantization/ptq
+cd examples/3.x_api/tensorflow/nlp/transformer_lt/quantization/ptq
 bash prepare_dataset_model.sh
 ```
 
 ## Run Command
+### Quantization
 
 ```shell
-python main.py --input_graph=/path/to/fp32_graphdef.pb --inputs_file=/path/to/newstest2014.en --reference_file=/path/to/newstest2014.de --vocab_file=/path/to/vocab.txt --tune
+bash run_quant.sh --input_model=./model/fp32_graphdef.pb --dataset_location=./data --output_model=./model/int8_graphdef.pb
+```
+### Benchmark
+```shell
+bash run_benchmark.sh --input_model=./model/int8_graphdef.pb --dataset_location=./data --mode=performance
+
+bash run_benchmark.sh --input_model=./model/int8_graphdef.pb --dataset_location=./data --mode=accuracy --batch_size=1
 ```
 
 Details of enabling Intel® Neural Compressor on transformer-lt for Tensorflow.
 =========================
 
 This is a tutorial of how to enable transformer-lt model with Intel® Neural Compressor.
-## User Code Analysis
-1. User specifies fp32 *model*, calibration dataset *q_dataloader*, evaluation dataset *eval_dataloader* and metric in tuning.metric field of model-specific yaml config file.
-
-2. User specifies fp32 *model*, calibration dataset *q_dataloader* and a custom *eval_func* which encapsulates the evaluation dataset and metric by itself.
-
-For transformer-lt, we applied the latter one because we don't have dataset and metric for transformer-lt. The task is to implement the *q_dataloader* and *eval_func*.
-
 
 ### q_dataloader Part Adaption
 Below dataset class uses getitem to provide the model with input.
@@ -96,19 +96,6 @@ class Dataset(object):
 ### Evaluation Part Adaption
 We evaluate the model with BLEU score, its source: https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/utils/bleu_hook.py
 
-### Quantization Config
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
-
-```
-config = PostTrainingQuantConfig(
-    device="gpu",
-    backend="itex",
-	inputs=['input_tensor'],
-    outputs=['model/Transformer/strided_slice_19'],
-    ...
-    )
-```
-
 Here we set the input tensor and output tensors name into *inputs* and *outputs* args.
 In this case we calibrate and quantize the model, and use our calibration dataloader initialized from a 'Dataset' object.
 
@@ -117,17 +104,16 @@ After prepare step is done, we add tune code to generate quantized model.
 
 #### Tune
 ```python
-    from neural_compressor import quantization
-    from neural_compressor.data import DataLoader
-    from neural_compressor.config import PostTrainingQuantConfig
-    ds = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
-    calib_dataloader = DataLoader(dataset=ds, collate_fn=collate_fn, \
-                                    batch_size=FLAGS.batch_size, framework='tensorflow')
-    conf = PostTrainingQuantConfig(inputs=['input_tensor'],
-                                    outputs=['model/Transformer/strided_slice_19'],
-                                    calibration_sampling_size=[500])
-    q_model = quantization.fit(graph, conf=conf, calib_dataloader=calib_dataloader,
-                eval_func=eval_func)
+    from neural_compressor.tensorflow import StaticQuantConfig, quantize_model, Model
+
+    dataset = Dataset(FLAGS.inputs_file, FLAGS.reference_file, FLAGS.vocab_file)
+    calib_dataloader = BaseDataLoader(dataset=dataset, batch_size=FLAGS.batch_size, collate_fn=collate_fn)
+
+    quant_config = StaticQuantConfig()
+    model = Model(graph)
+    model.input_tensor_names = ['input_tensor']
+    model.output_tensor_names = ['model/Transformer/strided_slice_19']
+    q_model = quantize_model(model, quant_config, calib_dataloader)
     try:
         q_model.save(FLAGS.output_model)
     except Exception as e:
@@ -135,11 +121,10 @@ After prepare step is done, we add tune code to generate quantized model.
 ```
 #### Benchmark
 ```python
-    from neural_compressor.benchmark import fit
-    from neural_compressor.config import BenchmarkConfig
-    if FLAGS.mode == 'performance':
-        fit(graph, conf=BenchmarkConfig(), b_func=eval_func)
-    elif FLAGS.mode == 'accuracy':
-        eval_func(graph)
+    if FLAGS.benchmark:
+        assert FLAGS.mode == 'performance' or FLAGS.mode == 'accuracy', \
+        "Benchmark only supports performance or accuracy mode."
+        acc = eval_func(graph)
+        if FLAGS.mode == 'accuracy':
+            print('Accuracy is {:.3f}'.format(acc))
 ```
-The Intel® Neural Compressor quantization.fit() function will return a best quantized model under time constraint.
