@@ -16,6 +16,22 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
 <tr>
+    <td>Llama-4-Scout-17B-16E-Instruct</td>
+    <td>Multimodal Modeling</td>
+    <td>Quantization (MXFP4)</td>
+    <td><a href="./pytorch/multimodal-modeling/quantization/auto_round/llama4">link</a></td>
+</tr>
+<tr>
+    <td rowspan="2">Llama-3.3-70B-Instruct</td>
+    <td rowspan="2">Natural Language Processing</td>
+    <td>Mixed Precision (MXFP4+MXFP8)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/mix-precision#mix-precision-quantization-mxfp4--mxfp8">link</a></td>
+</tr>
+<tr>
+    <td>Quantization (MXFP4/MXFP8/NVFP4)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/mix-precision#mxfp4--mxfp8">link</a></td>
+</tr>
+<tr>
     <td rowspan="2">gpt_j</td>
     <td rowspan="2">Natural Language Processing</td>
     <td>Weight-Only Quantization</td>
@@ -58,22 +74,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
 <tr>
     <td>Static Quantization</td>
     <td><a href="./pytorch/cv/static_quant">link</a></td>
-</tr>
-<tr>
-    <td>Llama-4-Scout-17B-16E-Instruct</td>
-    <td>Multimodal Modeling</td>
-    <td>Quantization (MXFP4)</td>
-    <td><a href="./pytorch/multimodal-modeling/quantization/auto_round/llama4">link</a></td>
-</tr>
-<tr>
-    <td rowspan="2">Llama-3.3-70B-Instruct</td>
-    <td rowspan="2">Natural Language Processing</td>
-    <td>Mixed Precision (MXFP4+MXFP8)</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/mix-precision#mix-precision-quantization-mxfp4--mxfp8">link</a></td>
-</tr>
-<tr>
-    <td>Quantization (MXFP4/MXFP8)</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/mix-precision#mxfp4--mxfp8">link</a></td>
 </tr>
 </tbody>
 </table>
