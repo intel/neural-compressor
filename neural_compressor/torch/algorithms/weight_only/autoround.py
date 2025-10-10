@@ -308,14 +308,19 @@ class AutoRoundQuantizer(Quantizer):
             enable_torch_compile=self.enable_torch_compile,
             quant_lm_head=self.quant_lm_head,
         )
-        model, weight_config = rounder.quantize()
-        model.autoround_config = weight_config
+        
         if self.enable_w4afp8:
+            model, weight_config = rounder.quantize()
+            model.autoround_config = weight_config
             return rounder.save_quantized(output_dir=self.output_dir, inplace=True)
         elif "itrex" in self.export_format:
+            model, weight_config = rounder.quantize()
+            model.autoround_config = weight_config
             model = pack_model(model, weight_config, device=self.device, inplace=True)
         else:  # pragma: no cover
-            model = rounder.save_quantized(output_dir=self.output_dir, format=self.export_format, inplace=True)
+            rounder.quantize_and_save(output_dir=self.output_dir, format=self.export_format, inplace=True)
+            model = rounder.model
+            model.autoround_config = rounder.layer_config
         return model
 
 
@@ -413,7 +418,7 @@ def get_mllm_dataloader(
         nsamples = (nsamples // batch_size + 1) * batch_size
         logger.warning(f"'nsamples' is not divisible by 'batch_size', will adjusted to {nsamples}")
 
-    dataloader, batch_size, gradient_accumulate_steps = get_mllm_dataloader(
+    dataloader, batch_size, seqlen, gradient_accumulate_steps = get_mllm_dataloader(
         template=template,
         processor=processor,
         model=model,

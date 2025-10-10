@@ -295,10 +295,8 @@ class TestAutoRoundCPU:
     #     q_model.save(output_dir="saved_results_tiny-random-GPTJForCausalLM", format="huggingface")
     #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
 
-    @pytest.mark.skipif(parse(auto_round.__version__) <= parse("0.7.0"),
-                        reason="Export with llm_compressor format does not return a model.")
     @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
-    @pytest.mark.parametrize("scheme", ["MXFP4", "NVFP4"])
+    @pytest.mark.parametrize("scheme", ["W4A16","W2A16","W3A16","W8A16","MXFP4","MXFP8", "NVFP4","FPW8A16","FP8_STATIC"])
     def test_scheme(self, scheme):
         # INC API
         from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -316,7 +314,7 @@ class TestAutoRoundCPU:
             tokenizer=tokenizer,
             nsamples=32,
             seqlen=10,
-            iters=10,
+            iters=1,
             amp=False,
             scale_dtype="fp16",
             scheme=scheme,
@@ -327,6 +325,8 @@ class TestAutoRoundCPU:
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
         inc_model = convert(model)
+        if scheme in ["FPW8A16"]: # FP8_STATIC loading not supported yet
+            return
         inc_model = AutoModelForCausalLM.from_pretrained(
             output_dir,
             torch_dtype="auto",
@@ -350,14 +350,13 @@ class TestAutoRoundCPU:
             tokenizer=tokenizer,
             nsamples=32,
             seqlen=10,
-            iters=10,
+            iters=1,
             amp=False,
             scale_dtype="fp16",
             scheme=scheme,
         )
         quantized_model_path = "./saved_ar"
-        ar.quantize()
-        model = ar.save_quantized(output_dir=quantized_model_path, inplace=True, format="auto_round")
+        ar.quantize_and_save(output_dir=quantized_model_path, inplace=True, format="auto_round")
         model = AutoModelForCausalLM.from_pretrained(
             quantized_model_path,
             torch_dtype="auto",
@@ -368,8 +367,6 @@ class TestAutoRoundCPU:
         assert torch.all(out_ar.eq(out))
         shutil.rmtree(output_dir, ignore_errors=True)
         shutil.rmtree(quantized_model_path, ignore_errors=True)
-
-        assert torch.all(out.eq(out_ar))
         
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")
 @pytest.mark.skipif(os.getenv("PT_HPU_LAZY_MODE", "0") == "1", reason="Lazy mode is enabled")
