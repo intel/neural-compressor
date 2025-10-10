@@ -308,7 +308,7 @@ class AutoRoundQuantizer(Quantizer):
             enable_torch_compile=self.enable_torch_compile,
             quant_lm_head=self.quant_lm_head,
         )
-        
+
         if self.enable_w4afp8:
             model, weight_config = rounder.quantize()
             model.autoround_config = weight_config
