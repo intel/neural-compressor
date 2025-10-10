@@ -992,14 +992,14 @@ class AutoRoundConfig(TorchBaseConfig):
         """Init AUTOROUND weight-only quantization config.
 
         Args:
-            dtype (str): Data type for weights, default is "int".
-            bits (int): Number of bits used to represent weights, default is 4.
-            use_sym (bool): Indicates whether weights are symmetric, default is False.
-            group_size (int): Size of weight groups, default is 128.
-            act_bits (int): Number of bits for activation quantization. Default is 32.
+            dtype (str): Data type for weights, default is None.
+            bits (int): Number of bits used to represent weights, default is None.
+            use_sym (bool): Indicates whether weights are symmetric, default is None.
+            group_size (int): Size of weight groups, default is None.
+            act_bits (int): Number of bits for activation quantization. Default is None.
             act_group_size (int): Group size for activation quantization. Default is None.
             act_sym (bool): Whether to use symmetric activation quantization. Default is None.
-            act_dynamic (bool): Whether to use dynamic activation quantization. Default is True.
+            act_dynamic (bool): Whether to use dynamic activation quantization. Default is None.
             act_dtype (Optional[str]): Data type for activation quantization. Default is None.
             enable_full_range (bool): Whether to enable full range quantization (default is False).
             batch_size (int): Batch size for training (default is 8).
@@ -1113,6 +1113,8 @@ class AutoRoundConfig(TorchBaseConfig):
         """
         result = dict()
         for param, value in self.__dict__.items():
+            # tokenizer: excluded to avoid duplicating large tokenizer objects in per-layer configs.
+            # The tokenizer is attached at the model level to ensure a single shared instance.
             if param not in ["_global_config", "_local_config", "_white_list", "tokenizer"]:
                 result[param] = value
         return result
