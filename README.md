@@ -27,9 +27,11 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
 * Collaborate with cloud marketplaces such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html), [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00) and [Microsoft Olive](https://github.com/microsoft/Olive), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), [ONNX Runtime](https://github.com/microsoft/onnxruntime), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
 ## What's New
+* [2025/10] [MXFP8 / MXFP4 quantization](./docs/source/3x/PT_MXQuant.md) experimental support
+* [2025/09] FP8 dynamic quantization, including Linear, FusedMoE on Intel Gaudi AI Accelerators
+* [2025/05] FP8 static quantization of DeepSeek V3/R1 model on Intel Gaudi AI Accelerators
+* [2025/03] VLM quantization in transformers-like API on Intel CPU/GPU   
 * [2024/10] [Transformers-like API](./docs/source/3x/transformers_like_api.md) for INT4 inference on Intel CPU and GPU.
-* [2024/07] From 3.0 release, framework extension API is recommended to be used for quantization.
-* [2024/07] Performance optimizations and usability improvements on [client-side](./docs/source/3x/client_quant.md).
 
 ## Installation
 Choose the necessary framework dependencies to install based on your deploy environment.
