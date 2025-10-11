@@ -89,18 +89,22 @@ To get a model quantized with Microscaling Data Types, users can use the AutoRou
 from neural_compressor.torch.quantization import AutoRoundConfig, prepare, convert
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-fp32_model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m", device_map="auto",)
+fp32_model = AutoModelForCausalLM.from_pretrained(
+    "facebook/opt-125m",
+    device_map="auto",
+)
 tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
 output_dir = "./saved_inc"
 
 # quantization configuration
-quant_config = AutoRoundConfig(tokenizer=tokenizer,
+quant_config = AutoRoundConfig(
+    tokenizer=tokenizer,
     nsamples=32,
     seqlen=32,
     iters=20,
-    scheme="MXFP4", # MXFP4, MXFP8
+    scheme="MXFP4",  # MXFP4, MXFP8
     export_format="auto_round",
-    output_dir=output_dir, # default is "temp_auto_round"
+    output_dir=output_dir,  # default is "temp_auto_round"
 )
 
 # quantize the model and save to output_dir
@@ -114,7 +118,6 @@ model = AutoModelForCausalLM.from_pretrained(output_dir, torch_dtype="auto", dev
 text = "There is a girl who likes adventure,"
 inputs = tokenizer(text, return_tensors="pt").to(model.device)
 print(tokenizer.decode(model.generate(**inputs, max_new_tokens=10)[0]))
-
 ```
 
 ## Examples
