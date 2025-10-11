@@ -119,7 +119,7 @@ print(tokenizer.decode(model.generate(**inputs, max_new_tokens=10)[0]))
 
 ## Examples
 
-- PyTorch [huggingface models](/examples/pytorch/multimodal-modeling/quantization/auto_round/llama4)
+- PyTorch [LLM/VLM models](/examples/pytorch/multimodal-modeling/quantization/auto_round/llama4)
 
 
 ## Reference
