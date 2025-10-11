@@ -81,6 +81,7 @@ def tune(args):
 
     qconfig = AutoRoundConfig(
         tokenizer=tokenizer,
+        iters=args.iters,
         scheme=args.scheme,
         layer_config=layer_config,
         export_format="llm_compressor",
