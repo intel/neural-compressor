@@ -83,19 +83,43 @@ The exponent (exp) is equal to torch.floor(torch.log2(amax)), MAX is the represe
 
 ## Get Started with Microscaling Quantization API
 
-To get a model quantized with Microscaling Data Types, users can use the Microscaling Quantization API as follows.
+To get a model quantized with Microscaling Data Types, users can use the AutoRound Quantization API as follows.
 
 ```python
-from neural_compressor.torch.quantization import MXQuantConfig, prepare, convert
+from neural_compressor.torch.quantization import AutoRoundConfig, prepare, convert
+from transformers import AutoModelForCausalLM, AutoTokenizer
 
-quant_config = MXQuantConfig(w_dtype=args.w_dtype, act_dtype=args.act_dtype, weight_only=args.woq)
-user_model = prepare(model=user_model, quant_config=quant_config)
-user_model = convert(model=user_model)
+fp32_model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m", device_map="auto",)
+tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
+output_dir = "./saved_inc"
+
+# quantization configuration
+quant_config = AutoRoundConfig(tokenizer=tokenizer,
+    nsamples=32,
+    seqlen=32,
+    iters=20,
+    scheme="MXFP4", # MXFP4, MXFP8
+    export_format="auto_round",
+    output_dir=output_dir, # default is "temp_auto_round"
+)
+
+# quantize the model and save to output_dir
+model = prepare(model=fp32_model, quant_config=quant_config)
+model = convert(model)
+
+# loading
+model = AutoModelForCausalLM.from_pretrained(output_dir, torch_dtype="auto", device_map="auto")
+
+# inference
+text = "There is a girl who likes adventure,"
+inputs = tokenizer(text, return_tensors="pt").to(model.device)
+print(tokenizer.decode(model.generate(**inputs, max_new_tokens=10)[0]))
+
 ```
 
 ## Examples
 
-- PyTorch [huggingface models](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/mx_quant)
+- PyTorch [huggingface models](/examples/pytorch/multimodal-modeling/quantization/auto_round/llama4)
 
 
 ## Reference
