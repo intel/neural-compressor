@@ -78,7 +78,7 @@ The memory and computational limits of LLMs are more severe than other general n
 |  Zero point  |   0 (None)   | $2^{bits - 1}$ or $-min * scale$ |   0 (None)   |
 |  Granularity  |  per-block (default blocksize is 32)   |  per-channel or per-tensor  | per-channel or per-tensor  |
 
-The exponent (exp) is equal to torch.floor(torch.log2(amax)), MAX is the representation range of the data type, amax is the max absolute value of per-block tensor, and rmin is the minimum value of the per-block tensor.
+The exponent (exp) is equal to clamp(floor(log2(amax)) - maxExp, -127, 127), MAX is the representation range of the data type, amax is the max absolute value of per-block tensor, and rmin is the minimum value of the per-block tensor.
 
 
 ## Get Started with Microscaling Quantization API
