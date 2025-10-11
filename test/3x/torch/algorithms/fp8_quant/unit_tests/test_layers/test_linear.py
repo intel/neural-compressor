@@ -134,6 +134,8 @@ def test_linear_dynamic_quantization(
     scale_format: ScaleFormat,
     use_hpu_graphs: bool
 ):
+    if not use_hpu_graphs and (hp_dtype == torch.bfloat16) and device_type == GAUDI2:
+        pytest.xfail("[SW-242200] Temporary skip them since the time usage is more than expected.")
     check_tests_to_skip(scale_method, scale_format, True)
     N = 1
     D_in = 8
