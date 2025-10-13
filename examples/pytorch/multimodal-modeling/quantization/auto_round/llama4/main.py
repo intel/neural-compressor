@@ -85,7 +85,6 @@ def tune(args):
         scheme=args.scheme,
         layer_config=layer_config,
         export_format="llm_compressor",
-        is_mllm=True,
         output_dir=args.output_dir,
     )
     model = prepare(model, qconfig)
