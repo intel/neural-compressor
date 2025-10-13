@@ -12,7 +12,7 @@ docker exec -it llama4 bash
 git clone https://github.com/intel/neural-compressor.git
 cd neural-compressor/examples/3.x_api/pytorch/multimodal-modeling/quantization/auto_round/llama4
 # Use `INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@v3.6rc` for the latest updates before neural-compressor v3.6 release
-pip install neural-compressor-pt==3.6 # INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@v3.6rc
+pip install neural-compressor-pt==3.6
 # Use `pip install git+https://github.com/intel/auto-round.git@v0.8.0rc` for the latest updates before auto-round v0.8.0 release
 pip install auto-round==0.8.0
 bash setup.sh
