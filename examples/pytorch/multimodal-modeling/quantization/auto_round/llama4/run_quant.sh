@@ -49,9 +49,9 @@ function run_tuning {
 
     python3 main.py \
     	--model ${input_model} \
-	--iters ${iters} \
-	--output_dir ${tuned_checkpoint} \
-	${extra_cmd}
+		--iters ${iters} \
+		--output_dir ${tuned_checkpoint} \
+		${extra_cmd}
 }
 
 main "$@"
