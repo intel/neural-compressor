@@ -15,3 +15,4 @@ auto_round
 lm-eval==0.4.3
 numba
 tbb
+vllm

@@ -337,7 +337,7 @@ if args.accuracy:
     else:
         print("Disabled optimization with IPEX...")
     from neural_compressor.evaluation.lm_eval import evaluate, LMEvalParser
-    args = LMEvalParser(model = "hf", 
+    args = LMEvalParser(model = "vllm",
                         tokenizer = tokenizer,
                         user_model = user_model,
                         tasks = args.tasks,
