@@ -17,7 +17,7 @@ import argparse
 import torch
 
 torch.use_deterministic_algorithms(True, warn_only=True)
-from transformers import AutoTokenizer, Llama4ForConditionalGeneration
+from transformers import AutoTokenizer, Llama4ForConditionalGeneration, AutoProcessor
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     convert,
@@ -69,6 +69,7 @@ def tune(args):
     layer_config = {}
     model = Llama4ForConditionalGeneration.from_pretrained(args.model, device_map=None, torch_dtype="auto", trust_remote_code=True)
     tokenizer = AutoTokenizer.from_pretrained(args.model, trust_remote_code=True)
+    processor = AutoProcessor.from_pretrained(args.model, trust_remote_code=True)
     fp_layers = args.fp_layers.replace(" ", "").split(",")
     if len(fp_layers) > 0:
         for n, m in model.named_modules():
@@ -86,6 +87,7 @@ def tune(args):
         layer_config=layer_config,
         export_format="llm_compressor",
         output_dir=args.output_dir,
+        processor=processor,
     )
     model = prepare(model, qconfig)
     model = convert(model, qconfig)
