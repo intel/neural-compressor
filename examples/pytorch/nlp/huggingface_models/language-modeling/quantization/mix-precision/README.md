@@ -44,7 +44,7 @@ python quantize.py  \
     --batch_size 32
 
 # Llama 3.3 70B
-deepspeed --include="localhost:4,5,6,7" --master_port=29500 python quantize.py  \
+deepspeed --include="localhost:0,1,2,3" --master_port=29500 quantize.py  \
     --model_name_or_path meta-llama/Llama-3.3-70B-Instruct/ \
     --quantize \
     --dtype MXFP4 \
