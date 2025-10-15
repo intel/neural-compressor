@@ -46,10 +46,10 @@ function run_tuning {
 
     python3 main.py \
     	--model ${input_model} \
-	--output_dir ${tuned_checkpoint} \
-	--quantize \
-	--inference \
-	${extra_cmd}
+		--output_dir ${tuned_checkpoint} \
+		--quantize \
+		--inference \
+		${extra_cmd}
 }
 
 main "$@"
