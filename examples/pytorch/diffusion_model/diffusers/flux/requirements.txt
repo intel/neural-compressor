@@ -1,4 +1,5 @@
 diffusers==0.35.1
+pandas==2.2.2
 clip==0.2.0
 image-reward==1.5
 torchmetrics==1.8.2
