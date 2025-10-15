@@ -96,8 +96,7 @@ class ScaleMethodFactory:
             ## maxabs/opt in channel PCS
             case (_, ScaleGranularity.PCS, QuantTensorName.WEIGHT_IN_CH, _)\
                 if scale_value_type in {ScaleValueType.MAXABS, ScaleValueType.OPT}:
-                in_channel_size = self.mod.weight.shape[1]
-                return InputChannelScale(scale_round_method, self.params, self.device_for_scales, in_channel_size)
+                return InputChannelScale(scale_round_method, self.params, self.device_for_scales)
             ## maxabs PCS
             case (ScaleValueType.MAXABS, ScaleGranularity.PCS, _, _):
                 if is_dynamic:

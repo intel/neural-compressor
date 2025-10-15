@@ -124,10 +124,10 @@ class LinearOpQuantizer(BaseOpQuantizer):
             # Calculating weight in hpu to support scale calculation CGUID torch.ops.hpu.calculate_scale_for_cast
             rescaled_weight = rescaled_weight.to(cur_device)
         if self.weight_ich_scale_calc is not None:
-            weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST)
+            weights_input_channel_dim_size = rescaled_weight.size()[1]
+            weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST, in_channel_size=weights_input_channel_dim_size)
             rescaled_weight = torch.div(rescaled_weight, weight_scales_in_ch.reshape([1, -1]))
         weights_scales_out_ch = self.weight_och_scale_calc.calc_scales(rescaled_weight, QuantTensorType.CONST)
-
         params_config = (
             {"weight": weights_scales_out_ch}
             if (self.weight_ich_scale_calc is None)

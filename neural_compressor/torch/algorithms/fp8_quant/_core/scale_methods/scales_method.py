@@ -179,13 +179,16 @@ class MaxAbsPcs(MaxAbsMethod):
 
 ## InputChannelScale used for input channel in PCS mode
 class InputChannelScale(ScalesMethod):
-    def __init__(self, round_scale_method, params, device_for_scales, in_channel_size):
+    def __init__(self, round_scale_method, params, device_for_scales):
         super().__init__(round_scale_method, params, device_for_scales)
-        self.in_channel_size = in_channel_size
 
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        input_in_ch = torch.ones([self.in_channel_size, 1], dtype=self.hp_dtype, device=self.device)
-        return  input_in_ch.flatten()
+        in_channel_size = additional_kwargs.get("in_channel_size")
+        if in_channel_size is None:
+            raise ValueError("Missing 'in_channel_size' in additional_kwargs")
+
+        input_in_ch = torch.ones([in_channel_size, 1], dtype=self.hp_dtype, device=self.device)
+        return input_in_ch.flatten()
 
 class FixedScale(ScalesMethod):
     
