@@ -105,16 +105,8 @@ def setup_parser():
     return args
 
 
-def tune(args):
-    model_name = args.model
-    if model_name[-1] == "/":
-        model_name = model_name[:-1]
-    print(f"start to quantize {model_name}")
-
-    use_auto_mapping = True
+def tune(args, model, pipe):
     layer_config = {}
-    pipe = AutoPipelineForText2Image.from_pretrained(model_name, torch_dtype=torch.bfloat16)
-    model = pipe.transformer
     kwargs = {}
     if args.scheme == "FP8":
         for n, m in model.named_modules():
@@ -140,7 +132,15 @@ def tune(args):
 if __name__ == '__main__':
     mp.set_start_method('spawn', force=True)
     args = setup_parser()
-    model, pipe = tune(args)
+    model_name = args.model
+    if model_name[-1] == "/":
+        model_name = model_name[:-1]
+    pipe = AutoPipelineForText2Image.from_pretrained(model_name, torch_dtype=torch.bfloat16)
+    model = pipe.transformer
+
+    if "--quantize" in sys.argv:
+        print(f"start to quantize {model_name}")
+        model, pipe = tune(args, model, pipe)
     if "--inference" in sys.argv:
         if not os.path.exists(args.output_image_path):
             os.makedirs(args.output_image_path)
