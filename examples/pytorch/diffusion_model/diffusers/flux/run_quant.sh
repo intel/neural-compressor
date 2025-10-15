@@ -41,7 +41,7 @@ function run_tuning {
     if [ "${topology}" = "flux_fp8" ]; then
         extra_cmd="--scheme FP8 --iters 0 --dataset captions_source.tsv"
     elif [ "${topology}" = "flux_mxfp8" ]; then
-        extra_cmd="--scheme MXFP8 --iters 10 --dataset captions_source.tsv"
+        extra_cmd="--scheme MXFP8 --iters 1000 --dataset captions_source.tsv"
     fi
 
     python3 main.py \
