@@ -105,7 +105,8 @@ def setup_parser():
     return args
 
 
-def tune(args, model, pipe):
+def tune(args, pipe):
+    model = pipe.transformer
     layer_config = {}
     kwargs = {}
     if args.scheme == "FP8":
@@ -127,7 +128,7 @@ def tune(args, model, pipe):
     )
     model = prepare(model, qconfig)
     model = convert(model, qconfig, pipeline=pipe)
-    return model, pipe
+    return pipe
 
 if __name__ == '__main__':
     mp.set_start_method('spawn', force=True)
@@ -136,11 +137,11 @@ if __name__ == '__main__':
     if model_name[-1] == "/":
         model_name = model_name[:-1]
     pipe = AutoPipelineForText2Image.from_pretrained(model_name, torch_dtype=torch.bfloat16)
-    model = pipe.transformer
+    
 
     if "--quantize" in sys.argv:
         print(f"start to quantize {model_name}")
-        model, pipe = tune(args, model, pipe)
+        pipe = tune(args, pipe)
     if "--inference" in sys.argv:
         if not os.path.exists(args.output_image_path):
             os.makedirs(args.output_image_path)
@@ -158,8 +159,6 @@ if __name__ == '__main__':
                 end = min((i + 1) * subsut_sample_num, len(df))
                 df_subset = df.iloc[start : end]
                 df_subset.to_csv(f"subset_{i}.tsv", sep='\t', index=False)
-
-            pipe.model = model
 
             with mp.Pool(processes=visible_gpus) as pool:
                 results = [pool.apply_async(inference_worker, (i,  f"subset_{i}.tsv", pipe.to(f"cuda:{i}"), args.output_image_path)) for i in range(visible_gpus)]
