@@ -75,7 +75,7 @@ class BasicArgumentParser(argparse.ArgumentParser):
         self.add_argument("--model", "--model_name", "--model_name_or_path",
                           help="model name or path")
 
-        self.add_argument('--scheme', default="MXFP4", type=str,
+        self.add_argument('--scheme', default="MXFP8", type=str,
                           help="quantizaion scheme.")
 
         self.add_argument("--quantize", action="store_true")
