@@ -71,12 +71,14 @@ if __name__ == "__main__":
     parser.add_argument("--device_map", type=str, default=None, help="device map for model")
     parser.add_argument("--use_recipe", action="store_true", help="whether to use recipe to quantize model")
     parser.add_argument("--recipe_file", type=str, default="recipes/Meta-Llama-3.1-8B-Instruct_6bits.json", help="path of recipe file")
+    parser.add_argument("--mem_per_param_scale", default=13, type=int, help="memory per param scale factor")
     parser.add_argument("--iters", default=200, type=int, help="iters for autoround.")
     parser.add_argument("--seqlen", default=2048, type=int, help="sequence length for autoround.")
     parser.add_argument("--nsamples", default=128, type=int, help="number of samples for autoround.")
     parser.add_argument("--save", action="store_true", help="whether to save the quantized model")
     parser.add_argument("--save_path", type=str, default="saved_results", help="path to save the quantized model")
     parser.add_argument("--save_format", type=str, default="auto_round", help="format to save the quantized model")
+    parser.add_argument("--enable_torch_compile", action="store_true", help="whether to enable torch.compile")
     parser.add_argument("--quant_lm_head", action="store_true", help="whether to quantize lm_head")
     parser.add_argument("--accuracy", action="store_true", help="accuracy measurement")
     parser.add_argument("--local_rank", type=int, default=0, metavar="N", help="Local process rank.")
@@ -106,8 +108,8 @@ if __name__ == "__main__":
         autoround_dtype_mapping = {
             "MXFP4": "mx_fp4",
             "MXFP8": "mx_fp8",
-            "NVFP4": "nv_fp4",
-            "uNVFP4": "fp4_v2",
+            "NVFP4": "nv_fp4_with_static_gs",
+            "uNVFP4": "fp4_v2",  # no global scale
             "NVFP4+": "fp4_v2",
         }
         args.dtype = autoround_dtype_mapping[args.dtype]
@@ -115,7 +117,7 @@ if __name__ == "__main__":
             lm_head_config = {
                 "group_size": 32 if "mx" in args.dtype else 16,
                 "data_type": args.dtype,
-                "act_data_type": "fp4_v2_with_global_scale" if "fp4_v2" in args.dtype else args.dtype,
+                "act_data_type": args.dtype,
             }
             layer_config = {"lm_head": lm_head_config}
 
@@ -130,8 +132,10 @@ if __name__ == "__main__":
             low_gpu_mem_usage=True,
             group_size=32 if "mx" in args.dtype else 16,
             data_type=args.dtype,
-            act_data_type="fp4_v2_with_global_scale" if "fp4_v2" in args.dtype else args.dtype,
+            act_data_type=args.dtype,
             layer_config=layer_config if args.quant_lm_head else None,
+            enable_torch_compile=args.enable_torch_compile,
+            mem_per_param_scale=args.mem_per_param_scale,
         )
 
         if args.use_recipe:
@@ -192,7 +196,6 @@ if __name__ == "__main__":
         else:
             # CUDA evaluation support all tasks.
             # gsm8k requires add_bos_token=False for better accuracy for llama model.
-            # model = torch.compile(model)
             args.tasks = ["piqa", "hellaswag", "mmlu", "gsm8k"]
             all_accuracy = {}
             test_gsm8k = False

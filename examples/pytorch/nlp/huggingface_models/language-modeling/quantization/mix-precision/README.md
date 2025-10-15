@@ -44,14 +44,15 @@ python quantize.py  \
     --batch_size 32
 
 # Llama 3.3 70B
-deepspeed --include="localhost:4,5,6,7" --master_port=29500 python quantize.py  \
+deepspeed --include="localhost:0,1,2,3" --master_port=29500 quantize.py  \
     --model_name_or_path meta-llama/Llama-3.3-70B-Instruct/ \
     --quantize \
     --dtype MXFP4 \
     --use_recipe \
     --recipe_file recipes/Meta-Llama-3.3-70B-Instruct_5bits.json \
     --accuracy \
-    --batch_size 32
+    --batch_size 32 \
+    --enable_torch_compile
 ```
 
 > Note: 
@@ -109,16 +110,16 @@ Model with mixed precision is not supported in vLLM, but supported in transforme
 ```bash
 # Command to save model:
 python quantize.py  \
-    --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
+    --model_name_or_path /ssd/hf_models/Llama-3.3-70B-Instruct \
     --quantize \
-    --iters 0 \
     --dtype MXFP4 \
     --use_recipe \
-    --recipe_file recipes/Meta-Llama-3.1-8B-Instruct_7bits.json \
+    --recipe_file recipes/Meta-Llama-3.3-70B-Instruct_5bits.json \
     --save \
     --save_format auto_round \
-    --save_path Llama-3.1-8B-Instruct-MXFP4-MXFP8-AR
+    --save_path Llama-3.3-70B-Instruct-MXFP4-MXFP8-AR \
+    --enable_torch_compile
 
 # Command to inference with transformer:
-python run_hf_inf.py Llama-3.1-8B-Instruct-MXFP4-MXFP8-AR
+python run_hf_inf.py Llama-3.3-70B-Instruct-MXFP4-MXFP8-AR
 ```
