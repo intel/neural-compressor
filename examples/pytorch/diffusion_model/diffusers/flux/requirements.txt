@@ -1,0 +1,5 @@
+diffusers
+clip
+image-reward
+torchmetrics
+transformers==4.55.0
