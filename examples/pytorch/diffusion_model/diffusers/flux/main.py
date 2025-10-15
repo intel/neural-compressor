@@ -137,7 +137,6 @@ if __name__ == '__main__':
     if model_name[-1] == "/":
         model_name = model_name[:-1]
     pipe = AutoPipelineForText2Image.from_pretrained(model_name, torch_dtype=torch.bfloat16)
-    
 
     if "--quantize" in sys.argv:
         print(f"start to quantize {model_name}")
