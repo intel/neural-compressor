@@ -180,7 +180,7 @@ def train():
         # export quantized model for vllm inference using llm-compressor and compressed_tensor
         export_hf2compressored_model(model, training_args.output_dir, quant_args.quant_scheme)
         if tokenizer is not None:
-            tokenizer.save_pretrained(export_path)
+            tokenizer.save_pretrained(training_args.output_dir)
 
 
 if __name__ == "__main__":
