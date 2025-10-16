@@ -75,6 +75,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Static Quantization</td>
     <td><a href="./pytorch/cv/static_quant">link</a></td>
 </tr>
+<tr>
+    <td>FLUX.1-dev</td>
+    <td>Text to Image</td>
+    <td>Quantization (MXFP8+FP8)</td>
+    <td><a href="./pytorch/diffusion_model/diffusers/flux">link</a></td>
+</tr>
 </tbody>
 </table>
 
