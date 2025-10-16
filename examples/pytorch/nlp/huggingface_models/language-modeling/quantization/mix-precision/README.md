@@ -27,7 +27,7 @@ pip install -r requirements.txt
 ### Demo (`MXFP4`, `MXFP8`, `NVFP4`, `uNVFP4`)
 
 ```bash
-python quantize.py  --model_name_or_path facebook/opt-125m --quantize --dtype MXFP4 --batch_size 8 --accuracy
+python quantize.py  --model_name_or_path facebook/opt-125m --quantize --dtype MXFP4 --batch_size 8 --accuracy --enable_torch_compile
 ```
 
 ### Mix-precision Quantization (`MXFP4 + MXFP8`)
@@ -41,7 +41,8 @@ python quantize.py  \
     --use_recipe \
     --recipe_file recipes/Meta-Llama-3.1-8B-Instruct_7bits.json \
     --accuracy \
-    --batch_size 32
+    --batch_size 32 \
+    --enable_torch_compile
 
 # Llama 3.3 70B
 deepspeed --include="localhost:0,1,2,3" --master_port=29500 quantize.py  \
@@ -112,13 +113,14 @@ Model with mixed precision is not supported in vLLM, but supported in transforme
 python quantize.py  \
     --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
     --quantize \
-    --iters 0 \
     --dtype MXFP4 \
     --use_recipe \
     --recipe_file recipes/Meta-Llama-3.1-8B-Instruct_7bits.json \
     --save \
     --save_format auto_round \
-    --save_path Llama-3.1-8B-Instruct-MXFP4-MXFP8-AR
+    --save_path Llama-3.1-8B-Instruct-MXFP4-MXFP8-AR \
+    --enable_torch_compile
+
 # Command to inference with transformer:
 python run_hf_inf.py Llama-3.1-8B-Instruct-MXFP4-MXFP8-AR
 ```
