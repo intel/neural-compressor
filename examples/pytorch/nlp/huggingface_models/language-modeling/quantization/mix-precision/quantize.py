@@ -105,21 +105,24 @@ if __name__ == "__main__":
     device="hpu" if is_hpex_available() else "cuda"
 
     if args.quantize:
-        autoround_dtype_mapping = {
-            "MXFP4": "mx_fp4",
-            "MXFP8": "mx_fp8",
-            "NVFP4": "nv_fp4_with_static_gs",
-            "uNVFP4": "fp4_v2",  # no global scale
-            "NVFP4+": "fp4_v2",
-        }
-        args.dtype = autoround_dtype_mapping[args.dtype]
+        if args.dtype in ["uNVFP4", "NVFP4+"]:
+            from auto_round.schemes import QuantizationScheme
+
+            uNVFP4 = QuantizationScheme.from_dict(
+                {
+                    "bits": 4,
+                    "group_size": 16,
+                    "data_type": "fp4_v2",
+                    "act_bits": 4,
+                    "act_data_type": "fp4_v2",
+                    "act_group_size": 16,
+                    "act_sym": True,
+                }
+            )
+            args.dtype = uNVFP4
+
         if args.quant_lm_head:
-            lm_head_config = {
-                "group_size": 32 if "mx" in args.dtype else 16,
-                "data_type": args.dtype,
-                "act_data_type": args.dtype,
-            }
-            layer_config = {"lm_head": lm_head_config}
+            layer_config = {"lm_head": args.dtype}
 
         autoround = AutoRound(
             model,
@@ -130,9 +133,7 @@ if __name__ == "__main__":
             seqlen=args.seqlen,
             nsamples=args.nsamples,
             low_gpu_mem_usage=True,
-            group_size=32 if "mx" in args.dtype else 16,
-            data_type=args.dtype,
-            act_data_type=args.dtype,
+            scheme=args.dtype,
             layer_config=layer_config if args.quant_lm_head else None,
             enable_torch_compile=args.enable_torch_compile,
             mem_per_param_scale=args.mem_per_param_scale,
@@ -144,20 +145,16 @@ if __name__ == "__main__":
                 import json
                 with open(file_path, "r") as f:
                     return json.load(f)
-                
+
             layer_config = load_recipe_results(args.recipe_file)
             if args.quant_lm_head:
-                mxfp8_config = {
-                    "bits": 8,
-                    "group_size": 32,
-                    "data_type": "mx_fp8",
-                    "act_data_type": "mx_fp8",
-                }
                 # ensure lm_head is quantized with mxfp8_config
-                layer_config.update({"lm_head": mxfp8_config})
+                layer_config.update({"lm_head": "MXFP8"})
                 print("In recipe mode, lm_head is quantized with MXFP8.")
             autoround.layer_config = layer_config
 
+        # A placeholder, to pass assertion in AutoRound
+        autoround.formats = "auto_round"
         autoround.quantize()
         model = autoround.model
 
@@ -246,7 +243,7 @@ if __name__ == "__main__":
             print(f"Overall accuracy: {sum(all_accuracy.values())/len(all_accuracy):.4f}")
 
     if args.save:
-        if args.dtype == "nv_fp4":
+        if args.dtype == "NVFP4":
             # using llm_compressor format to save nv_fp4 model
             autoround.save_quantized(args.save_path, format=args.save_format)
         else:
