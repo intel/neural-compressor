@@ -236,7 +236,7 @@ class AutoRoundQuantizer(Quantizer):
         if self.is_mllm:
             rounder = AutoRoundMLLM(
                 model,
-                tokenizer=None,
+                tokenizer="None",
                 processor=self.processor,
                 image_processor=self.image_processor,
                 layer_config=self.quant_config,
@@ -277,7 +277,7 @@ class AutoRoundQuantizer(Quantizer):
         else:
             rounder = AutoRound(
                 model=model,
-                tokenizer=None,
+                tokenizer="None",
                 dataset=dataloader,
                 layer_config=self.quant_config or {},
                 enable_full_range=self.enable_full_range,

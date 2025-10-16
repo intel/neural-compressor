@@ -50,17 +50,13 @@ from neural_compressor.torch.utils import logger
 
 torch.backends.__allow_nonbracketed_mutation_flag = True
 
-# TODO SW-239679 temorarily disable tests due to auto_round import issue
-# try:
-#     pass
-#     import auto_round
-#     from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear
-#
-#     auto_round_installed = True
-# except ImportError:
-#     auto_round_installed = False
-auto_round_installed = False  # TODO SW-239679 remove when fixed
+try:
+    import auto_round
+    from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear
 
+    auto_round_installed = True
+except ImportError:
+    auto_round_installed = False
 
 @torch.no_grad()
 def run_fn(model, dataloader):
