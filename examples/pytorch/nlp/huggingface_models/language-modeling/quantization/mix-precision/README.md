@@ -110,16 +110,15 @@ Model with mixed precision is not supported in vLLM, but supported in transforme
 ```bash
 # Command to save model:
 python quantize.py  \
-    --model_name_or_path /ssd/hf_models/Llama-3.3-70B-Instruct \
+    --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
     --quantize \
+    --iters 0 \
     --dtype MXFP4 \
     --use_recipe \
-    --recipe_file recipes/Meta-Llama-3.3-70B-Instruct_5bits.json \
+    --recipe_file recipes/Meta-Llama-3.1-8B-Instruct_7bits.json \
     --save \
     --save_format auto_round \
-    --save_path Llama-3.3-70B-Instruct-MXFP4-MXFP8-AR \
-    --enable_torch_compile
-
+    --save_path Llama-3.1-8B-Instruct-MXFP4-MXFP8-AR
 # Command to inference with transformer:
-python run_hf_inf.py Llama-3.3-70B-Instruct-MXFP4-MXFP8-AR
+python run_hf_inf.py Llama-3.1-8B-Instruct-MXFP4-MXFP8-AR
 ```
