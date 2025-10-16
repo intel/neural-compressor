@@ -83,6 +83,7 @@ def train():
 
     # Setup logging
     logging.basicConfig(
+        level=logging.INFO,
         format="%(asctime)s - %(levelname)s - %(name)s - %(message)s",
         datefmt="%m/%d/%Y %H:%M:%S",
         handlers=[logging.StreamHandler(sys.stdout)],
@@ -148,9 +149,6 @@ def train():
         checkpoint = training_args.resume_from_checkpoint
     elif last_checkpoint is not None:
         checkpoint = last_checkpoint
-
-    if checkpoint is not None and training_args.lora:
-        raise RuntimeError("Does not support LoRA resuming training yet!")
 
     # Torch >= 2.4 throws an error if `use_reentrant` is not set explicitly
     if training_args.gradient_checkpointing and training_args.gradient_checkpointing_kwargs is None:
