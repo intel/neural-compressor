@@ -128,6 +128,7 @@ def tune(args, pipe):
     )
     model = prepare(model, qconfig)
     model = convert(model, qconfig, pipeline=pipe)
+    delattr(model, "save")
     return pipe
 
 if __name__ == '__main__':
