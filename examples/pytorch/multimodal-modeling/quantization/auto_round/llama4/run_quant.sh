@@ -47,12 +47,11 @@ function run_tuning {
         extra_cmd="--fp_layers lm-head,self_attn,router,vision_model,multi_modal_projector,shared_expert --scheme MXFP4"
     fi
 
-    python3 -m auto_round \
-        --model ${input_model} \
-        --iters ${iters}  \
-        --format "llm_compressor"  \
-        --output_dir ${tuned_checkpoint} \
-        ${extra_cmd}
+    python3 main.py \
+    	--model ${input_model} \
+		--iters ${iters} \
+		--output_dir ${tuned_checkpoint} \
+		${extra_cmd}
 }
 
 main "$@"
