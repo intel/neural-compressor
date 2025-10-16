@@ -124,7 +124,7 @@ def make_supervised_data_module(
     train_size: int = 0,
     eval_size: int = 0,
 ) -> dict:
-    """Make dataset and collmtor for supervised fine-tuning."""
+    """Make dataset and collator for supervised fine-tuning."""
     if dataset == "Daring-Anteater":
         train_dataset = get_daring_anteater(
             tokenizer, "train", tokenizer.model_max_length, train_size, eval_size
