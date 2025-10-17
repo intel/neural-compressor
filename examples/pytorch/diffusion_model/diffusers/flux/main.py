@@ -33,7 +33,7 @@ from auto_round.compressors.diffusion.dataset import get_diffusion_dataloader
 from torch.multiprocessing import Process, Queue
 
 
-def inference_worker(device, eval_file, pipe, image_save_dir, queue):
+def inference_worker(device, eval_file, pipe, image_save_dir, queue=None):
     if device != "cpu":
         os.environ["CUDA_VISIBLE_DEVICES"] = str(device)
         torch.cuda.set_device(device)
@@ -68,7 +68,10 @@ def inference_worker(device, eval_file, pipe, image_save_dir, queue):
         for idx, image_id in enumerate(new_ids):
             output.images[idx].save(os.path.join(image_save_dir, str(image_id) + ".png"))
 
-    queue.put((prompt_list, image_list))
+    if queue is None:
+        return prompt_list, image_list
+    else:
+        queue.put((prompt_list, image_list))
 
 class BasicArgumentParser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
