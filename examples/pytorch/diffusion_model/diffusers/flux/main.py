@@ -30,9 +30,10 @@ import multiprocessing as mp
 
 from auto_round.compressors.diffusion.eval import metric_map
 from auto_round.compressors.diffusion.dataset import get_diffusion_dataloader
+from torch.multiprocessing import Process, Queue
 
 
-def inference_worker(device, eval_file, pipe, image_save_dir):
+def inference_worker(device, eval_file, pipe, image_save_dir, queue):
     if device != "cpu":
         os.environ["CUDA_VISIBLE_DEVICES"] = str(device)
         torch.cuda.set_device(device)
@@ -67,7 +68,7 @@ def inference_worker(device, eval_file, pipe, image_save_dir):
         for idx, image_id in enumerate(new_ids):
             output.images[idx].save(os.path.join(image_save_dir, str(image_id) + ".png"))
 
-    return prompt_list, image_list
+    queue.put((prompt_list, image_list))
 
 class BasicArgumentParser(argparse.ArgumentParser):
     def __init__(self, *args, **kwargs):
@@ -160,9 +161,16 @@ if __name__ == '__main__':
                 df_subset = df.iloc[start : end]
                 df_subset.to_csv(f"subset_{i}.tsv", sep='\t', index=False)
 
-            with mp.Pool(processes=visible_gpus) as pool:
-                results = [pool.apply_async(inference_worker, (i,  f"subset_{i}.tsv", pipe.to(f"cuda:{i}"), args.output_image_path)) for i in range(visible_gpus)]
-                outputs = [r.get() for r in results]
+            processes = []
+            queue = Queue()
+            for i in range(visible_gpus):
+                p = Process(target=inference_worker, args=(i, f"subset_{i}.tsv", pipe.to(f"cuda:{i}"), args.output_image_path, queue))
+                p.start()
+                processes.append(p)
+            for p in processes:
+                p.join()
+
+            outputs = [queue.get() for _ in range(visible_gpus)]
 
             prompt_list = []
             image_list = []
