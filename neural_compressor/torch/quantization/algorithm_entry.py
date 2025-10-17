@@ -608,6 +608,7 @@ def autoround_quantize_entry(
                 "act_data_type": act_data_type,
             }
             layer_config = quant_config.to_dict().get("layer_config", None)
+            dataset = quant_config.to_dict().get("dataset", "NeelNanda/pile-10k")
             output_dir = quant_config.to_dict().get("output_dir", "temp_auto_round")
             enable_full_range = quant_config.enable_full_range
             batch_size = quant_config.batch_size
@@ -642,6 +643,9 @@ def autoround_quantize_entry(
             scheme = quant_config.scheme
             device_map = quant_config.device_map
             quant_lm_head = quant_config.quant_lm_head
+            guidance_scale = quant_config.to_dict().get("guidance_scale", 7.5)
+            num_inference_steps = quant_config.to_dict().get("num_inference_steps", 50)
+            generator_seed = quant_config.to_dict().get("generator_seed", None)
 
     kwargs.pop("example_inputs")
     quantizer = get_quantizer(
@@ -665,6 +669,7 @@ def autoround_quantize_entry(
         batch_size=batch_size,
         amp=amp,
         lr_scheduler=lr_scheduler,
+        dataset=dataset,
         enable_quanted_input=enable_quanted_input,
         enable_minmax_tuning=enable_minmax_tuning,
         lr=lr,
@@ -694,6 +699,9 @@ def autoround_quantize_entry(
         scheme=scheme,
         device_map=device_map,
         quant_lm_head=quant_lm_head,
+        guidance_scale=guidance_scale,
+        num_inference_steps=num_inference_steps,
+        generator_seed=generator_seed,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping

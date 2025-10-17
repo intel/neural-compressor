@@ -16,6 +16,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
 <tr>
+    <td>FLUX.1-dev</td>
+    <td>Text to Image</td>
+    <td>Quantization (MXFP8+FP8)</td>
+    <td><a href="./pytorch/diffusion_model/diffusers/flux">link</a></td>
+</tr>
+<tr>
     <td>Llama-4-Scout-17B-16E-Instruct</td>
     <td>Multimodal Modeling</td>
     <td>Quantization (MXFP4)</td>

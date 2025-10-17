@@ -100,6 +100,10 @@ class AutoRoundQuantizer(Quantizer):
         truncation: bool = False,
         # 0.7
         scheme: Union[str, dict, QuantizationScheme] = "W4A16",
+        # diffusion
+        guidance_scale: float = 7.5,
+        num_inference_steps: int = 50,
+        generator_seed: int = None,
         **kwargs,
     ):
         """Init a AutQRoundQuantizer object.
@@ -172,6 +176,10 @@ class AutoRoundQuantizer(Quantizer):
             template (Template): The template to specify process for different mllms.
             truncation (bool): Activates truncation to cut input sequences longer than `max_length` to `max_length`.
             scheme (str| dict | QuantizationScheme ): A preset scheme that defines the quantization configurations.
+            guidance_scale (float): Control how much the image generation process follows the text prompt.
+                                    The more it is, the more closely it follows the prompt (default is 7.5).
+            num_inference_steps (int): The reference number of denoising steps (default is 50).
+            generator_seed (int): A seed that controls the initial noise for image generation (default is None).
 
         Returns:
             The quantized model.
@@ -227,6 +235,9 @@ class AutoRoundQuantizer(Quantizer):
         self.device_map = device_map
         self.quant_lm_head = quant_lm_head
         self.enable_w4afp8 = self._is_w4afp8()
+        self.guidance_scale = guidance_scale
+        self.num_inference_steps = num_inference_steps
+        self.generator_seed = generator_seed
 
     def _is_w4afp8(self) -> bool:
         return any([v.get("data_type", None) == "fp8_to_int_sym" for v in self.quant_config.values()])
@@ -252,13 +263,16 @@ class AutoRoundQuantizer(Quantizer):
         Returns:
             The quantized model.
         """
+        pipe = kwargs.pop("pipeline", None)
         tokenizer = getattr(model.orig_model, "tokenizer", None)
         if tokenizer is not None:
             delattr(model.orig_model, "tokenizer")
-        else:
+        elif pipe is None:
             tokenizer = "Placeholder"
             self.dataset = CapturedDataloader(model.args_list, model.kwargs_list)
         model = model.orig_model
+        if pipe is not None:
+            model = pipe
         rounder = AutoRound(
             model,
             layer_config=self.layer_config,
@@ -307,6 +321,9 @@ class AutoRoundQuantizer(Quantizer):
             truncation=self.truncation,
             enable_torch_compile=self.enable_torch_compile,
             quant_lm_head=self.quant_lm_head,
+            guidance_scale=self.guidance_scale,
+            num_inference_steps=self.num_inference_steps,
+            generator_seed=self.generator_seed,
         )
 
         if self.enable_w4afp8:
