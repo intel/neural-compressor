@@ -52,8 +52,7 @@ deepspeed --include="localhost:0,1,2,3" --master_port=29500 quantize.py  \
     --use_recipe \
     --recipe_file recipes/Meta-Llama-3.3-70B-Instruct_5bits.json \
     --accuracy \
-    --batch_size 32 \
-    --enable_torch_compile
+    --batch_size 32
 ```
 
 > Note: 
