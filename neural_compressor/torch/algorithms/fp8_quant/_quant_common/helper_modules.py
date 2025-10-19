@@ -656,8 +656,8 @@ class PatchedMixtralMoE(PatchedModuleBase):
         """
         The pplx combine kernel reduces across GPU ranks by default.
         """
-        if (self.use_pplx_kernels or self.use_deepep_ht_kernels
-                or self.use_deepep_ll_kernels):
+        if (self.orig_mod.use_pplx_kernels or self.orig_mod.use_deepep_ht_kernels
+                or self.orig_mod.use_deepep_ll_kernels):
             return final_hidden_states
         else:
             from .._core.external_func_impl import get_external_row_parallel_collective_func

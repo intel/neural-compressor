@@ -87,6 +87,7 @@ _mod_default_dict = {
     "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
     # Note: `no_quantize_op` indicates that this module is patched but does not require measurement or quantization.
     "FusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False),
+    "SharedFusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False),
     "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
     "GaudiDeepseekV3MoE": ModuleInfo("dynamic_moe", PatchedGaudiDeepseekV3MoE),
     "GaudiFP8Linear": ModuleInfo("linear", PatchedMoeFP8Matmul),
