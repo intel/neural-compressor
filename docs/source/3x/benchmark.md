@@ -1,4 +1,4 @@
-Benchmark
+Benchmark (Deprecated)
 ---
 
 1. [Introduction](#introduction)
@@ -8,6 +8,8 @@ Benchmark
 3. [Usage](#usage)
 
 ## Introduction
+
+> Since version >= 3.6, `incbench` has been moved.
 
 Intel Neural Compressor provides a command `incbench` to launch the Intel CPU performance benchmark.
 
