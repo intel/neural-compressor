@@ -40,16 +40,18 @@ class ModuleInfo:
     Configures a relation between a ModuleType key (from `_mod_types` dict in `common.py`)
     to a PatchedModule class.
     """
-    def __init__(self, type, patched_module, should_measure_and_quant=True):
+    def __init__(self, type, patched_module, should_measure_and_quant=True, *, supports_dynamic_quantization=False):
         self.type = type
         self.patched_module = patched_module
         self.should_measure_and_quant = should_measure_and_quant
+        self.supports_dynamic_quantization = supports_dynamic_quantization
 
     def __repr__(self):
         return (
             f"ModuleInfo(type={self.type}, "
             f"patched_module={self.patched_module.__name__}), "
-            f"should_measure_and_quant={self.should_measure_and_quant}"
+            f"should_measure_and_quant={self.should_measure_and_quant}, "
+            f"supports_dynamic_quantization={self.supports_dynamic_quantization}"
         )
 
 
