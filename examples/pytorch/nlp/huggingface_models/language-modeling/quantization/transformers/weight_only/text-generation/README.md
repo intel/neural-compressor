@@ -10,7 +10,7 @@ python version requests equal or higher than 3.9 due to [text evaluation library
 
 ```bash
 pip install oneccl_bind_pt==2.4.0 --index-url https://pytorch-extension.intel.com/release-whl/stable/cpu/us/
-pip install -r requirements_cpu_woq.txt
+pip install -r requirements_cpu_woq.txt --extra-index-url https://download.pytorch.org/whl/cpu
 ```
 
 
@@ -119,19 +119,14 @@ Pytorch and Intel-extension-for-pytorch version for intel GPU > 2.1 are required
 ```bash
 pip install -r requirements_GPU.txt
 pip install transformers==4.38.1 # llama use 4.38.1
-git clone https://github.com/intel/intel-extension-for-pytorch.git ipex-gpu
-cd ipex-gpu
-git submodule update --init --recursive
-export USE_AOT_DEVLIST='pvc,ats-m150'
-export BUILD_WITH_CPU=OFF
+pip install oneccl_bind_pt==2.3.100+xpu --index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/
+pip install torch==2.3.1+cxx11.abi intel-extension-for-pytorch==2.3.110+xpu --extra-index-url https://pytorch-extension.intel.com/release-whl/stable/xpu/us/
 
 export LD_LIBRARY_PATH=${CONDA_PREFIX}/lib/:$LD_LIBRARY_PATH
 export OCL_ICD_VENDORS=/etc/OpenCL/vendors
 export CCL_ROOT=${CONDA_PREFIX}
 source /opt/intel/oneapi/setvars.sh --force
 export LLM_ACC_TEST=1
-
-python setup.py install
 ```
 
 ## Run
