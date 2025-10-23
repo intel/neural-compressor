@@ -53,54 +53,40 @@ function run_tuning {
         extra_cmd="--scheme MXFP8 --inference"
     fi
 
-    if ! command -v nvidia-smi &> /dev/null; then
-        echo "GPU is not available, use CPU for evaluation."
+    if [ -n "$CUDA_VISIBLE_DEVICES" ]; then
+        gpu_list="${CUDA_VISIBLE_DEVICES:-}"
+	    IFS=',' read -ra gpu_ids <<< "$gpu_list"
+	    visible_gpus=${#gpu_ids[@]}
+		echo "visible_gpus: ${visible_gpus}"
 
-        python3 main.py \
-            --model ${input_model} \
-            --quantized_model_path ${tuned_checkpoint} \
-            --limit ${limit} \
-            --output_image_path ${output_image_path} \
-	        --eval_dataset ${dataset_location} \
-            ${extra_cmd}
-        python3 main.py --output_image_path ${output_image_path} --accuracy
- 
-    else
-        if [ -n "$CUDA_VISIBLE_DEVICES" ]; then
-            gpu_list="${CUDA_VISIBLE_DEVICES:-}"
-	        IFS=',' read -ra gpu_ids <<< "$gpu_list"
-	        visible_gpus=${#gpu_ids[@]}
-			echo "visible_gpus: ${visible_gpus}"
+		python dataset_split.py --split_num ${visible_gpus} --input_file ${dataset_location} --limit ${limit}
 
-			python dataset_split.py --split_num ${visible_gpus} --input_file ${dataset_location} --limit ${limit}
+        for ((i=0; i<visible_gpus; i++)); do
+            export CUDA_VISIBLE_DEVICES=${i}
 
-            for ((i=0; i<visible_gpus; i++)); do
-                export CUDA_VISIBLE_DEVICES=${i}
-
-                python3 main.py \
-                    --model ${input_model} \
-                    --quantized_model_path ${tuned_checkpoint} \
-                    --output_image_path ${output_image_path} \
-		            --eval_dataset "subset_$i.tsv" \
-                    ${extra_cmd} &
-                program_pid+=($!)
-	            echo "Start (PID: ${program_pid[-1]}, GPU: ${i})"
-            done
-	        wait "${program_pid[@]}"
-        else
             python3 main.py \
                 --model ${input_model} \
                 --quantized_model_path ${tuned_checkpoint} \
                 --output_image_path ${output_image_path} \
-		        --eval_dataset ${dataset_location} \
-				--limit ${limit} \
-                ${extra_cmd}
-    	fi
-
-	    echo "Start calculating final score..."
-
-        python3 main.py --output_image_path ${output_image_path} --accuracy
+		        --eval_dataset "subset_$i.tsv" \
+                ${extra_cmd} &
+            program_pid+=($!)
+	        echo "Start (PID: ${program_pid[-1]}, GPU: ${i})"
+        done
+	    wait "${program_pid[@]}"
+    else
+        python3 main.py \
+            --model ${input_model} \
+            --quantized_model_path ${tuned_checkpoint} \
+            --output_image_path ${output_image_path} \
+		    --eval_dataset ${dataset_location} \
+			--limit ${limit} \
+            ${extra_cmd}
     fi
+
+	echo "Start calculating final score..."
+
+    python3 main.py --output_image_path ${output_image_path} --accuracy
 }
 
 main "$@"
