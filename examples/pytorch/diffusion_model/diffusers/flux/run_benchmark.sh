@@ -70,26 +70,33 @@ function run_tuning {
             gpu_list="${CUDA_VISIBLE_DEVICES:-}"
 	        IFS=',' read -ra gpu_ids <<< "$gpu_list"
 	        visible_gpus=${#gpu_ids[@]}
+			echo "visible_gpus: ${visible_gpus}"
+
+			python dataset_split.py --split_num ${visible_gpus} --input_file ${dataset_location} --limit ${limit}
+
+            for ((i=0; i<visible_gpus; i++)); do
+                export CUDA_VISIBLE_DEVICES=${i}
+
+                python3 main.py \
+                    --model ${input_model} \
+                    --quantized_model_path ${tuned_checkpoint} \
+                    --output_image_path ${output_image_path} \
+		            --eval_dataset "subset_$i.tsv" \
+                    ${extra_cmd} &
+                program_pid+=($!)
+	            echo "Start (PID: ${program_pid[-1]}, GPU: ${i})"
+            done
+	        wait "${program_pid[@]}"
         else
-            visible_gpus=$(nvidia-smi --query-gpu=count --format=csv,noheader,nounits | wc -l)
-    	fi
-
-        echo "visible_gpus: ${visible_gpus}"
-	    python dataset_split.py --split_num ${visible_gpus} --input_file ${dataset_location} --limit ${limit}
-
-        for ((i=0; i<visible_gpus; i++)); do
-            export CUDA_VISIBLE_DEVICES=${i}
-
             python3 main.py \
                 --model ${input_model} \
                 --quantized_model_path ${tuned_checkpoint} \
                 --output_image_path ${output_image_path} \
-		        --eval_dataset "subset_$i.tsv" \
-                ${extra_cmd} &
-            program_pid+=($!)
-	        echo "Start (PID: ${program_pid[-1]}, GPU: ${i})"
-        done
-	    wait "${program_pid[@]}"
+		        --eval_dataset ${dataset_location} \
+				--limit ${limit} \
+                ${extra_cmd}
+    	fi
+
 	    echo "Start calculating final score..."
 
         python3 main.py --output_image_path ${output_image_path} --accuracy
