@@ -3,8 +3,7 @@ NVFP4 Quantization
 
 1. [Introduction](#introduction)
 2. [Get Started with NVFP4 Quantization API](#get-started-with-nvfp4-quantization-api)
-3. [Examples](#examples)
-4. [Reference](#reference)
+3. [Reference](#reference)
 
 ## Introduction
 
