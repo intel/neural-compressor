@@ -22,9 +22,9 @@ function init_params {
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
-       --output_model=*)
-           tuned_checkpoint=$(echo $var |cut -f2 -d=)
-       ;;
+      --output_model=*)
+          tuned_checkpoint=$(echo $var |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -46,8 +46,8 @@ function run_tuning {
 
     python3 main.py \
     	--model ${input_model} \
-	--output_dir ${tuned_checkpoint} \
-	${extra_cmd}
+	    --output_dir ${tuned_checkpoint} \
+	    ${extra_cmd}
 }
 
 main "$@"
