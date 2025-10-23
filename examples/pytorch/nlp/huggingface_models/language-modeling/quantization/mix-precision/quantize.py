@@ -103,6 +103,9 @@ if __name__ == "__main__":
 
     model, tokenizer = initialize_model_and_tokenizer(args.model_name_or_path)
     device="hpu" if is_hpex_available() else "cuda"
+    # in case that model is set to cuda:0 by default
+    if args.device_map.isdigit() and device=="cuda":
+        device = f"{device}:{args.device_map}"
 
     if args.quantize:
         if args.dtype in ["uNVFP4", "NVFP4+"]:
