@@ -4,7 +4,7 @@ set -x
 function main {
 
   init_params "$@"
-  run_tuning
+  run_benchmark
 
 }
 
@@ -41,8 +41,8 @@ function init_params {
 }
 
 
-# run_tuning
-function run_tuning {
+# run_benchmark
+function run_benchmark {
     dataset_location=${dataset_location:="captions_source.tsv"}
     limit=${limit:=-1}
     output_image_path=${output_image_path:="./tmp_imgs"}
