@@ -160,7 +160,7 @@ if __name__ == '__main__':
         else:
             print("Don't supply quantized_model_path or quantized model doesn't exist, evaluate BF16 accuracy.")
 
-            inference_worker(args.eval_dataset, pipe.to(device), args.output_image_path)
+        inference_worker(args.eval_dataset, pipe.to(device), args.output_image_path)
 
     if args.accuracy:
         df = pd.read_csv(args.eval_dataset, sep="\t")
