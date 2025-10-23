@@ -22,15 +22,15 @@ function init_params {
       --input_model=*)
           input_model=$(echo $var |cut -f2 -d=)
       ;;
-       --quantized_model=*)
-           tuned_checkpoint=$(echo $var |cut -f2 -d=)
-       ;;
-       --limit=*)
-           limit=$(echo $var |cut -f2 -d=)
-       ;;
-       --output_image_path=*)
-           output_image_path=$(echo $var |cut -f2 -d=)
-       ;;
+      --quantized_model=*)
+          tuned_checkpoint=$(echo $var |cut -f2 -d=)
+      ;;
+      --limit=*)
+          limit=$(echo $var |cut -f2 -d=)
+      ;;
+      --output_image_path=*)
+          output_image_path=$(echo $var |cut -f2 -d=)
+      ;;
       *)
           echo "Error: No such parameter: ${var}"
           exit 1
@@ -68,8 +68,8 @@ function run_tuning {
     else
         if [ -n "$CUDA_VISIBLE_DEVICES" ]; then
             gpu_list="${CUDA_VISIBLE_DEVICES:-}"
-	    IFS=',' read -ra gpu_ids <<< "$gpu_list"
-	    visible_gpus=${#gpu_ids[@]}
+	        IFS=',' read -ra gpu_ids <<< "$gpu_list"
+	        visible_gpus=${#gpu_ids[@]}
         else
             visible_gpus=$(nvidia-smi --query-gpu=count --format=csv,noheader,nounits | wc -l)
     	fi
@@ -87,7 +87,7 @@ function run_tuning {
 		        --eval_dataset "subset_$i.tsv" \
                 ${extra_cmd} &
             program_pid+=($!)
-	    echo "Start (PID: ${program_pid[-1]}, GPU: ${i})"
+	        echo "Start (PID: ${program_pid[-1]}, GPU: ${i})"
         done
 	    wait "${program_pid[@]}"
 	    echo "Start calculating final score..."
