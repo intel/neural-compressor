@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import json
 import os
 import sys
 import argparse
@@ -20,41 +21,52 @@ import pandas as pd
 import tabulate
 import torch
 
-from diffusers import AutoPipelineForText2Image
+from diffusers import AutoPipelineForText2Image, FluxTransformer2DModel
+from functools import partial
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     convert,
     prepare,
 )
-import multiprocessing as mp
-
+from auto_round.data_type.mxfp import quant_mx_rceil
+from auto_round.data_type.fp8 import quant_fp8_sym
+from auto_round.utils import get_block_names, get_module
 from auto_round.compressors.diffusion.eval import metric_map
 from auto_round.compressors.diffusion.dataset import get_diffusion_dataloader
-from torch.multiprocessing import Process, Queue
 
 
-def inference_worker(device, eval_file, pipe, image_save_dir, queue=None):
-    if device != "cpu":
-        os.environ["CUDA_VISIBLE_DEVICES"] = str(device)
-        torch.cuda.set_device(device)
+parser = argparse.ArgumentParser(
+    description="Flux quantization.", formatter_class=argparse.ArgumentDefaultsHelpFormatter
+)
+parser.add_argument("--model", "--model_name", "--model_name_or_path", help="model name or path")
+parser.add_argument('--scheme', default="MXFP8", type=str, help="quantizaion scheme.")
+parser.add_argument("--quantize", action="store_true")
+parser.add_argument("--inference", action="store_true")
+parser.add_argument("--accuracy", action="store_true")
+parser.add_argument("--dataset", type=str, default="coco2014", help="the dataset for quantization training.")
+parser.add_argument("--output_dir", "--quantized_model_path", default="./tmp_autoround", type=str, help="the directory to save quantized model")
+parser.add_argument("--eval_dataset", default="captions_source.tsv", type=str, help="eval datasets")
+parser.add_argument("--output_image_path", default="./tmp_imgs", type=str, help="the directory to save quantized model")
+parser.add_argument("--iters", "--iter", default=1000, type=int, help="tuning iters")
+parser.add_argument("--limit", default=-1, type=int, help="limit the number of prompts for evaluation")
 
+args = parser.parse_args()
+
+
+def inference_worker(eval_file, pipe, image_save_dir):
     gen_kwargs = {
         "guidance_scale": 7.5,
         "num_inference_steps": 50,
         "generator": None,
     }
  
-    dataloader, _, _ = get_diffusion_dataloader(eval_file, nsamples=-1, bs=1)
-    prompt_list = []
-    image_list = []
+    dataloader, _, _ = get_diffusion_dataloader(eval_file, nsamples=args.limit, bs=1)
     for image_ids, prompts in dataloader:
-        prompt_list.extend(prompts)
 
         new_ids = []
         new_prompts = []
         for idx, image_id in enumerate(image_ids):
             image_id = image_id.item()
-            image_list.append(os.path.join(image_save_dir, str(image_id) + ".png"))
 
             if os.path.exists(os.path.join(image_save_dir, str(image_id) + ".png")):
                 continue
@@ -68,57 +80,22 @@ def inference_worker(device, eval_file, pipe, image_save_dir, queue=None):
         for idx, image_id in enumerate(new_ids):
             output.images[idx].save(os.path.join(image_save_dir, str(image_id) + ".png"))
 
-    if queue is None:
-        return prompt_list, image_list
-    else:
-        queue.put((prompt_list, image_list))
 
-class BasicArgumentParser(argparse.ArgumentParser):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.add_argument("--model", "--model_name", "--model_name_or_path",
-                          help="model name or path")
-
-        self.add_argument('--scheme', default="MXFP8", type=str,
-                          help="quantizaion scheme.")
-
-        self.add_argument("--quantize", action="store_true")
-
-        self.add_argument("--inference", action="store_true")
-
-        self.add_argument("--dataset", type=str, default="coco2014",
-                          help="the dataset for quantization training.")
-
-        self.add_argument("--output_dir", default="./tmp_autoround", type=str,
-                          help="the directory to save quantized model")
-
-        self.add_argument("--eval_dataset", default="captions_source.tsv", type=str,
-                          help="eval datasets")
-
-        self.add_argument("--output_image_path", default="./tmp_imgs", type=str,
-                          help="the directory to save quantized model")
-
-
-def setup_parser():
-    parser = BasicArgumentParser()
-
-    parser.add_argument("--iters", "--iter", default=1000, type=int,
-                        help="tuning iters")
-
-    args = parser.parse_args()
-    return args
-
-
-def tune(args, pipe):
+def tune():
+    pipe = AutoPipelineForText2Image.from_pretrained(args.model, torch_dtype=torch.bfloat16)
     model = pipe.transformer
     layer_config = {}
     kwargs = {}
     if args.scheme == "FP8":
         for n, m in model.named_modules():
             if m.__class__.__name__ == "Linear":
-                layer_config[n] = {"bits": 8, "act_bits": 8, "data_type": "fp", "act_data_type": "fp", "group_size": 0, "act_group_size": 0}
+                layer_config[n] = {"bits": 8, "data_type": "fp", "group_size": 0}
     elif args.scheme == "MXFP8":
-        kwargs["scheme"] = "MXFP8"
+        kwargs["scheme"] = {
+            "bits": 8,
+            "group_size": 32,
+            "data_type": "mx_fp",
+        }
 
     qconfig = AutoRoundConfig(
         iters=args.iters,
@@ -128,64 +105,78 @@ def tune(args, pipe):
         export_format="fake",
         nsamples=128,
         batch_size=1,
+        output_dir=args.output_dir,
         **kwargs
     )
     model = prepare(model, qconfig)
     model = convert(model, qconfig, pipeline=pipe)
-    delattr(model, "save")
-    return pipe
 
 if __name__ == '__main__':
-    mp.set_start_method('spawn', force=True)
-    args = setup_parser()
-    model_name = args.model
-    if model_name[-1] == "/":
-        model_name = model_name[:-1]
-    pipe = AutoPipelineForText2Image.from_pretrained(model_name, torch_dtype=torch.bfloat16)
+    device = "cpu" if torch.cuda.device_count() == 0 else "cuda"
 
-    if "--quantize" in sys.argv:
-        print(f"start to quantize {model_name}")
-        pipe = tune(args, pipe)
-    if "--inference" in sys.argv:
+    if args.quantize:
+        print(f"Start to quantize {args.model}.")
+        tune()
+        exit(0)
+
+    if args.inference:
+        pipe = AutoPipelineForText2Image.from_pretrained(args.model, torch_dtype=torch.bfloat16)
+
         if not os.path.exists(args.output_image_path):
             os.makedirs(args.output_image_path)
 
-        visible_gpus = torch.cuda.device_count()
+        if os.path.exists(args.output_dir) and os.path.exists(os.path.join(args.output_dir, "diffusion_pytorch_model.safetensors.index.json")):
+            print(f"Loading quantized model from {args.output_dir}")
+            model = FluxTransformer2DModel.from_pretrained(args.output_dir, torch_dtype=torch.bfloat16)
 
-        if visible_gpus == 0:
-            prompt_list, image_list = inference_worker("cpu", args.eval_dataset, pipe, args.output_image_path)
+            # replace Linear's forward function
+            if args.scheme == "MXFP8":
+                def act_qdq_forward(module, x, *args, **kwargs):
+                    qdq_x, _, _ = quant_mx_rceil(x, bits=8, group_size=32, data_type="mx_fp_rceil")
+                    return module.orig_forward(qdq_x, *args, **kwargs)
+
+                all_quant_blocks = get_block_names(model)
+
+                for block_names in all_quant_blocks:
+                    for block_name in block_names:
+                        block = get_module(model, block_name)
+                        for n, m in block.named_modules():
+                            if m.__class__.__name__ == "Linear":
+                                m.orig_forward = m.forward
+                                m.forward = partial(act_qdq_forward, m)
+
+            if args.scheme == "FP8":
+                def act_qdq_forward(module, x, *args, **kwargs):
+                    qdq_x, _, _ = quant_fp8_sym(x, group_size=0)
+                    return module.orig_forward(qdq_x, *args, **kwargs)
+
+                for n, m in model.named_modules():
+                    if m.__class__.__name__ == "Linear":
+                        m.orig_forward = m.forward
+                        m.forward = partial(act_qdq_forward, m)
+
+            pipe.transformer = model
 
         else:
-            df = pd.read_csv(args.eval_dataset, sep='\t')
-            subsut_sample_num = len(df) // visible_gpus
-            for i in range(visible_gpus):
-                start = i * subsut_sample_num
-                end = min((i + 1) * subsut_sample_num, len(df))
-                df_subset = df.iloc[start : end]
-                df_subset.to_csv(f"subset_{i}.tsv", sep='\t', index=False)
+            print("Don't supply quantized_model_path or quantized model doesn't exist, evaluate BF16 accuracy.")
 
-            processes = []
-            queue = Queue()
-            for i in range(visible_gpus):
-                p = Process(target=inference_worker, args=(i, f"subset_{i}.tsv", pipe.to(f"cuda:{i}"), args.output_image_path, queue))
-                p.start()
-                processes.append(p)
-            for p in processes:
-                p.join()
+            inference_worker(args.eval_dataset, pipe.to(device), args.output_image_path)
 
-            outputs = [queue.get() for _ in range(visible_gpus)]
-
-            prompt_list = []
-            image_list = []
-            for output in outputs:
-                prompt_list.extend(output[0])
-                image_list.extend(output[1])
-
-            print("Evaluations for subset are done! Getting the final accuracy...")
+    if args.accuracy:
+        df = pd.read_csv(args.eval_dataset, sep="\t")
+        prompt_list = []
+        image_list = []
+        for index, row in df.iterrows():
+            assert "id" in row and "caption" in row
+            caption_id = row["id"]
+            caption_text = row["caption"]
+            if os.path.exists(os.path.join(args.output_image_path, str(caption_id) + ".png")):
+                prompt_list.append(caption_text)
+                image_list.append(os.path.join(args.output_image_path, str(caption_id) + ".png"))
 
         result = {}
         metrics = ["clip", "clip-iqa", "imagereward"]
         for metric in metrics:
-            result.update(metric_map[metric](prompt_list, image_list, pipe.device))
+            result.update(metric_map[metric](prompt_list, image_list, device))
 
         print(tabulate.tabulate(result.items(), tablefmt="grid"))

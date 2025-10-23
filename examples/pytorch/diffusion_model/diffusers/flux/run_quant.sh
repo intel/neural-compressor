@@ -39,17 +39,15 @@ function run_tuning {
     tuned_checkpoint=${tuned_checkpoint:="saved_results"}
 
     if [ "${topology}" = "flux_fp8" ]; then
-        extra_cmd="--scheme FP8 --iters 0 --dataset captions_source.tsv --inference --quantize"
+        extra_cmd="--scheme FP8 --iters 0 --dataset captions_source.tsv --quantize"
     elif [ "${topology}" = "flux_mxfp8" ]; then
-        extra_cmd="--scheme MXFP8 --iters 1000 --dataset captions_source.tsv --inference --quantize"
-    else
-		extra_cmd="--inference"
-	fi
+        extra_cmd="--scheme MXFP8 --iters 1000 --dataset captions_source.tsv --quantize"
+    fi
 
     python3 main.py \
     	--model ${input_model} \
-		--output_dir ${tuned_checkpoint} \
-		${extra_cmd}
+	--output_dir ${tuned_checkpoint} \
+	${extra_cmd}
 }
 
 main "$@"

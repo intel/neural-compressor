@@ -27,8 +27,18 @@ wget https://github.com/mlcommons/inference/raw/refs/heads/master/text_to_image/
 
 # Run
 
+## Quantization
+
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_quant.sh --topology=flux_fp8 --input_model=FLUX.1-dev
+bash run_quant.sh --topology=flux_mxfp8 --input_model=FLUX.1-dev --output_model=mxfp8_model
 ```
 - topology: support flux_fp8 and flux_mxfp8
+
+
+## Evaluation
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --topology=flux_mxfp8 --input_model=FLUX.1-dev --quantized_model=mxfp8_model
+```
+
 - CUDA_VISIBLE_DEVICES: split the evaluation file into the number of GPUs' subset to speed up the evaluation 
