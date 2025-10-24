@@ -1,7 +1,7 @@
 {
     "model.layers.0.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -10,8 +10,8 @@
         "act_sym": true
     },
     "model.layers.0.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -20,8 +20,8 @@
         "act_sym": true
     },
     "model.layers.0.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -30,8 +30,8 @@
         "act_sym": true
     },
     "model.layers.0.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -40,8 +40,8 @@
         "act_sym": true
     },
     "model.layers.0.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -50,8 +50,8 @@
         "act_sym": true
     },
     "model.layers.0.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -60,8 +60,8 @@
         "act_sym": true
     },
     "model.layers.0.mlp.down_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -70,8 +70,8 @@
         "act_sym": true
     },
     "model.layers.1.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -80,8 +80,8 @@
         "act_sym": true
     },
     "model.layers.1.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -90,8 +90,8 @@
         "act_sym": true
     },
     "model.layers.1.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -100,8 +100,8 @@
         "act_sym": true
     },
     "model.layers.1.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -110,8 +110,8 @@
         "act_sym": true
     },
     "model.layers.1.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -120,8 +120,8 @@
         "act_sym": true
     },
     "model.layers.1.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -130,8 +130,8 @@
         "act_sym": true
     },
     "model.layers.1.mlp.down_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -140,8 +140,8 @@
         "act_sym": true
     },
     "model.layers.2.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -150,8 +150,8 @@
         "act_sym": true
     },
     "model.layers.2.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -160,8 +160,8 @@
         "act_sym": true
     },
     "model.layers.2.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -170,8 +170,8 @@
         "act_sym": true
     },
     "model.layers.2.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -180,8 +180,8 @@
         "act_sym": true
     },
     "model.layers.2.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -190,8 +190,8 @@
         "act_sym": true
     },
     "model.layers.2.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -200,8 +200,8 @@
         "act_sym": true
     },
     "model.layers.2.mlp.down_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -210,8 +210,8 @@
         "act_sym": true
     },
     "model.layers.3.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -220,8 +220,8 @@
         "act_sym": true
     },
     "model.layers.3.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -230,8 +230,8 @@
         "act_sym": true
     },
     "model.layers.3.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -240,8 +240,8 @@
         "act_sym": true
     },
     "model.layers.3.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -250,8 +250,8 @@
         "act_sym": true
     },
     "model.layers.3.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -260,8 +260,8 @@
         "act_sym": true
     },
     "model.layers.3.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -270,8 +270,8 @@
         "act_sym": true
     },
     "model.layers.3.mlp.down_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -280,8 +280,8 @@
         "act_sym": true
     },
     "model.layers.4.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -290,8 +290,8 @@
         "act_sym": true
     },
     "model.layers.4.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -300,8 +300,8 @@
         "act_sym": true
     },
     "model.layers.4.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -310,8 +310,8 @@
         "act_sym": true
     },
     "model.layers.4.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -320,8 +320,8 @@
         "act_sym": true
     },
     "model.layers.4.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -330,8 +330,8 @@
         "act_sym": true
     },
     "model.layers.4.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -340,8 +340,8 @@
         "act_sym": true
     },
     "model.layers.4.mlp.down_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -350,8 +350,8 @@
         "act_sym": true
     },
     "model.layers.5.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -360,8 +360,8 @@
         "act_sym": true
     },
     "model.layers.5.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -370,8 +370,8 @@
         "act_sym": true
     },
     "model.layers.5.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -380,8 +380,8 @@
         "act_sym": true
     },
     "model.layers.5.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -390,8 +390,8 @@
         "act_sym": true
     },
     "model.layers.5.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -400,8 +400,8 @@
         "act_sym": true
     },
     "model.layers.5.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -410,8 +410,8 @@
         "act_sym": true
     },
     "model.layers.5.mlp.down_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -420,8 +420,8 @@
         "act_sym": true
     },
     "model.layers.6.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -430,8 +430,8 @@
         "act_sym": true
     },
     "model.layers.6.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -440,8 +440,8 @@
         "act_sym": true
     },
     "model.layers.6.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -450,8 +450,8 @@
         "act_sym": true
     },
     "model.layers.6.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -460,8 +460,8 @@
         "act_sym": true
     },
     "model.layers.6.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -470,8 +470,8 @@
         "act_sym": true
     },
     "model.layers.6.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -480,8 +480,8 @@
         "act_sym": true
     },
     "model.layers.6.mlp.down_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -490,8 +490,8 @@
         "act_sym": true
     },
     "model.layers.7.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -500,8 +500,8 @@
         "act_sym": true
     },
     "model.layers.7.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -510,8 +510,8 @@
         "act_sym": true
     },
     "model.layers.7.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -520,8 +520,8 @@
         "act_sym": true
     },
     "model.layers.7.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -530,8 +530,8 @@
         "act_sym": true
     },
     "model.layers.7.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -540,8 +540,8 @@
         "act_sym": true
     },
     "model.layers.7.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -550,8 +550,8 @@
         "act_sym": true
     },
     "model.layers.7.mlp.down_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -560,8 +560,8 @@
         "act_sym": true
     },
     "model.layers.8.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -570,8 +570,8 @@
         "act_sym": true
     },
     "model.layers.8.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -580,8 +580,8 @@
         "act_sym": true
     },
     "model.layers.8.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -590,8 +590,8 @@
         "act_sym": true
     },
     "model.layers.8.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -600,8 +600,8 @@
         "act_sym": true
     },
     "model.layers.8.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -610,8 +610,8 @@
         "act_sym": true
     },
     "model.layers.8.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -620,8 +620,8 @@
         "act_sym": true
     },
     "model.layers.8.mlp.down_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -630,8 +630,8 @@
         "act_sym": true
     },
     "model.layers.9.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -640,8 +640,8 @@
         "act_sym": true
     },
     "model.layers.9.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -650,8 +650,8 @@
         "act_sym": true
     },
     "model.layers.9.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -660,8 +660,8 @@
         "act_sym": true
     },
     "model.layers.9.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -670,8 +670,8 @@
         "act_sym": true
     },
     "model.layers.9.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -680,8 +680,8 @@
         "act_sym": true
     },
     "model.layers.9.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -690,8 +690,8 @@
         "act_sym": true
     },
     "model.layers.9.mlp.down_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -700,8 +700,8 @@
         "act_sym": true
     },
     "model.layers.10.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -710,8 +710,8 @@
         "act_sym": true
     },
     "model.layers.10.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -720,8 +720,8 @@
         "act_sym": true
     },
     "model.layers.10.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -730,8 +730,8 @@
         "act_sym": true
     },
     "model.layers.10.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -740,8 +740,8 @@
         "act_sym": true
     },
     "model.layers.10.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -750,8 +750,8 @@
         "act_sym": true
     },
     "model.layers.10.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -760,8 +760,8 @@
         "act_sym": true
     },
     "model.layers.10.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -770,8 +770,8 @@
         "act_sym": true
     },
     "model.layers.11.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -780,8 +780,8 @@
         "act_sym": true
     },
     "model.layers.11.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -790,8 +790,8 @@
         "act_sym": true
     },
     "model.layers.11.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -800,8 +800,8 @@
         "act_sym": true
     },
     "model.layers.11.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -810,8 +810,8 @@
         "act_sym": true
     },
     "model.layers.11.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -820,8 +820,8 @@
         "act_sym": true
     },
     "model.layers.11.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -830,8 +830,8 @@
         "act_sym": true
     },
     "model.layers.11.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -840,8 +840,8 @@
         "act_sym": true
     },
     "model.layers.12.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -850,8 +850,8 @@
         "act_sym": true
     },
     "model.layers.12.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -860,8 +860,8 @@
         "act_sym": true
     },
     "model.layers.12.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -870,8 +870,8 @@
         "act_sym": true
     },
     "model.layers.12.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -880,8 +880,8 @@
         "act_sym": true
     },
     "model.layers.12.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -890,8 +890,8 @@
         "act_sym": true
     },
     "model.layers.12.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -900,8 +900,8 @@
         "act_sym": true
     },
     "model.layers.12.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -910,8 +910,8 @@
         "act_sym": true
     },
     "model.layers.13.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -920,8 +920,8 @@
         "act_sym": true
     },
     "model.layers.13.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -930,8 +930,8 @@
         "act_sym": true
     },
     "model.layers.13.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -940,8 +940,8 @@
         "act_sym": true
     },
     "model.layers.13.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -950,8 +950,8 @@
         "act_sym": true
     },
     "model.layers.13.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -960,8 +960,8 @@
         "act_sym": true
     },
     "model.layers.13.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -970,8 +970,8 @@
         "act_sym": true
     },
     "model.layers.13.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -980,8 +980,8 @@
         "act_sym": true
     },
     "model.layers.14.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -990,8 +990,8 @@
         "act_sym": true
     },
     "model.layers.14.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1000,8 +1000,8 @@
         "act_sym": true
     },
     "model.layers.14.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1010,8 +1010,8 @@
         "act_sym": true
     },
     "model.layers.14.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1020,8 +1020,8 @@
         "act_sym": true
     },
     "model.layers.14.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1030,8 +1030,8 @@
         "act_sym": true
     },
     "model.layers.14.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1040,8 +1040,8 @@
         "act_sym": true
     },
     "model.layers.14.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1050,8 +1050,8 @@
         "act_sym": true
     },
     "model.layers.15.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1060,8 +1060,8 @@
         "act_sym": true
     },
     "model.layers.15.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1070,8 +1070,8 @@
         "act_sym": true
     },
     "model.layers.15.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1080,8 +1080,8 @@
         "act_sym": true
     },
     "model.layers.15.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1090,8 +1090,8 @@
         "act_sym": true
     },
     "model.layers.15.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1100,8 +1100,8 @@
         "act_sym": true
     },
     "model.layers.15.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1110,8 +1110,8 @@
         "act_sym": true
     },
     "model.layers.15.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1120,8 +1120,8 @@
         "act_sym": true
     },
     "model.layers.16.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1130,8 +1130,8 @@
         "act_sym": true
     },
     "model.layers.16.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1140,8 +1140,8 @@
         "act_sym": true
     },
     "model.layers.16.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1150,8 +1150,8 @@
         "act_sym": true
     },
     "model.layers.16.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1160,8 +1160,8 @@
         "act_sym": true
     },
     "model.layers.16.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1170,8 +1170,8 @@
         "act_sym": true
     },
     "model.layers.16.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1180,8 +1180,8 @@
         "act_sym": true
     },
     "model.layers.16.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1190,8 +1190,8 @@
         "act_sym": true
     },
     "model.layers.17.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1200,8 +1200,8 @@
         "act_sym": true
     },
     "model.layers.17.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1210,8 +1210,8 @@
         "act_sym": true
     },
     "model.layers.17.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1220,8 +1220,8 @@
         "act_sym": true
     },
     "model.layers.17.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1230,8 +1230,8 @@
         "act_sym": true
     },
     "model.layers.17.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1240,8 +1240,8 @@
         "act_sym": true
     },
     "model.layers.17.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1250,8 +1250,8 @@
         "act_sym": true
     },
     "model.layers.17.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1260,8 +1260,8 @@
         "act_sym": true
     },
     "model.layers.18.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1270,8 +1270,8 @@
         "act_sym": true
     },
     "model.layers.18.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1280,8 +1280,8 @@
         "act_sym": true
     },
     "model.layers.18.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1290,8 +1290,8 @@
         "act_sym": true
     },
     "model.layers.18.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1300,8 +1300,8 @@
         "act_sym": true
     },
     "model.layers.18.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1310,8 +1310,8 @@
         "act_sym": true
     },
     "model.layers.18.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1320,8 +1320,8 @@
         "act_sym": true
     },
     "model.layers.18.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1330,8 +1330,8 @@
         "act_sym": true
     },
     "model.layers.19.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1340,8 +1340,8 @@
         "act_sym": true
     },
     "model.layers.19.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1350,8 +1350,8 @@
         "act_sym": true
     },
     "model.layers.19.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1360,8 +1360,8 @@
         "act_sym": true
     },
     "model.layers.19.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1370,8 +1370,8 @@
         "act_sym": true
     },
     "model.layers.19.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1380,8 +1380,8 @@
         "act_sym": true
     },
     "model.layers.19.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1390,8 +1390,8 @@
         "act_sym": true
     },
     "model.layers.19.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1400,8 +1400,8 @@
         "act_sym": true
     },
     "model.layers.20.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1410,8 +1410,8 @@
         "act_sym": true
     },
     "model.layers.20.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1420,8 +1420,8 @@
         "act_sym": true
     },
     "model.layers.20.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1430,8 +1430,8 @@
         "act_sym": true
     },
     "model.layers.20.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1440,8 +1440,8 @@
         "act_sym": true
     },
     "model.layers.20.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1450,8 +1450,8 @@
         "act_sym": true
     },
     "model.layers.20.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1460,8 +1460,8 @@
         "act_sym": true
     },
     "model.layers.20.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1470,8 +1470,8 @@
         "act_sym": true
     },
     "model.layers.21.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1480,8 +1480,8 @@
         "act_sym": true
     },
     "model.layers.21.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1490,8 +1490,8 @@
         "act_sym": true
     },
     "model.layers.21.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1500,8 +1500,8 @@
         "act_sym": true
     },
     "model.layers.21.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1510,8 +1510,8 @@
         "act_sym": true
     },
     "model.layers.21.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1520,8 +1520,8 @@
         "act_sym": true
     },
     "model.layers.21.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1530,8 +1530,8 @@
         "act_sym": true
     },
     "model.layers.21.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1540,8 +1540,8 @@
         "act_sym": true
     },
     "model.layers.22.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1550,8 +1550,8 @@
         "act_sym": true
     },
     "model.layers.22.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1560,8 +1560,8 @@
         "act_sym": true
     },
     "model.layers.22.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1570,8 +1570,8 @@
         "act_sym": true
     },
     "model.layers.22.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1580,8 +1580,8 @@
         "act_sym": true
     },
     "model.layers.22.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1590,8 +1590,8 @@
         "act_sym": true
     },
     "model.layers.22.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1600,8 +1600,8 @@
         "act_sym": true
     },
     "model.layers.22.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1610,8 +1610,8 @@
         "act_sym": true
     },
     "model.layers.23.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1620,8 +1620,8 @@
         "act_sym": true
     },
     "model.layers.23.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1630,8 +1630,8 @@
         "act_sym": true
     },
     "model.layers.23.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1640,8 +1640,8 @@
         "act_sym": true
     },
     "model.layers.23.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1650,8 +1650,8 @@
         "act_sym": true
     },
     "model.layers.23.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1660,8 +1660,8 @@
         "act_sym": true
     },
     "model.layers.23.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1670,8 +1670,8 @@
         "act_sym": true
     },
     "model.layers.23.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1680,8 +1680,8 @@
         "act_sym": true
     },
     "model.layers.24.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1690,8 +1690,8 @@
         "act_sym": true
     },
     "model.layers.24.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1700,8 +1700,8 @@
         "act_sym": true
     },
     "model.layers.24.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1710,8 +1710,8 @@
         "act_sym": true
     },
     "model.layers.24.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1720,8 +1720,8 @@
         "act_sym": true
     },
     "model.layers.24.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1730,8 +1730,8 @@
         "act_sym": true
     },
     "model.layers.24.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1740,8 +1740,8 @@
         "act_sym": true
     },
     "model.layers.24.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1750,8 +1750,8 @@
         "act_sym": true
     },
     "model.layers.25.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1760,8 +1760,8 @@
         "act_sym": true
     },
     "model.layers.25.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1770,8 +1770,8 @@
         "act_sym": true
     },
     "model.layers.25.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1780,8 +1780,8 @@
         "act_sym": true
     },
     "model.layers.25.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1790,8 +1790,8 @@
         "act_sym": true
     },
     "model.layers.25.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1800,8 +1800,8 @@
         "act_sym": true
     },
     "model.layers.25.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1810,8 +1810,8 @@
         "act_sym": true
     },
     "model.layers.25.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1820,8 +1820,8 @@
         "act_sym": true
     },
     "model.layers.26.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1830,8 +1830,8 @@
         "act_sym": true
     },
     "model.layers.26.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1840,8 +1840,8 @@
         "act_sym": true
     },
     "model.layers.26.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1850,8 +1850,8 @@
         "act_sym": true
     },
     "model.layers.26.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1860,8 +1860,8 @@
         "act_sym": true
     },
     "model.layers.26.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1870,8 +1870,8 @@
         "act_sym": true
     },
     "model.layers.26.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1880,8 +1880,8 @@
         "act_sym": true
     },
     "model.layers.26.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1890,8 +1890,8 @@
         "act_sym": true
     },
     "model.layers.27.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1900,8 +1900,8 @@
         "act_sym": true
     },
     "model.layers.27.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1910,8 +1910,8 @@
         "act_sym": true
     },
     "model.layers.27.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1920,8 +1920,8 @@
         "act_sym": true
     },
     "model.layers.27.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1930,8 +1930,8 @@
         "act_sym": true
     },
     "model.layers.27.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -1940,8 +1940,8 @@
         "act_sym": true
     },
     "model.layers.27.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1950,8 +1950,8 @@
         "act_sym": true
     },
     "model.layers.27.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1960,8 +1960,8 @@
         "act_sym": true
     },
     "model.layers.28.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1970,8 +1970,8 @@
         "act_sym": true
     },
     "model.layers.28.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1980,8 +1980,8 @@
         "act_sym": true
     },
     "model.layers.28.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -1990,8 +1990,8 @@
         "act_sym": true
     },
     "model.layers.28.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2000,8 +2000,8 @@
         "act_sym": true
     },
     "model.layers.28.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2010,8 +2010,8 @@
         "act_sym": true
     },
     "model.layers.28.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2020,8 +2020,8 @@
         "act_sym": true
     },
     "model.layers.28.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2030,8 +2030,8 @@
         "act_sym": true
     },
     "model.layers.29.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2040,8 +2040,8 @@
         "act_sym": true
     },
     "model.layers.29.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2050,8 +2050,8 @@
         "act_sym": true
     },
     "model.layers.29.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2060,8 +2060,8 @@
         "act_sym": true
     },
     "model.layers.29.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2070,8 +2070,8 @@
         "act_sym": true
     },
     "model.layers.29.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2080,8 +2080,8 @@
         "act_sym": true
     },
     "model.layers.29.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2090,8 +2090,8 @@
         "act_sym": true
     },
     "model.layers.29.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2100,8 +2100,8 @@
         "act_sym": true
     },
     "model.layers.30.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2110,8 +2110,8 @@
         "act_sym": true
     },
     "model.layers.30.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2120,8 +2120,8 @@
         "act_sym": true
     },
     "model.layers.30.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2130,8 +2130,8 @@
         "act_sym": true
     },
     "model.layers.30.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2140,8 +2140,8 @@
         "act_sym": true
     },
     "model.layers.30.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2150,8 +2150,8 @@
         "act_sym": true
     },
     "model.layers.30.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2160,8 +2160,8 @@
         "act_sym": true
     },
     "model.layers.30.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2170,8 +2170,8 @@
         "act_sym": true
     },
     "model.layers.31.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2180,8 +2180,8 @@
         "act_sym": true
     },
     "model.layers.31.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2190,8 +2190,8 @@
         "act_sym": true
     },
     "model.layers.31.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2200,8 +2200,8 @@
         "act_sym": true
     },
     "model.layers.31.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2210,8 +2210,8 @@
         "act_sym": true
     },
     "model.layers.31.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2220,8 +2220,8 @@
         "act_sym": true
     },
     "model.layers.31.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2230,8 +2230,8 @@
         "act_sym": true
     },
     "model.layers.31.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2240,8 +2240,8 @@
         "act_sym": true
     },
     "model.layers.32.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2250,8 +2250,8 @@
         "act_sym": true
     },
     "model.layers.32.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2260,8 +2260,8 @@
         "act_sym": true
     },
     "model.layers.32.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2270,8 +2270,8 @@
         "act_sym": true
     },
     "model.layers.32.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2280,8 +2280,8 @@
         "act_sym": true
     },
     "model.layers.32.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2290,8 +2290,8 @@
         "act_sym": true
     },
     "model.layers.32.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2300,8 +2300,8 @@
         "act_sym": true
     },
     "model.layers.32.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2310,8 +2310,8 @@
         "act_sym": true
     },
     "model.layers.33.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2320,8 +2320,8 @@
         "act_sym": true
     },
     "model.layers.33.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2330,8 +2330,8 @@
         "act_sym": true
     },
     "model.layers.33.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2340,8 +2340,8 @@
         "act_sym": true
     },
     "model.layers.33.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2350,8 +2350,8 @@
         "act_sym": true
     },
     "model.layers.33.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2360,8 +2360,8 @@
         "act_sym": true
     },
     "model.layers.33.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2370,8 +2370,8 @@
         "act_sym": true
     },
     "model.layers.33.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2380,8 +2380,8 @@
         "act_sym": true
     },
     "model.layers.34.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2390,8 +2390,8 @@
         "act_sym": true
     },
     "model.layers.34.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2400,8 +2400,8 @@
         "act_sym": true
     },
     "model.layers.34.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2410,8 +2410,8 @@
         "act_sym": true
     },
     "model.layers.34.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2420,8 +2420,8 @@
         "act_sym": true
     },
     "model.layers.34.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2430,8 +2430,8 @@
         "act_sym": true
     },
     "model.layers.34.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2440,8 +2440,8 @@
         "act_sym": true
     },
     "model.layers.34.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2450,8 +2450,8 @@
         "act_sym": true
     },
     "model.layers.35.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2460,8 +2460,8 @@
         "act_sym": true
     },
     "model.layers.35.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2470,8 +2470,8 @@
         "act_sym": true
     },
     "model.layers.35.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2480,8 +2480,8 @@
         "act_sym": true
     },
     "model.layers.35.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2490,8 +2490,8 @@
         "act_sym": true
     },
     "model.layers.35.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2500,8 +2500,8 @@
         "act_sym": true
     },
     "model.layers.35.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2510,8 +2510,8 @@
         "act_sym": true
     },
     "model.layers.35.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2520,8 +2520,8 @@
         "act_sym": true
     },
     "model.layers.36.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2530,8 +2530,8 @@
         "act_sym": true
     },
     "model.layers.36.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2540,8 +2540,8 @@
         "act_sym": true
     },
     "model.layers.36.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2550,8 +2550,8 @@
         "act_sym": true
     },
     "model.layers.36.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2560,8 +2560,8 @@
         "act_sym": true
     },
     "model.layers.36.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2570,8 +2570,8 @@
         "act_sym": true
     },
     "model.layers.36.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2580,8 +2580,8 @@
         "act_sym": true
     },
     "model.layers.36.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2590,8 +2590,8 @@
         "act_sym": true
     },
     "model.layers.37.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2600,8 +2600,8 @@
         "act_sym": true
     },
     "model.layers.37.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2610,8 +2610,8 @@
         "act_sym": true
     },
     "model.layers.37.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2620,8 +2620,8 @@
         "act_sym": true
     },
     "model.layers.37.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2630,8 +2630,8 @@
         "act_sym": true
     },
     "model.layers.37.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2640,8 +2640,8 @@
         "act_sym": true
     },
     "model.layers.37.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2650,8 +2650,8 @@
         "act_sym": true
     },
     "model.layers.37.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2660,8 +2660,8 @@
         "act_sym": true
     },
     "model.layers.38.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2670,8 +2670,8 @@
         "act_sym": true
     },
     "model.layers.38.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2680,8 +2680,8 @@
         "act_sym": true
     },
     "model.layers.38.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2690,8 +2690,8 @@
         "act_sym": true
     },
     "model.layers.38.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2700,8 +2700,8 @@
         "act_sym": true
     },
     "model.layers.38.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2710,8 +2710,8 @@
         "act_sym": true
     },
     "model.layers.38.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2720,8 +2720,8 @@
         "act_sym": true
     },
     "model.layers.38.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2730,8 +2730,8 @@
         "act_sym": true
     },
     "model.layers.39.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2740,8 +2740,8 @@
         "act_sym": true
     },
     "model.layers.39.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2750,8 +2750,8 @@
         "act_sym": true
     },
     "model.layers.39.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2760,8 +2760,8 @@
         "act_sym": true
     },
     "model.layers.39.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2770,8 +2770,8 @@
         "act_sym": true
     },
     "model.layers.39.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2780,8 +2780,8 @@
         "act_sym": true
     },
     "model.layers.39.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2790,8 +2790,8 @@
         "act_sym": true
     },
     "model.layers.39.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2800,8 +2800,8 @@
         "act_sym": true
     },
     "model.layers.40.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2810,8 +2810,8 @@
         "act_sym": true
     },
     "model.layers.40.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2820,8 +2820,8 @@
         "act_sym": true
     },
     "model.layers.40.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2830,8 +2830,8 @@
         "act_sym": true
     },
     "model.layers.40.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2840,8 +2840,8 @@
         "act_sym": true
     },
     "model.layers.40.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2850,8 +2850,8 @@
         "act_sym": true
     },
     "model.layers.40.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2860,8 +2860,8 @@
         "act_sym": true
     },
     "model.layers.40.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2870,8 +2870,8 @@
         "act_sym": true
     },
     "model.layers.41.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2880,8 +2880,8 @@
         "act_sym": true
     },
     "model.layers.41.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2890,8 +2890,8 @@
         "act_sym": true
     },
     "model.layers.41.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2900,8 +2900,8 @@
         "act_sym": true
     },
     "model.layers.41.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2910,8 +2910,8 @@
         "act_sym": true
     },
     "model.layers.41.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2920,8 +2920,8 @@
         "act_sym": true
     },
     "model.layers.41.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2930,8 +2930,8 @@
         "act_sym": true
     },
     "model.layers.41.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2940,8 +2940,8 @@
         "act_sym": true
     },
     "model.layers.42.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2950,8 +2950,8 @@
         "act_sym": true
     },
     "model.layers.42.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2960,8 +2960,8 @@
         "act_sym": true
     },
     "model.layers.42.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -2970,8 +2970,8 @@
         "act_sym": true
     },
     "model.layers.42.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2980,8 +2980,8 @@
         "act_sym": true
     },
     "model.layers.42.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -2990,8 +2990,8 @@
         "act_sym": true
     },
     "model.layers.42.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3000,8 +3000,8 @@
         "act_sym": true
     },
     "model.layers.42.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3010,8 +3010,8 @@
         "act_sym": true
     },
     "model.layers.43.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3020,8 +3020,8 @@
         "act_sym": true
     },
     "model.layers.43.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3030,8 +3030,8 @@
         "act_sym": true
     },
     "model.layers.43.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3040,8 +3040,8 @@
         "act_sym": true
     },
     "model.layers.43.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3050,8 +3050,8 @@
         "act_sym": true
     },
     "model.layers.43.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3060,8 +3060,8 @@
         "act_sym": true
     },
     "model.layers.43.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3070,8 +3070,8 @@
         "act_sym": true
     },
     "model.layers.43.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3080,8 +3080,8 @@
         "act_sym": true
     },
     "model.layers.44.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3090,8 +3090,8 @@
         "act_sym": true
     },
     "model.layers.44.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3100,8 +3100,8 @@
         "act_sym": true
     },
     "model.layers.44.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3110,8 +3110,8 @@
         "act_sym": true
     },
     "model.layers.44.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3120,8 +3120,8 @@
         "act_sym": true
     },
     "model.layers.44.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3130,8 +3130,8 @@
         "act_sym": true
     },
     "model.layers.44.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3140,8 +3140,8 @@
         "act_sym": true
     },
     "model.layers.44.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3150,8 +3150,8 @@
         "act_sym": true
     },
     "model.layers.45.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3160,8 +3160,8 @@
         "act_sym": true
     },
     "model.layers.45.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3170,8 +3170,8 @@
         "act_sym": true
     },
     "model.layers.45.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3180,8 +3180,8 @@
         "act_sym": true
     },
     "model.layers.45.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3190,8 +3190,8 @@
         "act_sym": true
     },
     "model.layers.45.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3200,8 +3200,8 @@
         "act_sym": true
     },
     "model.layers.45.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3210,8 +3210,8 @@
         "act_sym": true
     },
     "model.layers.45.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3220,8 +3220,8 @@
         "act_sym": true
     },
     "model.layers.46.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3230,8 +3230,8 @@
         "act_sym": true
     },
     "model.layers.46.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3240,8 +3240,8 @@
         "act_sym": true
     },
     "model.layers.46.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3250,8 +3250,8 @@
         "act_sym": true
     },
     "model.layers.46.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3260,8 +3260,8 @@
         "act_sym": true
     },
     "model.layers.46.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3270,8 +3270,8 @@
         "act_sym": true
     },
     "model.layers.46.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3280,8 +3280,8 @@
         "act_sym": true
     },
     "model.layers.46.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3290,8 +3290,8 @@
         "act_sym": true
     },
     "model.layers.47.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3300,8 +3300,8 @@
         "act_sym": true
     },
     "model.layers.47.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3310,8 +3310,8 @@
         "act_sym": true
     },
     "model.layers.47.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3320,8 +3320,8 @@
         "act_sym": true
     },
     "model.layers.47.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3330,8 +3330,8 @@
         "act_sym": true
     },
     "model.layers.47.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3340,8 +3340,8 @@
         "act_sym": true
     },
     "model.layers.47.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3350,8 +3350,8 @@
         "act_sym": true
     },
     "model.layers.47.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3360,8 +3360,8 @@
         "act_sym": true
     },
     "model.layers.48.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3370,8 +3370,8 @@
         "act_sym": true
     },
     "model.layers.48.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3380,8 +3380,8 @@
         "act_sym": true
     },
     "model.layers.48.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3390,8 +3390,8 @@
         "act_sym": true
     },
     "model.layers.48.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3400,8 +3400,8 @@
         "act_sym": true
     },
     "model.layers.48.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3410,8 +3410,8 @@
         "act_sym": true
     },
     "model.layers.48.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3420,8 +3420,8 @@
         "act_sym": true
     },
     "model.layers.48.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3430,8 +3430,8 @@
         "act_sym": true
     },
     "model.layers.49.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3440,8 +3440,8 @@
         "act_sym": true
     },
     "model.layers.49.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3450,8 +3450,8 @@
         "act_sym": true
     },
     "model.layers.49.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3460,8 +3460,8 @@
         "act_sym": true
     },
     "model.layers.49.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3470,8 +3470,8 @@
         "act_sym": true
     },
     "model.layers.49.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3480,8 +3480,8 @@
         "act_sym": true
     },
     "model.layers.49.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3490,8 +3490,8 @@
         "act_sym": true
     },
     "model.layers.49.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3500,8 +3500,8 @@
         "act_sym": true
     },
     "model.layers.50.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3510,8 +3510,8 @@
         "act_sym": true
     },
     "model.layers.50.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3520,8 +3520,8 @@
         "act_sym": true
     },
     "model.layers.50.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3530,8 +3530,8 @@
         "act_sym": true
     },
     "model.layers.50.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3540,8 +3540,8 @@
         "act_sym": true
     },
     "model.layers.50.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3550,8 +3550,8 @@
         "act_sym": true
     },
     "model.layers.50.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3560,8 +3560,8 @@
         "act_sym": true
     },
     "model.layers.50.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3570,8 +3570,8 @@
         "act_sym": true
     },
     "model.layers.51.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3580,8 +3580,8 @@
         "act_sym": true
     },
     "model.layers.51.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3590,8 +3590,8 @@
         "act_sym": true
     },
     "model.layers.51.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3600,8 +3600,8 @@
         "act_sym": true
     },
     "model.layers.51.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3610,8 +3610,8 @@
         "act_sym": true
     },
     "model.layers.51.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3620,8 +3620,8 @@
         "act_sym": true
     },
     "model.layers.51.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3630,8 +3630,8 @@
         "act_sym": true
     },
     "model.layers.51.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3640,8 +3640,8 @@
         "act_sym": true
     },
     "model.layers.52.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3650,8 +3650,8 @@
         "act_sym": true
     },
     "model.layers.52.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3660,8 +3660,8 @@
         "act_sym": true
     },
     "model.layers.52.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3670,8 +3670,8 @@
         "act_sym": true
     },
     "model.layers.52.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3680,8 +3680,8 @@
         "act_sym": true
     },
     "model.layers.52.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3690,8 +3690,8 @@
         "act_sym": true
     },
     "model.layers.52.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3700,8 +3700,8 @@
         "act_sym": true
     },
     "model.layers.52.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3710,8 +3710,8 @@
         "act_sym": true
     },
     "model.layers.53.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3720,8 +3720,8 @@
         "act_sym": true
     },
     "model.layers.53.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3730,8 +3730,8 @@
         "act_sym": true
     },
     "model.layers.53.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3740,8 +3740,8 @@
         "act_sym": true
     },
     "model.layers.53.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3750,8 +3750,8 @@
         "act_sym": true
     },
     "model.layers.53.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3760,8 +3760,8 @@
         "act_sym": true
     },
     "model.layers.53.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3770,8 +3770,8 @@
         "act_sym": true
     },
     "model.layers.53.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3780,8 +3780,8 @@
         "act_sym": true
     },
     "model.layers.54.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3790,8 +3790,8 @@
         "act_sym": true
     },
     "model.layers.54.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3800,8 +3800,8 @@
         "act_sym": true
     },
     "model.layers.54.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3810,8 +3810,8 @@
         "act_sym": true
     },
     "model.layers.54.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3820,8 +3820,8 @@
         "act_sym": true
     },
     "model.layers.54.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3830,8 +3830,8 @@
         "act_sym": true
     },
     "model.layers.54.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3840,8 +3840,8 @@
         "act_sym": true
     },
     "model.layers.54.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3850,8 +3850,8 @@
         "act_sym": true
     },
     "model.layers.55.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3860,8 +3860,8 @@
         "act_sym": true
     },
     "model.layers.55.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3870,8 +3870,8 @@
         "act_sym": true
     },
     "model.layers.55.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3880,8 +3880,8 @@
         "act_sym": true
     },
     "model.layers.55.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3890,8 +3890,8 @@
         "act_sym": true
     },
     "model.layers.55.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3900,8 +3900,8 @@
         "act_sym": true
     },
     "model.layers.55.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3910,8 +3910,8 @@
         "act_sym": true
     },
     "model.layers.55.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3920,8 +3920,8 @@
         "act_sym": true
     },
     "model.layers.56.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3930,8 +3930,8 @@
         "act_sym": true
     },
     "model.layers.56.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3940,8 +3940,8 @@
         "act_sym": true
     },
     "model.layers.56.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3950,8 +3950,8 @@
         "act_sym": true
     },
     "model.layers.56.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3960,8 +3960,8 @@
         "act_sym": true
     },
     "model.layers.56.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3970,8 +3970,8 @@
         "act_sym": true
     },
     "model.layers.56.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -3980,8 +3980,8 @@
         "act_sym": true
     },
     "model.layers.56.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -3990,8 +3990,8 @@
         "act_sym": true
     },
     "model.layers.57.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4000,8 +4000,8 @@
         "act_sym": true
     },
     "model.layers.57.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4010,8 +4010,8 @@
         "act_sym": true
     },
     "model.layers.57.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4020,8 +4020,8 @@
         "act_sym": true
     },
     "model.layers.57.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4030,8 +4030,8 @@
         "act_sym": true
     },
     "model.layers.57.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4040,8 +4040,8 @@
         "act_sym": true
     },
     "model.layers.57.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4050,8 +4050,8 @@
         "act_sym": true
     },
     "model.layers.57.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4060,8 +4060,8 @@
         "act_sym": true
     },
     "model.layers.58.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4070,8 +4070,8 @@
         "act_sym": true
     },
     "model.layers.58.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4080,8 +4080,8 @@
         "act_sym": true
     },
     "model.layers.58.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4090,8 +4090,8 @@
         "act_sym": true
     },
     "model.layers.58.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4100,8 +4100,8 @@
         "act_sym": true
     },
     "model.layers.58.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4110,8 +4110,8 @@
         "act_sym": true
     },
     "model.layers.58.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4120,8 +4120,8 @@
         "act_sym": true
     },
     "model.layers.58.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4130,8 +4130,8 @@
         "act_sym": true
     },
     "model.layers.59.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4140,8 +4140,8 @@
         "act_sym": true
     },
     "model.layers.59.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4150,8 +4150,8 @@
         "act_sym": true
     },
     "model.layers.59.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4160,8 +4160,8 @@
         "act_sym": true
     },
     "model.layers.59.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4170,8 +4170,8 @@
         "act_sym": true
     },
     "model.layers.59.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4180,8 +4180,8 @@
         "act_sym": true
     },
     "model.layers.59.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4190,8 +4190,8 @@
         "act_sym": true
     },
     "model.layers.59.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4200,8 +4200,8 @@
         "act_sym": true
     },
     "model.layers.60.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4210,8 +4210,8 @@
         "act_sym": true
     },
     "model.layers.60.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4220,8 +4220,8 @@
         "act_sym": true
     },
     "model.layers.60.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4230,8 +4230,8 @@
         "act_sym": true
     },
     "model.layers.60.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4240,8 +4240,8 @@
         "act_sym": true
     },
     "model.layers.60.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4250,8 +4250,8 @@
         "act_sym": true
     },
     "model.layers.60.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4260,8 +4260,8 @@
         "act_sym": true
     },
     "model.layers.60.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4270,8 +4270,8 @@
         "act_sym": true
     },
     "model.layers.61.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4280,8 +4280,8 @@
         "act_sym": true
     },
     "model.layers.61.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4290,8 +4290,8 @@
         "act_sym": true
     },
     "model.layers.61.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4300,8 +4300,8 @@
         "act_sym": true
     },
     "model.layers.61.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4310,8 +4310,8 @@
         "act_sym": true
     },
     "model.layers.61.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4320,8 +4320,8 @@
         "act_sym": true
     },
     "model.layers.61.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4330,8 +4330,8 @@
         "act_sym": true
     },
     "model.layers.61.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4340,8 +4340,8 @@
         "act_sym": true
     },
     "model.layers.62.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4350,8 +4350,8 @@
         "act_sym": true
     },
     "model.layers.62.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4360,8 +4360,8 @@
         "act_sym": true
     },
     "model.layers.62.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4370,8 +4370,8 @@
         "act_sym": true
     },
     "model.layers.62.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4380,8 +4380,8 @@
         "act_sym": true
     },
     "model.layers.62.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4390,8 +4390,8 @@
         "act_sym": true
     },
     "model.layers.62.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4400,8 +4400,8 @@
         "act_sym": true
     },
     "model.layers.62.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4410,8 +4410,8 @@
         "act_sym": true
     },
     "model.layers.63.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4420,8 +4420,8 @@
         "act_sym": true
     },
     "model.layers.63.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4430,8 +4430,8 @@
         "act_sym": true
     },
     "model.layers.63.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4440,8 +4440,8 @@
         "act_sym": true
     },
     "model.layers.63.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4450,8 +4450,8 @@
         "act_sym": true
     },
     "model.layers.63.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4460,8 +4460,8 @@
         "act_sym": true
     },
     "model.layers.63.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4470,8 +4470,8 @@
         "act_sym": true
     },
     "model.layers.63.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4480,8 +4480,8 @@
         "act_sym": true
     },
     "model.layers.64.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4490,8 +4490,8 @@
         "act_sym": true
     },
     "model.layers.64.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4500,8 +4500,8 @@
         "act_sym": true
     },
     "model.layers.64.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4510,8 +4510,8 @@
         "act_sym": true
     },
     "model.layers.64.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4520,8 +4520,8 @@
         "act_sym": true
     },
     "model.layers.64.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4530,8 +4530,8 @@
         "act_sym": true
     },
     "model.layers.64.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4540,8 +4540,8 @@
         "act_sym": true
     },
     "model.layers.64.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4550,8 +4550,8 @@
         "act_sym": true
     },
     "model.layers.65.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4560,8 +4560,8 @@
         "act_sym": true
     },
     "model.layers.65.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4570,8 +4570,8 @@
         "act_sym": true
     },
     "model.layers.65.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4580,8 +4580,8 @@
         "act_sym": true
     },
     "model.layers.65.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4590,8 +4590,8 @@
         "act_sym": true
     },
     "model.layers.65.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4600,8 +4600,8 @@
         "act_sym": true
     },
     "model.layers.65.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4610,8 +4610,8 @@
         "act_sym": true
     },
     "model.layers.65.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4620,8 +4620,8 @@
         "act_sym": true
     },
     "model.layers.66.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4630,8 +4630,8 @@
         "act_sym": true
     },
     "model.layers.66.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4640,8 +4640,8 @@
         "act_sym": true
     },
     "model.layers.66.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4650,8 +4650,8 @@
         "act_sym": true
     },
     "model.layers.66.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4660,8 +4660,8 @@
         "act_sym": true
     },
     "model.layers.66.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4670,8 +4670,8 @@
         "act_sym": true
     },
     "model.layers.66.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4680,8 +4680,8 @@
         "act_sym": true
     },
     "model.layers.66.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4690,8 +4690,8 @@
         "act_sym": true
     },
     "model.layers.67.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4700,8 +4700,8 @@
         "act_sym": true
     },
     "model.layers.67.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4710,8 +4710,8 @@
         "act_sym": true
     },
     "model.layers.67.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4720,8 +4720,8 @@
         "act_sym": true
     },
     "model.layers.67.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4730,8 +4730,8 @@
         "act_sym": true
     },
     "model.layers.67.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4740,8 +4740,8 @@
         "act_sym": true
     },
     "model.layers.67.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4750,8 +4750,8 @@
         "act_sym": true
     },
     "model.layers.67.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4760,8 +4760,8 @@
         "act_sym": true
     },
     "model.layers.68.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4770,8 +4770,8 @@
         "act_sym": true
     },
     "model.layers.68.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4780,8 +4780,8 @@
         "act_sym": true
     },
     "model.layers.68.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4790,8 +4790,8 @@
         "act_sym": true
     },
     "model.layers.68.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4800,8 +4800,8 @@
         "act_sym": true
     },
     "model.layers.68.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4810,8 +4810,8 @@
         "act_sym": true
     },
     "model.layers.68.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4820,8 +4820,8 @@
         "act_sym": true
     },
     "model.layers.68.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4830,8 +4830,8 @@
         "act_sym": true
     },
     "model.layers.69.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4840,8 +4840,8 @@
         "act_sym": true
     },
     "model.layers.69.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4850,8 +4850,8 @@
         "act_sym": true
     },
     "model.layers.69.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4860,8 +4860,8 @@
         "act_sym": true
     },
     "model.layers.69.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4870,8 +4870,8 @@
         "act_sym": true
     },
     "model.layers.69.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4880,8 +4880,8 @@
         "act_sym": true
     },
     "model.layers.69.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4890,8 +4890,8 @@
         "act_sym": true
     },
     "model.layers.69.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4900,8 +4900,8 @@
         "act_sym": true
     },
     "model.layers.70.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4910,8 +4910,8 @@
         "act_sym": true
     },
     "model.layers.70.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4920,8 +4920,8 @@
         "act_sym": true
     },
     "model.layers.70.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4930,8 +4930,8 @@
         "act_sym": true
     },
     "model.layers.70.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4940,8 +4940,8 @@
         "act_sym": true
     },
     "model.layers.70.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4950,8 +4950,8 @@
         "act_sym": true
     },
     "model.layers.70.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -4960,8 +4960,8 @@
         "act_sym": true
     },
     "model.layers.70.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4970,8 +4970,8 @@
         "act_sym": true
     },
     "model.layers.71.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4980,8 +4980,8 @@
         "act_sym": true
     },
     "model.layers.71.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -4990,8 +4990,8 @@
         "act_sym": true
     },
     "model.layers.71.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5000,8 +5000,8 @@
         "act_sym": true
     },
     "model.layers.71.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5010,8 +5010,8 @@
         "act_sym": true
     },
     "model.layers.71.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5020,8 +5020,8 @@
         "act_sym": true
     },
     "model.layers.71.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5030,8 +5030,8 @@
         "act_sym": true
     },
     "model.layers.71.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5040,8 +5040,8 @@
         "act_sym": true
     },
     "model.layers.72.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5050,8 +5050,8 @@
         "act_sym": true
     },
     "model.layers.72.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5060,8 +5060,8 @@
         "act_sym": true
     },
     "model.layers.72.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5070,8 +5070,8 @@
         "act_sym": true
     },
     "model.layers.72.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5080,8 +5080,8 @@
         "act_sym": true
     },
     "model.layers.72.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5090,8 +5090,8 @@
         "act_sym": true
     },
     "model.layers.72.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5100,8 +5100,8 @@
         "act_sym": true
     },
     "model.layers.72.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5110,8 +5110,8 @@
         "act_sym": true
     },
     "model.layers.73.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5120,8 +5120,8 @@
         "act_sym": true
     },
     "model.layers.73.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5130,8 +5130,8 @@
         "act_sym": true
     },
     "model.layers.73.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5140,8 +5140,8 @@
         "act_sym": true
     },
     "model.layers.73.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5150,8 +5150,8 @@
         "act_sym": true
     },
     "model.layers.73.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5160,8 +5160,8 @@
         "act_sym": true
     },
     "model.layers.73.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5170,8 +5170,8 @@
         "act_sym": true
     },
     "model.layers.73.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5180,8 +5180,8 @@
         "act_sym": true
     },
     "model.layers.74.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5190,8 +5190,8 @@
         "act_sym": true
     },
     "model.layers.74.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5200,8 +5200,8 @@
         "act_sym": true
     },
     "model.layers.74.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5210,8 +5210,8 @@
         "act_sym": true
     },
     "model.layers.74.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5220,8 +5220,8 @@
         "act_sym": true
     },
     "model.layers.74.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5230,8 +5230,8 @@
         "act_sym": true
     },
     "model.layers.74.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5240,8 +5240,8 @@
         "act_sym": true
     },
     "model.layers.74.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5250,8 +5250,8 @@
         "act_sym": true
     },
     "model.layers.75.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5260,8 +5260,8 @@
         "act_sym": true
     },
     "model.layers.75.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5270,8 +5270,8 @@
         "act_sym": true
     },
     "model.layers.75.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5280,8 +5280,8 @@
         "act_sym": true
     },
     "model.layers.75.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5290,8 +5290,8 @@
         "act_sym": true
     },
     "model.layers.75.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5300,8 +5300,8 @@
         "act_sym": true
     },
     "model.layers.75.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5310,8 +5310,8 @@
         "act_sym": true
     },
     "model.layers.75.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5320,8 +5320,8 @@
         "act_sym": true
     },
     "model.layers.76.self_attn.q_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5330,8 +5330,8 @@
         "act_sym": true
     },
     "model.layers.76.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5340,8 +5340,8 @@
         "act_sym": true
     },
     "model.layers.76.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5350,8 +5350,8 @@
         "act_sym": true
     },
     "model.layers.76.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5360,8 +5360,8 @@
         "act_sym": true
     },
     "model.layers.76.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5370,8 +5370,8 @@
         "act_sym": true
     },
     "model.layers.76.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5380,8 +5380,8 @@
         "act_sym": true
     },
     "model.layers.76.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5390,8 +5390,8 @@
         "act_sym": true
     },
     "model.layers.77.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5400,8 +5400,8 @@
         "act_sym": true
     },
     "model.layers.77.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5410,8 +5410,8 @@
         "act_sym": true
     },
     "model.layers.77.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5420,8 +5420,8 @@
         "act_sym": true
     },
     "model.layers.77.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5430,8 +5430,8 @@
         "act_sym": true
     },
     "model.layers.77.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5440,8 +5440,8 @@
         "act_sym": true
     },
     "model.layers.77.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5450,8 +5450,8 @@
         "act_sym": true
     },
     "model.layers.77.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5460,8 +5460,8 @@
         "act_sym": true
     },
     "model.layers.78.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5470,8 +5470,8 @@
         "act_sym": true
     },
     "model.layers.78.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5480,8 +5480,8 @@
         "act_sym": true
     },
     "model.layers.78.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5490,8 +5490,8 @@
         "act_sym": true
     },
     "model.layers.78.self_attn.o_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5500,8 +5500,8 @@
         "act_sym": true
     },
     "model.layers.78.mlp.gate_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5510,8 +5510,8 @@
         "act_sym": true
     },
     "model.layers.78.mlp.up_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5520,8 +5520,8 @@
         "act_sym": true
     },
     "model.layers.78.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5530,8 +5530,8 @@
         "act_sym": true
     },
     "model.layers.79.self_attn.q_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5540,8 +5540,8 @@
         "act_sym": true
     },
     "model.layers.79.self_attn.k_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5550,8 +5550,8 @@
         "act_sym": true
     },
     "model.layers.79.self_attn.v_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5560,8 +5560,8 @@
         "act_sym": true
     },
     "model.layers.79.self_attn.o_proj": {
-        "data_type": "mx_fp4",
-        "act_data_type": "mx_fp4",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 4,
         "group_size": 32,
         "sym": true,
@@ -5570,8 +5570,8 @@
         "act_sym": true
     },
     "model.layers.79.mlp.gate_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5580,8 +5580,8 @@
         "act_sym": true
     },
     "model.layers.79.mlp.up_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
@@ -5590,8 +5590,8 @@
         "act_sym": true
     },
     "model.layers.79.mlp.down_proj": {
-        "data_type": "mx_fp8",
-        "act_data_type": "mx_fp8",
+        "data_type": "mx_fp",
+        "act_data_type": "mx_fp_rceil",
         "bits": 8,
         "group_size": 32,
         "sym": true,
