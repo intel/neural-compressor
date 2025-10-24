@@ -228,6 +228,7 @@ def convert(
     model: torch.nn.Module,
     quant_config: BaseConfig = None,
     inplace: bool = True,
+    **kwargs,
 ):
     """Convert the prepared model to a quantized model.
 
@@ -284,6 +285,7 @@ def convert(
                 configs_mapping,
                 example_inputs=example_inputs,
                 mode=Mode.CONVERT,
+                **kwargs,
             )
     setattr(q_model, "is_quantized", True)
     return q_model
