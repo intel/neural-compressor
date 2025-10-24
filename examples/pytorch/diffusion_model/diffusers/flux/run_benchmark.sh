@@ -62,7 +62,7 @@ function run_benchmark {
 		python dataset_split.py --split_num ${visible_gpus} --input_file ${dataset_location} --limit ${limit}
 
         for ((i=0; i<visible_gpus; i++)); do
-            export CUDA_VISIBLE_DEVICES=${i}
+            export CUDA_VISIBLE_DEVICES=${gpu_ids[i]}
 
             python3 main.py \
                 --model ${input_model} \
