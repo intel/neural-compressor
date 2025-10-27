@@ -1199,6 +1199,39 @@ class PatchedVLLMKVCache(PatchedModuleBase):
             get_current_repr(self),
         )
 
+##TODO SW-242485 -  move this function to base conv class
+def compute_padding(padding, kernel_size, stride=(1, 1), input_size=None):
+    """
+    Compute padding values based on padding type and stride.
+
+    Args:
+        padding: controls the amount of padding applied to the input.
+                It can be either a string {‘valid’, ‘same’} or an int / a tuple of
+                ints giving the amount of implicit padding applied on both sides.
+        kernel_size : (ch_in, ch_out, kernel_height, kernel_width)
+        stride (tuple): (stride_height, stride_width)
+        input_size (tuple): (ch_in, ch_out, input_height, input_width), optional for exact SAME padding
+
+    Returns:
+        Tuple: (pad_h, pad_w) - pad_h and pad_w is half of the total padding_h and padding_w, padding added to all four sides of the input
+    """
+
+    if isinstance(padding, list) or isinstance(padding, tuple):
+        return padding
+    elif padding == "valid":
+        return 0
+    elif padding == "same":
+        in_h, in_w = input_size[2], input_size[3]
+        sh, sw = stride
+        kh, kw = kernel_size[2], kernel_size[3]
+        out_h = (in_h + sh - 1) // sh
+        out_w = (in_w + sw - 1) // sw
+        pad_h_total = max((out_h - 1) * sh + kh - in_h, 0)
+        pad_w_total = max((out_w - 1) * sw + kw - in_w, 0)
+        return (int(pad_h_total/2), int(pad_w_total/2))
+    else:
+        raise ValueError(f"Unsupported padding type: {padding}")
+
 
 def init_conv(instance, mod_extra_config):
     if instance.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
@@ -1217,6 +1250,7 @@ class PatchedConv2d(PatchedModuleBase):
         init_conv(self, mod_extra_config)
 
     def forward_qdq(self, input):
+        padding = compute_padding(self.padding,self.weight.size(), self.stride, input.size() )
         qweight = self.dequant_weights(self.weight, )
         qinput = self.quant_input(input)
         output = torch.nn.functional.conv2d(
@@ -1224,19 +1258,20 @@ class PatchedConv2d(PatchedModuleBase):
             qweight,
             self.bias,
             self.stride,
-            self.padding,
+            padding,
             self.dilation,
             self.groups,
         )
         return output
 
     def forward_quant(self, input):
+        padding = compute_padding(self.padding,self.weight.size(), self.stride, input.size() )
         qinput = self.quant_input(input)
         output = self.conv2d_fp8(qinput,
                                  self.weight,
                                  self.bias,
                                  self.stride,
-                                 self.padding,
+                                 padding,
                                  self.dilation,
                                  self.groups,
                                  out_dtype=self._mod_extra_config.config_params["hp_dtype"],
@@ -1245,6 +1280,8 @@ class PatchedConv2d(PatchedModuleBase):
         return output
 
     def forward_measure(self, input):
+        padding = compute_padding(self.padding,self.weight.size(), self.stride, input.size() )
+        self.padding = padding
         measure_input((input,), observer=self._mod_extra_config.inputs)
         output = self.orig_mod(input)
         measure_output((output,), self._mod_extra_config.outputs)
@@ -1387,11 +1424,12 @@ class PatchedLoRACompatibleConv(PatchedModuleBase):
             # TODO SW-174899 support lora layer quantization
             _raise_lora_layer_error(self.class_name_org)
         else:
+            padding = compute_padding(self.padding,self.weight.size(), self.stride, input.size() )
             output = self.conv2d_fp8(qinput,
                                      self.weight,
                                      self.bias,
                                      self.stride,
-                                     self.padding,
+                                     padding,
                                      self.dilation,
                                      self.groups,
                                      out_dtype=self._mod_extra_config.config_params["hp_dtype"],
@@ -1400,6 +1438,8 @@ class PatchedLoRACompatibleConv(PatchedModuleBase):
         return output
 
     def forward_measure(self, input, scale: float = 1.0):
+        padding = compute_padding(self.padding,self.weight.size(), self.stride, input.size() )
+        self.padding = padding
         measure_input((input,), observer=self._mod_extra_config.inputs)
         output = self.orig_mod(input, scale)
         measure_output((output,), self._mod_extra_config.outputs)
