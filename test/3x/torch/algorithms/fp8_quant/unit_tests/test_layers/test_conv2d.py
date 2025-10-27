@@ -22,7 +22,8 @@ def get_test_vectors(
 @pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn], ids=["fp8_e4m3fn"])
 @pytest.mark.parametrize("scale_method", ScaleMethodString)
 @pytest.mark.parametrize("device_type", device_type)
-def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethodString, device_type: str):
+@pytest.mark.parametrize("padding_type",["valid", "same", [1,1]], ids=["valid", "same", "int_padding"])
+def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethodString, device_type: str, padding_type):
     # TODO [SW-196641]: fix the following issues:
     if scale_method in SCALE_METHODS_SEGFAULT:
         pytest.skip("Not supported")
@@ -47,7 +48,7 @@ def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_met
                 "in_channels": C_in,
                 "out_channels": C_out,
                 "kernel_size": K,
-                "padding": 1,
+                "padding": padding_type,
                 "bias": False,
                 "device": "hpu",
                 "dtype": hp_dtype,
