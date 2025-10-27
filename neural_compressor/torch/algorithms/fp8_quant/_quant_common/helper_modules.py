@@ -641,13 +641,12 @@ class PatchedMixtralMoE(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         # remove the MoE weights that are quanted by PatchedMoeMatmul
-        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            delattr(mod, "w13_weight")
-            delattr(mod, "w2_weight")
-            setattr(mod, "w13_weight", None)
-            setattr(mod, "w2_weight", None)
-            setattr(self, "w13_weight", None)
-            setattr(self, "w2_weight", None)
+        delattr(mod, "w13_weight")
+        delattr(mod, "w2_weight")
+        setattr(mod, "w13_weight", None)
+        setattr(mod, "w2_weight", None)
+        setattr(self, "w13_weight", None)
+        setattr(self, "w2_weight", None)
         self.forward = self.forward_orig
 
     # copied from https://github.com/HabanaAI/vllm-fork/blob/93b8bad8478451349d0c76b3116d3ad863a3b48e/vllm/model_executor/layers/fused_moe/layer.py#L1429
@@ -679,10 +678,9 @@ class PatchedMoeMatmul(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.init_linear(mod_extra_config)
+        self.weight = torch.nn.Parameter(self.weight.squeeze(), requires_grad=False)
         if (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             measure_input((torch.tensor(0),), observer=self._mod_extra_config.inputs)
-        else:
-            self.weight = torch.nn.Parameter(self.weight.squeeze(), requires_grad=False)
 
     def forward_qdq(self, input, *args, **kwargs):
         return self.run_linear_qdq(input, None)
