@@ -1,4 +1,4 @@
-Step-by-Step (Deprecated)
+Step-by-Step
 ============
 
 This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor smooth quantization of language models gpt-j-6B.
@@ -11,7 +11,7 @@ This document is used to list steps of reproducing TensorFlow Intel® Neural Com
 ```shell
 # Install Intel® Neural Compressor
 pip install neural-compressor
-pip install -r requirements
+pip install -r requirements.txt
 ```
 
 ## 2. Prepare Pretrained model
@@ -91,16 +91,6 @@ class MyDataloader:
         return self.length
 ```
 
-### Quantization Config
-The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the 'backend' parameter should be set to 'itex' and the 'device' parameter should be set to 'gpu'.
-
-```python
-config = PostTrainingQuantConfig(
-    device="gpu",
-    backend="itex",
-    ...
-    )
-```
 
 ### Code Update
 After prepare step is done, we add the code for quantization tuning to generate quantized model.
@@ -124,30 +114,24 @@ To apply quantization, the function that maps names from AutoTrackable variables
 
 Please use the recipe to set smooth quantization.
 ```python
-    from neural_compressor import quantization, PostTrainingQuantConfig
-    calib_dataloader = MyDataloader(mydata, batch_size=run_args.batch_size)  
-    recipes = {"smooth_quant": True, "smooth_quant_args": {'alpha': 0.52705}}
-    conf = PostTrainingQuantConfig(quant_level=1, 
-                                    excluded_precisions=["bf16"],##use basic tuning
-                                    recipes=recipes,
-                                    calibration_sampling_size=[1],
-                                    )
-    
-    model.weight_name_mapping = weight_name_mapping
-    q_model = quantization.fit( model,
-                                conf,
-                                eval_func=evaluate,
-                                calib_dataloader=calib_dataloader)
+    from neural_compressor.tensorflow import StaticQuantConfig, SmoothQuantConfig, autotune
+    from neural_compressor.tensorflow.quantization import TuningConfig
+    from neural_compressor.tensorflow.utils import BaseDataLoader
 
+    calib_dataloader = MyDataloader(mydata, batch_size=run_args.batch_size)  
+    quant_config = [SmoothQuantConfig(alpha=0.52705), StaticQuantConfig(act_dtype="int8", weight_dtype="int8")]
+    tune_config = TuningConfig(config_set=quant_config, max_trials=1)
+    model.weight_name_mapping = weight_name_mapping
+    q_model = autotune(model, 
+                        tune_config, 
+                        eval_fn=evaluate,
+                        calib_dataloader=calib_dataloader)
     q_model.save(run_args.output_model)
 ```
 #### Benchmark
 ```python
     if run_args.mode == "performance":
-        from neural_compressor.benchmark import fit
-        from neural_compressor.config import BenchmarkConfig
-        conf = BenchmarkConfig(warmup=10, iteration=run_args.iteration, cores_per_instance=4, num_of_instance=1)
-        fit(model, conf, b_func=evaluate)
+        evaluate(model.model)
     elif run_args.mode == "accuracy":
         acc_result = evaluate(model.model)
         print("Batch size = %d" % run_args.batch_size)

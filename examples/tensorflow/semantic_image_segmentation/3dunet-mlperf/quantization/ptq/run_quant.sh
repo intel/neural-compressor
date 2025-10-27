@@ -37,7 +37,7 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    python run_accuracy.py \
+    python main.py \
       --input-model=${input_model} \
       --output-model=${output_model} \
       --data-location=${dataset_location} \

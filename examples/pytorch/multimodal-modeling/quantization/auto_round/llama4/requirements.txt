@@ -1,0 +1,4 @@
+lm-eval==0.4.9.1
+setuptools_scm
+torchao==0.12.0
+triton==3.3.1

@@ -516,6 +516,7 @@ def quant_weight_w_scale(weight, scale, scale_bf16_to_fp8, zp=None, group_size=-
         if dtype in FLOAT_MAPPING.keys():  # NF4 FP4
             int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size]
             quantize_4bit(int_weight_tmp, scale=scale[:, i].unsqueeze(1), dtype=dtype, return_int=True)[0]
+            int_weight[:, i * group_size : (i + 1) * group_size].copy_(int_weight_tmp)
         else:
             int_weight_tmp = weight[:, i * group_size : (i + 1) * group_size].div_(scale[:, i].unsqueeze(1))
             if zp is not None:
@@ -526,6 +527,7 @@ def quant_weight_w_scale(weight, scale, scale_bf16_to_fp8, zp=None, group_size=-
         if dtype in FLOAT_MAPPING.keys():  # NF4 FP4
             int_weight_tmp = weight[:, leng * group_size :]
             quantize_4bit(int_weight_tmp, scale=scale[:, -1].unsqueeze(1), dtype=dtype, return_int=True)[0]
+            int_weight[:, leng * group_size :].copy_(int_weight_tmp)
         else:
             int_weight_tmp = weight[:, leng * group_size :].div_(scale[:, -1].unsqueeze(1))
             if zp is not None:

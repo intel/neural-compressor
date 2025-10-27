@@ -579,25 +579,37 @@ def autoround_quantize_entry(
         if quant_config.name != AUTOROUND or quant_config.dtype == "fp32":
             continue
         else:
-            dtype = quant_config.dtype
             bits = quant_config.bits
-            if dtype != "int" and "int" in dtype:
-                if dtype == "fp8_to_int_sym":
+            group_size = quant_config.group_size
+            sym = quant_config.use_sym
+            data_type = quant_config.dtype
+            act_bits = quant_config.act_bits
+            act_group_size = quant_config.act_group_size
+            act_sym = quant_config.act_sym
+            act_data_type = quant_config.act_dtype
+            act_dynamic = quant_config.act_dynamic
+            super_bits = quant_config.super_bits
+            super_group_size = quant_config.super_group_size
+            if data_type is not None and data_type != "int" and "int" in data_type:
+                if data_type == "fp8_to_int_sym":
                     bits = 4
                 else:
-                    bits = int(dtype.lstrip("int"))
-                    dtype = "int"
+                    bits = int(data_type.lstrip("int"))
+                    data_type = "int"
             weight_config[op_name] = {
-                "data_type": dtype,
+                "data_type": data_type,
                 "bits": bits,
-                "sym": quant_config.use_sym,
-                "group_size": quant_config.group_size,
-                "act_bits": quant_config.act_bits,
-                "act_group_size": quant_config.act_group_size,
-                "act_sym": quant_config.act_sym,
-                "act_dynamic": quant_config.act_dynamic,
-                "act_data_type": quant_config.act_dtype,
+                "sym": sym,
+                "group_size": group_size,
+                "act_bits": act_bits,
+                "act_group_size": act_group_size,
+                "act_sym": act_sym,
+                "act_dynamic": act_dynamic,
+                "act_data_type": act_data_type,
             }
+            layer_config = quant_config.to_dict().get("layer_config", None)
+            dataset = quant_config.to_dict().get("dataset", "NeelNanda/pile-10k")
+            output_dir = quant_config.to_dict().get("output_dir", "temp_auto_round")
             enable_full_range = quant_config.enable_full_range
             batch_size = quant_config.batch_size
             amp = quant_config.amp
@@ -622,7 +634,6 @@ def autoround_quantize_entry(
             export_format = quant_config.export_format
             enable_norm_bias_tuning = quant_config.enable_norm_bias_tuning
             enable_torch_compile = quant_config.enable_torch_compile
-            is_mllm = quant_config.is_mllm
             quant_nontext_module = quant_config.quant_nontext_module
             extra_data_dir = quant_config.extra_data_dir
             processor = quant_config.processor
@@ -631,16 +642,34 @@ def autoround_quantize_entry(
             truncation = quant_config.truncation
             scheme = quant_config.scheme
             device_map = quant_config.device_map
+            quant_lm_head = quant_config.quant_lm_head
+            guidance_scale = quant_config.to_dict().get("guidance_scale", 7.5)
+            num_inference_steps = quant_config.to_dict().get("num_inference_steps", 50)
+            generator_seed = quant_config.to_dict().get("generator_seed", None)
 
     kwargs.pop("example_inputs")
     quantizer = get_quantizer(
         model,
         quantizer_cls=AutoRoundQuantizer,
         quant_config=weight_config,
+        bits=bits,
+        data_type=data_type,
+        group_size=group_size,
+        sym=sym,
+        act_bits=act_bits,
+        act_group_size=act_group_size,
+        act_sym=act_sym,
+        act_data_type=act_data_type,
+        act_dynamic=act_dynamic,
+        super_bits=super_bits,
+        super_group_size=super_group_size,
+        layer_config=layer_config,
+        output_dir=output_dir,
         enable_full_range=enable_full_range,
         batch_size=batch_size,
         amp=amp,
         lr_scheduler=lr_scheduler,
+        dataset=dataset,
         enable_quanted_input=enable_quanted_input,
         enable_minmax_tuning=enable_minmax_tuning,
         lr=lr,
@@ -661,7 +690,6 @@ def autoround_quantize_entry(
         export_format=export_format,
         enable_norm_bias_tuning=enable_norm_bias_tuning,
         enable_torch_compile=enable_torch_compile,
-        is_mllm=is_mllm,
         quant_nontext_module=quant_nontext_module,
         extra_data_dir=extra_data_dir,
         processor=processor,
@@ -670,6 +698,10 @@ def autoround_quantize_entry(
         truncation=truncation,
         scheme=scheme,
         device_map=device_map,
+        quant_lm_head=quant_lm_head,
+        guidance_scale=guidance_scale,
+        num_inference_steps=num_inference_steps,
+        generator_seed=generator_seed,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping

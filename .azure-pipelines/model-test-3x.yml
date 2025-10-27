@@ -11,7 +11,7 @@ pr:
       - neural_compressor/common
       - neural_compressor/torch
       - neural_compressor/transformers
-      - examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only
+      - examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only
       - setup.py
       - requirements_pt.txt
       - .azure-pipelines/scripts/models

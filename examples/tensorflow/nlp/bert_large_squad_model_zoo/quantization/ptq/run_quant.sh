@@ -34,7 +34,7 @@ function init_params {
 
 # run_tuning
 function run_tuning {
-    python tune_squad.py \
+    python main.py \
       --input_model=${input_model} \
       --output_model=${output_model} \
       --dataset_location=${dataset_location} \

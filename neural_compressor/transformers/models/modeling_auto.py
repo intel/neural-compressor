@@ -745,13 +745,13 @@ class _BaseINCAutoModelClass:
                 tmp_kwargs = {
                     "sharded_metadata": sharded_metadata,
                     "disk_offload_folder": offload_folder,
-                    "offload_state_dict": offload_state_dict,
                     "dtype": torch_dtype,
                 }
+                if parse(transformers.__version__) < parse("4.57"):
+                    tmp_kwargs["offload_state_dict"] = offload_state_dict
                 if parse(transformers.__version__) < parse("4.51"):
                     tmp_kwargs["_fast_init"] = _fast_init
                     tmp_kwargs["low_cpu_mem_usage"] = True
-
             model_message = model_class._load_pretrained_model(*tmp_args, **tmp_kwargs)
             model = model_message[0]
 

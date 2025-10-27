@@ -1,6 +1,0 @@
-torch
-torchvision
-timm
-onnx
-onnxruntime
-onnxruntime-extensions; python_version < '3.11'

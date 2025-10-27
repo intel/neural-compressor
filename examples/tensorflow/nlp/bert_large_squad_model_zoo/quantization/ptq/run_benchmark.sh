@@ -38,7 +38,7 @@ function init_params {
 # run_tuning
 function run_benchmark {
 
-    python tune_squad.py \
+    python main.py \
       --input_model=${input_model} \
       --mode=${mode} \
       --dataset_location=${dataset_location} \

@@ -16,6 +16,7 @@ sed -i '/^deepspeed/d' /neural-compressor/test/3x/torch/requirements.txt
 pip install -r /neural-compressor/test/3x/torch/requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 pip install pytest-cov
 pip install pytest-html
+pip install beautifulsoup4==4.13.5
 echo "##[endgroup]"
 pip list
 
