@@ -1,19 +1,18 @@
-name: Check stale issue and pr
+name: Close stale issue
 
 permissions:
   contents: read
   issues: write
-  pull-requests: write
 
 on:
   schedule:
     - cron: "30 22 * * *"
 
 jobs:
-  close-issues:
+  stale:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/stale@v9
+      - uses: actions/stale@v10
         with:
           days-before-issue-stale: 60
           days-before-issue-close: 7
