@@ -30,29 +30,7 @@ new_benchmark=true
 inc_new_api=true
 benchmark_cmd=""
 # ======== set up config for pytorch models ========
-if [ "${model}" == "resnet18" ]; then
-    model_src_dir="image_recognition/torchvision_models/quantization/ptq/cpu/eager"
-    dataset_location="/tf_dataset2/datasets/mini-imageraw"
-    input_model=""
-    yaml="conf.yaml"
-    strategy="bayesian"
-    batch_size=1
-    new_benchmark=false
-    inc_new_api=false
-    tuning_cmd="bash run_tuning.sh --topology=resnet18 --dataset_location=${dataset_location} --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --topology=resnet18 --dataset_location=${dataset_location} --mode=benchmark --batch_size=${batch_size} --iters=500"
-elif [ "${model}" == "resnet18_fx" ]; then
-    model_src_dir="image_recognition/torchvision_models/quantization/ptq/cpu/fx/"
-    dataset_location="/tf_dataset2/datasets/mini-imageraw"
-    input_model="resnet18"
-    yaml=""
-    strategy="basic"
-    batch_size=1
-    new_benchmark=true
-    inc_new_api=true
-    tuning_cmd="bash run_quant.sh --topology=resnet18 --dataset_location=${dataset_location} --input_model=${input_model}"
-    benchmark_cmd="bash run_benchmark.sh --topology=resnet18 --dataset_location=${dataset_location} --mode=performance --batch_size=${batch_size} --iters=500"
-elif [ "${model}" == "opt_125m_woq_gptq_int4" ]; then
+if [ "${model}" == "opt_125m_woq_gptq_int4" ]; then
     model_src_dir="nlp/huggingface_models/language-modeling/quantization/weight_only"
     inc_new_api=3x_pt
     tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4"
@@ -60,10 +38,6 @@ elif [ "${model}" == "opt_125m_woq_gptq_nf4_dq_bnb" ]; then
     model_src_dir="nlp/huggingface_models/language-modeling/quantization/weight_only"
     inc_new_api=3x_pt
     tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_nf4_dq_bnb"
-elif [ "${model}" == "opt_125m_woq_gptq_int4_dq_ggml" ]; then
-    model_src_dir="nlp/huggingface_models/language-modeling/quantization/weight_only"
-    inc_new_api=3x_pt
-    tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4_dq_ggml"
 fi
 
 echo "Specify FWs version..."
