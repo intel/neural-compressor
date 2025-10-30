@@ -37,7 +37,7 @@ def dequant_original_fp8_weight_if_needed(mod: torch.nn.Module, param: torch.Ten
             else:
                 raise RuntimeError(f"Got fp8 weight for {mod}, but dequant function is None, please check.")
         else:
-            RuntimeError(f"Got fp8 weight for {mod}, but dequant function is not found, please check.")
+            raise RuntimeError(f"Got fp8 weight for {mod}, but dequant function is not found, please check.")
             
     return param
 
