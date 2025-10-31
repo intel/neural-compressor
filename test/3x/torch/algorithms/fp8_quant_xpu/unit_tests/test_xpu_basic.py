@@ -37,8 +37,8 @@ class Matmul(torch.nn.Module):
     def __init__(self, dim=16):
         super().__init__()
 
-    def forward(self, input, other):
-        return torch.matmul(input, other)
+    def forward(self, input, other, **kwargs):
+        return torch.matmul(input, other, **kwargs)
 
 
 class MyModelMatmul(torch.nn.Module):

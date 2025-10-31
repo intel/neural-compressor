@@ -45,8 +45,8 @@ class Matmul(torch.nn.Module):
     def __init__(self):
         super().__init__()
 
-    def forward(self, x, y):
-        return torch.matmul(x, y)
+    def forward(self, x, y, **kwargs):
+        return torch.matmul(x, y, **kwargs)
 
 
 @pytest.mark.parametrize("hp_dtype", [torch.bfloat16, torch.float32], ids=["bf16", "fp32"])

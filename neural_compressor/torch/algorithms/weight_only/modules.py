@@ -28,14 +28,6 @@ from neural_compressor.torch.utils import accelerator, can_pack_with_numba, logg
 
 from .utility import quant_tensor
 
-class Matmul(torch.nn.Module):
-
-    def __init__(self, ) -> None:
-        super().__init__()
-
-    def forward(self, X, Y):
-        """Forward function."""
-        return torch.matmul(X, Y)
 
 class Matmul(torch.nn.Module):
     """Basic module for matmul."""
@@ -46,9 +38,9 @@ class Matmul(torch.nn.Module):
         """Init the Matmul object."""
         super().__init__()
 
-    def forward(self, X, Y):
+    def forward(self, X, Y, **kwargs):
         """Forward function."""
-        return torch.matmul(X, Y)
+        return torch.matmul(X, Y, **kwargs)
 
 
 class QDQLayer(torch.nn.Module):
