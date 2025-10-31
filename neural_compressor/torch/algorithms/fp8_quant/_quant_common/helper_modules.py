@@ -115,27 +115,28 @@ class PatchedMatmul(PatchedModuleBase):
                 if hasattr(parent, 'scale_bf16_to_fp8') and parent.scale_bf16_to_fp8 > 0:
                     self.scale_other = torch.nn.Parameter(parent.scale_bf16_to_fp8)
 
-    def forward_quant(self, input, other):
+    def forward_quant(self, input, other, out=None):
         qinput = self.quant_input_0(input)
         qother = self.quant_input_1(other)
-        output = self.matmul_fp8(qinput,
-                                 qother,
-                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                                 scale_input_inv=self.scale_input,
-                                 scale_other_inv=self.scale_other)
-        return output
+        out = self.matmul_fp8(qinput,
+                              qother,
+                              out=out,
+                              out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                              scale_input_inv=self.scale_input,
+                              scale_other_inv=self.scale_other)
+        return out
 
-    def forward_qdq(self, input, other):
+    def forward_qdq(self, input, other, out=None):
         qinput = self.quant_input_0(input)
         qother = self.quant_input_1(other)
-        output = torch.matmul(qinput, qother)
-        return output
+        out = torch.matmul(qinput, qother, out=out)
+        return out
 
-    def forward_measure(self, input, other):
+    def forward_measure(self, input, other, out=None):
         measure_input((input, other), observer=self._mod_extra_config.inputs)
-        output = self.orig_mod(input, other)
-        measure_output((output,), self._mod_extra_config.outputs)
-        return output
+        out = self.orig_mod(input, other, out=out)
+        measure_output((out,), self._mod_extra_config.outputs)
+        return out
 
     def extra_repr(self) -> str:
         return extra_representation(
