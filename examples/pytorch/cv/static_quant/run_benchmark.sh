@@ -85,8 +85,7 @@ function run_benchmark {
                 ${extra_cmd} \
                 ${mode_cmd}
     elif [[ ${mode} == "performance" ]]; then
-        incbench --num_cores_per_instance 4 \
-                main.py \
+        python main.py \
                 --pretrained \
                 -a resnet18 \
                 -b ${batch_size} \
