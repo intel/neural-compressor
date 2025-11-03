@@ -138,7 +138,6 @@ if __name__ == "__main__":
         install_requires=install_requires,
         ext_modules=ext_modules,
         cmdclass=cmdclass,
-        entry_points=entry_points,
         extras_require=extras_require,
         python_requires=">=3.7.0",
         classifiers=[
