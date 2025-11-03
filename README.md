@@ -115,7 +115,7 @@ model = load(
       <td colspan="2" align="center"><a href="./docs/source/3x/design.md#architecture">Architecture</a></td>
       <td colspan="2" align="center"><a href="./docs/source/3x/design.md#workflows">Workflow</a></td>
       <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="1" align="center"><a href="./docs/source/3x/llm_recipes.md">LLMs Recipes</a></td>
+      <td colspan="1" align="center"><a href="./docs/source/llm_recipes.md">LLMs Recipes</a></td>
       <td colspan="1" align="center"><a href="./examples/3.x_api/README.md">Examples</a></td>
     </tr>
   </tbody>
