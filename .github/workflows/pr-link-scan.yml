@@ -100,7 +100,7 @@ jobs:
           branch="https://github.com/$REPO_NAME/blob/$HEAD_REF"
 
           merged_commit=$(git log -1 --format='%H')
-          changed_files="$(git diff --name-status --diff-filter=ARM $BASE_SHA ${merged_commit} | awk '/\.md$/ {print $NF}')"
+          changed_files="$(git diff --name-status --diff-filter=ARM $BASE_SHA ${merged_commit} | awk '/\.md$/ {print $NF}' | grep -Ev 'shape=' )"
           png_lines=$(grep -Eo '\]\([^)]+\)' --include='*.md' -r .|grep -Ev 'http')
           if [ -n "$png_lines" ]; then
             for png_line in $png_lines; do
@@ -108,7 +108,7 @@ jobs:
               png_path=$(echo "$png_line"|cut -d '(' -f2 | cut -d ')' -f1)
 
               if [[ "${png_path:0:1}" == "/" ]]; then
-                check_path=$png_path
+                check_path="${png_path:1}"
               elif [[ "$png_path" == *#* ]]; then
                 relative_path=$(echo "$png_path" | cut -d '#' -f1)
                 if [ -n "$relative_path" ]; then
@@ -143,7 +143,7 @@ jobs:
                   fi
                 fi
               else
-                echo -e "::error:: ${{github.workspace}}/$refer_path:$png_path does not exist"
+                echo -e "::error:: ${{github.workspace}}/$refer_path:$png_path does not exist, url is $url_dev"
                 fail="TRUE"
               fi
             done
