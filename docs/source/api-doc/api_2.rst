@@ -23,7 +23,3 @@
    strategy.rst
    model.rst
 
-**API document example:**
-
-.. toctree::
-  api_doc_example.rst
