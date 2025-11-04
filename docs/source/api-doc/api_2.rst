@@ -22,4 +22,3 @@
    compression.rst
    strategy.rst
    model.rst
-
