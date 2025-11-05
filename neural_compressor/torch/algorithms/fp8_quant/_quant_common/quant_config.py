@@ -251,6 +251,8 @@ class Fp8cfg:
         dynamic_quantization = measured_global_config["dynamic_quantization"]
         # TODO [SW-217814]: get dynamic methods in a better way, or support file handling in dynamic mode
         if dynamic_quantization:
+            if measured_global_config["use_qdq"] or measured_global_config["fake_quant"]:
+                raise ValueError("Currently dynamic quantization is not supported for qdq and fake quant.")
             if auto_detect_accelerator().current_device_name() == "cpu":
                 raise ValueError("Currently CPU device doesn't support dynamic quantization")
             logger.info(f"NOTE: Using dynamic scale method, only supported ops will be quantized.")

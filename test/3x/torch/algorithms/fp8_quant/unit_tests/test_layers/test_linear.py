@@ -2,27 +2,15 @@ import typing
 
 import pytest
 import torch
+import types
 
 from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods.scale_method_config import ScaleMethodString
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleFormat
 from neural_compressor.torch.algorithms.fp8_quant._core.scale_handler import scale_to_scalar
-from neural_compressor.torch.algorithms.fp8_quant._core.quant_dequant import QuantDynamicInput
 
 from ...test_hpu_utils import *
 from ...tester import *
 
-
-# Test Class to support restoration of calculated scale during runtime with dynamic quantization to test it correctness.
-# This is a workaround to avoid saving the scale in the original QuantDynamicInput class as scale saving may cause unwanted graph breaks in torch.compile or issues with hpu_graph.
-class TestQuantDynamicInput(QuantDynamicInput):
-    def __init__(self, input_scales_creator, lp_dtype, hp_dtype, *args, **kwargs):
-        super(TestQuantDynamicInput, self).__init__(input_scales_creator, lp_dtype, hp_dtype, *args, **kwargs)
-        self.input_scale = None
-    def forward(self, x):
-        ret ,scale = super().forward(x)
-        # We save the calculated scale during this forward pass to test it correctness.
-        self.input_scale = scale
-        return ret, scale
 
 def get_test_vectors(*, dtype: torch.dtype, N: int, D_in: int, atol: float = 0.02, rtol: float = 0.01) -> typing.Iterable[TestVector]:
     yield TestVector(
@@ -160,16 +148,17 @@ def test_linear_dynamic_quantization(
             **module_kwargs,
         )
         previous_input_dynamic_scale = 0
-        test_quant_dynamic_input = TestQuantDynamicInput(dynamic_quantized_model.inner.quant_input.input_scales_creator,
-                                                        dynamic_quantized_model.inner.quant_input.lp_dtype,
-                                                        dynamic_quantized_model.inner.quant_input.hp_dtype)
-        dynamic_quantized_model.inner.quant_input = test_quant_dynamic_input
+        def wrapForward(self, input):
+            _,scale = self.inner.quant_input_func(input)
+            self.input_scale = scale
+            return self.inner(input)
+        dynamic_quantized_model.forward = types.MethodType(wrapForward, dynamic_quantized_model)
 
         for vector in test_vectors:
             dynamic_quantized_output = dynamic_quantized_model(*(input.clone() for input in vector.inputs)).to(float)
             # We save the calculated scale after the dynamic_quantized_model run the current input and calculates new scale.
             # In next iteration, we will have a new scale stored in the class.
-            current_input_dynamic_scale = dynamic_quantized_model.inner.quant_input.input_scale
+            current_input_dynamic_scale = dynamic_quantized_model.input_scale
 
             if isinstance(current_input_dynamic_scale, torch.Tensor):
                 current_input_dynamic_scale = scale_to_scalar(current_input_dynamic_scale)

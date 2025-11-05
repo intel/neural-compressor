@@ -66,7 +66,7 @@ _mod_types = {
 
 
 _mod_default_dict = {
-    "Matmul": ModuleInfo("matmul", PatchedMatmul),
+    "Matmul": ModuleInfo("matmul", PatchedMatmul, supports_dynamic_quantization=True),
     "Linear": ModuleInfo("linear", PatchedLinear, supports_dynamic_quantization=True),
     "ParallelLMHead": ModuleInfo("linear", PatchedParallelLMHead, supports_dynamic_quantization=True),
     "RowParallelLinear": ModuleInfo("row_parallel_linear", PatchedRowParallelLinear, supports_dynamic_quantization=True),

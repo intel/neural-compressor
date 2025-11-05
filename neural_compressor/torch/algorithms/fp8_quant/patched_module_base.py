@@ -158,6 +158,7 @@ class PatchedModuleBase(torch.nn.Module):
         set_attrs_from_orig_model(self, mod, parent, mod_extra_config, *func_names)
         add_scale_registry(self)
         self.mod_extra_config = mod_extra_config
+        self.is_dynamic_quantization = get_hqt_config(mod).cfg["dynamic_quantization"]
         if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
             self.forward = self.forward_measure
         elif self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:

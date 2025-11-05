@@ -246,15 +246,17 @@ class MatmulOpQuantizer(BaseOpQuantizer):
 
     def __init__(self, config, mod, measurement, params, mod_type_str):
         super().__init__(config, mod, measurement, params, mod_type_str)
-        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
-        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
-        self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
+        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic))
+        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic))
+        self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT, self.is_dynamic))
 
 
     def get_scales_module_config(self):
         input_scales = self.calc_input_scales(num_of_inputs=2)
 
-        output_scales = input_scales[0] * input_scales[1]
+        output_scales = None
+        if not self.is_dynamic:
+            output_scales = input_scales[0] * input_scales[1]
         return ModuleConfig(input_scales, (output_scales,), {})
 
     def scales_module_config_to_q_and_dq(self, module):
