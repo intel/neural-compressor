@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.split_shared_input
+=========================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.split_shared_input
+
+.. autoapi-nested-parse::
+
+   Split shared input Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.split_shared_input.SplitSharedInputOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: SplitSharedInputOptimizer(model)
+
+
+
+   Split the shared input if the input node is shared and const.
+
+

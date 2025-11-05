@@ -1,0 +1,228 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Prerequisite &mdash; Intel® Neural Compressor 3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">3.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Prerequisite</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/3.x_api/tensorflow/object_detection/yolo_v5/quantization/ptq/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <p>This document describes the step-by-step to reproduce Yolo-v5 tuning result with Neural Compressor. This example can run on Intel CPUs and GPUs.</p>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<p>Recommend python 3.10 or higher version.</p>
+<section id="install-intel-neural-compressor">
+<h3>Install Intel® Neural Compressor<a class="headerlink" href="#install-intel-neural-compressor" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
+</pre></div>
+</div>
+</section>
+<section id="install-tensorflow">
+<h3>Install Tensorflow<a class="headerlink" href="#install-tensorflow" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>tensorflow
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: Validated TensorFlow <a class="reference external" href="/docs/source/installation_guide.html#validated-software-environment">Version</a>.</p>
+</div></blockquote>
+</section>
+<section id="installation-dependency-packages">
+<h3>Installation Dependency packages<a class="headerlink" href="#installation-dependency-packages" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/3.x_api/tensorflow/object_detection/yolo_v5/quantization/ptq
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="install-intel-extension-for-tensorflow">
+<h3>Install Intel Extension for Tensorflow<a class="headerlink" href="#install-intel-extension-for-tensorflow" title="Link to this heading"></a></h3>
+<section id="quantizing-the-model-on-intel-gpu-mandatory-to-install-itex">
+<h4>Quantizing the model on Intel GPU(Mandatory to install ITEX)<a class="headerlink" href="#quantizing-the-model-on-intel-gpu-mandatory-to-install-itex" title="Link to this heading"></a></h4>
+<p>Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>intel-extension-for-tensorflow<span class="o">[</span>xpu<span class="o">]</span>
+</pre></div>
+</div>
+<p>For any more details, please follow the procedure in <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.html#install-gpu-drivers">install-gpu-drivers</a></p>
+</section>
+<section id="quantizing-the-model-on-intel-cpu-optional-to-install-itex">
+<h4>Quantizing the model on Intel CPU(Optional to install ITEX)<a class="headerlink" href="#quantizing-the-model-on-intel-cpu-optional-to-install-itex" title="Link to this heading"></a></h4>
+<p>Intel Extension for Tensorflow for Intel CPUs is experimental currently. It’s not mandatory for quantizing the model on Intel CPUs.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>intel-extension-for-tensorflow<span class="o">[</span>cpu<span class="o">]</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>:
+The version compatibility of stock Tensorflow and ITEX can be checked <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow#compatibility-table">here</a>. Please make sure you have installed compatible Tensorflow and ITEX.</p>
+</div></blockquote>
+</section>
+</section>
+</section>
+<section id="prepare-model">
+<h2>2. Prepare model<a class="headerlink" href="#prepare-model" title="Link to this heading"></a></h2>
+<p>Users can choose to automatically or manually download the model.</p>
+<section id="automatic-download">
+<h3>Automatic download<a class="headerlink" href="#automatic-download" title="Link to this heading"></a></h3>
+<p>Run the <code class="docutils literal notranslate"><span class="pre">prepare_model.sh</span></code> script.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>.<span class="w"> </span>prepare_model.sh
+</pre></div>
+</div>
+<p>This script will load yolov5 model to <code class="docutils literal notranslate"><span class="pre">./yolov5/yolov5s.pb</span></code>.</p>
+</section>
+<section id="manual-download">
+<h3>Manual download<a class="headerlink" href="#manual-download" title="Link to this heading"></a></h3>
+<p>To get a TensorFlow pretrained model, you need to export it from a PyTorch model. Clone the <a class="reference external" href="https://github.com/ultralytics/yolov5.git">Ultralytics yolov5 repository</a>.
+Generate the pretrained PyTorch model and then export to a Tensorflow supported format with the following commands:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>yolov5/models/tf.py<span class="w"> </span>--weights<span class="w"> </span>yolov5/yolov5s.pt
+python<span class="w"> </span>yolov5/export.py<span class="w"> </span>--weights<span class="w"> </span>yolov5/yolov5s.pt<span class="w"> </span>--include<span class="w"> </span>pb
+</pre></div>
+</div>
+<p>The yolov5 model will be loaded to <code class="docutils literal notranslate"><span class="pre">./yolov5/yolov5s.pb</span></code>.</p>
+</section>
+</section>
+<section id="prepare-dataset">
+<h2>3. Prepare Dataset<a class="headerlink" href="#prepare-dataset" title="Link to this heading"></a></h2>
+<p>Users can choose to automatically or manually download the dataset.</p>
+<section id="id1">
+<h3>Automatic download<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>Run the <code class="docutils literal notranslate"><span class="pre">prepare_dataset.sh</span></code> script.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>.<span class="w"> </span>prepare_dataset.sh
+</pre></div>
+</div>
+<p>The validation set of coco2017 will be downloaded into a <code class="docutils literal notranslate"><span class="pre">./coco</span></code> folder.</p>
+</section>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<section id="quantization">
+<h2>1. Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">run_quant</span><span class="o">.</span><span class="n">sh</span> <span class="o">--</span><span class="n">input_model</span><span class="o">=./</span><span class="n">yolov5</span><span class="o">/</span><span class="n">yolov5s</span><span class="o">.</span><span class="n">pb</span> <span class="o">--</span><span class="n">output_model</span><span class="o">=</span><span class="n">yolov5s_int8</span><span class="o">.</span><span class="n">pb</span> <span class="o">--</span><span class="n">dataset_location</span><span class="o">=/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">dataset</span>
+</pre></div>
+</div>
+</section>
+<section id="benchmark">
+<h2>2. Benchmark<a class="headerlink" href="#benchmark" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run performance benchmark</span>
+<span class="n">bash</span> <span class="n">run_benchmark</span><span class="o">.</span><span class="n">sh</span> <span class="o">--</span><span class="n">input_model</span><span class="o">=</span><span class="n">yolov5s_int8</span><span class="o">.</span><span class="n">pb</span> <span class="o">--</span><span class="n">dataset_location</span><span class="o">=/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">dataset</span> <span class="o">--</span><span class="n">mode</span><span class="o">=</span><span class="n">performance</span>
+
+<span class="c1"># run accuracy benchmark</span>
+<span class="n">bash</span> <span class="n">run_benchmark</span><span class="o">.</span><span class="n">sh</span> <span class="o">--</span><span class="n">input_model</span><span class="o">=</span><span class="n">yolov5s_int8</span><span class="o">.</span><span class="n">pb</span> <span class="o">--</span><span class="n">dataset_location</span><span class="o">=/</span><span class="n">path</span><span class="o">/</span><span class="n">to</span><span class="o">/</span><span class="n">dataset</span> <span class="o">--</span><span class="n">mode</span><span class="o">=</span><span class="n">accuracy</span>
+</pre></div>
+</div>
+<p>Finally, the program will generate the quantized Yolo-v5 model with relative 1% loss.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f146ca24920> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

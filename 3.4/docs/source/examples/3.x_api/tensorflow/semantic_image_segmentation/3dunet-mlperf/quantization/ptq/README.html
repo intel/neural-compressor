@@ -1,0 +1,211 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">3.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/3.x_api/tensorflow/semantic_image_segmentation/3dunet-mlperf/quantization/ptq/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning zoo result of 3dunet-mlperf.
+This example can run on Intel CPUs and GPUs.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Intel® Neural Compressor</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
+</pre></div>
+</div>
+</section>
+<section id="install-requirements">
+<h3>Install requirements<a class="headerlink" href="#install-requirements" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: Validated TensorFlow <a class="reference external" href="/docs/source/installation_guide.html#validated-software-environment">Version</a>.</p>
+</div></blockquote>
+</section>
+<section id="install-intel-extension-for-tensorflow">
+<h3>Install Intel Extension for Tensorflow<a class="headerlink" href="#install-intel-extension-for-tensorflow" title="Link to this heading"></a></h3>
+<section id="quantizing-the-model-on-intel-gpu-mandatory-to-install-itex">
+<h4>Quantizing the model on Intel GPU(Mandatory to install ITEX)<a class="headerlink" href="#quantizing-the-model-on-intel-gpu-mandatory-to-install-itex" title="Link to this heading"></a></h4>
+<p>Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>intel-extension-for-tensorflow<span class="o">[</span>xpu<span class="o">]</span>
+</pre></div>
+</div>
+<p>Please refer to the <a class="reference external" href="https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html">Installation Guides</a> for latest Intel GPU driver installation.
+For any more details, please follow the procedure in <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.html#install-gpu-drivers">install-gpu-drivers</a>.</p>
+</section>
+<section id="quantizing-the-model-on-intel-cpu-optional-to-install-itex">
+<h4>Quantizing the model on Intel CPU(Optional to install ITEX)<a class="headerlink" href="#quantizing-the-model-on-intel-cpu-optional-to-install-itex" title="Link to this heading"></a></h4>
+<p>Intel Extension for Tensorflow for Intel CPUs is experimental currently. It’s not mandatory for quantizing the model on Intel CPUs.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>intel-extension-for-tensorflow<span class="o">[</span>cpu<span class="o">]</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>:
+The version compatibility of stock Tensorflow and ITEX can be checked <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow#compatibility-table">here</a>. Please make sure you have installed compatible Tensorflow and ITEX.</p>
+</div></blockquote>
+</section>
+</section>
+</section>
+<section id="prepare-pre-trained-model">
+<h2>2. Prepare Pre-trained model<a class="headerlink" href="#prepare-pre-trained-model" title="Link to this heading"></a></h2>
+<p>Download the pre-trained model from the
+<a class="reference external" href="https://storage.googleapis.com/intel-optimized-tensorflow/models/v2_7_0/3dunet_dynamic_ndhwc.pb">3DUnetCNN</a>.
+In this example, we are using the model,
+trained using the fold 1 BRATS 2019 data.
+The validation files have been copied from <a class="reference external" href="https://github.com/mlcommons/inference/tree/r0.7/vision/medical_imaging/3d-unet/folds">here</a></p>
+</section>
+<section id="prepare-dataset">
+<h2>3. Prepare dataset<a class="headerlink" href="#prepare-dataset" title="Link to this heading"></a></h2>
+<section id="download-brats-2019-dataset">
+<h3>Download BraTS 2019 dataset<a class="headerlink" href="#download-brats-2019-dataset" title="Link to this heading"></a></h3>
+<p>Please download <a class="reference external" href="https://www.med.upenn.edu/cbica/brats2019/data.html">Brats 2019</a>
+separately and unzip the dataset. The directory that contains the dataset files will be
+passed to the launch script when running the benchmarking script.</p>
+</section>
+<section id="prepare-calibration-set">
+<h3>Prepare Calibration set<a class="headerlink" href="#prepare-calibration-set" title="Link to this heading"></a></h3>
+<p>The calibration set is the forty images listed in brats_cal_images_list.txt. They are randomly selected from Fold 0, Fold 2, Fold 3, and Fold 4 of BraTS 2019 Training Dataset.</p>
+</section>
+</section>
+</section>
+<section id="run-command">
+<h1>Run command<a class="headerlink" href="#run-command" title="Link to this heading"></a></h1>
+<p>Please set the following environment variables before running quantization or benchmark commands:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">nnUNet_preprocessed=&lt;path/to/build&gt;/build/preprocessed_data</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">nnUNet_raw_data_base=&lt;path/to/build&gt;/build/raw_data</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">RESULTS_FOLDER=&lt;path/to/build&gt;/build/result</span></code></p></li>
+</ul>
+<section id="quantization">
+<h2>Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">bash</span> <span class="pre">run_quant.sh</span> <span class="pre">--input_model=3dunet_dynamic_ndhwc.pb</span> <span class="pre">--dataset_location=&lt;path/to/build&gt;/build</span> <span class="pre">--output_model=3dunet_dynamic_ndhwc_int8.pb</span></code></p>
+</section>
+<section id="benchmark">
+<h2>Benchmark<a class="headerlink" href="#benchmark" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">bash</span> <span class="pre">run_benchmark.sh</span> <span class="pre">--input_model=3dunet_dynamic_ndhwc_int8.pb</span> <span class="pre">--dataset_location=&lt;path/to/build&gt;/build</span> <span class="pre">--batch_size=100</span> <span class="pre">--iters=500</span> <span class="pre">--mode=benchmark</span></code></p>
+<p><code class="docutils literal notranslate"><span class="pre">bash</span> <span class="pre">run_benchmark.sh</span> <span class="pre">--input_model=3dunet_dynamic_ndhwc_int8.pb</span> <span class="pre">--dataset_location=&lt;path/to/build&gt;/build</span> <span class="pre">--batch_size=1</span> <span class="pre">--mode=accuracy</span></code></p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f146c9e41d0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

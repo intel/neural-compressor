@@ -1,0 +1,231 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step (Deprecated) &mdash; Intel® Neural Compressor 3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../versions.html">3.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step (Deprecated)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../_sources/docs/source/examples/onnxrt/nlp/huggingface_model/text_classification/mix_precision/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step-deprecated">
+<h1>Step-by-Step (Deprecated)<a class="headerlink" href="#step-by-step-deprecated" title="Link to this heading"></a></h1>
+<p>This example load a language translation model and confirm its accuracy and speed based on <a class="reference external" href="https://gluebenchmark.com/">GLUE data</a>.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </span>dnnl_ep<span class="w"> </span>--depth<span class="w"> </span><span class="m">1</span><span class="w"> </span>https://github.com/intel/neural-compressor.git
+<span class="nb">cd</span><span class="w"> </span>neural-compressor
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>./
+
+<span class="nb">cd</span><span class="w"> </span>examples/onnxrt/nlp/huggingface_model/text_classification/mix_precision/
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: Validated ONNX Runtime <a class="reference external" href="/docs/source/installation_guide.html#validated-software-environment">Version</a>.</p>
+</div></blockquote>
+</section>
+<section id="prepare-model">
+<h2>2. Prepare Model<a class="headerlink" href="#prepare-model" title="Link to this heading"></a></h2>
+<p>Supported model identifier from <a class="reference external" href="https://huggingface.co/">huggingface.co</a>:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: center;">Model Identifier</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">Intel/bert-base-uncased-mrpc</td>
+</tr>
+<tr>
+<td style="text-align: center;">Intel/roberta-base-mrpc</td>
+</tr>
+<tr>
+<td style="text-align: center;">Intel/xlm-roberta-base-mrpc</td>
+</tr>
+<tr>
+<td style="text-align: center;">Intel/camembert-base-mrpc</td>
+</tr>
+<tr>
+<td style="text-align: center;">distilbert-base-uncased-finetuned-sst-2-english</td>
+</tr>
+<tr>
+<td style="text-align: center;">Alireza1044/albert-base-v2-sst2</td>
+</tr>
+<tr>
+<td style="text-align: center;">Intel/MiniLM-L12-H384-uncased-mrpc</td>
+</tr>
+<tr>
+<td style="text-align: center;">philschmid/MiniLM-L6-H384-uncased-sst2</td>
+</tr>
+<tr>
+<td style="text-align: center;">bert-base-cased-finetuned-mrpc</td>
+</tr>
+<tr>
+<td style="text-align: center;">Intel/electra-small-discriminator-mrpc</td>
+</tr>
+<tr>
+<td style="text-align: center;">M-FAC/bert-mini-finetuned-mrpc</td>
+</tr>
+<tr>
+<td style="text-align: center;">Intel/xlnet-base-cased-mrpc</td>
+</tr>
+<tr>
+<td style="text-align: center;">Intel/bart-large-mrpc</td>
+</tr>
+</tbody>
+</table><div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>prepare_model.py<span class="w"> </span>--input_model<span class="o">=</span>Intel/bert-base-uncased-mrpc<span class="w"> </span>--output_model<span class="o">=</span>model
+</pre></div>
+</div>
+</section>
+<section id="prepare-dataset">
+<h2>3. Prepare Dataset<a class="headerlink" href="#prepare-dataset" title="Link to this heading"></a></h2>
+<p>Download the GLUE data with <code class="docutils literal notranslate"><span class="pre">prepare_data.sh</span></code> script.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">GLUE_DIR</span><span class="o">=</span>/path/to/glue_data
+<span class="nb">export</span><span class="w"> </span><span class="nv">TASK_NAME</span><span class="o">=</span>MRPC<span class="w"> </span><span class="c1"># or SST</span>
+
+bash<span class="w"> </span>prepare_data.sh<span class="w"> </span>--data_dir<span class="o">=</span><span class="nv">$GLUE_DIR</span><span class="w"> </span>--task_name<span class="o">=</span><span class="nv">$TASK_NAME</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<p>If the hardware doesn’t support bf16 instruction, please set flag as below to force bf16 conversion (this way will be deprecated):</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">FORCE_BF16</span><span class="o">=</span><span class="m">1</span>
+</pre></div>
+</div>
+<section id="only-mixed-precision-conversion">
+<h2>1. Only mixed precision conversion<a class="headerlink" href="#only-mixed-precision-conversion" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run.sh<span class="w"> </span>--input_model<span class="o">=</span>path/to/model<span class="w"> </span><span class="se">\ </span><span class="c1"># model path as *.onnx</span>
+<span class="w">            </span>--output_model<span class="o">=</span>path/to/model_tune<span class="w"> </span><span class="se">\ </span><span class="c1"># model path as *.onnx</span>
+</pre></div>
+</div>
+</section>
+<section id="mixed-precision-conversion-accuracy-evaluation">
+<h2>2. Mixed precision conversion + accuracy evaluation<a class="headerlink" href="#mixed-precision-conversion-accuracy-evaluation" title="Link to this heading"></a></h2>
+<p>Please make sure DnnlExecutionProvider is in available providers list to execute evaluation.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>eval.sh<span class="w"> </span>--input_model<span class="o">=</span>path/to/model<span class="w"> </span><span class="se">\ </span><span class="c1"># model path as *.onnx</span>
+<span class="w">            </span>--output_model<span class="o">=</span>path/to/model_tune<span class="w"> </span><span class="se">\ </span><span class="c1"># model path as *.onnx</span>
+<span class="w">            </span>--dataset_location<span class="o">=</span>path/to/glue/data<span class="w"> </span><span class="se">\</span>
+<span class="w">            </span>--batch_size<span class="o">=</span>batch_size<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># optional</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f146ee782f0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

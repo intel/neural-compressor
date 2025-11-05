@@ -1,0 +1,48 @@
+neural_compressor.torch.algorithms.weight_only.hqq.optimizer
+============================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.optimizer
+
+.. autoapi-nested-parse::
+
+   Optimization logic of HQQ.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.optimizer.optimize_weights_proximal_legacy
+
+
+Module Contents
+---------------
+
+.. py:function:: optimize_weights_proximal_legacy(tensor, scale, zero, min_max, axis=0, device='cuda', opt_params={'lp_norm': 0.7, 'beta': 10.0, 'kappa': 1.01, 'iters': 20}, verbose=False)
+
+   Quantize the scale/zero of quantized tensor using the HQQ.
+
+   :param tensor: The input tensor to optimize.
+   :type tensor: torch.Tensor
+   :param scale: The scaling factor for quantization.
+   :type scale: torch.Tensor
+   :param zero: The zero-point for quantization.
+   :type zero: torch.Tensor
+   :param min_max: The minimum and maximum values for quantization.
+   :type min_max: tuple
+   :param axis: The axis along which to compute the mean for zero-point calculation. Defaults to 0.
+   :type axis: int, optional
+   :param device: The device to use for computation. Defaults to "cuda".
+   :type device: str, optional
+   :param opt_params: Optimization parameters.
+                      Defaults to {"lp_norm": 0.7, "beta": 1e1, "kappa": 1.01, "iters": 20}.
+   :type opt_params: dict, optional
+   :param verbose: Whether to print verbose output. Defaults to False.
+   :type verbose: bool, optional
+
+   :returns: A tuple containing the optimized scale and zero-point tensors.
+   :rtype: tuple
+
+

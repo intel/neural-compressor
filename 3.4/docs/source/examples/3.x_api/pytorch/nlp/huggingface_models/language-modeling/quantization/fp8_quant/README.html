@@ -1,0 +1,174 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-step &mdash; Intel® Neural Compressor 3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../versions.html">3.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../_sources/docs/source/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/fp8_quant/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>Here we demonstrate FP8 quantization with some advanced techniques.</p>
+<ul class="simple">
+<li><p>block-wise calibration: reduce device memory requirement during calibration</p></li>
+<li><p>layer-wise quantization (base on memory mapping): reduce host memory requirement during quantization</p></li>
+<li><p>lm_eval evaluation for HPU: balance performance and memory usage, <code class="docutils literal notranslate"><span class="pre">--use_hpu_graph</span></code> is required.</p></li>
+</ul>
+<p>Typically, quantization requires calibration with a high-precision model (such as bf16), which occupies a lot of device memory. Block-wise calibration splits the LLM into blocks and performs calibration one by one. Use <code class="docutils literal notranslate"> <span class="pre">--enable_block_wise_calibration</span></code> to enable this feature.</p>
+<p>By default, This example loads model into shared memory from disk and loads to physical host memory layer-by-layer during quantization. The occupied physical host memory will be released in time.</p>
+<p>In this example, you can measure and quantize<code class="docutils literal notranslate"><span class="pre">llama3.1/Meta-Llama-3.1-405B-Instruct</span></code> in torch.bfloat16 dtype with 8 Gaudi2 cards or even less, and host memory requirement is also low.</p>
+<section id="install-deepspeed">
+<h2>Install deepspeed<a class="headerlink" href="#install-deepspeed" title="Link to this heading"></a></h2>
+<p>Due to a known issue <a class="reference external" href="https://github.com/microsoft/DeepSpeed/issues/3207">microsoft/DeepSpeed/issues/3207</a>, we recommend installing deepspeed as follows.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/HabanaAI/DeepSpeed.git
+<span class="nb">cd</span><span class="w"> </span>DeepSpeed
+git<span class="w"> </span>checkout<span class="w"> </span><span class="m">1</span>.19.0
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+<span class="nb">cd</span><span class="w"> </span>..
+</pre></div>
+</div>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<section id="meta-llama-llama-2-70b-hf">
+<h2>meta-llama/Llama-2-70b-hf<a class="headerlink" href="#meta-llama-llama-2-70b-hf" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Measure, quantize and save</span>
+deepspeed<span class="w"> </span>--num_gpus<span class="w"> </span><span class="m">2</span><span class="w"> </span>quantize.py<span class="w"> </span>--model_name_or_path<span class="w"> </span>meta-llama/Llama-2-70b-hf<span class="w"> </span>--quantize<span class="w"> </span>--save<span class="w"> </span>--save_path<span class="w"> </span>llama2_70b_fp8/
+<span class="c1"># With block-wise calibration, we can quantize 70b with one Gaudi2 cards</span>
+python<span class="w"> </span>quantize.py<span class="w"> </span>--model_name_or_path<span class="w"> </span>meta-llama/Llama-2-70b-hf<span class="w"> </span>--quantize<span class="w"> </span>--enable_block_wise_calibration<span class="w"> </span>--save<span class="w"> </span>--save_path<span class="w"> </span>llama2_70b_fp8/
+
+
+<span class="c1"># Load fp8 model and verify accuracy</span>
+python<span class="w"> </span>quantize.py<span class="w"> </span>--model_name_or_path<span class="w"> </span>llama2_70b_fp8/<span class="w"> </span>--load<span class="w"> </span>--use_hpu_graph<span class="w"> </span>--accuracy
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: To get the best performance of fp8 model, please go to <a class="reference external" href="https://github.com/huggingface/optimum-habana/tree/main/examples/text-generation#running-with-fp8">optimum-habana</a> to quantize the model. These advanced techniques will be upstreamed to optimum-habana soon.</p>
+</div></blockquote>
+</section>
+<section id="meta-llama-llama-3-1-405b-instruct">
+<h2>meta-llama/Llama-3.1-405B-Instruct<a class="headerlink" href="#meta-llama-llama-3-1-405b-instruct" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Measure</span>
+deepspeed<span class="w"> </span>--num_gpus<span class="w"> </span><span class="m">8</span><span class="w"> </span>quantize.py<span class="w"> </span>--model_name_or_path<span class="w"> </span>meta-llama/Llama-3.1-405B-Instruct<span class="w"> </span>--quantize<span class="w"> </span>--enable_block_wise_calibration<span class="w"> </span>--save<span class="w"> </span>--save_path<span class="w"> </span>llama3.1_405b_fp8/<span class="w"> </span>
+
+<span class="c1"># Load fp8 model and verify accuracy</span>
+deepspeed<span class="w"> </span>--num_gpus<span class="w"> </span><span class="m">8</span><span class="w"> </span>quantize.py<span class="w"> </span>--model_name_or_path<span class="w"> </span>llama3.1_405b_fp8/<span class="w"> </span>--load<span class="w"> </span>--use_hpu_graph<span class="w"> </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f146c69a0f0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

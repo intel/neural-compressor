@@ -1,0 +1,232 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step (Deprecated) &mdash; Intel® Neural Compressor 3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../versions.html">3.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step (Deprecated)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../_sources/docs/source/examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step-deprecated">
+<h1>Step-by-Step (Deprecated)<a class="headerlink" href="#step-by-step-deprecated" title="Link to this heading"></a></h1>
+<p>This example confirms llama’s weight only accuracy on <a class="reference external" href="https://huggingface.co/datasets/lambada">lambada</a>.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
+<span class="nv">SKIP_RUNTIME</span><span class="o">=</span>True<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: Validated ONNX Runtime <a class="reference external" href="/docs/source/installation_guide.html#validated-software-environment">Version</a>.</p>
+</div></blockquote>
+<blockquote>
+<div><p>Note: Weight-only quantization in Intel® Neural Compressor is still under development. We encourage you to use the <code class="docutils literal notranslate"><span class="pre">master</span></code> branch to access the latest features.</p>
+</div></blockquote>
+</section>
+<section id="prepare-model">
+<h2>2. Prepare Model<a class="headerlink" href="#prepare-model" title="Link to this heading"></a></h2>
+<p>Note that this README.html uses meta-llama/Llama-2-7b-hf as an example. There are other models available that can be used for weight-only quantization. The following table shows a few models’ configurations:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Model</th>
+<th>Num Hidden Layers</th>
+<th>Num Attention Heads</th>
+<th>Hidden Size</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><a href="https://huggingface.co/meta-llama/Llama-2-7b-hf">meta-llama/Llama-2-7b-hf</a></td>
+<td>32</td>
+<td>32</td>
+<td>4096</td>
+</tr>
+<tr>
+<td><a href="https://huggingface.co/meta-llama/Llama-2-7b-chat-hf">meta-llama/Llama-2-7b-chat-hf</a></td>
+<td>32</td>
+<td>32</td>
+<td>4096</td>
+</tr>
+<tr>
+<td><a href="https://huggingface.co/meta-llama/Llama-2-13b-hf">meta-llama/Llama-2-13b-hf</a></td>
+<td>40</td>
+<td>40</td>
+<td>5120</td>
+</tr>
+<tr>
+<td><a href="https://huggingface.co/meta-llama/Llama-2-13b-chat-hf">meta-llama/Llama-2-13b-chat-hf</a></td>
+<td>40</td>
+<td>40</td>
+<td>5120</td>
+</tr>
+<tr>
+<td><a href="https://huggingface.co/meta-llama/Llama-2-70b-hf">meta-llama/Llama-2-70b-hf</a></td>
+<td>80</td>
+<td>64</td>
+<td>8192</td>
+</tr>
+<tr>
+<td><a href="https://huggingface.co/meta-llama/Llama-2-70b-chat-hf">meta-llama/Llama-2-70b-chat-hf</a></td>
+<td>80</td>
+<td>64</td>
+<td>8192</td>
+</tr>
+</tbody>
+</table><p>Export to ONNX model:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>prepare_model.py<span class="w">  </span>--input_model<span class="o">=</span><span class="s2">&quot;meta-llama/Llama-2-7b-hf&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">                         </span>--output_model<span class="o">=</span><span class="s2">&quot;./llama-2-7b-hf&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">                         </span>--task<span class="o">=</span>text-generation-with-past<span class="w"> </span><span class="se">\ </span><span class="c1"># or text-generation</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<section id="quantization">
+<h2>1. Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h2>
+<p>Set <code class="docutils literal notranslate"><span class="pre">algorithm=WOQ_TUNE</span></code> to tune weight-only quantization algorithm or specify algorithm to <code class="docutils literal notranslate"><span class="pre">RTN</span></code> or <code class="docutils literal notranslate"><span class="pre">GPTQ</span></code> or <code class="docutils literal notranslate"><span class="pre">AWQ</span></code>.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--input_model<span class="o">=</span>/path/to/model<span class="w"> </span><span class="se">\ </span><span class="c1"># folder path of onnx model</span>
+<span class="w">                  </span>--output_model<span class="o">=</span>/path/to/model_tune<span class="w"> </span><span class="se">\ </span><span class="c1"># folder path to save onnx model</span>
+<span class="w">                  </span>--batch_size<span class="o">=</span>batch_size<span class="w"> </span><span class="c1"># optional \</span>
+<span class="w">                  </span>--dataset<span class="o">=</span>NeelNanda/pile-10k<span class="w"> </span><span class="se">\</span>
+<span class="w">                  </span>--tokenizer<span class="o">=</span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\ </span><span class="c1"># model name or folder path containing all relevant files for model&#39;s tokenizer</span>
+<span class="w">                  </span>--algorithm<span class="o">=</span>WOQ_TUNE<span class="w"> </span><span class="c1"># support WOQ_TUNE, RTN, AWQ, GPTQ</span>
+</pre></div>
+</div>
+</section>
+<section id="benchmark">
+<h2>2. Benchmark<a class="headerlink" href="#benchmark" title="Link to this heading"></a></h2>
+<p>Accuracy:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--input_model<span class="o">=</span>path/to/model<span class="w"> </span><span class="se">\ </span><span class="c1"># folder path of onnx model</span>
+<span class="w">                      </span>--batch_size<span class="o">=</span>batch_size<span class="w"> </span><span class="se">\ </span><span class="c1"># optional </span>
+<span class="w">                      </span>--mode<span class="o">=</span>accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">                      </span>--tokenizer<span class="o">=</span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\ </span><span class="c1"># model name or folder path containing all relevant files for model&#39;s tokenizer</span>
+<span class="w">                      </span>--tasks<span class="o">=</span>lambada_openai
+</pre></div>
+</div>
+<p>Performance:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--input_model<span class="o">=</span>path/to/model<span class="w"> </span><span class="se">\ </span><span class="c1"># folder path of onnx model</span>
+<span class="w">                      </span>--mode<span class="o">=</span>performance<span class="w"> </span><span class="se">\</span>
+<span class="w">                      </span>--batch_size<span class="o">=</span>batch_size<span class="w"> </span><span class="c1"># optional \</span>
+<span class="w">                      </span>--tokenizer<span class="o">=</span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\ </span><span class="c1"># model name or folder path containing all relevant files for model&#39;s tokenizer</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f1465073ce0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

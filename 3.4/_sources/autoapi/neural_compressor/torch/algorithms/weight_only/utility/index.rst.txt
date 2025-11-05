@@ -1,0 +1,326 @@
+neural_compressor.torch.algorithms.weight_only.utility
+======================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.utility
+
+.. autoapi-nested-parse::
+
+   Weight-Only utility.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.utility.GraphTrace
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.utility.quantize_4bit
+   neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_asym
+   neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_sym
+   neural_compressor.torch.algorithms.weight_only.utility.qdq_weight_actor
+   neural_compressor.torch.algorithms.weight_only.utility.quant_tensor
+   neural_compressor.torch.algorithms.weight_only.utility.search_clip
+   neural_compressor.torch.algorithms.weight_only.utility.quant_weight_w_scale
+   neural_compressor.torch.algorithms.weight_only.utility.model_forward
+   neural_compressor.torch.algorithms.weight_only.utility.forward_wrapper
+   neural_compressor.torch.algorithms.weight_only.utility.move_input_to_device
+   neural_compressor.torch.algorithms.weight_only.utility.set_module
+   neural_compressor.torch.algorithms.weight_only.utility.fetch_module
+   neural_compressor.torch.algorithms.weight_only.utility.get_absorb_layers
+   neural_compressor.torch.algorithms.weight_only.utility.get_parent
+   neural_compressor.torch.algorithms.weight_only.utility.get_module
+   neural_compressor.torch.algorithms.weight_only.utility.get_block_prefix
+   neural_compressor.torch.algorithms.weight_only.utility.replace_forward
+   neural_compressor.torch.algorithms.weight_only.utility.recover_forward
+   neural_compressor.torch.algorithms.weight_only.utility.get_module_input_output
+
+
+Module Contents
+---------------
+
+.. py:function:: quantize_4bit(tensor, quantile=1.0, dtype='nf4', return_int=False, **kwargs)
+
+   Quantize tensor to NF4/FP4 data type.
+
+   :param tensor: input tensor
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param dtype: data type. Defaults to 'nf4'.
+   :type dtype: str, optional
+   :param return_int: whether return int data. Defaults to False.
+   :type return_int: bool, optional
+
+   :returns: fake quantized tensor
+   :rtype: q_tensor
+
+
+.. py:function:: qdq_weight_asym(weight, bits=4, quantile=1.0, return_int=False, **kwargs)
+
+   Quant and dequant tensor with asym schema.
+
+   :param weight: input weight
+   :param bits: bits. Defaults to 4.
+   :type bits: int, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param return_int: Choose return fp32 or int8/uint8 data.
+                      Defaults to False.
+   :type return_int: bool, optional
+
+   :returns: qdq weight
+   :rtype: output
+
+
+.. py:function:: qdq_weight_sym(weight, bits=4, quantile=1.0, return_int=False, full_range=False, **kwargs)
+
+   Quant and dequant tensor with sym schema.
+
+   :param weight: input weight
+   :param bits: bits. Defaults to 4.
+   :type bits: int, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param return_int: Choose return fp32 or int8/uint8 data.
+                      Defaults to False.
+   :type return_int: bool, optional
+   :param full_range: Choose sym range whether use -2**(bits-1).
+                      For example: 4 bit
+                          scale = amax / 8 if full_range else amax / 7
+                          If True, scale = -scale if abs(min)> abs(max) else scale
+                          Defaults to False.
+   :type full_range: bool, optional
+
+   :returns: qdq weight
+   :rtype: output
+
+
+.. py:function:: qdq_weight_actor(weight, bits, scheme, quantile=1.0, dtype='int', return_int=False, full_range=False, **kwargs)
+
+   Quant and dequant tensor per channel. It is an in-place op.
+
+   :param weight: input weight
+   :param bits: bits. Defaults to 4.
+   :type bits: int, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param dtype: select from int, nf4, fp4. Defaults to int.
+   :type dtype: str, optional
+   :param return_int: Choose return fp32 or int8/uint8 data.
+                      Defaults to False.
+   :type return_int: bool, optional
+   :param full_range: Choose sym range whether use -2**(bits-1).
+   :type full_range: bool, optional
+
+   :returns: qdq weight
+   :rtype: output
+
+
+.. py:function:: quant_tensor(weight, bits=4, group_size=-1, scheme='asym', quantile=1.0, dtype='int', return_int=False, full_range=False, **kwargs)
+
+   Quant and dequant tensor with group size. It's an in-place function.
+
+   :param weight: input weight
+   :param bits: bits. Defaults to 4.
+   :type bits: int, optional
+   :param group_size: how many elements share one scale/zp. Defaults to -1.
+   :type group_size: int, optional
+   :param scheme: sym or asym. Defaults to "asym".
+   :type scheme: str, optional
+   :param quantile: percentile of clip. Defaults to 1.0.
+   :type quantile: float, optional
+   :param dtype: select from int, nf4, fp4. Defaults to int.
+   :type dtype: str, optional
+   :param return_int: Choose return fp32 or int8/uint8 data.
+                      Defaults to False.
+   :type return_int: bool, optional
+   :param full_range: Choose sym range whether use -2**(bits-1).
+   :type full_range: bool, optional
+
+   :returns: qdq weight.
+   :rtype: output
+
+
+.. py:function:: search_clip(m, bits=4, group_size=32, scheme='asym', dtype='int', enable_full_range=False)
+
+   Search best clip range of each linear in current block. It's not an in-place function.
+
+   :param m: torch module.
+   :type m: torch.nn.Module
+   :param bits: num bits.
+   :type bits: int, optional
+   :param group_size: how many elements share one scale/zp.
+   :type group_size: int, optional
+   :param scheme: sym or asym.
+   :type scheme: str, optional
+   :param dtype: select from int, nf4, fp4. Defaults to int.
+   :type dtype: str, optional
+   :param enable_full_range: Choose sym range whether use -2**(bits-1).
+   :type enable_full_range: bool, optional
+
+   :returns: best percentile of clip
+   :rtype: best_clip_ratio (float)
+
+
+.. py:function:: quant_weight_w_scale(weight, scale, zp=None, group_size=-1, dtype='int')
+
+   Quant and dequant tensor with group size. It's an in-place function.
+
+   :param weight: input weight
+   :param scale: scale
+   :param zp: zero point
+   :param group_size: how many elements share one scale/zp. Defaults to -1.
+   :type group_size: int, optional
+   :param dtype: data type, for NF4 FP4
+
+   :returns: int weight.
+   :rtype: output
+
+
+.. py:function:: model_forward(model, dataloader, iters, device)
+
+   The model forward function.
+
+
+.. py:function:: forward_wrapper(model, input, device=torch.device('cpu'))
+
+   The forward wrapper.
+
+
+.. py:function:: move_input_to_device(input, device=torch.device('cpu'))
+
+   Move input to the spevific device.
+
+
+.. py:function:: set_module(model, key, new_module)
+
+   Set new module into model by key name.
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+   :param new_module: new module to be inserted
+   :type new_module: torch.nn.Module
+
+
+.. py:function:: fetch_module(model, op_name)
+
+   Get module with a given op name.
+
+   :param model: the input model.
+   :type model: object
+   :param op_name: name of op.
+   :type op_name: str
+
+   :returns: module (object).
+
+
+.. py:function:: get_absorb_layers(model, example_inputs, supported_layers=['Linear'], folding=False)
+
+   Get absorb_to_layer and no_absorb_layer.
+
+   :param model: input model
+   :type model: torch.nn.Module
+   :param example_inputs: example_inputs
+   :param supported_layers: supported_layers. Defaults to ['Linear'].
+   :type supported_layers: list, optional
+   :param folding: whether allow self-absorption. Defaults to False.
+   :type folding: bool, optional
+
+   :returns: dict of absorb_to_layer. eg. {absorb, [absorbed_1, xx]}
+             no_absorb_layers: list of no_absorb_layers
+   :rtype: absorb_to_layer
+
+
+.. py:function:: get_parent(node, all_parents=False)
+
+   Get parent of node.
+
+
+.. py:function:: get_module(model, key)
+
+   Get module from model by key name.
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+
+
+.. py:class:: GraphTrace
+
+   GraphTrace.
+
+
+.. py:function:: get_block_prefix(model)
+
+   Get prefix and number of blocks.
+
+   :param model: input model
+   :type model: torch.nn.Module
+
+   :returns: block_list name in model
+             block_num(int): number of block in block_list
+   :rtype: block_prefix(str)
+
+
+.. py:function:: replace_forward(model)
+
+   Replace forward to get the input args and kwargs of first block for AWQ algorithm.
+
+   :param model: input model.
+   :type model: torch.nn.Module
+
+   :raises ValueError: to avoid inference of rest parts in model.
+
+   :returns: model with replaced forward.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: recover_forward(model)
+
+   Recover model and block forward for AWQ algorithm.
+
+   :param model: input model.
+   :type model: torch.nn.Module
+
+   :returns: model with recovered forward.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: get_module_input_output(model, module_hook_config={}, dataloader=None, iters=-1, calib_func=None, input_func=None, output_func=None)
+
+   A help function to get input and output tensor of modules in module_name_list.
+
+   :param model: torch model.
+   :param module_hook_config: required module name for input/output. Defaults to {}.
+                              For example:
+                                  module_hook_config = {
+                                      'fc1': ['output'],
+                                      'fc2': ['input', 'output']
+                                  }
+   :type module_hook_config: dict, optional
+   :param dataloader: dataloader for model input.
+   :param iters: iterations for inference.
+   :param calib_func: a custom inference function to replace dataloader and iters.
+   :param input_func: preprocess input for less memory usage
+   :param output_func: preprocess output for less memory usage
+
+   :returns:
+
+             recorded input_values, output_values.
+                 for example:
+                     {'fc1':
+                         {'input': [], 'output': []},
+                     }
+   :rtype: total_values
+
+

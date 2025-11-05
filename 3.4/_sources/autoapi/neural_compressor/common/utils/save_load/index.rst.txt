@@ -1,0 +1,47 @@
+neural_compressor.common.utils.save_load
+========================================
+
+.. py:module:: neural_compressor.common.utils.save_load
+
+.. autoapi-nested-parse::
+
+   The module for save/load config.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.common.utils.save_load.save_config_mapping
+   neural_compressor.common.utils.save_load.load_config_mapping
+
+
+Module Contents
+---------------
+
+.. py:function:: save_config_mapping(config_mapping, qconfig_file_path)
+
+   Save config mapping to json file.
+
+   :param config_mapping: config mapping.
+   :type config_mapping: dict
+   :param qconfig_file_path: path to saved json file.
+   :type qconfig_file_path: str
+
+
+.. py:function:: load_config_mapping(qconfig_file_path, config_name_mapping)
+
+   Reload config mapping from json file.
+
+   :param qconfig_file_path: path to saved json file.
+   :type qconfig_file_path: str
+   :param config_name_mapping: map config name to config object.
+                               For example: ConfigRegistry.get_all_configs()["torch"]
+   :type config_name_mapping: dict
+
+   :returns: config mapping.
+   :rtype: config_mapping (dict)
+
+

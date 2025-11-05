@@ -1,0 +1,29 @@
+neural_compressor.torch.algorithms.weight_only.awq
+==================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.awq
+
+.. autoapi-nested-parse::
+
+   AWQ quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.awq.AWQQuantizer
+
+
+Module Contents
+---------------
+
+.. py:class:: AWQQuantizer(quant_config: collections.OrderedDict = {}, absorb_layer_dict: dict = {})
+
+
+
+   AWQ Quantizer.
+
+

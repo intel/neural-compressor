@@ -1,0 +1,205 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">3.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/pytorch/image_recognition/3d-unet/quantization/ptq/fx/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This example is used to demonstrate the steps of reproducing quantization and benchmarking results with Intel® Neural Compressor.</p>
+<p>The 3D-Unet source code comes from <a class="reference external" href="https://github.com/mlcommons/inference/tree/v1.0.1/vision/medical_imaging/3d-unet">mlperf</a>, commit SHA is <strong>b7e8f0da170a421161410d18e5d2a05d75d6bccf</strong>; <a class="reference external" href="https://github.com/MIC-DKFZ/nnUNet">nnUnet</a> commit SHA is <strong>b38c69b345b2f60cd0d053039669e8f988b0c0af</strong>. Users could diff them with this example to know which changes have been made to integrate with Intel® Neural Compressor..</p>
+<p>The model is performing on <a class="reference external" href="https://www.med.upenn.edu/cbica/brats2019/data.html">BraTS 2019</a> brain tumor segmentation task.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<p>Python 3.6 or higher version is recommended.
+The dependent packages are all in requirements, please install as following.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/pytorch/image_recognition/3d-unet/quantization/ptq/fx
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="preprocess-dataset">
+<h2>2. Preprocess Dataset<a class="headerlink" href="#preprocess-dataset" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="w">  </span><span class="c1"># download BraTS 2019 from https://www.med.upenn.edu/cbica/brats2019/data.html</span>
+<span class="w">  </span><span class="nb">export</span><span class="w"> </span><span class="nv">DOWNLOAD_DATA_DIR</span><span class="o">=</span>&lt;path/to/MICCAI_BraTS_2019_Data_Training&gt;<span class="w"> </span><span class="c1"># point to location of downloaded BraTS 2019 Training dataset.</span>
+
+<span class="w">  </span><span class="c1"># install dependency required by data preprocessing script</span>
+<span class="w">  </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/MIC-DKFZ/nnUNet.git<span class="w"> </span>--recursive
+<span class="w">  </span><span class="nb">cd</span><span class="w"> </span>nnUNet/
+<span class="w">  </span>git<span class="w"> </span>checkout<span class="w"> </span>b38c69b345b2f60cd0d053039669e8f988b0c0af
+<span class="w">  </span><span class="c1"># replace sklearn in the older version with scikit-learn</span>
+<span class="w">  </span>sed<span class="w"> </span>-i<span class="w"> </span><span class="s1">&#39;s/sklearn/scikit-learn/g&#39;</span><span class="w"> </span>setup.py
+<span class="w">  </span>python<span class="w"> </span>setup.py<span class="w"> </span>install
+<span class="w">  </span><span class="nb">cd</span><span class="w"> </span>..
+
+<span class="w">  </span><span class="c1"># download pytorch model</span>
+<span class="w">  </span>make<span class="w"> </span>download_pytorch_model
+
+<span class="w">  </span><span class="c1"># generate preprocessed data</span>
+<span class="w">  </span>make<span class="w"> </span>preprocess_data
+
+<span class="w">  </span><span class="c1"># create postprocess dir</span>
+<span class="w">  </span>make<span class="w"> </span>mkdir_postprocessed_data
+
+<span class="w">  </span><span class="c1"># generate calibration preprocessed data</span>
+<span class="w">  </span>python<span class="w"> </span>preprocess.py<span class="w"> </span>--preprocessed_data_dir<span class="o">=</span>./build/calib_preprocess/<span class="w"> </span>--validation_fold_file<span class="o">=</span>./brats_cal_images_list.txt
+
+<span class="w">  </span><span class="c1"># install mlperf loadgen required by tuning script</span>
+<span class="w">  </span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/mlcommons/inference.git<span class="w"> </span>--recursive
+<span class="w">  </span><span class="nb">cd</span><span class="w"> </span>inference
+<span class="w">  </span>git<span class="w"> </span>checkout<span class="w"> </span>b7e8f0da170a421161410d18e5d2a05d75d6bccf
+<span class="w">  </span><span class="nb">cd</span><span class="w"> </span>loadgen
+<span class="w">  </span>pip<span class="w"> </span>install<span class="w"> </span>absl-py
+<span class="w">  </span>python<span class="w"> </span>setup.py<span class="w"> </span>install
+<span class="w">  </span><span class="nb">cd</span><span class="w"> </span>../..
+</pre></div>
+</div>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<section id="quantization">
+<h2>1. Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="w">  </span>make<span class="w"> </span>run_pytorch_NC_tuning
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="w">  </span>python<span class="w"> </span>run.py<span class="w"> </span>--model_dir<span class="o">=</span>build/result/nnUNet/3d_fullres/Task043_BraTS2019/nnUNetTrainerV2__nnUNetPlansv2.mlperf.1<span class="w"> </span>--backend<span class="o">=</span>pytorch<span class="w"> </span>--accuracy<span class="w"> </span>--preprocessed_data_dir<span class="o">=</span>build/preprocessed_data/<span class="w"> </span>--mlperf_conf<span class="o">=</span>./mlperf.conf<span class="w"> </span>--tune
+</pre></div>
+</div>
+</section>
+<section id="benchmark">
+<h2>2. Benchmark<a class="headerlink" href="#benchmark" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8</span>
+sh<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--int8<span class="o">=</span><span class="nb">true</span><span class="w"> </span>--input_model<span class="o">=</span>build/result/nnUNet/3d_fullres/Task043_BraTS2019/nnUNetTrainerV2__nnUNetPlansv2.mlperf.1<span class="w"> </span>--dataset_location<span class="o">=</span>build/preprocessed_data/
+<span class="c1"># fp32</span>
+sh<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--input_model<span class="o">=</span>build/result/nnUNet/3d_fullres/Task043_BraTS2019/nnUNetTrainerV2__nnUNetPlansv2.mlperf.1<span class="w"> </span>--dataset_location<span class="o">=</span>build/preprocessed_data/
+</pre></div>
+</div>
+</section>
+<section id="model-baseline">
+<h2>3. Model Baseline<a class="headerlink" href="#model-baseline" title="Link to this heading"></a></h2>
+<p>| model | framework | accuracy | dataset | model link | model source | precision |
+| - | - | - | - | - | - | - |
+| 3D-Unet | PyTorch | <strong>mean = 0.85300</strong> (whole tumor = 0.9141, tumor core = 0.8679, enhancing tumor = 0.7770) | <a class="reference external" href="folds/fold1_validation.txt">Fold 1</a> of <a class="reference external" href="https://www.med.upenn.edu/cbica/brats2019/data.html">BraTS 2019</a> Training Dataset | <a class="reference external" href="https://zenodo.org/record/3904106">from zenodo</a> | Trained in PyTorch using codes from<a class="reference external" href="https://github.com/MIC-DKFZ/nnUNet">nnUnet</a> on <a class="reference external" href="folds/fold0_validation.txt">Fold 0</a>, <a class="reference external" href="folds/fold2_validation.txt">Fold 2</a>, <a class="reference external" href="folds/fold3_validation.txt">Fold 3</a>, and <a class="reference external" href="folds/fold4_validation.txt">Fold 4</a> of <a class="reference external" href="https://www.med.upenn.edu/cbica/brats2019/data.html">BraTS 2019</a> Training Dataset. | fp32 |</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f1466d15790> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

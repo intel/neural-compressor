@@ -1,0 +1,242 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">3.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/pytorch/object_detection/ssd_resnet34/quantization/ptq/fx/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document lists steps of reproducing Intel Optimized PyTorch ssd_resnet34 models tuning results via Neural Compressor.</p>
+<p>Our example comes from MLPerf Inference Benchmark Suite</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<p>PyTorch 1.8 or higher version is needed with pytorch_fx backend. We recommend to use Python 3.8.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/pytorch/object_detection/ssd_resnet34/quantization/ptq/fx
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: Validated PyTorch <a class="reference external" href="/docs/source/installation_guide.html#validated-software-environment">Version</a>.</p>
+</div></blockquote>
+<p>Check your gcc version with command : <strong>gcc -v</strong></p>
+<p>GCC5 or above is needed.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>prepare_loadgen.sh
+</pre></div>
+</div>
+</section>
+<section id="prepare-dataset">
+<h2>2. Prepare Dataset<a class="headerlink" href="#prepare-dataset" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Step1: Download COCO2017 dataset and extract it.</p></li>
+<li><p>Step2: Upscale COCO2017 dataset image size into 1200x1200 with prepare_dataset.sh</p></li>
+</ul>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>dataset</th>
+<th>download link</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>coco (validation)</td>
+<td>http://images.cocodataset.org/zips/val2017.zip</td>
+</tr>
+<tr>
+<td>coco (annotations)</td>
+<td>http://images.cocodataset.org/annotations/annotations_trainval2017.zip</td>
+</tr>
+</tbody>
+</table><div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/pytorch/object_detection/ssd_resnet34/quantization/ptq/fx
+bash<span class="w"> </span>prepare_dataset.sh<span class="w"> </span>--origin_dir<span class="o">=</span>origin_dataset<span class="w"> </span>--convert_dir<span class="o">=</span>convert_dataset
+</pre></div>
+</div>
+<p>Make sure origin_dataset (COCO2017) have two folder: val2017 and annotations.</p>
+</section>
+<section id="prepare-pre-trained-model">
+<h2>3. Prepare pre-trained model<a class="headerlink" href="#prepare-pre-trained-model" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/pytorch/object_detection/ssd_resnet34/quantization/ptq/fx
+wget<span class="w"> </span>https://zenodo.org/record/3236545/files/resnet34-ssd1200.pytorch
+</pre></div>
+</div>
+</section>
+</section>
+<section id="quantization">
+<h1>Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h1>
+<section id="enable-ssd-resnet34-example-with-the-auto-dynamic-quantization-strategy-of-neural-compressor">
+<h2>1. Enable ssd_resnet34 example with the auto dynamic quantization strategy of Neural Compressor.<a class="headerlink" href="#enable-ssd-resnet34-example-with-the-auto-dynamic-quantization-strategy-of-neural-compressor" title="Link to this heading"></a></h2>
+<p>The changes made are as follows:</p>
+<ol class="simple">
+<li><p>edit python/main.py:
+we import neural_compressor in it and pass <code class="docutils literal notranslate"><span class="pre">PostTrainingQuantConfig</span></code> to the quantization process.</p></li>
+<li><p>edit python/model/ssd_r34.py:
+we wrap functions with &#64;torch.fx.wrap to avoid ops cannot be traced by fx mode.</p></li>
+</ol>
+</section>
+<section id="to-get-the-tuned-model-and-its-accuracy">
+<h2>2. To get the tuned model and its accuracy:<a class="headerlink" href="#to-get-the-tuned-model-and-its-accuracy" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">run_quant</span><span class="o">.</span><span class="n">sh</span>  <span class="o">--</span><span class="n">topology</span><span class="o">=</span><span class="n">ssd</span><span class="o">-</span><span class="n">resnet34</span> <span class="o">--</span><span class="n">dataset_location</span><span class="o">=./</span><span class="n">convert_dataset</span> <span class="o">--</span><span class="n">input_model</span><span class="o">=./</span><span class="n">resnet34</span><span class="o">-</span><span class="n">ssd1200</span><span class="o">.</span><span class="n">pytorch</span>  <span class="o">--</span><span class="n">output_model</span><span class="o">=./</span><span class="n">saved_results</span>
+</pre></div>
+</div>
+</section>
+<section id="to-get-the-benchmark-of-tuned-model-includes-batch-size-and-throughput">
+<h2>3. To get the benchmark of tuned model, includes Batch_size and Throughput:<a class="headerlink" href="#to-get-the-benchmark-of-tuned-model-includes-batch-size-and-throughput" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">run_benchmark</span><span class="o">.</span><span class="n">sh</span> <span class="o">--</span><span class="n">topology</span><span class="o">=</span><span class="n">ssd</span><span class="o">-</span><span class="n">resnet34</span> <span class="o">--</span><span class="n">dataset_location</span><span class="o">=./</span><span class="n">convert_dataset</span> <span class="o">--</span><span class="n">input_model</span><span class="o">=./</span><span class="n">resnet34</span><span class="o">-</span><span class="n">ssd1200</span><span class="o">.</span><span class="n">pytorch</span> <span class="o">--</span><span class="n">config</span><span class="o">=./</span><span class="n">saved_results</span> <span class="o">--</span><span class="n">mode</span><span class="o">=</span><span class="n">performance</span> <span class="o">--</span><span class="n">int8</span><span class="o">=</span><span class="n">true</span><span class="o">/</span><span class="n">false</span>
+</pre></div>
+</div>
+</section>
+<section id="the-following-is-the-brief-output-information">
+<h2>4. The following is the brief output information:<a class="headerlink" href="#the-following-is-the-brief-output-information" title="Link to this heading"></a></h2>
+<p>Left part is accuracy/percentage, right part is time_usage/second.</p>
+<p>sampling_size: 50
+FP32 baseline is: [19.6298, 3103.3418]
+Pass quantize model elapsed time: 76469.05 ms
+Tune 1 result is: [19.1733, 763.7865]
+Pass quantize model elapsed time: 22288.36 ms
+Tune 2 result is: [19.4817, 861.9649]</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th></th>
+<th>Batch size</th>
+<th>Latency</th>
+<th>Throughput</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>fp32</td>
+<td>1</td>
+<td>878.225 ms</td>
+<td>1.139 samples/sec</td>
+</tr>
+<tr>
+<td>int8</td>
+<td>1</td>
+<td>97.111 ms</td>
+<td>10.298 samples/sec</td>
+</tr>
+</tbody>
+</table><p>sampling_size: 500
+FP32 baseline is: [19.6298, 3103.3418]<br />Pass quantize model elapsed time: 480769.63 ms<br />Tune 1 result is: [19.0617, 649.5251]<br />Pass quantize model elapsed time: 215259.43 ms<br />Tune 2 result is: [19.5257, 636.5329]<br />···</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f146e76eab0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

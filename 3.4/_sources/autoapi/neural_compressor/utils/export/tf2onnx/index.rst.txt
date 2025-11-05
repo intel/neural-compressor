@@ -1,0 +1,59 @@
+neural_compressor.utils.export.tf2onnx
+======================================
+
+.. py:module:: neural_compressor.utils.export.tf2onnx
+
+.. autoapi-nested-parse::
+
+   Helper functions to export model from TensorFlow to ONNX.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.utils.export.tf2onnx.tf_to_fp32_onnx
+   neural_compressor.utils.export.tf2onnx.tf_to_int8_onnx
+
+
+Module Contents
+---------------
+
+.. py:function:: tf_to_fp32_onnx(graph_def, save_path, opset_version=14, input_names=None, output_names=None, inputs_as_nchw=None)
+
+   Export FP32 Tensorflow model into FP32 ONNX model using tf2onnx tool.
+
+   :param graph_def: fp32 graph_def.
+   :type graph_def: graph_def to convert
+   :param save_path: save path of ONNX model.
+   :type save_path: str
+   :param opset_version: opset version. Defaults to 14.
+   :type opset_version: int, optional
+   :param input_names: input names. Defaults to None.
+   :type input_names: list, optional
+   :param output_names: output names. Defaults to None.
+   :type output_names: list, optional
+   :param inputs_as_nchw: transpose the input. Defaults to None.
+   :type inputs_as_nchw: list, optional
+
+
+.. py:function:: tf_to_int8_onnx(int8_model, save_path, opset_version: int = 14, input_names=None, output_names=None, inputs_as_nchw=None)
+
+   Export INT8 Tensorflow model into INT8 ONNX model.
+
+   :param int8_model: int8 model.
+   :type int8_model: tensorflow ITEX QDQ model
+   :param save_path: save path of ONNX model.
+   :type save_path: str
+   :param opset_version: opset version. Defaults to 14.
+   :type opset_version: int, optional
+   :param input_names: input names. Defaults to None.
+   :type input_names: list, optional
+   :param output_names: output names. Defaults to None.
+   :type output_names: list, optional
+   :param inputs_as_nchw: transpose the input. Defaults to None.
+   :type inputs_as_nchw: list, optional
+
+

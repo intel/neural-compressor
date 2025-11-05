@@ -1,0 +1,177 @@
+neural_compressor.torch.algorithms.static_quant.utility
+=======================================================
+
+.. py:module:: neural_compressor.torch.algorithms.static_quant.utility
+
+.. autoapi-nested-parse::
+
+   Utility functions for Static quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.static_quant.utility.TransformerBasedModelBlockPatternDetector
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.static_quant.utility.cfg_to_qconfig
+   neural_compressor.torch.algorithms.static_quant.utility.check_cfg_and_qconfig
+   neural_compressor.torch.algorithms.static_quant.utility.generate_xpu_qconfig
+   neural_compressor.torch.algorithms.static_quant.utility.generate_activation_observer
+   neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_recursively
+   neural_compressor.torch.algorithms.static_quant.utility.simple_inference
+   neural_compressor.torch.algorithms.static_quant.utility.dump_model_op_stats
+   neural_compressor.torch.algorithms.static_quant.utility.get_depth
+   neural_compressor.torch.algorithms.static_quant.utility.get_dict_at_depth
+   neural_compressor.torch.algorithms.static_quant.utility.get_element_under_depth
+   neural_compressor.torch.algorithms.static_quant.utility.parse_cfgs
+   neural_compressor.torch.algorithms.static_quant.utility.get_quantizable_ops_from_cfgs
+
+
+Module Contents
+---------------
+
+.. py:function:: cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
+
+   Updates json file in ipex_config_path.
+
+   :param tune_cfg: dictionary of quantization configuration.
+   :type tune_cfg: dict
+   :param cfgs: configs loaded from ipex config path.
+   :type cfgs: dict
+   :param op_infos_from_cfgs: dict containing configs that have been parsed for each op.
+   :type op_infos_from_cfgs: dict
+   :param output_tensor_ids_op_name: dict containing op names corresponding to 'op_infos_from_cfgs'.
+   :type output_tensor_ids_op_name: dict
+
+   :returns: quantization configuration for ops.
+   :rtype: user_cfg (dict)
+
+
+.. py:function:: check_cfg_and_qconfig(user_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name)
+
+   Check configs and quantization configs.
+
+   :param user_cfg: quantization configuration for ops.
+   :type user_cfg: dict
+   :param cfgs: configs loaded from ipex config path.
+   :type cfgs: dict
+   :param op_infos_from_cfgs: dict containing configs that have been parsed for each op.
+   :type op_infos_from_cfgs: dict
+   :param output_tensor_ids_op_name: dict containing op names corresponding to 'op_infos_from_cfgs'.
+   :type output_tensor_ids_op_name: dict
+
+   :returns: updated configs.
+   :rtype: cfgs (dict)
+
+
+.. py:function:: generate_xpu_qconfig(tune_cfg)
+
+   Generates qconfig for quantiztaion on xpu device.
+
+   :param tune_cfg: dictionary of quantization configuration.
+   :type tune_cfg: dict
+
+   :returns: quantization configuration for ops.
+   :rtype: qconfig (dict)
+
+
+.. py:function:: generate_activation_observer(scheme, algorithm, smooth_quant=False, smooth_quant_enable=False, alpha=0.5)
+
+   This is a helper method to generate an activation observer.
+
+   :param scheme: Quantization scheme to be used.
+   :type scheme: str
+   :param algorithm: What algorithm for computing the quantization parameters based on.
+   :type algorithm: str
+
+   :returns: An observer.
+
+
+.. py:function:: get_quantizable_ops_recursively(model, example_inputs)
+
+   Get all quantizable ops from model.
+
+   :param model: input model
+   :type model: object
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: dict|list|tuple|torch.Tensor
+
+   :returns: list of tuples of op_name and op_type.
+             cfgs (dict): dict of configuration.
+             op_infos_from_cfgs (dict): dict containing configs that have been parsed for each op.
+             output_tensor_ids_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
+   :rtype: quantizable_ops (list)
+
+
+.. py:function:: simple_inference(q_model, example_inputs, iterations=1)
+
+   The function is used for ipex warm-up inference.
+
+
+.. py:function:: dump_model_op_stats(user_cfg)
+
+   This is a function to dump quantizable ops of model to user.
+
+   :param user_cfg: quantization config
+   :type user_cfg: dict
+
+   :returns: None
+
+
+.. py:function:: get_depth(d) -> int
+
+   Query the depth of the dict.
+
+
+.. py:function:: get_dict_at_depth(d, target_depth, result, depth=0)
+
+   Get all sub-dicts that are at a specified depth in a nested dict.
+
+
+.. py:function:: get_element_under_depth(d, ops_lst)
+
+   Get all values in a nested dict.
+
+
+.. py:function:: parse_cfgs(cfgs)
+
+   Parse configs.
+
+   :param cfgs: the input configs.
+   :type cfgs: dict
+
+   :returns: list of op names.
+             tune_cfg (dict): dictionary of quantization configuration.
+             op_infos_from_cfgs (dict): op infos from configs.
+             output_tensor_ids_op_name (dict): dictionary of output tensor op names.
+   :rtype: ops_name (list)
+
+
+.. py:function:: get_quantizable_ops_from_cfgs(ops_name, op_infos_from_cfgs, input_tensor_ids_op_name)
+
+   Get quantizable ops from configs, combine fused ops as one op.
+
+   :param ops_name: list of op names.
+   :type ops_name: list
+   :param op_infos_from_cfgs: op infos from configs.
+   :type op_infos_from_cfgs: dict
+   :param input_tensor_ids_op_name: dictionary of input tensor op names.
+   :type input_tensor_ids_op_name: dict
+
+   :returns: cfgs (dict).
+
+
+.. py:class:: TransformerBasedModelBlockPatternDetector(model: torch.nn.Module, pattern_lst: List[List[Union[str, int]]] = BLOCK_PATTERNS)
+
+   Detect the attention block and FFN block in transformer-based model.
+
+

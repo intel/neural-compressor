@@ -1,0 +1,268 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../versions.html">3.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../_sources/docs/source/examples/3.x_api/tensorflow/nlp/large_language_models/quantization/ptq/gpt-j/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor smooth quantization of language models gpt-j-6B.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Intel® Neural Compressor</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+</section>
+<section id="prepare-pretrained-model">
+<h2>2. Prepare Pretrained model<a class="headerlink" href="#prepare-pretrained-model" title="Link to this heading"></a></h2>
+<p>Run the follow script to download gpt-j-6B saved_model to <code class="docutils literal notranslate"><span class="pre">./gpt-j-6B</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">prepare_model</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+</section>
+<section id="install-tensorflow-2-11-dev202242">
+<h2>3. Install TensorFlow 2.11.dev202242<a class="headerlink" href="#install-tensorflow-2-11-dev202242" title="Link to this heading"></a></h2>
+<p>Build a TensorFlow pip package from <a class="reference external" href="https://github.com/Intel-tensorflow/tensorflow/tree/spr_ww42">intel-tensorflow spr_ww42 branch</a> and install it. How to build a TensorFlow pip package from source please refer to this <a class="reference external" href="https://www.tensorflow.org/install/source">tutorial</a>.</p>
+<p>The performance of int8 gpt-j-6B would be better once intel-tensorflow for gnr is released.</p>
+</section>
+<section id="prepare-dataset">
+<h2>4. Prepare Dataset<a class="headerlink" href="#prepare-dataset" title="Link to this heading"></a></h2>
+<p>The dataset will be automatically loaded.</p>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<section id="smooth-quantization">
+<h2>Smooth Quantization<a class="headerlink" href="#smooth-quantization" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--input_model<span class="o">=</span>&lt;FP32_MODEL_PATH&gt;<span class="w"> </span>--output_model<span class="o">=</span>&lt;INT8_MODEL_PATH&gt;
+</pre></div>
+</div>
+</section>
+<section id="benchmark">
+<h2>Benchmark<a class="headerlink" href="#benchmark" title="Link to this heading"></a></h2>
+<section id="evaluate-performance">
+<h3>Evaluate Performance<a class="headerlink" href="#evaluate-performance" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--input_model<span class="o">=</span>&lt;MODEL_PATH&gt;<span class="w"> </span>--mode<span class="o">=</span>benchmark
+</pre></div>
+</div>
+</section>
+<section id="evaluate-accuracy">
+<h3>Evaluate Accuracy<a class="headerlink" href="#evaluate-accuracy" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--input_model<span class="o">=</span>&lt;MODEL_PATH&gt;<span class="w"> </span>--mode<span class="o">=</span>accuracy
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="details-of-enabling-intel-neural-compressor-on-gpt-j-6b-for-tensorflow">
+<h1>Details of enabling Intel® Neural Compressor on gpt-j-6B for TensorFlow<a class="headerlink" href="#details-of-enabling-intel-neural-compressor-on-gpt-j-6b-for-tensorflow" title="Link to this heading"></a></h1>
+<p>This is a tutorial of how to enable gpt-j-6B model with Intel® Neural Compressor.</p>
+<section id="user-code-analysis">
+<h2>User Code Analysis<a class="headerlink" href="#user-code-analysis" title="Link to this heading"></a></h2>
+<p>User specifies fp32 <em>model</em>, calibration dataloader <em>q_dataloader</em> and a custom <em>eval_func</em> which encapsulates the evaluation dataloader and metric by itself.</p>
+<section id="calib-dataloader-part-adaption">
+<h3>calib_dataloader Part Adaption<a class="headerlink" href="#calib-dataloader-part-adaption" title="Link to this heading"></a></h3>
+<p>Below dataloader class uses generator function to provide the model with input.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">MyDataloader</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">dataset</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="mi">1</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">length</span> <span class="o">=</span> <span class="n">math</span><span class="o">.</span><span class="n">ceil</span><span class="p">(</span><span class="nb">len</span><span class="p">(</span><span class="n">dataset</span><span class="p">)</span> <span class="o">/</span> <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">generate_data</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">data</span><span class="p">,</span> <span class="n">pad_token_id</span><span class="o">=</span><span class="mi">50256</span><span class="p">):</span>
+        <span class="n">input_ids</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">convert_to_tensor</span><span class="p">([</span><span class="n">data</span><span class="p">[:</span><span class="o">-</span><span class="mi">1</span><span class="p">]],</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span>
+        <span class="n">cur_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
+        <span class="n">input_ids_padding</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">pad_token_id</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
+        <span class="n">generated</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">input_ids_padding</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="n">model_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;attention_mask&#39;</span><span class="p">:</span> <span class="n">prepare_attention_mask_for_generation</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)}</span>
+        <span class="k">if</span> <span class="n">model_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;past_key_values&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+            <span class="n">input_ids</span> <span class="o">=</span> <span class="n">generated</span><span class="p">[:,</span> <span class="p">:</span><span class="n">cur_len</span><span class="p">]</span>
+        <span class="k">else</span><span class="p">:</span>
+            <span class="n">input_ids</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">generated</span><span class="p">[:,</span> <span class="n">cur_len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;attention_mask&#39;</span><span class="p">],</span> <span class="n">input_ids</span>
+    
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="n">labels</span> <span class="o">=</span> <span class="kc">None</span>
+        <span class="k">for</span> <span class="n">_</span><span class="p">,</span> <span class="n">data</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">):</span>
+            <span class="n">cur_input</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">generate_data</span><span class="p">(</span><span class="n">data</span><span class="p">)</span>
+            <span class="k">yield</span> <span class="p">(</span><span class="n">cur_input</span><span class="p">,</span> <span class="n">labels</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">length</span>
+</pre></div>
+</div>
+</section>
+<section id="code-update">
+<h3>Code Update<a class="headerlink" href="#code-update" title="Link to this heading"></a></h3>
+<p>After prepare step is done, we add the code for quantization tuning to generate quantized model.</p>
+<p>Firstly, let’s load a INC inner class model from the path of gpt-j-6B saved_model.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">run_args</span><span class="o">.</span><span class="n">input_model</span><span class="p">,</span> <span class="n">modelType</span><span class="o">=</span><span class="s1">&#39;llm_saved_model&#39;</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="tune">
+<h4>Tune<a class="headerlink" href="#tune" title="Link to this heading"></a></h4>
+<p>To apply quantization, the function that maps names from AutoTrackable variables to graph nodes must be defined to match names of nodes in different format.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="nf">weight_name_mapping</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
+<span class="w">        </span><span class="sd">&quot;&quot;&quot;The function that maps name from AutoTrackable variables to graph nodes&quot;&quot;&quot;</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;tfgptj_for_causal_lm&#39;</span><span class="p">,</span> <span class="s1">&#39;StatefulPartitionedCall&#39;</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;kernel:0&#39;</span><span class="p">,</span> <span class="s1">&#39;Tensordot/ReadVariableOp&#39;</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">name</span>
+</pre></div>
+</div>
+<p>Please use the recipe to set smooth quantization.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.tensorflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span><span class="p">,</span> <span class="n">SmoothQuantConfig</span><span class="p">,</span> <span class="n">autotune</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.tensorflow.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">TuningConfig</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.tensorflow.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseDataLoader</span>
+
+    <span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">MyDataloader</span><span class="p">(</span><span class="n">mydata</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">run_args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>  
+    <span class="n">quant_config</span> <span class="o">=</span> <span class="p">[</span><span class="n">SmoothQuantConfig</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.52705</span><span class="p">),</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">act_dtype</span><span class="o">=</span><span class="s2">&quot;int8&quot;</span><span class="p">,</span> <span class="n">weight_dtype</span><span class="o">=</span><span class="s2">&quot;int8&quot;</span><span class="p">)]</span>
+    <span class="n">tune_config</span> <span class="o">=</span> <span class="n">TuningConfig</span><span class="p">(</span><span class="n">config_set</span><span class="o">=</span><span class="n">quant_config</span><span class="p">,</span> <span class="n">max_trials</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">weight_name_mapping</span> <span class="o">=</span> <span class="n">weight_name_mapping</span>
+    <span class="n">q_model</span> <span class="o">=</span> <span class="n">autotune</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> 
+                        <span class="n">tune_config</span><span class="p">,</span> 
+                        <span class="n">eval_fn</span><span class="o">=</span><span class="n">evaluate</span><span class="p">,</span>
+                        <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">calib_dataloader</span><span class="p">)</span>
+    <span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">run_args</span><span class="o">.</span><span class="n">output_model</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="id1">
+<h4>Benchmark<a class="headerlink" href="#id1" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">if</span> <span class="n">run_args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;performance&quot;</span><span class="p">:</span>
+        <span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">run_args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span>
+        <span class="n">acc_result</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Batch size = </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">run_args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Accuracy: </span><span class="si">%.5f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">acc_result</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The Intel® Neural Compressor quantization.fit() function will return a best quantized model under time constraint.</p>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f146cfd39e0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

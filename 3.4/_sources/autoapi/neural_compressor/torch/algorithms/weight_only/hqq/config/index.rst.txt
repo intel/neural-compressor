@@ -1,0 +1,42 @@
+neural_compressor.torch.algorithms.weight_only.hqq.config
+=========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.config
+
+.. autoapi-nested-parse::
+
+   Configuration for HQQ.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.config.QTensorConfig
+   neural_compressor.torch.algorithms.weight_only.hqq.config.HQQModuleConfig
+
+
+Module Contents
+---------------
+
+.. py:class:: QTensorConfig
+
+   Configuration class for quantized tensors.
+
+
+.. py:class:: HQQModuleConfig
+
+
+
+   Configuration class for HQQModule.
+
+   :param weight: The weight quantization configuration.
+   :type weight: Any
+   :param scale: The scale quantization configuration.
+   :type scale: Any
+   :param zero: The zero quantization configuration.
+   :type zero: Any
+
+

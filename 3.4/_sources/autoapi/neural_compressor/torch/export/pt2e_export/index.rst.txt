@@ -1,0 +1,55 @@
+neural_compressor.torch.export.pt2e_export
+==========================================
+
+.. py:module:: neural_compressor.torch.export.pt2e_export
+
+.. autoapi-nested-parse::
+
+   Export model for quantization.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.export.pt2e_export.export_model_for_pt2e_quant
+   neural_compressor.torch.export.pt2e_export.export
+
+
+Module Contents
+---------------
+
+.. py:function:: export_model_for_pt2e_quant(model: torch.nn.Module, example_inputs: Tuple[Any], dynamic_shapes: Optional[Union[Dict[str, Any], Tuple[Any]]] = None) -> Optional[torch.fx.graph_module.GraphModule]
+
+   Exports a eager model for PT2E quantization.
+
+   :param model: The PyTorch model to be exported.
+   :type model: torch.nn.Module
+   :param example_inputs: Example inputs to the model.
+   :type example_inputs: Tuple[Any]
+   :param dynamic_shapes: Dynamic shapes for the model inputs. Defaults to None.
+   :type dynamic_shapes: Optional[Union[Dict[str, Any], Tuple[Any]]], optional
+
+   :returns: The exported model as a GraphModule.
+   :rtype: Optional[GraphModule]
+
+   :raises AssertionError: If `example_inputs` is not a tuple.
+
+
+.. py:function:: export(model: torch.nn.Module, example_inputs: Tuple[Any], dynamic_shapes: Optional[Union[Dict[str, Any], Tuple[Any]]] = None) -> Optional[torch.fx.graph_module.GraphModule]
+
+   Unified export function for quantization.
+
+   :param model: The model to be exported.
+   :type model: torch.nn.Module
+   :param example_inputs: Example inputs to the model.
+   :type example_inputs: Tuple[Any]
+   :param dynamic_shapes: Dynamic shapes for the model. Defaults to None.
+   :type dynamic_shapes: Optional[Union[Dict[str, Any], Tuple[Any]]], optional
+
+   :returns: The exported model for quantization.
+   :rtype: Optional[GraphModule]
+
+

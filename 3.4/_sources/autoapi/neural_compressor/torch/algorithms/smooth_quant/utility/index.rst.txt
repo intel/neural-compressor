@@ -1,0 +1,424 @@
+neural_compressor.torch.algorithms.smooth_quant.utility
+=======================================================
+
+.. py:module:: neural_compressor.torch.algorithms.smooth_quant.utility
+
+.. autoapi-nested-parse::
+
+   Utility functions for Smooth quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.smooth_quant.utility.Calibration
+   neural_compressor.torch.algorithms.smooth_quant.utility.GraphTrace
+   neural_compressor.torch.algorithms.smooth_quant.utility.AutoAlpha
+   neural_compressor.torch.algorithms.smooth_quant.utility.TorchSmoothQuant
+   neural_compressor.torch.algorithms.smooth_quant.utility.SQLinearWrapper
+   neural_compressor.torch.algorithms.smooth_quant.utility.WrapperLayer
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.smooth_quant.utility.get_quantizable_ops_recursively
+   neural_compressor.torch.algorithms.smooth_quant.utility.check_cfg_and_qconfig
+   neural_compressor.torch.algorithms.smooth_quant.utility.cfg_to_qconfig
+   neural_compressor.torch.algorithms.smooth_quant.utility.dump_model_op_stats
+   neural_compressor.torch.algorithms.smooth_quant.utility.get_parent
+   neural_compressor.torch.algorithms.smooth_quant.utility.get_module
+   neural_compressor.torch.algorithms.smooth_quant.utility.set_module
+   neural_compressor.torch.algorithms.smooth_quant.utility.update_sq_scale
+   neural_compressor.torch.algorithms.smooth_quant.utility.enough_memo_store_scale
+   neural_compressor.torch.algorithms.smooth_quant.utility.move_input_to_device
+   neural_compressor.torch.algorithms.smooth_quant.utility.forward_wrapper
+   neural_compressor.torch.algorithms.smooth_quant.utility.model_forward
+   neural_compressor.torch.algorithms.smooth_quant.utility.build_captured_dataloader
+   neural_compressor.torch.algorithms.smooth_quant.utility.cal_scale
+   neural_compressor.torch.algorithms.smooth_quant.utility.model_forward_per_sample
+   neural_compressor.torch.algorithms.smooth_quant.utility.quant_dequant_w_v1
+   neural_compressor.torch.algorithms.smooth_quant.utility.quant_dequant_x_v1
+   neural_compressor.torch.algorithms.smooth_quant.utility.reshape_scale_as_weight
+   neural_compressor.torch.algorithms.smooth_quant.utility.reshape_in_channel_to_last
+   neural_compressor.torch.algorithms.smooth_quant.utility.reshape_scale_as_input
+   neural_compressor.torch.algorithms.smooth_quant.utility.register_autotune
+
+
+Module Contents
+---------------
+
+.. py:function:: get_quantizable_ops_recursively(model, example_inputs, alpha, act_algo, inplace=True)
+
+   Get all quantizable ops from model.
+
+   :param model: input model
+   :type model: object
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: dict|list|tuple|torch.Tensor
+   :param alpha: smoothquant alpha.
+   :type alpha: float|str
+   :param act_algo: activation algorithm, minmax or kl.
+   :type act_algo: str
+   :param inplace: whether to carry out model transformations in-place. Defaults to True.
+   :type inplace: bool
+
+   :returns: list of tuples of op_name and op_type.
+             cfgs (dict): dict of configuration.
+             op_infos_from_cfgs (dict): op infos from configs.
+             output_tensor_ids_op_name (dict): dictionary of output tensor op names.
+   :rtype: quantizable_ops (list)
+
+
+.. py:function:: check_cfg_and_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_ids_op_name, alpha=0.5, smooth_quant=True)
+
+   Check configs and quantization configs.
+
+   :param tune_cfg: dictionary of quantization configuration.
+   :type tune_cfg: dict
+   :param cfgs: the input configs.
+   :type cfgs: dict
+   :param op_infos_from_cfgs: op infos from configs.
+   :type op_infos_from_cfgs: dict
+   :param output_tensor_ids_op_name: dictionary of output tensor op names.
+   :type output_tensor_ids_op_name: dict
+   :param alpha: Value to balance input and weight quantization error,
+                 between 0 and 1, default is 0.5.
+   :type alpha: float
+   :param smooth_quant: whether to use smooth quant.
+   :type smooth_quant: bool, optional
+
+   :returns: cfgs (dict).
+
+
+.. py:function:: cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, alpha=0.5, smooth_quant=True)
+
+   Check configs and quantization configs.
+
+   :param user_cfg: quantization configuration for ops.
+   :type user_cfg: dict
+   :param cfgs: configs loaded from ipex config path.
+   :type cfgs: dict
+   :param op_infos_from_cfgs: dict containing configs that have been parsed for each op.
+   :type op_infos_from_cfgs: dict
+   :param output_tensor_ids_op_name: dict containing op names corresponding to 'op_infos_from_cfgs'.
+   :type output_tensor_ids_op_name: dict
+   :param alpha: Value to balance input and weight quantization error,
+                 between 0 and 1, default is 0.5.
+   :type alpha: float
+   :param smooth_quant: whether to use smooth quant.
+   :type smooth_quant: bool, optional
+
+   :returns: updated configs.
+   :rtype: cfgs (dict)
+
+
+.. py:function:: dump_model_op_stats(user_cfg)
+
+   This is a function to dump quantizable ops of model to user.
+
+   :param user_cfg: quantization config.
+   :type user_cfg: dict
+
+   :returns: None
+
+
+.. py:function:: get_parent(node, all_parents=False)
+
+   Get the parent node(s) of a given node.
+
+   :param node: The node whose parent(s) are to be retrieved.
+   :type node: Node
+   :param all_parents: Whether to return all parents or just the first one. Defaults to False.
+   :type all_parents: bool, optional
+
+   :returns:
+
+             The parent node if `all_parents` is False, otherwise a list of all parent nodes.
+                 Returns None if no parents are found.
+   :rtype: list
+
+
+.. py:function:: get_module(model, key)
+
+   Get module from model by key name.
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+
+
+.. py:function:: set_module(model, key, new_module)
+
+   Set new module into model by key name.
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+   :param new_module: new module to be inserted
+   :type new_module: torch.nn.Module
+
+
+.. py:function:: update_sq_scale(ipex_config_path, smoothquant_scale_info)
+
+   Update ipex_config.json with smoothquant scale info generated by our algorithm.
+
+   :param ipex_config_path: a path to temporary ipex_config.json file.
+   :type ipex_config_path: str
+   :param smoothquant_scale_info: a dict contains smoothquant scale info.
+   :type smoothquant_scale_info: dict
+
+
+.. py:function:: enough_memo_store_scale(device, need_space)
+
+   Check if there is enough memory available to store a specified amount of data.
+
+   :param device: The device type ('cuda' for GPU or 'cpu' for CPU).
+   :type device: str
+   :param need_space: The amount of memory needed, in bytes.
+   :type need_space: int
+
+   :returns: True if there is enough memory available, False otherwise.
+   :rtype: bool
+
+
+.. py:function:: move_input_to_device(input, device=torch.device('cpu'))
+
+   Move the input data to the specified device.
+
+   :param input: The input data to be moved.
+                 Can be a dictionary, list, tuple, or a tensor.
+   :type input: dict, list, tuple, or torch.Tensor
+   :param device: The device to which the input should be moved.
+                  Defaults to CPU.
+   :type device: torch.device, optional
+
+   :returns:
+
+             The input data moved to the specified device,
+                 with the same type as the input (dict, list, tuple, or tensor).
+
+
+.. py:function:: forward_wrapper(model, input, device=torch.device('cpu'))
+
+   Apply the model to the input data on the specified device.
+
+   :param model: The model to be applied.
+   :type model: torch.nn.Module
+   :param input: The input data to be fed to the model.
+                 Can be a dictionary, list, tuple, or a zip of arguments and keyword arguments.
+   :type input: dict, list, tuple, or zip
+   :param device: The device on which the model and input should be located.
+                  Defaults to CPU.
+   :type device: torch.device, optional
+
+   :returns: The output of the model after applying it to the input data.
+
+   :raises Exception: Logs warnings if there are issues with moving the model or input to the device.
+
+
+.. py:function:: model_forward(model, dataloader, iters, device)
+
+   Run the model on data from the dataloader for a specified number of iterations.
+
+   :param model: The model to be used for forward passes.
+   :type model: torch.nn.Module
+   :param dataloader: The dataloader providing the input data and labels.
+   :type dataloader: DataLoader
+   :param iters: The maximum number of iterations to run.
+                 If -1, run until the dataloader is exhausted.
+   :type iters: int
+   :param device: The device on which the model and data are located.
+   :type device: torch.device
+
+   :returns: None
+
+   :raises Exception: Handles exceptions during the forward pass and retries if needed.
+
+
+.. py:function:: build_captured_dataloader(model, run_fn, calib_num=None)
+
+   Build a dataloader that captures input data and keyword arguments used in forward passes of the model.
+
+   :param model: The model whose inputs will be captured.
+   :type model: torch.nn.Module
+   :param run_fn: A function to run the model, which will use the InputCaptureModule to collect inputs.
+   :type run_fn: function
+   :param calib_num: The number of inputs to capture for calibration. If None, capture all inputs.
+   :type calib_num: int, optional
+
+   :returns: The original model.
+             CapturedDataloader: A dataloader with the captured inputs and keyword arguments.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: cal_scale(input_max_abs, weights, alpha, weight_max_lb=1e-05)
+
+   Calculate the scaling factor for weights based on the input max values and weight magnitudes.
+
+   :param input_max_abs: The maximum absolute values of the inputs.
+   :type input_max_abs: Tensor
+   :param weights: The list of weight tensors to be concatenated and processed.
+   :type weights: list of Tensor
+   :param alpha: A parameter to balance the scaling between inputs and weights.
+   :type alpha: float
+   :param weight_max_lb: The lower bound for weight magnitudes to avoid division by zero.
+                         Defaults to 1e-5.
+   :type weight_max_lb: float, optional
+
+   :returns: The calculated scaling factors for the weights.
+   :rtype: Tensor
+
+
+.. py:function:: model_forward_per_sample(model, sample, device)
+
+   Perform a forward pass of the model on a single sample.
+
+   :param model: The model to be applied.
+   :type model: torch.nn.Module
+   :param sample: The input sample or a tuple of inputs to be passed to the model.
+   :type sample: Tensor or tuple
+   :param device: The device on which the model and input sample are located.
+   :type device: torch.device
+
+   :returns: The output of the model after applying it to the sample.
+   :rtype: Tensor
+
+   :raises Exception: Handles exceptions during the forward pass and retries if needed.
+
+
+.. py:function:: quant_dequant_w_v1(m, num_bits=8, scheme='sym')
+
+   Quantize and dequantize the weights of a layer.
+
+   :param m: The layer whose weights are to be quantized and dequantized.
+             Supports torch.nn.Linear and torch.nn.Conv2d.
+   :type m: torch.nn.Module
+   :param num_bits: The number of bits for quantization.
+                    Defaults to 8.
+   :type num_bits: int, optional
+   :param scheme: The quantization scheme to use.
+                  Can be "sym" for symmetric or "asym" for asymmetric quantization. Defaults to "sym".
+   :type scheme: str, optional
+
+   :returns: The quantized and dequantized weights of the layer.
+   :rtype: Tensor
+
+   :raises Warning: Logs a warning if the layer type is not supported.
+
+
+.. py:function:: quant_dequant_x_v1(x, min_x=None, max_x=None, num_bits=8)
+
+   Quantize and dequantize a tensor.
+
+   :param x: The input tensor to be quantized and dequantized.
+   :type x: Tensor
+   :param min_x: The minimum value of the input tensor.
+                 If None, it will be computed from x. Defaults to None.
+   :type min_x: Tensor, optional
+   :param max_x: The maximum value of the input tensor.
+                 If None, it will be computed from x. Defaults to None.
+   :type max_x: Tensor, optional
+   :param num_bits: The number of bits for quantization. Defaults to 8.
+   :type num_bits: int, optional
+
+   :returns: The quantized and dequantized tensor.
+   :rtype: Tensor
+
+   :raises None: No specific exceptions are raised, but input values are clipped to avoid invalid operations.
+
+
+.. py:function:: reshape_scale_as_weight(layer, scale)
+
+   Reshape the scale for weight input channel, depthwise output channel.
+
+   :param layer: Torch module.
+   :type layer: torch.nn.Module
+   :param scale: Original scale.
+   :type scale: Tensor
+
+   :returns: Reshaped scale.
+   :rtype: Tensor
+
+
+.. py:function:: reshape_in_channel_to_last(layer_name, model)
+
+   Move the input channel to the last dimension.
+
+   :param layer_name: Layer name.
+   :type layer_name: str
+
+   :returns: The reshaped weight.
+   :rtype: Tensor
+
+
+.. py:function:: reshape_scale_as_input(layer, scale)
+
+   Reshape the scale for input feature in channel.
+
+   :param layer: Torch module.
+   :type layer: torch.nn.Module
+   :param scale: Original scale.
+   :type scale: Tensor
+
+   :returns: Reshaped scale.
+   :rtype: Tensor
+
+
+.. py:function:: register_autotune(name)
+
+   Class decorator to register a SmoothQuant auto-tune subclass.
+
+   :returns: The class of register.
+   :rtype: type
+
+
+.. py:class:: Calibration(model, dataloder=None, q_func=None, device='cpu')
+
+   Calibration class.
+
+
+.. py:class:: GraphTrace
+
+   GraphTrace Class.
+
+
+.. py:class:: AutoAlpha(model, dataloader, absorb_to_layer, op_types, device, q_func, example_inputs, weight_clip=True, alpha_min=0.3, alpha_max=0.7, alpha_step=0.1, shared_criterion='mean', init_alpha=0.5, folding=False, do_blockwise=False, n_samples=32)
+
+   AutoAlpha Class.
+
+
+.. py:class:: TorchSmoothQuant(model, dataloader=None, example_inputs=None, q_func=None, traced_model=None, scale_sharing=True, record_max_info=False)
+
+   Fake input channel quantization.
+
+   For more details please refer to:
+   [1] SmoothQuant: Accurate and Efficient
+   Post-Training Quantization for Large Language Models
+   [2] SPIQ: Data-Free Per-Channel Static Input Quantization
+   Currently, we only handle the layers whose smooth scale could be absorbed, we will support other layers later.
+   We only support inplace mode which means the model weights will be changed, you can call recover function
+   to recover the weights if needed
+
+
+.. py:class:: SQLinearWrapper(module, input_scale, input_minmax, alpha=0.5, dtype=torch.quint8)
+
+
+
+   SQLinearWrapper Class.
+
+
+.. py:class:: WrapperLayer(layer, input_min, input_max, save_q_input=False)
+
+
+
+   WrapperLayer Class.
+
+

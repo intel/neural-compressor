@@ -1,0 +1,140 @@
+neural_compressor.common.base_tuning
+====================================
+
+.. py:module:: neural_compressor.common.base_tuning
+
+.. autoapi-nested-parse::
+
+   The auto-tune module.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.common.base_tuning.EvaluationFuncWrapper
+   neural_compressor.common.base_tuning.Evaluator
+   neural_compressor.common.base_tuning.ConfigSet
+   neural_compressor.common.base_tuning.Sampler
+   neural_compressor.common.base_tuning.SequentialSampler
+   neural_compressor.common.base_tuning.ConfigLoader
+   neural_compressor.common.base_tuning.TuningConfig
+   neural_compressor.common.base_tuning.TuningMonitor
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.common.base_tuning.init_tuning
+
+
+Module Contents
+---------------
+
+.. py:class:: EvaluationFuncWrapper(eval_fn: Callable, eval_args=None)
+
+   Evaluation function wrapper.
+
+
+.. py:class:: Evaluator
+
+   Evaluator is a collection of evaluation functions.
+
+   Note: will deprecate this class in the future.
+
+   .. rubric:: Examples
+
+   def eval_acc(model):
+       ...
+
+   def eval_perf(molde):
+       ...
+
+   # Usage
+   user_eval_fns1 = eval_acc
+   user_eval_fns2 = {"eval_fn": eval_acc}
+   user_eval_fns3 = {"eval_fn": eval_acc, "weight": 1.0, "name": "accuracy"}
+   user_eval_fns4 = [
+       {"eval_fn": eval_acc, "weight": 0.5},
+       {"eval_fn": eval_perf, "weight": 0.5, "name": "accuracy"},
+       ]
+
+
+.. py:class:: ConfigSet(config_list: List[neural_compressor.common.base_config.BaseConfig])
+
+   A class representing a set of configurations.
+
+   :param config_list: A list of BaseConfig objects.
+   :type config_list: List[BaseConfig]
+
+   .. attribute:: config_list
+
+      The list of BaseConfig objects.
+
+      :type: List[BaseConfig]
+
+
+.. py:class:: Sampler(config_source: Optional[ConfigSet])
+
+   Base class for samplers.
+
+
+.. py:class:: SequentialSampler(config_source: Sized)
+
+
+
+   Samples elements sequentially, always in the same order.
+
+   :param config_source: config set to sample from
+   :type config_source: _ConfigSet
+
+
+.. py:class:: ConfigLoader(config_set: ConfigSet, sampler: Sampler = default_sampler, skip_verified_config: bool = True)
+
+   ConfigLoader is a generator that yields configs from a config set.
+
+
+.. py:class:: TuningConfig(config_set: Union[neural_compressor.common.base_config.BaseConfig, List[neural_compressor.common.base_config.BaseConfig]] = None, sampler: Sampler = default_sampler, tolerable_loss=0.01, max_trials=100)
+
+   Config for auto tuning pipeline.
+
+   .. rubric:: Examples
+
+   from neural_compressor.torch.quantization import TuningConfig
+   tune_config = TuningConfig(
+       config_set=[config1, config2, ...],
+       max_trials=3,
+       tolerable_loss=0.01)
+
+   The tuning process stops when either of the following conditions is met:
+       1) The number of trials reaches the maximum trials.
+       2) The metric loss is within the tolerable loss.
+
+   For condition 2), we calculate the metric loss as follows:
+       relative_loss = (fp32_baseline - eval_result_of_q_model) / fp32_baseline
+       If relative_loss <= tolerable_loss, we stop the tuning process.
+       For example:
+           tolerable_loss = 0.01
+           fp32_baseline = 100
+           eval_result_of_q_model = 99
+           relative_loss = (100 - 99) / 100 = 0.01
+           The metric loss is within the tolerable loss, so the tuning process is stopped.
+
+
+.. py:class:: TuningMonitor(tuning_config: TuningConfig)
+
+   The tuning monitor class for auto-tuning.
+
+
+.. py:function:: init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, neural_compressor.common.utils.TuningLogger, TuningMonitor]
+
+   Initializes the tuning process.
+
+   :param tuning_config: The configuration for the tuning process.
+   :type tuning_config: TuningConfig
+
+

@@ -1,0 +1,601 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.utils.utility &mdash; Intel® Neural Compressor 3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">3.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.utils.utility</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/torch/utils/utility/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.utils.utility">
+<span id="neural-compressor-torch-utils-utility"></span><h1>neural_compressor.torch.utils.utility<a class="headerlink" href="#module-neural_compressor.torch.utils.utility" title="Link to this heading"></a></h1>
+<p>Intel Neural Compressor PyTorch utilities.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.register_algo" title="neural_compressor.torch.utils.utility.register_algo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_algo</span></code></a>(name)</p></td>
+<td><p>Decorator function to register algorithms in the algos_mapping dictionary.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.fetch_module" title="neural_compressor.torch.utils.utility.fetch_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fetch_module</span></code></a>(model, op_name)</p></td>
+<td><p>Get module with a given op name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.set_module" title="neural_compressor.torch.utils.utility.set_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">set_module</span></code></a>(model, op_name, new_module)</p></td>
+<td><p>Set module with a given op name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.get_model_info" title="neural_compressor.torch.utils.utility.get_model_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_info</span></code></a>(→ List[Tuple[str, str]])</p></td>
+<td><p>Get model info according to white_module_list.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.get_double_quant_config_dict" title="neural_compressor.torch.utils.utility.get_double_quant_config_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_double_quant_config_dict</span></code></a>([double_quant_type])</p></td>
+<td><p>Query config dict of double_quant according to double_quant_type.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.get_quantizer" title="neural_compressor.torch.utils.utility.get_quantizer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantizer</span></code></a>(model, quantizer_cls[, quant_config])</p></td>
+<td><p>Get the quantizer.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.postprocess_model" title="neural_compressor.torch.utils.utility.postprocess_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">postprocess_model</span></code></a>(model, mode, quantizer)</p></td>
+<td><p>Process <cite>quantizer</cite> attribute of model according to current phase.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.dump_model_op_stats" title="neural_compressor.torch.utils.utility.dump_model_op_stats"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dump_model_op_stats</span></code></a>(mode, tune_cfg)</p></td>
+<td><p>Dump quantizable ops stats of model to user.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.get_model_device" title="neural_compressor.torch.utils.utility.get_model_device"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_model_device</span></code></a>(model)</p></td>
+<td><p>Get the device.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.get_processor_type_from_user_config" title="neural_compressor.torch.utils.utility.get_processor_type_from_user_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_processor_type_from_user_config</span></code></a>([user_processor_type])</p></td>
+<td><p>Get the processor type.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.dowload_hf_model" title="neural_compressor.torch.utils.utility.dowload_hf_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dowload_hf_model</span></code></a>(repo_id[, cache_dir, repo_type, revision])</p></td>
+<td><p>Download hugging face model from hf hub.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.load_empty_model" title="neural_compressor.torch.utils.utility.load_empty_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_empty_model</span></code></a>(pretrained_model_name_or_path[, cls])</p></td>
+<td><p>Load a empty model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.get_module" title="neural_compressor.torch.utils.utility.get_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_module</span></code></a>(module, key)</p></td>
+<td><p>Get module from model by key name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.get_layer_names_in_block" title="neural_compressor.torch.utils.utility.get_layer_names_in_block"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_layer_names_in_block</span></code></a>(model[, supported_types, ...])</p></td>
+<td><p>Retrieves the names of layers within each block of the model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.to_dtype" title="neural_compressor.torch.utils.utility.to_dtype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_dtype</span></code></a>(input[, dtype])</p></td>
+<td><p>Moves input data to the specified data type.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.to_device" title="neural_compressor.torch.utils.utility.to_device"><code class="xref py py-obj docutils literal notranslate"><span class="pre">to_device</span></code></a>(input[, device])</p></td>
+<td><p>Moves input data to the specified device.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.get_block_names" title="neural_compressor.torch.utils.utility.get_block_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_block_names</span></code></a>(model)</p></td>
+<td><p>Get the block names for transformers-like networks.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.validate_modules" title="neural_compressor.torch.utils.utility.validate_modules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">validate_modules</span></code></a>(module_names)</p></td>
+<td><p>Test a list of modules' validity.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.get_multimodal_block_names" title="neural_compressor.torch.utils.utility.get_multimodal_block_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_multimodal_block_names</span></code></a>(model[, quant_vision])</p></td>
+<td><p>Get the multimodal model block names for transformers-like networks.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.detect_device" title="neural_compressor.torch.utils.utility.detect_device"><code class="xref py py-obj docutils literal notranslate"><span class="pre">detect_device</span></code></a>([device])</p></td>
+<td><p>Detects the device to use for model execution (GPU, HPU, or CPU).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.find_matching_blocks" title="neural_compressor.torch.utils.utility.find_matching_blocks"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_matching_blocks</span></code></a>(model, all_blocks[, ...])</p></td>
+<td><p>Find and return matching blocks in the model based on to_quant_block_names.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.get_non_persistent_buffers" title="neural_compressor.torch.utils.utility.get_non_persistent_buffers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_non_persistent_buffers</span></code></a>(model)</p></td>
+<td><p>Get all non-persistent buffers in the model.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.load_non_persistent_buffers" title="neural_compressor.torch.utils.utility.load_non_persistent_buffers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_non_persistent_buffers</span></code></a>(model, non_persistent_buffers)</p></td>
+<td><p>Load all non-persistent buffers into the model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.move_input_device" title="neural_compressor.torch.utils.utility.move_input_device"><code class="xref py py-obj docutils literal notranslate"><span class="pre">move_input_device</span></code></a>(input[, device])</p></td>
+<td><p>Auto mapping input to device for all kinds of format.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.forward_wrapper" title="neural_compressor.torch.utils.utility.forward_wrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">forward_wrapper</span></code></a>(model, input)</p></td>
+<td><p>Model forward with device auto mapping.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.utils.utility.get_enum_from_format" title="neural_compressor.torch.utils.utility.get_enum_from_format"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_enum_from_format</span></code></a>(format)</p></td>
+<td><p>Make sure Save&amp;Load format is an Enum object.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.register_algo">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">register_algo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.register_algo" title="Link to this definition"></a></dt>
+<dd><p>Decorator function to register algorithms in the algos_mapping dictionary.</p>
+<dl>
+<dt>Usage example:</dt><dd><p>&#64;register_algo(name=example_algo)
+def example_algo(model: torch.nn.Module, quant_config: RTNConfig) -&gt; torch.nn.Module:</p>
+<blockquote>
+<div><p>…</p>
+</div></blockquote>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name under which the algorithm function will be registered.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The decorator function to be used with algorithm functions.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>decorator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.fetch_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">fetch_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.fetch_module" title="Link to this definition"></a></dt>
+<dd><p>Get module with a given op name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – the input model.</p></li>
+<li><p><strong>op_name</strong> (<em>str</em>) – name of op.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>module (object).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.set_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">set_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">new_module</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.set_module" title="Link to this definition"></a></dt>
+<dd><p>Set module with a given op name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>object</em>) – the input model.</p></li>
+<li><p><strong>op_name</strong> (<em>str</em>) – name of op.</p></li>
+<li><p><strong>new_module</strong> (<em>object</em>) – the input model.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>module (object).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.get_model_info">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_model_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">white_module_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.get_model_info" title="Link to this definition"></a></dt>
+<dd><p>Get model info according to white_module_list.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.get_double_quant_config_dict">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_double_quant_config_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">double_quant_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'BNB_NF4'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.get_double_quant_config_dict" title="Link to this definition"></a></dt>
+<dd><p>Query config dict of double_quant according to double_quant_type.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>double_quant_type</strong> (<em>str</em><em>, </em><em>optional</em>) – double_quant type. Defaults to “BNB_NF4”.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.get_quantizer">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_quantizer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantizer_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.get_quantizer" title="Link to this definition"></a></dt>
+<dd><p>Get the quantizer.</p>
+<p>Initialize a quantizer or get <cite>quantizer</cite> attribute from model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – pytorch model.</p></li>
+<li><p><strong>quantizer_cls</strong> (<a class="reference internal" href="../../algorithms/base_algorithm/index.html#neural_compressor.torch.algorithms.base_algorithm.Quantizer" title="neural_compressor.torch.algorithms.base_algorithm.Quantizer"><em>Quantizer</em></a>) – quantizer class of a specific algorithm.</p></li>
+<li><p><strong>quant_config</strong> (<em>dict</em><em>, </em><em>optional</em>) – Specifies how to apply the algorithm on the given model.
+Defaults to None.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>quantizer object.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.postprocess_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">postprocess_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantizer</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.postprocess_model" title="Link to this definition"></a></dt>
+<dd><p>Process <cite>quantizer</cite> attribute of model according to current phase.</p>
+<p>In <cite>prepare</cite> phase, the <cite>quantizer</cite> is set as an attribute of the model
+to avoid redundant initialization during <cite>convert</cite> phase.</p>
+<p>In ‘convert’ or ‘quantize’ phase, the unused <cite>quantizer</cite> attribute is removed.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – pytorch model.</p></li>
+<li><p><strong>mode</strong> (<a class="reference internal" href="../../../common/utils/constants/index.html#neural_compressor.common.utils.constants.Mode" title="neural_compressor.common.utils.constants.Mode"><em>Mode</em></a>) – The mode of current phase, including ‘prepare’, ‘convert’ and ‘quantize’.</p></li>
+<li><p><strong>quantizer</strong> (<a class="reference internal" href="../../algorithms/base_algorithm/index.html#neural_compressor.torch.algorithms.base_algorithm.Quantizer" title="neural_compressor.torch.algorithms.base_algorithm.Quantizer"><em>Quantizer</em></a>) – quantizer object.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.dump_model_op_stats">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">dump_model_op_stats</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">mode</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tune_cfg</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.dump_model_op_stats" title="Link to this definition"></a></dt>
+<dd><p>Dump quantizable ops stats of model to user.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>mode</strong> (<em>object</em>) – quantization mode.</p></li>
+<li><p><strong>tune_cfg</strong> (<em>dict</em>) – quantization config</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.get_model_device">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_model_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.get_model_device" title="Link to this definition"></a></dt>
+<dd><p>Get the device.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>torch.nn.Module</em>) – the input model.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>a string.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>device (str)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.get_processor_type_from_user_config">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_processor_type_from_user_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">user_processor_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">neural_compressor.common.utils.ProcessorType</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.get_processor_type_from_user_config" title="Link to this definition"></a></dt>
+<dd><p>Get the processor type.</p>
+<p>Get the processor type based on the user configuration or automatically detect it based on the hardware.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>user_processor_type</strong> (<em>Optional</em><em>[</em><em>Union</em><em>[</em><em>str</em><em>, </em><a class="reference internal" href="../../../common/utils/utility/index.html#neural_compressor.common.utils.utility.ProcessorType" title="neural_compressor.common.utils.utility.ProcessorType"><em>ProcessorType</em></a><em>]</em><em>]</em>) – The user-specified processor type. Defaults to None.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The detected or user-specified processor type.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../../../common/utils/utility/index.html#neural_compressor.common.utils.utility.ProcessorType" title="neural_compressor.common.utils.utility.ProcessorType">ProcessorType</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><ul class="simple">
+<li><p><strong>AssertionError</strong> – If the user-specified processor type is not supported.</p></li>
+<li><p><strong>NotImplementedError</strong> – If the processor type is not recognized.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.dowload_hf_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">dowload_hf_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">repo_id</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cache_dir</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">repo_type</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">revision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.dowload_hf_model" title="Link to this definition"></a></dt>
+<dd><p>Download hugging face model from hf hub.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.load_empty_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">load_empty_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">pretrained_model_name_or_path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">cls</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.load_empty_model" title="Link to this definition"></a></dt>
+<dd><p>Load a empty model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.get_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">key</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.get_module" title="Link to this definition"></a></dt>
+<dd><p>Get module from model by key name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module</strong> (<em>torch.nn.Module</em>) – original model</p></li>
+<li><p><strong>key</strong> (<em>str</em>) – module name to be replaced</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.get_layer_names_in_block">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_layer_names_in_block</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">supported_types</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">SUPPORTED_LAYERS</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_quant_block_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.get_layer_names_in_block" title="Link to this definition"></a></dt>
+<dd><p>Retrieves the names of layers within each block of the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p><dl class="simple">
+<dt>A list of strings, where each string is the name of a layer</dt><dd><p>within a block of the model.</p>
+</dd>
+</dl>
+</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>list</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.to_dtype">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">to_dtype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.float32</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.to_dtype" title="Link to this definition"></a></dt>
+<dd><p>Moves input data to the specified data type.</p>
+<p>Args:
+input: The input data to be moved.
+dtype: The target data type.</p>
+<p>Returns:
+The input data on the specified data type.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.to_device">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">to_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">torch.device('cpu')</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.to_device" title="Link to this definition"></a></dt>
+<dd><p>Moves input data to the specified device.</p>
+<p>Args:
+input: The input data to be moved.
+device: The target device.</p>
+<p>Returns:
+The input data on the specified device.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.get_block_names">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_block_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.get_block_names" title="Link to this definition"></a></dt>
+<dd><p>Get the block names for transformers-like networks.</p>
+<p>Args:
+model: The model.</p>
+<p>Returns:
+block_names: A list whose elements are list of block’s layer names</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.validate_modules">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">validate_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_names</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.validate_modules" title="Link to this definition"></a></dt>
+<dd><p>Test a list of modules’ validity.</p>
+<p>Args:
+modules (list of str): List of strings to be validated.</p>
+<p>Returns:
+bool: True if all modules have equal length or not dependent, otherwise False.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.get_multimodal_block_names">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_multimodal_block_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_vision</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.get_multimodal_block_names" title="Link to this definition"></a></dt>
+<dd><p>Get the multimodal model block names for transformers-like networks.</p>
+<p>Args:
+model: The model.</p>
+<p>Returns:
+block_names: A list whose elements are list of block’s layer names</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.detect_device">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">detect_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.detect_device" title="Link to this definition"></a></dt>
+<dd><p>Detects the device to use for model execution (GPU, HPU, or CPU).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>device</strong> (<em>str</em><em>, </em><em>int</em><em>, </em><em>torch.device</em><em>, </em><em>optional</em>) – <ul class="simple">
+<li><p>If a string (‘cuda’, ‘cpu’, or ‘hpu’) or torch.device is provided, that device is selected.</p></li>
+<li><p>If an integer is provided, it treats it as a GPU device index.</p></li>
+<li><p>If None or ‘auto’, it automatically selects ‘cuda’ if available, ‘hpu’ if Habana is available,
+or falls back to ‘cpu’.</p></li>
+</ul>
+</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The selected device in string format (‘cuda:X’, ‘hpu’, or ‘cpu’).</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.find_matching_blocks">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">find_matching_blocks</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">all_blocks</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">to_quant_block_names</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.find_matching_blocks" title="Link to this definition"></a></dt>
+<dd><p>Find and return matching blocks in the model based on to_quant_block_names.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – The model (not used in this specific function but kept for completeness).</p></li>
+<li><p><strong>all_blocks</strong> – List of lists, where each inner list contains full block names in the model.</p></li>
+<li><p><strong>to_quant_block_names</strong> – Comma-separated string of target block names to match.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>List of lists containing full paths of matching blocks in the model.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>target_blocks</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.get_non_persistent_buffers">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_non_persistent_buffers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.get_non_persistent_buffers" title="Link to this definition"></a></dt>
+<dd><p>Get all non-persistent buffers in the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>model</strong> (<em>torch.nn.Module</em>) – PyTorch model</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dictionary containing all non-persistent buffers, {buffer_names: buffer_tensors}</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.load_non_persistent_buffers">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">load_non_persistent_buffers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">non_persistent_buffers</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.load_non_persistent_buffers" title="Link to this definition"></a></dt>
+<dd><p>Load all non-persistent buffers into the model.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – PyTorch model</p></li>
+<li><p><strong>non_persistent_buffers</strong> (<em>dict</em>) – A dictionary containing all non-persistent buffers, {buffer_names: buffer_tensors}</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.move_input_device">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">move_input_device</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">input</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">'cpu'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.move_input_device" title="Link to this definition"></a></dt>
+<dd><p>Auto mapping input to device for all kinds of format.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>input</strong> (<em>torch.tensor</em>) – input data</p></li>
+<li><p><strong>device</strong> (<em>str</em><em>, </em><em>optional</em>) – target device. Defaults to “cpu”.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>input data on target device</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>input (torch.tensor)</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.forward_wrapper">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">forward_wrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.forward_wrapper" title="Link to this definition"></a></dt>
+<dd><p>Model forward with device auto mapping.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – input model</p></li>
+<li><p><strong>input</strong> (<em>torch.tensor</em>) – input data</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>output data</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>output</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.utils.utility.get_enum_from_format">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_enum_from_format</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/v3.4/neural_compressor/torch/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.utils.utility.get_enum_from_format" title="Link to this definition"></a></dt>
+<dd><p>Make sure Save&amp;Load format is an Enum object.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f146c511fd0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

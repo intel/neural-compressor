@@ -1,0 +1,307 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">3.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/pytorch/nlp/huggingface_models/language-modeling/pruning/multi_cards/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+</section>
+<section id="single-gpu">
+<h1>Single GPU<a class="headerlink" href="#single-gpu" title="Link to this heading"></a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="mi">0</span>
+<span class="n">bash</span> <span class="n">run</span><span class="o">.</span><span class="n">sh</span> \
+    <span class="o">--</span><span class="n">model_name_or_path</span><span class="o">=</span><span class="n">facebook</span><span class="o">/</span><span class="n">opt</span><span class="o">-</span><span class="mi">125</span><span class="n">m</span> \
+    <span class="o">--</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">NeelNanda</span><span class="o">/</span><span class="n">pile</span><span class="o">-</span><span class="mi">10</span><span class="n">k</span> \
+    <span class="o">--</span><span class="n">block_size</span><span class="o">=</span><span class="mi">128</span> \
+    <span class="o">--</span><span class="n">output_dir</span><span class="o">=./</span><span class="n">test</span><span class="o">-</span><span class="n">clm</span> \
+    <span class="o">--</span><span class="n">pruning_type</span><span class="o">=</span><span class="n">magnitude</span> \
+    <span class="o">--</span><span class="n">pruning_pattern</span><span class="o">=</span><span class="mi">4</span><span class="n">x1</span> \
+    <span class="o">--</span><span class="n">pruning_frequency</span><span class="o">=</span><span class="mi">1000</span>
+</pre></div>
+</div>
+</section>
+<section id="multi-gpu">
+<h1>Multi GPU<a class="headerlink" href="#multi-gpu" title="Link to this heading"></a></h1>
+<p>We use <code class="docutils literal notranslate"><span class="pre">accelerate</span></code> and <code class="docutils literal notranslate"><span class="pre">deepspeed</span> <span class="pre">ZeRO</span></code> to conduct weight magnitude, snip pruning. Below are two usage examples: 1) magnitude pruning with ZeRO Stage-2, and 2) snip pruning with ZeRO Stage-3.</p>
+<section id="magnitude-pruning-with-zero-stage-2">
+<h2>Magnitude pruning with ZeRO Stage-2<a class="headerlink" href="#magnitude-pruning-with-zero-stage-2" title="Link to this heading"></a></h2>
+<section id="accelerate-deepspeed-plugin">
+<h3>Accelerate DeepSpeed Plugin<a class="headerlink" href="#accelerate-deepspeed-plugin" title="Link to this heading"></a></h3>
+<p>On your machine(s) just run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">accelerate</span> <span class="n">config</span>
+</pre></div>
+</div>
+<p>and answer the questions asked. It will ask whether you want to use a config file for DeepSpeed to which you should answer no. Then answer the following questions to generate a basic DeepSpeed config. This will generate a config file that will be used automatically to properly set the default options when doing</p>
+<p>For instance,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">compute_environment</span><span class="p">:</span> <span class="n">LOCAL_MACHINE</span>
+<span class="n">deepspeed_config</span><span class="p">:</span>
+ <span class="n">deepspeed_config_file</span><span class="p">:</span> <span class="n">config</span><span class="o">/</span><span class="n">zero_stage2_config</span><span class="o">.</span><span class="n">json</span>
+ <span class="n">zero3_init_flag</span><span class="p">:</span> <span class="n">true</span>
+<span class="n">distributed_type</span><span class="p">:</span> <span class="n">DEEPSPEED</span>
+<span class="n">fsdp_config</span><span class="p">:</span> <span class="p">{}</span>
+<span class="n">machine_rank</span><span class="p">:</span> <span class="mi">0</span>
+<span class="n">main_process_ip</span><span class="p">:</span> <span class="n">null</span>
+<span class="n">main_process_port</span><span class="p">:</span> <span class="n">null</span>
+<span class="n">main_training_function</span><span class="p">:</span> <span class="n">main</span>
+<span class="n">mixed_precision</span><span class="p">:</span> <span class="n">fp16</span>
+<span class="n">num_machines</span><span class="p">:</span> <span class="mi">1</span>
+<span class="n">num_processes</span><span class="p">:</span> <span class="mi">2</span>
+<span class="n">use_cpu</span><span class="p">:</span> <span class="n">false</span>
+</pre></div>
+</div>
+<p>with the contents of <code class="docutils literal notranslate"><span class="pre">config/zero_stage2_config.json</span></code> being:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;train_batch_size&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>
+  <span class="s2">&quot;train_micro_batch_size_per_gpu&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+  <span class="s2">&quot;gradient_accumulation_steps&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+  <span class="s2">&quot;fp16&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;min_loss_scale&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;opt_level&quot;</span><span class="p">:</span> <span class="s2">&quot;O2&quot;</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;zero_optimization&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="mi">2</span><span class="p">,</span>
+    <span class="s2">&quot;offload_param&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;device&quot;</span><span class="p">:</span> <span class="s2">&quot;cpu&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;offload_optimizer&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;device&quot;</span><span class="p">:</span> <span class="s2">&quot;cpu&quot;</span>
+    <span class="p">},</span>
+    <span class="s2">&quot;allgather_partitions&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;allgather_bucket_size&quot;</span><span class="p">:</span> <span class="mf">5e8</span><span class="p">,</span>
+    <span class="s2">&quot;contiguous_gradients&quot;</span><span class="p">:</span> <span class="n">true</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;optimizer&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;AdamW&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;torch_adam&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+      <span class="s2">&quot;adam_w_mode&quot;</span><span class="p">:</span> <span class="n">true</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;scheduler&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;WarmupDecayLR&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;warmup_min_lr&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+      <span class="s2">&quot;warmup_max_lr&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;warmup_num_steps&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;total_num_steps&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;warmup_type&quot;</span><span class="p">:</span> <span class="s2">&quot;cosine&quot;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+<section id="pruning">
+<h3>pruning<a class="headerlink" href="#pruning" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 2 gpu cards example</span>
+<span class="n">export</span> <span class="n">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span>
+<span class="n">bash</span> <span class="n">run_ds</span><span class="o">.</span><span class="n">sh</span> \
+    <span class="o">--</span><span class="n">model_name_or_path</span><span class="o">=</span><span class="n">facebook</span><span class="o">/</span><span class="n">opt</span><span class="o">-</span><span class="mi">125</span><span class="n">m</span> \
+    <span class="o">--</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">NeelNanda</span><span class="o">/</span><span class="n">pile</span><span class="o">-</span><span class="mi">10</span><span class="n">k</span> \
+    <span class="o">--</span><span class="n">block_size</span><span class="o">=</span><span class="mi">128</span> \
+    <span class="o">--</span><span class="n">output_dir</span><span class="o">=./</span><span class="n">test</span><span class="o">-</span><span class="n">clm</span> \
+    <span class="o">--</span><span class="n">pruning_type</span><span class="o">=</span><span class="n">magnitude</span> \
+    <span class="o">--</span><span class="n">pruning_pattern</span><span class="o">=</span><span class="mi">4</span><span class="n">x1</span> \
+    <span class="o">--</span><span class="n">pruning_frequency</span><span class="o">=</span><span class="mi">1000</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="snip-pruning-with-zero-stage-3">
+<h2>SNIP pruning with ZeRO Stage-3<a class="headerlink" href="#snip-pruning-with-zero-stage-3" title="Link to this heading"></a></h2>
+<p>To specify the accelerate use DeepSpeed ZeRO Stage-3. On your machine(s) just run:</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>accelerate<span class="w"> </span>config
+
+compute_environment:<span class="w"> </span>LOCAL_MACHINE
+deepspeed_config:
+<span class="w"> </span>deepspeed_config_file:<span class="w"> </span>config/zero_stage3_config.json
+<span class="w"> </span>zero3_init_flag:<span class="w"> </span><span class="nb">true</span>
+distributed_type:<span class="w"> </span>DEEPSPEED
+fsdp_config:<span class="w"> </span><span class="o">{}</span>
+machine_rank:<span class="w"> </span><span class="m">0</span>
+main_process_ip:<span class="w"> </span>null
+main_process_port:<span class="w"> </span>null
+main_training_function:<span class="w"> </span>main
+mixed_precision:<span class="w"> </span>fp16
+num_machines:<span class="w"> </span><span class="m">1</span>
+num_processes:<span class="w"> </span><span class="m">2</span>
+use_cpu:<span class="w"> </span><span class="nb">false</span>
+</pre></div>
+</div>
+<p>with the contents of <code class="docutils literal notranslate"><span class="pre">config/zero_stage3_config.json</span></code> being:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+  <span class="s2">&quot;train_batch_size&quot;</span><span class="p">:</span> <span class="mi">64</span><span class="p">,</span>
+  <span class="s2">&quot;train_micro_batch_size_per_gpu&quot;</span><span class="p">:</span> <span class="mi">8</span><span class="p">,</span>
+  <span class="s2">&quot;gradient_accumulation_steps&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+  <span class="s2">&quot;fp16&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;enabled&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;min_loss_scale&quot;</span><span class="p">:</span> <span class="mi">1</span><span class="p">,</span>
+    <span class="s2">&quot;opt_level&quot;</span><span class="p">:</span> <span class="s2">&quot;O2&quot;</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;zero_optimization&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;stage&quot;</span><span class="p">:</span> <span class="mi">3</span><span class="p">,</span>
+    <span class="s2">&quot;allgather_partitions&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+    <span class="s2">&quot;allgather_bucket_size&quot;</span><span class="p">:</span> <span class="mf">5e8</span><span class="p">,</span>
+    <span class="s2">&quot;contiguous_gradients&quot;</span><span class="p">:</span> <span class="n">true</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;optimizer&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;AdamW&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;lr&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;torch_adam&quot;</span><span class="p">:</span> <span class="n">true</span><span class="p">,</span>
+      <span class="s2">&quot;adam_w_mode&quot;</span><span class="p">:</span> <span class="n">true</span>
+    <span class="p">}</span>
+  <span class="p">},</span>
+  <span class="s2">&quot;scheduler&quot;</span><span class="p">:</span> <span class="p">{</span>
+    <span class="s2">&quot;type&quot;</span><span class="p">:</span> <span class="s2">&quot;WarmupDecayLR&quot;</span><span class="p">,</span>
+    <span class="s2">&quot;params&quot;</span><span class="p">:</span> <span class="p">{</span>
+      <span class="s2">&quot;warmup_min_lr&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span>
+      <span class="s2">&quot;warmup_max_lr&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;warmup_num_steps&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;total_num_steps&quot;</span><span class="p">:</span> <span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+      <span class="s2">&quot;warmup_type&quot;</span><span class="p">:</span> <span class="s2">&quot;cosine&quot;</span>
+    <span class="p">}</span>
+  <span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<section id="id1">
+<h3>Pruning<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>Note: As the ZeRO Stage-3 partitions all three model states(optimizer states, gradients, and parameters), please specify the <code class="docutils literal notranslate"><span class="pre">pruning_scope</span></code> as <code class="docutils literal notranslate"><span class="pre">local</span></code>. Choosing <code class="docutils literal notranslate"><span class="pre">global</span></code> requires gathering all parameters to update the mask, which compromises the benefits of ZeRO Stage-3.</p>
+</div></blockquote>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># 2 gpu cards example</span>
+<span class="n">export</span> <span class="n">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span><span class="mi">1</span>  <span class="n">USE_DEEPSPEED</span><span class="o">=</span><span class="mi">1</span>
+<span class="n">bash</span> <span class="n">run_ds_z3</span><span class="o">.</span><span class="n">sh</span> \
+    <span class="o">--</span><span class="n">model_name_or_path</span><span class="o">=</span><span class="n">facebook</span><span class="o">/</span><span class="n">opt</span><span class="o">-</span><span class="mi">125</span><span class="n">m</span> \
+    <span class="o">--</span><span class="n">dataset_name</span><span class="o">=</span><span class="n">NeelNanda</span><span class="o">/</span><span class="n">pile</span><span class="o">-</span><span class="mi">10</span><span class="n">k</span> \
+    <span class="o">--</span><span class="n">block_size</span><span class="o">=</span><span class="mi">128</span> \
+    <span class="o">--</span><span class="n">output_dir</span><span class="o">=./</span><span class="n">test</span><span class="o">-</span><span class="n">clm</span> \
+    <span class="o">--</span><span class="n">pruning_type</span><span class="o">=</span><span class="n">snip_momentum</span> \
+    <span class="o">--</span><span class="n">pruning_scope</span><span class="o">=</span><span class="n">local</span> \
+    <span class="o">--</span><span class="n">pruning_pattern</span><span class="o">=</span><span class="mi">4</span><span class="n">x1</span> \
+    <span class="o">--</span><span class="n">pruning_frequency</span><span class="o">=</span><span class="mi">1000</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f146e696390> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

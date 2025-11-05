@@ -1,0 +1,296 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DreamBooth training example &mdash; Intel® Neural Compressor 3.4 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../versions.html">3.4▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">DreamBooth training example</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../_sources/docs/source/examples/pytorch/diffusion_model/diffusers/dreambooth/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="dreambooth-training-example">
+<h1>DreamBooth training example<a class="headerlink" href="#dreambooth-training-example" title="Link to this heading"></a></h1>
+<p><a class="reference external" href="https://arxiv.org/abs/2208.12242">DreamBooth</a> is a method to personalize text2image models like stable diffusion given just a few(3~5) images of a subject.
+The <code class="docutils literal notranslate"><span class="pre">train_dreambooth.py</span></code> script shows how to implement the training procedure and adapt it for stable diffusion.</p>
+<section id="running-locally-with-pytorch">
+<h2>Running locally with PyTorch<a class="headerlink" href="#running-locally-with-pytorch" title="Link to this heading"></a></h2>
+<p>** Create Virtual Environment**</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>conda<span class="w"> </span>create<span class="w"> </span>-n<span class="w"> </span>dreambooth<span class="w"> </span><span class="nv">python</span><span class="o">=</span><span class="m">3</span>.8<span class="w"> </span>-y<span class="w"> </span>
+conda<span class="w"> </span>activate<span class="w"> </span>dreambooth
+</pre></div>
+</div>
+<section id="installing-the-dependencies">
+<h3>Installing the dependencies<a class="headerlink" href="#installing-the-dependencies" title="Link to this heading"></a></h3>
+<p>Before running the scripts, make sure to install the library’s training dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/huggingface/diffusers
+pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>-r<span class="w"> </span>requirements.txt<span class="w"> </span>--no-deps
+</pre></div>
+</div>
+</section>
+<section id="dog-toy-example">
+<h3>Dog toy example<a class="headerlink" href="#dog-toy-example" title="Link to this heading"></a></h3>
+<p>Now let’s get our dataset. For this example we will use some dog images: https://huggingface.co/datasets/diffusers/dog-example.</p>
+<p>Let’s first download it locally:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">huggingface_hub</span><span class="w"> </span><span class="kn">import</span> <span class="n">snapshot_download</span>
+
+<span class="n">local_dir</span> <span class="o">=</span> <span class="s2">&quot;./dog&quot;</span>
+<span class="n">snapshot_download</span><span class="p">(</span>
+    <span class="s2">&quot;diffusers/dog-example&quot;</span><span class="p">,</span>
+    <span class="n">local_dir</span><span class="o">=</span><span class="n">local_dir</span><span class="p">,</span> <span class="n">repo_type</span><span class="o">=</span><span class="s2">&quot;dataset&quot;</span><span class="p">,</span>
+    <span class="n">ignore_patterns</span><span class="o">=</span><span class="s2">&quot;.gitattributes&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>Official repository for the dataset of the Google paper DreamBooth: https://github.com/google/dreambooth</p>
+</section>
+<section id="finetuning-with-cpu-using-ipex">
+<h3>Finetuning With CPU using IPEX<a class="headerlink" href="#finetuning-with-cpu-using-ipex" title="Link to this heading"></a></h3>
+<p>The following script shows how to use CPU with BF16</p>
+<p><strong><em><strong>Note: Change the <code class="docutils literal notranslate"><span class="pre">resolution</span></code> to 768 if you are using the <a class="reference external" href="https://huggingface.co/stabilityai/stable-diffusion-2">stable-diffusion-2</a> 768x768 model.</strong></em></strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">MODEL_NAME</span><span class="o">=</span><span class="s2">&quot;CompVis/stable-diffusion-v1-4&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">INSTANCE_DIR</span><span class="o">=</span><span class="s2">&quot;dog&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OUTPUT_DIR</span><span class="o">=</span><span class="s2">&quot;path-to-save-model&quot;</span>
+
+<span class="c1"># recommend to use numactl to bind cores in Intel cpus for better performance</span>
+
+<span class="nv">OMP_NUM_THREADS</span><span class="o">=</span>&lt;physic_cores&gt;<span class="w"> </span>numactl<span class="w"> </span>-m<span class="w"> </span><span class="m">0</span><span class="w"> </span>-C<span class="w"> </span><span class="m">0</span>-&lt;physic_cores-1&gt;<span class="w"> </span>python<span class="w"> </span>train_dreambooth_ipex.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pretrained_model_name_or_path<span class="o">=</span><span class="nv">$MODEL_NAME</span><span class="w">  </span><span class="se">\</span>
+<span class="w">  </span>--instance_data_dir<span class="o">=</span><span class="nv">$INSTANCE_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_dir<span class="o">=</span><span class="nv">$OUTPUT_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--instance_prompt<span class="o">=</span><span class="s2">&quot;a photo of sks dog&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--resolution<span class="o">=</span><span class="m">512</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--train_batch_size<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--gradient_accumulation_steps<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--learning_rate<span class="o">=</span>5e-6<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_scheduler<span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_warmup_steps<span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max_train_steps<span class="o">=</span><span class="m">400</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--use_bf16<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--ipex
+</pre></div>
+</div>
+</section>
+<section id="training-with-prior-preservation-loss">
+<h3>Training with prior-preservation loss<a class="headerlink" href="#training-with-prior-preservation-loss" title="Link to this heading"></a></h3>
+<p>Prior-preservation is used to avoid overfitting and language-drift. Refer to the paper to learn more about it. For prior-preservation we first generate images using the model with a class prompt and then use those during training along with our data.
+According to the paper, it’s recommended to generate <code class="docutils literal notranslate"><span class="pre">num_epochs</span> <span class="pre">*</span> <span class="pre">num_samples</span></code> images for prior-preservation. 200-300 works well for most cases. The <code class="docutils literal notranslate"><span class="pre">num_class_images</span></code> flag sets the number of images to generate with the class prompt. You can place existing images in <code class="docutils literal notranslate"><span class="pre">class_data_dir</span></code>, and the training script will generate any additional images so that <code class="docutils literal notranslate"><span class="pre">num_class_images</span></code> are present in <code class="docutils literal notranslate"><span class="pre">class_data_dir</span></code> during training time.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">MODEL_NAME</span><span class="o">=</span><span class="s2">&quot;CompVis/stable-diffusion-v1-4&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">INSTANCE_DIR</span><span class="o">=</span><span class="s2">&quot;dog&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CLASS_DIR</span><span class="o">=</span><span class="s2">&quot;path-to-class-images&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OUTPUT_DIR</span><span class="o">=</span><span class="s2">&quot;path-to-save-model&quot;</span>
+
+<span class="nv">OMP_NUM_THREADS</span><span class="o">=</span>&lt;physic_cores&gt;<span class="w"> </span>numactl<span class="w"> </span>-m<span class="w"> </span><span class="m">0</span><span class="w"> </span>-C<span class="w"> </span><span class="m">0</span>-&lt;physic_cores-1&gt;<span class="w"> </span>python<span class="w"> </span>train_dreambooth_ipex.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pretrained_model_name_or_path<span class="o">=</span><span class="nv">$MODEL_NAME</span><span class="w">  </span><span class="se">\</span>
+<span class="w">  </span>--instance_data_dir<span class="o">=</span><span class="nv">$INSTANCE_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--class_data_dir<span class="o">=</span><span class="nv">$CLASS_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_dir<span class="o">=</span><span class="nv">$OUTPUT_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--with_prior_preservation<span class="w"> </span>--prior_loss_weight<span class="o">=</span><span class="m">1</span>.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--instance_prompt<span class="o">=</span><span class="s2">&quot;a photo of sks dog&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--class_prompt<span class="o">=</span><span class="s2">&quot;a photo of dog&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--resolution<span class="o">=</span><span class="m">512</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--train_batch_size<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--gradient_accumulation_steps<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--learning_rate<span class="o">=</span>5e-6<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_scheduler<span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_warmup_steps<span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--num_class_images<span class="o">=</span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max_train_steps<span class="o">=</span><span class="m">800</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--use_bf16<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--ipex
+</pre></div>
+</div>
+</section>
+<section id="with-gpu-using-accelerate">
+<h3>With GPU using accelerate<a class="headerlink" href="#with-gpu-using-accelerate" title="Link to this heading"></a></h3>
+<p>And initialize an <a class="reference external" href="https://github.com/huggingface/accelerate/">🤗Accelerate</a> environment with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>accelerate<span class="w"> </span>config
+</pre></div>
+</div>
+<p>Or for a default accelerate configuration without answering questions about your environment</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>accelerate<span class="w"> </span>config<span class="w"> </span>default
+</pre></div>
+</div>
+<p>When running <code class="docutils literal notranslate"><span class="pre">accelerate</span> <span class="pre">config</span></code>, if we specify torch compile mode to True there can be dramatic speedups.</p>
+<p>And launch the training using:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">MODEL_NAME</span><span class="o">=</span><span class="s2">&quot;CompVis/stable-diffusion-v1-4&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">INSTANCE_DIR</span><span class="o">=</span><span class="s2">&quot;dog&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OUTPUT_DIR</span><span class="o">=</span><span class="s2">&quot;path-to-save-model&quot;</span>
+
+accelerate<span class="w"> </span>launch<span class="w"> </span>train_dreambooth.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pretrained_model_name_or_path<span class="o">=</span><span class="nv">$MODEL_NAME</span><span class="w">  </span><span class="se">\</span>
+<span class="w">  </span>--instance_data_dir<span class="o">=</span><span class="nv">$INSTANCE_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_dir<span class="o">=</span><span class="nv">$OUTPUT_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--instance_prompt<span class="o">=</span><span class="s2">&quot;a photo of sks dog&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--resolution<span class="o">=</span><span class="m">512</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--train_batch_size<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--gradient_accumulation_steps<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--learning_rate<span class="o">=</span>5e-6<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_scheduler<span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_warmup_steps<span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max_train_steps<span class="o">=</span><span class="m">400</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--push_to_hub
+</pre></div>
+</div>
+</section>
+<section id="id1">
+<h3>Training with prior-preservation loss<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">MODEL_NAME</span><span class="o">=</span><span class="s2">&quot;CompVis/stable-diffusion-v1-4&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">INSTANCE_DIR</span><span class="o">=</span><span class="s2">&quot;dog&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">CLASS_DIR</span><span class="o">=</span><span class="s2">&quot;path-to-class-images&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OUTPUT_DIR</span><span class="o">=</span><span class="s2">&quot;path-to-save-model&quot;</span>
+
+accelerate<span class="w"> </span>launch<span class="w"> </span>train_dreambooth.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pretrained_model_name_or_path<span class="o">=</span><span class="nv">$MODEL_NAME</span><span class="w">  </span><span class="se">\</span>
+<span class="w">  </span>--instance_data_dir<span class="o">=</span><span class="nv">$INSTANCE_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--class_data_dir<span class="o">=</span><span class="nv">$CLASS_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_dir<span class="o">=</span><span class="nv">$OUTPUT_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--with_prior_preservation<span class="w"> </span>--prior_loss_weight<span class="o">=</span><span class="m">1</span>.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--instance_prompt<span class="o">=</span><span class="s2">&quot;a photo of sks dog&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--class_prompt<span class="o">=</span><span class="s2">&quot;a photo of dog&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--resolution<span class="o">=</span><span class="m">512</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--train_batch_size<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--gradient_accumulation_steps<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--learning_rate<span class="o">=</span>5e-6<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_scheduler<span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_warmup_steps<span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--num_class_images<span class="o">=</span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max_train_steps<span class="o">=</span><span class="m">800</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--push_to_hub
+</pre></div>
+</div>
+</section>
+<section id="inference">
+<h3>Inference<a class="headerlink" href="#inference" title="Link to this heading"></a></h3>
+<p>Once you have trained a model using the above command, you can run inference simply using the <code class="docutils literal notranslate"><span class="pre">StableDiffusionPipeline</span></code>. Make sure to include the <code class="docutils literal notranslate"><span class="pre">identifier</span></code> (e.g. sks in above example) in your prompt.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">diffusers</span><span class="w"> </span><span class="kn">import</span> <span class="n">StableDiffusionPipeline</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="n">model_id</span> <span class="o">=</span> <span class="s2">&quot;path-to-your-trained-model&quot;</span>
+<span class="c1"># use gpu</span>
+<span class="c1">#pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to(&quot;cuda&quot;)</span>
+<span class="n">pipe</span> <span class="o">=</span> <span class="n">StableDiffusionPipeline</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_id</span><span class="p">)</span>
+<span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;A photo of sks dog in a bucket&quot;</span>
+<span class="n">image</span> <span class="o">=</span> <span class="n">pipe</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">num_inference_steps</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">guidance_scale</span><span class="o">=</span><span class="mf">7.5</span><span class="p">)</span><span class="o">.</span><span class="n">images</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="n">image</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;dog-bucket.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="inference-from-a-training-checkpoint">
+<h3>Inference from a training checkpoint<a class="headerlink" href="#inference-from-a-training-checkpoint" title="Link to this heading"></a></h3>
+<p>You can also perform inference from one of the checkpoints saved during the training process, if you used the <code class="docutils literal notranslate"><span class="pre">--checkpointing_steps</span></code> argument. Please, refer to <a class="reference external" href="https://huggingface.co/docs/diffusers/main/en/training/dreambooth#performing-inference-using-a-saved-checkpoint">the documentation</a> to see how to do it.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f1466d16420> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

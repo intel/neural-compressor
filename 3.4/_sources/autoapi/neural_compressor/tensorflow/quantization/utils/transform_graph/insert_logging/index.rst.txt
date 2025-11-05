@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.transform_graph.insert_logging
+==============================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.transform_graph.insert_logging
+
+.. autoapi-nested-parse::
+
+   Insert logging graph transformation.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.transform_graph.insert_logging.InsertLogging
+
+
+Module Contents
+---------------
+
+.. py:class:: InsertLogging(input_pb, ops=[], node_name_list=[], show_name=True, show_op=False, first_n=-1, summarize=1024, message='', dump_fp32=False)
+
+
+
+   Insert logging graph transformation.
+
+
