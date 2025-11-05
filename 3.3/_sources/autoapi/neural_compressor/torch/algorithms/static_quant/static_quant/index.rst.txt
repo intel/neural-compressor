@@ -1,0 +1,29 @@
+neural_compressor.torch.algorithms.static_quant.static_quant
+============================================================
+
+.. py:module:: neural_compressor.torch.algorithms.static_quant.static_quant
+
+.. autoapi-nested-parse::
+
+   The quantizer using StaticQuant path.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.static_quant.static_quant.StaticQuantQuantizer
+
+
+Module Contents
+---------------
+
+.. py:class:: StaticQuantQuantizer(quant_config: collections.OrderedDict = {})
+
+
+
+   The quantizer using Static Quant.
+
+

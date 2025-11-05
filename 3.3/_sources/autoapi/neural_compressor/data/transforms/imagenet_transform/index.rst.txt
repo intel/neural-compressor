@@ -1,0 +1,179 @@
+neural_compressor.data.transforms.imagenet_transform
+====================================================
+
+.. py:module:: neural_compressor.data.transforms.imagenet_transform
+
+.. autoapi-nested-parse::
+
+   Neural Compressor built-in imagenet transforms.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.data.transforms.imagenet_transform.QuantizedInput
+   neural_compressor.data.transforms.imagenet_transform.LabelShift
+   neural_compressor.data.transforms.imagenet_transform.ParseDecodeImagenet
+   neural_compressor.data.transforms.imagenet_transform.ParseDecodeImagenetTransform
+   neural_compressor.data.transforms.imagenet_transform.TensorflowTransposeLastChannel
+   neural_compressor.data.transforms.imagenet_transform.TensorflowShiftRescale
+   neural_compressor.data.transforms.imagenet_transform.TensorflowResizeCropImagenetTransform
+   neural_compressor.data.transforms.imagenet_transform.BilinearImagenetTransform
+   neural_compressor.data.transforms.imagenet_transform.OnnxBilinearImagenetTransform
+   neural_compressor.data.transforms.imagenet_transform.ONNXResizeCropImagenetTransform
+   neural_compressor.data.transforms.imagenet_transform.ResizeWithAspectRatio
+
+
+Module Contents
+---------------
+
+.. py:class:: QuantizedInput(dtype, scale=None)
+
+
+
+   Convert the dtype of input to quantize it.
+
+   :param dtype: desired image dtype, support 'uint8', 'int8'
+   :type dtype: str
+   :param scale: scaling ratio of each point in image
+   :type scale: float, default=None
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: LabelShift(label_shift=0)
+
+
+
+   Convert label to label - label_shift.
+
+   :param label_shift: number of label shift
+   :type label_shift: int, default=0
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: ParseDecodeImagenet
+
+   Parse features in Example proto.
+
+   :returns: tuple of parsed image and label
+
+
+.. py:class:: ParseDecodeImagenetTransform
+
+
+
+   Imagenet decoding will be performed automatically from Neural Compressor v1.4.
+
+   :returns: sample
+
+
+.. py:class:: TensorflowTransposeLastChannel
+
+
+
+   Transpose NHWC to NCHW.
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: TensorflowShiftRescale
+
+
+
+   Label shift by 1 and rescale.
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: TensorflowResizeCropImagenetTransform(height, width, random_crop=False, resize_side=256, resize_method='bilinear', random_flip_left_right=False, mean_value=[0.0, 0.0, 0.0], scale=1.0, data_format='channels_last', subpixels='RGB')
+
+
+
+   Combination of a series of transforms which is applicable to images in Imagenet.
+
+   :param height: Height of the result
+   :type height: int
+   :param width: Width of the result
+   :type width: int
+   :param random_crop: whether to random crop
+   :type random_crop: bool, default=False
+   :param resize_side: desired shape after resize operation
+   :type resize_side: int, default=256
+   :param random_flip_left_right: whether to random flip left and right
+   :type random_flip_left_right: bool, default=False
+   :param mean_value: means for each channel
+   :type mean_value: list, default=[0.0,0.0,0.0]
+   :param scale: std value
+   :type scale: float, default=1.0
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: BilinearImagenetTransform(height, width, central_fraction=0.875, mean_value=[0.0, 0.0, 0.0], scale=1.0)
+
+
+
+   Combination of a series of transforms which is applicable to images in Imagenet.
+
+   :param height: Height of the result
+   :param width: Width of the result
+   :param central_fraction: fraction of size to crop
+   :type central_fraction: float, default=0.875
+   :param mean_value: means for each channel
+   :type mean_value: list, default=[0.0,0.0,0.0]
+   :param scale: std value
+   :type scale: float, default=1.0
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: OnnxBilinearImagenetTransform(height, width, central_fraction=0.875, mean_value=[0.0, 0.0, 0.0], scale=1.0)
+
+
+
+   Combination of a series of transforms which is applicable to images in Imagenet.
+
+   :param height: Height of the result
+   :param width: Width of the result
+   :param central_fraction: fraction of size to crop
+   :type central_fraction: float, default=0.875
+   :param mean_value: means for each channel
+   :type mean_value: list, default=[0.0,0.0,0.0]
+   :param scale: std value
+   :type scale: float, default=1.0
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: ONNXResizeCropImagenetTransform(height, width, random_crop=False, resize_side=256, mean_value=[0.0, 0.0, 0.0], std_value=[0.229, 0.224, 0.225], resize_method='bilinear', data_format='channels_last', subpixels='RGB')
+
+
+
+   Combination of a series of transforms which is applicable to images in Imagenet.
+
+   :param height: Height of the result
+   :param width: Width of the result
+   :param central_fraction: fraction of size to crop
+   :type central_fraction: float, default=0.875
+   :param mean_value: means for each channel
+   :type mean_value: list, default=[0.0,0.0,0.0]
+   :param scale: std value
+   :type scale: float, default=1.0
+
+   :returns: tuple of processed image and label
+
+
+.. py:class:: ResizeWithAspectRatio(height, width, scale=87.5, inter_pol=cv2.INTER_AREA)
+
+
+
+   Resize the image with aspect ratio.
+
+   :returns: image and label
+
+

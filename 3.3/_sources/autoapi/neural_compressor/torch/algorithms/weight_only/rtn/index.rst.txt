@@ -1,0 +1,29 @@
+neural_compressor.torch.algorithms.weight_only.rtn
+==================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.rtn
+
+.. autoapi-nested-parse::
+
+   RTN quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.rtn.RTNQuantizer
+
+
+Module Contents
+---------------
+
+.. py:class:: RTNQuantizer(quant_config: collections.OrderedDict = {})
+
+
+
+   RTN Quantizer.
+
+

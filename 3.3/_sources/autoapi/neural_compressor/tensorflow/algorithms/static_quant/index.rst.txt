@@ -1,0 +1,21 @@
+neural_compressor.tensorflow.algorithms.static_quant
+====================================================
+
+.. py:module:: neural_compressor.tensorflow.algorithms.static_quant
+
+.. autoapi-nested-parse::
+
+   Initialize classes of static quant algorithm.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/tensorflow/algorithms/static_quant/keras/index
+   /autoapi/neural_compressor/tensorflow/algorithms/static_quant/tensorflow/index
+
+

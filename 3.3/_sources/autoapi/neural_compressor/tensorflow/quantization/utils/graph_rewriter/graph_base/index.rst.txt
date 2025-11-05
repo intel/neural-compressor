@@ -1,0 +1,32 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base
+=========================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base
+
+.. autoapi-nested-parse::
+
+   Graph Rewrite Base Class.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.graph_rewriter.graph_base.GraphRewriterBase
+
+
+Module Contents
+---------------
+
+.. py:class:: GraphRewriterBase(model)
+
+   Graph Rewrite Base class.
+
+   We abstract this base class and define the interface only.
+
+   :param object: the input model to be converted.
+   :type object: model
+
+

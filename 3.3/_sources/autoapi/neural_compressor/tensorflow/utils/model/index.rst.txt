@@ -1,0 +1,35 @@
+neural_compressor.tensorflow.utils.model
+========================================
+
+.. py:module:: neural_compressor.tensorflow.utils.model
+
+.. autoapi-nested-parse::
+
+   The Model API for wrapping all TF model formats.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.utils.model.TensorflowGlobalConfig
+   neural_compressor.tensorflow.utils.model.Model
+
+
+Module Contents
+---------------
+
+.. py:class:: TensorflowGlobalConfig
+
+   A global config class for setting framework specific information.
+
+
+.. py:class:: Model
+
+
+
+   A wrapper to construct a Neural Compressor TF Model.
+
+

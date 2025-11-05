@@ -1,0 +1,73 @@
+neural_compressor.torch.utils.block_wise
+========================================
+
+.. py:module:: neural_compressor.torch.utils.block_wise
+
+.. autoapi-nested-parse::
+
+   This utility is for block-wise calibration of LLMs.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.utils.block_wise.get_block_prefix
+   neural_compressor.torch.utils.block_wise.replace_forward
+   neural_compressor.torch.utils.block_wise.recover_forward
+   neural_compressor.torch.utils.block_wise.block_wise_calibration
+
+
+Module Contents
+---------------
+
+.. py:function:: get_block_prefix(model)
+
+   Get prefix and number of attention blocks of transformer models.
+
+   :param model: input model
+   :type model: torch.nn.Module
+
+   :returns: block_list name in model
+             block_num(int): number of block in block_list
+   :rtype: block_prefix(str)
+
+
+.. py:function:: replace_forward(model)
+
+   Replace forward to get the input args and kwargs of first block for AWQ algorithm.
+
+   :param model: input model.
+   :type model: torch.nn.Module
+
+   :raises ValueError: to avoid inference of rest parts in model.
+
+   :returns: model with replaced forward.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: recover_forward(model)
+
+   Recover model and block forward for AWQ algorithm.
+
+   :param model: input model.
+   :type model: torch.nn.Module
+
+   :returns: model with recovered forward.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: block_wise_calibration(model, dataloader=None, data=None, inference_dtype=torch.bfloat16)
+
+   Calibration model on hpu block-by-block to reduce device memory usage.
+
+   :param model: prepared model.
+   :type model: torch.nn.Module
+   :param dataloader: dataloader.
+   :type dataloader: obj
+   :param data: one data.
+   :type data: obj
+
+

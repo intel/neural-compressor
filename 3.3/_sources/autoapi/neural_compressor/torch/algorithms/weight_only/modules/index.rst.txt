@@ -1,0 +1,85 @@
+neural_compressor.torch.algorithms.weight_only.modules
+======================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.modules
+
+.. autoapi-nested-parse::
+
+   Torch.nn.Module Class Definition.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.modules.QDQLayer
+   neural_compressor.torch.algorithms.weight_only.modules.UnpackedWeightOnlyLinearParams
+   neural_compressor.torch.algorithms.weight_only.modules.WeightOnlyLinear
+   neural_compressor.torch.algorithms.weight_only.modules.INCWeightOnlyLinear
+   neural_compressor.torch.algorithms.weight_only.modules.HPUWeightOnlyLinear
+   neural_compressor.torch.algorithms.weight_only.modules.FakeAffineTensorQuantFunction
+   neural_compressor.torch.algorithms.weight_only.modules.TEQLinearFakeQuant
+   neural_compressor.torch.algorithms.weight_only.modules.MulLinear
+
+
+Module Contents
+---------------
+
+.. py:class:: QDQLayer(module, input_scale=None)
+
+
+
+   Quantized and dequantized layer.
+
+
+.. py:class:: UnpackedWeightOnlyLinearParams(unpack_weight, scales, unpack_zp, **kwargs)
+
+
+
+   Contains all unpacked weight values.
+
+
+.. py:class:: WeightOnlyLinear(in_features, out_features, dtype, bits, group_size, device)
+
+
+
+   Base Weight Only Linear.
+
+
+.. py:class:: INCWeightOnlyLinear(in_features, out_features, dtype='int', bits=4, group_size=32, zp=False, bias=False, scale_dtype=torch.float32, compression_dtype=torch.int32, compression_dim=1, g_idx=False, device='cpu', use_optimum_format=True, **kwargs)
+
+
+
+   INC Weight Only Linear.
+
+
+.. py:class:: HPUWeightOnlyLinear(in_features, out_features, dtype='int', bits=4, group_size=32, zp=False, bias=False, scale_dtype=torch.bfloat16, compression_dtype=torch.int32, compression_dim=1, g_idx=False, device='hpu', use_optimum_format=True, **kwargs)
+
+
+
+   Weight Only Linear for HPU device.
+
+
+.. py:class:: FakeAffineTensorQuantFunction
+
+
+
+   Fake version of affine quantization.
+
+
+.. py:class:: TEQLinearFakeQuant(orig_layer, alpha=None, num_bits=4, group_size=-1, scheme='asym')
+
+
+
+   Wrapper quantization linear.
+
+
+.. py:class:: MulLinear(module, input_scale=None)
+
+
+
+   Linear wrapper to apply scale to input.
+
+

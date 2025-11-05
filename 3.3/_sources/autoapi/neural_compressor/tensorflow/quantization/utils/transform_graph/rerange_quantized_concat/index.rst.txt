@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.transform_graph.rerange_quantized_concat
+========================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.transform_graph.rerange_quantized_concat
+
+.. autoapi-nested-parse::
+
+   ConcatV2 rerange transform.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.transform_graph.rerange_quantized_concat.RerangeQuantizedConcat
+
+
+Module Contents
+---------------
+
+.. py:class:: RerangeQuantizedConcat(input_pb, device, performance_only=False)
+
+
+
+   This class implements the rerange_quantize concat graph transform.
+
+

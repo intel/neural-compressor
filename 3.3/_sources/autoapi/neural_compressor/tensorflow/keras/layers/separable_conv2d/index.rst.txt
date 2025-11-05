@@ -1,0 +1,42 @@
+neural_compressor.tensorflow.keras.layers.separable_conv2d
+==========================================================
+
+.. py:module:: neural_compressor.tensorflow.keras.layers.separable_conv2d
+
+.. autoapi-nested-parse::
+
+   Initialize custom separable conv2d layers for Keras quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.keras.layers.separable_conv2d.QSeparableConv2D
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.keras.layers.separable_conv2d.initialize_int8_separable_conv2d
+
+
+Module Contents
+---------------
+
+.. py:class:: QSeparableConv2D(filters, kernel_size, strides=(1, 1), padding='valid', data_format=None, dilation_rate=(1, 1), depth_multiplier=1, activation=None, use_bias=True, depthwise_initializer='glorot_uniform', pointwise_initializer='glorot_uniform', bias_initializer='zeros', depthwise_regularizer=None, pointwise_regularizer=None, bias_regularizer=None, activity_regularizer=None, depthwise_constraint=None, pointwise_constraint=None, bias_constraint=None, act_min_value=None, act_max_value=None, weight_min_value=None, weight_max_value=None, granularity='per_tensor', quant_status='calib', quant_mode='SCALED', quant_T='s8', quant_round_mode='HALF_AWAY_FROM_ZERO', quant_narrow_range=False, quant_axis=None, **kwargs)
+
+
+
+   The custom quantized SeparableConv2D layer.
+
+
+.. py:function:: initialize_int8_separable_conv2d(fp32_layer, q_config)
+
+   Initialize int8 separable conv2d.
+
+

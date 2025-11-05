@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_pooling
+===================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_pooling
+
+.. autoapi-nested-parse::
+
+   Quantize the AvgPool/MaxPool.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_pooling.FuseNodeStartWithPooling
+
+
+Module Contents
+---------------
+
+.. py:class:: FuseNodeStartWithPooling(**kwargs)
+
+
+
+   Quantize the AvgPool and MaxPool.
+
+

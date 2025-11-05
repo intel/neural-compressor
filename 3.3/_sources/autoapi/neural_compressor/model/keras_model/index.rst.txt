@@ -1,0 +1,29 @@
+neural_compressor.model.keras_model
+===================================
+
+.. py:module:: neural_compressor.model.keras_model
+
+.. autoapi-nested-parse::
+
+   Class for Keras model.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.model.keras_model.KerasModel
+
+
+Module Contents
+---------------
+
+.. py:class:: KerasModel(model, **kwargs)
+
+
+
+   Build Keras model.
+
+

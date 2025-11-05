@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.post_quantized_op_cse
+=========================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.post_quantized_op_cse
+
+.. autoapi-nested-parse::
+
+   Post CSE Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.graph_rewriter.int8.post_quantized_op_cse.PostCseOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: PostCseOptimizer(model)
+
+
+
+   Remove duplicated nodes like shared quantizev2 and const to decrease the output model size.
+
+

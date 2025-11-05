@@ -1,0 +1,23 @@
+neural_compressor.algorithm
+===========================
+
+.. py:module:: neural_compressor.algorithm
+
+.. autoapi-nested-parse::
+
+   Fetch all files and init all algorithms.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/algorithm/algorithm/index
+   /autoapi/neural_compressor/algorithm/fast_bias_correction/index
+   /autoapi/neural_compressor/algorithm/smooth_quant/index
+   /autoapi/neural_compressor/algorithm/weight_correction/index
+
+

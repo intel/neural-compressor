@@ -1,0 +1,52 @@
+neural_compressor.torch.algorithms.pt2e_quant.utility
+=====================================================
+
+.. py:module:: neural_compressor.torch.algorithms.pt2e_quant.utility
+
+.. autoapi-nested-parse::
+
+   Utility functions for PT2E quantization.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.pt2e_quant.utility.create_quant_spec_from_config
+   neural_compressor.torch.algorithms.pt2e_quant.utility.create_xiq_quantizer_from_pt2e_config
+
+
+Module Contents
+---------------
+
+.. py:function:: create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=False) -> torch.ao.quantization.quantizer.QuantizationSpec
+
+   Create a quantization specification based on the given configuration.
+
+   :param dtype: The desired data type for quantization. Valid options are "int8" and "uint8".
+   :type dtype: str
+   :param sym: Whether to use symmetric quantization or not.
+   :type sym: bool
+   :param granularity: The granularity of quantization. Valid options are "per_channel" and "per_tensor".
+   :type granularity: str
+   :param algo: The algorithm to use for quantization. Valid options are "placeholder", "minmax", and "kl".
+   :type algo: str
+   :param is_dynamic: Whether to use dynamic quantization or not. Defaults to False.
+   :type is_dynamic: bool, optional
+
+   :returns: The created quantization specification.
+   :rtype: QuantizationSpec
+
+
+.. py:function:: create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> torch.ao.quantization.quantizer.x86_inductor_quantizer.X86InductorQuantizer
+
+   Creates an instance of X86InductorQuantizer based on the given configuration.
+
+   :param config: The configuration object containing the quantization settings.
+   :param is_dynamic: A boolean indicating whether dynamic quantization is enabled.
+
+   :returns: An instance of X86InductorQuantizer initialized with the provided configuration.
+
+

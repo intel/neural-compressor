@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_matmul
+==================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_matmul
+
+.. autoapi-nested-parse::
+
+   Quantize MatMul/BatchMatMul/BatchMatMulV2.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.quantize_graph.qdq.fuse_qdq_matmul.FuseNodeStartWithMatmul
+
+
+Module Contents
+---------------
+
+.. py:class:: FuseNodeStartWithMatmul(**kwargs)
+
+
+
+   Quantize MatMul/BatchMatMul/BatchMatMulV2 and apply the fusion.
+
+

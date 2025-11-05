@@ -1,0 +1,22 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq
+==================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.qdq
+
+.. autoapi-nested-parse::
+
+   Tensorflow QDQ Graph Rewriters.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/qdq/insert_qdq_pattern/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/qdq/merge_duplicated_qdq/index
+   /autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/qdq/share_qdq_y_pattern/index
+
+
