@@ -1,0 +1,73 @@
+neural_compressor.torch.algorithms.weight_only.hqq.qtensor
+==========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.qtensor
+
+.. autoapi-nested-parse::
+
+   QTensor for HQQ.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensorMetaInfo
+   neural_compressor.torch.algorithms.weight_only.hqq.qtensor.QTensor
+
+
+Module Contents
+---------------
+
+.. py:class:: QTensorMetaInfo
+
+   Represents the meta information of a quantized tensor.
+
+   .. attribute:: nbits
+
+      The number of bits used for quantization.
+
+      :type: int
+
+   .. attribute:: group_size
+
+      The size of the quantization group.
+
+      :type: int
+
+   .. attribute:: shape
+
+      The shape of the tensor.
+
+      :type: Tuple
+
+   .. attribute:: axis
+
+      The axis along which the tensor is quantized.
+
+      :type: int
+
+   .. attribute:: packing
+
+      Indicates whether the tensor is packed.
+
+      :type: bool
+
+
+.. py:class:: QTensor(val, scale=None, zero=None, meta_info=None)
+
+   Represents a quantized tensor.
+
+   .. rubric:: Example
+
+   val: torch.Tensor
+   scale:
+       val: torch.Tensor
+       scale: torch.Tensor
+       zero: torch.Tensor
+   zero:
+       torch.Tensor
+
+

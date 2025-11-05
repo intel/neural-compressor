@@ -1,0 +1,401 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">3.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document describes the step-by-step instructions to run large language models (LLMs) on 4th Gen Intel® Xeon® Scalable Processor (codenamed Sapphire Rapids) with PyTorch and Intel® Extension for PyTorch.</p>
+<p>The script <code class="docutils literal notranslate"><span class="pre">run_clm_no_trainer.py</span></code> supports <code class="docutils literal notranslate"><span class="pre">GPTJ</span></code>, <code class="docutils literal notranslate"><span class="pre">OPT</span></code>, <code class="docutils literal notranslate"><span class="pre">LLaMA2</span></code>, <code class="docutils literal notranslate"><span class="pre">BLOOM</span></code> and <code class="docutils literal notranslate"><span class="pre">Falcon</span></code> quantization and validates last word prediction accuracy with <a class="reference external" href="https://github.com/EleutherAI/lm-evaluation-harness.git">lm_eval</a> now, and we are adding more models.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="create-environment">
+<h2>1. Create Environment<a class="headerlink" href="#create-environment" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Installation</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<p>Here is how to run the scripts:</p>
+<p><strong>Causal Language Modeling (CLM)</strong></p>
+<p><code class="docutils literal notranslate"><span class="pre">run_clm_no_trainer.py</span></code> quantizes the large language models using the dataset <a class="reference external" href="https://huggingface.co/datasets/NeelNanda/pile-10k">NeelNanda/pile-10k</a> calibration and validates <code class="docutils literal notranslate"><span class="pre">lambada_openai</span></code>, <code class="docutils literal notranslate"><span class="pre">piqa</span></code>, <code class="docutils literal notranslate"><span class="pre">winogrande</span></code>, <code class="docutils literal notranslate"><span class="pre">hellaswag</span></code> and other datasets accuracy provided by lm_eval, an example command is as follows.</p>
+<section id="gpt-j-6b">
+<h2>GPT-J-6b<a class="headerlink" href="#gpt-j-6b" title="Link to this heading"></a></h2>
+<section id="quantization">
+<h3>Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># &quot;--sq&quot; is used to enable smooth quant</span>
+<span class="c1"># &quot;--int8_bf16_mixed&quot; is used to enable int8-bf16 mixed mode for platform that natively supports bf16</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>EleutherAI/gpt-j-6B<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--alpha<span class="w"> </span><span class="m">1</span>.0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ipex<span class="w"> </span>
+</pre></div>
+</div>
+<p><strong>Notes</strong>: Smooth quantization here is based on torch.jit. Without past key value in example_inputs, the quantized model cannot be used for text-generation. For text-generation task, please go to <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization">link</a></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># &quot;--approach weight_only&quot; is used to enable weight only quantization.</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>EleutherAI/gpt-j-6B<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--approach<span class="w"> </span>weight_only<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_scheme<span class="w"> </span>asym<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>RTN<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_enable_mse_search<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span>
+
+<span class="c1"># &quot;--woq_algo GPTQ&quot; is used to enable GPTQ algorithms</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>EleutherAI/gpt-j-6B<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset<span class="w"> </span>NeelNanda/pile-10k<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--seed<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--approach<span class="w"> </span>weight_only<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gptq_pad_max_length<span class="w"> </span><span class="m">2048</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gptq_use_max_length
+</pre></div>
+</div>
+<p><strong>Notes</strong>: Weight-only quantization based on fake quantization is supported in preview, including RTN, GPTQ[1], AWQ[2], TEQ algorithms. For more details, please refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_weight_only.html">link</a>. Our GPTQ API support various CLMs including GPTJ, OPTs, Blooms, Llamas, Falcons, MPTs, ChatGLMs, etc. Simply replace the “–model” argument with other models to quantize different CLMs with GPTQ.</p>
+</section>
+<section id="accuracy-with-lm-eval">
+<h3>Accuracy with lm_eval<a class="headerlink" href="#accuracy-with-lm-eval" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># FP32 Accuracy</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>EleutherAI/gpt-j-6B<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--approach<span class="w"> </span>weight_only<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">112</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span><span class="s2">&quot;lambada_openai&quot;</span><span class="se">\</span>
+<span class="w">    </span>--int8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span><span class="w">  </span><span class="c1"># load int8 model</span>
+
+<span class="c1"># to validate FP32 model, please remove &quot;--int8&quot; and &quot;--output_dir&quot;.</span>
+<span class="c1"># to validate int8 model generated with `--sq`, please remove &quot;--approach weight_only&quot;.</span>
+<span class="c1"># to validate the int8 model quantized with ipex, please include &quot;--ipex&quot;.</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="opt-1-3b-2-7b-6-7b">
+<h2>OPT-1.3b/2.7b/6.7b<a class="headerlink" href="#opt-1-3b-2-7b-6-7b" title="Link to this heading"></a></h2>
+<section id="id1">
+<h3>Quantization<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># &quot;--sq&quot; is used to enable smooth quant</span>
+<span class="c1"># &quot;--int8_bf16_mixed&quot; is used to enable int8-bf16 mixed mode for platform that natively supports bf16</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>facebook/opt-2.7b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--alpha<span class="w"> </span><span class="m">0</span>.5<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ipex<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--int8_bf16_mixed<span class="w"> </span>
+
+<span class="c1"># &quot;--woq_algo GPTQ&quot; is used to enable GPTQ algorithms</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>facebook/opt-1.3b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset<span class="w"> </span>NeelNanda/pile-10k<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--seed<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--approach<span class="w"> </span>weight_only<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gptq_pad_max_length<span class="w"> </span><span class="m">2048</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gptq_use_max_length
+</pre></div>
+</div>
+</section>
+<section id="id2">
+<h3>Accuracy with lm_eval<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>facebook/opt-2.7b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--approach<span class="w"> </span>weight_only<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">112</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span><span class="s2">&quot;lambada_openai&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--int8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span><span class="w">  </span><span class="c1"># load int8 model</span>
+
+<span class="c1"># to validate FP32 model, please remove &quot;--int8&quot; and &quot;--output_dir&quot;.</span>
+<span class="c1"># to validate int8 model generated with `--sq`, please remove &quot;--approach weight_only&quot;.</span>
+<span class="c1"># to validate the int8 model quantized with ipex, please include &quot;--ipex&quot;.</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="llama2-7b-13b-70b">
+<h2>LLAMA2-7b/13b/70b<a class="headerlink" href="#llama2-7b-13b-70b" title="Link to this heading"></a></h2>
+<blockquote>
+<div><p>Note: LLAMA requires IPEX requirements &gt;= 2.1 to get better accuracy.</p>
+</div></blockquote>
+<section id="id3">
+<h3>Quantization<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># &quot;--sq&quot; is used to enable smooth quant</span>
+<span class="c1"># &quot;--int8_bf16_mixed&quot; is used to enable int8-bf16 mixed mode for platform that natively supports bf16</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--alpha<span class="w"> </span><span class="m">0</span>.8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ipex<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--int8_bf16_mixed<span class="w"> </span>
+
+<span class="c1"># &quot;--woq_algo GPTQ&quot; is used to enable GPTQ algorithms</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset<span class="w"> </span>NeelNanda/pile-10k<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--seed<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--approach<span class="w"> </span>weight_only<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gptq_pad_max_length<span class="w"> </span><span class="m">2048</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gptq_use_max_length
+</pre></div>
+</div>
+</section>
+<section id="id4">
+<h3>Accuracy with lm_eval<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--approach<span class="w"> </span>weight_only<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">112</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w">  </span><span class="s2">&quot;lambada_openai&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--int8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span><span class="w">  </span><span class="c1"># load int8 model</span>
+
+<span class="c1"># to validate FP32 model, please remove &quot;--int8&quot; and &quot;--output_dir&quot;.</span>
+<span class="c1"># to validate int8 model generated with `--sq`, please remove &quot;--approach weight_only&quot;.</span>
+<span class="c1"># to validate the int8 model quantized with ipex, please include &quot;--ipex&quot;.</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="bloom">
+<h2>BLOOM<a class="headerlink" href="#bloom" title="Link to this heading"></a></h2>
+<section id="id5">
+<h3>Quantization<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># &quot;--sq&quot; is used to enable smooth quant</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>bigscience/bloom-560m<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--ipex<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--alpha<span class="w"> </span><span class="m">0</span>.5<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span>
+
+<span class="c1"># &quot;--woq_algo GPTQ&quot; is used to enable GPTQ algorithms</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>bigscience/bloom-560m<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset<span class="w"> </span>NeelNanda/pile-10k<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--seed<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--approach<span class="w"> </span>weight_only<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gptq_pad_max_length<span class="w"> </span><span class="m">2048</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gptq_use_max_length
+</pre></div>
+</div>
+</section>
+<section id="id6">
+<h3>Accuracy with lm_eval<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>bigscience/bloom-560m<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--approach<span class="w"> </span>weight_only<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">112</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w">  </span><span class="s2">&quot;lambada_openai&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--int8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span><span class="w">  </span><span class="c1"># load int8 model</span>
+
+<span class="c1"># to validate FP32 model, please remove &quot;--int8&quot; and &quot;--output_dir&quot;.</span>
+<span class="c1"># to validate int8 model generated with `--sq`, please remove &quot;--approach weight_only&quot;.</span>
+<span class="c1"># to validate the int8 model quantized with ipex, please include &quot;--ipex&quot;.</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="falcon-7b">
+<h2>Falcon-7b<a class="headerlink" href="#falcon-7b" title="Link to this heading"></a></h2>
+<section id="id7">
+<h3>Quantization<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># &quot;--sq&quot; is used to enable smooth quant</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>tiiuae/falcon-7b-instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--sq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--alpha<span class="w"> </span><span class="m">0</span>.5<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span>
+
+<span class="c1"># &quot;--woq_algo GPTQ&quot; is used to enable GPTQ algorithms</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>tiiuae/falcon-7b-instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset<span class="w"> </span>NeelNanda/pile-10k<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--seed<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--approach<span class="w"> </span>weight_only<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gptq_pad_max_length<span class="w"> </span><span class="m">2048</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gptq_use_max_length
+</pre></div>
+</div>
+</section>
+<section id="id8">
+<h3>Accuracy with lm_eval<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>bigscience/bloom-560m<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--approach<span class="w"> </span>weight_only<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">112</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w">  </span><span class="s2">&quot;lambada_openai&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--int8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span><span class="w">  </span><span class="c1"># load int8 model</span>
+
+<span class="c1"># to validate FP32 model, please remove &quot;--int8&quot; and &quot;--output_dir&quot;.</span>
+</pre></div>
+</div>
+<p>[1]. Elias, Frantar, et al. “GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers.” arXiv preprint arXiv:2210.17323 (2023).
+[2]. Lin, Ji, et al. “AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.” arXiv preprint arXiv:2306.00978 (2023).</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f29b9b9bc50> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

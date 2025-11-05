@@ -1,0 +1,195 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step (Deprecated) &mdash; Intel® Neural Compressor 3.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../versions.html">3.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step (Deprecated)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../_sources/docs/source/examples/tensorflow/image_recognition/tensorflow_models/distillation/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step-deprecated">
+<h1>Step-by-Step (Deprecated)<a class="headerlink" href="#step-by-step-deprecated" title="Link to this heading"></a></h1>
+<p>This document list steps of demo the usage of tensorflow distillation via Neural Compressor.
+This example can run on Intel CPUs and GPUs.</p>
+<blockquote>
+<div><p><strong>Note</strong>:
+Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x. Validated TensorFlow <a class="reference external" href="/docs/source/installation_guide.html#validated-software-environment">Version</a>.</p>
+</div></blockquote>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<p>Recommend python 3.8 or higher version.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Intel® Neural Compressor</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
+</pre></div>
+</div>
+</section>
+<section id="install-tensorflow">
+<h3>Install Tensorflow<a class="headerlink" href="#install-tensorflow" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>tensorflow
+</pre></div>
+</div>
+</section>
+<section id="install-intel-extension-for-tensorflow">
+<h3>Install Intel Extension for Tensorflow<a class="headerlink" href="#install-intel-extension-for-tensorflow" title="Link to this heading"></a></h3>
+<section id="running-the-model-on-intel-cpu-optional-to-install-itex">
+<h4>Running the model on Intel CPU(Optional to install ITEX)<a class="headerlink" href="#running-the-model-on-intel-cpu-optional-to-install-itex" title="Link to this heading"></a></h4>
+<p>Intel Extension for Tensorflow for Intel CPUs is experimental currently. It’s not mandatory for running the model on Intel CPUs.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>intel-extension-for-tensorflow<span class="o">[</span>cpu<span class="o">]</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>:
+The version compatibility of stock Tensorflow and ITEX can be checked <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow#compatibility-table">here</a>. Please make sure you have installed compatible Tensorflow and ITEX.</p>
+</div></blockquote>
+</section>
+</section>
+</section>
+<section id="prepare-dataset">
+<h2>2. Prepare Dataset<a class="headerlink" href="#prepare-dataset" title="Link to this heading"></a></h2>
+<p>TensorFlow <a class="reference external" href="https://github.com/tensorflow/models">models</a> repo provides <a class="reference external" href="https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data">scripts and instructions</a> to download.
+This example uses the raw ImageNet data. Therefore, users do not need to convert the data to TF Record format.</p>
+<p>The data folder is expected to contain subfolders representing the classes to which
+its images belong.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Please</span> <span class="n">arrange</span> <span class="n">data</span> <span class="ow">in</span> <span class="n">this</span> <span class="n">way</span><span class="p">:</span>
+    <span class="n">dataset</span><span class="o">/</span><span class="n">class_1</span><span class="o">/</span><span class="n">xxx</span><span class="o">.</span><span class="n">png</span>
+    <span class="n">dataset</span><span class="o">/</span><span class="n">class_1</span><span class="o">/</span><span class="n">xxy</span><span class="o">.</span><span class="n">png</span>
+    <span class="n">dataset</span><span class="o">/</span><span class="n">class_1</span><span class="o">/</span><span class="n">xxz</span><span class="o">.</span><span class="n">png</span>
+    <span class="o">...</span>
+    <span class="n">dataset</span><span class="o">/</span><span class="n">class_n</span><span class="o">/</span><span class="mf">123.</span><span class="n">png</span>
+    <span class="n">dataset</span><span class="o">/</span><span class="n">class_n</span><span class="o">/</span><span class="n">nsdf3</span><span class="o">.</span><span class="n">png</span>
+    <span class="n">dataset</span><span class="o">/</span><span class="n">class_n</span><span class="o">/</span><span class="n">asd932_</span><span class="o">.</span><span class="n">png</span>
+<span class="n">Please</span> <span class="n">put</span> <span class="n">images</span> <span class="n">of</span> <span class="n">different</span> <span class="n">categories</span> <span class="n">into</span> <span class="n">different</span> <span class="n">folders</span><span class="o">.</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<section id="run-pretraining">
+<h2>Run pretraining<a class="headerlink" href="#run-pretraining" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_distillation.sh<span class="w"> </span>--topology<span class="o">=</span>mobilenet<span class="w"> </span>--teacher<span class="o">=</span>densenet201<span class="w"> </span>--dataset_location<span class="o">=</span>/path/to/dataset<span class="w"> </span>--output_model<span class="o">=</span>path/to/output_model
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: <code class="docutils literal notranslate"><span class="pre">--topology</span></code> is the student model and <code class="docutils literal notranslate"><span class="pre">--teacher</span></code> is the teacher model.</p>
+</div></blockquote>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f29b9be7200> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

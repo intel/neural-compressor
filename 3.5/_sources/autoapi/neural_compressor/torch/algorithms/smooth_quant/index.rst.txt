@@ -1,0 +1,22 @@
+neural_compressor.torch.algorithms.smooth_quant
+===============================================
+
+.. py:module:: neural_compressor.torch.algorithms.smooth_quant
+
+.. autoapi-nested-parse::
+
+   The SmoothQuant-related modules.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/algorithms/smooth_quant/save_load/index
+   /autoapi/neural_compressor/torch/algorithms/smooth_quant/smooth_quant/index
+   /autoapi/neural_compressor/torch/algorithms/smooth_quant/utility/index
+
+

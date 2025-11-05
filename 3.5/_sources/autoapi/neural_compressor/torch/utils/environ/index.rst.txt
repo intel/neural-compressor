@@ -1,0 +1,134 @@
+neural_compressor.torch.utils.environ
+=====================================
+
+.. py:module:: neural_compressor.torch.utils.environ
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor PyTorch environment check.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.utils.environ.is_ipex_imported
+   neural_compressor.torch.utils.environ.is_transformers_imported
+   neural_compressor.torch.utils.environ.is_package_available
+   neural_compressor.torch.utils.environ.is_hpex_available
+   neural_compressor.torch.utils.environ.is_hpu_available
+   neural_compressor.torch.utils.environ.is_hpex_support_g_idx
+   neural_compressor.torch.utils.environ.is_optimum_available
+   neural_compressor.torch.utils.environ.is_optimum_habana_available
+   neural_compressor.torch.utils.environ.is_ipex_available
+   neural_compressor.torch.utils.environ.get_ipex_version
+   neural_compressor.torch.utils.environ.get_torch_version
+   neural_compressor.torch.utils.environ.get_accelerator
+   neural_compressor.torch.utils.environ.device_synchronize
+   neural_compressor.torch.utils.environ.can_pack_with_numba
+   neural_compressor.torch.utils.environ.is_numba_available
+   neural_compressor.torch.utils.environ.is_tbb_available
+   neural_compressor.torch.utils.environ.get_used_hpu_mem_MB
+   neural_compressor.torch.utils.environ.get_used_cpu_mem_MB
+
+
+Module Contents
+---------------
+
+.. py:function:: is_ipex_imported() -> bool
+
+   Check whether intel_extension_for_pytorch is imported.
+
+
+.. py:function:: is_transformers_imported() -> bool
+
+   Check whether transformers is imported.
+
+
+.. py:function:: is_package_available(package_name)
+
+   Check if the package exists in the environment without importing.
+
+   :param package_name: package name
+   :type package_name: str
+
+
+.. py:function:: is_hpex_available()
+
+   Returns whether hpex is available.
+
+
+.. py:function:: is_hpu_available()
+
+   Returns whether hpex is available.
+
+
+.. py:function:: is_hpex_support_g_idx()
+
+   Check if HPEX supports group_index in the schema of hpu::convert_from_int4.
+
+
+.. py:function:: is_optimum_available()
+
+   Return whether optimum-habana is available.
+
+
+.. py:function:: is_optimum_habana_available()
+
+   Return whether optimum-habana is available.
+
+
+.. py:function:: is_ipex_available()
+
+   Return whether ipex is available.
+
+
+.. py:function:: get_ipex_version()
+
+   Return ipex version if ipex exists.
+
+
+.. py:function:: get_torch_version()
+
+   Return torch version if ipex exists.
+
+
+.. py:function:: get_accelerator(device_name='auto')
+
+   Return the recommended accelerator based on device priority.
+
+
+.. py:function:: device_synchronize(raw_func)
+
+   Function decorator that calls accelerated.synchronize before and after a function call.
+
+
+.. py:function:: can_pack_with_numba()
+
+   Check if Numba and TBB are available for packing.
+
+   To pack tensor with Numba, both Numba and TBB are required, and TBB should be configured correctly.
+
+
+.. py:function:: is_numba_available()
+
+   Check if Numba is available.
+
+
+.. py:function:: is_tbb_available()
+
+   Check if TBB is available.
+
+
+.. py:function:: get_used_hpu_mem_MB()
+
+   Get HPU used memory: MiB.
+
+
+.. py:function:: get_used_cpu_mem_MB()
+
+   Get the amount of CPU memory used by the current process in MiB (Mebibytes).
+
+

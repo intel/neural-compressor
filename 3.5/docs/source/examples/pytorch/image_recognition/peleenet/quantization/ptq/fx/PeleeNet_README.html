@@ -1,0 +1,214 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PeleeNet &mdash; Intel® Neural Compressor 3.5 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">3.5▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">PeleeNet</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/pytorch/image_recognition/peleenet/quantization/ptq/fx/PeleeNet_README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="peleenet">
+<h1>PeleeNet<a class="headerlink" href="#peleenet" title="Link to this heading"></a></h1>
+<p>PeleeNet: An efficient DenseNet architecture for mobile devices</p>
+<p>An implementation of PeleeNet in PyTorch. PeleeNet is an efficient Convolutional Neural Network (CNN) architecture built with
+conventional convolution. Compared to other efficient architectures,PeleeNet has a great speed advantage and easy to be applied to the computer vision tasks other than image classification.</p>
+<p>For more information, check the paper:
+<a class="reference external" href="https://arxiv.org/pdf/1804.06882.pdf">Pelee: A Real-Time Object Detection System on Mobile Devices</a> (NeurIPS 2018)</p>
+<section id="citation">
+<h2>Citation<a class="headerlink" href="#citation" title="Link to this heading"></a></h2>
+<p>If you find this work useful in your research, please consider citing:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>
+<span class="nd">@incollection</span><span class="p">{</span><span class="n">NIPS2018_7466</span><span class="p">,</span>
+<span class="n">title</span> <span class="o">=</span> <span class="p">{</span><span class="n">Pelee</span><span class="p">:</span> <span class="n">A</span> <span class="n">Real</span><span class="o">-</span><span class="n">Time</span> <span class="n">Object</span> <span class="n">Detection</span> <span class="n">System</span> <span class="n">on</span> <span class="n">Mobile</span> <span class="n">Devices</span><span class="p">},</span>
+<span class="n">author</span> <span class="o">=</span> <span class="p">{</span><span class="n">Wang</span><span class="p">,</span> <span class="n">Robert</span> <span class="n">J</span><span class="o">.</span> <span class="ow">and</span> <span class="n">Li</span><span class="p">,</span> <span class="n">Xiang</span> <span class="ow">and</span> <span class="n">Ling</span><span class="p">,</span> <span class="n">Charles</span> <span class="n">X</span><span class="o">.</span><span class="p">},</span>
+<span class="n">booktitle</span> <span class="o">=</span> <span class="p">{</span><span class="n">Advances</span> <span class="ow">in</span> <span class="n">Neural</span> <span class="n">Information</span> <span class="n">Processing</span> <span class="n">Systems</span> <span class="mi">31</span><span class="p">},</span>
+<span class="n">editor</span> <span class="o">=</span> <span class="p">{</span><span class="n">S</span><span class="o">.</span> <span class="n">Bengio</span> <span class="ow">and</span> <span class="n">H</span><span class="o">.</span> <span class="n">Wallach</span> <span class="ow">and</span> <span class="n">H</span><span class="o">.</span> <span class="n">Larochelle</span> <span class="ow">and</span> <span class="n">K</span><span class="o">.</span> <span class="n">Grauman</span> <span class="ow">and</span> <span class="n">N</span><span class="o">.</span> <span class="n">Cesa</span><span class="o">-</span><span class="n">Bianchi</span> <span class="ow">and</span> <span class="n">R</span><span class="o">.</span> <span class="n">Garnett</span><span class="p">},</span>
+<span class="n">pages</span> <span class="o">=</span> <span class="p">{</span><span class="mi">1963</span><span class="o">--</span><span class="mi">1972</span><span class="p">},</span>
+<span class="n">year</span> <span class="o">=</span> <span class="p">{</span><span class="mi">2018</span><span class="p">},</span>
+<span class="n">publisher</span> <span class="o">=</span> <span class="p">{</span><span class="n">Curran</span> <span class="n">Associates</span><span class="p">,</span> <span class="n">Inc</span><span class="o">.</span><span class="p">},</span>
+<span class="n">url</span> <span class="o">=</span> <span class="p">{</span><span class="n">http</span><span class="p">:</span><span class="o">//</span><span class="n">papers</span><span class="o">.</span><span class="n">nips</span><span class="o">.</span><span class="n">cc</span><span class="o">/</span><span class="n">paper</span><span class="o">/</span><span class="mi">7466</span><span class="o">-</span><span class="n">pelee</span><span class="o">-</span><span class="n">a</span><span class="o">-</span><span class="n">real</span><span class="o">-</span><span class="n">time</span><span class="o">-</span><span class="nb">object</span><span class="o">-</span><span class="n">detection</span><span class="o">-</span><span class="n">system</span><span class="o">-</span><span class="n">on</span><span class="o">-</span><span class="n">mobile</span><span class="o">-</span><span class="n">devices</span><span class="o">.</span><span class="n">pdf</span><span class="p">}</span>
+<span class="p">}</span>
+
+</pre></div>
+</div>
+</section>
+<section id="results-on-imagenet-ilsvrc-2012">
+<h2>Results on ImageNet ILSVRC 2012<a class="headerlink" href="#results-on-imagenet-ilsvrc-2012" title="Link to this heading"></a></h2>
+<p>The table below shows the results on the
+ImageNet ILSVRC 2012 validation set, with single-crop testing.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Model</th>
+<th style="text-align: center;">FLOPs</th>
+<th style="text-align: center;"># parameters</th>
+<th style="text-align: center;">Top-1 Acc</th>
+<th style="text-align: center;">FPS (NVIDIA TX2)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">MobileNet</td>
+<td style="text-align: center;">569 M</td>
+<td style="text-align: center;">4.2 M</td>
+<td style="text-align: center;">70.0</td>
+<td style="text-align: center;">136</td>
+</tr>
+<tr>
+<td style="text-align: left;">ShuffleNet 2x</td>
+<td style="text-align: center;">524 M</td>
+<td style="text-align: center;">5.2 M</td>
+<td style="text-align: center;">73.7</td>
+<td style="text-align: center;">110</td>
+</tr>
+<tr>
+<td style="text-align: left;">Condensenet (C=G=8)</td>
+<td style="text-align: center;">274M</td>
+<td style="text-align: center;">4.0M</td>
+<td style="text-align: center;">71</td>
+<td style="text-align: center;">40</td>
+</tr>
+<tr>
+<td style="text-align: left;">MobileNet v2</td>
+<td style="text-align: center;">300 M</td>
+<td style="text-align: center;">3.5 M</td>
+<td style="text-align: center;">72.0</td>
+<td style="text-align: center;">123</td>
+</tr>
+<tr>
+<td style="text-align: left;">ShuffleNet v2 1.5x</td>
+<td style="text-align: center;">300 M</td>
+<td style="text-align: center;">5.2 M</td>
+<td style="text-align: center;">72.6</td>
+<td style="text-align: center;">164</td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>PeleeNet (our)</strong></td>
+<td style="text-align: center;">508 M</td>
+<td style="text-align: center;">2.8 M</td>
+<td style="text-align: center;">72.6</td>
+<td style="text-align: center;"><strong>240</strong></td>
+</tr>
+<tr>
+<td style="text-align: left;"><strong>PeleeNet v2 (our)</strong></td>
+<td style="text-align: center;">621 M</td>
+<td style="text-align: center;">4.4 M</td>
+<td style="text-align: center;"><strong>73.9</strong></td>
+<td style="text-align: center;"><strong>245</strong></td>
+</tr>
+</tbody>
+</table></section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f29b9c83830> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

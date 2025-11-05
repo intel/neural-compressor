@@ -1,0 +1,29 @@
+neural_compressor.model.onnx_model
+==================================
+
+.. py:module:: neural_compressor.model.onnx_model
+
+.. autoapi-nested-parse::
+
+   Class for ONNX model.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.model.onnx_model.ONNXModel
+
+
+Module Contents
+---------------
+
+.. py:class:: ONNXModel(model, **kwargs)
+
+
+
+   Build ONNX model.
+
+
