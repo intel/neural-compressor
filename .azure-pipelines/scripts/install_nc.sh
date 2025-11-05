@@ -2,7 +2,6 @@
 
 echo -e "##[group]Install Neural Compressor ... "
 cd /neural-compressor
-pip install cmake==3.31.6
 if [[ $1 = *"3x_pt"* ]]; then
     python -m pip install --no-cache-dir -r requirements_pt.txt
     if [[ $1 = *"3x_pt_fp8"* ]]; then

@@ -24,6 +24,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     python3.12-dev \
     autoconf \
     build-essential \
+    cmake \
     git \
     libomp-dev \
     numactl \
