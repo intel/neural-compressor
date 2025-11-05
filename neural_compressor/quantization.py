@@ -27,7 +27,7 @@ from .metric import register_customer_metric
 from .model import Model
 from .strategy import STRATEGIES
 from .utils import logger
-from .utils.utility import dump_class_attrs, secure_check_eval_func, time_limit, _safe_pickle_load
+from .utils.utility import _safe_pickle_load, dump_class_attrs, secure_check_eval_func, time_limit
 
 
 def fit(
