@@ -125,9 +125,9 @@ jobs:
                 real_path=$(realpath $check_path)
                 echo "No.5----->real_path is $real_path"
                 if [[ "$png_path" == *#* ]]; then
-                  if [ -n "changed_files" ] && echo "$changed_files" | grep -q "^${refer_path}$"; then
-                    url_dev=$branch$(echo "$real_path" | sed 's|.*/neural-compressor||')$(echo "$png_path" | cut -d '#' -f2)
-                    echo "No.5----->url_dev is $url_dev"
+                  if [ -n "$changed_files" ] && echo "$changed_files" | grep -q "^${refer_path}$"; then
+                    url_dev=$branch$(echo "$real_path" | sed 's|.*/neural-compressor||')#$(echo "$png_path" | cut -d '#' -f2)
+                    echo "No.6----->url_dev is $url_dev"
                     sleep $delay
                     response=$(curl -I -L -s -o /dev/null -w "%{http_code}" "$url_dev")
                     if [ "$response" -ne 200 ]; then
