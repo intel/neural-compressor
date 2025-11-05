@@ -1,4 +1,5 @@
-import sys, os
+import os
+import sys
 
 
 def main(inputs):
@@ -12,14 +13,13 @@ def main(inputs):
                 while True:
                     pos = line.find('href="./', start)
 
-                    if pos>=0:
+                    if pos >= 0:
                         # print("find", line)
                         end_pos = line.find('">', pos)
-                        line = line[:end_pos]+'/README.md">'+line[end_pos+2:]
-                        start = end_pos+2
+                        line = line[:end_pos] + '/README.md">' + line[end_pos + 2 :]
+                        start = end_pos + 2
                     else:
                         break
-
 
                 res.append(line)
 
@@ -28,5 +28,6 @@ def main(inputs):
 
             print(f"save to {output_file}")
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     main(sys.argv[1:])
