@@ -18,7 +18,7 @@ import torch.nn as nn
 import types
 import functools
 
-from .._core.quant_dequant import QuantDequant as qdq, QuantDynamicInput
+from .._core.quant_dequant import QuantDequant as qdq
 from .._core.quantized_func_wrappers import get_quantized_func_wrapper, OP_TYPE
 from .quant_config import QuantMode, get_hqt_config
 from ..patched_module_base import PatchedModuleBase, get_call_wrapper
@@ -107,6 +107,7 @@ class PatchedMatmul(PatchedModuleBase):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_input_0 = self._mod_extra_config.inputs[0]
             self.quant_input_1 = self._mod_extra_config.inputs[1]
+
             if not self.use_qdq and not self.fake_quant:
                 self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
                 self.register_scale("scale_other", mod_extra_config.scale.inputs[1], self.scale_format)
@@ -114,16 +115,26 @@ class PatchedMatmul(PatchedModuleBase):
                 # in DPQ we want to use the scales measured in the quantization process
                 if hasattr(parent, 'scale_bf16_to_fp8') and parent.scale_bf16_to_fp8 > 0:
                     self.scale_other = torch.nn.Parameter(parent.scale_bf16_to_fp8)
+                if self.is_dynamic_quantization:
+                    self.forward = self.forward_dynamic
 
     def forward_quant(self, input, other, out=None):
         qinput = self.quant_input_0(input)
         qother = self.quant_input_1(other)
+        return self.forward_impl(qinput, self.scale_input, qother, self.scale_other, out)
+
+    def forward_dynamic(self, input, other, out=None):
+        qinput, scale_input = self.quant_input_0(input)
+        qother, scale_other = self.quant_input_1(other)
+        return self.forward_impl(qinput, scale_input, qother, scale_other, out)
+
+    def forward_impl(self, qinput, scale_input, qother, scale_other, out=None):
         out = self.matmul_fp8(qinput,
                               qother,
                               out=out,
                               out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                              scale_input_inv=self.scale_input,
-                              scale_other_inv=self.scale_other)
+                              scale_input_inv=scale_input,
+                              scale_other_inv=scale_other)
         return out
 
     def forward_qdq(self, input, other, out=None):
@@ -188,7 +199,6 @@ class PatchedLinearBase(PatchedModuleBase):
                     # only ScaleFormat.CONST is supported for per-channel scale now.
                     self.register_scale("scale_weight", mod_extra_config.scale.params["weight"][0], ScaleFormat.CONST)
 
-            self.is_dynamic_quantization = isinstance(self.quant_input, QuantDynamicInput)
             self.quant_input_func = self.quant_input_and_get_scale_dynamic if self.is_dynamic_quantization else self.quant_input_and_get_scale_static
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             init_mixture_of_experts_linears(self)
@@ -910,7 +920,6 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                 [mod_extra_config.scale.inputs[x] for x in range(1, self.experts_used + 1)],
                 self.scale_format,
             )
-            self.is_dynamic_quantization = isinstance(self.quant_input, QuantDynamicInput)
             self.dynamic_moe_op = get_quantized_func_wrapper(
                 OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, scale_format=self.scale_format, is_dynamic=self.is_dynamic_quantization
             )
