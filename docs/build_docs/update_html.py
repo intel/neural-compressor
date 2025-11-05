@@ -26,7 +26,7 @@ def update_version_link(version, folder_name, index_file):
 
     with open(index_file, "r") as f:
         index_buf = f.read()
-        key_str = '<div role="search">\n'.format(version)
+        key_str = '<div role="search">\n'
         version_list = """            <div class="version">
               <a href="{}versions.html">{}▼</a>
               <p>Click link above to switch version</p>
