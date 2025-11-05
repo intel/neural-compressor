@@ -27,6 +27,7 @@ Functions
 
    neural_compressor.torch.algorithms.weight_only.gptq.is_leaf
    neural_compressor.torch.algorithms.weight_only.gptq.trace_gptq_target_blocks
+   neural_compressor.torch.algorithms.weight_only.gptq.find_all_layers
    neural_compressor.torch.algorithms.weight_only.gptq.find_layers
    neural_compressor.torch.algorithms.weight_only.gptq.find_layers_name
    neural_compressor.torch.algorithms.weight_only.gptq.log_quantizable_layers_per_transformer
@@ -63,6 +64,11 @@ Module Contents
              }
 
 
+.. py:function:: find_all_layers(module, name='')
+
+   Get all layers.
+
+
 .. py:function:: find_layers(module, layers=SUPPORTED_LAYERS, name='')
 
    Get all layers with target types.
@@ -78,7 +84,7 @@ Module Contents
    Print all layers which will be quantized in GPTQ algorithm.
 
 
-.. py:class:: RAWGPTQuantizer(model, weight_config={}, nsamples=128, use_max_length=True, max_seq_length=2048, device=None, use_layer_wise=False, model_path='', dataloader=None, *args, **kwargs)
+.. py:class:: RAWGPTQuantizer(model, weight_config={}, nsamples=128, use_max_length=True, max_seq_length=2048, device=None, use_layer_wise=False, model_path='', quant_lm_head=False, dataloader=None, use_block_wise=False, *args, **kwargs)
 
 
 

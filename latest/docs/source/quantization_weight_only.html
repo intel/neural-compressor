@@ -1,14 +1,16 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Weight Only Quantization (WOQ) &mdash; Intel® Neural Compressor 3.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+  <title>Weight Only Quantization (WOQ) &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
 
   
 <script type="text/javascript">
@@ -40,10 +42,6 @@
           <a href="../../index.html" class="icon icon-home">
             Intel® Neural Compressor
           </a>
-            <div class="version">
-              <a href="../../../versions.html">latest▼</a>
-              <p>Click link above to switch version</p>
-            </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -57,7 +55,6 @@
 <li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -88,7 +85,7 @@
            <div itemprop="articleBody">
              
   <section id="weight-only-quantization-woq">
-<h1>Weight Only Quantization (WOQ)<a class="headerlink" href="#weight-only-quantization-woq" title="Permalink to this heading"></a></h1>
+<h1>Weight Only Quantization (WOQ)<a class="headerlink" href="#weight-only-quantization-woq" title="Link to this heading"></a></h1>
 <ol class="simple">
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#supported-framework-model-matrix">Supported Framework Model Matrix</a></p></li>
@@ -96,7 +93,7 @@
 <li><p><a class="reference external" href="#woq-algorithms-tuning">WOQ Algorithms Tuning</a></p></li>
 </ol>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
 <p>As large language models (LLMs) become more prevalent, there is a growing need for new and improved quantization methods that can meet the computational demands of these modern architectures while maintaining the accuracy.  Compared to normal quantization like W8A8,  weight only quantization is probably a better trade-off to balance the performance and the accuracy, since we will see below that the bottleneck of deploying LLMs is the memory bandwidth and normally weight only quantization could lead to better accuracy.</p>
 <p>Model inference: Roughly speaking , two key steps are required to get the model’s result. The first one is moving the model from the memory to the cache piece by piece, in which, memory bandwidth $B$ and parameter count $P$ are the key factors, theoretically the time cost is  $P*4 /B$. The second one is  computation, in which, the device’s computation capacity  $C$  measured in FLOPS and the forward FLOPs $F$ play the key roles, theoretically the cost is $F/C$.</p>
 <p>Text generation:  The most famous application of LLMs is text generation, which predicts the next token/word  based on the inputs/context. To generate a sequence of texts, we need to predict them one by one. In this scenario,  $F\approx P$  if some operations like bmm are ignored and past key values have been saved. However, the  $C/B$ of the modern device could be to <strong>100X,</strong> that makes the memory bandwidth as the bottleneck in this scenario.</p>
@@ -105,7 +102,7 @@
 <p>There are many excellent works for weight only quantization to improve its accuracy performance, such as AWQ[3], GPTQ[4]. Neural compressor integrates these popular algorithms in time to help customers leverage them and deploy them to their own tasks.</p>
 </section>
 <section id="supported-framework-model-matrix">
-<h2>Supported Framework Model Matrix<a class="headerlink" href="#supported-framework-model-matrix" title="Permalink to this heading"></a></h2>
+<h2>Supported Framework Model Matrix<a class="headerlink" href="#supported-framework-model-matrix" title="Link to this heading"></a></h2>
 <table border="1" class="docutils">
 <thead>
 <tr>
@@ -151,9 +148,9 @@
 </div></blockquote>
 </section>
 <section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
 <section id="quantization-capability">
-<h3><strong>Quantization Capability</strong><a class="headerlink" href="#quantization-capability" title="Permalink to this heading"></a></h3>
+<h3><strong>Quantization Capability</strong><a class="headerlink" href="#quantization-capability" title="Link to this heading"></a></h3>
 <table border="1" class="docutils">
 <thead>
 <tr>
@@ -304,7 +301,7 @@
 </table><p><strong>Note:</strong> Neural compressor provides <code class="docutils literal notranslate"><span class="pre">Unsigned</span> <span class="pre">integer</span> <span class="pre">for</span> <span class="pre">asymmetric</span> <span class="pre">quantization</span></code> and <code class="docutils literal notranslate"><span class="pre">Signed</span> <span class="pre">integer</span> <span class="pre">for</span> <span class="pre">symmetric</span> <span class="pre">quantization</span></code>. Please follow the below section to compress the low bit data type for saving.</p>
 </section>
 <section id="export-compressed-model">
-<h3><strong>Export Compressed Model</strong><a class="headerlink" href="#export-compressed-model" title="Permalink to this heading"></a></h3>
+<h3><strong>Export Compressed Model</strong><a class="headerlink" href="#export-compressed-model" title="Link to this heading"></a></h3>
 <p>To support low memory inference, Neural Compressor implemented WeightOnlyLinear, a torch.nn.Module, to compress the fake quantized fp32 model. Since torch does not provide flexible data type storage, WeightOnlyLinear combines low bits data into a long date type, such as torch.int8 and torch.int32. Low bits data includes weights and zero points. When using WeightOnlyLinear for inference, it will restore the compressed data to float32 and run torch linear function.</p>
 <p><strong>Export arguments</strong></p>
 <table border="1" class="docutils">
@@ -360,7 +357,7 @@
 </div></blockquote>
 </section>
 <section id="user-code-example">
-<h3><strong>User Code Example</strong><a class="headerlink" href="#user-code-example" title="Permalink to this heading"></a></h3>
+<h3><strong>User Code Example</strong><a class="headerlink" href="#user-code-example" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
     <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;weight_only&quot;</span><span class="p">,</span>
     <span class="n">op_type_dict</span><span class="o">=</span><span class="p">{</span>
@@ -396,7 +393,7 @@
 </section>
 </section>
 <section id="woq-algorithms-tuning">
-<h2>WOQ Algorithms Tuning<a class="headerlink" href="#woq-algorithms-tuning" title="Permalink to this heading"></a></h2>
+<h2>WOQ Algorithms Tuning<a class="headerlink" href="#woq-algorithms-tuning" title="Link to this heading"></a></h2>
 <p>To find the best algorithm, users can omit specifying a particular algorithm. In comparison to setting a specific algorithm, this tuning process will traverse through a set of pre-defined WOQ configurations and identify the optimal one with the best result. For details usage, please refer to the <a class="reference external" href="./tuning_strategies.html#Basic">tuning strategy</a>.</p>
 <blockquote>
 <div><p><strong>Note:</strong> Currently, this behavior is specific to the <code class="docutils literal notranslate"><span class="pre">ONNX</span> <span class="pre">Runtime</span></code> backend.</p>
@@ -432,7 +429,7 @@
 </tr>
 </tbody>
 </table><section id="id1">
-<h3><strong>User code example</strong><a class="headerlink" href="#id1" title="Permalink to this heading"></a></h3>
+<h3><strong>User code example</strong><a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
     <span class="n">approach</span><span class="o">=</span><span class="s2">&quot;weight_only&quot;</span><span class="p">,</span>
     <span class="n">quant_level</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>  <span class="c1"># quant_level supports &quot;auto&quot; or 1 for woq config tuning</span>
@@ -441,11 +438,11 @@
 <span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;saved_results&quot;</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Refer to this <a class="reference external" href="../../examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only">link</a> for an example of WOQ algorithms tuning on ONNX Llama models.</p>
+<p>Refer to this <a class="reference external" href="../../examples/deprecated/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only">link</a> for an example of WOQ algorithms tuning on ONNX Llama models.</p>
 </section>
 </section>
 <section id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this heading"></a></h2>
+<h2>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h2>
 <p>[1]. Xiao, Guangxuan, et al. “Smoothquant: Accurate and efficient post-training quantization for large language models.” arXiv preprint arXiv:2211.10438 (2022).</p>
 <p>[2]. Wei, Xiuying, et al. “Outlier suppression: Pushing the limit of low-bit transformer language models.” arXiv preprint arXiv:2209.13325 (2022).</p>
 <p>[3]. Lin, Ji, et al. “AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.” arXiv preprint arXiv:2306.00978 (2023).</p>
@@ -468,7 +465,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cc2395480> 
+   <jinja2.runtime.BlockReference object at 0x7f07a8dc2450> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

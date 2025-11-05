@@ -30,8 +30,6 @@ Module Contents
                  For PyTorch model, it's torch.nn.model
                  instance. For onnx model, it should be a path
                  to .onnx file or onnx.onnx_ml_pb2.ModelProto.
-                 For MXNet model, it's mxnet.symbol.Symbol
-                 or gluon.HybirdBlock instance.
    :type model: object
    :param conf: The MixedPrecisionConfig class containing accuracy goal,
                 tuning objective and mixed_precision tuning space etc.

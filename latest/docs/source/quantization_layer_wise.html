@@ -1,14 +1,16 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Layer Wise Quantization (LWQ) &mdash; Intel® Neural Compressor 3.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+  <title>Layer Wise Quantization (LWQ) &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
 
   
 <script type="text/javascript">
@@ -40,10 +42,6 @@
           <a href="../../index.html" class="icon icon-home">
             Intel® Neural Compressor
           </a>
-            <div class="version">
-              <a href="../../../versions.html">latest▼</a>
-              <p>Click link above to switch version</p>
-            </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -57,7 +55,6 @@
 <li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -88,20 +85,20 @@
            <div itemprop="articleBody">
              
   <section id="layer-wise-quantization-lwq">
-<h1>Layer Wise Quantization (LWQ)<a class="headerlink" href="#layer-wise-quantization-lwq" title="Permalink to this heading"></a></h1>
+<h1>Layer Wise Quantization (LWQ)<a class="headerlink" href="#layer-wise-quantization-lwq" title="Link to this heading"></a></h1>
 <ol class="simple">
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#supported-framework-model-matrix">Supported Framework Model Matrix</a></p></li>
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
 </ol>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
 <p>Large language models (LLMs) have shown exceptional performance across various tasks, meanwhile, the substantial parameter size poses significant challenges for deployment. Layer-wise quantization(LWQ) can greatly reduce the memory footprint of LLMs, usually 80-90% reduction, which means that users can quantize LLMs even on single node using GPU or CPU. We can quantize the model under memory-constrained devices, therefore making the huge-sized LLM quantization possible.</p>
 <img src="./imgs/lwq.png" width=780 height=429><p><em>Figure 1: The process of layer-wise quantization for PyTorch model. The color grey means empty parameters and the color blue represents parameters need to be quantized. Every rectangle inside model represents one layer.</em></p>
 <img src="./imgs/lwq_ort.png" width=900 height=400><p><em>Figure 2: The process of layer-wise quantization for ONNX model. The graph of LLM is split into several parts, and each subgraph is quantized in turn.</em></p>
 </section>
 <section id="supported-framework-model-matrix">
-<h2>Supported Framework Model Matrix<a class="headerlink" href="#supported-framework-model-matrix" title="Permalink to this heading"></a></h2>
+<h2>Supported Framework Model Matrix<a class="headerlink" href="#supported-framework-model-matrix" title="Link to this heading"></a></h2>
 <table class="tg">
 <thead>
   <tr>
@@ -137,11 +134,11 @@
 </tbody>
 </table></section>
 <section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
 <section id="pytorch-framework-example">
-<h3>PyTorch framework example<a class="headerlink" href="#pytorch-framework-example" title="Permalink to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">quantization</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.adaptor.torch_utils.layer_wise_quant</span> <span class="kn">import</span> <span class="n">load_empty_model</span>
+<h3>PyTorch framework example<a class="headerlink" href="#pytorch-framework-example" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">quantization</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.adaptor.torch_utils.layer_wise_quant</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_empty_model</span>
 
 <span class="n">fp32_model</span> <span class="o">=</span> <span class="n">load_empty_model</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">,</span> <span class="n">torchscript</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
@@ -165,15 +162,15 @@
 </div>
 </section>
 <section id="onnx-runtime-framework-example">
-<h3>ONNX Runtime framework example<a class="headerlink" href="#onnx-runtime-framework-example" title="Permalink to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
+<h3>ONNX Runtime framework example<a class="headerlink" href="#onnx-runtime-framework-example" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
 
 <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">recipes</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;layer_wise_quant&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">})</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">fp32_model_path</span><span class="p">,</span> <span class="n">conf</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">dataloader</span><span class="p">)</span>
 <span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">int8_model_path</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>Refer to <a class="reference external" href="../../examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only">ONNX Runtime llama-2 LWQ example</a></p>
+<p>Refer to <a class="reference external" href="../../examples/deprecated/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/weight_only">ONNX Runtime llama-2 LWQ example</a></p>
 </section>
 </section>
 </section>
@@ -192,7 +189,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cbaaece20> 
+   <jinja2.runtime.BlockReference object at 0x7f07a8dc2ff0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

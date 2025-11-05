@@ -1,0 +1,29 @@
+neural_compressor.torch.algorithms.qat.quant_linear
+===================================================
+
+.. py:module:: neural_compressor.torch.algorithms.qat.quant_linear
+
+.. autoapi-nested-parse::
+
+   Quantized Linear.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.qat.quant_linear.QuantLinear
+
+
+Module Contents
+---------------
+
+.. py:class:: QuantLinear
+
+
+
+   Quantized version of nn.Linear.
+
+

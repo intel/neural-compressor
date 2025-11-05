@@ -20,10 +20,10 @@ Classes
 Module Contents
 ---------------
 
-.. py:class:: Mode
+.. py:class:: Mode(*args, **kwds)
 
 
 
-   Enumeration class representing different modes of the quantizer execution.
+   Enumeration class representing different modes of the quantization.
 
 

@@ -1,0 +1,22 @@
+neural_compressor.torch.algorithms.qat
+======================================
+
+.. py:module:: neural_compressor.torch.algorithms.qat
+
+.. autoapi-nested-parse::
+
+   QAT (Quantization Aware Tuning).
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/algorithms/qat/quant_linear/index
+   /autoapi/neural_compressor/torch/algorithms/qat/quant_utils/index
+   /autoapi/neural_compressor/torch/algorithms/qat/tensor_quantizer/index
+
+

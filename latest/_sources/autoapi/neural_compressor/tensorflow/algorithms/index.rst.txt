@@ -9,8 +9,8 @@ neural_compressor.tensorflow.algorithms
 
 
 
-Subpackages
------------
+Submodules
+----------
 
 .. toctree::
    :maxdepth: 1

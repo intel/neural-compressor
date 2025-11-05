@@ -9,8 +9,8 @@ neural_compressor.data
 
 
 
-Subpackages
------------
+Submodules
+----------
 
 .. toctree::
    :maxdepth: 1

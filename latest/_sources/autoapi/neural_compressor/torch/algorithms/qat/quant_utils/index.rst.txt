@@ -1,0 +1,70 @@
+neural_compressor.torch.algorithms.qat.quant_utils
+==================================================
+
+.. py:module:: neural_compressor.torch.algorithms.qat.quant_utils
+
+.. autoapi-nested-parse::
+
+   Utils for quantization.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.qat.quant_utils.convert
+   neural_compressor.torch.algorithms.qat.quant_utils.replace_with_quant_linear
+   neural_compressor.torch.algorithms.qat.quant_utils.get_quant_config_with_scheme
+   neural_compressor.torch.algorithms.qat.quant_utils.convert_model_with_mapping
+   neural_compressor.torch.algorithms.qat.quant_utils.get_quant_config
+   neural_compressor.torch.algorithms.qat.quant_utils.get_quantization_format
+   neural_compressor.torch.algorithms.qat.quant_utils.is_quantlinear
+
+
+Module Contents
+---------------
+
+.. py:function:: convert(module: torch.nn.Module, quant_cfg=None, quant_module=None)
+
+   Convert the model to a quantized one with quant config.
+
+
+.. py:function:: replace_with_quant_linear(model, quant_cfg=None)
+
+   Recursively replace the module with quantized module.
+
+
+.. py:function:: get_quant_config_with_scheme(scheme: str)
+
+   Get quantization config.
+
+
+.. py:function:: convert_model_with_mapping(model, mapping=None)
+
+   Process mapping to quant config.
+
+
+.. py:function:: get_quant_config(scheme: str) -> dict[str, Any]
+
+   Generate quantization config for a torch model.
+
+   :param model: The PyTorch model to analyze
+
+   :returns: Dictionary containing the quantization configuration
+
+
+.. py:function:: get_quantization_format(module) -> str | None
+
+   Gets the quantization string.
+
+   Gets the quantization string by iterating through the module and its children.
+   The first non-None quantization string is returned.
+
+
+.. py:function:: is_quantlinear(module: torch.nn.Module) -> bool
+
+   Returns whether the module is a quantized linear layer.
+
+

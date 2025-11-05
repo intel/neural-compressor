@@ -33,11 +33,10 @@ Classes
    neural_compressor.config.Torch2ONNXConfig
    neural_compressor.config.TF2ONNXConfig
    neural_compressor.config.NASConfig
-   neural_compressor.config.MXNet
+   neural_compressor.config.PyTorch
    neural_compressor.config.ONNX
    neural_compressor.config.TensorFlow
    neural_compressor.config.Keras
-   neural_compressor.config.PyTorch
 
 
 Module Contents
@@ -783,9 +782,9 @@ Module Contents
    Config class for NAS approaches.
 
 
-.. py:class:: MXNet(precisions=None)
+.. py:class:: PyTorch(precisions=None)
 
-   Base config class for MXNet.
+   Base config class for PyTorch.
 
 
 .. py:class:: ONNX(graph_optimization_level=None, precisions=None)
@@ -807,12 +806,5 @@ Module Contents
 
 
    Config class for Keras.
-
-
-.. py:class:: PyTorch(precisions=None)
-
-
-
-   Config class for PyTorch.
 
 

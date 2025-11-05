@@ -14,6 +14,7 @@ Classes
 
 .. autoapisummary::
 
+   neural_compressor.torch.utils.auto_accelerator.INCAcceleratorType
    neural_compressor.torch.utils.auto_accelerator.AcceleratorRegistry
    neural_compressor.torch.utils.auto_accelerator.Auto_Accelerator
    neural_compressor.torch.utils.auto_accelerator.CPU_Accelerator
@@ -33,6 +34,48 @@ Functions
 
 Module Contents
 ---------------
+
+.. py:class:: INCAcceleratorType(*args, **kwds)
+
+
+
+   Create a collection of name/value pairs.
+
+   Example enumeration:
+
+   >>> class Color(Enum):
+   ...     RED = 1
+   ...     BLUE = 2
+   ...     GREEN = 3
+
+   Access them by:
+
+   - attribute access:
+
+     >>> Color.RED
+     <Color.RED: 1>
+
+   - value lookup:
+
+     >>> Color(1)
+     <Color.RED: 1>
+
+   - name lookup:
+
+     >>> Color['RED']
+     <Color.RED: 1>
+
+   Enumerations can be iterated over, and know how many members they have:
+
+   >>> len(Color)
+   3
+
+   >>> list(Color)
+   [<Color.RED: 1>, <Color.BLUE: 2>, <Color.GREEN: 3>]
+
+   Methods can be added to enumerations, and members can have their own
+   attributes -- see the documentation for details.
+
 
 .. py:class:: AcceleratorRegistry
 
@@ -91,9 +134,9 @@ Module Contents
 
    Automatically detects and selects the appropriate accelerator.
 
-   Force use the cpu on node has both cpu and gpu: `FORCE_DEVICE=cpu` python main.py ...
-   The `FORCE_DEVICE` is case insensitive.
-   The environment variable `FORCE_DEVICE` has higher priority than the `device_name`.
+   Force use the cpu on node has both cpu and gpu: `INC_TARGET_DEVICE=cpu` python main.py ...
+   The `INC_TARGET_DEVICE` is case insensitive.
+   The environment variable `INC_TARGET_DEVICE` has higher priority than the `device_name`.
    TODO: refine the docs and logic later
 
 

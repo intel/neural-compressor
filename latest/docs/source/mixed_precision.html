@@ -1,14 +1,16 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Mixed Precision &mdash; Intel® Neural Compressor 3.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+  <title>Mixed Precision &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
 
   
 <script type="text/javascript">
@@ -40,10 +42,6 @@
           <a href="../../index.html" class="icon icon-home">
             Intel® Neural Compressor
           </a>
-            <div class="version">
-              <a href="../../../versions.html">latest▼</a>
-              <p>Click link above to switch version</p>
-            </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -57,7 +55,6 @@
 <li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -88,7 +85,7 @@
            <div itemprop="articleBody">
              
   <section id="mixed-precision">
-<h1>Mixed Precision<a class="headerlink" href="#mixed-precision" title="Permalink to this heading"></a></h1>
+<h1>Mixed Precision<a class="headerlink" href="#mixed-precision" title="Link to this heading"></a></h1>
 <ol class="simple">
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#mixed-precision-support-matrix">Mixed Precision Support Matrix</a></p></li>
@@ -96,14 +93,14 @@
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
 </ol>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
 <p>The recent growth of Deep Learning has driven the development of more complex models that require significantly more compute and memory capabilities. Several low precision numeric formats have been proposed to address the problem. Google’s <a class="reference external" href="https://cloud.google.com/tpu/docs/bfloat16">bfloat16</a> and the <a class="reference external" href="https://en.wikipedia.org/wiki/Half-precision_floating-point_format">FP16: IEEE</a> half-precision format are two of the most widely used sixteen bit formats. <a class="reference external" href="https://arxiv.org/abs/1710.03740">Mixed precision</a> training and inference using low precision formats have been developed to reduce compute and bandwidth requirements.</p>
 <p>The recently launched 3rd Gen Intel® Xeon® Scalable processor (codenamed Cooper Lake), featuring Intel® Deep Learning Boost, is the first general-purpose x86 CPU to support the bfloat16 format. Specifically, three new bfloat16 instructions are added as a part of the AVX512_BF16 extension within Intel Deep Learning Boost: VCVTNE2PS2BF16, VCVTNEPS2BF16, and VDPBF16PS. The first two instructions allow converting to and from bfloat16 data type, while the last one performs a dot product of bfloat16 pairs. Further details can be found in the <a class="reference external" href="https://software.intel.com/content/www/us/en/develop/download/bfloat16-hardware-numerics-definition.html">hardware numerics document</a> published by Intel.</p>
 <p align="center" width="100%">
     <img src="./imgs/data_format.png" alt="Architecture" height=230>
 </p></section>
 <section id="mixed-precision-support-matrix">
-<h2>Mixed Precision Support Matrix<a class="headerlink" href="#mixed-precision-support-matrix" title="Permalink to this heading"></a></h2>
+<h2>Mixed Precision Support Matrix<a class="headerlink" href="#mixed-precision-support-matrix" title="Link to this heading"></a></h2>
 <table class="center">
     <thead>
         <tr>
@@ -135,7 +132,7 @@
             <td align="left">:x:</td>
         </tr>
         <tr>
-            <td rowspan="4" align="left">ONNX Runtime</td>
+            <td rowspan="4" align="left">ONNX Runtime (Deprecated)</td>
             <td align="left">CPUExecutionProvider</td>
             <td align="left">MLAS</td>
             <td align="left">"default"</td>
@@ -168,7 +165,7 @@
             <td align="left">:x:</td>
         </tr>
         <tr>
-            <td rowspan="2" align="left">Tensorflow</td>
+            <td rowspan="2" align="left">Tensorflow (Deprecated)</td>
             <td align="left">Tensorflow</td>
             <td align="left">OneDNN</td>
             <td align="left">"default"</td>
@@ -184,18 +181,9 @@
             <td align="left">&#10004;</td>
             <td align="left">:x:</td>
         </tr>  
-        <tr>
-            <td align="left">MXNet</td>
-            <td align="left">OneDNN</td>
-            <td align="left">OneDNN</td>
-            <td align="left">"default"</td>
-            <td align="left">cpu</td>
-            <td align="left">&#10004;</td>
-            <td align="left">:x:</td>
-        </tr>
     </tbody>
 </table><section id="hardware-and-software-requests-for-bf16">
-<h3>Hardware and Software requests for <strong>BF16</strong><a class="headerlink" href="#hardware-and-software-requests-for-bf16" title="Permalink to this heading"></a></h3>
+<h3>Hardware and Software requests for <strong>BF16</strong><a class="headerlink" href="#hardware-and-software-requests-for-bf16" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>TensorFlow</p>
 <ol class="simple">
@@ -218,7 +206,7 @@
 </ul>
 </section>
 <section id="hardware-and-software-requests-for-fp16">
-<h3>Hardware and Software requests for <strong>FP16</strong><a class="headerlink" href="#hardware-and-software-requests-for-fp16" title="Permalink to this heading"></a></h3>
+<h3>Hardware and Software requests for <strong>FP16</strong><a class="headerlink" href="#hardware-and-software-requests-for-fp16" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>ONNX Runtime</p>
 <ol class="simple">
@@ -229,25 +217,25 @@
 </ul>
 </section>
 <section id="during-quantization-mixed-precision">
-<h3>During quantization mixed precision<a class="headerlink" href="#during-quantization-mixed-precision" title="Permalink to this heading"></a></h3>
+<h3>During quantization mixed precision<a class="headerlink" href="#during-quantization-mixed-precision" title="Link to this heading"></a></h3>
 <p>During quantization, if the hardware support BF16, the conversion is default enabled. So you may get an INT8/BF16/FP32 mixed precision model on those hardware. FP16 can be executed if ‘device’ of config is ‘gpu’.
 Please refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/source/quantization_mixed_precision.html">document</a> for its workflow.</p>
 </section>
 <section id="accuracy-driven-mixed-precision">
-<h3>Accuracy-driven mixed precision<a class="headerlink" href="#accuracy-driven-mixed-precision" title="Permalink to this heading"></a></h3>
+<h3>Accuracy-driven mixed precision<a class="headerlink" href="#accuracy-driven-mixed-precision" title="Link to this heading"></a></h3>
 <p>BF16/FP16 conversion may lead to accuracy drop. Intel® Neural Compressor provides an accuracy-driven tuning function to reduce accuracy loss,
 which will fallback converted ops to FP32 automatically to get better accuracy. To enable this function, users only to provide
 <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code> or (<code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">dataloader</span></code> plus <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code>) for <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/mix_precision.py">mixed precision inputs</a>.<br />To be noticed, IPEX backend doesn’t support accuracy-driven mixed precision.</p>
 </section>
 </section>
 <section id="get-started-with-mixed-precision-api">
-<h2>Get Started with Mixed Precision API<a class="headerlink" href="#get-started-with-mixed-precision-api" title="Permalink to this heading"></a></h2>
+<h2>Get Started with Mixed Precision API<a class="headerlink" href="#get-started-with-mixed-precision-api" title="Link to this heading"></a></h2>
 <p>To get a bf16/fp16 model, users can use the Mixed Precision API as follows.</p>
 <ul class="simple">
 <li><p>BF16:</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">mix_precision</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">MixedPrecisionConfig</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">mix_precision</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">MixedPrecisionConfig</span>
 
 <span class="n">conf</span> <span class="o">=</span> <span class="n">MixedPrecisionConfig</span><span class="p">()</span>  <span class="c1"># default precision is bf16</span>
 <span class="n">converted_model</span> <span class="o">=</span> <span class="n">mix_precision</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">)</span>
@@ -257,8 +245,8 @@ which will fallback converted ops to FP32 automatically to get better accuracy. 
 <ul class="simple">
 <li><p>FP16:</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">mix_precision</span>
-<span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">MixedPrecisionConfig</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">mix_precision</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">MixedPrecisionConfig</span>
 
 <span class="n">conf</span> <span class="o">=</span> <span class="n">MixedPrecisionConfig</span><span class="p">(</span>
     <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;onnxrt_cuda_ep&quot;</span><span class="p">,</span>
@@ -271,13 +259,13 @@ which will fallback converted ops to FP32 automatically to get better accuracy. 
 </div>
 </section>
 <section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p>Quick started with <a class="reference external" href="/examples/helloworld/tf_example3">helloworld example</a></p></li>
-<li><p>PyTorch <a class="reference external" href="/examples/pytorch/image_recognition/torchvision_models/mixed_precision/resnet18">ResNet18</a></p></li>
-<li><p>IPEX <a class="reference external" href="/examples/pytorch/nlp/huggingface_models/question-answering/mixed_precision/ipex">DistilBERT base</a></p></li>
-<li><p>Tensorflow <a class="reference external" href="/examples/tensorflow/image_recognition/tensorflow_models/resnet50_v1/mixed_precision">ResNet50</a></p></li>
-<li><p>ONNX Runtime <a class="reference external" href="/examples/onnxrt/nlp/huggingface_model/text_classification/mix_precision">Bert base</a></p></li>
+<li><p>Quick started with <a class="reference external" href="/examples/deprecated/helloworld/tf_example3">helloworld example</a></p></li>
+<li><p>PyTorch <a class="reference external" href="/examples/deprecated/pytorch/image_recognition/torchvision_models/mixed_precision/resnet18">ResNet18</a></p></li>
+<li><p>IPEX <a class="reference external" href="/examples/deprecated/pytorch/nlp/huggingface_models/question-answering/mixed_precision/ipex">DistilBERT base</a></p></li>
+<li><p>Tensorflow <a class="reference external" href="/examples/deprecated/tensorflow/image_recognition/tensorflow_models/resnet50_v1/mixed_precision">ResNet50</a></p></li>
+<li><p>ONNX Runtime <a class="reference external" href="/examples/deprecated/onnxrt/nlp/huggingface_model/text_classification/mix_precision">Bert base</a></p></li>
 </ul>
 </section>
 </section>
@@ -296,7 +284,7 @@ which will fallback converted ops to FP32 automatically to get better accuracy. 
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cc2395a20> 
+   <jinja2.runtime.BlockReference object at 0x7f07a8d3a120> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

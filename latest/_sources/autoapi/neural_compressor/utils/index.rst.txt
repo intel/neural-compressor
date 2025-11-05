@@ -9,15 +9,6 @@ neural_compressor.utils
 
 
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 1
-
-   /autoapi/neural_compressor/utils/export/index
-
-
 Submodules
 ----------
 
@@ -27,6 +18,7 @@ Submodules
    /autoapi/neural_compressor/utils/collect_layer_histogram/index
    /autoapi/neural_compressor/utils/constant/index
    /autoapi/neural_compressor/utils/create_obj_from_config/index
+   /autoapi/neural_compressor/utils/export/index
    /autoapi/neural_compressor/utils/kl_divergence/index
    /autoapi/neural_compressor/utils/load_huggingface/index
    /autoapi/neural_compressor/utils/logger/index

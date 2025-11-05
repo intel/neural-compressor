@@ -9,8 +9,8 @@ neural_compressor.torch
 
 
 
-Subpackages
------------
+Submodules
+----------
 
 .. toctree::
    :maxdepth: 1

@@ -1,14 +1,16 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>AutoTune &mdash; Intel® Neural Compressor 3.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+  <title>AutoTune &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=68dfede1" />
 
   
 <script type="text/javascript">
@@ -40,10 +42,6 @@
           <a href="../../../index.html" class="icon icon-home">
             Intel® Neural Compressor
           </a>
-            <div class="version">
-              <a href="../../../../versions.html">latest▼</a>
-              <p>Click link above to switch version</p>
-            </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -57,7 +55,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../installation_guide.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api-doc/apis.html">APIs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../releases_info.html">Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -88,22 +85,22 @@
            <div itemprop="articleBody">
              
   <section id="autotune">
-<h1>AutoTune<a class="headerlink" href="#autotune" title="Permalink to this heading"></a></h1>
+<h1>AutoTune<a class="headerlink" href="#autotune" title="Link to this heading"></a></h1>
 <ol class="simple">
 <li><p><a class="reference external" href="#overview">Overview</a></p></li>
 <li><p><a class="reference external" href="#how-it-works">How it Works</a></p></li>
 <li><p><a class="reference external" href="#working-with-autotune">Working with Autotune</a> <br />3.1 <a class="reference external" href="#working-with-pytorch-model">Working with PyTorch Model</a> <br />3.1 <a class="reference external" href="#working-with-tensorflow-model">Working with Tensorflow Model</a></p></li>
 </ol>
 <section id="overview">
-<h2>Overview<a class="headerlink" href="#overview" title="Permalink to this heading"></a></h2>
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
 <p>Intel® Neural Compressor aims to help users quickly deploy low-precision models by leveraging popular compression techniques, such as post-training quantization and weight-only quantization algorithms. Despite having a variety of these algorithms, finding the appropriate configuration for a model can be difficult and time-consuming. To address this, we built the <code class="docutils literal notranslate"><span class="pre">autotune</span></code> module based on the <a class="reference external" href="./tuning_strategies.html">strategy</a> in 2.x for accuracy-aware tuning, which identifies the best algorithm configuration for models to achieve optimal performance under the certain accuracy criteria. This module allows users to easily use predefined tuning recipes and customize the tuning space as needed.</p>
 </section>
 <section id="how-it-works">
-<h2>How it Works<a class="headerlink" href="#how-it-works" title="Permalink to this heading"></a></h2>
+<h2>How it Works<a class="headerlink" href="#how-it-works" title="Link to this heading"></a></h2>
 <p>The autotune module constructs the tuning space according to the pre-defined tuning set or users’ tuning set. It iterates the tuning space and applies the configuration on given float model then records and compares its evaluation result with the baseline. The tuning process stops when meeting the exit policy.</p>
 </section>
 <section id="working-with-autotune">
-<h2>Working with Autotune<a class="headerlink" href="#working-with-autotune" title="Permalink to this heading"></a></h2>
+<h2>Working with Autotune<a class="headerlink" href="#working-with-autotune" title="Link to this heading"></a></h2>
 <p>The <code class="docutils literal notranslate"><span class="pre">autotune</span></code> API is used across all of frameworks supported by INC. It accepts three primary arguments: <code class="docutils literal notranslate"><span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">tune_config</span></code>, and <code class="docutils literal notranslate"><span class="pre">eval_fn</span></code>.</p>
 <p>The <code class="docutils literal notranslate"><span class="pre">TuningConfig</span></code> class defines the tuning process, including the tuning space, order, and exit policy.</p>
 <ul>
@@ -128,12 +125,12 @@
 </li>
 </ul>
 <section id="working-with-pytorch-model">
-<h3>Working with PyTorch Model<a class="headerlink" href="#working-with-pytorch-model" title="Permalink to this heading"></a></h3>
+<h3>Working with PyTorch Model<a class="headerlink" href="#working-with-pytorch-model" title="Link to this heading"></a></h3>
 <p>The example below demonstrates how to autotune a PyTorch model on four <code class="docutils literal notranslate"><span class="pre">RTNConfig</span></code> configurations.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">RTNConfig</span><span class="p">,</span> <span class="n">TuningConfig</span><span class="p">,</span> <span class="n">autotune</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">RTNConfig</span><span class="p">,</span> <span class="n">TuningConfig</span><span class="p">,</span> <span class="n">autotune</span>
 
 
-<span class="k">def</span> <span class="nf">eval_fn</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">eval_fn</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="k">return</span> <span class="o">...</span>
 
 
@@ -147,9 +144,9 @@
 </div>
 </section>
 <section id="working-with-tensorflow-model">
-<h3>Working with Tensorflow Model<a class="headerlink" href="#working-with-tensorflow-model" title="Permalink to this heading"></a></h3>
+<h3>Working with Tensorflow Model<a class="headerlink" href="#working-with-tensorflow-model" title="Link to this heading"></a></h3>
 <p>The example below demonstrates how to autotune a TensorFlow model on two <code class="docutils literal notranslate"><span class="pre">StaticQuantConfig</span></code> configurations.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.tensorflow.quantization</span> <span class="kn">import</span> <span class="n">StaticQuantConfig</span><span class="p">,</span> <span class="n">autotune</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.tensorflow.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span><span class="p">,</span> <span class="n">autotune</span>
 
 <span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">MyDataloader</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
 <span class="n">custom_tune_config</span> <span class="o">=</span> <span class="n">TuningConfig</span><span class="p">(</span>
@@ -160,7 +157,7 @@
 <span class="p">)</span>
 
 
-<span class="k">def</span> <span class="nf">eval_fn</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">eval_fn</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
     <span class="k">return</span> <span class="o">...</span>
 
 
@@ -187,7 +184,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cba773760> 
+   <jinja2.runtime.BlockReference object at 0x7f07a89608c0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

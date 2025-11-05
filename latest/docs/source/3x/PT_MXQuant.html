@@ -1,14 +1,16 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Microscaling Quantization &mdash; Intel® Neural Compressor 3.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+  <title>Microscaling Quantization &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=68dfede1" />
 
   
 <script type="text/javascript">
@@ -40,10 +42,6 @@
           <a href="../../../index.html" class="icon icon-home">
             Intel® Neural Compressor
           </a>
-            <div class="version">
-              <a href="../../../../versions.html">latest▼</a>
-              <p>Click link above to switch version</p>
-            </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -57,7 +55,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../installation_guide.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api-doc/apis.html">APIs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../releases_info.html">Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -88,7 +85,7 @@
            <div itemprop="articleBody">
              
   <section id="microscaling-quantization">
-<h1>Microscaling Quantization<a class="headerlink" href="#microscaling-quantization" title="Permalink to this heading"></a></h1>
+<h1>Microscaling Quantization<a class="headerlink" href="#microscaling-quantization" title="Link to this heading"></a></h1>
 <ol class="simple">
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#get-start-with-microscaling-quantization-api">Get Started with Microscaling Quantization API</a></p></li>
@@ -96,7 +93,7 @@
 <li><p><a class="reference external" href="#reference">Reference</a></p></li>
 </ol>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
 <p>Numerous breakthroughs have emerged across various fields, such as text analysis, language translation and chatbot technologies, fueled by the development of large language models (LLMs). Nevertheless, their increasing power comes with the challenge of explosive growth in parameters, posing obstacles for practical use. To balance memory limits and accuracy preservation for AI models, the Microscaling (MX) specification was promoted from the well-known Microsoft Floating Point (MSFP) data type [1, 2]:</p>
 <table>
   <tr>
@@ -151,7 +148,7 @@
     <left> 
         <img src="./imgs/mx_workflow.png" alt="Workflow of MX Quant (source [3])" height=120> 
     </left>
-</a><p>The memory and computational limits of LLMs are more severe than other general neural networks, so our exploration focuses on LLMs first. The following table shows the basic MX quantization recipes in Neural Compressor and enumerates distinctions among various data types. The MX data type replaces general float scale with powers of two to be more hardware-friendly. It adapts a granularity falling between per-channel and per-tensor to balance accuracy and memory consumption.</p>
+</a><p>The memory and computational limits of LLMs are more severe than other general neural networks, so our exploration focuses on LLMs first. The following table shows the basic MX quantization recipes in Neural Compressor and enumerates distinctions among various data types. The MX data type replaces general float scale with powers of two to be more hardware-friendly.</p>
 <table border="1" class="docutils">
 <thead>
 <tr>
@@ -181,27 +178,54 @@
 <td>per-channel or per-tensor</td>
 </tr>
 </tbody>
-</table><p>The exponent (exp) is equal to torch.floor(torch.log2(amax)), MAX is the representation range of the data type, amax is the max absolute value of per-block tensor, and rmin is the minimum value of the per-block tensor.</p>
+</table><p>The exponent (exp) is equal to clamp(floor(log2(amax)) - maxExp, -127, 127), MAX is the representation range of the data type, amax is the max absolute value of per-block tensor, and rmin is the minimum value of the per-block tensor.</p>
 </section>
 <section id="get-started-with-microscaling-quantization-api">
-<h2>Get Started with Microscaling Quantization API<a class="headerlink" href="#get-started-with-microscaling-quantization-api" title="Permalink to this heading"></a></h2>
-<p>To get a model quantized with Microscaling Data Types, users can use the Microscaling Quantization API as follows.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">MXQuantConfig</span><span class="p">,</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span>
+<h2>Get Started with Microscaling Quantization API<a class="headerlink" href="#get-started-with-microscaling-quantization-api" title="Link to this heading"></a></h2>
+<p>To get a model quantized with Microscaling Data Types, users can use the AutoRound Quantization API as follows.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoRoundConfig</span><span class="p">,</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
 
-<span class="n">quant_config</span> <span class="o">=</span> <span class="n">MXQuantConfig</span><span class="p">(</span><span class="n">w_dtype</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">w_dtype</span><span class="p">,</span> <span class="n">act_dtype</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">act_dtype</span><span class="p">,</span> <span class="n">weight_only</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">woq</span><span class="p">)</span>
-<span class="n">user_model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">user_model</span><span class="p">,</span> <span class="n">quant_config</span><span class="o">=</span><span class="n">quant_config</span><span class="p">)</span>
-<span class="n">user_model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">user_model</span><span class="p">)</span>
+<span class="n">fp32_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+    <span class="s2">&quot;facebook/opt-125m&quot;</span><span class="p">,</span>
+    <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;facebook/opt-125m&quot;</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;./saved_inc&quot;</span>
+
+<span class="c1"># quantization configuration</span>
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">(</span>
+    <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>
+    <span class="n">nsamples</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+    <span class="n">seqlen</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+    <span class="n">iters</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
+    <span class="n">scheme</span><span class="o">=</span><span class="s2">&quot;MXFP4&quot;</span><span class="p">,</span>  <span class="c1"># MXFP4, MXFP8</span>
+    <span class="n">export_format</span><span class="o">=</span><span class="s2">&quot;auto_round&quot;</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>  <span class="c1"># default is &quot;temp_auto_round&quot;</span>
+<span class="p">)</span>
+
+<span class="c1"># quantize the model and save to output_dir</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">fp32_model</span><span class="p">,</span> <span class="n">quant_config</span><span class="o">=</span><span class="n">quant_config</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+<span class="c1"># loading</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">torch_dtype</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+
+<span class="c1"># inference</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;There is a girl who likes adventure,&quot;</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">10</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
 </pre></div>
 </div>
 </section>
 <section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p>PyTorch <a class="reference external" href="/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/mx_quant">huggingface models</a></p></li>
+<li><p>PyTorch <a class="reference external" href="/examples/pytorch/multimodal-modeling/quantization/auto_round/llama4">LLM/VLM models</a></p></li>
 </ul>
 </section>
 <section id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this heading"></a></h2>
+<h2>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h2>
 <p>[1]: Darvish Rouhani, Bita, et al. “Pushing the limits of narrow precision inferencing at cloud scale with microsoft floating point.” Advances in neural information processing systems 33 (2020): 10271-10281</p>
 <p>[2]: OCP Microscaling Formats (MX) Specification</p>
 <p>[3]: Rouhani, Bita Darvish, et al. “Microscaling Data Formats for Deep Learning.” arXiv preprint arXiv:2310.10537 (2023).</p>
@@ -222,7 +246,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cbcfbb3d0> 
+   <jinja2.runtime.BlockReference object at 0x7f07a40e78c0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

@@ -17,13 +17,11 @@ Classes
    neural_compressor.metric.metric.Metric
    neural_compressor.metric.metric.TensorflowMetrics
    neural_compressor.metric.metric.PyTorchMetrics
-   neural_compressor.metric.metric.MXNetMetrics
    neural_compressor.metric.metric.ONNXRTQLMetrics
    neural_compressor.metric.metric.ONNXRTITMetrics
    neural_compressor.metric.metric.METRICS
    neural_compressor.metric.metric.BaseMetric
    neural_compressor.metric.metric.WrapPyTorchMetric
-   neural_compressor.metric.metric.WrapMXNetMetric
    neural_compressor.metric.metric.WrapONNXRTMetric
    neural_compressor.metric.metric.F1
    neural_compressor.metric.metric.Accuracy
@@ -95,17 +93,6 @@ Module Contents
       A dict to maintain all metrics for PyTorch model.
 
 
-.. py:class:: MXNetMetrics
-
-
-
-   MXNet metrics collection.
-
-   .. attribute:: metrics
-
-      A dict to maintain all metrics for MXNet model.
-
-
 .. py:class:: ONNXRTQLMetrics
 
 
@@ -144,7 +131,7 @@ Module Contents
    Decorate for registering all Metric subclasses.
 
    The cross-framework metric is supported by specifying the framework param
-   as one of tensorflow, pytorch, mxnet, onnxrt.
+   as one of tensorflow, pytorch, onnxrt.
 
    :param metric_type: The metric type.
    :param framework: The framework name.
@@ -165,13 +152,6 @@ Module Contents
 
 
    The wrapper of Metric class for PyTorch.
-
-
-.. py:class:: WrapMXNetMetric(metric, single_output=False, hvd=None)
-
-
-
-   The wrapper of Metric class for MXNet.
 
 
 .. py:class:: WrapONNXRTMetric(metric, single_output=False, hvd=None)

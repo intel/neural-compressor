@@ -77,6 +77,7 @@ Functions
    neural_compressor.utils.utility.calculate_mse
    neural_compressor.utils.utility.mse_metric_gap
    neural_compressor.utils.utility.check_key_exist
+   neural_compressor.utils.utility.secure_check_eval_func
 
 
 Module Contents
@@ -180,11 +181,11 @@ Module Contents
    Get all the fp32 data.
 
 
-.. py:function:: get_tuning_history(tuning_history_path)
+.. py:function:: get_tuning_history(history_path)
 
    Get tuning history.
 
-   :param tuning_history_path: The tuning history path, which need users to assign
+   :param history_path: The tuning history path, which need users to assign
 
 
 .. py:function:: recover(fp32_model, tuning_history_path, num, **kwargs)
@@ -225,7 +226,7 @@ Module Contents
    The statistics printer.
 
 
-.. py:class:: MODE
+.. py:class:: MODE(*args, **kwds)
 
 
 
@@ -500,5 +501,10 @@ Module Contents
    True
    >>> check_key_exist({'a': 1, 'b': [1, 2, 3]}, 'c')
    False
+
+
+.. py:function:: secure_check_eval_func(user_func)
+
+   Return a secured version of user eval_func.
 
 

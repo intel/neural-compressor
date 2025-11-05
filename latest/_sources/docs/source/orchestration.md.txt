@@ -90,4 +90,4 @@ model.save('./path/to/save')
 
 ## Examples
 
-[Orchestration Examples](../../examples/README.html#orchestration)
+[Orchestration Examples](../../examples/deprecated/README.html#orchestration)

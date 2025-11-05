@@ -25,17 +25,20 @@ Functions
    neural_compressor.torch.algorithms.layer_wise.utils.get_module
    neural_compressor.torch.algorithms.layer_wise.utils.get_children
    neural_compressor.torch.algorithms.layer_wise.utils.get_named_children
-   neural_compressor.torch.algorithms.layer_wise.utils.dowload_hf_model
-   neural_compressor.torch.algorithms.layer_wise.utils.load_empty_model
    neural_compressor.torch.algorithms.layer_wise.utils.get_super_module_by_name
    neural_compressor.torch.algorithms.layer_wise.utils.update_module
    neural_compressor.torch.algorithms.layer_wise.utils.load_layer_wise_quantized_model
    neural_compressor.torch.algorithms.layer_wise.utils.load_tensor_from_shard
    neural_compressor.torch.algorithms.layer_wise.utils.load_tensor
+   neural_compressor.torch.algorithms.layer_wise.utils.load_tensor_from_safetensors
+   neural_compressor.torch.algorithms.layer_wise.utils.load_tensor_from_safetensors_shard
    neural_compressor.torch.algorithms.layer_wise.utils.load_value
    neural_compressor.torch.algorithms.layer_wise.utils.load_module
+   neural_compressor.torch.algorithms.layer_wise.utils.load_first_layer_only
    neural_compressor.torch.algorithms.layer_wise.utils.register_weight_hooks
    neural_compressor.torch.algorithms.layer_wise.utils.clean_module_weight
+   neural_compressor.torch.algorithms.layer_wise.utils.save_layers_in_shards_iteratively
+   neural_compressor.torch.algorithms.layer_wise.utils.load_model_from_shards_with_safetensors
 
 
 Module Contents
@@ -68,16 +71,6 @@ Module Contents
    Get all the name and children of given model.
 
 
-.. py:function:: dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None)
-
-   Download hugging face model from hf hub.
-
-
-.. py:function:: load_empty_model(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs)
-
-   Load a empty model.
-
-
 .. py:function:: get_super_module_by_name(model, module_name)
 
    Get the father module with given name of child module.
@@ -103,7 +96,17 @@ Module Contents
    Load a tensor from bin file with given tensor name.
 
 
-.. py:function:: load_value(model, param_name, path)
+.. py:function:: load_tensor_from_safetensors(path, tensor_name=None, prefix=None, device='cpu')
+
+   Load a tensor from safetensors file with given tensor name.
+
+
+.. py:function:: load_tensor_from_safetensors_shard(pretrained_model_name_or_path, tensor_name, prefix=None, device='cpu')
+
+   Load tensor from shard.
+
+
+.. py:function:: load_value(model, param_name, path, device='cpu')
 
    Load the module value.
 
@@ -113,6 +116,8 @@ Module Contents
    :type param_name: str
    :param path: path to load state_dict per layer.
    :type path: str
+   :param device: module device. Defaults to "cpu".
+   :type device: str, optional
 
    :returns: the module value.
    :rtype: tensor
@@ -132,7 +137,17 @@ Module Contents
    :type device: str, optional
 
 
-.. py:function:: register_weight_hooks(model, path, device='cpu', clean_weight=True, saved_path=None)
+.. py:function:: load_first_layer_only(user_model, model_name)
+
+   Load first layer only.
+
+   :param user_model: input model
+   :type user_model: torch.nn.Module
+   :param model_name: model name or path
+   :type model_name: str
+
+
+.. py:function:: register_weight_hooks(model, path, device='cpu', clean_weight=True, saved_path=None, indicated_layers=None)
 
    Register weight hooks for model.
 
@@ -154,5 +169,23 @@ Module Contents
 .. py:function:: clean_module_weight(module)
 
    Clean module weight.
+
+
+.. py:function:: save_layers_in_shards_iteratively(checkpoint_dir, output_dir, layers_per_shard=10)
+
+   Save model layers iteratively in shards, each shard containing a fixed number of layers using safetensors.
+
+
+.. py:function:: load_model_from_shards_with_safetensors(shard_dir, bin_index_file)
+
+   Load the model from its shards and the bin index using safetensors.
+
+   :param shard_dir: Directory containing the model shard files.
+   :type shard_dir: str
+   :param bin_index_file: Path to the bin index JSON file.
+   :type bin_index_file: str
+
+   :returns: The reconstructed model with the layers.
+   :rtype: torch.nn.Module
 
 

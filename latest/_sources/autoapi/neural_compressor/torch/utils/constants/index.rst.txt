@@ -14,13 +14,13 @@ Classes
 
 .. autoapisummary::
 
-   neural_compressor.torch.utils.constants.LoadFormat
+   neural_compressor.torch.utils.constants.SaveLoadFormat
 
 
 Module Contents
 ---------------
 
-.. py:class:: LoadFormat
+.. py:class:: SaveLoadFormat(*args, **kwds)
 
 
 

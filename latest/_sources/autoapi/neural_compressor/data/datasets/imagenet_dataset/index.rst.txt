@@ -16,7 +16,6 @@ Classes
 
    neural_compressor.data.datasets.imagenet_dataset.ImagenetRaw
    neural_compressor.data.datasets.imagenet_dataset.PytorchImagenetRaw
-   neural_compressor.data.datasets.imagenet_dataset.MXNetImagenetRaw
    neural_compressor.data.datasets.imagenet_dataset.TensorflowImagenetRaw
    neural_compressor.data.datasets.imagenet_dataset.TensorflowImagenetDataset
    neural_compressor.data.datasets.imagenet_dataset.ONNXRTImagenetDataset
@@ -45,13 +44,6 @@ Module Contents
 
 
    Dataset for ImageNet data generation on pytorch backend.
-
-
-.. py:class:: MXNetImagenetRaw(data_path, image_list, transform=None, filter=None)
-
-
-
-   Dataset for ImageNet data generation on mxnet backend.
 
 
 .. py:class:: TensorflowImagenetRaw(data_path, image_list, transform=None, filter=None)

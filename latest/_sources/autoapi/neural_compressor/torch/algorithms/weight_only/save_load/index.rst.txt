@@ -24,12 +24,13 @@ Functions
 
    neural_compressor.torch.algorithms.weight_only.save_load.save
    neural_compressor.torch.algorithms.weight_only.save_load.load
+   neural_compressor.torch.algorithms.weight_only.save_load.change_config_to_hf_format
 
 
 Module Contents
 ---------------
 
-.. py:function:: save(model, output_dir='./saved_results')
+.. py:function:: save(model, output_dir='./saved_results', format=SaveLoadFormat.DEFAULT, **kwargs)
 
    Save the quantized model and config to the output path.
 
@@ -37,9 +38,15 @@ Module Contents
    :type model: torch.nn.module
    :param output_dir: output path to save.
    :type output_dir: str, optional
+   :param format: The format in which to save the model. Options include "default" and "huggingface". Defaults to "default".
+   :type format: str, optional
+   :param kwargs: Additional arguments for specific formats. For example:
+                  - safe_serialization (bool): Whether to use safe serialization when saving (only applicable for 'huggingface' format). Defaults to True.
+                  - tokenizer (Tokenizer, optional): The tokenizer to be saved along with the model (only applicable for 'huggingface' format).
+                  - max_shard_size (str, optional): The maximum size for each shard (only applicable for 'huggingface' format). Defaults to "5GB".
 
 
-.. py:function:: load(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device='cpu', **kwargs)
+.. py:function:: load(model_name_or_path, original_model=None, format=SaveLoadFormat.DEFAULT, device='cpu', **kwargs)
 
    Load quantized weight-only quantization model.
 
@@ -72,8 +79,13 @@ Module Contents
    :rtype: torch.nn.Module
 
 
-.. py:class:: WOQModelLoader(model_name_or_path, original_model=None, format=LoadFormat.DEFAULT, device='cpu', **kwargs)
+.. py:class:: WOQModelLoader(model_name_or_path, original_model=None, format=SaveLoadFormat.DEFAULT, device='cpu', **kwargs)
 
    WOQ Model Loader.
+
+
+.. py:function:: change_config_to_hf_format(config_mappings)
+
+   Change INC config_mappings to Huggingface format.
 
 

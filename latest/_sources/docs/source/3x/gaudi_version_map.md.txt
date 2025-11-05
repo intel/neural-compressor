@@ -13,4 +13,34 @@
             <td>v1.17</td>
         </tr>
     </tbody>
+    <tbody>
+        <tr>
+            <td>v3.1</td>
+            <td>v1.18</td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr>
+            <td>v3.2</td>
+            <td>v1.19</td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr>
+            <td>v3.3</td>
+            <td>v1.20</td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr>
+            <td>v3.4</td>
+            <td>v1.21</td>
+        </tr>
+    </tbody>
+    <tbody>
+        <tr>
+            <td>v3.5, v3.6</td>
+            <td>v1.22</td>
+        </tr>
+    </tbody>
 </table>

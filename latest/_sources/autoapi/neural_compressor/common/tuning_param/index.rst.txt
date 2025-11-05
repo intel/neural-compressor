@@ -21,7 +21,7 @@ Classes
 Module Contents
 ---------------
 
-.. py:class:: ParamLevel
+.. py:class:: ParamLevel(*args, **kwds)
 
 
 

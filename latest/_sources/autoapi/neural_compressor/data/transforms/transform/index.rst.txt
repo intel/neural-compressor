@@ -16,7 +16,6 @@ Classes
 
    neural_compressor.data.transforms.transform.Transforms
    neural_compressor.data.transforms.transform.TensorflowTransforms
-   neural_compressor.data.transforms.transform.MXNetTransforms
    neural_compressor.data.transforms.transform.PyTorchTransforms
    neural_compressor.data.transforms.transform.ONNXRTQLTransforms
    neural_compressor.data.transforms.transform.ONNXRTITTransforms
@@ -24,18 +23,16 @@ Classes
    neural_compressor.data.transforms.transform.BaseTransform
    neural_compressor.data.transforms.transform.TensorflowWrapFunction
    neural_compressor.data.transforms.transform.TensorflowTransform
-   neural_compressor.data.transforms.transform.PytorchMxnetWrapFunction
-   neural_compressor.data.transforms.transform.PytorchMxnetTransform
+   neural_compressor.data.transforms.transform.PytorchWrapFunction
+   neural_compressor.data.transforms.transform.PytorchTransform
    neural_compressor.data.transforms.transform.ComposeTransform
    neural_compressor.data.transforms.transform.CropToBoundingBox
-   neural_compressor.data.transforms.transform.MXNetCropToBoundingBox
    neural_compressor.data.transforms.transform.ONNXRTCropToBoundingBox
    neural_compressor.data.transforms.transform.TensorflowCropToBoundingBox
    neural_compressor.data.transforms.transform.ResizeWithRatio
    neural_compressor.data.transforms.transform.TensorflowResizeWithRatio
    neural_compressor.data.transforms.transform.Transpose
    neural_compressor.data.transforms.transform.TensorflowTranspose
-   neural_compressor.data.transforms.transform.MXNetTranspose
    neural_compressor.data.transforms.transform.PyTorchTranspose
    neural_compressor.data.transforms.transform.RandomVerticalFlip
    neural_compressor.data.transforms.transform.TensorflowRandomVerticalFlip
@@ -51,7 +48,6 @@ Classes
    neural_compressor.data.transforms.transform.ResizePytorchTransform
    neural_compressor.data.transforms.transform.RandomCropTFTransform
    neural_compressor.data.transforms.transform.RandomResizedCropPytorchTransform
-   neural_compressor.data.transforms.transform.RandomResizedCropMXNetTransform
    neural_compressor.data.transforms.transform.RandomResizedCropTFTransform
    neural_compressor.data.transforms.transform.NormalizeTFTransform
    neural_compressor.data.transforms.transform.RescaleKerasPretrainTransform
@@ -59,15 +55,11 @@ Classes
    neural_compressor.data.transforms.transform.RescaleTransform
    neural_compressor.data.transforms.transform.AlignImageChannelTransform
    neural_compressor.data.transforms.transform.PyTorchAlignImageChannel
-   neural_compressor.data.transforms.transform.ToNDArrayTransform
-   neural_compressor.data.transforms.transform.ResizeMXNetTransform
    neural_compressor.data.transforms.transform.ResizeTransform
    neural_compressor.data.transforms.transform.CropResizeTFTransform
    neural_compressor.data.transforms.transform.PyTorchCropResizeTransform
-   neural_compressor.data.transforms.transform.MXNetCropResizeTransform
    neural_compressor.data.transforms.transform.CropResizeTransform
    neural_compressor.data.transforms.transform.CenterCropTransform
-   neural_compressor.data.transforms.transform.MXNetNormalizeTransform
    neural_compressor.data.transforms.transform.PyTorchNormalizeTransform
    neural_compressor.data.transforms.transform.NormalizeTransform
    neural_compressor.data.transforms.transform.RandomCropTransform
@@ -113,13 +105,6 @@ Module Contents
    Tensorflow Transforms subclass.
 
 
-.. py:class:: MXNetTransforms(process, concat_general=True)
-
-
-
-   Mxnet Transforms subclass.
-
-
 .. py:class:: PyTorchTransforms(process, concat_general=True)
 
 
@@ -159,7 +144,7 @@ Module Contents
    :type transform_type: str
    :param process: support 3 process including 'preprocess', 'postprocess', 'general'
    :type process: str
-   :param framework: support 4 framework including 'tensorflow', 'pytorch', 'mxnet', 'onnxrt'
+   :param framework: support 4 framework including 'tensorflow', 'pytorch', 'onnxrt'
    :type framework: str
    :param cls: The class of register.
    :type cls: class
@@ -189,18 +174,18 @@ Module Contents
    Tensorflow transform class, the subclass of BaseTransform.
 
 
-.. py:class:: PytorchMxnetWrapFunction(transform_func)
+.. py:class:: PytorchWrapFunction(transform_func)
 
 
 
-   Pytorch and MXNet wrapper function class.
+   Pytorch wrapper function class.
 
 
-.. py:class:: PytorchMxnetTransform(transform_func)
+.. py:class:: PytorchTransform(transform_func)
 
 
 
-   Pytorch and Mxnet transform class, the subclass of BaseTransform.
+   Pytorch transform class, the subclass of BaseTransform.
 
 
 .. py:function:: get_torchvision_map(interpolation)
@@ -222,24 +207,6 @@ Module Contents
 
 
 .. py:class:: CropToBoundingBox(offset_height, offset_width, target_height, target_width)
-
-
-
-   Crops an image to a specified bounding box.
-
-   :param offset_height: Vertical coordinate of the top-left corner of the result in the input
-   :type offset_height: int
-   :param offset_width: Horizontal coordinate of the top-left corner of the result in the input
-   :type offset_width: int
-   :param target_height: Height of the result
-   :type target_height: int
-   :param target_width: Width of the result
-   :type target_width: int
-
-   :returns: tuple of processed image and label
-
-
-.. py:class:: MXNetCropToBoundingBox(offset_height, offset_width, target_height, target_width)
 
 
 
@@ -355,18 +322,6 @@ Module Contents
    :returns: tuple of processed image and label
 
 
-.. py:class:: MXNetTranspose(perm)
-
-
-
-   Transpose image according to perm.
-
-   :param perm: A permutation of the dimensions of input image
-   :type perm: list
-
-   :returns: tuple of processed image and label
-
-
 .. py:class:: PyTorchTranspose(perm)
 
 
@@ -419,7 +374,7 @@ Module Contents
 
 
 
-   Convert PIL Image or NDArray to numpy array.
+   Convert PIL Image to numpy array.
 
    :returns: tuple of processed image and label
 
@@ -546,24 +501,6 @@ Module Contents
    :returns: tuple of processed image and label
 
 
-.. py:class:: RandomResizedCropMXNetTransform(size, scale=(0.08, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0), interpolation='bilinear')
-
-
-
-   Crop the given image to random size and aspect ratio.
-
-   :param size: Size of the result
-   :type size: list or int
-   :param scale: range of size of the origin size cropped
-   :type scale: tuple or list, default=(0.08, 1.0)
-   :param ratio: range of aspect ratio of the origin aspect ratio cropped
-   :type ratio: tuple or list, default=(3. / 4., 4. / 3.)
-   :param interpolation: Desired interpolation type, support 'bilinear', 'nearest', 'bicubic'
-   :type interpolation: str, default='bilinear'
-
-   :returns: tuple of processed image and label
-
-
 .. py:class:: RandomResizedCropTFTransform(size, scale=(0.08, 1.0), ratio=(3.0 / 4.0, 4.0 / 3.0), interpolation='bilinear')
 
 
@@ -647,30 +584,6 @@ Module Contents
    :returns: tuple of processed image and label
 
 
-.. py:class:: ToNDArrayTransform
-
-
-
-   Convert np.array to NDArray.
-
-   :returns: tuple of processed image and label
-
-
-.. py:class:: ResizeMXNetTransform(size, interpolation='bilinear')
-
-
-
-   Resize the input image to the given size.
-
-   :param size: Size of the result
-   :type size: list or int
-   :param interpolation: Desired interpolation type,
-                         support 'bilinear', 'nearest', 'bicubic'
-   :type interpolation: str, default='bilinear'
-
-   :returns: tuple of processed image and label
-
-
 .. py:class:: ResizeTransform(size, interpolation='bilinear')
 
 
@@ -734,29 +647,6 @@ Module Contents
    :returns: tuple of processed image and label
 
 
-.. py:class:: MXNetCropResizeTransform(x, y, width, height, size, interpolation='bilinear')
-
-
-
-   Crop the input image with given location and resize it.
-
-   :param x: Left boundary of the cropping area
-   :type x: int
-   :param y: Top boundary of the cropping area
-   :type y: int
-   :param width: Width of the cropping area
-   :type width: int
-   :param height: Height of the cropping area
-   :type height: int
-   :param size: resize to new size after cropping
-   :type size: list or int
-   :param interpolation: Desired interpolation type,
-                         support 'bilinear', 'nearest', 'bicubic'
-   :type interpolation: str, default='bilinear'
-
-   :returns: tuple of processed image and label
-
-
 .. py:class:: CropResizeTransform(x, y, width, height, size, interpolation='bilinear')
 
 
@@ -788,22 +678,6 @@ Module Contents
 
    :param size: Size of the result
    :type size: list or int
-
-   :returns: tuple of processed image and label
-
-
-.. py:class:: MXNetNormalizeTransform(mean=[0.0], std=[1.0])
-
-
-
-   Normalize a image with mean and standard deviation.
-
-   :param mean: means for each channel, if len(mean)=1, mean will be broadcasted to each channel,
-                otherwise its length should be same with the length of image shape
-   :type mean: list, default=[0.0]
-   :param std: stds for each channel, if len(std)=1, std will be broadcasted to each channel,
-               otherwise its length should be same with the length of image shape
-   :type std: list, default=[1.0]
 
    :returns: tuple of processed image and label
 

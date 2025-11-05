@@ -15,8 +15,10 @@ Functions
 .. autoapisummary::
 
    neural_compressor.torch.quantization.quantize.need_apply
+   neural_compressor.torch.quantization.quantize.preprocess_quant_config
    neural_compressor.torch.quantization.quantize.quantize
    neural_compressor.torch.quantization.quantize.prepare
+   neural_compressor.torch.quantization.quantize.prepare_qat
    neural_compressor.torch.quantization.quantize.convert
    neural_compressor.torch.quantization.quantize.finalize_calibration
 
@@ -35,6 +37,22 @@ Module Contents
 
    :returns: True or False.
    :rtype: Bool
+
+
+.. py:function:: preprocess_quant_config(model, quant_config, mode='prepare', example_inputs=None, run_fn=None)
+
+   Preprocess the quantization configuration.
+
+   :param model: a float model to be quantized.
+   :param quant_config: a quantization configuration.
+   :param mode: Which mode is in use currently. Defaults to "prepare".
+   :type mode: str, optional
+   :param run_fn: a calibration function for calibrating the model. Defaults to None.
+   :param example_inputs: used to trace torch model.
+
+   :returns: model to be quantized.
+             OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+   :rtype: model
 
 
 .. py:function:: quantize(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig, run_fn: Callable = None, run_args: Any = None, inplace: bool = True, example_inputs: Any = None) -> torch.nn.Module
@@ -68,13 +86,28 @@ Module Contents
    :returns: prepared and calibrated module.
 
 
-.. py:function:: convert(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig = None, inplace: bool = True)
+.. py:function:: prepare_qat(model: torch.nn.Module, mapping=None, inplace: bool = True)
+
+   Prepares a copy of the model for quantization calibration or
+   quantization-aware training and converts it to quantized version.
+
+   Quantization configuration should be assigned preemptively
+   to individual submodules in `.qconfig` attribute.
+
+   :param model: input model to be modified in-place
+   :param quant_config: quantization config that maps float modules to quantized modules to be
+                        replaced.
+   :param inplace: carry out model transformations in-place, the original module
+                   is mutated
+
+
+.. py:function:: convert(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig = None, inplace: bool = True, **kwargs)
 
    Convert the prepared model to a quantized model.
 
-   :param model: the prepared model
+   :param model: torch model
    :type model: torch.nn.Module
-   :param quant_config: path to quantization config
+   :param quant_config: path to quantization config, only required when model is not prepared.
    :type quant_config: BaseConfig, optional
    :param inplace: It will change the given model in-place if True.
    :type inplace: bool, optional

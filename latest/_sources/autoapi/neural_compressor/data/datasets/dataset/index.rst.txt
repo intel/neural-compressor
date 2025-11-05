@@ -24,32 +24,26 @@ Classes
 
    neural_compressor.data.datasets.dataset.TensorflowDatasets
    neural_compressor.data.datasets.dataset.PyTorchDatasets
-   neural_compressor.data.datasets.dataset.MXNetDatasets
    neural_compressor.data.datasets.dataset.ONNXRTQLDatasets
    neural_compressor.data.datasets.dataset.ONNXRTITDatasets
-   neural_compressor.data.datasets.dataset.PytorchMxnetWrapDataset
-   neural_compressor.data.datasets.dataset.PytorchMxnetWrapFunction
+   neural_compressor.data.datasets.dataset.PytorchWrapDataset
+   neural_compressor.data.datasets.dataset.PytorchWrapFunction
    neural_compressor.data.datasets.dataset.Datasets
    neural_compressor.data.datasets.dataset.Dataset
    neural_compressor.data.datasets.dataset.IterableDataset
    neural_compressor.data.datasets.dataset.CIFAR10
    neural_compressor.data.datasets.dataset.PytorchCIFAR10
-   neural_compressor.data.datasets.dataset.MXNetCIFAR10
    neural_compressor.data.datasets.dataset.TensorflowCIFAR10
    neural_compressor.data.datasets.dataset.CIFAR100
    neural_compressor.data.datasets.dataset.PytorchCIFAR100
-   neural_compressor.data.datasets.dataset.MXNetCIFAR100
    neural_compressor.data.datasets.dataset.TensorflowCIFAR100
    neural_compressor.data.datasets.dataset.MNIST
    neural_compressor.data.datasets.dataset.PytorchMNIST
-   neural_compressor.data.datasets.dataset.MXNetMNIST
    neural_compressor.data.datasets.dataset.TensorflowMNIST
    neural_compressor.data.datasets.dataset.FashionMNIST
    neural_compressor.data.datasets.dataset.PytorchFashionMNIST
-   neural_compressor.data.datasets.dataset.MXNetFashionMNIST
    neural_compressor.data.datasets.dataset.TensorflowFashionMNIST
    neural_compressor.data.datasets.dataset.ImageFolder
-   neural_compressor.data.datasets.dataset.MXNetImageFolder
    neural_compressor.data.datasets.dataset.Tensorflow
    neural_compressor.data.datasets.dataset.TensorflowTFRecordDataset
    neural_compressor.data.datasets.dataset.TensorflowImageRecord
@@ -85,13 +79,6 @@ Module Contents
    The base class of PyTorch datasets class.
 
 
-.. py:class:: MXNetDatasets
-
-
-
-   The base class of MXNet datasets class.
-
-
 .. py:class:: ONNXRTQLDatasets
 
 
@@ -106,18 +93,18 @@ Module Contents
    The base class of ONNXRT IT datasets class.
 
 
-.. py:class:: PytorchMxnetWrapDataset(datafunc)
+.. py:class:: PytorchWrapDataset(datafunc)
 
-   The base class for PyTorch and MXNet frameworks.
+   The base class for PyTorch framework.
 
-   :param datafunc: The datasets class of PyTorch or MXNet.
+   :param datafunc: The datasets class of PyTorch.
 
 
-.. py:class:: PytorchMxnetWrapFunction(dataset, transform, filter, *args, **kwargs)
+.. py:class:: PytorchWrapFunction(dataset, transform, filter, *args, **kwargs)
 
-   The Helper class for PytorchMxnetWrapDataset.
+   The Helper class for PytorchWrapDataset.
 
-   :param dataset: The datasets class of PyTorch or MXNet.
+   :param dataset: The datasets class of PyTorch.
    :type dataset: datasets class
    :param transform: transform to process input data.
    :type transform: transform object
@@ -144,7 +131,7 @@ Module Contents
    A base class for all framework datasets.
 
    :param framework: framework name, like:"tensorflow", "tensorflow_itex", "keras",
-                     "mxnet", "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops",
+                     "onnxrt_qdq", "onnxrt_qlinearops", "onnxrt_integerops",
                      "pytorch", "pytorch_ipex", "pytorch_fx", "onnxruntime".
    :type framework: str
 
@@ -157,7 +144,7 @@ Module Contents
    :type cls: class
    :param dataset_type: The dataset registration name
    :type dataset_type: str
-   :param framework: support 3 framework including 'tensorflow', 'pytorch', 'mxnet'
+   :param framework: support 3 framework including 'tensorflow', 'pytorch',
    :type framework: str
    :param data_format: The format dataset saved, eg 'raw_image', 'tfrecord'
    :type data_format: str
@@ -253,13 +240,6 @@ Module Contents
    The PyTorch datasets for CIFAR10.
 
 
-.. py:class:: MXNetCIFAR10(root, train=False, transform=None, filter=None, download=True)
-
-
-
-   The MXNet datasets for CIFAR10.
-
-
 .. py:class:: TensorflowCIFAR10(root, train=False, transform=None, filter=None, download=True)
 
 
@@ -299,13 +279,6 @@ Module Contents
 
 
    The PyTorch datasets for CIFAR100.
-
-
-.. py:class:: MXNetCIFAR100(root, train=False, transform=None, filter=None, download=True)
-
-
-
-   The MXNet datasets for CIFAR100.
 
 
 .. py:class:: TensorflowCIFAR100(root, train=False, transform=None, filter=None, download=True)
@@ -351,13 +324,6 @@ Module Contents
    The PyTorch datasets for MNIST.
 
 
-.. py:class:: MXNetMNIST(root, train=False, transform=None, filter=None, download=True)
-
-
-
-   The MXNet datasets for MNIST.
-
-
 .. py:class:: TensorflowMNIST(root, train=False, transform=None, filter=None, download=True)
 
 
@@ -399,13 +365,6 @@ Module Contents
    The PyTorch datasets for FashionMNIST.
 
 
-.. py:class:: MXNetFashionMNIST(root, train=False, transform=None, filter=None, download=True)
-
-
-
-   The MXNet Dataset for FashionMNIST.
-
-
 .. py:class:: TensorflowFashionMNIST(root, train=False, transform=None, filter=None, download=True)
 
 
@@ -418,31 +377,6 @@ Module Contents
 
 
    The base class for ImageFolder.
-
-   Expects the data folder to contain subfolders representing the classes to which
-   its images belong.
-
-   Please arrange data in this way:
-       root/class_1/xxx.png
-       root/class_1/xxy.png
-       root/class_1/xxz.png
-       ...
-       root/class_n/123.png
-       root/class_n/nsdf3.png
-       root/class_n/asd932_.png
-   Please put images of different categories into different folders.
-
-   Args: root (str): Root directory of dataset.
-         transform (transform object, default=None):  transform to process input data.
-         filter (Filter objects, default=None): filter out examples according to specific
-                                                conditions.
-
-
-.. py:class:: MXNetImageFolder(root, transform=None, filter=None)
-
-
-
-   The MXNet Dataset for image folder.
 
    Expects the data folder to contain subfolders representing the classes to which
    its images belong.

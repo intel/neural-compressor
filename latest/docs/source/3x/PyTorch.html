@@ -1,14 +1,16 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Torch &mdash; Intel® Neural Compressor 3.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+  <title>Torch &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=68dfede1" />
 
   
 <script type="text/javascript">
@@ -40,10 +42,6 @@
           <a href="../../../index.html" class="icon icon-home">
             Intel® Neural Compressor
           </a>
-            <div class="version">
-              <a href="../../../../versions.html">latest▼</a>
-              <p>Click link above to switch version</p>
-            </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -57,7 +55,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../installation_guide.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api-doc/apis.html">APIs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../releases_info.html">Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -88,7 +85,7 @@
            <div itemprop="articleBody">
              
   <section id="torch">
-<h1>Torch<a class="headerlink" href="#torch" title="Permalink to this heading"></a></h1>
+<h1>Torch<a class="headerlink" href="#torch" title="Link to this heading"></a></h1>
 <ol class="simple">
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#torch-like-apis">Torch-like APIs</a></p></li>
@@ -96,14 +93,14 @@
 <li><p><a class="reference external" href="#common-problems">Common Problems</a></p></li>
 </ol>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
 <p><code class="docutils literal notranslate"><span class="pre">neural_compressor.torch</span></code> provides a Torch-like API and integrates various model compression methods fine-grained to the torch.nn.Module. Supports a comprehensive range of models, including but not limited to CV models, NLP models, and large language models. A variety of quantization methods are available, including classic INT8 quantization, SmoothQuant, and the popular weight-only quantization. Neural compressor also provides the latest research in simulation work, such as FP8 emulation quantization, MX data type emulation quantization.</p>
 <p>In terms of ease of use, neural compressor is committed to providing an easy-to-use user interface and easy to extend the structure design, on the one hand, reuse the PyTorch prepare, convert API, on the other hand, through the Quantizer base class for prepare and convert customization to provide a convenient.</p>
 <p>For more details, please refer to <a class="reference external" href="https://github.com/intel/neural-compressor/discussions/1527">link</a> in Neural Compressor discussion space.</p>
 <p>So far, <code class="docutils literal notranslate"><span class="pre">neural_compressor.torch</span></code> still relies on the backend to generate the quantized model and run it on the corresponding backend, but in the future, neural_compressor is planned to provide generalized device-agnostic Q-DQ model, so as to achieve one-time quantization and arbitrary deployment.</p>
 </section>
 <section id="torch-like-apis">
-<h2>Torch-like APIs<a class="headerlink" href="#torch-like-apis" title="Permalink to this heading"></a></h2>
+<h2>Torch-like APIs<a class="headerlink" href="#torch-like-apis" title="Link to this heading"></a></h2>
 <p>Currently, we provide below three user scenarios, through <code class="docutils literal notranslate"><span class="pre">prepare</span></code>&amp;<code class="docutils literal notranslate"><span class="pre">convert</span></code>, <code class="docutils literal notranslate"><span class="pre">autotune</span></code> and <code class="docutils literal notranslate"><span class="pre">load</span></code> APIs.</p>
 <ul class="simple">
 <li><p>One-time quantization of the model</p></li>
@@ -111,8 +108,8 @@
 <li><p>Direct deployment of the quantized model</p></li>
 </ul>
 <section id="quantization-apis">
-<h3>Quantization APIs<a class="headerlink" href="#quantization-apis" title="Permalink to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">prepare</span><span class="p">(</span>
+<h3>Quantization APIs<a class="headerlink" href="#quantization-apis" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">prepare</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
     <span class="n">quant_config</span><span class="p">:</span> <span class="n">BaseConfig</span><span class="p">,</span>
     <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -133,7 +130,7 @@
 <span class="sd">    &quot;&quot;&quot;</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">convert</span><span class="p">(</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">convert</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
     <span class="n">quant_config</span><span class="p">:</span> <span class="n">BaseConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
@@ -152,8 +149,8 @@
 </div>
 </section>
 <section id="autotune-api">
-<h3>Autotune API<a class="headerlink" href="#autotune-api" title="Permalink to this heading"></a></h3>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">autotune</span><span class="p">(</span>
+<h3>Autotune API<a class="headerlink" href="#autotune-api" title="Link to this heading"></a></h3>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">autotune</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">,</span>
     <span class="n">tune_config</span><span class="p">:</span> <span class="n">TuningConfig</span><span class="p">,</span>
     <span class="n">eval_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
@@ -180,9 +177,9 @@
 </div>
 </section>
 <section id="load-api">
-<h3>Load API<a class="headerlink" href="#load-api" title="Permalink to this heading"></a></h3>
+<h3>Load API<a class="headerlink" href="#load-api" title="Link to this heading"></a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">neural_compressor.torch</span></code> links the save function to the quantized model. If <code class="docutils literal notranslate"><span class="pre">model.save</span></code> already exists, Neural Compressor renames the previous function to <code class="docutils literal notranslate"><span class="pre">model.orig_save</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./saved_results&quot;</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./saved_results&quot;</span><span class="p">):</span>
 <span class="sd">&quot;&quot;&quot;</span>
 <span class="sd">    Args:</span>
 <span class="sd">        self (torch.nn.Module): the quantized model.</span>
@@ -190,7 +187,7 @@
 <span class="sd">&quot;&quot;&quot;</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">load</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./saved_results&quot;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./saved_results&quot;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;The main entry of load for all algorithms.</span>
 
 <span class="sd">    Args:</span>
@@ -205,7 +202,7 @@
 </section>
 </section>
 <section id="supported-matrix">
-<h2>Supported Matrix<a class="headerlink" href="#supported-matrix" title="Permalink to this heading"></a></h2>
+<h2>Supported Matrix<a class="headerlink" href="#supported-matrix" title="Link to this heading"></a></h2>
 <table class="tg"><thead>
   <tr>
     <th class="tg-9wq8">Method<br></th>
@@ -260,16 +257,21 @@
     <td class="tg-9wq8"><a href="PT_SmoothQuant.html">link</a></td>
   </tr>
   <tr>
-    <td class="tg-9wq8" rowspan="2">Static Quantization</td>
-    <td class="tg-9wq8" rowspan="2"><a href=https://pytorch.org/docs/master/quantization.html#post-training-static-quantization>Post-traning Static Quantization</a></td>
-    <td class="tg-9wq8">intel-extension-for-pytorch</td>
+    <td class="tg-9wq8" rowspan="3">Static Quantization</td>
+    <td class="tg-9wq8" rowspan="3"><a href=https://pytorch.org/docs/master/quantization.html#post-training-static-quantization>Post-traning Static Quantization</a></td>
+    <td class="tg-9wq8">intel-extension-for-pytorch (INT8)</td>
     <td class="tg-9wq8">&#10004</td>
     <td class="tg-9wq8"><a href="PT_StaticQuant.html">link</a></td>
   </tr>
   <tr>
-    <td class="tg-9wq8"><a href=https://pytorch.org/docs/stable/torch.compiler_deepdive.html>TorchDynamo</a></td>
+    <td class="tg-9wq8"><a href=https://pytorch.org/docs/stable/torch.compiler_deepdive.html>TorchDynamo (INT8)</a></td>
     <td class="tg-9wq8">&#10004</td>
     <td class="tg-9wq8"><a href="PT_StaticQuant.html">link</a></td>
+  <tr>
+    <td class="tg-9wq8"><a href=https://docs.habana.ai/en/latest/index.html>Intel Gaudi AI accelerator (FP8)</a></td>
+    <td class="tg-9wq8">&#10004</td>
+    <td class="tg-9wq8"><a href="PT_FP8Quant.html">link</a></td>
+  </tr>
   </tr>
   <tr>
     <td class="tg-9wq8">Dynamic Quantization</td>
@@ -302,7 +304,7 @@ Deep Learning</a></td>
   </tr>
 </tbody></table></section>
 <section id="common-problems">
-<h2>Common Problems<a class="headerlink" href="#common-problems" title="Permalink to this heading"></a></h2>
+<h2>Common Problems<a class="headerlink" href="#common-problems" title="Link to this heading"></a></h2>
 <ol>
 <li><p>How to choose backend between <code class="docutils literal notranslate"><span class="pre">intel-extension-for-pytorch</span></code> and <code class="docutils literal notranslate"><span class="pre">PyTorchDynamo</span></code>?</p>
 <blockquote>
@@ -325,9 +327,9 @@ Deep Learning</a></td>
  </table></li>
 <li><p>How to set different configuration for specific op_name or op_type?</p>
 <blockquote>
-<div><p>INC extends a <code class="docutils literal notranslate"><span class="pre">set_local</span></code> method based on the global configuration object to set custom configuration.</p>
+<div><p>Neural Compressor extends a <code class="docutils literal notranslate"><span class="pre">set_local</span></code> method based on the global configuration object to set custom configuration.</p>
 </div></blockquote>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">set_local</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operator_name_or_list</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">],</span> <span class="n">config</span><span class="p">:</span> <span class="n">BaseConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseConfig</span><span class="p">:</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">set_local</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operator_name_or_list</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">],</span> <span class="n">config</span><span class="p">:</span> <span class="n">BaseConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseConfig</span><span class="p">:</span>
 <span class="w">    </span><span class="sd">&quot;&quot;&quot;Set custom configuration based on the global configuration object.</span>
 
 <span class="sd">    Args:</span>
@@ -342,6 +344,20 @@ Deep Learning</a></td>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">quant_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">()</span>  <span class="c1"># Initialize global configuration with default bits=4</span>
 <span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">&quot;.*mlp.*&quot;</span><span class="p">,</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">bits</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span>  <span class="c1"># For layers with &quot;mlp&quot; in their names, set bits=8</span>
 <span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">&quot;Conv1d&quot;</span><span class="p">,</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;fp32&quot;</span><span class="p">))</span>  <span class="c1"># For Conv1d layers, do not quantize them.</span>
+</pre></div>
+</div>
+</li>
+<li><p>How to specify an accelerator?</p>
+<blockquote>
+<div><p>Neural Compressor provides automatic accelerator detection, including HPU, Intel GPU, CUDA, and CPU.</p>
+</div></blockquote>
+<blockquote>
+<div><p>The automatically detected accelerator may not be suitable for some special cases, such as poor performance, memory limitations. In such situations, users can override the detected accelerator by setting the environment variable <code class="docutils literal notranslate"><span class="pre">INC_TARGET_DEVICE</span></code>.</p>
+</div></blockquote>
+<blockquote>
+<div><p>Usage:</p>
+</div></blockquote>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">INC_TARGET_DEVICE</span><span class="o">=</span>cpu
 </pre></div>
 </div>
 </li>
@@ -363,7 +379,7 @@ Deep Learning</a></td>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cba8f2c20> 
+   <jinja2.runtime.BlockReference object at 0x7f07a8975400> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

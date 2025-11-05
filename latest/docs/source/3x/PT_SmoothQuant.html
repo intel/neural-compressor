@@ -1,14 +1,16 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>PyTorch Smooth Quantization &mdash; Intel® Neural Compressor 3.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css" />
-      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css" />
+  <title>PyTorch Smooth Quantization &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=68dfede1" />
 
   
 <script type="text/javascript">
@@ -40,10 +42,6 @@
           <a href="../../../index.html" class="icon icon-home">
             Intel® Neural Compressor
           </a>
-            <div class="version">
-              <a href="../../../../versions.html">latest▼</a>
-              <p>Click link above to switch version</p>
-            </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -57,7 +55,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../installation_guide.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../api-doc/apis.html">APIs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../releases_info.html">Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -88,7 +85,7 @@
            <div itemprop="articleBody">
              
   <section id="pytorch-smooth-quantization">
-<h1>PyTorch Smooth Quantization<a class="headerlink" href="#pytorch-smooth-quantization" title="Permalink to this heading"></a></h1>
+<h1>PyTorch Smooth Quantization<a class="headerlink" href="#pytorch-smooth-quantization" title="Link to this heading"></a></h1>
 <ol class="simple">
 <li><p><a class="reference external" href="#Introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#Usage">Usage</a></p></li>
@@ -96,18 +93,18 @@
 <li><p><a class="reference external" href="#Supported-Framework-Matrix">Supported Framework Matrix</a></p></li>
 </ol>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
 <p>Quantization is a common compression operation to reduce memory and accelerate inference by converting the floating point matrix to an integer matrix. For large language models (LLMs) with gigantic parameters, the systematic outliers make quantification of activations difficult.  <a class="reference external" href="https://arxiv.org/abs/2211.10438">SmoothQuant</a>, a training free post-training quantization (PTQ) solution, offline migrates this difficulty from activations to weights with a mathematically equivalent transformation.</p>
 </section>
 <section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h2>
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
 <section id="fixed-alpha">
-<h3>Fixed Alpha<a class="headerlink" href="#fixed-alpha" title="Permalink to this heading"></a></h3>
+<h3>Fixed Alpha<a class="headerlink" href="#fixed-alpha" title="Link to this heading"></a></h3>
 <p>To set a fixed alpha for the entire model, users can follow this example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.torch.quantization</span> <span class="kn">import</span> <span class="n">SmoothQuantConfig</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">prepare</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">SmoothQuantConfig</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">prepare</span>
 
 
-<span class="k">def</span> <span class="nf">run_fn</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">run_fn</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
     <span class="n">model</span><span class="p">(</span><span class="n">example_inputs</span><span class="p">)</span>
 
 
@@ -124,7 +121,7 @@
 </div></blockquote>
 </section>
 <section id="specify-quantization-rules">
-<h3>Specify Quantization Rules<a class="headerlink" href="#specify-quantization-rules" title="Permalink to this heading"></a></h3>
+<h3>Specify Quantization Rules<a class="headerlink" href="#specify-quantization-rules" title="Link to this heading"></a></h3>
 <p>Intel(R) Neural Compressor support specify quantization rules by operator type for Smooth Quantization. Users can use <code class="docutils literal notranslate"><span class="pre">set_local</span></code> to fallback op type in <code class="docutils literal notranslate"><span class="pre">SmoothQuantConfig</span></code> to achieve the above purpose.</p>
 <p>Here we don’t quantize <code class="docutils literal notranslate"><span class="pre">Linear</span></code> layers.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># fallback by op_type</span>
@@ -138,7 +135,7 @@
 </section>
 </section>
 <section id="validated-models">
-<h2>Validated Models<a class="headerlink" href="#validated-models" title="Permalink to this heading"></a></h2>
+<h2>Validated Models<a class="headerlink" href="#validated-models" title="Link to this heading"></a></h2>
 <p>Neural Compressor: 2.1</p>
 <p>IPEX (Intel Extension for PyTorch): 2.0/2.1</p>
 <p>Dataset: lambada_openai</p>
@@ -364,7 +361,7 @@
 <p>Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.</p>
 </section>
 <section id="supported-framework-matrix">
-<h2>Supported Framework Matrix<a class="headerlink" href="#supported-framework-matrix" title="Permalink to this heading"></a></h2>
+<h2>Supported Framework Matrix<a class="headerlink" href="#supported-framework-matrix" title="Link to this heading"></a></h2>
 <table border="1" class="docutils">
 <thead>
 <tr>
@@ -402,7 +399,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cba771810> 
+   <jinja2.runtime.BlockReference object at 0x7f07a40e4a70> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

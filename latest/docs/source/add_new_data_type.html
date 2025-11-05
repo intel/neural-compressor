@@ -1,14 +1,16 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>How to Support New Data Type, Like Int4, with a Few Line Changes &mdash; Intel® Neural Compressor 3.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+  <title>How to Support New Data Type, Like Int4, with a Few Line Changes &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
 
   
 <script type="text/javascript">
@@ -40,10 +42,6 @@
           <a href="../../index.html" class="icon icon-home">
             Intel® Neural Compressor
           </a>
-            <div class="version">
-              <a href="../../../versions.html">latest▼</a>
-              <p>Click link above to switch version</p>
-            </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -57,7 +55,6 @@
 <li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -88,7 +85,7 @@
            <div itemprop="articleBody">
              
   <section id="how-to-support-new-data-type-like-int4-with-a-few-line-changes">
-<h1>How to Support New Data Type, Like Int4, with a Few Line Changes<a class="headerlink" href="#how-to-support-new-data-type-like-int4-with-a-few-line-changes" title="Permalink to this heading"></a></h1>
+<h1>How to Support New Data Type, Like Int4, with a Few Line Changes<a class="headerlink" href="#how-to-support-new-data-type-like-int4-with-a-few-line-changes" title="Link to this heading"></a></h1>
 <ul class="simple">
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#define-the-quantization-ability-of-the-specific-operator">Define the Quantization Ability of the Specific Operator</a></p></li>
@@ -97,7 +94,7 @@
 <li><p><a class="reference external" href="#summary">Summary</a></p></li>
 </ul>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
 <p>To enable accuracy-aware tuning with various frameworks, Intel® Neural Compressor introduced the <a class="reference external" href="./framework_yaml.html">framework YAML</a> which unifies the configuration format for quantization and provides a description for the capabilities of specific framework. Before explaining how to add a new data type, let’s first introduce the overall process, from defining the operator behavior in YAML to invoking it by the adaptor. The diagram below illustrates all the relevant steps, with additional details provided for each annotated step.</p>
 <blockquote>
 <div><p>Note: The <code class="docutils literal notranslate"><span class="pre">adaptor</span></code> is a layer that abstracts various frameworks supported by Intel® Neural Compressor.</p>
@@ -124,7 +121,7 @@
 <p>The following section provides an example of extending the PyTorch <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code> operator to include support for 4-bit quantization.</p>
 </section>
 <section id="define-the-quantization-ability-of-the-specific-operator">
-<h2>Define the Quantization Ability of the Specific Operator<a class="headerlink" href="#define-the-quantization-ability-of-the-specific-operator" title="Permalink to this heading"></a></h2>
+<h2>Define the Quantization Ability of the Specific Operator<a class="headerlink" href="#define-the-quantization-ability-of-the-specific-operator" title="Link to this heading"></a></h2>
 <p>The first step in adding a new data type for specific operator to Intel® Neural Compressor is to extend the capabilities of operator and include it to the framework YAML.
 The capabilities should include the quantized data types and quantization schemes of activation and weight(if applicable). The following table describes the detail of each filed:</p>
 <table border="1" class="docutils">
@@ -188,7 +185,7 @@ The capabilities should include the quantized data types and quantization scheme
 <p>The code states that the PyTorch Conv2d Operator has the ability to quantize weights to int4 using the <code class="docutils literal notranslate"><span class="pre">torch.per_channel_symmetric</span></code> quantization scheme, with the supported calibration algorithm being <code class="docutils literal notranslate"><span class="pre">minmax</span></code>. Additionally, the operator can quantize activations to <code class="docutils literal notranslate"><span class="pre">uint4</span></code> using the <code class="docutils literal notranslate"><span class="pre">torch.per_tensor_symmetric</span></code> quantization scheme, with the supported calibration algorithm also being <code class="docutils literal notranslate"><span class="pre">minmax</span></code>.</p>
 </section>
 <section id="invoke-the-operator-kernel-according-to-the-tuning-configuration">
-<h2>Invoke the Operator Kernel According to the Tuning Configuration<a class="headerlink" href="#invoke-the-operator-kernel-according-to-the-tuning-configuration" title="Permalink to this heading"></a></h2>
+<h2>Invoke the Operator Kernel According to the Tuning Configuration<a class="headerlink" href="#invoke-the-operator-kernel-according-to-the-tuning-configuration" title="Link to this heading"></a></h2>
 <p>One of the tuning configurations generated by the strategy for <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code> looks like as following:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>
 <span class="n">tune_cfg</span> <span class="o">=</span> <span class="p">{</span>
@@ -224,9 +221,9 @@ The capabilities should include the quantized data types and quantization scheme
 </div></blockquote>
 </section>
 <section id="use-the-new-data-type">
-<h2>Use the New Data Type<a class="headerlink" href="#use-the-new-data-type" title="Permalink to this heading"></a></h2>
+<h2>Use the New Data Type<a class="headerlink" href="#use-the-new-data-type" title="Link to this heading"></a></h2>
 <p>Once the new data type has been added to Intel® Neural Compressor, it can be used in the same way as any other data type within the framework. Below is an example of specifying that all <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code> operators should utilize 4-bit quantization:”</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.config</span> <span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
 
 <span class="n">op_type_dict</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;Conv2d&quot;</span><span class="p">:</span> <span class="p">{</span>
@@ -245,7 +242,7 @@ The capabilities should include the quantized data types and quantization scheme
 <p>With this code, all <code class="docutils literal notranslate"><span class="pre">Conv2d</span></code> operators will be quantized to 4-bit, with weight using <code class="docutils literal notranslate"><span class="pre">int4</span></code> and activation using <code class="docutils literal notranslate"><span class="pre">uint4</span></code>.</p>
 </section>
 <section id="summary">
-<h2>Summary<a class="headerlink" href="#summary" title="Permalink to this heading"></a></h2>
+<h2>Summary<a class="headerlink" href="#summary" title="Link to this heading"></a></h2>
 <p>The document outlines the process of adding support for a new data type, such as int4, in Intel® Neural Compressor with minimal changes. It provides instructions and code examples for defining the data type’s quantization capabilities, invoking the operator kernel, and using the new data type within the framework. By following the steps outlined in the document, users can extend Intel® Neural Compressor’s functionality to accommodate new data types and incorporate them into their quantization workflows.</p>
 </section>
 </section>
@@ -264,7 +261,7 @@ The capabilities should include the quantized data types and quantization scheme
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cbab5e5c0> 
+   <jinja2.runtime.BlockReference object at 0x7f07a8a53b30> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

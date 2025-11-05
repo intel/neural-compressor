@@ -1,14 +1,16 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DataLoader &mdash; Intel® Neural Compressor 3.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+  <title>DataLoader &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
 
   
 <script type="text/javascript">
@@ -40,10 +42,6 @@
           <a href="../../index.html" class="icon icon-home">
             Intel® Neural Compressor
           </a>
-            <div class="version">
-              <a href="../../../versions.html">latest▼</a>
-              <p>Click link above to switch version</p>
-            </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -57,7 +55,6 @@
 <li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -88,7 +85,7 @@
            <div itemprop="articleBody">
              
   <section id="dataloader">
-<h1>DataLoader<a class="headerlink" href="#dataloader" title="Permalink to this heading"></a></h1>
+<h1>DataLoader<a class="headerlink" href="#dataloader" title="Link to this heading"></a></h1>
 <ol>
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#supported-framework-dataloader-matrix">Supported Framework Dataloader Matrix</a></p></li>
@@ -99,7 +96,7 @@
 <li><p><a class="reference external" href="#examples">Examples</a></p></li>
 </ol>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
 <p>Deep Learning often encounters large datasets that are memory-consuming. Previously, working with large datasets required loading them into memory all at once. The constant lack of memory resulted in the need for an efficient data generation scheme. This is not only about handling the lack of memory in large datasets, but also about making the process of loading data faster using a multi-processing thread. We call the data generation object a DataLoader.</p>
 <p>With the importance of a dataloader, different frameworks can have their own DataLoader module. As for Intel® Neural Compressor, it implements an internal dataloader and provides a unified <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API for the following two reasons:</p>
 <ul class="simple">
@@ -110,7 +107,7 @@
 <p>Of cause, users can also use frameworks own dataloader in Neural Compressor.</p>
 </section>
 <section id="supported-framework-dataloader-matrix">
-<h2>Supported Framework Dataloader Matrix<a class="headerlink" href="#supported-framework-dataloader-matrix" title="Permalink to this heading"></a></h2>
+<h2>Supported Framework Dataloader Matrix<a class="headerlink" href="#supported-framework-dataloader-matrix" title="Link to this heading"></a></h2>
 <table border="1" class="docutils">
 <thead>
 <tr>
@@ -120,15 +117,11 @@
 </thead>
 <tbody>
 <tr>
-<td>TensorFlow</td>
+<td>TensorFlow (Deprecated)</td>
 <td style="text-align: center;">&#10004;</td>
 </tr>
 <tr>
-<td>Keras</td>
-<td style="text-align: center;">&#10004;</td>
-</tr>
-<tr>
-<td>MXNet</td>
+<td>Keras (Deprecated)</td>
 <td style="text-align: center;">&#10004;</td>
 </tr>
 <tr>
@@ -136,15 +129,15 @@
 <td style="text-align: center;">&#10004;</td>
 </tr>
 <tr>
-<td>ONNX Runtime</td>
+<td>ONNX Runtime (Deprecated)</td>
 <td style="text-align: center;">&#10004;</td>
 </tr>
 </tbody>
 </table></section>
 <section id="get-started-with-dataloader">
-<h2>Get Started with DataLoader<a class="headerlink" href="#get-started-with-dataloader" title="Permalink to this heading"></a></h2>
+<h2>Get Started with DataLoader<a class="headerlink" href="#get-started-with-dataloader" title="Link to this heading"></a></h2>
 <section id="use-intel-neural-compressor-dataloader-api">
-<h3>Use Intel® Neural Compressor DataLoader API<a class="headerlink" href="#use-intel-neural-compressor-dataloader-api" title="Permalink to this heading"></a></h3>
+<h3>Use Intel® Neural Compressor DataLoader API<a class="headerlink" href="#use-intel-neural-compressor-dataloader-api" title="Link to this heading"></a></h3>
 <p>Acceptable parameters for <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API including:</p>
 <table border="1" class="docutils">
 <thead>
@@ -156,7 +149,7 @@
 <tbody>
 <tr>
 <td>framework (str)</td>
-<td style="text-align: center;">different frameworks, such as <code>tensorflow</code>, <code>tensorflow_itex</code>, <code>keras</code>, <code>mxnet</code>, <code>pytorch</code> and <code>onnxruntime</code>.</td>
+<td style="text-align: center;">different frameworks, such as <code>tensorflow</code>, <code>tensorflow_itex</code>, <code>keras</code>, <code>pytorch</code> and <code>onnxruntime</code>.</td>
 </tr>
 <tr>
 <td>dataset (object)</td>
@@ -200,8 +193,8 @@
 </tr>
 </tbody>
 </table><p>Users can use the unified <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API in the following manners.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.data</span> <span class="kn">import</span> <span class="n">DataLoader</span>
-<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
 
 <span class="n">dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">framework</span><span class="o">=</span><span class="s2">&quot;tensorflow&quot;</span><span class="p">,</span> <span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
 <span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
@@ -213,20 +206,20 @@
 </div></blockquote>
 </section>
 <section id="build-custom-dataloader-with-python-api">
-<h3>Build Custom Dataloader with Python API<a class="headerlink" href="#build-custom-dataloader-with-python-api" title="Permalink to this heading"></a></h3>
+<h3>Build Custom Dataloader with Python API<a class="headerlink" href="#build-custom-dataloader-with-python-api" title="Link to this heading"></a></h3>
 <p>Users can define their own dataloaders as shown as below:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span> <span class="nc">NewDataloader</span><span class="p">:</span>
-    <span class="k">def</span> <span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">NewDataloader</span><span class="p">:</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">batch_size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span> <span class="o">=</span> <span class="n">batch_size</span>
         <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span> <span class="o">=</span> <span class="p">[]</span>
         <span class="c1"># operations to add (input_data, label) pairs into self.dataset</span>
 
-    <span class="k">def</span> <span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="k">for</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">label</span> <span class="ow">in</span> <span class="bp">self</span><span class="o">.</span><span class="n">dataset</span><span class="p">:</span>
             <span class="k">yield</span> <span class="n">input_data</span><span class="p">,</span> <span class="n">label</span>
 
 
-<span class="kn">from</span> <span class="nn">neural_compressor</span> <span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">quantization</span><span class="p">,</span> <span class="n">PostTrainingQuantConfig</span>
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
 <span class="n">dataloader</span> <span class="o">=</span> <span class="n">NewDataloader</span><span class="p">(</span><span class="n">batch_size</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
@@ -236,7 +229,7 @@
 </section>
 </section>
 <section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Permalink to this heading"></a></h2>
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq_static">example</a> for how to define a customised dataloader.</p></li>
 <li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/nlp/bert/quantization/ptq_static">example</a> for how to use internal dataloader.</p></li>
@@ -258,7 +251,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cbad22d70> 
+   <jinja2.runtime.BlockReference object at 0x7f07a8bb42f0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

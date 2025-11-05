@@ -26,6 +26,22 @@ Functions
    neural_compressor.torch.utils.utility.get_processor_type_from_user_config
    neural_compressor.torch.utils.utility.dowload_hf_model
    neural_compressor.torch.utils.utility.load_empty_model
+   neural_compressor.torch.utils.utility.get_module
+   neural_compressor.torch.utils.utility.get_layer_names_in_block
+   neural_compressor.torch.utils.utility.to_dtype
+   neural_compressor.torch.utils.utility.to_device
+   neural_compressor.torch.utils.utility.get_block_names
+   neural_compressor.torch.utils.utility.validate_modules
+   neural_compressor.torch.utils.utility.get_multimodal_block_names
+   neural_compressor.torch.utils.utility.detect_device
+   neural_compressor.torch.utils.utility.find_matching_blocks
+   neural_compressor.torch.utils.utility.get_non_persistent_buffers
+   neural_compressor.torch.utils.utility.load_non_persistent_buffers
+   neural_compressor.torch.utils.utility.move_input_device
+   neural_compressor.torch.utils.utility.forward_wrapper
+   neural_compressor.torch.utils.utility.get_enum_from_format
+   neural_compressor.torch.utils.utility.read_json_file
+   neural_compressor.torch.utils.utility.write_json_file
 
 
 Module Contents
@@ -165,5 +181,172 @@ Module Contents
 .. py:function:: load_empty_model(pretrained_model_name_or_path, cls=None, **kwargs)
 
    Load a empty model.
+
+
+.. py:function:: get_module(module, key)
+
+   Get module from model by key name.
+
+   :param module: original model
+   :type module: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+
+
+.. py:function:: get_layer_names_in_block(model, supported_types=SUPPORTED_LAYERS, to_quant_block_names=None)
+
+   Retrieves the names of layers within each block of the model.
+
+   :returns:
+
+             A list of strings, where each string is the name of a layer
+                   within a block of the model.
+   :rtype: list
+
+
+.. py:function:: to_dtype(input, dtype=torch.float32)
+
+   Moves input data to the specified data type.
+
+   Args:
+   input: The input data to be moved.
+   dtype: The target data type.
+
+   Returns:
+   The input data on the specified data type.
+
+
+.. py:function:: to_device(input, device=torch.device('cpu'))
+
+   Moves input data to the specified device.
+
+   Args:
+   input: The input data to be moved.
+   device: The target device.
+
+   Returns:
+   The input data on the specified device.
+
+
+.. py:function:: get_block_names(model)
+
+   Get the block names for transformers-like networks.
+
+   Args:
+   model: The model.
+
+   Returns:
+   block_names: A list whose elements are list of block's layer names
+
+
+.. py:function:: validate_modules(module_names)
+
+   Test a list of modules' validity.
+
+   Args:
+   modules (list of str): List of strings to be validated.
+
+   Returns:
+   bool: True if all modules have equal length or not dependent, otherwise False.
+
+
+.. py:function:: get_multimodal_block_names(model, quant_vision=False)
+
+   Get the multimodal model block names for transformers-like networks.
+
+   Args:
+   model: The model.
+
+   Returns:
+   block_names: A list whose elements are list of block's layer names
+
+
+.. py:function:: detect_device(device=None)
+
+   Detects the device to use for model execution (GPU, HPU, or CPU).
+
+   :param device:
+                  - If a string ('cuda', 'cpu', or 'hpu') or torch.device is provided, that device is selected.
+                  - If an integer is provided, it treats it as a GPU device index.
+                  - If None or 'auto', it automatically selects 'cuda' if available, 'hpu' if Habana is available,
+                    or falls back to 'cpu'.
+   :type device: str, int, torch.device, optional
+
+   :returns: The selected device in string format ('cuda:X', 'hpu', or 'cpu').
+   :rtype: str
+
+
+.. py:function:: find_matching_blocks(model, all_blocks, to_quant_block_names=None)
+
+   Find and return matching blocks in the model based on to_quant_block_names.
+
+   :param model: The model (not used in this specific function but kept for completeness).
+   :param all_blocks: List of lists, where each inner list contains full block names in the model.
+   :param to_quant_block_names: Comma-separated string of target block names to match.
+
+   :returns: List of lists containing full paths of matching blocks in the model.
+   :rtype: target_blocks
+
+
+.. py:function:: get_non_persistent_buffers(model)
+
+   Get all non-persistent buffers in the model.
+
+   :param model: PyTorch model
+   :type model: torch.nn.Module
+
+   :returns: A dictionary containing all non-persistent buffers, {buffer_names: buffer_tensors}
+   :rtype: dict
+
+
+.. py:function:: load_non_persistent_buffers(model, non_persistent_buffers)
+
+   Load all non-persistent buffers into the model.
+
+   :param model: PyTorch model
+   :type model: torch.nn.Module
+   :param non_persistent_buffers: A dictionary containing all non-persistent buffers, {buffer_names: buffer_tensors}
+   :type non_persistent_buffers: dict
+
+
+.. py:function:: move_input_device(input, device='cpu')
+
+   Auto mapping input to device for all kinds of format.
+
+   :param input: input data
+   :type input: torch.tensor
+   :param device: target device. Defaults to "cpu".
+   :type device: str, optional
+
+   :returns: input data on target device
+   :rtype: input (torch.tensor)
+
+
+.. py:function:: forward_wrapper(model, input)
+
+   Model forward with device auto mapping.
+
+   :param model: input model
+   :type model: torch.nn.Module
+   :param input: input data
+   :type input: torch.tensor
+
+   :returns: output data
+   :rtype: output
+
+
+.. py:function:: get_enum_from_format(format)
+
+   Make sure Save&Load format is an Enum object.
+
+
+.. py:function:: read_json_file(file_path)
+
+   Read a JSON file and return its content.
+
+
+.. py:function:: write_json_file(file_path, data)
+
+   Write data to a JSON file.
 
 

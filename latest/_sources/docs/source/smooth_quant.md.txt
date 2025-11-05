@@ -375,7 +375,7 @@ A list of models that achieved a <1% accuracy drop is shown below.
 | databricks/dolly-v2-3b* | 0.6297 | 0.6247 | alpha=0.5, Ipex 2.1 |
 | tiiuae/falcon-7b-instruct | 0.6437 | 0.6392 | alpha=0.7, Pytorch |
 
-The results listed below are achieved using IPEX optimize_transformers in model initialization for better performance. Please refer to the step-by-step [instruction](../../examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm/ipex/README.html) for details.
+The results listed below are achieved using IPEX optimize_transformers in model initialization for better performance. Please refer to the step-by-step [instruction](../../examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm/ipex/README.html) for details.
 | Model/Last token accuracy |  FP32 Accuracy   | INT8 (w/ SmoothQuant) | Notes |
 |:----------:|:------:|:------:|-----------------------------------|
 | LLaMa-2-7b-hf* | 0.7392 | 0.7332  | alpha=Auto, Ipex 2.1 |

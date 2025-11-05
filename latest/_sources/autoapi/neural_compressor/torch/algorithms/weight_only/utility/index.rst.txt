@@ -169,7 +169,7 @@ Module Contents
    :rtype: best_clip_ratio (float)
 
 
-.. py:function:: quant_weight_w_scale(weight, scale, zp=None, group_size=-1, dtype='int')
+.. py:function:: quant_weight_w_scale(weight, scale, scale_bf16_to_fp8, zp=None, group_size=-1, dtype='int', fp8_aware=False)
 
    Quant and dequant tensor with group size. It's an in-place function.
 

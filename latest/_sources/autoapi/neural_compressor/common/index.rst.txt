@@ -9,15 +9,6 @@ neural_compressor.common
 
 
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 1
-
-   /autoapi/neural_compressor/common/utils/index
-
-
 Submodules
 ----------
 
@@ -28,5 +19,7 @@ Submodules
    /autoapi/neural_compressor/common/base_tuning/index
    /autoapi/neural_compressor/common/benchmark/index
    /autoapi/neural_compressor/common/tuning_param/index
+   /autoapi/neural_compressor/common/utils/index
+   /autoapi/neural_compressor/common/version/index
 
 

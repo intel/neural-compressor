@@ -1,14 +1,16 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>neural_compressor.common.benchmark &mdash; Intel® Neural Compressor 3.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css" />
-      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css" />
+  <title>neural_compressor.common.benchmark &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../_static/custom.css?v=68dfede1" />
 
   
 <script type="text/javascript">
@@ -40,10 +42,6 @@
           <a href="../../../../index.html" class="icon icon-home">
             Intel® Neural Compressor
           </a>
-            <div class="version">
-              <a href="../../../../../versions.html">latest▼</a>
-              <p>Click link above to switch version</p>
-            </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -57,7 +55,6 @@
 <li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/installation_guide.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/api-doc/apis.html">APIs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/releases_info.html">Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../../../../docs/source/SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -88,10 +85,10 @@
            <div itemprop="articleBody">
              
   <section id="module-neural_compressor.common.benchmark">
-<span id="neural-compressor-common-benchmark"></span><h1>neural_compressor.common.benchmark<a class="headerlink" href="#module-neural_compressor.common.benchmark" title="Permalink to this heading"></a></h1>
+<span id="neural-compressor-common-benchmark"></span><h1>neural_compressor.common.benchmark<a class="headerlink" href="#module-neural_compressor.common.benchmark" title="Link to this heading"></a></h1>
 <p>Benchmark API for Intel Neural Compressor.</p>
 <section id="functions">
-<h2>Functions<a class="headerlink" href="#functions" title="Permalink to this heading"></a></h2>
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.common.benchmark.get_linux_numa_info" title="neural_compressor.common.benchmark.get_linux_numa_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_linux_numa_info</span></code></a>()</p></td>
@@ -134,10 +131,10 @@
 </table>
 </section>
 <section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Permalink to this heading"></a></h2>
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.benchmark.get_linux_numa_info">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_linux_numa_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.get_linux_numa_info" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_linux_numa_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.get_linux_numa_info" title="Link to this definition"></a></dt>
 <dd><p>Collect numa/socket information on linux system.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -162,7 +159,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.benchmark.get_windows_numa_info">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_windows_numa_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.get_windows_numa_info" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_windows_numa_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.get_windows_numa_info" title="Link to this definition"></a></dt>
 <dd><p>Collect socket information on Windows system due to no available numa info.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -187,7 +184,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.benchmark.dump_numa_info">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">dump_numa_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.dump_numa_info" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">dump_numa_info</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.dump_numa_info" title="Link to this definition"></a></dt>
 <dd><p>Fetch NUMA info and dump stats in shell, return numa_info.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Returns<span class="colon">:</span></dt>
@@ -201,31 +198,31 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.benchmark.parse_str2list">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">parse_str2list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpu_ranges</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.parse_str2list" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">parse_str2list</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpu_ranges</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.parse_str2list" title="Link to this definition"></a></dt>
 <dd><p>Parse ‘0-4,7,8’ into [0,1,2,3,4,7,8] for machine readable.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.benchmark.format_list2str">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">format_list2str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpus</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.format_list2str" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">format_list2str</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cpus</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.format_list2str" title="Link to this definition"></a></dt>
 <dd><p>Format [0,1,2,3,4,7,8] back to ‘0-4,7,8’ for human readable.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.benchmark.get_reversed_numa_info">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_reversed_numa_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">numa_info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.get_reversed_numa_info" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_reversed_numa_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">numa_info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.get_reversed_numa_info" title="Link to this definition"></a></dt>
 <dd><p>Reverse numa_info.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.benchmark.get_numa_node">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_numa_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">core_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reversed_numa_info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.get_numa_node" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">get_numa_node</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">core_list</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reversed_numa_info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.get_numa_node" title="Link to this definition"></a></dt>
 <dd><p>Return numa node used in current core_list.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.benchmark.set_cores_for_instance">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">set_cores_for_instance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numa_info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.set_cores_for_instance" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">set_cores_for_instance</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">numa_info</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.set_cores_for_instance" title="Link to this definition"></a></dt>
 <dd><p>Set cores for each instance based on the input args.</p>
 <dl class="simple">
 <dt>All use cases are listed below:</dt><dd><dl class="simple">
@@ -261,7 +258,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.benchmark.generate_prefix">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">generate_prefix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_list</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.generate_prefix" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">generate_prefix</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_list</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.generate_prefix" title="Link to this definition"></a></dt>
 <dd><p>Generate the command prefix with <cite>numactl</cite> (Linux) or <cite>start</cite> (Windows) command.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -281,7 +278,7 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.benchmark.run_multi_instance_command">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">run_multi_instance_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_list_per_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_cmd</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.run_multi_instance_command" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">run_multi_instance_command</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">core_list_per_instance</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">raw_cmd</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.run_multi_instance_command" title="Link to this definition"></a></dt>
 <dd><p>Build and trigger commands for multi-instances with subprocess.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -296,13 +293,13 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.benchmark.summary_latency_throughput">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">summary_latency_throughput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logfile_dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.summary_latency_throughput" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">summary_latency_throughput</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">logfile_dict</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.summary_latency_throughput" title="Link to this definition"></a></dt>
 <dd><p>Get the summary of the benchmark.</p>
 </dd></dl>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.common.benchmark.benchmark">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">benchmark</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.benchmark" title="Permalink to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.common.benchmark.</span></span><span class="sig-name descname"><span class="pre">benchmark</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/common/benchmark.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.common.benchmark.benchmark" title="Link to this definition"></a></dt>
 <dd><p>Benchmark API interface.</p>
 </dd></dl>
 
@@ -323,7 +320,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cbbcbf880> 
+   <jinja2.runtime.BlockReference object at 0x7f07a4f0d640> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

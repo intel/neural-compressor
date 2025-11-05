@@ -15,6 +15,7 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
+   /autoapi/neural_compressor/torch/export/export_hf/index
    /autoapi/neural_compressor/torch/export/pt2e_export/index
 
 

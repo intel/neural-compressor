@@ -176,16 +176,21 @@ def load(output_dir="./saved_results", model=None):
     <td class="tg-9wq8"><a href="PT_SmoothQuant.html">link</a></td>
   </tr>
   <tr>
-    <td class="tg-9wq8" rowspan="2">Static Quantization</td>
-    <td class="tg-9wq8" rowspan="2"><a href=https://pytorch.org/docs/master/quantization.html#post-training-static-quantization>Post-traning Static Quantization</a></td>
-    <td class="tg-9wq8">intel-extension-for-pytorch</td>
+    <td class="tg-9wq8" rowspan="3">Static Quantization</td>
+    <td class="tg-9wq8" rowspan="3"><a href=https://pytorch.org/docs/master/quantization.html#post-training-static-quantization>Post-traning Static Quantization</a></td>
+    <td class="tg-9wq8">intel-extension-for-pytorch (INT8)</td>
     <td class="tg-9wq8">&#10004</td>
     <td class="tg-9wq8"><a href="PT_StaticQuant.html">link</a></td>
   </tr>
   <tr>
-    <td class="tg-9wq8"><a href=https://pytorch.org/docs/stable/torch.compiler_deepdive.html>TorchDynamo</a></td>
+    <td class="tg-9wq8"><a href=https://pytorch.org/docs/stable/torch.compiler_deepdive.html>TorchDynamo (INT8)</a></td>
     <td class="tg-9wq8">&#10004</td>
     <td class="tg-9wq8"><a href="PT_StaticQuant.html">link</a></td>
+  <tr>
+    <td class="tg-9wq8"><a href=https://docs.habana.ai/en/latest/index.html>Intel Gaudi AI accelerator (FP8)</a></td>
+    <td class="tg-9wq8">&#10004</td>
+    <td class="tg-9wq8"><a href="PT_FP8Quant.html">link</a></td>
+  </tr>
   </tr>
   <tr>
     <td class="tg-9wq8">Dynamic Quantization</td>
@@ -240,7 +245,7 @@ Deep Learning</a></td>
     </table>
 
 2. How to set different configuration for specific op_name or op_type?
-    > INC extends a `set_local` method based on the global configuration object to set custom configuration.
+    > Neural Compressor extends a `set_local` method based on the global configuration object to set custom configuration.
 
     ```python
     def set_local(self, operator_name_or_list: Union[List, str, Callable], config: BaseConfig) -> BaseConfig:
@@ -258,4 +263,16 @@ Deep Learning</a></td>
     quant_config = RTNConfig()  # Initialize global configuration with default bits=4
     quant_config.set_local(".*mlp.*", RTNConfig(bits=8))  # For layers with "mlp" in their names, set bits=8
     quant_config.set_local("Conv1d", RTNConfig(dtype="fp32"))  # For Conv1d layers, do not quantize them.
+    ```
+
+3. How to specify an accelerator?
+
+    > Neural Compressor provides automatic accelerator detection, including HPU, Intel GPU, CUDA, and CPU.
+
+    > The automatically detected accelerator may not be suitable for some special cases, such as poor performance, memory limitations. In such situations, users can override the detected accelerator by setting the environment variable `INC_TARGET_DEVICE`.
+
+    > Usage:
+
+    ```bash
+    export INC_TARGET_DEVICE=cpu
     ```

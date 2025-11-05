@@ -111,7 +111,7 @@ Module Contents
    :returns: The decorated function.
 
 
-.. py:class:: ProcessorType
+.. py:class:: ProcessorType(*args, **kwds)
 
 
 

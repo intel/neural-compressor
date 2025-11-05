@@ -1,0 +1,99 @@
+neural_compressor.torch.utils.bit_packer
+========================================
+
+.. py:module:: neural_compressor.torch.utils.bit_packer
+
+.. autoapi-nested-parse::
+
+   Utility functions for bit packing.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.utils.bit_packer.register_pack_func
+   neural_compressor.torch.utils.bit_packer.pack_array_with_numba_b4_c32
+   neural_compressor.torch.utils.bit_packer.pack_array_with_numba_b4_c16
+   neural_compressor.torch.utils.bit_packer.pack_array_with_numba_b4_c8
+   neural_compressor.torch.utils.bit_packer.pack_array_with_numba_b4_c64
+   neural_compressor.torch.utils.bit_packer.pack_array_with_numba_b8_c32
+   neural_compressor.torch.utils.bit_packer.pack_array_with_numba_b8_c16
+   neural_compressor.torch.utils.bit_packer.pack_array_with_numba_b8_c8
+   neural_compressor.torch.utils.bit_packer.pack_array_with_numba_b8_c64
+   neural_compressor.torch.utils.bit_packer.pack_array_with_numba_b2_c32
+   neural_compressor.torch.utils.bit_packer.pack_array_with_numba_b2_c16
+   neural_compressor.torch.utils.bit_packer.pack_array_with_numba_b2_c8
+   neural_compressor.torch.utils.bit_packer.pack_array_with_numba_b2_c64
+
+
+Module Contents
+---------------
+
+.. py:function:: register_pack_func(orig_bits: int, compress_bits: int)
+
+   Register the pack function.
+
+
+.. py:function:: pack_array_with_numba_b4_c32(raw_array: numpy.ndarray, packed_array: numpy.ndarray, n_pack: int, new_in_features: int) -> numpy.ndarray
+
+   Pack the array with numba when bits=4 and compress_bits=32.
+
+
+.. py:function:: pack_array_with_numba_b4_c16(raw_array: numpy.ndarray, packed_array: numpy.ndarray, n_pack: int, new_in_features: int) -> numpy.ndarray
+
+   Pack the array with numba when bits=4 and compress_bits=16.
+
+
+.. py:function:: pack_array_with_numba_b4_c8(raw_array: numpy.ndarray, packed_array: numpy.ndarray, n_pack: int, new_in_features: int) -> numpy.ndarray
+
+   Pack the array with numba when bits=4 and compress_bits=8.
+
+
+.. py:function:: pack_array_with_numba_b4_c64(raw_array: numpy.ndarray, packed_array: numpy.ndarray, n_pack: int, new_in_features: int) -> numpy.ndarray
+
+   Pack the array with numba when bits=4 and compress_bits=64.
+
+
+.. py:function:: pack_array_with_numba_b8_c32(raw_array: numpy.ndarray, packed_array: numpy.ndarray, n_pack: int, new_in_features: int) -> numpy.ndarray
+
+   Pack the array with numba when bits=8 and compress_bits=32.
+
+
+.. py:function:: pack_array_with_numba_b8_c16(raw_array: numpy.ndarray, packed_array: numpy.ndarray, n_pack: int, new_in_features: int) -> numpy.ndarray
+
+   Pack the array with numba when bits=8 and compress_bits=16.
+
+
+.. py:function:: pack_array_with_numba_b8_c8(raw_array: numpy.ndarray, packed_array: numpy.ndarray, n_pack: int, new_in_features: int) -> numpy.ndarray
+
+   Pack the array with numba when bits=8 and compress_bits=8.
+
+
+.. py:function:: pack_array_with_numba_b8_c64(raw_array: numpy.ndarray, packed_array: numpy.ndarray, n_pack: int, new_in_features: int) -> numpy.ndarray
+
+   Pack the array with numba when bits=8 and compress_bits=64.
+
+
+.. py:function:: pack_array_with_numba_b2_c32(raw_array: numpy.ndarray, packed_array: numpy.ndarray, n_pack: int, new_in_features: int) -> numpy.ndarray
+
+   Pack the array with numba when bits=2 and compress_bits=32.
+
+
+.. py:function:: pack_array_with_numba_b2_c16(raw_array: numpy.ndarray, packed_array: numpy.ndarray, n_pack: int, new_in_features: int) -> numpy.ndarray
+
+   Pack the array with numba when bits=2 and compress_bits=16.
+
+
+.. py:function:: pack_array_with_numba_b2_c8(raw_array: numpy.ndarray, packed_array: numpy.ndarray, n_pack: int, new_in_features: int) -> numpy.ndarray
+
+   Pack the array with numba when bits=2 and compress_bits=8.
+
+
+.. py:function:: pack_array_with_numba_b2_c64(raw_array: numpy.ndarray, packed_array: numpy.ndarray, n_pack: int, new_in_features: int) -> numpy.ndarray
+
+   Pack the array with numba when bits=2 and compress_bits=64.
+
+

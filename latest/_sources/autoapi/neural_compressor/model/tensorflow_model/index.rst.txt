@@ -281,6 +281,13 @@ Module Contents
    Build Tensorflow QAT model.
 
 
+   .. py:attribute:: model_type
+      :value: 'keras'
+
+
+      Return model type.
+
+
 .. py:class:: TensorflowCheckpointModel(model, **kwargs)
 
 

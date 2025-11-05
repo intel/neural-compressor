@@ -14,6 +14,7 @@ Classes
 
 .. autoapisummary::
 
+   neural_compressor.torch.algorithms.weight_only.modules.Matmul
    neural_compressor.torch.algorithms.weight_only.modules.QDQLayer
    neural_compressor.torch.algorithms.weight_only.modules.UnpackedWeightOnlyLinearParams
    neural_compressor.torch.algorithms.weight_only.modules.WeightOnlyLinear
@@ -27,6 +28,13 @@ Classes
 Module Contents
 ---------------
 
+.. py:class:: Matmul
+
+
+
+   Basic module for matmul.
+
+
 .. py:class:: QDQLayer(module, input_scale=None)
 
 
@@ -34,14 +42,14 @@ Module Contents
    Quantized and dequantized layer.
 
 
-.. py:class:: UnpackedWeightOnlyLinearParams(unpack_weight, scales, unpack_zp, **kwargs)
+.. py:class:: UnpackedWeightOnlyLinearParams(unpack_weight, scales, scale_bf16_to_fp8, unpack_zp, **kwargs)
 
 
 
    Contains all unpacked weight values.
 
 
-.. py:class:: WeightOnlyLinear(in_features, out_features, dtype, bits, group_size, device)
+.. py:class:: WeightOnlyLinear(in_features, out_features, dtype, bits, group_size, device, scale_dtype, **kwargs)
 
 
 

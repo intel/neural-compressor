@@ -1,0 +1,29 @@
+neural_compressor.torch.algorithms.qat.tensor_quantizer
+=======================================================
+
+.. py:module:: neural_compressor.torch.algorithms.qat.tensor_quantizer
+
+.. autoapi-nested-parse::
+
+   TensorQuantizer Module.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.qat.tensor_quantizer.TensorQuantizer
+
+
+Module Contents
+---------------
+
+.. py:class:: TensorQuantizer(data_type='mx_fp8', bits=8, block_size=32, sym=True, if_quant=True, learn_exponent=False, amax=None, scale_shape=None, device=None)
+
+
+
+   Tensor quantizer module.
+
+

@@ -9,15 +9,6 @@ neural_compressor.strategy
 
 
 
-Subpackages
------------
-
-.. toctree::
-   :maxdepth: 1
-
-   /autoapi/neural_compressor/strategy/utils/index
-
-
 Submodules
 ----------
 
@@ -35,5 +26,6 @@ Submodules
    /autoapi/neural_compressor/strategy/mse_v2/index
    /autoapi/neural_compressor/strategy/random/index
    /autoapi/neural_compressor/strategy/strategy/index
+   /autoapi/neural_compressor/strategy/utils/index
 
 

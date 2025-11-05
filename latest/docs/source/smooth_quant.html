@@ -1,14 +1,16 @@
+
+
 <!DOCTYPE html>
-<html class="writer-html5" lang="en">
+<html class="writer-html5" lang="en" data-content_root="../../">
 <head>
-  <meta charset="utf-8" /><meta name="generator" content="Docutils 0.19: https://docutils.sourceforge.io/" />
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Smooth Quant &mdash; Intel® Neural Compressor 3.0 documentation</title>
-      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css" />
-      <link rel="stylesheet" type="text/css" href="../../_static/custom.css" />
+  <title>Smooth Quant &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
 
   
 <script type="text/javascript">
@@ -40,10 +42,6 @@
           <a href="../../index.html" class="icon icon-home">
             Intel® Neural Compressor
           </a>
-            <div class="version">
-              <a href="../../../versions.html">latest▼</a>
-              <p>Click link above to switch version</p>
-            </div>
 <div role="search">
   <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
     <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
@@ -57,7 +55,6 @@
 <li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
 <li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
 <li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
-<li class="toctree-l1"><a class="reference internal" href="releases_info.html">Release</a></li>
 <li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -88,7 +85,7 @@
            <div itemprop="articleBody">
              
   <section id="smooth-quant">
-<h1>Smooth Quant<a class="headerlink" href="#smooth-quant" title="Permalink to this heading"></a></h1>
+<h1>Smooth Quant<a class="headerlink" href="#smooth-quant" title="Link to this heading"></a></h1>
 <ol class="simple">
 <li><p><a class="reference external" href="#Introduction">Introduction</a></p></li>
 <li><p><a class="reference external" href="#Quantization-Fundamentals">Quantization Fundamentals</a></p></li>
@@ -98,11 +95,11 @@
 <li><p><a class="reference external" href="#Supported-Framework-Matrix">Supported Framework Matrix</a></p></li>
 </ol>
 <section id="introduction">
-<h2>Introduction<a class="headerlink" href="#introduction" title="Permalink to this heading"></a></h2>
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
 <p>Quantization is a common compression operation to reduce memory and accelerate inference by converting the floating point matrix to an integer matrix. For large language models (LLMs) with gigantic parameters, the systematic outliers make quantification of activations difficult.  <a class="reference external" href="https://arxiv.org/abs/2211.10438">SmoothQuant</a>, a training free post-training quantization (PTQ) solution, offline migrates this difficulty from activations to weights with a mathematically equivalent transformation.</p>
 </section>
 <section id="quantization-fundamentals">
-<h2>Quantization Fundamentals<a class="headerlink" href="#quantization-fundamentals" title="Permalink to this heading"></a></h2>
+<h2>Quantization Fundamentals<a class="headerlink" href="#quantization-fundamentals" title="Link to this heading"></a></h2>
 <p>Quantization is a common compression operation to reduce memory and accelerate inference; therefore, the difficulty of LLM deployment can be alleviated. Quantization converts the floating point matrix to an integer matrix.</p>
 <p>The equation of quantization is as follows:</p>
 <p>$$
@@ -110,13 +107,13 @@ X_{int8} = round(X_{fp32}/S) + Z \tag{1}
 $$</p>
 <p>where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integer zero point.</p>
 <section id="per-tensor-per-channel">
-<h3>Per-tensor &amp; Per-channel<a class="headerlink" href="#per-tensor-per-channel" title="Permalink to this heading"></a></h3>
+<h3>Per-tensor &amp; Per-channel<a class="headerlink" href="#per-tensor-per-channel" title="Link to this heading"></a></h3>
 <p>There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarsest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrices and per channel for 3D matrices. Similarly, the finest granularity is that each element has an individual set of quantization parameters.</p>
 <p>However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. <strong>In the following part, We will show that per-channel could bring lower quantization loss but has some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization</strong></p>
 <section id="per-tensor-example">
-<h4>Per-tensor example<a class="headerlink" href="#per-tensor-example" title="Permalink to this heading"></a></h4>
+<h4>Per-tensor example<a class="headerlink" href="#per-tensor-example" title="Link to this heading"></a></h4>
 <p>Suppose the weight tensor is：</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span> <span class="nn">torch</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
 <span class="n">W</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span>
     <span class="p">[</span>
@@ -134,7 +131,7 @@ $$</p>
 Z = -round(X_{min/}/S) \tag{3}
 $$</p>
 <p>The per-tensor quantization function is:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">quantize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">quantize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
     <span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">2.0</span><span class="o">**</span><span class="n">num_bits</span> <span class="o">-</span> <span class="mf">1.0</span>
     <span class="n">scale</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">num_bits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
     <span class="n">scale</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
@@ -154,7 +151,7 @@ tensor<span class="o">([[</span><span class="m">172</span>.,<span class="w"> </s
 </pre></div>
 </div>
 <p>With the value of scale and zp, we can dequantize the tensor.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">dequantize</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">zp</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">dequantize</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">zp</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">scale</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">zp</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -178,9 +175,9 @@ tensor<span class="o">([[</span><span class="m">0</span>.6848,<span class="w"> <
 <p>The difference between $W$ and $W_{dq}$ shows that quantization affects precision and appropriate values of scale and zero point will reduce the loss of precision.</p>
 </section>
 <section id="per-channel-example">
-<h4>Per-channel example<a class="headerlink" href="#per-channel-example" title="Permalink to this heading"></a></h4>
+<h4>Per-channel example<a class="headerlink" href="#per-channel-example" title="Link to this heading"></a></h4>
 <p>Similarly, the example of per-channel quantization is as follows:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">quantize_per_channel</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">quantize_per_channel</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
     <span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">2.0</span><span class="o">**</span><span class="n">num_bits</span> <span class="o">-</span> <span class="mf">1.0</span>
     <span class="n">x_tmp</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">scales</span> <span class="o">=</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">num_bits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
@@ -191,7 +188,7 @@ tensor<span class="o">([[</span><span class="m">0</span>.6848,<span class="w"> <
     <span class="k">return</span> <span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">zp</span>
 
 
-<span class="k">def</span> <span class="nf">dequantize_per_channel</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">zp</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">dequantize_per_channel</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">zp</span><span class="p">):</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">zp</span><span class="p">)</span>
     <span class="nb">print</span><span class="p">(</span><span class="n">scales</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">zp</span><span class="p">))</span>
     <span class="k">return</span> <span class="n">scales</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">zp</span><span class="p">)</span>
@@ -221,10 +218,10 @@ tensor<span class="o">([[</span><span class="m">0</span>.6837,<span class="w"> <
 <p>Through this example, we can see that per-channel quantization has finer granularity and has lower loss (loss 5.6376e-07 for per-channel quantization and 7.3852e-07 for per-tensor quantization).</p>
 </section>
 <section id="matmul-quantization-example">
-<h4>Matmul quantization example<a class="headerlink" href="#matmul-quantization-example" title="Permalink to this heading"></a></h4>
+<h4>Matmul quantization example<a class="headerlink" href="#matmul-quantization-example" title="Link to this heading"></a></h4>
 <p>For a linear layer in most model, $Y=X \cdot W$, we can quantize both the weights and activations in order to reduce the storage and accelerate inference.
 Using per-tensor scale quantization to show the process.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span> <span class="nf">quantize_per_tensor_absmax</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">quantize_per_tensor_absmax</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
     <span class="n">scales</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
     <span class="n">q_max</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">n_bits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
     <span class="n">scales</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span><span class="o">.</span><span class="n">div_</span><span class="p">(</span><span class="n">q_max</span><span class="p">)</span>
@@ -233,7 +230,7 @@ Using per-tensor scale quantization to show the process.</p>
     <span class="k">return</span> <span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span>
 
 
-<span class="k">def</span> <span class="nf">dequantize</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+<span class="k">def</span><span class="w"> </span><span class="nf">dequantize</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
     <span class="k">return</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">q_x</span>
 </pre></div>
 </div>
@@ -278,7 +275,7 @@ tensor<span class="o">([[</span><span class="m">0</span>.6836,<span class="w"> <
 </div>
 </section>
 <section id="per-channel-limitation">
-<h4>Per-channel limitation<a class="headerlink" href="#per-channel-limitation" title="Permalink to this heading"></a></h4>
+<h4>Per-channel limitation<a class="headerlink" href="#per-channel-limitation" title="Link to this heading"></a></h4>
 <p>Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We would prove it in the following image and the zero point of quantization would be ignored for simplicity.</p>
 <p>The image on the left presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics. In the middle image, we apply per-tensor quantization for activations and per-channel quantization for weights; the results after quantization that are denoted by $y_1$ and $y_2$, could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation (right image), we could not dequantize the  $y_1$ and  $y_2$ to float results.</p>
 <div align="center">
@@ -287,9 +284,9 @@ tensor<span class="o">([[</span><span class="m">0</span>.6836,<span class="w"> <
 </section>
 </section>
 <section id="smoothquant-and-our-enhancement">
-<h2>SmoothQuant and Our Enhancement<a class="headerlink" href="#smoothquant-and-our-enhancement" title="Permalink to this heading"></a></h2>
+<h2>SmoothQuant and Our Enhancement<a class="headerlink" href="#smoothquant-and-our-enhancement" title="Link to this heading"></a></h2>
 <section id="smoothquant">
-<h3>SmoothQuant<a class="headerlink" href="#smoothquant" title="Permalink to this heading"></a></h3>
+<h3>SmoothQuant<a class="headerlink" href="#smoothquant" title="Link to this heading"></a></h3>
 <p>In the previous subsection, we have explained why per-channel quantization could not be applied for activation, even though it could lead to lower quantization loss. However, the quantization error loss of activation plays an important role in the accuracy loss of model quantization[^2][^3][^4].</p>
 <p>To reduce the quantization loss of activations, lots of methods have been proposed. In the following, we briefly introduce SPIQ[^2], Outlier Suppression[^3] and Smoothquant[^4]. All these three methods share a similar idea to migrate the difficulty from activation quantization to weight quantization but differ in how much difficulty to be transferred.</p>
 <p>So <strong>the first question is how to migrate the difficulty from activation to weights?</strong> The solution is straightforward, that is to convert the network to an output equivalent network that is presented in the image below and apply quantization to this equivalent network. The intuition is that each channel of activation could be scaled to make it more quantization-friendly, similar to a fake per-channel activation quantization.</p>
@@ -309,9 +306,9 @@ $$</p>
 </div><p>For most of the models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced value to split the difficulty of weight and activation quantization. A larger $\alpha$ value could be used on models with more significant activation outliers to migrate more quantization difficulty to weights.</p>
 </section>
 <section id="our-enhancement">
-<h3>Our enhancement:<a class="headerlink" href="#our-enhancement" title="Permalink to this heading"></a></h3>
+<h3>Our enhancement:<a class="headerlink" href="#our-enhancement" title="Link to this heading"></a></h3>
 <section id="algorithm-auto-tuning-of-alpha">
-<h4>Algorithm: Auto-tuning of $\alpha$.<a class="headerlink" href="#algorithm-auto-tuning-of-alpha" title="Permalink to this heading"></a></h4>
+<h4>Algorithm: Auto-tuning of $\alpha$.<a class="headerlink" href="#algorithm-auto-tuning-of-alpha" title="Link to this heading"></a></h4>
 <p>SmoothQuant method aims to split the quantization difficulty of weight and activation by using a fixed-value $\alpha$ for an entire model. However, as the distributions of activation outliers vary not only across different models but also across different layers within a model, we hereby propose a method to obtain layer-wise optimal $\alpha$ values with the ability to tune automatically.
 Currently, both layer-wise and block-wise auto-tuning methods are supported and the default option is layer-wise.
 In block-wise auto-tuning, layers within one block (e.g an OPTDecoderLayer) would share the same alpha value; users could set <em>‘do_blockwise’: True</em> in <em>auto_alpha_args</em> to enable it.</p>
@@ -330,9 +327,9 @@ In block-wise auto-tuning, layers within one block (e.g an OPTDecoderLayer) woul
 <p>In our experiments, an $\alpha$ range of [0.0, 1.0] with a step_size of 0.1 is found to be well-balanced one for the majority of models.</p>
 </section>
 <section id="engineering">
-<h4>Engineering<a class="headerlink" href="#engineering" title="Permalink to this heading"></a></h4>
+<h4>Engineering<a class="headerlink" href="#engineering" title="Link to this heading"></a></h4>
 <p><em>fully automated</em>: users only need to pass a model and dataloader.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span> <span class="nn">neural_compressor.adaptor.torch_utils.waq</span> <span class="kn">import</span> <span class="n">TorchSmoothQuant</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.adaptor.torch_utils.waq</span><span class="w"> </span><span class="kn">import</span> <span class="n">TorchSmoothQuant</span>
 
 <span class="n">sq</span> <span class="o">=</span> <span class="n">TorchSmoothQuant</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">dataloader</span><span class="p">)</span>
 <span class="n">alpha</span> <span class="o">=</span> <span class="s2">&quot;auto&quot;</span>  <span class="c1">##alpha could be a float number to disable auto-tuning and enable fixed-value alpha smoothquant.</span>
@@ -351,7 +348,7 @@ conv2d/linear-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanor
 </section>
 </section>
 <section id="validated-models">
-<h2>Validated Models<a class="headerlink" href="#validated-models" title="Permalink to this heading"></a></h2>
+<h2>Validated Models<a class="headerlink" href="#validated-models" title="Link to this heading"></a></h2>
 <p>Neural Compressor: 2.1</p>
 <p>IPEX (Intel Extension for PyTorch): 2.0/2.1</p>
 <p>Dataset: lambada_openai</p>
@@ -591,7 +588,7 @@ conv2d/linear-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanor
 <td>alpha=0.7, Pytorch</td>
 </tr>
 </tbody>
-</table><p>The results listed below are achieved using IPEX optimize_transformers in model initialization for better performance. Please refer to the step-by-step <a class="reference external" href="../../examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm/ipex/README.html">instruction</a> for details.
+</table><p>The results listed below are achieved using IPEX optimize_transformers in model initialization for better performance. Please refer to the step-by-step <a class="reference external" href="../../examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm/ipex/README.html">instruction</a> for details.
 | Model/Last token accuracy |  FP32 Accuracy   | INT8 (w/ SmoothQuant) | Notes |
 |:———-:|:——:|:——:|———————————–|
 | LLaMa-2-7b-hf* | 0.7392 | 0.7332  | alpha=Auto, Ipex 2.1 |
@@ -599,10 +596,10 @@ conv2d/linear-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanor
 <p>Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.</p>
 </section>
 <section id="usage">
-<h2>Usage<a class="headerlink" href="#usage" title="Permalink to this heading"></a></h2>
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
 <p>There are two ways to apply smooth quantization: 1) using a fixed <code class="docutils literal notranslate"><span class="pre">alpha</span></code> for the entire model or 2) determining the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> through auto-tuning.</p>
 <section id="using-a-fixed-alpha">
-<h3>Using a fixed <code class="docutils literal notranslate"><span class="pre">alpha</span></code><a class="headerlink" href="#using-a-fixed-alpha" title="Permalink to this heading"></a></h3>
+<h3>Using a fixed <code class="docutils literal notranslate"><span class="pre">alpha</span></code><a class="headerlink" href="#using-a-fixed-alpha" title="Link to this heading"></a></h3>
 <p>To set a fixed alpha for the entire model, users can follow this example:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">recipes</span> <span class="o">=</span> <span class="p">{</span>
     <span class="s2">&quot;smooth_quant&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
@@ -623,42 +620,42 @@ conv2d/linear-&gt;conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanor
 </ul>
 </section>
 <section id="determining-the-alpha-through-auto-tuning">
-<h3>Determining the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> through auto-tuning<a class="headerlink" href="#determining-the-alpha-through-auto-tuning" title="Permalink to this heading"></a></h3>
+<h3>Determining the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> through auto-tuning<a class="headerlink" href="#determining-the-alpha-through-auto-tuning" title="Link to this heading"></a></h3>
 <p>Users can search for the best <code class="docutils literal notranslate"><span class="pre">alpha</span></code> at two levels: 1) for the entire model, and 2) for each layer/block.</p>
 <section id="auto-tune-the-alpha-for-the-entire-model">
-<h4>Auto-tune the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> for the entire model<a class="headerlink" href="#auto-tune-the-alpha-for-the-entire-model" title="Permalink to this heading"></a></h4>
+<h4>Auto-tune the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> for the entire model<a class="headerlink" href="#auto-tune-the-alpha-for-the-entire-model" title="Link to this heading"></a></h4>
 <p>The tuning process looks for the optimal <code class="docutils literal notranslate"><span class="pre">alpha</span></code> value from a list of <code class="docutils literal notranslate"><span class="pre">alpha</span></code> values provided by the user.</p>
 <blockquote>
 <div><p>Please note that, it may a considerable amount of time as the tuning process applies each <code class="docutils literal notranslate"><span class="pre">alpha</span></code> to the entire model and uses the evaluation result on the entire dataset as the metric to determine the best <code class="docutils literal notranslate"><span class="pre">alpha</span></code>.
 Here is an example:</p>
 </div></blockquote>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>import numpy as np
-conf = PostTrainingQuantConfig(
-    quant_level=&#39;auto&#39;, # quant_level can also be 1
-    ...
-    recipes={&quot;smooth_quant&quot;: True, 
-             &quot;smooth_quant_args&quot;: {&quot;alpha&quot;: np.arange(0.1, 0.5, 0.05).tolist()}
-    ...
-    }）
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">numpy</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">np</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">quant_level</span><span class="o">=</span><span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="c1"># quant_level can also be 1</span>
+    <span class="o">...</span>
+    <span class="n">recipes</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;smooth_quant&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> 
+             <span class="s2">&quot;smooth_quant_args&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="n">np</span><span class="o">.</span><span class="n">arange</span><span class="p">(</span><span class="mf">0.1</span><span class="p">,</span> <span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.05</span><span class="p">)</span><span class="o">.</span><span class="n">tolist</span><span class="p">()}</span>
+    <span class="o">...</span>
+    <span class="p">}</span><span class="err">）</span>
 </pre></div>
 </div>
 </section>
 <section id="auto-tune-the-alpha-for-each-layer-block">
-<h4>Auto-tune the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> for each layer/block<a class="headerlink" href="#auto-tune-the-alpha-for-each-layer-block" title="Permalink to this heading"></a></h4>
+<h4>Auto-tune the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> for each layer/block<a class="headerlink" href="#auto-tune-the-alpha-for-each-layer-block" title="Link to this heading"></a></h4>
 <p>In this case, the tuning process searches the optimal <code class="docutils literal notranslate"><span class="pre">alpha</span></code> of each layer of the block by evaluating the loss with respect to FP32 output on a few batches of data.
 Here is an example:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>recipes = {&quot;smooth_quant&quot;: True, 
-    &quot;default_alpha&quot;: 0.7, # Baseline alpha-value for auto-tuning.
-    &quot;smooth_quant_args&quot;: {&quot;alpha&quot;: &#39;auto&#39;, &quot;auto_alpha_args&quot;: {
-        &quot;alpha_min&quot;: 0.0, # min value of auto-tuning alpha search space
-        &quot;alpha_max&quot;: 1.0, # max value of auto-tuning alpha search space
-        &quot;alpha_step&quot;: 0.1, # step_size of auto-tuning alpha search space
-        &quot;shared_criterion&quot;: &quot;mean&quot;, # Criterion for input LayerNorm op of a transformer block.
-        &quot;do_blockwise&quot;: False, # Whether to enable block-wise auto-tuning.
-        }
-    }
-}
-conf = PostTrainingQuantConfig(recipes=recipes）
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">recipes</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;smooth_quant&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span> 
+    <span class="s2">&quot;default_alpha&quot;</span><span class="p">:</span> <span class="mf">0.7</span><span class="p">,</span> <span class="c1"># Baseline alpha-value for auto-tuning.</span>
+    <span class="s2">&quot;smooth_quant_args&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="s1">&#39;auto&#39;</span><span class="p">,</span> <span class="s2">&quot;auto_alpha_args&quot;</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">&quot;alpha_min&quot;</span><span class="p">:</span> <span class="mf">0.0</span><span class="p">,</span> <span class="c1"># min value of auto-tuning alpha search space</span>
+        <span class="s2">&quot;alpha_max&quot;</span><span class="p">:</span> <span class="mf">1.0</span><span class="p">,</span> <span class="c1"># max value of auto-tuning alpha search space</span>
+        <span class="s2">&quot;alpha_step&quot;</span><span class="p">:</span> <span class="mf">0.1</span><span class="p">,</span> <span class="c1"># step_size of auto-tuning alpha search space</span>
+        <span class="s2">&quot;shared_criterion&quot;</span><span class="p">:</span> <span class="s2">&quot;mean&quot;</span><span class="p">,</span> <span class="c1"># Criterion for input LayerNorm op of a transformer block.</span>
+        <span class="s2">&quot;do_blockwise&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span> <span class="c1"># Whether to enable block-wise auto-tuning.</span>
+        <span class="p">}</span>
+    <span class="p">}</span>
+<span class="p">}</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">recipes</span><span class="o">=</span><span class="n">recipes</span><span class="err">）</span>
 </pre></div>
 </div>
 <p>To get more information, please refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">examples</a>.</p>
@@ -666,7 +663,7 @@ conf = PostTrainingQuantConfig(recipes=recipes）
 </section>
 </section>
 <section id="supported-framework-matrix">
-<h2>Supported Framework Matrix<a class="headerlink" href="#supported-framework-matrix" title="Permalink to this heading"></a></h2>
+<h2>Supported Framework Matrix<a class="headerlink" href="#supported-framework-matrix" title="Link to this heading"></a></h2>
 <table border="1" class="docutils">
 <thead>
 <tr>
@@ -704,7 +701,7 @@ conf = PostTrainingQuantConfig(recipes=recipes）
 </tbody>
 </table></section>
 <section id="reference">
-<h2>Reference<a class="headerlink" href="#reference" title="Permalink to this heading"></a></h2>
+<h2>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h2>
 <p>[^1]: Jason, Wei, et al. “Emergent Abilities of Large Language Models”. Published in Transactions on Machine Learning Research (2022).</p>
 <p>[^2]: Yvinec, Edouard, et al. “SPIQ: Data-Free Per-Channel Static Input Quantization.” Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision. 2023.</p>
 <p>[^3]: Wei, Xiuying, et al. “Outlier suppression: Pushing the limit of low-bit transformer language models.” arXiv preprint arXiv:2209.13325 (2022).</p>
@@ -726,7 +723,7 @@ conf = PostTrainingQuantConfig(recipes=recipes）
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f6cbaaec160> 
+   <jinja2.runtime.BlockReference object at 0x7f07a4592960> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

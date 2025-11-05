@@ -29,8 +29,6 @@ Module Contents
                  a path to ckpt/savedmodel folder.
                  For PyTorch model, it's torch.nn.model
                  instance.
-                 For MXNet model, it's mxnet.symbol.Symbol
-                 or gluon.HybirdBlock instance.
    :type model: torch.nn.Module
    :param conf: The class of PostTrainingQuantConfig containing accuracy goal,
                 tuning objective and preferred calibration &

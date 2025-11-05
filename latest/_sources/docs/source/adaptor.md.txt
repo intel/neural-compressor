@@ -17,17 +17,16 @@ Adaptor
 
 Intel® Neural Compressor builds the low-precision inference
 solution on popular deep learning frameworks such as TensorFlow, PyTorch,
-MXNet, and ONNX Runtime. The adaptor layer is the bridge between the 
+and ONNX Runtime. The adaptor layer is the bridge between the 
 tuning strategy and vanilla framework quantization APIs.
 
 ## Adaptor Support Matrix
 
 |Framework     |Adaptor      |
 |--------------|:-----------:|
-|TensorFlow    |&#10004;     |
+|TensorFlow (Deprecated)    |&#10004;     |
 |PyTorch       |&#10004;     |
-|ONNX          |&#10004;     |
-|MXNet         |&#10004;     |
+|ONNX (Deprecated)          |&#10004;     |
 
 
 ## Working Flow
