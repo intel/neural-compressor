@@ -114,7 +114,7 @@ jobs:
                 check_path=$(echo "${png_path:1}" | cut -d '#' -f1)
                 echo "No.3----->check_path is $check_path"
               else
-                # relative path 
+                # relative path
                 check_path=${refer_path}
                 relative_path=$(echo "$png_path" | cut -d '#' -f1)
                 if [ -n "$relative_path" ]; then check_path=$(dirname "$refer_path")/$relative_path fi
