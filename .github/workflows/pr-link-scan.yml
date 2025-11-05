@@ -110,31 +110,24 @@ jobs:
               echo "No.2----->refer_path is $refer_path, png_path is $png_path"
 
               if [[ "${png_path:0:1}" == "/" ]]; then
+                # absolute path
                 check_path=$(echo "${png_path:1}" | cut -d '#' -f1)
                 echo "No.3----->check_path is $check_path"
-              elif [[ "$png_path" == *#* ]]; then
-                relative_path=$(echo "$png_path" | cut -d '#' -f1)
-                echo "No.4----->relative_path is $relative_path"
-                if [ -n "$relative_path" ]; then
-                  check_path=$(dirname "$refer_path")/$relative_path
-                  png_path=$(echo "$png_path" | awk -F'#' '{print "#" $2}')
-                  echo "No.5----->check_path is $check_path, png_path is $png_path"
-                else
-                  check_path=$refer_path
-                  echo "No.6----->check_path is $check_path"
-                fi
               else
-                check_path=$(dirname "$refer_path")/$png_path
-                echo "No.7----->check_path is $check_path"
+                # relative path 
+                check_path=${refer_path}
+                relative_path=$(echo "$png_path" | cut -d '#' -f1)
+                if [ -n "$relative_path" ]; then check_path=$(dirname "$refer_path")/$relative_path fi
+                echo "No.4----->check_path is $check_path"
               fi
 
               if [ -e "$check_path" ]; then
                 real_path=$(realpath $check_path)
-                echo "No.8 -----> Found relative path: $png_line from ${{github.workspace}}/$refer_path"
-                if [[ "$png_line" == *#* ]]; then
+                echo "No.5----->real_path is $real_path"
+                if [[ "$png_path" == *#* ]]; then
                   if [ -n "changed_files" ] && echo "$changed_files" | grep -q "^${refer_path}$"; then
-                    url_dev=$branch$(echo "$real_path" | sed 's|.*/neural-compressor||')$png_path
-                    echo "No.9----->url_dev is $url_dev"
+                    url_dev=$branch$(echo "$real_path" | sed 's|.*/neural-compressor||')$(echo "$png_path" | cut -d '#' -f2)
+                    echo "No.5----->url_dev is $url_dev"
                     sleep $delay
                     response=$(curl -I -L -s -o /dev/null -w "%{http_code}" "$url_dev")
                     if [ "$response" -ne 200 ]; then

@@ -124,6 +124,6 @@ q_model = fit(model, config, calib_dataloader=calib_dataloader, eval_dataloader=
 
 ## Example
 
-- Refer to this [example](https://github.com/intel/neural-compressor/tree/master/examples/onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq_static) for how to define a customised metric.
+- Refer to this [example](https://github.com/intel/neural-compressor/tree/master/examples/deprecated/onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq_static) for how to define a customised metric.
 
-- Refer to this [example](https://github.com/intel/neural-compressor/blob/master/examples/tensorflow/image_recognition/tensorflow_models/efficientnet-b0/quantization/ptq) for how to use internal metric.
+- Refer to this [example](https://github.com/intel/neural-compressor/tree/master/examples/deprecated/tensorflow/image_recognition/tensorflow_models/efficientnet-b0/quantization/ptq) for how to use internal metric.

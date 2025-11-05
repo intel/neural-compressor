@@ -446,7 +446,7 @@ recipes = {"smooth_quant": True,
 conf = PostTrainingQuantConfig(recipes=recipes）
 ```
 
-To get more information, please refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm).
+To get more information, please refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm).
 
  
 ## Supported Framework Matrix

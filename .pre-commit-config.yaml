@@ -134,7 +134,7 @@ repos:
         exclude: |
           (?x)^(
               examples/.*(txt|patch)|
-              examples/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static/prompt.json|
+              examples/deprecated/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static/prompt.json|
               neural_compressor/torch/algorithms/fp8_quant/internal/diffusion_evaluation/SR_evaluation/imagenet1000_clsidx_to_labels.txt|
               neural_compressor/evaluation/hf_eval/datasets/cnn_validation.json|
               neural_compressor/torch/algorithms/fp8_quant/.+|
