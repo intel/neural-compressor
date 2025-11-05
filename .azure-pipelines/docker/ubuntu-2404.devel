@@ -46,8 +46,8 @@ USER hostuser
 
 ENV PATH="/home/hostuser/.local/bin:$PATH"
 RUN pip config set global.break-system-packages true
-RUN python -m pip install pip packaging --upgrade
-RUN python -m pip install --no-cache-dir setuptools
+RUN pip install pip packaging --upgrade
+RUN pip install --no-cache-dir setuptools
 RUN pip list
 
 WORKDIR /
