@@ -307,6 +307,6 @@ class SigOptTuneStrategy(TuneStrategy):
             project=self.project_id,
         )
 
-        logger.debug("Create experiment at https://app.sigopt.com/experiment/{}".format(experiment.id))
+        logger.debug("Create experiment at https://sigopt.org/experiment/{}".format(experiment.id))
 
         return experiment

@@ -391,7 +391,7 @@ conf = PostTrainingQuantConfig(
 
 #### Design
 
-`SigOpt` strategy is to use [SigOpt Optimization Loop](https://app.sigopt.com/docs/overview/optimization) method to accelerate and visualize the traversal of the tuning configurations from the tuning space. The metrics add accuracy as a constraint and optimize for latency to improve performance. [SigOpt Projects](https://app.sigopt.com/) can show the result of each tuning experiment.
+`SigOpt` strategy is to use SigOpt Optimization Loop method to accelerate and visualize the traversal of the tuning configurations from the tuning space. The metrics add accuracy as a constraint and optimize for latency to improve performance.  
 
 #### Usage
 
