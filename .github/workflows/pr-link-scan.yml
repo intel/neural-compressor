@@ -111,6 +111,7 @@ jobs:
 
               if [[ "${png_path:0:1}" == "/" ]]; then
                 check_path="${png_path:1}"
+                check_path=$(echo "$png_path" | cut -d '#' -f1)
                 echo "No.3----->check_path is $check_path"
               elif [[ "$png_path" == *#* ]]; then
                 relative_path=$(echo "$png_path" | cut -d '#' -f1)
