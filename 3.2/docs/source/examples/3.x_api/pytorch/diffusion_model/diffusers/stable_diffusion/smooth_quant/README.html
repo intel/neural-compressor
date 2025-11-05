@@ -1,0 +1,219 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">3.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/3.x_api/pytorch/diffusion_model/diffusers/stable_diffusion/smooth_quant/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document describes the step-by-step instructions to run <a class="reference external" href="https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0">stable diffusion XL model</a> using Smooth Quantization to accelerate inference while maintain the quality of output image.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<p>Recommend python 3.9 or higher version.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<p><strong>Note</strong>: IPEX along with torch require nightly version (2.4) for compatibility. Please refer to <a class="reference external" href="https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=cpu&amp;version=main&amp;os=linux%2fwsl2&amp;package=source">installation</a>.</p>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<p>To quantize the model:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>sdxl_smooth_quant.py<span class="w"> </span>--model_name_or_path<span class="w"> </span>stabilityai/stable-diffusion-xl-base-1.0<span class="w"> </span>--quantize<span class="w"> </span>--alpha<span class="w"> </span><span class="m">0</span>.44<span class="w"> </span>--output_dir<span class="w"> </span><span class="s2">&quot;./saved_results&quot;</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sh<span class="w"> </span>run_quant.sh<span class="w"> </span>--alpha<span class="o">=</span><span class="m">0</span>.44
+</pre></div>
+</div>
+<p>To load a quantized model:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>sdxl_smooth_quant.py<span class="w"> </span>--model_name_or_path<span class="w"> </span>stabilityai/stable-diffusion-xl-base-1.0<span class="w"> </span>--quantize<span class="w"> </span>--load<span class="w"> </span>--int8
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sh<span class="w"> </span>run_quant.sh<span class="w"> </span>--int8<span class="o">=</span><span class="nb">true</span>
+</pre></div>
+</div>
+</section>
+<section id="results">
+<h1>Results<a class="headerlink" href="#results" title="Link to this heading"></a></h1>
+<section id="image-generated">
+<h2>Image Generated<a class="headerlink" href="#image-generated" title="Link to this heading"></a></h2>
+<p>With caption <code class="docutils literal notranslate"><span class="pre">&quot;A</span> <span class="pre">brown</span> <span class="pre">and</span> <span class="pre">white</span> <span class="pre">dog</span> <span class="pre">runs</span> <span class="pre">on</span> <span class="pre">some</span> <span class="pre">brown</span> <span class="pre">grass</span> <span class="pre">near</span> <span class="pre">a</span> <span class="pre">Frisbee</span> <span class="pre">that</span> <span class="pre">is</span> <span class="pre">just</span> <span class="pre">sailing</span> <span class="pre">above</span> <span class="pre">the</span> <span class="pre">ground.&quot;</span></code>, results of fp32 model and int8 model are listed left and right respectively.</p>
+<p float="left">
+  <img src="./images/fp32.jpg" width = "300" height = "300" alt="bf16" align=center />
+  <img src="./images/int8.jpg" width = "300" height = "300" alt="int8" align=center />
+</p></section>
+<section id="clip-evaluation">
+<h2>CLIP evaluation<a class="headerlink" href="#clip-evaluation" title="Link to this heading"></a></h2>
+<p>We have also evaluated CLIP scores on 5000 samples from COCO2014 validation dataset for FP32 model and INT8 model. CLIP results are listed below.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Precision</th>
+<th>FP32</th>
+<th>INT8</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLIP on COCO2014 val</td>
+<td>32.05</td>
+<td>31.77</td>
+</tr>
+</tbody>
+</table><p>We’re using the mlperf_sd_inference <a class="reference external" href="https://github.com/ahmadki/mlperf_sd_inference">repo</a> to evaluate CLIP scores. In order to support evaluation on quantized model,
+we made some modification on the script (<code class="docutils literal notranslate"><span class="pre">main.py</span></code>). Please use as following:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/ahmadki/mlperf_sd_inference.git
+<span class="nb">cd</span><span class="w"> </span>mlperf_sd_inference
+mv<span class="w"> </span>../main.py<span class="w"> </span>./
+</pre></div>
+</div>
+<p>After setting the environment as instructed in the repo, you can execute the modified <code class="docutils literal notranslate"><span class="pre">main.py</span></code> script to generate images:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>main.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model-id<span class="w"> </span>stabilityai/stable-diffusion-xl-base-1.0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantized-unet<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># quantized model saving path, should include `qconfig.json` and `quantized_model.pt`</span>
+<span class="w">    </span>--precision<span class="w"> </span>fp32<span class="w"> </span><span class="se">\ </span>
+<span class="w">    </span>--guidance<span class="w"> </span><span class="m">8</span>.0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--steps<span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># change to 5000 for the full 5k dataset</span>
+<span class="w">    </span>--latent-path<span class="w"> </span>latents.pt<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--base-output-dir<span class="w"> </span>./output
+</pre></div>
+</div>
+<p>Then you can compute CLIP score using the images generated by the quantized model:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>mv<span class="w"> </span>./output/stabilityai--stable-diffusion-xl-base-1.0__euler__20__8.0__fp32/*<span class="w"> </span>./output/<span class="w">  </span><span class="c1"># switch directory</span>
+rm<span class="w"> </span>-rf<span class="w"> </span>./output/stabilityai--stable-diffusion-xl-base-1.0__euler__20__8.0__fp32/
+
+python<span class="w"> </span>clip/clip_score.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tsv-file<span class="w"> </span>captions_5k.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--image-folder<span class="w"> </span>./output<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># folder with the generated images</span>
+<span class="w">    </span>--device<span class="w"> </span><span class="s2">&quot;cpu&quot;</span><span class="w">     </span>
+</pre></div>
+</div>
+<p>Or you can use the bash script for all steps above:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sh<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--mode<span class="o">=</span>accuracy<span class="w"> </span>--int8<span class="o">=</span><span class="nb">true</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f723c03aba0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

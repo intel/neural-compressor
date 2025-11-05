@@ -1,0 +1,47 @@
+neural_compressor.tensorflow.algorithms.smoother.scaler
+=======================================================
+
+.. py:module:: neural_compressor.tensorflow.algorithms.smoother.scaler
+
+.. autoapi-nested-parse::
+
+   Tensorflow scaling model weights and activations for Smooth Quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.algorithms.smoother.scaler.SmoothQuantScaler
+   neural_compressor.tensorflow.algorithms.smoother.scaler.SmoothQuantScalerLLM
+
+
+Module Contents
+---------------
+
+.. py:class:: SmoothQuantScaler(model, dataloader, alpha, scales_per_op)
+
+   A class for scaling model weights using Smooth Quantization method.
+
+   :param model: Tensorflow model to be scaled
+   :param dataloader: Tensorflow dataloader for the dataset
+   :param alpha: float, the scaling factor
+   :param scales_per_op: bool, each op will have an individual scale or
+                         ops with the same input will share a scale
+
+
+.. py:class:: SmoothQuantScalerLLM(graph_def, alpha, scales_per_op, op_types)
+
+
+
+   A class for scaling model weights for TF LLM models using Smooth Quantization method.
+
+   :param graph_def: graph_def of the model to be scaled
+   :param alpha: float, the scaling factor
+   :param scales_per_op: bool, each op will have an individual scale or
+                         ops with the same input will share a scale
+   :param op_types:
+
+

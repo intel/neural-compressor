@@ -1,0 +1,11 @@
+neural_compressor.tensorflow.keras.layers.layer_initializer
+===========================================================
+
+.. py:module:: neural_compressor.tensorflow.keras.layers.layer_initializer
+
+.. autoapi-nested-parse::
+
+   Initialize layer initializer functions.
+
+
+

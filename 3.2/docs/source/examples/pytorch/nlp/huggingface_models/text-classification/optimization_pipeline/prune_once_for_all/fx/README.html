@@ -1,0 +1,238 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../versions.html">3.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../_sources/docs/source/examples/pytorch/nlp/huggingface_models/text-classification/optimization_pipeline/prune_once_for_all/fx/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document is used to list steps of reproducing Prune Once For All examples result.
+<br>
+These examples take the pre-trained sparse language model and fine tune it on several downstream tasks. This fine tune pipeline is two staged. For stage 1, the pattern lock pruning and the distillation are applied to fine-tune the pre-trained sparse language model. In stage 2, the pattern lock pruning, distillation and quantization aware training are performed simultaneously on the fine tuned model from stage 1 to obtain the quantized model with the same sparsity pattern as the pre-trained sparse language model.
+<br>
+For more information of this algorithm, please refer to the paper <a class="reference external" href="https://arxiv.org/abs/2111.05754">Prune Once For All: Sparse Pre-Trained Language Models</a></p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<p>Recommend python 3.6 or higher version.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<section id="sst-2-task">
+<h2>SST-2 task<a class="headerlink" href="#sst-2-task" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># for stage 1</span>
+python<span class="w"> </span>run_glue_no_trainer_pruneOFA.py<span class="w"> </span>--task_name<span class="w"> </span>sst2<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--model_name_or_path<span class="w"> </span>Intel/bert-base-uncased-sparse-90-unstructured-pruneofa<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>textattack/bert-base-uncased-SST-2<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--do_prune<span class="w"> </span>--do_distillation<span class="w"> </span>--max_seq_length<span class="w"> </span><span class="m">128</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--learning_rate<span class="w"> </span>1e-4<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">9</span><span class="w"> </span>--output_dir<span class="w"> </span>/path/to/stage1_output_dir<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--loss_weights<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--temperature<span class="w"> </span><span class="m">2</span><span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span>
+<span class="c1"># for stage 2</span>
+python<span class="w"> </span>run_glue_no_trainer_pruneOFA.py<span class="w"> </span>--task_name<span class="w"> </span>sst2<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--model_name_or_path<span class="w"> </span>Intel/bert-base-uncased-sparse-90-unstructured-pruneofa<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>textattack/bert-base-uncased-SST-2<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--do_prune<span class="w"> </span>--do_distillation<span class="w"> </span>--max_seq_length<span class="w"> </span><span class="m">128</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--learning_rate<span class="w"> </span>1e-5<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">3</span><span class="w"> </span>--output_dir<span class="w"> </span>/path/to/stage2_output_dir<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--loss_weights<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--temperature<span class="w"> </span><span class="m">2</span><span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span><span class="w"> </span>--do_quantization<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--resume<span class="w"> </span>/path/to/stage1_output_dir/best_model.pt<span class="w"> </span>--pad_to_max_length
+</pre></div>
+</div>
+</section>
+<section id="mnli-task">
+<h2>MNLI task<a class="headerlink" href="#mnli-task" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># for stage 1</span>
+python<span class="w"> </span>run_glue_no_trainer_pruneOFA.py<span class="w"> </span>--task_name<span class="w"> </span>mnli<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--model_name_or_path<span class="w"> </span>Intel/bert-base-uncased-sparse-90-unstructured-pruneofa<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>blackbird/bert-base-uncased-MNLI-v1<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--do_prune<span class="w"> </span>--do_distillation<span class="w"> </span>--max_seq_length<span class="w"> </span><span class="m">128</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--learning_rate<span class="w"> </span>1e-4<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">9</span><span class="w"> </span>--output_dir<span class="w"> </span>/path/to/stage1_output_dir<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--loss_weights<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--temperature<span class="w"> </span><span class="m">2</span><span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span>
+<span class="c1"># for stage 2</span>
+python<span class="w"> </span>run_glue_no_trainer_pruneOFA.py<span class="w"> </span>--task_name<span class="w"> </span>mnli<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--model_name_or_path<span class="w"> </span>Intel/bert-base-uncased-sparse-90-unstructured-pruneofa<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>blackbird/bert-base-uncased-MNLI-v1<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--do_prune<span class="w"> </span>--do_distillation<span class="w"> </span>--max_seq_length<span class="w"> </span><span class="m">128</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--learning_rate<span class="w"> </span>1e-5<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">3</span><span class="w"> </span>--output_dir<span class="w"> </span>/path/to/stage2_output_dir<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--loss_weights<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--temperature<span class="w"> </span><span class="m">2</span><span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span><span class="w"> </span>--do_quantization<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--resume<span class="w"> </span>/path/to/stage1_output_dir/best_model.pt<span class="w"> </span>--pad_to_max_length
+</pre></div>
+</div>
+</section>
+<section id="qqp-task">
+<h2>QQP task<a class="headerlink" href="#qqp-task" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># for stage 1</span>
+python<span class="w"> </span>run_glue_no_trainer_pruneOFA.py<span class="w"> </span>--task_name<span class="w"> </span>qqp<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--model_name_or_path<span class="w"> </span>Intel/bert-base-uncased-sparse-90-unstructured-pruneofa<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>textattack/bert-base-uncased-QQP<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--do_prune<span class="w"> </span>--do_distillation<span class="w"> </span>--max_seq_length<span class="w"> </span><span class="m">128</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--learning_rate<span class="w"> </span>1e-4<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">9</span><span class="w"> </span>--output_dir<span class="w"> </span>/path/to/stage1_output_dir<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--loss_weights<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--temperature<span class="w"> </span><span class="m">2</span><span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span>
+<span class="c1"># for stage 2</span>
+python<span class="w"> </span>run_glue_no_trainer_pruneOFA.py<span class="w"> </span>--task_name<span class="w"> </span>qqp<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--model_name_or_path<span class="w"> </span>Intel/bert-base-uncased-sparse-90-unstructured-pruneofa<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>textattack/bert-base-uncased-QQP<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--do_prune<span class="w"> </span>--do_distillation<span class="w"> </span>--max_seq_length<span class="w"> </span><span class="m">128</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--learning_rate<span class="w"> </span>1e-5<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">3</span><span class="w"> </span>--output_dir<span class="w"> </span>/path/to/stage2_output_dir<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--loss_weights<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--temperature<span class="w"> </span><span class="m">2</span><span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span><span class="w"> </span>--do_quantization<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--resume<span class="w"> </span>/path/to/stage1_output_dir/best_model.pt<span class="w"> </span>--pad_to_max_length
+</pre></div>
+</div>
+</section>
+<section id="qnli-task">
+<h2>QNLI task<a class="headerlink" href="#qnli-task" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># for stage 1</span>
+python<span class="w"> </span>run_glue_no_trainer_pruneOFA.py<span class="w"> </span>--task_name<span class="w"> </span>qnli<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--model_name_or_path<span class="w"> </span>Intel/bert-base-uncased-sparse-90-unstructured-pruneofa<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>textattack/bert-base-uncased-QNLI<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--do_prune<span class="w"> </span>--do_distillation<span class="w"> </span>--max_seq_length<span class="w"> </span><span class="m">128</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--learning_rate<span class="w"> </span>1e-4<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">9</span><span class="w"> </span>--output_dir<span class="w"> </span>/path/to/stage1_output_dir<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--loss_weights<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--temperature<span class="w"> </span><span class="m">2</span><span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span>
+<span class="c1"># for stage 2</span>
+python<span class="w"> </span>run_glue_no_trainer_pruneOFA.py<span class="w"> </span>--task_name<span class="w"> </span>qnli<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--model_name_or_path<span class="w"> </span>Intel/bert-base-uncased-sparse-90-unstructured-pruneofa<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>textattack/bert-base-uncased-QNLI<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--do_prune<span class="w"> </span>--do_distillation<span class="w"> </span>--max_seq_length<span class="w"> </span><span class="m">128</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--learning_rate<span class="w"> </span>1e-5<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">3</span><span class="w"> </span>--output_dir<span class="w"> </span>/path/to/stage2_output_dir<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--loss_weights<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--temperature<span class="w"> </span><span class="m">2</span><span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span><span class="w"> </span>--do_quantization<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--resume<span class="w"> </span>/path/to/stage1_output_dir/best_model.pt<span class="w"> </span>--pad_to_max_length
+</pre></div>
+</div>
+<p>We supported Distributed Data Parallel training on single node and multi nodes settings. To use Distributed Data Parallel to speedup training, the bash command needs a small adjustment.
+<br>
+For example, bash command of stage 1 for SST2 task will look like the following, where <em><code class="docutils literal notranslate"><span class="pre">&lt;MASTER_ADDRESS&gt;</span></code></em> is the address of the master node, it won’t be necessary for single node case, <em><code class="docutils literal notranslate"><span class="pre">&lt;NUM_PROCESSES_PER_NODE&gt;</span></code></em> is the desired processes to use in current node, for node with GPU, usually set to number of GPUs in this node, for node without GPU and use CPU for training, it’s recommended set to 1, <em><code class="docutils literal notranslate"><span class="pre">&lt;NUM_NODES&gt;</span></code></em> is the number of nodes to use, <em><code class="docutils literal notranslate"><span class="pre">&lt;NODE_RANK&gt;</span></code></em> is the rank of the current node, rank starts from 0 to <em><code class="docutils literal notranslate"><span class="pre">&lt;NUM_NODES&gt;</span></code></em><code class="docutils literal notranslate"><span class="pre">-1</span></code>.
+<br>
+Also please aware that using CPU for training in each node with multi nodes settings, argument <code class="docutils literal notranslate"><span class="pre">--no_cuda</span></code> is mandatory. In multi-nodes setting, the following command needs to be launched in each node, and all the commands should be the same except for <em><code class="docutils literal notranslate"><span class="pre">&lt;NODE_RANK&gt;</span></code></em>, which should be integer from 0 to <em><code class="docutils literal notranslate"><span class="pre">&lt;NUM_NODES&gt;</span></code></em><code class="docutils literal notranslate"><span class="pre">-1</span></code> assigned to each node.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>torch.distributed.launch<span class="w"> </span>--master_addr<span class="o">=</span>&lt;MASTER_ADDRESS&gt;<span class="w"> </span>--nproc_per_node<span class="o">=</span>&lt;NUM_PROCESSES_PER_NODE&gt;<span class="w"> </span>--nnodes<span class="o">=</span>&lt;NUM_NODES&gt;<span class="w"> </span>--node_rank<span class="o">=</span>&lt;NODE_RANK&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>run_glue_no_trainer_pruneOFA.py<span class="w"> </span>--task_name<span class="w"> </span>sst2<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--model_name_or_path<span class="w"> </span>Intel/bert-base-uncased-sparse-90-unstructured-pruneofa<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>textattack/bert-base-uncased-SST-2<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--do_prune<span class="w"> </span>--do_distillation<span class="w"> </span>--max_seq_length<span class="w"> </span><span class="m">128</span><span class="w"> </span>--batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--learning_rate<span class="w"> </span>1e-4<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">9</span><span class="w"> </span>--output_dir<span class="w"> </span>/path/to/stage1_output_dir<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--loss_weights<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--temperature<span class="w"> </span><span class="m">2</span><span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f723c77ad20> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

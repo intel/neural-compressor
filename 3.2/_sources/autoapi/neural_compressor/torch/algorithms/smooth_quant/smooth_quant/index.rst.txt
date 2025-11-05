@@ -1,0 +1,63 @@
+neural_compressor.torch.algorithms.smooth_quant.smooth_quant
+============================================================
+
+.. py:module:: neural_compressor.torch.algorithms.smooth_quant.smooth_quant
+
+.. autoapi-nested-parse::
+
+   The quantizer using SmoothQuant path.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.smooth_quant.smooth_quant.SmoothQuantQuantizer
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.smooth_quant.smooth_quant.qdq_quantize
+
+
+Module Contents
+---------------
+
+.. py:class:: SmoothQuantQuantizer(quant_config: collections.OrderedDict = {})
+
+
+
+   SmoothQuantQuantizer Class.
+
+
+.. py:function:: qdq_quantize(model, tune_cfg, run_fn, example_inputs, inplace, cfgs, op_infos_from_cfgs, output_tensor_id_op_name, sq)
+
+   Executes the smooth quantize process.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param tune_cfg: quantization config for ops.
+   :type tune_cfg: OrderedDict
+   :param run_fn: a calibration function for calibrating the model.
+   :type run_fn: Callable
+   :param example_inputs: used to trace torch model.
+   :type example_inputs: tensor/tuple/dict
+   :param inplace: whether to carry out model transformations in-place. Defaults to True.
+   :type inplace: bool
+   :param cfgs: configs loaded from ipex config path.
+   :type cfgs: dict
+   :param op_infos_from_cfgs: dict containing configs that have been parsed for each op.
+   :type op_infos_from_cfgs: dict
+   :param output_tensor_id_op_name: dict containing op names corresponding to 'op_infos_from_cfgs'.
+   :type output_tensor_id_op_name: dict
+   :param sq: TorchSmoothQuant class containing sq infos.
+   :type sq: TorchSmoothQuant
+
+   :returns: A quantized model.
+
+

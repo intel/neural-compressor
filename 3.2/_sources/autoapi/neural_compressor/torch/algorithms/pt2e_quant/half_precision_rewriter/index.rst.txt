@@ -1,0 +1,121 @@
+neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter
+=====================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter
+
+.. autoapi-nested-parse::
+
+   Rewrite the FP32 operators to FP16 or BF16 operators.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.PatternPair
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.pattern_factory
+   neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.get_filter_fn
+   neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.apply_single_pattern_pair
+   neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.get_unquantized_node_set
+   neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.transformation
+   neural_compressor.torch.algorithms.pt2e_quant.half_precision_rewriter.get_half_precision_node_set
+
+
+Module Contents
+---------------
+
+.. py:class:: PatternPair
+
+   Represents a pair of patterns used for search and replacement in a graph.
+
+   .. attribute:: fn
+
+      The function type associated with the pattern pair.
+
+      :type: TorchFuncType
+
+   .. attribute:: search_pattern
+
+      The search pattern to be matched in the graph.
+
+      :type: torch.fx.GraphModule
+
+   .. attribute:: replace_pattern
+
+      The replacement pattern to be used when a match is found.
+
+      :type: torch.fx.GraphModule
+
+
+.. py:function:: pattern_factory(fn: TorchFuncType, fn_arg: Tuple[torch.Tensor, Ellipsis], target_dtype: torch.dtype = torch.float16)
+
+   Create a search, replace pattern and filter functions for a given torch function and its arguments.
+
+
+.. py:function:: get_filter_fn(node_list, fn)
+
+   Filter function to check if a node with the target operator is in the given `node_list`.
+
+   :param node_list: List of nodes to check against.
+   :type node_list: list
+   :param fn: Target operator.
+   :type fn: str
+
+   :returns: True if the node with the target operator is in the `node_list`, False otherwise.
+   :rtype: bool
+
+
+.. py:function:: apply_single_pattern_pair(gm: torch.fx.GraphModule, pattern_pair: PatternPair, node_list)
+
+   Applies a single pattern pair to a given GraphModule.
+
+   :param gm: The GraphModule to apply the pattern pair to.
+   :type gm: torch.fx.GraphModule
+   :param pattern_pair: The pattern pair containing the search and replace patterns.
+   :type pattern_pair: PatternPair
+   :param node_list: The list of nodes to filter for pattern matching.
+
+   :returns: A list of Match objects representing the matches found after applying the pattern pair.
+   :rtype: List[Match]
+
+
+.. py:function:: get_unquantized_node_set(gm: torch.fx.GraphModule)
+
+   Retrieves the set of unquantized nodes from a given GraphModule.
+
+   :param gm: The GraphModule to retrieve unquantized nodes from.
+   :type gm: torch.fx.GraphModule
+
+   :returns: A set containing the unquantized nodes.
+   :rtype: set
+
+
+.. py:function:: transformation(gm: torch.fx.GraphModule, node_candidate_list: List[str], target_dtype: torch.dtype = torch.float16)
+
+   Convert the nodes in `node_candidate_list` to `target_dtype` if possible.
+
+
+.. py:function:: get_half_precision_node_set(gm, config)
+
+   Retrieves a set of nodes from the given graph model (gm) that are candidates for conversion to half precision.
+
+   The result is the intersection between `unquantized_node_set` and `node_set_from_user_config`.
+
+   :param gm: The graph model to search for nodes.
+   :type gm: GraphModel
+   :param config: User configuration for node candidate set.
+   :type config: dict
+
+   :returns: A set of nodes that are candidates for conversion to half precision.
+   :rtype: set
+
+

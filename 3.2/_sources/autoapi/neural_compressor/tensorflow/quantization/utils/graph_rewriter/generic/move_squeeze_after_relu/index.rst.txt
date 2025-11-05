@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.move_squeeze_after_relu
+==============================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.move_squeeze_after_relu
+
+.. autoapi-nested-parse::
+
+   Move Squeeze after Relu Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.move_squeeze_after_relu.MoveSqueezeAfterReluOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: MoveSqueezeAfterReluOptimizer(model)
+
+
+
+   Move Squeeze op after Relu op for match fusion pattern.
+
+

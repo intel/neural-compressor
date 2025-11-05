@@ -1,0 +1,201 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">3.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document presents step-by-step instructions for pruning Huggingface models using the Intel® Neural Compressor.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<p>PyTorch 1.8 or higher version is needed with pytorch_fx backend.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="prepare-dataset">
+<h2>2. Prepare Dataset<a class="headerlink" href="#prepare-dataset" title="Link to this heading"></a></h2>
+<p>The dataset will be downloaded automatically from the datasets Hub.
+See more about loading <a class="reference external" href="https://huggingface.co/docs/datasets/loading_datasets.html">huggingface dataset</a></p>
+</section>
+</section>
+<section id="run-examples">
+<h1>Run Examples<a class="headerlink" href="#run-examples" title="Link to this heading"></a></h1>
+<p>Several pruning examples are provided, which are trained on different datasets/tasks, use different sparsity patterns, etc. We are working on sharing our sparse models on HuggingFace.</p>
+<p>There are pruning scripts for MPRC and SST2 sparse models (Bert-mini, Distilbert-base-uncased, etc). The sparse model with different patterns (”4x1”, “2:4”, “1xchannel”, etc) can be obtained by modifying “target_sparsity” and “pruning_pattern” parameters. <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/">Pruning Scripts</a>.</p>
+<p>Dense model can also be fine-tuned on glue datasets (by setting –do_prune to False) <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/scripts/bertmini_mrpc_dense_finetune.sh">Bert-mini MRPC</a></p>
+<p>To try to train a sparse model in mixed pattern <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/text-classification/pruning/eager/run_glue_no_trainer_mixed.py">Mixed-patterns Example</a>, local pruning config can be set as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">pruning_configs</span><span class="o">=</span><span class="p">[</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;.*output&quot;</span><span class="p">,</span> <span class="s2">&quot;.*intermediate&quot;</span><span class="p">],</span> <span class="c1"># list of regular expressions, containing the layer names you wish to be included in this pruner.</span>
+            <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;1x1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pruning_scope&quot;</span><span class="p">:</span> <span class="s2">&quot;local&quot;</span><span class="p">,</span> <span class="c1"># the score map is computed corresponding layer&#39;s weight.</span>
+            <span class="s2">&quot;pruning_type&quot;</span><span class="p">:</span> <span class="s2">&quot;snip_momentum&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sparsity_decay_type&quot;</span><span class="p">:</span> <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pruning_op_types&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Linear&quot;</span><span class="p">]</span>
+        <span class="p">},</span>
+        <span class="p">{</span>
+            <span class="s2">&quot;op_names&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;.*query&quot;</span><span class="p">,</span> <span class="s2">&quot;.*key&quot;</span><span class="p">,</span> <span class="s2">&quot;.*value&quot;</span><span class="p">],</span>
+            <span class="s2">&quot;pattern&quot;</span><span class="p">:</span> <span class="s2">&quot;4x1&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;pruning_scope&quot;</span><span class="p">:</span> <span class="s2">&quot;global&quot;</span><span class="p">,</span> <span class="c1"># the score map is computed out of entire parameters.</span>
+            <span class="s2">&quot;pruning_type&quot;</span><span class="p">:</span> <span class="s2">&quot;snip_momentum&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;sparsity_decay_type&quot;</span><span class="p">:</span> <span class="s2">&quot;exp&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;max_sparsity_ratio_per_op&quot;</span><span class="p">:</span> <span class="mf">0.98</span><span class="p">,</span> <span class="c1"># Maximum sparsity that can be achieved per layer(iterative pruning).</span>
+            <span class="s2">&quot;min_sparsity_ratio_per_op&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span> <span class="c1"># Minimum sparsity that must be achieved per layer(iterative pruning).</span>
+            <span class="s2">&quot;pruning_op_types&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Linear&quot;</span><span class="p">]</span>
+        <span class="p">}</span>
+<span class="p">]</span>
+</pre></div>
+</div>
+<p>Please be aware that when the keywords appear in both global and local settings, the <strong>local</strong> settings are given priority.</p>
+<section id="results">
+<h2>Results<a class="headerlink" href="#results" title="Link to this heading"></a></h2>
+<p>The snip-momentum pruning method is used by default, and the initial dense model is fine-tuned.</p>
+<section id="mrpc">
+<h3>MRPC<a class="headerlink" href="#mrpc" title="Link to this heading"></a></h3>
+<p>|  Model  | Dataset  | Sparsity pattern |Element-wise/matmul, Gemm, conv ratio | Dense Accuracy (mean/max) | Sparse Accuracy (mean/max) | Relative drop |
+|  :—-:  | :—-:  | :—-: | :—-: |:—-:|:—-:| :—-: |
+| Bert-Mini | MRPC |  4x1  | 0.8804 | 0.8619/0.8752 | 0.8610/0.8722 | -0.34% |
+| Bert-Mini | MRPC |  2:4  | 0.4795 | 0.8619/0.8752| 0.8666/0.8689 | -0.72% |
+| Bert-Mini | MRPC |  per channel  | 0.66 | 0.8619/0.8752| 0.8629/0.8680 | -0.83% |
+| Distilbert-base-uncased | MRPC |  4x1  | 0.8992 | 0.9026 |0.8985 | -0.46% |
+| Distilbert-base-uncased | MRPC |  2:4  | 0.5000 | 0.9026 | 0.9088 | +0.69% |</p>
+</section>
+<section id="sst-2">
+<h3>SST-2<a class="headerlink" href="#sst-2" title="Link to this heading"></a></h3>
+<p>|  Model  | Dataset  |  Sparsity pattern |Element-wise/matmul, Gemm, conv ratio | Dense Accuracy (mean/max) | Sparse Accuracy (mean/max)| Relative drop|
+|  :—-:  | :—-:  | :—-: | :—-: |:—-:|:—-:| :—-: |
+| Bert-Mini | SST-2 |  4x1  | 0.8815 | 0.8660/0.8761 | 0.8651/0.8692 | -0.79% |
+| Bert-Mini | SST-2 |  2:4  | 0.4795 | 0.8660/0.8761 | 0.8731/0.8773 | +0.14% |
+| Bert-Mini | SST-2 |  per channel  | 0.53 | 0.8660/0.8761 | 0.8651/0.8692 | -0.79% |</p>
+</section>
+</section>
+</section>
+<section id="references">
+<h1>References<a class="headerlink" href="#references" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference external" href="https://arxiv.org/abs/1810.02340">SNIP: Single-shot Network Pruning based on Connection Sensitivity</a></p></li>
+<li><p><a class="reference external" href="https://arxiv.org/abs/2203.14001">Knowledge Distillation with the Reused Teacher Classifier</a></p></li>
+</ul>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f723d093230> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

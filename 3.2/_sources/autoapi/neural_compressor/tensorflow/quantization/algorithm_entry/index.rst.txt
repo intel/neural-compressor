@@ -1,0 +1,53 @@
+neural_compressor.tensorflow.quantization.algorithm_entry
+=========================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.algorithm_entry
+
+.. autoapi-nested-parse::
+
+   The entry interface for algorithms.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.algorithm_entry.static_quant_entry
+   neural_compressor.tensorflow.quantization.algorithm_entry.smooth_quant_entry
+
+
+Module Contents
+---------------
+
+.. py:function:: static_quant_entry(model: neural_compressor.tensorflow.utils.BaseModel, quant_config: neural_compressor.common.base_config.BaseConfig, calib_dataloader: Callable = None, calib_iteration: int = 100, calib_func: Callable = None)
+
+   The main entry to apply static quantization.
+
+   :param model: a fp32 model to be quantized.
+   :param quant_config: a quantization configuration.
+   :param calib_dataloader: a data loader for calibration.
+   :param calib_iteration: the iteration of calibration.
+   :param calib_func: the function used for calibration, should be a substitution for calib_dataloader
+   :param when the built-in calibration function of INC does not work for model inference.:
+
+   :returns: the quantized model.
+   :rtype: q_model
+
+
+.. py:function:: smooth_quant_entry(model: neural_compressor.tensorflow.utils.BaseModel, smooth_quant_config: neural_compressor.tensorflow.quantization.config.SmoothQuantConfig, calib_dataloader: Callable = None, calib_iteration: int = 100, calib_func: Callable = None)
+
+   The main entry to apply smooth quantization.
+
+   :param model: a fp32 model to be quantized.
+   :param quant_config: a quantization configuration.
+   :param calib_dataloader: a data loader for calibration.
+   :param calib_iteration: the iteration of calibration.
+   :param calib_func: the function used for calibration, should be a substitution for calib_dataloader
+   :param when the built-in calibration function of INC does not work for model inference.:
+
+   :returns: the quantized model.
+   :rtype: q_model
+
+

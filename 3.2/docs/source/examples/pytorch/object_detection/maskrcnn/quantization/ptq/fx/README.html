@@ -1,0 +1,242 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">3.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/pytorch/object_detection/maskrcnn/quantization/ptq/fx/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document describes the step-by-step instructions for reproducing PyTorch MASK_RCNN tuning results with Intel® Neural Compressor.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="installation">
+<h2>1. Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<section id="environment">
+<h3>Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h3>
+<p>PyTorch &gt;=1.8 version is required with pytorch_fx backend.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/pytorch/object_detection/maskrcnn/quantization/ptq/fx
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="maskrcnn-benchmark-and-dependencies-installation">
+<h3>Maskrcnn_benchmark and Dependencies Installation<a class="headerlink" href="#maskrcnn-benchmark-and-dependencies-installation" title="Link to this heading"></a></h3>
+<p>Make sure that your conda is setup properly with the right environment. Check that <code class="docutils literal notranslate"><span class="pre">which</span> <span class="pre">conda</span></code>, <code class="docutils literal notranslate"><span class="pre">which</span> <span class="pre">pip</span></code> and <code class="docutils literal notranslate"><span class="pre">which</span> <span class="pre">python</span></code> points to the right path from a clean conda env.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># this installs the right pip and dependencies for the fresh python</span>
+conda<span class="w"> </span>install<span class="w"> </span>ipython<span class="w"> </span>pip
+<span class="c1"># maskrcnn_benchmark and coco api dependencies</span>
+pip<span class="w"> </span>install<span class="w"> </span>ninja<span class="w"> </span>yacs<span class="w"> </span>cython<span class="w"> </span>matplotlib<span class="w"> </span>tqdm<span class="w"> </span>opencv-python
+
+<span class="nb">cd</span><span class="w"> </span>examples/pytorch/object_detection/maskrcnn/quantization/ptq/fx/pytorch
+<span class="nb">export</span><span class="w"> </span><span class="nv">INSTALL_DIR</span><span class="o">=</span><span class="nv">$PWD</span>
+
+<span class="c1"># install pycocotools</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$INSTALL_DIR</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/cocodataset/cocoapi.git
+<span class="nb">cd</span><span class="w"> </span>cocoapi/PythonAPI
+git<span class="w"> </span>checkout<span class="w"> </span>8c9bcc3cf640524c4c20a9c40e89cb6a2f2fa0e9
+python<span class="w"> </span>setup.py<span class="w"> </span>build_ext<span class="w"> </span>install
+
+<span class="c1"># install cityscapesScripts</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$INSTALL_DIR</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/mcordts/cityscapesScripts.git
+<span class="nb">cd</span><span class="w"> </span>cityscapesScripts/
+git<span class="w"> </span>checkout<span class="w"> </span>a7ac7b4062d1a80ed5e22d2ea2179c886801c77d
+python<span class="w"> </span>setup.py<span class="w"> </span>build_ext<span class="w"> </span>install
+
+<span class="c1"># install PyTorch Detection</span>
+<span class="c1"># some modifications have been made according to this example</span>
+<span class="c1"># please apply the patch provided before installing</span>
+<span class="nb">cd</span><span class="w"> </span><span class="nv">$INSTALL_DIR</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/facebookresearch/maskrcnn-benchmark.git
+<span class="nb">cd</span><span class="w"> </span>maskrcnn-benchmark
+git<span class="w"> </span>checkout<span class="w"> </span>57eec25b75144d9fb1a6857f32553e1574177daf
+git<span class="w"> </span>apply<span class="w"> </span>../maskrnn.patch
+python<span class="w"> </span>setup.py<span class="w"> </span>build<span class="w"> </span>develop
+
+<span class="nb">cd</span><span class="w"> </span>../..
+<span class="nb">unset</span><span class="w"> </span>INSTALL_DIR
+</pre></div>
+</div>
+</section>
+</section>
+<section id="prepare-dataset">
+<h2>2. Prepare Dataset<a class="headerlink" href="#prepare-dataset" title="Link to this heading"></a></h2>
+<p>You can download COCO2017 dataset use script file:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="n">download_dataset</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>Or you can download COCO2017 dataset to your local path, then link it to pytorch/datasets/coco:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ln<span class="w"> </span>-s<span class="w"> </span>/path/of/COCO2017/annotations<span class="w"> </span>pytorch/datasets/coco/annotations
+ln<span class="w"> </span>-s<span class="w"> </span>/path/of/COCO2017/train2017<span class="w"> </span>pytorch/datasets/coco/train2017
+ln<span class="w"> </span>-s<span class="w"> </span>/path/of/COCO2017/val2017<span class="w"> </span>pytorch/datasets/coco/val2017
+</pre></div>
+</div>
+</section>
+<section id="prepare-weights">
+<h2>3. Prepare weights<a class="headerlink" href="#prepare-weights" title="Link to this heading"></a></h2>
+<p>You can download weights with script file:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>download_weights.sh
+</pre></div>
+</div>
+<p>Or you else can link your weights to pytorch folder:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>ln<span class="w"> </span>-s<span class="w"> </span>/path/of/weights<span class="w"> </span>pytorch/e2e_mask_rcnn_R_50_FPN_1x.pth
+</pre></div>
+</div>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--output_model<span class="o">=</span>/path/to/tuned_checkpoint
+</pre></div>
+</div>
+</section>
+<section id="saving-and-loading-model">
+<h1>Saving and loading model:<a class="headerlink" href="#saving-and-loading-model" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p>Saving model:
+After tuning with Neural Compressor, we can get neural_compressor.model:</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">quantization</span>
+<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">model</span><span class="p">,</span>
+                            <span class="n">conf</span><span class="p">,</span>
+                            <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">cal_dataloader</span><span class="p">,</span>
+                            <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here, q_model is Neural Compressor model class, so it has “save” API:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;Path_to_save_configure_file&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>loading model:</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.utils.pytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">load</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.utils.pytorch</span><span class="w"> </span><span class="kn">import</span> <span class="n">load</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">abspath</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">path</span><span class="o">.</span><span class="n">expanduser</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">tuned_checkpoint</span><span class="p">)),</span>
+            <span class="n">fp32_model</span><span class="p">,</span>
+            <span class="n">dataloader</span><span class="o">=</span><span class="n">your_dataloader</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Please refer to <a class="reference external" href="./pytorch/tools/test_net.py">Sample code</a></p>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f723c77b6e0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,326 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../versions.html">3.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../_sources/docs/source/examples/tensorflow/nlp/transformer_lt_mlperf/quantization/ptq/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document is used to list steps of reproducing TensorFlow Intel® Neural Compressor tuning zoo result of Transformer_LT_mlperf. Part of the inference code is based on the transformer mlperf evaluation code. Detailed information on mlperf benchmark can be found in <a class="reference external" href="https://github.com/mlperf/training/tree/master/translation/tensorflow/transformer">mlcommons/training</a>.
+This example can run on Intel CPUs and GPUs.</p>
+<section id="prerequisite">
+<h2>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h2>
+<section id="installation">
+<h3>1. Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Intel® Neural Compressor</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
+</pre></div>
+</div>
+</section>
+<section id="install-tensorflow">
+<h3>2. Install TensorFlow<a class="headerlink" href="#install-tensorflow" title="Link to this heading"></a></h3>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>tensorflow
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: Validated TensorFlow <a class="reference external" href="/docs/source/installation_guide.html#validated-software-environment">Version</a>.</p>
+</div></blockquote>
+</section>
+<section id="install-intel-extension-for-tensorflow">
+<h3>3. Install Intel Extension for Tensorflow<a class="headerlink" href="#install-intel-extension-for-tensorflow" title="Link to this heading"></a></h3>
+<section id="quantizing-the-model-on-intel-gpu-mandatory-to-install-itex">
+<h4>Quantizing the model on Intel GPU(Mandatory to install ITEX)<a class="headerlink" href="#quantizing-the-model-on-intel-gpu-mandatory-to-install-itex" title="Link to this heading"></a></h4>
+<p>Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>intel-extension-for-tensorflow<span class="o">[</span>xpu<span class="o">]</span>
+</pre></div>
+</div>
+<p>Please refer to the <a class="reference external" href="https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html">Installation Guides</a> for latest Intel GPU driver installation.
+For any more details, please follow the procedure in <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.html#install-gpu-drivers">install-gpu-drivers</a>.</p>
+</section>
+<section id="quantizing-the-model-on-intel-cpu-optional-to-install-itex">
+<h4>Quantizing the model on Intel CPU(Optional to install ITEX)<a class="headerlink" href="#quantizing-the-model-on-intel-cpu-optional-to-install-itex" title="Link to this heading"></a></h4>
+<p>Intel Extension for Tensorflow for Intel CPUs is experimental currently. It’s not mandatory for quantizing the model on Intel CPUs.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>intel-extension-for-tensorflow<span class="o">[</span>cpu<span class="o">]</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>:
+The version compatibility of stock Tensorflow and ITEX can be checked <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow#compatibility-table">here</a>. Please make sure you have installed compatible Tensorflow and ITEX.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="prepare-dataset-frozen-model">
+<h3>4. Prepare Dataset &amp; Frozen Model<a class="headerlink" href="#prepare-dataset-frozen-model" title="Link to this heading"></a></h3>
+<p>Follow the <a class="reference external" href="https://github.com/IntelAI/models/blob/master/benchmarks/language_translation/tensorflow/transformer_mlperf/inference/fp32/README.html">instructions</a> on <a class="reference external" href="https://github.com/IntelAI/models">Model Zoo for Intel® Architecture</a> to download and preprocess the WMT English-German dataset and generate a FP32 frozen model. Please make sure there are the following files in the dataset directory and the input model directory.</p>
+<ul class="simple">
+<li><p>DATASET_DIR: newstest2014.de, newstest2014.en, vocab.ende.32768</p></li>
+<li><p>INPUT_MODEL_DIR: the FP32 frozen model .pb file</p></li>
+</ul>
+</section>
+</section>
+<section id="run-command">
+<h2>Run Command<a class="headerlink" href="#run-command" title="Link to this heading"></a></h2>
+<section id="run-tuning">
+<h3>Run Tuning:<a class="headerlink" href="#run-tuning" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>bash run_quant.sh \
+    --input_model=$INPUT_MODEL \
+    --dataset_location=$DATASET_DIR \
+    --output_model=$OUTPUT_MODEL \
+    --file_out=$OUTPUT_TRANSLATION_FILE \
+    --batch_size=$BATCH_SIZE \
+    --warmup_steps=$WARMUPS \
+    --bleu_variant=$VARIANT \
+    --num_inter=$INTER_THREADS \
+    --num_intra=$INTRA_THREADS
+</pre></div>
+</div>
+</section>
+<section id="run-benchmark">
+<h3>Run Benchmark:<a class="headerlink" href="#run-benchmark" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># performance mode: get performance
+bash run_benchmark.sh \
+    --input_model=$INPUT_MODEL \
+    --dataset_location=$DATASET_DIR \
+    --file_out=$OUTPUT_TRANSLATION_FILE \
+    --mode=performance \
+    --batch_size=$BATCH_SIZE \
+    --iters=$ITERATIONS \
+    --warmup_steps=$WARMUPS \
+    --bleu_variant=$VARIANT \
+    --num_inter=$INTER_THREADS \
+    --num_intra=$INTRA_THREADS
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span># accuracy mode: get accuracy
+bash run_benchmark.sh \
+    --input_model=$INPUT_MODEL \
+    --dataset_location=$DATASET_DIR \
+    --file_out=$OUTPUT_TRANSLATION_FILE \
+    --mode=accuracy \
+    --batch_size=$BATCH_SIZE \
+    --warmup_steps=$WARMUPS \
+    --bleu_variant=$VARIANT \
+    --num_inter=$INTER_THREADS \
+    --num_intra=$INTRA_THREADS
+</pre></div>
+</div>
+<p>Where (Default values are shown in the square brackets):</p>
+<ul class="simple">
+<li><p>$INPUT_MODEL [”./transformer_mlperf_fp32.pb”]– The path to input FP32 frozen model .pb file to load</p></li>
+<li><p>$DATASET_DIR [”./transformer_uniform_data”]– The path to input dataset directory, which should include newstest2014.en, newstest2014.de and vocab.ende.32768</p></li>
+<li><p>$OUTPUT_MODEL [”./output_transformer_mlperf_int8.pb”]– The user-specified export path to the output INT8 quantized model</p></li>
+<li><p>$OUTPUT_TRANSLATION_FILE [”./output_translation_result.txt”] – The file path to save model translation result, only the most recent translation result will be saved</p></li>
+<li><p>$BATCH_SIZE [64]– The batch size for model inference</p></li>
+<li><p>$ITERATIONS [-1]– The user-defined total inference iterations in benchmark mode. If it is -1, it means to run the entire dataset</p></li>
+<li><p>$WARMUPS [10]– The number of warmup steps before benchmarking the model</p></li>
+<li><p>$VARIANT [”uncased”]– The case sensitive type to compute BLEU score, which is one of two options: ‘uncased’/’cased’</p></li>
+<li><p>$INTER_THREADS [2]– The number of inter op parallelism thread to use, which can be set to the number of sockets</p></li>
+<li><p>$INTRA_THREADS [28]– The number of intra op parallelism thread to use, which can be set to the number of physical core per socket</p></li>
+</ul>
+</section>
+</section>
+</section>
+<section id="details-of-enabling-intel-neural-compressor-on-transformer-lt-mlperf-for-tensorflow">
+<h1>Details of enabling Intel® Neural Compressor on Transformer_LT_mlperf for Tensorflow.<a class="headerlink" href="#details-of-enabling-intel-neural-compressor-on-transformer-lt-mlperf-for-tensorflow" title="Link to this heading"></a></h1>
+<p>This is a tutorial of how to enable Transformer_LT_mlperf model with Intel® Neural Compressor.</p>
+<section id="user-code-analysis">
+<h2>User Code Analysis<a class="headerlink" href="#user-code-analysis" title="Link to this heading"></a></h2>
+<ol class="simple">
+<li><p>User specifies fp32 <em>model</em>, calibration dataset <em>q_dataloader</em>, evaluation dataset <em>eval_dataloader</em> and metric.</p></li>
+<li><p>User specifies fp32 <em>model</em>, calibration dataset <em>q_dataloader</em> and a custom <em>eval_func</em> which encapsulates the evaluation dataset and metric by itself.</p></li>
+</ol>
+<p>For Transformer_LT_mlperf, we applied the latter one because we don’t have dataset and metric for Transformer_LT_mlperf. The task is to implement the <em>q_dataloader</em> and <em>eval_func</em>.</p>
+<section id="q-dataloader-part-adaption">
+<h3>q_dataloader Part Adaption<a class="headerlink" href="#q-dataloader-part-adaption" title="Link to this heading"></a></h3>
+<p>Below dataset class uses getitem to provide the model with input.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">Dataset</span><span class="p">(</span><span class="nb">object</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">):</span>
+        <span class="c1"># initialize dataset related info here</span>
+        <span class="o">...</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__getitem__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">index</span><span class="p">):</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">[</span><span class="n">index</span><span class="p">],</span> <span class="mi">0</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="fm">__len__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
+        <span class="k">return</span> <span class="nb">len</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">lines</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="evaluation-part-adaption">
+<h3>Evaluation Part Adaption<a class="headerlink" href="#evaluation-part-adaption" title="Link to this heading"></a></h3>
+<p>We evaluate the model with BLEU score, its source: https://github.com/IntelAI/models/blob/master/models/language_translation/tensorflow/transformer_mlperf/inference/fp32/transformer/compute_bleu.py</p>
+</section>
+<section id="quantization-config">
+<h3>Quantization Config<a class="headerlink" href="#quantization-config" title="Link to this heading"></a></h3>
+<p>The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the ‘backend’ parameter should be set to ‘itex’ and the ‘device’ parameter should be set to ‘gpu’.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">device</span><span class="o">=</span><span class="s2">&quot;gpu&quot;</span><span class="p">,</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;itex&quot;</span><span class="p">,</span>
+    <span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;input_tokens&#39;</span><span class="p">],</span>
+    <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;model/Transformer/strided_slice_15&#39;</span><span class="p">],</span>
+    <span class="o">...</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>Here we set the input tensor and output tensors name into <em>inputs</em> and <em>outputs</em> args.
+In this case we calibrate and quantize the model, and use our calibration dataloader initialized from a ‘Dataset’ object.</p>
+</section>
+<section id="code-update">
+<h3>Code update<a class="headerlink" href="#code-update" title="Link to this heading"></a></h3>
+<p>After prepare step is done, we add tune code to generate quantized model.</p>
+<section id="tune">
+<h4>Tune<a class="headerlink" href="#tune" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="n">graph</span> <span class="o">=</span> <span class="n">load_graph</span><span class="p">(</span><span class="n">FLAGS</span><span class="o">.</span><span class="n">input_graph</span><span class="p">)</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">quantization</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.data</span><span class="w"> </span><span class="kn">import</span> <span class="n">DataLoader</span>
+    <span class="n">dataset</span> <span class="o">=</span> <span class="n">Dataset</span><span class="p">(</span><span class="n">FLAGS</span><span class="o">.</span><span class="n">input_file</span><span class="p">,</span> <span class="n">FLAGS</span><span class="o">.</span><span class="n">vocab_file</span><span class="p">)</span>
+    <span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">DataLoader</span><span class="p">(</span><span class="n">dataset</span> <span class="o">=</span> <span class="n">dataset</span><span class="p">,</span>
+                                  <span class="n">framework</span> <span class="o">=</span><span class="s1">&#39;tensorflow&#39;</span><span class="p">,</span>
+                                  <span class="n">collate_fn</span> <span class="o">=</span> <span class="n">collate_fn</span><span class="p">,</span>
+                                  <span class="n">batch_size</span> <span class="o">=</span> <span class="n">FLAGS</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>
+
+    <span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">inputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;input_tokens&#39;</span><span class="p">],</span>
+                                   <span class="n">outputs</span><span class="o">=</span><span class="p">[</span><span class="s1">&#39;model/Transformer/strided_slice_15&#39;</span><span class="p">],</span>
+                                   <span class="n">calibration_sampling_size</span><span class="o">=</span><span class="p">[</span><span class="mi">500</span><span class="p">])</span>
+    <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">calib_dataloader</span><span class="p">,</span>
+                <span class="n">eval_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
+    <span class="k">try</span><span class="p">:</span>
+        <span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">FLAGS</span><span class="o">.</span><span class="n">output_model</span><span class="p">)</span>
+    <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
+        <span class="n">tf</span><span class="o">.</span><span class="n">compat</span><span class="o">.</span><span class="n">v1</span><span class="o">.</span><span class="n">logging</span><span class="o">.</span><span class="n">error</span><span class="p">(</span><span class="s2">&quot;Failed to save model due to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)))</span>
+</pre></div>
+</div>
+</section>
+<section id="benchmark">
+<h4>Benchmark<a class="headerlink" href="#benchmark" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.benchmark</span><span class="w"> </span><span class="kn">import</span> <span class="n">fit</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">BenchmarkConfig</span>
+    <span class="k">if</span> <span class="n">FLAGS</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;performance&#39;</span><span class="p">:</span>
+        <span class="n">fit</span><span class="p">(</span><span class="n">graph</span><span class="p">,</span> <span class="n">conf</span><span class="o">=</span><span class="n">BenchmarkConfig</span><span class="p">(),</span> <span class="n">b_func</span><span class="o">=</span><span class="n">eval_func</span><span class="p">)</span>
+    <span class="k">elif</span> <span class="n">FLAGS</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;accuracy&#39;</span><span class="p">:</span>
+        <span class="n">eval_func</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The Intel® Neural Compressor quantization.fit() function will return a best quantized model under time constraint.</p>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f7244db7b30> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

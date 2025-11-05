@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fetch_weight_from_reshape
+================================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fetch_weight_from_reshape
+
+.. autoapi-nested-parse::
+
+   Fetch Weight from Reshape Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fetch_weight_from_reshape.FetchWeightFromReshapeOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: FetchWeightFromReshapeOptimizer(model)
+
+
+
+   Handle the Pack + Reshape + Conv2D fusion pattern.
+
+

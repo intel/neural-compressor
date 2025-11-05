@@ -1,0 +1,289 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Weight-only quantization &mdash; Intel® Neural Compressor 3.2 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../versions.html">3.2▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../releases_info.html">Release</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Weight-only quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../_sources/docs/source/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="weight-only-quantization">
+<h1>Weight-only quantization<a class="headerlink" href="#weight-only-quantization" title="Link to this heading"></a></h1>
+<section id="prerequisite">
+<h2>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Installation</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+</section>
+<section id="support-status-on-hpu">
+<h2>Support status on HPU<a class="headerlink" href="#support-status-on-hpu" title="Link to this heading"></a></h2>
+<p>Below is the current support status on Intel Gaudi AI Accelerator with PyTorch.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>woq_algo</th>
+<th>Status</th>
+<th>Validated Models</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>GPTQ</td>
+<td>&#10004;</td>
+<td><code>meta-llama/Llama-2-7b-hf</code><br/> <code>EleutherAI/gpt-j-6B</code><br/> <code>facebook/opt-125m</code></td>
+</tr>
+<tr>
+<td>AutoRound</td>
+<td>&#10004;</td>
+<td><code>meta-llama/Llama-2-7b-chat-hf</code></td>
+</tr>
+</tbody>
+</table><blockquote>
+<div><p>Notes:</p>
+<ol class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--gptq_actorder</span></code> is not supported by HPU.</p></li>
+<li><p>Only support inference using uint4.</p></li>
+<li><p>Double quantization is not supported on HPU.</p></li>
+</ol>
+</div></blockquote>
+</section>
+<section id="support-status-on-cpu">
+<h2>Support status on CPU<a class="headerlink" href="#support-status-on-cpu" title="Link to this heading"></a></h2>
+<p>Below is the current support status on Intel® Xeon® Scalable Processor with PyTorch.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>woq_algo</th>
+<th>status</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>RTN</td>
+<td>&#10004;</td>
+</tr>
+<tr>
+<td>GPTQ</td>
+<td>&#10004;</td>
+</tr>
+<tr>
+<td>AutoRound</td>
+<td>&#10004;</td>
+</tr>
+<tr>
+<td>AWQ</td>
+<td>&#10004;</td>
+</tr>
+<tr>
+<td>TEQ</td>
+<td>&#10004;</td>
+</tr>
+</tbody>
+</table><blockquote>
+<div><p>We validated the typical LLMs such as: <code class="docutils literal notranslate"><span class="pre">meta-llama/Llama-2-7b-hf</span></code>, <code class="docutils literal notranslate"><span class="pre">EleutherAI/gpt-j-6B</span></code>, <code class="docutils literal notranslate"><span class="pre">facebook/opt-125m</span></code>.</p>
+</div></blockquote>
+</section>
+<section id="run">
+<h2>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">run_clm_no_trainer.py</span></code> quantizes the large language models using the dataset <a class="reference external" href="https://huggingface.co/datasets/NeelNanda/pile-10k">NeelNanda/pile-10k</a> calibration and validates datasets accuracy provided by lm_eval, an example command is as follows.</p>
+<section id="quantization-cpu-hpu">
+<h3>Quantization (CPU &amp; HPU)<a class="headerlink" href="#quantization-cpu-hpu" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset<span class="w"> </span>NeelNanda/pile-10k<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gptq_max_seq_length<span class="w"> </span><span class="m">2048</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--gptq_use_max_length<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>saved_results
+</pre></div>
+</div>
+<section id="quantize-model-with-autoround-on-hpu">
+<h4>Quantize model with AutoRound on HPU<a class="headerlink" href="#quantize-model-with-autoround-on-hpu" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements-autoround-hpu.txt
+
+<span class="nv">PT_ENABLE_INT64_SUPPORT</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="nv">PT_HPU_LAZY_MODE</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-chat-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset<span class="w"> </span>NeelNanda/pile-10k<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_seq_len<span class="w"> </span><span class="m">2048</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>saved_results
+</pre></div>
+</div>
+<blockquote>
+<div><p>[!TIP]
+We use <code class="docutils literal notranslate"><span class="pre">torch.compile</span></code>  to accelerate the quantization process of AutoRound on HPU.
+Please set the following environment variables before running the command:
+<code class="docutils literal notranslate"><span class="pre">PT_ENABLE_INT64_SUPPORT=1</span></code> and <code class="docutils literal notranslate"><span class="pre">PT_HPU_LAZY_MODE=0</span></code>.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="evaluation-cpu">
+<h3>Evaluation (CPU)<a class="headerlink" href="#evaluation-cpu" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># original model</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span><span class="s2">&quot;lambada_openai&quot;</span>
+
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span><span class="s2">&quot;lambada_openai&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--load<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>saved_results
+</pre></div>
+</div>
+</section>
+<section id="evaluation-hpu">
+<h3>Evaluation (HPU)<a class="headerlink" href="#evaluation-hpu" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>Note: The SRAM_SLICER_SHARED_MME_INPUT_EXPANSION_ENABLED=false is an experimental flag which yields better performance for uint4, and it will be removed in a future release.</p>
+</div></blockquote>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># original model</span>
+python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span><span class="s2">&quot;lambada_openai&quot;</span>
+
+<span class="c1"># quantized model</span>
+<span class="nv">SRAM_SLICER_SHARED_MME_INPUT_EXPANSION_ENABLED</span><span class="o">=</span><span class="nb">false</span><span class="w"> </span><span class="nv">ENABLE_EXPERIMENTAL_FLAGS</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">8</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span><span class="s2">&quot;lambada_openai&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--load<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>saved_results
+</pre></div>
+</div>
+<p>For more information about parameter usage, please refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/docs/source/3x/PT_WeightOnlyQuant.html">PT_WeightOnlyQuant.html</a></p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f72425df1d0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,37 @@
+neural_compressor.torch.algorithms.base_algorithm
+=================================================
+
+.. py:module:: neural_compressor.torch.algorithms.base_algorithm
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor PyTorch Quantizer API.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.base_algorithm.Quantizer
+
+
+Module Contents
+---------------
+
+.. py:class:: Quantizer(quant_config: Optional[Any] = None)
+
+
+
+   The base quantizer for all algorithm quantizers.
+
+   The `Quantizer` unifies the interfaces across various quantization algorithms, including GPTQ, RTN, etc.
+   Given a float model, `Quantizer` apply the quantization algorithm to the model according to the `quant_config`.
+
+   To implement a new quantization algorithm,, inherit from `Quantizer` and implement the following methods:
+       - `prepare`: prepare a given model for convert.
+       - `convert`: convert a prepared model to a quantized model.
+   Note: `quantize` and `execute` are optional for new quantization algorithms.
+
+

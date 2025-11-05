@@ -1,0 +1,90 @@
+neural_compressor.torch.algorithms.weight_only.autoround
+========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.autoround
+
+.. autoapi-nested-parse::
+
+   AutoRound quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.autoround.AutoRoundQuantizer
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.autoround.get_dataloader
+   neural_compressor.torch.algorithms.weight_only.autoround.get_mllm_dataloader
+
+
+Module Contents
+---------------
+
+.. py:class:: AutoRoundQuantizer(quant_config: dict = {}, enable_full_range: bool = False, batch_size: int = 8, amp: bool = True, device: str = None, lr_scheduler=None, dataset: Union[str, list, tuple, torch.utils.data.DataLoader] = 'NeelNanda/pile-10k', enable_quanted_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = False, iters: int = 200, seqlen: int = 2048, nsamples: int = 128, sampler: str = 'rand', seed: int = 42, nblocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, data_type: str = 'int', scale_dtype: str = 'fp16', to_quant_block_names: list = None, act_bits: int = 32, act_group_size: int = None, act_sym: bool = None, act_dynamic: bool = True, low_cpu_mem_usage: bool = False, export_format: str = 'itrex', enable_norm_bias_tuning: bool = False, enable_torch_compile: bool = None, is_mllm: bool = False, quant_nontext_module: Union[str, list] = None, extra_data_dir: str = None, image_processor=None, processor=None, template: Union[str, auto_round.mllm.template.Template] = None, truncation: bool = False, **kwargs)
+
+
+
+   AutoRound Quantizer.
+
+
+.. py:function:: get_dataloader(tokenizer, seqlen, dataset_name='NeelNanda/pile-10k', seed=42, bs=8, nsamples=128)
+
+   Generate a DataLoader for calibration using specified parameters.
+
+   :param tokenizer: The tokenizer to use for tokenization.
+   :type tokenizer: Tokenizer
+   :param seqlen: The exact sequence length. samples < seqlen will be dropped,
+                  samples longer than seqlen will be truncated
+   :type seqlen: int
+   :param dataset_name: The name of the dataset or datasets separated by commas.
+                        Defaults to "NeelNanda/pile-10k".
+   :type dataset_name: str, optional
+   :param split: The data split to use. Defaults to None.
+   :type split: str, optional
+   :param seed: The random seed for reproducibility. Defaults to 42.
+   :type seed: int, optional
+   :param bs: The batch size. Defaults to 4.
+   :type bs: int, optional
+   :param nsamples: The total number of samples to include. Defaults to 128.
+   :type nsamples: int, optional
+
+   :returns: The DataLoader for the calibrated dataset.
+   :rtype: DataLoader
+
+
+.. py:function:: get_mllm_dataloader(model, tokenizer, template=None, processor=None, image_processor=None, dataset=None, extra_data_dir=None, seqlen=None, batch_size=8, split=None, apply_template=None, truncation=None, seed=42, nsamples=128, gradient_accumulate_steps=1, quant_nontext_module=False)
+
+   Generate a DataLoader for calibration using specified parameters.
+
+   :param template: The template to specify process for different mllms.
+   :type template: Template
+   :param model: The model to quantized.
+   :type model: Model
+   :param tokenizer: The tokenizer to use for tokenization.
+   :type tokenizer: Tokenizer
+   :param Dataset_name: The name or path of the dataset.
+   :type Dataset_name: str
+   :param extra_data_dir: The path for extra data such as images, audio or videos.
+   :type extra_data_dir: str
+   :param seqlen: The exact sequence length. samples < seqlen will be dropped,
+                  samples longer than seqlen will be truncated
+   :type seqlen: int
+   :param bs: The batch size. Defaults to 4.
+   :type bs: int, optional
+   :param split: The data split to use. Defaults to None.
+   :type split: str, optional
+   :param apply_template: Whether to apply chat template in tokenization.
+
+   :returns: The DataLoader for the calibrated datasets.
+   :rtype: DataLoader
+
+

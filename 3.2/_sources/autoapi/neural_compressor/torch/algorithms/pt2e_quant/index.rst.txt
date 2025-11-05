@@ -1,0 +1,23 @@
+neural_compressor.torch.algorithms.pt2e_quant
+=============================================
+
+.. py:module:: neural_compressor.torch.algorithms.pt2e_quant
+
+.. autoapi-nested-parse::
+
+   The PT2E-related modules.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/algorithms/pt2e_quant/core/index
+   /autoapi/neural_compressor/torch/algorithms/pt2e_quant/half_precision_rewriter/index
+   /autoapi/neural_compressor/torch/algorithms/pt2e_quant/save_load/index
+   /autoapi/neural_compressor/torch/algorithms/pt2e_quant/utility/index
+
+
