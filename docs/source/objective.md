@@ -67,5 +67,3 @@ from neural_compressor.config import TuningCriterion
 tuning_criterion = TuningCriterion(objective=["performance", "accuracy"])
 ```
 
-## Example
-Refer to [example](../neural_compressor/template/ptq.yaml) as an example.

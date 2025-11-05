@@ -86,7 +86,7 @@ Below is a fragment of the Tensorflow configuration file.
 
 #### Query API Introduction
 
-The abstract class `QueryBackendCapability` is defined in [query.py](../neural_compressor/adaptor/query.py#L21). Each framework should inherit it and implement the member function if needed. Refer to Tensorflow implementation [TensorflowQuery](../neural_compressor/adaptor/tensorflow.py#L628).
+The abstract class `QueryBackendCapability` is defined in [query.py](/neural_compressor/adaptor/query.py). Each framework should inherit it and implement the member function if needed. Refer to Tensorflow implementation [TensorflowQuery](/neural_compressor/adaptor/tensorflow.py).
 
 
 ## Example of Adding a New Backend Support
@@ -107,11 +107,9 @@ Onnxruntime already has [quantization tools](https://github.com/microsoft/onnxru
    * nodes_to_quantize, nodes_to_exclude
    * op_types_to_quantize
 
-   We define three configuration files to describe the capability of ONNXRT. Please refer to [onnxrt_qlinear.yaml](../neural_compressor/adaptor/onnxrt_qlinear.yaml), [onnxrt_integer.yaml](../neural_compressor/adaptor/onnxrt_integer.yaml) and [onnxrt_qdq.yaml](../neural_compressor/adaptor/onnxrt_qdq.yaml).
-
 ### Implement ONNXRTAdaptor Class
 
-   The base class ONNXRTAdaptor inherits from the Adaptor class. Please refer to [onnxrt.py](../neural_compressor/adaptor/onnxrt.py).
+   The base class ONNXRTAdaptor inherits from the Adaptor class.
 
    ```python
    @adaptor_registry

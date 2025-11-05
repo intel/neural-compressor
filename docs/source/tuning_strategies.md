@@ -50,12 +50,12 @@ the low-precision inference solution on popular Deep Learning frameworks such as
 Before tuning, the `tuning space` was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse process and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
 below:
 
-![Tuning Strategy](./imgs/strategy.png "Strategy Framework")
+![Tuning Strategy](./imgs/strategy.png)
 
 ### Tuning Space
 
 Intel® Neural Compressor supports multiple quantization modes such as Post Training Static Quantization (PTQ static), Post Training Dynamic Quantization (PTQ dynamic), Quantization Aware Training, etc. One operator (OP) with a specific quantization mode has multiple ways to quantize, for example it may have multiple quantization scheme(symmetric/asymmetric), calibration algorithm(Min-Max/KL Divergence), etc. We use the [`framework capability`](./framework_yaml.md) to represent the methods that we have already supported. The `tuning space` includes all tuning items and their options. For example, the tuning items and options of the `Conv2D` (PyTorch) supported by Intel® Neural Compressor are as follows:
-![Conv2D_PyTorch_Cap](./imgs/Conv2D_PyTorch_Cap.png "Conv2D PyTorch Capability")
+![Conv2D_PyTorch_Cap](./imgs/Conv2D_PyTorch_Cap.png)
 
 To incorporate the human experience and reduce the tuning time, user can reduce the tuning space by specifying the `op_name_dict` and `op_type_dict` in `PostTrainingQuantConfig` (`QuantizationAwareTrainingConfig`). Before tuning, the strategy will merge these configurations with framework capability to create the final tuning space.
 
@@ -485,7 +485,7 @@ An example of customizing a new tuning strategy can be reached at [TPE Strategy]
 Intel® Neural Compressor provides distributed tuning to speed up the tuning process by leveraging the multi-node cluster. It seamlessly parallelizes the tuning process across multi nodes by using the MPI. In distributed tuning, the `fp32` model is replicated on every node, and each original model replica is fed with a different quantization configuration. The master handler coordinates the tuning process and synchronizes the tuning result of each stage to every slave handler. The distributed tuning allows the tuning process to scale up significantly to the number of nodes, which translates into faster results and more efficient utilization of computing resources. 
 
 The diagram below provides an overview of the distributed tuning process.
-![distributed tuning](./imgs/distributed_tuning_intro.png "Distributed Tuning")
+![distributed tuning](./imgs/distributed_tuning_intro.png)
 
 
 ### Usage

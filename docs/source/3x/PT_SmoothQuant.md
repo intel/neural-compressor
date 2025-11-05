@@ -99,8 +99,6 @@ A list of models that achieved a <1% accuracy drop is shown below.
 | databricks/dolly-v2-3b* | 0.6297 | 0.6247 | alpha=0.5, Ipex 2.1 |
 | tiiuae/falcon-7b-instruct | 0.6437 | 0.6392 | alpha=0.7, Pytorch |
 
-Please refer to the step-by-step [instruction](../../examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm/ipex/README.md) for details.
-
 Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.
 
 

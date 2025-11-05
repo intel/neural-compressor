@@ -190,7 +190,6 @@ model = load(
 
 ## Additional Content
 
-* [Release Information](./docs/source/releases_info.md)
 * [Contribution Guidelines](./docs/source/CONTRIBUTING.md)
 * [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)

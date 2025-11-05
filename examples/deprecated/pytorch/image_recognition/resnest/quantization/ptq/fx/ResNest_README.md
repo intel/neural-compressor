@@ -17,8 +17,6 @@
 # ResNeSt
 Split-Attention Network, A New ResNet Variant. It significantly boosts the performance of downstream models such as Mask R-CNN, Cascade R-CNN and DeepLabV3.
 
-![](./miscs/abstract.jpg)
-
 ### Table of Contents
 0. [Pretrained Models](#pretrained-models)
 0. [Transfer Learning Models](#transfer-learning-models)
@@ -49,8 +47,6 @@ pip install resnest --pre
 | ResNeSt-269 | 416       | 84.54   | 84.53 |
 
 - **3rd party implementations** are available: [Tensorflow](https://github.com/QiaoranC/tf_ResNeSt_RegNet_model), [Caffe](https://github.com/NetEase-GameAI/ResNeSt-caffe).
-
-- Extra ablation study models are available in [link](./ablation.md)
 
 ### PyTorch Models
 
@@ -339,7 +335,6 @@ python verify.py --model resnest50 --crop-size 224
 
 ### ImageNet Models
 
-- Training with MXNet Gluon: Please visit [Gluon folder](./scripts/gluon/).
 - Training with PyTorch: Please visit [PyTorch Encoding Toolkit](https://hangzhang.org/PyTorch-Encoding/model_zoo/imagenet.html) (slightly worse than Gluon implementation).
 
 ### Detectron Models
