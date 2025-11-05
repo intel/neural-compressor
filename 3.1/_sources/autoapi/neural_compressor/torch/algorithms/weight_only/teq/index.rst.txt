@@ -1,0 +1,35 @@
+neural_compressor.torch.algorithms.weight_only.teq
+==================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.teq
+
+.. autoapi-nested-parse::
+
+   TEQ quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.teq.TrainableEquivalentTransformation
+   neural_compressor.torch.algorithms.weight_only.teq.TEQuantizer
+
+
+Module Contents
+---------------
+
+.. py:class:: TrainableEquivalentTransformation(model, weight_config={}, absorb_to_layer=None, folding=True, example_inputs=None)
+
+   Weight-only quantization, Trainable Equivalent Transformation (TEQ).
+
+
+.. py:class:: TEQuantizer(quant_config, folding, example_inputs, absorb_to_layer=None)
+
+
+
+   TEQ Quantizer.
+
+

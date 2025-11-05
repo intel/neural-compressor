@@ -1,0 +1,158 @@
+neural_compressor.torch.algorithms.layer_wise.utils
+===================================================
+
+.. py:module:: neural_compressor.torch.algorithms.layer_wise.utils
+
+.. autoapi-nested-parse::
+
+   Utils for layer wise quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.layer_wise.utils.QDQLayer
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.layer_wise.utils.get_module
+   neural_compressor.torch.algorithms.layer_wise.utils.get_children
+   neural_compressor.torch.algorithms.layer_wise.utils.get_named_children
+   neural_compressor.torch.algorithms.layer_wise.utils.dowload_hf_model
+   neural_compressor.torch.algorithms.layer_wise.utils.load_empty_model
+   neural_compressor.torch.algorithms.layer_wise.utils.get_super_module_by_name
+   neural_compressor.torch.algorithms.layer_wise.utils.update_module
+   neural_compressor.torch.algorithms.layer_wise.utils.load_layer_wise_quantized_model
+   neural_compressor.torch.algorithms.layer_wise.utils.load_tensor_from_shard
+   neural_compressor.torch.algorithms.layer_wise.utils.load_tensor
+   neural_compressor.torch.algorithms.layer_wise.utils.load_value
+   neural_compressor.torch.algorithms.layer_wise.utils.load_module
+   neural_compressor.torch.algorithms.layer_wise.utils.register_weight_hooks
+   neural_compressor.torch.algorithms.layer_wise.utils.clean_module_weight
+
+
+Module Contents
+---------------
+
+.. py:class:: QDQLayer(module, input_scale=None)
+
+
+
+   Quantized and Dequantized Layer.
+
+
+.. py:function:: get_module(model, key)
+
+   Get module from model by key name.
+
+   :param model: original model
+   :type model: torch.nn.Module
+   :param key: module name to be replaced
+   :type key: str
+
+
+.. py:function:: get_children(model)
+
+   Get all the children of given model.
+
+
+.. py:function:: get_named_children(model, pre=[])
+
+   Get all the name and children of given model.
+
+
+.. py:function:: dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None)
+
+   Download hugging face model from hf hub.
+
+
+.. py:function:: load_empty_model(pretrained_model_name_or_path, cls=AutoModelForCausalLM, **kwargs)
+
+   Load a empty model.
+
+
+.. py:function:: get_super_module_by_name(model, module_name)
+
+   Get the father module with given name of child module.
+
+
+.. py:function:: update_module(model, module_name, new_module)
+
+   Update module.
+
+
+.. py:function:: load_layer_wise_quantized_model(path)
+
+   Load layer wise quantized model.
+
+
+.. py:function:: load_tensor_from_shard(pretrained_model_name_or_path, tensor_name, prefix=None)
+
+   Load tensor from shard.
+
+
+.. py:function:: load_tensor(path, tensor_name=None, prefix=None)
+
+   Load a tensor from bin file with given tensor name.
+
+
+.. py:function:: load_value(model, param_name, path)
+
+   Load the module value.
+
+   :param model: torch model.
+   :type model: torch.nn.module
+   :param param_name: module name.
+   :type param_name: str
+   :param path: path to load state_dict per layer.
+   :type path: str
+
+   :returns: the module value.
+   :rtype: tensor
+
+
+.. py:function:: load_module(model, module_name, path, device='cpu')
+
+   Load all named parameters of module.
+
+   :param model: torch model.
+   :type model: torch.nn.module
+   :param module_name: module name.
+   :type module_name: str
+   :param path: path to load state_dict per layer.
+   :type path: str
+   :param device: module device. Defaults to "cpu".
+   :type device: str, optional
+
+
+.. py:function:: register_weight_hooks(model, path, device='cpu', clean_weight=True, saved_path=None)
+
+   Register weight hooks for model.
+
+   :param model: torch model.
+   :type model: torch.nn.module
+   :param path: path to load state_dict per layer.
+   :type path: str
+   :param device: module device. Defaults to "cpu".
+   :type device: str, optional
+   :param clean_weight: to clean model weight. Defaults to True.
+   :type clean_weight: bool, optional
+   :param saved_path: path to save module weight. Defaults to None.
+   :type saved_path: str, optional
+
+   :returns: handlers.
+   :rtype: list
+
+
+.. py:function:: clean_module_weight(module)
+
+   Clean module weight.
+
+

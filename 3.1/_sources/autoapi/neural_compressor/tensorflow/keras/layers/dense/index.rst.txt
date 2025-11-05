@@ -1,0 +1,42 @@
+neural_compressor.tensorflow.keras.layers.dense
+===============================================
+
+.. py:module:: neural_compressor.tensorflow.keras.layers.dense
+
+.. autoapi-nested-parse::
+
+   Initialize custom dense layers for Keras quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.keras.layers.dense.QDense
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.keras.layers.dense.initialize_int8_dense
+
+
+Module Contents
+---------------
+
+.. py:class:: QDense(name, units, activation=None, use_bias=True, kernel_initializer='glorot_uniform', bias_initializer='zeros', kernel_regularizer=None, bias_regularizer=None, activity_regularizer=None, kernel_constraint=None, bias_constraint=None, act_min_value=None, act_max_value=None, weight_min_value=None, weight_max_value=None, granularity='per_tensor', quant_status='calib', quant_mode='SCALED', quant_T='s8', quant_round_mode='HALF_AWAY_FROM_ZERO', quant_narrow_range=False, quant_axis=None, **kwargs)
+
+
+
+   The custom quantized Dense layer.
+
+
+.. py:function:: initialize_int8_dense(fp32_layer, q_config)
+
+   Initialize int8 dense.
+
+

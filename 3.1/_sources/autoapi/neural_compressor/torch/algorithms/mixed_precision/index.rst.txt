@@ -1,0 +1,21 @@
+neural_compressor.torch.algorithms.mixed_precision
+==================================================
+
+.. py:module:: neural_compressor.torch.algorithms.mixed_precision
+
+.. autoapi-nested-parse::
+
+   Initialize classes for mixed precision.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/algorithms/mixed_precision/half_precision_convert/index
+   /autoapi/neural_compressor/torch/algorithms/mixed_precision/module_wrappers/index
+
+

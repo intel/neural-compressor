@@ -1,0 +1,82 @@
+neural_compressor.torch.algorithms.weight_only.hqq.quantizer
+============================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.quantizer
+
+.. autoapi-nested-parse::
+
+   HQQ Quantizer.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.quantizer.HQQuantizer
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.quantizer.patch_hqq_moduile
+   neural_compressor.torch.algorithms.weight_only.hqq.quantizer.filter_fn
+   neural_compressor.torch.algorithms.weight_only.hqq.quantizer.replacement_fn
+
+
+Module Contents
+---------------
+
+.. py:function:: patch_hqq_moduile(mod, config)
+
+   Patch the given module with the HQQLinear module.
+
+   :param mod: The module to be patched.
+   :type mod: torch.nn.Module
+   :param config: Configuration parameters for the HQQLinear module.
+   :type config: dict
+
+   :returns: The patched module with HQQLinear.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: filter_fn(mod: torch.nn.Module, name: str, config_mapping: neural_compressor.torch.algorithms.weight_only.hqq.config.ConfigMappingType) -> bool
+
+   Filter function used to determine if a module should be quantized.
+
+   :param mod: The module to be checked.
+   :type mod: torch.nn.Module
+   :param name: The name of the module.
+   :type name: str
+   :param config_mapping: The configuration mapping.
+   :type config_mapping: ConfigMappingType
+
+   :returns: True if the module should be quantized, False otherwise.
+   :rtype: bool
+
+
+.. py:function:: replacement_fn(mod: torch.nn.Module, name: str, config_mapping: neural_compressor.torch.algorithms.weight_only.hqq.config.ConfigMappingType) -> torch.nn.Module
+
+   Replaces a Linear with HQQLinear if the module is in the config mapping.
+
+   :param mod: The original module to be replaced.
+   :type mod: torch.nn.Module
+   :param name: The name of the module to be replaced.
+   :type name: str
+   :param config_mapping: A mapping of module names to their corresponding configurations.
+   :type config_mapping: ConfigMappingType
+
+   :returns: The patched module.
+   :rtype: torch.nn.Module
+
+
+.. py:class:: HQQuantizer(quant_config: neural_compressor.torch.algorithms.weight_only.hqq.config.ConfigMappingType)
+
+
+
+   HQQ Quantizer.
+
+

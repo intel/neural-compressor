@@ -1,0 +1,25 @@
+neural_compressor.torch.algorithms.weight_only.hqq
+==================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq
+
+.. autoapi-nested-parse::
+
+   HQQ-related modules.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/algorithms/weight_only/hqq/bitpack/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/hqq/config/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/hqq/core/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/hqq/optimizer/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/hqq/qtensor/index
+   /autoapi/neural_compressor/torch/algorithms/weight_only/hqq/quantizer/index
+
+

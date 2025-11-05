@@ -1,0 +1,62 @@
+neural_compressor.torch.quantization.autotune
+=============================================
+
+.. py:module:: neural_compressor.torch.quantization.autotune
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor Pytorch quantization AutoTune API.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.quantization.autotune.get_rtn_double_quant_config_set
+   neural_compressor.torch.quantization.autotune.get_all_config_set
+   neural_compressor.torch.quantization.autotune.autotune
+
+
+Module Contents
+---------------
+
+.. py:function:: get_rtn_double_quant_config_set() -> List[neural_compressor.torch.quantization.config.RTNConfig]
+
+   Generate RTN double quant config set.
+
+   :returns: a set of quant config
+   :rtype: List[RTNConfig]
+
+
+.. py:function:: get_all_config_set() -> Union[neural_compressor.common.base_config.BaseConfig, List[neural_compressor.common.base_config.BaseConfig]]
+
+   Generate all quant config set.
+
+   :returns: a set of quant config
+   :rtype: Union[BaseConfig, List[BaseConfig]]
+
+
+.. py:function:: autotune(model: torch.nn.Module, tune_config: neural_compressor.common.base_tuning.TuningConfig, eval_fn: Callable, eval_args=None, run_fn=None, run_args=None, example_inputs=None)
+
+   The main entry of auto-tune.
+
+   :param model: _description_
+   :type model: torch.nn.Module
+   :param tune_config: _description_
+   :type tune_config: TuningConfig
+   :param eval_fn: for evaluation of quantized models.
+   :type eval_fn: Callable
+   :param eval_args: arguments used by eval_fn. Defaults to None.
+   :type eval_args: tuple, optional
+   :param run_fn: for calibration to quantize model. Defaults to None.
+   :type run_fn: Callable, optional
+   :param run_args: arguments used by run_fn. Defaults to None.
+   :type run_args: tuple, optional
+   :param example_inputs: used to trace torch model. Defaults to None.
+   :type example_inputs: tensor/tuple/dict, optional
+
+   :returns: The quantized model.
+
+

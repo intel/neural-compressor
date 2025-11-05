@@ -1,0 +1,217 @@
+neural_compressor.torch.quantization.algorithm_entry
+====================================================
+
+.. py:module:: neural_compressor.torch.quantization.algorithm_entry
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor PyTorch supported algorithm entries.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.quantization.algorithm_entry.rtn_entry
+   neural_compressor.torch.quantization.algorithm_entry.gptq_entry
+   neural_compressor.torch.quantization.algorithm_entry.static_quant_entry
+   neural_compressor.torch.quantization.algorithm_entry.pt2e_dynamic_quant_entry
+   neural_compressor.torch.quantization.algorithm_entry.pt2e_static_quant_entry
+   neural_compressor.torch.quantization.algorithm_entry.smooth_quant_entry
+   neural_compressor.torch.quantization.algorithm_entry.awq_quantize_entry
+   neural_compressor.torch.quantization.algorithm_entry.teq_quantize_entry
+   neural_compressor.torch.quantization.algorithm_entry.autoround_quantize_entry
+   neural_compressor.torch.quantization.algorithm_entry.hqq_entry
+   neural_compressor.torch.quantization.algorithm_entry.fp8_entry
+   neural_compressor.torch.quantization.algorithm_entry.mx_quant_entry
+   neural_compressor.torch.quantization.algorithm_entry.mixed_precision_entry
+
+
+Module Contents
+---------------
+
+.. py:function:: rtn_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.RTNConfig], mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply rtn quantization.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param configs_mapping: per-op configuration.
+   :type configs_mapping: Dict[Tuple[str, callable], RTNConfig]
+   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+   :type mode: Mode, optional
+
+   :returns: prepared model or quantized model.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: gptq_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.GPTQConfig], mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply gptq quantization.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param configs_mapping: per-op configuration.
+   :type configs_mapping: Dict[Tuple[str, callable], GPTQConfig]
+   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+   :type mode: Mode, optional
+
+   :returns: prepared model or quantized model.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: static_quant_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.StaticQuantConfig], mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply static quantization, includes pt2e quantization and ipex quantization.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param configs_mapping: per-op configuration.
+   :type configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig]
+   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+   :type mode: Mode, optional
+
+   :returns: prepared model or quantized model.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: pt2e_dynamic_quant_entry(model: torch.nn.Module, configs_mapping, mode: neural_compressor.common.utils.Mode, *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply pt2e dynamic quantization.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param configs_mapping: per-op configuration.
+   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+   :type mode: Mode, optional
+
+   :returns: prepared model or quantized model.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: neural_compressor.common.utils.Mode, *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply pt2e static quantization.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param configs_mapping: per-op configuration.
+   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+   :type mode: Mode, optional
+
+   :returns: prepared model or quantized model.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: smooth_quant_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.SmoothQuantConfig], mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply smooth quantization.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param configs_mapping: per-op configuration.
+   :type configs_mapping: Dict[Tuple[str, callable], SmoothQuantConfig]
+   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+   :type mode: Mode, optional
+
+   :returns: prepared model or quantized model.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: awq_quantize_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.AWQConfig], mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply AWQ quantization.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param configs_mapping: per-op configuration.
+   :type configs_mapping: Dict[Tuple[str, callable], AWQConfig]
+   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+   :type mode: Mode, optional
+
+   :returns: prepared model or quantized model.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: teq_quantize_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.TEQConfig], mode: neural_compressor.common.utils.Mode, *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply TEQ quantization.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param configs_mapping: per-op configuration.
+   :type configs_mapping: Dict[Tuple[str, callable], TEQConfig]
+   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+   :type mode: Mode, optional
+
+   :returns: prepared model or quantized model.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: autoround_quantize_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.AutoRoundConfig], mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply AutoRound quantization.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param configs_mapping: per-op configuration.
+   :type configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig]
+   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+   :type mode: Mode, optional
+
+   :returns: prepared model or quantized model.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: hqq_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, Callable], neural_compressor.torch.quantization.HQQConfig], mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply AutoRound quantization.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param configs_mapping: per-op configuration.
+   :type configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig]
+   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+   :type mode: Mode, optional
+
+   :returns: prepared model or quantized model.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: fp8_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str], neural_compressor.torch.quantization.FP8Config], mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply fp8 quantization.
+
+
+.. py:function:: mx_quant_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.MXQuantConfig], mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply AutoRound quantization.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param configs_mapping: per-op configuration.
+   :type configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig]
+   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+   :type mode: Mode, optional
+
+   :returns: prepared model or quantized model.
+   :rtype: torch.nn.Module
+
+
+.. py:function:: mixed_precision_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str], neural_compressor.torch.quantization.MixedPrecisionConfig], *args, **kwargs) -> torch.nn.Module
+
+   The main entry to apply Mixed Precision.
+
+   :param model: raw fp32 model or prepared model.
+   :type model: torch.nn.Module
+   :param configs_mapping: per-op configuration.
+   :type configs_mapping: Dict[Tuple[str, callable], MixPrecisionConfig]
+   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
+   :type mode: Mode, optional
+
+   :returns: prepared model or quantized model.
+   :rtype: torch.nn.Module
+
+

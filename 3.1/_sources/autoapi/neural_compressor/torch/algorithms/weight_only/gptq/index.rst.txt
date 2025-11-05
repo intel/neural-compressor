@@ -1,0 +1,112 @@
+neural_compressor.torch.algorithms.weight_only.gptq
+===================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.gptq
+
+.. autoapi-nested-parse::
+
+   GPTQ quantization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.gptq.RAWGPTQuantizer
+   neural_compressor.torch.algorithms.weight_only.gptq.GPTQ
+   neural_compressor.torch.algorithms.weight_only.gptq.Quantizer
+   neural_compressor.torch.algorithms.weight_only.gptq.GPTQuantizer
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.gptq.is_leaf
+   neural_compressor.torch.algorithms.weight_only.gptq.trace_gptq_target_blocks
+   neural_compressor.torch.algorithms.weight_only.gptq.find_layers
+   neural_compressor.torch.algorithms.weight_only.gptq.find_layers_name
+   neural_compressor.torch.algorithms.weight_only.gptq.log_quantizable_layers_per_transformer
+
+
+Module Contents
+---------------
+
+.. py:function:: is_leaf(module)
+
+   Judge whether a module has no child-modules.
+
+   :param module: torch.nn.Module
+
+   :returns: whether a module has no child-modules.
+   :rtype: a bool
+
+
+.. py:function:: trace_gptq_target_blocks(module, module_types=[torch.nn.ModuleList, torch.nn.Sequential])
+
+   Search transformer stacked structures, which is critical in LLMs and GPTQ execution.
+
+   :param module: torch.nn.Module
+   :param module_types: List of torch.nn.Module.
+
+   :returns:
+
+             gptq_related_blocks = {
+                 "embeddings": {}, # Dict embedding layers before transformer stack module,
+                 "transformers_pre": {}, # TODO
+                 "transformers_name": string. LLMs' transformer stack module name ,
+                 "transformers": torch.nn.ModuleList. LLMs' transformer stack module,
+                 "transformers": {}, Dict# TODO
+             }
+
+
+.. py:function:: find_layers(module, layers=SUPPORTED_LAYERS, name='')
+
+   Get all layers with target types.
+
+
+.. py:function:: find_layers_name(module, layers=SUPPORTED_LAYERS, name='')
+
+   Get all layers with target types.
+
+
+.. py:function:: log_quantizable_layers_per_transformer(transformer_blocks, layers=SUPPORTED_LAYERS)
+
+   Print all layers which will be quantized in GPTQ algorithm.
+
+
+.. py:class:: RAWGPTQuantizer(model, weight_config={}, nsamples=128, use_max_length=True, max_seq_length=2048, device=None, use_layer_wise=False, model_path='', quant_lm_head=False, dataloader=None, *args, **kwargs)
+
+
+
+   Main API for GPTQ algorithm.
+
+   Please refer to:
+   GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers
+   url: https://arxiv.org/abs/2210.17323
+
+
+.. py:class:: GPTQ(layer, W, device='cpu')
+
+   Please refer to the following.
+
+   GPTQ: Accurate Post-training Compression for Generative Pretrained Transformers (https://arxiv.org/abs/2210.17323)
+
+
+.. py:class:: Quantizer(shape=1)
+
+
+
+   Quantizer.
+
+
+.. py:class:: GPTQuantizer(quant_config={})
+
+
+
+   GPTQ Quantizer.
+
+

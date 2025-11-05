@@ -1,0 +1,29 @@
+neural_compressor.tensorflow.quantization.utils.transform_graph.graph_transform_base
+====================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.transform_graph.graph_transform_base
+
+.. autoapi-nested-parse::
+
+   GraphTransform Base Class.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.transform_graph.graph_transform_base.GraphTransformBase
+
+
+Module Contents
+---------------
+
+.. py:class:: GraphTransformBase(input_pb)
+
+
+
+   GraphTransform Base Class.
+
+

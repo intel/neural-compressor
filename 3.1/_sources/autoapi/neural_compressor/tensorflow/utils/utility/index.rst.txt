@@ -1,0 +1,172 @@
+neural_compressor.tensorflow.utils.utility
+==========================================
+
+.. py:module:: neural_compressor.tensorflow.utils.utility
+
+.. autoapi-nested-parse::
+
+   The utility functions and classes for Tensorflow.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.utils.utility.CpuInfo
+   neural_compressor.tensorflow.utils.utility.CaptureOutputToFile
+   neural_compressor.tensorflow.utils.utility.TFSlimNetsFactory
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.utils.utility.version1_lt_version2
+   neural_compressor.tensorflow.utils.utility.version1_gt_version2
+   neural_compressor.tensorflow.utils.utility.version1_eq_version2
+   neural_compressor.tensorflow.utils.utility.version1_gte_version2
+   neural_compressor.tensorflow.utils.utility.version1_lte_version2
+   neural_compressor.tensorflow.utils.utility.register_algo
+   neural_compressor.tensorflow.utils.utility.deep_get
+   neural_compressor.tensorflow.utils.utility.itex_installed
+   neural_compressor.tensorflow.utils.utility.dump_elapsed_time
+   neural_compressor.tensorflow.utils.utility.combine_histogram
+   neural_compressor.tensorflow.utils.utility.get_all_fp32_data
+   neural_compressor.tensorflow.utils.utility.get_tensor_histogram
+   neural_compressor.tensorflow.utils.utility.singleton
+   neural_compressor.tensorflow.utils.utility.disable_random
+   neural_compressor.tensorflow.utils.utility.valid_keras_format
+
+
+Module Contents
+---------------
+
+.. py:function:: version1_lt_version2(version1, version2)
+
+   Check whether version1 is less than version2.
+
+
+.. py:function:: version1_gt_version2(version1, version2)
+
+   Check whether version1 is greater than version2.
+
+
+.. py:function:: version1_eq_version2(version1, version2)
+
+   Check whether version1 is equal to version2.
+
+
+.. py:function:: version1_gte_version2(version1, version2)
+
+   Check whether version1 is greater than version2 or is equal to it.
+
+
+.. py:function:: version1_lte_version2(version1, version2)
+
+   Check whether version1 is less than version2 or is equal to it.
+
+
+.. py:function:: register_algo(name)
+
+   Decorator function to register algorithms in the algos_mapping dictionary.
+
+   Usage example:
+       @register_algo(name=example_algo)
+       def example_algo(model: tf.keras.Model, quant_config: StaticQuantConfig) -> tf.keras.Model:
+           ...
+   :param name: The name under which the algorithm function will be registered.
+   :type name: str
+
+   :returns: The decorator function to be used with algorithm functions.
+   :rtype: decorator
+
+
+.. py:function:: deep_get(dictionary, keys, default=None)
+
+   Get the dot key's item in nested dict.
+
+   Usage example:
+      person = {'person':{'name':{'first':'John'}}}
+      deep_get(person, "person.name.first") will output 'John'.
+   :param dictionary: The dict object to get keys
+   :type dictionary: dict
+   :param keys: The deep keys
+   :type keys: dict
+   :param default: The return item if key not exists
+   :type default: object
+
+   :returns: the item of the deep dot keys
+   :rtype: item
+
+
+.. py:function:: itex_installed()
+
+   Check if the Intel® Extension for TensorFlow has been installed.
+
+
+.. py:function:: dump_elapsed_time(customized_msg='')
+
+   Get the elapsed time for decorated functions.
+
+   :param customized_msg: The parameter passed to decorator. Defaults to None.
+   :type customized_msg: string, optional
+
+
+.. py:function:: combine_histogram(old_hist, arr)
+
+   Collect layer histogram for arr and combine it with old histogram.
+
+
+.. py:function:: get_all_fp32_data(data)
+
+   Get all the fp32 data.
+
+
+.. py:function:: get_tensor_histogram(tensor_data, bins=2048)
+
+   Get the histogram of the tensor data.
+
+
+.. py:function:: singleton(cls)
+
+   Not displayed in API Docs.
+
+   Singleton decorator.
+
+
+.. py:function:: disable_random(seed=1)
+
+   A Decorator to disable tf random seed.
+
+
+.. py:function:: valid_keras_format(model)
+
+   Check if the input model is Sequential or Functional model.
+
+
+.. py:class:: CpuInfo
+
+
+
+   Get CPU Info.
+
+
+.. py:class:: CaptureOutputToFile(tmp_file_path, stream=sys.stderr)
+
+
+
+   Not displayed in API Docs.
+
+   Capture the output to file.
+
+
+.. py:class:: TFSlimNetsFactory
+
+
+
+   TF-Slim nets factory.
+
+
