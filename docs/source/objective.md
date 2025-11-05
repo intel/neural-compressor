@@ -66,4 +66,3 @@ from neural_compressor.config import TuningCriterion
 
 tuning_criterion = TuningCriterion(objective=["performance", "accuracy"])
 ```
-
