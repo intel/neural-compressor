@@ -1,0 +1,252 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../versions.html">3.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../_sources/docs/source/examples/deprecated/pytorch/diffusion_model/diffusers/textual_inversion/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document is used to list steps of reproducing the training procedure and adapt it for stable diffusion.</p>
+<p><a class="reference external" href="https://arxiv.org/abs/2208.01618">Textual inversion</a> is a method to personalize text2image models like stable diffusion on your own images.<em>By using just 3-5 images new concepts can be taught to Stable Diffusion and the model personalized on your own images</em></p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<p>Recommend python 3.6 or higher version.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+</section>
+<section id="using-textual-inversion-method-to-personalize-text2image">
+<h1>Using Textual Inversion method to personalize text2image<a class="headerlink" href="#using-textual-inversion-method-to-personalize-text2image" title="Link to this heading"></a></h1>
+<section id="prepare-datasets">
+<h2>Prepare Datasets<a class="headerlink" href="#prepare-datasets" title="Link to this heading"></a></h2>
+<p>One picture which is from the huggingface datasets <a class="reference external" href="https://huggingface.co/sd-concepts-library/dicoo2">sd-concepts-library/dicoo2</a> is needed, and save it to the <code class="docutils literal notranslate"><span class="pre">./dicoo</span></code> directory. The picture show below:</p>
+<div align="left">
+<img src="./dicoo/1.jpeg" width=40%/>
+</div></section>
+</section>
+<section id="finetune">
+<h1>Finetune<a class="headerlink" href="#finetune" title="Link to this heading"></a></h1>
+<section id="with-cpu-using-ipex">
+<h2>With CPU using IPEX<a class="headerlink" href="#with-cpu-using-ipex" title="Link to this heading"></a></h2>
+<p>The following script shows how to use CPU with BF16</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">MODEL_NAME</span><span class="o">=</span><span class="s2">&quot;CompVis/stable-diffusion-v1-4&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DATA_DIR</span><span class="o">=</span><span class="s2">&quot;./dicoo&quot;</span>
+
+<span class="c1"># add use_bf16</span>
+python<span class="w"> </span>textual_inversion_ipex.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pretrained_model_name_or_path<span class="o">=</span><span class="nv">$MODEL_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--train_data_dir<span class="o">=</span><span class="nv">$DATA_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--learnable_property<span class="o">=</span><span class="s2">&quot;object&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--placeholder_token<span class="o">=</span><span class="s2">&quot;&lt;dicoo&gt;&quot;</span><span class="w"> </span>--initializer_token<span class="o">=</span><span class="s2">&quot;toy&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--resolution<span class="o">=</span><span class="m">512</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--train_batch_size<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--gradient_accumulation_steps<span class="o">=</span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--use_bf16<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max_train_steps<span class="o">=</span><span class="m">3000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--learning_rate<span class="o">=</span><span class="m">5</span>.0e-04<span class="w"> </span>--scale_lr<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_scheduler<span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_warmup_steps<span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_dir<span class="o">=</span><span class="s2">&quot;dicoo_model&quot;</span>
+</pre></div>
+</div>
+<section id="distributed">
+<h3>Distributed<a class="headerlink" href="#distributed" title="Link to this heading"></a></h3>
+<p>Install <a class="reference external" href="https://github.com/intel/torch-ccl">Torch-CCL</a> first.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">oneccl_bindings_for_pytorch_path</span><span class="o">=</span><span class="k">$(</span>python<span class="w"> </span>-c<span class="w"> </span><span class="s2">&quot;from oneccl_bindings_for_pytorch import cwd; print(cwd)&quot;</span><span class="k">)</span>
+<span class="nb">source</span><span class="w"> </span><span class="nv">$oneccl_bindings_for_pytorch_path</span>/env/setvars.sh
+<span class="nb">export</span><span class="w"> </span><span class="nv">MODEL_NAME</span><span class="o">=</span><span class="s2">&quot;CompVis/stable-diffusion-v1-4&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DATA_DIR</span><span class="o">=</span><span class="s2">&quot;./dicoo&quot;</span>
+
+python<span class="w"> </span>-m<span class="w"> </span>intel_extension_for_pytorch.cpu.launch<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--throughput_mode<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--distributed<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>textual_inversion_ipex.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pretrained_model_name_or_path<span class="o">=</span><span class="nv">$MODEL_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--train_data_dir<span class="o">=</span><span class="nv">$DATA_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--learnable_property<span class="o">=</span><span class="s2">&quot;object&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--placeholder_token<span class="o">=</span><span class="s2">&quot;&lt;dicoo&gt;&quot;</span><span class="w"> </span>--initializer_token<span class="o">=</span><span class="s2">&quot;toy&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--resolution<span class="o">=</span><span class="m">512</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--train_batch_size<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--gradient_accumulation_steps<span class="o">=</span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--use_bf16<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max_train_steps<span class="o">=</span><span class="m">3000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--learning_rate<span class="o">=</span><span class="m">5</span>.0e-04<span class="w"> </span>--scale_lr<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_scheduler<span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_warmup_steps<span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_dir<span class="o">=</span><span class="s2">&quot;dicoo_model&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="with-gpu-using-accelerate">
+<h2>With GPU using accelerate<a class="headerlink" href="#with-gpu-using-accelerate" title="Link to this heading"></a></h2>
+<p>Initialize an <a class="reference external" href="https://github.com/huggingface/accelerate/">🤗Accelerate</a> environment with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>accelerate<span class="w"> </span>config
+</pre></div>
+</div>
+<p>And launch the training using</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">MODEL_NAME</span><span class="o">=</span><span class="s2">&quot;CompVis/stable-diffusion-v1-4&quot;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">DATA_DIR</span><span class="o">=</span><span class="s2">&quot;./dicoo&quot;</span>
+
+accelerate<span class="w"> </span>launch<span class="w"> </span>textual_inversion.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--pretrained_model_name_or_path<span class="o">=</span><span class="nv">$MODEL_NAME</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--train_data_dir<span class="o">=</span><span class="nv">$DATA_DIR</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--learnable_property<span class="o">=</span><span class="s2">&quot;object&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--placeholder_token<span class="o">=</span><span class="s2">&quot;&lt;dicoo&gt;&quot;</span><span class="w"> </span>--initializer_token<span class="o">=</span><span class="s2">&quot;toy&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--resolution<span class="o">=</span><span class="m">512</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--train_batch_size<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--gradient_accumulation_steps<span class="o">=</span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max_train_steps<span class="o">=</span><span class="m">3000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--learning_rate<span class="o">=</span><span class="m">5</span>.0e-04<span class="w"> </span>--scale_lr<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_scheduler<span class="o">=</span><span class="s2">&quot;constant&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_warmup_steps<span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_dir<span class="o">=</span><span class="s2">&quot;dicoo_model&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="inference">
+<h1>Inference<a class="headerlink" href="#inference" title="Link to this heading"></a></h1>
+<p>The inference can be done simply using the <code class="docutils literal notranslate"><span class="pre">StableDiffusionPipeline</span></code>. Make sure to include the <code class="docutils literal notranslate"><span class="pre">placeholder_token</span></code> in your prompt.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">diffusers</span><span class="w"> </span><span class="kn">import</span> <span class="n">StableDiffusionPipeline</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="n">model_id</span> <span class="o">=</span> <span class="s2">&quot;dicoo_model&quot;</span>
+
+<span class="c1"># use cpu (FP32 by default; low precision coming soon)</span>
+<span class="n">pipe</span> <span class="o">=</span> <span class="n">StableDiffusionPipeline</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_id</span><span class="p">,</span> <span class="n">torch_dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float</span><span class="p">)</span>
+
+<span class="c1"># use gpu</span>
+<span class="c1">#pipe = StableDiffusionPipeline.from_pretrained(model_id, torch_dtype=torch.float16).to(&quot;cuda&quot;)</span>
+
+<span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;a lovely &lt;dicoo&gt; in red dress and hat, in the snowly and brightly night, with many brightly buildings.&quot;</span>
+
+<span class="n">image</span> <span class="o">=</span> <span class="n">pipe</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">num_inference_steps</span><span class="o">=</span><span class="mi">50</span><span class="p">,</span> <span class="n">guidance_scale</span><span class="o">=</span><span class="mf">7.5</span><span class="p">)</span><span class="o">.</span><span class="n">images</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+
+<span class="n">image</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./generated_images/dicoo_christmas.png&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Here is a sample image generated by the fine-tuned model:</p>
+<div align="left">
+<img src="./generated_images/dicoo_christmas.png" width=40%/>
+</div></section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8c2e97b380> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

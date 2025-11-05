@@ -1,0 +1,39 @@
+neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_conv_with_math
+==========================================================================================
+
+.. py:module:: neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_conv_with_math
+
+.. autoapi-nested-parse::
+
+   Fuse Conv with Math Graph Rewriter.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_conv_with_math.FuseConvWithMathOptimizer
+
+
+Module Contents
+---------------
+
+.. py:class:: FuseConvWithMathOptimizer(model)
+
+
+
+   Convert below subgraph to Conv2D + BiasAdd by eliminating math ops.
+
+   Conv2D            Conv2D
+     |                  |
+     Sub                 |
+     |       ---->      |
+   RealDiv              |
+     |                  |
+     Mul                 |
+     |                  |
+   BiasAdd           BiasAdd
+
+

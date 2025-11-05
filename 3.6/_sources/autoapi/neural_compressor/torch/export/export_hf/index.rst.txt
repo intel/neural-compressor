@@ -1,0 +1,29 @@
+neural_compressor.torch.export.export_hf
+========================================
+
+.. py:module:: neural_compressor.torch.export.export_hf
+
+.. autoapi-nested-parse::
+
+   Export quantized hf model to compatible formats.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.export.export_hf.export_hf2compressored_model
+
+
+Module Contents
+---------------
+
+.. py:function:: export_hf2compressored_model(model: torch.nn.Module, export_dir: pathlib.Path | str = tempfile.gettempdir(), scheme: str = None)
+
+   Exports the torch model to the packed checkpoint with original HF naming.
+
+   The packed checkpoint will be consumed by the VLLM.
+
+

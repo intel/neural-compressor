@@ -1,0 +1,260 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step (Deprecated) &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../versions.html">3.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step (Deprecated)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../_sources/docs/source/examples/deprecated/tensorflow/image_recognition/tensorflow_models/resnet_v2_101/quantization/ptq/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step-deprecated">
+<h1>Step-by-Step (Deprecated)<a class="headerlink" href="#step-by-step-deprecated" title="Link to this heading"></a></h1>
+<p>This document list steps of reproducing resnet_v2_101 model tuning and benchmark results via Neural Compressor.
+This example can run on Intel CPUs and GPUs.</p>
+<blockquote>
+<div><p><strong>Note</strong>:
+Most of those models are both supported in Intel optimized TF 1.15.x and Intel optimized TF 2.x. Validated TensorFlow <a class="reference external" href="/docs/source/installation_guide.html#validated-software-environment">Version</a>.</p>
+</div></blockquote>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<p>Recommend python 3.7 or higher version.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="install-intel-extension-for-tensorflow">
+<h3>Install Intel Extension for Tensorflow<a class="headerlink" href="#install-intel-extension-for-tensorflow" title="Link to this heading"></a></h3>
+<section id="quantizing-the-model-on-intel-gpu-mandatory-to-install-itex">
+<h4>Quantizing the model on Intel GPU(Mandatory to install ITEX)<a class="headerlink" href="#quantizing-the-model-on-intel-gpu-mandatory-to-install-itex" title="Link to this heading"></a></h4>
+<p>Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>intel-extension-for-tensorflow<span class="o">[</span>xpu<span class="o">]</span>
+</pre></div>
+</div>
+<p>For any more details, please follow the procedure in <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.html#install-gpu-drivers">install-gpu-drivers</a></p>
+</section>
+<section id="quantizing-the-model-on-intel-cpu-optional-to-install-itex">
+<h4>Quantizing the model on Intel CPU(Optional to install ITEX)<a class="headerlink" href="#quantizing-the-model-on-intel-cpu-optional-to-install-itex" title="Link to this heading"></a></h4>
+<p>Intel Extension for Tensorflow for Intel CPUs is experimental currently. It’s not mandatory for quantizing the model on Intel CPUs.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>intel-extension-for-tensorflow<span class="o">[</span>cpu<span class="o">]</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>:
+The version compatibility of stock Tensorflow and ITEX can be checked <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow#compatibility-table">here</a>. Please make sure you have installed compatible Tensorflow and ITEX.</p>
+</div></blockquote>
+</section>
+</section>
+</section>
+<section id="prepare-pre-trained-model">
+<h2>2. Prepare pre-trained model<a class="headerlink" href="#prepare-pre-trained-model" title="Link to this heading"></a></h2>
+<p>The resnet_v2_101 checkpoint file comes from <a class="reference external" href="https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models">models</a>.
+We can get the pb file by convert the checkpoint file.</p>
+<ol class="simple">
+<li><p>Download the checkpoint file from <a class="reference external" href="https://github.com/tensorflow/models/tree/master/research/slim#pre-trained-models">here</a></p></li>
+</ol>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>http://download.tensorflow.org/models/resnet_v2_101_2017_04_14.tar.gz
+tar<span class="w"> </span>-xvf<span class="w"> </span>resnet_v2_101_2017_04_14.tar.gz
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Exporting the Inference Graph</p></li>
+</ol>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/tensorflow/models
+<span class="nb">cd</span><span class="w"> </span>models/research/slim
+python<span class="w"> </span>export_inference_graph.py<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--alsologtostderr<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--model_name<span class="o">=</span>resnet_v2_101<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--output_file<span class="o">=</span>/tmp/resnet_v2_101_inf_graph.pb
+</pre></div>
+</div>
+<p>Make sure to use intel-tensorflow v1.15, and pip install tf_slim.</p>
+<section id="install-intel-tensorflow-1-15-up2">
+<h3>Install Intel Tensorflow 1.15 up2<a class="headerlink" href="#install-intel-tensorflow-1-15-up2" title="Link to this heading"></a></h3>
+<p>Check your python version and use pip install 1.15.0 up2 from links below:
+https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp36-cp36m-manylinux2010_x86_64.whl<br />https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp37-cp37m-manylinux2010_x86_64.whl
+https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp35-cp35m-manylinux2010_x86_64.whl</p>
+<blockquote>
+<div><p>Please note: The ImageNet dataset has 1001, the <strong>VGG</strong> and <strong>ResNet V1</strong> final layers have only 1000 outputs rather than 1001. So we need add the <code class="docutils literal notranslate"><span class="pre">--labels_offset=1</span></code> flag in the inference graph exporting command.</p>
+</div></blockquote>
+<ol class="simple">
+<li><p>Use <a class="reference external" href="https://lutzroeder.github.io/netron/">Netron</a> to get the input/output layer name of inference graph pb, for vgg_16 the output layer name is <code class="docutils literal notranslate"><span class="pre">resnet_v2_101/predictions/Reshape_1</span></code></p></li>
+<li><p>Freezing the exported Graph, please use the tool <code class="docutils literal notranslate"><span class="pre">freeze_graph.py</span></code> in <a class="reference external" href="https://github.com/tensorflow/tensorflow/blob/v1.15.2/tensorflow/python/tools/freeze_graph.py">tensorflow v1.15.2</a> repo</p></li>
+</ol>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>freeze_graph.py<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--input_graph<span class="o">=</span>/tmp/resnet_v2_101_inf_graph.pb<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--input_checkpoint<span class="o">=</span>./resnet_v2_101.ckpt<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--input_binary<span class="o">=</span><span class="nb">true</span><span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--output_graph<span class="o">=</span>./frozen_resnet_v2_101.pb<span class="w"> </span><span class="se">\</span>
+<span class="w">        </span>--output_node_names<span class="o">=</span>resnet_v2_101/predictions/Reshape_1
+</pre></div>
+</div>
+</section>
+</section>
+<section id="prepare-dataset">
+<h2>3. Prepare Dataset<a class="headerlink" href="#prepare-dataset" title="Link to this heading"></a></h2>
+<p>TensorFlow <a class="reference external" href="https://github.com/tensorflow/models">models</a> repo provides <a class="reference external" href="https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data">scripts and instructions</a> to download, process and convert the ImageNet dataset to the TF records format.
+We also prepared related scripts in <code class="docutils literal notranslate"> <span class="pre">examples/tensorflow/image_recognition/tensorflow_models/imagenet_prepare</span></code> directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/tensorflow/image_recognition/tensorflow_models/
+<span class="c1"># convert validation subset</span>
+bash<span class="w"> </span>prepare_dataset.sh<span class="w"> </span>--output_dir<span class="o">=</span>./resnet_v2_101/quantization/ptq/data<span class="w"> </span>--raw_dir<span class="o">=</span>/PATH/TO/img_raw/val/<span class="w"> </span>--subset<span class="o">=</span>validation
+<span class="c1"># convert train subset</span>
+bash<span class="w"> </span>prepare_dataset.sh<span class="w"> </span>--output_dir<span class="o">=</span>./resnet_v2_101/quantization/ptq/data<span class="w"> </span>--raw_dir<span class="o">=</span>/PATH/TO/img_raw/train/<span class="w"> </span>--subset<span class="o">=</span>train
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>:
+The raw ImageNet dataset resides in JPEG files should be in the following directory structure. Taking validation set as an example:<br>
+        /PATH/TO/img_raw/val/n01440764/ILSVRC2012_val_00000293.JPEG<br>
+        /PATH/TO/img_raw/val/n01440764/ILSVRC2012_val_00000543.JPEG<br>
+where ‘n01440764’ is the unique synset label associated with these images.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<section id="quantization-config">
+<h2>Quantization Config<a class="headerlink" href="#quantization-config" title="Link to this heading"></a></h2>
+<p>The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the ‘backend’ parameter should be set to ‘itex’ and the ‘device’ parameter should be set to ‘gpu’.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">device</span><span class="o">=</span><span class="s2">&quot;gpu&quot;</span><span class="p">,</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;itex&quot;</span><span class="p">,</span>
+    <span class="o">...</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="quantization">
+<h2>1 Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/tensorflow/image_recognition/tensorflow_models/resnet_v2_101/quantization/ptq
+bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--input_model<span class="o">=</span>/PATH/TO/frozen_resnet_v2_101.pb<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_model<span class="o">=</span>./nc_resnet_v2_101.pb<span class="w"> </span>--dataset_location<span class="o">=</span>/path/to/ImageNet/
+</pre></div>
+</div>
+</section>
+<section id="benchmark">
+<h2>2. Benchmark<a class="headerlink" href="#benchmark" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/tensorflow/image_recognition/tensorflow_models/resnet_v2_101/quantization/ptq
+bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--input_model<span class="o">=</span>./nc_resnet_v2_101.pb<span class="w"> </span>--mode<span class="o">=</span>accuracy<span class="w"> </span>--dataset_location<span class="o">=</span>/path/to/ImageNet/<span class="w"> </span>--batch_size<span class="o">=</span><span class="m">32</span>
+bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--input_model<span class="o">=</span>./nc_resnet_v2_101.pb<span class="w"> </span>--mode<span class="o">=</span>performance<span class="w"> </span>--dataset_location<span class="o">=</span>/path/to/ImageNet/<span class="w"> </span>--batch_size<span class="o">=</span><span class="m">1</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8c2deec590> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

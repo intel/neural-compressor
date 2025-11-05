@@ -1,0 +1,147 @@
+neural_compressor.common.benchmark
+==================================
+
+.. py:module:: neural_compressor.common.benchmark
+
+.. autoapi-nested-parse::
+
+   Benchmark API for Intel Neural Compressor.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.common.benchmark.get_linux_numa_info
+   neural_compressor.common.benchmark.get_windows_numa_info
+   neural_compressor.common.benchmark.dump_numa_info
+   neural_compressor.common.benchmark.parse_str2list
+   neural_compressor.common.benchmark.format_list2str
+   neural_compressor.common.benchmark.get_reversed_numa_info
+   neural_compressor.common.benchmark.get_numa_node
+   neural_compressor.common.benchmark.set_cores_for_instance
+   neural_compressor.common.benchmark.generate_prefix
+   neural_compressor.common.benchmark.run_multi_instance_command
+   neural_compressor.common.benchmark.summary_latency_throughput
+   neural_compressor.common.benchmark.benchmark
+
+
+Module Contents
+---------------
+
+.. py:function:: get_linux_numa_info()
+
+   Collect numa/socket information on linux system.
+
+   :returns:
+
+             demo: {numa_index: {"physical_cpus": "xxx"; "logical_cpus": "xxx"}}
+                                 E.g.    numa_info = {
+                                             0: {"physical_cpus": "0-23", "logical_cpus": "0-23,48-71"},
+                                             1: {"physical_cpus": "24-47", "logical_cpus": "24-47,72-95"}
+                                         }
+   :rtype: numa_info (dict)
+
+
+.. py:function:: get_windows_numa_info()
+
+   Collect socket information on Windows system due to no available numa info.
+
+   :returns:
+
+             demo: {numa_index: {"physical_cpus": "xxx"; "logical_cpus": "xxx"}}
+                                 E.g.    numa_info = {
+                                             0: {"physical_cpus": "0-23", "logical_cpus": "0-23,48-71"},
+                                             1: {"physical_cpus": "24-47", "logical_cpus": "24-47,72-95"}
+                                         }
+   :rtype: numa_info (dict)
+
+
+.. py:function:: dump_numa_info()
+
+   Fetch NUMA info and dump stats in shell, return numa_info.
+
+   :returns: {numa_node_index: list of Physical CPUs in this numa node, ...}
+   :rtype: numa_info (dict)
+
+
+.. py:function:: parse_str2list(cpu_ranges)
+
+   Parse '0-4,7,8' into [0,1,2,3,4,7,8] for machine readable.
+
+
+.. py:function:: format_list2str(cpus)
+
+   Format [0,1,2,3,4,7,8] back to '0-4,7,8' for human readable.
+
+
+.. py:function:: get_reversed_numa_info(numa_info)
+
+   Reverse numa_info.
+
+
+.. py:function:: get_numa_node(core_list, reversed_numa_info)
+
+   Return numa node used in current core_list.
+
+
+.. py:function:: set_cores_for_instance(args, numa_info)
+
+   Set cores for each instance based on the input args.
+
+   All use cases are listed below:
+       Params: a=num_instance; b=num_cores_per_instance; c=cores;
+           - no a, b, c: a=1, c=numa:0
+           - no a, b: a=1, c=c
+           - no a, c: a=numa:0/b, c=numa:0
+           - no b, c: a=a, c=numa:0
+           - no a: a=numa:0/b, c=c
+           - no b: a=a, c=c
+           - no c: a=a, c=a*b
+           - a, b, c: a=a, c=a*b
+
+   :param args: arguments for setting different configurations
+   :type args: argparse
+   :param numa_info: {numa_node_index: list of Physical CPUs in this numa node, ...}
+   :type numa_info: dict
+
+   :returns: {"instance_index": ["node_index", "cpu_index", num_cpu]}
+   :rtype: core_list_per_instance (dict)
+
+
+.. py:function:: generate_prefix(args, core_list)
+
+   Generate the command prefix with `numactl` (Linux) or `start` (Windows) command.
+
+   :param args: arguments for setting different configurations
+   :type args: argparse
+   :param core_list: ["node_index", "cpu_index", num_cpu]
+
+   :returns: command_prefix with specific core list for Linux or Windows.
+   :rtype: command_prefix (str)
+
+
+.. py:function:: run_multi_instance_command(args, core_list_per_instance, raw_cmd)
+
+   Build and trigger commands for multi-instances with subprocess.
+
+   :param args: arguments for setting different configurations
+   :type args: argparse
+   :param core_list_per_instance: {"instance_index": ["node_index", "cpu_index", num_cpu]}
+   :type core_list_per_instance: dict
+   :param raw_cmd: script.py and parameters for this script
+   :type raw_cmd: str
+
+
+.. py:function:: summary_latency_throughput(logfile_dict)
+
+   Get the summary of the benchmark.
+
+
+.. py:function:: benchmark()
+
+   Benchmark API interface.
+
+

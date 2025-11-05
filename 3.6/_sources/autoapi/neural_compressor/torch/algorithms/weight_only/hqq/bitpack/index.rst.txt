@@ -1,0 +1,27 @@
+neural_compressor.torch.algorithms.weight_only.hqq.bitpack
+==========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.weight_only.hqq.bitpack
+
+.. autoapi-nested-parse::
+
+   Bit packing logic for HQQ.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.weight_only.hqq.bitpack.Packer
+
+
+Module Contents
+---------------
+
+.. py:class:: Packer
+
+   Pack/unpack functions collection.
+
+

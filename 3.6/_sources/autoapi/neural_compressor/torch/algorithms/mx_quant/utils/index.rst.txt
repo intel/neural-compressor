@@ -1,0 +1,64 @@
+neural_compressor.torch.algorithms.mx_quant.utils
+=================================================
+
+.. py:module:: neural_compressor.torch.algorithms.mx_quant.utils
+
+.. autoapi-nested-parse::
+
+   MX quantization utils.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.mx_quant.utils.ElemFormat
+   neural_compressor.torch.algorithms.mx_quant.utils.RoundingMode
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.mx_quant.utils.quantize_elemwise_op
+   neural_compressor.torch.algorithms.mx_quant.utils.quantize_mx_op
+
+
+Module Contents
+---------------
+
+.. py:class:: ElemFormat(*args, **kwds)
+
+
+
+   Element format.
+
+
+.. py:class:: RoundingMode
+
+
+
+   Rounding mode.
+
+
+.. py:function:: quantize_elemwise_op(A, mx_specs)
+
+   A function used for element-wise quantization with mx_specs.
+
+   :param A: a tensor that needs to be quantized
+   :type A: torch.Tensor
+   :param mx_specs: dictionary to specify mx_specs
+   :type mx_specs: dict
+
+   :returns: tensor that has been quantized
+   :rtype: torch.Tensor
+
+
+.. py:function:: quantize_mx_op(A: torch.Tensor, elem_format: str, round: str, block_size: int, scale_bits=8, axes=None, expand_and_reshape=False)
+
+   Quantize tensor to MX data type.
+
+

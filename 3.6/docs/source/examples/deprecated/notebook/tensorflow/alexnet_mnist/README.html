@@ -1,0 +1,376 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Intel® Neural Compressor Sample for TensorFlow* &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../versions.html">3.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Intel® Neural Compressor Sample for TensorFlow*</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../_sources/docs/source/examples/deprecated/notebook/tensorflow/alexnet_mnist/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="intel-neural-compressor-sample-for-tensorflow">
+<h1>Intel® Neural Compressor Sample for TensorFlow*<a class="headerlink" href="#intel-neural-compressor-sample-for-tensorflow" title="Link to this heading"></a></h1>
+<section id="background">
+<h2>Background<a class="headerlink" href="#background" title="Link to this heading"></a></h2>
+<p>Low-precision inference can speed up inference obviously, by converting the fp32 model to int8 or bf16 model. Intel provides Intel® Deep Learning Boost technology in the Second Generation Intel® Xeon® Scalable Processors and newer Xeon®, which supports to speed up int8 and bf16 model by hardware.</p>
+<p>Intel® Neural Compressor helps the user to simplify the processing to convert the fp32 model to int8/bf16.</p>
+<p>At the same time, Intel® Neural Compressor will tune the quantization method to reduce the accuracy loss, which is a big blocker for low-precision inference.</p>
+<p>Intel® Neural Compressor is released in Intel® AI Analytics Toolkit and works with Intel® Optimization of TensorFlow*.</p>
+<p>Please refer to the official website for detailed info and news: <a class="reference external" href="https://github.com/intel/neural-compressor">https://github.com/intel/neural-compressor</a></p>
+</section>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>This is a demo to show an End-To-End pipeline to build up a CNN model by Tensorflow to recognize handwriting number and speed up AI model by Intel® Neural Compressor.</p>
+<ol class="simple">
+<li><p>Train a CNN AlexNet model by Keras and Intel Optimization for Tensorflow based on dataset MNIST.</p></li>
+<li><p>Quantize the frozen PB model file by Intel® Neural Compressor to INT8 model.</p></li>
+<li><p>Compare the performance of FP32 and INT8 model by same script.</p></li>
+</ol>
+<p>We will learn the acceleration of AI inference by Intel AI technology:</p>
+<ol class="simple">
+<li><p>Intel® Deep Learning Boost</p></li>
+<li><p>Intel® Neural Compressor</p></li>
+<li><p>Intel® Optimization for Tensorflow*</p></li>
+</ol>
+</section>
+<section id="code">
+<h2>Code<a class="headerlink" href="#code" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Function</th>
+<th>Code</th>
+<th>Input</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Train a CNN AlexNet model</td>
+<td>keras_tf_train_mnist.py</td>
+<td>dataset: MNIST</td>
+<td>fp32_frozen.pb</td>
+</tr>
+<tr>
+<td>Quantize the frozen PB model file</td>
+<td>inc_quantize_model.py</td>
+<td>dataset: MNIST<br>model: fp32_frozen.pb<br>yaml: alexnet.yaml</td>
+<td>alexnet_int8_model.pb</td>
+</tr>
+<tr>
+<td>Test performance</td>
+<td>profiling_inc.py</td>
+<td>fp32_frozen.pb<br>alexnet_int8_model.pb</td>
+<td>32.json<br>8.json</td>
+</tr>
+<tr>
+<td>Compare the performance</td>
+<td>compare_perf.py</td>
+<td>32.json<br>8.json</td>
+<td>stdout/stderr<br>log file<br>fp32_int8_absolute.png<br>fp32_int8_times.png</td>
+</tr>
+</tbody>
+</table><p><strong>run_sample.sh</strong> will call above python scripts to finish the demo.</p>
+</section>
+<section id="hardware-environment">
+<h2>Hardware Environment<a class="headerlink" href="#hardware-environment" title="Link to this heading"></a></h2>
+<p>This demo could be executed on any Intel CPU. But it’s recommended to use 2nd Generation Intel® Xeon® Scalable Processors or newer, which include:</p>
+<ol class="simple">
+<li><p>AVX512 instruction to speed up training &amp; inference AI model.</p></li>
+<li><p>Intel® Deep Learning Boost: Vector Neural Network Instruction (VNNI) to accelerate AI/DL Inference with INT8/BF16 Model.</p></li>
+</ol>
+<p>With Intel® Deep Learning Boost, the performance will be increased obviously. Without it, maybe it’s 1.x times of FP32.</p>
+<ol class="simple">
+<li><p>Intel® DevCloud</p></li>
+</ol>
+<p>If you have no such CPU support Intel® Deep Learning Boost, you could register to Intel® DevCloud and try this example on new Xeon with Intel® Deep Learning Boost freely. To learn more about working with Intel® DevCloud, please refer to <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/tools/devcloud/overview.html">Intel® DevCloud</a></p>
+</section>
+<section id="running-environment">
+<h2>Running Environment<a class="headerlink" href="#running-environment" title="Link to this heading"></a></h2>
+<section id="intel-devcloud">
+<h3>Intel® DevCloud<a class="headerlink" href="#intel-devcloud" title="Link to this heading"></a></h3>
+<section id="getting-started-with-intel-devcloud">
+<h4>Getting Started with Intel® DevCloud<a class="headerlink" href="#getting-started-with-intel-devcloud" title="Link to this heading"></a></h4>
+<p>This article assumes you are familiar with Intel® DevCloud environment. To learn more about working with Intel® DevCloud, please refer to <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/tools/devcloud/overview.html">Intel® DevCloud</a>.
+Specifically, this article assumes:</p>
+<ol class="simple">
+<li><p>You have an Intel® DevCloud account.</p></li>
+<li><p>You are familiar with usage of Intel® DevCloud, like login by SSH client..</p></li>
+<li><p>Developers are familiar with Python, AI model training and inference based on Tensorflow*.</p></li>
+</ol>
+</section>
+<section id="setup-based-on-intel-oneapi-ai-analytics-toolkit">
+<h4>Setup based on Intel® oneAPI AI Analytics Toolkit<a class="headerlink" href="#setup-based-on-intel-oneapi-ai-analytics-toolkit" title="Link to this heading"></a></h4>
+<ol class="simple">
+<li><p>SSH to Intel® DevCloud or Open terminal by Jupyter notebook.</p></li>
+<li><p>Create virtual environment <strong>env_inc</strong>:</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">devcloud_setup_env</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+</section>
+<section id="run-in-jupyter-notebook-in-intel-devcloud-for-oneapi">
+<h4>Run in Jupyter Notebook in Intel® DevCloud for oneAPI<a class="headerlink" href="#run-in-jupyter-notebook-in-intel-devcloud-for-oneapi" title="Link to this heading"></a></h4>
+<p>Please open <strong>inc_sample_for_tensorflow.ipynb</strong> in Jupyter Notebook.</p>
+<p>Following the guide to run this demo.</p>
+</section>
+<section id="run-in-ssh-login-intel-devcloud-for-oneapi">
+<h4>Run in SSH Login Intel® DevCloud for oneAPI<a class="headerlink" href="#run-in-ssh-login-intel-devcloud-for-oneapi" title="Link to this heading"></a></h4>
+<p>This demo will show the obviously acceleration by VNNI. In Intel® DevCloud, please choose compute node with the property ‘clx’ or ‘icx’ or ‘spr’ which support VNNI.</p>
+<section id="job-submit">
+<h5>Job Submit<a class="headerlink" href="#job-submit" title="Link to this heading"></a></h5>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>!qsub run_in_intel_devcloud.sh -d `pwd` -l nodes=1:icx:ppn=2
+28029.v-qsvr-nda.aidevcloud
+</pre></div>
+</div>
+<p>Note, please run above command in login node. There will be error as below if run it on compute node:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">qsub</span><span class="p">:</span> <span class="n">submit</span> <span class="n">error</span> <span class="p">(</span><span class="n">Bad</span> <span class="n">UID</span> <span class="k">for</span> <span class="n">job</span> <span class="n">execution</span> <span class="n">MSG</span><span class="o">=</span><span class="n">ruserok</span> <span class="n">failed</span> <span class="n">validating</span> <span class="n">uXXXXX</span><span class="o">/</span><span class="n">uXXXXX</span> <span class="kn">from</span><span class="w"> </span><span class="nn">s001</span><span class="o">-</span><span class="n">n054</span><span class="o">.</span><span class="n">aidevcloud</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="check-job-status">
+<h5>Check job status<a class="headerlink" href="#check-job-status" title="Link to this heading"></a></h5>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">qstat</span>
+</pre></div>
+</div>
+<p>After the job is over (successfully or fault), there will be log files, like:</p>
+<ol class="simple">
+<li><p><strong>run_in_intel_devcloud.sh.o28029</strong></p></li>
+<li><p><strong>run_in_intel_devcloud.sh.e28029</strong></p></li>
+</ol>
+</section>
+<section id="check-result">
+<h5>Check Result<a class="headerlink" href="#check-result" title="Link to this heading"></a></h5>
+</section>
+<section id="check-result-in-log-file">
+<h5>Check Result in Log File<a class="headerlink" href="#check-result-in-log-file" title="Link to this heading"></a></h5>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>tail -23 `ls -lAtr run_in_intel_devcloud.sh.o* |  tail -1 | awk &#39;{print $9}&#39;`
+</pre></div>
+</div>
+<p>Or
+Check the result in a log file, like : <strong>run_in_intel_devcloud.sh.o28029</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>!tail -23 run_in_intel_devcloud.sh.o1842253
+
+
+Model          FP32                 INT8                    
+throughput(fps)   572.4982883964987        3030.70552731285        
+latency(ms)      2.8339174329018104       2.128233714979522       
+accuracy(%)      0.9799               0.9796                  
+
+Save to fp32_int8_absolute.png
+
+Model         FP32                  INT8                    
+throughput_times  1                    5.293824608282245       
+latency_times    1                    0.7509864932092611      
+accuracy_times   1                    0.9996938463108482      
+
+Save to fp32_int8_times.png
+Please check the PNG files to see the performance!
+This demo is finished successfully!
+Thank you!
+
+########################################################################
+# End of output for job 1842253.v-qsvr-1.aidevcloud
+# Date: Thu 27 Jan 2022 07:05:52 PM PST
+########################################################################
+
+...
+</pre></div>
+</div>
+<p>We will see the performance and accuracy of FP32 and INT8 model. The performance could be obviously increased if running on Xeon with VNNI.</p>
+</section>
+<section id="check-result-in-png-file">
+<h5>Check Result in PNG file<a class="headerlink" href="#check-result-in-png-file" title="Link to this heading"></a></h5>
+<p>The demo creates figure files: fp32_int8_absolute.png, fp32_int8_times.png to show performance bar. They could be used in report.</p>
+<p>Copy files from DevCloud in host:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">scp</span> <span class="n">devcloud</span><span class="p">:</span><span class="o">~/</span><span class="n">xxx</span><span class="o">/*.</span><span class="n">png</span> <span class="o">./</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+<section id="customer-server">
+<h3>Customer Server<a class="headerlink" href="#customer-server" title="Link to this heading"></a></h3>
+<p>Set up own running environment in local server, cloud (including Intel® DevCloud):</p>
+<section id="install-by-pypi">
+<h4>Install by PyPi<a class="headerlink" href="#install-by-pypi" title="Link to this heading"></a></h4>
+<p>Create virtual environment <strong>env_inc</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip_set_env</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>Activate it by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="n">env_inc</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+</pre></div>
+</div>
+</section>
+<section id="install-by-conda">
+<h4>Install by Conda<a class="headerlink" href="#install-by-conda" title="Link to this heading"></a></h4>
+<p>Create virtual environment <strong>env_inc</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda_set_env</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>Activate it by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">env_inc</span>
+</pre></div>
+</div>
+</section>
+<section id="run-by-ssh">
+<h4>Run by SSH<a class="headerlink" href="#run-by-ssh" title="Link to this heading"></a></h4>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">run_sample</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Check the result in screen print out:</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>...
+
+Model          FP32                 INT8                    
+throughput(fps)   572.4982883964987        3030.70552731285        
+latency(ms)      2.8339174329018104       2.128233714979522       
+accuracy(%)      0.9799               0.9796                  
+
+Save to fp32_int8_absolute.png
+
+Model         FP32                  INT8                    
+throughput_times  1                    5.293824608282245       
+latency_times    1                    0.7509864932092611      
+accuracy_times   1                    0.9996938463108482      
+
+Save to fp32_int8_times.png
+Please check the PNG files to see the performance!
+This demo is finished successfully!
+Thank you!
+...
+</pre></div>
+</div>
+<p>We will see the performance and accuracy of FP32 and INT8 model. The performance could be obviously increased if running on Xeon with VNNI.</p>
+<ol class="simple">
+<li><p>Check Result in PNG file</p></li>
+</ol>
+<p>The demo creates figure files: fp32_int8_absolute.png, fp32_int8_times.png to show performance bar. They could be used in report.</p>
+</section>
+<section id="run-by-jupyter-notebook">
+<h4>Run by Jupyter Notebook<a class="headerlink" href="#run-by-jupyter-notebook" title="Link to this heading"></a></h4>
+<p>Please open <strong>inc_sample_for_tensorflow.ipynb</strong> in Jupyter Notebook.</p>
+<p>Following the guide of chapter <strong>Run in Customer Server or Cloud</strong> to run this demo.</p>
+</section>
+</section>
+</section>
+<section id="license">
+<h2>License<a class="headerlink" href="#license" title="Link to this heading"></a></h2>
+<p>Code samples are licensed under the MIT license. See
+<a class="reference external" href="License.txt">License.txt</a> for details.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8c27481c40> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

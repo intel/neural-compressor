@@ -1,0 +1,525 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>ResNeSt &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../versions.html">3.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">ResNeSt</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../_sources/docs/source/examples/deprecated/pytorch/image_recognition/resnest/quantization/ptq/fx/ResNest_README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <p><a class="reference external" href="https://pypi.python.org/pypi/resnest"><img alt="PyPI" src="https://img.shields.io/pypi/v/resnest.svg" /></a>
+<a class="reference external" href="https://pypi.org/project/resnest/#history"><img alt="PyPI Pre-release" src="https://img.shields.io/badge/pypi--prerelease-v0.0.6-ff69b4.svg" /></a>
+<a class="reference external" href="https://github.com/zhanghang1989/ResNeSt/actions"><img alt="PyPI Nightly" src="https://github.com/zhanghang1989/ResNeSt/workflows/Pypi%20Nightly/badge.svg" /></a>
+<a class="reference external" href="http://pepy.tech/project/resnest"><img alt="Downloads" src="http://pepy.tech/badge/resnest" /></a>
+<a class="reference external" href="https://opensource.org/licenses/Apache-2.0"><img alt="License" src="https://img.shields.io/badge/License-Apache%202.0-blue.svg" /></a>
+<a class="reference external" href="https://github.com/zhanghang1989/ResNeSt/actions"><img alt="Unit Test" src="https://github.com/zhanghang1989/ResNeSt/workflows/Unit%20Test/badge.svg" /></a>
+<a class="reference external" href="https://arxiv.org/abs/2004.08955"><img alt="arXiv" src="http://img.shields.io/badge/cs.CV-arXiv%3A2004.08955-B31B1B.svg" /></a></p>
+<p><a class="reference external" href="https://paperswithcode.com/sota/instance-segmentation-on-coco?p=resnest-split-attention-networks"><img alt="PWC" src="https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/resnest-split-attention-networks/instance-segmentation-on-coco" /></a>
+<a class="reference external" href="https://paperswithcode.com/sota/object-detection-on-coco?p=resnest-split-attention-networks"><img alt="PWC" src="https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/resnest-split-attention-networks/object-detection-on-coco" /></a>
+<a class="reference external" href="https://paperswithcode.com/sota/panoptic-segmentation-on-coco-panoptic?p=resnest-split-attention-networks"><img alt="PWC" src="https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/resnest-split-attention-networks/panoptic-segmentation-on-coco-panoptic" /></a>
+<a class="reference external" href="https://paperswithcode.com/sota/semantic-segmentation-on-ade20k?p=resnest-split-attention-networks"><img alt="PWC" src="https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/resnest-split-attention-networks/semantic-segmentation-on-ade20k" /></a>
+<a class="reference external" href="https://paperswithcode.com/sota/semantic-segmentation-on-cityscapes-val?p=resnest-split-attention-networks"><img alt="PWC" src="https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/resnest-split-attention-networks/semantic-segmentation-on-cityscapes-val" /></a>
+<a class="reference external" href="https://paperswithcode.com/sota/semantic-segmentation-on-pascal-context?p=resnest-split-attention-networks"><img alt="PWC" src="https://img.shields.io/endpoint.svg?url=https://paperswithcode.com/badge/resnest-split-attention-networks/semantic-segmentation-on-pascal-context" /></a></p>
+<section id="resnest">
+<h1>ResNeSt<a class="headerlink" href="#resnest" title="Link to this heading"></a></h1>
+<p>Split-Attention Network, A New ResNet Variant. It significantly boosts the performance of downstream models such as Mask R-CNN, Cascade R-CNN and DeepLabV3.</p>
+<p><img alt="docs/source/examples/deprecated/pytorch/image_recognition/resnest/quantization/ptq/fx/miscs/abstract.jpg" src="docs/source/examples/deprecated/pytorch/image_recognition/resnest/quantization/ptq/fx/miscs/abstract.jpg" /></p>
+<section id="table-of-contents">
+<h2>Table of Contents<a class="headerlink" href="#table-of-contents" title="Link to this heading"></a></h2>
+<ol class="simple">
+<li><p><a class="reference external" href="#pretrained-models">Pretrained Models</a></p></li>
+<li><p><a class="reference external" href="#transfer-learning-models">Transfer Learning Models</a></p></li>
+<li><p><a class="reference external" href="#verify-backbone-models">Verify Backbone Models</a></p></li>
+<li><p><a class="reference external" href="#how-to-train">How to Train</a></p></li>
+<li><p><a class="reference external" href="#reference">Reference</a></p></li>
+</ol>
+</section>
+<section id="pypi-github-install">
+<h2>Pypi / GitHub Install<a class="headerlink" href="#pypi-github-install" title="Link to this heading"></a></h2>
+<ol class="simple">
+<li><p>Install this package repo, note that you only need to choose one of the options</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># using github url</span>
+pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/zhanghang1989/ResNeSt
+
+<span class="c1"># using pypi</span>
+pip<span class="w"> </span>install<span class="w"> </span>resnest<span class="w"> </span>--pre
+</pre></div>
+</div>
+</section>
+<section id="pretrained-models">
+<h2>Pretrained Models<a class="headerlink" href="#pretrained-models" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th></th>
+<th>crop size</th>
+<th>PyTorch</th>
+<th>Gluon</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ResNeSt-50</td>
+<td>224</td>
+<td>81.03</td>
+<td>81.04</td>
+</tr>
+<tr>
+<td>ResNeSt-101</td>
+<td>256</td>
+<td>82.83</td>
+<td>82.81</td>
+</tr>
+<tr>
+<td>ResNeSt-200</td>
+<td>320</td>
+<td>83.84</td>
+<td>83.88</td>
+</tr>
+<tr>
+<td>ResNeSt-269</td>
+<td>416</td>
+<td>84.54</td>
+<td>84.53</td>
+</tr>
+</tbody>
+</table><ul class="simple">
+<li><p><strong>3rd party implementations</strong> are available: <a class="reference external" href="https://github.com/QiaoranC/tf_ResNeSt_RegNet_model">Tensorflow</a>, <a class="reference external" href="https://github.com/NetEase-GameAI/ResNeSt-caffe">Caffe</a>.</p></li>
+<li><p>Extra ablation study models are available in <a class="reference external" href="./ablation.html">link</a></p></li>
+</ul>
+<section id="pytorch-models">
+<h3>PyTorch Models<a class="headerlink" href="#pytorch-models" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Load using Torch Hub</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+<span class="c1"># get list of models</span>
+<span class="n">torch</span><span class="o">.</span><span class="n">hub</span><span class="o">.</span><span class="n">list</span><span class="p">(</span><span class="s1">&#39;zhanghang1989/ResNeSt&#39;</span><span class="p">,</span> <span class="n">force_reload</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+
+<span class="c1"># load pretrained models, using ResNeSt-50 as an example</span>
+<span class="n">net</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">hub</span><span class="o">.</span><span class="n">load</span><span class="p">(</span><span class="s1">&#39;zhanghang1989/ResNeSt&#39;</span><span class="p">,</span> <span class="s1">&#39;resnest50&#39;</span><span class="p">,</span> <span class="n">pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Load using python package</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># using ResNeSt-50 as an example</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">resnest.torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">resnest50</span>
+<span class="n">net</span> <span class="o">=</span> <span class="n">resnest50</span><span class="p">(</span><span class="n">pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="gluon-models">
+<h3>Gluon Models<a class="headerlink" href="#gluon-models" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Load pretrained model:</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># using ResNeSt-50 as an example</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">resnest.gluon</span><span class="w"> </span><span class="kn">import</span> <span class="n">resnest50</span>
+<span class="n">net</span> <span class="o">=</span> <span class="n">resnest50</span><span class="p">(</span><span class="n">pretrained</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="transfer-learning-models">
+<h2>Transfer Learning Models<a class="headerlink" href="#transfer-learning-models" title="Link to this heading"></a></h2>
+<section id="detectron-models">
+<h3>Detectron Models<a class="headerlink" href="#detectron-models" title="Link to this heading"></a></h3>
+<p>Training code and pretrained models are released at our <a class="reference external" href="https://github.com/zhanghang1989/detectron2-ResNeSt">Detectron2 Fork</a>.</p>
+<section id="object-detection-on-ms-coco-validation-set">
+<h4>Object Detection on MS-COCO validation set<a class="headerlink" href="#object-detection-on-ms-coco-validation-set" title="Link to this heading"></a></h4>
+<table class="tg">
+  <tr>
+    <th class="tg-0pky">Method</th>
+    <th class="tg-0pky">Backbone</th>
+    <th class="tg-0pky">mAP%</th>
+  </tr>
+  <tr>
+    <td rowspan="4" class="tg-0pky">Faster R-CNN</td>
+    <td class="tg-0pky">ResNet-50</td>
+    <td class="tg-0pky">39.25</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNet-101</td>
+    <td class="tg-0lax">41.37</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-50 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>42.33</b></td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-101 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>44.72</b></td>
+  </tr>
+  <tr>
+    <td rowspan="5" class="tg-0lax">Cascade R-CNN</td>
+    <td class="tg-0lax">ResNet-50</td>
+    <td class="tg-0lax">42.52</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNet-101</td>
+    <td class="tg-0lax">44.03</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-50 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>45.41</b></td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-101 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>47.50</b></td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-200 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>49.03</b></td>
+  </tr>
+</table></section>
+<section id="instance-segmentation">
+<h4>Instance Segmentation<a class="headerlink" href="#instance-segmentation" title="Link to this heading"></a></h4>
+<table class="tg">
+  <tr>
+    <th class="tg-0pky">Method</th>
+    <th class="tg-0pky">Backbone</th>
+    <th class="tg-0pky">bbox</th>
+    <th class="tg-0lax">mask</th>
+  </tr>
+  <tr>
+    <td rowspan="4" class="tg-0pky">Mask R-CNN</td>
+    <td class="tg-0pky">ResNet-50</td>
+    <td class="tg-0pky">39.97</td>
+    <td class="tg-0lax">36.05</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNet-101</td>
+    <td class="tg-0lax">41.78</td>
+    <td class="tg-0lax">37.51</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-50 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>42.81</b></td>
+    <td class="tg-0lax"><b>38.14</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-101 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>45.75</b></td>
+    <td class="tg-0lax"><b>40.65</b></td>
+  </tr>
+  <tr>
+    <td rowspan="7" class="tg-0lax">Cascade R-CNN</td>
+    <td class="tg-0lax">ResNet-50</td>
+    <td class="tg-0lax">43.06</td>
+    <td class="tg-0lax">37.19</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNet-101</td>
+    <td class="tg-0lax">44.79</td>
+    <td class="tg-0lax">38.52</td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-50 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>46.19</b></td>
+    <td class="tg-0lax"><b>39.55</b></td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-101 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>48.30</b></td>
+    <td class="tg-0lax"><b>41.56</b></td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-200 (w/ tricks <span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>50.54</b></td>
+    <td class="tg-0lax"><b>44.21</b></td>
+  </tr>
+   <tr>
+    <td rowspan="2" class="tg-0lax">ResNeSt-200-dcn (w/ tricks <span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>50.91</b></td>
+    <td class="tg-0lax"><b>44.50</b></td>
+  </tr>
+   <tr>
+    <td class="tg-0lax"><b>53.30*</b></td>
+    <td class="tg-0lax"><b>47.10*</b></td>
+  </tr>
+</table><p>All of results are reported on COCO-2017 validation dataset. The values with * demonstrate the multi-scale testing performance on the test-dev2019.</p>
+</section>
+</section>
+</section>
+<section id="panoptic-segmentation">
+<h2>Panoptic Segmentation<a class="headerlink" href="#panoptic-segmentation" title="Link to this heading"></a></h2>
+<table class="tg">
+  <tr>
+    <th class="tg-0pky">Backbone</th>
+    <th class="tg-0pky">bbox</th>
+    <th class="tg-0lax">mask</th>
+    <th class="tg-0lax">PQ</th>
+  </tr>
+  <tr>
+    <td class="tg-0pky">ResNeSt-200</td>
+    <td class="tg-0pky">51.00</td>
+    <td class="tg-0lax">43.68</td>
+    <td class="tg-0lax">47.90</td>
+   </tr> 
+</table><section id="semantic-segmentation">
+<h3>Semantic Segmentation<a class="headerlink" href="#semantic-segmentation" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>PyTorch models and training: Please visit <a class="reference external" href="https://hangzhang.org/PyTorch-Encoding/model_zoo/segmentation.html">PyTorch Encoding Toolkit</a>.</p></li>
+<li><p>Training with Gluon: Please visit <a class="reference external" href="https://gluon-cv.mxnet.io/model_zoo/segmentation.html#ade20k-dataset">GluonCV Toolkit</a>.</p></li>
+</ul>
+<section id="results-on-ade20k">
+<h4>Results on ADE20K<a class="headerlink" href="#results-on-ade20k" title="Link to this heading"></a></h4>
+<table class="tg">
+  <tr>
+    <th class="tg-cly1">Method</th>
+    <th class="tg-cly1">Backbone</th>
+    <th class="tg-cly1">pixAcc%</th>
+    <th class="tg-cly1">mIoU%</th>
+  </tr>
+  <tr>
+    <td rowspan="6" class="tg-cly1">Deeplab-V3<br></td>
+    <td class="tg-cly1">ResNet-50</td>
+    <td class="tg-cly1">80.39</td>
+    <td class="tg-cly1">42.1</td>
+  </tr>
+  <tr>
+    <td class="tg-cly1">ResNet-101</td>
+    <td class="tg-cly1">81.11</b></td>
+    <td class="tg-cly1">44.14</b></td>
+  </tr>
+  <tr>
+    <td class="tg-cly1">ResNeSt-50 (<span style="color:red">ours</span>)</td>
+    <td class="tg-cly1"><b>81.17</b></td>
+    <td class="tg-cly1"><b>45.12</b></td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-101 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>82.07</td>
+    <td class="tg-0lax"><b>46.91</b></td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-200 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>82.45</td>
+    <td class="tg-0lax"><b>48.36</b></td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-269 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax"><b>82.62</td>
+    <td class="tg-0lax"><b>47.60</b></td>
+  </tr>
+</table></section>
+<section id="results-on-cityscapes">
+<h4>Results on Cityscapes<a class="headerlink" href="#results-on-cityscapes" title="Link to this heading"></a></h4>
+<table class="tg">
+  <tr>
+    <th class="tg-cly1">Method</th>
+    <th class="tg-cly1">Backbone</th>
+    <th class="tg-cly1">Split</th>
+    <th class="tg-cly1">w Mapillary</th>
+    <th class="tg-cly1">mIoU%</th>
+  </tr>
+  <tr>
+    <td rowspan="3" class="tg-cly1">Deeplab-V3+<br></td>
+    <td class="tg-cly1">ResNeSt-200 (<span style="color:red">ours</span>)</td>
+    <td class="tg-cly1">Validation</td>
+    <td class="tg-cly1">no</td>
+    <td class="tg-cly1">82.7</td>
+  </tr>
+  <tr>
+    <td class="tg-cly1">ResNeSt-200 (<span style="color:red">ours</span>)</td>
+    <td class="tg-cly1">Validation</td>
+    <td class="tg-cly1">yes</td>
+    <td class="tg-cly1"><b>83.8<b></td>
+  </tr>
+  <tr>
+    <td class="tg-0lax">ResNeSt-200 (<span style="color:red">ours</span>)</td>
+    <td class="tg-0lax">Test</td>
+    <td class="tg-cly1">yes</td>
+    <td class="tg-0lax"><b>83.3<b></td>
+  </tr>
+</table></section>
+</section>
+</section>
+<section id="verify-backbone-models">
+<h2>Verify Backbone Models:<a class="headerlink" href="#verify-backbone-models" title="Link to this heading"></a></h2>
+<p><strong>Note:</strong> the inference speed reported in the paper are tested using Gluon implementation with RecordIO data.</p>
+<section id="prepare-imagenet-dataset">
+<h3>Prepare ImageNet dataset:<a class="headerlink" href="#prepare-imagenet-dataset" title="Link to this heading"></a></h3>
+<p>Here we use raw image data format for simplicity, please follow <a class="reference external" href="https://gluon-cv.mxnet.io/build/examples_datasets/recordio.html">GluonCV tutorial</a> if you would like to use RecordIO format.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>scripts/dataset/
+<span class="c1"># assuming you have downloaded the dataset in the current folder</span>
+python<span class="w"> </span>prepare_imagenet.py<span class="w"> </span>--download-dir<span class="w"> </span>./
+</pre></div>
+</div>
+</section>
+<section id="torch-model">
+<h3>Torch Model<a class="headerlink" href="#torch-model" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># use resnest50 as an example</span>
+<span class="nb">cd</span><span class="w"> </span>scripts/torch/
+python<span class="w"> </span>verify.py<span class="w"> </span>--model<span class="w"> </span>resnest50<span class="w"> </span>--crop-size<span class="w"> </span><span class="m">224</span>
+</pre></div>
+</div>
+</section>
+<section id="gluon-model">
+<h3>Gluon Model<a class="headerlink" href="#gluon-model" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># use resnest50 as an example</span>
+<span class="nb">cd</span><span class="w"> </span>scripts/gluon/
+python<span class="w"> </span>verify.py<span class="w"> </span>--model<span class="w"> </span>resnest50<span class="w"> </span>--crop-size<span class="w"> </span><span class="m">224</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="how-to-train">
+<h2>How to Train<a class="headerlink" href="#how-to-train" title="Link to this heading"></a></h2>
+<section id="imagenet-models">
+<h3>ImageNet Models<a class="headerlink" href="#imagenet-models" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Training with MXNet Gluon: Please visit <a class="reference external" href="./scripts/gluon/">Gluon folder</a>.</p></li>
+<li><p>Training with PyTorch: Please visit <a class="reference external" href="https://hangzhang.org/PyTorch-Encoding/model_zoo/imagenet.html">PyTorch Encoding Toolkit</a> (slightly worse than Gluon implementation).</p></li>
+</ul>
+</section>
+<section id="id1">
+<h3>Detectron Models<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>For object detection and instance segmentation models, please visit our <a class="reference external" href="https://github.com/zhanghang1989/detectron2-ResNeSt">detectron2-ResNeSt fork</a>.</p>
+</section>
+<section id="id2">
+<h3>Semantic Segmentation<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Training with PyTorch: <a class="reference external" href="https://hangzhang.org/PyTorch-Encoding/model_zoo/segmentation.html">Encoding Toolkit</a>.</p></li>
+<li><p>Training with MXNet: <a class="reference external" href="https://gluon-cv.mxnet.io/model_zoo/segmentation.html#ade20k-dataset">GluonCV Toolkit</a>.</p></li>
+</ul>
+</section>
+</section>
+<section id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h2>
+<p><strong>ResNeSt: Split-Attention Networks</strong> [<a class="reference external" href="https://arxiv.org/pdf/2004.08955.pdf">arXiv</a>]</p>
+<p>Hang Zhang, Chongruo Wu, Zhongyue Zhang, Yi Zhu, Zhi Zhang, Haibin Lin, Yue Sun, Tong He, Jonas Muller, R. Manmatha, Mu Li and Alex Smola</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@article</span><span class="p">{</span><span class="n">zhang2020resnest</span><span class="p">,</span>
+<span class="n">title</span><span class="o">=</span><span class="p">{</span><span class="n">ResNeSt</span><span class="p">:</span> <span class="n">Split</span><span class="o">-</span><span class="n">Attention</span> <span class="n">Networks</span><span class="p">},</span>
+<span class="n">author</span><span class="o">=</span><span class="p">{</span><span class="n">Zhang</span><span class="p">,</span> <span class="n">Hang</span> <span class="ow">and</span> <span class="n">Wu</span><span class="p">,</span> <span class="n">Chongruo</span> <span class="ow">and</span> <span class="n">Zhang</span><span class="p">,</span> <span class="n">Zhongyue</span> <span class="ow">and</span> <span class="n">Zhu</span><span class="p">,</span> <span class="n">Yi</span> <span class="ow">and</span> <span class="n">Zhang</span><span class="p">,</span> <span class="n">Zhi</span> <span class="ow">and</span> <span class="n">Lin</span><span class="p">,</span> <span class="n">Haibin</span> <span class="ow">and</span> <span class="n">Sun</span><span class="p">,</span> <span class="n">Yue</span> <span class="ow">and</span> <span class="n">He</span><span class="p">,</span> <span class="n">Tong</span> <span class="ow">and</span> <span class="n">Muller</span><span class="p">,</span> <span class="n">Jonas</span> <span class="ow">and</span> <span class="n">Manmatha</span><span class="p">,</span> <span class="n">R</span><span class="o">.</span> <span class="ow">and</span> <span class="n">Li</span><span class="p">,</span> <span class="n">Mu</span> <span class="ow">and</span> <span class="n">Smola</span><span class="p">,</span> <span class="n">Alexander</span><span class="p">},</span>
+<span class="n">journal</span><span class="o">=</span><span class="p">{</span><span class="n">arXiv</span> <span class="n">preprint</span> <span class="n">arXiv</span><span class="p">:</span><span class="mf">2004.08955</span><span class="p">},</span>
+<span class="n">year</span><span class="o">=</span><span class="p">{</span><span class="mi">2020</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<section id="major-contributors">
+<h3>Major Contributors<a class="headerlink" href="#major-contributors" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>ResNeSt Backbone (<a class="reference external" href="https://hangzhang.org/">Hang Zhang</a>)</p></li>
+<li><p>Detectron Models (<a class="reference external" href="https://github.com/chongruo">Chongruo Wu</a>, <a class="reference external" href="http://zhongyuezhang.com/">Zhongyue Zhang</a>)</p></li>
+<li><p>Semantic Segmentation (<a class="reference external" href="https://sites.google.com/view/yizhu/home">Yi Zhu</a>)</p></li>
+<li><p>Distributed Training (<a class="reference external" href="https://sites.google.com/view/haibinlin/">Haibin Lin</a>)</p></li>
+</ul>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8c2d9a43b0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

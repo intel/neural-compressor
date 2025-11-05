@@ -1,0 +1,207 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../versions.html">3.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../_sources/docs/source/examples/deprecated/pytorch/object_detection/ssd_resnet34/quantization/ptq/ipex/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">pip</span> <span class="n">install</span> <span class="o">-</span><span class="n">r</span> <span class="n">requirements</span><span class="o">.</span><span class="n">txt</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: Validated PyTorch <a class="reference external" href="/docs/source/installation_guide.html#validated-software-environment">Version</a>.</p>
+</div></blockquote>
+<section id="install-intel-extension-for-pytorch">
+<h3>install Intel® Extension for PyTorch<a class="headerlink" href="#install-intel-extension-for-pytorch" title="Link to this heading"></a></h3>
+<div class="highlight-shell position-relative notranslate"><div class="highlight"><pre><span></span>python -m pip install intel_extension_for_pytorch -f https://software.intel.com/ipex-whl-stable
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: Intel® Extension for PyTorch* has PyTorch version requirement. Please check more detailed information via the URL below.</p>
+<p>More installation methods can be found at <a class="reference external" href="https://intel.github.io/intel-extension-for-pytorch/1.12.0/tutorials/installation.html">Installation Guide</a></p>
+</div></blockquote>
+</section>
+</section>
+<section id="prepare-model">
+<h2>2. Prepare Model<a class="headerlink" href="#prepare-model" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">cd</span> <span class="o">&lt;</span><span class="n">path</span> <span class="n">to</span> <span class="n">your</span> <span class="n">clone</span> <span class="n">of</span> <span class="n">the</span> <span class="n">model</span> <span class="n">zoo</span><span class="o">&gt;/</span><span class="n">examples</span><span class="o">/</span><span class="n">pytorch</span><span class="o">/</span><span class="n">object_detection</span><span class="o">/</span><span class="n">ssd_resnet34</span><span class="o">/</span><span class="n">quantization</span><span class="o">/</span><span class="n">ptq</span><span class="o">/</span><span class="n">ipex</span>
+    <span class="n">bash</span> <span class="n">download_model</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+</section>
+<section id="prepare-dataset">
+<h2>3. Prepare Dataset<a class="headerlink" href="#prepare-dataset" title="Link to this heading"></a></h2>
+<p>Download the 2017 COCO dataset using the <code class="docutils literal notranslate"><span class="pre">download_dataset.sh</span></code> script.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">cd</span> <span class="o">&lt;</span><span class="n">path</span> <span class="n">to</span> <span class="n">your</span> <span class="n">clone</span> <span class="n">of</span> <span class="n">the</span> <span class="n">model</span> <span class="n">zoo</span><span class="o">&gt;/</span><span class="n">examples</span><span class="o">/</span><span class="n">pytorch</span><span class="o">/</span><span class="n">object_detection</span><span class="o">/</span><span class="n">ssd_resnet34</span><span class="o">/</span><span class="n">quantization</span><span class="o">/</span><span class="n">ptq</span><span class="o">/</span><span class="n">ipex</span>
+
+    <span class="n">bash</span> <span class="n">download_dataset</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+</section>
+<section id="setting-of-tuning-performance">
+<h2>4. Setting of Tuning Performance<a class="headerlink" href="#setting-of-tuning-performance" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Set Jemalloc Preload for better performance. The jemalloc should be built from the General setup section.</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    export LD_PRELOAD=&quot;path/lib/libjemalloc.so&quot;:$LD_PRELOAD
+    export MALLOC_CONF=&quot;oversize_threshold:1,background_thread:true,metadata_thp:auto,dirty_decay_ms:9000000000,muzzy_decay_ms:9000000000&quot;
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Set IOMP preload for better performance. IOMP should be installed in your conda env from the General setup section.</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    export LD_PRELOAD=path/lib/libiomp5.so:$LD_PRELOAD
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Set ENV to use AMX if you are using SPR</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>    <span class="n">export</span> <span class="n">DNNL_MAX_CPU_ISA</span><span class="o">=</span><span class="n">AVX512_CORE_AMX</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="quantization">
+<h1>Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h1>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">infer</span><span class="o">.</span><span class="n">py</span>
+    <span class="o">--</span><span class="n">data</span> <span class="n">DATASET_DIR</span>
+    <span class="o">--</span><span class="n">device</span> <span class="mi">0</span>
+    <span class="o">--</span><span class="n">checkpoint</span>  <span class="n">PRETAINED_MODEL</span>   <span class="c1">#./pretrained/resnet34-ssd1200.pth </span>
+    <span class="o">-</span><span class="n">w</span> <span class="mi">10</span> 
+    <span class="o">-</span><span class="n">j</span> <span class="mi">0</span> 
+    <span class="o">--</span><span class="n">no</span><span class="o">-</span><span class="n">cuda</span> 
+    <span class="o">--</span><span class="n">batch</span><span class="o">-</span><span class="n">size</span> <span class="mi">16</span> 
+    <span class="o">--</span><span class="n">tune</span> 
+    <span class="o">--</span><span class="n">accuracy</span><span class="o">-</span><span class="n">mode</span>
+</pre></div>
+</div>
+<p>or</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">run_quant</span><span class="o">.</span><span class="n">sh</span> <span class="o">--</span><span class="n">dataset_location</span><span class="o">=</span><span class="n">dataset</span> <span class="o">--</span><span class="n">input_model</span><span class="o">=</span><span class="n">model</span>
+</pre></div>
+</div>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">bash</span> <span class="n">run_benchmark</span><span class="o">.</span><span class="n">sh</span> <span class="o">--</span><span class="n">dataset_location</span><span class="o">=</span><span class="n">dataset</span> <span class="o">--</span><span class="n">input_model</span><span class="o">=</span><span class="n">model</span> <span class="o">--</span><span class="n">mode</span><span class="o">=</span><span class="n">accuracy</span><span class="o">/</span><span class="n">performance</span> <span class="o">--</span><span class="n">int8</span><span class="o">=</span><span class="kc">True</span><span class="o">/</span><span class="kc">False</span>
+</pre></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8c2dad5490> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

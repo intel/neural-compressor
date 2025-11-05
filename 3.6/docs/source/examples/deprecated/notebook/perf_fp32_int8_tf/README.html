@@ -1,0 +1,224 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Performance of FP32 Vs. INT8 ResNet50 Model &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">3.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Performance of FP32 Vs. INT8 ResNet50 Model</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/docs/source/examples/deprecated/notebook/perf_fp32_int8_tf/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="performance-of-fp32-vs-int8-resnet50-model">
+<h1>Performance of FP32 Vs. INT8 ResNet50 Model<a class="headerlink" href="#performance-of-fp32-vs-int8-resnet50-model" title="Link to this heading"></a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Intel® Neural Compressor helps user to quantize FP32 model to accelerate the inference. The increase is obviously if running on Xeon with Intel® Deep Learning Boost.</p>
+<p>This is one command example supports user test the performance improvement of a quantized ResNet50 model based on Tensorflow by Intel® Neural Compressor, without any code work and prepare work on local server or cloud.</p>
+</section>
+<section id="steps">
+<h2>Steps<a class="headerlink" href="#steps" title="Link to this heading"></a></h2>
+<ol class="simple">
+<li><p>Download the FP32 and INT8 model of ResNet50 based on Tensorflow.</p></li>
+<li><p>Test the performance (throughput and latency) of both models in same code.</p></li>
+<li><p>Compare the performance and output result in screen print and PNG file.</p></li>
+</ol>
+<p>It uses the dummy dataset to test performance, so no accuracy data is tested. If you want to know the accuracy impact, please refer to other examples.</p>
+</section>
+<section id="check-cpu-support-intel-deep-learning-boost">
+<h2>Check CPU Support Intel® Deep Learning Boost<a class="headerlink" href="#check-cpu-support-intel-deep-learning-boost" title="Link to this heading"></a></h2>
+<p>To get obviously increase, it’s recommended to test quantized model on CPU support Intel® Deep Learning Boost.</p>
+<p>Run following command to check in Ubuntu:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">lscpu</span> <span class="o">|</span> <span class="n">grep</span> <span class="n">avx512_vnni</span>
+
+<span class="o">...</span>
+<span class="n">avx512_vnni</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+<p>If there is avx512_vnni, that means the CPU supports Intel® Deep Learning Boost.</p>
+</section>
+<section id="setup-environment">
+<h2>Setup Environment<a class="headerlink" href="#setup-environment" title="Link to this heading"></a></h2>
+<p>Following commands don’t need to run manually. They will be called during running sample automatically.</p>
+<section id="script">
+<h3>Script<a class="headerlink" href="#script" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">set_env</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+</section>
+<section id="activate-running-environment">
+<h3>Activate Running Environment<a class="headerlink" href="#activate-running-environment" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="n">env_intel_tf</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="run-sample">
+<h2>Run Sample<a class="headerlink" href="#run-sample" title="Link to this heading"></a></h2>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">run</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>This script will execute following steps:</p>
+<ol class="simple">
+<li><p>Setup running environment</p></li>
+<li><p>Activate running environment</p></li>
+<li><p>Test performance</p></li>
+<li><p>Compare the result.</p></li>
+</ol>
+</section>
+<section id="check-result">
+<h2>Check Result<a class="headerlink" href="#check-result" title="Link to this heading"></a></h2>
+<ol class="simple">
+<li><p>Screen Print</p></li>
+</ol>
+<p>We will see the result in screen.</p>
+<p>For example:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">Compare</span> <span class="n">the</span> <span class="n">Performance</span> <span class="n">of</span> <span class="n">FP32</span> <span class="ow">and</span> <span class="n">INT8</span> <span class="n">Models</span>
+<span class="n">Model</span>           <span class="n">FP32</span>                    <span class="n">INT8</span>                    
+<span class="n">throughput</span><span class="p">(</span><span class="n">fps</span><span class="p">)</span> <span class="mf">378.35371907536023</span>      <span class="n">X113</span><span class="mf">.26080122625</span>        
+<span class="n">latency</span><span class="p">(</span><span class="n">ms</span><span class="p">)</span>     <span class="mf">38.190600580098675</span>      <span class="n">Y7</span><span class="mf">.58170614437181</span>       
+<span class="n">qt</span><span class="o">.</span><span class="n">qpa</span><span class="o">.</span><span class="n">xcb</span><span class="p">:</span> <span class="n">XKeyboard</span> <span class="n">extension</span> <span class="ow">not</span> <span class="n">present</span> <span class="n">on</span> <span class="n">the</span> <span class="n">X</span> <span class="n">server</span>
+
+<span class="n">Save</span> <span class="n">to</span> <span class="n">fp32_int8_absolute</span><span class="o">.</span><span class="n">png</span>
+
+<span class="n">Model</span>           <span class="n">FP32</span>                    <span class="n">INT8</span>                    
+<span class="n">throughput_times1</span>                       <span class="n">X</span><span class="mf">.942381018341494</span>       
+<span class="n">latency_times</span>   <span class="mi">1</span>                       <span class="n">Y</span><span class="mf">.46036736467385464</span>     
+
+<span class="n">Save</span> <span class="n">to</span> <span class="n">fp32_int8_times</span><span class="o">.</span><span class="n">png</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Image File</p></li>
+</ol>
+<p>The result will be shown as figures in PNG files:
+Please check them:</p>
+<p>fp32_int8_absolute.png</p>
+<p>fp32_int8_times.png</p>
+<section id="note">
+<h3>Note<a class="headerlink" href="#note" title="Link to this heading"></a></h3>
+<ol class="simple">
+<li><p>Code is not optimize for performance.</p></li>
+</ol>
+<p>This sample uses common code to test the performance of FP32 and INT8 ResNet50 models. The code is not designed to optimize to release hardware performance.</p>
+<p>To get the better benchmark result, please refer <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/articles/technical/maximize-tensorflow-performance-on-cpu-considerations-and-recommendations-for-inference.html">Maximize TensorFlow* Performance on CPUs</a></p>
+<ol class="simple">
+<li><p>No accuracy data.</p></li>
+</ol>
+<p>This sample doesn’t test the accuracy and compare, because it uses dummy dataset.</p>
+<p>If you want to know the accuracy lost, please refer to other tutorial of Intel® Neural Compressor.</p>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8c273a3b60> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,345 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PyTorch-YOLOv3 &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../versions.html">3.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">PyTorch-YOLOv3</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../_sources/docs/source/examples/deprecated/pytorch/object_detection/yolo_v3/quantization/ptq_static/fx/YOLOV3_README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pytorch-yolov3">
+<h1>PyTorch-YOLOv3<a class="headerlink" href="#pytorch-yolov3" title="Link to this heading"></a></h1>
+<p>A minimal PyTorch implementation of YOLOv3, with support for training, inference and evaluation.</p>
+<section id="installation">
+<h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
+<section id="clone-and-install-requirements">
+<h3>Clone and install requirements<a class="headerlink" href="#clone-and-install-requirements" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ git clone https://github.com/eriklindernoren/PyTorch-YOLOv3
+$ cd PyTorch-YOLOv3/
+$ sudo pip3 install -r requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="download-pretrained-weights">
+<h3>Download pretrained weights<a class="headerlink" href="#download-pretrained-weights" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cd weights/
+$ bash download_weights.sh
+</pre></div>
+</div>
+</section>
+<section id="download-coco">
+<h3>Download COCO<a class="headerlink" href="#download-coco" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cd data/
+$ bash get_coco_dataset.sh
+</pre></div>
+</div>
+</section>
+</section>
+<section id="test">
+<h2>Test<a class="headerlink" href="#test" title="Link to this heading"></a></h2>
+<p>Evaluates the model on COCO test.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python3 test.py --weights_path weights/yolov3.weights
+</pre></div>
+</div>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Model</th>
+<th style="text-align: center;">mAP (min. 50 IoU)</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>YOLOv3 608 (paper)</td>
+<td style="text-align: center;">57.9</td>
+</tr>
+<tr>
+<td>YOLOv3 608 (this impl.)</td>
+<td style="text-align: center;">57.3</td>
+</tr>
+<tr>
+<td>YOLOv3 416 (paper)</td>
+<td style="text-align: center;">55.3</td>
+</tr>
+<tr>
+<td>YOLOv3 416 (this impl.)</td>
+<td style="text-align: center;">55.5</td>
+</tr>
+</tbody>
+</table></section>
+<section id="inference">
+<h2>Inference<a class="headerlink" href="#inference" title="Link to this heading"></a></h2>
+<p>Uses pretrained weights to make predictions on images. Below table displays the inference times when using as inputs images scaled to 256x256. The ResNet backbone measurements are taken from the YOLOv3 paper. The Darknet-53 measurement marked shows the inference time of this implementation on my 1080ti card.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Backbone</th>
+<th style="text-align: center;">GPU</th>
+<th style="text-align: center;">FPS</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>ResNet-101</td>
+<td style="text-align: center;">Titan X</td>
+<td style="text-align: center;">53</td>
+</tr>
+<tr>
+<td>ResNet-152</td>
+<td style="text-align: center;">Titan X</td>
+<td style="text-align: center;">37</td>
+</tr>
+<tr>
+<td>Darknet-53 (paper)</td>
+<td style="text-align: center;">Titan X</td>
+<td style="text-align: center;">76</td>
+</tr>
+<tr>
+<td>Darknet-53 (this impl.)</td>
+<td style="text-align: center;">1080ti</td>
+<td style="text-align: center;">74</td>
+</tr>
+</tbody>
+</table><div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python3 detect.py --image_folder data/samples/
+</pre></div>
+</div>
+<p align="center"><img src="assets/giraffe.png" width="480"\></p>
+<p align="center"><img src="assets/dog.png" width="480"\></p>
+<p align="center"><img src="assets/traffic.png" width="480"\></p>
+<p align="center"><img src="assets/messi.png" width="480"\></p></section>
+<section id="train">
+<h2>Train<a class="headerlink" href="#train" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>train.py<span class="w"> </span><span class="o">[</span>-h<span class="o">]</span><span class="w"> </span><span class="o">[</span>--epochs<span class="w"> </span>EPOCHS<span class="o">]</span><span class="w"> </span><span class="o">[</span>--batch_size<span class="w"> </span>BATCH_SIZE<span class="o">]</span>
+<span class="w">                </span><span class="o">[</span>--gradient_accumulations<span class="w"> </span>GRADIENT_ACCUMULATIONS<span class="o">]</span>
+<span class="w">                </span><span class="o">[</span>--model_def<span class="w"> </span>MODEL_DEF<span class="o">]</span><span class="w"> </span><span class="o">[</span>--data_config<span class="w"> </span>DATA_CONFIG<span class="o">]</span>
+<span class="w">                </span><span class="o">[</span>--pretrained_weights<span class="w"> </span>PRETRAINED_WEIGHTS<span class="o">]</span><span class="w"> </span><span class="o">[</span>--n_cpu<span class="w"> </span>N_CPU<span class="o">]</span>
+<span class="w">                </span><span class="o">[</span>--img_size<span class="w"> </span>IMG_SIZE<span class="o">]</span>
+<span class="w">                </span><span class="o">[</span>--checkpoint_interval<span class="w"> </span>CHECKPOINT_INTERVAL<span class="o">]</span>
+<span class="w">                </span><span class="o">[</span>--evaluation_interval<span class="w"> </span>EVALUATION_INTERVAL<span class="o">]</span>
+<span class="w">                </span><span class="o">[</span>--compute_map<span class="w"> </span>COMPUTE_MAP<span class="o">]</span>
+<span class="w">                </span><span class="o">[</span>--multiscale_training<span class="w"> </span>MULTISCALE_TRAINING<span class="o">]</span>
+</pre></div>
+</div>
+<section id="example-coco">
+<h3>Example (COCO)<a class="headerlink" href="#example-coco" title="Link to this heading"></a></h3>
+<p>To train on COCO using a Darknet-53 backend pretrained on ImageNet run:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>$<span class="w"> </span>python3<span class="w"> </span>train.py<span class="w"> </span>--data_config<span class="w"> </span>config/coco.data<span class="w">  </span>--pretrained_weights<span class="w"> </span>weights/darknet53.conv.74
+</pre></div>
+</div>
+</section>
+<section id="training-log">
+<h3>Training log<a class="headerlink" href="#training-log" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">----</span> <span class="p">[</span><span class="n">Epoch</span> <span class="mi">7</span><span class="o">/</span><span class="mi">100</span><span class="p">,</span> <span class="n">Batch</span> <span class="mi">7300</span><span class="o">/</span><span class="mi">14658</span><span class="p">]</span> <span class="o">----</span>
+<span class="o">+------------+--------------+--------------+--------------+</span>
+<span class="o">|</span> <span class="n">Metrics</span>    <span class="o">|</span> <span class="n">YOLO</span> <span class="n">Layer</span> <span class="mi">0</span> <span class="o">|</span> <span class="n">YOLO</span> <span class="n">Layer</span> <span class="mi">1</span> <span class="o">|</span> <span class="n">YOLO</span> <span class="n">Layer</span> <span class="mi">2</span> <span class="o">|</span>
+<span class="o">+------------+--------------+--------------+--------------+</span>
+<span class="o">|</span> <span class="n">grid_size</span>  <span class="o">|</span> <span class="mi">16</span>           <span class="o">|</span> <span class="mi">32</span>           <span class="o">|</span> <span class="mi">64</span>           <span class="o">|</span>
+<span class="o">|</span> <span class="n">loss</span>       <span class="o">|</span> <span class="mf">1.554926</span>     <span class="o">|</span> <span class="mf">1.446884</span>     <span class="o">|</span> <span class="mf">1.427585</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">x</span>          <span class="o">|</span> <span class="mf">0.028157</span>     <span class="o">|</span> <span class="mf">0.044483</span>     <span class="o">|</span> <span class="mf">0.051159</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">y</span>          <span class="o">|</span> <span class="mf">0.040524</span>     <span class="o">|</span> <span class="mf">0.035687</span>     <span class="o">|</span> <span class="mf">0.046307</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">w</span>          <span class="o">|</span> <span class="mf">0.078980</span>     <span class="o">|</span> <span class="mf">0.066310</span>     <span class="o">|</span> <span class="mf">0.027984</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">h</span>          <span class="o">|</span> <span class="mf">0.133414</span>     <span class="o">|</span> <span class="mf">0.094540</span>     <span class="o">|</span> <span class="mf">0.037121</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">conf</span>       <span class="o">|</span> <span class="mf">1.234448</span>     <span class="o">|</span> <span class="mf">1.165665</span>     <span class="o">|</span> <span class="mf">1.223495</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="bp">cls</span>        <span class="o">|</span> <span class="mf">0.039402</span>     <span class="o">|</span> <span class="mf">0.040198</span>     <span class="o">|</span> <span class="mf">0.041520</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">cls_acc</span>    <span class="o">|</span> <span class="mf">44.44</span><span class="o">%</span>       <span class="o">|</span> <span class="mf">43.59</span><span class="o">%</span>       <span class="o">|</span> <span class="mf">32.50</span><span class="o">%</span>       <span class="o">|</span>
+<span class="o">|</span> <span class="n">recall50</span>   <span class="o">|</span> <span class="mf">0.361111</span>     <span class="o">|</span> <span class="mf">0.384615</span>     <span class="o">|</span> <span class="mf">0.300000</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">recall75</span>   <span class="o">|</span> <span class="mf">0.222222</span>     <span class="o">|</span> <span class="mf">0.282051</span>     <span class="o">|</span> <span class="mf">0.300000</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">precision</span>  <span class="o">|</span> <span class="mf">0.520000</span>     <span class="o">|</span> <span class="mf">0.300000</span>     <span class="o">|</span> <span class="mf">0.070175</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">conf_obj</span>   <span class="o">|</span> <span class="mf">0.599058</span>     <span class="o">|</span> <span class="mf">0.622685</span>     <span class="o">|</span> <span class="mf">0.651472</span>     <span class="o">|</span>
+<span class="o">|</span> <span class="n">conf_noobj</span> <span class="o">|</span> <span class="mf">0.003778</span>     <span class="o">|</span> <span class="mf">0.004039</span>     <span class="o">|</span> <span class="mf">0.004044</span>     <span class="o">|</span>
+<span class="o">+------------+--------------+--------------+--------------+</span>
+<span class="n">Total</span> <span class="n">Loss</span> <span class="mf">4.429395</span>
+<span class="o">----</span> <span class="n">ETA</span> <span class="mi">0</span><span class="p">:</span><span class="mi">35</span><span class="p">:</span><span class="mf">48.821929</span>
+</pre></div>
+</div>
+</section>
+<section id="tensorboard">
+<h3>Tensorboard<a class="headerlink" href="#tensorboard" title="Link to this heading"></a></h3>
+<p>Track training progress in Tensorboard:</p>
+<ul class="simple">
+<li><p>Initialize training</p></li>
+<li><p>Run the command below</p></li>
+<li><p>Go to http://localhost:6006/</p></li>
+</ul>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ tensorboard --logdir=&#39;logs&#39; --port=6006
+</pre></div>
+</div>
+</section>
+</section>
+<section id="train-on-custom-dataset">
+<h2>Train on Custom Dataset<a class="headerlink" href="#train-on-custom-dataset" title="Link to this heading"></a></h2>
+<section id="custom-model">
+<h3>Custom model<a class="headerlink" href="#custom-model" title="Link to this heading"></a></h3>
+<p>Run the commands below to create a custom model definition, replacing <code class="docutils literal notranslate"><span class="pre">&lt;num-classes&gt;</span></code> with the number of classes in your dataset.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cd config/                                # Navigate to config dir
+$ bash create_custom_model.sh &lt;num-classes&gt; # Will create custom model &#39;yolov3-custom.cfg&#39;
+</pre></div>
+</div>
+</section>
+<section id="classes">
+<h3>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h3>
+<p>Add class names to <code class="docutils literal notranslate"><span class="pre">data/custom/classes.names</span></code>. This file should have one row per class name.</p>
+</section>
+<section id="image-folder">
+<h3>Image Folder<a class="headerlink" href="#image-folder" title="Link to this heading"></a></h3>
+<p>Move the images of your dataset to <code class="docutils literal notranslate"><span class="pre">data/custom/images/</span></code>.</p>
+</section>
+<section id="annotation-folder">
+<h3>Annotation Folder<a class="headerlink" href="#annotation-folder" title="Link to this heading"></a></h3>
+<p>Move your annotations to <code class="docutils literal notranslate"><span class="pre">data/custom/labels/</span></code>. The dataloader expects that the annotation file corresponding to the image <code class="docutils literal notranslate"><span class="pre">data/custom/images/train.jpg</span></code> has the path <code class="docutils literal notranslate"><span class="pre">data/custom/labels/train.txt</span></code>. Each row in the annotation file should define one bounding box, using the syntax <code class="docutils literal notranslate"><span class="pre">label_idx</span> <span class="pre">x_center</span> <span class="pre">y_center</span> <span class="pre">width</span> <span class="pre">height</span></code>. The coordinates should be scaled <code class="docutils literal notranslate"><span class="pre">[0,</span> <span class="pre">1]</span></code>, and the <code class="docutils literal notranslate"><span class="pre">label_idx</span></code> should be zero-indexed and correspond to the row number of the class name in <code class="docutils literal notranslate"><span class="pre">data/custom/classes.names</span></code>.</p>
+</section>
+<section id="define-train-and-validation-sets">
+<h3>Define Train and Validation Sets<a class="headerlink" href="#define-train-and-validation-sets" title="Link to this heading"></a></h3>
+<p>In <code class="docutils literal notranslate"><span class="pre">data/custom/train.txt</span></code> and <code class="docutils literal notranslate"><span class="pre">data/custom/valid.txt</span></code>, add paths to images that will be used as train and validation data respectively.</p>
+</section>
+<section id="id1">
+<h3>Train<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>To train on the custom dataset run:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ python3 train.py --model_def config/yolov3-custom.cfg --data_config config/custom.data
+</pre></div>
+</div>
+<p>Add <code class="docutils literal notranslate"><span class="pre">--pretrained_weights</span> <span class="pre">weights/darknet53.conv.74</span></code> to train using a backend pretrained on ImageNet.</p>
+</section>
+</section>
+<section id="credit">
+<h2>Credit<a class="headerlink" href="#credit" title="Link to this heading"></a></h2>
+<section id="yolov3-an-incremental-improvement">
+<h3>YOLOv3: An Incremental Improvement<a class="headerlink" href="#yolov3-an-incremental-improvement" title="Link to this heading"></a></h3>
+<p><em>Joseph Redmon, Ali Farhadi</em> <br></p>
+<p><strong>Abstract</strong> <br>
+We present some updates to YOLO! We made a bunch
+of little design changes to make it better. We also trained
+this new network that’s pretty swell. It’s a little bigger than
+last time but more accurate. It’s still fast though, don’t
+worry. At 320 × 320 YOLOv3 runs in 22 ms at 28.2 mAP,
+as accurate as SSD but three times faster. When we look
+at the old .5 IOU mAP detection metric YOLOv3 is quite
+good. It achieves 57.9 AP50 in 51 ms on a Titan X, compared
+to 57.5 AP50 in 198 ms by RetinaNet, similar performance
+but 3.8× faster. As always, all the code is online at
+https://pjreddie.com/yolo/.</p>
+<p><a class="reference external" href="https://pjreddie.com/media/files/papers/YOLOv3.pdf">[Paper]</a> <a class="reference external" href="https://pjreddie.com/darknet/yolo/">[Project Webpage]</a> <a class="reference external" href="https://github.com/pjreddie/darknet">[Authors’ Implementation]</a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="nd">@article</span><span class="p">{</span><span class="n">yolov3</span><span class="p">,</span>
+  <span class="n">title</span><span class="o">=</span><span class="p">{</span><span class="n">YOLOv3</span><span class="p">:</span> <span class="n">An</span> <span class="n">Incremental</span> <span class="n">Improvement</span><span class="p">},</span>
+  <span class="n">author</span><span class="o">=</span><span class="p">{</span><span class="n">Redmon</span><span class="p">,</span> <span class="n">Joseph</span> <span class="ow">and</span> <span class="n">Farhadi</span><span class="p">,</span> <span class="n">Ali</span><span class="p">},</span>
+  <span class="n">journal</span> <span class="o">=</span> <span class="p">{</span><span class="n">arXiv</span><span class="p">},</span>
+  <span class="n">year</span><span class="o">=</span><span class="p">{</span><span class="mi">2018</span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8c2db64110> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

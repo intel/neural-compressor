@@ -1,0 +1,789 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step recipes for LLM quantization &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../../versions.html">3.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step recipes for LLM quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../../_sources/docs/source/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation/llm_quantization_recipes.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step-recipes-for-llm-quantization">
+<h1>Step-by-Step recipes for LLM quantization<a class="headerlink" href="#step-by-step-recipes-for-llm-quantization" title="Link to this heading"></a></h1>
+<p>This document describes the step-by-step instructions to run large language models (LLMs) on 5th Gen Intel® Xeon® Scalable Processor (codenamed Emerald Rapids) with <a class="reference external" href="https://pytorch.org/">PyTorch</a>.</p>
+<p>The scripts <a class="reference external" href="run_generation_cpu_woq.py">run_generation_cpu_woq.py</a> provide Weight-Only Quantization based on <a class="reference external" href="https://github.com/intel/neural-compressor">Intel® Neural Compressor</a> and return last word prediction accuracy by <a class="reference external" href="https://github.com/EleutherAI/lm-evaluation-harness/tree/master">lm-evaluation-harness</a>.</p>
+</section>
+<section id="validated-models">
+<h1>Validated Models<a class="headerlink" href="#validated-models" title="Link to this heading"></a></h1>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: center;">Model Name</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;"><a href="#eleutheraigpt-j-6b">EleutherAI/gpt-j-6b</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#facebookopt-30b">facebook/opt-30b</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#meta-llamallama-2-7b-hf">meta-llama/Llama-2-7b-hf</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#meta-llamallama-2-13b-hf">meta-llama/Llama-2-13b-hf</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#meta-llamameta-llama-31-8b-instruct">meta-llama/Meta-Llama-3.1-8B-Instruct</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#tiiuaefalcon-40b">tiiuae/falcon-40b</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#tiiuaefalcon-7b">tiiuae/falcon-7b</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#baichuan-inc/Baichuan2-7B-Chat">baichuan-inc/Baichuan2-7B-Chat</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#baichuan-inc/Baichuan2-13B-Chat">baichuan-inc/Baichuan2-13B-Chat</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#THUDM/chatglm2-6b">THUDM/chatglm2-6b</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#THUDM/chatglm3-6b">THUDM/chatglm3-6b</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#mistralai/Mistral-7B-v0.1">mistralai/Mistral-7B-v0.1</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#microsoft/Phi-3-medium-128k-instruct">microsoft/Phi-3-medium-128k-instruct</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#microsoft/Phi-3-mini-128k-instruct">microsoft/Phi-3-mini-128k-instruct</a></td>
+</tr>
+<tr>
+<td style="text-align: center;"><a href="#Qwen/Qwen2-7B-Instruct">Qwen/Qwen2-7B-Instruct</a></td>
+</tr>
+</tbody>
+</table></section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># install requirements</span>
+<span class="nb">cd</span><span class="w"> </span>examples/huggingface/pytorch/text-generation/quantization
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="o">==</span><span class="m">3</span>.1
+pip<span class="w"> </span>install<span class="w"> </span><span class="nv">torch</span><span class="o">==</span><span class="m">2</span>.4.0<span class="w"> </span>--index-url<span class="w"> </span>https://download.pytorch.org/whl/cpu
+pip<span class="w"> </span>install<span class="w"> </span><span class="nv">transformers</span><span class="o">==</span><span class="m">4</span>.43.0
+</pre></div>
+</div>
+</section>
+<section id="run-quantization-and-evaluate-int8-int4-accuracy">
+<h1>Run Quantization and evaluate INT8/INT4 accuracy<a class="headerlink" href="#run-quantization-and-evaluate-int8-int4-accuracy" title="Link to this heading"></a></h1>
+<section id="eleutherai-gpt-j-6b">
+<h2>EleutherAI/gpt-j-6b<a class="headerlink" href="#eleutherai-gpt-j-6b" title="Link to this heading"></a></h2>
+<section id="weight-only-quantization">
+<h3>Weight-Only Quantization<a class="headerlink" href="#weight-only-quantization" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>EleutherAI/gpt-j-6b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>EleutherAI/gpt-j-6b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--desc_act<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>sym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>EleutherAI/gpt-j-6b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="facebook-opt-30b">
+<h2>facebook/opt-30b<a class="headerlink" href="#facebook-opt-30b" title="Link to this heading"></a></h2>
+<section id="id1">
+<h3>Weight-Only Quantization<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>facebook/opt-30b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>facebook/opt-30b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--desc_act<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>sym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>facebook/opt-30b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="meta-llama-llama-2-7b-hf">
+<h2>meta-llama/Llama-2-7b-hf<a class="headerlink" href="#meta-llama-llama-2-7b-hf" title="Link to this heading"></a></h2>
+<section id="id2">
+<h3>Weight-Only Quantization<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--desc_act<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>sym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="meta-llama-llama-2-13b-hf">
+<h2>meta-llama/Llama-2-13b-hf<a class="headerlink" href="#meta-llama-llama-2-13b-hf" title="Link to this heading"></a></h2>
+<section id="id3">
+<h3>Weight-Only Quantization<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-13b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-13b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--desc_act<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>sym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-13b-hf<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="meta-llama-meta-llama-3-1-8b-instruct">
+<h2>meta-llama/Meta-Llama-3.1-8B-Instruct<a class="headerlink" href="#meta-llama-meta-llama-3-1-8b-instruct" title="Link to this heading"></a></h2>
+<section id="id4">
+<h3>Weight-Only Quantization<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Meta-Llama-3.1-8B-Instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Meta-Llama-3.1-8B-Instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--desc_act<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>meta-llama/Meta-Llama-3.1-8B-Instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="tiiuae-falcon-40b">
+<h2>tiiuae/falcon-40b<a class="headerlink" href="#tiiuae-falcon-40b" title="Link to this heading"></a></h2>
+<section id="id5">
+<h3>Weight-Only Quantization<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>tiiuae/falcon-40b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>tiiuae/falcon-40b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--desc_act<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>sym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>tiiuae/falcon-40b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="tiiuae-falcon-7b">
+<h2>tiiuae/falcon-7b<a class="headerlink" href="#tiiuae-falcon-7b" title="Link to this heading"></a></h2>
+<section id="id6">
+<h3>Weight-Only Quantization<a class="headerlink" href="#id6" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>tiiuae/falcon-7b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w">  </span>tiiuae/falcon-7b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>sym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>tiiuae/falcon-7b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="baichuan-inc-baichuan2-7b-chat">
+<h2>baichuan-inc/Baichuan2-7B-Chat<a class="headerlink" href="#baichuan-inc-baichuan2-7b-chat" title="Link to this heading"></a></h2>
+<section id="id7">
+<h3>Weight-Only Quantization<a class="headerlink" href="#id7" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>baichuan-inc/Baichuan2-7B-Chat<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>baichuan-inc/Baichuan2-7B-Chat<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--desc_act<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>sym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>baichuan-inc/Baichuan2-7B-Chat<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="baichuan-inc-baichuan2-13b-chat">
+<h2>baichuan-inc/Baichuan2-13B-Chat<a class="headerlink" href="#baichuan-inc-baichuan2-13b-chat" title="Link to this heading"></a></h2>
+<section id="id8">
+<h3>Weight-Only Quantization<a class="headerlink" href="#id8" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>baichuan-inc/Baichuan2-13B-Chat<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>baichuan-inc/Baichuan2-13B-Chats<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--desc_act<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>sym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>baichuan-inc/Baichuan2-13B-Chat<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="thudm-chatglm2-6b">
+<h2>THUDM/chatglm2-6b<a class="headerlink" href="#thudm-chatglm2-6b" title="Link to this heading"></a></h2>
+<section id="id9">
+<h3>Weight-Only Quantization<a class="headerlink" href="#id9" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>THUDM/chatglm2-6b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>THUDM/chatglm2-6b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>THUDM/chatglm2-6b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="thudm-chatglm3-6b">
+<h2>THUDM/chatglm3-6b<a class="headerlink" href="#thudm-chatglm3-6b" title="Link to this heading"></a></h2>
+<section id="id10">
+<h3>Weight-Only Quantization<a class="headerlink" href="#id10" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>THUDM/chatglm3-6b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>THUDM/chatglm3-6b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>sym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--n_samples<span class="w"> </span><span class="m">256</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>THUDM/chatglm3-6b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="mistralai-mistral-7b-v0-1">
+<h2>mistralai/Mistral-7B-v0.1<a class="headerlink" href="#mistralai-mistral-7b-v0-1" title="Link to this heading"></a></h2>
+<section id="id11">
+<h3>Weight-Only Quantization<a class="headerlink" href="#id11" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>mistralai/Mistral-7B-v0.1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>mistralai/Mistral-7B-v0.1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--use_mse_search<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--n_samples<span class="w"> </span><span class="m">128</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>mistralai/Mistral-7B-v0.1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="microsoft-phi-3-medium-128k-instruct">
+<h2>microsoft/Phi-3-medium-128k-instruct<a class="headerlink" href="#microsoft-phi-3-medium-128k-instruct" title="Link to this heading"></a></h2>
+<section id="id12">
+<h3>Weight-Only Quantization<a class="headerlink" href="#id12" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>microsoft/Phi-3-medium-128k-instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>microsoft/Phi-3-medium-128k-instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>sym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>microsoft/Phi-3-medium-128k-instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+<section id="microsoft-phi-3-mini-128k-instruct">
+<h2>microsoft/Phi-3-mini-128k-instruct<a class="headerlink" href="#microsoft-phi-3-mini-128k-instruct" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>microsoft/Phi-3-mini-128k-instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>microsoft/Phi-3-mini-128k-instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>microsoft/Phi-3-mini-128k-instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+<section id="qwen-qwen2-7b-instruct">
+<h2>Qwen/Qwen2-7B-Instruct<a class="headerlink" href="#qwen-qwen2-7b-instruct" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># int8 RTN</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>Qwen/Qwen2-7B-Instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 GPTQ</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>Qwen/Qwen2-7B-Instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>GPTQ<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--desc_act<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>sym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+
+<span class="c1"># int4 AutoRound</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>Qwen/Qwen2-7B-Instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--bits<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--weight_dtype<span class="w"> </span>int4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--autoround_iters<span class="w"> </span><span class="m">200</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>asym<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--group_size<span class="w"> </span><span class="m">128</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8c272051f0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

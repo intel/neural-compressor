@@ -1,0 +1,40 @@
+neural_compressor.metric.bleu_util
+==================================
+
+.. py:module:: neural_compressor.metric.bleu_util
+
+.. autoapi-nested-parse::
+
+   Script to compute BLEU score.
+
+   Source:
+   https://github.com/tensorflow/tensor2tensor/blob/master/tensor2tensor/utils/bleu_hook.py
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.metric.bleu_util.compute_bleu
+
+
+Module Contents
+---------------
+
+.. py:function:: compute_bleu(reference_corpus: Union[Sequence[str], Sequence[Sequence[str]]], translation_corpus: Sequence[str], max_order: int = 4, use_bp: bool = True) -> float
+
+   Compute the BLEU score of translated segments against its references.
+
+   :param reference_corpus: List of references for each translation.
+                            Each reference should be tokenized into a list of tokens.
+   :param translation_corpus: List of translations to score. Each translation
+                              should be tokenized into a list of tokens.
+   :param max_order: Maximum n-gram order to use when computing BLEU score.
+   :param use_bp: The flag to decide whether to apply brevity penalty.
+
+   :returns: The approximate BLEU score.
+   :rtype: bleu_score
+
+

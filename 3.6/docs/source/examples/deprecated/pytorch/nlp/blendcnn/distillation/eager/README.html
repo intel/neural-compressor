@@ -1,0 +1,175 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">3.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/deprecated/pytorch/nlp/blendcnn/distillation/eager/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document describes the step-by-step instructions for reproducing PyTorch BlendCNN distillation(with MRPC dataset) results with Intel® Neural Compressor.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/pytorch/nlp/blendcnn/distillation/eager
+pip<span class="w"> </span>install<span class="w"> </span>torch&gt;<span class="o">=</span><span class="m">1</span>.6.0<span class="w"> </span>tqdm
+</pre></div>
+</div>
+</section>
+<section id="prepare-model">
+<h2>2. Prepare model<a class="headerlink" href="#prepare-model" title="Link to this heading"></a></h2>
+<p>Download <a class="reference external" href="https://storage.googleapis.com/bert_models/2018_10_18/uncased_L-12_H-768_A-12.zip">BERT-Base, Uncased</a></p>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>models/<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>mv<span class="w"> </span>uncased_L-12_H-768_A-12.zip<span class="w"> </span>models/
+<span class="nb">cd</span><span class="w"> </span>models/<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>unzip<span class="w"> </span>uncased_L-12_H-768_A-12.zip
+</pre></div>
+</div>
+</section>
+<section id="prepare-datasets">
+<h2>3. Prepare Datasets<a class="headerlink" href="#prepare-datasets" title="Link to this heading"></a></h2>
+<p>Download
+<a class="reference external" href="https://github.com/nyu-mll/GLUE-baselines">GLUE MRPC Benchmark Datasets</a>,
+After downloads dataset, you need to put dataset at <code class="docutils literal notranslate"><span class="pre">./MRPC/</span></code>, list this:</p>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>ls<span class="w"> </span>MRPC/
+dev_ids.tsv<span class="w">  </span>dev.tsv<span class="w">  </span>test.tsv<span class="w">  </span>train.tsv
+</pre></div>
+</div>
+</section>
+</section>
+<section id="distillation">
+<h1>Distillation<a class="headerlink" href="#distillation" title="Link to this heading"></a></h1>
+<section id="fine-tune-the-pretrained-bert-base-model-on-mrpc-dataset">
+<h2>1 Fine-tune the pretrained BERT-Base model on MRPC dataset<a class="headerlink" href="#fine-tune-the-pretrained-bert-base-model-on-mrpc-dataset" title="Link to this heading"></a></h2>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span>models/bert/mrpc
+<span class="c1"># fine-tune the pretrained BERT-Base model</span>
+python<span class="w"> </span>finetune.py<span class="w"> </span>config/finetune/mrpc/train.json
+</pre></div>
+</div>
+</section>
+<section id="distilling-the-blendcnn-with-bert-base">
+<h2>2 Distilling the BlendCNN with BERT-Base<a class="headerlink" href="#distilling-the-blendcnn-with-bert-base" title="Link to this heading"></a></h2>
+<p>Now BERT-Base model weights model_final.pt at <code class="docutils literal notranslate"><span class="pre">./models/bert/mrpc/</span></code>.</p>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>mkdir<span class="w"> </span>-p<span class="w"> </span>models/blendcnn/
+<span class="c1"># distilling the BlendCNN</span>
+python<span class="w"> </span>distill.py<span class="w"> </span>--loss_weights<span class="w"> </span><span class="m">0</span>.1<span class="w"> </span><span class="m">0</span>.9
+</pre></div>
+</div>
+<p>Follow the above steps, you will find distilled BlendCNN model weights best_model_weights.pt in <code class="docutils literal notranslate"><span class="pre">./models/blendcnn/</span></code>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8c28dce6f0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

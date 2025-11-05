@@ -1,0 +1,41 @@
+neural_compressor.utils.export.qlinear2qdq
+==========================================
+
+.. py:module:: neural_compressor.utils.export.qlinear2qdq
+
+.. autoapi-nested-parse::
+
+   Helper functions to export onnx model from QLinear ops to QDQ.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.utils.export.qlinear2qdq.check_model
+   neural_compressor.utils.export.qlinear2qdq.onnx_qlinear_to_qdq
+
+
+Module Contents
+---------------
+
+.. py:function:: check_model(model)
+
+   Check optype for input model.
+
+   :param model: onnx model.
+   :type model: ModelProto
+
+
+.. py:function:: onnx_qlinear_to_qdq(model, input_name_to_nodes)
+
+   Export ONNX QLinearops model into QDQ model.
+
+   :param model: int8 onnx model.
+   :type model: ModelProto
+   :param input_name_to_nodes: the mapping of tensor name and its destination nodes.
+   :type input_name_to_nodes: dict
+
+

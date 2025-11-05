@@ -1,0 +1,320 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../../versions.html">3.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../../_sources/docs/source/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>We provide a Transformers-like API for model compression using the <code class="docutils literal notranslate"><span class="pre">WeightOnlyQuant</span></code> with <code class="docutils literal notranslate"><span class="pre">Rtn/Awq/Teq/GPTQ/AutoRound</span></code> algorithms, besides we provide use ipex to use intel extension for pytorch to accelerate the model.
+We provide the inference benchmarking script <code class="docutils literal notranslate"><span class="pre">run_generation.py</span></code> for large language models, the default search algorithm is beam search with <code class="docutils literal notranslate"><span class="pre">num_beams</span> <span class="pre">=</span> <span class="pre">4</span></code>. <a class="reference external" href="llm_quantization_recipes.html">Here</a> are some well accuracy and performance optimized models we validated, more models are working in progress.</p>
+</section>
+<section id="quantization-for-cpu-device">
+<h1>Quantization for CPU device<a class="headerlink" href="#quantization-for-cpu-device" title="Link to this heading"></a></h1>
+<section id="prerequisite">
+<h2>Prerequisite​<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h2>
+<section id="create-environment">
+<h3>Create Environment​<a class="headerlink" href="#create-environment" title="Link to this heading"></a></h3>
+<p>python version requests equal or higher than 3.9 due to <a class="reference external" href="https://github.com/EleutherAI/lm-evaluation-harness/tree/master">text evaluation library</a> limitation, the dependent packages are listed in requirements, we recommend create environment as the following steps.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">oneccl_bind_pt</span><span class="o">==</span><span class="m">2</span>.4.0<span class="w"> </span>--index-url<span class="w"> </span>https://pytorch-extension.intel.com/release-whl/stable/cpu/us/
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements_cpu_woq.txt
+</pre></div>
+</div>
+</section>
+<section id="run">
+<h3>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h3>
+<section id="performance">
+<h4>Performance<a class="headerlink" href="#performance" title="Link to this heading"></a></h4>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># fp32</span>
+<span class="nv">OMP_NUM_THREADS</span><span class="o">=</span>&lt;physical<span class="w"> </span>cores<span class="w"> </span>num&gt;<span class="w"> </span>numactl<span class="w"> </span>-m<span class="w"> </span>&lt;node<span class="w"> </span>N&gt;<span class="w"> </span>-C<span class="w"> </span>&lt;cpu<span class="w"> </span>list&gt;<span class="w"> </span>python<span class="w"> </span>run_generation_cpu_woq.py<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>&lt;MODEL_NAME_OR_PATH&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--benchmark
+
+<span class="c1"># quant and do benchmark.</span>
+<span class="nv">OMP_NUM_THREADS</span><span class="o">=</span>&lt;physical<span class="w"> </span>cores<span class="w"> </span>num&gt;<span class="w"> </span>numactl<span class="w"> </span>-m<span class="w"> </span>&lt;node<span class="w"> </span>N&gt;<span class="w"> </span>-C<span class="w"> </span>&lt;cpu<span class="w"> </span>list&gt;<span class="w"> </span>python<span class="w"> </span>run_generation_cpu_woq.py<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>&lt;MODEL_NAME_OR_PATH&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>&lt;ALGORITHM_NAME&gt;<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># Default is &quot;Rtn&quot;, &quot;Awq&quot;, &quot;Teq&quot;, &quot;GPTQ&quot;, &quot;AutoRound&quot; are provided.</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>&lt;WOQ_MODEL_SAVE_PATH&gt;<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># Default is &quot;./saved_results&quot;</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--benchmark
+
+<span class="c1"># load WOQ quantized model and do benchmark.</span>
+<span class="nv">OMP_NUM_THREADS</span><span class="o">=</span>&lt;physical<span class="w"> </span>cores<span class="w"> </span>num&gt;<span class="w"> </span>numactl<span class="w"> </span>-m<span class="w"> </span>&lt;node<span class="w"> </span>N&gt;<span class="w"> </span>-C<span class="w"> </span>&lt;cpu<span class="w"> </span>list&gt;<span class="w"> </span>python<span class="w"> </span>run_generation_cpu_woq.py<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>&lt;WOQ_MODEL_SAVE_PATH&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--benchmark
+
+<span class="c1"># load WOQ model from Huggingface and do benchmark.</span>
+<span class="nv">OMP_NUM_THREADS</span><span class="o">=</span>&lt;physical<span class="w"> </span>cores<span class="w"> </span>num&gt;<span class="w"> </span>numactl<span class="w"> </span>-m<span class="w"> </span>&lt;node<span class="w"> </span>N&gt;<span class="w"> </span>-C<span class="w"> </span>&lt;cpu<span class="w"> </span>list&gt;<span class="w"> </span>python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>&lt;MODEL_NAME_OR_PATH&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--benchmark
+</pre></div>
+</div>
+</section>
+<section id="accuracy">
+<h4>Accuracy<a class="headerlink" href="#accuracy" title="Link to this heading"></a></h4>
+<p>The accuracy validation is based from <a class="reference external" href="https://github.com/EleutherAI/lm-evaluation-harness/blob/v0.4.3/lm_eval/__main__.py">lm_evaluation_harness</a>.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># fp32</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>&lt;MODEL_NAME_OR_PATH&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span>lambada_openai,piqa,hellaswag<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># notice: no space.</span>
+<span class="w">    </span>--device<span class="w"> </span>cpu<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">56</span>
+
+<span class="c1"># quant and do accuracy.</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>&lt;MODEL_NAME_OR_PATH&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>&lt;ALGORITHM_NAME&gt;<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># Default is &quot;Rtn&quot;, &quot;Awq&quot;, &quot;Teq&quot;, &quot;GPTQ&quot;, &quot;AutoRound&quot; are provided.</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>&lt;WOQ_MODEL_SAVE_PATH&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span>lambada_openai,piqa,hellaswag<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># notice: no space.</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">56</span><span class="w"> </span>
+
+<span class="c1"># load WOQ model quantied by itrex and do benchmark.</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>&lt;WOQ_MODEL_SAVE_PATH&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span>lambada_openai,piqa,hellaswag<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># notice: no space.</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">56</span><span class="w"> </span>
+
+<span class="c1"># load WOQ model quantied by itrex and do benchmark with neuralspeed.</span>
+<span class="c1"># only support quantized with algorithm &quot;Awq&quot;, &quot;GPTQ&quot;, &quot;AutoRound&quot;</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>&lt;WOQ_MODEL_SAVE_PATH&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span>lambada_openai,piqa,hellaswag<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># notice: no space.</span>
+<span class="w">    </span>--device<span class="w"> </span>cpu<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">56</span>
+<span class="w">    </span>
+
+<span class="c1"># load WOQ model from Huggingface and do benchmark.</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>&lt;MODEL_NAME_OR_PATH&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span>lambada_openai,piqa,hellaswag<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># notice: no space.</span>
+<span class="w">    </span>--device<span class="w"> </span>cpu<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">56</span>
+
+<span class="c1"># load WOQ model from Huggingface and do benchmark with neuralspeed.</span>
+python<span class="w"> </span>run_generation_cpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>&lt;MODEL_NAME_OR_PATH&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span>lambada_openai,piqa,hellaswag<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># notice: no space.</span>
+<span class="w">    </span>--device<span class="w"> </span>cpu<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">56</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+<section id="quantization-for-gpu-device">
+<h1>Quantization for GPU device<a class="headerlink" href="#quantization-for-gpu-device" title="Link to this heading"></a></h1>
+<blockquote>
+<div><p><strong>Note</strong>:</p>
+<ol class="simple">
+<li><p>default search algorithm is beam search with num_beams = 1.</p></li>
+<li><p><a class="reference external" href="https://github.com/intel/intel-extension-for-pytorch/blob/v2.1.10%2Bxpu/docs/tutorials/llm/llm_optimize_transformers.html">ipex.optimize_transformers</a> Support for the optimized inference of model types “gptj,” “mistral,” “qwen,” and “llama” to achieve high performance and accuracy. Ensure accurate inference for other model types as well.</p></li>
+<li><p>We provide compression technologies <code class="docutils literal notranslate"><span class="pre">WeightOnlyQuant</span></code> with <code class="docutils literal notranslate"><span class="pre">Rtn/GPTQ/AutoRound</span></code> algorithms and <code class="docutils literal notranslate"><span class="pre">load_in_4bit</span></code> and <code class="docutils literal notranslate"><span class="pre">load_in_8bit</span></code> work on intel GPU device.</p></li>
+<li><p>The quantization process is performed on the CPU accelerator by default. Users can override this setting by specifying the environment variable <code class="docutils literal notranslate"><span class="pre">INC_TARGET_DEVICE</span></code>. Usage on bash: <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">INC_TARGET_DEVICE=xpu</span></code>.</p></li>
+<li><p>For Linux systems, users need to configure the environment variables appropriately to achieve optimal performance. For example, set the OMP_NUM_THREADS explicitly. For processors with hybrid architecture (including both P-cores and E-cores), it is recommended to bind tasks to all P-cores using taskset.</p></li>
+</ol>
+</div></blockquote>
+<section id="id1">
+<h2>Prerequisite​<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<section id="dependencies">
+<h3>Dependencies<a class="headerlink" href="#dependencies" title="Link to this heading"></a></h3>
+<p>Intel-extension-for-pytorch dependencies are in oneapi package, before install intel-extension-for-pytorch, we should install oneapi first. Please refer to <a class="reference external" href="https://intel.github.io/intel-extension-for-pytorch/index.html#installation?platform=gpu&amp;version=v2.1.10%2Bxpu">Installation Guide</a> to install the OneAPI to “/opt/intel folder”.</p>
+</section>
+<section id="id2">
+<h3>Create Environment​<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>Pytorch and Intel-extension-for-pytorch version for intel GPU &gt; 2.1 are required, python version requests equal or higher than 3.9 due to <a class="reference external" href="https://github.com/EleutherAI/lm-evaluation-harness/tree/master">text evaluation library</a> limitation, the dependent packages are listed in requirements_GPU.txt, we recommend create environment as the following steps. For Intel-exension-for-pytorch, we should install from source code now, and Intel-extension-for-pytorch will add weight-only quantization in the next version.</p>
+<blockquote>
+<div><p><strong>Note</strong>: please install transformers==4.38.1.</p>
+</div></blockquote>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements_GPU.txt
+pip<span class="w"> </span>install<span class="w"> </span><span class="nv">transformers</span><span class="o">==</span><span class="m">4</span>.38.1<span class="w"> </span><span class="c1"># llama use 4.38.1</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel/intel-extension-for-pytorch.git<span class="w"> </span>ipex-gpu
+<span class="nb">cd</span><span class="w"> </span>ipex-gpu
+git<span class="w"> </span>submodule<span class="w"> </span>update<span class="w"> </span>--init<span class="w"> </span>--recursive
+<span class="nb">export</span><span class="w"> </span><span class="nv">USE_AOT_DEVLIST</span><span class="o">=</span><span class="s1">&#39;pvc,ats-m150&#39;</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">BUILD_WITH_CPU</span><span class="o">=</span>OFF
+
+<span class="nb">export</span><span class="w"> </span><span class="nv">LD_LIBRARY_PATH</span><span class="o">=</span><span class="si">${</span><span class="nv">CONDA_PREFIX</span><span class="si">}</span>/lib/:<span class="nv">$LD_LIBRARY_PATH</span>
+<span class="nb">export</span><span class="w"> </span><span class="nv">OCL_ICD_VENDORS</span><span class="o">=</span>/etc/OpenCL/vendors
+<span class="nb">export</span><span class="w"> </span><span class="nv">CCL_ROOT</span><span class="o">=</span><span class="si">${</span><span class="nv">CONDA_PREFIX</span><span class="si">}</span>
+<span class="nb">source</span><span class="w"> </span>/opt/intel/oneapi/setvars.sh<span class="w"> </span>--force
+<span class="nb">export</span><span class="w"> </span><span class="nv">LLM_ACC_TEST</span><span class="o">=</span><span class="m">1</span>
+
+python<span class="w"> </span>setup.py<span class="w"> </span>install
+</pre></div>
+</div>
+</section>
+</section>
+<section id="id3">
+<h2>Run<a class="headerlink" href="#id3" title="Link to this heading"></a></h2>
+<p>The following are command to show how to use it.</p>
+<section id="id4">
+<h3>1. Performance<a class="headerlink" href="#id4" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># fp16</span>
+python<span class="w"> </span>run_generation_gpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>EleutherAI/gpt-j-6b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--benchmark
+
+<span class="c1"># weightonlyquant</span>
+python<span class="w"> </span>run_generation_gpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>EleutherAI/gpt-j-6b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>&lt;ALGORITHM_NAME&gt;<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># Default is &quot;Rtn&quot;, &quot;GPTQ&quot;, &quot;AutoRound&quot; are provided.</span>
+<span class="w">    </span>--benchmark
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: If your device memory is not enough, please quantize and save the model first, then rerun the example with loading the model as below, If your device memory is enough, skip below instruction, just quantization and inference.</p>
+</div></blockquote>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># First step: Quantize and save model</span>
+python<span class="w"> </span>run_generation_gpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>EleutherAI/gpt-j-6b<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--woq<span class="w"> </span><span class="se">\ </span><span class="c1"># default quantize method is Rtn</span>
+<span class="w">    </span>--woq_algo<span class="w"> </span>&lt;ALGORITHM_NAME&gt;<span class="w"> </span><span class="se">\ </span><span class="w"> </span><span class="c1"># Default is &quot;Rtn&quot;, &quot;GPTQ&quot;, &quot;AutoRound&quot; are provided.</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_dir&quot;</span>
+
+<span class="c1"># Second step: Load model and inference</span>
+python<span class="w"> </span>run_generation_gpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span><span class="s2">&quot;saved_dir&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--benchmark
+</pre></div>
+</div>
+</section>
+<section id="id5">
+<h3>2. Accuracy<a class="headerlink" href="#id5" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># quantized model by following the steps above</span>
+python<span class="w"> </span>run_generation_gpu_woq.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span><span class="s2">&quot;saved_dir&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span><span class="s2">&quot;lambada_openai&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8c27229700> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

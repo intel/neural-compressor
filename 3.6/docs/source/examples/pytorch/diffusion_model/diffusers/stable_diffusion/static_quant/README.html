@@ -1,0 +1,216 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stable Diffusion &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../versions.html">3.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Stable Diffusion</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../_sources/docs/source/examples/pytorch/diffusion_model/diffusers/stable_diffusion/static_quant/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="stable-diffusion">
+<h1>Stable Diffusion<a class="headerlink" href="#stable-diffusion" title="Link to this heading"></a></h1>
+<p>Stable Diffusion quantization and inference best known configurations with static quant.</p>
+<section id="model-information">
+<h2>Model Information<a class="headerlink" href="#model-information" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: center;"><strong>Framework</strong></th>
+<th style="text-align: center;"><strong>Model Repo</strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: center;">PyTorch</td>
+<td style="text-align: center;">https://huggingface.co/stabilityai/stable-diffusion-2-1</td>
+</tr>
+<tr>
+<td style="text-align: center;">PyTorch</td>
+<td style="text-align: center;">https://huggingface.co/SimianLuo/LCM_Dreamshaper_v7</td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="pre-requisite">
+<h1>Pre-Requisite<a class="headerlink" href="#pre-requisite" title="Link to this heading"></a></h1>
+<section id="datasets">
+<h2>Datasets<a class="headerlink" href="#datasets" title="Link to this heading"></a></h2>
+<p>Download the 2017 <a class="reference external" href="https://cocodataset.org">COCO dataset</a> using the <code class="docutils literal notranslate"><span class="pre">download_dataset.sh</span></code> script.
+Export the <code class="docutils literal notranslate"><span class="pre">DATASET_DIR</span></code> environment variable to specify the directory where the dataset will be downloaded. This environment variable will be used again when running training scripts.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">export</span> <span class="n">DATASET_DIR</span><span class="o">=&lt;</span><span class="n">directory</span> <span class="n">where</span> <span class="n">the</span> <span class="n">dataset</span> <span class="n">will</span> <span class="n">be</span> <span class="n">saved</span><span class="o">&gt;</span>
+<span class="n">bash</span> <span class="n">download_dataset</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="quantization-and-inference">
+<h1>Quantization and Inference<a class="headerlink" href="#quantization-and-inference" title="Link to this heading"></a></h1>
+<p>quantization</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>main.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model_name_or_path<span class="w"> </span>stabilityai/stable-diffusion-2-1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset_path<span class="o">=</span><span class="si">${</span><span class="nv">DATASET_DIR</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantized_model_path<span class="o">=</span><span class="si">${</span><span class="nv">INT8_MODEL</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--compile_inductor<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--precision<span class="o">=</span>int8-bf16<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--calibration
+</pre></div>
+</div>
+<p>inference</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>main.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model_name_or_path<span class="w"> </span>stabilityai/stable-diffusion-2-1<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset_path<span class="o">=</span><span class="si">${</span><span class="nv">DATASET_DIR</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--precision<span class="o">=</span>int8-bf16<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--benchmark<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-w<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>-i<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantized_model_path<span class="o">=</span><span class="si">${</span><span class="nv">INT8_MODEL</span><span class="si">}</span><span class="w"> </span><span class="se">\ </span>
+<span class="w">    </span>--compile_inductor
+</pre></div>
+</div>
+<section id="fid-evaluation">
+<h2>FID evaluation<a class="headerlink" href="#fid-evaluation" title="Link to this heading"></a></h2>
+<p>We have also evaluated FID scores on COCO2017 validation dataset for BF16 model, mixture of BF16 and INT8 model. FID results are listed below.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Model</th>
+<th>BF16</th>
+<th>INT8+BF16</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>stable-diffusion-2-1</td>
+<td>27.8630</td>
+<td>27.8618</td>
+</tr>
+<tr>
+<td>SimianLuo/LCM_Dreamshaper_v7</td>
+<td>42.1710</td>
+<td>42.3138</td>
+</tr>
+</tbody>
+</table><p>To evaluated FID score on COCO2017 validation dataset for mixture of BF16 and INT8 model, you can use below command.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>main.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset_path<span class="o">=</span><span class="si">${</span><span class="nv">DATASET_DIR</span><span class="si">}</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--precision<span class="o">=</span>int8-bf16<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantized_model_path<span class="o">=</span><span class="si">${</span><span class="nv">INT8_MODEL</span><span class="si">}</span><span class="w"> </span><span class="se">\ </span>
+<span class="w">    </span>--compile_inductor
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8c2dd28a10> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

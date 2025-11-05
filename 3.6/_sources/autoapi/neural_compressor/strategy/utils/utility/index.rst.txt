@@ -1,0 +1,110 @@
+neural_compressor.strategy.utils.utility
+========================================
+
+.. py:module:: neural_compressor.strategy.utils.utility
+
+.. autoapi-nested-parse::
+
+   Tuning utility.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.strategy.utils.utility.QuantType
+   neural_compressor.strategy.utils.utility.QuantOptions
+   neural_compressor.strategy.utils.utility.OrderedDefaultDict
+   neural_compressor.strategy.utils.utility.ClassRegister
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.strategy.utils.utility.preprocess_user_cfg
+   neural_compressor.strategy.utils.utility.extract_data_type
+   neural_compressor.strategy.utils.utility.reverted_data_type
+   neural_compressor.strategy.utils.utility.get_adaptor_name
+   neural_compressor.strategy.utils.utility.build_slave_faker_model
+
+
+Module Contents
+---------------
+
+.. py:class:: QuantType
+
+
+
+   Quantization type.
+
+
+.. py:class:: QuantOptions(quant_type=1)
+
+   Option Class for Quantization.
+
+   This class is used for configuring global variable related to quantization.
+   The global variable quant_options is created with this class.
+
+   :param quant_type: Quantization type. Default value is 1.
+   :type quant_type: int
+
+
+.. py:function:: preprocess_user_cfg(op_user_cfg: Dict)
+
+   Preprocess the op user config for weight only.
+
+   :param op_user_cfg: The original user config.
+
+   .. rubric:: Example
+
+   op_user_cfg = {'activation': {'bits': [4]}}
+   op_user_cfg_modified = {'activation': {'bits': [4], 'group_size': [32]}}
+
+   :returns: The modified config.
+
+
+.. py:class:: OrderedDefaultDict
+
+
+
+   Ordered default dict.
+
+
+.. py:function:: extract_data_type(data_type: str) -> str
+
+   Extract data type and signed from data type.
+
+   :param data_type: The original data type such as uint8, int8.
+
+   :returns: (signed or unsigned, data type without signed)
+
+
+.. py:function:: reverted_data_type(signed_flag: str, data_type: str) -> str
+
+   Revert the data type.
+
+
+.. py:function:: get_adaptor_name(adaptor)
+
+   Get adaptor name.
+
+   :param adaptor: adaptor instance.
+
+
+.. py:function:: build_slave_faker_model()
+
+   Slave does not have a model, so construct a fake model.
+
+   :returns: a class object where all properties and methods are virtual.
+   :rtype: object
+
+
+.. py:class:: ClassRegister
+
+   Class register.
+
+

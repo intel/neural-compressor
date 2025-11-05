@@ -1,0 +1,33 @@
+neural_compressor.utils.collect_layer_histogram
+===============================================
+
+.. py:module:: neural_compressor.utils.collect_layer_histogram
+
+.. autoapi-nested-parse::
+
+   LayerHistogramCollector: save the histogram by layer.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.utils.collect_layer_histogram.LayerHistogramCollector
+
+
+Module Contents
+---------------
+
+.. py:class:: LayerHistogramCollector(num_bins=8001, layer_tensor=None, include_layer=None, logger=None)
+
+
+
+   The collector of the histogram by layer.
+
+   Saves layer histogram in a dict with layer names as keys and lists of NDArrays as
+   values. The collected histogram will be used for calculating the optimal thresholds for
+   quantization using KL divergence.
+
+

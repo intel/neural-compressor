@@ -1,0 +1,255 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Quantization Aware Training (QAT) &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">3.6▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Quantization Aware Training (QAT)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm_qat/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="quantization-aware-training-qat">
+<h1>Quantization Aware Training (QAT)<a class="headerlink" href="#quantization-aware-training-qat" title="Link to this heading"></a></h1>
+<p>Quantization-Aware Training (QAT) is a technique designed to bridge the accuracy gap often observed with Post-Training Quantization (PTQ). Unlike PTQ, which applies quantization after model training, QAT simulates the effects of low-precision arithmetic during the training process itself. This allows the model to adapt its weights and activations to quantization constraints, significantly reducing accuracy degradation. As a result, QAT is particularly effective in preserving model performance even at extremely low precisions, such as MXFP8 or MXFP4, making it a critical approach for deploying efficient, high-performance models on resource-constrained hardware.</p>
+<section id="pre-requisites">
+<h2>Pre-Requisites<a class="headerlink" href="#pre-requisites" title="Link to this heading"></a></h2>
+<p>Install the requirements for the example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="getting-started">
+<h2>Getting Started<a class="headerlink" href="#getting-started" title="Link to this heading"></a></h2>
+<p>In QAT, a model quantized using <code class="docutils literal notranslate"><span class="pre">prepare_qat()</span></code> can be directly fine-tuned with the original training pipeline. During QAT, the scaling factors inside quantizers are frozen and the model weights are fine-tuned.</p>
+<section id="hugging-face-qat">
+<h3>Hugging Face QAT<a class="headerlink" href="#hugging-face-qat" title="Link to this heading"></a></h3>
+<section id="qat">
+<h4>QAT<a class="headerlink" href="#qat" title="Link to this heading"></a></h4>
+<section id="step-1">
+<h5>Step 1:<a class="headerlink" href="#step-1" title="Link to this heading"></a></h5>
+<p>Start by training or fine-tuning your model in its original precision (e.g., BF16). This establishes a strong baseline before introducing quantization.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">accelerate</span> <span class="n">launch</span> <span class="o">--</span><span class="n">config</span><span class="o">-</span><span class="n">file</span> <span class="n">accelerate_config</span><span class="o">/</span><span class="n">fsdp1</span><span class="o">.</span><span class="n">yaml</span> \
+  <span class="o">--</span><span class="n">fsdp_transformer_layer_cls_to_wrap</span> <span class="n">LlamaDecoderLayer</span> \
+  <span class="n">main</span><span class="o">.</span><span class="n">py</span> \
+  <span class="o">--</span><span class="n">model_name_or_path</span> <span class="n">meta</span><span class="o">-</span><span class="n">llama</span><span class="o">/</span><span class="n">Llama</span><span class="o">-</span><span class="mf">3.1</span><span class="o">-</span><span class="mi">8</span><span class="n">B</span> \
+  <span class="o">--</span><span class="n">model_max_length</span> <span class="mi">4096</span> \
+  <span class="o">--</span><span class="n">dataloader_drop_last</span> <span class="kc">True</span> \
+  <span class="o">--</span><span class="n">do_train</span> <span class="kc">True</span> \
+  <span class="o">--</span><span class="n">do_eval</span> <span class="kc">True</span> \
+  <span class="o">--</span><span class="n">output_dir</span> <span class="o">./</span><span class="n">llama3</span><span class="mf">.1</span><span class="o">-</span><span class="n">finetuned</span> \
+  <span class="o">--</span><span class="n">dataset</span> <span class="n">Daring</span><span class="o">-</span><span class="n">Anteater</span> \
+  <span class="o">--</span><span class="n">num_train_epochs</span> <span class="mf">2.0</span> \
+  <span class="o">--</span><span class="n">per_device_train_batch_size</span> <span class="mi">4</span> \
+  <span class="o">--</span><span class="n">per_device_eval_batch_size</span> <span class="mi">4</span> \
+  <span class="o">--</span><span class="n">gradient_accumulation_steps</span> <span class="mi">1</span> \
+  <span class="o">--</span><span class="n">eval_accumulation_steps</span> <span class="mi">1</span> \
+  <span class="o">--</span><span class="n">save_strategy</span> <span class="n">steps</span> \
+  <span class="o">--</span><span class="n">save_steps</span> <span class="mi">3000</span> \
+  <span class="o">--</span><span class="n">eval_strategy</span> <span class="n">steps</span> \
+  <span class="o">--</span><span class="n">eval_steps</span> <span class="mi">3000</span> \
+  <span class="o">--</span><span class="n">load_best_model_at_end</span> <span class="kc">True</span> \
+  <span class="o">--</span><span class="n">save_total_limit</span> <span class="mi">2</span> \
+  <span class="o">--</span><span class="n">learning_rate</span> <span class="mf">1e-5</span> \
+  <span class="o">--</span><span class="n">weight_decay</span> <span class="mf">0.0</span> \
+  <span class="o">--</span><span class="n">warmup_ratio</span> <span class="mf">0.1</span> \
+  <span class="o">--</span><span class="n">lr_scheduler_type</span> <span class="n">linear</span> \
+  <span class="o">--</span><span class="n">logging_steps</span> <span class="mi">1</span> \
+  <span class="o">--</span><span class="n">report_to</span> <span class="n">tensorboard</span>
+</pre></div>
+</div>
+</section>
+<section id="step-2">
+<h5>Step 2:<a class="headerlink" href="#step-2" title="Link to this heading"></a></h5>
+<p>Quantize the trained model using <code class="docutils literal notranslate"><span class="pre">prepare_qat()</span></code> by setting the following flags <code class="docutils literal notranslate"><span class="pre">--quant_scheme</span> <span class="pre">MXFP8</span> <span class="pre">--do_train</span> <span class="pre">False</span></code>. This inserts fake quantization modules into the model without starting training yet. Then save the model directly to a get post training quantization model.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">accelerate</span> <span class="n">launch</span> <span class="o">--</span><span class="n">config</span><span class="o">-</span><span class="n">file</span> <span class="n">accelerate_config</span><span class="o">/</span><span class="n">fsdp1</span><span class="o">.</span><span class="n">yaml</span> \
+  <span class="o">--</span><span class="n">fsdp_transformer_layer_cls_to_wrap</span> <span class="n">LlamaDecoderLayer</span> \
+  <span class="n">main</span><span class="o">.</span><span class="n">py</span> \
+  <span class="o">--</span><span class="n">model_name_or_path</span> <span class="o">./</span><span class="n">llama3</span><span class="mf">.1</span><span class="o">-</span><span class="n">finetuned</span> \
+  <span class="o">--</span><span class="n">model_max_length</span> <span class="mi">4096</span> \
+  <span class="o">--</span><span class="n">dataloader_drop_last</span> <span class="kc">True</span> \
+  <span class="o">--</span><span class="n">do_train</span> <span class="kc">False</span> \
+  <span class="o">--</span><span class="n">do_eval</span> <span class="kc">False</span> \
+  <span class="o">--</span><span class="n">quant_scheme</span> <span class="n">MXFP8</span> \
+  <span class="o">--</span><span class="n">output_dir</span> <span class="o">./</span><span class="n">llama3</span><span class="mf">.1</span><span class="o">-</span><span class="n">finetuned</span><span class="o">-</span><span class="n">ptq</span> \
+  <span class="o">--</span><span class="n">dataset</span> <span class="n">Daring</span><span class="o">-</span><span class="n">Anteater</span> \
+  <span class="o">--</span><span class="n">num_train_epochs</span> <span class="mf">2.0</span> \
+  <span class="o">--</span><span class="n">per_device_train_batch_size</span> <span class="mi">4</span> \
+  <span class="o">--</span><span class="n">per_device_eval_batch_size</span> <span class="mi">4</span> \
+  <span class="o">--</span><span class="n">gradient_accumulation_steps</span> <span class="mi">1</span> \
+  <span class="o">--</span><span class="n">eval_accumulation_steps</span> <span class="mi">1</span> \
+  <span class="o">--</span><span class="n">save_strategy</span> <span class="n">steps</span> \
+  <span class="o">--</span><span class="n">save_steps</span> <span class="mi">3000</span> \
+  <span class="o">--</span><span class="n">eval_strategy</span> <span class="n">steps</span> \
+  <span class="o">--</span><span class="n">eval_steps</span> <span class="mi">3000</span> \
+  <span class="o">--</span><span class="n">load_best_model_at_end</span> <span class="kc">True</span> \
+  <span class="o">--</span><span class="n">save_total_limit</span> <span class="mi">2</span> \
+  <span class="o">--</span><span class="n">learning_rate</span> <span class="mf">1e-5</span> \
+  <span class="o">--</span><span class="n">weight_decay</span> <span class="mf">0.0</span> \
+  <span class="o">--</span><span class="n">warmup_ratio</span> <span class="mf">0.1</span> \
+  <span class="o">--</span><span class="n">lr_scheduler_type</span> <span class="n">linear</span> \
+  <span class="o">--</span><span class="n">logging_steps</span> <span class="mi">1</span> \
+  <span class="o">--</span><span class="n">report_to</span> <span class="n">tensorboard</span>
+</pre></div>
+</div>
+</section>
+<section id="step-3">
+<h5>Step 3:<a class="headerlink" href="#step-3" title="Link to this heading"></a></h5>
+<p>Train/fine-tune the quantized model with a small learning rate, e.g. 1e-5 for Adam optimizer by setting <code class="docutils literal notranslate"><span class="pre">--quant_scheme</span> <span class="pre">MXFP8</span> <span class="pre">--do_train</span> <span class="pre">True</span></code></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">accelerate</span> <span class="n">launch</span> <span class="o">--</span><span class="n">config</span><span class="o">-</span><span class="n">file</span> <span class="n">accelerate_config</span><span class="o">/</span><span class="n">fsdp1</span><span class="o">.</span><span class="n">yaml</span> \
+  <span class="o">--</span><span class="n">fsdp_transformer_layer_cls_to_wrap</span> <span class="n">LlamaDecoderLayer</span> \
+  <span class="n">main</span><span class="o">.</span><span class="n">py</span> \
+  <span class="o">--</span><span class="n">model_name_or_path</span> <span class="o">./</span><span class="n">llama3</span><span class="mf">.1</span><span class="o">-</span><span class="n">finetuned</span> \
+  <span class="o">--</span><span class="n">model_max_length</span> <span class="mi">4096</span> \
+  <span class="o">--</span><span class="n">dataloader_drop_last</span> <span class="kc">True</span> \
+  <span class="o">--</span><span class="n">do_train</span> <span class="kc">True</span> \
+  <span class="o">--</span><span class="n">do_eval</span> <span class="kc">True</span> \
+  <span class="o">--</span><span class="n">quant_scheme</span> <span class="n">MXFP8</span> \
+  <span class="o">--</span><span class="n">output_dir</span> <span class="o">./</span><span class="n">llama3</span><span class="mf">.1</span><span class="o">-</span><span class="n">finetuned</span><span class="o">-</span><span class="n">qat</span> \
+  <span class="o">--</span><span class="n">dataset</span> <span class="n">Daring</span><span class="o">-</span><span class="n">Anteater</span> \
+  <span class="o">--</span><span class="n">max_steps</span> <span class="mi">1000</span> \
+  <span class="o">--</span><span class="n">per_device_train_batch_size</span> <span class="mi">4</span> \
+  <span class="o">--</span><span class="n">per_device_eval_batch_size</span> <span class="mi">4</span> \
+  <span class="o">--</span><span class="n">gradient_accumulation_steps</span> <span class="mi">1</span> \
+  <span class="o">--</span><span class="n">eval_accumulation_steps</span> <span class="mi">1</span> \
+  <span class="o">--</span><span class="n">save_strategy</span> <span class="n">steps</span> \
+  <span class="o">--</span><span class="n">save_steps</span> <span class="mi">3000</span> \
+  <span class="o">--</span><span class="n">eval_strategy</span> <span class="n">steps</span> \
+  <span class="o">--</span><span class="n">eval_steps</span> <span class="mi">3000</span> \
+  <span class="o">--</span><span class="n">load_best_model_at_end</span> <span class="kc">True</span> \
+  <span class="o">--</span><span class="n">save_total_limit</span> <span class="mi">2</span> \
+  <span class="o">--</span><span class="n">learning_rate</span> <span class="mf">1e-5</span> \
+  <span class="o">--</span><span class="n">weight_decay</span> <span class="mf">0.0</span> \
+  <span class="o">--</span><span class="n">warmup_ratio</span> <span class="mf">0.03</span> \
+  <span class="o">--</span><span class="n">lr_scheduler_type</span> <span class="n">linear</span> \
+  <span class="o">--</span><span class="n">logging_steps</span> <span class="mi">1</span> \
+  <span class="o">--</span><span class="n">report_to</span> <span class="n">tensorboard</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="evaluation">
+<h4>Evaluation<a class="headerlink" href="#evaluation" title="Link to this heading"></a></h4>
+<p>Once QAT is complete, the saved quantized model can be deployed using vLLM for efficient inference. For example, to evaluate on GSM8K:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">lm_eval</span> \
+  <span class="o">--</span><span class="n">model</span> <span class="n">vllm</span> \
+  <span class="o">--</span><span class="n">model_args</span> <span class="n">pretrained</span><span class="o">=./</span><span class="n">llama3</span><span class="mf">.1</span><span class="o">-</span><span class="n">finetuned</span><span class="o">-</span><span class="n">qat</span><span class="p">,</span><span class="n">tensor_parallel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">data_parallel_size</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span><span class="n">gpu_memory_utilization</span><span class="o">=</span><span class="mf">0.3</span><span class="p">,</span><span class="n">max_model_len</span><span class="o">=</span><span class="mi">32768</span><span class="p">,</span><span class="n">enforce_eager</span><span class="o">=</span><span class="kc">True</span> \
+  <span class="o">--</span><span class="n">tasks</span> <span class="n">gsm8k</span> \
+  <span class="o">--</span><span class="n">batch_size</span> <span class="mi">8</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f8c2f5f8f50> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
