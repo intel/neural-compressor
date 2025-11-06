@@ -1,0 +1,362 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Accelerate VGG19 Inference on Intel® Gen4 Xeon® Sapphire Rapids &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Accelerate VGG19 Inference on Intel® Gen4 Xeon®  Sapphire Rapids</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../_sources/docs/source/examples/deprecated/notebook/tensorflow/vgg19_ibean/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="accelerate-vgg19-inference-on-intel-gen4-xeon-sapphire-rapids">
+<h1>Accelerate VGG19 Inference on Intel® Gen4 Xeon®  Sapphire Rapids<a class="headerlink" href="#accelerate-vgg19-inference-on-intel-gen4-xeon-sapphire-rapids" title="Link to this heading"></a></h1>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Intel® Gen4 Xeon® Sapphire Rapids supports new hardware feature: <a class="reference external" href="https://www.intel.com/content/www/us/en/develop/documentation/cpp-compiler-developer-guide-and-reference/top/compiler-reference/intrinsics/intrinsics-for-amx-instructions.html">Intel® Advanced Matrix Extensions (AMX)</a> which accelerates deep learning inference by INT8/BF16 data type.</p>
+<p>AMX is better than VNNI (<a class="reference external" href="https://www.intel.com/content/dam/www/public/us/en/documents/product-overviews/dl-boost-product-overview.pdf">AVX-512 Vector Neural Network Instructions</a> supported by older Xeon®) to accelerate INT8 model. It’s 8 times performance of VNNI in theory.</p>
+<p>Intel® Neural Compressor helps quantize the FP32 model to INT8 and control the accuracy loss as expected.</p>
+<p>This example shows a whole pipeline:</p>
+<ol class="simple">
+<li><p>Train an image classification model <a class="reference external" href="https://arxiv.org/abs/1409.1556">VGG19</a> by transfer learning based on <a class="reference external" href="https://tfhub.dev">TensorFlow Hub</a> trained model.</p></li>
+<li><p>Quantize the FP32 Keras model and get a INT8 PB model by Intel® Neural Compressor.</p></li>
+<li><p>Test and compare the performance of FP32 &amp; INT8 models.</p></li>
+</ol>
+<p>This example can be executed on Intel® CPU supports VNNI or AMX. There will be more performance improvement on Intel® CPU with AMX.</p>
+<p>To learn more about Intel® Neural Compressor, please refer to the official website for detailed info and news: <a class="reference external" href="https://github.com/intel/neural-compressor">https://github.com/intel/neural-compressor</a></p>
+<p>We will learn the acceleration of AI inference by Intel AI technology:</p>
+<ol class="simple">
+<li><p>Intel® Advanced Matrix Extensions</p></li>
+<li><p>Intel® Deep Learning Boost</p></li>
+<li><p>Intel® Neural Compressor</p></li>
+<li><p>Intel® Optimization for Tensorflow*</p></li>
+</ol>
+</section>
+<section id="quantization-plus-bf16-on-sapphire-rapids-spr">
+<h2>Quantization Plus BF16 on Sapphire Rapids (SPR)<a class="headerlink" href="#quantization-plus-bf16-on-sapphire-rapids-spr" title="Link to this heading"></a></h2>
+<p>As we know, SPR support AMX-INT8 and AMX-BF16 instructions which accelerate the INT8 and BF16 layer inference.</p>
+<p>Intel® Neural Compressor has this special function for SPR: during quantizing the model, it will convert the FP32 layers to BF16 which can’t be quantized when execute the quantization on SPR automatically. Convert FP32 to BF16 is following the rule of AI framework too.</p>
+<p>It will help accelerate the model on SPR as possible and control the accuracy loss as expected.</p>
+<p>How to enable it?</p>
+<ol class="simple">
+<li><p>Install Intel® Optimization for Tensorflow*/Intel® Extension for Tensorflow* of the release support this feature.</p></li>
+</ol>
+<p>Note, the public release can’t support it now.</p>
+<ol class="simple">
+<li><p>Execute quantization process by calling Intel® Neural Compressor API on SPR.</p></li>
+</ol>
+<p>we could force to enable this feature by setting environment variables, if the quantization is executed on the Xeon which doesn’t support AMX.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;FORCE_BF16&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;MIX_PRECISION_TEST&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;1&quot;</span>
+</pre></div>
+</div>
+<p>How to disable it?</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">os</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;FORCE_BF16&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span>
+<span class="n">os</span><span class="o">.</span><span class="n">environ</span><span class="p">[</span><span class="s2">&quot;MIX_PRECISION_TEST&quot;</span><span class="p">]</span> <span class="o">=</span> <span class="s2">&quot;0&quot;</span>
+</pre></div>
+</div>
+<p>This example is used to highlight to this feature.</p>
+</section>
+<section id="code">
+<h2>Code<a class="headerlink" href="#code" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Function</th>
+<th>Code</th>
+<th>Input</th>
+<th>Output</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Train and quantize a CNN model</td>
+<td>train_model.py</td>
+<td>dataset: ibean</td>
+<td>model_keras.fp32<br>model_pb.int8</td>
+</tr>
+<tr>
+<td>Test performance</td>
+<td>profiling_inc.py</td>
+<td>model_keras.fp32<br>model_pb.int8</td>
+<td>32.json<br>8.json</td>
+</tr>
+<tr>
+<td>Compare the performance</td>
+<td>compare_perf.py</td>
+<td>32.json<br>8.json</td>
+<td>stdout/stderr<br>log file<br>fp32_int8_absolute.png<br>fp32_int8_times.png</td>
+</tr>
+</tbody>
+</table><p>Execute <strong>run_sample.sh</strong> in shell will call above scripts to finish the demo. Or execute <strong>inc_quantize_vgg19.ipynbrun_sample.sh</strong> in jupyter notebook to finish the demo.</p>
+</section>
+<section id="hardware-environment">
+<h2>Hardware Environment<a class="headerlink" href="#hardware-environment" title="Link to this heading"></a></h2>
+<section id="local-server-or-cloud">
+<h3>Local Server or Cloud<a class="headerlink" href="#local-server-or-cloud" title="Link to this heading"></a></h3>
+<p>It’s recommended to use 4nd Generation Intel® Xeon® Scalable Processors (SPR) or newer, which include:</p>
+<ol class="simple">
+<li><p>AVX512 instruction to speed up training &amp; inference AI model.</p></li>
+<li><p>Intel® Advanced Matrix Extensions (AMX) to accelerate AI/DL Inference with INT8/BF16 Model.</p></li>
+</ol>
+<p>It’s also executed on other Intel CPUs. If the CPU support Intel® Deep Learning Boost, the performance will be increased obviously. Without it, maybe it’s 1.x times of FP32.</p>
+</section>
+<section id="intel-devcloud">
+<h3>Intel® DevCloud<a class="headerlink" href="#intel-devcloud" title="Link to this heading"></a></h3>
+<p>If you have no such hardware platform to support Intel® Advanced Matrix Extensions (AMX) or Intel® Deep Learning Boost, you could register to Intel® DevCloud and try this example on new Xeon with Intel® Deep Learning Boost freely. To learn more about working with Intel® DevCloud, please refer to <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/tools/devcloud/overview.html">Intel® DevCloud</a></p>
+</section>
+</section>
+<section id="running-environment">
+<h2>Running Environment<a class="headerlink" href="#running-environment" title="Link to this heading"></a></h2>
+<section id="id1">
+<h3>Local Server or Cloud<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>Set up own running environment in local server, cloud (including Intel® DevCloud):</p>
+<section id="install-by-pypi">
+<h4>Install by PyPi<a class="headerlink" href="#install-by-pypi" title="Link to this heading"></a></h4>
+<p>Create virtual environment <strong>env_inc</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">pip_set_env</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>Activate it by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">source</span> <span class="n">env_inc</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">activate</span>
+</pre></div>
+</div>
+</section>
+<section id="install-by-conda">
+<h4>Install by Conda<a class="headerlink" href="#install-by-conda" title="Link to this heading"></a></h4>
+<p>Create virtual environment <strong>env_inc</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda_set_env</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>Activate it by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">env_inc</span>
+</pre></div>
+</div>
+</section>
+<section id="run-by-jupyter-notebook">
+<h4>Run by Jupyter Notebook<a class="headerlink" href="#run-by-jupyter-notebook" title="Link to this heading"></a></h4>
+<p>Startup Jupyter Notebook:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">run_jupyter</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>Please open <strong>inc_quantize_vgg19.ipynb</strong> in Jupyter Notebook.</p>
+<p>After set the right kernel, following the guide in it to run this demo.</p>
+</section>
+</section>
+<section id="id2">
+<h3>Intel® DevCloud<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<section id="getting-started-with-intel-devcloud">
+<h4>Getting Started with Intel® DevCloud<a class="headerlink" href="#getting-started-with-intel-devcloud" title="Link to this heading"></a></h4>
+<p>This article assumes you are familiar with Intel® DevCloud environment. To learn more about working with Intel® DevCloud, please refer to <a class="reference external" href="https://www.intel.com/content/www/us/en/developer/tools/devcloud/overview.html">Intel® DevCloud</a>.
+Specifically, this article assumes:</p>
+<ol class="simple">
+<li><p>You have an Intel® DevCloud account.</p></li>
+<li><p>You are familiar with usage of Intel® DevCloud, like login by SSH client..</p></li>
+<li><p>Developers are familiar with Python, AI model training and inference based on Tensorflow*.</p></li>
+</ol>
+</section>
+<section id="setup-based-on-intel-oneapi-ai-analytics-toolkit">
+<h4>Setup based on Intel® oneAPI AI Analytics Toolkit<a class="headerlink" href="#setup-based-on-intel-oneapi-ai-analytics-toolkit" title="Link to this heading"></a></h4>
+<ol class="simple">
+<li><p>SSH to Intel® DevCloud or Open terminal by Jupyter notebook.</p></li>
+<li><p>Create virtual environment <strong>env_inc</strong>:</p></li>
+</ol>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">./</span><span class="n">devcloud_setup_env</span><span class="o">.</span><span class="n">sh</span>
+</pre></div>
+</div>
+<p>Activate it by:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">conda</span> <span class="n">activate</span> <span class="n">env_inc</span>
+</pre></div>
+</div>
+</section>
+<section id="run-in-ssh-login-intel-devcloud-for-oneapi">
+<h4>Run in SSH Login Intel® DevCloud for oneAPI<a class="headerlink" href="#run-in-ssh-login-intel-devcloud-for-oneapi" title="Link to this heading"></a></h4>
+<p>If you have no SPR server, you can try on Intel® DevCloud which provides SPR server running environment.</p>
+<p>Job submit to compute node with the property ‘clx’ or ‘icx’ which support Intel® Deep Learning Boost (avx512_vnni); ‘spr’ which supports Intel® Advanced Matrix Extensions (AMX).</p>
+<section id="job-submit">
+<h5>Job Submit<a class="headerlink" href="#job-submit" title="Link to this heading"></a></h5>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>!qsub run_in_intel_devcloud.sh -d `pwd` -l nodes=1:spr:ppn=2
+28029.v-qsvr-nda.aidevcloud
+</pre></div>
+</div>
+<p>Note, please run above command in login node. There will be error as below if run it on compute node:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">qsub</span><span class="p">:</span> <span class="n">submit</span> <span class="n">error</span> <span class="p">(</span><span class="n">Bad</span> <span class="n">UID</span> <span class="k">for</span> <span class="n">job</span> <span class="n">execution</span> <span class="n">MSG</span><span class="o">=</span><span class="n">ruserok</span> <span class="n">failed</span> <span class="n">validating</span> <span class="n">uXXXXX</span><span class="o">/</span><span class="n">uXXXXX</span> <span class="kn">from</span><span class="w"> </span><span class="nn">s001</span><span class="o">-</span><span class="n">n054</span><span class="o">.</span><span class="n">aidevcloud</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="check-job-status">
+<h5>Check job status<a class="headerlink" href="#check-job-status" title="Link to this heading"></a></h5>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">qstat</span>
+</pre></div>
+</div>
+<p>After the job is over (successfully or fault), there will be log files, like:</p>
+<ol class="simple">
+<li><p><strong>run_in_intel_devcloud.sh.o28029</strong></p></li>
+<li><p><strong>run_in_intel_devcloud.sh.e28029</strong></p></li>
+</ol>
+</section>
+<section id="check-result">
+<h5>Check Result<a class="headerlink" href="#check-result" title="Link to this heading"></a></h5>
+</section>
+<section id="check-result-in-log-file">
+<h5>Check Result in Log File<a class="headerlink" href="#check-result-in-log-file" title="Link to this heading"></a></h5>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>tail -23 `ls -lAtr run_in_intel_devcloud.sh.o* |  tail -1 | awk &#39;{print $9}&#39;`
+</pre></div>
+</div>
+<p>Or
+Check the result in a log file, like : <strong>run_in_intel_devcloud.sh.o28029</strong>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>!tail -23 run_in_intel_devcloud.sh.o1842253
+
+
+Model          FP32                 INT8
+throughput(fps)   572.4982883964987        X030.70552731285
+latency(ms)      2.8339174329018104       X.128233714979522
+accuracy(%)      0.9799               X.9796
+
+Save to fp32_int8_absolute.png
+
+Model         FP32                  INT8
+throughput_times  1                    X.293824608282245
+latency_times    1                    X.7509864932092611
+accuracy_times   1                    X.9996938463108482
+
+Save to fp32_int8_times.png
+Please check the PNG files to see the performance!
+This demo is finished successfully!
+Thank you!
+
+########################################################################
+# End of output for job 1842253.v-qsvr-1.aidevcloud
+# Date: Thu 27 Jan 2022 07:05:52 PM PST
+########################################################################
+
+...
+</pre></div>
+</div>
+<p>We will see the performance and accuracy of FP32 and INT8 model. The performance could be obviously increased if running on Xeon with VNNI.</p>
+</section>
+<section id="check-result-in-png-file">
+<h5>Check Result in PNG file<a class="headerlink" href="#check-result-in-png-file" title="Link to this heading"></a></h5>
+<p>The demo creates figure files: fp32_int8_absolute.png, fp32_int8_times.png to show performance bar. They could be used in report.</p>
+<p>Copy files from DevCloud in host:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">scp</span> <span class="n">devcloud</span><span class="p">:</span><span class="o">~/</span><span class="n">xxx</span><span class="o">/*.</span><span class="n">png</span> <span class="o">./</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f1e98288710> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,171 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step by Step &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step by Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/deprecated/pytorch/nlp/huggingface_models/question-answering/model_slim/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step by Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<section id="channel-pruning-for-consecutive-linear-layers">
+<h2>Channel Pruning for Consecutive Linear Layers<a class="headerlink" href="#channel-pruning-for-consecutive-linear-layers" title="Link to this heading"></a></h2>
+<p>An interesting thing for pruning is that if we do <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/neural_compressor/compression/pruner#pruning-patterns">channel pruning</a> for some linear layers in NLP models, we can permanently remove these all-zero channels without changing their accuracy.</p>
+<p>To be specific, if a model has two consecutive linear layers, which is common in both <strong>Bert series</strong> and <strong>GPT series</strong> models’ FFN parts, and we conduct the input channel pruning for the second linear layer (masking weights by column). We can remove these all-zero channels. Plus, we also remove the same indices’ output channels in the first linear layers (masking weights by row), since their contribution for activation will be masked by the second layer’s.</p>
+<p>This leads to no change for model’s accuracy, but can obtain a significant acceleration for model’s inference, because the transformer models’ FFN parts take nearly 50% of entire computing overhead. Thus, compressing weights in FFN parts is really useful.</p>
+</section>
+<section id="multi-head-pruning-for-self-attention-layers">
+<h2>Multi-head Pruning for Self-Attention Layers<a class="headerlink" href="#multi-head-pruning-for-self-attention-layers" title="Link to this heading"></a></h2>
+<p>Self attention modules are common in all Transformer-based models. These models use multi-head attention (also known as MHA) to enhance their abilities of linking contextual information. Transformer-based models usually stack a sequence of MHA modules, and this makes MHA takes a noticeable storage and memory bandwidth. As an optimization method, head pruning removes attention heads which make minor contribution to model’s contextual analysis. This method does not lead to much accuracy loss, but provides us with much opportunity for model acceleration.</p>
+</section>
+<section id="api-for-consecutive-linear-layers-and-multi-head-attention-slim">
+<h2>API for Consecutive Linear Layers and Multi-head attention Slim.<a class="headerlink" href="#api-for-consecutive-linear-layers-and-multi-head-attention-slim" title="Link to this heading"></a></h2>
+<p>We provide API functions for you to complete the process above and slim your transformer models easily. Here is how to call our API functions. Simply provide a target sparsity value to our Our API function <strong>parse_auto_slim_config</strong> and it can generate the <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/neural_compressor/compression/pruner#get-started-with-pruning-api">pruning_configs</a> used by our pruning API. Such process is fully automatic and target linear layers will be included without manual setting. After pruning process finished, use API function <strong>model_slim</strong> to slim the model.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># auto slim config</span>
+<span class="c1"># part1 generate pruning configs for the second linear layers. </span>
+<span class="n">pruning_configs</span> <span class="o">=</span> <span class="p">[]</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.compression.pruner</span><span class="w"> </span><span class="kn">import</span> <span class="n">parse_auto_slim_config</span>
+<span class="n">auto_slim_configs</span> <span class="o">=</span> <span class="n">parse_auto_slim_config</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">,</span> 
+    <span class="n">ffn2_sparsity</span> <span class="o">=</span> <span class="n">prune_ffn2_sparsity</span><span class="p">,</span> <span class="c1"># define target sparsity with a float between 0 and 1</span>
+    <span class="n">mha_sparsity</span> <span class="o">=</span> <span class="n">prune_mha_sparsity</span><span class="p">,</span> <span class="c1"># define target sparsity with a float between 0 and 1</span>
+<span class="p">)</span>
+<span class="n">pruning_configs</span> <span class="o">+=</span> <span class="n">auto_slim_configs</span>
+
+<span class="c1">################</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd"># Training codes.</span>
+<span class="sd">......</span>
+<span class="sd">&quot;&quot;&quot;</span>
+<span class="c1">################</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.compression.pruner</span><span class="w"> </span><span class="kn">import</span> <span class="n">model_slim</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">model_slim</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Please noted that if you already have a sparse model which corresponding linear layers pruned, you can simply call the last two lines to complete the model slim.</p>
+</section>
+<section id="run-examples">
+<h2>Run Examples<a class="headerlink" href="#run-examples" title="Link to this heading"></a></h2>
+<p>We provides an example of Bert-Base to demonstrate how we slim Transformer-based models. In this example, we simultaneously prune the searched feed forward networks and multi-head attention modules to obtain the best acceleration performance. Simply run the following script:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>sh<span class="w"> </span>run_qa_auto_slim.sh
+</pre></div>
+</div>
+<p>After FFN compression, the inference speed of the model will be significantly improved on both CPU and GPU.</p>
+<p>For more information about pruning, please refer to our <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/neural_compressor/compression/pruner">INC Pruning API</a>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f1e9813e1b0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,247 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step (Deprecated) &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step (Deprecated)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../_sources/docs/source/examples/deprecated/tensorflow/oob_models/quantization/ptq/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step-deprecated">
+<h1>Step-by-Step (Deprecated)<a class="headerlink" href="#step-by-step-deprecated" title="Link to this heading"></a></h1>
+<p>This document is used to list steps of reproducing Intel Optimized TensorFlow OOB models tuning zoo result.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1. Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<p>Recommend python 3.8 or higher version.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install Intel® Neural Compressor</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
+<span class="c1"># Install Intel® Tensorflow</span>
+pip<span class="w"> </span>install<span class="w"> </span>intel-tensorflow
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: Validated TensorFlow <a class="reference external" href="/docs/source/installation_guide.html#validated-software-environment">Version</a>.</p>
+</div></blockquote>
+</section>
+<section id="install-intel-extension-for-tensorflow">
+<h3>Install Intel Extension for Tensorflow<a class="headerlink" href="#install-intel-extension-for-tensorflow" title="Link to this heading"></a></h3>
+<section id="quantizing-the-model-on-intel-gpu-mandatory-to-install-itex">
+<h4>Quantizing the model on Intel GPU(Mandatory to install ITEX)<a class="headerlink" href="#quantizing-the-model-on-intel-gpu-mandatory-to-install-itex" title="Link to this heading"></a></h4>
+<p>Intel Extension for Tensorflow is mandatory to be installed for quantizing the model on Intel GPUs.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>intel-extension-for-tensorflow<span class="o">[</span>xpu<span class="o">]</span>
+</pre></div>
+</div>
+<p>Please refer to the <a class="reference external" href="https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html">Installation Guides</a> for latest Intel GPU driver installation.
+For any more details, please follow the procedure in <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow/blob/main/docs/install/install_for_xpu.html#install-gpu-drivers">install-gpu-drivers</a>.</p>
+</section>
+<section id="quantizing-the-model-on-intel-cpu-optional-to-install-itex">
+<h4>Quantizing the model on Intel CPU(Optional to install ITEX)<a class="headerlink" href="#quantizing-the-model-on-intel-cpu-optional-to-install-itex" title="Link to this heading"></a></h4>
+<p>Intel Extension for Tensorflow for Intel CPUs is experimental currently. It’s not mandatory for quantizing the model on Intel CPUs.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--upgrade<span class="w"> </span>intel-extension-for-tensorflow<span class="o">[</span>cpu<span class="o">]</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p><strong>Note</strong>:
+The version compatibility of stock Tensorflow and ITEX can be checked <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow#compatibility-table">here</a>. Please make sure you have installed compatible Tensorflow and ITEX.</p>
+</div></blockquote>
+</section>
+</section>
+</section>
+<section id="prepare-pre-trained-model">
+<h2>2. Prepare pre-trained model<a class="headerlink" href="#prepare-pre-trained-model" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>Get model from <a class="reference external" href="https://github.com/openvinotoolkit/open_model_zoo/tree/2021.4/tools/downloader/README.html">open_model_zoo</a></p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/openvinotoolkit/open_model_zoo.git
+
+git<span class="w"> </span>checkout<span class="w"> </span><span class="m">2021</span>.4
+
+<span class="nb">cd</span><span class="w"> </span>open_model_zoo/tools/downloader/
+
+./downloader.py<span class="w"> </span>--name<span class="w"> </span><span class="si">${</span><span class="nv">model_name</span><span class="si">}</span><span class="w"> </span>--output_dir<span class="w"> </span><span class="si">${</span><span class="nv">model_path</span><span class="si">}</span>
+</pre></div>
+</div>
+<p>List models names can get with open_model_zoo:</p>
+<p>|	Model_name	|
+|	——————————–	|
+|	deeplabv3	|
+|	efficientnet-b0	|
+|	efficientnet-b0_auto_aug	|
+|	efficientnet-b5	|
+|	efficientnet-b7_auto_aug	|
+|	faster_rcnn_inception_v2_coco	|
+|	faster_rcnn_resnet101_coco	|
+|	faster_rcnn_resnet50_coco	|
+|	googlenet-v1-tf	|
+|	googlenet-v3	|
+|	googlenet-v4-tf	|
+|	i3d-rgb-tf	|
+|	inception-resnet-v2-tf	|
+|	license-plate-recognition-barrier-0007	|
+|	resnet-50-tf	|
+|	rfcn-resnet101-coco-tf	|
+|	vehicle-license-plate-detection-barrier-0123	|
+|	yolo-v2-tf	|
+|	yolo-v3-tf	|</p>
+<ul class="simple">
+<li><p>Download with URL</p></li>
+</ul>
+<p>|	Model name	|	URL	|
+|	——————————–	|	——————————–	|
+|	faster_rcnn_resnet101_ava_v2.1	|	http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_ava_v2.1_2018_04_30.tar.gz	|
+|	faster_rcnn_resnet101_kitti	|	http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_kitti_2018_01_28.tar.gz	|
+|	faster_rcnn_resnet101_lowproposals_coco	|	http://download.tensorflow.org/models/object_detection/faster_rcnn_resnet101_lowproposals_coco_2018_01_28.tar.gz	|
+|	image-retrieval-0001	|	https://download.01.org/opencv/openvino_training_extensions/models/image_retrieval/image-retrieval-0001.tar.gz	|
+|	SSD ResNet50 V1 FPN 640x640 (RetinaNet50)	|	http://download.tensorflow.org/models/object_detection/tf2/20200711/ssd_resnet50_v1_fpn_640x640_coco17_tpu-8.tar.gz	|
+|	ssd_inception_v2_coco	|	http://download.tensorflow.org/models/object_detection/ssd_inception_v2_coco_2018_01_28.tar.gz	|
+|	ssd-resnet34 300x300	|	https://storage.googleapis.com/intel-optimized-tensorflow/models/v1_6/ssd_resnet34_fp32_bs1_pretrained_model.pb	|</p>
+</section>
+<section id="prepare-dataset">
+<h2>3. Prepare Dataset<a class="headerlink" href="#prepare-dataset" title="Link to this heading"></a></h2>
+<p>We use dummy data to do benchmarking with Tensorflow OOB models.</p>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<section id="run-tuning">
+<h2>run tuning<a class="headerlink" href="#run-tuning" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./run_quant.sh<span class="w"> </span>--topology<span class="o">=</span><span class="si">${</span><span class="nv">model_topology</span><span class="si">}</span><span class="w"> </span>--dataset_location<span class="o">=</span><span class="w"> </span>--input_model<span class="o">=</span><span class="si">${</span><span class="nv">model_path</span><span class="si">}</span><span class="w"> </span>--output_model<span class="o">=</span><span class="si">${</span><span class="nv">output_model_path</span><span class="si">}</span>
+</pre></div>
+</div>
+<section id="quantization-config">
+<h3>Quantization Config<a class="headerlink" href="#quantization-config" title="Link to this heading"></a></h3>
+<p>The Quantization Config class has default parameters setting for running on Intel CPUs. If running this example on Intel GPUs, the ‘backend’ parameter should be set to ‘itex’ and the ‘device’ parameter should be set to ‘gpu’.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
+    <span class="n">device</span><span class="o">=</span><span class="s2">&quot;gpu&quot;</span><span class="p">,</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">&quot;itex&quot;</span><span class="p">,</span>
+    <span class="o">...</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="run-benchmarking">
+<h2>run benchmarking<a class="headerlink" href="#run-benchmarking" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>./run_benchmark.sh<span class="w"> </span>--topology<span class="o">=</span><span class="si">${</span><span class="nv">model_topology</span><span class="si">}</span><span class="w"> </span>--dataset_location<span class="o">=</span><span class="w"> </span>--input_model<span class="o">=</span><span class="si">${</span><span class="nv">model_path</span><span class="si">}</span><span class="w"> </span>--mode<span class="o">=</span>performance<span class="w"> </span>--batch_size<span class="o">=</span><span class="m">1</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f1e97f7a210> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

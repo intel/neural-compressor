@@ -1,0 +1,183 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../_sources/docs/source/examples/deprecated/pytorch/nlp/huggingface_models/text-classification/distillation/eager/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document is used to list steps of reproducing Huggingface models distillation examples result.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<p>Recommend python 3.6 or higher version.</p>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+</section>
+<section id="distillation">
+<h1>Distillation<a class="headerlink" href="#distillation" title="Link to this heading"></a></h1>
+<section id="sst-2-task">
+<h2>SST-2 task<a class="headerlink" href="#sst-2-task" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>-P<span class="w"> </span>./<span class="w"> </span>http://nlp.stanford.edu/data/glove.6B.zip
+unzip<span class="w"> </span>glove.6B.zip<span class="w"> </span>glove.6B.50d.txt<span class="w"> </span>-d<span class="w"> </span>./
+python<span class="w"> </span>run_glue_no_trainer_distillation.py<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--task_name<span class="w"> </span>sst2<span class="w"> </span>--max_seq_length<span class="w"> </span><span class="m">128</span><span class="w"> </span>--model_name_or_path<span class="w"> </span>BiLSTM<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>textattack/roberta-base-SST-2<span class="w"> </span>--do_distillation<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--per_device_train_batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span>--learning_rate<span class="w"> </span>1e-4<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">20</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--output_dir<span class="w"> </span>/path/to/output_dir<span class="w">  </span><span class="se">\</span>
+<span class="w">      </span>--augmented_sst2_data<span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span>
+</pre></div>
+</div>
+</section>
+<section id="mnli-task">
+<h2>MNLI task<a class="headerlink" href="#mnli-task" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_glue_no_trainer_distillation.py<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--task_name<span class="w"> </span>mnli<span class="w"> </span>--model_name_or_path<span class="w"> </span>huawei-noah/TinyBERT_General_4L_312D<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>blackbird/bert-base-uncased-MNLI-v1<span class="w"> </span>--do_distillation<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--learning_rate<span class="w"> </span>2e-5<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">4</span><span class="w"> </span>--per_device_train_batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--output_dir<span class="w"> </span>/path/to/output_dir<span class="w"> </span>--loss_weights<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span>--temperature<span class="w"> </span><span class="m">4</span><span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span>
+</pre></div>
+</div>
+</section>
+<section id="qqp-task">
+<h2>QQP task<a class="headerlink" href="#qqp-task" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_glue_no_trainer_distillation.py<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--task_name<span class="w"> </span>qqp<span class="w"> </span>--max_seq_length<span class="w"> </span><span class="m">128</span><span class="w"> </span>--model_name_or_path<span class="w"> </span>nreimers/MiniLM-L3-H384-uncased<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>textattack/bert-base-uncased-QQP<span class="w"> </span>--do_distillation<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--per_device_train_batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span>--learning_rate<span class="w"> </span>1e-5<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--output_dir<span class="w"> </span>/path/to/output_dir<span class="w">  </span>--loss_weights<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--temperature<span class="w"> </span><span class="m">2</span><span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span>
+</pre></div>
+</div>
+</section>
+<section id="cola-task">
+<h2>COLA task<a class="headerlink" href="#cola-task" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_glue_no_trainer_distillation.py<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--task_name<span class="w"> </span>cola<span class="w"> </span>--max_seq_length<span class="w"> </span><span class="m">128</span><span class="w"> </span>--model_name_or_path<span class="w"> </span>distilroberta-base<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--teacher_model_name_or_path<span class="w"> </span>howey/roberta-large-cola<span class="w"> </span>--do_distillation<span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--per_device_train_batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span>--learning_rate<span class="w"> </span>1e-5<span class="w"> </span>--num_train_epochs<span class="w"> </span><span class="m">10</span><span class="w"> </span><span class="se">\</span>
+<span class="w">      </span>--output_dir<span class="w"> </span>/path/to/output_dir<span class="w">  </span>--temperature<span class="w"> </span><span class="m">2</span><span class="w"> </span>--seed<span class="w"> </span><span class="m">5143</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f1e98036f30> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

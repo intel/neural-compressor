@@ -1,0 +1,167 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/deprecated/pytorch/image_recognition/MobileNetV2-0.35/distillation/eager/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This document describes the step-by-step instructions for reproducing the distillation on CIFAR10 dataset. The example is a distillation of the WideResNet40-2 to the MobileNetV2-0.35.</p>
+</section>
+<section id="prerequisite">
+<h1>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># install dependencies</span>
+<span class="nb">cd</span><span class="w"> </span>examples/pytorch/image_recognition/MobileNetV2-0.35/distillation/eager
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+</section>
+<section id="distillation">
+<h1>Distillation<a class="headerlink" href="#distillation" title="Link to this heading"></a></h1>
+<p>Distillation examples on CIFAR10.</p>
+<section id="train-teacher-model">
+<h2>1. Train Teacher Model<a class="headerlink" href="#train-teacher-model" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># for training of the teacher model WideResNet40-2</span>
+python<span class="w"> </span>train_without_distillation.py<span class="w"> </span>--epochs<span class="w"> </span><span class="m">200</span><span class="w"> </span>--lr<span class="w"> </span><span class="m">0</span>.1<span class="w"> </span>--layers<span class="w"> </span><span class="m">40</span><span class="w"> </span>--widen-factor<span class="w"> </span><span class="m">2</span><span class="w"> </span>--name<span class="w"> </span>WideResNet-40-2<span class="w"> </span>--tensorboard
+</pre></div>
+</div>
+</section>
+<section id="distilling-the-teacher-model-to-the-student-model">
+<h2>2. Distilling The Teacher Model to The Student Model<a class="headerlink" href="#distilling-the-teacher-model-to-the-student-model" title="Link to this heading"></a></h2>
+<div class="highlight-shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># for distillation of the teacher model WideResNet40-2 to the student model MobileNetV2-0.35</span>
+python<span class="w"> </span>main.py<span class="w"> </span>--epochs<span class="w"> </span><span class="m">200</span><span class="w"> </span>--lr<span class="w"> </span><span class="m">0</span>.02<span class="w"> </span>--name<span class="w"> </span>MobileNetV2-0.35-distillation<span class="w"> </span>--teacher_model<span class="w"> </span>runs/WideResNet-40-2/model_best.pth.tar<span class="w"> </span>--tensorboard<span class="w"> </span>--seed<span class="w"> </span><span class="m">9</span><span class="w"> </span>
+</pre></div>
+</div>
+</section>
+<section id="distributed-data-parallel-training">
+<h2>Distributed Data Parallel Training<a class="headerlink" href="#distributed-data-parallel-training" title="Link to this heading"></a></h2>
+<p>We also supported Distributed Data Parallel training on single node and multi nodes settings for distillation. To use Distributed Data Parallel to speedup training, the bash command needs a small adjustment.
+<br>
+For example, bash command will look like the following, where <em><code class="docutils literal notranslate"><span class="pre">&lt;MASTER_ADDRESS&gt;</span></code></em> is the address of the master node, it won’t be necessary for single node case, <em><code class="docutils literal notranslate"><span class="pre">&lt;NUM_PROCESSES_PER_NODE&gt;</span></code></em> is the desired processes to use in current node, for node with GPU, usually set to number of GPUs in this node, for node without GPU and use CPU for training, it’s recommended set to 1, <em><code class="docutils literal notranslate"><span class="pre">&lt;NUM_NODES&gt;</span></code></em> is the number of nodes to use, <em><code class="docutils literal notranslate"><span class="pre">&lt;NODE_RANK&gt;</span></code></em> is the rank of the current node, rank starts from 0 to <em><code class="docutils literal notranslate"><span class="pre">&lt;NUM_NODES&gt;</span></code></em><code class="docutils literal notranslate"><span class="pre">-1</span></code>.
+<br>
+Also please note that to use CPU for training in each node with multi nodes settings, argument <code class="docutils literal notranslate"><span class="pre">--no_cuda</span></code> is mandatory. In multi nodes setting, following command needs to be launched in each node, and all the commands should be the same except for <em><code class="docutils literal notranslate"><span class="pre">&lt;NODE_RANK&gt;</span></code></em>, which should be integer from 0 to <em><code class="docutils literal notranslate"><span class="pre">&lt;NUM_NODES&gt;</span></code></em><code class="docutils literal notranslate"><span class="pre">-1</span></code> assigned to each node.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>-m<span class="w"> </span>torch.distributed.launch<span class="w"> </span>--master_addr<span class="o">=</span>&lt;MASTER_ADDRESS&gt;<span class="w"> </span>--nproc_per_node<span class="o">=</span>&lt;NUM_PROCESSES_PER_NODE&gt;<span class="w"> </span>--nnodes<span class="o">=</span>&lt;NUM_NODES&gt;<span class="w"> </span>--node_rank<span class="o">=</span>&lt;NODE_RANK&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">   </span>main.py<span class="w"> </span>--epochs<span class="w"> </span><span class="m">200</span><span class="w"> </span>--lr<span class="w"> </span><span class="m">0</span>.02<span class="w"> </span>--name<span class="w"> </span>MobileNetV2-0.35-distillation<span class="w"> </span>--teacher_model<span class="w"> </span>runs/WideResNet-40-2/model_best.pth.tar<span class="w"> </span>--tensorboard<span class="w"> </span>--seed<span class="w"> </span><span class="m">9</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f1e981b63c0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

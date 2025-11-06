@@ -1,0 +1,309 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Examples &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Examples</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/docs/source/examples/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="examples">
+<h1>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h1>
+<p>Intel® Neural Compressor validated examples with multiple compression techniques, including quantization, pruning, knowledge distillation and orchestration.</p>
+</section>
+<section id="pytorch-examples">
+<h1>PyTorch Examples<a class="headerlink" href="#pytorch-examples" title="Link to this heading"></a></h1>
+<section id="quantization">
+<h2>Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h2>
+<table>
+<thead>
+  <tr>
+    <th>Model</th>
+    <th>Domain</th>
+    <th>Method </th>
+    <th>Examples</th>
+  </tr>
+</thead>
+<tbody>
+<tr>
+    <td>FLUX.1-dev</td>
+    <td>Text to Image</td>
+    <td>Quantization (MXFP8+FP8)</td>
+    <td><a href="./pytorch/diffusion_model/diffusers/flux">link</a></td>
+</tr>
+<tr>
+    <td>Llama-4-Scout-17B-16E-Instruct</td>
+    <td>Multimodal Modeling</td>
+    <td>Quantization (MXFP4)</td>
+    <td><a href="./pytorch/multimodal-modeling/quantization/auto_round/llama4">link</a></td>
+</tr>
+<tr>
+    <td rowspan="2">Llama-3.3-70B-Instruct</td>
+    <td rowspan="2">Natural Language Processing</td>
+    <td>Mixed Precision (MXFP4+MXFP8)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/mix-precision#mix-precision-quantization-mxfp4--mxfp8">link</a></td>
+</tr>
+<tr>
+    <td>Quantization (MXFP4/MXFP8/NVFP4)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/mix-precision#mxfp4--mxfp8">link</a></td>
+</tr>
+<tr>
+    <td rowspan="2">gpt_j</td>
+    <td rowspan="2">Natural Language Processing</td>
+    <td>Weight-Only Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
+</tr>
+<tr>
+    <td>Static Quantization (IPEX)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex">link</a></td>
+</tr>
+<tr>
+    <td rowspan="2">llama2_7b</td>
+    <td rowspan="2">Natural Language Processing</td>
+    <td>Weight-Only Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
+</tr>
+<tr>
+    <td>Static Quantization (IPEX)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex">link</a></td>
+</tr>
+<tr>
+    <td rowspan="3">opt_125m</td>
+    <td rowspan="3">Natural Language Processing</td>
+    <td>Static Quantization (IPEX)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex">link</a></td>
+</tr>
+<tr>
+    <td>Static Quantization (PT2E)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/pt2e">link</a></td>
+</tr>
+<tr>
+    <td>Weight-Only Quantization</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
+</tr>
+<tr>
+    <td rowspan="2">resnet18</td>
+    <td rowspan="2">Image Recognition</td>
+    <td>Mixed Precision</td>
+    <td><a href="./pytorch/cv/mixed_precision">link</a></td>
+</tr>
+<tr>
+    <td>Static Quantization</td>
+    <td><a href="./pytorch/cv/static_quant">link</a></td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="tensorflow-examples">
+<h1>TensorFlow Examples<a class="headerlink" href="#tensorflow-examples" title="Link to this heading"></a></h1>
+<section id="id1">
+<h2>Quantization<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
+<table>
+<thead>
+  <tr>
+    <th>Model</th>
+    <th>Domain</th>
+    <th>Method</th>
+    <th>Examples</th>
+  </tr>
+</thead>
+<tbody>
+ <tr>
+    <td>bert_large_squad_model_zoo</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/nlp/bert_large_squad_model_zoo/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>transformer_lt</td>
+    <td>Natural Language Processing</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/nlp/transformer_lt/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>inception_v3</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/inception_v3/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>mobilenetv2</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/mobilenet_v2/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>resnetv2_50</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/resnet_v2_50/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>vgg16</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/vgg16/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>ViT</td>
+    <td>Image Recognition</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/image_recognition/vision_transformer/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>GraphSage</td>
+    <td>Graph Networks</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/graph_networks/graphsage/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>yolo_v5</td>
+    <td>Object Detection</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/object_detection/yolo_v5/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>faster_rcnn_resnet50</td>
+    <td>Object Detection</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/object_detection/faster_rcnn_resnet50/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>mask_rcnn_inception_v2</td>
+    <td>Object Detection</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/object_detection/mask_rcnn_inception_v2/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>ssd_mobilenet_v1</td>
+    <td>Object Detection</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/object_detection/ssd_mobilenet_v1/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>wide_deep_large_ds</td>
+    <td>Recommendation</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/recommendation/wide_deep_large_ds/quantization/ptq">link</a></td>
+</tr>
+<tr>
+    <td>3dunet-mlperf</td>
+    <td>Semantic Image Segmentation</td>
+    <td>Post-Training Static Quantization</td>
+    <td><a href="./tensorflow/semantic_image_segmentation/3dunet-mlperf/quantization/ptq">link</a></td>
+</tr></tbody>
+</table></section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f1e98882a80> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

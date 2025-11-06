@@ -1,0 +1,186 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Troubleshooting &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Troubleshooting</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../../_sources/docs/source/examples/deprecated/pytorch/object_detection/maskrcnn/quantization/ptq/fx/pytorch/TROUBLESHOOTING.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="troubleshooting">
+<h1>Troubleshooting<a class="headerlink" href="#troubleshooting" title="Link to this heading"></a></h1>
+<p>Here is a compilation if common issues that you might face
+while compiling / running this code:</p>
+<section id="compilation-errors-when-compiling-the-library">
+<h2>Compilation errors when compiling the library<a class="headerlink" href="#compilation-errors-when-compiling-the-library" title="Link to this heading"></a></h2>
+<p>If you encounter build errors like the following:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>/usr/include/c++/6/type_traits:1558:8: note: provided for ‘template&lt;class _From, class _To&gt; struct std::is_convertible’
+     struct is_convertible
+        ^~~~~~~~~~~~~~
+/usr/include/c++/6/tuple:502:1: error: body of constexpr function ‘static constexpr bool std::_TC&lt;&lt;anonymous&gt;, _Elements&gt;::_NonNestedTuple() [with _SrcTuple = std::tuple&lt;at::Tensor, at::Tensor, at::Tensor, at::Tensor&gt;&amp;&amp;; bool &lt;anonymous&gt; = true; _Elements = {at::Tensor, at::Tensor, at::Tensor, at::Tensor}]’ not a return-statement
+     }
+ ^
+error: command &#39;/usr/local/cuda/bin/nvcc&#39; failed with exit status 1
+</pre></div>
+</div>
+<p>check your CUDA version and your <code class="docutils literal notranslate"><span class="pre">gcc</span></code> version.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">nvcc</span> <span class="o">--</span><span class="n">version</span>
+<span class="n">gcc</span> <span class="o">--</span><span class="n">version</span>
+</pre></div>
+</div>
+<p>If you are using CUDA 9.0 and gcc 6.4.0, then refer to https://github.com/facebookresearch/maskrcnn-benchmark/issues/25,
+which has a summary of the solution. Basically, CUDA 9.0 is not compatible with gcc 6.4.0.</p>
+</section>
+<section id="importerror-no-module-named-maskrcnn-benchmark-config-when-running-webcam-py">
+<h2>ImportError: No module named maskrcnn_benchmark.config when running webcam.py<a class="headerlink" href="#importerror-no-module-named-maskrcnn-benchmark-config-when-running-webcam-py" title="Link to this heading"></a></h2>
+<p>This means that <code class="docutils literal notranslate"><span class="pre">maskrcnn-benchmark</span></code> has not been properly installed.
+Refer to https://github.com/facebookresearch/maskrcnn-benchmark/issues/22 for a few possible issues.
+Note that we now support Python 2 as well.</p>
+</section>
+<section id="importerror-undefined-symbol-cudapopcallconfiguration-error-when-import-c">
+<h2>ImportError: Undefined symbol: __cudaPopCallConfiguration error when import _C<a class="headerlink" href="#importerror-undefined-symbol-cudapopcallconfiguration-error-when-import-c" title="Link to this heading"></a></h2>
+<p>This probably means that the inconsistent version of NVCC compile and your conda CUDAToolKit package. This is firstly mentioned in https://github.com/facebookresearch/maskrcnn-benchmark/issues/45 . All you need to do is:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Check the NVCC compile version(e.g.)</span>
+<span class="o">/</span><span class="n">usr</span><span class="o">/</span><span class="n">cuda</span><span class="o">-</span><span class="mf">9.2</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">nvcc</span> <span class="o">--</span><span class="n">version</span>
+<span class="c1"># Check the CUDAToolKit version(e.g.)</span>
+<span class="o">~/</span><span class="n">anaconda3</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">conda</span> <span class="nb">list</span> <span class="o">|</span> <span class="n">grep</span> <span class="n">cuda</span>
+
+<span class="c1"># If you need to update your CUDAToolKit</span>
+<span class="o">~/</span><span class="n">anaconda3</span><span class="o">/</span><span class="nb">bin</span><span class="o">/</span><span class="n">conda</span> <span class="n">install</span> <span class="o">-</span><span class="n">c</span> <span class="n">anaconda</span> <span class="n">cudatoolkit</span><span class="o">==</span><span class="mf">9.2</span>
+</pre></div>
+</div>
+<p>Both of them should have the <strong>same</strong> version. For example, if NVCC==9.2 and CUDAToolKit==9.2, this will be fine while when NVCC==9.2 but CUDAToolKit==9, it fails.</p>
+</section>
+<section id="segmentation-fault-core-dumped-when-running-the-library">
+<h2>Segmentation fault (core dumped) when running the library<a class="headerlink" href="#segmentation-fault-core-dumped-when-running-the-library" title="Link to this heading"></a></h2>
+<p>This probably means that you have compiled the library using GCC &lt; 4.9, which is ABI incompatible with PyTorch.
+Indeed, during installation, you probably saw a message like</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Your compiler (g++ 4.8) may be ABI-incompatible with PyTorch!
+Please use a compiler that is ABI-compatible with GCC 4.9 and above.
+See https://gcc.gnu.org/onlinedocs/libstdc++/manual/abi.html.
+
+See https://gist.github.com/goldsborough/d466f43e8ffc948ff92de7486c5216d6
+for instructions on how to install GCC 4.9 or higher.
+</pre></div>
+</div>
+<p>Follow the instructions on https://gist.github.com/goldsborough/d466f43e8ffc948ff92de7486c5216d6
+to install GCC 4.9 or higher, and try recompiling <code class="docutils literal notranslate"><span class="pre">maskrcnn-benchmark</span></code> again, after cleaning the
+<code class="docutils literal notranslate"><span class="pre">build</span></code> folder with</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">rm</span> <span class="o">-</span><span class="n">rf</span> <span class="n">build</span>
+</pre></div>
+</div>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f1e97fdbf20> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

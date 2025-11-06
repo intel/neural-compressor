@@ -1,0 +1,256 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Run &mdash; Intel® Neural Compressor 3.6 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Run</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../_sources/docs/source/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/mix-precision/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<p>In this example, you can verify the accuracy on HPU/CUDA device with emulation of MXFP4, MXFP8, NVFP4 and uNVFP4.</p>
+<section id="requirement">
+<h2>Requirement<a class="headerlink" href="#requirement" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># neural-compressor-pt</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-pt<span class="o">==</span><span class="m">3</span>.6
+<span class="c1"># auto-round</span>
+pip<span class="w"> </span>install<span class="w"> </span>auto-round<span class="o">==</span><span class="m">0</span>.8.0
+<span class="c1"># other requirements</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<p><strong>Before neural-compressor v3.6 and auto-round v0.8.0 release, please install from source for the latest updates:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># neural-compressor-pt</span>
+<span class="nv">INC_PT_ONLY</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/intel/neural-compressor.git@v3.6rc
+<span class="c1"># auto-round</span>
+pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/intel/auto-round.git@v0.8.0rc
+<span class="c1"># other requirements</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="quantization">
+<h2>Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h2>
+<section id="demo-mxfp4-mxfp8-nvfp4-unvfp4">
+<h3>Demo (<code class="docutils literal notranslate"><span class="pre">MXFP4</span></code>, <code class="docutils literal notranslate"><span class="pre">MXFP8</span></code>, <code class="docutils literal notranslate"><span class="pre">NVFP4</span></code>, <code class="docutils literal notranslate"><span class="pre">uNVFP4</span></code>)<a class="headerlink" href="#demo-mxfp4-mxfp8-nvfp4-unvfp4" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>quantize.py<span class="w">  </span>--model_name_or_path<span class="w"> </span>facebook/opt-125m<span class="w"> </span>--quantize<span class="w"> </span>--dtype<span class="w"> </span>MXFP4<span class="w"> </span>--batch_size<span class="w"> </span><span class="m">8</span><span class="w"> </span>--accuracy<span class="w"> </span>--enable_torch_compile
+</pre></div>
+</div>
+</section>
+<section id="mix-precision-quantization-mxfp4-mxfp8">
+<h3>Mix-precision Quantization (<code class="docutils literal notranslate"><span class="pre">MXFP4</span> <span class="pre">+</span> <span class="pre">MXFP8</span></code>)<a class="headerlink" href="#mix-precision-quantization-mxfp4-mxfp8" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Llama 3.1 8B</span>
+python<span class="w"> </span>quantize.py<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--model_name_or_path<span class="w"> </span>meta-llama/Llama-3.1-8B-Instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dtype<span class="w"> </span>MXFP4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--use_recipe<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--recipe_file<span class="w"> </span>recipes/Meta-Llama-3.1-8B-Instruct_7bits.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--enable_torch_compile
+
+<span class="c1"># Llama 3.3 70B</span>
+deepspeed<span class="w"> </span>--include<span class="o">=</span><span class="s2">&quot;localhost:0,1,2,3&quot;</span><span class="w"> </span>--master_port<span class="o">=</span><span class="m">29500</span><span class="w"> </span>quantize.py<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--model_name_or_path<span class="w"> </span>meta-llama/Llama-3.3-70B-Instruct/<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dtype<span class="w"> </span>MXFP4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--use_recipe<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--recipe_file<span class="w"> </span>recipes/Meta-Llama-3.3-70B-Instruct_5bits.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">32</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note:</p>
+<ol class="simple">
+<li><p>Quantization applies <code class="docutils literal notranslate"><span class="pre">--dtype</span></code> for all blocks in the model by removing <code class="docutils literal notranslate"><span class="pre">--use_recipe</span></code>.</p></li>
+<li><p>Setting <code class="docutils literal notranslate"><span class="pre">--quant_lm_head</span></code> applies <code class="docutils literal notranslate"><span class="pre">--dtype</span></code> for the lm_head layer.</p></li>
+<li><p>Setting <code class="docutils literal notranslate"><span class="pre">--iters</span> <span class="pre">0</span></code> skips AutoRound tuning and uses RTN method.</p></li>
+<li><p>The <code class="docutils literal notranslate"><span class="pre">deepspeed</span></code> usage provides quick accuracy verification.</p></li>
+</ol>
+</div></blockquote>
+</section>
+</section>
+<section id="inference-usage">
+<h2>Inference usage<a class="headerlink" href="#inference-usage" title="Link to this heading"></a></h2>
+<section id="nvfp4">
+<h3>NVFP4<a class="headerlink" href="#nvfp4" title="Link to this heading"></a></h3>
+<p>NVFP4 is supported by vLLM already, the saved model in this example follows the <code class="docutils literal notranslate"><span class="pre">llm_compressor</span></code> format, please refer to the usage in the public vLLM document.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Command to save model:</span>
+python<span class="w"> </span>quantize.py<span class="w">  </span>--model_name_or_path<span class="w"> </span>facebook/opt-125m<span class="w"> </span>--quantize<span class="w"> </span>--dtype<span class="w"> </span>NVFP4<span class="w"> </span>--batch_size<span class="w"> </span><span class="m">8</span><span class="w"> </span>--save<span class="w"> </span>--save_path<span class="w"> </span>opt-125m-nvfp4<span class="w"> </span>--save_format<span class="w"> </span>llm_compressor
+</pre></div>
+</div>
+</section>
+<section id="mxfp4-mxfp8">
+<h3>MXFP4 / MXFP8<a class="headerlink" href="#mxfp4-mxfp8" title="Link to this heading"></a></h3>
+<p>MXFP4 and MXFP8 is enabled in a forked vLLM repo, usages as below:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install the forked vLLM</span>
+git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </span>cuda-mxfp8-moe<span class="w"> </span>--single-branch<span class="w"> </span>--quiet<span class="w"> </span>https://github.com/yiliu30/vllm-fork.git<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>vllm-fork
+<span class="nv">USE_CPP</span><span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="nv">VLLM_USE_PRECOMPILED</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span>-vvv<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>-
+
+<span class="c1"># Command to save model:</span>
+python<span class="w"> </span>quantize.py<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--model_name_or_path<span class="w"> </span>meta-llama/Llama-3.3-70B-Instruct/<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--iters<span class="w"> </span><span class="m">0</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dtype<span class="w"> </span>MXFP4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--save_path<span class="w"> </span>Llama-3.3-70B-Instruct-MXFP4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--save<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--save_format<span class="w"> </span>llm_compressor
+
+<span class="c1"># Command to inference with vLLM:</span>
+<span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1<span class="w"> </span><span class="nv">VLLM_USE_V1</span><span class="o">=</span><span class="m">0</span><span class="w"> </span><span class="nv">VLLM_USE_MXFP4_CT_EMULATIONS</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="nv">VLLM_LOGGING_LEVEL</span><span class="o">=</span>DEBUG<span class="w"> </span><span class="se">\</span>
+vllm<span class="w"> </span>serve<span class="w"> </span>Llama-3.3-70B-Instruct-MXFP4<span class="w"> </span>--tensor-parallel-size<span class="o">=</span><span class="m">2</span><span class="w"> </span>--port<span class="w"> </span><span class="m">7777</span><span class="w"> </span>--host<span class="w"> </span>localhost<span class="w"> </span>--trust-remote-code<span class="w"> </span>--dtype<span class="w"> </span>bfloat16<span class="w"> </span>--enforce-eager
+<span class="nb">export</span><span class="w"> </span><span class="nv">no_proxy</span><span class="o">=</span><span class="s2">&quot;localhost, 127.0.0.1, ::1&quot;</span>
+curl<span class="w"> </span>-X<span class="w"> </span>POST<span class="w"> </span>http://localhost:7777/v1/completions<span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>-H<span class="w"> </span><span class="s2">&quot;Content-Type: application/json&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">     </span>-d<span class="w"> </span><span class="s1">&#39;{</span>
+<span class="s1">           &quot;model&quot;: &quot;/model_path/Llama-3.3-70B-Instruct-MXFP4&quot;,</span>
+<span class="s1">           &quot;prompt&quot;: &quot;Solve the following math problem step by step: What is 25 + 37? Please answer directly with the result.&quot;,</span>
+<span class="s1">           &quot;max_tokens&quot;: 100,</span>
+<span class="s1">           &quot;temperature&quot;: 0.7,</span>
+<span class="s1">           &quot;top_p&quot;: 1.0</span>
+<span class="s1">         }&#39;</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: To inference with transformers, please save model with <code class="docutils literal notranslate"><span class="pre">--save_format</span> <span class="pre">auto_round</span></code> and try <code class="docutils literal notranslate"><span class="pre">python</span> <span class="pre">run_hf_inf.py</span> <span class="pre">${model_name_or_path}</span></code></p>
+</div></blockquote>
+</section>
+<section id="id1">
+<h3>MXFP4 + MXFP8<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p>Model with mixed precision is not supported in vLLM, but supported in transformers in <code class="docutils literal notranslate"><span class="pre">auto-round</span></code> format.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Command to save model:</span>
+python<span class="w"> </span>quantize.py<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--model_name_or_path<span class="w"> </span>meta-llama/Llama-3.1-8B-Instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dtype<span class="w"> </span>MXFP4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--use_recipe<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--recipe_file<span class="w"> </span>recipes/Meta-Llama-3.1-8B-Instruct_7bits.json<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--save<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--save_format<span class="w"> </span>auto_round<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--save_path<span class="w"> </span>Llama-3.1-8B-Instruct-MXFP4-MXFP8-AR<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--enable_torch_compile
+
+<span class="c1"># Command to inference with transformer:</span>
+python<span class="w"> </span>run_hf_inf.py<span class="w"> </span>Llama-3.1-8B-Instruct-MXFP4-MXFP8-AR
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f1e97f35a60> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
