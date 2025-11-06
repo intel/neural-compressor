@@ -107,7 +107,7 @@ Pruning patterns defines the rules of pruned weights' arrangements in space. Int
 
 - Multi-head Attention Pruning
 
-  Multi-head attention mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. **We haven't support it in pruning, but we have provided experimental feature in Model Auto Slim**. Please refer to [multi-head attention auto slim examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/model_slim)
+  Multi-head attention mechanism boosts transformer models' capability of contextual information analysis. However, different heads' contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. **We haven't support it in pruning, but we have provided experimental feature in Model Auto Slim**. Please refer to [multi-head attention auto slim examples](https://github.com/intel/neural-compressor/tree/master/examples/deprecated/pytorch/nlp/huggingface_models/question-answering/model_slim)
 
 
 
@@ -474,7 +474,7 @@ The pruning technique  is validated on typical models across various domains (in
 
 - Language Modeling
 
-  Sparsity is effectively implemented through various pruning patterns in Causal language modeling (CLM) tasks. [Language-modeling examples](../../../examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager).
+  Sparsity is effectively implemented through various pruning patterns in Causal language modeling (CLM) tasks. [Language-modeling examples](/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/pruning/eager).
 
 - Text Classification
 
@@ -500,11 +500,11 @@ Please refer to [pruning examples](../../examples/deprecated/README.md#Pruning-1
 
 ## Sparse Model Deployment
 
-Particular hardware/software like [Intel Extension for Transformer](https://github.com/intel/intel-extension-for-transformers) are required to obtain inference speed and footprints' optimization for most sparse models. However, using [model slim](#click) for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)
+Particular hardware/software like [Intel Extension for Transformer](https://github.com/intel/intel-extension-for-transformers) are required to obtain inference speed and footprints' optimization for most sparse models. However, using model slim for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)
 
 ## Pruning with Hyperparameter Optimization
 Intel® Neural Compressor currently support grid search, random, bayesian optimization and xgboost search algorithms for pruning with HPO. 
-For more details, please refer to [HPO document](../../neural_compressor/compression/hpo/README.md)
+For more details, please refer to [HPO](/neural_compressor/compression/hpo)
 
 ## Reference
 
