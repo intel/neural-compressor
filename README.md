@@ -4,7 +4,7 @@ Intel® Neural Compressor
 ===========================
 <h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, and ONNX Runtime)</h3>
 
-[![python](https://img.shields.io/badge/python-3.8%2B-blue)](https://github.com/intel/neural-compressor)
+[![python](https://img.shields.io/badge/python-3.10%2B-blue)](https://github.com/intel/neural-compressor)
 [![version](https://img.shields.io/badge/release-3.6-green)](https://github.com/intel/neural-compressor/releases)
 [![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
 [![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/intel/neural-compressor)
@@ -19,12 +19,12 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
 as well as Intel extensions such as [Intel Extension for TensorFlow](https://github.com/intel/intel-extension-for-tensorflow) and [Intel Extension for PyTorch](https://github.com/intel/intel-extension-for-pytorch).
 In particular, the tool provides the key features, typical examples, and open collaborations as below:
 
-* Support a wide range of Intel hardware such as [Intel Gaudi Al Accelerators](https://www.intel.com/content/www/us/en/products/details/processors/ai-accelerators/gaudi-overview.html), [Intel Core Ultra Processors](https://www.intel.com/content/www/us/en/products/details/processors/core-ultra.html), [Intel Xeon Scalable Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/flex-series.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/details/discrete-gpus/data-center-gpu/max-series.html) with extensive testing;
+* Support a wide range of Intel hardware such as [Intel Gaudi Al Accelerators](https://www.intel.com/content/www/us/en/products/details/processors/ai-accelerators/gaudi.html), [Intel Core Ultra Processors](https://www.intel.com/content/www/us/en/products/details/processors/core-ultra.html), [Intel Xeon Scalable Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/overview.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/overview.html) with extensive testing;
 support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing; support NVidia GPU for some WOQ algorithms like AutoRound and HQQ.
 
 * Validate popular LLMs such as [LLama2](/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), [Falcon](/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), [GPT-J](/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), [Bloom](/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), [OPT](/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), and more than 10,000 broad models such as [Stable Diffusion](/examples/deprecated/pytorch/nlp/huggingface_models/text-to-image/quantization), [BERT-Large](/examples/deprecated/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx), and [ResNet50](/examples/deprecated/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx) from popular model hubs such as [Hugging Face](https://huggingface.co/), [Torch Vision](https://pytorch.org/vision/stable/index.html), and [ONNX Model Zoo](https://github.com/onnx/models#models), with automatic [accuracy-driven](/docs/source/design.md#workflow) quantization strategies
 
-* Collaborate with cloud marketplaces such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Alibaba Cloud](https://www.intel.com/content/www/us/en/developer/articles/technical/quantize-ai-by-oneapi-analytics-on-alibaba-cloud.html), [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00) and [Microsoft Olive](https://github.com/microsoft/Olive), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), [ONNX Runtime](https://github.com/microsoft/onnxruntime), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
+* Collaborate with cloud marketplaces such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00) and [Microsoft Olive](https://github.com/microsoft/Olive), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), [ONNX Runtime](https://github.com/microsoft/onnxruntime), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
 ## What's New
 * [2025/10] [MXFP8 / MXFP4 quantization](./docs/source/3x/PT_MXQuant.md) experimental support
@@ -115,8 +115,8 @@ model = load(
       <td colspan="2" align="center"><a href="./docs/source/3x/design.md#architecture">Architecture</a></td>
       <td colspan="2" align="center"><a href="./docs/source/3x/design.md#workflows">Workflow</a></td>
       <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="1" align="center"><a href="./docs/source/3x/llm_recipes.md">LLMs Recipes</a></td>
-      <td colspan="1" align="center"><a href="./examples/3.x_api/README.md">Examples</a></td>
+      <td colspan="1" align="center"><a href="./docs/source/llm_recipes.md">LLMs Recipes</a></td>
+      <td colspan="1" align="center"><a href="./examples/README.md">Examples</a></td>
     </tr>
   </tbody>
   <thead>
@@ -189,7 +189,6 @@ model = load(
 
 ## Additional Content
 
-* [Release Information](./docs/source/releases_info.md)
 * [Contribution Guidelines](./docs/source/CONTRIBUTING.md)
 * [Legal Information](./docs/source/legal_information.md)
 * [Security Policy](SECURITY.md)

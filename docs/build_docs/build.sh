@@ -83,7 +83,8 @@ source env_sphinx/bin/activate
 cp -rf ../docs/ ./source
 cp -f "../README.md" "./source/docs/source/Welcome.md"
 cp -f "../SECURITY.md" "./source/docs/source/SECURITY.md"
-
+cp -rf ../examples ./source/docs/source/
+#python add_readme.py ./source/docs/source/examples/3.x_api/README.md
 
 all_md_files=`find ./source/docs -name "*.md"`
 for md_file in ${all_md_files}

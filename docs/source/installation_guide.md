@@ -22,7 +22,7 @@ You can install Neural Compressor using one of three options: Install single com
 
 The following prerequisites and requirements must be satisfied for a successful installation:
 
-- Python version: 3.8 or 3.9 or 3.10 or 3.11
+- Python version: 3.10 or 3.11 or 3.12
 
 > Notes:
 > - If you get some build issues, please check [frequently asked questions](faq.md) at first.
@@ -73,14 +73,28 @@ pip install neural-compressor-tf
 
 ### Install from Source
 
-  ```Shell
-  git clone https://github.com/intel/neural-compressor.git
-  cd neural-compressor
-  pip install -r requirements.txt
-  python setup.py install
-  [optional] pip install -r requirements_pt.txt # for PyTorch framework extension API
-  [optional] pip install -r requirements_tf.txt # for TensorFlow framework extension API
-  ```
+```Shell
+git clone https://github.com/intel/neural-compressor.git
+cd neural-compressor
+pip install -r requirements.txt
+```
+
+```Shell
+# PyTorch framework extension API + PyTorch dependency
+INC_PT_ONLY=1 pip install .
+```
+
+```Shell
+# TensorFlow framework extension API + TensorFlow dependency
+INC_TF_ONLY=1 pip install .
+```
+
+```Shell
+# Full Installation
+pip install .
+[optional] pip install -r requirements_pt.txt # for PyTorch framework extension API
+[optional] pip install -r requirements_tf.txt # for TensorFlow framework extension API
+```
 
 ### Install from AI Kit
 
@@ -97,18 +111,19 @@ The AI Kit is distributed through many common channels, including from Intel's w
 ### Validated Hardware Environment
 
 #### Intel® Neural Compressor supports HPUs based on heterogeneous architecture with two compute engines (MME and TPC): 
-* Intel Gaudi Al Accelerators (Gaudi2)
+* Intel Gaudi Al Accelerators (Gaudi2, Gaudi3)
 
 #### Intel® Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
 
-* Intel Xeon Scalable processor (Skylake, Cascade Lake, Cooper Lake, Ice Lake, and Sapphire Rapids)
+* Intel Xeon Scalable processor (Sapphire Rapids, Emerald Rapids, Granite Rapids)
 * Intel Xeon CPU Max Series (Sapphire Rapids HBM)
-* Intel Core Ultra Processors (Meteor Lake)
+* Intel Core Ultra Processors (Meteor Lake, Lunar Lake)
 
 #### Intel® Neural Compressor supports GPUs built on Intel's Xe architecture:
 
 * Intel Data Center GPU Flex Series (Arctic Sound-M)
 * Intel Data Center GPU Max Series (Ponte Vecchio)
+* Intel® Arc™ B-Series Graphics (Battlemage)
 
 #### Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:
 
@@ -116,8 +131,8 @@ The AI Kit is distributed through many common channels, including from Intel's w
 
 ### Validated Software Environment
 
-* OS version: CentOS 8.4, Ubuntu 22.04, MacOS Ventura 13.5, Windows 11
-* Python version: 3.8, 3.9, 3.10, 3.11
+* OS version: CentOS 8.4, Ubuntu 24.04, MacOS Ventura 13.5, Windows 11
+* Python version: 3.10, 3.11, 3.12
 
 <table class="docutils">
 <thead>
@@ -142,13 +157,13 @@ The AI Kit is distributed through many common channels, including from Intel's w
     <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.14.0.1>2.14.0.1</a><br>
     <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.13.0.0>2.13.0.0</a><br></td>
     <td class="tg-7zrl">
-    <a href=https://github.com/pytorch/pytorch/tree/v2.3.0>2.3.0</a><br>
-    <a href=https://github.com/pytorch/pytorch/tree/v2.2.2>2.2.2</a><br>
-    <a href=https://github.com/pytorch/pytorch/tree/v2.1.1>2.1.1</a><br></td>
+    <a href=https://github.com/pytorch/pytorch/tree/v2.8.0>2.8.0</a><br>
+    <a href=https://github.com/pytorch/pytorch/tree/v2.7.1>2.7.1</a><br>
+    <a href=https://github.com/pytorch/pytorch/tree/v2.6.0>2.6.0</a><br></td>
     <td class="tg-7zrl">
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.3.0%2Bcpu>2.3.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.2.0%2Bcpu>2.2.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.1.100%2Bcpu>2.1.100</a><br></td>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.8.0%2Bcpu>2.8.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.7.0%2Bcpu>2.7.0</a><br>
+    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.6.0%2Bcpu>2.6.0</a><br></td>
     <td class="tg-7zrl">
     <a href=https://github.com/microsoft/onnxruntime/tree/v1.18.0>1.18.0</a><br>
     <a href=https://github.com/microsoft/onnxruntime/tree/v1.17.3>1.17.3</a><br>
