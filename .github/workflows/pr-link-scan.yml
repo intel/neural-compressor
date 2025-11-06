@@ -41,7 +41,7 @@ jobs:
                   # echo $url_line
                   url=$(echo "$url_line"|cut -d '(' -f2 | cut -d ')' -f1|sed 's/\.git$//')
                   path=$(echo "$url_line"|cut -d':' -f1 | cut -d'/' -f2-)
-                  if [[ "$url" == "https://platform.openai.com/api-keys"* || "$url" == "https://ai.cloud.intel.com/" ]]; then
+                  if [[ "$url" == "https://dgpu-docs.intel.com/installation-guides/ubuntu/ubuntu-focal-dc.html" || "$url" == "https://ai.cloud.intel.com/" ]]; then
                     echo "Link "$url" from ${{github.workspace}}/$path needs to be verified by real person."
                   else
                     sleep $delay
