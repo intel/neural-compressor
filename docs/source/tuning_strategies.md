@@ -33,9 +33,7 @@ Tuning Strategies
 
     3.9. [Random](#random)
 
-    3.10. [SigOpt](#sigopt)
-
-    3.11. [TPE](#tpe)
+    3.10. [TPE](#tpe)
 
  4. [Distributed Tuning](#distributed-tuning)
 
@@ -44,7 +42,7 @@ Tuning Strategies
 ## Introduction
 
 Intel® Neural Compressor aims to help users quickly deploy
-the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch and ONNX. With built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several tuning strategies, including `auto`, `O0`, `O1`, `Basic`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Bayesian`, `Exhaustive`, `Random`, `SigOpt`, `TPE`, etc are supported. By default, the [`quant_level="auto"`](./tuning_strategies.md#auto) is used for tuning.
+the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch and ONNX. With built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several tuning strategies, including `auto`, `O0`, `O1`, `Basic`, `MSE`, `MSE_V2`, `HAWQ_V2`, `Bayesian`, `Exhaustive`, `Random`, `TPE`, etc. are supported. By default, the [`quant_level="auto"`](./tuning_strategies.md#auto) is used for tuning.
 
 ## Strategy Design
 Before tuning, the `tuning space` was constructed according to the framework capability and user configuration. Then the selected strategy generates the next quantization configuration according to its traverse process and the previous tuning record. The tuning process stops when meeting the exit policy. The function of strategies is shown
@@ -385,37 +383,6 @@ conf = PostTrainingQuantConfig(
     ),
 )
 ```
-
-
-### SigOpt
-
-#### Design
-
-`SigOpt` strategy is to use SigOpt Optimization Loop method to accelerate and visualize the traversal of the tuning configurations from the tuning space. The metrics add accuracy as a constraint and optimize for latency to improve performance.  
-
-#### Usage
-
-Compared to `Basic`, `sigopt_api_token` and `sigopt_project_id` are necessary for `SigOpt`.
-For details, [how to use sigopt strategy in neural_compressor](./sigopt_strategy.md) is available.
-
-Note that the `sigopt_api_token`, `sigopt_project_id`, and `sigopt_experiment_name` should be set inside the `strategy_kwargs`.
-
-```python
-from neural_compressor.config import PostTrainingQuantConfig, TuningCriterion
-
-conf = PostTrainingQuantConfig(
-    quant_level=1,
-    tuning_criterion=TuningCriterion(
-        strategy="sigopt",
-        strategy_kwargs={
-            "sigopt_api_token": "YOUR-ACCOUNT-API-TOKEN",
-            "sigopt_project_id": "PROJECT-ID",
-            "sigopt_experiment_name": "nc-tune",
-        },
-    ),
-)
-```
-
 
 ### TPE
 
