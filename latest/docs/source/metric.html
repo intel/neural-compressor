@@ -165,25 +165,25 @@
 </tr>
 <tr>
 <td style="text-align: left;">mAP(anno_path, iou_thrs, map_points)</td>
-<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br> <strong>iou_thrs</strong> (float or str, default=0.5): Minimal value for intersection over union that allows to make decision that prediction bounding box is true positive. You can specify one float value between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int, default=0): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 11-point interpolated AP, 0 for area under PR curve.</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file. <br> <strong>iou_thrs</strong> (float or str, default=0.5): Minimal value for intersection over union that allows to make decision that prediction bounding box is true positive. You can specify one float value between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int, default=0): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 11-point interpolated AP, 0 for area under PR curve.</td>
 <td style="text-align: left;">preds, labels</td>
 <td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
 </tr>
 <tr>
 <td style="text-align: left;">COCOmAP(anno_path, iou_thrs, map_points)</td>
-<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br> <strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to "0.5:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file. <br> <strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to "0.5:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.</td>
 <td style="text-align: left;">preds, labels</td>
 <td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
 </tr>
 <tr>
 <td style="text-align: left;">VOCmAP(anno_path, iou_thrs, map_points)</td>
-<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br> <strong>iou_thrs</strong>(float or str): Intersection over union threshold. Set to 0.5.<br> <strong>map_points</strong>(int): The way to calculate mAP. The way to calculate mAP. Set to 0 for area under PR curve.</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file. <br> <strong>iou_thrs</strong>(float or str): Intersection over union threshold. Set to 0.5.<br> <strong>map_points</strong>(int): The way to calculate mAP. The way to calculate mAP. Set to 0 for area under PR curve.</td>
 <td style="text-align: left;">preds, labels</td>
 <td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
 </tr>
 <tr>
 <td style="text-align: left;">COCOmAPv2(anno_path, iou_thrs, map_points, output_index_mapping)</td>
-<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br><strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to "0.5:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP. <br> <strong>output_index_mapping</strong> (dict, default={'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}): Specifies the index of outputs in model raw prediction, -1 means this output does not exist.</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file. <br><strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to "0.5:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP. <br> <strong>output_index_mapping</strong> (dict, default={'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}): Specifies the index of outputs in model raw prediction, -1 means this output does not exist.</td>
 <td style="text-align: left;">preds, labels</td>
 <td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
 </tr>
@@ -313,25 +313,25 @@
 </tr>
 <tr>
 <td style="text-align: left;">mAP(anno_path, iou_thrs, map_points)</td>
-<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br> <strong>iou_thrs</strong> (float or str, default=0.5): Minimal value for intersection over union that allows to make decision that prediction bounding box is true positive. You can specify one float value between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int, default=0): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 11-point interpolated AP, 0 for area under PR curve.</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file. The annotation file should be a yaml file. <br> <strong>iou_thrs</strong> (float or str, default=0.5): Minimal value for intersection over union that allows to make decision that prediction bounding box is true positive. You can specify one float value between 0 to 1 or string "05:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int, default=0): The way to calculate mAP. 101 for 101-point interpolated AP, 11 for 11-point interpolated AP, 0 for area under PR curve.</td>
 <td style="text-align: left;">preds, labels</td>
 <td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
 </tr>
 <tr>
 <td style="text-align: left;">COCOmAP(anno_path, iou_thrs, map_points)</td>
-<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br> <strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to "0.5:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file. The annotation file should be a yaml file. <br> <strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to "0.5:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.</td>
 <td style="text-align: left;">preds, labels</td>
 <td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
 </tr>
 <tr>
 <td style="text-align: left;">VOCmAP(anno_path, iou_thrs, map_points)</td>
-<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format .<br> <strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to 0.5.<br> <strong>map_points</strong>  (int): The way to calculate mAP. The way to calculate mAP. Set to 0 for area under PR curve.</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, . The annotation file should be a yaml file. <br> <strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to 0.5.<br> <strong>map_points</strong>  (int): The way to calculate mAP. The way to calculate mAP. Set to 0 for area under PR curve.</td>
 <td style="text-align: left;">preds, labels</td>
 <td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
 </tr>
 <tr>
 <td style="text-align: left;">COCOmAPv2(anno_path, iou_thrs, map_points, output_index_mapping)</td>
-<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. The annotation file should be a yaml file, please refer to <a href="../examples/tensorflow/object_detection/tensorflow_models/quantization/ptq/label_map.yaml">label_map</a> for its format. <br><strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to "0.5:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.<br> <strong>output_index_mapping</strong> (dict, default={'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}): Specifies the index of outputs in model raw prediction, -1 means this output does not exist.</td>
+<td style="text-align: left;"><strong>anno_path</strong> (str): Annotation path. The annotation file should be a yaml file. The annotation file should be a yaml file. <br><strong>iou_thrs</strong> (float or str): Intersection over union threshold. Set to "0.5:0.05:0.95" for standard COCO thresholds.<br> <strong>map_points</strong> (int): The way to calculate mAP. Set to 101 for 101-point interpolated AP.<br> <strong>output_index_mapping</strong> (dict, default={'num_detections':-1, 'boxes':0, 'scores':1, 'classes':2}): Specifies the index of outputs in model raw prediction, -1 means this output does not exist.</td>
 <td style="text-align: left;">preds, labels</td>
 <td style="text-align: left;">preds is a tuple which supports 2 length: 3 and 4. <br> If its length is 3, it should contain boxes, scores, classes in turn. <br> If its length is 4, it should contain target_boxes_num, boxes, scores, classes in turn <br> labels is a tuple which contains bbox, str_label, int_label, image_id inturn <br> the length of one of str_label and int_label can be 0</td>
 </tr>
@@ -390,8 +390,8 @@
 <section id="example">
 <h2>Example<a class="headerlink" href="#example" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq_static">example</a> for how to define a customised metric.</p></li>
-<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/tensorflow/image_recognition/tensorflow_models/efficientnet-b0/quantization/ptq">example</a> for how to use internal metric.</p></li>
+<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/deprecated/onnxrt/body_analysis/onnx_model_zoo/arcface/quantization/ptq_static">example</a> for how to define a customised metric.</p></li>
+<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/deprecated/tensorflow/image_recognition/tensorflow_models/efficientnet-b0/quantization/ptq">example</a> for how to use internal metric.</p></li>
 </ul>
 </section>
 </section>
@@ -410,7 +410,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f1e97df74d0> 
+   <jinja2.runtime.BlockReference object at 0x7f77916547d0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

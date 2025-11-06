@@ -15,7 +15,6 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
-   /autoapi/neural_compressor/contrib/strategy/sigopt/index
    /autoapi/neural_compressor/contrib/strategy/tpe/index
 
 

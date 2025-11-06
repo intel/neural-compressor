@@ -19,7 +19,7 @@ pip install tensorflow
 
 ### Installation Dependency packages
 ```shell
-cd examples/3.x_api/tensorflow/object_detection/yolo_v5/quantization/ptq
+cd examples/tensorflow/object_detection/yolo_v5/quantization/ptq
 pip install -r requirements.txt
 ```
 

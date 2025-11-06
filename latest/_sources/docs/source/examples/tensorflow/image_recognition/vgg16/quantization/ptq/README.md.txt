@@ -62,7 +62,7 @@ We can get the pb file by convert the checkpoint file.
   https://storage.googleapis.com/intel-optimized-tensorflow/intel_tensorflow-1.15.0up2-cp35-cp35m-manylinux2010_x86_64.whl
   > Please note: The ImageNet dataset has 1001, the **VGG** and **ResNet V1** final layers have only 1000 outputs rather than 1001. So we need add the `--labels_offset=1` flag in the inference graph exporting command.
 
-  3. Use [Netron](https://lutzroeder.github.io/netron/) to get the input/output layer name of inference graph pb, for vgg_16 the output layer name is `vgg_16/fc8/squeezed`
+  3. Use [Netron](https://netron.app/) to get the input/output layer name of inference graph pb, for vgg_16 the output layer name is `vgg_16/fc8/squeezed`
 
   4. Freezing the exported Graph, please use the tool `freeze_graph.py` in [tensorflow v1.15.2](https://github.com/tensorflow/tensorflow/blob/v1.15.2/tensorflow/python/tools/freeze_graph.py) repo 
   ```shell
@@ -77,10 +77,10 @@ We can get the pb file by convert the checkpoint file.
 ## 3. Prepare Dataset
 
   TensorFlow [models](https://github.com/tensorflow/models) repo provides [scripts and instructions](https://github.com/tensorflow/models/tree/master/research/slim#an-automated-script-for-processing-imagenet-data) to download, process and convert the ImageNet dataset to the TF records format.
-  We also prepared related scripts in `examples/3.x_api/tensorflow/cv` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
+  We also prepared related scripts in `examples/tensorflow/cv` directory. To download the raw images, the user must create an account with image-net.org. If you have downloaded the raw data and preprocessed the validation data by moving the images into the appropriate sub-directory based on the label (synset) of the image. we can use below command ro convert it to tf records format.
 
   ```shell
-  cd examples/3.x_api/tensorflow/cv
+  cd examples/tensorflow/cv
   # convert validation subset
   bash prepare_dataset.sh --output_dir=./vgg16/quantization/ptq/data --raw_dir=/PATH/TO/img_raw/val/ --subset=validation
   # convert train subset

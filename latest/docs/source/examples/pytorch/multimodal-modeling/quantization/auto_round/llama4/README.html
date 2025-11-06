@@ -99,7 +99,7 @@
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>docker<span class="w"> </span>run<span class="w"> </span>-d<span class="w"> </span>--gpus<span class="w"> </span>all<span class="w"> </span>-v<span class="w"> </span>...<span class="w"> </span>--shm-size<span class="o">=</span>100g<span class="w"> </span>--name<span class="w"> </span>llama4<span class="w"> </span>-it<span class="w"> </span>nvcr.io/nvidia/pytorch:25.05-py3<span class="w"> </span>/bin/bash
 docker<span class="w"> </span><span class="nb">exec</span><span class="w"> </span>-it<span class="w"> </span>llama4<span class="w"> </span>bash
 git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel/neural-compressor.git
-<span class="nb">cd</span><span class="w"> </span>neural-compressor/examples/3.x_api/pytorch/multimodal-modeling/quantization/auto_round/llama4
+<span class="nb">cd</span><span class="w"> </span>neural-compressor/examples/pytorch/multimodal-modeling/quantization/auto_round/llama4
 <span class="c1"># Use `INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@v3.6rc` for the latest updates before neural-compressor v3.6 release</span>
 pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-pt<span class="o">==</span><span class="m">3</span>.6
 <span class="c1"># Use `pip install git+https://github.com/intel/auto-round.git@v0.8.0rc2` for the latest updates before auto-round v0.8.0 release</span>
@@ -145,7 +145,7 @@ bash<span class="w"> </span>setup.sh
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f1e97f29340> 
+   <jinja2.runtime.BlockReference object at 0x7f77915716d0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

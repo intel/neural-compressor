@@ -177,7 +177,7 @@ following information on the current runtime framework.</p>
 <li><p>The supported sequence of each quantizable op.</p></li>
 <li><p>The instance of each sequence.</p></li>
 </ul>
-<p>In the past, the above information was generally defined and hidden in every corner of the code which made effective maintenance difficult. With the Query API, we only need to create one unified yaml file and call the corresponding API to get the information. For example, the <a class="reference external" href="../neural_compressor/adaptor/tensorflow.yaml">tensorflow.yaml</a> keeps the current Tensorflow framework ability. We recommend that the end user not make modifications if requirements are not clear.</p>
+<p>In the past, the above information was generally defined and hidden in every corner of the code which made effective maintenance difficult. With the Query API, we only need to create one unified yaml file and call the corresponding API to get the information. For example, the <a class="reference external" href="/neural_compressor/adaptor/tensorflow.yaml">tensorflow.yaml</a> keeps the current Tensorflow framework ability. We recommend that the end user not make modifications if requirements are not clear.</p>
 <p>Below is a fragment of the Tensorflow configuration file.</p>
 <ul class="simple">
 <li><p><strong>precisions</strong> field defines the supported precision for Neural Compressor.</p>
@@ -192,7 +192,7 @@ following information on the current runtime framework.</p>
 </section>
 <section id="query-api-introduction">
 <h4>Query API Introduction<a class="headerlink" href="#query-api-introduction" title="Link to this heading"></a></h4>
-<p>The abstract class <code class="docutils literal notranslate"><span class="pre">QueryBackendCapability</span></code> is defined in <a class="reference external" href="../neural_compressor/adaptor/query.py#L21">query.py</a>. Each framework should inherit it and implement the member function if needed. Refer to Tensorflow implementation <a class="reference external" href="../neural_compressor/adaptor/tensorflow.py#L628">TensorflowQuery</a>.</p>
+<p>The abstract class <code class="docutils literal notranslate"><span class="pre">QueryBackendCapability</span></code> is defined in <a class="reference external" href="/neural_compressor/adaptor/query.py">query.py</a>. Each framework should inherit it and implement the member function if needed. Refer to Tensorflow implementation <a class="reference external" href="/neural_compressor/adaptor/tensorflow.py">TensorflowQuery</a>.</p>
 </section>
 </section>
 </section>
@@ -214,11 +214,10 @@ Onnxruntime already has <a class="reference external" href="https://github.com/m
 <li><p>nodes_to_quantize, nodes_to_exclude</p></li>
 <li><p>op_types_to_quantize</p></li>
 </ul>
-<p>We define three configuration files to describe the capability of ONNXRT. Please refer to <a class="reference external" href="../neural_compressor/adaptor/onnxrt_qlinear.yaml">onnxrt_qlinear.yaml</a>, <a class="reference external" href="../neural_compressor/adaptor/onnxrt_integer.yaml">onnxrt_integer.yaml</a> and <a class="reference external" href="../neural_compressor/adaptor/onnxrt_qdq.yaml">onnxrt_qdq.yaml</a>.</p>
 </section>
 <section id="implement-onnxrtadaptor-class">
 <h3>Implement ONNXRTAdaptor Class<a class="headerlink" href="#implement-onnxrtadaptor-class" title="Link to this heading"></a></h3>
-<p>The base class ONNXRTAdaptor inherits from the Adaptor class. Please refer to <a class="reference external" href="../neural_compressor/adaptor/onnxrt.py">onnxrt.py</a>.</p>
+<p>The base class ONNXRTAdaptor inherits from the Adaptor class.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@adaptor_registry</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ONNXRT_QLinearOpsAdaptor</span><span class="p">(</span><span class="n">ONNXRTAdaptor</span><span class="p">):</span>
   <span class="nd">@dump_elapsed_time</span><span class="p">(</span><span class="s2">&quot;Pass quantize model&quot;</span><span class="p">)</span>
@@ -270,7 +269,7 @@ Onnxruntime already has <a class="reference external" href="https://github.com/m
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f1e982c9010> 
+   <jinja2.runtime.BlockReference object at 0x7f7791bb6480> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

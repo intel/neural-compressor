@@ -107,7 +107,7 @@
 <li><p>The framework-specific dataloader has different features and APIs that will make it hard to use them same way in Neural Compressor.</p></li>
 <li><p>Neural Compressor treats batch size as a tuning parameter which means it can dynamically change the batch size to reach the accuracy goal.</p></li>
 </ul>
-<p>The unified  <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API takes a <a class="reference external" href="./dataset.html">dataset</a> as the input parameter and loads data from the dataset when needed. In special cases, users can also define their own dataloader classes, which must have <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> attribute and <code class="docutils literal notranslate"><span class="pre">__iter__</span></code> function.</p>
+<p>The unified  <code class="docutils literal notranslate"><span class="pre">DataLoader</span></code> API takes a dataset as the input parameter and loads data from the dataset when needed. In special cases, users can also define their own dataloader classes, which must have <code class="docutils literal notranslate"><span class="pre">batch_size</span></code> attribute and <code class="docutils literal notranslate"><span class="pre">__iter__</span></code> function.</p>
 <p>Of cause, users can also use frameworks own dataloader in Neural Compressor.</p>
 </section>
 <section id="supported-framework-dataloader-matrix">
@@ -235,8 +235,8 @@
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq_static">example</a> for how to define a customised dataloader.</p></li>
-<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/onnxrt/nlp/bert/quantization/ptq_static">example</a> for how to use internal dataloader.</p></li>
+<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/deprecated/onnxrt/body_analysis/onnx_model_zoo/ultraface/quantization/ptq_static">example</a> for how to define a customised dataloader.</p></li>
+<li><p>Refer to this <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/deprecated/onnxrt/nlp/bert/quantization/ptq_static">example</a> for how to use internal dataloader.</p></li>
 </ul>
 </section>
 </section>
@@ -255,7 +255,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f1e98883f20> 
+   <jinja2.runtime.BlockReference object at 0x7f7791b2c7d0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

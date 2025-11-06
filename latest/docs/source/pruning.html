@@ -145,7 +145,7 @@
 </a>
 </div><ul>
 <li><p>Multi-head Attention Pruning</p>
-<p>Multi-head attention mechanism boosts transformer models’ capability of contextual information analysis. However, different heads’ contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. <strong>We haven’t support it in pruning, but we have provided experimental feature in Model Auto Slim</strong>. Please refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/question-answering/model_slim">multi-head attention auto slim examples</a></p>
+<p>Multi-head attention mechanism boosts transformer models’ capability of contextual information analysis. However, different heads’ contribution to the final output varies. In most situation, a number of heads can be removed without causing accuracy drop. Head pruning can be applied in a wide range of scenes including BERT, GPT as well as other large language models. <strong>We haven’t support it in pruning, but we have provided experimental feature in Model Auto Slim</strong>. Please refer to <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/deprecated/pytorch/nlp/huggingface_models/question-answering/model_slim">multi-head attention auto slim examples</a></p>
 </li>
 </ul>
 </section>
@@ -467,7 +467,7 @@ By providing the pruning config, calibration dataset, and specifying the desired
 </div><p>“Experimental” annotation means these examples codes are ready but pruning results are under improvements. Please don’t hesitate to try these codes with different configurations to get better pruning results!</p>
 <ul>
 <li><p>Language Modeling</p>
-<p>Sparsity is effectively implemented through various pruning patterns in Causal language modeling (CLM) tasks. <a class="reference external" href="../../../examples/pytorch/nlp/huggingface_models/language-modeling/pruning/eager">Language-modeling examples</a>.</p>
+<p>Sparsity is effectively implemented through various pruning patterns in Causal language modeling (CLM) tasks. <a class="reference external" href="/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/pruning/eager">Language-modeling examples</a>.</p>
 </li>
 <li><p>Text Classification</p>
 <p>Sparsity is implemented in different pruning patterns of MRPC and SST-2 tasks <a class="reference external" href="../../examples/deprecated/pytorch/nlp/huggingface_models/text-classification/pruning/eager">Text-classification examples</a>.</p>
@@ -489,12 +489,12 @@ By providing the pruning config, calibration dataset, and specifying the desired
 </section>
 <section id="sparse-model-deployment">
 <h2>Sparse Model Deployment<a class="headerlink" href="#sparse-model-deployment" title="Link to this heading"></a></h2>
-<p>Particular hardware/software like <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers">Intel Extension for Transformer</a> are required to obtain inference speed and footprints’ optimization for most sparse models. However, using <a class="reference external" href="#click">model slim</a> for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)</p>
+<p>Particular hardware/software like <a class="reference external" href="https://github.com/intel/intel-extension-for-transformers">Intel Extension for Transformer</a> are required to obtain inference speed and footprints’ optimization for most sparse models. However, using model slim for some special structures can obtain significant inference speed improvements and footprint reduction without the post-pruning deployment. In other words, you can achieve model acceleration directly under your training framework (PyTorch, etc.)</p>
 </section>
 <section id="pruning-with-hyperparameter-optimization">
 <h2>Pruning with Hyperparameter Optimization<a class="headerlink" href="#pruning-with-hyperparameter-optimization" title="Link to this heading"></a></h2>
 <p>Intel® Neural Compressor currently support grid search, random, bayesian optimization and xgboost search algorithms for pruning with HPO.
-For more details, please refer to <a class="reference external" href="../../neural_compressor/compression/hpo/README.html">HPO document</a></p>
+For more details, please refer to <a class="reference external" href="/neural_compressor/compression/hpo">HPO</a></p>
 </section>
 <section id="reference">
 <h2>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h2>
@@ -519,7 +519,7 @@ For more details, please refer to <a class="reference external" href="../../neur
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f1e97ff1a90> 
+   <jinja2.runtime.BlockReference object at 0x7f77915518b0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

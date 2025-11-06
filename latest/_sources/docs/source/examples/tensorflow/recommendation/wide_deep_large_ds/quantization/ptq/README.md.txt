@@ -41,7 +41,7 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 
 ### Install Additional Dependency packages
 ```shell
-cd examples/3.x_api/tensorflow/recommendation/wide_deep_large_ds/quantization/ptq
+cd examples/tensorflow/recommendation/wide_deep_large_ds/quantization/ptq
 pip install -r requirements.txt
 ```
 

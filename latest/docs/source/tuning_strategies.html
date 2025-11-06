@@ -108,8 +108,7 @@
 <p>3.7. <a class="reference external" href="#bayesian">Bayesian</a></p>
 <p>3.8. <a class="reference external" href="#exhaustive">Exhaustive</a></p>
 <p>3.9. <a class="reference external" href="#random">Random</a></p>
-<p>3.10. <a class="reference external" href="#sigopt">SigOpt</a></p>
-<p>3.11. <a class="reference external" href="#tpe">TPE</a></p>
+<p>3.10. <a class="reference external" href="#tpe">TPE</a></p>
 </li>
 <li><p><a class="reference external" href="#distributed-tuning">Distributed Tuning</a></p></li>
 <li><p><a class="reference external" href="#customize-a-new-tuning-strategy">Customize a New Tuning Strategy</a></p></li>
@@ -117,7 +116,7 @@
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
 <p>Intel® Neural Compressor aims to help users quickly deploy
-the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch and ONNX. With built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several tuning strategies, including <code class="docutils literal notranslate"><span class="pre">auto</span></code>, <code class="docutils literal notranslate"><span class="pre">O0</span></code>, <code class="docutils literal notranslate"><span class="pre">O1</span></code>, <code class="docutils literal notranslate"><span class="pre">Basic</span></code>, <code class="docutils literal notranslate"><span class="pre">MSE</span></code>, <code class="docutils literal notranslate"><span class="pre">MSE_V2</span></code>, <code class="docutils literal notranslate"><span class="pre">HAWQ_V2</span></code>, <code class="docutils literal notranslate"><span class="pre">Bayesian</span></code>, <code class="docutils literal notranslate"><span class="pre">Exhaustive</span></code>, <code class="docutils literal notranslate"><span class="pre">Random</span></code>, <code class="docutils literal notranslate"><span class="pre">SigOpt</span></code>, <code class="docutils literal notranslate"><span class="pre">TPE</span></code>, etc are supported. By default, the <a class="reference external" href="./tuning_strategies.html#auto"><code class="docutils literal notranslate"><span class="pre">quant_level=&quot;auto&quot;</span></code></a> is used for tuning.</p>
+the low-precision inference solution on popular Deep Learning frameworks such as TensorFlow, PyTorch and ONNX. With built-in strategies, it automatically optimizes low-precision recipes for deep learning models to achieve optimal product objectives, such as inference performance and memory usage, with expected accuracy criteria. Currently, several tuning strategies, including <code class="docutils literal notranslate"><span class="pre">auto</span></code>, <code class="docutils literal notranslate"><span class="pre">O0</span></code>, <code class="docutils literal notranslate"><span class="pre">O1</span></code>, <code class="docutils literal notranslate"><span class="pre">Basic</span></code>, <code class="docutils literal notranslate"><span class="pre">MSE</span></code>, <code class="docutils literal notranslate"><span class="pre">MSE_V2</span></code>, <code class="docutils literal notranslate"><span class="pre">HAWQ_V2</span></code>, <code class="docutils literal notranslate"><span class="pre">Bayesian</span></code>, <code class="docutils literal notranslate"><span class="pre">Exhaustive</span></code>, <code class="docutils literal notranslate"><span class="pre">Random</span></code>, <code class="docutils literal notranslate"><span class="pre">TPE</span></code>, etc. are supported. By default, the <a class="reference external" href="./tuning_strategies.html#auto"><code class="docutils literal notranslate"><span class="pre">quant_level=&quot;auto&quot;</span></code></a> is used for tuning.</p>
 </section>
 <section id="strategy-design">
 <h2>Strategy Design<a class="headerlink" href="#strategy-design" title="Link to this heading"></a></h2>
@@ -444,38 +443,10 @@ tuning configs to generate a better-performance quantized model.</p>
 </div>
 </section>
 </section>
-<section id="sigopt">
-<h3>SigOpt<a class="headerlink" href="#sigopt" title="Link to this heading"></a></h3>
-<section id="id17">
-<h4>Design<a class="headerlink" href="#id17" title="Link to this heading"></a></h4>
-<p><code class="docutils literal notranslate"><span class="pre">SigOpt</span></code> strategy is to use <a class="reference external" href="https://app.sigopt.com/docs/overview/optimization">SigOpt Optimization Loop</a> method to accelerate and visualize the traversal of the tuning configurations from the tuning space. The metrics add accuracy as a constraint and optimize for latency to improve performance. <a class="reference external" href="https://app.sigopt.com/">SigOpt Projects</a> can show the result of each tuning experiment.</p>
-</section>
-<section id="id18">
-<h4>Usage<a class="headerlink" href="#id18" title="Link to this heading"></a></h4>
-<p>Compared to <code class="docutils literal notranslate"><span class="pre">Basic</span></code>, <code class="docutils literal notranslate"><span class="pre">sigopt_api_token</span></code> and <code class="docutils literal notranslate"><span class="pre">sigopt_project_id</span></code> are necessary for <code class="docutils literal notranslate"><span class="pre">SigOpt</span></code>.
-For details, <a class="reference external" href="./sigopt_strategy.html">how to use sigopt strategy in neural_compressor</a> is available.</p>
-<p>Note that the <code class="docutils literal notranslate"><span class="pre">sigopt_api_token</span></code>, <code class="docutils literal notranslate"><span class="pre">sigopt_project_id</span></code>, and <code class="docutils literal notranslate"><span class="pre">sigopt_experiment_name</span></code> should be set inside the <code class="docutils literal notranslate"><span class="pre">strategy_kwargs</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
-
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span>
-    <span class="n">quant_level</span><span class="o">=</span><span class="mi">1</span><span class="p">,</span>
-    <span class="n">tuning_criterion</span><span class="o">=</span><span class="n">TuningCriterion</span><span class="p">(</span>
-        <span class="n">strategy</span><span class="o">=</span><span class="s2">&quot;sigopt&quot;</span><span class="p">,</span>
-        <span class="n">strategy_kwargs</span><span class="o">=</span><span class="p">{</span>
-            <span class="s2">&quot;sigopt_api_token&quot;</span><span class="p">:</span> <span class="s2">&quot;YOUR-ACCOUNT-API-TOKEN&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;sigopt_project_id&quot;</span><span class="p">:</span> <span class="s2">&quot;PROJECT-ID&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;sigopt_experiment_name&quot;</span><span class="p">:</span> <span class="s2">&quot;nc-tune&quot;</span><span class="p">,</span>
-        <span class="p">},</span>
-    <span class="p">),</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</section>
-</section>
 <section id="tpe">
 <h3>TPE<a class="headerlink" href="#tpe" title="Link to this heading"></a></h3>
-<section id="id19">
-<h4>Design<a class="headerlink" href="#id19" title="Link to this heading"></a></h4>
+<section id="id17">
+<h4>Design<a class="headerlink" href="#id17" title="Link to this heading"></a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">TPE</span></code> uses sequential model-based optimization methods (SMBOs). <strong>Sequential</strong> refers to running trials one after another and selecting a better
 <strong>hyperparameter</strong> to evaluate based on previous trials. A hyperparameter is
 a parameter whose value is set before the learning process begins; it
@@ -515,8 +486,8 @@ on a dataset and latency measurements using a benchmark. This process may
 take from 24 hours to a few days to complete, depending on the model.</p>
 </div></blockquote>
 </section>
-<section id="id20">
-<h4>Usage<a class="headerlink" href="#id20" title="Link to this heading"></a></h4>
+<section id="id18">
+<h4>Usage<a class="headerlink" href="#id18" title="Link to this heading"></a></h4>
 <p><code class="docutils literal notranslate"><span class="pre">TPE</span></code> usage is similar to <code class="docutils literal notranslate"><span class="pre">basic</span></code> with <code class="docutils literal notranslate"><span class="pre">tpe</span></code> specified to <code class="docutils literal notranslate"><span class="pre">strategy</span></code> field in the <code class="docutils literal notranslate"><span class="pre">TuningCriterion</span></code>.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span><span class="p">,</span> <span class="n">TuningCriterion</span>
 
@@ -534,14 +505,14 @@ take from 24 hours to a few days to complete, depending on the model.</p>
 </section>
 <section id="distributed-tuning">
 <h2>Distributed Tuning<a class="headerlink" href="#distributed-tuning" title="Link to this heading"></a></h2>
-<section id="id21">
-<h3>Design<a class="headerlink" href="#id21" title="Link to this heading"></a></h3>
+<section id="id19">
+<h3>Design<a class="headerlink" href="#id19" title="Link to this heading"></a></h3>
 <p>Intel® Neural Compressor provides distributed tuning to speed up the tuning process by leveraging the multi-node cluster. It seamlessly parallelizes the tuning process across multi nodes by using the MPI. In distributed tuning, the <code class="docutils literal notranslate"><span class="pre">fp32</span></code> model is replicated on every node, and each original model replica is fed with a different quantization configuration. The master handler coordinates the tuning process and synchronizes the tuning result of each stage to every slave handler. The distributed tuning allows the tuning process to scale up significantly to the number of nodes, which translates into faster results and more efficient utilization of computing resources.</p>
 <p>The diagram below provides an overview of the distributed tuning process.
 <img alt="distributed tuning" src="../../_images/distributed_tuning_intro.png" /></p>
 </section>
-<section id="id22">
-<h3>Usage<a class="headerlink" href="#id22" title="Link to this heading"></a></h3>
+<section id="id20">
+<h3>Usage<a class="headerlink" href="#id20" title="Link to this heading"></a></h3>
 <p>To use Distributed Tuning, the number of processes should be specified to be greater than 1.</p>
 <div class="highlight-shell notranslate"><div class="highlight"><pre><span></span>mpirun<span class="w"> </span>-np<span class="w"> </span>&lt;number_of_processes&gt;<span class="w"> </span>&lt;RUN_CMD&gt;
 </pre></div>
@@ -584,7 +555,7 @@ take from 24 hours to a few days to complete, depending on the model.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f1e97d32d50> 
+   <jinja2.runtime.BlockReference object at 0x7f779169f710> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
