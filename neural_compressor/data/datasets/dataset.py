@@ -21,7 +21,7 @@ from abc import abstractmethod
 
 from PIL import Image
 
-from neural_compressor.utils.utility import LazyImport, _safe_pickle_load, singleton
+from neural_compressor.utils.utility import LazyImport, singleton
 
 torch = LazyImport("torch")
 torchvision = LazyImport("torchvision")
@@ -415,7 +415,7 @@ class CIFAR10(Dataset):  # pragma: no cover
         for file_name, checksum in downloaded_list:
             file_path = os.path.join(self.root, file_name)
             with open(file_path, "rb") as f:
-                entry = _safe_pickle_load(f, encoding="latin1")
+                entry = pickle.load(f, encoding="latin1")
                 self.data.append(entry["data"])
                 if "labels" in entry:
                     self.targets.extend(entry["labels"])
@@ -435,7 +435,7 @@ class CIFAR10(Dataset):  # pragma: no cover
                 "Dataset metadata file not found or corrupted." + " You can use download=True to download it"
             )
         with open(path, "rb") as infile:
-            data = _safe_pickle_load(infile, encoding="latin1")
+            data = pickle.load(infile, encoding="latin1")
             self.classes = data[self.meta["key"]]
         self.class_to_idx = {_class: i for i, _class in enumerate(self.classes)}
 

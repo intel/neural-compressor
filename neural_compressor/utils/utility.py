@@ -638,20 +638,18 @@ class GLOBAL_STATE:
     STATE = MODE.QUANTIZATION
 
 
-def load_data_from_pkl(path, filename):
+def load_data_from_pkl(file_path):
     """Load data from local pkl file.
 
     Args:
-        path: The directory to load data
-        filename: The filename to load
+        file_path: The directory to load data
     """
     try:
-        file_path = os.path.join(path, filename)
         with open(file_path, "rb") as fp:
             data = _safe_pickle_load(fp)
             return data
     except FileExistsError:
-        logging.getLogger("neural_compressor").info("Can not open %s." % path)
+        logging.getLogger("neural_compressor").info("Can not open %s." % file_path)
 
 
 def dump_data_to_local(data, path, filename):

@@ -32,7 +32,7 @@ from .config import _Config, options
 from .metric import register_customer_metric
 from .model.model import Model
 from .utils import logger
-from .utils.utility import _safe_pickle_load, time_limit
+from .utils.utility import load_data_from_pkl, time_limit
 
 
 class CompressionManager:
@@ -312,7 +312,7 @@ def fit(compression_manager, train_func, eval_func=None, eval_dataloader=None, e
     if resume_file:
         assert os.path.exists(resume_file), "The specified resume file {} doesn't exist!".format(resume_file)
         with open(resume_file, "rb") as f:
-            _resume = _safe_pickle_load(f).__dict__
+            _resume = load_data_from_pkl(f).__dict__
 
     if eval_func is None and eval_dataloader is None:  # pragma: no cover
         logger.info("Quantize model without tuning!")
