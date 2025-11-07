@@ -29,7 +29,7 @@ from .config import _Config, options
 from .model import Model
 from .strategy import STRATEGIES
 from .utils import alias_param, logger
-from .utils.utility import CpuInfo, secure_check_eval_func, time_limit
+from .utils.utility import CpuInfo, secure_check_eval_func, time_limit, _safe_pickle_load
 
 
 @alias_param("conf", param_alias="config")
@@ -142,7 +142,7 @@ def fit(model, conf, eval_func=None, eval_dataloader=None, eval_metric=None, **k
     if resume_file:
         assert os.path.exists(resume_file), "The specified resume file {} doesn't exist!".format(resume_file)
         with open(resume_file, "rb") as f:
-            _resume = pickle.load(f).__dict__
+            _resume = _safe_pickle_load(f).__dict__
 
     strategy = STRATEGIES["automixedprecision"](
         model=wrapped_model,
