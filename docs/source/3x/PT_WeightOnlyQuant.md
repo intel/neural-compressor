@@ -178,6 +178,8 @@ model = convert(model, config)  # after this step, the model is ready for W4A8 i
 |             not_use_best_mse (bool)         |  Whether to use mean squared   error                                                       | False     |
 |             dynamic_max_gap (int)           |  The dynamic maximum gap                                                                   | -1        |
 |             scale_dtype (str)               | The data type of quantization scale to be used, different kernels have   different choices | "float16" |
+|             scheme (str)               | A preset scheme that defines the quantization configurations. | "W4A16" |
+|             layer_config (dict)               | Layer-wise quantization config | None |
 
 ``` python
 # Quantization code
@@ -281,6 +283,23 @@ quant_config = {
 ```python
 quant_config = RTNConfig()
 lm_head_config = RTNConfig(dtype="fp32")
+quant_config.set_local("lm_head", lm_head_config)
+```
+3. Example of using `layer_config` for AutoRound
+```python
+# layer_config = {
+#      "layer1": {
+#          "data_type": "int",
+#          "bits": 3,
+#          "group_size": 128,
+#          "sym": True,
+#      },
+#      "layer2": {
+#          "W8A16"
+#       }
+# }
+layer_config = {"lm_head": {"data_type": "int"}}
+quant_config = AutoRoundConfig(layer_config=layer_config)
 quant_config.set_local("lm_head", lm_head_config)
 ```
 
