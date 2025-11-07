@@ -298,9 +298,9 @@ quant_config.set_local("lm_head", lm_head_config)
 #          "W8A16"
 #       }
 # }
+# Use the AutoRound specific 'layer_config' instead of the 'set_local' API.
 layer_config = {"lm_head": {"data_type": "int"}}
 quant_config = AutoRoundConfig(layer_config=layer_config)
-quant_config.set_local("lm_head", lm_head_config)
 ```
 
 ### Saving and Loading
