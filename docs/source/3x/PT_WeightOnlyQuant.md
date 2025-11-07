@@ -178,8 +178,8 @@ model = convert(model, config)  # after this step, the model is ready for W4A8 i
 |             not_use_best_mse (bool)         |  Whether to use mean squared   error                                                       | False     |
 |             dynamic_max_gap (int)           |  The dynamic maximum gap                                                                   | -1        |
 |             scale_dtype (str)               | The data type of quantization scale to be used, different kernels have   different choices | "float16" |
-|             scheme (str)               | A preset scheme that defines the quantization configurations. | "W4A16" |
-|             layer_config (dict)               | Layer-wise quantization config | None |
+|             scheme (str)                    | A preset scheme that defines the quantization configurations.                              | "W4A16"   |
+|             layer_config (dict)             | Layer-wise quantization config                                                             | None      |
 
 ``` python
 # Quantization code
