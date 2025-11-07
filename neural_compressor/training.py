@@ -32,7 +32,7 @@ from .config import _Config, options
 from .metric import register_customer_metric
 from .model.model import Model
 from .utils import logger
-from .utils.utility import time_limit, _safe_pickle_load
+from .utils.utility import _safe_pickle_load, time_limit
 
 
 class CompressionManager:

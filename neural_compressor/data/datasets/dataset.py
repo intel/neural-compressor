@@ -21,7 +21,7 @@ from abc import abstractmethod
 
 from PIL import Image
 
-from neural_compressor.utils.utility import LazyImport, singleton, _safe_pickle_load
+from neural_compressor.utils.utility import LazyImport, _safe_pickle_load, singleton
 
 torch = LazyImport("torch")
 torchvision = LazyImport("torchvision")
