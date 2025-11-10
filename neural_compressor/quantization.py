@@ -27,7 +27,7 @@ from .metric import register_customer_metric
 from .model import Model
 from .strategy import STRATEGIES
 from .utils import logger
-from .utils.utility import dump_class_attrs, secure_check_eval_func, time_limit
+from .utils.utility import dump_class_attrs, load_data_from_pkl, secure_check_eval_func, time_limit
 
 
 def fit(
@@ -182,7 +182,7 @@ def fit(
     if resume_file:
         assert os.path.exists(resume_file), "The specified resume file {} doesn't exist!".format(resume_file)
         with open(resume_file, "rb") as f:
-            _resume = pickle.load(f).__dict__
+            _resume = load_data_from_pkl(f).__dict__
 
     if eval_func is None and eval_dataloader is None:  # pragma: no cover
         logger.info("Quantize model without tuning!")
