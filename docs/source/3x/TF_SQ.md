@@ -12,7 +12,7 @@
 
 Quantization is a common compression operation to reduce memory and accelerate inference by converting the floating point matrix to an integer matrix. For large language models (LLMs) with gigantic parameters, the systematic outliers make quantification of activations difficult.  [SmoothQuant](https://arxiv.org/abs/2211.10438), a training free post-training quantization (PTQ) solution, offline migrates this difficulty from activations to weights with a mathematically equivalent transformation.
 
-Please refer to the document of [Smooth Quant](../quantization.md/#smooth-quant) for detailed fundamental knowledge.
+Please refer to the document of [Smooth Quant](../smooth_quant.md) for detailed fundamental knowledge.
 
 
 ## Usage
@@ -50,4 +50,4 @@ best_model = autotune(
 
 ## Examples
 
-Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/tensorflow/nlp/large_language_models/quantization/ptq/smoothquant) on how to apply smooth quant to a TensorFlow model with `neural_compressor.tensorflow`.
+Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/tensorflow/nlp/large_language_models/quantization/ptq/smoothquant) on how to apply smooth quant to a TensorFlow model with `neural_compressor.tensorflow`.

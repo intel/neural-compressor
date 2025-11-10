@@ -68,7 +68,7 @@ q_model = convert(prepared_model)
 
 #### Model Examples
 
-Users could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex) on how to quantize a new model.
+Users could refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex) on how to quantize a new model.
 
 
 ### Static Quantization with PT2E Backend
@@ -105,4 +105,4 @@ opt_model = torch.compile(q_model)
 
 #### Model Examples with PT2E
 
-Users could refer to [cv examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/cv/static_quant) and [llm examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/pt2e) on how to quantize a new model.
+Users could refer to [cv examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/cv/static_quant) and [llm examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/pt2e) on how to quantize a new model.

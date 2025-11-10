@@ -22,7 +22,7 @@ pip install intel-tensorflow
 
 ### Installation Dependency packages
 ```shell
-cd examples/3.x_api/tensorflow/object_detection
+cd examples/tensorflow/object_detection
 pip install -r requirements.txt
 cd mask_rcnn_inception_v2/quantization/ptq
 ```
@@ -65,11 +65,11 @@ tar -xvzf mask_rcnn_inception_v2_coco_2018_01_28.tar.gz
 
 > **_Note: `prepare_dataset.sh` script works with TF version 1.x._**
 
-Run the `prepare_dataset.sh` script located in `examples/3.x_api/tensorflow/object_detection`.
+Run the `prepare_dataset.sh` script located in `examples/tensorflow/object_detection`.
 
 Usage:
 ```shell
-cd examples/3.x_api/tensorflow/object_detection/
+cd examples/tensorflow/object_detection/
 . prepare_dataset.sh
 cd mask_rcnn_inception_v2/quantization/ptq
 ```

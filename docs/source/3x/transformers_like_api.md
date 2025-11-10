@@ -200,7 +200,7 @@ gen_text = tokenizer.batch_decode(gen_ids, skip_special_tokens=True)
 print(gen_text)
 ```
 
-5. You can directly use [example script](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation/run_generation_gpu_woq.py)
+5. You can directly use [example script](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation/run_generation_gpu_woq.py)
 ```bash
 python run_generation_gpu_woq.py --woq --benchmark --model save_dir
 ```
@@ -213,4 +213,4 @@ python run_generation_gpu_woq.py --woq --benchmark --model save_dir
 
 ## Examples
 
-Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation) on how to quantize a model with transformers-like api.
+Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation) on how to quantize a model with transformers-like api.

@@ -120,4 +120,4 @@ quant_config.set_local("conv1", conv2d_config)
 
 ## Examples
 
-Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/tensorflow) on how to quantize a TensorFlow model with `neural_compressor.tensorflow`.
+Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/tensorflow) on how to quantize a TensorFlow model with `neural_compressor.tensorflow`.
