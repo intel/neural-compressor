@@ -238,12 +238,11 @@ Module Contents
    Access the global model.
 
 
-.. py:function:: load_data_from_pkl(path, filename)
+.. py:function:: load_data_from_pkl(file_path)
 
    Load data from local pkl file.
 
-   :param path: The directory to load data
-   :param filename: The filename to load
+   :param file_path: The directory to load data
 
 
 .. py:function:: dump_data_to_local(data, path, filename)

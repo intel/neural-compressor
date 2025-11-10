@@ -190,7 +190,7 @@ options.</p>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.Dequantize" title="neural_compressor.utils.utility.Dequantize"><code class="xref py py-obj docutils literal notranslate"><span class="pre">Dequantize</span></code></a>(data, scale_info)</p></td>
 <td><p>Dequantize the data with the scale_info.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.load_data_from_pkl" title="neural_compressor.utils.utility.load_data_from_pkl"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_data_from_pkl</span></code></a>(path, filename)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.load_data_from_pkl" title="neural_compressor.utils.utility.load_data_from_pkl"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_data_from_pkl</span></code></a>(file_path)</p></td>
 <td><p>Load data from local pkl file.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.utils.utility.dump_data_to_local" title="neural_compressor.utils.utility.dump_data_to_local"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dump_data_to_local</span></code></a>(data, path, filename)</p></td>
@@ -454,14 +454,11 @@ options.</p>
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.utils.utility.load_data_from_pkl">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">load_data_from_pkl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">filename</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.load_data_from_pkl" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.utils.utility.</span></span><span class="sig-name descname"><span class="pre">load_data_from_pkl</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">file_path</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.utils.utility.load_data_from_pkl" title="Link to this definition"></a></dt>
 <dd><p>Load data from local pkl file.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>path</strong> – The directory to load data</p></li>
-<li><p><strong>filename</strong> – The filename to load</p></li>
-</ul>
+<dd class="field-odd"><p><strong>file_path</strong> – The directory to load data</p>
 </dd>
 </dl>
 </dd></dl>
@@ -848,7 +845,7 @@ deep_set(person, “person.sex”, ‘male’) will output
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77967388c0> 
+   <jinja2.runtime.BlockReference object at 0x7fd200910620> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
