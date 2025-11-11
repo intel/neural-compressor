@@ -511,6 +511,16 @@
 <td>The data type of quantization scale to be used, different kernels have   different choices</td>
 <td>"float16"</td>
 </tr>
+<tr>
+<td>scheme (str)</td>
+<td>A preset scheme that defines the quantization configurations.</td>
+<td>"W4A16"</td>
+</tr>
+<tr>
+<td>layer_config (dict)</td>
+<td>Layer-wise quantization config</td>
+<td>None</td>
+</tr>
 </tbody>
 </table><div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantization code</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">AutoRoundConfig</span>
@@ -710,6 +720,25 @@
 <span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">&quot;lm_head&quot;</span><span class="p">,</span> <span class="n">lm_head_config</span><span class="p">)</span>
 </pre></div>
 </div>
+<ol class="simple">
+<li><p>Example of using <code class="docutils literal notranslate"><span class="pre">layer_config</span></code> for AutoRound</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># layer_config = {</span>
+<span class="c1">#      &quot;layer1&quot;: {</span>
+<span class="c1">#          &quot;data_type&quot;: &quot;int&quot;,</span>
+<span class="c1">#          &quot;bits&quot;: 3,</span>
+<span class="c1">#          &quot;group_size&quot;: 128,</span>
+<span class="c1">#          &quot;sym&quot;: True,</span>
+<span class="c1">#      },</span>
+<span class="c1">#      &quot;layer2&quot;: {</span>
+<span class="c1">#          &quot;W8A16&quot;</span>
+<span class="c1">#       }</span>
+<span class="c1"># }</span>
+<span class="c1"># Use the AutoRound specific &#39;layer_config&#39; instead of the &#39;set_local&#39; API.</span>
+<span class="n">layer_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lm_head&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;data_type&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">}}</span>
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">(</span><span class="n">layer_config</span><span class="o">=</span><span class="n">layer_config</span><span class="p">)</span>
+</pre></div>
+</div>
 </section>
 <section id="saving-and-loading">
 <h3>Saving and Loading<a class="headerlink" href="#saving-and-loading" title="Link to this heading"></a></h3>
@@ -786,7 +815,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fd1fbb644a0> 
+   <jinja2.runtime.BlockReference object at 0x7f9f3a5f8890> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
