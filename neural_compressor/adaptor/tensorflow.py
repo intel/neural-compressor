@@ -1354,7 +1354,7 @@ class TensorFlowAdaptor(Adaptor):
             model = model.graph_def
         if not quantization_cfg:
             # TODO get config from graph if config is None
-            quantization_cfg = load_data_from_pkl("./nc_workspace/", "cfg.pkl")
+            quantization_cfg = load_data_from_pkl("./nc_workspace/cfg.pkl")
         node_list = op_list
         # create the mapping between node name and node, key: node_name, val: node
         graph_node_name_mapping = {}
