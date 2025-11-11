@@ -1,0 +1,54 @@
+name: Repo Sync Triggered by PR
+
+on:
+  pull_request:
+    branches: [master_next_test] # test branch
+    types: [opened, reopened, ready_for_review, synchronize]
+  push:
+    branches: [master_next_test] # test branch
+  workflow_dispatch:
+
+env:
+  INNERSOURCE_REPO: intel-innersource/frameworks.ai.lpot.neural-compressor
+  INNERSOURCE_BRANCH: master_next_test
+  EXTERNAL_REPO: intel/neural-compressor
+  EXTERNAL_BRANCH: master_test
+
+jobs:
+  git-sync:
+    if: ${{ contains(github.repository, 'intel-innersource') }}
+    runs-on: [repo-sync]
+    steps:
+      - name: Git sync
+        run: |
+          internal_sha=$(git ls-remote https://github.com/${INNERSOURCE_REPO}.git refs/heads/${INNERSOURCE_BRANCH} | cut -f1)
+          external_sha=$(git ls-remote https://github.com/${EXTERNAL_REPO}.git refs/heads/${EXTERNAL_BRANCH} | cut -f1)
+          if [ "$internal_sha" = "$external_sha" ]; then
+              echo "SHAs are aligned, no need to sync. SHA: $internal_sha."
+              exit 0
+          else
+              echo "SHAs are not aligned. Internal SHA: $internal_sha, External SHA: $external_sha"
+          fi
+          
+          git clone --depth=1 -b $EXTERNAL_BRANCH https://${{ secrets.REPO_SYNC_USER_NAME }}:${{ secrets.REPO_SYNC_SSH_PRIVATE_KEY }}@github.com/${EXTERNAL_REPO}.git neural-compressor 
+          cd neural-compressor
+          git remote add innersource https://${{ secrets.REPO_SYNC_USER_NAME }}:${{ secrets.REPO_SYNC_SSH_PRIVATE_KEY }}@github.com/${INNERSOURCE_REPO}.git
+          git fetch innersource ${INNERSOURCE_BRANCH} --depth=100
+          git fetch origin ${EXTERNAL_BRANCH} --depth=100
+          MB=$(git merge-base $external_sha $internal_sha)
+
+          if [ "$MB" = "$external_sha" ]; then
+              echo "Need to sync internal code into external!"
+              git push origin innersource/${INNERSOURCE_BRANCH}:${EXTERNAL_BRANCH}
+          elif [ "$MB" = "$internal_sha" ]; then
+              echo "Need to sync external code into internal!"
+              git push innersource origin/${EXTERNAL_BRANCH}:${INNERSOURCE_BRANCH}
+          else
+              echo "::error::${INNERSOURCE_REPO}:${INNERSOURCE_BRANCH} and ${EXTERNAL_REPO}:${EXTERNAL_BRANCH} commit history have diverged, manual intervention required!"
+              exit 1
+          fi
+
+      - name: Clean up
+        if: always()
+        run: |
+          rm -rf ${{github.workspace}}/* || true
