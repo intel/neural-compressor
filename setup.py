@@ -119,11 +119,6 @@ if __name__ == "__main__":
     package_data = PKG_INSTALL_CFG[cfg_key].get("package_data") or {}
     install_requires = PKG_INSTALL_CFG[cfg_key].get("install_requires") or []
     extras_require = PKG_INSTALL_CFG[cfg_key].get("extras_require") or {}
-    entry_points = {
-        "console_scripts": [
-            "incbench = neural_compressor.common.benchmark:benchmark",
-        ]
-    }
 
     setup(
         name=project_name,
@@ -143,7 +138,6 @@ if __name__ == "__main__":
         install_requires=install_requires,
         ext_modules=ext_modules,
         cmdclass=cmdclass,
-        entry_points=entry_points,
         extras_require=extras_require,
         python_requires=">=3.7.0",
         classifiers=[

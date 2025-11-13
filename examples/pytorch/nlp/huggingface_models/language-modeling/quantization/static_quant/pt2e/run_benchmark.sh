@@ -85,7 +85,7 @@ function run_benchmark {
             --batch_size ${batch_size} \
             ${extra_cmd} ${mode_cmd}
     elif [[ ${mode} == "performance" ]]; then
-        incbench --num_cores_per_instance 4 run_clm_no_trainer.py \
+        python run_clm_no_trainer.py \
             --model ${model_name_or_path} \
             --batch_size ${batch_size} \
             --output_dir ${tuned_checkpoint} \
