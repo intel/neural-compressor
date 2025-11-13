@@ -246,8 +246,8 @@ class MatmulOpQuantizer(BaseOpQuantizer):
 
     def __init__(self, config, mod, measurement, params, mod_type_str):
         super().__init__(config, mod, measurement, params, mod_type_str)
-        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic))
-        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic))
+        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic, tensor_type_index=1))
+        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic, tensor_type_index=2))
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT, self.is_dynamic))
 
 

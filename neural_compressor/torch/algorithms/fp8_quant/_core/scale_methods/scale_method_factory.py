@@ -50,7 +50,7 @@ class ScaleMethodFactory:
 
         logger.trace("%s %s", self.__class__.__name__, self.__dict__)
 
-    def get_scale_method(self, tensor_type, is_dynamic=False):
+    def get_scale_method(self, tensor_type, is_dynamic=False, tensor_type_index=1):
         backoff = 1.0 if is_dynamic else self.scale_method_config_map[tensor_type].backoff
         scale_round_method = self.scale_method_config_map[tensor_type].rounding_method
         scale_value_type = self.scale_method_config_map[tensor_type].scale_value_type
@@ -100,7 +100,10 @@ class ScaleMethodFactory:
             ## maxabs PCS
             case (ScaleValueType.MAXABS, ScaleGranularity.PCS, _, _):
                 if is_dynamic:
-                    return MaxAbsDynamicPcs(scale_round_method, self.params, self.device_for_scales, backoff)
+                    scaling_dim = -1
+                    if tensor_type == QuantTensorName.INPUT and tensor_type_index == 2 and self.op_type == "matmul":
+                        scaling_dim = -2
+                    return MaxAbsDynamicPcs(scale_round_method, self.params, self.device_for_scales, backoff, dim=scaling_dim)
                 return MaxAbsPcs(scale_round_method, self.params, self.device_for_scales, backoff)
             ## opt PTS
             case (ScaleValueType.OPT, ScaleGranularity.PTS, _, _):

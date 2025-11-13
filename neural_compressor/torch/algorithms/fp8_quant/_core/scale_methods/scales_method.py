@@ -237,8 +237,8 @@ class OptScalesPcs(ScalesMethod):
 
 class MaxAbsDynamicPcs(MaxAbsPcs):
 
-    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None):
-        super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, -1, True, True)
+    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None, dim=-1):
+        super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, dim, True, True)
         logger.trace("%s %s", self.__class__.__name__, self.__dict__)
 
     def get_scale_funcs_dict(self):
