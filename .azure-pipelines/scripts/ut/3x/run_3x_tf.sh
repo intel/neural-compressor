@@ -41,7 +41,6 @@ pytest --cov="${inc_path}" --cov-append -vs --disable-warnings --html=report_tf.
 # test for tensorflow new api ut
 pip uninstall tensorflow -y
 pip install /tf_dataset/tf_binary/230928/tensorflow*.whl
-pip install cmake==3.31.6
 pip install protobuf==3.20.3
 pip install horovod==0.27.0
 pip list

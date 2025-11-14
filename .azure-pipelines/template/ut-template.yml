@@ -2,6 +2,9 @@ parameters:
   - name: dockerConfigName
     type: string
     default: "commonDockerConfig"
+  - name: dockerFileName
+    type: string
+    default: "Dockerfile"
   - name: repo
     type: string
     default: "https://github.com/intel/neural-compressor"
@@ -27,7 +30,7 @@ steps:
       dockerConfigName: ${{ parameters.dockerConfigName }}
       repoName: "neural-compressor"
       repoTag: "py310"
-      dockerFileName: "Dockerfile"
+      dockerFileName: "${{ parameters.dockerFileName }}"
       containerName: ${{ parameters.utContainerName }}
       repo: ${{ parameters.repo }}
       imageSource: ${{ parameters.imageSource }}
@@ -58,4 +61,6 @@ steps:
       targetType: "inline"
       script: |
         docker exec ${{ parameters.utContainerName }} bash -c "rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* || true"
+        docker stop ${{ parameters.utContainerName }}
+        docker rm -vf ${{ parameters.utContainerName }} || true
     displayName: "Docker clean up"

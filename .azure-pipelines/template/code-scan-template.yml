@@ -38,5 +38,6 @@ steps:
     inputs:
       targetType: "inline"
       script: |
-        docker exec ${{ parameters.codeScanContainerName }} bash -c "rm -fr /neural-compressor/* && rm -fr /neural-compressor/.* || true"
+        docker stop ${{ parameters.codeScanContainerName }}
+        docker rm -vf ${{ parameters.codeScanContainerName }} || true
     displayName: "Docker clean up"

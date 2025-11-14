@@ -25,7 +25,7 @@ pool: ICX-16C
 
 variables:
   IMAGE_NAME: "neural-compressor"
-  IMAGE_TAG: "py310"
+  IMAGE_TAG: "py312"
   UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   DOWNLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   ARTIFACT_NAME: "UT_coverage_report_3x_pt"
@@ -42,6 +42,7 @@ stages:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "commonDockerConfig"
+              dockerFileName: "ubuntu-2404"
               utScriptFileName: "3x/run_3x_pt"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x"
@@ -57,6 +58,7 @@ stages:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "gitCloneDockerConfig"
+              dockerFileName: "ubuntu-2404"
               utScriptFileName: "3x/run_3x_pt"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x_baseline"
@@ -72,7 +74,8 @@ stages:
         steps:
           - script: |
               if [[ ! $(docker images | grep -i ${IMAGE_NAME}:${IMAGE_TAG}) ]]; then
-                docker build -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/Dockerfile.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
+                docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) \
+                  -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/ubuntu-2404.devel -t ${IMAGE_NAME}:${IMAGE_TAG} .
               fi
               docker images | grep -i ${IMAGE_NAME}
               if [[ $? -ne 0 ]]; then

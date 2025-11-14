@@ -11,7 +11,7 @@ echo "##[section]import check pass"
 
 # install requirements
 echo "##[group]set up UT env..."
-export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${HOME}/.local/lib/:$LD_LIBRARY_PATH
 sed -i '/^deepspeed/d' /neural-compressor/test/3x/torch/requirements.txt
 pip install -r /neural-compressor/test/3x/torch/requirements.txt --extra-index-url https://download.pytorch.org/whl/cpu
 pip install pytest-cov
