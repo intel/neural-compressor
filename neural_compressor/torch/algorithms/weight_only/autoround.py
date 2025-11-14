@@ -16,7 +16,7 @@ import copy
 import json
 import time
 from functools import lru_cache
-from typing import Optional, Union, Iterable
+from typing import Iterable, Optional, Union
 
 import torch
 
@@ -39,9 +39,9 @@ from auto_round.compressors.mllm.template import Template, get_template
 from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
 from auto_round.schemes import QuantizationScheme
 
+from neural_compressor.common.utils import Statistics
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, logger
-from neural_compressor.common.utils import Statistics
 
 from .utility import CapturedDataloader, InputCaptureModule
 
@@ -291,6 +291,7 @@ class AutoRoundQuantizer(Quantizer):
             model = pipe
         if self.target_bits is not None:
             from auto_round import AutoScheme
+
             self.scheme = AutoScheme(
                 avg_bits=self.target_bits,
                 options=self.options,
@@ -491,10 +492,10 @@ def dump_model_op_stats(layer_config):
     res = {}
     res["Linear"] = {}
     for name, info in layer_config.items():
-        if 'data_type' in info:
-            data_type_str = info['data_type'].upper()
-            if 'bits' in info and str(info["bits"]) not in info["data_type"]:
-                data_type_str += str(info['bits'])
+        if "data_type" in info:
+            data_type_str = info["data_type"].upper()
+            if "bits" in info and str(info["bits"]) not in info["data_type"]:
+                data_type_str += str(info["bits"])
             res["Linear"][data_type_str] = res.get("Linear", {}).get(data_type_str, 0) + 1
 
     # update stats format for dump.

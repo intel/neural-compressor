@@ -62,6 +62,7 @@ def _deepcopy_warp(model):
         setattr(new_model, key, value)
     return new_model
 
+
 def _preprocess_model_quant_config(model, quant_config):
     """Preprocess model and quant config before quantization."""
     for config in quant_config.config_set:
