@@ -118,8 +118,8 @@ class TuningParam:
         assert isinstance(
             self.tunable_type, typing._GenericAlias
         ), f"Expected a type hint, got {self.tunable_type} instead."
-        DynamicInputArgsModel = TuningParam.create_input_args_model(self.tunable_type)
         try:
+            DynamicInputArgsModel = TuningParam.create_input_args_model(self.tunable_type)
             new_args = DynamicInputArgsModel(input_args=value)
             return True
         except Exception as e:

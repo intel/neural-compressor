@@ -7,6 +7,8 @@ import transformers
 from packaging.version import Version, parse
 import os
 from functools import lru_cache
+from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaConfig
+
 
 @lru_cache(None)
 def is_habana_framework_installed():
@@ -299,7 +301,6 @@ class TestAutoRoundCPU:
     @pytest.mark.parametrize("scheme", ["W4A16","W2A16","W3A16","W8A16","MXFP4","MXFP8", "NVFP4","FPW8A16","FP8_STATIC"])
     def test_scheme(self, scheme):
         # INC API
-        from transformers import AutoModelForCausalLM, AutoTokenizer
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
             torchscript=True,
@@ -335,7 +336,6 @@ class TestAutoRoundCPU:
         out = inc_model(inp)[0]
         
         # AutoRound API
-        from transformers import AutoModelForCausalLM, AutoTokenizer
         fp32_model = transformers.AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
             torchscript=True,
@@ -367,7 +367,79 @@ class TestAutoRoundCPU:
         assert torch.all(out_ar.eq(out))
         shutil.rmtree(output_dir, ignore_errors=True)
         shutil.rmtree(quantized_model_path, ignore_errors=True)
-        
+
+
+    @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
+    def test_target_bits(self):
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        tokenizer = AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+
+        output_dir = "./saved_inc"
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer,
+            nsamples=32,
+            seqlen=10,
+            iters=1,
+            target_bits=5,
+            options=("MXFP4", "MXFP8"),
+            enable_torch_compile=True,
+            low_gpu_mem_usage=True,
+            export_format="auto_round",
+        )
+        # quantizer execute
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        model = convert(model)
+        # mxfp4/8 model inference relys on autoround extension for vLLM.
+        assert model.model.decoder.layers[0].self_attn.k_proj.data_type =="mx_fp8", \
+                "model is not quantized correctly, please check."
+        assert model.model.decoder.layers[1].fc1.data_type =="mx_fp4", \
+                "model is not quantized correctly, please check."
+
+
+    def test_target_bits_autotune(self):
+        from neural_compressor.torch.quantization import TuningConfig, autotune
+        baseline = 1
+        eval_result = [0.9, 0.8, 0.99]
+        acc_list = [baseline] + eval_result
+
+        def eval_acc_fn(model) -> float:
+            acc = acc_list.pop(0)
+            return acc
+
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        tokenizer = AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+        # AutoRound API
+        custom_tune_config = TuningConfig(
+            config_set=[
+                AutoRoundConfig(
+                    tokenizer=tokenizer,
+                    target_bits=[5, 6, 7],
+                    options=("MXFP4", "MXFP8"),
+                    enable_torch_compile=True,
+                    low_gpu_mem_usage=True,
+                    export_format="auto_round",
+                    iters=0,
+                )
+            ]
+        )
+        best_model = autotune(model=fp32_model, tune_config=custom_tune_config, eval_fn=eval_acc_fn)
+        # mxfp4/8 model inference relys on autoround extension for vLLM.
+        assert best_model.model.decoder.layers[0].self_attn.k_proj.data_type =="mx_fp8", \
+                "model is not quantized correctly, please check."
+        assert best_model.model.decoder.layers[1].fc1.data_type =="mx_fp8", \
+                "model is not quantized correctly, please check."
+
+
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")
 @pytest.mark.skipif(os.getenv("PT_HPU_LAZY_MODE", "0") == "1", reason="Lazy mode is enabled")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
@@ -376,7 +448,6 @@ class TestAutoRoundHPU:
     def setup_class(self):
         
         model_name = "TheBloke/Llama-2-7B-Chat-GPTQ"
-        from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaConfig
         from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
 
         config = LlamaConfig(num_hidden_layers=2)
