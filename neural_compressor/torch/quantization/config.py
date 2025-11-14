@@ -19,12 +19,12 @@
 
 
 import copy
-import importlib
+import inspect
 import json
 from collections import OrderedDict
 from typing import Any, Callable, Dict, List, NamedTuple, Optional
 from typing import OrderedDict as OrderedDictType
-from typing import Tuple, Union
+from typing import Tuple, Union, Iterable
 
 import torch
 
@@ -98,6 +98,18 @@ class TorchBaseConfig(BaseConfig):
                 if is_ipex_imported():
                     op_type_config_dict[name] = config
         return op_type_config_dict, op_name_config_dict
+
+    @classmethod
+    def _generate_params_list(cls) -> List[str]:
+        sig = inspect.signature(cls.__init__)
+        params_list = list(sig.parameters.keys())[1:]
+        if "white_list" in params_list:
+            params_list.remove("white_list")
+        if "args" in params_list:
+            params_list.remove("args")
+        if "kwargs" in params_list:
+            params_list.remove("kwargs")
+        return params_list
 
 
 ######################## RNT Config ###############################
@@ -976,7 +988,7 @@ class AutoRoundConfig(TorchBaseConfig):
         enable_torch_compile: bool = False,
         # v0.7
         scheme: str | dict = "W4A16",
-        device_map: [str, int, torch.device, dict] = 0,
+        device_map: str | int | torch.device | dict = 0,
         # mllm
         quant_nontext_module: bool = False,
         extra_data_dir: str = None,
@@ -987,6 +999,15 @@ class AutoRoundConfig(TorchBaseConfig):
         quant_lm_head: bool = False,
         # v0.8
         enable_adam: bool = False,
+        # v0.9: auto scheme parameters
+        target_bits: int = None,
+        options: Union[str, list[Union[str]], tuple[Union[str], ...]] = ("MXFP4", "MXFP8"),
+        shared_layers: Optional[Iterable[Iterable[str]]] = None,
+        ignore_scale_zp_bits: bool = False,
+        auto_scheme_method: str = "default",
+        auto_scheme_device_map: str = None,
+        auto_scheme_batch_size: int = None,
+        # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
     ):
@@ -1039,9 +1060,17 @@ class AutoRoundConfig(TorchBaseConfig):
             device_map: The device to be used for tuning.
             scheme (str| dict | QuantizationScheme ): A preset scheme that defines the quantization configurations.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
-              Default is DEFAULT_WHITE_LIST.
+            target_bits (int): The target bit width for quantization (default is None).
+                options (Union[str, list[Union[str]], tuple[Union[str], ...]]): The options for mixed-precision quantization.
+                shared_layers (Optional[Iterable[Iterable[str]]]): The shared layers for mixed-precision quantization.
+                ignore_scale_zp_bits (bool): Whether to ignore scale and zero-point bits (default is False).
+                auto_scheme_method (str): The method for automatic scheme selection (default is "default").
+                auto_scheme_device_map (str): The device map for automatic scheme selection (default is None).
+                auto_scheme_batch_size (int): The batch size for automatic scheme selection (default is 8).
         """
         super().__init__(white_list=white_list)
+        self.params_list = self.__class__._generate_params_list()
+        self.params_list.remove("options")  # option is a list but not a tunable parameter
 
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
@@ -1057,6 +1086,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.super_bits = super_bits
         self.super_group_size = super_group_size
         self.amp = amp
+        self.enable_adam = enable_adam
         self.lr_scheduler = lr_scheduler
         self.enable_quanted_input = enable_quanted_input
         self.enable_minmax_tuning = enable_minmax_tuning
@@ -1087,6 +1117,13 @@ class AutoRoundConfig(TorchBaseConfig):
         self.scheme = scheme
         self.device_map = device_map
         self.quant_lm_head = quant_lm_head
+        self.target_bits = target_bits
+        self.options = options
+        self.shared_layers = shared_layers
+        self.ignore_scale_zp_bits = ignore_scale_zp_bits
+        self.auto_scheme_method = auto_scheme_method
+        self.auto_scheme_device_map = auto_scheme_device_map
+        self.auto_scheme_batch_size = auto_scheme_batch_size
         # add kwargs
         for k, v in kwargs.items():
             setattr(self, k, v)

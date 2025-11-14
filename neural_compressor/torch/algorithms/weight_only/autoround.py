@@ -16,7 +16,7 @@ import copy
 import json
 import time
 from functools import lru_cache
-from typing import Optional, Union
+from typing import Optional, Union, Iterable
 
 import torch
 
@@ -41,6 +41,7 @@ from auto_round.schemes import QuantizationScheme
 
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, logger
+from neural_compressor.common.utils import Statistics
 
 from .utility import CapturedDataloader, InputCaptureModule
 
@@ -104,6 +105,14 @@ class AutoRoundQuantizer(Quantizer):
         guidance_scale: float = 7.5,
         num_inference_steps: int = 50,
         generator_seed: int = None,
+        # 0.9
+        target_bits: int = None,
+        options: Union[str, list[Union[str]], tuple[Union[str], ...]] = ("MXFP4", "MXFP8"),
+        shared_layers: Optional[Iterable[Iterable[str]]] = None,
+        ignore_scale_zp_bits: bool = False,
+        auto_scheme_method: str = "default",
+        auto_scheme_batch_size: int = None,
+        auto_scheme_device_map: str = None,
         **kwargs,
     ):
         """Init a AutQRoundQuantizer object.
@@ -238,6 +247,13 @@ class AutoRoundQuantizer(Quantizer):
         self.guidance_scale = guidance_scale
         self.num_inference_steps = num_inference_steps
         self.generator_seed = generator_seed
+        self.target_bits = target_bits
+        self.options = options
+        self.shared_layers = shared_layers
+        self.ignore_scale_zp_bits = ignore_scale_zp_bits
+        self.auto_scheme_method = auto_scheme_method
+        self.auto_scheme_batch_size = auto_scheme_batch_size
+        self.auto_scheme_device_map = auto_scheme_device_map
 
     def _is_w4afp8(self) -> bool:
         return any([v.get("data_type", None) == "fp8_to_int_sym" for v in self.quant_config.values()])
@@ -273,6 +289,18 @@ class AutoRoundQuantizer(Quantizer):
         model = model.orig_model
         if pipe is not None:
             model = pipe
+        if self.target_bits is not None:
+            from auto_round import AutoScheme
+            self.scheme = AutoScheme(
+                avg_bits=self.target_bits,
+                options=self.options,
+                shared_layers=self.shared_layers,
+                ignore_scale_zp_bits=self.ignore_scale_zp_bits,
+                method=self.auto_scheme_method,
+                batch_size=self.auto_scheme_batch_size,
+                device_map=self.auto_scheme_device_map,
+                low_gpu_mem_usage=self.low_gpu_mem_usage,
+            )
         rounder = AutoRound(
             model,
             layer_config=self.layer_config,
@@ -338,6 +366,9 @@ class AutoRoundQuantizer(Quantizer):
             rounder.quantize_and_save(output_dir=self.output_dir, format=self.export_format, inplace=True)
             model = rounder.model
             model.autoround_config = rounder.layer_config
+
+        dump_model_op_stats(rounder.layer_config)
+
         return model
 
 
@@ -452,3 +483,28 @@ def get_mllm_dataloader(
         quant_nontext_module=quant_nontext_module,
     )
     return dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen, nsamples
+
+
+def dump_model_op_stats(layer_config):
+    """Dump quantizable ops stats of model to user."""
+    # TODO: collect more ops besides Linear
+    res = {}
+    res["Linear"] = {}
+    for name, info in layer_config.items():
+        if 'data_type' in info:
+            data_type_str = info['data_type'].upper()
+            if 'bits' in info and str(info["bits"]) not in info["data_type"]:
+                data_type_str += str(info['bits'])
+            res["Linear"][data_type_str] = res.get("Linear", {}).get(data_type_str, 0) + 1
+
+    # update stats format for dump.
+    field_names = ["Op Type", "Total"]
+    dtype_list = list(res["Linear"].keys())
+    field_names.extend(dtype_list)
+    output_data = []
+    for op_type in res.keys():
+        field_results = [op_type, sum(res[op_type].values())]
+        field_results.extend([res[op_type][dtype] for dtype in dtype_list])
+        output_data.append(field_results)
+
+    Statistics(output_data, header="Mixed Precision Statistics", field_names=field_names).print_stat()

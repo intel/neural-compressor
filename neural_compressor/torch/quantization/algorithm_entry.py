@@ -646,6 +646,15 @@ def autoround_quantize_entry(
             guidance_scale = quant_config.to_dict().get("guidance_scale", 7.5)
             num_inference_steps = quant_config.to_dict().get("num_inference_steps", 50)
             generator_seed = quant_config.to_dict().get("generator_seed", None)
+            # 0.9.0: auto scheme parameters
+            target_bits=quant_config.target_bits
+            options=quant_config.options
+            shared_layers=quant_config.shared_layers
+            ignore_scale_zp_bits=quant_config.ignore_scale_zp_bits
+            auto_scheme_method=quant_config.auto_scheme_method
+            auto_scheme_batch_size=quant_config.auto_scheme_batch_size
+            auto_scheme_device_map=quant_config.auto_scheme_device_map
+            
 
     kwargs.pop("example_inputs")
     quantizer = get_quantizer(
@@ -702,12 +711,18 @@ def autoround_quantize_entry(
         guidance_scale=guidance_scale,
         num_inference_steps=num_inference_steps,
         generator_seed=generator_seed,
+        target_bits=target_bits,
+        options=options,
+        shared_layers=shared_layers,
+        ignore_scale_zp_bits=ignore_scale_zp_bits,
+        auto_scheme_method=auto_scheme_method,
+        auto_scheme_batch_size=auto_scheme_batch_size,
+        auto_scheme_device_map=auto_scheme_device_map,
     )
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping
     model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
-    dump_model_op_stats(mode, configs_mapping)
     return model
 
 
