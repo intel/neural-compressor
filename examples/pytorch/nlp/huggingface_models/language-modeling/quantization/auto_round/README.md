@@ -10,6 +10,7 @@
 - Export model path
 ```bash
 export QWEN_MODEL=Qwen/Qwen3-235B-A22B
+export QWEN_MODEL=/storage/yiliu7/Qwen/Qwen3-30B-A3B-Base/
 export DS_MODEL=deepseek-ai/DeepSeek-R1
 ```
 
@@ -18,7 +19,7 @@ export DS_MODEL=deepseek-ai/DeepSeek-R1
 python quantize.py --model $QWEN_MODEL -t qwen_mxfp8 --use_autoround_format --output_dir ./qmodels
 python quantize.py --model $DS_MODEL -t ds_mxfp8 --use_autoround_format ----output_dir ./qmodels
 ```
-
+/storage/yiliu7/meta-llama/Meta-Llama-3-8B-Instruct
 - MXFP4
 ```bash
 python quantize.py --model $QWEN_MODEL -t qwen_mxfp4 --use_autoround_format --output_dir ./qmodels

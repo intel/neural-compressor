@@ -32,7 +32,7 @@ topologies_config = {
 }
 
 
-def quant_model_ar(args):
+def quant_model(args):
     config = topologies_config[args.t]
 
     logger.info(f"Using fp_layers: {config['fp_layers']}")
@@ -65,7 +65,7 @@ def get_model_and_tokenizer(model_name):
     return fp32_model, tokenizer
 
 
-def quant_model(args):
+def quant_model_(args):
     from neural_compressor.torch.quantization import (
         AutoRoundConfig,
         convert,
