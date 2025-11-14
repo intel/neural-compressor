@@ -49,15 +49,7 @@ done
 
 SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
 log_dir="/neural-compressor/.azure-pipelines/scripts/models"
-if [[ "${inc_new_api}" == "3x"* ]]; then
-    WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
-    git clone https://github.com/intel/intel-extension-for-transformers.git ~/itrex
-    cd ~/itrex
-    pip install -r requirements.txt
-    pip install -v .
-else
-    WORK_SOURCE_DIR="/neural-compressor/examples/deprecated/${framework}"
-fi
+WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
 
 $BOLD_YELLOW && echo "processing ${framework}-${fwk_ver}-${model}" && $RESET
 
@@ -74,17 +66,6 @@ $BOLD_YELLOW && echo "====== install requirements ======" && $RESET
 /bin/bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh ${inc_new_api}
 
 mkdir -p ${WORK_SOURCE_DIR}
-cd ${WORK_SOURCE_DIR}
-if [[ "${inc_new_api}" == "false" ]]; then
-    echo "copy old api examples to workspace..."
-    git clone -b old_api_examples https://github.com/intel/neural-compressor.git old-lpot-models
-    cd old-lpot-models
-    git branch
-    cd -
-    rm -rf ${model_src_dir}
-    mkdir -p ${model_src_dir}
-    cp -r old-lpot-models/examples/${framework}/${model_src_dir} ${WORK_SOURCE_DIR}/${model_src_dir}/../
-fi
 
 cd ${model_src_dir}
 
@@ -128,20 +109,4 @@ if [ -f "requirements.txt" ]; then
     pip list
 else
     $BOLD_RED && echo "Not found requirements.txt file." && $RESET
-fi
-
-if [[ "${inc_new_api}" == "false" ]]; then
-    $BOLD_YELLOW && echo "======== update yaml config ========" && $RESET
-    $BOLD_YELLOW && echo -e "\nPrint origin yaml..." && $RESET
-    cat ${yaml}
-    python ${SCRIPTS_PATH}/update_yaml_config.py \
-        --yaml=${yaml} \
-        --framework=${framework} \
-        --dataset_location=${dataset_location} \
-        --batch_size=${batch_size} \
-        --strategy=${strategy} \
-        --new_benchmark=${new_benchmark} \
-        --multi_instance='true'
-    $BOLD_YELLOW && echo -e "\nPrint updated yaml... " && $RESET
-    cat ${yaml}
 fi
