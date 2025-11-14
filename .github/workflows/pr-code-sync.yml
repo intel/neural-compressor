@@ -33,8 +33,8 @@ jobs:
           else
               echo "SHAs are not aligned. Internal SHA: $internal_sha, External SHA: $external_sha"
           fi
-          
-          git clone --depth=1 -b $EXTERNAL_BRANCH https://${{ secrets.REPO_SYNC_USER_NAME }}:${{ secrets.REPO_SYNC_SSH_PRIVATE_KEY }}@github.com/${EXTERNAL_REPO}.git neural-compressor 
+
+          git clone --depth=1 -b $EXTERNAL_BRANCH https://${{ secrets.REPO_SYNC_USER_NAME }}:${{ secrets.REPO_SYNC_SSH_PRIVATE_KEY }}@github.com/${EXTERNAL_REPO}.git neural-compressor
           cd neural-compressor
           git remote add innersource https://${{ secrets.REPO_SYNC_USER_NAME }}:${{ secrets.REPO_SYNC_SSH_PRIVATE_KEY }}@github.com/${INNERSOURCE_REPO}.git
           git fetch innersource ${INNERSOURCE_BRANCH} --depth=100
