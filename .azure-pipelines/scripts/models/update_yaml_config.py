@@ -134,14 +134,6 @@ def update_yaml_config_tuning(
                 prev_strategy = tuning_config.get("strategy", {})
             strategy_name = prev_strategy.get("name", None)
             prev_strategy.update({"name": strategy})
-            if strategy == "sigopt":
-                prev_strategy.update(
-                    {
-                        "sigopt_api_token": strategy_token,
-                        "sigopt_project_id": "lpot",
-                        "sigopt_experiment_name": "lpot-tune",
-                    }
-                )
             if strategy == "hawq":
                 prev_strategy.update({"loss": "CrossEntropyLoss"})
             print(f"Changed {strategy_name} to {strategy}")

@@ -11,7 +11,7 @@ git clone -b dnnl_ep --depth 1 https://github.com/intel/neural-compressor.git
 cd neural-compressor
 pip install -e ./
 
-cd examples/onnxrt/nlp/huggingface_model/text_classification/mix_precision/
+cd examples/deprecated/onnxrt/nlp/huggingface_model/text_classification/mix_precision/
 pip install -r requirements.txt
 ```
 

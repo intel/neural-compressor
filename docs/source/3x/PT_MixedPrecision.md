@@ -18,7 +18,7 @@ The 4th Gen Intel® Xeon® Scalable processor supports FP16 instruction set arch
 Further details can be found in the [Intel AVX512 FP16 Guide](https://www.intel.com/content/www/us/en/content-details/669773/intel-avx-512-fp16-instruction-set-for-intel-xeon-processor-based-products-technology-guide.html) published by Intel.
 
 The latest Intel Xeon processors deliver flexibility of Intel Advanced Matrix Extensions (Intel AMX) ,an accelerator that improves the performance of deep learning(DL) training and inference, making it ideal for workloads like NLP, recommender systems, and image recognition. Developers can code AI functionality to take advantage of the Intel AMX instruction set, and they can code non-AI functionality to use the processor instruction set architecture (ISA). Intel has integrated the Intel® oneAPI Deep Neural Network Library (oneDNN), its oneAPI DL engine, into Pytorch.
-Further details can be found in the [Intel AMX Document](https://www.intel.com/content/www/us/en/content-details/785250/accelerate-artificial-intelligence-ai-workloads-with-intel-advanced-matrix-extensions-intel-amx.html) published by Intel.
+Further details can be found in the [Intel AMX Document](https://www.intel.com/content/www/us/en/content-details/785250/accelerate-artificial-intelligence-workloads-with-intel-advanced-matrix-extensions.html) published by Intel.
 
 <p align="center" width="100%">
     <img src="./imgs/data_format.png" alt="Architecture" height=230>
@@ -107,5 +107,5 @@ best_model = autotune(model=build_torch_model(), tune_config=custom_tune_config,
   
 ## Examples
 
-Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/3.x_api/pytorch/cv/mixed_precision
+Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/cv/mixed_precision
 ) on how to quantize a model with Mixed Precision.

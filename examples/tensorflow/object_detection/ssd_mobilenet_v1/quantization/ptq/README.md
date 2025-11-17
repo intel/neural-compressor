@@ -22,7 +22,7 @@ pip install intel-tensorflow
 
 ### Installation Dependency packages
 ```shell
-cd examples/3.x_api//tensorflow/object_detection
+cd examples/tensorflow/object_detection
 pip install -r requirements.txt
 cd ssd_mobilenet_v1/quantization/ptq
 ```
@@ -55,7 +55,7 @@ pip install --upgrade intel-extension-for-tensorflow[cpu]
 ## 2. Prepare Model
 
 ### Automated approach
-Run the `prepare_model.py` script located in `examples/3.x_api/tensorflow/object_detection/ssd_mobilenet_v1/quantization/ptq`.
+Run the `prepare_model.py` script located in `examples/tensorflow/object_detection/ssd_mobilenet_v1/quantization/ptq`.
 
 ```
 python prepare_model.py --model_name=ssd_mobilenet_v1 --model_path=./
@@ -83,11 +83,11 @@ tar -xvzf ssd_mobilenet_v1_coco_2018_01_28.tar.gz
 
 > **_Note: `prepare_dataset.sh` script works with TF version 1.x._**
 
-Run the `prepare_dataset.sh` script located in `examples/3.x_api/tensorflow/object_detection`.
+Run the `prepare_dataset.sh` script located in `examples/tensorflow/object_detection`.
 
 Usage:
 ```shell
-cd examples/3.x_api/tensorflow/object_detection
+cd examples/tensorflow/object_detection
 . prepare_dataset.sh
 cd ssd_mobilenet_v1/quantization/ptq
 ```

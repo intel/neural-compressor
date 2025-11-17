@@ -20,3 +20,4 @@ jobs:
           days-before-issue-close: 7
           stale-issue-message: "This issue is stale because it has been open 60 days with no activity. Remove stale label or comment or this will be closed in 7 days."
           close-issue-message: "This issue was closed because it has been stalled for 7 days with no activity."
+          operations-per-run: 500
