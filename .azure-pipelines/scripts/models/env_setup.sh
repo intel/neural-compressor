@@ -65,21 +65,13 @@ fi
 $BOLD_YELLOW && echo "====== install requirements ======" && $RESET
 /bin/bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh ${inc_new_api}
 
-mkdir -p ${WORK_SOURCE_DIR}
-
-cd ${model_src_dir}
+cd ${WORK_SOURCE_DIR}/${model_src_dir}
 
 if [[ "${fwk_ver}" != "latest" ]]; then
     pip install ruamel.yaml==0.17.40
     pip install psutil
     pip install protobuf==4.23.4
-    if [[ "${framework}" == "tensorflow" ]]; then
-        if [[ "${fwk_ver}" == *"-official" ]]; then
-            pip install tensorflow==${fwk_ver%-official}
-        else
-            pip install intel-tensorflow==${fwk_ver}
-        fi
-    elif [[ "${framework}" == "pytorch" ]]; then
+    if [[ "${framework}" == "pytorch" ]]; then
         pip install torch==${fwk_ver} --index-url https://download.pytorch.org/whl/cpu
         pip install torchvision==${torch_vision_ver} --index-url https://download.pytorch.org/whl/cpu
     elif [[ "${framework}" == "onnxrt" ]]; then
@@ -92,10 +84,6 @@ if [ -f "requirements.txt" ]; then
     sed -i '/neural-compressor/d' requirements.txt
     if [ "${framework}" == "onnxrt" ]; then
         sed -i '/^onnx>=/d;/^onnx==/d;/^onnxruntime>=/d;/^onnxruntime==/d' requirements.txt
-    fi
-    if [ "${framework}" == "tensorflow" ]; then
-        sed -i '/tensorflow==/d;/tensorflow$/d' requirements.txt
-        sed -i '/^intel-tensorflow/d' requirements.txt
     fi
     if [ "${framework}" == "pytorch" ]; then
         sed -i '/torch==/d;/torch$/d;/torchvision==/d;/torchvision$/d' requirements.txt

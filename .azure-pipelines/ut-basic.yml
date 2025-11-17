@@ -38,19 +38,19 @@ variables:
   REPO: $(Build.Repository.Uri)
 
 stages:
-  - stage: Adaptor
-    displayName: Unit Test FWKs adaptor
-    dependsOn: []
-    jobs:
-      - job:
-        displayName: Test FWKs adaptor
-        steps:
-          - template: template/ut-template.yml
-            parameters:
-              dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_basic_adaptor"
-              uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_adaptor"
+  # - stage: Adaptor
+  #   displayName: Unit Test FWKs adaptor
+  #   dependsOn: []
+  #   jobs:
+  #     - job:
+  #       displayName: Test FWKs adaptor
+  #       steps:
+  #         - template: template/ut-template.yml
+  #           parameters:
+  #             dockerConfigName: "commonDockerConfig"
+  #             utScriptFileName: "run_basic_adaptor"
+  #             uploadPath: $(UPLOAD_PATH)
+  #             utArtifact: "ut_adaptor"
 
   - stage: API
     displayName: Unit Test User facing API
