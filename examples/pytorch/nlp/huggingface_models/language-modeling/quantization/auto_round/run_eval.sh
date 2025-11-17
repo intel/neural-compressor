@@ -30,49 +30,7 @@ echo "Evaluating model: ${model_path} on task: ${task_name}, output dir: ${outpu
 mkdir -p ${output_dir}
 # VLLM_ATTENTION_BACKEND=FLASHINFER \
 
-# VLLM_ENABLE_AR_EXT=1 \
-# VLLM_AR_MXFP4_MODULAR_MOE=1 \
-# VLLM_ENABLE_STATIC_MOE=0 \
-# VLLM_USE_DEEP_GEMM=0 \
-# VLLM_AR_MXFP4_MODULAR_MOE=1 \
-# VLLM_ENABLE_STATIC_MOE=0 \
-# VLLM_USE_DEEP_GEMM=0 \
-# VLLM_LOGGING_LEVEL=DEBUG  \
-# VLLM_ENABLE_V1_MULTIPROCESSING=1 \
-# VLLM_USE_DEEP_GEMM=0 \
-# VLLM_LOGGING_LEVEL=DEBUG  \
-# VLLM_ENABLE_V1_MULTIPROCESSING=1  \
-# lm_eval --model vllm \
-#   --model_args "pretrained=${model_path},tensor_parallel_size=${tp_size},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False" \
-#   --tasks $task_name  \
-#     --batch_size 16 \
-#     --limit 32 \
-#     --log_samples \
-#     --seed 42 \
-#     --output_path ${output_dir} \
-#     --show_config 2>&1 | tee ${output_dir}/log.txt
-  
-# 
 
-
-# VLLM_ENABLE_AR_EXT=1 \
-# VLLM_AR_MXFP4_MODULAR_MOE=1 \
-# VLLM_ENABLE_AR_EXT=1 \
-# VLLM_MXFP4_PRE_UNPACK_TO_FP8=1 \
-# VLLM_ENABLE_STATIC_MOE=0 \
-# VLLM_MXFP4_PRE_UNPACK_WEIGHTS=0 \
-# VLLM_USE_DEEP_GEMM=0 \
-# VLLM_ENABLE_V1_MULTIPROCESSING=1 \
-# lm_eval --model vllm \
-#   --model_args "pretrained=${model_path},tensor_parallel_size=${tp_size},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,enable_expert_parallel=True" \
-#   --tasks $task_name  \
-#     --batch_size 16 \
-#     --limit 256 \
-#     --log_samples \
-#     --seed 42 \
-#     --output_path ${output_dir} \
-#     --show_config 2>&1 | tee ${output_dir}/log.txt
-  
 # -MXFP4 Evaluation
 # /storage/yiliu7/quantized_model_qwen_mxfp4 4x200
 # VLLM_AR_MXFP4_MODULAR_MOE=1 \
