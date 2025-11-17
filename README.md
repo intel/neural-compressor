@@ -167,8 +167,7 @@ model = load(
   </thead>
   <tbody>
       <tr>
-          <td colspan="4" align="center"><a href="./docs/source/3x/autotune.md">Auto Tune</a></td>
-          <td colspan="4" align="center"><a href="./docs/source/3x/benchmark.md">Benchmark</a></td>
+          <td colspan="8" align="center"><a href="./docs/source/3x/autotune.md">Auto Tune</a></td>
       </tr>
   </tbody>
 </table>

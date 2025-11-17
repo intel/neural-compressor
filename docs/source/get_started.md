@@ -78,8 +78,7 @@ It also provides some common modules across different frameworks. For example, A
   </thead>
   <tbody>
       <tr>
-          <td colspan="4" align="center"><a href="3x/autotune.md">Auto Tune</a></td>
-          <td colspan="4" align="center"><a href="3x/benchmark.md">Benchmark</a></td>
+          <td colspan="8" align="center"><a href="3x/autotune.md">Auto Tune</a></td>
       </tr>
   </tbody>
 </table>

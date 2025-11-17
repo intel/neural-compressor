@@ -46,7 +46,7 @@ function run_benchmark {
             --batch_size ${batch_size} \
             --benchmark
     elif [[ ${mode} == "performance" ]]; then
-        incbench --num_c 4 main.py \
+        python main.py \
             --input_model ${input_model} \
             --dataset_location ${dataset_location} \
             --mode ${mode} \
