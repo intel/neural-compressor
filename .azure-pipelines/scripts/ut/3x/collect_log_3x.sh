@@ -1,3 +1,4 @@
+#!/bin/bash
 source /neural-compressor/.azure-pipelines/scripts/change_color.sh
 
 set -e
