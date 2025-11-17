@@ -22,14 +22,15 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v3
+
       - name: Build Online Document
         run: |
           git config --local --get remote.origin.url
           cd docs/build_docs
           bash build.sh latest
 
-        if: ${{ github.event_name == 'push' }}
       - name: Push to github
+        if: ${{ github.event_name == 'push' }}
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
