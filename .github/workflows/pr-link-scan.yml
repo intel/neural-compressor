@@ -40,11 +40,11 @@ jobs:
           fail="FALSE"
           merged_commit=$(git log -1 --format='%H')
           changed_files="$(git diff --name-status --diff-filter=ARM $BASE_SHA ${merged_commit} | awk '/\.md$/ {print $NF}')"
-          
+
           echo "no_proxy=$no_proxy"
           echo "http_proxy=$http_proxy"
           echo "https_proxy=$https_proxy"
-          
+
           if  [ -n "$changed_files" ]; then
             for changed_file in $changed_files; do
               # echo $changed_file
@@ -118,11 +118,11 @@ jobs:
           merged_commit=$(git log -1 --format='%H')
           changed_files="$(git diff --name-status --diff-filter=ARM $BASE_SHA ${merged_commit} | awk '/\.md$/ {print $NF}')"
           png_lines=$(grep -Eo '\]\([^)]+\)' --include='*.md' -r .|grep -Ev 'http' | grep -Ev 'shape=' | grep -Ev 'mailto:inc.maintainers@intel.com')
-          
+
           echo "no_proxy=$no_proxy"
           echo "http_proxy=$http_proxy"
           echo "https_proxy=$https_proxy"
-          
+
           if [ -n "$png_lines" ]; then
             for png_line in $png_lines; do
               # echo "No.1----->png_line is $png_line"

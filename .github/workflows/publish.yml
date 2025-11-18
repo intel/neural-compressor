@@ -9,6 +9,9 @@ on:
   push:
     branches:
       - master
+  pull_request:
+    branches:
+      - master
 
 jobs:
   build:
@@ -18,16 +21,18 @@ jobs:
       pull-requests: write
       contents: write
     steps:
-    - uses: actions/checkout@v3
-    - name: Build Online Document
-      run: |
-        git config --local --get remote.origin.url
-        cd docs/build_docs
-        bash build.sh latest
+      - uses: actions/checkout@v3
 
-    - name: Push to github
-      uses: peaceiris/actions-gh-pages@v3
-      with:
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-        publish_dir: ./build_tmp/gh-pages
-        publish_branch: gh-pages
+      - name: Build Online Document
+        run: |
+          git config --local --get remote.origin.url
+          cd docs/build_docs
+          bash build.sh latest
+
+      - name: Push to github
+        if: ${{ github.event_name == 'push' }}
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./build_tmp/gh-pages
+          publish_branch: gh-pages
