@@ -84,8 +84,9 @@ stages:
             displayName: 'Use Python 3.12'
 
           - script: |
+              cd ${BUILD_SOURCESDIRECTORY}
               pip install -r requirements.txt
-              python setup.py install
+              python setup.py install pt
               cd ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/scripts
               bash ut/3x/collect_log_3x.sh 3x_pt
             displayName: "Collect UT Coverage"

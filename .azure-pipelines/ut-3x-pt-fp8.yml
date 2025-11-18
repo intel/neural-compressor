@@ -86,7 +86,8 @@ stages:
             displayName: 'Use Python 3.12'
 
           - script: |
-              python setup.py install
+              cd ${BUILD_SOURCESDIRECTORY}
+              python setup.py install pt
               cd ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/scripts
               bash ut/3x/collect_log_3x.sh 3x_pt_fp8
             displayName: "Collect UT Coverage"

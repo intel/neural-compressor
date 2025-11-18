@@ -28,7 +28,7 @@ git checkout master
 rm -rf build dist *egg-info
 binary_index="${1%_fp8}"
 echo y | pip uninstall neural_compressor_${binary_index}
-cd ${BUILD_SOURCESDIRECTORY}/.azure-pipelines-pr/scripts && bash install_nc.sh ${1}
+cd ${BUILD_SOURCESDIRECTORY} && python setup.py install pt
 
 coverage erase
 cd ${BUILD_SOURCESDIRECTORY}/log_dir
