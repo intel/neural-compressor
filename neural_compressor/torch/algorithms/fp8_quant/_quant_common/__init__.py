@@ -11,3 +11,5 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import *
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.patched_helper_modules import *
