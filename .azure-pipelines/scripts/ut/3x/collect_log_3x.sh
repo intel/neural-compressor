@@ -1,18 +1,18 @@
 #!/bin/bash
-source /neural-compressor/.azure-pipelines/scripts/change_color.sh
+source ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/scripts/change_color.sh
 
 set -e
 pip install coverage
-export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.${1}
-coverage_log="/neural-compressor/log_dir/coverage_log"
-coverage_log_base="/neural-compressor/log_dir/coverage_log_base"
-coverage_compare="/neural-compressor/log_dir/coverage_compare.html"
-cd /neural-compressor/log_dir
+export COVERAGE_RCFILE=${BUILD_SOURCESDIRECTORY}/.azure-pipelines/scripts/ut/3x/coverage.${1}
+coverage_log="${BUILD_SOURCESDIRECTORY}/log_dir/coverage_log"
+coverage_log_base="${BUILD_SOURCESDIRECTORY}/log_dir/coverage_log_base"
+coverage_compare="${BUILD_SOURCESDIRECTORY}/log_dir/coverage_compare.html"
+cd ${BUILD_SOURCESDIRECTORY}/log_dir
 
 $BOLD_YELLOW && echo "collect coverage for PR branch" && $RESET
-cp ut_3x_coverage/.coverage /neural-compressor/
+cp ut_3x_coverage/.coverage ${BUILD_SOURCESDIRECTORY}/
 mkdir -p coverage_PR
-cd /neural-compressor
+cd ${BUILD_SOURCESDIRECTORY}
 coverage report -m --rcfile=${COVERAGE_RCFILE} | tee ${coverage_log}
 coverage html -d log_dir/coverage_PR/htmlcov --rcfile=${COVERAGE_RCFILE}
 coverage xml -o log_dir/coverage_PR/coverage.xml --rcfile=${COVERAGE_RCFILE}
@@ -20,23 +20,23 @@ ls -l log_dir/coverage_PR/htmlcov
 
 
 $BOLD_YELLOW && echo "collect coverage for baseline" && $RESET
-cd /neural-compressor
-cp -r /neural-compressor/.azure-pipelines .azure-pipelines-pr
-git config --global --add safe.directory /neural-compressor
+cd ${BUILD_SOURCESDIRECTORY}
+cp -r ${BUILD_SOURCESDIRECTORY}/.azure-pipelines .azure-pipelines-pr
+git config --global --add safe.directory ${BUILD_SOURCESDIRECTORY}
 git fetch
 git checkout master
 rm -rf build dist *egg-info
 binary_index="${1%_fp8}"
 echo y | pip uninstall neural_compressor_${binary_index}
-cd /neural-compressor/.azure-pipelines-pr/scripts && bash install_nc.sh ${1}
+cd ${BUILD_SOURCESDIRECTORY}/.azure-pipelines-pr/scripts && bash install_nc.sh ${1}
 
 coverage erase
-cd /neural-compressor/log_dir
+cd ${BUILD_SOURCESDIRECTORY}/log_dir
 mkdir -p coverage_base
-rm -rf /neural-compressor/.coverage || true
-cp ut_3x_baseline_coverage/.coverage /neural-compressor
+rm -rf ${BUILD_SOURCESDIRECTORY}/.coverage || true
+cp ut_3x_baseline_coverage/.coverage ${BUILD_SOURCESDIRECTORY}
 
-cd /neural-compressor
+cd ${BUILD_SOURCESDIRECTORY}
 coverage report -m --rcfile=${COVERAGE_RCFILE} | tee ${coverage_log_base}
 coverage html -d log_dir/coverage_base/htmlcov --rcfile=${COVERAGE_RCFILE}
 coverage xml -o log_dir/coverage_base/coverage.xml --rcfile=${COVERAGE_RCFILE}
@@ -126,10 +126,10 @@ if [[ ${#fail_items[@]} -ne 0 ]]; then
         $BOLD_RED && echo "Unit Test failed with ${item} coverage decrease ${decrease}%" && $RESET
     done
     $BOLD_RED && echo "compare coverage to give detail info" && $RESET
-    bash /neural-compressor/.azure-pipelines-pr/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
+    bash ${BUILD_SOURCESDIRECTORY}/.azure-pipelines-pr/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "FAILED" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
     exit 1
 else
     $BOLD_GREEN && echo "Unit Test success with coverage lines: ${coverage_PR_lines_rate}%, branches: ${coverage_PR_branches_rate}%" && $RESET
     $BOLD_GREEN && echo "compare coverage to give detail info" && $RESET
-    bash /neural-compressor/.azure-pipelines-pr/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "SUCCESS" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
+    bash ${BUILD_SOURCESDIRECTORY}/.azure-pipelines-pr/scripts/ut/compare_coverage.sh ${coverage_compare} ${coverage_log} ${coverage_log_base} "SUCCESS" ${coverage_PR_lines_rate} ${coverage_base_lines_rate} ${coverage_PR_branches_rate} ${coverage_base_branches_rate}
 fi
