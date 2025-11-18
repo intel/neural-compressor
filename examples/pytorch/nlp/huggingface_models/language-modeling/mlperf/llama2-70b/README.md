@@ -2,7 +2,7 @@
 
 ## Getting started
 
-Please first download the data, model and preprocess the data folloing the steps below _within the mlperf container_. Note that if you have already downloaded the model and data prior to v4.1, you don't need to redo them. But you _need to re-run_ the preprocess_data step for the updated calibration data.
+Please first download the data, model and preprocess the data following the steps below _within the mlperf container_. Note that if you have already downloaded the model and data prior to v4.1, you don't need to redo them. But you _need to re-run_ the preprocess_data step for the updated calibration data.
 
 ### Download Model
 
