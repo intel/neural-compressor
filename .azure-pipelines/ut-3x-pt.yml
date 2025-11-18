@@ -78,9 +78,15 @@ stages:
               patterns: '*_coverage/.coverage'
               path: $(DOWNLOAD_PATH)
 
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.12'
+            displayName: 'Use Python 3.12'
+
           - script: |
+              pip install -r requirements.txt
+              python setup.py install
               cd ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/scripts
-              bash install_nc.sh 3x_pt
               bash ut/3x/collect_log_3x.sh 3x_pt
             displayName: "Collect UT Coverage"
 
