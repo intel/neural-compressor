@@ -1,0 +1,70 @@
+# Copyright (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+name: Fix Code Style on PR
+
+on:
+  pull_request:
+    branches: [master_next, master]
+    types: [opened, reopened, ready_for_review, synchronize]
+
+# If there is a new commit, the previous jobs will be canceled
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  scan-and-fix:
+    if: ${{ contains(github.repository, 'intel-innersource') }}
+    runs-on: ${{ contains(github.repository, 'intel-innersource') && 'self-hosted' || 'ubuntu-latest' }}
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - name: Clean Up Working Directory
+        run: sudo rm -rf ${{github.workspace}}/*
+
+      - name: Checkout Repo
+        uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2
+        with:
+          fetch-depth: 0
+
+      - name: Fix Code Style
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          # Create a virtual environment
+          python -m venv venv
+          source venv/bin/activate
+      
+          # Upgrade pip and install pre-commit
+          pip install --upgrade pip
+          pip install -U pre-commit
+      
+          # Run pre-commit hooks to fix auto-fixable issues
+          pre-commit install
+          pre-commit run --all-files --show-diff-on-failure > pre-commit.log 2>&1
+          exit_code=$?
+          cat pre-commit.log
+      
+          # Check if there are changes after pre-commit run
+          if [ -n "$(git status --porcelain)" ]; then
+            # Commit and push the changes if there are any
+            git config user.name "GitHub Action"
+            git config user.email "action@github.com"
+            git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
+            git add -A
+            git commit -m -s "chore: apply pre-commit auto-fixes"
+            git push origin HEAD:${{ github.head_ref }}
+          else
+            # If no changes are made, print a message
+            echo "No auto-fixable changes were made by pre-commit."
+          fi
+          
+          # Exit with the original exit code from pre-commit
+          if [ $exit_code -ne 0 ]; then
+            echo "Pre-commit found issues. See pre-commit.log for details."
+            exit $exit_code
+          fi
+          
+          

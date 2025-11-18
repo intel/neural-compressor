@@ -23,7 +23,7 @@ from abc import ABCMeta
 
 class QuantizedXPUFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
     """
-    Placeholder for base class for XPU (Falcon/Jaguar Shores) quantized func wrapper.
+    Placeholder for base class for XPU quantized func wrapper.
     """
     def __init__(self, scale_format, is_dynamic=False):
         self._quantized_func_ = self.get_default_quantized_func()
