@@ -85,6 +85,7 @@ stages:
 
           - script: |
               cd ${BUILD_SOURCESDIRECTORY}
+              pip install -U pip setuptools
               pip install -r requirements.txt
               python setup.py install pt
               cd ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/scripts
