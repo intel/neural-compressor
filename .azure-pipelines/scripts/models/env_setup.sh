@@ -63,8 +63,8 @@ else
 fi
 
 $BOLD_YELLOW && echo "====== install requirements ======" && $RESET
-cd /neural-compressor/.azure-pipelines/scripts
-bash install_nc.sh ${inc_new_api}
+cd /neural-compressor
+bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh ${inc_new_api}
 
 cd ${WORK_SOURCE_DIR}/${model_src_dir}
 
