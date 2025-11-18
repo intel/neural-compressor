@@ -2,9 +2,8 @@
 from auto_round import AutoRound
 
 # Load a model (supports FP8/BF16/FP16/FP32)
-model_name_or_path = "meta-llama/Llama-2-70b-chat-hf"
-#output_dir = "Llama-2-70b-chat-hf-mxfp4-fp8kv"
-output_dir = "Llama-2-70b-chat-hf-mxfp4"
+model_name_or_path = "build/models/Llama2/Llama-2-70b-chat-hf/"
+output_dir = "build/models/Llama2/Llama-2-70b-chat-hf-quantized"
 
 #ar = AutoRound(model_name_or_path, scheme="MXFP4", iters=200, static_kv_dtype="fp8",)
 ar = AutoRound(model_name_or_path, scheme="MXFP4", iters=200)

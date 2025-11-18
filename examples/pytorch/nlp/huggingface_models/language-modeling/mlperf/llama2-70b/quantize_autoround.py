@@ -95,11 +95,10 @@ def main():
     orig_path = args.model_name
     packing_format="llm_compressor"
     if orig_path.endswith("/"):
-        output_dir=orig_path[:-1]+f"-{packing_format}-w{args.bits}g{args.group_size}-iters{args.iters}"
+        output_dir=orig_path[:-1]+f"-quantized"
     else:
-        output_dir=orig_path+f"-{packing_format}-w{args.bits}g{args.group_size}-iters{args.iters}"
-    if args.fp8_kv:
-        output_dir += "-fp8kv"
+        output_dir=orig_path+f"-quantized"
+
     autoround.quantize_and_save(output_dir, format=f'{packing_format}')
 
 

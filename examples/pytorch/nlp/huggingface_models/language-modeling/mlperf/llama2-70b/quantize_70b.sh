@@ -1,5 +1,5 @@
-CHECKPOINT_PATH=meta-llama/Llama-2-70b-chat-hf
-CALIBRATION_DATA_PATH=./open_orca/open_orca_gpt4_tokenized_llama.calibration_1000.pkl
+CHECKPOINT_PATH=build/models/Llama2/Llama-2-70b-chat-hf/
+CALIBRATION_DATA_PATH=build/preprocessed_data/llama2-70b/open_orca_gpt4_tokenized_llama.calibration_1000.pkl
 NUM_GROUPS=-1
 NUM_SAMPLES=1000
 ITERS=200
