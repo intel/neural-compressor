@@ -16,7 +16,6 @@ Submodules
    :maxdepth: 1
 
    /autoapi/neural_compressor/algorithm/index
-   /autoapi/neural_compressor/benchmark/index
    /autoapi/neural_compressor/common/index
    /autoapi/neural_compressor/config/index
    /autoapi/neural_compressor/contrib/index
