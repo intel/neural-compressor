@@ -25,9 +25,6 @@ Please move the downloaded pickle into expected path and follow steps to run the
 gzip -dk open_orca_gpt4_tokenized_llama.sampled_24576.pkl.gz
 gzip -dk open_orca_gpt4_tokenized_llama.calibration_1000.pkl.gz
 
-# make sure you are in mlperf's container
-make prebuild
-
 # move into right directory
 mv open_orca_gpt4_tokenized_llama.*.pkl build/data/llama2-70b/
 
