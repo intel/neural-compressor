@@ -708,7 +708,7 @@ class SUT():
         # Create worker threads
         for j in range(self.num_workers):
 
-            # Build kwargs for inidividual workers
+            # Build kwargs for individual workers
             private_worker_kwargs = {key_i: self.individual_worker_kwargs[key_i][j] for key_i in self.individual_worker_kwargs}
             private_worker_kwargs = private_worker_kwargs | self.shared_worker_kwargs
 
