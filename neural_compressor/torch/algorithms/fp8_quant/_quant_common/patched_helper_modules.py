@@ -74,11 +74,14 @@ class OoTPatchedVllmMixtureOfExpertsOpFP8(INCPatchedVllmMixtureOfExpertsOpFP8):
 
         return final_hidden_states.view(-1, x.shape[1])
 
+    def _forward_quant(self, *args, **kwargs):
+        return super().forward_quant(*args, **kwargs)
+
     def forward_quant(
         self, hidden_states, expert_routing_table, router_weights, permuted_weights=True, activation="silu"
     ):
         enable_moe_chunk = hasattr(self.orig_mod, "enable_moe_chunk") and self.orig_mod.enable_moe_chunk
-        if enable_moe_chunk:
+        if not enable_moe_chunk:
             return self._forward_quant(
                 hidden_states, expert_routing_table, router_weights, permuted_weights, activation
             )
