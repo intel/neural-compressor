@@ -85,6 +85,7 @@ def dispatch_model_on_devices(model, device_map=None):
 
 
 def get_accuracy(model_name_or_path, limit=None):
+    os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
     all_accuracy = {}
     test_gsm8k = False
     test_normal = False

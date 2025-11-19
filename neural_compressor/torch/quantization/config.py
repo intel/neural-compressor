@@ -926,25 +926,6 @@ class AutoRoundConfig(TorchBaseConfig):
     """
 
     supported_configs: List[OperatorConfig] = []
-    params_list = [
-        "dtype",
-        "bits",
-        "group_size",
-        "use_sym",
-        # autoround params
-        "enable_full_range",
-        "batch_size",
-        "enable_minmax_tuning",
-        "lr",
-        "minmax_lr",
-        "iters",
-        "seqlen",
-        "nsamples",
-        "nblocks",
-        "gradient_accumulate_steps",
-        "not_use_best_mse",
-        "dynamic_max_gap",
-    ]
     name = AUTOROUND
 
     def __init__(
@@ -1000,7 +981,7 @@ class AutoRoundConfig(TorchBaseConfig):
         # v0.8
         enable_adam: bool = False,
         # v0.9: auto scheme parameters
-        target_bits: int = None,
+        target_bits: float = None,
         options: Union[str, list[Union[str]], tuple[Union[str], ...]] = ("MXFP4", "MXFP8"),
         shared_layers: Optional[Iterable[Iterable[str]]] = None,
         ignore_scale_zp_bits: bool = False,
@@ -1061,7 +1042,7 @@ class AutoRoundConfig(TorchBaseConfig):
             device_map: The device to be used for tuning.
             scheme (str| dict | QuantizationScheme ): A preset scheme that defines the quantization configurations.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
-            target_bits (int): The target bit width for quantization (default is None).
+            target_bits (float): The target bit width for quantization (default is None).
                 options (Union[str, list[Union[str]], tuple[Union[str], ...]]): The options for mixed-precision quantization.
                 shared_layers (Optional[Iterable[Iterable[str]]]): The shared layers for mixed-precision quantization.
                 ignore_scale_zp_bits (bool): Whether to ignore scale and zero-point bits (default is False).

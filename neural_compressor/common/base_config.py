@@ -321,6 +321,7 @@ class BaseConfig(ABC):
                 result[GLOBAL] = global_config
         else:
             result = global_config
+        result.pop("params_list", None)  # Internal parameters
         return result
 
     def get_params_dict(self):
