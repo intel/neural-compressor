@@ -24,6 +24,7 @@
 
 # To keep it simply, only add the APIs we need.
 
+import gc
 import os
 from abc import ABC, abstractmethod
 from enum import Enum, auto
@@ -206,7 +207,7 @@ class CPU_Accelerator(Auto_Accelerator):
 
     def empty_cache(self):
         """Do nothing."""
-        pass
+        gc.collect()
 
     def synchronize(self):
         """Do nothing."""

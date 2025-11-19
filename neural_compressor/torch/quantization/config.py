@@ -1007,6 +1007,7 @@ class AutoRoundConfig(TorchBaseConfig):
         auto_scheme_method: str = "default",
         auto_scheme_device_map: str = None,
         auto_scheme_batch_size: int = None,
+        output_dir: str = "./temp_auto_round",
         # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
@@ -1067,6 +1068,7 @@ class AutoRoundConfig(TorchBaseConfig):
                 auto_scheme_method (str): The method for automatic scheme selection (default is "default").
                 auto_scheme_device_map (str): The device map for automatic scheme selection (default is None).
                 auto_scheme_batch_size (int): The batch size for automatic scheme selection (default is 8).
+            output_dir (str): The output directory for temporary files (default is "./temp_auto_round").
         """
         super().__init__(white_list=white_list)
         self.params_list = self.__class__._generate_params_list()
@@ -1124,6 +1126,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.auto_scheme_method = auto_scheme_method
         self.auto_scheme_device_map = auto_scheme_device_map
         self.auto_scheme_batch_size = auto_scheme_batch_size
+        self.output_dir = output_dir
         # add kwargs
         for k, v in kwargs.items():
             setattr(self, k, v)
