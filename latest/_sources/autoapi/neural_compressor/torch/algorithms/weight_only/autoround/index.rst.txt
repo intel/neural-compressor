@@ -24,12 +24,13 @@ Functions
 
    neural_compressor.torch.algorithms.weight_only.autoround.get_dataloader
    neural_compressor.torch.algorithms.weight_only.autoround.get_mllm_dataloader
+   neural_compressor.torch.algorithms.weight_only.autoround.dump_model_op_stats
 
 
 Module Contents
 ---------------
 
-.. py:class:: AutoRoundQuantizer(bits: int = None, group_size: int = None, sym: bool = None, data_type: str = None, act_bits: int = None, act_group_size: int = None, act_sym: bool = None, act_data_type: str = None, act_dynamic: bool = None, super_bits: int = None, super_group_size: int = None, quant_config: dict = {}, layer_config: dict[str, Union[str, dict, auto_round.schemes.QuantizationScheme]] = None, enable_full_range: bool = False, batch_size: int = 8, amp: bool = True, device_map: str = None, quant_lm_head: bool = False, lr_scheduler=None, dataset: Union[str, list, tuple, torch.utils.data.DataLoader] = 'NeelNanda/pile-10k', enable_quanted_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = False, iters: int = 200, seqlen: int = 2048, nsamples: int = 128, sampler: str = 'rand', seed: int = 42, nblocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, scale_dtype: str = 'fp16', to_quant_block_names: list = None, low_cpu_mem_usage: bool = False, export_format: str = 'itrex', enable_norm_bias_tuning: bool = False, enable_torch_compile: bool = None, quant_nontext_module: bool = False, extra_data_dir: str = None, image_processor=None, processor=None, template: Union[str, auto_round.compressors.mllm.template.Template] = None, truncation: bool = False, scheme: Union[str, dict, auto_round.schemes.QuantizationScheme] = 'W4A16', guidance_scale: float = 7.5, num_inference_steps: int = 50, generator_seed: int = None, **kwargs)
+.. py:class:: AutoRoundQuantizer(bits: int = None, group_size: int = None, sym: bool = None, data_type: str = None, act_bits: int = None, act_group_size: int = None, act_sym: bool = None, act_data_type: str = None, act_dynamic: bool = None, super_bits: int = None, super_group_size: int = None, quant_config: dict = {}, layer_config: dict[str, Union[str, dict, auto_round.schemes.QuantizationScheme]] = None, enable_full_range: bool = False, batch_size: int = 8, amp: bool = True, device_map: str = None, quant_lm_head: bool = False, lr_scheduler=None, dataset: Union[str, list, tuple, torch.utils.data.DataLoader] = 'NeelNanda/pile-10k', enable_quanted_input: bool = True, enable_minmax_tuning: bool = True, lr: float = None, minmax_lr: float = None, low_gpu_mem_usage: bool = False, iters: int = 200, seqlen: int = 2048, nsamples: int = 128, sampler: str = 'rand', seed: int = 42, nblocks: int = 1, gradient_accumulate_steps: int = 1, not_use_best_mse: bool = False, dynamic_max_gap: int = -1, scale_dtype: str = 'fp16', to_quant_block_names: list = None, low_cpu_mem_usage: bool = False, export_format: str = 'itrex', enable_norm_bias_tuning: bool = False, enable_torch_compile: bool = None, quant_nontext_module: bool = False, extra_data_dir: str = None, image_processor=None, processor=None, template: Union[str, auto_round.compressors.mllm.template.Template] = None, truncation: bool = False, scheme: Union[str, dict, auto_round.schemes.QuantizationScheme] = 'W4A16', guidance_scale: float = 7.5, num_inference_steps: int = 50, generator_seed: int = None, target_bits: int = None, options: Union[str, list[Union[str]], tuple[Union[str], Ellipsis]] = ('MXFP4', 'MXFP8'), shared_layers: Optional[Iterable[Iterable[str]]] = None, ignore_scale_zp_bits: bool = False, auto_scheme_method: str = 'default', auto_scheme_batch_size: int = None, auto_scheme_device_map: str = None, **kwargs)
 
 
 
@@ -86,5 +87,10 @@ Module Contents
 
    :returns: The DataLoader for the calibrated datasets.
    :rtype: DataLoader
+
+
+.. py:function:: dump_model_op_stats(layer_config)
+
+   Dump quantizable ops stats of model to user.
 
 
