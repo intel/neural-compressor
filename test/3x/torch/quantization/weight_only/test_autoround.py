@@ -370,6 +370,7 @@ class TestAutoRoundCPU:
 
 
     @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
+    @pytest.mark.skipif(Version(auto_round.__version__) < Version("0.9.0"), reason="target bits is not supported.")
     def test_target_bits(self):
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
@@ -401,6 +402,8 @@ class TestAutoRoundCPU:
                 "model is not quantized correctly, please check."
 
 
+    @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
+    @pytest.mark.skipif(Version(auto_round.__version__) < Version("0.9.0"), reason="target bits is not supported.")
     def test_target_bits_autotune(self):
         from neural_compressor.torch.quantization import TuningConfig, autotune
         baseline = 1
