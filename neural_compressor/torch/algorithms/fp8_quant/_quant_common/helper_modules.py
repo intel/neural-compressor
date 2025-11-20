@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+import os
 import torch
 import torch.nn as nn
 import types
@@ -1330,6 +1331,40 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
             seq_padding_type,
             )
         return results
+    
+    def fp8_fsdpa_fwd(self,
+        q,
+        k,
+        v,
+        attn_mask,
+        dropout_p,
+        scale,
+        softmax_mode,
+    ):
+        results = torch.ops.hpu.fp8_sdpa_recomp_fwd(
+            q,
+            k,
+            v,
+            attn_mask,
+            dropout_p,
+            scale,
+            False,  # is_causal
+            True, # requires_backward
+            softmax_mode,   # softmax_mode
+            self.scale_q,   # d_scale_q
+            self.scale_k,   # d_scale_k
+            self.scale_v,   # d_scale_v
+            self.scale_amax,   # q_scale_s
+            self.scale_output,   # q_scale_o
+            self.descale_amax,   # d_scale_s
+            False,  # is_amax_s
+            False,  # is_amax_o
+            None,   # valid_seq_len
+            "right",    # seq_padding_type
+            (-1, -1),   # window_size
+            None,   # sink
+        )
+        return results
 
     def forward_quant(
         self,
@@ -1345,32 +1380,67 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
         valid_seq_len=None,
         seq_padding_type="None",
     ):
-        sm_mode = softmax_mode if softmax_mode == "fp32" else "None"
+        sm_mode = softmax_mode if softmax_mode == "fp32" else "none"
         qinput = self.quant_q(q).detach()
         kinput = self.quant_k(k).detach()
         vinput = self.quant_v(v).detach()
-        results = self.fp8_fused_sdpa(
-            qinput,
-            kinput,
-            vinput,
-            attn_mask=attn_mask,
-            dropout_p=dropout_p,
-            is_causal=is_causal,
-            scale=scale,
-            softmax_mode=sm_mode,
-            d_scale_q=self.scale_q,
-            d_scale_k=self.scale_k,
-            d_scale_v=self.scale_v,
-            q_scale_s=self.scale_amax,
-            q_scale_o=self.scale_output,
-            d_scale_s=self.descale_amax,
-            is_amax_s=False,
-            valid_seq_len=valid_seq_len,
-            seq_padding_type=seq_padding_type,
-        )
-        output = results[0]
-        d_out = self.dequant_output(output)
-        return d_out
+        q_len = q.shape[-2]
+        kv_len = kinput.size(-2)
+
+        # for prefill with prefix caching
+        if q_len != 1 and q_len != kv_len:
+            from habana_frameworks.torch.hpex.kernels.Fp8FusedSDPA import is_gqa, gqa_input_reshape_fwd, gqa_output_reshape
+            gqa = is_gqa(qinput, kinput)
+            if gqa:
+                qinput, kinput, vinput, attn_mask = gqa_input_reshape_fwd(qinput, kinput, vinput, attn_mask)
+            
+            prefix_k = kinput[..., :kv_len - q_len, :]
+            prefix_v = vinput[..., :kv_len - q_len, :]
+            prefix_mask = None
+            prefix_res = self.fp8_fsdpa_fwd(qinput, prefix_k, prefix_v, prefix_mask, dropout_p, scale, sm_mode)
+            prefix_out, prefix_m, prefix_linv = (gqa_output_reshape(x) for x in (prefix_res[:3])) if gqa else prefix_res[:3]
+
+            text_k = kinput[..., kv_len - q_len:, :]
+            text_v = vinput[..., kv_len - q_len:, :]
+            text_mask = attn_mask[..., kv_len - q_len:]
+            text_res = self.fp8_fsdpa_fwd(qinput, text_k, text_v, text_mask, dropout_p, scale, sm_mode)
+            text_out, text_m, text_linv = (gqa_output_reshape(x) for x in (text_res[:3])) if gqa else text_res[:3]
+            
+            prefix_linv = prefix_linv.to(torch.float32) * 128.0 if softmax_mode != "fp32" else prefix_linv.to(torch.float32)
+            text_linv = text_linv.to(torch.float32) * 128.0 if softmax_mode != "fp32" else text_linv.to(torch.float32)
+            prefix_out = self.dequant_output(prefix_out).to(torch.float32)
+            text_out = self.dequant_output(text_out).to(torch.float32)
+            new_m = torch.maximum(prefix_m, text_m)
+            l_rescaled = (1.0 / prefix_linv) * torch.exp(prefix_m - new_m)
+            block_l_rescaled = (1.0 / text_linv) * torch.exp(text_m - new_m)
+            new_linv = 1.0 / (l_rescaled + block_l_rescaled)
+            attn_weights = (l_rescaled * new_linv) * prefix_out + (
+                block_l_rescaled * new_linv) * text_out
+            return attn_weights.to(q.dtype)
+
+        else:
+            results = self.fp8_fused_sdpa(
+                qinput,
+                kinput,
+                vinput,
+                attn_mask=attn_mask,
+                dropout_p=dropout_p,
+                is_causal=is_causal,
+                scale=scale,
+                softmax_mode=sm_mode,
+                d_scale_q=self.scale_q,
+                d_scale_k=self.scale_k,
+                d_scale_v=self.scale_v,
+                q_scale_s=self.scale_amax,
+                q_scale_o=self.scale_output,
+                d_scale_s=self.descale_amax,
+                is_amax_s=False,
+                valid_seq_len=valid_seq_len,
+                seq_padding_type=seq_padding_type,
+            )
+            output = results[0]
+            d_out = self.dequant_output(output)
+            return d_out
 
     def forward_measure(
         self,
