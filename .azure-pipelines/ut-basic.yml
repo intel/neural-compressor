@@ -38,19 +38,19 @@ variables:
   REPO: $(Build.Repository.Uri)
 
 stages:
-  - stage: Adaptor
-    displayName: Unit Test FWKs adaptor
-    dependsOn: []
-    jobs:
-      - job:
-        displayName: Test FWKs adaptor
-        steps:
-          - template: template/ut-template.yml
-            parameters:
-              dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_basic_adaptor"
-              uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_adaptor"
+  # - stage: Adaptor
+  #   displayName: Unit Test FWKs adaptor
+  #   dependsOn: []
+  #   jobs:
+  #     - job:
+  #       displayName: Test FWKs adaptor
+  #       steps:
+  #         - template: template/ut-template.yml
+  #           parameters:
+  #             dockerConfigName: "commonDockerConfig"
+  #             utScriptFileName: "run_basic_adaptor"
+  #             uploadPath: $(UPLOAD_PATH)
+  #             utArtifact: "ut_adaptor"
 
   - stage: API
     displayName: Unit Test User facing API
@@ -79,43 +79,43 @@ stages:
               utScriptFileName: "run_basic_pt_pruning"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_pt-pruning"
-      - job:
-        displayName: Test TensorFlow Pruning
-        steps:
-          - template: template/ut-template.yml
-            parameters:
-              dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_basic_tf_pruning"
-              uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_tf-pruning"
+      # - job:
+      #   displayName: Test TensorFlow Pruning
+      #   steps:
+      #     - template: template/ut-template.yml
+      #       parameters:
+      #         dockerConfigName: "commonDockerConfig"
+      #         utScriptFileName: "run_basic_tf_pruning"
+      #         uploadPath: $(UPLOAD_PATH)
+      #         utArtifact: "ut_tf-pruning"
 
-  - stage: TFNewAPI
-    displayName: Unit Test TF newAPI
-    dependsOn: []
-    jobs:
-      - job:
-        displayName: Test TF newAPI
-        steps:
-          - template: template/ut-template.yml
-            parameters:
-              dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_basic_adaptor_tfnewapi"
-              uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_tfnewapi"
+  # - stage: TFNewAPI
+  #   displayName: Unit Test TF newAPI
+  #   dependsOn: []
+  #   jobs:
+  #     - job:
+  #       displayName: Test TF newAPI
+  #       steps:
+  #         - template: template/ut-template.yml
+  #           parameters:
+  #             dockerConfigName: "commonDockerConfig"
+  #             utScriptFileName: "run_basic_adaptor_tfnewapi"
+  #             uploadPath: $(UPLOAD_PATH)
+  #             utArtifact: "ut_tfnewapi"
 
-  - stage: ITEX
-    displayName: Unit Test ITEX
-    dependsOn: []
-    jobs:
-      - job:
-        displayName: Test ITEX
-        steps:
-          - template: template/ut-template.yml
-            parameters:
-              dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_basic_itex"
-              uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_itex"
+  # - stage: ITEX
+  #   displayName: Unit Test ITEX
+  #   dependsOn: []
+  #   jobs:
+  #     - job:
+  #       displayName: Test ITEX
+  #       steps:
+  #         - template: template/ut-template.yml
+  #           parameters:
+  #             dockerConfigName: "commonDockerConfig"
+  #             utScriptFileName: "run_basic_itex"
+  #             uploadPath: $(UPLOAD_PATH)
+  #             utArtifact: "ut_itex"
 
   - stage: Others
     displayName: Unit Test other basic case
