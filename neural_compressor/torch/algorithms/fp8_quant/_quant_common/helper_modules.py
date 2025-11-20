@@ -1297,6 +1297,10 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
             self.register_scale("descale_amax", mod_extra_config.scale.inputs[3].type(torch.float32), self.scale_format)
             self.register_scale("scale_output", 1 / mod_extra_config.scale.outputs[0].type(torch.float32), self.scale_format)
             self.register_scale("scale_amax", 1 / self.descale_amax, self.scale_format)
+        self.qkv_slice_thld = int(os.getenv("VLLM_FUSEDSPA_QKV_SLICE_SEQ_LEN_THLD", 8192))
+        if self.qkv_slice_thld > 0:
+            self.q_chunk_size = int(os.getenv("VLLM_FUSEDSDPA_Q_SLICE_CHUNK_SIZE", self.qkv_slice_thld))
+            self.kv_chunk_size = int(os.getenv("VLLM_FUSEDSDPA_KV_SLICE_CHUNK_SIZE", self.qkv_slice_thld))
 
     def forward_qdq(
         self,
@@ -1388,36 +1392,59 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
         kv_len = kinput.size(-2)
 
         # for prefill with prefix caching
-        if q_len != 1 and q_len != kv_len:
+        if q_len != 1 and q_len != kv_len \
+            and kv_len > self.qkv_slice_thld:
+            ctx_len = kv_len - q_len
             from habana_frameworks.torch.hpex.kernels.Fp8FusedSDPA import is_gqa, gqa_input_reshape_fwd, gqa_output_reshape
             gqa = is_gqa(qinput, kinput)
             if gqa:
                 qinput, kinput, vinput, attn_mask = gqa_input_reshape_fwd(qinput, kinput, vinput, attn_mask)
             
-            prefix_k = kinput[..., :kv_len - q_len, :]
-            prefix_v = vinput[..., :kv_len - q_len, :]
-            prefix_mask = None
-            prefix_res = self.fp8_fsdpa_fwd(qinput, prefix_k, prefix_v, prefix_mask, dropout_p, scale, sm_mode)
-            prefix_out, prefix_m, prefix_linv = (gqa_output_reshape(x) for x in (prefix_res[:3])) if gqa else prefix_res[:3]
+            num_q_chunks = (q_len + self.q_chunk_size - 1) // self.q_chunk_size
+            num_kv_chunks = (kv_len + self.kv_chunk_size - 1) // self.kv_chunk_size
+            chunk_outputs = []
+            for q_chunk_idx in range(num_q_chunks):
+                q_start = q_chunk_idx * self.q_chunk_size
+                q_end = min((q_chunk_idx + 1) * self.q_chunk_size, q_len)
+                q_chunk = qinput[..., q_start:q_end, :]
 
-            text_k = kinput[..., kv_len - q_len:, :]
-            text_v = vinput[..., kv_len - q_len:, :]
-            text_mask = attn_mask[..., kv_len - q_len:]
-            text_res = self.fp8_fsdpa_fwd(qinput, text_k, text_v, text_mask, dropout_p, scale, sm_mode)
-            text_out, text_m, text_linv = (gqa_output_reshape(x) for x in (text_res[:3])) if gqa else text_res[:3]
-            
-            prefix_linv = prefix_linv.to(torch.float32) * 128.0 if softmax_mode != "fp32" else prefix_linv.to(torch.float32)
-            text_linv = text_linv.to(torch.float32) * 128.0 if softmax_mode != "fp32" else text_linv.to(torch.float32)
-            prefix_out = self.dequant_output(prefix_out).to(torch.float32)
-            text_out = self.dequant_output(text_out).to(torch.float32)
-            new_m = torch.maximum(prefix_m, text_m)
-            l_rescaled = (1.0 / prefix_linv) * torch.exp(prefix_m - new_m)
-            block_l_rescaled = (1.0 / text_linv) * torch.exp(text_m - new_m)
-            new_linv = 1.0 / (l_rescaled + block_l_rescaled)
-            attn_weights = (l_rescaled * new_linv) * prefix_out + (
-                block_l_rescaled * new_linv) * text_out
-            return attn_weights.to(q.dtype)
+                last_out = None
+                last_m = None
+                last_linv = None
+                for kv_chunk_idx in range(num_kv_chunks):
+                    kv_start = kv_chunk_idx * self.kv_chunk_size
+                    kv_end = min((kv_chunk_idx + 1) * self.kv_chunk_size, kv_len)
+                    k_chunk = kinput[..., kv_start:kv_end, :]
+                    v_chunk = vinput[..., kv_start:kv_end, :]
+                    attn_mask_chunk = attn_mask[..., kv_start:kv_end] if attn_mask is not None else None
+                    attn_mask_chunk = None if kv_end < ctx_len else attn_mask_chunk
 
+                    # skip the upper triangular part for causal attention
+                    if kv_start > ctx_len + q_end:
+                        continue
+
+                    chunk_res = self.fp8_fsdpa_fwd(q_chunk, k_chunk, v_chunk, attn_mask_chunk, dropout_p, scale, sm_mode)
+                    chunk_out, chunk_m, chunk_linv = (gqa_output_reshape(x) for x in (chunk_res[:3])) if gqa else chunk_res[:3]
+                    
+                    chunk_m = chunk_m.to(torch.float32)
+                    chunk_linv = chunk_linv.to(torch.float32) * 128.0 if softmax_mode != "fp32" else chunk_linv.to(torch.float32)
+                    chunk_out = self.dequant_output(chunk_out).to(torch.float32)
+
+                    if kv_chunk_idx == 0:
+                        last_out = chunk_out
+                        last_m = chunk_m
+                        last_linv = chunk_linv
+                    else:
+                        new_m = torch.maximum(last_m, chunk_m)
+                        last_linv_rescaled = (1.0 / last_linv) * torch.exp(last_m - new_m)
+                        chunk_linv_rescaled = (1.0 / chunk_linv) * torch.exp(chunk_m - new_m)
+                        last_linv = 1.0 / (last_linv_rescaled + chunk_linv_rescaled)
+                        last_out = (last_linv_rescaled * last_linv) * last_out + (
+                            chunk_linv_rescaled * last_linv) * chunk_out
+                        last_m = new_m
+                chunk_outputs.append(last_out)
+            output = torch.cat(chunk_outputs, dim=-2)
+            return output.to(q.dtype)
         else:
             results = self.fp8_fused_sdpa(
                 qinput,
