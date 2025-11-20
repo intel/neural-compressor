@@ -37,8 +37,7 @@ In 2.X API, it's very important to create the `DataLoader` and `Metrics` for you
 <td colspan="2" align="center"><a href="distillation.md">Distillation</a></td>
 </tr>
 <tr>
-<td colspan="2" align="center"><a href="orchestration.md">Orchestration</a></td>
-<td colspan="2" align="center"><a href="benchmark.md">Benchmarking</a></td>
+<td colspan="3" align="center"><a href="orchestration.md">Orchestration</a></td>
 <td colspan="3" align="center"><a href="distributed.md">Distributed Compression</a></td>
 <td colspan="3" align="center"><a href="export.md">Model Export</a></td>
 </tr>

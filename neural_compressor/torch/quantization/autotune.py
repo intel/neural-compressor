@@ -23,7 +23,7 @@ from neural_compressor.common.base_config import BaseConfig, get_all_config_set_
 from neural_compressor.common.base_tuning import EvaluationFuncWrapper, TuningConfig, init_tuning
 from neural_compressor.common.utils import dump_elapsed_time
 from neural_compressor.torch.quantization import quantize
-from neural_compressor.torch.quantization.config import FRAMEWORK_NAME, RTNConfig
+from neural_compressor.torch.quantization.config import FRAMEWORK_NAME, AutoRoundConfig, RTNConfig
 from neural_compressor.torch.utils import constants, logger
 
 __all__ = [
@@ -63,6 +63,18 @@ def _deepcopy_warp(model):
     return new_model
 
 
+def _preprocess_model_quant_config(model, quant_config):
+    """Preprocess model and quant config before quantization."""
+    for config in quant_config.config_set:
+        # handle tokenizer attribute in AutoRoundConfig
+        if isinstance(config, AutoRoundConfig):
+            _tokenizer_backup = getattr(config, "tokenizer", None)
+            if _tokenizer_backup is not None:
+                setattr(model, "tokenizer", _tokenizer_backup)
+                delattr(config, "tokenizer")
+    return model, quant_config
+
+
 @dump_elapsed_time("Pass auto-tune")
 def autotune(
     model: torch.nn.Module,
@@ -88,6 +100,7 @@ def autotune(
         The quantized model.
     """
     best_quant_model = None
+    model, tune_config = _preprocess_model_quant_config(model, tune_config)
     eval_func_wrapper = EvaluationFuncWrapper(eval_fn, eval_args)
     config_loader, tuning_logger, tuning_monitor = init_tuning(tuning_config=tune_config)
     baseline: float = eval_func_wrapper.evaluate(_deepcopy_warp(model))

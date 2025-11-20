@@ -49,16 +49,7 @@ done
 
 SCRIPTS_PATH="/neural-compressor/.azure-pipelines/scripts/models"
 log_dir="/neural-compressor/.azure-pipelines/scripts/models"
-if [[ "${inc_new_api}" == "3x"* ]]; then
-    pip install cmake==3.31.6
-    WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
-    git clone https://github.com/intel/intel-extension-for-transformers.git /itrex
-    cd /itrex
-    pip install -r requirements.txt
-    pip install -v .
-else
-    WORK_SOURCE_DIR="/neural-compressor/examples/deprecated/${framework}"
-fi
+WORK_SOURCE_DIR="/neural-compressor/examples/${framework}"
 
 $BOLD_YELLOW && echo "processing ${framework}-${fwk_ver}-${model}" && $RESET
 
@@ -72,34 +63,16 @@ else
 fi
 
 $BOLD_YELLOW && echo "====== install requirements ======" && $RESET
-/bin/bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh ${inc_new_api}
+cd /neural-compressor
+bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh ${inc_new_api}
 
-mkdir -p ${WORK_SOURCE_DIR}
-cd ${WORK_SOURCE_DIR}
-if [[ "${inc_new_api}" == "false" ]]; then
-    echo "copy old api examples to workspace..."
-    git clone -b old_api_examples https://github.com/intel/neural-compressor.git old-lpot-models
-    cd old-lpot-models
-    git branch
-    cd -
-    rm -rf ${model_src_dir}
-    mkdir -p ${model_src_dir}
-    cp -r old-lpot-models/examples/${framework}/${model_src_dir} ${WORK_SOURCE_DIR}/${model_src_dir}/../
-fi
-
-cd ${model_src_dir}
+cd ${WORK_SOURCE_DIR}/${model_src_dir}
 
 if [[ "${fwk_ver}" != "latest" ]]; then
     pip install ruamel.yaml==0.17.40
     pip install psutil
     pip install protobuf==4.23.4
-    if [[ "${framework}" == "tensorflow" ]]; then
-        if [[ "${fwk_ver}" == *"-official" ]]; then
-            pip install tensorflow==${fwk_ver%-official}
-        else
-            pip install intel-tensorflow==${fwk_ver}
-        fi
-    elif [[ "${framework}" == "pytorch" ]]; then
+    if [[ "${framework}" == "pytorch" ]]; then
         pip install torch==${fwk_ver} --index-url https://download.pytorch.org/whl/cpu
         pip install torchvision==${torch_vision_ver} --index-url https://download.pytorch.org/whl/cpu
     elif [[ "${framework}" == "onnxrt" ]]; then
@@ -113,10 +86,6 @@ if [ -f "requirements.txt" ]; then
     if [ "${framework}" == "onnxrt" ]; then
         sed -i '/^onnx>=/d;/^onnx==/d;/^onnxruntime>=/d;/^onnxruntime==/d' requirements.txt
     fi
-    if [ "${framework}" == "tensorflow" ]; then
-        sed -i '/tensorflow==/d;/tensorflow$/d' requirements.txt
-        sed -i '/^intel-tensorflow/d' requirements.txt
-    fi
     if [ "${framework}" == "pytorch" ]; then
         sed -i '/torch==/d;/torch$/d;/torchvision==/d;/torchvision$/d' requirements.txt
     fi
@@ -129,20 +98,4 @@ if [ -f "requirements.txt" ]; then
     pip list
 else
     $BOLD_RED && echo "Not found requirements.txt file." && $RESET
-fi
-
-if [[ "${inc_new_api}" == "false" ]]; then
-    $BOLD_YELLOW && echo "======== update yaml config ========" && $RESET
-    $BOLD_YELLOW && echo -e "\nPrint origin yaml..." && $RESET
-    cat ${yaml}
-    python ${SCRIPTS_PATH}/update_yaml_config.py \
-        --yaml=${yaml} \
-        --framework=${framework} \
-        --dataset_location=${dataset_location} \
-        --batch_size=${batch_size} \
-        --strategy=${strategy} \
-        --new_benchmark=${new_benchmark} \
-        --multi_instance='true'
-    $BOLD_YELLOW && echo -e "\nPrint updated yaml... " && $RESET
-    cat ${yaml}
 fi
