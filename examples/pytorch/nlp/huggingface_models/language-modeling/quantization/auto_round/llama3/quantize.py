@@ -57,34 +57,29 @@ def pre_dequantize(model):
 
 def dispatch_model_on_devices(model, device_map=None):
     from accelerate.big_modeling import dispatch_model, infer_auto_device_map
-    from accelerate.utils import get_max_memory, compute_module_sizes
+    from accelerate.utils import get_max_memory
 
-    model_size = compute_module_sizes(model)[""]
     no_split_modules = getattr(model, "_no_split_modules", [])
-    if device_map is not None:
-        device_list = device_map.split(",") if device_map is not None else None
-    else:
-        device_list = list(get_max_memory().keys())
-    per_device_mem = model_size / len(device_list) if device_list is not None else None
+    device_list = [int(x) for x in device_map.split(",")] if device_map is not None else None
+    all_memory = get_max_memory()
+    available_memory = {}
+    for dev in all_memory:
+        if device_list is not None and dev not in device_list and dev != "cpu":
+            continue
+        # reserve 10% for activations
+        available_memory[dev] = f"{int(all_memory[dev] * 0.9 / (1024**3))}GiB"
 
-    # set max_memory for each device based on model size
-    max_memory = {}
-    for dev in device_list:
-        if dev == "cpu":
-            max_memory["cpu"] = f"{int(per_device_mem / (1024**3)) + 2}GiB"
-        else:
-            max_memory[dev] = f"{int(per_device_mem / (1024**3))}GiB"
-    
-    device_map = infer_auto_device_map(
+    auto_device_map = infer_auto_device_map(
         model,
-        max_memory=max_memory,
+        max_memory=available_memory,
         no_split_module_classes=no_split_modules
     )
-    model = dispatch_model(model, device_map)
+    model = dispatch_model(model, auto_device_map)
     return model
 
 
-def get_accuracy(model_name_or_path, limit=None):
+@torch.no_grad()
+def get_accuracy(model_name_or_path, tokenizer=None, limit=None):
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
     all_accuracy = {}
     test_gsm8k = False
@@ -147,7 +142,7 @@ if __name__ == "__main__":
     )
     parser.add_argument("--dtype", type=str, default="MXFP4", choices=["MXFP4", "MXFP8", "NVFP4", "NVFP4+", "uNVFP4"], help="data type")
     parser.add_argument("--quantize", action="store_true", help="whether to quantize model")
-    parser.add_argument("--device_map", type=str, default=None, help="device map for model")
+    parser.add_argument("--device_map", type=str, default=0, help="device map for model")
     parser.add_argument(
         "--target_bits",
         type=float,
@@ -188,9 +183,9 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     print("Target data type:", args.dtype)
+    model, tokenizer = initialize_model_and_tokenizer(args.model_name_or_path)
 
     if args.quantize:
-        model, tokenizer = initialize_model_and_tokenizer(args.model_name_or_path)
         if args.dtype in ["uNVFP4", "NVFP4+"]:
             from auto_round.schemes import QuantizationScheme
 
@@ -241,14 +236,14 @@ if __name__ == "__main__":
         if isinstance(args.target_bits, list) and len(args.target_bits) > 1:
             def eval_fn(model):
                 model = dispatch_model_on_devices(model, args.device_map)
-                accu = get_accuracy(model, args.tune_limit)
+                accu = get_accuracy(model, tokenizer, args.tune_limit)
                 return accu
-            q_model = autotune(model, TuningConfig(config_set=[config]), eval_fn=eval_fn)
+            model = autotune(model, TuningConfig(config_set=[config]), eval_fn=eval_fn)
         else:
             model = prepare(model, config)
-            q_model = convert(model)
-        print(q_model)
+            model = convert(model)
         print(f"Quantized model in {args.export_format} format is saved to {args.export_path}")
 
     if args.accuracy:
-        get_accuracy(args.export_path)
+        model = dispatch_model_on_devices(model, args.device_map)
+        get_accuracy(model, tokenizer)

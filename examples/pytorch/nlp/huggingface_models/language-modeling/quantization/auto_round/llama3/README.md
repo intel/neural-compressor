@@ -18,16 +18,29 @@ pip install -r requirements.txt
 ### Demo (`MXFP4`, `MXFP8`, `NVFP4`, `uNVFP4`)
 
 ```bash
-python quantize.py  \
-    --model_name_or_path facebook/opt-125m \
+CUDA_VISIBLE_DEVICES=1 python quantize.py  \
+    --model_name_or_path facebook/opt-125m  \
     --quantize \
     --dtype MXFP4 \
     --enable_torch_compile \
     --low_gpu_mem_usage \
     --export_format auto_round \
-    --export_path OPT-125m-MXFP4 \
+    --export_path OPT-125M-MXFP4 \
     --accuracy \
-    --eval_batch_size 8 \
+    --tasks lambada_openai \
+    --eval_batch_size 8  \
+    --device_map 0
+```
+
+To verify the accuracy of the saved model:
+
+```bash
+# verify accuracy from export_path
+CUDA_VISIBLE_DEVICES=2 python quantize.py \
+    --model_name_or_path OPT-125M-MXFP4 \
+    --accuracy \
+    --tasks lambada_openai \
+    --device_map 0  
 ```
 
 Notes:
@@ -43,7 +56,7 @@ Notes:
 
 ```bash
 # Llama 3.1 8B
-python quantize.py  \
+CUDA_VISIBLE_DEVICES=1 python quantize.py \
     --model_name_or_path /models/Meta-Llama-3.1-8B-Instruct \
     --quantize \
     --dtype MXFP4 \
@@ -52,10 +65,11 @@ python quantize.py  \
     --enable_torch_compile \
     --low_gpu_mem_usage \
     --export_format auto_round \
-    --export_path Llama-3.1-8B-MXFP4-MXFP8
+    --export_path Llama-3.1-8B-MXFP4-MXFP8 \
+    --device_map 0
 
 # Llama 3.3 70B
-python quantize.py  \
+CUDA_VISIBLE_DEVICES=1 python quantize.py  \
     --model_name_or_path meta-llama/Llama-3.3-70B-Instruct/ \
     --quantize \
     --dtype MXFP4 \
@@ -64,8 +78,11 @@ python quantize.py  \
     --enable_torch_compile \
     --low_gpu_mem_usage \
     --export_format auto_round \
-    --export_path Llama-3.3-70B-MXFP4-MXFP8
+    --export_path Llama-3.3-70B-MXFP4-MXFP8 \
+    --device_map 0
 ```
+
+Note: Please add more available cards by setting device_map if you got OOM issue.
 
 #### Target_bits
 
@@ -77,7 +94,7 @@ To achieve optimal compression ratios in mixed-precision quantization, we provid
 Example usage:
 
 ```bash
-python quantize.py  \
+CUDA_VISIBLE_DEVICES=1 python quantize.py  \
     --model_name_or_path facebook/opt-125m \
     --quantize \
     --dtype MXFP4 \
@@ -86,10 +103,11 @@ python quantize.py  \
     --enable_torch_compile \
     --low_gpu_mem_usage \
     --export_format auto_round \
-    --export_path OPT-125m-MXFP4 \
+    --export_path OPT-125m-MXFP4-MXFP8 \
     --accuracy \
-    --tasks mmlu \
-    --eval_batch_size 8
+    --tasks lambada_openai \
+    --eval_batch_size 8 \
+    --device_map 0
 ```
 
 
@@ -100,34 +118,16 @@ python quantize.py  \
 MXFP4 and MXFP8 is enabled in a forked vLLM repo, usages as below:
 ```bash
 # Install the forked vLLM
-git clone -b cuda-mxfp8-moe --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
-USE_CPP=0 VLLM_USE_PRECOMPILED=1 pip install -e . -vvv && cd -
+git clone https://github.com/yiliu30/vllm-fork.git
+cd vllm-fork
+git checkout fused-moe-ar
+VLLM_USE_PRECOMPILED=1 pip install -e .
+# Run accuracy evaluation
+CUDA_VISIBLE_DEVICES=1 python lm_eval_launcher.py --enable-ar-ext --model vllm \
+    --model_args pretrained=Qwen3-30B-A3B-MXFP4,tensor_parallel_size=1,data_parallel_size=1 \
+    --tasks lambada_openai \
+    --batch_size 8
 
-# Command to save model:
-python quantize.py  \
-    --model_name_or_path meta-llama/Llama-3.3-70B-Instruct/ \
-    --quantize \
-    --iters 0 \
-    --dtype MXFP4 \
-    --save_path Llama-3.3-70B-Instruct-MXFP4 \
-    --save \
-    --save_format llm_compressor
-
-# Command to inference with vLLM:
-CUDA_VISIBLE_DEVICES=0,1 VLLM_USE_V1=0 VLLM_USE_MXFP4_CT_EMULATIONS=1 VLLM_LOGGING_LEVEL=DEBUG \
-vllm serve Llama-3.3-70B-Instruct-MXFP4 --tensor-parallel-size=2 --port 7777 --host localhost --trust-remote-code --dtype bfloat16 --enforce-eager
-export no_proxy="localhost, 127.0.0.1, ::1"
-curl -X POST http://localhost:7777/v1/completions \
-     -H "Content-Type: application/json" \
-     -d '{
-           "model": "/model_path/Llama-3.3-70B-Instruct-MXFP4",
-           "prompt": "Solve the following math problem step by step: What is 25 + 37? Please answer directly with the result.",
-           "max_tokens": 100,
-           "temperature": 0.7,
-           "top_p": 1.0
-         }'
-```
-> Note: To inference with transformers, please save model with `--save_format auto_round` and try `python run_hf_inf.py ${model_name_or_path}`
 
 ### MXFP4 + MXFP8
 Model with mixed precision is not supported in vLLM, but supported in transformers in `auto-round` format. 

@@ -378,6 +378,7 @@ class AutoRoundQuantizer(Quantizer):
             try:
                 del model
                 self.accelerator.empty_cache()
+                logger.info("Quantization is done, reloading model from saved directory...")
                 import transformers  # pylint: disable=E0401
 
                 model = transformers.AutoModelForCausalLM.from_pretrained(self.output_dir)
