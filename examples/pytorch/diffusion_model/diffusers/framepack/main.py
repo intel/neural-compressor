@@ -326,7 +326,7 @@ if __name__ == "__main__":
                 if args.limit > 0 and idx >= args.limit:
                     break
 
-                # only sample 1 video for each prompt to evalute quickly
+                # only sample 1 video for each prompt to evaluate quickly
                 cur_save_path = f"{args.output_video_path}/{prompt}-0.mp4"
 
                 if os.path.exists(cur_save_path):
