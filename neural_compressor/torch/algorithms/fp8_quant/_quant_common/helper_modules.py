@@ -1297,7 +1297,7 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
             self.register_scale("descale_amax", mod_extra_config.scale.inputs[3].type(torch.float32), self.scale_format)
             self.register_scale("scale_output", 1 / mod_extra_config.scale.outputs[0].type(torch.float32), self.scale_format)
             self.register_scale("scale_amax", 1 / self.descale_amax, self.scale_format)
-        self.qkv_slice_thld = int(os.getenv("VLLM_FUSEDSPA_QKV_SLICE_SEQ_LEN_THLD", 8192))
+        self.qkv_slice_thld = int(os.getenv("VLLM_FUSEDSDPA_QKV_SLICE_SEQ_LEN_THLD", 8192))
         if self.qkv_slice_thld > 0:
             self.q_chunk_size = int(os.getenv("VLLM_FUSEDSDPA_Q_SLICE_CHUNK_SIZE", self.qkv_slice_thld))
             self.kv_chunk_size = int(os.getenv("VLLM_FUSEDSDPA_KV_SLICE_CHUNK_SIZE", self.qkv_slice_thld))
@@ -1393,17 +1393,17 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
         kv_len = kinput.size(-2)
 
         # for prefill with prefix caching
-        if q_len != 1 and q_len != kv_len \
-            and kv_len > self.qkv_slice_thld:
+        if self.qkv_slice_thld > 0 and q_len != 1 and q_len != kv_len and kv_len > self.qkv_slice_thld:
             assert attn_mask is not None, "Attention mask is required for FSDPA with prefix caching."
             ctx_len = kv_len - q_len
             from habana_frameworks.torch.hpex.kernels.Fp8FusedSDPA import is_gqa, gqa_input_reshape_fwd, gqa_output_reshape
             gqa = is_gqa(qinput, kinput)
             if gqa:
                 qinput, kinput, vinput, attn_mask = gqa_input_reshape_fwd(qinput, kinput, vinput, attn_mask)
-            
+
             num_q_chunks = (q_len + self.q_chunk_size - 1) // self.q_chunk_size
-            num_kv_chunks = (kv_len + self.kv_chunk_size - 1) // self.kv_chunk_size
+            num_context_kv_chunks = (ctx_len + self.kv_chunk_size - 1) // self.kv_chunk_size
+            num_causal_kv_chunks = num_q_chunks
             chunk_outputs = []
             for q_chunk_idx in range(num_q_chunks):
                 q_start = q_chunk_idx * self.q_chunk_size
@@ -1413,28 +1413,15 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
                 last_out = None
                 last_m = None
                 last_linv = None
-                for kv_chunk_idx in range(num_kv_chunks):
+                for kv_chunk_idx in range(num_context_kv_chunks):
                     kv_start = kv_chunk_idx * self.kv_chunk_size
-                    kv_end = min((kv_chunk_idx + 1) * self.kv_chunk_size, kv_len)
+                    kv_end = min((kv_chunk_idx + 1) * self.kv_chunk_size, ctx_len)
                     k_chunk = kinput[..., kv_start:kv_end, :]
                     v_chunk = vinput[..., kv_start:kv_end, :]
 
-                    # skip the upper triangular part for causal attention
-                    if kv_start > ctx_len + q_end:
-                        continue
-                    
-                    is_causal= True if kv_start-ctx_len==0 else False
-
-                    # current chunk_size should be multiple of 1024 to get right m/linv
-                    if kv_end-ctx_len==0 and ((q_end-q_start)%1024!=0 or (kv_end-kv_start)%1024!=0):
-                        is_causal = False
-                        attn_mask_chunk = attn_mask[..., kv_start:kv_end]
-                    else:
-                        attn_mask_chunk = None
-
-                    chunk_res = self.fp8_fsdpa_fwd(q_chunk, k_chunk, v_chunk, attn_mask_chunk, dropout_p, scale, is_causal, sm_mode)
+                    chunk_res = self.fp8_fsdpa_fwd(q_chunk, k_chunk, v_chunk, None, dropout_p, scale, False, sm_mode)
                     chunk_out, chunk_m, chunk_linv = (gqa_output_reshape(x) for x in (chunk_res[:3])) if gqa else chunk_res[:3]
-                    
+
                     chunk_m = chunk_m.to(torch.float32)
                     chunk_linv = chunk_linv.to(torch.float32) * 128.0 if softmax_mode != "fp32" else chunk_linv.to(torch.float32)
                     chunk_out = self.dequant_output(chunk_out).to(torch.float32)
@@ -1451,6 +1438,63 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
                         last_out = (last_linv_rescaled * last_linv) * last_out + (
                             chunk_linv_rescaled * last_linv) * chunk_out
                         last_m = new_m
+
+                kv_causal_start = ctx_len + q_start
+                kv_causal_end = ctx_len + q_end
+                k_causal_chunk = kinput[..., kv_causal_start:kv_causal_end, :]
+                v_causal_chunk = vinput[..., kv_causal_start:kv_causal_end, :]
+
+                bs = q_chunk.size(0)
+                q_chunk_len = q_chunk.size(-2)
+                if q_chunk.size(-2) < self.q_chunk_size:
+                    mask = (1 - torch.tril(
+                        torch.ones(bs,
+                               1,
+                               1,
+                               q_chunk_len,
+                               q_chunk_len,
+                               dtype=q.dtype,
+                               device=q.device))) * torch.finfo(
+                                   q.dtype).min
+                    causal_chunk_res = self.fp8_fsdpa_fwd(q_chunk, k_causal_chunk, v_causal_chunk, mask, dropout_p, scale, False, sm_mode)
+                else:
+                    causal_chunk_res = self.fp8_fsdpa_fwd(q_chunk, k_causal_chunk, v_causal_chunk, None, dropout_p, scale, True, sm_mode)
+
+                causal_chunk_out, causal_chunk_m, causal_chunk_linv = (gqa_output_reshape(x) for x in (causal_chunk_res[:3])) if gqa else causal_chunk_res[:3]
+                causal_chunk_m = causal_chunk_m.to(torch.float32)
+                causal_chunk_linv = causal_chunk_linv.to(torch.float32) * 128.0 if softmax_mode != "fp32" else causal_chunk_linv.to(torch.float32)
+                causal_chunk_out = self.dequant_output(causal_chunk_out).to(torch.float32)
+
+                if num_causal_kv_chunks == 1:
+                    new_m = torch.maximum(last_m, causal_chunk_m)
+                    last_linv_rescaled = (1.0 / last_linv) * torch.exp(last_m - new_m)
+                    chunk_linv_rescaled = (1.0 / causal_chunk_linv) * torch.exp(causal_chunk_m - new_m)
+                    last_linv = 1.0 / (last_linv_rescaled + chunk_linv_rescaled)
+                    last_out = (last_linv_rescaled * last_linv) * last_out + (
+                        chunk_linv_rescaled * last_linv) * causal_chunk_out
+                    last_m = new_m
+                else:
+                    for kv_chunk_idx in range(0, q_chunk_idx):
+                        kv_causal_start = ctx_len + kv_chunk_idx * self.q_chunk_size
+                        kv_causal_end = ctx_len + (kv_chunk_idx + 1) * self.q_chunk_size
+                        k_causal_chunk = kinput[..., kv_causal_start:kv_causal_end, :]
+                        v_causal_chunk = vinput[..., kv_causal_start:kv_causal_end, :]
+
+                        chunk_res = self.fp8_fsdpa_fwd(q_chunk, k_causal_chunk, v_causal_chunk, None, dropout_p, scale, False, sm_mode)
+
+                        chunk_out, chunk_m, chunk_linv = (gqa_output_reshape(x) for x in (chunk_res[:3])) if gqa else chunk_res[:3]
+                        chunk_m = chunk_m.to(torch.float32)
+                        chunk_linv = chunk_linv.to(torch.float32) * 128.0 if softmax_mode != "fp32" else chunk_linv.to(torch.float32)
+                        chunk_out = self.dequant_output(chunk_out).to(torch.float32)
+
+                        new_m = torch.maximum(last_m, chunk_m)
+                        last_linv_rescaled = (1.0 / last_linv) * torch.exp(last_m - new_m)
+                        chunk_linv_rescaled = (1.0 / chunk_linv) * torch.exp(chunk_m - new_m)
+                        last_linv = 1.0 / (last_linv_rescaled + chunk_linv_rescaled)
+                        last_out = (last_linv_rescaled * last_linv) * last_out + (
+                            chunk_linv_rescaled * last_linv) * chunk_out
+                        last_m = new_m
+
                 chunk_outputs.append(last_out)
             output = torch.cat(chunk_outputs, dim=-2)
             return output.to(q.dtype)
