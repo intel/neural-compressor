@@ -80,20 +80,22 @@ function run_benchmark {
         dimension_num=${#dimensions[@]}
         if [ "${visible_gpus}" -gt "${dimension_num}" ]; then
             count=${dimension_num}
+	    step=1
         else
             count=${visible_gpus}
-            left=${dimensions[@]:count-1:dimension_num}
-            dimensions=("${dimensions[@]:0:count-1}" "$left")
+	    step=$((dimension_num/visible_gpus))
+            left=${dimensions[@]:step*count-1:dimension_num}
+            dimensions=("${dimensions[@]:0:step*count-1}" "$left")
         fi
 
         for ((i=0; i<count; i++)); do
             export CUDA_VISIBLE_DEVICES=${gpu_ids[i]}
             python3 main.py \
                 --output_video_path ${output_video_path} \
-        	--dataset_location ${dataset_location} \
+                --dataset_location ${dataset_location} \
                 --ratio ${ratio} \
                 --limit ${limit} \
-                --dimension_list ${dimensions[i]} \
+                --dimension_list ${dimensions[@]:i*step:(i+1)*step} \
                 ${extra_cmd} &
             program_pid+=($!)
             echo "Start (PID: ${program_pid[-1]}, GPU: ${i})"
@@ -109,18 +111,18 @@ function run_benchmark {
             ${extra_cmd}
     fi
 
-    echo "Start calculating final score..."
-    cd ${dataset_location}
-    output=$(python evaluate_i2v.py \
-        --videos_path ${output_video_path} \
-        --dimension ${dimension_list} \
-        --output_path ${result_path} \
-        --ratio ${ratio} 2>&1)
-    result_file=$(echo "$output" | grep -i "Evaluation results saved to " | awk '{print $NF}')
+    #echo "Start calculating final score..."
+    #cd ${dataset_location}
+    #output=$(python evaluate_i2v.py \
+    #    --videos_path ${output_video_path} \
+    #    --dimension ${dimension_list} \
+    #    --output_path ${result_path} \
+    #    --ratio ${ratio} 2>&1)
+    #result_file=$(echo "$output" | grep -i "Evaluation results saved to " | awk '{print $NF}')
 
-    echo "Evaluation results saved to ${result_file}"
-    zip -r "${result_path}.zip" ${result_path}
-    python scripts/cal_i2v_final_score.py --zip_file "${result_path}.zip" --model_name "framepack"
+    #echo "Evaluation results saved to ${result_file}"
+    #zip -r "${result_path}.zip" ${result_path}
+    #python scripts/cal_i2v_final_score.py --zip_file "${result_path}.zip" --model_name "framepack"
 
 }
 
