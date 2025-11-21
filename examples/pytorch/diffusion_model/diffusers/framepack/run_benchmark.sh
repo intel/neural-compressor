@@ -111,18 +111,18 @@ function run_benchmark {
             ${extra_cmd}
     fi
 
-    #echo "Start calculating final score..."
-    #cd ${dataset_location}
-    #output=$(python evaluate_i2v.py \
-    #    --videos_path ${output_video_path} \
-    #    --dimension ${dimension_list} \
-    #    --output_path ${result_path} \
-    #    --ratio ${ratio} 2>&1)
-    #result_file=$(echo "$output" | grep -i "Evaluation results saved to " | awk '{print $NF}')
+    echo "Start calculating final score..."
+    cd ${dataset_location}
+    output=$(python evaluate_i2v.py \
+        --videos_path ${output_video_path} \
+        --dimension ${dimension_list} \
+        --output_path ${result_path} \
+        --ratio ${ratio} 2>&1)
+    result_file=$(echo "$output" | grep -i "Evaluation results saved to " | awk '{print $NF}')
 
-    #echo "Evaluation results saved to ${result_file}"
-    #zip -r "${result_path}.zip" ${result_path}
-    #python scripts/cal_i2v_final_score.py --zip_file "${result_path}.zip" --model_name "framepack"
+    echo "Evaluation results saved to ${result_file}"
+    zip -r "${result_path}.zip" ${result_path}
+    python scripts/cal_i2v_final_score.py --zip_file "${result_path}.zip" --model_name "framepack"
 
 }
 
