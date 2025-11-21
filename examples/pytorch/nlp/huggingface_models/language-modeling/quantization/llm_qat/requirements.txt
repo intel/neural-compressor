@@ -1,6 +1,6 @@
 auto-round==0.8.0
 neural-compressor-pt==3.6
-transformers==4.52.4
+transformers==4.53.0
 datasets
 sentencepiece>=0.2.0
 tensorboardX
