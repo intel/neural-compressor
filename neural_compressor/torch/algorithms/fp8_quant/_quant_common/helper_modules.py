@@ -1343,6 +1343,7 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
         attn_mask,
         dropout_p,
         scale,
+        is_causal,
         softmax_mode,
     ):
         results = torch.ops.hpu.fp8_sdpa_recomp_fwd(
@@ -1352,7 +1353,7 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
             attn_mask,
             dropout_p,
             scale,
-            False,  # is_causal
+            is_causal,
             True, # requires_backward
             softmax_mode,   # softmax_mode
             self.scale_q,   # d_scale_q
@@ -1394,6 +1395,7 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
         # for prefill with prefix caching
         if q_len != 1 and q_len != kv_len \
             and kv_len > self.qkv_slice_thld:
+            assert attn_mask is not None, "Attention mask is required for FSDPA with prefix caching."
             ctx_len = kv_len - q_len
             from habana_frameworks.torch.hpex.kernels.Fp8FusedSDPA import is_gqa, gqa_input_reshape_fwd, gqa_output_reshape
             gqa = is_gqa(qinput, kinput)
@@ -1416,14 +1418,21 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
                     kv_end = min((kv_chunk_idx + 1) * self.kv_chunk_size, kv_len)
                     k_chunk = kinput[..., kv_start:kv_end, :]
                     v_chunk = vinput[..., kv_start:kv_end, :]
-                    attn_mask_chunk = attn_mask[..., kv_start:kv_end] if attn_mask is not None else None
-                    attn_mask_chunk = None if kv_end < ctx_len else attn_mask_chunk
 
                     # skip the upper triangular part for causal attention
                     if kv_start > ctx_len + q_end:
                         continue
+                    
+                    is_causal= True if kv_start-ctx_len==0 else False
 
-                    chunk_res = self.fp8_fsdpa_fwd(q_chunk, k_chunk, v_chunk, attn_mask_chunk, dropout_p, scale, sm_mode)
+                    # current chunk_size should be multiple of 1024 to get right m/linv
+                    if kv_end-ctx_len==0 and ((q_end-q_start)%1024!=0 or (kv_end-kv_start)%1024!=0):
+                        is_causal = False
+                        attn_mask_chunk = attn_mask[..., kv_start:kv_end]
+                    else:
+                        attn_mask_chunk = None
+
+                    chunk_res = self.fp8_fsdpa_fwd(q_chunk, k_chunk, v_chunk, attn_mask_chunk, dropout_p, scale, is_causal, sm_mode)
                     chunk_out, chunk_m, chunk_linv = (gqa_output_reshape(x) for x in (chunk_res[:3])) if gqa else chunk_res[:3]
                     
                     chunk_m = chunk_m.to(torch.float32)
