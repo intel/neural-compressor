@@ -80,10 +80,10 @@ function run_benchmark {
         dimension_num=${#dimensions[@]}
         if [ "${visible_gpus}" -gt "${dimension_num}" ]; then
             count=${dimension_num}
-	    step=1
+	        step=1
         else
             count=${visible_gpus}
-	    step=$((dimension_num/visible_gpus))
+	        step=$((dimension_num/visible_gpus))
             left=${dimensions[@]:step*count-1:dimension_num}
             dimensions=("${dimensions[@]:0:step*count-1}" "$left")
         fi
