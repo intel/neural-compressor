@@ -53,26 +53,26 @@ parser.add_argument("--scheme", default="MXFP8", type=str, help="quantizaion sch
 parser.add_argument("--quantize", action="store_true")
 parser.add_argument("--inference", action="store_true")
 parser.add_argument("--output_dir", "--quantized_model_path", default="./tmp_autoround", type=str, help="the directory to save quantized model")
-parser.add_argument("--dataset_location", type=str, help="Path of cloned VBench repository which contains images and prompts for evaluation")
+parser.add_argument("--dataset_location", type=str, help="path of cloned VBench repository which contains images and prompts for evaluation")
 parser.add_argument("--output_video_path", default="./tmp_video", type=str, help="the directory to save generated videos")
 parser.add_argument("--limit", default=-1, type=int, help="limit the number of prompts for evaluation")
 parser.add_argument("--seed", default=31337, type=int, help="random seed")
 parser.add_argument("--total_second_length", default=5, type=int, help="length of generated video")
-parser.add_argument("--steps", default=25, type=float)
-parser.add_argument("--cfg", default=1.0, type=float)
-parser.add_argument("--gs", default=10.0, type=float)
-parser.add_argument("--rs", default=0.0, type=float)
+parser.add_argument("--latent_window_size", default=9, type=int)
+parser.add_argument("--steps", default=25, type=float, help="number of inference step")
+parser.add_argument("--cfg", default=1.0, type=float, help="real guidance scale")
+parser.add_argument("--gs", default=10.0, type=float, help="distilled guidance scale")
+parser.add_argument("--rs", default=0.0, type=float, help="guidance rescale")
 parser.add_argument("--gpu_memory_preservation", default=6, type=int)
-parser.add_argument("--use_teacache", action="store_true")
-parser.add_argument("--mp4_crf", default=16, type=int)
+parser.add_argument("--use_teacache", action="store_true", help="faster speed, but often makes hands and fingers slightly worse")
+parser.add_argument("--mp4_crf", default=16, type=int, help="MP4 compression. Lower means better quality. 0 is uncompressed. Change to 16 if you get black outputs.")
 parser.add_argument(
     "--dimension_list",
     nargs="+",
     choices=["subject_consistency", "background_consistency", "motion_smoothness", "dynamic_degree", "aesthetic_quality", "imaging_quality", "i2v_subject", "i2v_background", "camera_motion"],
     help="list of evaluation dimensions, usage: --dimension_list <dim_1> <dim_2>",
 )
-parser.add_argument("--limit", default=-1, type=int)
-parser.add_argument("--ratio", default="16-9", type=str)
+parser.add_argument("--ratio", default="16-9", type=str, help="aspect ratio of image")
 
 args = parser.parse_args()
 free_mem_gb = get_cuda_free_memory_gb(gpu)
@@ -252,8 +252,11 @@ def worker(input_image, prompt, seed, total_second_length, latent_window_size, s
 
 if __name__ == "__main__":
     transformer = HunyuanVideoTransformer3DModelPacked.from_pretrained("lllyasviel/FramePackI2V_HY", torch_dtype=torch.bfloat16).cpu()
+    transformer.to(dtype=torch.bfloat16)
+    transformer.requires_grad_(False)
+    transformer.eval()
+
     if args.quantize:
-        print(f"Start to quantize {args.model}.")
         setattr(transformer, "name_or_path", "lllyasviel/FramePackI2V_HY")
 
         qconfig = AutoRoundConfig(
@@ -279,7 +282,6 @@ if __name__ == "__main__":
         text_encoder.eval()
         text_encoder_2.eval()
         image_encoder.eval()
-        transformer.eval()
 
         if not high_vram:
             vae.enable_slicing()
@@ -288,7 +290,6 @@ if __name__ == "__main__":
         transformer.high_quality_fp32_output_for_inference = True
         print("transformer.high_quality_fp32_output_for_inference = True")
 
-        transformer.to(dtype=torch.bfloat16)
         vae.to(dtype=torch.float16)
         image_encoder.to(dtype=torch.float16)
         text_encoder.to(dtype=torch.float16)
@@ -298,12 +299,11 @@ if __name__ == "__main__":
         text_encoder.requires_grad_(False)
         text_encoder_2.requires_grad_(False)
         image_encoder.requires_grad_(False)
-        transformer.requires_grad_(False)
 
         if not high_vram:
             # DynamicSwapInstaller is same as huggingface"s enable_sequential_offload but 3x faster
-            DynamicSwapInstaller.install_model(transformer, device=gpu)
             DynamicSwapInstaller.install_model(text_encoder, device=gpu)
+            DynamicSwapInstaller.install_model(transformer, device=gpu)
         else:
             text_encoder.to(gpu)
             text_encoder_2.to(gpu)
@@ -311,14 +311,18 @@ if __name__ == "__main__":
             vae.to(gpu)
             transformer.to(gpu)
 
+        if not os.path.exists(args.output_video_path):
+            os.makedirs(args.output_video_path)
+
         idx = 0
         for dimension in args.dimension_list:
             # prepare inputs
 
-            image_folder = f"{args.dataset_location}/vbench2_beta_i2v/data/crop/{args.ratio}"
-            info_list = json.load(open(f"{args.dataset_location}/vbench2_beta_i2v/vbench2_i2v_full_info.json", "r"))
+            image_folder = os.path.join(args.dataset_location, f"vbench2_beta_i2v/data/crop/{args.ratio}")
+            info_list = json.load(open(os.path.join(args.dataset_location, "vbench2_beta_i2v/vbench2_i2v_full_info.json"), "r"))
             inputs = [(os.path.join(image_folder, info["image_name"]), info["prompt_en"]) for info in info_list if dimension in info["dimension"]]
             for image_path, prompt in inputs:
+                idx += 1
                 if args.limit > 0 and idx >= args.limit:
                     break
 
@@ -327,7 +331,6 @@ if __name__ == "__main__":
 
                 if os.path.exists(cur_save_path):
                     continue
-                idx += 1
                 # perform sampling
                 x = worker(image_path, prompt, args.seed, args.total_second_length, args.latent_window_size, args.steps, args.cfg, args.gs, args.rs, args.gpu_memory_preservation, args.use_teacache, args.mp4_crf)
                 b, c, t, h, w = x.shape

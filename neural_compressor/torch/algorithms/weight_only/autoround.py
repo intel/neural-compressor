@@ -268,7 +268,6 @@ class AutoRoundQuantizer(Quantizer):
         if tokenizer is not None:
             delattr(model.orig_model, "tokenizer")
         elif pipe is None:
-            tokenizer = "Placeholder"
             self.dataset = CapturedDataloader(model.args_list, model.kwargs_list)
         model = model.orig_model
         if pipe is not None:

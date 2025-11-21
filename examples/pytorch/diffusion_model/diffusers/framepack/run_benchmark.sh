@@ -31,6 +31,9 @@ function init_params {
       --output_video_path=*)
           output_video_path=$(echo $var |cut -f2 -d=)
       ;;
+      --result_path=*)
+          result_path=$(echo $var |cut -f2 -d=)
+      ;;
       --dimension_list=*)
           dimension_list=$(echo $var |cut -f2 -d=)
       ;;
@@ -49,6 +52,15 @@ function run_benchmark {
     limit=${limit:=-1}
     ratio=${ratio:="16-9"}
     output_video_path=${output_video_path:="./tmp_videos"}
+    result_path=${result_path:="./eval_result"}
+
+    if [[ ! "${result_path}" = /* ]]; then
+        result_path=$(realpath -s "$(pwd)/$result_path")
+    fi
+
+    if [[ ! "${output_video_path}" = /* ]]; then
+        output_video_path=$(realpath -s "$(pwd)/$output_video_path")
+    fi
 
     if [ "${topology}" = "FP8" ]; then
         extra_cmd="--scheme FP8 --quantize --inference"
@@ -60,51 +72,57 @@ function run_benchmark {
 
     if [ -n "$CUDA_VISIBLE_DEVICES" ]; then
         gpu_list="${CUDA_VISIBLE_DEVICES:-}"
-	    IFS=',' read -ra gpu_ids <<< "$gpu_list"
-	    visible_gpus=${#gpu_ids[@]}
-		echo "visible_gpus: ${visible_gpus}"
+        IFS=',' read -ra gpu_ids <<< "$gpu_list"
+        visible_gpus=${#gpu_ids[@]}
+        echo "visible_gpus: ${visible_gpus}"
 
         IFS=' ' read -ra dimensions <<< "$dimension_list"
         dimension_num=${#dimensions[@]}
-        if [ "${visible_gpus}" > "${dimension_num}" ]; then
+        if [ "${visible_gpus}" -gt "${dimension_num}" ]; then
             count=${dimension_num}
         else
             count=${visible_gpus}
-            sliced=("${dimensions[@]:count-1:dimension_num-visible_gpus}")
-            dimensions="${sliced[*]}"
+            left=${dimensions[@]:count-1:dimension_num}
+            dimensions=("${dimensions[@]:0:count-1}" "$left")
         fi
 
         for ((i=0; i<count; i++)); do
             export CUDA_VISIBLE_DEVICES=${gpu_ids[i]}
             python3 main.py \
-                --model ${input_model} \
                 --output_video_path ${output_video_path} \
-		        --dataset_location ${dataset_location} \
+        	--dataset_location ${dataset_location} \
                 --ratio ${ratio} \
                 --limit ${limit} \
-                --dimension_list ${dimensions[i]}
+                --dimension_list ${dimensions[i]} \
                 ${extra_cmd} &
             program_pid+=($!)
-	        echo "Start (PID: ${program_pid[-1]}, GPU: ${i})"
+            echo "Start (PID: ${program_pid[-1]}, GPU: ${i})"
         done
-	    wait "${program_pid[@]}"
+        wait "${program_pid[@]}"
     else
         python3 main.py \
-            --model ${input_model} \
             --output_video_path ${output_video_path} \
-		    --dataset_location ${dataset_location} \
-			--limit ${limit} \
+            --dataset_location ${dataset_location} \
+            --limit ${limit} \
             --ratio ${ratio} \
             --dimension_list ${dimension_list} \
             ${extra_cmd}
     fi
 
-	echo "Start calculating final score..."
+    echo "Start calculating final score..."
     cd ${dataset_location}
-    python evaluate_i2v.py \
+    output=$(python evaluate_i2v.py \
         --videos_path ${output_video_path} \
         --dimension ${dimension_list} \
-        --ratio ${ratio}
+        --output_path ${result_path} \
+        --ratio ${ratio} 2>&1)
+    result_file=$(echo "$output" | grep -i "Evaluation results saved to " | awk '{print $NF}')
+
+    echo "Evaluation results saved to ${result_file}"
+    zip -r "${result_path}.zip" ${result_path}
+    python scripts/cal_i2v_final_score.py --zip_file "${result_path}.zip" --model_name "framepack"
+
 }
 
 main "$@"
+
