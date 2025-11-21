@@ -16,6 +16,9 @@ concurrency:
 jobs:
   build-on-pr:
     runs-on: ${{ contains(github.repository, 'intel-innersource') && 'self-hosted' || 'ubuntu-latest' }}
+    permissions:
+      pull-requests: write
+      contents: write
     steps:
       - name: Clean Up Working Directory
         run: sudo rm -rf ${{github.workspace}}/*

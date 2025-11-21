@@ -33,20 +33,19 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
+
           # Create a virtual environment
           python -m venv venv
           source venv/bin/activate
-      
+
           # Upgrade pip and install pre-commit
           pip install --upgrade pip
           pip install -U pre-commit
-      
+
           # Run pre-commit hooks to fix auto-fixable issues
           pre-commit install
-          pre-commit run --all-files --show-diff-on-failure > pre-commit.log 2>&1
-          exit_code=$?
-          cat pre-commit.log
-      
+          pre-commit run --all-files | tee pre-commit.log 2>&1 || true
+
           # Check if there are changes after pre-commit run
           if [ -n "$(git status --porcelain)" ]; then
             # Commit and push the changes if there are any
@@ -54,17 +53,15 @@ jobs:
             git config user.email "action@github.com"
             git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
             git add -A
-            git commit -m -s "chore: apply pre-commit auto-fixes"
+            git commit -n -s -m "chore: apply pre-commit auto-fixes"
             git push origin HEAD:${{ github.head_ref }}
           else
             # If no changes are made, print a message
             echo "No auto-fixable changes were made by pre-commit."
           fi
-          
-          # Exit with the original exit code from pre-commit
-          if [ $exit_code -ne 0 ]; then
-            echo "Pre-commit found issues. See pre-commit.log for details."
-            exit $exit_code
+
+          sleep 1s
+          if [ $(grep -c "Failed" pre-commit.log) != 0 ]; then
+            echo "Some checks failed that require manual intervention. Please review the pre-commit.log for details."
+            exit 1
           fi
-          
-          
