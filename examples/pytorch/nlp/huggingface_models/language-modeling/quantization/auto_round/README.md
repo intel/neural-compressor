@@ -25,6 +25,13 @@ python quantize.py --model $QWEN_MODEL -t qwen_mxfp4 --use_autoround_format --ou
 python quantize.py --model $DS_MODEL -t qwen_mxfp4 --use_autoround_format --output_dir ./qmodels
 ```
 
+## Evaluation
+```bash
+git clone https://github.com/yiliu30/vllm-fork/tree/
+cd vllm-fork
+git checkout fused-moe-ar
+VLLM_USE_PRECOMPILED=1 pip install --editable . -vvv
+```
 
 ### Prompt Tests
 
