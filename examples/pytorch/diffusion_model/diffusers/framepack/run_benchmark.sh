@@ -80,12 +80,23 @@ function run_benchmark {
         dimension_num=${#dimensions[@]}
         if [ "${visible_gpus}" -gt "${dimension_num}" ]; then
             count=${dimension_num}
-	        step=1
+	        result=("${dimensions[@]}")
         else
             count=${visible_gpus}
-	        step=$((dimension_num/visible_gpus))
-            left=${dimensions[@]:step*count-1:dimension_num}
-            dimensions=("${dimensions[@]:0:step*count-1}" "$left")
+            remainder=$((dimension_num % visible_gpus))
+            base_size=$((dimension_num / visible_gpus))
+            start=0
+            for ((group=0; group<count; group++)); do
+                current_size=$((base_size + (group < remainder ? 1 : 0)))
+                end=$((start + current_size))
+                current_group="${dimensions[@]:start:end-start}"
+                if [[ $group -ne 0 ]]; then
+                    result=("${result[@]}" "${current_group}")
+                else
+                    result=("${current_group}")
+                fi
+                start=$end
+            done
         fi
 
         for ((i=0; i<count; i++)); do
@@ -95,7 +106,7 @@ function run_benchmark {
                 --dataset_location ${dataset_location} \
                 --ratio ${ratio} \
                 --limit ${limit} \
-                --dimension_list ${dimensions[@]:i*step:(i+1)*step} \
+                --dimension_list ${result[i]} \
                 ${extra_cmd} &
             program_pid+=($!)
             echo "Start (PID: ${program_pid[-1]}, GPU: ${i})"
