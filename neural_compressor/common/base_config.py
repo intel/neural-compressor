@@ -475,7 +475,7 @@ class BaseConfig(ABC):
 
         # Get the parameters and their default values
         parameters = signature.parameters
-        return parameters.get(param).default
+        return parameters.get(param).annotation
 
     def expand(self) -> List[BaseConfig]:
         """Expand the config.
@@ -522,8 +522,8 @@ class BaseConfig(ABC):
             # 1. The param is a string.
             # 2. The param is a `TuningParam` instance.
             if isinstance(param, str):
-                default_param = self.get_the_default_value_of_param(config, param)
-                tuning_param = TuningParam(name=param, tunable_type=List[type(default_param)])
+                param_annotation = self.get_the_default_value_of_param(config, param)
+                tuning_param = TuningParam(name=param, tunable_type=List[param_annotation])
             elif isinstance(param, TuningParam):
                 tuning_param = param
             else:
