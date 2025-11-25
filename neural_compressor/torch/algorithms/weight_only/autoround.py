@@ -211,7 +211,8 @@ class AutoRoundQuantizer(Quantizer):
         self.super_group_size = super_group_size
         self.batch_size = batch_size
         self.amp = amp
-        self.device = get_accelerator(kwargs.pop("device", "auto")).name()
+        self.accelerator = get_accelerator(kwargs.pop("device", "auto"))
+        self.device = self.accelerator.name()
         self.lr_scheduler = lr_scheduler
         self.dataset = dataset
         self.enable_quanted_input = enable_quanted_input
@@ -302,6 +303,7 @@ class AutoRoundQuantizer(Quantizer):
                 device_map=self.auto_scheme_device_map,
                 low_gpu_mem_usage=self.low_gpu_mem_usage,
             )
+
         rounder = AutoRound(
             model,
             layer_config=self.layer_config,
@@ -349,6 +351,7 @@ class AutoRoundQuantizer(Quantizer):
             enable_norm_bias_tuning=self.enable_norm_bias_tuning,
             truncation=self.truncation,
             enable_torch_compile=self.enable_torch_compile,
+            # TODO: AutoRound is using layer_config to quantize lm_head, remove it.
             quant_lm_head=self.quant_lm_head,
             guidance_scale=self.guidance_scale,
             num_inference_steps=self.num_inference_steps,
@@ -369,6 +372,18 @@ class AutoRoundQuantizer(Quantizer):
             model.autoround_config = rounder.layer_config
 
         dump_model_op_stats(rounder.layer_config)
+
+        if self.export_format in ["auto_round", "llm_compressor"]:
+            # the directly returned model is QuantLinear, which is used for packing.
+            try:
+                del model
+                self.accelerator.empty_cache()
+                logger.info("Quantization is done, reloading model from saved directory...")
+                import transformers  # pylint: disable=E0401
+
+                model = transformers.AutoModelForCausalLM.from_pretrained(self.output_dir)
+            except:
+                pass
 
         return model
 

@@ -321,6 +321,7 @@ class BaseConfig(ABC):
                 result[GLOBAL] = global_config
         else:
             result = global_config
+        result.pop("params_list", None)  # Internal parameters
         return result
 
     def get_params_dict(self):
@@ -531,7 +532,7 @@ class BaseConfig(ABC):
             # Assign the options to the `TuningParam` instance
             param_val = getattr(config, tuning_param.name)
             if param_val is not None:
-                if tuning_param.is_tunable(param_val):
+                if param not in self.non_tunable_params and tuning_param.is_tunable(param_val):
                     tuning_param.options = param_val
                     tuning_param_list.append(tuning_param)
                 else:
