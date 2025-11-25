@@ -23,13 +23,13 @@ mkdir -p ${LIBRISPEECH_DIR}
 
 cd ${WORKSPACE_DIR}
 
-# Downloads all Librispeech dev paritions
+# Downloads all Librispeech dev partitions
 python ${UTILS_DIR}/download_librispeech.py \
     ${UTILS_DIR}/inference_librispeech.csv \
     ${LIBRISPEECH_DIR} \
     -e ${DATA_DIR}
 
-# Consolidates all Librispeech paritions into common dir
+# Consolidates all Librispeech partitions into common dir
 mkdir -p ${LIBRISPEECH_DIR}/dev-all
 cp -r ${LIBRISPEECH_DIR}/dev-clean/* \
       ${LIBRISPEECH_DIR}/dev-other/* \

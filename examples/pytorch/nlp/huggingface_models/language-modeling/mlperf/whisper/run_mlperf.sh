@@ -137,7 +137,7 @@ fi
 # Creates the non-runtime submission content (code, systems, measurements)
 if [ "${DEBUG}" == "False" ] ; then prepare_suplements; fi
 
-# Begining workload runs, with Mode of: Performance, Accuracy, OR Compliance
+# Beginning workload runs, with Mode of: Performance, Accuracy, OR Compliance
 export RUN_LOGS=${WORKSPACE_DIR}/run_output
 if [ "${MODE}" == "Performance" ]; then
     run_workload
@@ -157,7 +157,7 @@ elif [ "${MODE}" == "Compliance" ]; then
         fi
 
 	if ! [ -d ${RESULTS_PATH} ]; then
-	    echo "[ERROR] Compliance run could not be verified due to unspecified or non-existant RESULTS_PATH: ${RESULTS_PATH}"
+	    echo "[ERROR] Compliance run could not be verified due to unspecified or non-existent RESULTS_PATH: ${RESULTS_PATH}"
             exit
 	fi
 

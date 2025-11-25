@@ -10,7 +10,7 @@ COMPLIANCE_DIR=${LOG_DIR}/compliance
 MEASUREMENTS_DIR=${LOG_DIR}/measurements
 SYSTEMS_DIR=${LOG_DIR}/systems
 echo "Ensuring correct system directories and files match system ${SYSTEM}."
-echo "The fillowing are expected:"
+echo "The following are expected:"
 echo "- RESULTS: ${RESULTS_DIR}/${SYSTEM}"
 echo "- COMPLIANCE: ${COMPLIANCE_DIR}/${SYSTEM}"
 echo "- MEASUREMENTS: ${MEASUREMENTS_DIR}/${SYSTEM}"

@@ -140,7 +140,7 @@ class Instance(mp.Process):
 
     def process_queries(self):
         samples_to_fill = self.batch_size - self.model.llm_engine.get_num_unfinished_requests()
-        # After receiving None, continue executing untill all requests are finished
+        # After receiving None, continue executing until all requests are finished
         return_value = True
         if (samples_to_fill>0 and not self.finished):
             try:
