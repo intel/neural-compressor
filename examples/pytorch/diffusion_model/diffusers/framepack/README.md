@@ -39,7 +39,7 @@ sh vbench2_beta_i2v/download_data.sh
 ## BF16
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
+CUDA_VISIBLE_DEVICES=0,1 \
 bash run_benchmark.sh \
     --topology=BF16 \
     --dataset_location=/path/to/VBench \
@@ -51,7 +51,7 @@ bash run_benchmark.sh \
 ## MXFP8 or FP8 
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 \
+CUDA_VISIBLE_DEVICES=0,1 \
 bash run_benchmark.sh \
     --topology=MXFP8 \ # or FP8
     --dataset_location=/path/to/VBench \
