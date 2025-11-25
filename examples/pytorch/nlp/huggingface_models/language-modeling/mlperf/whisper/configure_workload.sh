@@ -16,9 +16,9 @@ workload_specific_run () {
   export MODE=${MODE}
 
   # Standard ENV settings (potentially redundant)
-  export MODEL_DIR=${MODEL_DIR}/whisper-model.uri
+  export MODEL_DIR=${MODEL_DIR}/whisper-large-v3
   export DATA_DIR=${DATA_DIR}
-  export MANIFEST_FILE=${DATA_DIR}/whisper-dataset.uri/dev-all-repack.json
+  export MANIFEST_FILE=${DATA_DIR}/dev-all-repack.json
   export USER_CONF=${USER_CONF}
   export RUN_LOGS=${RUN_LOGS}
 
@@ -31,14 +31,22 @@ workload_specific_run () {
   export VLLM_WORKER_MULTIPROC_METHOD=spawn
   export ONEAPI_DEVICE_SELECTOR=level_zero:0
 #  export EXTRA_ARGS="--accuracy"
+  if [ "${MODE}" == "Compliance" ]; then
+    export MODE="Performance"
+  fi
+
+  export EXTRA_ARGS=""
+  if [ "${MODE}" == "Accuracy" ]; then
+      export EXTRA_ARGS="--accuracy"
+  fi
   python main.py \
       --dataset_dir ${DATA_DIR} \
       --model_path ${MODEL_DIR} \
       --manifest ${MANIFEST_FILE} \
       --scenario Offline \
       --log_dir ${RUN_LOGS} \
-      --num_workers 1 # \
-#      ${EXTRA_ARGS}
+      --num_workers 1 \
+      ${EXTRA_ARGS}
 
 
 #  export LD_PRELOAD=/usr/lib/x86_64-linux-gnu/libtcmalloc_minimal.so.4:$LD_PRELOAD

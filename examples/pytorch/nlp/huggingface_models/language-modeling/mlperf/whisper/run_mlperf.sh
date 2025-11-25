@@ -1,5 +1,7 @@
 #!/bin/bash
 
+set -x
+
 # Controls workload mode
 export SCENARIO="${SCENARIO:-Offline}"
 export MODE="${MODE:-Performance}"
@@ -44,7 +46,7 @@ configure_system () {
 
 # Creates the default user.conf file, either auto-selected, modified, or newly generated.
 configure_userconf () {
-  cd ${WORKSPACE_DIR}
+  # cd ${WORKSPACE_DIR}
 
   # Ensure no left-over user.conf files from previous runs, and use pre-configured SYSTEM file if available.
   if [ -f "${USER_CONF}" ]; then rm ${USER_CONF}; fi
@@ -71,7 +73,7 @@ configure_userconf () {
 
 # Creates the non-run-specific submission files (necessary for final submission).
 prepare_suplements () {
-  cd ${WORKSPACE_DIR}
+  # cd ${WORKSPACE_DIR}
   # Ensure /logs/systems is populated or abort process.
   if [ -f "systems/${SYSTEM}.json" ]; then
     cp systems/${SYSTEM}.json ${SYSTEMS_DIR}/
@@ -92,7 +94,7 @@ prepare_suplements () {
 
 # Initializes the system for an MLPerf run, then launches the run.
 run_workload () {
-  cd ${WORKSPACE_DIR}
+  # cd ${WORKSPACE_DIR}
   if [ "${DEBUG}" == "False" ] ; then bash run_clean.sh; fi
   if [ -f "${RUN_LOGS}" ]; then rm -r ${RUN_LOGS}; fi
   mkdir -p ${RUN_LOGS}
