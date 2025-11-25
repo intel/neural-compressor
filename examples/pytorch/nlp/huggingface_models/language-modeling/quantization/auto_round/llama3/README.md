@@ -6,12 +6,24 @@ In this example, you can verify the accuracy on HPU/CUDA device with emulation o
 
 ```bash
 # neural-compressor-pt
-pip install neural-compressor-pt>=3.6
+pip install neural-compressor-pt==3.7
 # auto-round
-pip install auto-round>=0.8.0
+pip install auto-round==0.9.1
 # other requirements
 pip install -r requirements.txt
 ```
+
+**Before neural-compressor v3.7 and auto-round v0.9.1 release, please install from source for the latest updates:**
+
+```bash 
+# neural-compressor-pt
+INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@master
+# auto-round
+pip install git+https://github.com/intel/auto-round.git@main
+# other requirements
+pip install -r requirements.txt
+```
+
 
 ## Quantization
 
