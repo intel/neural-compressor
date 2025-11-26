@@ -7,6 +7,7 @@ permissions:
 on:
   schedule:
     - cron: "30 22 * * *"
+  workflow_dispatch:
 
 jobs:
   stale:
@@ -14,7 +15,9 @@ jobs:
     steps:
       - uses: actions/stale@v10
         with:
+          start-date: '2020-01-01T00:00:00Z'
           days-before-issue-stale: 60
           days-before-issue-close: 7
           stale-issue-message: "This issue is stale because it has been open 60 days with no activity. Remove stale label or comment or this will be closed in 7 days."
           close-issue-message: "This issue was closed because it has been stalled for 7 days with no activity."
+          operations-per-run: 500

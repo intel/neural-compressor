@@ -1,5 +1,6 @@
 # Copyright (C) 2025 Intel Corporation
 # SPDX-License-Identifier: Apache-2.0
+# CI for public repo only
 
 name: PR Agent
 
@@ -11,6 +12,7 @@ on:
 
 jobs:
   review:
+    if: ${{ !contains(github.repository, 'intel-innersource') }}
     runs-on: agent
 
     permissions:
