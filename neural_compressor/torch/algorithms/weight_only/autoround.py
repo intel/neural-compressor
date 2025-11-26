@@ -351,7 +351,6 @@ class AutoRoundQuantizer(Quantizer):
             enable_norm_bias_tuning=self.enable_norm_bias_tuning,
             truncation=self.truncation,
             enable_torch_compile=self.enable_torch_compile,
-            # TODO: AutoRound is using layer_config to quantize lm_head, remove it.
             quant_lm_head=self.quant_lm_head,
             guidance_scale=self.guidance_scale,
             num_inference_steps=self.num_inference_steps,
