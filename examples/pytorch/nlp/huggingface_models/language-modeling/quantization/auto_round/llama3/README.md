@@ -127,9 +127,7 @@ Note: If you got OOM issue, either increasing `CUDA_VISIBLE_DEVICES` or reducing
 
 ```bash
 # Install the forked vLLM
-git clone https://github.com/yiliu30/vllm-fork.git
-cd vllm-fork
-git checkout fused-moe-ar
+git clone -b fused-moe-ar --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
 VLLM_USE_PRECOMPILED=1 pip install -e .
 ```
 
