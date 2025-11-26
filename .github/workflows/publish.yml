@@ -1,13 +1,17 @@
-name: Publish
+# Copyright (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+# CI for public repo only
+
+name: Publish IO
 permissions: {}
 
 on:
   push:
-    branches:
-      - master
+    branches: [master]
 
 jobs:
   build:
+    if: ${{ !contains(github.repository, 'intel-innersource') }}
     runs-on: ubuntu-latest
     permissions:
       pull-requests: write

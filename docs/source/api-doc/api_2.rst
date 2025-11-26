@@ -9,7 +9,6 @@
    quantization.rst
    mix_precision.rst
    training.rst
-   benchmark.rst
    config.rst
    objective.rst
 

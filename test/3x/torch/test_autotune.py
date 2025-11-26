@@ -299,11 +299,11 @@ class TestAutoTune(unittest.TestCase):
         self.assertIsNotNone(best_model)
 
         # case 4
-        # Where tolerable_loss is 0.01 and accuracy meets the goal, we expect best model is None.
+        # Where tolerable_loss is 0.01 and accuracy doesn't meets the goal, best_model is the best model in trails.
         acc_res_lst = baseline + [0.9] * 2 + [0.9] + [0.9]
         custom_tune_config = TuningConfig(config_set=[RTNConfig(bits=[4, 6, 5, 8])], tolerable_loss=0.01)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
-        self.assertIsNone(best_model)
+        self.assertIsNotNone(best_model)
 
     @reset_tuning_target
     def test_rtn_double_quant_config_set(self) -> None:
@@ -335,7 +335,7 @@ class TestAutoTune(unittest.TestCase):
             config_set=get_rtn_double_quant_config_set(), max_trials=10, tolerable_loss=-1
         )
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
-        self.assertIsNone(best_model)
+        self.assertIsNotNone(best_model)
 
     @patch("neural_compressor.torch.utils.constants.DOUBLE_QUANT_CONFIGS", FAKE_DOUBLE_QUANT_CONFIGS)
     def test_rtn_double_quant_config_set3(self) -> None:
@@ -350,7 +350,7 @@ class TestAutoTune(unittest.TestCase):
 
         custom_tune_config = TuningConfig(config_set=get_rtn_double_quant_config_set(), tolerable_loss=-1)
         best_model = autotune(model=build_simple_torch_model(), tune_config=custom_tune_config, eval_fn=eval_acc_fn)
-        self.assertIsNone(best_model)
+        self.assertIsNotNone(best_model)
 
     def test_woq_tuning(self):
         from neural_compressor.torch.quantization import autotune, get_woq_tuning_config
@@ -374,7 +374,7 @@ class TestAutoTune(unittest.TestCase):
             run_args=(dataloader, True),  # run_args should be a tuple,
             example_inputs=example_inputs,
         )
-        self.assertIsNone(best_model)
+        self.assertIsNotNone(best_model)
 
     @reset_tuning_target
     def test_autotune_mixed_precision_default(self):

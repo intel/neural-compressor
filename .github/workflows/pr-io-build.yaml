@@ -1,0 +1,35 @@
+# Copyright (C) 2025 Intel Corporation
+# SPDX-License-Identifier: Apache-2.0
+
+name: IO page build test
+
+on:
+  pull_request:
+    branches: [master_next, master]
+    types: [opened, reopened, ready_for_review, synchronize]
+
+# If there is a new commit, the previous jobs will be canceled
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  build-on-pr:
+    runs-on: ${{ contains(github.repository, 'intel-innersource') && 'self-hosted' || 'ubuntu-latest' }}
+    permissions:
+      pull-requests: write
+      contents: write
+    steps:
+      - name: Clean Up Working Directory
+        run: sudo rm -rf ${{github.workspace}}/*
+
+      - name: Checkout Repo
+        uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2
+        with:
+          fetch-depth: 0
+
+      - name: Build Online Document
+        run: |
+          git config --local --get remote.origin.url
+          cd docs/build_docs
+          bash build.sh latest

@@ -8,12 +8,18 @@ permissions:
 
 on:
   pull_request:
-    branches: [master]
+    branches: ["master", "master_next"]
     types: [opened, reopened, ready_for_review, synchronize]
+
+# If there is a new commit, the previous jobs will be canceled
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
 
 jobs:
   check-the-validity-of-hyperlinks-in-README:
-    runs-on: ubuntu-latest
+    # choose different runner label for internal and external CI
+    runs-on: ${{ contains(github.repository, 'intel-innersource') && 'self-hosted' || 'ubuntu-latest' }}
     steps:
       - name: Clean Up Working Directory
         run: sudo rm -rf ${{github.workspace}}/*
@@ -28,10 +34,17 @@ jobs:
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
         run: |
           cd ${{github.workspace}}
+          export no_proxy="localhost,127.0.0.1"
+          curl_timeout=10
           delay=1
           fail="FALSE"
           merged_commit=$(git log -1 --format='%H')
           changed_files="$(git diff --name-status --diff-filter=ARM $BASE_SHA ${merged_commit} | awk '/\.md$/ {print $NF}')"
+
+          echo "no_proxy=$no_proxy"
+          echo "http_proxy=$http_proxy"
+          echo "https_proxy=$https_proxy"
+
           if  [ -n "$changed_files" ]; then
             for changed_file in $changed_files; do
               # echo $changed_file
@@ -45,15 +58,15 @@ jobs:
                     echo "Link "$url" from ${{github.workspace}}/$path needs to be verified by real person."
                   else
                     sleep $delay
-                    response=$(curl -L -s -o /dev/null -w "%{http_code}" -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"   -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"   -H "Accept-Language: en-US,en;q=0.5" "$url")|| true
+                    response=$(curl --max-time "${curl_timeout}" -L -s -o /dev/null -w "%{http_code}" -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"   -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"   -H "Accept-Language: en-US,en;q=0.5" "$url")|| true
                     if [ "$response" -ne 200 ]; then
                       echo "**********Validation $url failed ($response), try again**********"
-                      response_retry=$(curl -s -o /dev/null -w "%{http_code}" "$url") || true
+                      response_retry=$(curl --max-time "${curl_timeout}" -s -o /dev/null -w "%{http_code}" "$url") || true
                       if [ "$response_retry" -eq 200 ]; then
                         echo "*****Retry successfully*****"
                       else
                         echo "******Retry $url failed ($response_retry), add simulated browser requests******"
-                        response_browser=$(curl -s -o /dev/null -w "%{http_code}" -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"   -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"   -H "Accept-Language: en-US,en;q=0.5" "$url")|| true
+                        response_browser=$(curl --max-time "${curl_timeout}" -s -o /dev/null -w "%{http_code}" -A "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"   -H "Accept: text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8"   -H "Accept-Language: en-US,en;q=0.5" "$url")|| true
                         if [ "$response_browser" -eq 200 ]; then
                           echo "*****Retry successfully*****"
                         else
@@ -78,7 +91,7 @@ jobs:
         shell: bash
 
   check-the-validity-of-relative-path:
-    runs-on: ubuntu-latest
+    runs-on: ${{ contains(github.repository, 'intel-innersource') && 'self-hosted' || 'ubuntu-latest' }}
     steps:
       - name: Clean up Working Directory
         run: sudo rm -rf ${{github.workspace}}/*
@@ -93,15 +106,23 @@ jobs:
           REPO_NAME: ${{ github.event.pull_request.head.repo.full_name }}
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
           BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           cd ${{github.workspace}}
+          export no_proxy="localhost,127.0.0.1"
+          curl_timeout=10
           delay=1
           fail="FALSE"
-          branch="https://github.com/$REPO_NAME/blob/$HEAD_REF"
+          url_head="https://api.github.com/repos/$REPO_NAME/contents"
 
           merged_commit=$(git log -1 --format='%H')
           changed_files="$(git diff --name-status --diff-filter=ARM $BASE_SHA ${merged_commit} | awk '/\.md$/ {print $NF}')"
           png_lines=$(grep -Eo '\]\([^)]+\)' --include='*.md' -r .|grep -Ev 'http' | grep -Ev 'shape=' | grep -Ev 'mailto:inc.maintainers@intel.com')
+
+          echo "no_proxy=$no_proxy"
+          echo "http_proxy=$http_proxy"
+          echo "https_proxy=$https_proxy"
+
           if [ -n "$png_lines" ]; then
             for png_line in $png_lines; do
               # echo "No.1----->png_line is $png_line"
@@ -126,13 +147,14 @@ jobs:
                 # echo "No.5----->real_path is $real_path"
                 if [[ "$png_path" == *#* ]]; then
                   if [ -n "$changed_files" ] && echo "$changed_files" | grep -q "^${refer_path}$"; then
-                    url_dev=$branch$(echo "$real_path" | sed 's|.*/neural-compressor||')#$(echo "$png_path" | cut -d '#' -f2)
+                    url_dev=$url_head$(echo "$real_path" | sed 's|.*/frameworks.ai.lpot.neural-compressor||' | sed 's|.*/neural-compressor||')#$(echo "$png_path" | cut -d '#' -f2)?ref=$HEAD_REF
                     # echo "No.6----->url_dev is $url_dev"
                     sleep $delay
-                    response=$(curl -I -L -s -o /dev/null -w "%{http_code}" "$url_dev")
+                    # response=$(curl --max-time "${curl_timeout}" -I -L -s -o /dev/null -w "%{http_code}" "$url_dev")
+                    response=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3.raw" "$url_dev")
                     if [ "$response" -ne 200 ]; then
                       echo "**********Validation failed ($response), try again**********"
-                      response_retry=$(curl -s -o /dev/null -w "%{http_code}" "$url_dev")
+                      response_retry=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3.raw" "$url_dev")
                       if [ "$response_retry" -eq 200 ]; then
                         echo "*****Retry successfully*****"
                       else

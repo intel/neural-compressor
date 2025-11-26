@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2022 Intel Corporation
+# Copyright (c) 2025 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -12,29 +12,42 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-
-ARG UBUNTU_VER=22.04
-FROM ubuntu:${UBUNTU_VER} as devel
+ARG UBUNTU_VER=24.04
+FROM ubuntu:${UBUNTU_VER}
 
 # See http://bugs.python.org/issue19846
 ENV LANG C.UTF-8
 
 RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
-    aspell \
-    aspell-en \
     python3 \
     python3-pip \
-    python3-dev \
-    python3-distutils \
-    wget
+    python3.12-dev \
+    autoconf \
+    build-essential \
+    cmake \
+    git \
+    libomp-dev \
+    numactl \
+    time \
+    wget \
+    bc \
+    jq \
+    vim
 
 RUN ln -sf $(which python3) /usr/bin/python
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 
-RUN python -m pip install --no-cache-dir \
-    bandit\
-    pydocstyle
+RUN groupadd -g ${GROUP_ID} hostgroup && \
+    useradd -m -u ${USER_ID} -g ${GROUP_ID} hostuser
+
+USER hostuser
+
+ENV PATH="/home/hostuser/.local/bin:$PATH"
+RUN pip config set global.break-system-packages true
+RUN pip install pip packaging --upgrade
+RUN pip install --no-cache-dir setuptools
+RUN pip list
 
 WORKDIR /
