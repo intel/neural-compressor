@@ -84,81 +84,37 @@ CUDA_VISIBLE_DEVICES=0 python quantize.py  \
 AutoRound helps improve the accuracy, `iters` and `nsamples` is higher than default.
 ```bash
 # Quantize and export AutoRound format
-CUDA_VISIBLE_DEVICES=0 python quantize.py \
-    --model_name_or_path /models/Meta-Llama-3.1-8B-Instruct \
-    --quantize \
-    --dtype MXFP8 \
-    --iters 1000 \
-    --nsamples 512 \
-    --enable_torch_compile \
-    --low_gpu_mem_usage \
-    --export_format auto_round \
-    --export_path Llama-3.1-8B-MXFP8
+CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP8
 ```
 
 
-#### Llama 3.1 8B MXFP4 (Mixed with MXFP8)
+#### Llama 3.1 8B MXFP4 (Mixed with MXFP8, Target_bits=7.8)
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python quantize.py \
-    --model_name_or_path /models/Meta-Llama-3.1-8B-Instruct \
-    --quantize \
-    --target_bits 7.8 \
-    --options "MXFP4" "MXFP8" \
-    --shared_layer "k_proj" "v_proj" "q_proj" \
-    --shared_layer "gate_proj" "up_proj" \
-    --enable_torch_compile \
-    --low_gpu_mem_usage \
-    --export_format auto_round \
-    --export_path Llama-3.1-8B-MXFP4-MXFP8
+CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp4_mixed --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP4-MXFP8
 ```
 
 #### Llama 3.3 70B MXFP8
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 python quantize.py  \
-    --model_name_or_path /models/Llama-3.3-70B-Instruct/ \
-    --quantize \
-    --dtype MXFP8 \
-    --quant_lm_head \
-    --iters 0 \
-    --enable_torch_compile \
-    --low_gpu_mem_usage \
-    --export_format auto_round \
-    --export_path Llama-3.3-70B-MXFP8
+CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.3-70B --dtype=mxfp8 --input_model=/models/Llama-3.3-70B-Instruct/ --output_model=Llama-3.3-70B-MXFP8
 ```
 
-#### Llama 3.3 70B MXFP4 (Mixed with MXFP8)
+#### Llama 3.3 70B MXFP4 (Mixed with MXFP8, Target_bits=5.8)
 ```bash
-CUDA_VISIBLE_DEVICES=0 python quantize.py  \
-    --model_name_or_path /models/Llama-3.3-70B-Instruct/ \
-    --quantize \
-    --target_bits 5.8 \
-    --options "MXFP4" "MXFP8" \
-    --shared_layer "k_proj" "v_proj" "q_proj" \
-    --shared_layer "gate_proj" "up_proj" \
-    --enable_torch_compile \
-    --low_gpu_mem_usage \
-    --export_format auto_round \
-    --export_path Llama-3.3-70B-MXFP4-MXFP8
+CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.3-70B --dtype=mxfp4_mixed --input_model=/models/Llama-3.3-70B-Instruct/ --output_model=Llama-3.3-70B-MXFP4-MXFP8
 ```
 
+#### Llama 3.1 70B MXFP8
+
+```bash
+CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-70B --dtype=mxfp8 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-MXFP8
+```
 #### Llama 3.1 70B uNVFP4
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 python quantize.py  \
-    --model_name_or_path /models/Llama-3.1-70B-Instruct/ \
-    --quantize \
-    --dtype uNVFP4 \
-    --quant_lm_head \
-    --iters 0 \
-    --enable_torch_compile \
-    --low_gpu_mem_usage \
-    --export_format fake \
-    --export_path Llama-3.1-70B-uNVFP4 \
-    --accuracy
+CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_quant.sh --topology=Llama-3.1-70B --dtype=unvfp4 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-uNVFP4
 ```
-
 Note: If you got OOM issue, either increasing `CUDA_VISIBLE_DEVICES` or reducing `eval_batch_size` is suggested.
 
 ## Inference
@@ -177,28 +133,43 @@ git checkout fused-moe-ar
 VLLM_USE_PRECOMPILED=1 pip install -e .
 ```
 
-#### Accuracy Evaluation
+#### MXFP Benchmark Script
+
+For convenience, we provide a benchmark script that automatically handles GPU detection and tensor parallelism configuration:
+
+**All 5 MXFP benchmark cases:**
+
+1. **Llama 3.1 8B MXFP8** (1 GPU):
 ```bash
-# add_bos_token=True helps accuracy for general tasks
-VLLM_ENABLE_AR_EXT=1 \
-TORCH_COMPILE_DISABLE=1 \
-CUDA_VISIBLE_DEVICES=0 \
-lm_eval --model vllm \
-    --model_args pretrained=Llama-3.1-8B-MXFP4-MXFP8,add_bos_token=True,tensor_parallel_size=1,data_parallel_size=1 \
-    --tasks piqa,hellaswag,mmlu \
-    --batch_size 8 &
-wait
-# add_bos_token=True helps accuracy for GSM8K
-VLLM_ENABLE_AR_EXT=1 \
-TORCH_COMPILE_DISABLE=1 \
-CUDA_VISIBLE_DEVICES=0 \
-lm_eval --model vllm \
-    --model_args pretrained=Llama-3.1-8B-MXFP4-MXFP8,add_bos_token=False,tensor_parallel_size=1,data_parallel_size=1 \
-    --tasks gsm8k \
-    --batch_size 8
+CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=Llama-3.1-8B-MXFP8
 ```
 
-Note: If you got OOM issue, either increasing `CUDA_VISIBLE_DEVICES`+`tensor_parallel_size` or reducing `batch_size` is suggested.
+2. **Llama 3.1 8B MXFP4 Mixed** (1 GPU):
+```bash
+CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=Llama-3.1-8B-MXFP4-MXFP8
+```
+
+3. **Llama 3.3 70B MXFP8** (4 GPU):
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --model_path=Llama-3.3-70B-MXFP8
+```
+
+4. **Llama 3.3 70B MXFP4 Mixed** (4 GPU):
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --model_path=Llama-3.3-70B-MXFP4-MXFP8
+```
+
+5. **Llama 3.1 70B MXFP8** (4 GPU):
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --model_path=Llama-3.1-70B-MXFP8
+```
+
+The script automatically:
+- Detects available GPUs from `CUDA_VISIBLE_DEVICES` and sets `tensor_parallel_size` accordingly
+- Handles different `add_bos_token` settings for different tasks (GSM8K requires `False`, others use `True`)
+- Runs default tasks: `piqa,hellaswag,mmlu,gsm8k` with batch size 8
+- Supports custom task selection and batch size adjustment
+
 
 ### NVFP4
 NVFP4 is supported by vLLM already, please set `llm_compressor` format for exporting during quantization.

@@ -28,7 +28,7 @@ os.environ.setdefault("PT_HPU_WEIGHT_SHARING", "0")
 if int(os.getenv("WORLD_SIZE", "0")) > 0:
     os.environ.setdefault("PT_HPU_LAZY_ACC_PAR_MODE", "0")
     os.environ.setdefault("PT_HPU_ENABLE_LAZY_COLLECTIVES", "true")
-from neural_compressor.torch.utils import is_hpex_available, world_size
+from neural_compressor.torch.utils import is_hpex_available
 from neural_compressor.torch.quantization import autotune, prepare, convert, AutoRoundConfig, TuningConfig
 
 if is_hpex_available():

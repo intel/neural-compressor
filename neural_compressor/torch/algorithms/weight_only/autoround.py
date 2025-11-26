@@ -384,6 +384,8 @@ class AutoRoundQuantizer(Quantizer):
                 model = transformers.AutoModelForCausalLM.from_pretrained(self.output_dir)
             except:
                 pass
+        else:
+            self.accelerator.empty_cache()
 
         return model
 
