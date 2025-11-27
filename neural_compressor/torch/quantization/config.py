@@ -85,8 +85,9 @@ class TorchBaseConfig(BaseConfig):
 
     # re-write func _get_op_name_op_type_config to fallback op_type with string
     # because there are some special op_types for IPEX backend: `Linear&Relu`, `Linear&add`, ...
-    def __init__(self, white_list):
+    def __init__(self, white_list=DEFAULT_WHITE_LIST):
         super().__init__(white_list)
+        self.params_list = self.__class__._generate_params_list()
         self.non_tunable_params: List[str] = ["white_list"]
 
     def _get_op_name_op_type_config(self):
@@ -966,7 +967,6 @@ class AutoRoundConfig(TorchBaseConfig):
             output_dir (str): The output directory for temporary files (default is "./temp_auto_round").
         """
         super().__init__(white_list=white_list)
-        self.params_list = self.__class__._generate_params_list()
         # these two params are lists but not tunable
         self.non_tunable_params.extend(["options", "shared_layers"])
 
