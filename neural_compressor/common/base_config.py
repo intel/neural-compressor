@@ -190,6 +190,7 @@ class BaseConfig(ABC):
     name = BASE_CONFIG
     params_list = []
     _is_initialized = False
+    non_tunable_params = ["white_list"]
 
     def __init__(self, white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST) -> None:
         """Initialize the BaseConfig.

@@ -370,21 +370,18 @@ class AutoRoundQuantizer(Quantizer):
             model = rounder.model
             model.autoround_config = rounder.layer_config
 
+        self.accelerator.empty_cache()
         dump_model_op_stats(rounder.layer_config)
 
         if self.export_format in ["auto_round", "llm_compressor"]:
             # the directly returned model is QuantLinear, which is used for packing.
             try:
-                del model
-                self.accelerator.empty_cache()
                 logger.info(f"Quantization is done, reloading model from saved directory({self.output_dir})...")
                 import transformers  # pylint: disable=E0401
 
                 model = transformers.AutoModelForCausalLM.from_pretrained(self.output_dir)
             except:
                 pass
-        else:
-            self.accelerator.empty_cache()
 
         return model
 
