@@ -1447,15 +1447,7 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
                 bs = q_chunk.size(0)
                 q_chunk_len = q_chunk.size(-2)
                 if q_chunk.size(-2) < self.q_chunk_size:
-                    mask = (1 - torch.tril(
-                        torch.ones(bs,
-                               1,
-                               1,
-                               q_chunk_len,
-                               q_chunk_len,
-                               dtype=q.dtype,
-                               device=q.device))) * torch.finfo(
-                                   q.dtype).min
+                    mask = attn_mask[..., q_start:q_end, kv_causal_start:kv_causal_end]
                     causal_chunk_res = self.fp8_fsdpa_fwd(q_chunk, k_causal_chunk, v_causal_chunk, mask, dropout_p, scale, False, sm_mode)
                 else:
                     causal_chunk_res = self.fp8_fsdpa_fwd(q_chunk, k_causal_chunk, v_causal_chunk, None, dropout_p, scale, True, sm_mode)
