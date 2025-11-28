@@ -20,9 +20,7 @@ bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
 
 ## Evaluation
 ```bash
-git clone https://github.com/yiliu30/vllm-fork/tree/
-cd vllm-fork
-git checkout fused-moe-ar
+git clone -b fused-moe-ar --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
 VLLM_USE_PRECOMPILED=1 pip install --editable . -vvv
 ```
 
