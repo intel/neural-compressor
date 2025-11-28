@@ -1,36 +1,48 @@
+#!/bin/bash
+set -e
 
-export AR_LOG_LEVEL=TRACE
-qwen_model="/storage/yiliu7/Qwen/Qwen3-30B-A3B-Base/"
-# ds_model="/storage/yiliu7/Qwen/Qwen3-30B-A3B-Base/"
-ds_model="/storage/yiliu7/deepseek-ai/DeepSeek-V2-Lite-Chat"
-# ds_model="/storage/yiliu7/unsloth/DeepSeek-R1-BF16"
-qwen_model="/storage/yiliu7/Qwen/Qwen3-235B-A22B"
-base_name=$(basename ${model})
-scheme="MXFP4"
-scheme="MXFP8"
-qmodel_dir="quantized_models/"
-mkdir -p ${qmodel_dir}
-output_dir="${qmodel_dir}/${base_name}-${scheme}"
-# python quantize.py --model $model --scheme $scheme --output_dir $output_dir --skip_attn --use_autoround_format
-# python quantize.py --model $model -t qwen_mxfp8 --use_autoround_format
-python quantize.py --model $qwen_model -t qwen_mxfp4 --use_autoround_format
-# python quantize.py --model $qwen_model -t qwen_mxfp8 --use_autoround_format
-# python quantize.py --model $ds_model -t ds_mxfp4 --use_autoround_format
-# python quantize.py --model $ds_model -t ds_mxfp8 --use_autoround_format
-# python quantize.py --model $ds_model -t ds_mxfp4 --use_autoround_format
-# python quantize.py --model $model -t qwen_mxfp8 --use_autoround_format
-# python quantize.py --model $model -t ds_mxfp8 --use_autoround_format
-# model_name="/storage/yiliu7/Qwen/Qwen3-A3B-Base"
+MODEL=""
+TARGET=""
+OUTPUT_DIR=""
 
-# scheme="MXFP4"
+usage() {
+  echo "Usage: $0 --model MODEL -t [mxfp4|mxfp8] --output_dir DIR"
+  echo "  --model      Hugging Face model ID or local path"
+  echo "  -t           quantization target (e.g. mxfp8, mxfp4)"
+  echo "  --output_dir output directory for quantized model"
+  exit 1
+}
 
-# output_path="./"
-# base_name=$(basename ${model_name})
-# CUDA_VISIBLE_DEVICES=$device \
-# python3 quantize.py \
-#      --model ${model} \
-#      --scheme ${scheme} \
-#      --format llm_compressor \
-#      --iters 0 \
-#      --enable_torch_compile \
-#      --output_dir ${output_path}/${base_name}-${scheme}
+while [[ $# -gt 0 ]]; do
+  case "$1" in
+    --model)
+      MODEL="$2"
+      shift 2
+      ;;
+    -t)
+      TARGET="$2"
+      shift 2
+      ;;
+    --output_dir)
+      OUTPUT_DIR="$2"
+      shift 2
+      ;;
+    -h|--help)
+      usage
+      ;;
+    *)
+      echo "Unknown option: $1"
+      usage
+      ;;
+  esac
+done
+
+[ -z "$MODEL" ] && echo "Error: --model is required" && usage
+[ -z "$TARGET" ] && echo "Error: -t is required" && usage
+[ -z "$OUTPUT_DIR" ] && echo "Error: --output_dir is required" && usage
+
+python quantize.py \
+  --model "$MODEL" \
+  -t "$TARGET" \
+  --use_autoround_format \
+  --output_dir "$OUTPUT_DIR"
