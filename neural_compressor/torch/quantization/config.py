@@ -1794,6 +1794,7 @@ class FP8Config(TorchBaseConfig):
         self.observer = observer
         self.mod_dict = mod_dict
         self._json_file = None
+        self.measure_exclude = measure_exclude
         self.fake_quant = str(fake_quant)
         self.use_qdq = str(use_qdq)
         self.scale_format = scale_format
