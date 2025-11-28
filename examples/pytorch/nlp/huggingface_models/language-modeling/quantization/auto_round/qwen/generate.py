@@ -2,12 +2,6 @@
 # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 # Copied from https://github.com/vllm-project/vllm/
 
-try:
-    from auto_round_extension.vllm_ext import apply as apply_auto_round_extension
-    apply_auto_round_extension()
-except ImportError:
-    print("auto_round_extension.vllm_ext not found, proceeding without auto-round extension.")
-
 from vllm import LLM, EngineArgs
 from vllm.utils.argparse_utils import FlexibleArgumentParser
 
