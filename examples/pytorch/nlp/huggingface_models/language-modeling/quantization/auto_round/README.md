@@ -7,12 +7,12 @@ export MODEL=Qwen/Qwen3-235B-A22B
 
 - MXFP8
 ```bash
-python quantize.py --model $MODEL -t mxfp8 --use_autoround_format --output_dir ./qmodels
+bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
 ```
 
 - MXFP4
 ```bash
-bash run_quant.sh --model "$MODEL" -t mxfp8 --output_dir ./qmodels
+bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
 ```
 
 ## Evaluation
