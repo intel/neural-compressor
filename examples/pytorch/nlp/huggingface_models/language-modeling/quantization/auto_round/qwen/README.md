@@ -6,7 +6,7 @@ export MODEL=Qwen/Qwen3-235B-A22B
 ```
 > [!TIP]
 > For quicker experimentation (shorter quantization and evaluation time, lower memory),
-> you can start with the smaller `Qwen/Qwen3-30B-A3B` model before moving to larger variants.
+> you can start with the smaller `export MODEL=Qwen/Qwen3-30B-A3B` model before moving to larger variants.
 
 - MXFP8
 ```bash
