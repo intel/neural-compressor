@@ -64,9 +64,10 @@ def _convert(model):
 
     return model
 
+
 def _prepare(model):
     for name, module in model.named_modules():
-    # replace `HPUWeightOnlyLinear`s forward func
+        # replace `HPUWeightOnlyLinear`s forward func
         if isinstance(module, HPUWeightOnlyLinear):
             module = HPUMixedPrecisionLinear.prepare_from_weight_only(module)
             set_module(model, name, module)

@@ -23,7 +23,6 @@ from neural_compressor.common.utils import (
     AUTOROUND,
     AWQ,
     FP8_QUANT,
-    HYBRID_GPTQ,
     GPTQ,
     HQQ,
     HYBRID_GPTQ,
@@ -48,7 +47,6 @@ from neural_compressor.torch.quantization import (
     SmoothQuantConfig,
     StaticQuantConfig,
     TEQConfig,
-    HybridGPTQConfig
 )
 from neural_compressor.torch.utils import (
     dump_model_op_stats,
@@ -602,6 +600,7 @@ def autoround_quantize_entry(
             }
             enable_full_range = quant_config.enable_full_range
             batch_size = quant_config.batch_size
+            amp = quant_config.amp
             lr_scheduler = quant_config.lr_scheduler
             enable_quanted_input = quant_config.enable_quanted_input
             enable_minmax_tuning = quant_config.enable_minmax_tuning
@@ -638,6 +637,7 @@ def autoround_quantize_entry(
         quant_config=weight_config,
         enable_full_range=enable_full_range,
         batch_size=batch_size,
+        amp=amp,
         lr_scheduler=lr_scheduler,
         enable_quanted_input=enable_quanted_input,
         enable_minmax_tuning=enable_minmax_tuning,
@@ -748,7 +748,7 @@ def hybrid_gptq_entry(
     quantizer = get_quantizer(model, quantizer_cls=HybridGPTQQuantizer, quant_config=configs_mapping)
     model = quantizer.execute(model, mode=mode)
 
-    fp8_entry(model, configs_mapping, mode,  *args,  **kwargs)
+    fp8_entry(model, configs_mapping, mode, *args, **kwargs)
     return model
 
 

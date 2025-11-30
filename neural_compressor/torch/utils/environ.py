@@ -17,6 +17,7 @@
 import importlib
 import os
 import sys
+from functools import lru_cache
 
 import torch
 from packaging.version import Version
@@ -77,6 +78,22 @@ def is_hpex_available():
 def is_hpu_available():
     """Returns whether hpex is available."""
     return get_accelerator().name() == "hpu"
+
+
+@lru_cache(None)
+def is_hpex_support_g_idx():
+    """Check if HPEX supports group_index in the schema of hpu::convert_from_int4."""
+    if is_hpex_available():
+        try:
+            import habana_frameworks.torch
+            import torch
+
+            schema = torch._C._get_schema("hpu::convert_from_int4", "")
+            return "group_index" in str(schema)
+        except:  # pragma: no cover
+            return False
+    else:
+        return False
 
 
 ## check optimum

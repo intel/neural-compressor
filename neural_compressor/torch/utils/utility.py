@@ -13,17 +13,13 @@
 # limitations under the License.
 """Intel Neural Compressor PyTorch utilities."""
 
-import os
-import json
 import enum
 import importlib
+import json
+import os
 from collections import UserDict
 from typing import Callable, Dict, List, Optional, Tuple, Union
 
-import enum
-import importlib
-from collections import UserDict
-from typing import Callable, Dict, List, Optional, Tuple, Union
 import psutil
 import torch
 import torch.nn as nn
@@ -37,7 +33,7 @@ from neural_compressor.common.utils import (
     detect_processor_type_based_on_hw,
     logger,
 )
-from neural_compressor.torch.utils import SaveLoadFormat, is_optimum_habana_available, is_transformers_imported
+from neural_compressor.torch.utils import SaveLoadFormat, is_transformers_imported
 
 if is_transformers_imported():
     import transformers
@@ -316,7 +312,6 @@ def get_processor_type_from_user_config(user_processor_type: Optional[Union[str,
 
 def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
     """Download hugging face model from hf hub."""
-    import os
     from huggingface_hub.constants import DEFAULT_REVISION, HUGGINGFACE_HUB_CACHE
     from huggingface_hub.file_download import REGEX_COMMIT_HASH, repo_folder_name
     from huggingface_hub.utils import EntryNotFoundError

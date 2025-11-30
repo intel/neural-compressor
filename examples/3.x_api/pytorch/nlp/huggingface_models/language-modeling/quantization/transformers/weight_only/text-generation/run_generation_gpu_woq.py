@@ -30,7 +30,8 @@ parser.add_argument(
 )
 parser.add_argument("--output_dir", nargs="?", default="./saved_results")
 parser.add_argument("--quant_lm_head", action="store_true",  help="whether to quant the lm_head layer in transformers")
-parser.add_argument("--use_layer_wise",  nargs='?', const=True, default=None, type=lambda x: bool(strtobool(x)), 
+parser.add_argument("--for_inference", action="store_true",  help="whether to replace ipex linear for inference")
+parser.add_argument("--use_layer_wise",  nargs='?', const=True, default=None, type=lambda x: bool(strtobool(x)),
                     help="""whether to use layerwise quant. Case-insensitive and
                             true values are 'y', 'yes', 't', 'true', 'on', and '1'; 
                             false values are 'n', 'no', 'f', 'false', 'off', and '0'.""")
@@ -202,6 +203,7 @@ if quantization_config is not None:
                                                       quantization_config=quantization_config,
                                                       trust_remote_code=args.trust_remote_code,
                                                       torch_dtype=torch.float16,
+                                                      for_inference=args.for_inference,
                                                       )
 elif args.load_in_4bit or args.load_in_8bit:
     user_model = AutoModelForCausalLM.from_pretrained(args.model,
