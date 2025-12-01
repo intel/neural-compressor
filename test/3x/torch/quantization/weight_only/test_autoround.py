@@ -39,6 +39,8 @@ def set_hpu_torch_compile_envs():
 if is_habana_framework_installed():
     set_hpu_torch_compile_envs()
 
+def is_xpu_available():
+    return torch.xpu.is_available()
 
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
@@ -572,7 +574,7 @@ class TestAutoRoundHPU:
         )
         assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
 
-@pytest.mark.skipif(is_xpu_available=True, reason="These tests are not supported on XPU for now.")
+@pytest.mark.skipif(not is_xpu_available(), reason="These tests are not supported on XPU for now.")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRoundGPU:
     @pytest.mark.parametrize("scheme", ["W4A16","W2A16","W3A16","W8A16","MXFP4","MXFP8", "NVFP4","FPW8A16","FP8_STATIC"])
@@ -688,7 +690,7 @@ class TestAutoRoundGPU:
             seqlen=10,
             # quant_nontext_module=True,
             processor=processor,
-            device_map="xpu",
+            device_map="xpu:0",
             scheme=scheme,
             export_format="auto_round",
             output_dir=output_dir, # default is "temp_auto_round"
