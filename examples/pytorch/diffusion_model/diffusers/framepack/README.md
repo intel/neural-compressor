@@ -60,4 +60,4 @@ bash run_benchmark.sh \
     --result_path=mxfp8_result
 ```
 
-- CUDA_VISIBLE_DEVICES: distribute the dimension_list to different visible GPUs to speed up the evaluation
+- CUDA_VISIBLE_DEVICES: distribute the data to different visible GPUs to speed up the evaluation

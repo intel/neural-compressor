@@ -76,42 +76,13 @@ function run_benchmark {
         visible_gpus=${#gpu_ids[@]}
         echo "visible_gpus: ${visible_gpus}"
 
-        IFS=' ' read -ra dimensions <<< "$dimension_list"
-        dimension_num=${#dimensions[@]}
-        if [ "${visible_gpus}" -gt "${dimension_num}" ]; then
-            count=${dimension_num}
-	        result=("${dimensions[@]}")
-        else
-            count=${visible_gpus}
-            remainder=$((dimension_num % visible_gpus))
-            base_size=$((dimension_num / visible_gpus))
-            start=0
-            for ((group=0; group<count; group++)); do
-                current_size=$((base_size + (group < remainder ? 1 : 0)))
-                end=$((start + current_size))
-                current_group="${dimensions[@]:start:end-start}"
-                if [[ $group -ne 0 ]]; then
-                    result=("${result[@]}" "${current_group}")
-                else
-                    result=("${current_group}")
-                fi
-                start=$end
-            done
-        fi
-
-        for ((i=0; i<count; i++)); do
-            export CUDA_VISIBLE_DEVICES=${gpu_ids[i]}
-            python3 main.py \
+        torchrun --nproc_per_node=${visible_gpus} main.py \
                 --output_video_path ${output_video_path} \
                 --dataset_location ${dataset_location} \
-                --ratio ${ratio} \
                 --limit ${limit} \
-                --dimension_list ${result[i]} \
-                ${extra_cmd} &
-            program_pid+=($!)
-            echo "Start (PID: ${program_pid[-1]}, GPU: ${i})"
-        done
-        wait "${program_pid[@]}"
+                --ratio ${ratio} \
+                --dimension_list ${dimension_list} \
+                ${extra_cmd}
     else
         python3 main.py \
             --output_video_path ${output_video_path} \
