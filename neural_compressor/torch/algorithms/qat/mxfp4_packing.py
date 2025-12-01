@@ -1,3 +1,17 @@
+# Copyright (c) 2025 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import torch
 
 E2M1_max = 6.0
@@ -5,14 +19,14 @@ E2M1_max = 6.0
 E2M1_values = [0, 0.5, 1, 1.5, 2, 3, 4, 6]
 E2M1_bounds = torch.tensor([0.25, 0.75, 1.25, 1.75, 2.5, 3.5, 5])
 
+
 def cast_fp4(x):
     sign = torch.sign(x)
     sign_bit = (2 - sign) // 2
-    ord_ = torch.sum(
-        (x.abs().unsqueeze(-1) - E2M1_bounds.to(x.device)) > 0, dim=-1
-    )
+    ord_ = torch.sum((x.abs().unsqueeze(-1) - E2M1_bounds.to(x.device)) > 0, dim=-1)
     fp4_val = (sign_bit * 0b1000 + ord_).to(torch.uint8)
     return fp4_val
+
 
 def fuse_uint4_to_uint8(x):
     # If the last dimension is odd, pad with zeros
