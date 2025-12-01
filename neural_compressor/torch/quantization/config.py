@@ -2254,6 +2254,10 @@ DEFAULT_QAT_MODULE_MAPPINGS: dict[Callable, Any] = {
     torch.nn.Linear: "MXFP8",
 }
 
+QAT_MODULE_MAPPINGS: dict[Callable, Any] = {
+    torch.nn.Linear: ["MXFP8", "MXFP4"],
+}
+
 
 def get_default_qat_module_mappings() -> dict[Callable, Any]:
     """Get default module mapping for quantization aware training."""
