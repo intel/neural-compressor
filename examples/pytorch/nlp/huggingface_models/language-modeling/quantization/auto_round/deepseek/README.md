@@ -17,9 +17,6 @@ pip install -r requirements.txt
 ```bash
 export MODEL=deepseek-ai/DeepSeek-R1
 ```
-> [!TIP]
-> For quicker experimentation (shorter quantization and evaluation time, lower memory),
-> you can start with the smaller `export MODEL=deepseek-ai/DeepSeek-V2-Lite-Chat` model before moving to larger variants.
 
 - MXFP8
 ```bash
