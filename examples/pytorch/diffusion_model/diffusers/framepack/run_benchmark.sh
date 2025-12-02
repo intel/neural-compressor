@@ -95,12 +95,12 @@ function run_benchmark {
 
     echo "Start calculating final score..."
     cd ${dataset_location}
-    output=$(python evaluate_i2v.py \
+    python evaluate_i2v.py \
         --videos_path ${output_video_path} \
         --dimension ${dimension_list} \
         --output_path ${result_path} \
-        --ratio ${ratio} 2>&1)
-    result_file=$(echo "$output" | grep -i "Evaluation results saved to " | awk '{print $NF}')
+        --ratio ${ratio} 2>&1 | tee output.log
+    result_file=$(echo output.log | grep -i "Evaluation results saved to " | awk '{print $NF}')
 
     echo "Evaluation results saved to ${result_file}"
     zip -r "${result_path}.zip" ${result_path}
