@@ -49,6 +49,7 @@ Notes:
 - Use `--export_format fake` for `uNVFP4` data type since it's not fully supported.
 - Setting `--quant_lm_head` applies `--dtype` for the lm_head layer.
 - Setting `--iters 0` skips AutoRound tuning and uses RTN method.
+- Removing `--quantize` to evaluate the original model accuracy.
 
 
 #### Target_bits
@@ -65,9 +66,8 @@ CUDA_VISIBLE_DEVICES=0 python quantize.py  \
     --model_name_or_path facebook/opt-125m \
     --quantize \
     --dtype MXFP4 \
-    --target_bits 6.5 7 7.3 \
-    --tune_tasks mmlu \
-    --tune_limit 1000 \
+    --target_bits 6.5 7 7.5 \
+    --tune_tasks lambada_openai \
     --enable_torch_compile \
     --low_gpu_mem_usage \
     --export_format auto_round \
@@ -78,15 +78,16 @@ CUDA_VISIBLE_DEVICES=0 python quantize.py  \
 ```
 
 Notes:
+- For MX data type, `--target_bits` ranges from 4.25 to 8.25 due to scale bits
 - `--tune_tasks` indicates the tasks used for autotune accuracy verification.
-- `--tune_limit` indicates the selected samples of tasks used for autotune accuracy verification, set `None` to disable it.
+- `--tune_limit` indicates the selected samples of tasks used for autotune accuracy verification, default is None and uses all samples.
 
 
 ### Llama3 Quantization Recipes
 
 #### Llama 3.1 8B MXFP8
 
-AutoRound helps improve the accuracy, `iters` and `nsamples` is higher than default.
+AutoRound tuning helps improve the accuracy, `iters` and `nsamples` is higher than default value.
 ```bash
 # Quantize and export AutoRound format
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP8
@@ -94,27 +95,55 @@ CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 -
 
 #### Llama 3.1 8B MXFP4 (Mixed with MXFP8, Target_bits=7.8)
 
+`Target_bits=7.8` is an empirical value.
+
 ```bash
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp4_mixed --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP4-MXFP8
 ```
 
+To obtain the optimal target bit through `autotune` API, it is recommended to use `mmlu` as `--tune_tasks` or set it to be the same as `--tasks`.
+
+```bash
+CUDA_VISIBLE_DEVICES=4 python quantize.py  \
+    --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
+    --quantize \
+    --dtype MXFP4 \
+    --target_bits 7.2 7.5 7.8 \
+    --tune_tasks mmlu \
+    --enable_torch_compile  \
+    --low_gpu_mem_usage \
+    --export_format auto_round  \
+    --export_path llama3.1-8B-MXFP4-MXFP8 \
+    --accuracy \
+    --eval_batch_size 32
+```
+
 #### Llama 3.3 70B MXFP8
+
+RTN (Round-to-Nearest) is enough to keep accuracy.
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.3-70B --dtype=mxfp8 --input_model=/models/Llama-3.3-70B-Instruct/ --output_model=Llama-3.3-70B-MXFP8
 ```
 
 #### Llama 3.3 70B MXFP4 (Mixed with MXFP8, Target_bits=5.8)
+
+`Target_bits=5.8` is an empirical value.
+
 ```bash
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.3-70B --dtype=mxfp4_mixed --input_model=/models/Llama-3.3-70B-Instruct/ --output_model=Llama-3.3-70B-MXFP4-MXFP8
 ```
 
 #### Llama 3.1 70B MXFP8
 
+RTN (Round-to-Nearest) is enough to keep accuracy.
+
 ```bash
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-70B --dtype=mxfp8 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-MXFP8
 ```
 #### Llama 3.1 70B uNVFP4
+
+RTN (Round-to-Nearest) is enough to keep accuracy.
 
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_quant.sh --topology=Llama-3.1-70B --dtype=unvfp4 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-uNVFP4
