@@ -2,8 +2,6 @@ import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 import transformers
 import logging
-from auto_round import AutoRound
-
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
@@ -30,25 +28,6 @@ topologies_config = {
         "iters": 0,  # TODO: set to 200 before merge
     },
 }
-
-
-def quant_model_ar(args):
-    config = topologies_config[args.t]
-
-    logger.info(f"Using fp_layers: {config['fp_layers']}")
-    autoround = AutoRound(
-        model=args.model,
-        scheme=config["scheme"],
-        enable_torch_compile=args.enable_torch_compile,
-        iters=config["iters"],
-        fp_layers=config["fp_layers"],
-    )
-    logger.info(f"Save quantized model to {args.output_dir}")
-    format_type = "auto_round" if args.use_autoround_format else "llm_compressor"
-    autoround.quantize_and_save(
-        format=format_type,
-        output_dir=f"{args.output_dir}/quantized_model_{args.t}",
-    )
 
 
 def get_model_and_tokenizer(model_name):
