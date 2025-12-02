@@ -205,9 +205,27 @@ def get_device_type_for_scales(mod):
     return config["device_for_scales"]
 
 
-@lru_cache
+class RuntimeState(Enum):
+    STATIC = 0
+    RUNTIME_SCALE_PATCHING = 1
+    DYNAMIC_QUANTIZATION = 2
+
+
+_runtime_state = RuntimeState.STATIC
+
+@lru_cache()
+def set_runtime_state(is_dynamic_quantization):
+    global _runtime_state
+    if is_dynamic_quantization:
+        _runtime_state = RuntimeState.DYNAMIC_QUANTIZATION
+    elif (os.getenv("RUNTIME_SCALE_PATCHING", "False").lower() in ["true", "1"]):
+        _runtime_state = RuntimeState.RUNTIME_SCALE_PATCHING
+    else:
+        _runtime_state = RuntimeState.STATIC
+
+
 def is_runtime_scale_patching():
-    return os.getenv("RUNTIME_SCALE_PATCHING", "False").lower() in ["true", "1"]
+    return _runtime_state == RuntimeState.RUNTIME_SCALE_PATCHING
 
 #TODO [SW-224612]: Use cguid to calc scales and remove the check
 @lru_cache
