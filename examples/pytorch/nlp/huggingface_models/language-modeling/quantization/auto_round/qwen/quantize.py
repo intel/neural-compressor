@@ -75,7 +75,7 @@ if __name__ == "__main__":
         "-t",
         type=str,
         choices=topologies_config.keys(),
-        default="qwen_mxfp4",
+        default="mxfp4",
         help="Quantization scheme to use. Available options: " + ", ".join(topologies_config.keys()),
     )
 

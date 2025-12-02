@@ -43,7 +43,7 @@ bash ./run_generate.sh -s mxfp8 -tp 8 -m /path/to/ds_mxfp8
 ```
 - MXFP4
 ```bash
-bash ./run_generate.sh -s mxfp4 -tp 8 -m /path/to/ds_mxfp 
+bash ./run_generate.sh -s mxfp4 -tp 8 -m /path/to/ds_mxfp4
 ```
 ### Evaluation
 
