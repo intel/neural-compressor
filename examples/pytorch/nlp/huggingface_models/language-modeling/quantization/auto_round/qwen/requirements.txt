@@ -1,4 +1,2 @@
 lm-eval==0.4.9.1
 loguru
-# TODO: (yiliu30) replace it with release version
-auto_round @ git+https://github.com/intel/auto-round.git@more-ar-ext
