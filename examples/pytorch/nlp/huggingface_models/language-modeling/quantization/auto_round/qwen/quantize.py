@@ -57,11 +57,6 @@ def quant_model(args):
     fp32_model, tokenizer = get_model_and_tokenizer(args.model)
     quant_config = AutoRoundConfig(
         tokenizer=tokenizer,
-        # nsamples=32,
-        # seqlen=10,
-        # iters=1,
-        # amp=False,
-        # scale_dtype="fp16",
         scheme=config["scheme"],
         enable_torch_compile=args.enable_torch_compile,
         iters=config["iters"],
