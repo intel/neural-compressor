@@ -66,28 +66,31 @@ CUDA_VISIBLE_DEVICES=0 python quantize.py  \
     --model_name_or_path facebook/opt-125m \
     --quantize \
     --dtype MXFP4 \
-    --target_bits 6.5 7 7.5 \
-    --tune_tasks lambada_openai \
+    --target_bits 7.4 7.5 7.6 \
+    --options "MXFP4" "MXFP8" \
+    --shared_layer "k_proj" "v_proj" "q_proj" \
+    --shared_layer "fc1" "fc2" \
     --enable_torch_compile \
     --low_gpu_mem_usage \
     --export_format auto_round \
     --export_path OPT-125m-MXFP4-MXFP8 \
-    --accuracy \
     --tasks lambada_openai \
-    --eval_batch_size 8
+    --eval_batch_size 32
 ```
 
 Notes:
 - For MX data type, `--target_bits` ranges from 4.25 to 8.25 due to scale bits
-- `--tune_tasks` indicates the tasks used for autotune accuracy verification.
+- `--tune_tasks` indicates the tasks used for autotune accuracy verification, default is the same as `--tasks`.
 - `--tune_limit` indicates the selected samples of tasks used for autotune accuracy verification, default is None and uses all samples.
+- `--options` indicates the data types used for mix precision.
+- `--shared_layer` indicates the layers sharing the same data type for mix precision.
 
 
 ### Llama3 Quantization Recipes
 
 #### Llama 3.1 8B MXFP8
 
-AutoRound tuning helps improve the accuracy, `iters` and `nsamples` is higher than default value.
+AutoRound tuning helps improve the accuracy, `iters` and `nsamples` is higher than default.
 ```bash
 # Quantize and export AutoRound format
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP8
@@ -101,20 +104,23 @@ CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 -
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp4_mixed --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP4-MXFP8
 ```
 
-To obtain the optimal target bit through `autotune` API, it is recommended to use `mmlu` as `--tune_tasks` or set it to be the same as `--tasks`.
+To obtain the optimal target bit through `autotune` API:
 
 ```bash
-CUDA_VISIBLE_DEVICES=4 python quantize.py  \
+CUDA_VISIBLE_DEVICES=0 python quantize.py  \
     --model_name_or_path meta-llama/Llama-3.1-8B-Instruct \
     --quantize \
     --dtype MXFP4 \
     --target_bits 7.2 7.5 7.8 \
-    --tune_tasks mmlu \
+    --options "MXFP4" "MXFP8" \
+    --shared_layer "k_proj" "v_proj" "q_proj" \
+    --shared_layer "gate_proj" "up_proj" \
     --enable_torch_compile  \
     --low_gpu_mem_usage \
     --export_format auto_round  \
     --export_path llama3.1-8B-MXFP4-MXFP8 \
     --accuracy \
+    --tasks mmlu piqa hellaswag gsm8k \
     --eval_batch_size 32
 ```
 

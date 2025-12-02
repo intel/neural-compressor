@@ -173,7 +173,7 @@ if __name__ == "__main__":
         "--tune_tasks",
         type=str,
         nargs="+",
-        default=["mmlu"],
+        default=None,
         help="tasks for accuracy validation of autotune, text-generation and code-generation tasks are different.",
     )
     parser.add_argument(
@@ -189,7 +189,7 @@ if __name__ == "__main__":
         help="tasks for accuracy validation, text-generation and code-generation tasks are different.",
     )
     parser.add_argument("--limit", type=int, default=None, help="number of samples for accuracy evaluation")
-    parser.add_argument("--tune_limit", type=int, default=1000, help="number of samples for accuracy autotune")
+    parser.add_argument("--tune_limit", type=int, default=None, help="number of samples for accuracy autotune")
     args = parser.parse_args()
 
     if args.target_bits is None:
@@ -249,6 +249,8 @@ if __name__ == "__main__":
             layer_config=layer_config if (args.use_recipe or args.quant_lm_head) else None,
         )
         if isinstance(args.target_bits, list) and len(args.target_bits) > 1:
+            args.tune_tasks = args.tasks if args.tune_tasks is None else args.tune_tasks
+
             def eval_fn(model):
                 model = model.eval()
                 model = dispatch_model_on_devices(model)
