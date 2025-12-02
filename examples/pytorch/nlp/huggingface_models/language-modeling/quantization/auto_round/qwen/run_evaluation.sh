@@ -1,4 +1,5 @@
 #!/bin/bash
+set -e
 
 # Usage: ./run_evaluation.sh -m [model_path] -s [mxfp4|mxfp8] -t [task_name] -tp [tensor_parallel_size] -b [batch_size]
 # Default values
@@ -100,6 +101,7 @@ echo "Tensor parallelism size: ${TP_SIZE}"
 echo "Batch size: ${BATCH_SIZE}"
 echo "Output directory: ${OUTPUT_DIR}"
 
+VLLM_WORKER_MULTIPROC_METHOD=spawn \
 VLLM_ENABLE_AR_EXT=$VLLM_ENABLE_AR_EXT \
 VLLM_AR_MXFP4_MODULAR_MOE=$VLLM_AR_MXFP4_MODULAR_MOE \
 VLLM_MXFP4_PRE_UNPACK_TO_FP8=$VLLM_MXFP4_PRE_UNPACK_TO_FP8 \

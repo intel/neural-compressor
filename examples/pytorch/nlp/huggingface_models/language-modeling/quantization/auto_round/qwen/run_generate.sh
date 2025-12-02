@@ -1,3 +1,5 @@
+#!/bin/bash
+set -e
 
 # Model Testing Script
 # Usage: ./run_generate.sh -s [mxfp4|mxfp8] -m [model_path] -tp [tensor_parallel_size]
@@ -105,6 +107,7 @@ echo ""
 
 # Run the model
 echo "Starting model generation..."
+VLLM_WORKER_MULTIPROC_METHOD=spawn \
 python generate.py \
     --model "${MODEL_PATH}" \
     --tensor_parallel_size $TP_SIZE \
