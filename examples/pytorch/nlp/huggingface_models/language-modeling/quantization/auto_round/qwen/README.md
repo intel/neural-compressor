@@ -1,4 +1,18 @@
 
+This example provides an end-to-end workflow to quantize Qwen models to MXFP4/MXFP8 and evaluate them using a custom vLLM fork.
+
+## Requirement
+```bash
+pip install neural-compressor-pt==3.7
+# auto-round
+pip install auto-round==0.9.1
+# vLLM
+git clone -b fused-moe-ar --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
+VLLM_USE_PRECOMPILED=1 pip install --editable . -vvv
+# other requirements
+pip install -r requirements.txt
+```
+
 ### Quantize Model
 - Export model path
 ```bash
@@ -20,8 +34,7 @@ bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
 
 ## Evaluation
 ```bash
-git clone -b fused-moe-ar --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
-VLLM_USE_PRECOMPILED=1 pip install --editable . -vvv
+
 ```
 
 ### Prompt Tests
