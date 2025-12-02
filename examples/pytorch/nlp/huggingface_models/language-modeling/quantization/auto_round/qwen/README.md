@@ -32,9 +32,6 @@ bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
 ```
 
 ## Evaluation
-```bash
-
-```
 
 ### Prompt Tests
 
