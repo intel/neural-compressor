@@ -66,7 +66,8 @@ CUDA_VISIBLE_DEVICES=0 python quantize.py  \
     --quantize \
     --dtype MXFP4 \
     --target_bits 6.5 7 7.3 \
-    --tune_limit 100 \
+    --tune_tasks mmlu \
+    --tune_limit 1000 \
     --enable_torch_compile \
     --low_gpu_mem_usage \
     --export_format auto_round \
@@ -75,6 +76,10 @@ CUDA_VISIBLE_DEVICES=0 python quantize.py  \
     --tasks lambada_openai \
     --eval_batch_size 8
 ```
+
+Notes:
+- `--tune_tasks` indicates the tasks used for autotune accuracy verification.
+- `--tune_limit` indicates the selected samples of tasks used for autotune accuracy verification, set `None` to disable it.
 
 
 ### Llama3 Quantization Recipes

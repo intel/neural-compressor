@@ -65,15 +65,15 @@ def dispatch_model_on_devices(model):
 
 
 @torch.no_grad()
-def get_accuracy(model_name_or_path, tokenizer=None, limit=None):
+def get_accuracy(model_name_or_path, tokenizer=None, tasks="mmlu", limit=None):
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
     all_accuracy = {}
     test_gsm8k = False
     test_normal = False
-    if "gsm8k" in args.tasks:
+    if "gsm8k" in tasks:
         test_gsm8k = True
-        args.tasks.remove("gsm8k")
-    if args.tasks:
+        tasks.remove("gsm8k")
+    if tasks:
         test_normal = True
     import lm_eval
     from lm_eval.models.huggingface import HFLM
@@ -104,7 +104,7 @@ def get_accuracy(model_name_or_path, tokenizer=None, limit=None):
         )
         results = lm_eval.simple_evaluate(
             lm,
-            tasks=args.tasks,
+            tasks=tasks,
             limit=args.limit if limit is None else limit,
         )
         for task_name, task_results in results["results"].items():
@@ -170,6 +170,13 @@ if __name__ == "__main__":
     parser.add_argument("--local_rank", type=int, default=0, metavar="N", help="Local process rank.")
     parser.add_argument("--eval_batch_size", default=16, type=int, help="batch size for accuracy evaluation.")
     parser.add_argument(
+        "--tune_tasks",
+        type=str,
+        nargs="+",
+        default=["mmlu"],
+        help="tasks for accuracy validation of autotune, text-generation and code-generation tasks are different.",
+    )
+    parser.add_argument(
         "--tasks",
         type=str,
         nargs="+",
@@ -182,7 +189,7 @@ if __name__ == "__main__":
         help="tasks for accuracy validation, text-generation and code-generation tasks are different.",
     )
     parser.add_argument("--limit", type=int, default=None, help="number of samples for accuracy evaluation")
-    parser.add_argument("--tune_limit", type=int, default=100, help="number of samples for accuracy autotune")
+    parser.add_argument("--tune_limit", type=int, default=1000, help="number of samples for accuracy autotune")
     args = parser.parse_args()
 
     if args.target_bits is None:
@@ -245,7 +252,7 @@ if __name__ == "__main__":
             def eval_fn(model):
                 model = model.eval()
                 model = dispatch_model_on_devices(model)
-                accu = get_accuracy(model, tokenizer, args.tune_limit)
+                accu = get_accuracy(model, tokenizer, args.tune_tasks, args.tune_limit)
                 model = model.to("cpu")
                 return accu
             tuning_config = TuningConfig(config_set=[config], tolerable_loss=args.tolerable_loss)
@@ -257,4 +264,4 @@ if __name__ == "__main__":
 
     if args.accuracy:
         model = dispatch_model_on_devices(model)
-        get_accuracy(model, tokenizer)
+        get_accuracy(model, tokenizer, args.tasks)
