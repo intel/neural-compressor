@@ -14,6 +14,7 @@
 
 import argparse
 import os
+import copy
 
 import torch
 import transformers
@@ -67,13 +68,14 @@ def dispatch_model_on_devices(model):
 @torch.no_grad()
 def get_accuracy(model_name_or_path, tokenizer=None, tasks="mmlu", limit=None):
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
+    eval_tasks = copy.deepcopy(tasks)  # avoid removing gsm8k from original list
     all_accuracy = {}
     test_gsm8k = False
     test_normal = False
-    if "gsm8k" in tasks:
+    if "gsm8k" in eval_tasks:
         test_gsm8k = True
-        tasks.remove("gsm8k")
-    if tasks:
+        eval_tasks.remove("gsm8k")
+    if eval_tasks:
         test_normal = True
     import lm_eval
     from lm_eval.models.huggingface import HFLM
@@ -104,7 +106,7 @@ def get_accuracy(model_name_or_path, tokenizer=None, tasks="mmlu", limit=None):
         )
         results = lm_eval.simple_evaluate(
             lm,
-            tasks=tasks,
+            tasks=eval_tasks,
             limit=args.limit if limit is None else limit,
         )
         for task_name, task_results in results["results"].items():
