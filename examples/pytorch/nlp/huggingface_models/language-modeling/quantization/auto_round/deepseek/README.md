@@ -25,7 +25,7 @@ bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
 
 - MXFP4
 ```bash
-bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
+bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels
 ```
 
 ## Evaluation
