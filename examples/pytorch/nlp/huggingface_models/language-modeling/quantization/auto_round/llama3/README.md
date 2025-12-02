@@ -66,7 +66,7 @@ CUDA_VISIBLE_DEVICES=0 python quantize.py  \
     --model_name_or_path facebook/opt-125m \
     --quantize \
     --dtype MXFP4 \
-    --target_bits 7.4 7.5 7.6 \
+    --target_bits 7.1 7.2 7.3 \
     --options "MXFP4" "MXFP8" \
     --shared_layer "k_proj" "v_proj" "q_proj" \
     --shared_layer "fc1" "fc2" \
@@ -119,7 +119,6 @@ CUDA_VISIBLE_DEVICES=0 python quantize.py  \
     --low_gpu_mem_usage \
     --export_format auto_round  \
     --export_path llama3.1-8B-MXFP4-MXFP8 \
-    --accuracy \
     --tasks mmlu piqa hellaswag gsm8k \
     --eval_batch_size 32
 ```
