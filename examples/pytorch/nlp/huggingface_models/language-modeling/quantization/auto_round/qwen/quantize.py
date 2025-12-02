@@ -7,16 +7,6 @@ logger = logging.getLogger(__name__)
 
 
 topologies_config = {
-    # "ds_mxfp8": {
-    #     "scheme": "MXFP8",
-    #     "fp_layers": "lm_head",
-    #     "iters": 0,
-    # },
-    # "ds_mxfp4": {
-    #     "scheme": "MXFP4",
-    #     "fp_layers": "lm_head,self_attn",
-    #     "iters": 0,
-    # },
     "mxfp8": {
         "scheme": "MXFP8",
         "fp_layers": "lm_head,mlp.gate",
@@ -25,7 +15,7 @@ topologies_config = {
     "mxfp4": {
         "scheme": "MXFP4",
         "fp_layers": "lm_head,mlp.gate,self_attn",
-        "iters": 0,  # TODO: set to 200 before merge
+        "iters": 200,
     },
 }
 
