@@ -150,6 +150,18 @@ case "$TOPOLOGY" in
                     --iters 0 \
                     --export_path "$OUTPUT_MODEL"
                 ;;
+            "nvfp4")
+                echo "Running Llama 3.1 70B NVFP4 quantization..."
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype NVFP4 --quant_lm_head --iters 0 --export_path \"$OUTPUT_MODEL\""
+                echo "Executing command: $CMD"
+                python quantize.py \
+                    --model_name_or_path "$INPUT_MODEL" \
+                    $COMMON_ARGS \
+                    --dtype NVFP4 \
+                    --quant_lm_head \
+                    --iters 0 \
+                    --export_path "$OUTPUT_MODEL"
+                ;;
             "unvfp4")
                 echo "Running Llama 3.1 70B uNVFP4 quantization..."
                 CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" --quantize --dtype uNVFP4 --quant_lm_head --iters 0 --enable_torch_compile --low_gpu_mem_usage --export_format fake --export_path \"$OUTPUT_MODEL\" --accuracy"
