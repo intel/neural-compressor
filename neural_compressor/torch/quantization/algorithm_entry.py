@@ -583,6 +583,23 @@ def autoround_quantize_entry(
     }
     for _, quant_config in configs_mapping.items():
         quant_config = quant_config
+        
+        # set local layer config
+        if len(quant_config.local_config) > 0:
+            allowed_keys = ['bits', 'group_size', 'sym', 'data_type', 'act_bits', 'act_group_size', 
+                'act_sym', 'act_data_type', 'act_dynamic', 'super_bits', 'super_group_size', 'scale_dtype']
+            
+            layer_config = {}
+            for layer_name, layer_quant_config  in quant_config.local_config.items():
+                result = dict()
+                for param, value in layer_quant_config.get_params_dict().items():
+                    if param not in ["params_list", "_is_initialized"]:
+                        result[param] = value
+                result = {key_mapping.get(k, k): v for k, v in result.items()}
+                result = {k: v for k, v in result.items() if k in allowed_keys}
+            layer_config[layer_name] = result
+            quant_config.layer_config = layer_config
+
         result = dict()
         for param, value in quant_config.get_params_dict().items():
             if param not in ["params_list", "_is_initialized"]:
@@ -595,12 +612,13 @@ def autoround_quantize_entry(
             else:
                 bits = int(data_type.lstrip("int"))
                 params_dict["data_type"] = "int"
-        params_dict["layer_config"] = quant_config.to_dict().get("layer_config", None)
-        params_dict["dataset"] = quant_config.to_dict().get("dataset", "NeelNanda/pile-10k")
-        params_dict["output_dir"] = quant_config.to_dict().get("output_dir", "temp_auto_round")
-        params_dict["guidance_scale"] = quant_config.to_dict().get("guidance_scale", 7.5)
-        params_dict["num_inference_steps"] = quant_config.to_dict().get("num_inference_steps", 50)
-        params_dict["generator_seed"] = quant_config.to_dict().get("generator_seed", None)
+                params_dict["bits"] = bits
+        params_dict["layer_config"] = params_dict.get("layer_config", None)
+        params_dict["dataset"] = params_dict.get("dataset", "NeelNanda/pile-10k")
+        params_dict["output_dir"] = params_dict.get("output_dir", "temp_auto_round")
+        params_dict["guidance_scale"] = params_dict.get("guidance_scale", 7.5)
+        params_dict["num_inference_steps"] = params_dict.get("num_inference_steps", 50)
+        params_dict["generator_seed"] = params_dict.get("generator_seed", None)
         break
 
     kwargs.pop("example_inputs")
