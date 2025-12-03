@@ -591,7 +591,7 @@ def autoround_quantize_entry(
         data_type = params_dict["data_type"]
         if data_type is not None and data_type != "int" and "int" in data_type:
             if data_type == "fp8_to_int_sym":
-                params_dict[bits] = 4
+                params_dict["bits"] = 4
             else:
                 bits = int(data_type.lstrip("int"))
                 params_dict["data_type"] = "int"
