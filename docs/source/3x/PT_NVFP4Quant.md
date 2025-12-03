@@ -21,22 +21,36 @@ The following table summarizes the NVFP4 quantization format:
     <th>Scaling Block Size</th>
     <th>Scale Data Type</th> 
     <th>Scale Bits</th>
-    <th>Global Scale Data Type</th> 
-    <th>Global Scale Bits</th>
+    <th>Global Tensor-Wise Scale Data Type</th> 
+    <th>Global Tensor-Wise Scale Bits</th>
   </tr>
   <tr>
     <td>NVFP4</td>
     <td>E2M1</td>
     <td>4</td>
     <td>16</td>
-    <td>E4M3</td> 
+    <td>UE4M3</td> 
     <td>8</td>
     <td>FP32</td> 
     <td>32</td>
   </tr>
 </table>
 
-At similar accuracy levels, NVFP4 can deliver lower memory usage and improved compute efficiency for multiply-accumulate operations compared to higher-precision formats. Neural Compressor supports post-training quantization to NVFP4, providing recipes and APIs for users to quantize LLMs easily. To provide the best performance, the global scale for activation is static.
+### Understanding the Scaling Mechanism
+
+NVFP4 uses a two-level scaling approach to maintain accuracy while reducing precision:
+
+- **Block-wise Scale**: The quantized tensor is divided into blocks of size 16 (the Scaling Block Size). Each block has its own scale factor stored in UE4M3 format (8 bits), which is used to convert the 4-bit E2M1 quantized values back to a higher precision representation. This fine-grained scaling helps preserve local variations in the data.
+
+- **Global Tensor-Wise Scale**: In addition to the block-wise scales, a single FP32 (32-bit) scale factor is applied to the entire tensor. This global scale provides an additional level of normalization for the whole weight or activation tensor. For activations, this global scale is static (computed during calibration and fixed during inference) to optimize performance.
+
+The dequantization formula can be expressed as:
+
+$$\text{dequantized\_value} = \text{quantized\_value} \times \text{block\_scale} \times \text{global\_scale}$$
+
+This hierarchical scaling strategy balances compression efficiency with numerical accuracy, enabling NVFP4 to maintain model performance while significantly reducing memory footprint.
+
+At similar accuracy levels, NVFP4 can deliver lower memory usage and improved compute efficiency for multiply-accumulate operations compared to higher-precision formats. Neural Compressor supports post-training quantization to NVFP4, providing recipes and APIs for users to quantize LLMs easily.
 
 ## Get Started with NVFP4 Quantization API
 
