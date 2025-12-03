@@ -1,0 +1,365 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-step &mdash; Intel® Neural Compressor 3.7 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../_sources/docs/source/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>In this example, you can verify the accuracy on HPU/CUDA device with emulation of MXFP4, MXFP8, NVFP4 and uNVFP4.</p>
+<section id="requirement">
+<h2>Requirement<a class="headerlink" href="#requirement" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># neural-compressor-pt</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-pt<span class="o">==</span><span class="m">3</span>.7
+<span class="c1"># auto-round</span>
+pip<span class="w"> </span>install<span class="w"> </span>auto-round<span class="o">==</span><span class="m">0</span>.9.2
+<span class="c1"># other requirements</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<p><strong>Before neural-compressor v3.7 and auto-round v0.9.1 release, please install from source for the latest updates:</strong></p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># neural-compressor-pt</span>
+<span class="nv">INC_PT_ONLY</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/intel/neural-compressor.git@master
+<span class="c1"># auto-round</span>
+pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/intel/auto-round.git@more-ar-ext
+<span class="c1"># other requirements</span>
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="quantization">
+<h2>Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h2>
+<section id="demo-mxfp4-mxfp8-nvfp4-unvfp4">
+<h3>Demo (<code class="docutils literal notranslate"><span class="pre">MXFP4</span></code>, <code class="docutils literal notranslate"><span class="pre">MXFP8</span></code>, <code class="docutils literal notranslate"><span class="pre">NVFP4</span></code>, <code class="docutils literal notranslate"><span class="pre">uNVFP4</span></code>)<a class="headerlink" href="#demo-mxfp4-mxfp8-nvfp4-unvfp4" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>python<span class="w"> </span>quantize.py<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--model_name_or_path<span class="w"> </span>facebook/opt-125m<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dtype<span class="w"> </span>MXFP8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--enable_torch_compile<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--low_gpu_mem_usage<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--export_format<span class="w"> </span>auto_round<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--export_path<span class="w"> </span>OPT-125M-MXFP8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span>lambada_openai<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--eval_batch_size<span class="w"> </span><span class="m">8</span>
+</pre></div>
+</div>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">--export_format</span> <span class="pre">auto_round</span></code> for <code class="docutils literal notranslate"><span class="pre">MXFP4</span></code>, <code class="docutils literal notranslate"><span class="pre">MXFP8</span></code> data type and do inference as below.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">--export_format</span> <span class="pre">llm_compressor</span></code> for <code class="docutils literal notranslate"><span class="pre">NVFP4</span></code> data type since public vLLM supports it.</p></li>
+<li><p>Use <code class="docutils literal notranslate"><span class="pre">--export_format</span> <span class="pre">fake</span></code> for <code class="docutils literal notranslate"><span class="pre">uNVFP4</span></code> data type since it’s not fully supported.</p></li>
+<li><p>Setting <code class="docutils literal notranslate"><span class="pre">--quant_lm_head</span></code> applies <code class="docutils literal notranslate"><span class="pre">--dtype</span></code> for the lm_head layer.</p></li>
+<li><p>Setting <code class="docutils literal notranslate"><span class="pre">--iters</span> <span class="pre">0</span></code> skips AutoRound tuning and uses RTN method.</p></li>
+<li><p>Removing <code class="docutils literal notranslate"><span class="pre">--quantize</span></code> to evaluate the original model accuracy.</p></li>
+</ul>
+<section id="target-bits">
+<h4>Target_bits<a class="headerlink" href="#target-bits" title="Link to this heading"></a></h4>
+<p>To achieve optimal compression ratios in mixed-precision quantization, we provide the <code class="docutils literal notranslate"><span class="pre">--target_bits</span></code> argument for automated precision configuration.</p>
+<ul class="simple">
+<li><p>If you pass a single float number, it will automatically generate an optimal quantization recipe to achieve that target average bit-width.</p></li>
+<li><p>If you pass multiple float numbers, it will generate multiple recipes for different target bit-widths, allowing you to compare trade-offs between model size and accuracy.</p></li>
+</ul>
+<p>Example usage:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>python<span class="w"> </span>quantize.py<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--model_name_or_path<span class="w"> </span>facebook/opt-125m<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dtype<span class="w"> </span>MXFP4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--target_bits<span class="w"> </span><span class="m">7</span>.1<span class="w"> </span><span class="m">7</span>.2<span class="w"> </span><span class="m">7</span>.3<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--options<span class="w"> </span><span class="s2">&quot;MXFP4&quot;</span><span class="w"> </span><span class="s2">&quot;MXFP8&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--shared_layer<span class="w"> </span><span class="s2">&quot;k_proj&quot;</span><span class="w"> </span><span class="s2">&quot;v_proj&quot;</span><span class="w"> </span><span class="s2">&quot;q_proj&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--shared_layer<span class="w"> </span><span class="s2">&quot;fc1&quot;</span><span class="w"> </span><span class="s2">&quot;fc2&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--enable_torch_compile<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--low_gpu_mem_usage<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--export_format<span class="w"> </span>auto_round<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--export_path<span class="w"> </span>OPT-125m-MXFP4-MXFP8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span>lambada_openai<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--eval_batch_size<span class="w"> </span><span class="m">32</span>
+</pre></div>
+</div>
+<p>Notes:</p>
+<ul class="simple">
+<li><p>For MX data type, <code class="docutils literal notranslate"><span class="pre">--target_bits</span></code> ranges from 4.25 to 8.25 due to scale bits</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--tune_tasks</span></code> indicates the tasks used for autotune accuracy verification, default is the same as <code class="docutils literal notranslate"><span class="pre">--tasks</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--tune_limit</span></code> indicates the selected samples of tasks used for autotune accuracy verification, default is None and uses all samples.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--options</span></code> indicates the data types used for mix precision.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--shared_layer</span></code> indicates the layers sharing the same data type for mix precision.</p></li>
+</ul>
+</section>
+</section>
+<section id="llama3-quantization-recipes">
+<h3>Llama3 Quantization Recipes<a class="headerlink" href="#llama3-quantization-recipes" title="Link to this heading"></a></h3>
+<section id="llama-3-1-8b-mxfp8">
+<h4>Llama 3.1 8B MXFP8<a class="headerlink" href="#llama-3-1-8b-mxfp8" title="Link to this heading"></a></h4>
+<p>AutoRound tuning helps improve the accuracy, <code class="docutils literal notranslate"><span class="pre">iters</span></code> and <code class="docutils literal notranslate"><span class="pre">nsamples</span></code> is higher than default.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Quantize and export AutoRound format</span>
+<span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>Llama-3.1-8B<span class="w"> </span>--dtype<span class="o">=</span>mxfp8<span class="w"> </span>--input_model<span class="o">=</span>/models/Meta-Llama-3.1-8B-Instruct<span class="w"> </span>--output_model<span class="o">=</span>Llama-3.1-8B-MXFP8
+</pre></div>
+</div>
+</section>
+<section id="llama-3-1-8b-mxfp4-mixed-with-mxfp8-target-bits-7-8">
+<h4>Llama 3.1 8B MXFP4 (Mixed with MXFP8, Target_bits=7.8)<a class="headerlink" href="#llama-3-1-8b-mxfp4-mixed-with-mxfp8-target-bits-7-8" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">Target_bits=7.8</span></code> is an empirical value.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>Llama-3.1-8B<span class="w"> </span>--dtype<span class="o">=</span>mxfp4_mixed<span class="w"> </span>--input_model<span class="o">=</span>/models/Meta-Llama-3.1-8B-Instruct<span class="w"> </span>--output_model<span class="o">=</span>Llama-3.1-8B-MXFP4-MXFP8
+</pre></div>
+</div>
+<p>To obtain the optimal target bit through <code class="docutils literal notranslate"><span class="pre">autotune</span></code> API:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>python<span class="w"> </span>quantize.py<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--model_name_or_path<span class="w"> </span>meta-llama/Llama-3.1-8B-Instruct<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dtype<span class="w"> </span>MXFP4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--target_bits<span class="w"> </span><span class="m">7</span>.2<span class="w"> </span><span class="m">7</span>.5<span class="w"> </span><span class="m">7</span>.8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--options<span class="w"> </span><span class="s2">&quot;MXFP4&quot;</span><span class="w"> </span><span class="s2">&quot;MXFP8&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--shared_layer<span class="w"> </span><span class="s2">&quot;k_proj&quot;</span><span class="w"> </span><span class="s2">&quot;v_proj&quot;</span><span class="w"> </span><span class="s2">&quot;q_proj&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--shared_layer<span class="w"> </span><span class="s2">&quot;gate_proj&quot;</span><span class="w"> </span><span class="s2">&quot;up_proj&quot;</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--enable_torch_compile<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--low_gpu_mem_usage<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--export_format<span class="w"> </span>auto_round<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--export_path<span class="w"> </span>llama3.1-8B-MXFP4-MXFP8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span>mmlu<span class="w"> </span>piqa<span class="w"> </span>hellaswag<span class="w"> </span>gsm8k<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--eval_batch_size<span class="w"> </span><span class="m">32</span>
+</pre></div>
+</div>
+</section>
+<section id="llama-3-3-70b-mxfp8">
+<h4>Llama 3.3 70B MXFP8<a class="headerlink" href="#llama-3-3-70b-mxfp8" title="Link to this heading"></a></h4>
+<p>RTN (Round-to-Nearest) is enough to keep accuracy.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>Llama-3.3-70B<span class="w"> </span>--dtype<span class="o">=</span>mxfp8<span class="w"> </span>--input_model<span class="o">=</span>/models/Llama-3.3-70B-Instruct/<span class="w"> </span>--output_model<span class="o">=</span>Llama-3.3-70B-MXFP8
+</pre></div>
+</div>
+</section>
+<section id="llama-3-3-70b-mxfp4-mixed-with-mxfp8-target-bits-5-8">
+<h4>Llama 3.3 70B MXFP4 (Mixed with MXFP8, Target_bits=5.8)<a class="headerlink" href="#llama-3-3-70b-mxfp4-mixed-with-mxfp8-target-bits-5-8" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">Target_bits=5.8</span></code> is an empirical value.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>Llama-3.3-70B<span class="w"> </span>--dtype<span class="o">=</span>mxfp4_mixed<span class="w"> </span>--input_model<span class="o">=</span>/models/Llama-3.3-70B-Instruct/<span class="w"> </span>--output_model<span class="o">=</span>Llama-3.3-70B-MXFP4-MXFP8
+</pre></div>
+</div>
+</section>
+<section id="llama-3-1-70b-mxfp8">
+<h4>Llama 3.1 70B MXFP8<a class="headerlink" href="#llama-3-1-70b-mxfp8" title="Link to this heading"></a></h4>
+<p>RTN (Round-to-Nearest) is enough to keep accuracy.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>Llama-3.1-70B<span class="w"> </span>--dtype<span class="o">=</span>mxfp8<span class="w"> </span>--input_model<span class="o">=</span>/models/Llama-3.1-70B-Instruct/<span class="w"> </span>--output_model<span class="o">=</span>Llama-3.1-70B-MXFP8
+</pre></div>
+</div>
+</section>
+<section id="llama-3-1-70b-nvfp4">
+<h4>Llama 3.1 70B NVFP4<a class="headerlink" href="#llama-3-1-70b-nvfp4" title="Link to this heading"></a></h4>
+<p>RTN (Round-to-Nearest) is enough to keep accuracy.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>Llama-3.1-70B<span class="w"> </span>--dtype<span class="o">=</span>nvfp4<span class="w"> </span>--input_model<span class="o">=</span>/models/Llama-3.1-70B-Instruct/<span class="w"> </span>--output_model<span class="o">=</span>Llama-3.1-70B-NVFP4
+</pre></div>
+</div>
+</section>
+<section id="llama-3-1-70b-unvfp4">
+<h4>Llama 3.1 70B uNVFP4<a class="headerlink" href="#llama-3-1-70b-unvfp4" title="Link to this heading"></a></h4>
+<p>RTN (Round-to-Nearest) is enough to keep accuracy.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>Llama-3.1-70B<span class="w"> </span>--dtype<span class="o">=</span>unvfp4<span class="w"> </span>--input_model<span class="o">=</span>/models/Llama-3.1-70B-Instruct/<span class="w"> </span>--output_model<span class="o">=</span>Llama-3.1-70B-uNVFP4
+</pre></div>
+</div>
+<p>Note: If you got OOM issue, either increasing <code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code> or reducing <code class="docutils literal notranslate"><span class="pre">eval_batch_size</span></code> is suggested.</p>
+</section>
+</section>
+</section>
+<section id="inference">
+<h2>Inference<a class="headerlink" href="#inference" title="Link to this heading"></a></h2>
+<section id="mxfp4-mxfp8">
+<h3>MXFP4 &amp; MXFP8<a class="headerlink" href="#mxfp4-mxfp8" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p>Both pure MXFP4/MXFP8 and mix-precision model generated by target bits are supported.</p></li>
+</ul>
+<section id="prerequisite">
+<h4>Prerequisite<a class="headerlink" href="#prerequisite" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install the forked vLLM</span>
+git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </span>fused-moe-ar<span class="w"> </span>--single-branch<span class="w"> </span>--quiet<span class="w"> </span>https://github.com/yiliu30/vllm-fork.git<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span><span class="nb">cd</span><span class="w"> </span>vllm-fork
+<span class="nv">VLLM_USE_PRECOMPILED</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.
+</pre></div>
+</div>
+</section>
+<section id="mxfp-benchmark-script">
+<h4>MXFP Benchmark Script<a class="headerlink" href="#mxfp-benchmark-script" title="Link to this heading"></a></h4>
+<p>For convenience, we provide a benchmark script that automatically handles GPU detection and tensor parallelism configuration:</p>
+<p><strong>All 5 MXFP benchmark cases:</strong></p>
+<ol class="simple">
+<li><p><strong>Llama 3.1 8B MXFP8</strong> (1 GPU):</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.1-8B-MXFP8
+</pre></div>
+</div>
+<ol class="simple">
+<li><p><strong>Llama 3.1 8B MXFP4 Mixed</strong> (1 GPU):</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.1-8B-MXFP4-MXFP8
+</pre></div>
+</div>
+<ol class="simple">
+<li><p><strong>Llama 3.3 70B MXFP8</strong> (4 GPU):</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.3-70B-MXFP8
+</pre></div>
+</div>
+<ol class="simple">
+<li><p><strong>Llama 3.3 70B MXFP4 Mixed</strong> (4 GPU):</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.3-70B-MXFP4-MXFP8
+</pre></div>
+</div>
+<ol class="simple">
+<li><p><strong>Llama 3.1 70B MXFP8</strong> (4 GPU):</p></li>
+</ol>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.1-70B-MXFP8
+</pre></div>
+</div>
+<p>The script automatically:</p>
+<ul class="simple">
+<li><p>Detects available GPUs from <code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code> and sets <code class="docutils literal notranslate"><span class="pre">tensor_parallel_size</span></code> accordingly</p></li>
+<li><p>Handles different <code class="docutils literal notranslate"><span class="pre">add_bos_token</span></code> settings for different tasks (GSM8K requires <code class="docutils literal notranslate"><span class="pre">False</span></code>, others use <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></li>
+<li><p>Runs default tasks: <code class="docutils literal notranslate"><span class="pre">piqa,hellaswag,mmlu,gsm8k</span></code> with batch size 8</p></li>
+<li><p>Supports custom task selection and batch size adjustment</p></li>
+</ul>
+</section>
+</section>
+<section id="nvfp4">
+<h3>NVFP4<a class="headerlink" href="#nvfp4" title="Link to this heading"></a></h3>
+<p>NVFP4 is supported by vLLM already, please set <code class="docutils literal notranslate"><span class="pre">llm_compressor</span></code> format for exporting during quantization.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>lm_eval<span class="w"> </span>--model<span class="w"> </span>vllm<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model_args<span class="w"> </span><span class="nv">pretrained</span><span class="o">={</span>nvfp4_model_path<span class="o">}</span>,tensor_parallel_size<span class="o">=</span><span class="m">1</span>,data_parallel_size<span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span>lambada_openai<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--batch_size<span class="w"> </span><span class="m">4</span>
+</pre></div>
+</div>
+</section>
+<section id="unvfp4">
+<h3>uNVFP4<a class="headerlink" href="#unvfp4" title="Link to this heading"></a></h3>
+<p>uNVFP4 is saved in fake format and reloading is not available currently. To verify accuracy after quantization, setting <code class="docutils literal notranslate"><span class="pre">--accuracy</span> <span class="pre">--tasks</span> <span class="pre">lambada_openai</span></code> in command.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>python<span class="w"> </span>quantize.py<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--model_name_or_path<span class="w"> </span>facebook/opt-125m<span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dtype<span class="w"> </span>uNVFP4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--enable_torch_compile<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--low_gpu_mem_usage<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--export_format<span class="w"> </span>fake<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--export_path<span class="w"> </span>OPT-125M-uNVFP4<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span>lambada_openai<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--eval_batch_size<span class="w"> </span><span class="m">8</span><span class="w">  </span><span class="se">\</span>
+<span class="w">    </span>--device_map<span class="w"> </span><span class="m">0</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fbf5a9afe30> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

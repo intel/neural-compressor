@@ -46,14 +46,31 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/multimodal-modeling/quantization/auto_round/llama4">link</a></td>
 </tr>
 <tr>
-    <td rowspan="2">Llama-3.3-70B-Instruct</td>
+    <td rowspan="2">Llama-3.1-8B-Instruct</td>
     <td rowspan="2">Natural Language Processing</td>
     <td>Mixed Precision (MXFP4+MXFP8)</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/mix-precision#mix-precision-quantization-mxfp4--mxfp8">link</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.html#llama-31-8b-mxfp4-mixed-with-mxfp8-target_bits78">link</a></td>
 </tr>
 <tr>
     <td>Quantization (MXFP4/MXFP8/NVFP4)</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/mix-precision#mxfp4--mxfp8">link</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.html#demo-mxfp4-mxfp8-nvfp4-unvfp4">link</a></td>
+</tr>
+<tr>
+    <td rowspan="2">Llama-3.1-70B-Instruct</td>
+    <td rowspan="2">Natural Language Processing</td>
+<tr>
+    <td>Quantization (MXFP8/NVFP4/uNVFP4)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.html#llama-31-70b-mxfp8">link</a></td>
+</tr>
+<tr>
+    <td rowspan="2">Llama-3.3-70B-Instruct</td>
+    <td rowspan="2">Natural Language Processing</td>
+    <td>Mixed Precision (MXFP4+MXFP8)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.html#llama-33-70b-mxfp4-mixed-with-mxfp8-target_bits58">link</a></td>
+</tr>
+<tr>
+    <td>Quantization (MXFP4/MXFP8/NVFP4)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.html#demo-mxfp4-mxfp8-nvfp4-unvfp4">link</a></td>
 </tr>
 <tr>
     <td rowspan="2">gpt_j</td>

@@ -85,6 +85,10 @@ The exponent (exp) is equal to clamp(floor(log2(amax)) - maxExp, -127, 127), MAX
 
 To get a model quantized with Microscaling Data Types, users can use the AutoRound Quantization API as follows.
 
+### Basic Usage
+
+The following example demonstrates how to quantize a model using MX data types:
+
 ```python
 from neural_compressor.torch.quantization import AutoRoundConfig, prepare, convert
 from transformers import AutoModelForCausalLM, AutoTokenizer
@@ -98,13 +102,13 @@ output_dir = "./saved_inc"
 
 # quantization configuration
 quant_config = AutoRoundConfig(
-    tokenizer=tokenizer,
-    nsamples=32,
-    seqlen=32,
-    iters=20,
-    scheme="MXFP4",  # MXFP4, MXFP8
-    export_format="auto_round",
-    output_dir=output_dir,  # default is "temp_auto_round"
+    tokenizer=tokenizer,  # Tokenizer for processing calibration data
+    nsamples=32,  # Number of calibration samples (default: 128)
+    seqlen=32,  # Sequence length of calibration data (default: 2048)
+    iters=20,  # Number of optimization iterations (default: 200)
+    scheme="MXFP4",  # MX quantization scheme: "MXFP4", "MXFP8"
+    export_format="auto_round",  # Export format for the quantized model
+    output_dir=output_dir,  # Directory to save the quantized model (default: "temp_auto_round")
 )
 
 # quantize the model and save to output_dir
@@ -120,9 +124,127 @@ inputs = tokenizer(text, return_tensors="pt").to(model.device)
 print(tokenizer.decode(model.generate(**inputs, max_new_tokens=10)[0]))
 ```
 
+### Advantages of MX Quantization
+
+1. **Hardware-Friendly**: Uses power-of-2 scaling factors for efficient hardware implementation
+2. **Fine-Grained Quantization**: Per-block scaling (block size = 32) provides better accuracy than per-tensor or per-channel methods
+3. **Zero-Point Free**: No zero-point overhead, simplifying computation
+4. **Memory Efficient**: Significantly reduces model size while maintaining competitive accuracy
+5. **Energy Efficient**: Lower energy consumption for multiply-accumulate operations compared to traditional data types
+
+## Mix Precision (MXFP4 + MXFP8)
+
+To achieve optimal compression ratios with acceptable accuracy, we integrate AutoRound automatic mix-precision algorithm. The mix-precision approach combines MXFP4 and MXFP8 formats to quantize different layers of the model based on their sensitivity to quantization.
+
+### Benefits of Mix Precision
+
+- **Better Accuracy-Compression Trade-off**: Sensitive layers use MXFP8 (higher precision) while less sensitive layers use MXFP4 (higher compression), optimizing the overall model performance.
+- **Flexible Configuration**: Users can customize the precision assignment strategy based on their specific accuracy and compression requirements.
+- **Automatic Layer Selection**: The AutoRound algorithm automatically identifies which layers should use which precision level, reducing manual tuning effort.
+
+### Target Bits Configuration
+
+To achieve optimal compression ratios in mixed-precision quantization, we provide the `target_bits` parameter for automated precision configuration.
+
+- **Single target bit**: If you pass a single float number, it will automatically generate an optimal quantization recipe to achieve that target average bit-width.
+- **Multiple target bits**: If you pass multiple float numbers, it will generate multiple recipes for different target bit-widths, allowing you to compare trade-offs between model size and accuracy.
+
+**Note**: For MX data type, `target_bits` ranges from 4.25 to 8.25 due to scale bits overhead.
+
+### Usage Example
+
+#### AutoTune with Multiple Target Bits
+
+For automatically finding the best configuration across multiple target bits:
+
+```python
+from neural_compressor.torch.quantization import AutoRoundConfig, autotune, TuningConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
+fp32_model = AutoModelForCausalLM.from_pretrained(
+    "meta-llama/Llama-3.1-8B-Instruct",
+    device_map="auto",
+)
+tokenizer = AutoTokenizer.from_pretrained("meta-llama/Llama-3.1-8B-Instruct")
+
+
+# Define evaluation function
+def eval_fn(model):
+    # Implement your evaluation logic here
+    # Return accuracy score
+    pass
+
+
+# Configuration with multiple target bits
+config = AutoRoundConfig(
+    tokenizer=tokenizer,
+    nsamples=128,
+    seqlen=2048,
+    iters=200,
+    target_bits=[7.2, 7.5, 7.8],  # Try multiple target bits
+    options=["MXFP4", "MXFP8"],
+    shared_layers=[
+        ["k_proj", "v_proj", "q_proj"],
+        ["gate_proj", "up_proj"],
+    ],
+    export_format="auto_round",
+    output_dir="./llama3.1-8B-MXFP4-MXFP8",
+)
+
+# AutoTune to find the best configuration
+tuning_config = TuningConfig(config_set=[config], tolerable_loss=0.01)
+model = autotune(fp32_model, tuning_config, eval_fn=eval_fn)
+```
+
+### Key Parameters for Mix Precision
+
+- **target_bits**: Target average bit-width for the model. Can be a single float or a list of floats.
+  - Single value: Generates one recipe for that specific target bit-width
+  - Multiple values: Generates multiple recipes for comparison and selects the best one via autotune
+
+- **options**: List of available data types for mixed precision (e.g., `["MXFP4", "MXFP8"]`)
+
+- **shared_layers**: List of layer groups that should use the same precision. Each group is a list of layer name patterns.
+  - Ensures architectural consistency (e.g., all attention projections use the same precision)
+  - Improves model performance by maintaining balanced computation
+
+- **tolerable_loss**: Maximum acceptable accuracy loss compared to FP32 baseline (used with autotune)
+
+
+
 ## Examples
 
-- PyTorch [LLM/VLM models](/examples/pytorch/multimodal-modeling/quantization/auto_round/llama4)
+### PyTorch Examples
+
+- **Multimodal Models**: [Llama-4-Scout-17B-16E-Instruct with MXFP4](/examples/pytorch/multimodal-modeling/quantization/auto_round/llama4)
+- **Language Models**: [Llama3 series with MXFP4/MXFP8 and Mix Precision](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3)
+  - Llama 3.1 8B: MXFP8, MXFP4, and Mix Precision (target_bits=7.8)
+  - Llama 3.3 70B: MXFP8, MXFP4, and Mix Precision (target_bits=5.8)
+
+## Best Practices and Tips
+
+### Choosing the Right Data Type
+
+| Data Type | Compression | Accuracy | Use Case | Export Format |
+|-----------|-------------|----------|----------|---------------|
+| **MXFP8** | Moderate (8-bit) | High | Production models where accuracy is critical | `auto_round` |
+| **MXFP4** | High (4-bit) | Moderate | Aggressive compression with acceptable accuracy loss | `auto_round` |
+| **MXFP4+MXFP8 Mix** | Configurable (4.25-8.25 bits) | High | Best balance between compression and accuracy | `auto_round` |
+
+
+### Common Issues and Solutions
+
+**Issue**: Out of Memory (OOM) during quantization
+- **Solution**: Use `low_gpu_mem_usage=True`, enable `enable_torch_compile`, reduce `nsamples`, or use smaller `seqlen`
+
+**Issue**: Accuracy drop is too large
+- **Solution**: Increase `iters`, use more `nsamples`, or try mixed precision with higher `target_bits`
+
+**Issue**: Quantization is too slow
+- **Solution**: Reduce `iters` or set to 0 for RTN, decrease `nsamples`, enable `enable_torch_compile`
+
+**Issue**: Model loading fails after quantization
+- **Solution**: Refer to [auto_round/llama3/inference](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.html#inference)
 
 
 ## Reference
