@@ -110,7 +110,7 @@ def get_accuracy(model_name_or_path, tokenizer=None, tasks="mmlu", limit=None):
             limit=args.limit if limit is None else limit,
         )
         for task_name, task_results in results["results"].items():
-            if "acc,none" in task_results:
+            if "acc,none" in task_results and task_name in eval_tasks:
                 accu = task_results["acc,none"]
                 all_accuracy[task_name] = accu
     for task_name, accu in all_accuracy.items():
