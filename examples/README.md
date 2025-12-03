@@ -16,6 +16,18 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
 <tr>
+    <td>deepseek-ai/DeepSeek-R1</td>
+    <td>Natural Language Processing</td>
+    <td>Quantization (MXFP8+MXFP4)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/deepseek">link</a></td>
+</tr>
+<tr>
+    <td>Qwen/Qwen3-235B-A22B</td>
+    <td>Natural Language Processing</td>
+    <td>Quantization (MXFP8+MXFP4)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/qwen">link</a></td>
+</tr>
+<tr>
     <td>FLUX.1-dev</td>
     <td>Text to Image</td>
     <td>Quantization (MXFP8+FP8)</td>
