@@ -31,6 +31,5 @@ av==12.1.0
 torchsde==0.2.6
 einops
 safetensors
-opencv-python-headless
 dreamsim
 numpy<2.0.0
