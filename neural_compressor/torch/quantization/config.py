@@ -85,6 +85,11 @@ class TorchBaseConfig(BaseConfig):
 
     # re-write func _get_op_name_op_type_config to fallback op_type with string
     # because there are some special op_types for IPEX backend: `Linear&Relu`, `Linear&add`, ...
+    def __init__(self, white_list=DEFAULT_WHITE_LIST):
+        super().__init__(white_list)
+        self.params_list = self.__class__._generate_params_list()
+        self.non_tunable_params: List[str] = ["white_list"]
+
     def _get_op_name_op_type_config(self):
         op_type_config_dict = dict()
         op_name_config_dict = dict()
@@ -103,8 +108,6 @@ class TorchBaseConfig(BaseConfig):
     def _generate_params_list(cls) -> List[str]:
         sig = inspect.signature(cls.__init__)
         params_list = list(sig.parameters.keys())[1:]
-        if "white_list" in params_list:
-            params_list.remove("white_list")
         if "args" in params_list:
             params_list.remove("args")
         if "kwargs" in params_list:
@@ -118,26 +121,6 @@ class RTNConfig(TorchBaseConfig):
     """Config class for round-to-nearest weight-only quantization."""
 
     name = RTN
-    params_list = [
-        "dtype",
-        "bits",
-        "use_sym",
-        "group_size",
-        "group_dim",
-        "use_full_range",
-        "use_mse_search",
-        # layer wise params
-        "use_layer_wise",
-        "model_path",
-        # double quant
-        "use_double_quant",
-        "double_quant_dtype",
-        "double_quant_bits",
-        "double_quant_use_sym",
-        "double_quant_group_size",
-        # quant_lm_head
-        "quant_lm_head",
-    ]
     supported_configs: List[OperatorConfig] = []
 
     def __init__(
@@ -346,32 +329,6 @@ class GPTQConfig(TorchBaseConfig):
 
     name = GPTQ
     supported_configs: List[OperatorConfig] = []
-    params_list = [
-        "dtype",
-        "bits",
-        "use_sym",
-        "group_size",
-        "use_mse_search",
-        "use_double_quant",
-        "double_quant_dtype",
-        "double_quant_bits",
-        "double_quant_use_sym",
-        "double_quant_group_size",
-        # layer wise params
-        "use_layer_wise",
-        "use_block_wise",
-        "model_path",
-        # quant lm_head
-        "quant_lm_head",
-        # gptq params
-        "act_order",
-        "hybrid_order",
-        "fp8_aware",
-        "percdamp",
-        "block_size",
-        "static_groups",
-        "true_sequential",
-    ]
 
     def __init__(
         self,
@@ -574,28 +531,6 @@ class AWQConfig(TorchBaseConfig):
     """
 
     supported_configs: List[OperatorConfig] = []
-    params_list = [
-        "dtype",
-        "bits",
-        "group_size",
-        "group_dim",
-        "use_sym",
-        "use_full_range",
-        "use_mse_search",
-        "use_layer_wise",
-        "use_double_quant",
-        "double_quant_dtype",
-        "double_quant_bits",
-        "double_quant_use_sym",
-        "double_quant_group_size",
-        # quant_lm_head
-        "quant_lm_head",
-        # AWQ params
-        "use_auto_scale",
-        "use_auto_clip",
-        "folding",
-        "absorb_layer_dict",
-    ]
     name = AWQ
 
     def __init__(
@@ -756,26 +691,6 @@ class TEQConfig(TorchBaseConfig):
     """
 
     supported_configs: List[OperatorConfig] = []
-    params_list = [
-        "dtype",
-        "bits",
-        "group_size",
-        "group_dim",
-        "use_sym",
-        "use_full_range",
-        "use_mse_search",
-        "use_layer_wise",
-        "use_double_quant",
-        "double_quant_dtype",
-        "double_quant_bits",
-        "double_quant_use_sym",
-        "double_quant_group_size",
-        # quant_lm_head
-        "quant_lm_head",
-        # TEQ params
-        "absorb_to_layer",
-        "folding",
-    ]
     name = TEQ
 
     def __init__(
@@ -926,25 +841,6 @@ class AutoRoundConfig(TorchBaseConfig):
     """
 
     supported_configs: List[OperatorConfig] = []
-    params_list = [
-        "dtype",
-        "bits",
-        "group_size",
-        "use_sym",
-        # autoround params
-        "enable_full_range",
-        "batch_size",
-        "enable_minmax_tuning",
-        "lr",
-        "minmax_lr",
-        "iters",
-        "seqlen",
-        "nsamples",
-        "nblocks",
-        "gradient_accumulate_steps",
-        "not_use_best_mse",
-        "dynamic_max_gap",
-    ]
     name = AUTOROUND
 
     def __init__(
@@ -1000,13 +896,14 @@ class AutoRoundConfig(TorchBaseConfig):
         # v0.8
         enable_adam: bool = False,
         # v0.9: auto scheme parameters
-        target_bits: int = None,
+        target_bits: float = None,
         options: Union[str, list[Union[str]], tuple[Union[str], ...]] = ("MXFP4", "MXFP8"),
         shared_layers: Optional[Iterable[Iterable[str]]] = None,
         ignore_scale_zp_bits: bool = False,
         auto_scheme_method: str = "default",
         auto_scheme_device_map: str = None,
         auto_scheme_batch_size: int = None,
+        output_dir: str = "./temp_auto_round",
         # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
@@ -1060,17 +957,18 @@ class AutoRoundConfig(TorchBaseConfig):
             device_map: The device to be used for tuning.
             scheme (str| dict | QuantizationScheme ): A preset scheme that defines the quantization configurations.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
-            target_bits (int): The target bit width for quantization (default is None).
+            target_bits (float): The target bit width for quantization (default is None).
                 options (Union[str, list[Union[str]], tuple[Union[str], ...]]): The options for mixed-precision quantization.
                 shared_layers (Optional[Iterable[Iterable[str]]]): The shared layers for mixed-precision quantization.
                 ignore_scale_zp_bits (bool): Whether to ignore scale and zero-point bits (default is False).
                 auto_scheme_method (str): The method for automatic scheme selection (default is "default").
                 auto_scheme_device_map (str): The device map for automatic scheme selection (default is None).
                 auto_scheme_batch_size (int): The batch size for automatic scheme selection (default is 8).
+            output_dir (str): The output directory for temporary files (default is "./temp_auto_round").
         """
         super().__init__(white_list=white_list)
-        self.params_list = self.__class__._generate_params_list()
-        self.params_list.remove("options")  # option is a list but not a tunable parameter
+        # these two params are lists but not tunable
+        self.non_tunable_params.extend(["options", "shared_layers"])
 
         self.enable_full_range = enable_full_range
         self.batch_size = batch_size
@@ -1124,6 +1022,7 @@ class AutoRoundConfig(TorchBaseConfig):
         self.auto_scheme_method = auto_scheme_method
         self.auto_scheme_device_map = auto_scheme_device_map
         self.auto_scheme_batch_size = auto_scheme_batch_size
+        self.output_dir = output_dir
         # add kwargs
         for k, v in kwargs.items():
             setattr(self, k, v)
@@ -1236,14 +1135,6 @@ class MXQuantConfig(TorchBaseConfig):
     """Config class for MX quantization."""
 
     supported_configs: List[OperatorConfig] = []
-    params_list = [
-        "w_dtype",
-        "act_dtype",
-        "out_dtype",
-        "blocksize",
-        "round_method",
-        "weight_only",
-    ]
     name = MX_QUANT
 
     def __init__(
@@ -1362,16 +1253,6 @@ class DynamicQuantConfig(TorchBaseConfig):
     """Config class for dynamic quantization."""
 
     name = PT2E_DYNAMIC_QUANT
-    params_list = [
-        "w_dtype",
-        "w_sym",
-        "w_granularity",
-        "w_algo",
-        "act_dtype",
-        "act_sym",
-        "act_granularity",
-        "act_algo",
-    ]
     supported_configs: List[OperatorConfig] = []
 
     def __init__(
@@ -1457,17 +1338,6 @@ class INT8StaticQuantConfig(TorchBaseConfig):
     """Config class for static quantization."""
 
     name = STATIC_QUANT
-    params_list = [
-        "w_dtype",
-        "w_sym",
-        "w_granularity",
-        "w_algo",
-        "act_dtype",
-        "act_sym",
-        "act_granularity",
-        "act_algo",
-        "excluded_precisions",
-    ]
     supported_configs: List[OperatorConfig] = []
 
     def __init__(
@@ -1616,21 +1486,6 @@ class SmoothQuantConfig(TorchBaseConfig):
     """Config class for smooth quantization."""
 
     name = SMOOTH_QUANT
-    params_list = [
-        "w_dtype",
-        "w_sym",
-        "w_granularity",
-        "w_algo",
-        "act_dtype",
-        "act_sym",
-        "act_granularity",
-        "act_algo",
-        "excluded_precisions",
-        "alpha",
-        "folding",
-        "scale_sharing",
-        "auto_alpha_args",
-    ]
     supported_configs: List[OperatorConfig] = []
 
     def __init__(
@@ -1777,14 +1632,6 @@ class HQQConfig(TorchBaseConfig):
     """
 
     name = HQQ
-    params_list = [
-        "bits",
-        "group_size",
-        "quant_zero",
-        "quant_scale",
-        "scale_quant_group_size",
-        "quant_lm_head",
-    ]
     supported_configs: List[OperatorConfig] = []
 
     def __init__(
@@ -1947,6 +1794,7 @@ class FP8Config(TorchBaseConfig):
         self.observer = observer
         self.mod_dict = mod_dict
         self._json_file = None
+        self.measure_exclude = measure_exclude
         self.fake_quant = str(fake_quant)
         self.use_qdq = str(use_qdq)
         self.scale_format = scale_format
@@ -2101,9 +1949,6 @@ class MixedPrecisionConfig(TorchBaseConfig):
 
     name = MIXED_PRECISION
     supported_configs: List[OperatorConfig] = []
-    params_list = [
-        "dtype",
-    ]
     supported_half_precision_ops = (
         torch.nn.Linear,
         torch.nn.Conv1d,
