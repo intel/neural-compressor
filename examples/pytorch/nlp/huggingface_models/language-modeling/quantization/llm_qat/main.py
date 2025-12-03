@@ -47,7 +47,7 @@ class TrainingArguments(transformers.TrainingArguments):
 class DataArguments:
     dataset: str = field(
         default="Daring-Anteater",
-        metadata={"help": "Specify the dataset.", "choices": ["Daring-Anteater"]},
+        metadata={"help": "Specify the dataset.", "choices": ["Daring-Anteater", "cnn_dailymail"]},
     )
     train_size: int = field(
         default=0,
