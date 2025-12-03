@@ -583,14 +583,26 @@ def autoround_quantize_entry(
     }
     for _, quant_config in configs_mapping.items():
         quant_config = quant_config
-        
+
         # set local layer config
         if len(quant_config.local_config) > 0:
-            allowed_keys = ['bits', 'group_size', 'sym', 'data_type', 'act_bits', 'act_group_size', 
-                'act_sym', 'act_data_type', 'act_dynamic', 'super_bits', 'super_group_size', 'scale_dtype']
-            
+            allowed_keys = [
+                "bits",
+                "group_size",
+                "sym",
+                "data_type",
+                "act_bits",
+                "act_group_size",
+                "act_sym",
+                "act_data_type",
+                "act_dynamic",
+                "super_bits",
+                "super_group_size",
+                "scale_dtype",
+            ]
+
             layer_config = {}
-            for layer_name, layer_quant_config  in quant_config.local_config.items():
+            for layer_name, layer_quant_config in quant_config.local_config.items():
                 result = dict()
                 for param, value in layer_quant_config.get_params_dict().items():
                     if param not in ["params_list", "_is_initialized"]:
