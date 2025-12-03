@@ -28,9 +28,15 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/qwen">link</a></td>
 </tr>
 <tr>
+    <td>Framepack</td>
+    <td>Image + Text to Video</td>
+    <td>Quantization (MXFP8/FP8)</td>
+    <td><a href="./pytorch/diffusion_model/diffusers/framepack">link</a></td>
+</tr>
+<tr>
     <td>FLUX.1-dev</td>
     <td>Text to Image</td>
-    <td>Quantization (MXFP8+FP8)</td>
+    <td>Quantization (MXFP8/FP8)</td>
     <td><a href="./pytorch/diffusion_model/diffusers/flux">link</a></td>
 </tr>
 <tr>
