@@ -267,6 +267,31 @@ class TestAutoRoundCPU:
     #     assert isinstance(q_model.transformer.h[0].attn.k_proj, QuantLinear), "packing model failed."
     #     q_model.save(output_dir="saved_results_tiny-random-GPTJForCausalLM", format="huggingface")
     #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
+    
+    def test_set_local(self):
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        inp = torch.ones([1, 10], dtype=torch.long)
+        tokenizer = AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+        quant_config = AutoRoundConfig(dtype="int4", nsamples=32, seqlen=10, iters=0, amp=False ,scale_dtype="fp32")
+        logger.info(f"Test AutoRound with config {quant_config}")
+        quant_config.set_local("self.attn", AutoRoundConfig(dtype="fp16"))
+        # {"self_attn": {"bits": 4, "data_type": "nv_fp", "act_bits": 16, "group_size": 16}}
+
+        # prepare + convert API
+        model = prepare(model=fp32_model, quant_config=quant_config)
+
+        run_fn(model, self.dataloader)
+        q_model = convert(model)
+        out = q_model(self.inp)[0]
+        assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
+        assert "scale_dtype" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
+        assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
+        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
 
     @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
     @pytest.mark.parametrize("scheme", ["W4A16","W2A16","W3A16","W8A16","MXFP4","MXFP8", "NVFP4","FPW8A16","FP8_STATIC"])
