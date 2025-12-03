@@ -135,10 +135,10 @@ class AutoRoundQuantizer(Quantizer):
         super().__init__(quant_config=quant_config)
         for k, v in kwargs.items():
             setattr(self, k, v)
-        self.device = get_accelerator(kwargs.pop("device", "auto")).name() # for pack
+        self.device = get_accelerator(kwargs.pop("device", "auto")).name()  # for pack
 
     def _is_w4afp8(self) -> bool:
-        return self.data_type == "fp8_to_int_sym" 
+        return self.data_type == "fp8_to_int_sym"
 
     def prepare(self, model: torch.nn.Module, *args, **kwargs):
         """Prepares a given model for quantization.

@@ -574,7 +574,7 @@ def autoround_quantize_entry(
     from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     logger.info("Quantize model with the AutoRound algorithm.")
-    
+
     key_mapping = {
         "use_sym": "sym",
         "dtype": "data_type",
@@ -584,7 +584,7 @@ def autoround_quantize_entry(
     for _, quant_config in configs_mapping.items():
         quant_config = quant_config
         result = dict()
-        for param, value in  quant_config.get_params_dict().items():
+        for param, value in quant_config.get_params_dict().items():
             if param not in ["params_list", "_is_initialized"]:
                 result[param] = value
         params_dict = {key_mapping.get(k, k): v for k, v in result.items()}
