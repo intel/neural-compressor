@@ -1,6 +1,4 @@
 pip install -r requirements.txt
-pip install --update neural-compressor-pt
-pip install --update auto-round
 
 # opencv-python lacks deps
 pip uninstall opencv-python
