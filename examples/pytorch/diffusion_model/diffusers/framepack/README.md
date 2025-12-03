@@ -9,7 +9,7 @@ docker run -d --gpus all -v ... --shm-size=10g --name framepack -it nvcr.io/nvid
 docker exec -it framepack bash
 
 # install zip according to your system
-apt update && sudo apt install zip
+apt update && apt install zip
 
 git clone https://github.com/intel/neural-compressor.git
 cd neural-compressor/examples/pytorch/diffusion_model/diffusers/framepack
