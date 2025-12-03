@@ -413,7 +413,111 @@ class TestAutoRoundCPU:
         assert best_model.model.decoder.layers[1].fc1.data_type =="mx_fp8", \
                 "model is not quantized correctly, please check."
 
+    def test_static_attention_dtype(self):
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        tokenizer = AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
 
+        output_dir = "./saved_inc"
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer,
+            iters=0,
+            nsamples=2,
+            seqlen=2,
+            scheme="FP8_STATIC",
+            static_attention_dtype="fp8",
+            output_dir=output_dir,
+            export_format="auto_round",
+        )
+        # quantizer execute
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        model = convert(model)
+        
+        from safetensors import safe_open
+        f = safe_open(os.path.join(output_dir, "model.safetensors"), framework="pt")
+        assert "model.decoder.layers.8.self_attn.k_proj.input_scale" in f.keys()
+        assert "model.decoder.layers.8.self_attn.k_proj.weight_scale" in f.keys()
+        assert f.get_tensor("model.decoder.layers.5.self_attn.v_proj.input_scale").shape == torch.Size([1])
+        assert f.get_tensor("model.decoder.layers.5.self_attn.v_proj.weight").dtype == torch.float8_e4m3fn
+        check_attrs = ["k_scale", "v_scale", "q_scale"]
+
+        for attr in check_attrs:
+            weight_name = f"model.decoder.layers.8.self_attn.{attr}"
+            assert weight_name in f.keys()
+            assert f.get_tensor(weight_name).shape == torch.Size([1])
+            assert f.get_tensor(weight_name).dtype == torch.float32
+        shutil.rmtree(output_dir, ignore_errors=True)
+
+    @pytest.mark.parametrize("static_kv_dtype", [None, "fp8", "float16"])
+    def test_static_afp8_export(self, static_kv_dtype):
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        tokenizer = AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+
+        output_dir = "./saved_inc"
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer,
+            bits=8,
+            group_size=-1,
+            iters=0,
+            act_bits=8,
+            nsamples=2,
+            seqlen=2,
+            data_type="fp8",
+            act_data_type="fp8",
+            act_dynamic=False,
+            act_group_size=0,
+            static_kv_dtype=static_kv_dtype,
+            export_format="auto_round",
+            output_dir=output_dir,
+        )
+        
+        # quantizer execute
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        model = convert(model)
+        
+        from safetensors import safe_open
+        f = safe_open(os.path.join(output_dir, "model.safetensors"), framework="pt")
+        assert "model.decoder.layers.8.self_attn.k_proj.input_scale" in f.keys()
+        assert "model.decoder.layers.8.self_attn.k_proj.weight_scale" in f.keys()
+        assert f.get_tensor("model.decoder.layers.5.self_attn.v_proj.input_scale").shape == torch.Size([1])
+        assert f.get_tensor("model.decoder.layers.5.self_attn.v_proj.weight").dtype == torch.float8_e4m3fn
+        if static_kv_dtype is None:
+            with torch.no_grad():
+                import transformers
+
+                model = transformers.AutoModelForCausalLM.from_pretrained(
+                    output_dir,
+                    torch_dtype="auto",
+                    low_cpu_mem_usage=True,
+                    trust_remote_code=True,
+                )
+                model.eval()
+                assert (
+                    model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__
+                    == "WeightFP8ActFP8StaticQuantLinear"
+                ), f"Expected WeightFP8ActFP8StaticQuantLinear, got {model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__}"
+                tokenizer = transformers.AutoTokenizer.from_pretrained(output_dir)
+                prompt = "AI is "
+                encode = tokenizer.encode(prompt, return_tensors="pt")
+                with torch.no_grad():
+                    output_tokens = model.generate(
+                        encode,
+                        max_length=10,
+                    )
+                    output = tokenizer.decode(output_tokens[0], skip_special_tokens=True)
+                    print(f"Prompt: {prompt}")
+                    print(f"Output: {output}")
+                    assert output is not None, "Output should not be None"
+        shutil.rmtree(output_dir, ignore_errors=True)
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")
 @pytest.mark.skipif(os.getenv("PT_HPU_LAZY_MODE", "0") == "1", reason="Lazy mode is enabled")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")

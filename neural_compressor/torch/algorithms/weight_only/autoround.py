@@ -187,6 +187,7 @@ class AutoRoundQuantizer(Quantizer):
         quant_config = self.__dict__.pop("quant_config", None)
         device = self.__dict__.pop("device")
         export_format = self.__dict__.pop("export_format", "default")
+        output_dir = self.__dict__.pop("output_dir", "temp_auto_round")
         rounder = AutoRound(
             model,
             tokenizer=tokenizer,
@@ -196,13 +197,13 @@ class AutoRoundQuantizer(Quantizer):
         if self._is_w4afp8():
             model, weight_config = rounder.quantize()
             model.autoround_config = weight_config
-            return rounder.save_quantized(output_dir=self.output_dir, inplace=True)
+            return rounder.save_quantized(output_dir=output_dir, inplace=True)
         elif "itrex" in export_format:
             model, weight_config = rounder.quantize()
             model.autoround_config = weight_config
             model = pack_model(model, weight_config, device=device, inplace=True)
         else:  # pragma: no cover
-            rounder.quantize_and_save(output_dir=self.output_dir, format=export_format, inplace=True)
+            rounder.quantize_and_save(output_dir=output_dir, format=export_format, inplace=True)
             model = rounder.model
             model.autoround_config = rounder.layer_config
 
