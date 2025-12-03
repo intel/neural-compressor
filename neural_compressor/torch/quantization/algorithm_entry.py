@@ -574,150 +574,37 @@ def autoround_quantize_entry(
     from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     logger.info("Quantize model with the AutoRound algorithm.")
-    weight_config = {}
-    for (op_name, op_type), quant_config in configs_mapping.items():
-        if quant_config.name != AUTOROUND or quant_config.dtype == "fp32":
-            continue
-        else:
-            bits = quant_config.bits
-            group_size = quant_config.group_size
-            sym = quant_config.use_sym
-            data_type = quant_config.dtype
-            act_bits = quant_config.act_bits
-            act_group_size = quant_config.act_group_size
-            act_sym = quant_config.act_sym
-            act_data_type = quant_config.act_dtype
-            act_dynamic = quant_config.act_dynamic
-            super_bits = quant_config.super_bits
-            super_group_size = quant_config.super_group_size
-            if data_type is not None and data_type != "int" and "int" in data_type:
-                if data_type == "fp8_to_int_sym":
-                    bits = 4
-                else:
-                    bits = int(data_type.lstrip("int"))
-                    data_type = "int"
-            weight_config[op_name] = {
-                "data_type": data_type,
-                "bits": bits,
-                "sym": sym,
-                "group_size": group_size,
-                "act_bits": act_bits,
-                "act_group_size": act_group_size,
-                "act_sym": act_sym,
-                "act_dynamic": act_dynamic,
-                "act_data_type": act_data_type,
-            }
-            layer_config = quant_config.to_dict().get("layer_config", None)
-            dataset = quant_config.to_dict().get("dataset", "NeelNanda/pile-10k")
-            output_dir = quant_config.to_dict().get("output_dir", "temp_auto_round")
-            enable_full_range = quant_config.enable_full_range
-            batch_size = quant_config.batch_size
-            amp = quant_config.amp
-            lr_scheduler = quant_config.lr_scheduler
-            enable_quanted_input = quant_config.enable_quanted_input
-            enable_minmax_tuning = quant_config.enable_minmax_tuning
-            lr = quant_config.lr
-            minmax_lr = quant_config.minmax_lr
-            low_gpu_mem_usage = quant_config.low_gpu_mem_usage
-            iters = quant_config.iters
-            seqlen = quant_config.seqlen
-            nsamples = quant_config.nsamples
-            sampler = quant_config.sampler
-            seed = quant_config.seed
-            nblocks = quant_config.nblocks
-            gradient_accumulate_steps = quant_config.gradient_accumulate_steps
-            not_use_best_mse = quant_config.not_use_best_mse
-            dynamic_max_gap = quant_config.dynamic_max_gap
-            scale_dtype = quant_config.scale_dtype
-            to_quant_block_names = quant_config.to_quant_block_names
-            low_cpu_mem_usage = quant_config.use_layer_wise
-            export_format = quant_config.export_format
-            enable_norm_bias_tuning = quant_config.enable_norm_bias_tuning
-            enable_torch_compile = quant_config.enable_torch_compile
-            quant_nontext_module = quant_config.quant_nontext_module
-            extra_data_dir = quant_config.extra_data_dir
-            processor = quant_config.processor
-            image_processor = quant_config.image_processor
-            template = quant_config.template
-            truncation = quant_config.truncation
-            scheme = quant_config.scheme
-            device_map = quant_config.device_map
-            quant_lm_head = quant_config.quant_lm_head
-            guidance_scale = quant_config.to_dict().get("guidance_scale", 7.5)
-            num_inference_steps = quant_config.to_dict().get("num_inference_steps", 50)
-            generator_seed = quant_config.to_dict().get("generator_seed", None)
-            # 0.9.0: auto scheme parameters
-            target_bits = quant_config.target_bits
-            options = quant_config.options
-            shared_layers = quant_config.shared_layers
-            ignore_scale_zp_bits = quant_config.ignore_scale_zp_bits
-            auto_scheme_method = quant_config.auto_scheme_method
-            auto_scheme_batch_size = quant_config.auto_scheme_batch_size
-            auto_scheme_device_map = quant_config.auto_scheme_device_map
+    
+    key_mapping = {
+        "use_sym": "sym",
+        "dtype": "data_type",
+        "act_dtype": "act_data_type",
+        "use_layer_wise": "low_cpu_mem_usage",
+    }
+    for _, quant_config in configs_mapping.items():
+        quant_config = quant_config
+        result = dict()
+        for param, value in  quant_config.get_params_dict().items():
+            if param not in ["params_list", "_is_initialized"]:
+                result[param] = value
+        params_dict = {key_mapping.get(k, k): v for k, v in result.items()}
+        data_type = params_dict["data_type"]
+        if data_type is not None and data_type != "int" and "int" in data_type:
+            if data_type == "fp8_to_int_sym":
+                params_dict[bits] = 4
+            else:
+                bits = int(data_type.lstrip("int"))
+                params_dict["data_type"] = "int"
+        params_dict["layer_config"] = quant_config.to_dict().get("layer_config", None)
+        params_dict["dataset"] = quant_config.to_dict().get("dataset", "NeelNanda/pile-10k")
+        params_dict["output_dir"] = quant_config.to_dict().get("output_dir", "temp_auto_round")
+        params_dict["guidance_scale"] = quant_config.to_dict().get("guidance_scale", 7.5)
+        params_dict["num_inference_steps"] = quant_config.to_dict().get("num_inference_steps", 50)
+        params_dict["generator_seed"] = quant_config.to_dict().get("generator_seed", None)
+        break
 
     kwargs.pop("example_inputs")
-    quantizer = get_quantizer(
-        model,
-        quantizer_cls=AutoRoundQuantizer,
-        quant_config=weight_config,
-        bits=bits,
-        data_type=data_type,
-        group_size=group_size,
-        sym=sym,
-        act_bits=act_bits,
-        act_group_size=act_group_size,
-        act_sym=act_sym,
-        act_data_type=act_data_type,
-        act_dynamic=act_dynamic,
-        super_bits=super_bits,
-        super_group_size=super_group_size,
-        layer_config=layer_config,
-        output_dir=output_dir,
-        enable_full_range=enable_full_range,
-        batch_size=batch_size,
-        amp=amp,
-        lr_scheduler=lr_scheduler,
-        dataset=dataset,
-        enable_quanted_input=enable_quanted_input,
-        enable_minmax_tuning=enable_minmax_tuning,
-        lr=lr,
-        minmax_lr=minmax_lr,
-        low_gpu_mem_usage=low_gpu_mem_usage,
-        iters=iters,
-        seqlen=seqlen,
-        nsamples=nsamples,
-        sampler=sampler,
-        seed=seed,
-        nblocks=nblocks,
-        gradient_accumulate_steps=gradient_accumulate_steps,
-        not_use_best_mse=not_use_best_mse,
-        dynamic_max_gap=dynamic_max_gap,
-        scale_dtype=scale_dtype,
-        to_quant_block_names=to_quant_block_names,
-        low_cpu_mem_usage=low_cpu_mem_usage,
-        export_format=export_format,
-        enable_norm_bias_tuning=enable_norm_bias_tuning,
-        enable_torch_compile=enable_torch_compile,
-        quant_nontext_module=quant_nontext_module,
-        extra_data_dir=extra_data_dir,
-        processor=processor,
-        image_processor=image_processor,
-        template=template,
-        truncation=truncation,
-        scheme=scheme,
-        device_map=device_map,
-        quant_lm_head=quant_lm_head,
-        guidance_scale=guidance_scale,
-        num_inference_steps=num_inference_steps,
-        generator_seed=generator_seed,
-        target_bits=target_bits,
-        options=options,
-        shared_layers=shared_layers,
-        ignore_scale_zp_bits=ignore_scale_zp_bits,
-        auto_scheme_method=auto_scheme_method,
-        auto_scheme_batch_size=auto_scheme_batch_size,
-        auto_scheme_device_map=auto_scheme_device_map,
-    )
+    quantizer = get_quantizer(model, quantizer_cls=AutoRoundQuantizer, quant_config=quant_config, **params_dict)
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
     model.qconfig = configs_mapping
     model.save = MethodType(save, model)

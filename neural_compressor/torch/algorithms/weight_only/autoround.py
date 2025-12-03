@@ -51,68 +51,7 @@ class AutoRoundQuantizer(Quantizer):
 
     def __init__(
         self,
-        bits: int = None,
-        group_size: int = None,
-        sym: bool = None,
-        data_type: str = None,
-        act_bits: int = None,
-        act_group_size: int = None,
-        act_sym: bool = None,
-        act_data_type: str = None,
-        act_dynamic: bool = None,
-        super_bits: int = None,
-        super_group_size: int = None,
-        quant_config: dict = {},  # for INC
-        layer_config: dict[str, Union[str, dict, QuantizationScheme]] = None,
-        enable_full_range: bool = False,  ##for symmetric, TODO support later
-        batch_size: int = 8,
-        amp: bool = True,
-        device_map: str = None,
-        quant_lm_head: bool = False,
-        lr_scheduler=None,
-        dataset: Union[str, list, tuple, torch.utils.data.DataLoader] = "NeelNanda/pile-10k",
-        enable_quanted_input: bool = True,
-        enable_minmax_tuning: bool = True,
-        lr: float = None,
-        minmax_lr: float = None,
-        low_gpu_mem_usage: bool = False,
-        iters: int = 200,
-        seqlen: int = 2048,
-        nsamples: int = 128,
-        sampler: str = "rand",
-        seed: int = 42,
-        nblocks: int = 1,
-        gradient_accumulate_steps: int = 1,
-        not_use_best_mse: bool = False,
-        dynamic_max_gap: int = -1,
-        scale_dtype: str = "fp16",
-        to_quant_block_names: list = None,
-        low_cpu_mem_usage: bool = False,
-        export_format: str = "itrex",
-        # v0.4
-        enable_norm_bias_tuning: bool = False,
-        enable_torch_compile: bool = None,
-        # mllm
-        quant_nontext_module: bool = False,
-        extra_data_dir: str = None,
-        image_processor=None,
-        processor=None,
-        template: Union[str, Template] = None,
-        truncation: bool = False,
-        # 0.7
-        scheme: Union[str, dict, QuantizationScheme] = "W4A16",
-        # diffusion
-        guidance_scale: float = 7.5,
-        num_inference_steps: int = 50,
-        generator_seed: int = None,
-        # 0.9
-        target_bits: int = None,
-        options: Union[str, list[Union[str]], tuple[Union[str], ...]] = ("MXFP4", "MXFP8"),
-        shared_layers: Optional[Iterable[Iterable[str]]] = None,
-        ignore_scale_zp_bits: bool = False,
-        auto_scheme_method: str = "default",
-        auto_scheme_batch_size: int = None,
-        auto_scheme_device_map: str = None,
+        quant_config: Optional[dict] = None,
         **kwargs,
     ):
         """Init a AutQRoundQuantizer object.
@@ -193,70 +132,13 @@ class AutoRoundQuantizer(Quantizer):
         Returns:
             The quantized model.
         """
-        super().__init__(quant_config)
-        self.layer_config = layer_config
-        self.output_dir = kwargs.pop("output_dir", "temp_auto_round")
-        self.tokenizer = kwargs.pop("tokenizer", "Placeholder")  # for AutoRound initialization
-        self.enable_full_range = enable_full_range
-        self.bits = bits
-        self.group_size = group_size
-        self.sym = sym
-        self.data_type = data_type
-        self.act_bits = act_bits
-        self.act_group_size = act_group_size
-        self.act_sym = act_sym
-        self.act_data_type = act_data_type
-        self.act_dynamic = act_dynamic
-        self.super_bits = super_bits
-        self.super_group_size = super_group_size
-        self.batch_size = batch_size
-        self.amp = amp
-        self.device = get_accelerator(kwargs.pop("device", "auto")).name()
-        self.lr_scheduler = lr_scheduler
-        self.dataset = dataset
-        self.enable_quanted_input = enable_quanted_input
-        self.enable_minmax_tuning = enable_minmax_tuning
-        self.lr = lr
-        self.minmax_lr = minmax_lr
-        self.low_gpu_mem_usage = low_gpu_mem_usage
-        self.iters = iters
-        self.seqlen = seqlen
-        self.nsamples = nsamples
-        self.sampler = sampler
-        self.seed = seed
-        self.nblocks = nblocks
-        self.gradient_accumulate_steps = gradient_accumulate_steps
-        self.not_use_best_mse = not_use_best_mse
-        self.dynamic_max_gap = dynamic_max_gap
-        self.scale_dtype = scale_dtype
-        self.to_quant_block_names = to_quant_block_names
-        self.low_cpu_mem_usage = low_cpu_mem_usage
-        self.export_format = export_format
-        self.enable_norm_bias_tuning = enable_norm_bias_tuning
-        self.enable_torch_compile = enable_torch_compile
-        self.quant_nontext_module = quant_nontext_module
-        self.extra_data_dir = extra_data_dir
-        self.processor = processor
-        self.image_processor = image_processor
-        self.template = template
-        self.truncation = truncation
-        self.scheme = scheme
-        self.device_map = device_map
-        self.quant_lm_head = quant_lm_head
-        self.enable_w4afp8 = self._is_w4afp8()
-        self.guidance_scale = guidance_scale
-        self.num_inference_steps = num_inference_steps
-        self.generator_seed = generator_seed
-        self.target_bits = target_bits
-        self.options = options
-        self.shared_layers = shared_layers
-        self.ignore_scale_zp_bits = ignore_scale_zp_bits
-        self.auto_scheme_method = auto_scheme_method
-        self.auto_scheme_batch_size = auto_scheme_batch_size
-        self.auto_scheme_device_map = auto_scheme_device_map
+        super().__init__(quant_config=quant_config)
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+        self.device = get_accelerator(kwargs.pop("device", "auto")).name() # for pack
 
     def _is_w4afp8(self) -> bool:
-        return any([v.get("data_type", None) == "fp8_to_int_sym" for v in self.quant_config.values()])
+        return self.data_type == "fp8_to_int_sym" 
 
     def prepare(self, model: torch.nn.Module, *args, **kwargs):
         """Prepares a given model for quantization.
@@ -289,7 +171,7 @@ class AutoRoundQuantizer(Quantizer):
         model = model.orig_model
         if pipe is not None:
             model = pipe
-        if self.target_bits is not None:
+        if hasattr(self, "target_bits") and self.target_bits is not None:
             from auto_round import AutoScheme
 
             self.scheme = AutoScheme(
@@ -302,69 +184,25 @@ class AutoRoundQuantizer(Quantizer):
                 device_map=self.auto_scheme_device_map,
                 low_gpu_mem_usage=self.low_gpu_mem_usage,
             )
+        quant_config = self.__dict__.pop("quant_config", None)
+        device = self.__dict__.pop("device")
+        export_format = self.__dict__.pop("export_format", "default")
         rounder = AutoRound(
             model,
-            layer_config=self.layer_config,
-            bits=self.bits,
-            data_type=self.data_type,
-            group_size=self.group_size,
-            sym=self.sym,
-            act_bits=self.act_bits,
-            act_group_size=self.act_group_size,
-            act_sym=self.act_sym,
-            act_data_type=self.act_data_type,
-            act_dynamic=self.act_dynamic,
-            super_bits=self.super_bits,
-            super_group_size=self.super_group_size,
             tokenizer=tokenizer,
-            scheme=self.scheme,
-            processor=self.processor,
-            image_processor=self.image_processor,
-            enable_full_range=self.enable_full_range,
-            batch_size=self.batch_size,
-            amp=self.amp,
-            device_map=self.device_map,
-            lr_scheduler=self.lr_scheduler,
-            dataset=self.dataset,
-            extra_data_dir=self.extra_data_dir,
-            template=self.template,
-            quant_nontext_module=self.quant_nontext_module,
-            enable_quanted_input=self.enable_quanted_input,
-            enable_minmax_tuning=self.enable_minmax_tuning,
-            lr=self.lr,
-            minmax_lr=self.minmax_lr,
-            low_gpu_mem_usage=self.low_gpu_mem_usage,
-            low_cpu_mem_usage=self.low_gpu_mem_usage,
-            iters=self.iters,
-            seqlen=self.seqlen,
-            nsamples=self.nsamples,
-            sampler=self.sampler,
-            seed=self.seed,
-            nblocks=self.nblocks,
-            gradient_accumulate_steps=self.gradient_accumulate_steps,
-            not_use_best_mse=self.not_use_best_mse,
-            dynamic_max_gap=self.dynamic_max_gap,
-            scale_dtype=self.scale_dtype,
-            to_quant_block_names=self.to_quant_block_names,
-            enable_norm_bias_tuning=self.enable_norm_bias_tuning,
-            truncation=self.truncation,
-            enable_torch_compile=self.enable_torch_compile,
-            quant_lm_head=self.quant_lm_head,
-            guidance_scale=self.guidance_scale,
-            num_inference_steps=self.num_inference_steps,
-            generator_seed=self.generator_seed,
+            **self.__dict__,
         )
 
-        if self.enable_w4afp8:
+        if self._is_w4afp8():
             model, weight_config = rounder.quantize()
             model.autoround_config = weight_config
             return rounder.save_quantized(output_dir=self.output_dir, inplace=True)
-        elif "itrex" in self.export_format:
+        elif "itrex" in export_format:
             model, weight_config = rounder.quantize()
             model.autoround_config = weight_config
-            model = pack_model(model, weight_config, device=self.device, inplace=True)
+            model = pack_model(model, weight_config, device=device, inplace=True)
         else:  # pragma: no cover
-            rounder.quantize_and_save(output_dir=self.output_dir, format=self.export_format, inplace=True)
+            rounder.quantize_and_save(output_dir=self.output_dir, format=export_format, inplace=True)
             model = rounder.model
             model.autoround_config = rounder.layer_config
 
