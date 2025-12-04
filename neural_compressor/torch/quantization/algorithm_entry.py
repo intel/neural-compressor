@@ -587,7 +587,9 @@ def autoround_quantize_entry(
         # set local layer config
         if len(quant_config.local_config) > 0:
             from dataclasses import fields
+
             from auto_round.schemes import QuantizationScheme
+
             allowed_keys = tuple(f.name for f in fields(QuantizationScheme)) + ("scale_dtype",)
 
             layer_config = {}
