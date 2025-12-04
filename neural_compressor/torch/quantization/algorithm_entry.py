@@ -570,7 +570,7 @@ def autoround_quantize_entry(
     Returns:
         torch.nn.Module: prepared model or quantized model.
     """
-    from neural_compressor.torch.algorithms.weight_only.autoround import AutoRoundQuantizer
+    from neural_compressor.torch.algorithms.autoround import AutoRoundQuantizer
     from neural_compressor.torch.algorithms.weight_only.save_load import save
 
     logger.info("Quantize model with the AutoRound algorithm.")
