@@ -619,7 +619,7 @@ def autoround_quantize_entry(
                 result[param] = value
         params_dict = {key_mapping.get(k, k): v for k, v in result.items()}
         data_type = params_dict["data_type"]
-        
+
         # for w4afp8
         if data_type is not None and data_type != "int" and "int" in data_type:
             if data_type == "fp8_to_int_sym":

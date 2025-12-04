@@ -186,8 +186,15 @@ class AutoRoundQuantizer(Quantizer):
                 device_map=self.auto_scheme_device_map,
                 low_gpu_mem_usage=self.low_gpu_mem_usage,
             )
-            keys_to_pop += ["target_bits", "options", "shared_layers", "ignore_scale_zp_bits", \
-                "auto_scheme_method", "auto_scheme_batch_size", "auto_scheme_device_map"]
+            keys_to_pop += [
+                "target_bits",
+                "options",
+                "shared_layers",
+                "ignore_scale_zp_bits",
+                "auto_scheme_method",
+                "auto_scheme_batch_size",
+                "auto_scheme_device_map",
+            ]
 
         rounder = AutoRound(
             model,
