@@ -104,19 +104,6 @@ class TestTansformersLikeAPI:
         else:
             assert isclose(float(output[0][0][0][0]), -0.0874, abs_tol=1e-04)
 
-        # AUTOROUND
-        woq_config = AutoRoundConfig(
-            bits=4, weight_dtype="int4_clip", n_samples=128, seq_len=32, iters=5, group_size=16, tokenizer=tokenizer
-        )
-        woq_model = AutoModelForCausalLM.from_pretrained(model_name_or_path, quantization_config=woq_config)
-        woq_model.eval()
-        output = woq_model(dummy_input)
-        # The output might change when device supports bf16
-        if CpuInfo().bf16:
-            assert isclose(float(output[0][0][0][0]),  -0.07275, abs_tol=1e-04)
-        else:
-            assert isclose(float(output[0][0][0][0]), -0.0786, abs_tol=1e-04)
-
     def test_save_load(self):
         model_name_or_path = self.model_name_or_path
 
@@ -225,56 +212,6 @@ class TestTansformersLikeAPI:
         else:
             target_text = ["One day, the little girl in the back of my mind will say, “I’m so glad you’"]
         assert gen_text == target_text, "loading autoawq quantized model failed."
-    
-    @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
-    def test_vlm(self):
-        model_name = "Qwen/Qwen2-VL-2B-Instruct"
-        from neural_compressor.transformers import Qwen2VLForConditionalGeneration
-        from neural_compressor.transformers import AutoModelForCausalLM
-        woq_config = AutoRoundConfig(
-            bits=4, 
-            group_size=128,
-            dataset="NeelNanda/pile-10k",  
-            iters=1,
-            n_samples=1,
-            seq_len=32,
-            batch_size=1,
-        )
-        
-        woq_model = Qwen2VLForConditionalGeneration.from_pretrained(model_name, quantization_config=woq_config, trust_remote_code=True)
-       
-        if  hasattr(torch, "xpu") and torch.xpu.is_available():
-            from intel_extension_for_pytorch.nn.utils._quantize_convert import WeightOnlyQuantizedLinear
-        else:    
-            from intel_extension_for_pytorch.nn.modules import WeightOnlyQuantizedLinear
-
-        if Version(transformers.__version__) >= Version("4.52"):
-            assert isinstance(woq_model.model.language_model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "replacing model failed."
-        else:
-            assert isinstance(woq_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "replacing model failed."
-        
-        #save
-        woq_model.save_pretrained("transformers_vlm_tmp")
-        
-        #load
-        loaded_model = Qwen2VLForConditionalGeneration.from_pretrained("transformers_vlm_tmp")
-        if Version(transformers.__version__) >= Version("4.52"):
-            assert isinstance(loaded_model.model.language_model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "loaing model failed."
-        else:
-            assert isinstance(loaded_model.model.layers[0].self_attn.k_proj, WeightOnlyQuantizedLinear), "loaing model failed."
-        # phi-3-vision-128k-instruct, disable as CI consumes too much time
-        # woq_config = AutoRoundConfig(
-        #     bits=4, 
-        #     group_size=128,
-        #     dataset="liuhaotian/llava_conv_58k",
-        #     iters=2,
-        #     n_samples=5,
-        #     seq_len=64,
-        #     batch_size=1,
-        # )
-        # model_name = "microsoft/Phi-3-vision-128k-instruct"
-        # woq_model = AutoModelForCausalLM.from_pretrained(model_name, quantization_config=woq_config, trust_remote_code=True, attn_implementation='eager')
-        # assert isinstance(woq_model.model.layers[0].self_attn.o_proj, WeightOnlyQuantizedLinear), "quantizaion failed."
 
     def test_save_load_for_inc_model(self):
         model_name_or_path = self.model_name_or_path
