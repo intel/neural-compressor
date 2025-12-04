@@ -612,12 +612,15 @@ def autoround_quantize_entry(
             layer_config[layer_name] = result
             quant_config.layer_config = layer_config
 
+        # set global config
         result = dict()
         for param, value in quant_config.get_params_dict().items():
             if param not in ["params_list", "_is_initialized"]:
                 result[param] = value
         params_dict = {key_mapping.get(k, k): v for k, v in result.items()}
         data_type = params_dict["data_type"]
+        
+        # for w4afp8
         if data_type is not None and data_type != "int" and "int" in data_type:
             if data_type == "fp8_to_int_sym":
                 params_dict["bits"] = 4
@@ -625,12 +628,6 @@ def autoround_quantize_entry(
                 bits = int(data_type.lstrip("int"))
                 params_dict["data_type"] = "int"
                 params_dict["bits"] = bits
-        params_dict["layer_config"] = params_dict.get("layer_config", None)
-        params_dict["dataset"] = params_dict.get("dataset", "NeelNanda/pile-10k")
-        params_dict["output_dir"] = params_dict.get("output_dir", "temp_auto_round")
-        params_dict["guidance_scale"] = params_dict.get("guidance_scale", 7.5)
-        params_dict["num_inference_steps"] = params_dict.get("num_inference_steps", 50)
-        params_dict["generator_seed"] = params_dict.get("generator_seed", None)
         break
 
     kwargs.pop("example_inputs")

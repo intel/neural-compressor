@@ -172,6 +172,7 @@ class AutoRoundQuantizer(Quantizer):
         model = model.orig_model
         if pipe is not None:
             model = pipe
+        keys_to_pop = ["quant_config", "device", "export_format", "output_dir", "accelerator"]
         if hasattr(self, "target_bits") and self.target_bits is not None:
             from auto_round import AutoScheme
 
@@ -185,41 +186,38 @@ class AutoRoundQuantizer(Quantizer):
                 device_map=self.auto_scheme_device_map,
                 low_gpu_mem_usage=self.low_gpu_mem_usage,
             )
-        quant_config = self.__dict__.pop("quant_config")
-        device = self.__dict__.pop("device")
-        export_format = self.__dict__.pop("export_format", "auto_round")
-        output_dir = self.__dict__.pop("output_dir", "temp_auto_round")
-        accelerator = self.__dict__.pop("accelerator")
+            keys_to_pop += ["target_bits", "options", "shared_layers", "ignore_scale_zp_bits", \
+                "auto_scheme_method", "auto_scheme_batch_size", "auto_scheme_device_map"]
 
         rounder = AutoRound(
             model,
             tokenizer=tokenizer,
-            **self.__dict__,
+            **{k: v for k, v in self.__dict__.items() if k not in keys_to_pop},
         )
 
         if self._is_w4afp8():
             model, weight_config = rounder.quantize()
             model.autoround_config = weight_config
-            return rounder.save_quantized(output_dir=output_dir, inplace=True)
-        elif "itrex" in export_format:  # TODO: remove itrex related code later
+            return rounder.save_quantized(output_dir=self.output_dir, inplace=True)
+        elif "itrex" in self.export_format:  # TODO: remove itrex related code later
             model, weight_config = rounder.quantize()
             model.autoround_config = weight_config
-            model = pack_model(model, weight_config, device=device, inplace=True)
+            model = pack_model(model, weight_config, device=self.device, inplace=True)
         else:  # pragma: no cover
-            rounder.quantize_and_save(output_dir=output_dir, format=export_format, inplace=True)
+            rounder.quantize_and_save(output_dir=self.output, format=self.export_format, inplace=True)
             model = rounder.model
             model.autoround_config = rounder.layer_config
 
-        accelerator.empty_cache()
+        self.accelerator.empty_cache()
         dump_model_op_stats(rounder.layer_config)
 
-        if export_format in ["auto_round", "llm_compressor"]:
+        if self.export_format in ["auto_round", "llm_compressor"]:
             # the directly returned model is QuantLinear, which is used for packing.
             try:
-                logger.info(f"Quantization is done, reloading model from saved directory({output_dir})...")
+                logger.info(f"Quantization is done, reloading model from saved directory({self.output})...")
                 import transformers  # pylint: disable=E0401
 
-                model = transformers.AutoModelForCausalLM.from_pretrained(output_dir)
+                model = transformers.AutoModelForCausalLM.from_pretrained(self.output)
             except:
                 pass
 

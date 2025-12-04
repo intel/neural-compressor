@@ -420,11 +420,9 @@ class TestAutoRoundCPU:
         model = prepare(model=fp32_model, quant_config=quant_config)
         model = convert(model)
         # mxfp4/8 model inference relys on autoround extension for vLLM.
-        assert ("MXFP8" in model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ and \
-                "MXFP4" in model.model.decoder.layers[1].fc1.__class__.__name__) \
-                or \
-                ("MXFP4" in model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ and \
-                "MXFP8" in model.model.decoder.layers[1].fc1.__class__.__name__), \
+        target_modules = ["MXFP4QuantLinear", "MXFP8QuantLinear"]
+        assert (model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ in target_modules and \
+                model.model.decoder.layers[1].fc1.__class__.__name__ in target_modules) ,\
             "model is not quantized correctly, please check."
 
 
@@ -463,11 +461,9 @@ class TestAutoRoundCPU:
         )
         best_model = autotune(model=fp32_model, tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         # mxfp4/8 model inference relys on autoround extension for vLLM.
-        assert ("MXFP8" in best_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ and \
-                "MXFP8" in best_model.model.decoder.layers[1].fc1.__class__.__name__) \
-                or \
-                ("MXFP4" in best_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ and \
-                "MXFP4" in best_model.model.decoder.layers[1].fc1.__class__.__name__), \
+        target_modules = ["MXFP4QuantLinear", "MXFP8QuantLinear"]
+        assert (best_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ in target_modules and \
+                best_model.model.decoder.layers[1].fc1.__class__.__name__ in target_modules) ,\
             "model is not quantized correctly, please check."
 
     def test_static_attention_dtype(self):
