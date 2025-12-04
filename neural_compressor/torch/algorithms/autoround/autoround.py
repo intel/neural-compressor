@@ -43,7 +43,7 @@ from neural_compressor.common.utils import Statistics
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.utils import get_accelerator, logger
 
-from .utility import CapturedDataloader, InputCaptureModule
+from neural_compressor.torch.algorithms.weight_only.utility import CapturedDataloader, InputCaptureModule
 
 
 class AutoRoundQuantizer(Quantizer):

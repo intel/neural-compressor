@@ -93,7 +93,7 @@ class TestAutoRoundCPU:
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
-        from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
+        from neural_compressor.torch.algorithms.autoround import get_dataloader
         self.dataloader = get_dataloader(self.tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
         self.label = self.gptj(self.inp)[0]
 
@@ -211,7 +211,7 @@ class TestAutoRoundCPU:
         input = torch.randn(1, 32)
         from transformers import AutoProcessor, AutoTokenizer, Qwen2VLForConditionalGeneration
 
-        from neural_compressor.torch.algorithms.weight_only.autoround import get_mllm_dataloader
+        from neural_compressor.torch.algorithms.autoround import get_mllm_dataloader
 
         model_name = "Qwen/Qwen2-VL-2B-Instruct"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -644,7 +644,7 @@ class TestAutoRoundHPU:
     def setup_class(self):
         
         model_name = "TheBloke/Llama-2-7B-Chat-GPTQ"
-        from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
+        from neural_compressor.torch.algorithms.autoround import get_dataloader
 
         config = LlamaConfig(num_hidden_layers=2)
         with transformers.modeling_utils.no_init_weights():
@@ -869,7 +869,7 @@ class TestAutoRoundGPU:
         )
         tokenizer = AutoTokenizer.from_pretrained(
             "Qwen/Qwen2-VL-2B-Instruct", trust_remote_code=True)
-        from neural_compressor.torch.algorithms.weight_only.autoround import get_mllm_dataloader
+        from neural_compressor.torch.algorithms.autoround import get_mllm_dataloader
         processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True)
         
         output_dir = "./saved_inc"
