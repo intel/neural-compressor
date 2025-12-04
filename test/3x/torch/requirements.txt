@@ -1,4 +1,4 @@
-auto_round @ git+https://github.com/intel/auto-round.git@v0.8.0rc2
+auto_round @ git+https://github.com/intel/auto-round.git@v0.9.2rc
 compressed-tensors
 datasets
 deepspeed @ git+https://github.com/HabanaAI/DeepSpeed.git@1.22.0
