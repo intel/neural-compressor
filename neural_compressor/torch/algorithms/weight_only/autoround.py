@@ -201,7 +201,7 @@ class AutoRoundQuantizer(Quantizer):
             model, weight_config = rounder.quantize()
             model.autoround_config = weight_config
             return rounder.save_quantized(output_dir=output_dir, inplace=True)
-        elif "itrex" in export_format:
+        elif "itrex" in export_format: # TODO: remove itrex related code later
             model, weight_config = rounder.quantize()
             model.autoround_config = weight_config
             model = pack_model(model, weight_config, device=device, inplace=True)
