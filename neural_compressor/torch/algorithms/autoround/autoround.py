@@ -223,10 +223,10 @@ class AutoRoundQuantizer(Quantizer):
         if self.export_format in ["auto_round", "llm_compressor"]:
             # the directly returned model is QuantLinear, which is used for packing.
             try:
-                logger.info(f"Quantization is done, reloading model from saved directory({self.output})...")
+                logger.info(f"Quantization is done, reloading model from saved directory({self.output_dir})...")
                 import transformers  # pylint: disable=E0401
 
-                model = transformers.AutoModelForCausalLM.from_pretrained(self.output)
+                model = transformers.AutoModelForCausalLM.from_pretrained(self.output_dir)
             except:
                 pass
 

@@ -169,7 +169,7 @@ class TestAutoRoundCPU:
         assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
 
     def test_conv1d(self):
-        model = AutoModelForCausalLM.from_pretrained("MBZUAI/LaMini-GPT-124M", torch_dtype="auto", trust_remote_code=True)
+        model = AutoModelForCausalLM.from_pretrained("MBZUAI/LaMini-GPT-124M", device_map="auto", trust_remote_code=True)
         tokenizer =  AutoTokenizer.from_pretrained("MBZUAI/LaMini-GPT-124M", trust_remote_code=True)
         text = "Replace me by any text you'd like."
         encoded_input = tokenizer(text, return_tensors="pt")
