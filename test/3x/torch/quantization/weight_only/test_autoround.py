@@ -571,6 +571,71 @@ class TestAutoRoundCPU:
                     print(f"Output: {output}")
                     assert output is not None, "Output should not be None"
         shutil.rmtree(output_dir, ignore_errors=True)
+        
+    @pytest.mark.parametrize(
+        "scheme,  static_kv_dtype, static_attention_dtype",
+        [
+            ("MXFP4", None, "fp8"),
+            ("MXFP4", "fp8", None),
+            ("MXFP8", None, "fp8"),
+            ("MXFP8", "fp8", None),
+            ("NVFP4", None, "fp8"),
+            ("NVFP4", "fp8", None),
+        ]
+    )
+    def test_fp8_kv_attn(self, scheme, static_kv_dtype, static_attention_dtype):
+
+        from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+        from transformers.models.opt.modeling_opt import OPTForCausalLM
+
+        model_name = "facebook/opt-125m"
+        config = AutoConfig.from_pretrained(model_name)
+        config.num_hidden_layers = 1
+        model = OPTForCausalLM(config)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+        output_dir = "./saved_inc"
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer,
+            scheme=scheme,
+            iters=0,
+            seqlen=2,
+            static_kv_dtype=static_kv_dtype,
+            static_attention_dtype=static_attention_dtype,
+            export_format="auto_round",
+            output_dir=output_dir,
+        )
+        
+        # quantizer execute
+        model = prepare(model=model, quant_config=quant_config)
+        compressed_model = convert(model)
+        
+        attn = compressed_model.model.decoder.layers[0].self_attn
+        q_proj = attn.q_proj
+
+        # weight_scale should exist for all quantized schemes
+        assert hasattr(q_proj, "weight_scale"), f"Missing weight_scale in q_proj for scheme={scheme}"
+        if static_kv_dtype == "fp8":
+            assert (
+                compressed_model.config.quantization_config["static_kv_dtype"] == "fp8"
+            ), f"Invalid static_kv_dtype in config for scheme={scheme}, static_kv_dtype={static_kv_dtype}"
+
+        # Only when static_kv_dtype / static_attention_dtype are fp8 do we expect FP8 KV scales
+        if static_kv_dtype == "fp8" or static_attention_dtype == "fp8":
+            assert attn.k_scale is not None and attn.v_scale is not None, (
+                f"Missing k_scale/v_scale in attention for scheme={scheme}, "
+                f"static_kv_dtype={static_kv_dtype}, static_attention_dtype={static_attention_dtype}"
+            )
+
+        if static_attention_dtype == "fp8":
+            assert (
+                compressed_model.config.quantization_config["static_attention_dtype"] == "fp8"
+            ), f"Invalid static_attention_dtype in config for scheme={scheme}, static_attention_dtype={static_attention_dtype}"
+            assert (
+                getattr(attn, "q_scale", None) is not None
+            ), f"Missing q_scale in attention for scheme={scheme}, static_attention_dtype={static_attention_dtype}"
+        shutil.rmtree(output_dir, ignore_errors=True)
+
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")
 @pytest.mark.skipif(os.getenv("PT_HPU_LAZY_MODE", "0") == "1", reason="Lazy mode is enabled")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")

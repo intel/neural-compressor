@@ -172,6 +172,7 @@ class AutoRoundQuantizer(Quantizer):
         model = model.orig_model
         if pipe is not None:
             model = pipe
+        # Remove AutoRound specific args before passing to AutoRound constructor
         keys_to_pop = ["quant_config", "device", "export_format", "output_dir", "accelerator"]
         if hasattr(self, "target_bits") and self.target_bits is not None:
             from auto_round import AutoScheme
@@ -186,15 +187,16 @@ class AutoRoundQuantizer(Quantizer):
                 device_map=self.auto_scheme_device_map,
                 low_gpu_mem_usage=self.low_gpu_mem_usage,
             )
-            keys_to_pop += [
-                "target_bits",
-                "options",
-                "shared_layers",
-                "ignore_scale_zp_bits",
-                "auto_scheme_method",
-                "auto_scheme_batch_size",
-                "auto_scheme_device_map",
-            ]
+        # Remove AutoRound specific AutoScheme args before passing to AutoRound constructor
+        keys_to_pop += [
+            "target_bits",
+            "options",
+            "shared_layers",
+            "ignore_scale_zp_bits",
+            "auto_scheme_method",
+            "auto_scheme_batch_size",
+            "auto_scheme_device_map",
+        ]
 
         rounder = AutoRound(
             model,
@@ -211,7 +213,7 @@ class AutoRoundQuantizer(Quantizer):
             model.autoround_config = weight_config
             model = pack_model(model, weight_config, device=self.device, inplace=True)
         else:  # pragma: no cover
-            rounder.quantize_and_save(output_dir=self.output, format=self.export_format, inplace=True)
+            rounder.quantize_and_save(output_dir=self.output_dir, format=self.export_format, inplace=True)
             model = rounder.model
             model.autoround_config = rounder.layer_config
 
