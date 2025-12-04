@@ -1,0 +1,12 @@
+onnx
+onnxruntime
+onnxruntime-extensions
+torch
+transformers
+accelerate
+coloredlogs
+sympy
+numpy
+sentencepiece
+protobuf
+optimum

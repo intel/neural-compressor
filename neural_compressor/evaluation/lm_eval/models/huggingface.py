@@ -41,7 +41,10 @@ from transformers.models.auto.modeling_auto import (
 
 from neural_compressor.transformers import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM
 
-eval_logger = utils.eval_logger
+try:
+    from lm_eval.evaluator_utils import eval_logger
+except ImportError:
+    from lm_eval.utils import eval_logger
 
 transformers.AutoModelForCausalLM = AutoModelForCausalLM
 transformers.AutoModelForSeq2SeqLM = AutoModelForSeq2SeqLM
@@ -359,7 +362,7 @@ class HFLM(TemplateLM):
     @property
     def model(self):
         # returns the model, unwrapping it if using Accelerate
-        if hasattr(self, "accelerator"):
+        if hasattr(self, "accelerator") and self._model is not None:
             return self.accelerator.unwrap_model(self._model)
         else:
             return self._model

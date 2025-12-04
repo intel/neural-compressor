@@ -44,6 +44,11 @@ from lm_eval.utils import make_table, simple_parse_args_string
 
 DEFAULT_RESULTS_FILE = "results.json"
 
+try:
+    from lm_eval.evaluator_utils import eval_logger
+except ImportError:
+    from lm_eval.utils import eval_logger
+
 
 def request_caching_arg_to_dict(cache_requests: str) -> dict:
     request_caching_args = {
@@ -79,7 +84,6 @@ def cli_evaluate(args) -> None:
             raise RuntimeError(f"An unexpected error occurred: {e}")
         wandb_logger = WandbLogger(**simple_parse_args_string(args.wandb_args))
 
-    eval_logger = utils.eval_logger
     eval_logger.setLevel(getattr(logging, f"{args.verbosity}"))
     eval_logger.info(f"Verbosity set to {args.verbosity}")
     os.environ["TOKENIZERS_PARALLELISM"] = "false"

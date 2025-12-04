@@ -1,0 +1,4 @@
+
+torch
+torchvision
+timm==0.8.13.dev0

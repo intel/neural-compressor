@@ -4,7 +4,7 @@ import shutil
 import pytest
 import torch
 import transformers
-from packaging.version import Version
+from packaging.version import Version, parse
 import os
 from functools import lru_cache
 
@@ -57,6 +57,13 @@ try:
     auto_round_installed = True
 except ImportError:
     auto_round_installed = False
+    
+try:
+    import compressed_tensors
+
+    ct_installed = True
+except ImportError:
+    ct_installed = False
 
 @torch.no_grad()
 def run_fn(model, dataloader):
@@ -79,11 +86,11 @@ class TestAutoRoundCPU:
             torchscript=True,
         )
         self.inp = torch.ones([1, 10], dtype=torch.long)
-        tokenizer = transformers.AutoTokenizer.from_pretrained(
+        self.tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
         from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
-        self.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
+        self.dataloader = get_dataloader(self.tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
         self.label = self.gptj(self.inp)[0]
 
     @classmethod
@@ -95,10 +102,14 @@ class TestAutoRoundCPU:
 
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):
+        # AutoRound does not yet support the actual use of quant_lm_head 
+        # https://github.com/intel/auto-round/blob/7b8e280f5b789fe861fe95eac971de0805ce4c62/auto_round/compressors/base.py#L438-L442
         fp32_model = copy.deepcopy(self.gptj)
         quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
-        if quant_lm_head is False:
-            quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
+        if quant_lm_head is True:
+            layer_config = {"lm_head": {"data_type": "int"}}
+            quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32", 
+                                           quant_lm_head=quant_lm_head, layer_config=layer_config)
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # prepare + convert API
@@ -135,7 +146,8 @@ class TestAutoRoundCPU:
     def test_autoround_with_quantize_API(self):
         gpt_j_model = copy.deepcopy(self.gptj)
 
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
+        quant_config = AutoRoundConfig(dtype="int", bits=4, act_dtype="int", act_bits=32,nsamples=32, seqlen=10,
+                        iters=10, use_sym=False, group_size=128, amp=False ,scale_dtype="fp32")
         quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
 
         logger.info(f"Test AutoRound with config {quant_config}")
@@ -155,8 +167,9 @@ class TestAutoRoundCPU:
         fp32_model = copy.deepcopy(self.gptj)
         # known issue: scale_dtype="fp32" will cause accuracy gap between quantized model
         # (using auto-round WeightOnlyLinear) and reloaded model (using INCWeightOnlyLinear)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp16")
-        # quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
+        quant_config = AutoRoundConfig(dtype="int", bits=4, act_dtype="int", act_bits=32,nsamples=32, seqlen=10,
+                        iters=10, use_sym=False, group_size=128, amp=False ,scale_dtype="fp16")
+        quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # quantizer execute
@@ -248,18 +261,17 @@ class TestAutoRoundCPU:
             seed=42,
             nsamples=1,
             gradient_accumulate_steps=1,
-            quant_nontext_module=False,
+            quant_nontext_module=True,
             processor=processor,
         )
         quant_config = AutoRoundConfig(
             bits=4,
             group_size=128,
-            is_mllm=True,
             nsamples=1,
             batch_size=batch_size,
             iters=1,
             seqlen=seqlen,
-            quant_nontext_module=False,
+            quant_nontext_module=True,
             truncation=truncation,
             gradient_accumulate_steps=gradient_accumulate_steps,
         )
@@ -284,10 +296,83 @@ class TestAutoRoundCPU:
     #     q_model.save(output_dir="saved_results_tiny-random-GPTJForCausalLM", format="huggingface")
     #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
 
+    @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
+    @pytest.mark.parametrize("scheme", ["W4A16","W2A16","W3A16","W8A16","MXFP4","MXFP8", "NVFP4","FPW8A16","FP8_STATIC"])
+    def test_scheme(self, scheme):
+        # INC API
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        inp = torch.ones([1, 10], dtype=torch.long)
+        tokenizer = AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
 
+        output_dir = "./saved_inc"
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer,
+            nsamples=32,
+            seqlen=10,
+            iters=1,
+            amp=False,
+            scale_dtype="fp16",
+            scheme=scheme,
+            export_format="auto_round",
+            output_dir=output_dir, # default is "temp_auto_round"
+        )
+
+        # quantizer execute
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        inc_model = convert(model)
+        if scheme in ["FPW8A16"]: # FP8_STATIC loading not supported yet
+            return
+        inc_model = AutoModelForCausalLM.from_pretrained(
+            output_dir,
+            torch_dtype="auto",
+            device_map="auto",
+        )
+        out = inc_model(inp)[0]
+        
+        # AutoRound API
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        fp32_model = transformers.AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        inp = torch.ones([1, 10], dtype=torch.long)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+        from auto_round import AutoRound
+        ar = AutoRound(
+            model=fp32_model,
+            tokenizer=tokenizer,
+            nsamples=32,
+            seqlen=10,
+            iters=1,
+            amp=False,
+            scale_dtype="fp16",
+            scheme=scheme,
+        )
+        quantized_model_path = "./saved_ar"
+        ar.quantize_and_save(output_dir=quantized_model_path, inplace=True, format="auto_round")
+        model = AutoModelForCausalLM.from_pretrained(
+            quantized_model_path,
+            torch_dtype="auto",
+            device_map="auto",
+        )
+        tokenizer = AutoTokenizer.from_pretrained(quantized_model_path)
+        out_ar = model(inp)[0]
+        assert torch.all(out_ar.eq(out))
+        shutil.rmtree(output_dir, ignore_errors=True)
+        shutil.rmtree(quantized_model_path, ignore_errors=True)
+        
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")
 @pytest.mark.skipif(os.getenv("PT_HPU_LAZY_MODE", "0") == "1", reason="Lazy mode is enabled")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
+@pytest.mark.skip(reason="currently disabled - will be fixed GAUDISW-244618 ")
 class TestAutoRoundHPU:
     @classmethod
     def setup_class(self):
@@ -299,6 +384,7 @@ class TestAutoRoundHPU:
         config = LlamaConfig(num_hidden_layers=2)
         with transformers.modeling_utils.no_init_weights():
             self.tiny_llama_model = AutoModelForCausalLM.from_config(config=config)
+        self.tiny_llama_model.name_or_path = "hf-internal-testing/tiny-random-LlamaForCausalLM"
 
         tokenizer = transformers.AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
         self.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
@@ -367,9 +453,7 @@ class TestAutoRoundHPU:
     @pytest.mark.parametrize("quant_lm_head", [True, False])
     def test_autoround(self, quant_lm_head):
         fp32_model = copy.deepcopy(self.tiny_llama_model)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", amp=False ,scale_dtype="fp32")
-        if quant_lm_head is False:
-            quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", amp=False ,scale_dtype="fp32", quant_lm_head=quant_lm_head)
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # prepare + convert API

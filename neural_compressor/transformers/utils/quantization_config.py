@@ -544,7 +544,6 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         use_layer_wise: bool = None,
         quant_lm_head: bool = False,
         # vlm arguments
-        is_vlm: bool = False,
         quant_nontext_module: bool = False,
         truncation: bool = False,
         gradient_accumulate_steps: int = 1,
@@ -601,7 +600,6 @@ class AutoRoundConfig(INCQuantizationConfigMixin):
         self.model_path = kwargs.get("model_path", "")
 
         # vlm arguments
-        self.is_vlm = is_vlm
         self.quant_nontext_module = quant_nontext_module
         self.truncation = truncation
         self.gradient_accumulate_steps = gradient_accumulate_steps

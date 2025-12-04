@@ -21,6 +21,7 @@ import torch
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.utils import Mode, call_counter, log_process
 from neural_compressor.torch.quantization.config import (
+    AutoRoundConfig,
     FP8Config,
     HybridGPTQConfig,
     INT8StaticQuantConfig,
@@ -88,6 +89,12 @@ def preprocess_quant_config(model, quant_config, mode="prepare", example_inputs=
                     scale_sharing=quant_config.scale_sharing,
                 )
         model_info = quant_config.get_model_info(model, example_inputs)
+    elif isinstance(quant_config, AutoRoundConfig):
+        _tokenizer_backup = getattr(quant_config, "tokenizer", None)
+        if _tokenizer_backup is not None:
+            setattr(model, "tokenizer", _tokenizer_backup)
+            delattr(quant_config, "tokenizer")
+        model_info = quant_config.get_model_info(model=model)
     else:
         model_info = quant_config.get_model_info(model=model)
 
@@ -185,11 +192,43 @@ def prepare(
     return prepared_model
 
 
+@log_process(mode=Mode.PREPARE)
+def prepare_qat(
+    model: torch.nn.Module,
+    mapping=None,
+    inplace: bool = True,
+):
+    r"""Prepares a copy of the model for quantization calibration or
+    quantization-aware training and converts it to quantized version.
+
+    Quantization configuration should be assigned preemptively
+    to individual submodules in `.qconfig` attribute.
+
+    Args:
+        model: input model to be modified in-place
+        quant_config: quantization config that maps float modules to quantized modules to be
+                 replaced.
+        inplace: carry out model transformations in-place, the original module
+                 is mutated
+    """
+    assert model.training, "prepare_qat only works on models in training mode"
+
+    from .config import get_default_qat_module_mappings
+
+    if mapping is None:
+        mapping = get_default_qat_module_mappings()
+
+    from ..algorithms.qat.quant_utils import convert_model_with_mapping
+
+    return convert_model_with_mapping(model, mapping)
+
+
 @log_process(mode=Mode.CONVERT)
 def convert(
     model: torch.nn.Module,
     quant_config: BaseConfig = None,
     inplace: bool = True,
+    **kwargs,
 ):
     """Convert the prepared model to a quantized model.
 
@@ -247,6 +286,7 @@ def convert(
                 configs_mapping,
                 example_inputs=example_inputs,
                 mode=Mode.CONVERT,
+                **kwargs,
             )
     setattr(q_model, "is_quantized", True)
     return q_model

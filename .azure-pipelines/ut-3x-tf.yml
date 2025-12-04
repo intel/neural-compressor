@@ -16,6 +16,7 @@ pr:
       - requirements_tf.txt
       - .azure-pipelines/scripts/ut/3x/run_3x_tf.sh
       - .azure-pipelines/template/docker-template.yml
+      - .azure-pipelines/scripts/ut/3x/coverage.3x_tf
 
 pool: ICX-16C
 

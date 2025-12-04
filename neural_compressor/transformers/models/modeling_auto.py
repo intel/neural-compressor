@@ -393,7 +393,7 @@ class _BaseINCAutoModelClass:
         # index of the files.
         is_sharded = False
         sharded_metadata = None
-        if transformers.__version__ >= "4.50":
+        if parse(transformers.__version__) >= parse("4.50"):
             from transformers.modeling_utils import _get_resolved_checkpoint_files
 
             gguf_file = kwargs.pop("gguf_file", None)
@@ -635,8 +635,10 @@ class _BaseINCAutoModelClass:
                             torch_dtype = torch.float32
                 else:
                     assert False, f'`torch_dtype` can be either `torch.dtype` or `"auto"`, but received {torch_dtype}'
-
-            dtype_orig = model_class._set_default_torch_dtype(torch_dtype)
+            if parse(transformers.__version__) >= parse("4.56.0"):
+                dtype_orig = model_class._set_default_dtype(torch_dtype)
+            else:
+                dtype_orig = model_class._set_default_torch_dtype(torch_dtype)
         if quantization_config.compute_dtype is None:
             if use_xpu:
                 quantization_config.compute_dtype = (
@@ -743,13 +745,13 @@ class _BaseINCAutoModelClass:
                 tmp_kwargs = {
                     "sharded_metadata": sharded_metadata,
                     "disk_offload_folder": offload_folder,
-                    "offload_state_dict": offload_state_dict,
                     "dtype": torch_dtype,
                 }
+                if parse(transformers.__version__) < parse("4.57"):
+                    tmp_kwargs["offload_state_dict"] = offload_state_dict
                 if parse(transformers.__version__) < parse("4.51"):
                     tmp_kwargs["_fast_init"] = _fast_init
                     tmp_kwargs["low_cpu_mem_usage"] = True
-
             model_message = model_class._load_pretrained_model(*tmp_args, **tmp_kwargs)
             model = model_message[0]
 
