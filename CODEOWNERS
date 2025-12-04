@@ -5,6 +5,6 @@
 # Learn more about CODEOWNERS syntax here:
 # https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners
 
-*          lbuchnik@habana.ai ulivne@habana.ai ndavid@habana.ai rtiefenbrunn@habana.ai ytomsinsky@habana.ai dlester@habana.ai dsemiat@habana.ai
+*          lbuchnik@habana.ai ndavid@habana.ai ytomsinsky@habana.ai dlester@habana.ai dsemiat@habana.ai
 
-CODEOWNERS lbuchnik@habana.ai oabramovich@habana.ai
+CODEOWNERS lbuchnik@habana.ai 
