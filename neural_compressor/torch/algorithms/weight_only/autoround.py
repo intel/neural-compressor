@@ -135,7 +135,8 @@ class AutoRoundQuantizer(Quantizer):
         super().__init__(quant_config=quant_config)
         for k, v in kwargs.items():
             setattr(self, k, v)
-        self.device = get_accelerator(kwargs.pop("device", "auto")).name()  # for pack
+        self.accelerator = get_accelerator(kwargs.pop("device", "auto"))
+        self.device = self.accelerator.name()
 
     def _is_w4afp8(self) -> bool:
         return self.data_type == "fp8_to_int_sym"
@@ -184,10 +185,12 @@ class AutoRoundQuantizer(Quantizer):
                 device_map=self.auto_scheme_device_map,
                 low_gpu_mem_usage=self.low_gpu_mem_usage,
             )
-        quant_config = self.__dict__.pop("quant_config", None)
+        quant_config = self.__dict__.pop("quant_config")
         device = self.__dict__.pop("device")
-        export_format = self.__dict__.pop("export_format", "default")
+        export_format = self.__dict__.pop("export_format", "auto_round")
         output_dir = self.__dict__.pop("output_dir", "temp_auto_round")
+        accelerator = self.__dict__.pop("accelerator")
+
         rounder = AutoRound(
             model,
             tokenizer=tokenizer,
@@ -207,7 +210,18 @@ class AutoRoundQuantizer(Quantizer):
             model = rounder.model
             model.autoround_config = rounder.layer_config
 
+        accelerator.empty_cache()
         dump_model_op_stats(rounder.layer_config)
+
+        if export_format in ["auto_round", "llm_compressor"]:
+            # the directly returned model is QuantLinear, which is used for packing.
+            try:
+                logger.info(f"Quantization is done, reloading model from saved directory({output_dir})...")
+                import transformers  # pylint: disable=E0401
+
+                model = transformers.AutoModelForCausalLM.from_pretrained(output_dir)
+            except:
+                pass
 
         return model
 

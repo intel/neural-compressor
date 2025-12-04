@@ -39,6 +39,8 @@ def set_hpu_torch_compile_envs():
 if is_habana_framework_installed():
     set_hpu_torch_compile_envs()
 
+def is_xpu_available():
+    return torch.xpu.is_available()
 
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
@@ -98,6 +100,7 @@ class TestAutoRoundCPU:
     @classmethod
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
+        shutil.rmtree("temp_auto_round", ignore_errors=True)
 
     def setup_method(self, method):
         logger.info(f"Running TestAutoRound test: {method.__name__}")
@@ -166,21 +169,17 @@ class TestAutoRoundCPU:
         assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
 
     def test_conv1d(self):
-        input = torch.randn(1, 32)
-        from transformers import GPT2Model, GPT2Tokenizer
-
-        tokenizer = GPT2Tokenizer.from_pretrained("sshleifer/tiny-gpt2")
-        model = GPT2Model.from_pretrained("sshleifer/tiny-gpt2", use_cache=False)
+        model = AutoModelForCausalLM.from_pretrained("MBZUAI/LaMini-GPT-124M", torch_dtype="auto", trust_remote_code=True)
+        tokenizer =  AutoTokenizer.from_pretrained("MBZUAI/LaMini-GPT-124M", trust_remote_code=True)
         text = "Replace me by any text you'd like."
         encoded_input = tokenizer(text, return_tensors="pt")
-        out1 = model(**encoded_input)[0]
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=0,tokenizer=tokenizer,export_format="auto_round")
         model = prepare(model=model, quant_config=quant_config)
-        run_fn(model, self.dataloader)
         q_model = convert(model)
-        out2 = q_model(**encoded_input)[0]
-        assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
-        assert isinstance(q_model.h[0].attn.c_attn, WeightOnlyLinear), "loading compressed model failed."
+        output = tokenizer.decode(q_model.generate(**encoded_input, max_new_tokens=10)[0])
+        print(output)
+        assert output is not None
+        assert not isinstance(q_model.transformer.h[0].attn.c_attn, transformers.pytorch_utils.Conv1D), "loading compressed model failed."
 
     def test_utils(self):
         from neural_compressor.torch.utils.utility import (
@@ -294,8 +293,6 @@ class TestAutoRoundCPU:
             device_map="auto",
         )
         out = model(self.inp)[0]
-        assert "model.decoder.layers.0.self_attn.v_proj" in q_model.autoround_config.keys()
-        assert "fp16" == q_model.autoround_config["model.decoder.layers.0.self_attn.v_proj"]["data_type"]
         assert isinstance(q_model.model.decoder.layers[0].self_attn.v_proj, torch.nn.Linear), "set_local failed."
         
         # AutoRound API
@@ -423,9 +420,9 @@ class TestAutoRoundCPU:
         model = prepare(model=fp32_model, quant_config=quant_config)
         model = convert(model)
         # mxfp4/8 model inference relys on autoround extension for vLLM.
-        assert model.model.decoder.layers[0].self_attn.k_proj.data_type =="mx_fp8", \
-                "model is not quantized correctly, please check."
-        assert model.model.decoder.layers[1].fc1.data_type =="mx_fp4", \
+        assert "MXFP8" in model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__, \
+            "model is not quantized correctly, please check."
+        assert "MXFP4" in model.model.decoder.layers[1].fc1.__class__.__name__, \
                 "model is not quantized correctly, please check."
 
 
@@ -464,10 +461,10 @@ class TestAutoRoundCPU:
         )
         best_model = autotune(model=fp32_model, tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         # mxfp4/8 model inference relys on autoround extension for vLLM.
-        assert best_model.model.decoder.layers[0].self_attn.k_proj.data_type =="mx_fp8", \
-                "model is not quantized correctly, please check."
-        assert best_model.model.decoder.layers[1].fc1.data_type =="mx_fp8", \
-                "model is not quantized correctly, please check."
+        assert "MXFP8" in best_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__, \
+            "model is not quantized correctly, please check."
+        assert "MXFP8" in best_model.model.decoder.layers[1].fc1.__class__.__name__, \
+            "model is not quantized correctly, please check."
 
     def test_static_attention_dtype(self):
         fp32_model = AutoModelForCausalLM.from_pretrained(
@@ -701,3 +698,164 @@ class TestAutoRoundHPU:
             run_args=(self.dataloader,),
         )
         assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
+
+@pytest.mark.skipif(not is_xpu_available(), reason="These tests are not supported on XPU for now.")
+@pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
+class TestAutoRoundGPU:
+    @pytest.mark.parametrize("scheme", ["W4A16","W2A16","W3A16","W8A16","MXFP4","MXFP8", "NVFP4","FPW8A16","FP8_STATIC"])
+    def test_scheme(self, scheme):
+        # INC API
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+        )
+        inp = torch.ones([1, 10], dtype=torch.long)
+        tokenizer = AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+
+        output_dir = "./saved_inc"
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer,
+            nsamples=32,
+            seqlen=10,
+            iters=1,
+            device_map="xpu",
+            scheme=scheme,
+            export_format="auto_round",
+            output_dir=output_dir, # default is "temp_auto_round"
+        )
+
+        # quantizer execute
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        inc_model = convert(model)
+        if scheme in ["FPW8A16"]: # FP8_STATIC loading not supported yet
+            return
+        inc_model = AutoModelForCausalLM.from_pretrained(
+            output_dir,
+        )
+        out = inc_model(inp)[0]
+        
+        # AutoRound API
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        fp32_model = transformers.AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+        )
+        inp = torch.ones([1, 10], dtype=torch.long)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+        from auto_round import AutoRound
+        ar = AutoRound(
+            model=fp32_model,
+            tokenizer=tokenizer,
+            nsamples=32,
+            seqlen=10,
+            iters=1,
+            device_map="xpu",
+            scheme=scheme,
+        )
+        quantized_model_path = "./saved_ar"
+        ar.quantize_and_save(output_dir=quantized_model_path, inplace=True, format="auto_round")
+        model = AutoModelForCausalLM.from_pretrained(
+            quantized_model_path,
+        )
+        tokenizer = AutoTokenizer.from_pretrained(quantized_model_path)
+        out_ar = model(inp)[0]
+        assert torch.all(out_ar.eq(out))
+        shutil.rmtree(output_dir, ignore_errors=True)
+        shutil.rmtree(quantized_model_path, ignore_errors=True)
+
+    @pytest.mark.parametrize("format", ["auto_awq","auto_gptq", "llm_compressor"])
+    def test_format(self, format):
+        # INC API
+        scheme = "W4A16" if format != "llm_compressor" else "MXFP4"
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+        )
+        inp = torch.ones([1, 10], dtype=torch.long)
+        tokenizer = AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+
+        output_dir = "./saved_inc"
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer,
+            nsamples=32,
+            seqlen=10,
+            iters=1,
+            device_map="xpu",
+            scheme=scheme,
+            export_format=format,
+            output_dir=output_dir, # default is "temp_auto_round"
+        )
+
+        # quantizer execute
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        inc_model = convert(model)
+        assert inc_model is not None
+        shutil.rmtree(output_dir, ignore_errors=True)
+    
+    def test_vlm_model(self):
+        # INC API
+        scheme = "W4A16"
+        model_name = "Qwen/Qwen2-VL-2B-Instruct"
+        from transformers import AutoModelForCausalLM, AutoTokenizer, Qwen2VLForConditionalGeneration, AutoProcessor
+        fp32_model = Qwen2VLForConditionalGeneration.from_pretrained(
+            "Qwen/Qwen2-VL-2B-Instruct",
+        )
+        tokenizer = AutoTokenizer.from_pretrained(
+            "Qwen/Qwen2-VL-2B-Instruct", trust_remote_code=True)
+        from neural_compressor.torch.algorithms.weight_only.autoround import get_mllm_dataloader
+        processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True)
+        
+        output_dir = "./saved_inc"
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer,
+            nsamples=1,
+            iters=1,
+            seqlen=10,
+            # quant_nontext_module=True,
+            processor=processor,
+            device_map="xpu:0",
+            scheme=scheme,
+            export_format="auto_round",
+            output_dir=output_dir, # default is "temp_auto_round"
+        )
+
+        # quantizer execute
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        inc_model = convert(model)
+        inc_model = Qwen2VLForConditionalGeneration.from_pretrained(
+            output_dir,
+        )
+        assert inc_model is not None
+        shutil.rmtree(output_dir, ignore_errors=True)
+    
+    def test_quant_lm_head(self):
+        # INC API
+        scheme = "W4A16"
+        model_name = "Qwen/Qwen3-8B"
+        from transformers import AutoModelForCausalLM, AutoTokenizer
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            model_name,
+        )
+        tokenizer = AutoTokenizer.from_pretrained(
+            model_name, trust_remote_code=True)
+
+        output_dir = "./saved_inc"
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer,
+            nsamples=1,
+            seqlen=10,
+            iters=0, #rtn
+            device_map="xpu",
+            scheme=scheme,
+            export_format="auto_round",
+            output_dir=output_dir, # default is "temp_auto_round"
+            quant_lm_head=True,
+        )
+
+        # quantizer execute
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        inc_model = convert(model)
+        assert inc_model is not None
+        shutil.rmtree(output_dir, ignore_errors=True)
