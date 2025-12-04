@@ -86,14 +86,14 @@ _mod_default_dict = {
     "MoeFP8Matmul": ModuleInfo("linear", PatchedMoeFP8Matmul, supports_dynamic_quantization=True),
     "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear, supports_dynamic_quantization=True),
     # Note: `no_quantize_op` indicates that this module is patched but does not require measurement or quantization.
-    "FusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False),
-    "SharedFusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False),
+    "FusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False, supports_dynamic_quantization=True),
+    "SharedFusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False, supports_dynamic_quantization=True),
     "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
     "GaudiDeepseekV3MoE": ModuleInfo("dynamic_moe", PatchedGaudiDeepseekV3MoE),
     "GaudiFP8Linear": ModuleInfo("linear", PatchedMoeFP8Matmul),
-    "VllmMixtureOfExpertsOp": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOp),
-    "VllmMixtureOfExpertsOpFP8": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8),
-    "VllmMixtureOfExpertsOpFP8PerChannel": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8),
+    "VllmMixtureOfExpertsOp": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOp, supports_dynamic_quantization=True),
+    "VllmMixtureOfExpertsOpFP8": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8, supports_dynamic_quantization=True),
+    "VllmMixtureOfExpertsOpFP8PerChannel": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8, supports_dynamic_quantization=True),
 }
 
 
