@@ -219,7 +219,7 @@ class AutoRoundQuantizer(Quantizer):
         self.accelerator.empty_cache()
         dump_model_op_stats(rounder.layer_config)
 
-        reloading = self.__dict__.get("reloading", True) 
+        reloading = self.__dict__.get("reloading", True)
         if self.export_format in ["auto_round", "llm_compressor"] and reloading:
             # the directly returned model is QuantLinear, which is used for packing.
             try:
