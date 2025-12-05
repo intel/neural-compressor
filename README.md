@@ -126,16 +126,21 @@ model = load(
   </thead>
   <tbody>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/source/3x/PyTorch.md">Overview</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/3x/PT_DynamicQuant.md">Dynamic Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/3x/PT_StaticQuant.md">Static Quantization</a></td>
+        <td colspan="8" align="center"><a href="./docs/source/3x/PyTorch.md">Overview</a></td>
+    </tr>
+    <tr>
+        <td colspan="3" align="center"><a href="./docs/source/3x/PT_DynamicQuant.md">Dynamic Quantization</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/3x/PT_StaticQuant.md">Static Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_SmoothQuant.md">Smooth Quantization</a></td>
     </tr>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/source/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/3x/PT_FP8Quant.md">FP8 Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/3x/PT_MXQuant.md">MX Quantization</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/3x/PT_FP8Quant.md">FP8 Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_MixedPrecision.md">Mixed Precision</a></td>
+    </tr>
+    <tr>
+        <td colspan="4" align="center"><a href="./docs/source/3x/PT_MXQuant.md">MX Quantization</a></td>
+        <td colspan="4" align="center"><a href="./docs/source/3x/PT_NVFP4Quant.md">NVFP4 Quantization</a></td>
     </tr>
   </tbody>
   <thead>
