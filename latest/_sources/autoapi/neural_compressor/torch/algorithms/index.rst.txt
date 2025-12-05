@@ -15,6 +15,7 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
+   /autoapi/neural_compressor/torch/algorithms/autoround/index
    /autoapi/neural_compressor/torch/algorithms/base_algorithm/index
    /autoapi/neural_compressor/torch/algorithms/layer_wise/index
    /autoapi/neural_compressor/torch/algorithms/mixed_precision/index

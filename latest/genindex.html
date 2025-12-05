@@ -160,7 +160,7 @@
 </li>
       <li><a href="autoapi/neural_compressor/torch/quantization/config/index.html#neural_compressor.torch.quantization.config.AutoRoundConfig">AutoRoundConfig (class in neural_compressor.torch.quantization.config)</a>
 </li>
-      <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/autoround/index.html#neural_compressor.torch.algorithms.weight_only.autoround.AutoRoundQuantizer">AutoRoundQuantizer (class in neural_compressor.torch.algorithms.weight_only.autoround)</a>
+      <li><a href="autoapi/neural_compressor/torch/algorithms/autoround/autoround/index.html#neural_compressor.torch.algorithms.autoround.autoround.AutoRoundQuantizer">AutoRoundQuantizer (class in neural_compressor.torch.algorithms.autoround.autoround)</a>
 </li>
       <li><a href="autoapi/neural_compressor/tensorflow/quantization/autotune/index.html#neural_compressor.tensorflow.quantization.autotune.autotune">autotune() (in module neural_compressor.tensorflow.quantization.autotune)</a>
 
@@ -502,12 +502,12 @@
         <li><a href="autoapi/neural_compressor/utils/utility/index.html#neural_compressor.utils.utility.dump_elapsed_time">(in module neural_compressor.utils.utility)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/neural_compressor/torch/algorithms/smooth_quant/utility/index.html#neural_compressor.torch.algorithms.smooth_quant.utility.dump_model_op_stats">dump_model_op_stats() (in module neural_compressor.torch.algorithms.smooth_quant.utility)</a>
+      <li><a href="autoapi/neural_compressor/torch/algorithms/autoround/autoround/index.html#neural_compressor.torch.algorithms.autoround.autoround.dump_model_op_stats">dump_model_op_stats() (in module neural_compressor.torch.algorithms.autoround.autoround)</a>
 
       <ul>
-        <li><a href="autoapi/neural_compressor/torch/algorithms/static_quant/utility/index.html#neural_compressor.torch.algorithms.static_quant.utility.dump_model_op_stats">(in module neural_compressor.torch.algorithms.static_quant.utility)</a>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/smooth_quant/utility/index.html#neural_compressor.torch.algorithms.smooth_quant.utility.dump_model_op_stats">(in module neural_compressor.torch.algorithms.smooth_quant.utility)</a>
 </li>
-        <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/autoround/index.html#neural_compressor.torch.algorithms.weight_only.autoround.dump_model_op_stats">(in module neural_compressor.torch.algorithms.weight_only.autoround)</a>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/static_quant/utility/index.html#neural_compressor.torch.algorithms.static_quant.utility.dump_model_op_stats">(in module neural_compressor.torch.algorithms.static_quant.utility)</a>
 </li>
         <li><a href="autoapi/neural_compressor/torch/utils/utility/index.html#neural_compressor.torch.utils.utility.dump_model_op_stats">(in module neural_compressor.torch.utils.utility)</a>
 </li>
@@ -802,7 +802,7 @@
         <li><a href="autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/generic/fuse_decomposed_in/index.html#neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_decomposed_in.get_const_dim_count">(in module neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.fuse_decomposed_in)</a>
 </li>
       </ul></li>
-      <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/autoround/index.html#neural_compressor.torch.algorithms.weight_only.autoround.get_dataloader">get_dataloader() (in module neural_compressor.torch.algorithms.weight_only.autoround)</a>
+      <li><a href="autoapi/neural_compressor/torch/algorithms/autoround/autoround/index.html#neural_compressor.torch.algorithms.autoround.autoround.get_dataloader">get_dataloader() (in module neural_compressor.torch.algorithms.autoround.autoround)</a>
 </li>
       <li><a href="autoapi/neural_compressor/torch/quantization/config/index.html#neural_compressor.torch.quantization.config.get_default_AutoRound_config">get_default_AutoRound_config() (in module neural_compressor.torch.quantization.config)</a>
 </li>
@@ -874,7 +874,7 @@
 </li>
       <li><a href="autoapi/neural_compressor/utils/create_obj_from_config/index.html#neural_compressor.utils.create_obj_from_config.get_metrics">get_metrics() (in module neural_compressor.utils.create_obj_from_config)</a>
 </li>
-      <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/autoround/index.html#neural_compressor.torch.algorithms.weight_only.autoround.get_mllm_dataloader">get_mllm_dataloader() (in module neural_compressor.torch.algorithms.weight_only.autoround)</a>
+      <li><a href="autoapi/neural_compressor/torch/algorithms/autoround/autoround/index.html#neural_compressor.torch.algorithms.autoround.autoround.get_mllm_dataloader">get_mllm_dataloader() (in module neural_compressor.torch.algorithms.autoround.autoround)</a>
 </li>
       <li><a href="autoapi/neural_compressor/torch/utils/utility/index.html#neural_compressor.torch.utils.utility.get_model_device">get_model_device() (in module neural_compressor.torch.utils.utility)</a>
 </li>
@@ -1754,6 +1754,10 @@
 </li>
         <li><a href="autoapi/neural_compressor/torch/algorithms/index.html#module-neural_compressor.torch.algorithms">neural_compressor.torch.algorithms</a>
 </li>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/autoround/index.html#module-neural_compressor.torch.algorithms.autoround">neural_compressor.torch.algorithms.autoround</a>
+</li>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/autoround/autoround/index.html#module-neural_compressor.torch.algorithms.autoround.autoround">neural_compressor.torch.algorithms.autoround.autoround</a>
+</li>
         <li><a href="autoapi/neural_compressor/torch/algorithms/base_algorithm/index.html#module-neural_compressor.torch.algorithms.base_algorithm">neural_compressor.torch.algorithms.base_algorithm</a>
 </li>
         <li><a href="autoapi/neural_compressor/torch/algorithms/layer_wise/index.html#module-neural_compressor.torch.algorithms.layer_wise">neural_compressor.torch.algorithms.layer_wise</a>
@@ -1811,8 +1815,6 @@
         <li><a href="autoapi/neural_compressor/torch/algorithms/static_quant/utility/index.html#module-neural_compressor.torch.algorithms.static_quant.utility">neural_compressor.torch.algorithms.static_quant.utility</a>
 </li>
         <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/index.html#module-neural_compressor.torch.algorithms.weight_only">neural_compressor.torch.algorithms.weight_only</a>
-</li>
-        <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/autoround/index.html#module-neural_compressor.torch.algorithms.weight_only.autoround">neural_compressor.torch.algorithms.weight_only.autoround</a>
 </li>
         <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/awq/index.html#module-neural_compressor.torch.algorithms.weight_only.awq">neural_compressor.torch.algorithms.weight_only.awq</a>
 </li>
@@ -2899,8 +2901,6 @@
         <li><a href="autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/generic/rename_batch_norm/index.html#module-neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.rename_batch_norm">module</a>
 </li>
       </ul></li>
-  </ul></td>
-  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.split_shared_input
 
@@ -2908,6 +2908,8 @@
         <li><a href="autoapi/neural_compressor/tensorflow/quantization/utils/graph_rewriter/generic/split_shared_input/index.html#module-neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.split_shared_input">module</a>
 </li>
       </ul></li>
+  </ul></td>
+  <td style="width: 33%; vertical-align: top;"><ul>
       <li>
     neural_compressor.tensorflow.quantization.utils.graph_rewriter.generic.strip_equivalent_nodes
 
@@ -3273,6 +3275,20 @@
 </li>
       </ul></li>
       <li>
+    neural_compressor.torch.algorithms.autoround
+
+      <ul>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/autoround/index.html#module-neural_compressor.torch.algorithms.autoround">module</a>
+</li>
+      </ul></li>
+      <li>
+    neural_compressor.torch.algorithms.autoround.autoround
+
+      <ul>
+        <li><a href="autoapi/neural_compressor/torch/algorithms/autoround/autoround/index.html#module-neural_compressor.torch.algorithms.autoround.autoround">module</a>
+</li>
+      </ul></li>
+      <li>
     neural_compressor.torch.algorithms.base_algorithm
 
       <ul>
@@ -3473,13 +3489,6 @@
 
       <ul>
         <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/index.html#module-neural_compressor.torch.algorithms.weight_only">module</a>
-</li>
-      </ul></li>
-      <li>
-    neural_compressor.torch.algorithms.weight_only.autoround
-
-      <ul>
-        <li><a href="autoapi/neural_compressor/torch/algorithms/weight_only/autoround/index.html#module-neural_compressor.torch.algorithms.weight_only.autoround">module</a>
 </li>
       </ul></li>
       <li>
@@ -4855,7 +4864,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fbf5ab84b90> 
+   <jinja2.runtime.BlockReference object at 0x7f339e865b80> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
