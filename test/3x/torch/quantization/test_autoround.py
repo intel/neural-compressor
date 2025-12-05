@@ -604,6 +604,7 @@ class TestAutoRoundCPU:
             static_attention_dtype=static_attention_dtype,
             export_format="auto_round",
             output_dir=output_dir,
+            reloading=False,
         )
         
         # quantizer execute
