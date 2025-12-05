@@ -172,7 +172,7 @@ class AutoRoundQuantizer(Quantizer):
         if pipe is not None:
             model = pipe
         # Remove AutoRound specific args before passing to AutoRound constructor
-        keys_to_pop = ["quant_config", "device", "export_format", "output_dir", "accelerator"]
+        keys_to_pop = ["quant_config", "device", "export_format", "output_dir", "accelerator", "reloading"]
         if hasattr(self, "target_bits") and self.target_bits is not None:
             from auto_round import AutoScheme
 
@@ -219,10 +219,14 @@ class AutoRoundQuantizer(Quantizer):
         self.accelerator.empty_cache()
         dump_model_op_stats(rounder.layer_config)
 
-        if self.export_format in ["auto_round", "llm_compressor"]:
+        reloading = self.__dict__.get("reloading", True) 
+        if self.export_format in ["auto_round", "llm_compressor"] and reloading:
             # the directly returned model is QuantLinear, which is used for packing.
             try:
-                logger.info(f"Quantization is done, reloading model from saved directory({self.output_dir})...")
+                logger.info(
+                    f"Quantization is done, reloading model from saved directory({self.output_dir})...\n"
+                    "Set reloading=False to skip."
+                )
                 import transformers  # pylint: disable=E0401
 
                 model = transformers.AutoModelForCausalLM.from_pretrained(self.output_dir)
