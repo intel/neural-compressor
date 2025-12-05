@@ -23,6 +23,7 @@ torch.manual_seed(42)
 
 ipex_version = get_ipex_version()
 
+
 try:
     import auto_round
 
@@ -30,6 +31,7 @@ try:
 except ImportError:
     auto_round_installed = False
 
+@pytest.mark.skipif(not Version(torch.__version__) < Version("2.9.0"), reason="only for torch<2.9.0 [ipex]")
 class TestTansformersLikeAPI:
     def setup_class(self):
         self.model_name_or_path = "hf-tiny-model-private/tiny-random-GPTJForCausalLM"
