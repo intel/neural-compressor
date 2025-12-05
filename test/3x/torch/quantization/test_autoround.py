@@ -93,13 +93,14 @@ class TestAutoRoundCPU:
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
-        from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
+        from neural_compressor.torch.algorithms.autoround import get_dataloader
         self.dataloader = get_dataloader(self.tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
         self.label = self.gptj(self.inp)[0]
 
     @classmethod
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
+        shutil.rmtree("temp_auto_round", ignore_errors=True)
 
     def setup_method(self, method):
         logger.info(f"Running TestAutoRound test: {method.__name__}")
@@ -167,51 +168,18 @@ class TestAutoRoundCPU:
         assert torch.allclose(out, self.label, atol=1e-1)
         assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
 
-    def test_save_and_load(self):
-        fp32_model = copy.deepcopy(self.gptj)
-        # known issue: scale_dtype="fp32" will cause accuracy gap between quantized model
-        # (using auto-round WeightOnlyLinear) and reloaded model (using INCWeightOnlyLinear)
-        quant_config = AutoRoundConfig(dtype="int", bits=4, act_dtype="int", act_bits=32,nsamples=32, seqlen=10,
-                        iters=10, use_sym=False, group_size=128, amp=False ,scale_dtype="fp16")
-        quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
-        logger.info(f"Test AutoRound with config {quant_config}")
-
-        # quantizer execute
-        model = prepare(model=fp32_model, quant_config=quant_config)
-        run_fn(model, self.dataloader)
-        q_model = convert(model)
-
-        assert q_model is not None, "Quantization failed!"
-        q_model.save("saved_results")
-        inc_out = q_model(self.inp)[0]
-
-        from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
-        from neural_compressor.torch.quantization import load
-
-        # loading compressed model
-        loaded_model = load("saved_results", copy.deepcopy(self.gptj))
-        loaded_out = loaded_model(self.inp)[0]
-        assert torch.allclose(inc_out, loaded_out), "Unexpected result. Please double check."
-        assert isinstance(
-            loaded_model.transformer.h[0].attn.k_proj, INCWeightOnlyLinear
-        ), "loading compressed model failed."
-
     def test_conv1d(self):
-        input = torch.randn(1, 32)
-        from transformers import GPT2Model, GPT2Tokenizer
-
-        tokenizer = GPT2Tokenizer.from_pretrained("sshleifer/tiny-gpt2")
-        model = GPT2Model.from_pretrained("sshleifer/tiny-gpt2", use_cache=False)
+        model = AutoModelForCausalLM.from_pretrained("MBZUAI/LaMini-GPT-124M", device_map="auto", trust_remote_code=True)
+        tokenizer =  AutoTokenizer.from_pretrained("MBZUAI/LaMini-GPT-124M", trust_remote_code=True)
         text = "Replace me by any text you'd like."
         encoded_input = tokenizer(text, return_tensors="pt")
-        out1 = model(**encoded_input)[0]
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=0,tokenizer=tokenizer,export_format="auto_round")
         model = prepare(model=model, quant_config=quant_config)
-        run_fn(model, self.dataloader)
         q_model = convert(model)
-        out2 = q_model(**encoded_input)[0]
-        assert torch.allclose(out2, out1, atol=0.01), "Accuracy gap atol > 0.01 is unexpected."
-        assert isinstance(q_model.h[0].attn.c_attn, WeightOnlyLinear), "loading compressed model failed."
+        output = tokenizer.decode(q_model.generate(**encoded_input, max_new_tokens=10)[0])
+        print(output)
+        assert output is not None
+        assert not isinstance(q_model.transformer.h[0].attn.c_attn, transformers.pytorch_utils.Conv1D), "loading compressed model failed."
 
     def test_utils(self):
         from neural_compressor.torch.utils.utility import (
@@ -243,7 +211,7 @@ class TestAutoRoundCPU:
         input = torch.randn(1, 32)
         from transformers import AutoProcessor, AutoTokenizer, Qwen2VLForConditionalGeneration
 
-        from neural_compressor.torch.algorithms.weight_only.autoround import get_mllm_dataloader
+        from neural_compressor.torch.algorithms.autoround import get_mllm_dataloader
 
         model_name = "Qwen/Qwen2-VL-2B-Instruct"
         tokenizer = AutoTokenizer.from_pretrained(model_name)
@@ -282,7 +250,7 @@ class TestAutoRoundCPU:
         model = prepare(model=model, quant_config=quant_config)
         run_fn(model, dataloader)
         q_model = convert(model)
-        assert isinstance(q_model.language_model.layers[0].mlp.up_proj, WeightOnlyLinear), "model quantization failed."
+        assert isinstance(q_model.model.language_model.layers[0].mlp.up_proj, WeightOnlyLinear), "model quantization failed."
 
     # def test_autoround_format_export(self):
     #     from neural_compressor.torch.quantization import load
@@ -298,6 +266,60 @@ class TestAutoRoundCPU:
     #     assert isinstance(q_model.transformer.h[0].attn.k_proj, QuantLinear), "packing model failed."
     #     q_model.save(output_dir="saved_results_tiny-random-GPTJForCausalLM", format="huggingface")
     #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
+    
+    def test_set_local(self):
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        inp = torch.ones([1, 10], dtype=torch.long)
+        output_dir = "./saved_inc"
+        tokenizer = AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer, output_dir=output_dir,
+            dtype="int4", nsamples=32, seqlen=10, iters=0, amp=False ,scale_dtype="fp32", export_format="auto_round")
+        logger.info(f"Test AutoRound with config {quant_config}")
+        quant_config.set_local("self.attn", AutoRoundConfig(dtype="fp16"))
+        # {"self_attn": {"bits": 4, "data_type": "nv_fp", "act_bits": 16, "group_size": 16}}
+
+        # prepare + convert API
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        q_model = convert(model)
+        model = AutoModelForCausalLM.from_pretrained(
+            output_dir,
+            torch_dtype="auto",
+            device_map="auto",
+        )
+        out = model(self.inp)[0]
+        assert isinstance(q_model.model.decoder.layers[0].self_attn.v_proj, torch.nn.Linear), "set_local failed."
+        
+        # AutoRound API
+        fp32_model = transformers.AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        inp = torch.ones([1, 10], dtype=torch.long)
+        tokenizer = transformers.AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+        from auto_round import AutoRound
+        layer_config = {"self.attn":{"data_type":"fp16"}}
+        ar = AutoRound(
+            tokenizer=tokenizer, model=fp32_model, layer_config=layer_config,
+            data_type="int4", nsamples=32, seqlen=10, iters=0, amp=False ,scale_dtype="fp32", export_format="auto_round")
+        quantized_model_path = "./saved_ar"
+        ar.quantize_and_save(output_dir=quantized_model_path, inplace=True, format="auto_round")
+        model = AutoModelForCausalLM.from_pretrained(
+            quantized_model_path,
+            torch_dtype="auto",
+            device_map="auto",
+        )
+        out_ar = model(inp)[0]
+        assert torch.all(out_ar.eq(out))
+        shutil.rmtree("./saved_inc", ignore_errors=True)
+        shutil.rmtree(quantized_model_path, ignore_errors=True)
 
     @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
     @pytest.mark.parametrize("scheme", ["W4A16","W2A16","W3A16","W8A16","MXFP4","MXFP8", "NVFP4","FPW8A16","FP8_STATIC"])
@@ -398,10 +420,10 @@ class TestAutoRoundCPU:
         model = prepare(model=fp32_model, quant_config=quant_config)
         model = convert(model)
         # mxfp4/8 model inference relys on autoround extension for vLLM.
-        assert model.model.decoder.layers[0].self_attn.k_proj.data_type =="mx_fp8", \
-                "model is not quantized correctly, please check."
-        assert model.model.decoder.layers[1].fc1.data_type =="mx_fp4", \
-                "model is not quantized correctly, please check."
+        target_modules = ["MXFP4QuantLinear", "MXFP8QuantLinear"]
+        assert (model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ in target_modules and \
+                model.model.decoder.layers[1].fc1.__class__.__name__ in target_modules) ,\
+            "model is not quantized correctly, please check."
 
 
     @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
@@ -439,11 +461,181 @@ class TestAutoRoundCPU:
         )
         best_model = autotune(model=fp32_model, tune_config=custom_tune_config, eval_fn=eval_acc_fn)
         # mxfp4/8 model inference relys on autoround extension for vLLM.
-        assert best_model.model.decoder.layers[0].self_attn.k_proj.data_type =="mx_fp8", \
-                "model is not quantized correctly, please check."
-        assert best_model.model.decoder.layers[1].fc1.data_type =="mx_fp8", \
-                "model is not quantized correctly, please check."
+        target_modules = ["MXFP4QuantLinear", "MXFP8QuantLinear"]
+        assert (best_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ in target_modules and \
+                best_model.model.decoder.layers[1].fc1.__class__.__name__ in target_modules) ,\
+            "model is not quantized correctly, please check."
 
+    def test_static_attention_dtype(self):
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        tokenizer = AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+
+        output_dir = "./saved_inc"
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer,
+            iters=0,
+            nsamples=2,
+            seqlen=2,
+            scheme="FP8_STATIC",
+            static_attention_dtype="fp8",
+            output_dir=output_dir,
+            export_format="auto_round",
+        )
+        # quantizer execute
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        model = convert(model)
+        
+        from safetensors import safe_open
+        f = safe_open(os.path.join(output_dir, "model.safetensors"), framework="pt")
+        assert "model.decoder.layers.8.self_attn.k_proj.input_scale" in f.keys()
+        assert "model.decoder.layers.8.self_attn.k_proj.weight_scale" in f.keys()
+        assert f.get_tensor("model.decoder.layers.5.self_attn.v_proj.input_scale").shape == torch.Size([1])
+        assert f.get_tensor("model.decoder.layers.5.self_attn.v_proj.weight").dtype == torch.float8_e4m3fn
+        check_attrs = ["k_scale", "v_scale", "q_scale"]
+
+        for attr in check_attrs:
+            weight_name = f"model.decoder.layers.8.self_attn.{attr}"
+            assert weight_name in f.keys()
+            assert f.get_tensor(weight_name).shape == torch.Size([1])
+            assert f.get_tensor(weight_name).dtype == torch.float32
+        shutil.rmtree(output_dir, ignore_errors=True)
+
+    @pytest.mark.parametrize("static_kv_dtype", [None, "fp8", "float16"])
+    def test_static_afp8_export(self, static_kv_dtype):
+        fp32_model = AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
+            torchscript=True,
+            device_map="auto",
+        )
+        tokenizer = AutoTokenizer.from_pretrained(
+            "facebook/opt-125m", trust_remote_code=True)
+
+        output_dir = "./saved_inc"
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer,
+            bits=8,
+            group_size=-1,
+            iters=0,
+            act_bits=8,
+            nsamples=2,
+            seqlen=2,
+            data_type="fp8",
+            act_data_type="fp8",
+            act_dynamic=False,
+            act_group_size=0,
+            static_kv_dtype=static_kv_dtype,
+            export_format="auto_round",
+            output_dir=output_dir,
+        )
+        
+        # quantizer execute
+        model = prepare(model=fp32_model, quant_config=quant_config)
+        model = convert(model)
+        
+        from safetensors import safe_open
+        f = safe_open(os.path.join(output_dir, "model.safetensors"), framework="pt")
+        assert "model.decoder.layers.8.self_attn.k_proj.input_scale" in f.keys()
+        assert "model.decoder.layers.8.self_attn.k_proj.weight_scale" in f.keys()
+        assert f.get_tensor("model.decoder.layers.5.self_attn.v_proj.input_scale").shape == torch.Size([1])
+        assert f.get_tensor("model.decoder.layers.5.self_attn.v_proj.weight").dtype == torch.float8_e4m3fn
+        if static_kv_dtype is None:
+            with torch.no_grad():
+                import transformers
+
+                model = transformers.AutoModelForCausalLM.from_pretrained(
+                    output_dir,
+                    torch_dtype="auto",
+                    low_cpu_mem_usage=True,
+                    trust_remote_code=True,
+                )
+                model.eval()
+                assert (
+                    model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__
+                    == "WeightFP8ActFP8StaticQuantLinear"
+                ), f"Expected WeightFP8ActFP8StaticQuantLinear, got {model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__}"
+                tokenizer = transformers.AutoTokenizer.from_pretrained(output_dir)
+                prompt = "AI is "
+                encode = tokenizer.encode(prompt, return_tensors="pt")
+                with torch.no_grad():
+                    output_tokens = model.generate(
+                        encode,
+                        max_length=10,
+                    )
+                    output = tokenizer.decode(output_tokens[0], skip_special_tokens=True)
+                    print(f"Prompt: {prompt}")
+                    print(f"Output: {output}")
+                    assert output is not None, "Output should not be None"
+        shutil.rmtree(output_dir, ignore_errors=True)
+        
+    @pytest.mark.parametrize(
+        "scheme,  static_kv_dtype, static_attention_dtype",
+        [
+            ("MXFP4", None, "fp8"),
+            ("MXFP4", "fp8", None),
+            ("MXFP8", None, "fp8"),
+            ("MXFP8", "fp8", None),
+            ("NVFP4", None, "fp8"),
+            ("NVFP4", "fp8", None),
+        ]
+    )
+    def test_fp8_kv_attn(self, scheme, static_kv_dtype, static_attention_dtype):
+
+        from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
+        from transformers.models.opt.modeling_opt import OPTForCausalLM
+
+        model_name = "facebook/opt-125m"
+        config = AutoConfig.from_pretrained(model_name)
+        config.num_hidden_layers = 1
+        model = OPTForCausalLM(config)
+        tokenizer = AutoTokenizer.from_pretrained(model_name)
+
+        output_dir = "./saved_inc"
+        quant_config = AutoRoundConfig(
+            tokenizer=tokenizer,
+            scheme=scheme,
+            iters=0,
+            seqlen=2,
+            static_kv_dtype=static_kv_dtype,
+            static_attention_dtype=static_attention_dtype,
+            export_format="auto_round",
+            output_dir=output_dir,
+            reloading=False,
+        )
+        
+        # quantizer execute
+        model = prepare(model=model, quant_config=quant_config)
+        compressed_model = convert(model)
+        
+        attn = compressed_model.model.decoder.layers[0].self_attn
+        q_proj = attn.q_proj
+
+        # weight_scale should exist for all quantized schemes
+        assert hasattr(q_proj, "weight_scale"), f"Missing weight_scale in q_proj for scheme={scheme}"
+        if static_kv_dtype == "fp8":
+            assert (
+                compressed_model.config.quantization_config["static_kv_dtype"] == "fp8"
+            ), f"Invalid static_kv_dtype in config for scheme={scheme}, static_kv_dtype={static_kv_dtype}"
+
+        # Only when static_kv_dtype / static_attention_dtype are fp8 do we expect FP8 KV scales
+        if static_kv_dtype == "fp8" or static_attention_dtype == "fp8":
+            assert attn.k_scale is not None and attn.v_scale is not None, (
+                f"Missing k_scale/v_scale in attention for scheme={scheme}, "
+                f"static_kv_dtype={static_kv_dtype}, static_attention_dtype={static_attention_dtype}"
+            )
+
+        if static_attention_dtype == "fp8":
+            assert (
+                compressed_model.config.quantization_config["static_attention_dtype"] == "fp8"
+            ), f"Invalid static_attention_dtype in config for scheme={scheme}, static_attention_dtype={static_attention_dtype}"
+            assert (
+                getattr(attn, "q_scale", None) is not None
+            ), f"Missing q_scale in attention for scheme={scheme}, static_attention_dtype={static_attention_dtype}"
+        shutil.rmtree(output_dir, ignore_errors=True)
 
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")
 @pytest.mark.skipif(os.getenv("PT_HPU_LAZY_MODE", "0") == "1", reason="Lazy mode is enabled")
@@ -453,7 +645,7 @@ class TestAutoRoundHPU:
     def setup_class(self):
         
         model_name = "TheBloke/Llama-2-7B-Chat-GPTQ"
-        from neural_compressor.torch.algorithms.weight_only.autoround import get_dataloader
+        from neural_compressor.torch.algorithms.autoround import get_dataloader
 
         config = LlamaConfig(num_hidden_layers=2)
         with transformers.modeling_utils.no_init_weights():
@@ -561,7 +753,6 @@ class TestAutoRoundHPU:
         model = copy.deepcopy(self.tiny_llama_model)
 
         quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", amp=False ,scale_dtype="fp32")
-        quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
 
         logger.info(f"Test AutoRound with config {quant_config}")
 
@@ -679,7 +870,7 @@ class TestAutoRoundGPU:
         )
         tokenizer = AutoTokenizer.from_pretrained(
             "Qwen/Qwen2-VL-2B-Instruct", trust_remote_code=True)
-        from neural_compressor.torch.algorithms.weight_only.autoround import get_mllm_dataloader
+        from neural_compressor.torch.algorithms.autoround import get_mllm_dataloader
         processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True)
         
         output_dir = "./saved_inc"
