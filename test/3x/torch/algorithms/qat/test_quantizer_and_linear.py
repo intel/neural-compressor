@@ -163,3 +163,24 @@ def test_tensor_quantizer_scale_persistence():
     assert tq.scale.dtype == torch.uint8
     # Heuristic: at least one non-zero (if all zero it may still be valid, but improbable)
     assert (tq.scale != 0).any() or (shared_exp == 0).all()
+
+
+def test_weight_pack():
+    # Provide scale_shape so internal buffer is registered & updated
+    tq = TensorQuantizer(scale_shape=(4, 32), block_size=32)
+    x = torch.randn(4, 32)
+    # Use internal fake quant function to generate scale
+    q, shared_exp = tq._fake_quantize(x)
+
+    q_packed, scale = tq.weight_pack(q, shared_exp)
+
+    assert q_packed.dtype == torch.float8_e4m3fn
+
+    tq = TensorQuantizer(data_type="mx_fp4", bits=4, scale_shape=(4, 32), block_size=32)
+    x = torch.randn(4, 32)
+    # Use internal fake quant function to generate scale
+    q, shared_exp = tq._fake_quantize(x)
+
+    q_packed, scale = tq.weight_pack(q, shared_exp)
+
+    assert q_packed.dtype == torch.uint8

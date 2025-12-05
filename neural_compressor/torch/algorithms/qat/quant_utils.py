@@ -108,6 +108,7 @@ def get_quant_config(scheme: str) -> dict[str, Any]:
         quantization_config["provider"] = "auto-round"
         quantization_config["config_groups"]["group_0"]["weights"]["is_mx"] = True
         quantization_config["config_groups"]["group_0"]["input_activations"]["is_mx"] = True
+        quantization_config["format"] = "float-quantized"
 
     except ImportError:
         quantization_config = None
@@ -132,6 +133,9 @@ def get_quantization_format(module) -> str | None:
         # TODO: support more quant format
         if weight_quantizer.num_bits == 8 and weight_quantizer.data_type == "mx_fp8":
             return "MXFP8"
+
+        if weight_quantizer.num_bits == 4 and weight_quantizer.data_type == "mx_fp4":
+            return "MXFP4"
 
         # Raise error for unsupported num_bits
         raise NotImplementedError(f"Unsupported quantizer with num_bits: {weight_quantizer.num_bits}")
