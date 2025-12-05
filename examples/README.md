@@ -16,9 +16,27 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
 <tr>
+    <td>deepseek-ai/DeepSeek-R1</td>
+    <td>Natural Language Processing</td>
+    <td>Quantization (MXFP8/MXFP4)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/deepseek">link</a></td>
+</tr>
+<tr>
+    <td>Qwen/Qwen3-235B-A22B</td>
+    <td>Natural Language Processing</td>
+    <td>Quantization (MXFP8/MXFP4)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/qwen">link</a></td>
+</tr>
+<tr>
+    <td>Framepack</td>
+    <td>Image + Text to Video</td>
+    <td>Quantization (MXFP8/FP8)</td>
+    <td><a href="./pytorch/diffusion_model/diffusers/framepack">link</a></td>
+</tr>
+<tr>
     <td>FLUX.1-dev</td>
     <td>Text to Image</td>
-    <td>Quantization (MXFP8+FP8)</td>
+    <td>Quantization (MXFP8/FP8)</td>
     <td><a href="./pytorch/diffusion_model/diffusers/flux">link</a></td>
 </tr>
 <tr>
@@ -28,14 +46,31 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/multimodal-modeling/quantization/auto_round/llama4">link</a></td>
 </tr>
 <tr>
-    <td rowspan="2">Llama-3.3-70B-Instruct</td>
+    <td rowspan="2">Llama-3.1-8B-Instruct</td>
     <td rowspan="2">Natural Language Processing</td>
     <td>Mixed Precision (MXFP4+MXFP8)</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/mix-precision#mix-precision-quantization-mxfp4--mxfp8">link</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.md#llama-31-8b-mxfp4-mixed-with-mxfp8-target_bits78">link</a></td>
 </tr>
 <tr>
     <td>Quantization (MXFP4/MXFP8/NVFP4)</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/mix-precision#mxfp4--mxfp8">link</a></td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.md#demo-mxfp4-mxfp8-nvfp4-unvfp4">link</a></td>
+</tr>
+<tr>
+    <td rowspan="2">Llama-3.1-70B-Instruct</td>
+    <td rowspan="2">Natural Language Processing</td>
+<tr>
+    <td>Quantization (MXFP8/NVFP4/uNVFP4)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.md#llama-31-70b-mxfp8">link</a></td>
+</tr>
+<tr>
+    <td rowspan="2">Llama-3.3-70B-Instruct</td>
+    <td rowspan="2">Natural Language Processing</td>
+    <td>Mixed Precision (MXFP4+MXFP8)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.md#llama-33-70b-mxfp4-mixed-with-mxfp8-target_bits58">link</a></td>
+</tr>
+<tr>
+    <td>Quantization (MXFP4/MXFP8/NVFP4)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.md#demo-mxfp4-mxfp8-nvfp4-unvfp4">link</a></td>
 </tr>
 <tr>
     <td rowspan="2">gpt_j</td>
