@@ -54,43 +54,16 @@ accelerate launch --config-file accelerate_config/fsdp1.yaml \
 
 ##### Step 2: 
 
-Quantize the trained model using `prepare_qat()` by setting the following flags `--quant_scheme MXFP8 --do_train False`. This inserts fake quantization modules into the model without starting training yet. Then save the model directly to a get post training quantization model.
+Save the model directly to a get post training quantization model with using [auto-round](https://github.com/intel/auto-round).
 
 
 ```
-accelerate launch --config-file accelerate_config/fsdp1.yaml \
-  --fsdp_transformer_layer_cls_to_wrap LlamaDecoderLayer \
-  main.py \
-  --model_name_or_path ./llama3.1-finetuned \
-  --model_max_length 4096 \
-  --dataloader_drop_last True \
-  --do_train False \
-  --do_eval False \
-  --quant_scheme MXFP8 \
-  --output_dir ./llama3.1-finetuned-ptq \
-  --dataset Daring-Anteater \
-  --num_train_epochs 2.0 \
-  --per_device_train_batch_size 4 \
-  --per_device_eval_batch_size 4 \
-  --gradient_accumulation_steps 1 \
-  --eval_accumulation_steps 1 \
-  --save_strategy steps \
-  --save_steps 3000 \
-  --eval_strategy steps \
-  --eval_steps 3000 \
-  --load_best_model_at_end True \
-  --save_total_limit 2 \
-  --learning_rate 1e-5 \
-  --weight_decay 0.0 \
-  --warmup_ratio 0.1 \
-  --lr_scheduler_type linear \
-  --logging_steps 1 \
-  --report_to tensorboard
+python quantize_autoround.py 
 ```
 
 ##### Step 3: 
 
-Train/fine-tune the quantized model with a small learning rate, e.g. 1e-5 for Adam optimizer by setting `--quant_scheme MXFP8 --do_train True`
+Train/fine-tune the quantized model with a small learning rate, e.g. 1e-5 for Adam optimizer by setting `--quant_scheme MXFP4 --do_train True`
 
 ```
 accelerate launch --config-file accelerate_config/fsdp1.yaml \
@@ -101,7 +74,7 @@ accelerate launch --config-file accelerate_config/fsdp1.yaml \
   --dataloader_drop_last True \
   --do_train True \
   --do_eval True \
-  --quant_scheme MXFP8 \
+  --quant_scheme MXFP4 \
   --output_dir ./llama3.1-finetuned-qat \
   --dataset Daring-Anteater \
   --max_steps 1000 \
