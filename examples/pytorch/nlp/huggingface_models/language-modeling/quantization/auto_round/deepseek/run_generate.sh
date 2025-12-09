@@ -52,8 +52,8 @@ done
 
 # Validate quantization type
 QUANT_TYPE_UPPER=$(echo "$QUANT_TYPE" | tr '[:lower:]' '[:upper:]')
-if [[ "$QUANT_TYPE_UPPER" != "MXFP4" && "$QUANT_TYPE_UPPER" != "MXFP8" ]]; then
-    echo "Error: Quantization type must be mxfp4 or mxfp8"
+if [[ "$QUANT_TYPE_UPPER" != "MXFP4" && "$QUANT_TYPE_UPPER" != "MXFP8" && "$QUANT_TYPE_UPPER" != "NVFP4" ]]; then
+    echo "Error: Quantization type must be mxfp4, mxfp8 or nvfp4"
     usage
     exit 1
 fi
@@ -82,18 +82,25 @@ echo "  Tensor Parallelism: $TP_SIZE"
 echo ""
 
 # Set environment variables based on quantization type
+# Set environment variables based on quantization type
 if [[ "$QUANT_TYPE_UPPER" == "MXFP4" ]]; then
+    export VLLM_ENABLE_AR_EXT=1
     export VLLM_AR_MXFP4_MODULAR_MOE=1
     export VLLM_MXFP4_PRE_UNPACK_TO_FP8=1
     echo "Using MXFP4 configuration"
+elif [[ "$QUANT_TYPE_UPPER" == "NVFP4" ]]; then
+    export VLLM_ENABLE_AR_EXT=0
+    export VLLM_AR_MXFP4_MODULAR_MOE=0
+    export VLLM_MXFP4_PRE_UNPACK_TO_FP8=0
+    echo "Using NVFP4 configuration"
 else
+    export VLLM_ENABLE_AR_EXT=1
     export VLLM_AR_MXFP4_MODULAR_MOE=0
     export VLLM_MXFP4_PRE_UNPACK_TO_FP8=0
     echo "Using MXFP8 configuration"
 fi
 
 # Common environment variables
-export VLLM_ENABLE_AR_EXT=1
 export VLLM_ENABLE_STATIC_MOE=0
 export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=0
 export VLLM_USE_DEEP_GEMM=0

@@ -32,6 +32,11 @@ topologies_config = {
         "fp_layers": "lm_head,self_attn",
         "iters": 0,
     },
+    "nvfp4": {
+        "scheme": "NVFP4",
+        "fp_layers": "lm_head,self_attn",
+        "iters": 0,
+    },
 }
 
 
@@ -63,11 +68,12 @@ def quant_model(args):
     quant_config = AutoRoundConfig(
         tokenizer=tokenizer,
         scheme=config["scheme"],
-        enable_torch_compile=args.enable_torch_compile,
+        enable_torch_compile=True,
         iters=config["iters"],
         fp_layers=config["fp_layers"],
         export_format=export_format,
         output_dir=output_dir,
+        low_gpu_mem_usage=True,
     )
 
     # quantizer execute
