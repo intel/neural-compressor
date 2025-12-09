@@ -173,7 +173,7 @@ class TestAutoRoundCPU:
         tokenizer =  AutoTokenizer.from_pretrained("MBZUAI/LaMini-GPT-124M", trust_remote_code=True)
         text = "Replace me by any text you'd like."
         encoded_input = tokenizer(text, return_tensors="pt")
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=0,tokenizer=tokenizer,export_format="auto_round")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=0, amp=False, tokenizer=tokenizer, export_format="auto_round")
         model = prepare(model=model, quant_config=quant_config)
         q_model = convert(model)
         output = tokenizer.decode(q_model.generate(**encoded_input, max_new_tokens=10)[0])
@@ -267,6 +267,7 @@ class TestAutoRoundCPU:
     #     q_model.save(output_dir="saved_results_tiny-random-GPTJForCausalLM", format="huggingface")
     #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
     
+    @pytest.mark.skipif(not Version(torch.__version__) < Version("2.9.0"), reason="only for torch<2.9.0 [ipex]")
     def test_set_local(self):
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
@@ -324,6 +325,10 @@ class TestAutoRoundCPU:
     @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
     @pytest.mark.parametrize("scheme", ["W4A16","W2A16","W3A16","W8A16","MXFP4","MXFP8", "NVFP4","FPW8A16","FP8_STATIC"])
     def test_scheme(self, scheme):
+        # Skip W4A16 scheme when torch version >= 2.9.0
+        if scheme == "W4A16" and not Version(torch.__version__) < Version("2.9.0"):
+            pytest.skip("W4A16 scheme is not supported for torch >= 2.9.0 on cpu")
+
         # INC API
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
