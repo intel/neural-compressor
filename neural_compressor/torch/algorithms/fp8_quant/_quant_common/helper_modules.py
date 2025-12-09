@@ -1416,6 +1416,7 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
                 q_start = q_len - (q_chunk_idx + 1) * self.qkv_chunk_size
                 q_start = max(q_start, 0)
                 q_end = q_len - q_chunk_idx * self.qkv_chunk_size
+                q_chunk_size = q_end - q_start
                 q_chunk = qinput[..., q_start:q_end, :]
 
                 last_out = prefix_out[..., q_start:q_end, :]
@@ -1426,10 +1427,13 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
                     kv_start = prefix_len + q_end - (kv_chunk_idx + 1) * self.qkv_chunk_size
                     kv_start = max(kv_start, prefix_len)
                     kv_end = prefix_len + q_end - kv_chunk_idx * self.qkv_chunk_size
+                    kv_chunk_size = kv_end - kv_start
                     k_chunk = kinput[..., kv_start:kv_end, :]
                     v_chunk = vinput[..., kv_start:kv_end, :]
 
-                    is_causal_chunk = kv_chunk_idx == 0 and q_chunk_idx !=0 
+                    is_causal_chunk = kv_chunk_idx == 0 and q_chunk_idx != 0
+                    # If the chunk is causal, we need to ensure that the chunk sizes are multiples of 1024 to get valid m and linv
+                    is_causal_chunk = is_causal_chunk and q_chunk_size % 1024 == 0 and kv_chunk_size % 1024 == 0
                     mask_chunk = attn_mask[..., q_start:q_end, kv_start:kv_end] if kv_chunk_idx == 0 and not is_causal_chunk else None
                     chunk_res = self.fp8_fsdpa_fwd(q_chunk, k_chunk, v_chunk, mask_chunk, dropout_p, scale, is_causal_chunk, sm_mode)
 
