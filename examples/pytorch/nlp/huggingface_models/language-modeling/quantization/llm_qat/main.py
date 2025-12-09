@@ -12,7 +12,6 @@ from transformers import (
     AutoModelForCausalLM,
     AutoTokenizer,
     HfArgumentParser,
-    Trainer,
     default_data_collator,
     set_seed,
     TrainerCallback,
@@ -21,6 +20,7 @@ from transformers import (
 from utils import (
     get_metrics_with_perplexity,
     make_supervised_data_module,
+    QATTrainer
 )
 
 logger = logging.getLogger(__name__)
@@ -47,7 +47,7 @@ class TrainingArguments(transformers.TrainingArguments):
 class DataArguments:
     dataset: str = field(
         default="Daring-Anteater",
-        metadata={"help": "Specify the dataset.", "choices": ["Daring-Anteater"]},
+        metadata={"help": "Specify the dataset.", "choices": ["Daring-Anteater", "cnn_dailymail"]},
     )
     train_size: int = field(
         default=0,
@@ -69,7 +69,7 @@ class QuantizationArguments:
                 "Specify the quantization format for PTQ/QAT. if specified, PTQ/QAT will be enabled"
                 " with the specified quantization format"
             ),
-            "choices": ["MXFP8"],
+            "choices": ["MXFP8", "MXFP4"],
         },
     )
 
@@ -124,9 +124,16 @@ def train():
     # prepare model for quantization
     if quant_args.quant_scheme is not None:
         from neural_compressor.torch.quantization.quantize import prepare_qat
+
+        model.train()
         # inplace
-        # default mxfp8
-        prepare_qat(model)
+        if quant_args.quant_scheme == "MXFP8":
+            # default mxfp8
+            prepare_qat(model)
+        if quant_args.quant_scheme == "MXFP4":
+            mappings = {torch.nn.Linear: "MXFP4"}
+            prepare_qat(model, mappings)
+
 
         logger.info("Finish model preparation for QAT.")
 
@@ -154,7 +161,7 @@ def train():
     if training_args.gradient_checkpointing and training_args.gradient_checkpointing_kwargs is None:
         training_args.gradient_checkpointing_kwargs = {"use_reentrant": True}
 
-    trainer = Trainer(
+    trainer = QATTrainer(
         model=model,
         processing_class=tokenizer,
         args=training_args,
@@ -172,15 +179,8 @@ def train():
         metrics = get_metrics_with_perplexity(metrics)
         logger.info(f"Evaluation results: \n{metrics}")
 
-    if training_args.do_train and quant_args.quant_scheme is None:
-        logger.info("Saving the model...")
-        trainer.save_model(training_args.output_dir)
-    elif quant_args.quant_scheme is not None:
-        from neural_compressor.torch.export.export_hf import export_hf2compressored_model
-        # export quantized model for vllm inference using llm-compressor and compressed_tensor
-        export_hf2compressored_model(model, training_args.output_dir, quant_args.quant_scheme)
-        if tokenizer is not None:
-            tokenizer.save_pretrained(training_args.output_dir)
+    logger.info("Saving the model...")
+    trainer.save_model(training_args.output_dir)
 
 
 if __name__ == "__main__":

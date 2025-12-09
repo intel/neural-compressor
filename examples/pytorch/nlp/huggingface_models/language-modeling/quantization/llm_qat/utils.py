@@ -17,12 +17,12 @@ import gc
 import types
 from contextlib import contextmanager
 from functools import partial
-
+import json
 import datasets
 import torch
 
 import transformers
-from transformers import default_data_collator
+from transformers import default_data_collator, Trainer
 
 IGNORE_INDEX = -100
 
@@ -146,3 +146,78 @@ def get_metrics_with_perplexity(metrics):
     if "eval_loss" in metrics:
         metrics["perplexity"] = float(torch.exp(torch.tensor(metrics["eval_loss"])))
     return metrics
+
+
+def print_rank_0(*args, **kwargs):
+    """Prints only on the master process."""
+
+    if torch.distributed.is_available() and  torch.distributed.is_initialized():
+        if torch.distributed.get_rank(group=None) == 0:
+            print(*args, **kwargs, flush=True)
+    else:
+        print(*args, **kwargs, flush=True)
+
+class QATTrainer(Trainer):
+    """A drop-in replacement of HuggingFace's Trainer for ModelOpt.
+
+    This class adds extra utilities for ModelOpt checkpointing and memory reporting.
+    """
+
+    def __init__(self, *args, **kwargs):
+        """Initialize."""
+        # enable_huggingface_checkpointing()
+        super().__init__(*args, **kwargs)
+
+        self._original_dtype = getattr(
+            getattr(self.model, "config", None), "dtype", None
+        ) or getattr(getattr(self.model, "config", None), "torch_dtype", None)
+
+    def save_model(self, *args, **kwargs):
+        """Save the quantized model."""
+        if (
+            (not self.is_in_train)
+            and self.is_fsdp_enabled
+            and self.accelerator.state.fsdp_plugin.state_dict_type != "FULL_STATE_DICT"
+        ):
+            print_rank_0("Setting state_dict_type to FULL_STATE_DICT for final checkpoint save.")
+            original_type = self.accelerator.state.fsdp_plugin.state_dict_type
+            self.accelerator.state.fsdp_plugin.set_state_dict_type("FULL_STATE_DICT")
+            outputs = super().save_model(*args, **kwargs)
+            if torch.distributed.is_initialized():
+                torch.distributed.barrier()
+
+            self.accelerator.state.fsdp_plugin.set_state_dict_type(original_type)
+        else:
+            outputs = super().save_model(*args, **kwargs)
+        if (not self.is_in_train) and self.args.should_save:
+            out_dir = args[0]
+            # FSDP may upcast parameter dtype to float32 during mixed-precision training,
+            # we convert it back to original dtype by updating `torch-dtype` in `config.json`
+            self._update_config_json_dtype(out_dir, str(self._original_dtype).split(".")[1])
+        return outputs
+
+    def _update_config_json_dtype(self, output_dir: str, dtype_str: str | None) -> None:
+        """Rewrite <output_dir>/config.json 'dtype' (preferred) or 'torch_dtype' to dtype_str."""
+        cfg_path = os.path.join(output_dir, "config.json")
+        if not os.path.isfile(cfg_path):
+            print_rank_0(f"[warn] config.json not found under {output_dir}; skip dtype rewrite.")
+            return
+        try:
+            with open(cfg_path, encoding="utf-8") as f:
+                data = json.load(f)
+            # Prefer 'dtype', else fall back to 'torch_dtype'
+            key_to_update = (
+                "dtype" if "dtype" in data else ("torch_dtype" if "torch_dtype" in data else None)
+            )
+            if key_to_update is None:
+                print_rank_0(
+                    "[warn] Neither 'dtype' nor 'torch_dtype' present in config.json; skip dtype rewrite."
+                )
+                return
+            if data.get(key_to_update) != dtype_str:
+                data[key_to_update] = dtype_str
+                with open(cfg_path, "w", encoding="utf-8") as f:
+                    json.dump(data, f, ensure_ascii=False, indent=2)
+                print_rank_0(f'Updated config.json: {key_to_update} -> "{dtype_str}"')
+        except Exception as e:
+            print_rank_0(f"[warn] Failed to update dtype in config.json: {e}")

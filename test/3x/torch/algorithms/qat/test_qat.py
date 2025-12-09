@@ -65,3 +65,28 @@ def test_train():
     for name, param in model.named_parameters():
         assert param.grad is not None
     optimizer.step()
+
+
+def test_train_mxfp4():
+    """QAT test."""
+    setup_seed(20)
+
+    model = TinyModel()
+    mappings = {torch.nn.Linear: "MXFP4"}
+    prepare_qat(model, mappings)
+
+    inp = torch.randn([2, 32])
+
+    optimizer = torch.optim.AdamW(model.parameters(), lr=1e-5)
+
+    with torch.autocast(device_type="cpu", dtype=torch.bfloat16):
+        output = model(inp)
+        loss = output.mean()
+
+    optimizer.zero_grad()
+    loss.backward()
+
+    # check the grad
+    for name, param in model.named_parameters():
+        assert param.grad is not None
+    optimizer.step()

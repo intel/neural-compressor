@@ -206,3 +206,14 @@ def test_get_quantization_format_disabled_returns_none(disabled):
         assert fmt is None
     else:
         assert fmt == "MXFP8"
+
+    layer.weight_quantizer = TensorQuantizer(bits=4, data_type="mx_fp4")
+    layer.weight_quantizer._disabled = disabled
+    layer.input_quantizer = TensorQuantizer(bits=4, data_type="mx_fp4")
+    layer.input_quantizer._disabled = disabled
+
+    fmt = quant_utils.get_quantization_format(layer)
+    if disabled:
+        assert fmt is None
+    else:
+        assert fmt == "MXFP4"

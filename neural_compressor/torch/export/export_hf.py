@@ -41,7 +41,13 @@ def _export_quantized_weight(sub_module: nn.Module, quantization_format: str = N
 
     sub_module.register_buffer("weight_scale", e8m0_scale)
 
-    setattr(sub_module, weight_name, nn.Parameter(quantized_weight, requires_grad=False))
+    if quantization_format == "MXFP8":
+        setattr(sub_module, weight_name, nn.Parameter(quantized_weight, requires_grad=False))
+
+    if quantization_format == "MXFP4":
+        delattr(sub_module, weight_name)
+        # name aligned for vllm emulation
+        sub_module.register_buffer("weight_packed", quantized_weight)
 
 
 def _export_hf_checkpoint(model: nn.Module, scheme: str | None = None) -> tuple[dict[str, Any], dict[str, Any]]:

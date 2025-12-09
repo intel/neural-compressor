@@ -1057,7 +1057,7 @@ class AutoRoundConfig(TorchBaseConfig):
         return result
 
     @staticmethod
-    def get_model_info(model: torch.nn.Module) -> List[Tuple[str, Callable]]:
+    def get_model_info(model: torch.nn.Module):
         """Get information about the model.
 
         Args:
@@ -1066,13 +1066,7 @@ class AutoRoundConfig(TorchBaseConfig):
         Returns:
             List[Tuple[str, Callable]]: List of tuples containing the name and type of each module in the model.
         """
-        filter_result = []
-        for op_name, module in model.named_modules():
-            if isinstance(module, WOQ_WHITE_LIST):
-                pair = (op_name, type(module).__name__)
-                filter_result.append(pair)
-        logger.debug(f"Get model info: {filter_result}")
-        return filter_result
+        return None
 
     def to_config_mapping(
         self, config_list: List[BaseConfig] = None, model_info: List[Tuple[str, str]] = None
@@ -1087,9 +1081,7 @@ class AutoRoundConfig(TorchBaseConfig):
         Returns:
             OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
         """
-        if not self.quant_lm_head:
-            self.set_local(LM_HEAD_NAMES, AutoRoundConfig(dtype="fp32"))
-        config_mapping = super().to_config_mapping(config_list, model_info)
+        config_mapping = OrderedDict({self.name: self})
         return config_mapping
 
     @classmethod
@@ -2097,6 +2089,10 @@ class StaticQuantConfig(TorchBaseConfig):
 # Default map for swapping float module to qat modules
 DEFAULT_QAT_MODULE_MAPPINGS: dict[Callable, Any] = {
     torch.nn.Linear: "MXFP8",
+}
+
+QAT_MODULE_MAPPINGS: dict[Callable, Any] = {
+    torch.nn.Linear: ["MXFP8", "MXFP4"],
 }
 
 
