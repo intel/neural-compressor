@@ -36,6 +36,7 @@ topologies_config = {
         "scheme": "NVFP4",
         "fp_layers": "lm_head,self_attn",
         "iters": 0,
+        "export_format": "llm_compressor"
     },
 }
 
@@ -45,11 +46,12 @@ def get_model_and_tokenizer(model_name):
     fp32_model = AutoModelForCausalLM.from_pretrained(
         model_name,
         device_map="cpu",
-        trust_remote_code=True,
+        trust_remote_code=False,
+        dtype="auto",
     )
     tokenizer = AutoTokenizer.from_pretrained(
         model_name,
-        trust_remote_code=True,
+        trust_remote_code=False,
     )
     return fp32_model, tokenizer
 
@@ -62,13 +64,13 @@ def quant_model(args):
     )
 
     config = topologies_config[args.t]
-    export_format = "auto_round" if args.use_autoround_format else "llm_compressor"
+    export_format = config.get("export_format", "auto_round")
     output_dir = f"{args.output_dir}/quantized_model_{args.t}"
     fp32_model, tokenizer = get_model_and_tokenizer(args.model)
     quant_config = AutoRoundConfig(
         tokenizer=tokenizer,
         scheme=config["scheme"],
-        enable_torch_compile=True,
+        # enable_torch_compile=True,
         iters=config["iters"],
         fp_layers=config["fp_layers"],
         export_format=export_format,
