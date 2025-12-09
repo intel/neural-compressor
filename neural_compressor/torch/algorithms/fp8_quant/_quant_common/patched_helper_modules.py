@@ -7,7 +7,7 @@ import os
 
 
 class OoTPatchedVllmMixtureOfExpertsOpFP8(INCPatchedVllmMixtureOfExpertsOpFP8):
-    def _chunk_moe(self, x, expert_routing_table, router_weights, permuted_weights=True, activation="silu"):
+    def _slice_moe(self, x, expert_routing_table, router_weights, permuted_weights=True, activation="silu"):
         batched_tokens = x.shape[0]
         kwargs = {}
         orig_mod = self.orig_mod
@@ -80,13 +80,13 @@ class OoTPatchedVllmMixtureOfExpertsOpFP8(INCPatchedVllmMixtureOfExpertsOpFP8):
     def forward_quant(
         self, hidden_states, expert_routing_table, router_weights, permuted_weights=True, activation="silu"
     ):
-        enable_moe_chunk = hasattr(self.orig_mod, "enable_moe_chunk") and self.orig_mod.enable_moe_chunk
-        if not enable_moe_chunk:
+        enable_moe_slice = hasattr(self.orig_mod, "enable_moe_slice") and self.orig_mod.enable_moe_slice
+        if not enable_moe_slice:
             return self._forward_quant(
                 hidden_states, expert_routing_table, router_weights, permuted_weights, activation
             )
         else:
-            return self._chunk_moe(hidden_states, expert_routing_table, router_weights, permuted_weights, activation)
+            return self._slice_moe(hidden_states, expert_routing_table, router_weights, permuted_weights, activation)
 
 
 INC_APPLY_OOT_PATCH = os.environ.get("INC_APPLY_OOT_PATCH", "0").lower() in ("1", "true", "yes")
