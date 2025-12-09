@@ -6,6 +6,10 @@ import torch
 import os
 
 
+def test():
+    print(f"ss")
+    test =  1
+
 class OoTPatchedVllmMixtureOfExpertsOpFP8(INCPatchedVllmMixtureOfExpertsOpFP8):
     def _chunk_moe(self, x, expert_routing_table, router_weights, permuted_weights=True, activation="silu"):
         batched_tokens = x.shape[0]
