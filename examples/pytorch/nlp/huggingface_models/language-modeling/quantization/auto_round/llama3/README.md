@@ -88,6 +88,8 @@ Notes:
 
 ### Llama3 Quantization Recipes
 
+Here we provide several recipes for Llama3 models. The relative accuracy loss of quantized model should be less than 1%.
+
 #### Llama 3.1 8B MXFP8
 
 AutoRound tuning helps improve the accuracy, `iters` and `nsamples` is higher than default.
@@ -131,6 +133,8 @@ RTN (Round-to-Nearest) is enough to keep accuracy.
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.3-70B --dtype=mxfp8 --input_model=/models/Llama-3.3-70B-Instruct/ --output_model=Llama-3.3-70B-MXFP8
 ```
 
+> Note: Within the accuracy threshold, lm_head quantization is acceptable, but this feature is not enabled here to support vLLM inference.
+
 #### Llama 3.3 70B MXFP4 (Mixed with MXFP8, Target_bits=5.8)
 
 `Target_bits=5.8` is an empirical value.
@@ -147,6 +151,8 @@ RTN (Round-to-Nearest) is enough to keep accuracy.
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-70B --dtype=mxfp8 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-MXFP8
 ```
 
+> Note: Within the accuracy threshold, lm_head quantization is acceptable, but this feature is not enabled here to support vLLM inference.
+
 #### Llama 3.1 70B NVFP4
 
 RTN (Round-to-Nearest) is enough to keep accuracy.
@@ -154,6 +160,8 @@ RTN (Round-to-Nearest) is enough to keep accuracy.
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_quant.sh --topology=Llama-3.1-70B --dtype=nvfp4 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-NVFP4
 ```
+
+> Note: Within the accuracy threshold, lm_head quantization is acceptable, but this feature is not enabled here to support vLLM inference.
 
 #### Llama 3.1 70B uNVFP4
 
