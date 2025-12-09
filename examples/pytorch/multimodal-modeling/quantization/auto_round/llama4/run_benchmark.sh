@@ -40,6 +40,12 @@ function run_benchmark {
     batch_size=${batch_size:=1}
 
     if [ "${topology}" = "llama4_mxfp4" ]; then
+        export VLLM_AR_MXFP4_MODULAR_MOE=1
+        export VLLM_MXFP4_PRE_UNPACK_TO_FP8=1
+        export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=0
+        export VLLM_ENABLE_STATIC_MOE=0
+        export VLLM_USE_DEEP_GEMM=0
+        export VLLM_ENABLE_AR_EXT=1
         extra_model_args="max_model_len=8192,max_num_seqs=1024,max_gen_toks=2048,kv_cache_dtype=auto,gpu_memory_utilization=0.7"
         extra_cmd="--gen_kwargs max_gen_toks=2048"
     fi
