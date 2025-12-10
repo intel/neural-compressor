@@ -122,8 +122,7 @@ if __name__ == '__main__':
     if args.inference:
         pipe = AutoPipelineForText2Image.from_pretrained(args.model, torch_dtype=torch.bfloat16)
 
-        if not os.path.exists(args.output_image_path):
-            os.makedirs(args.output_image_path)
+        os.makedirs(args.output_image_path, exist_ok=True)
 
         if os.path.exists(args.output_dir) and os.path.exists(os.path.join(args.output_dir, "diffusion_pytorch_model.safetensors.index.json")):
             print(f"Loading quantized model from {args.output_dir}")
