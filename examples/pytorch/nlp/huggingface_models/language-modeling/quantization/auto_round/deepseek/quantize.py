@@ -36,7 +36,10 @@ topologies_config = {
         "scheme": "NVFP4",
         "fp_layers": "lm_head,self_attn",
         "iters": 0,
-        "export_format": "llm_compressor"
+        "export_format": "llm_compressor",
+        "low_cpu_mem_usage": True,
+        "low_gpu_mem_usage": True,
+        "reloading":False,
     },
 }
 

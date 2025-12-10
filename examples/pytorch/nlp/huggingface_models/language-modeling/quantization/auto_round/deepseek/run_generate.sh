@@ -120,6 +120,6 @@ python generate.py \
     --tensor_parallel_size $TP_SIZE \
     --max-tokens 16 \
     --max-num-seqs 4 \
+    --max-model-len 2048 \
     --gpu_memory_utilization 0.75 \
-    --no-enable-prefix-caching \
-    --enable_expert_parallel
+    --no-enable-prefix-caching  
