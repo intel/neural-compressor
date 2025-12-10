@@ -68,6 +68,7 @@ def quant_model(args):
         fp_layers=config["fp_layers"],
         export_format=export_format,
         output_dir=output_dir,
+        reloading=False,
     )
 
     # quantizer execute

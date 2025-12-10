@@ -69,6 +69,7 @@ def quant_model(args):
         disable_opt_rtn=True,
         low_gpu_mem_usage=True,
         output_dir=output_dir,
+        reloading=False,
     )
 
     # quantizer execute
