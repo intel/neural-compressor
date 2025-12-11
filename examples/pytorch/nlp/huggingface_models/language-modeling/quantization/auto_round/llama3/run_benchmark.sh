@@ -68,11 +68,11 @@ run_evaluation() {
     echo "Running evaluation for tasks: $tasks (add_bos_token=$add_bos_token)"
     
     # Print the command being executed
-    local cmd="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=0.8,data_parallel_size=1 --tasks $tasks --batch_size $BATCH_SIZE"
+    local cmd="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=0.6,data_parallel_size=1 --tasks $tasks --batch_size $BATCH_SIZE"
     echo "Executing command: $cmd"
     
     lm_eval --model vllm \
-        --model_args pretrained="$MODEL_PATH",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=0.8,data_parallel_size=1 \
+        --model_args pretrained="$MODEL_PATH",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=0.65,data_parallel_size=1 \
         --tasks $tasks \
         --batch_size $BATCH_SIZE
         
