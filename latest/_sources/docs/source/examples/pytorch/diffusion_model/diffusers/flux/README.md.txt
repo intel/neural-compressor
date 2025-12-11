@@ -8,10 +8,10 @@ This example quantizes and validates the accuracy of Flux.
 
 ```shell
 pip install -r requirements.txt
-# Use `INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@v3.6rc` for the latest updates before neural-compressor v3.6 release
-pip install neural-compressor-pt==3.6
-# Use `pip install git+https://github.com/intel/auto-round.git@v0.8.0rc2` for the latest updates before auto-round v0.8.0 release
-pip install auto-round==0.8.0
+# Use `INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@master` for the latest updates before neural-compressor v3.6 release
+pip install neural-compressor-pt==3.7
+# Use `pip install git+https://github.com/intel/auto-round.git@main` for the latest updates before auto-round v0.8.0 release
+pip install auto-round==0.9.3
 ```
 
 ## 2. Prepare Model
