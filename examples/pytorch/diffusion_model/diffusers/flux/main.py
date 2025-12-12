@@ -81,8 +81,8 @@ def inference_worker(eval_file, pipe, image_save_dir):
             output.images[idx].save(os.path.join(image_save_dir, str(image_id) + ".png"))
 
 
-def tune():
-    pipe = AutoPipelineForText2Image.from_pretrained(args.model, torch_dtype=torch.bfloat16)
+def tune(device):
+    pipe = AutoPipelineForText2Image.from_pretrained(args.model, torch_dtype=torch.bfloat16).to(device)
     model = pipe.transformer
     layer_config = {}
     kwargs = {}
@@ -116,14 +116,13 @@ if __name__ == '__main__':
 
     if args.quantize:
         print(f"Start to quantize {args.model}.")
-        tune()
+        tune(device)
         exit(0)
 
     if args.inference:
         pipe = AutoPipelineForText2Image.from_pretrained(args.model, torch_dtype=torch.bfloat16)
 
-        if not os.path.exists(args.output_image_path):
-            os.makedirs(args.output_image_path)
+        os.makedirs(args.output_image_path, exist_ok=True)
 
         if os.path.exists(args.output_dir) and os.path.exists(os.path.join(args.output_dir, "diffusion_pytorch_model.safetensors.index.json")):
             print(f"Loading quantized model from {args.output_dir}")

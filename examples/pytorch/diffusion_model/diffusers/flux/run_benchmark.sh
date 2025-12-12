@@ -86,7 +86,7 @@ function run_benchmark {
 
 	echo "Start calculating final score..."
 
-    python3 main.py --output_image_path ${output_image_path} --accuracy
+    python3 main.py --output_image_path ${output_image_path} --accuracy --eval_dataset ${dataset_location}
 }
 
 main "$@"

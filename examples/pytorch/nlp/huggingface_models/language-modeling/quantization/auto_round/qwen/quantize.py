@@ -63,10 +63,12 @@ def quant_model(args):
     quant_config = AutoRoundConfig(
         tokenizer=tokenizer,
         scheme=config["scheme"],
-        enable_torch_compile=args.enable_torch_compile,
+        enable_torch_compile=True,
         iters=config["iters"],
         fp_layers=config["fp_layers"],
         export_format=export_format,
+        disable_opt_rtn=True,
+        low_gpu_mem_usage=True,
         output_dir=output_dir,
         reloading=False,
     )
