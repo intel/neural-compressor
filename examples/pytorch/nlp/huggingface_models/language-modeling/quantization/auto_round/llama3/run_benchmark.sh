@@ -4,7 +4,8 @@
 
 # Parse command line arguments
 TASKS="piqa,hellaswag,mmlu,gsm8k"
-BATCH_SIZE=8
+BATCH_SIZE=512
+GPU_MEMORY_UTILIZATION=0.8
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -18,6 +19,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --batch_size=*)
             BATCH_SIZE="${1#*=}"
+            shift
+            ;;
+        --gpu_memory_utilization=*)
+            GPU_MEMORY_UTILIZATION="${1#*=}"
             shift
             ;;
         *)
@@ -48,6 +53,7 @@ echo "  Model Path: $MODEL_PATH"
 echo "  Tasks: $TASKS"
 echo "  Batch Size: $BATCH_SIZE"
 echo "  Tensor Parallel Size: $TENSOR_PARALLEL_SIZE"
+echo "  GPU Memory Utilization: $GPU_MEMORY_UTILIZATION"
 echo "  CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
 
 # Check if the model exists
@@ -68,11 +74,11 @@ run_evaluation() {
     echo "Running evaluation for tasks: $tasks (add_bos_token=$add_bos_token)"
     
     # Print the command being executed
-    local cmd="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=0.6,data_parallel_size=1 --tasks $tasks --batch_size $BATCH_SIZE"
+    local cmd="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192,max_num_batched_tokens=32768 --tasks $tasks --batch_size $BATCH_SIZE"
     echo "Executing command: $cmd"
     
     lm_eval --model vllm \
-        --model_args pretrained="$MODEL_PATH",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=0.65,data_parallel_size=1 \
+        --model_args pretrained="$MODEL_PATH",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192,max_num_batched_tokens=32768 \
         --tasks $tasks \
         --batch_size $BATCH_SIZE
         

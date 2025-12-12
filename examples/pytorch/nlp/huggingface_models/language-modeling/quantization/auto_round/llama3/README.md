@@ -194,27 +194,27 @@ For convenience, we provide a benchmark script that automatically handles GPU de
 
 1. **Llama 3.1 8B MXFP8** (1 GPU):
 ```bash
-CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=Llama-3.1-8B-MXFP8
+CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=Llama-3.1-8B-MXFP8 --gpu_memory_utilization=0.8
 ```
 
 2. **Llama 3.1 8B MXFP4 Mixed** (1 GPU):
 ```bash
-CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=Llama-3.1-8B-MXFP4-MXFP8
+CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=Llama-3.1-8B-MXFP4-MXFP8  --gpu_memory_utilization=0.6
 ```
 
-3. **Llama 3.3 70B MXFP8** (4 GPU):
+3. **Llama 3.3 70B MXFP8** (2 GPU):
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --model_path=Llama-3.3-70B-MXFP8
+CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.3-70B-MXFP8  --gpu_memory_utilization=0.8
 ```
 
-4. **Llama 3.3 70B MXFP4 Mixed** (4 GPU):
+4. **Llama 3.3 70B MXFP4 Mixed** (2 GPU):
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --model_path=Llama-3.3-70B-MXFP4-MXFP8
+CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.3-70B-MXFP4-MXFP8  --gpu_memory_utilization=0.6
 ```
 
-5. **Llama 3.1 70B MXFP8** (4 GPU):
+5. **Llama 3.1 70B MXFP8** (2 GPU):
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --model_path=Llama-3.1-70B-MXFP8
+CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.1-70B-MXFP8   --gpu_memory_utilization=0.8
 ```
 
 The script automatically:
