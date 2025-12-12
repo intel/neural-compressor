@@ -74,11 +74,11 @@ run_evaluation() {
     echo "Running evaluation for tasks: $tasks (add_bos_token=$add_bos_token)"
     
     # Print the command being executed
-    local cmd="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192,max_num_batched_tokens=32768 --tasks $tasks --batch_size $BATCH_SIZE"
+    local cmd="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192 --tasks $tasks --batch_size $BATCH_SIZE"
     echo "Executing command: $cmd"
     
     lm_eval --model vllm \
-        --model_args pretrained="$MODEL_PATH",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192,max_num_batched_tokens=32768 \
+        --model_args pretrained="$MODEL_PATH",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192 \
         --tasks $tasks \
         --batch_size $BATCH_SIZE
         
