@@ -4,7 +4,7 @@ This example provides an end-to-end workflow to quantize DeepSeek models to MXFP
 ```bash
 pip install neural-compressor-pt==3.7
 # auto-round
-pip install auto-round==0.9.2
+pip install auto-round==0.9.3
 # vLLM
 git clone -b fused-moe-ar --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
 VLLM_USE_PRECOMPILED=1 pip install --editable . -vvv
@@ -16,7 +16,7 @@ pip uninstall flash_attn
 ### Quantize Model
 - Export model path
 ```bash
-export MODEL=deepseek-ai/DeepSeek-R1
+export MODEL=unsloth/DeepSeek-R1-BF1
 ```
 
 - MXFP8
