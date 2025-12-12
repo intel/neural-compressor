@@ -79,6 +79,7 @@ def quant_model(args):
         export_format=export_format,
         output_dir=output_dir,
         low_gpu_mem_usage=True,
+        reloading=False,
     )
 
     # quantizer execute

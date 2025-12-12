@@ -1,2 +1,3 @@
 lm-eval==0.4.9.1
 loguru
+compressed-tensors==0.12.2
