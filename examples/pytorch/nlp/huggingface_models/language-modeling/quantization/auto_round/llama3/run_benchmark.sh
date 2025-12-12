@@ -4,7 +4,7 @@
 
 # Parse command line arguments
 TASKS="piqa,hellaswag,mmlu,gsm8k"
-BATCH_SIZE=512
+BATCH_SIZE=64
 GPU_MEMORY_UTILIZATION=0.8
 
 while [[ $# -gt 0 ]]; do
