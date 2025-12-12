@@ -926,6 +926,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             )
             if self.is_dynamic_quantization:
                 self.forward = self.forward_dynamic_quant
+        self.dispatch_fn = self._get_dispatch_func()
 
     def _get_extra_kwargs(self, tokens_num: int):
         kwargs = {}
@@ -933,20 +934,31 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             kwargs = self.orig_mod._get_extra_kwargs(tokens_num)
         return kwargs
 
+    # For vLLM Data Parallel https://github.com/vllm-project/vllm-gaudi/pull/684
+    def _get_dispatch_func(self):
+        def identity(x):
+            return x
+        if hasattr(self.orig_mod, "_get_dispatch_func"):
+            fn = self.orig_mod._get_dispatch_func()
+            if fn is not None:
+                return fn
+        return identity
+
     def forward_quant(self,
                       hidden_states,
                       expert_routing_table,
                       router_weights,
                       permuted_weights=True,
                       activation="silu"):
-        tokens_num, hidden_dim = hidden_states.shape
-        extra_kwargs = self._get_extra_kwargs(tokens_num)
         experts_range = range(self.experts_used)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
         qinput = self.quant_input(hidden_states)
+        qinput = self.dispatch_fn(qinput)
+        tokens_num, hidden_dim = qinput.shape
+        extra_kwargs = self._get_extra_kwargs(tokens_num)
         output = self.dynamic_moe_op(
             hidden_states=qinput,
             expert_routing_table=expert_routing_table,
@@ -978,6 +990,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
         qinput_fp8, input_scale = self.quant_input(hidden_states)
+        qinput_fp8 = self.dispatch_fn(qinput_fp8)
         output = self.dynamic_moe_op(
             hidden_states=qinput_fp8,
             expert_routing_table=expert_routing_table,
