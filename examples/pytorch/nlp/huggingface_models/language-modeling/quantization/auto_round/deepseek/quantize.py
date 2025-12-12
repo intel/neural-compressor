@@ -40,11 +40,12 @@ def get_model_and_tokenizer(model_name):
     fp32_model = AutoModelForCausalLM.from_pretrained(
         model_name,
         device_map="cpu",
-        trust_remote_code=True,
+        trust_remote_code=False,
+        dtype="auto",
     )
     tokenizer = AutoTokenizer.from_pretrained(
         model_name,
-        trust_remote_code=True,
+        trust_remote_code=False,
     )
     return fp32_model, tokenizer
 
@@ -68,6 +69,7 @@ def quant_model(args):
         fp_layers=config["fp_layers"],
         export_format=export_format,
         output_dir=output_dir,
+        reloading=False,
     )
 
     # quantizer execute

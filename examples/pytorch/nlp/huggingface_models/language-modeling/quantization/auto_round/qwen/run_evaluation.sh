@@ -114,7 +114,6 @@ lm_eval --model vllm \
   --tasks $TASK_NAME \
   --batch_size $BATCH_SIZE \
   --log_samples \
-  --limit 64 \
   --seed 42 \
   --output_path ${OUTPUT_DIR} \
   --show_config 2>&1 | tee ${OUTPUT_DIR}/log.txt
