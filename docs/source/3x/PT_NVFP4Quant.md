@@ -36,6 +36,8 @@ The following table summarizes the NVFP4 quantization format:
   </tr>
 </table>
 
+> Note: UE4M3 is the same data type as normal FP8 E4M3, here UE4M3 is named to remind that the sign bit remains 0 and scale is always positive.
+
 ### Understanding the Scaling Mechanism
 
 NVFP4 uses a two-level scaling approach to maintain accuracy while reducing precision:
