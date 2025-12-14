@@ -1,4 +1,4 @@
-This example provides an end-to-end workflow to quantize DeepSeek models to MXFP4/MXFP8 and evaluate them using a custom vLLM fork.
+This example provides an end-to-end workflow to quantize DeepSeek models to MXFP4/MXFP8/NVFP4 and evaluate them using a custom vLLM fork.
 
 ## Requirement
 ```bash
@@ -29,13 +29,18 @@ bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
 bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels
 ```
 
+- NVFP4
+```bash
+bash run_quant.sh --model $MODEL -t nvfp4 --output_dir ./qmodels
+```
+
 ## Evaluation
 
 ### Prompt Tests
 
 Usage: 
 ```bash
-bash ./run_generate.sh -s [mxfp4|mxfp8] -tp [tensor_parallel_size] -m [model_path]
+bash ./run_generate.sh -s [mxfp4|mxfp8|nvfp4] -tp [tensor_parallel_size] -m [model_path]
 ```
 
 - MXFP8
@@ -46,12 +51,16 @@ bash ./run_generate.sh -s mxfp8 -tp 8 -m /path/to/ds_mxfp8
 ```bash
 bash ./run_generate.sh -s mxfp4 -tp 8 -m /path/to/ds_mxfp4
 ```
+- NVFP4
+```bash
+bash ./run_generate.sh -s nvfp4 -tp 8 -m /path/to/ds_mxfp4
+```
 ### Evaluation
 
 
 Usage: 
 ```bash
-bash run_evaluation.sh -m [model_path] -s [mxfp4|mxfp8] -t [task_name] -tp [tensor_parallel_size] -b [batch_size]
+bash run_evaluation.sh -m [model_path] -s [mxfp4|mxfp8|nvfp4] -t [task_name] -tp [tensor_parallel_size] -b [batch_size]
 ```
 ```bash
 bash run_evaluation.sh -s mxfp8 -t piqa,hellaswag,mmlu -tp 8 -b 512 -m /path/to/ds_mxfp8
@@ -62,4 +71,9 @@ bash run_evaluation.sh -s mxfp8 -t gsm8k -tp 8 -b 256 -m /path/to/ds_mxfp8
 ```bash
 bash run_evaluation.sh -s mxfp4 -t piqa,hellaswag,mmlu -tp 8 -b 512 -m /path/to/ds_mxfp4
 bash run_evaluation.sh -s mxfp4 -t gsm8k -tp 8 -b 256 -m /path/to/ds_mxfp4
+```
+- NVFP4
+```bash
+bash run_evaluation.sh -s nvfp4 -t piqa,hellaswag,mmlu -tp 8 -b 512 -m /path/to/ds_nvfp4
+bash run_evaluation.sh -s nvfp4 -t gsm8k -tp 8 -b 256 -m /path/to/ds_nvfp4
 ```

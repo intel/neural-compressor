@@ -11,7 +11,7 @@ BATCH_SIZE=512
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 -m [model_path] -s [mxfp4|mxfp8] -t [task_name] -tp [tensor_parallel_size] -b [batch_size]"
+    echo "Usage: $0 -m [model_path] -s [mxfp4|mxfp8|nvfp4] -t [task_name] -tp [tensor_parallel_size] -b [batch_size]"
     echo "  -m: Path to the quantized model (required)"
     echo "  -s: Quantization scheme (mxfp4 or mxfp8, default: mxfp8)"
     echo "  -t: Task name(s) to evaluate (default: piqa,hellaswag,mmlu)"
@@ -80,6 +80,13 @@ if [[ "$SCHEME" == "mxfp4" ]]; then
     VLLM_ENABLE_STATIC_MOE=0
     VLLM_USE_DEEP_GEMM=0
     VLLM_ENABLE_AR_EXT=1
+elif [[ "$SCHEME" == "nvfp4" ]]; then
+    VLLM_AR_MXFP4_MODULAR_MOE=0
+    VLLM_MXFP4_PRE_UNPACK_TO_FP8=0
+    VLLM_MXFP4_PRE_UNPACK_WEIGHTS=0
+    VLLM_ENABLE_STATIC_MOE=0
+    VLLM_USE_DEEP_GEMM=0
+    VLLM_ENABLE_AR_EXT=0
 elif [[ "$SCHEME" == "mxfp8" ]]; then
     VLLM_AR_MXFP4_MODULAR_MOE=0
     VLLM_MXFP4_PRE_UNPACK_TO_FP8=0
@@ -88,7 +95,7 @@ elif [[ "$SCHEME" == "mxfp8" ]]; then
     VLLM_USE_DEEP_GEMM=0
     VLLM_ENABLE_AR_EXT=1
 else
-    echo "Error: Invalid quantization scheme (-s). Must be 'mxfp4' or 'mxfp8'."
+    echo "Error: Invalid quantization scheme (-s). Must be 'mxfp4', 'nvfp4' or 'mxfp8'."
     usage
     exit 1
 fi

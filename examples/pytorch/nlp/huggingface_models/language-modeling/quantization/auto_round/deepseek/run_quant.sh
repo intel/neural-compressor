@@ -41,6 +41,7 @@ done
 [ -z "$TARGET" ] && echo "Error: -t is required" && usage
 [ -z "$OUTPUT_DIR" ] && echo "Error: --output_dir is required" && usage
 
+AR_LOG_LEVEL=TRACE \
 python quantize.py \
   --model "$MODEL" \
   -t "$TARGET" \

@@ -40,6 +40,7 @@ def get_model_and_tokenizer(model_name):
         model_name,
         device_map="cpu",
         trust_remote_code=True,
+        dtype="auto",
     )
     tokenizer = AutoTokenizer.from_pretrained(
         model_name,
