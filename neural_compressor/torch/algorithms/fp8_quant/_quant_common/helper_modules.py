@@ -24,7 +24,6 @@ from .quant_config import QuantMode, get_hqt_config
 from ..patched_module_base import PatchedModuleBase, get_call_wrapper
 from .._core.scale_handler import get_scale_dtype, ScaleFormat
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
-cur_accelerator = auto_detect_accelerator()
 
 
 class BMM(nn.Module):
@@ -1180,6 +1179,20 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
+            if self.is_dynamic_quantization:
+                self.quant_on_hidden = self._mod_extra_config.inputs[1]
+                self.dequant_on_hidden = self._mod_extra_config.outputs[1]
+                if hasattr(mod, 'is_v_cache') and mod.is_v_cache:
+                    self.is_v_cache = True
+                else:
+                    self.is_v_cache = False
+                self.forward = self.forward_quant_dynamic
+                self.fetch_from_cache = self.fetch_from_cache_dynamic
+                self.scales_on_hidden = None
+                self.cur_device = auto_detect_accelerator().current_device_name()
+            else:
+                self.forward = self.forward_quant_static
+                self.fetch_from_cache = self.fetch_from_cache_static
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.fetch_from_cache = mod.fetch_from_cache
 
@@ -1188,33 +1201,88 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         output_cache = self.orig_mod(qinput, *args, **kwargs)
         return output_cache
 
-    def forward_quant(self, input, cache, *args, **kwargs):
+    def forward_quant_static(self, input, cache, slot_mapping, scales=None, *args, **kwargs):
         if input is not None:
             qinput = self.quant_input(input)
-            output_cache = self.orig_mod(qinput, cache, *args, **kwargs)
+            output_cache = self.orig_mod(qinput, cache, slot_mapping, scales, *args, **kwargs)
         else:
             # In cross-attention during decode stage kv cache isn't updated
             # so input is None and we don't store it
             output_cache = cache
         return self.dequant_output(output_cache)
 
-    def forward_measure(self, input, cache, *args, **kwargs):
+    def forward_quant_dynamic(self, input, cache, slot_mapping, scales=None, *args, **kwargs):
+        if input is not None:
+            qinput, scale = self.quant_input(input)
+            if scales is not None:
+                scales.index_copy_(0, slot_mapping, scale)
+                if self.is_v_cache:
+                    self.update_scales_on_hidden(input, slot_mapping)
+            output_cache = self.orig_mod(qinput, cache, slot_mapping, scales, *args, **kwargs)
+        else:
+            # In cross-attention during decode stage kv cache isn't updated
+            # so input is None and we don't store it
+            output_cache = cache
+        return output_cache
+
+    def forward_measure(self, input, cache, slot_mapping, *args, **kwargs):
         # In cross-attention during decode stage kv cache isn't updated
         # so input is None and we don't measure it
         if input is None:
             return cache
         measure_input((input, ), self._mod_extra_config.inputs)
-        output_cache = self.orig_mod(input, cache, *args, **kwargs)
+        output_cache = self.orig_mod(input, cache, slot_mapping, *args, **kwargs)
         measure_output((output_cache, ), self._mod_extra_config.outputs)
         return output_cache
 
-    def fetch_from_cache(self, cache, blocks):
+    def fetch_from_cache_static(self, cache, blocks, scales=None):
         if cache.dtype != self.lp_dtype:
             quant_cache = self.quant_input(cache)
         else:
             quant_cache = cache
         output_cache = self.orig_mod.fetch_from_cache(quant_cache, blocks)
         return self.dequant_output(output_cache)
+
+    def fetch_from_cache_dynamic(self, cache, blocks, scales=None):
+        if cache.dtype != self.lp_dtype:
+            cur_cache, cur_scales = self.fetch_cache_and_scales(cache, blocks, scales)
+            quant_cache, _ = self.quant_input(cur_cache, cur_scales)
+        else:
+            quant_cache, cur_scales = self.fetch_cache_and_scales(cache, blocks, scales)
+        cache_dequanted = self.dequant_output(quant_cache, cur_scales)
+        if self.is_v_cache:
+            cache_dequanted = self.convert_on_hidden(cache_dequanted)
+        return cache_dequanted
+
+    def fetch_cache_and_scales(self, cache, blocks, scales=None):
+        if self.orig_mod.use_contiguous_pa:
+            cur_scales = scales[:blocks.size(0)] if scales is not None else None
+            cur_cache = cache[:blocks.size(0)]
+        else:
+            cur_scales = scales.index_select(0, blocks) if scales is not None else None
+            cur_cache = cache.index_select(0, blocks)
+        return cur_cache, cur_scales
+
+    def update_scales_on_hidden(self, input, slot_mapping):
+        from .._core.fp_utils import calculate_scale_maxabs_with_cguid, get_fullscale, ScaleCalculationMaxMode
+        if self.scales_on_hidden is None:
+            self.scales_on_hidden = nn.Parameter(torch.ones(input.size(-1), device=self.cur_device, dtype=self.hp_dtype), requires_grad=False)
+            device_type = auto_detect_accelerator().get_inc_accelerator_type()
+            self.full_scale = get_fullscale(self.lp_dtype, device_type)
+        scale_tensor = calculate_scale_maxabs_with_cguid(
+            input,
+            ScaleCalculationMaxMode.MAX_ABS_PCS_CALCULATION,
+            reduceAxis=-2,
+            reduceKeepdim=True,
+            fullscale=self.full_scale,
+            backoff=1,
+        )
+        self.scales_on_hidden.copy_(torch.maximum(torch.amax(scale_tensor.squeeze(), dim=-2), self.scales_on_hidden))
+
+    def convert_on_hidden(self, cache_dequanted):
+        # quanting and dequanting on hidden dim to allow AV matmul in fp8 - graph-compiler will optimize
+        cache_quanted_on_h, scales = self.quant_on_hidden(cache_dequanted, self.scales_on_hidden)
+        return self.dequant_on_hidden(cache_quanted_on_h, scales)
 
     def extra_repr(self) -> str:
         return extra_representation(

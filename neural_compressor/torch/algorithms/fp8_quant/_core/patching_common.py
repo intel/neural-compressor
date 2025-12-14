@@ -75,7 +75,7 @@ _mod_default_dict = {
     "QKVParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear, supports_dynamic_quantization=True),
     "FalconLinear": ModuleInfo("linear", PatchedLinear, supports_dynamic_quantization=True),
     "KVCache": ModuleInfo("kv_cache", PatchedKVCache),
-    "VLLMKVCache": ModuleInfo("kv_cache", PatchedVLLMKVCache),
+    "VLLMKVCache": ModuleInfo("kv_cache", PatchedVLLMKVCache, supports_dynamic_quantization=True),
     "Conv2d": ModuleInfo("linear", PatchedConv2d),
     "LoRACompatibleLinear": ModuleInfo("linear", PatchedLoRACompatibleLinear, supports_dynamic_quantization=True),
     "LoRACompatibleConv": ModuleInfo("linear", PatchedLoRACompatibleConv),
