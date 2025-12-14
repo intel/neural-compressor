@@ -100,9 +100,7 @@ class ScaleMethodFactory:
             ## maxabs PCS
             case (ScaleValueType.MAXABS, ScaleGranularity.PCS, _, _):
                 if is_dynamic:
-                    scaling_dim = -1
-                    if tensor_type == QuantTensorName.INPUT and tensor_type_index == 2 and self.op_type == "matmul":
-                        scaling_dim = -2
+                    scaling_dim = -2 if tensor_type_index == 2 else -1
                     return MaxAbsDynamicPcs(scale_round_method, self.params, self.device_for_scales, backoff, dim=scaling_dim)
                 return MaxAbsPcs(scale_round_method, self.params, self.device_for_scales, backoff)
             ## opt PTS
