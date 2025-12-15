@@ -82,7 +82,6 @@ echo "  Tensor Parallelism: $TP_SIZE"
 echo ""
 
 # Set environment variables based on quantization type
-# Set environment variables based on quantization type
 if [[ "$QUANT_TYPE_UPPER" == "MXFP4" ]]; then
     export VLLM_ENABLE_AR_EXT=1
     export VLLM_AR_MXFP4_MODULAR_MOE=1
