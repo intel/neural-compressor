@@ -150,7 +150,7 @@ if __name__ == "__main__":
         help="options for mix precision"
     )
     parser.add_argument(
-        "--shared_layer",
+        "--shared_layers",
         type=str,
         nargs="+",
         action='append',
@@ -242,7 +242,7 @@ if __name__ == "__main__":
             scheme=args.dtype,
             target_bits=args.target_bits,
             options=args.options,
-            shared_layers=args.shared_layer,
+            shared_layers=args.shared_layers,
             enable_torch_compile=args.enable_torch_compile,
             low_gpu_mem_usage=args.low_gpu_mem_usage,
             export_format=args.export_format,
