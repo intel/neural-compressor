@@ -198,7 +198,7 @@ if __name__ == "__main__":
         print("Target data type:", args.dtype)
     else:
         print("Target data type for mix precision:", args.options)
-        print("Layers sharing the same data type:", args.shared_layer)
+        print("Layers sharing the same data type:", args.shared_layers)
     model, tokenizer = initialize_model_and_tokenizer(args.model_name_or_path)
 
     if args.quantize:
