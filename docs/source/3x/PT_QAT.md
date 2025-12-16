@@ -40,16 +40,12 @@ A typical QAT pipeline consists of the following stages:
    - Train or fine-tune the model in FP32/BF16 to obtain a strong baseline.
    - Example: fine-tune `meta-llama/Llama-3.1-8B` in BF16.
 
-2. **(Optional but Recommended) PTQ Pre-Quantization**  
-   - Use AutoRound/INC PTQ to obtain an initial quantized model.
-   - This model can serve as a better starting point for QAT, reducing convergence time and improving final accuracy.
-
-3. **Quantization-Aware Fine-Tuning (QAT)**  
+2. **Quantization-Aware Fine-Tuning (QAT)**  
    - Insert QAT modules into the model using `prepare_qat`.
    - Optionally load the PTQ model weights as initialization.
    - Fine-tune the quantized model with a small learning rate.
 
-4. **Export and Deployment**  
+3. **Export and Deployment**  
    - Save the QAT model as a standard Hugging Face model directory.
    - Deploy with compatible inference engines (e.g., vLLM), or export using INC/AutoRound export utilities for specific runtimes.
 
