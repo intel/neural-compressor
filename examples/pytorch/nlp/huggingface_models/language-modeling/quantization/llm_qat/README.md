@@ -54,7 +54,7 @@ accelerate launch --config-file accelerate_config/fsdp1.yaml \
 
 ##### Step 2: 
 
-Save the model directly to a get post training quantization model with following this example [auto_round
+Save the model directly to get a post training quantization model by following this example [auto_round
 ](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3).
 
 
