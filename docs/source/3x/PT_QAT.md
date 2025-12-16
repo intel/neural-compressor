@@ -317,8 +317,7 @@ class TensorQuantizer(nn.Module):
         device=None,
     ):
         ...
-        assert get_quant_func is not None, \
-            "The quantization function is imported from AutoRound, please install it."
+        assert get_quant_func is not None, "The quantization function is imported from AutoRound, please install it."
 
         self.quant_func, self.data_type = get_quant_func(self.data_type, self.num_bits, self.sym)
         ...
@@ -420,6 +419,7 @@ The mapping from scheme names to quantization configs is handled by AutoRound:
 
 ```python
 from auto_round.schemes import preset_name_to_scheme
+
 quant_cfg = preset_name_to_scheme(scheme)
 ```
 
