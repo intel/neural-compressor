@@ -111,7 +111,9 @@ if __name__ == "__main__":
     if "tf" in sys.argv:
         sys.argv.remove("tf")
         cfg_key = "neural_compressor_tf"
-
+    
+    cfg_key = "neural_compressor_pt"
+    
     ext_modules = []
     cmdclass = {}
     project_name = PKG_INSTALL_CFG[cfg_key].get("project_name")
