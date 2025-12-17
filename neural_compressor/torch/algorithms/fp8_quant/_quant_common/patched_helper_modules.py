@@ -432,6 +432,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
         vinput = self.quant_v(v).detach()
         q_len = q.shape[-2]
         kv_len = k.shape[-2]
+        assert softmax_mode.lower() in ["none", "fp32", "fast"], f"Unsupported softmax mode {softmax_mode}."
 
         # for prefill with prefix caching
         if (
