@@ -32,6 +32,15 @@ topologies_config = {
         "fp_layers": "lm_head,self_attn",
         "iters": 0,
     },
+    "nvfp4": {
+        "scheme": "NVFP4",
+        "fp_layers": "lm_head,self_attn",
+        "iters": 0,
+        "export_format": "llm_compressor",
+        "low_cpu_mem_usage": True,
+        "low_gpu_mem_usage": True,
+        "reloading":False,
+    },
 }
 
 
@@ -58,7 +67,7 @@ def quant_model(args):
     )
 
     config = topologies_config[args.t]
-    export_format = "auto_round" if args.use_autoround_format else "llm_compressor"
+    export_format = config.get("export_format", "auto_round")
     output_dir = f"{args.output_dir}/quantized_model_{args.t}"
     fp32_model, tokenizer = get_model_and_tokenizer(args.model)
     quant_config = AutoRoundConfig(
@@ -69,6 +78,7 @@ def quant_model(args):
         fp_layers=config["fp_layers"],
         export_format=export_format,
         output_dir=output_dir,
+        low_gpu_mem_usage=True,
         reloading=False,
     )
 
