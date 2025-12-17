@@ -109,16 +109,16 @@ class OoTPatchedVllmMixtureOfExpertsOpFP8(INCPatchedVllmMixtureOfExpertsOpFP8):
 class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.qkv_slice_thld = int(os.getenv("PT_HPU_QKV_SLICE_SEQ_LEN_THLD", 4096))
+        self.qkv_slice_thld = int(os.getenv("VLLM_HPU_FSDPA_SLICE_SEQ_LEN_THLD", 4096))
         if self.qkv_slice_thld > 0:
-            self.qkv_chunk_size = int(os.getenv("VLLM_FUSEDSDPA_QKV_SLICE_CHUNK_SIZE", self.qkv_slice_thld))
+            self.qkv_chunk_size = int(os.getenv("VLLM_HPU_FSDPA_SLICE_CHUNK_SIZE", self.qkv_slice_thld))
 
         impl_mapping = {
             'split_kv': self.fp8_fsdpa_split_kv,
             'slice_causal': self.fp8_fsdpa_slice_causal,
             'slice_qkv': self.fp8_fsdpa_slice_qkv,
         }
-        qkv_slice_impl = os.getenv("PT_HPU_QKV_SLICE_IMPL", 'slice_qkv').lower()
+        qkv_slice_impl = os.getenv("VLLM_HPU_FSDPA_SLICE_IMPL", 'slice_qkv').lower()
         assert qkv_slice_impl in impl_mapping, (
             f"Invalid QKV slice implementation: {qkv_slice_impl}, "
             f"available options: {list(impl_mapping.keys())}"
