@@ -85,7 +85,7 @@ def tune(args):
         iters=args.iters,
         scheme=args.scheme,
         layer_config=layer_config,
-        export_format="llm_compressor",
+        export_format=args.export_format,
         output_dir=args.output_dir,
         processor=processor,
     )
