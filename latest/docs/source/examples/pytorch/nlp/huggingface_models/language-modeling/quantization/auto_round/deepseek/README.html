@@ -88,7 +88,7 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <p>This example provides an end-to-end workflow to quantize DeepSeek models to MXFP4/MXFP8 and evaluate them using a custom vLLM fork.</p>
+  <p>This example provides an end-to-end workflow to quantize DeepSeek models to MXFP4/MXFP8/NVFP4 and evaluate them using a custom vLLM fork.</p>
 <section id="requirement">
 <h1>Requirement<a class="headerlink" href="#requirement" title="Link to this heading"></a></h1>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-pt<span class="o">==</span><span class="m">3</span>.7
@@ -122,6 +122,12 @@ pip<span class="w"> </span>uninstall<span class="w"> </span>flash_attn
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--model<span class="w"> </span><span class="nv">$MODEL</span><span class="w"> </span>-t<span class="w"> </span>mxfp4<span class="w"> </span>--output_dir<span class="w"> </span>./qmodels
 </pre></div>
 </div>
+<ul class="simple">
+<li><p>NVFP4</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--model<span class="w"> </span><span class="nv">$MODEL</span><span class="w"> </span>-t<span class="w"> </span>nvfp4<span class="w"> </span>--output_dir<span class="w"> </span>./qmodels
+</pre></div>
+</div>
 </section>
 </section>
 <section id="evaluation">
@@ -129,7 +135,7 @@ pip<span class="w"> </span>uninstall<span class="w"> </span>flash_attn
 <section id="prompt-tests">
 <h2>Prompt Tests<a class="headerlink" href="#prompt-tests" title="Link to this heading"></a></h2>
 <p>Usage:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>./run_generate.sh<span class="w"> </span>-s<span class="w"> </span><span class="o">[</span>mxfp4<span class="p">|</span>mxfp8<span class="o">]</span><span class="w"> </span>-tp<span class="w"> </span><span class="o">[</span>tensor_parallel_size<span class="o">]</span><span class="w"> </span>-m<span class="w"> </span><span class="o">[</span>model_path<span class="o">]</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>./run_generate.sh<span class="w"> </span>-s<span class="w"> </span><span class="o">[</span>mxfp4<span class="p">|</span>mxfp8<span class="p">|</span>nvfp4<span class="o">]</span><span class="w"> </span>-tp<span class="w"> </span><span class="o">[</span>tensor_parallel_size<span class="o">]</span><span class="w"> </span>-m<span class="w"> </span><span class="o">[</span>model_path<span class="o">]</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -144,11 +150,17 @@ pip<span class="w"> </span>uninstall<span class="w"> </span>flash_attn
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>./run_generate.sh<span class="w"> </span>-s<span class="w"> </span>mxfp4<span class="w"> </span>-tp<span class="w"> </span><span class="m">8</span><span class="w"> </span>-m<span class="w"> </span>/path/to/ds_mxfp4
 </pre></div>
 </div>
+<ul class="simple">
+<li><p>NVFP4</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>./run_generate.sh<span class="w"> </span>-s<span class="w"> </span>nvfp4<span class="w"> </span>-tp<span class="w"> </span><span class="m">8</span><span class="w"> </span>-m<span class="w"> </span>/path/to/ds_mxfp4
+</pre></div>
+</div>
 </section>
 <section id="id1">
 <h2>Evaluation<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
 <p>Usage:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-m<span class="w"> </span><span class="o">[</span>model_path<span class="o">]</span><span class="w"> </span>-s<span class="w"> </span><span class="o">[</span>mxfp4<span class="p">|</span>mxfp8<span class="o">]</span><span class="w"> </span>-t<span class="w"> </span><span class="o">[</span>task_name<span class="o">]</span><span class="w"> </span>-tp<span class="w"> </span><span class="o">[</span>tensor_parallel_size<span class="o">]</span><span class="w"> </span>-b<span class="w"> </span><span class="o">[</span>batch_size<span class="o">]</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-m<span class="w"> </span><span class="o">[</span>model_path<span class="o">]</span><span class="w"> </span>-s<span class="w"> </span><span class="o">[</span>mxfp4<span class="p">|</span>mxfp8<span class="p">|</span>nvfp4<span class="o">]</span><span class="w"> </span>-t<span class="w"> </span><span class="o">[</span>task_name<span class="o">]</span><span class="w"> </span>-tp<span class="w"> </span><span class="o">[</span>tensor_parallel_size<span class="o">]</span><span class="w"> </span>-b<span class="w"> </span><span class="o">[</span>batch_size<span class="o">]</span>
 </pre></div>
 </div>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-s<span class="w"> </span>mxfp8<span class="w"> </span>-t<span class="w"> </span>piqa,hellaswag,mmlu<span class="w"> </span>-tp<span class="w"> </span><span class="m">8</span><span class="w"> </span>-b<span class="w"> </span><span class="m">512</span><span class="w"> </span>-m<span class="w"> </span>/path/to/ds_mxfp8
@@ -160,6 +172,13 @@ bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-s<span cla
 </ul>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-s<span class="w"> </span>mxfp4<span class="w"> </span>-t<span class="w"> </span>piqa,hellaswag,mmlu<span class="w"> </span>-tp<span class="w"> </span><span class="m">8</span><span class="w"> </span>-b<span class="w"> </span><span class="m">512</span><span class="w"> </span>-m<span class="w"> </span>/path/to/ds_mxfp4
 bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-s<span class="w"> </span>mxfp4<span class="w"> </span>-t<span class="w"> </span>gsm8k<span class="w"> </span>-tp<span class="w"> </span><span class="m">8</span><span class="w"> </span>-b<span class="w"> </span><span class="m">256</span><span class="w"> </span>-m<span class="w"> </span>/path/to/ds_mxfp4
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>NVFP4</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-s<span class="w"> </span>nvfp4<span class="w"> </span>-t<span class="w"> </span>piqa,hellaswag,mmlu<span class="w"> </span>-tp<span class="w"> </span><span class="m">8</span><span class="w"> </span>-b<span class="w"> </span><span class="m">512</span><span class="w"> </span>-m<span class="w"> </span>/path/to/ds_nvfp4
+bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-s<span class="w"> </span>nvfp4<span class="w"> </span>-t<span class="w"> </span>gsm8k<span class="w"> </span>-tp<span class="w"> </span><span class="m">8</span><span class="w"> </span>-b<span class="w"> </span><span class="m">256</span><span class="w"> </span>-m<span class="w"> </span>/path/to/ds_nvfp4
 </pre></div>
 </div>
 </section>
@@ -179,7 +198,7 @@ bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-s<span cla
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fb54f5f6930> 
+   <jinja2.runtime.BlockReference object at 0x7fe3362dcdd0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
