@@ -80,7 +80,9 @@ run_evaluation() {
     lm_eval --model vllm \
         --model_args pretrained="$MODEL_PATH",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192 \
         --tasks $tasks \
-        --batch_size $BATCH_SIZE
+        --batch_size $BATCH_SIZE \
+        --apply_chat_template \
+        --fewshot_as_multiturn
         
     if [[ $? -ne 0 ]]; then
         echo "Error: Evaluation failed for tasks: $tasks"
@@ -88,34 +90,8 @@ run_evaluation() {
     fi
 }
 
-# Check if tasks contain gsm8k (requires add_bos_token=False)
-if [[ "$TASKS" == *"gsm8k"* ]]; then
-    # If gsm8k is the only task
-    if [[ "$TASKS" == "gsm8k" ]]; then
-        run_evaluation "$TASKS" false
-    else
-        # Split tasks: run gsm8k separately with add_bos_token=False
-        OTHER_TASKS=$(echo "$TASKS" | sed 's/,*gsm8k,*//' | sed 's/^,//' | sed 's/,$//')
-        
-        if [[ -n "$OTHER_TASKS" ]]; then
-            echo "Running general tasks with add_bos_token=True"
-            run_evaluation "$OTHER_TASKS" true
-            
-            if [[ $? -eq 0 ]]; then
-                echo "Running GSM8K with add_bos_token=False"
-                run_evaluation "gsm8k" false
-            else
-                echo "Skipping GSM8K due to previous failure"
-                exit 1
-            fi
-        else
-            run_evaluation "gsm8k" false
-        fi
-    fi
-else
-    # No gsm8k task, use add_bos_token=True for all tasks
-    run_evaluation "$TASKS" true
-fi
+# Run all tasks together with add_bos_token=True
+run_evaluation "$TASKS" true
 
 if [[ $? -eq 0 ]]; then
     echo "Benchmark completed successfully!"
