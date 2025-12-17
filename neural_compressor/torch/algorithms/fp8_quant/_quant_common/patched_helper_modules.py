@@ -1,3 +1,17 @@
+# Copyright (c) 2025 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+
 import os
 import torch
 import neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules as inc_modules
@@ -181,7 +195,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
         prefix_res = self.fp8_fsdpa_fwd(q, prefix_k, prefix_v, None, dropout_p, scale, False, softmax_mode)
         prefix_out, prefix_m, prefix_linv = (gqa_output_reshape(x) if gqa else x for x in prefix_res[:3])
         prefix_m = prefix_m.to(torch.float32)
-        prefix_linv = prefix_linv.to(torch.float32) * (128.0 if softmax_mode != "fp32" else 1.0)
+        prefix_linv = prefix_linv.to(torch.float32) * (128.0 if softmax_mode == "fast" else 1.0)
         prefix_out = self.dequant_output(prefix_out).to(torch.float32)
 
         # calculate the causal part
@@ -191,7 +205,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
         causal_res = self.fp8_fsdpa_fwd(q, causal_k, causal_v, causal_mask, dropout_p, scale, False, softmax_mode)
         causal_out, causal_m, causal_linv = (gqa_output_reshape(x) if gqa else x for x in causal_res[:3])
         causal_m = causal_m.to(torch.float32)
-        causal_linv = causal_linv.to(torch.float32) * (128.0 if softmax_mode != "fp32" else 1.0)
+        causal_linv = causal_linv.to(torch.float32) * (128.0 if softmax_mode == "fast" else 1.0)
         causal_out = self.dequant_output(causal_out).to(torch.float32)
 
         new_m = torch.maximum(prefix_m, causal_m)
@@ -237,7 +251,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
         prefix_res = self.fp8_fsdpa_fwd(q, prefix_k, prefix_v, None, dropout_p, scale, False, softmax_mode)
         prefix_out, prefix_m, prefix_linv = (gqa_output_reshape(x) if gqa else x for x in (prefix_res[:3]))
         prefix_m = prefix_m.to(torch.float32)
-        prefix_linv = prefix_linv.to(torch.float32) * (128.0 if softmax_mode != "fp32" else 1.0)
+        prefix_linv = prefix_linv.to(torch.float32) * (128.0 if softmax_mode == "fast" else 1.0)
         prefix_out = self.dequant_output(prefix_out).to(torch.float32)
 
         # calculate the causal part
@@ -275,7 +289,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
 
                 chunk_out, chunk_m, chunk_linv = (gqa_output_reshape(x) if gqa else x for x in (chunk_res[:3]))
                 chunk_m = chunk_m.to(torch.float32)
-                chunk_linv = chunk_linv.to(torch.float32) * (128.0 if softmax_mode != "fp32" else 1.0)
+                chunk_linv = chunk_linv.to(torch.float32) * (128.0 if softmax_mode == "fast" else 1.0)
                 chunk_out = self.dequant_output(chunk_out).to(torch.float32)
 
                 new_m = torch.maximum(last_m, chunk_m)
@@ -342,7 +356,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
                 )
                 chunk_out, chunk_m, chunk_linv = (gqa_output_reshape(x) if gqa else x for x in chunk_res[:3])
                 chunk_m = chunk_m.to(torch.float32)
-                chunk_linv = chunk_linv.to(torch.float32) * (128.0 if softmax_mode != "fp32" else 1.0)
+                chunk_linv = chunk_linv.to(torch.float32) * (128.0 if softmax_mode == "fast" else 1.0)
                 chunk_out = self.dequant_output(chunk_out).to(torch.float32)
 
                 if last_out is None or last_m is None or last_linv is None:
@@ -380,7 +394,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
 
                 chunk_out, chunk_m, chunk_linv = (gqa_output_reshape(x) if gqa else x for x in chunk_res[:3])
                 chunk_m = chunk_m.to(torch.float32)
-                chunk_linv = chunk_linv.to(torch.float32) * (128.0 if softmax_mode != "fp32" else 1.0)
+                chunk_linv = chunk_linv.to(torch.float32) * (128.0 if softmax_mode == "fast" else 1.0)
                 chunk_out = self.dequant_output(chunk_out).to(torch.float32)
 
                 if last_out is None or last_m is None or last_linv is None:
