@@ -82,15 +82,21 @@ def get_accuracy(model_name_or_path, tokenizer=None, tasks="mmlu", limit=None):
 
     ########################## gms8k (ahead of normal tasks) #########################
     if test_gsm8k:
+        if tokenizer.chat_template:
+            apply_chat_template, fewshot_as_multiturn = True, True
+        else:
+            apply_chat_template, fewshot_as_multiturn = False, False
         lm = HFLM(
             pretrained=model_name_or_path,
             tokenizer=tokenizer,
-            add_bos_token=False,
+            add_bos_token=True,
             batch_size=args.eval_batch_size,
         )
         results_gsm8k = lm_eval.simple_evaluate(
             lm,
             tasks=["gsm8k"],
+            apply_chat_template=apply_chat_template,
+            fewshot_as_multiturn=fewshot_as_multiturn,
             limit=args.limit if limit is None else limit,
         )
         for task_name, task_results in results_gsm8k["results"].items():
