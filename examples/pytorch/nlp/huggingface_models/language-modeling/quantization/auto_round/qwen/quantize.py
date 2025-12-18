@@ -29,7 +29,7 @@ topologies_config = {
     "mxfp4": {
         "scheme": "MXFP4",
         "fp_layers": "lm_head,mlp.gate,self_attn",
-        "iters": 200,
+        "iters": 2,
     },
 }
 
@@ -69,6 +69,8 @@ def quant_model(args):
         export_format=export_format,
         disable_opt_rtn=True,
         low_gpu_mem_usage=True,
+        static_kv_dtype=args.static_kv_dtype,
+        nsamples=1,
         output_dir=output_dir,
         reloading=False,
     )
@@ -113,6 +115,13 @@ if __name__ == "__main__":
         action="store_true",
         help="Skip quantize attention layers.",
     )
+    parser.add_argument(
+        "--static_kv_dtype",
+        type=str,
+        default=None,
+        help="Dtype to use KV Cache. Example: fp8.",
+    )
+
     parser.add_argument(
         "--iters",
         type=int,

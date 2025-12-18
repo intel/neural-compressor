@@ -19,6 +19,10 @@ def create_parser():
     sampling_group.add_argument("--top-p", type=float)
     sampling_group.add_argument("--top-k", type=int)
 
+    # Add kv cache dtype argument
+    breakpoint()
+    parser.set_defaults(kv_cache_dtype=None)
+
     return parser
 
 
@@ -28,7 +32,6 @@ def main(args: dict):
     temperature = args.pop("temperature")
     top_p = args.pop("top_p")
     top_k = args.pop("top_k")
-
     # Create an LLM
     llm = LLM(**args)
 
