@@ -41,6 +41,11 @@ To enable `fp8 kv cache`, please add `--kv_cache_dtype fp8`:
 bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels --kv_cache_dtype fp8
 ```
 
+- NVFP4
+```bash
+bash run_quant.sh --model $MODEL -t nvfp4 --output_dir ./qmodels
+```
+
 ## Evaluation
 
 ### Prompt Tests
