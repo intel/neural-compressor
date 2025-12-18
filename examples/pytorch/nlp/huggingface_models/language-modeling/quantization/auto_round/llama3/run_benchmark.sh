@@ -3,7 +3,7 @@
 # Usage: CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=<path_to_quantized_model> [--tasks=<tasks>] [--batch_size=<size>]
 
 # Parse command line arguments
-TASKS="piqa,hellaswag,mmlu,gsm8k"
+TASKS="piqa,hellaswag,mmlu_llama,gsm8k_llama"
 BATCH_SIZE=64
 GPU_MEMORY_UTILIZATION=0.8
 
@@ -83,39 +83,64 @@ run_evaluation() {
         --tasks $tasks \
         --batch_size $BATCH_SIZE \
         $extra_args
-        
+
     if [[ $? -ne 0 ]]; then
         echo "Error: Evaluation failed for tasks: $tasks"
         return 1
     fi
 }
 
-# Check if tasks contain gsm8k
-if [[ "$TASKS" == *"gsm8k"* ]]; then
-    # If gsm8k is the only task
-    if [[ "$TASKS" == "gsm8k" ]]; then
-        run_evaluation "$TASKS" true "--apply_chat_template --fewshot_as_multiturn"
+
+# Check if tasks contain gsm8k_llama or mmlu_llama
+NEED_SPLIT=false
+OTHER_TASKS="$TASKS"
+SPECIAL_TASKS=""
+
+if [[ "$TASKS" == *"gsm8k_llama"* ]]; then
+    SPECIAL_TASKS="gsm8k_llama"
+    OTHER_TASKS=$(echo "$OTHER_TASKS" | sed 's/,*gsm8k_llama,*//' | sed 's/^,//' | sed 's/,$//')
+    NEED_SPLIT=true
+fi
+if [[ "$TASKS" == *"mmlu_llama"* ]]; then
+    if [[ -n "$SPECIAL_TASKS" ]]; then
+        SPECIAL_TASKS="$SPECIAL_TASKS,mmlu_llama"
     else
-        # Split tasks: run gsm8k separately
-        OTHER_TASKS=$(echo "$TASKS" | sed 's/,*gsm8k,*//' | sed 's/^,//' | sed 's/,$//')
-        
-        if [[ -n "$OTHER_TASKS" ]]; then
-            echo "Running general tasks"
-            run_evaluation "$OTHER_TASKS" true ""
-            
-            if [[ $? -eq 0 ]]; then
-                echo "Running GSM8K with chat template"
-                run_evaluation "gsm8k" true "--apply_chat_template --fewshot_as_multiturn"
-            else
-                echo "Skipping GSM8K due to previous failure"
+        SPECIAL_TASKS="mmlu_llama"
+    fi
+    OTHER_TASKS=$(echo "$OTHER_TASKS" | sed 's/,*mmlu_llama,*//' | sed 's/^,//' | sed 's/,$//')
+    NEED_SPLIT=true
+fi
+
+if [[ "$NEED_SPLIT" == true ]]; then
+    if [[ -n "$OTHER_TASKS" ]]; then
+        echo "Running general tasks"
+        run_evaluation "$OTHER_TASKS" true ""
+        if [[ $? -eq 0 ]]; then
+            IFS=',' read -ra SPECIAL_ARRAY <<< "$SPECIAL_TASKS"
+            for special_task in "${SPECIAL_ARRAY[@]}"; do
+                echo "Running $special_task with chat template"
+                run_evaluation "$special_task" true "--apply_chat_template --fewshot_as_multiturn"
+                if [[ $? -ne 0 ]]; then
+                    echo "Benchmark failed on $special_task!"
+                    exit 1
+                fi
+            done
+        else
+            echo "Skipping special tasks due to previous failure"
+            exit 1
+        fi
+    else
+        IFS=',' read -ra SPECIAL_ARRAY <<< "$SPECIAL_TASKS"
+        for special_task in "${SPECIAL_ARRAY[@]}"; do
+            echo "Running $special_task with chat template"
+            run_evaluation "$special_task" true "--apply_chat_template --fewshot_as_multiturn"
+            if [[ $? -ne 0 ]]; then
+                echo "Benchmark failed on $special_task!"
                 exit 1
             fi
-        else
-            run_evaluation "gsm8k" true "--apply_chat_template --fewshot_as_multiturn"
-        fi
+        done
     fi
 else
-    # No gsm8k task
     run_evaluation "$TASKS" true ""
 fi
 

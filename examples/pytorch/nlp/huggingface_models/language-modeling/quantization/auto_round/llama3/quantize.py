@@ -65,58 +65,57 @@ def dispatch_model_on_devices(model):
     return model
 
 
+
 @torch.no_grad()
-def get_accuracy(model_name_or_path, tokenizer=None, tasks="mmlu", limit=None):
+def get_accuracy(model_name_or_path, tokenizer=None, eval_tasks="mmlu", limit=None):
     os.environ.setdefault("TOKENIZERS_PARALLELISM", "false")
-    eval_tasks = copy.deepcopy(tasks)  # avoid removing gsm8k from original list
     all_accuracy = {}
-    test_gsm8k = False
-    test_normal = False
-    if "gsm8k" in eval_tasks:
-        test_gsm8k = True
-        eval_tasks.remove("gsm8k")
-    if eval_tasks:
-        test_normal = True
+    special_tasks = []
+    normal_tasks = []
+    # Identify special tasks
+    for t in eval_tasks:
+        if t in ["gsm8k_llama", "mmlu_llama"]:
+            special_tasks.append(t)
+        else:
+            normal_tasks.append(t)
     import lm_eval
     from lm_eval.models.huggingface import HFLM
 
-    ########################## gms8k (ahead of normal tasks) #########################
-    if test_gsm8k:
-        if tokenizer.chat_template:
-            apply_chat_template, fewshot_as_multiturn = True, True
-        else:
-            apply_chat_template, fewshot_as_multiturn = False, False
-        lm = HFLM(
-            pretrained=model_name_or_path,
-            tokenizer=tokenizer,
-            add_bos_token=True,
-            batch_size=args.eval_batch_size,
-        )
-        results_gsm8k = lm_eval.simple_evaluate(
+    lm = HFLM(
+        pretrained=model_name_or_path,
+        tokenizer=tokenizer,
+        add_bos_token=True,
+        batch_size=args.eval_batch_size,
+    )
+    # Run special tasks with chat template
+    for special_task in special_tasks:
+        results_special = lm_eval.simple_evaluate(
             lm,
-            tasks=["gsm8k"],
-            apply_chat_template=apply_chat_template,
-            fewshot_as_multiturn=fewshot_as_multiturn,
+            tasks=[special_task],
+            apply_chat_template=True,
+            fewshot_as_multiturn=True,
             limit=args.limit if limit is None else limit,
         )
-        for task_name, task_results in results_gsm8k["results"].items():
-            accu = task_results["exact_match,strict-match"]
-            all_accuracy[task_name] = accu
-    ########################## gms8k end #########################
-    if test_normal:
-        lm = HFLM(
-            pretrained=model_name_or_path,
-            tokenizer=tokenizer,
-            add_bos_token=True,
-            batch_size=args.eval_batch_size,
-        )
+        for task_name, task_results in results_special["results"].items():
+            # gsm8k_llama uses exact_match,strict-match, mmlu_llama may use acc,none
+            if task_name in special_tasks:
+                if "exact_match,strict_match" in task_results:
+                    accu = task_results["exact_match,strict_match"]
+                elif "acc,none" in task_results:
+                    accu = task_results["acc,none"]
+                else:
+                    accu = list(task_results.values())[0]
+                all_accuracy[task_name] = accu
+
+    # Run normal tasks without chat template
+    if normal_tasks:
         results = lm_eval.simple_evaluate(
             lm,
-            tasks=eval_tasks,
+            tasks=normal_tasks,
             limit=args.limit if limit is None else limit,
         )
         for task_name, task_results in results["results"].items():
-            if "acc,none" in task_results and task_name in eval_tasks:
+            if "acc,none" in task_results and task_name in normal_tasks:
                 accu = task_results["acc,none"]
                 all_accuracy[task_name] = accu
     for task_name, accu in all_accuracy.items():
@@ -191,8 +190,8 @@ if __name__ == "__main__":
         default=[
             "piqa",
             "hellaswag",
-            "mmlu",
-            "gsm8k",
+            "mmlu_llama",
+            "gsm8k_llama",
         ],
         help="tasks for accuracy validation, text-generation and code-generation tasks are different.",
     )
