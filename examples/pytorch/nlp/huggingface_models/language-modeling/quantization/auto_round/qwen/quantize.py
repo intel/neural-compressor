@@ -61,7 +61,8 @@ def quant_model(args):
         convert,
         prepare,
     )
-
+    if args.t == "mxfp4" and args.kv_cache_dtype == "fp8":
+        args.t = "mxfp4_fp8kv"
     config = topologies_config[args.t]
     export_format = "auto_round" if args.use_autoround_format else "llm_compressor"
     output_dir = f"{args.output_dir}/quantized_model_{args.t}"
@@ -76,7 +77,7 @@ def quant_model(args):
         disable_opt_rtn=True,
         low_gpu_mem_usage=True,
         output_dir=output_dir,
-        # static_kv_dtype="fp8",
+        static_kv_dtype="fp8" if args.kv_cache_dtype == "fp8" else None,
         reloading=False,
     )
 
@@ -114,7 +115,13 @@ if __name__ == "__main__":
         action="store_true",
         help="Use AutoRound format for saving the quantized model.",
     )
-
+    parser.add_argument(
+        "--kv_cache_dtype",
+        type=str,
+        choices=["fp8", "auto"],
+        default="auto",
+        help="Data type for KV cache. Options are 'fp8' or 'auto'.",
+    )
     parser.add_argument(
         "--skip_attn",
         action="store_true",
