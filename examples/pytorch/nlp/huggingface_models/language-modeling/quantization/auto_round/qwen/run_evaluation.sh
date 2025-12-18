@@ -8,6 +8,7 @@ SCHEME="mxfp8"
 TASK_NAME="piqa,hellaswag,mmlu"
 TP_SIZE=8
 BATCH_SIZE=512
+KV_CACHE_DTYPE="auto"
 
 # Function to display usage
 usage() {
@@ -40,6 +41,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -tp)
             TP_SIZE="$2"
+            shift 2
+            ;;
+        --kv_cache_dtype)
+            KV_CACHE_DTYPE="$2"
             shift 2
             ;;
         -b)
@@ -93,6 +98,13 @@ else
     exit 1
 fi
 
+# for fp8 kv cache
+if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+    export VLLM_ATTENTION_BACKEND="FLASHINFER_MLA"
+    echo "Using FP8 for KV cache"
+fi
+
 # Run evaluation
 echo "Evaluating model: ${MODEL_PATH}"
 echo "Quantization scheme: ${SCHEME}"
@@ -110,7 +122,7 @@ VLLM_ENABLE_STATIC_MOE=$VLLM_ENABLE_STATIC_MOE \
 VLLM_USE_DEEP_GEMM=$VLLM_USE_DEEP_GEMM \
 VLLM_ENABLE_V1_MULTIPROCESSING=1 \
 lm_eval --model vllm \
-  --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False" \
+  --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}" \
   --tasks $TASK_NAME \
   --batch_size $BATCH_SIZE \
   --log_samples \
