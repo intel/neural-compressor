@@ -20,7 +20,6 @@ def create_parser():
     sampling_group.add_argument("--top-k", type=int)
 
     # Add kv cache dtype argument
-    breakpoint()
     parser.set_defaults(kv_cache_dtype=None)
 
     return parser
