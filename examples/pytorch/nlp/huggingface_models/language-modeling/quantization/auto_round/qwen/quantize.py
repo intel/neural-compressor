@@ -29,7 +29,7 @@ topologies_config = {
     "mxfp4": {
         "scheme": "MXFP4",
         "fp_layers": "lm_head,mlp.gate,self_attn",
-        "iters": 2,
+        "iters": 200,
     },
 }
 
