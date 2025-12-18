@@ -8,6 +8,8 @@ set -e
 QUANT_TYPE="mxfp8"
 MODEL_PATH="/path/to/quantized_model"
 TP_SIZE=8
+KV_CACHE_DTYPE="auto"
+
 
 # Function to display usage
 usage() {
@@ -15,11 +17,13 @@ usage() {
     echo "  -s: Quantization scheme (mxfp4 or mxfp8, default: mxfp8)"
     echo "  -m: Path to quantized model (required)"
     echo "  -tp: Tensor parallelism size (default: 8)"
+    echo "  --kv_cache_dtype: Data type for KV cache (default: auto)"
     echo ""
     echo "Examples:"
     echo "  $0 -s mxfp4 -m /path/to/my/model -tp 4"
     echo "  $0 -m /path/to/my/model"
     echo "  $0 -s mxfp8 -m /path/to/my/model"
+    each "  $0 --kv_cache_dtype fp8 -m /path/to/my/model"
 }
 
 # Parse command line arguments
@@ -35,6 +39,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -tp)
             TP_SIZE="$2"
+            shift 2
+            ;;
+        --kv_cache_dtype)
+            KV_CACHE_DTYPE="$2"
             shift 2
             ;;
         -h)
@@ -100,6 +108,13 @@ else
     echo "Using MXFP8 configuration"
 fi
 
+# for fp8 kv cache
+if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+    export VLLM_ATTENTION_BACKEND="FLASHINFER_MLA"
+    echo "Using FP8 for KV cache"
+fi
+
 # Common environment variables
 export VLLM_ENABLE_STATIC_MOE=0
 export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=0
@@ -122,4 +137,5 @@ python generate.py \
     --max-num-seqs 4 \
     --max-model-len 2048 \
     --gpu_memory_utilization 0.75 \
-    --no-enable-prefix-caching  
+    --no-enable-prefix-caching  \
+    --kv-cache-dtype $KV_CACHE_DTYPE

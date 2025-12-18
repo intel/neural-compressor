@@ -27,11 +27,18 @@ bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
 - MXFP4
 ```bash
 bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels
+
 ```
 
 - NVFP4
 ```bash
 bash run_quant.sh --model $MODEL -t nvfp4 --output_dir ./qmodels
+```
+
+To enable `fp8 kv cache`, please add `--kv_cache_dtype fp8`:
+```bash
+# w/ fp8 kv
+bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels --kv_cache_dtype fp8
 ```
 
 ## Evaluation

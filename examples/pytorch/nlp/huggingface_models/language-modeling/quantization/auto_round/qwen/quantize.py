@@ -31,6 +31,12 @@ topologies_config = {
         "fp_layers": "lm_head,mlp.gate,self_attn",
         "iters": 200,
     },
+    "mxfp4_fp8kv": {
+        "scheme": "MXFP4",
+        "fp_layers": "lm_head,mlp.gate,self_attn",
+        "iters": 0,
+        "static_kv_dtype": "fp8",
+    },
 }
 
 
@@ -70,6 +76,7 @@ def quant_model(args):
         disable_opt_rtn=True,
         low_gpu_mem_usage=True,
         output_dir=output_dir,
+        # static_kv_dtype="fp8",
         reloading=False,
     )
 
