@@ -31,6 +31,12 @@ topologies_config = {
         "fp_layers": "lm_head,mlp.gate,self_attn",
         "iters": 200,
     },
+    "mxfp4_fp8kv": {
+        "scheme": "MXFP4",
+        "fp_layers": "lm_head,mlp.gate,self_attn",
+        "iters": 0,
+        "static_kv_dtype": "fp8",
+    },
 }
 
 
@@ -59,6 +65,9 @@ def quant_model(args):
     config = topologies_config[args.t]
     export_format = "auto_round" if args.use_autoround_format else "llm_compressor"
     output_dir = f"{args.output_dir}/quantized_model_{args.t}"
+    static_kv_dtype = args.static_kv_dtype if args.static_kv_dtype is not None else config.get("static_kv_dtype", None)
+    if static_kv_dtype is not None and static_kv_dtype.lower() != "fp8":
+        raise ValueError("Only 'fp8' is supported for static_kv_dtype currently.")
     fp32_model, tokenizer = get_model_and_tokenizer(args.model)
     quant_config = AutoRoundConfig(
         tokenizer=tokenizer,
@@ -69,7 +78,7 @@ def quant_model(args):
         export_format=export_format,
         disable_opt_rtn=True,
         low_gpu_mem_usage=True,
-        static_kv_dtype=args.static_kv_dtype,
+        static_kv_dtype=static_kv_dtype,
         output_dir=output_dir,
         reloading=False,
     )
@@ -118,7 +127,7 @@ if __name__ == "__main__":
         "--static_kv_dtype",
         type=str,
         default=None,
-        help="Dtype to use KV Cache. Example: fp8.",
+        help="Data type to use KV Cache. e.g. fp8",
     )
 
     parser.add_argument(

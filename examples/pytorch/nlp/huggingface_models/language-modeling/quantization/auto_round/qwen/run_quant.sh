@@ -7,11 +7,11 @@ OUTPUT_DIR=""
 STATIC_KV_DTYPE="None"
 
 usage() {
-  echo "Usage: $0 --model MODEL -t [mxfp4|mxfp8] --output_dir DIR --static_kv_dtype DTYPE"
+  echo "Usage: $0 --model MODEL -t [mxfp4|mxfp8|mxfp4_fp8kv] --output_dir DIR -kv DTYPE"
   echo "  --model      Hugging Face model ID or local path"
-  echo "  -t           quantization target (e.g. mxfp8, mxfp4)"
+  echo "  -t           quantization target (e.g. mxfp8, mxfp4, mxfp4_fp8kv)"
   echo "  --output_dir output directory for quantized model"
-  echo "  --static_kv_dtype dtype for static kv cache (default: None)"
+  echo "  -kv          Data type for static kv cache (default: None)"
   echo ""
   echo "Examples:"
   echo "  $0 --model /path/to/my/model -t mxfp4 --output_dir /path/to/output/dir"
@@ -32,8 +32,8 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_DIR="$2"
       shift 2
       ;;
-    --static_kv_dtype)
-      static_kv_dtype="$2"
+    -kv)
+      STATIC_KV_DTYPE="$2"
       shift 2
       ;;
     -h|--help)

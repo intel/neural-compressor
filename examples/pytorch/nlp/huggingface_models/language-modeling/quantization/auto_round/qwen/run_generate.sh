@@ -8,7 +8,7 @@ set -e
 QUANT_TYPE="mxfp8"
 MODEL_PATH="/path/to/quantized_model"
 TP_SIZE=8
-KV_CACHE_DTYPE="None"
+KV_CACHE_DTYPE="auto"
 
 # Function to display usage
 usage() {
@@ -16,7 +16,7 @@ usage() {
     echo "  -s: Quantization scheme (mxfp4 or mxfp8, default: mxfp8)"
     echo "  -m: Path to quantized model (required)"
     echo "  -tp: Tensor parallelism size (default: 8)"
-    echo "  -kv: Dtype for KV cache (default: None)"
+    echo "  -kv: Data type for KV cache (default: None)"
     echo ""
     echo "Examples:"
     echo "  $0 -s mxfp4 -m /path/to/my/model -tp 4"
@@ -123,4 +123,4 @@ python generate.py \
     --gpu_memory_utilization 0.75 \
     --no-enable-prefix-caching \
     --enable_expert_parallel \
-    $( [ "$KV_CACHE_DTYPE" != "None" ] && echo "--kv-cache-dtype $KV_CACHE_DTYPE" )
+    --kv-cache-dtype $KV_CACHE_DTYPE
