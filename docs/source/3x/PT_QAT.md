@@ -71,7 +71,7 @@ Compared with PTQ, QAT offers:
 
 This section walks through an end-to-end example based on the provided code and examples in:
 
-`examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm_qat/`
+`[examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm_qat](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm_qat)`
 
 ### 1. Setup Environment
 
@@ -393,21 +393,6 @@ class DataArguments:
     eval_size: int = 0
 ```
 
-4. **QuantizationArguments**
-
-```python
-@dataclass
-class QuantizationArguments:
-    quant_scheme: str | None = field(
-        default=None,
-        metadata={
-            "choices": ["MXFP8", "MXFP4"],
-        },
-    )
-```
-
-- `MXFP8`: 8-bit microscaling format, accuracy-focused.
-- `MXFP4`: 4-bit microscaling format, compression-focused.
 
 ### AutoRound Quantization Schemes
 
