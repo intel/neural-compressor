@@ -113,7 +113,8 @@ pip<span class="w"> </span>uninstall<span class="w"> </span>flash_attn
 <blockquote>
 <div><p>[!TIP]
 For quicker experimentation (shorter quantization and evaluation time, lower memory),
-you can start with the smaller <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">MODEL=Qwen/Qwen3-30B-A3B</span></code> model before moving to larger variants.</p>
+you can start with the smaller <code class="docutils literal notranslate"><span class="pre">export</span> <span class="pre">MODEL=Qwen/Qwen3-30B-A3B</span></code> model before moving to larger variants.
+Currently, KV cache quantization only supports <strong>FP8</strong>.</p>
 </div></blockquote>
 <ul class="simple">
 <li><p>MXFP8</p></li>
@@ -125,6 +126,13 @@ you can start with the smaller <code class="docutils literal notranslate"><span 
 <li><p>MXFP4</p></li>
 </ul>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--model<span class="w"> </span><span class="nv">$MODEL</span><span class="w"> </span>-t<span class="w"> </span>mxfp4<span class="w"> </span>--output_dir<span class="w"> </span>./qmodels
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>KV Cache</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">MODEL</span><span class="o">=</span>Qwen/Qwen3-30B-A3B
+bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--model<span class="w"> </span><span class="nv">$MODEL</span><span class="w"> </span>-t<span class="w"> </span>mxfp4<span class="w"> </span>--output_dir<span class="w"> </span>./qmodels<span class="w"> </span>-kv<span class="w"> </span><span class="s2">&quot;fp8&quot;</span>
 </pre></div>
 </div>
 </section>
@@ -147,6 +155,12 @@ you can start with the smaller <code class="docutils literal notranslate"><span 
 <li><p>MXFP4</p></li>
 </ul>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>./run_generate.sh<span class="w"> </span>-s<span class="w"> </span>mxfp4<span class="w"> </span>-tp<span class="w"> </span><span class="m">4</span><span class="w"> </span>-m<span class="w"> </span>/path/to/qwen_mxfp4
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>KV Cache</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>./run_generate.sh<span class="w"> </span>-s<span class="w"> </span>mxfp4<span class="w"> </span>-tp<span class="w"> </span><span class="m">1</span><span class="w"> </span>-kv<span class="w"> </span>fp8<span class="w"> </span>-m<span class="w"> </span>/path/to/qwen_mxfp4
 </pre></div>
 </div>
 </section>
@@ -184,7 +198,7 @@ bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-s<span cla
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f8a8db91310> 
+   <jinja2.runtime.BlockReference object at 0x7fd445681be0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
