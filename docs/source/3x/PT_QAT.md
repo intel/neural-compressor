@@ -83,7 +83,7 @@ pip install -r requirements.txt
 
 `requirements.txt` includes (among others):
 
-- `auto-round==0.8.0`
+- `auto-round==0.9.3`
 - `neural-compressor-pt==3.6`
 - `transformers==4.53.0`
 - `accelerate`
@@ -211,7 +211,7 @@ lm_eval \
   --model vllm \
   --model_args pretrained=./llama3.1-finetuned-qat,\
 tensor_parallel_size=1,data_parallel_size=1,\
-gpu_memory_utilization=0.3,max_model_len=32768,enforce_eager=True \
+gpu_memory_utilization=0.8,max_model_len=32768 \
   --tasks gsm8k \
   --batch_size 8
 ```
