@@ -31,12 +31,6 @@ topologies_config = {
         "fp_layers": "lm_head,mlp.gate,self_attn",
         "iters": 200,
     },
-    "mxfp4_fp8kv": {
-        "scheme": "MXFP4",
-        "fp_layers": "lm_head,mlp.gate,self_attn",
-        "iters": 0,
-        "static_kv_dtype": "fp8",
-    },
 }
 
 
