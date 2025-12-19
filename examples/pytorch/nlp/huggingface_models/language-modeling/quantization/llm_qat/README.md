@@ -59,7 +59,7 @@ Save the model directly to get a post training quantization model by following t
 
 
 ```
-CUDA_VISIBLE_DEVICES=0 python ../auto_round/quantize.py  \
+CUDA_VISIBLE_DEVICES=0 python ../auto_round/llama3/quantize.py  \
     --model_name_or_path ./llama3.1-finetuned  \
     --quantize \
     --dtype MXFP4 \
