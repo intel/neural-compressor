@@ -36,9 +36,7 @@ bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels
 - KV Cache
 ```bash
 export MODEL=Qwen/Qwen3-30B-A3B
-bash run_quant.sh --model $MODEL -t mxfp4_fp8kv --output_dir ./qmodels -kv "fp8"
-# or
-# bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels -kv "fp8"
+bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels -kv "fp8"
 ```
 
 ## Evaluation
@@ -60,7 +58,7 @@ bash ./run_generate.sh -s mxfp4 -tp 4 -m /path/to/qwen_mxfp4
 ```
 - KV Cache
 ```bash
-bash ./run_generate.sh -s mxfp4 -tp 1 -kv fp8 -m /path/to/qwen_mxfp4_fp8kv
+bash ./run_generate.sh -s mxfp4 -tp 1 -kv fp8 -m /path/to/qwen_mxfp4
 ```
 ### Evaluation
 

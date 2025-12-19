@@ -7,9 +7,9 @@ OUTPUT_DIR=""
 STATIC_KV_DTYPE="None"
 
 usage() {
-  echo "Usage: $0 --model MODEL -t [mxfp4|mxfp8|mxfp4_fp8kv] --output_dir DIR -kv DTYPE"
+  echo "Usage: $0 --model MODEL -t [mxfp4|mxfp8] --output_dir DIR -kv DTYPE"
   echo "  --model      Hugging Face model ID or local path"
-  echo "  -t           quantization target (e.g. mxfp8, mxfp4, mxfp4_fp8kv)"
+  echo "  -t           quantization target (e.g. mxfp8, mxfp4)"
   echo "  --output_dir output directory for quantized model"
   echo "  -kv          Data type for static kv cache (default: None)"
   echo ""

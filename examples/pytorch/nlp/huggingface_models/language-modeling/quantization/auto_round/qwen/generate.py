@@ -19,9 +19,6 @@ def create_parser():
     sampling_group.add_argument("--top-p", type=float)
     sampling_group.add_argument("--top-k", type=int)
 
-    # Add kv cache dtype argument
-    parser.set_defaults(kv_cache_dtype="auto")
-
     return parser
 
 
