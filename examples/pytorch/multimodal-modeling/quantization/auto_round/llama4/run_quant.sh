@@ -44,7 +44,7 @@ function run_tuning {
     iters=${iters:=0}
 
     if [ "${topology}" = "llama4_mxfp4" ]; then
-        extra_cmd="--fp_layers lm-head,self_attn,router,vision_model,multi_modal_projector,shared_expert --scheme MXFP4"
+        extra_cmd="--fp_layers lm-head,self_attn,router,vision_model,multi_modal_projector,shared_expert --scheme MXFP4 --export_format auto_round"
     fi
 
     python3 main.py \
