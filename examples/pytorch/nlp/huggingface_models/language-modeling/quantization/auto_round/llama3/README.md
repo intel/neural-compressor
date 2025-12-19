@@ -135,9 +135,9 @@ CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.3-70B --dtype=mxfp8 
 
 > Note: Within the accuracy threshold, lm_head quantization is acceptable, but this feature is not enabled here to support vLLM inference.
 
-#### Llama 3.3 70B MXFP4 (Mixed with MXFP8, Target_bits=6.0)
+#### Llama 3.3 70B MXFP4 (Mixed with MXFP8, Target_bits=5.8)
 
-`Target_bits=6.0` is an empirical value.
+`Target_bits=5.8` is an empirical value.
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.3-70B --dtype=mxfp4_mixed --input_model=/models/Llama-3.3-70B-Instruct/ --output_model=Llama-3.3-70B-MXFP4-MXFP8
