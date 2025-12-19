@@ -28,7 +28,6 @@ def main(args: dict):
     temperature = args.pop("temperature")
     top_p = args.pop("top_p")
     top_k = args.pop("top_k")
-
     # Create an LLM
     llm = LLM(**args)
 
