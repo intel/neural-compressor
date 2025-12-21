@@ -95,10 +95,9 @@ runtime_scale_patching_supported_methods_list = [method for method in scaling_me
 
 def set_gaudi_modes_and_attributes(cfg_dict):
     is_dynamic_quantization = cfg_dict['dynamic_quantization']
-    import habana_frameworks.torch.utils.experimental as htexp # importing in local scope since it is gaudi specific
+    import habana_frameworks.torch.utils.experimental as htexp # importing in local scope since it is gaudi specific.
     set_runtime_state(is_dynamic_quantization)
-    # TODO [GAUDISW-244192]: Uncomment the following line once the bridge support it.
-    #htexp._set_is_dynamic_quantization(is_dynamic_quantization)
+    htexp._set_is_dynamic_quantization(is_dynamic_quantization)
     scale_method = get_scale_method_from_config(cfg_dict["scale_method"][CfgStr.DEFAULT])
     if is_runtime_scale_patching() and hasattr(htexp, "_set_scale_attributes"):
         assert (
