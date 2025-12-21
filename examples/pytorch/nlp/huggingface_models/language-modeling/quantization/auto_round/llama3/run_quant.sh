@@ -150,11 +150,12 @@ case "$TOPOLOGY" in
                 ;;
             "nvfp4")
                 echo "Running Llama 3.1 70B NVFP4 quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype NVFP4 --export_format llm_compressor --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" --quantize --low_gpu_mem_usage --dtype NVFP4 --export_format llm_compressor --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
-                    $COMMON_ARGS \
+                    --quantize \
+                    --low_gpu_mem_usage \
                     --dtype NVFP4 \
                     --export_format llm_compressor \
                     --export_path "$OUTPUT_MODEL"
