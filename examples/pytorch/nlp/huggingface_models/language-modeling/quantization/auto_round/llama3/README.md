@@ -158,7 +158,7 @@ CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-70B --dtype=mxfp8 
 AutoRound tuning helps improve the accuracy.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-70B --dtype=nvfp4 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-NVFP4
+CUDA_VISIBLE_DEVICES=0,1 bash run_quant.sh --topology=Llama-3.1-70B --dtype=nvfp4 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-NVFP4
 ```
 
 > Note: Within the accuracy threshold, lm_head quantization is acceptable, but this feature is not enabled here to support vLLM inference.
