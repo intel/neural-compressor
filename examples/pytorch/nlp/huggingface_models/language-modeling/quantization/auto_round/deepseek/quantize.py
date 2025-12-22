@@ -79,7 +79,7 @@ def quant_model(args):
         export_format=export_format,
         output_dir=output_dir,
         low_gpu_mem_usage=True,
-        static_kv_dtype="fp8" if args.kv_cache_dtype == "fp8" else None,
+        static_kv_dtype=args.static_kv_dtype,
         reloading=False,
     )
 
@@ -113,11 +113,10 @@ if __name__ == "__main__":
         help="Enable torch compile for the model.",
     )
     parser.add_argument(
-        "--kv_cache_dtype",
+        "--static_kv_dtype",
         type=str,
-        choices=["fp8", "auto"],
-        default="auto",
-        help="Data type for KV cache. Options are 'fp8' or 'auto'.",
+        default=None,
+        help="Data type to use KV Cache. e.g. fp8",
     )
     parser.add_argument(
         "--use_autoround_format",
