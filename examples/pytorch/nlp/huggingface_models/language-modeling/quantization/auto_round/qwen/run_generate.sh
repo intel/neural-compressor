@@ -40,10 +40,6 @@ while [[ $# -gt 0 ]]; do
             TP_SIZE="$2"
             shift 2
             ;;
-        --kv_cache_dtype)
-            KV_CACHE_DTYPE="$2"
-            shift 2
-            ;;
         -h)
             usage
             exit 0

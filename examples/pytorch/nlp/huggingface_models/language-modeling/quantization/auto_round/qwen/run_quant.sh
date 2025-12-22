@@ -10,7 +10,6 @@ usage() {
   echo "Usage: $0 --model MODEL -t [mxfp4|mxfp8] --output_dir DIR -kv DTYPE"
   echo "  --model      Hugging Face model ID or local path"
   echo "  -t           quantization target (e.g. mxfp8, mxfp4)"
-  echo "  --kv_cache_dtype datatype for kv cache (auto, fp8)"
   echo "  --output_dir output directory for quantized model"
   echo "  -kv          Data type for static kv cache (default: None)"
   echo ""
@@ -27,10 +26,6 @@ while [[ $# -gt 0 ]]; do
       ;;
     -t)
       TARGET="$2"
-      shift 2
-      ;;
-    --kv_cache_dtype)
-      KV_CACHE_DTYPE="$2"
       shift 2
       ;;
     --output_dir)

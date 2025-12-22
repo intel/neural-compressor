@@ -85,7 +85,6 @@ def quant_model(args):
         low_gpu_mem_usage=True,
         static_kv_dtype=static_kv_dtype,
         output_dir=output_dir,
-        static_kv_dtype="fp8" if args.kv_cache_dtype == "fp8" else None,
         reloading=False,
     )
 

@@ -4,13 +4,13 @@ set -e
 MODEL=""
 TARGET=""
 OUTPUT_DIR=""
-KV_CACHE_DTYPE="auto"
+STATIC_KV_DTYPE="None"
 
 usage() {
   echo "Usage: $0 --model MODEL -t [mxfp4|mxfp8] --output_dir DIR"
   echo "  --model      Hugging Face model ID or local path"
   echo "  -t           quantization target (e.g. mxfp8, mxfp4)"
-  echo "  --kv_cache_dtype datatype for kv cache (auto, fp8)"
+  echo "  -kv datatype for kv cache (auto, fp8)"
   echo "  --output_dir output directory for quantized model"
   exit 1
 }
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
       TARGET="$2"
       shift 2
       ;;
-    --kv_cache_dtype)
+    -kv)
       KV_CACHE_DTYPE="$2"
       shift 2
       ;;
@@ -52,5 +52,5 @@ python quantize.py \
   --model "$MODEL" \
   -t "$TARGET" \
   --use_autoround_format \
-  --kv_cache_dtype "$KV_CACHE_DTYPE" \
-  --output_dir "$OUTPUT_DIR"
+  --output_dir "$OUTPUT_DIR" \
+  $( [ "$STATIC_KV_DTYPE" != "None" ] && echo "--static_kv_dtype $STATIC_KV_DTYPE" )

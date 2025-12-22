@@ -43,7 +43,7 @@ while [[ $# -gt 0 ]]; do
             TP_SIZE="$2"
             shift 2
             ;;
-        --kv_cache_dtype)
+        -kv)
             KV_CACHE_DTYPE="$2"
             shift 2
             ;;

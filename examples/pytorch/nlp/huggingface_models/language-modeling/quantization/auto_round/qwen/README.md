@@ -39,11 +39,6 @@ export MODEL=Qwen/Qwen3-30B-A3B
 bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels -kv "fp8"
 ```
 
-To enable `fp8 kv cache`, please add `--kv_cache_dtype fp8`:
-```bash
-# w/ fp8 kv
-bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels --kv_cache_dtype fp8
-```
 
 ## Evaluation
 
