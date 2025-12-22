@@ -39,7 +39,7 @@
     </tbody>
     <tbody>
         <tr>
-            <td>v3.5, v3.6</td>
+            <td>v3.5, v3.6, v3.7</td>
             <td>v1.22</td>
         </tr>
     </tbody>

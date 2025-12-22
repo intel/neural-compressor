@@ -21,6 +21,8 @@ export MODEL=Qwen/Qwen3-235B-A22B
 > [!TIP]
 > For quicker experimentation (shorter quantization and evaluation time, lower memory),
 > you can start with the smaller `export MODEL=Qwen/Qwen3-30B-A3B` model before moving to larger variants.
+> Currently, KV cache quantization only supports **FP8**.
+
 
 - MXFP8
 ```bash
@@ -30,6 +32,11 @@ bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
 - MXFP4
 ```bash
 bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels
+```
+- KV Cache
+```bash
+export MODEL=Qwen/Qwen3-30B-A3B
+bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels -kv "fp8"
 ```
 
 To enable `fp8 kv cache`, please add `--kv_cache_dtype fp8`:
@@ -54,6 +61,10 @@ bash ./run_generate.sh -s mxfp8 -tp 4 -m /path/to/qwen_mxfp8
 - MXFP4
 ```bash
 bash ./run_generate.sh -s mxfp4 -tp 4 -m /path/to/qwen_mxfp4
+```
+- KV Cache
+```bash
+bash ./run_generate.sh -s mxfp4 -tp 1 -kv fp8 -m /path/to/qwen_mxfp4
 ```
 ### Evaluation
 
