@@ -17,13 +17,13 @@ usage() {
     echo "  -s: Quantization scheme (mxfp4 or mxfp8, default: mxfp8)"
     echo "  -m: Path to quantized model (required)"
     echo "  -tp: Tensor parallelism size (default: 8)"
-    echo "  --kv_cache_dtype: Data type for KV cache (default: auto)"
+    echo "  -kv: Data type for KV cache (default: auto)"
     echo ""
     echo "Examples:"
     echo "  $0 -s mxfp4 -m /path/to/my/model -tp 4"
     echo "  $0 -m /path/to/my/model"
     echo "  $0 -s mxfp8 -m /path/to/my/model"
-    each "  $0 --kv_cache_dtype fp8 -m /path/to/my/model"
+    each "  $0 -kv fp8 -m /path/to/my/model"
 }
 
 # Parse command line arguments
