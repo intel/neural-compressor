@@ -90,6 +90,8 @@ Notes:
 
 Here we provide several recipes for Llama3 models. The relative accuracy loss of quantized model should be less than 1%.
 
+> Note: You can also enable static quantization for KV cache and Attention by adding `--static_kv_dtype fp8` argument to `quantize.py` or `-kv fp8` argument to `run_quant.sh`.
+
 #### Llama 3.1 8B MXFP8
 
 AutoRound tuning helps improve the accuracy, `iters` and `nsamples` is higher than default.
