@@ -73,15 +73,15 @@ case "$TOPOLOGY" in
                 ;;
             "mxfp4_mixed")
                 echo "Running Llama 3.1 8B MXFP4 (Mixed with MXFP8) quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --target_bits 7.8 --options \"MXFP4\" \"MXFP8\" --shared_layer \"k_proj\" \"v_proj\" \"q_proj\" --shared_layer \"gate_proj\" \"up_proj\" --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --target_bits 7.8 --options \"MXFP4\" \"MXFP8\" --shared_layers \"k_proj\" \"v_proj\" \"q_proj\" --shared_layers \"gate_proj\" \"up_proj\" --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
                     $COMMON_ARGS \
                     --target_bits 7.8 \
                     --options "MXFP4" "MXFP8" \
-                    --shared_layer "k_proj" "v_proj" "q_proj" \
-                    --shared_layer "gate_proj" "up_proj" \
+                    --shared_layers "k_proj" "v_proj" "q_proj" \
+                    --shared_layers "gate_proj" "up_proj" \
                     --export_path "$OUTPUT_MODEL"
                 ;;
             *)
@@ -95,13 +95,12 @@ case "$TOPOLOGY" in
         case "$DTYPE" in
             "mxfp8")
                 echo "Running Llama 3.3 70B MXFP8 quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP8 --quant_lm_head --iters 0 --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP8 --iters 0 --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
                     $COMMON_ARGS \
                     --dtype MXFP8 \
-                    --quant_lm_head \
                     --iters 0 \
                     --export_path "$OUTPUT_MODEL"
                 ;;
@@ -118,15 +117,15 @@ case "$TOPOLOGY" in
                 ;;
             "mxfp4_mixed")
                 echo "Running Llama 3.3 70B MXFP4 (Mixed with MXFP8) quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --target_bits 5.8 --options \"MXFP4\" \"MXFP8\" --shared_layer \"k_proj\" \"v_proj\" \"q_proj\" --shared_layer \"gate_proj\" \"up_proj\" --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --target_bits 5.8 --options \"MXFP4\" \"MXFP8\" --shared_layers \"k_proj\" \"v_proj\" \"q_proj\" --shared_layers \"gate_proj\" \"up_proj\" --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
                     $COMMON_ARGS \
                     --target_bits 5.8 \
                     --options "MXFP4" "MXFP8" \
-                    --shared_layer "k_proj" "v_proj" "q_proj" \
-                    --shared_layer "gate_proj" "up_proj" \
+                    --shared_layers "k_proj" "v_proj" "q_proj" \
+                    --shared_layers "gate_proj" "up_proj" \
                     --export_path "$OUTPUT_MODEL"
                 ;;
             *)
@@ -140,26 +139,24 @@ case "$TOPOLOGY" in
         case "$DTYPE" in
             "mxfp8")
                 echo "Running Llama 3.1 70B MXFP8 quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP8 --quant_lm_head --iters 0 --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP8 --iters 0 --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
                     $COMMON_ARGS \
                     --dtype MXFP8 \
-                    --quant_lm_head \
                     --iters 0 \
                     --export_path "$OUTPUT_MODEL"
                 ;;
             "nvfp4")
                 echo "Running Llama 3.1 70B NVFP4 quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype NVFP4 --quant_lm_head --iters 0 --export_format llm_compressor --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" --quantize --low_gpu_mem_usage --dtype NVFP4 --export_format llm_compressor --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
-                    $COMMON_ARGS \
+                    --quantize \
+                    --low_gpu_mem_usage \
                     --dtype NVFP4 \
-                    --quant_lm_head \
-                    --iters 0 \
                     --export_format llm_compressor \
                     --export_path "$OUTPUT_MODEL"
                 ;;
