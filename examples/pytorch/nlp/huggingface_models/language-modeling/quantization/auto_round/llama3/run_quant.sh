@@ -22,9 +22,9 @@ while [[ $# -gt 0 ]]; do
             OUTPUT_MODEL="${1#*=}"
             shift
             ;;
-        -kv)
-            KV_CACHE_DTYPE="$2"
-            shift 2
+        --static_kv_dtype=*)
+            KV_CACHE_DTYPE="${1#*=}"
+            shift
             ;;
         *)
             echo "Unknown parameter: $1"

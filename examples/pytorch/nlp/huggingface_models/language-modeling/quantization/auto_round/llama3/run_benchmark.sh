@@ -26,7 +26,7 @@ while [[ $# -gt 0 ]]; do
             GPU_MEMORY_UTILIZATION="${1#*=}"
             shift
             ;;
-        -kv)
+        --static_kv_dtype=*)
             KV_CACHE_DTYPE="${1#*=}"
             shift
             ;;
