@@ -173,6 +173,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 </section>
 <section id="llama3-quantization-recipes">
 <h3>Llama3 Quantization Recipes<a class="headerlink" href="#llama3-quantization-recipes" title="Link to this heading"></a></h3>
+<p>Here we provide several recipes for Llama3 models. The relative accuracy loss of quantized model should be less than 1%.</p>
 <section id="llama-3-1-8b-mxfp8">
 <h4>Llama 3.1 8B MXFP8<a class="headerlink" href="#llama-3-1-8b-mxfp8" title="Link to this heading"></a></h4>
 <p>AutoRound tuning helps improve the accuracy, <code class="docutils literal notranslate"><span class="pre">iters</span></code> and <code class="docutils literal notranslate"><span class="pre">nsamples</span></code> is higher than default.</p>
@@ -211,6 +212,9 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>Llama-3.3-70B<span class="w"> </span>--dtype<span class="o">=</span>mxfp8<span class="w"> </span>--input_model<span class="o">=</span>/models/Llama-3.3-70B-Instruct/<span class="w"> </span>--output_model<span class="o">=</span>Llama-3.3-70B-MXFP8
 </pre></div>
 </div>
+<blockquote>
+<div><p>Note: Within the accuracy threshold, lm_head quantization is acceptable, but this feature is not enabled here to support vLLM inference.</p>
+</div></blockquote>
 </section>
 <section id="llama-3-3-70b-mxfp4-mixed-with-mxfp8-target-bits-5-8">
 <h4>Llama 3.3 70B MXFP4 (Mixed with MXFP8, Target_bits=5.8)<a class="headerlink" href="#llama-3-3-70b-mxfp4-mixed-with-mxfp8-target-bits-5-8" title="Link to this heading"></a></h4>
@@ -225,13 +229,19 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>Llama-3.1-70B<span class="w"> </span>--dtype<span class="o">=</span>mxfp8<span class="w"> </span>--input_model<span class="o">=</span>/models/Llama-3.1-70B-Instruct/<span class="w"> </span>--output_model<span class="o">=</span>Llama-3.1-70B-MXFP8
 </pre></div>
 </div>
+<blockquote>
+<div><p>Note: Within the accuracy threshold, lm_head quantization is acceptable, but this feature is not enabled here to support vLLM inference.</p>
+</div></blockquote>
 </section>
 <section id="llama-3-1-70b-nvfp4">
 <h4>Llama 3.1 70B NVFP4<a class="headerlink" href="#llama-3-1-70b-nvfp4" title="Link to this heading"></a></h4>
-<p>RTN (Round-to-Nearest) is enough to keep accuracy.</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>Llama-3.1-70B<span class="w"> </span>--dtype<span class="o">=</span>nvfp4<span class="w"> </span>--input_model<span class="o">=</span>/models/Llama-3.1-70B-Instruct/<span class="w"> </span>--output_model<span class="o">=</span>Llama-3.1-70B-NVFP4
+<p>AutoRound tuning helps improve the accuracy.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1<span class="w"> </span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--topology<span class="o">=</span>Llama-3.1-70B<span class="w"> </span>--dtype<span class="o">=</span>nvfp4<span class="w"> </span>--input_model<span class="o">=</span>/models/Llama-3.1-70B-Instruct/<span class="w"> </span>--output_model<span class="o">=</span>Llama-3.1-70B-NVFP4
 </pre></div>
 </div>
+<blockquote>
+<div><p>Note: Within the accuracy threshold, lm_head quantization is acceptable, but this feature is not enabled here to support vLLM inference.</p>
+</div></blockquote>
 </section>
 <section id="llama-3-1-70b-unvfp4">
 <h4>Llama 3.1 70B uNVFP4<a class="headerlink" href="#llama-3-1-70b-unvfp4" title="Link to this heading"></a></h4>
@@ -265,31 +275,31 @@ git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </spa
 <ol class="simple">
 <li><p><strong>Llama 3.1 8B MXFP8</strong> (1 GPU):</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.1-8B-MXFP8
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.1-8B-MXFP8<span class="w"> </span>--gpu_memory_utilization<span class="o">=</span><span class="m">0</span>.8
 </pre></div>
 </div>
 <ol class="simple">
 <li><p><strong>Llama 3.1 8B MXFP4 Mixed</strong> (1 GPU):</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.1-8B-MXFP4-MXFP8
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.1-8B-MXFP4-MXFP8<span class="w">  </span>--gpu_memory_utilization<span class="o">=</span><span class="m">0</span>.6
 </pre></div>
 </div>
 <ol class="simple">
-<li><p><strong>Llama 3.3 70B MXFP8</strong> (4 GPU):</p></li>
+<li><p><strong>Llama 3.3 70B MXFP8</strong> (2 GPU):</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.3-70B-MXFP8
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.3-70B-MXFP8<span class="w">  </span>--gpu_memory_utilization<span class="o">=</span><span class="m">0</span>.8
 </pre></div>
 </div>
 <ol class="simple">
-<li><p><strong>Llama 3.3 70B MXFP4 Mixed</strong> (4 GPU):</p></li>
+<li><p><strong>Llama 3.3 70B MXFP4 Mixed</strong> (2 GPU):</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.3-70B-MXFP4-MXFP8
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.3-70B-MXFP4-MXFP8<span class="w">  </span>--gpu_memory_utilization<span class="o">=</span><span class="m">0</span>.6
 </pre></div>
 </div>
 <ol class="simple">
-<li><p><strong>Llama 3.1 70B MXFP8</strong> (4 GPU):</p></li>
+<li><p><strong>Llama 3.1 70B MXFP8</strong> (2 GPU):</p></li>
 </ol>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.1-70B-MXFP8
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>Llama-3.1-70B-MXFP8<span class="w">   </span>--gpu_memory_utilization<span class="o">=</span><span class="m">0</span>.8
 </pre></div>
 </div>
 <p>The script automatically:</p>
@@ -346,7 +356,7 @@ git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </spa
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f2d412194c0> 
+   <jinja2.runtime.BlockReference object at 0x7f4febbb9fd0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
