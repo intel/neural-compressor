@@ -84,7 +84,7 @@ pip install -r requirements.txt
 `requirements.txt` includes (among others):
 
 - `auto-round==0.9.3`
-- `neural-compressor-pt==3.6`
+- `neural-compressor-pt==3.7`
 - `transformers==4.53.0`
 - `accelerate`
 - `datasets`
