@@ -79,7 +79,8 @@ def quant_model(args):
         export_format=export_format,
         output_dir=output_dir,
         low_gpu_mem_usage=True,
-        static_kv_dtype=args.static_kv_dtype,
+        # static_kv_dtype=args.static_kv_dtype,
+        static_attention_dtype="fp8",
         reloading=False,
     )
 

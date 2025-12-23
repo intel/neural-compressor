@@ -4,9 +4,9 @@ This example provides an end-to-end workflow to quantize DeepSeek models to MXFP
 ```bash
 pip install neural-compressor-pt==3.7
 # auto-round
-pip install auto-round==0.9.3
+pip install "auto-round @ git+https://github.com/intel/auto-round.git@ds-fp8kv"
 # vLLM
-git clone -b fused-moe-ar --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
+git clone -b ds-fp8kv --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
 VLLM_USE_PRECOMPILED=1 pip install --editable . -vvv
 # other requirements
 pip install -r requirements.txt
