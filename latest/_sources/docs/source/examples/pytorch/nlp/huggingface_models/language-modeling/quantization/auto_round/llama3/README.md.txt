@@ -8,7 +8,7 @@ In this example, you can verify the accuracy on HPU/CUDA device with emulation o
 # neural-compressor-pt
 pip install neural-compressor-pt==3.7
 # auto-round
-pip install auto-round==0.9.2
+pip install auto-round==0.9.3
 # other requirements
 pip install -r requirements.txt
 ```
@@ -19,7 +19,7 @@ pip install -r requirements.txt
 # neural-compressor-pt
 INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@master
 # auto-round
-pip install git+https://github.com/intel/auto-round.git@more-ar-ext
+pip install git+https://github.com/intel/auto-round.git@v0.9.3rc
 # other requirements
 pip install -r requirements.txt
 ```
