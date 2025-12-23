@@ -140,8 +140,17 @@
 </section>
 <section id="step-2">
 <h5>Step 2:<a class="headerlink" href="#step-2" title="Link to this heading"></a></h5>
-<p>Save the model directly to a get post training quantization model with using <a class="reference external" href="https://github.com/intel/auto-round">auto-round</a>.</p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">quantize_autoround</span><span class="o">.</span><span class="n">py</span> 
+<p>Save the model directly to get a post training quantization model by following this example <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3">auto_round
+</a>.</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="mi">0</span> <span class="n">python</span> <span class="o">../</span><span class="n">auto_round</span><span class="o">/</span><span class="n">llama3</span><span class="o">/</span><span class="n">quantize</span><span class="o">.</span><span class="n">py</span>  \
+    <span class="o">--</span><span class="n">model_name_or_path</span> <span class="o">./</span><span class="n">llama3</span><span class="mf">.1</span><span class="o">-</span><span class="n">finetuned</span>  \
+    <span class="o">--</span><span class="n">quantize</span> \
+    <span class="o">--</span><span class="n">dtype</span> <span class="n">MXFP4</span> \
+    <span class="o">--</span><span class="n">enable_torch_compile</span> \
+    <span class="o">--</span><span class="n">low_gpu_mem_usage</span> \
+    <span class="o">--</span><span class="n">export_format</span> <span class="n">llm_compressor</span> \
+    <span class="o">--</span><span class="n">export_path</span> <span class="n">llama3</span><span class="mf">.1</span><span class="o">-</span><span class="n">finetuned</span><span class="o">-</span><span class="n">rtn</span><span class="o">-</span><span class="n">MXFP4</span> \
+    <span class="o">--</span><span class="n">iters</span> <span class="mi">0</span>
 </pre></div>
 </div>
 </section>
@@ -209,7 +218,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f4febbac350> 
+   <jinja2.runtime.BlockReference object at 0x7f0d088483e0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
