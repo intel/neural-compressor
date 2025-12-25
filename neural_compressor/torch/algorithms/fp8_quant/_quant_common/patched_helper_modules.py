@@ -126,10 +126,6 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
         self.fp8_apc_fsdpa_impl = impl_mapping[qkv_slice_impl]
 
         self.slice_causal = os.getenv("VLLM_HPU_FSDPA_SLICE_CAUSAL", "0") in ("1", "true")
-        if self.qkv_slice_thld > 0 and self.slice_causal:
-            self.causal_mask_buffer = (1.0 - torch.tril(
-                torch.ones(1,1,1,self.qkv_chunk_size, self.qkv_chunk_size, dtype=torch.float32, device="hpu"))) * -3e38
-            self.causal_mask_buffer = self.causal_mask_buffer.to(self.hp_dtype)
 
     def fp8_fsdpa_fwd(
         self,
@@ -468,9 +464,13 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
                 is_causal_chunk = kv_chunk_idx == 0 and q_chunk_idx != 0
                 is_causal_chunk = is_causal_chunk and q_chunk_size % 1024 == 0 and kv_chunk_size % 1024 == 0
                 if kv_chunk_idx == 0 and not is_causal_chunk:
-                    mask_chunk = self.causal_mask_buffer[..., :q_chunk_size, :q_chunk_size].expand(
-                        q_chunk.shape[0], -1, -1, -1, -1
-                    )
+                    mask_chunk = (1.0 - torch.tril(
+                        torch.ones(
+                            q_chunk.shape[0], 1, 1, 1, self.qkv_chunk_size, self.qkv_chunk_size,
+                            dtype=self.hp_dtype,
+                            device=q_chunk.device
+                        )
+                    )) * -3e38
                 else:
                     mask_chunk = None
                 chunk_res = self.fp8_fsdpa_fwd(
