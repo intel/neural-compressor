@@ -466,7 +466,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
                 if kv_chunk_idx == 0 and not is_causal_chunk:
                     mask_chunk = (1.0 - torch.tril(
                         torch.ones(
-                            q_chunk.shape[0], 1, 1, 1, self.qkv_chunk_size, self.qkv_chunk_size,
+                            q_chunk.shape[0], 1, 1, self.qkv_chunk_size, self.qkv_chunk_size,
                             dtype=self.hp_dtype,
                             device=q_chunk.device
                         )
