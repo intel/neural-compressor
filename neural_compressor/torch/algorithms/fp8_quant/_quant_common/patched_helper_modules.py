@@ -109,22 +109,27 @@ class OoTPatchedVllmMixtureOfExpertsOpFP8(INCPatchedVllmMixtureOfExpertsOpFP8):
 class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.qkv_slice_thld = int(os.getenv("VLLM_HPU_FSDPA_SLICE_SEQ_LEN_THLD", 4096))
+        self.qkv_slice_thld = int(os.getenv("VLLM_HPU_FSDPA_SLICE_SEQ_LEN_THLD", "4096"))
         if self.qkv_slice_thld > 0:
             self.qkv_chunk_size = int(os.getenv("VLLM_HPU_FSDPA_SLICE_CHUNK_SIZE", self.qkv_slice_thld))
 
         impl_mapping = {
-            'split_kv': self.fp8_fsdpa_split_kv,
-            'slice_causal': self.fp8_fsdpa_slice_causal,
-            'slice_qkv': self.fp8_fsdpa_slice_qkv,
+            'split_kv': self.fp8_apc_fsdpa_split_kv,
+            'slice_causal': self.fp8_apc_fsdpa_slice_causal,
+            'slice_qkv': self.fp8_apc_fsdpa_slice_qkv,
         }
         qkv_slice_impl = os.getenv("VLLM_HPU_FSDPA_SLICE_IMPL", 'slice_qkv').lower()
         assert qkv_slice_impl in impl_mapping, (
             f"Invalid QKV slice implementation: {qkv_slice_impl}, "
             f"available options: {list(impl_mapping.keys())}"
         )
+        self.fp8_apc_fsdpa_impl = impl_mapping[qkv_slice_impl]
 
-        self.fp8_fsdpa_impl = impl_mapping[qkv_slice_impl]
+        self.slice_causal = os.getenv("VLLM_HPU_FSDPA_SLICE_CAUSAL", "0") in ("1", "true")
+        if self.qkv_slice_thld > 0 and self.slice_causal:
+            self.causal_mask_buffer = (1.0 - torch.tril(
+                torch.ones(self.qkv_chunk_size, self.qkv_chunk_size, dtype=torch.float32, device="hpu"))) * -3e38
+            self.causal_mask_buffer = self.causal_mask_buffer.to(self.hp_dtype)
 
     def fp8_fsdpa_fwd(
         self,
@@ -162,7 +167,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
         )
         return results
 
-    def fp8_fsdpa_split_kv(
+    def fp8_apc_fsdpa_split_kv(
         self,
         q,
         k,
@@ -218,7 +223,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
 
         return final_out
 
-    def fp8_fsdpa_slice_causal(
+    def fp8_apc_fsdpa_slice_causal(
         self,
         q,
         k,
@@ -304,7 +309,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
         chunk_outputs = list(reversed(chunk_outputs))
         return torch.cat(chunk_outputs, dim=-2)
 
-    def fp8_fsdpa_slice_qkv(
+    def fp8_apc_fsdpa_slice_qkv(
         self,
         q,
         k,
@@ -413,6 +418,84 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
         chunk_outputs = list(reversed(chunk_outputs))
         return torch.cat(chunk_outputs, dim=-2)
 
+    def fp8_causal_fsdpa_slice_qkv(
+        self,
+        q,
+        k,
+        v,
+        attn_mask=None,
+        dropout_p=0.0,
+        is_causal=False,
+        scale=None,
+        softmax_mode="None",
+        valid_seq_len=None,
+        seq_padding_type="None",
+    ):
+        q_len = q.shape[-2]
+        kv_len = k.shape[-2]
+        assert q_len == kv_len, "Causal FSDPA with QKV slice only supports q_len == kv_len."
+        softmax_mode = softmax_mode if softmax_mode == "fp32" else "fast"
+        if scale is None:
+            scale = 1.0 / (q.shape[-1] ** 0.5)
+        
+        from habana_frameworks.torch.hpex.kernels.Fp8FusedSDPA import (
+            is_gqa, gqa_input_reshape_fwd, gqa_output_reshape
+        )
+        gqa = is_gqa(q, k)
+        if gqa:
+            q, k, v, attn_mask = gqa_input_reshape_fwd(q, k, v, attn_mask)
+
+        chunk_outputs = []
+        num_chunks = (q_len + self.qkv_chunk_size - 1) // self.qkv_chunk_size
+        for q_chunk_idx in range(num_chunks):
+            q_start = q_len - (q_chunk_idx + 1) * self.qkv_chunk_size
+            q_start = max(q_start, 0)
+            q_end = q_len - q_chunk_idx * self.qkv_chunk_size
+            q_chunk_size = q_end - q_start
+            q_chunk = q[..., q_start:q_end, :]
+
+            last_out = None
+            last_m = None
+            last_linv = None
+            for kv_chunk_idx in range(0, num_chunks - q_chunk_idx):
+                kv_start =  q_end - (kv_chunk_idx + 1) * self.qkv_chunk_size
+                kv_start = max(kv_start, 0)
+                kv_end = q_end - kv_chunk_idx * self.qkv_chunk_size
+                kv_chunk_size = kv_end - kv_start
+                k_chunk = k[..., kv_start:kv_end, :]
+                v_chunk = v[..., kv_start:kv_end, :]
+
+                is_causal_chunk = kv_chunk_idx == 0 and q_chunk_idx != 0
+                is_causal_chunk = is_causal_chunk and q_chunk_size % 1024 == 0 and kv_chunk_size % 1024 == 0
+                if kv_chunk_idx == 0 and not is_causal_chunk:
+                    mask_chunk = self.causal_mask_buffer[..., :q_chunk_size, :q_chunk_size].repeat(q.shape[0], 1, 1)
+                else:
+                    mask_chunk = None
+                chunk_res = self.fp8_fsdpa_fwd(
+                    q_chunk, k_chunk, v_chunk, mask_chunk, dropout_p, scale, is_causal_chunk, softmax_mode
+                )
+
+                chunk_out, chunk_m, chunk_linv = (gqa_output_reshape(x) if gqa else x for x in chunk_res[:3])
+                chunk_m = chunk_m.to(torch.float32)
+                chunk_linv = chunk_linv.to(torch.float32) * (128.0 if softmax_mode == "fast" else 1.0)
+                chunk_out = self.dequant_output(chunk_out).to(torch.float32)
+
+                if last_out is None or last_m is None or last_linv is None:
+                    last_out = chunk_out
+                    last_m = chunk_m
+                    last_linv = chunk_linv
+                else:
+                    new_m = torch.maximum(last_m, chunk_m)
+                    last_linv_rescaled = (1.0 / last_linv) * torch.exp(last_m - new_m)
+                    chunk_linv_rescaled = (1.0 / chunk_linv) * torch.exp(chunk_m - new_m)
+                    last_linv = 1.0 / (last_linv_rescaled + chunk_linv_rescaled)
+                    last_out = (last_linv_rescaled * last_linv) * last_out + \
+                        (chunk_linv_rescaled * last_linv) * chunk_out
+                    last_m = new_m
+            chunk_outputs.append(last_out)
+        chunk_outputs = list(reversed(chunk_outputs))
+        return torch.cat(chunk_outputs, dim=-2)
+        
     def forward_quant(
         self,
         q,
@@ -442,7 +525,12 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
             and q_len != kv_len
             and kv_len >= self.qkv_slice_thld
         ):
-            output = self.fp8_fsdpa_impl(
+            output = self.fp8_apc_fsdpa_impl(
+                qinput, kinput, vinput, attn_mask, dropout_p, is_causal, scale, softmax_mode, valid_seq_len, seq_padding_type
+            )
+            return output.to(q.dtype)
+        elif is_causal and self.qkv_slice_thld > 0 and q_len >= self.qkv_slice_thld and self.slice_causal:
+            output = self.fp8_causal_fsdpa_slice_qkv(
                 qinput, kinput, vinput, attn_mask, dropout_p, is_causal, scale, softmax_mode, valid_seq_len, seq_padding_type
             )
             return output.to(q.dtype)
