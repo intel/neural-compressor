@@ -32,6 +32,7 @@ hf download meta-llama/Llama-4-Scout-17B-16E-Instruct --local-dir Llama-4-Scout-
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=llama4_mxfp4 --input_model=Llama-4-Scout-17B-16E-Instruct/
 ```
 
+> Note: You can also enable static quantization for KV cache by adding `--static_kv_dtype fp8` argument to `main.py`， or `--static_kv_dtype=fp8` argument to `run_quant.sh` and `run_benchmark.sh`.
 
 ## 2. Benchmark
 
