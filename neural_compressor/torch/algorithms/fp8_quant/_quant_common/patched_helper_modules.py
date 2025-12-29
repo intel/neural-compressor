@@ -464,13 +464,8 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
                 is_causal_chunk = kv_chunk_idx == 0 and q_chunk_idx != 0
                 is_causal_chunk = is_causal_chunk and q_chunk_size % 1024 == 0 and kv_chunk_size % 1024 == 0
                 if kv_chunk_idx == 0 and not is_causal_chunk:
-                    mask_chunk = (1.0 - torch.tril(
-                        torch.ones(
-                            q_chunk.shape[0], 1, 1, self.qkv_chunk_size, self.qkv_chunk_size,
-                            dtype=self.hp_dtype,
-                            device=q_chunk.device
-                        )
-                    )) * -3e38
+                    mask_shape= (q_chunk.shape[0], 1, 1, q_chunk_size, kv_chunk_size) if gqa else (q_chunk.shape[0], 1, q_chunk_size, kv_chunk_size)
+                    mask_chunk = (1.0 - torch.tril(torch.ones(mask_shape, dtype=self.hp_dtype, device=q_chunk.device))) * -3e38
                 else:
                     mask_chunk = None
                 chunk_res = self.fp8_fsdpa_fwd(
