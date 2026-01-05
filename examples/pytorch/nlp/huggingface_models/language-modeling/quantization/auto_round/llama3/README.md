@@ -13,18 +13,6 @@ pip install auto-round==0.9.3
 pip install -r requirements.txt
 ```
 
-**Before neural-compressor v3.7 and auto-round v0.9.1 release, please install from source for the latest updates:**
-
-```bash 
-# neural-compressor-pt
-INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@master
-# auto-round
-pip install git+https://github.com/intel/auto-round.git@v0.9.3rc
-# other requirements
-pip install -r requirements.txt
-```
-
-
 ## Quantization
 
 ### Demo (`MXFP4`, `MXFP8`, `NVFP4`, `uNVFP4`)
