@@ -109,9 +109,9 @@ class OoTPatchedVllmMixtureOfExpertsOpFP8(INCPatchedVllmMixtureOfExpertsOpFP8):
 class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.qkv_slice_thld = int(os.getenv("VLLM_HPU_FSDPA_SLICE_SEQ_LEN_THLD", "4096"))
+        self.qkv_slice_thld = int(os.getenv("VLLM_HPU_FSDPA_SLICE_SEQ_LEN_THLD", "8192"))
         if self.qkv_slice_thld > 0:
-            self.qkv_chunk_size = int(os.getenv("VLLM_HPU_FSDPA_SLICE_CHUNK_SIZE", self.qkv_slice_thld))
+            self.qkv_chunk_size = int(os.getenv("VLLM_HPU_FSDPA_SLICE_CHUNK_SIZE", "4096"))
 
         impl_mapping = {
             'split_kv': self.fp8_apc_fsdpa_split_kv,
@@ -465,6 +465,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
                 is_causal_chunk = is_causal_chunk and q_chunk_size % 1024 == 0 and kv_chunk_size % 1024 == 0
                 if kv_chunk_idx == 0 and not is_causal_chunk:
                     mask_shape= (q_chunk.shape[0], 1, 1, q_chunk_size, kv_chunk_size) if gqa else (q_chunk.shape[0], 1, q_chunk_size, kv_chunk_size)
+                    # use -3e38 intead of -inf to avoid nan
                     mask_chunk = (1.0 - torch.tril(torch.ones(mask_shape, dtype=self.hp_dtype, device=q_chunk.device))) * -3e38
                 else:
                     mask_chunk = None
