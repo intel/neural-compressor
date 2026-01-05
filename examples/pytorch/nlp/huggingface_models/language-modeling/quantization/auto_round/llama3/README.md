@@ -80,7 +80,8 @@ Here we provide several recipes for Llama3 models. The relative accuracy loss of
 
 #### Llama 3.1 8B MXFP8
 
-AutoRound tuning helps improve the accuracy, `iters` and `nsamples` is higher than default.
+RTN (Round-to-Nearest) is enough to keep accuracy.
+
 ```bash
 # Quantize and export AutoRound format
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP8
