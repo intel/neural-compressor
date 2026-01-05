@@ -123,7 +123,7 @@ CUDA_VISIBLE_DEVICES=0 python quantize.py  \
     --low_gpu_mem_usage \
     --export_format auto_round  \
     --export_path llama3.1-8B-MXFP4-MXFP8 \
-    --tasks mmlu piqa hellaswag gsm8k \
+    --tasks mmlu_llama piqa hellaswag gsm8k_llama \
     --eval_batch_size 32
 ```
 
@@ -221,8 +221,7 @@ CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.1-70B-MXFP8 
 
 The script automatically:
 - Detects available GPUs from `CUDA_VISIBLE_DEVICES` and sets `tensor_parallel_size` accordingly
-- Handles different `add_bos_token` settings for different tasks (GSM8K requires `False`, others use `True`)
-- Runs default tasks: `piqa,hellaswag,mmlu,gsm8k` with batch size 8
+- Runs default tasks: `piqa,hellaswag,mmlu_llama,gsm8k_llama` with batch size 8
 - Supports custom task selection and batch size adjustment
 
 
