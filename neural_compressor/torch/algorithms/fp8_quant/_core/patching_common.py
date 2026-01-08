@@ -57,6 +57,7 @@ _mod_types = {
     "linear": ModuleType(1, ["weight"], 1, False),
     "row_parallel_linear": ModuleType(1, ["weight"], 2, True),
     "matmul": ModuleType(2, [], 1, False),
+    "b2b_matmul": ModuleType(2, [], 1, True),
     "kv_cache": ModuleType(1, [], 1, False),
     "softmax": ModuleType(1, [], 1, True),
     "fused_sdpa": ModuleType(3, [], 2, True),
@@ -67,6 +68,7 @@ _mod_types = {
 
 _mod_default_dict = {
     "Matmul": ModuleInfo("matmul", PatchedMatmul, supports_dynamic_quantization=True),
+    "B2BMatmul": ModuleInfo("b2b_matmul", PatchedMatmul, supports_dynamic_quantization=True),
     "Linear": ModuleInfo("linear", PatchedLinear, supports_dynamic_quantization=True),
     "ParallelLMHead": ModuleInfo("linear", PatchedParallelLMHead, supports_dynamic_quantization=True),
     "RowParallelLinear": ModuleInfo("row_parallel_linear", PatchedRowParallelLinear, supports_dynamic_quantization=True),
