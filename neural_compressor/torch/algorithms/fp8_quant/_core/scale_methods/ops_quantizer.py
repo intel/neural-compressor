@@ -264,6 +264,40 @@ class MatmulOpQuantizer(BaseOpQuantizer):
         return ModuleConfig(input_config, output_config)
 
 
+## Batch2Block and Block2Batch Matmul Op Quantizer, need special handling for input scales
+## First input is matrix of 0 and 1, so its scale is always 1
+## Second input is corrupt with garbage values, so its scale is taken from output scale
+class B2B_MatmulOpQuantizer(MatmulOpQuantizer):
+    def __init__(self, config, mod, measurement, params, mod_type_str):
+        super().__init__(config, mod, measurement, params, mod_type_str)
+
+    def get_scales_module_config(self):
+        input_scales = []
+        ## first input is matrix of 0 and 1
+        input_measurement = self.measurement.inputs[0] if self.measurement is not None else []
+        input_scale = None
+        if not self.is_dynamic:
+            input_scale = self.inputs_scales_creators[0].calc_scales(
+                input_measurement, QuantTensorType.MEASUREMENTS
+            )
+        input_scales.append(input_scale)
+        ## second input is corrupt with garbage values - use measurement from output
+        input_measurement = self.measurement.outputs[0] if self.measurement is not None else []
+        input_scale = None
+        if not self.is_dynamic:
+            input_scale = self.inputs_scales_creators[1].calc_scales(
+                input_measurement, QuantTensorType.MEASUREMENTS
+            )
+        input_scales.append(input_scale)
+
+
+        output_scales = None
+        if not self.is_dynamic:
+            output_scales = input_scales[0] * input_scales[1]
+        return ModuleConfig(input_scales, (output_scales,), {})
+
+
+
 class SoftmaxOpQuantizer(BaseOpQuantizer):
 
     def __init__(self, config, mod, measurement, params, mod_type_str):
@@ -469,8 +503,12 @@ class EmbeddingOpQuantizer(BaseOpQuantizer):
         return ModuleConfig([], [], params_config)
 
 
+
+
+
 ops_quantizer_map = {"linear": LinearOpQuantizer,
                       "matmul": MatmulOpQuantizer,
+                      "b2b_matmul": B2B_MatmulOpQuantizer,
                       "fused_sdpa": FsdpaOpQuantizer,
                       "softmax": SoftmaxOpQuantizer,
                       "kv_cache": KVCacheOpQuantizer,
