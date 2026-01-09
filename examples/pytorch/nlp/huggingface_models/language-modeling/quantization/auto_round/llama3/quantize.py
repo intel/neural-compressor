@@ -162,6 +162,13 @@ if __name__ == "__main__":
         default=[],
         help="[mix-precision] ensure that listed layers are using same data type for quantization"
     )
+    parser.add_argument(
+        "--static_kv_dtype",
+        default=None,
+        type=str,
+        choices=["fp8", "float8_e4m3fn"],
+        help="Data type for static quantize key and value.",
+    )
     parser.add_argument("--use_recipe", action="store_true", help="whether to use recipe to quantize model")
     parser.add_argument("--recipe_file", type=str, default="recipes/Meta-Llama-3.1-8B-Instruct_6bits.json", help="path of recipe file")
     parser.add_argument("--iters", default=200, type=int, help="iters for autoround.")
@@ -248,6 +255,7 @@ if __name__ == "__main__":
             target_bits=args.target_bits,
             options=args.options,
             shared_layers=args.shared_layers,
+            static_kv_dtype=args.static_kv_dtype,
             enable_torch_compile=args.enable_torch_compile,
             low_gpu_mem_usage=args.low_gpu_mem_usage,
             export_format=args.export_format,
