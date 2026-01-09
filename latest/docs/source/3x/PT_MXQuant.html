@@ -201,11 +201,10 @@
 <span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;./saved_inc&quot;</span>
 
 <span class="c1"># quantization configuration</span>
+<span class="c1"># `iters=0` means RTN (fast, no optimization); use default `iters=200` if accuracy is poor</span>
 <span class="n">quant_config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">(</span>
     <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>  <span class="c1"># Tokenizer for processing calibration data</span>
-    <span class="n">nsamples</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>  <span class="c1"># Number of calibration samples (default: 128)</span>
-    <span class="n">seqlen</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>  <span class="c1"># Sequence length of calibration data (default: 2048)</span>
-    <span class="n">iters</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>  <span class="c1"># Number of optimization iterations (default: 200)</span>
+    <span class="n">iters</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># Number of optimization iterations (default: 200)</span>
     <span class="n">scheme</span><span class="o">=</span><span class="s2">&quot;MXFP4&quot;</span><span class="p">,</span>  <span class="c1"># MX quantization scheme: &quot;MXFP4&quot;, &quot;MXFP8&quot;</span>
     <span class="n">export_format</span><span class="o">=</span><span class="s2">&quot;auto_round&quot;</span><span class="p">,</span>  <span class="c1"># Export format for the quantized model</span>
     <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>  <span class="c1"># Directory to save the quantized model (default: &quot;temp_auto_round&quot;)</span>
@@ -416,7 +415,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f198f5d9550> 
+   <jinja2.runtime.BlockReference object at 0x7f149d732b40> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

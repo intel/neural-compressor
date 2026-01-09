@@ -132,7 +132,7 @@
 <li><p><strong>Global Tensor-Wise Scale</strong>: In addition to the block-wise scales, a single FP32 (32-bit) scale factor is applied to the entire tensor. This global scale provides an additional level of normalization for the whole weight or activation tensor. For activations, this global scale is static (computed during calibration and fixed during inference) to optimize performance.</p></li>
 </ul>
 <p>The dequantization formula can be expressed as:</p>
-<p>$$\text{dequantized_value} = \text{quantized_value} \times \text{block_scale} \times \text{global_scale}$$</p>
+<p><code class="docutils literal notranslate"><span class="pre">dequantized_value</span> <span class="pre">=</span> <span class="pre">quantized_value</span> <span class="pre">×</span> <span class="pre">block_scale</span> <span class="pre">×</span> <span class="pre">global_scale</span></code></p>
 <p>This hierarchical scaling strategy balances compression efficiency with numerical accuracy, enabling NVFP4 to maintain model performance while significantly reducing memory footprint.</p>
 <p>At similar accuracy levels, NVFP4 can deliver lower memory usage and improved compute efficiency for multiply-accumulate operations compared to higher-precision formats. Neural Compressor supports post-training quantization to NVFP4, providing recipes and APIs for users to quantize LLMs easily.</p>
 </section>
@@ -151,14 +151,13 @@
 <span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;./saved_inc&quot;</span>
 
 <span class="c1"># quantization configuration</span>
+<span class="c1"># `iters=0` means RTN (fast, no optimization); use default `iters=200` if accuracy is poor</span>
 <span class="n">quant_config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">(</span>
-    <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>
-    <span class="n">nsamples</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
-    <span class="n">seqlen</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
-    <span class="n">iters</span><span class="o">=</span><span class="mi">20</span><span class="p">,</span>
-    <span class="n">scheme</span><span class="o">=</span><span class="s2">&quot;NVFP4&quot;</span><span class="p">,</span>  <span class="c1"># NVFP4 format</span>
-    <span class="n">export_format</span><span class="o">=</span><span class="s2">&quot;llm_compressor&quot;</span><span class="p">,</span>
-    <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>  <span class="c1"># default is &quot;temp_auto_round&quot;</span>
+    <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>  <span class="c1"># Tokenizer for processing calibration data</span>
+    <span class="n">scheme</span><span class="o">=</span><span class="s2">&quot;NVFP4&quot;</span><span class="p">,</span>  <span class="c1"># NVFP4 quantization scheme</span>
+    <span class="n">iters</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># Number of optimization iterations (default: 200)</span>
+    <span class="n">export_format</span><span class="o">=</span><span class="s2">&quot;llm_compressor&quot;</span><span class="p">,</span>  <span class="c1"># Export format for the quantized model</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>  <span class="c1"># Directory to save the quantized model (default: &quot;temp_auto_round&quot;)</span>
 <span class="p">)</span>
 
 <span class="c1"># quantize the model and save to output_dir</span>
@@ -195,7 +194,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f198f5d9550> 
+   <jinja2.runtime.BlockReference object at 0x7f149dda0b60> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

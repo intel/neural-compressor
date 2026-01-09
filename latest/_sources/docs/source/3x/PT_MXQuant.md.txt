@@ -101,11 +101,10 @@ tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code
 output_dir = "./saved_inc"
 
 # quantization configuration
+# `iters=0` means RTN (fast, no optimization); use default `iters=200` if accuracy is poor
 quant_config = AutoRoundConfig(
     tokenizer=tokenizer,  # Tokenizer for processing calibration data
-    nsamples=32,  # Number of calibration samples (default: 128)
-    seqlen=32,  # Sequence length of calibration data (default: 2048)
-    iters=20,  # Number of optimization iterations (default: 200)
+    iters=0,  # Number of optimization iterations (default: 200)
     scheme="MXFP4",  # MX quantization scheme: "MXFP4", "MXFP8"
     export_format="auto_round",  # Export format for the quantized model
     output_dir=output_dir,  # Directory to save the quantized model (default: "temp_auto_round")
