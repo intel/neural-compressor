@@ -77,6 +77,7 @@ fi
 # Set common environment variables
 export VLLM_ENABLE_AR_EXT=1
 export TORCH_COMPILE_DISABLE=1
+export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
 
 # Function to run evaluation for specific tasks
 run_evaluation() {
