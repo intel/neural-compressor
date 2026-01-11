@@ -31,6 +31,12 @@ topologies_config = {
         "fp_layers": "lm_head,mlp.gate,self_attn",
         "iters": 200,
     },
+    "mxfp4_fp8kv": {
+        "scheme": "MXFP4",
+        "fp_layers": "lm_head,mlp.gate,self_attn",
+        "iters": 0,
+        "static_kv_dtype": "fp8",
+    },
 }
 
 
@@ -55,7 +61,8 @@ def quant_model(args):
         convert,
         prepare,
     )
-
+    if args.t == "mxfp4" and args.kv_cache_dtype == "fp8":
+        args.t = "mxfp4_fp8kv"
     config = topologies_config[args.t]
     export_format = "auto_round" if args.use_autoround_format else "llm_compressor"
     output_dir = f"{args.output_dir}/quantized_model_{args.t}"
@@ -115,7 +122,13 @@ if __name__ == "__main__":
         action="store_true",
         help="Use AutoRound format for saving the quantized model.",
     )
-
+    parser.add_argument(
+        "--kv_cache_dtype",
+        type=str,
+        choices=["fp8", "auto"],
+        default="auto",
+        help="Data type for KV cache. Options are 'fp8' or 'auto'.",
+    )
     parser.add_argument(
         "--skip_attn",
         action="store_true",

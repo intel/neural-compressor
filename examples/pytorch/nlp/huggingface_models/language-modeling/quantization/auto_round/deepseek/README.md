@@ -4,9 +4,9 @@ This example provides an end-to-end workflow to quantize DeepSeek models to MXFP
 ```bash
 pip install neural-compressor-pt==3.7
 # auto-round
-pip install auto-round==0.9.3
+pip install "auto-round @ git+https://github.com/intel/auto-round.git@ds-fp8kv"
 # vLLM
-git clone -b fused-moe-ar --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
+git clone -b ds-fp8kv --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
 VLLM_USE_PRECOMPILED=1 pip install --editable . -vvv
 # other requirements
 pip install -r requirements.txt
@@ -27,11 +27,18 @@ bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
 - MXFP4
 ```bash
 bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels
+
 ```
 
 - NVFP4
 ```bash
 bash run_quant.sh --model $MODEL -t nvfp4 --output_dir ./qmodels
+```
+
+To enable `fp8 kv cache`, please add `-kv fp8`:
+```bash
+# w/ fp8 kv
+bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels -kv fp8
 ```
 
 ## Evaluation

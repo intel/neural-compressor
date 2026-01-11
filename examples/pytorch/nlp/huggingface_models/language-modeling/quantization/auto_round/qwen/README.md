@@ -39,6 +39,7 @@ export MODEL=Qwen/Qwen3-30B-A3B
 bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels -kv "fp8"
 ```
 
+
 ## Evaluation
 
 ### Prompt Tests
