@@ -17,25 +17,33 @@ import torch
 from typing import Optional
 
 
-_world_size = -1
-_local_rank = -1
 
+_local_rank = -1
+_world_size = -1
+_world_size_initialized = False
+_local_rank_initialized = False
 
 def get_world_size():
-    global _world_size
-    if _world_size == -1:
-        if torch.distributed.is_initialized():
+    global _world_size, _world_size_initialized
+    if not _world_size_initialized:
+        if torch.distributed.is_available() and torch.distributed.is_initialized():
             _world_size = torch.distributed.get_world_size()
+            _world_size_initialized = True
+        elif os.getenv('WORLD_SIZE', None) is not None:
+            _world_size = os.getenv('WORLD_SIZE')
+            _world_size_initialized = True
     return _world_size
 
-
 def get_local_rank():
-    global _local_rank
-    if _local_rank == -1:
-        if torch.distributed.is_initialized():
+    global _local_rank, _local_rank_initialized
+    if not _local_rank_initialized:
+        if torch.distributed.is_available() and torch.distributed.is_initialized():
             _local_rank = torch.distributed.get_rank()
+            _local_rank_initialized = True
+        elif os.getenv('LOCAL_RANK', None) is not None:
+            _local_rank = os.getenv('LOCAL_RANK')
+            _local_rank_initialized = True
     return _local_rank
-
 
 def _prep_model_with_predefined_config(model, *, config):
     from .._core.utils import prepare_model

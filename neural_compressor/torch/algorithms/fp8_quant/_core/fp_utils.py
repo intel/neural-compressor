@@ -24,13 +24,13 @@ descale_fcn = lambda x, scale: torch.mul(x, scale)
 scale_fcn = lambda x, scale: torch.div(x, scale)
 cast_fcn = lambda x, dtype: x.to(dtype=dtype)
 cast_to_fp8_fcn = lambda x, dtype, scale_inv=None: torch.ops.hpu.cast_to_fp8_v2(x, scale_inv, False, False, dtype)[0]
-def calculate_scale_maxabs(x, maxMode, **kwargs):
+def calculate_scale_maxabs_with_cguid(x, maxMode, **kwargs):
     return torch.ops.hpu.calculate_scale_for_cast(
         x, maxMode.value, ScaleCalculationRoundingMode.NO_SCALE_ROUNDING.value, **kwargs
     )
 
 
-def calculate_scale_rounding(x, scaleMode, **kwargs):
+def calculate_scale_rounding_with_cguid(x, scaleMode, **kwargs):
     return torch.ops.hpu.calculate_scale_for_cast(
         x, ScaleCalculationMaxMode.NO_MAX_CALCULATION.value, scaleMode.value, **kwargs
     )
@@ -153,7 +153,7 @@ FP8_143_SCALES_TRAITS = {
     for device in DEVICES_SCALE_FACTORS.keys()
 }
 
-def calc_maxabs_scale(xmaxabs, fullscale, backoff=1):
+def calc_scale_from_maxabs(xmaxabs, fullscale, backoff=1):
     scale = xmaxabs / (fullscale * backoff)
     return scale
 

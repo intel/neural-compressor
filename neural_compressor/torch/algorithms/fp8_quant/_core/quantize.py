@@ -154,7 +154,7 @@ def prepare_model(model, mod_list, measurement, scale_file, scale_method_config,
                 set_hqt_config(mod, config)  # set config in the module, as it consumed by the patched module
                 if is_dynamic_quantization:
                     # TODO [SW-217813]: support dynamic quantization in all ops and remove supports_dynamic_quant, then move outside the loop
-                    should_quantize_cond = is_supported_dynamic_op(mod_default_dict[mod_type_str].type)
+                    should_quantize_cond = is_supported_dynamic_op(mod_type_str)
 
                 # TODO [SW-217813]: support dynamic quantization in all ops and remove should_quantize_cond
                 if should_quantize_cond:
@@ -214,7 +214,7 @@ def prepare_model_with_dummy_measurement(model, mod_list, scale_method_config, s
             mod_type_str = mod.__class__.__name__
             mode_type = config.cfg["mod_dict"][mod_type_str]
             mod_info = mod_types[mode_type]
-            op_obj = ops_quantizer.get_op_quantizer(scale_method_config, mod, None, scale_config, mode_type)
+            op_obj = ops_quantizer.get_op_quantizer(scale_method_config, mod, None, scale_config, mod_type_str)
             dummy_mod_scales = op_obj.get_scales_module_config()
             dummy_mod_config = op_obj.scales_module_config_to_q_and_dq(dummy_mod_scales)
             dummy_mod_extra_config = ModuleExtraConfig(

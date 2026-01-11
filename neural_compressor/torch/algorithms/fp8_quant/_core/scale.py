@@ -34,7 +34,7 @@ def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, 
     mod_extra_config = None
 
     if (mod_name in scales or not config.cfg["use_stats_files"] or mod_name in measurement) and mod_default_dict[mod_type_str].should_measure_and_quant:
-        op_for_scale_obj = ops_quantizer.get_op_quantizer(scaling_method_config, mod, measurement.get(mod_name, None), scale_config, module_type)
+        op_for_scale_obj = ops_quantizer.get_op_quantizer(scaling_method_config, mod, measurement.get(mod_name, None), scale_config, mod_type_str)
         # save mapping of current module name to scale method config
         scale_method_config_by_mod_map[mod_name] ={
             CfgStr.ACTIVATION: op_for_scale_obj.scales_method_factory.scale_method_config_map[QuantTensorName.INPUT], 

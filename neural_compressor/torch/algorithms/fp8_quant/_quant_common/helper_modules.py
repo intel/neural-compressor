@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+from abc import abstractmethod
 
 import torch
 import torch.nn as nn
@@ -24,6 +25,7 @@ from ..patched_module_base import PatchedModuleBase, get_call_wrapper
 from .._core.scale_handler import get_scale_dtype, ScaleFormat
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 cur_accelerator = auto_detect_accelerator()
+
 
 class BMM(nn.Module):
     def __init__(self):
@@ -109,7 +111,8 @@ class PatchedMatmul(PatchedModuleBase):
                 self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
                 self.register_scale("scale_other", mod_extra_config.scale.inputs[1], self.scale_format)
                 self.matmul_fp8 = get_quantized_func_wrapper(OP_TYPE.MATMUL_GEMM, self.scale_format)
-                if hasattr(parent, 'scale_bf16_to_fp8') and parent.scale_bf16_to_fp8 > 0: # in DPQ we want to use the scales measured in the quantization process
+                # in DPQ we want to use the scales measured in the quantization process
+                if hasattr(parent, 'scale_bf16_to_fp8') and parent.scale_bf16_to_fp8 > 0:
                     self.scale_other = torch.nn.Parameter(parent.scale_bf16_to_fp8)
 
     def forward_quant(self, input, other):
@@ -144,7 +147,7 @@ class PatchedMatmul(PatchedModuleBase):
 
 def init_mixture_of_experts_linears(instance):
     parent_name = instance.orig_mod_parent.__class__.__name__
-    if parent_name == "MixtralBlockSparseTop2MLP":
+    if parent_name == "MixtralBlockSparseTop2MLP" or parent_name == "GaudiDeepseekV3MLP":
         # this linear is part of MixtureOfExperts block
         # MoE linears hold the weights but their forward logic is done using the dynamic op
         # therefore no measure object is saved causing no quant object as well
@@ -156,7 +159,6 @@ class PatchedLinearBase(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
 
-
     # TODO [SW-224538]: Move init_linear to PatchedLinearBase __init__
     def init_linear(self, mod_extra_config):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
@@ -166,7 +168,6 @@ class PatchedLinearBase(PatchedModuleBase):
             self.weight = nn.Parameter(self.weight.t().contiguous())
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
-
 
             # When offloading weights to disk using device_map, the module forward is overridden.
             # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
@@ -227,7 +228,7 @@ class PatchedLinearBase(PatchedModuleBase):
         return extra_representation(
             self.extra_repr_org(),
             self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_weight") if not self.use_qdq else "",
+            get_current_repr(self, "scale_input", "scale_weight") if not self.use_qdq else get_current_repr(self),
         )
 
 
@@ -241,8 +242,8 @@ class PatchedLinear(PatchedLinearBase):
         output = self.orig_mod(input)
         measure_output((output,), self._mod_extra_config.outputs)
         return output
-
-
+    
+    
 class PatchedParallelLMHead(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
@@ -318,7 +319,7 @@ class PatchedLinearAllReduce(PatchedLinearBase):
     def forward_quant(self, input):
         # pre_all_reduce
         output = self.run_linear_quant(input, None)
-        #TODO: enable dynamic quantization for output
+        # TODO: enable dynamic quantization for output
         dqoutput = self.dequant_output(output)
         if not self.scoped_version:
             self.all_reduce(dqoutput)
@@ -349,8 +350,8 @@ class PatchedLinearAllReduce(PatchedLinearBase):
 class PatchedRowParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        from .._core.vllm_functions import get_vllm_row_parallel_collective_func
-        self.row_parallel_collective_func = get_vllm_row_parallel_collective_func()
+        from .._core.external_func_impl import get_external_row_parallel_collective_func
+        self.row_parallel_collective_func = get_external_row_parallel_collective_func()
         # TODO [SW-224403]: Enable dynamic quantization in row parallel allreduce
         allreduce_quantization_enable = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
         if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
@@ -493,8 +494,8 @@ class PatchedColumnParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.init_linear(mod_extra_config)
-        from .._core.vllm_functions import get_vllm_column_parallel_collective_func
-        self.column_parallel_collective_func = get_vllm_column_parallel_collective_func()
+        from .._core.external_func_impl import get_external_column_parallel_collective_func
+        self.column_parallel_collective_func = get_external_column_parallel_collective_func()
 
     def forward_qdq(self, input):
         output = self.run_linear_qdq(input, None)
@@ -505,7 +506,7 @@ class PatchedColumnParallelLinear(PatchedLinearBase):
 
     def forward_quant(self, input):
         output = self.run_linear_quant(input, None)
-        #TODO: enable dynamic quantization for output
+        # TODO: enable dynamic quantization for output
         dqoutput = self.dequant_output(output)
         dqoutput, dqoutput_bias = self.add_bias(dqoutput)
         if self.gather_output:
@@ -540,7 +541,7 @@ class PatchedLmHeadLinearAllreduce(PatchedLinearBase):
             input.shape[-1] % self.world_size == 0
         ), "Please ensure that self.world_size is divisible by input.shape[-1]"
         input_shard = input.shape[-1] // self.world_size
-        splittedInput = input[:, :, self.rank * input_shard : (self.rank + 1) * input_shard]
+        splittedInput = input[:, :, self.rank * input_shard: (self.rank + 1) * input_shard]
         output = self.run_linear_qdq(splittedInput, None)
 
         if self.mp_group is not None:
@@ -557,7 +558,7 @@ class PatchedLmHeadLinearAllreduce(PatchedLinearBase):
         input_shard_offset = sum(get_shard_size_list(input.shape[-1], self.world_size, "lm_head")[0:self.rank])
         splittedInput = input[:, :, input_shard_offset:input_shard_offset + input_shard_size]
         output = self.run_linear_quant(splittedInput, None)
-        #TODO: enable dynamic quantization for output
+        # TODO: enable dynamic quantization for output
         dqoutput = self.dequant_output(output)
 
         if self.mp_group is not None:
@@ -655,12 +656,12 @@ class PatchedMixtralMoE(PatchedModuleBase):
         """
         The pplx combine kernel reduces across GPU ranks by default.
         """
-        if (self.use_pplx_kernels or self.use_deepep_ht_kernels
-                or self.use_deepep_ll_kernels):
+        if (self.orig_mod.use_pplx_kernels or self.orig_mod.use_deepep_ht_kernels
+                or self.orig_mod.use_deepep_ll_kernels):
             return final_hidden_states
         else:
-            from .._core.vllm_functions import get_vllm_row_parallel_collective_func
-            tensor_model_parallel_all_reduce = get_vllm_row_parallel_collective_func()
+            from .._core.external_func_impl import get_external_row_parallel_collective_func
+            tensor_model_parallel_all_reduce = get_external_row_parallel_collective_func()
             return tensor_model_parallel_all_reduce(final_hidden_states)
 
     def extra_repr(self) -> str:
@@ -712,7 +713,7 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
             self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
             self.register_scale(
                 "scale_intermediate",
-                [mod_extra_config.scale.inputs[x] for x in range(self.experts_min+1, self.experts_max +2)],
+                [mod_extra_config.scale.inputs[x] for x in range(self.experts_min + 1, self.experts_max + 2)],
                 self.scale_format,
             )
             mod.call_dynamic_moe_op = get_call_wrapper(self, "call_dynamic_moe_quant_op")
@@ -761,7 +762,7 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
         w2_list = [self.experts[i].w2.weight for i in self.experts_range]
         w3_list = [self.experts[i].w3.weight for i in self.experts_range]
         measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
-        
+
         output, intermidiate_amax = torch.ops.hpu.mixture_of_experts.fp8_measurement(
             hidden_states=hidden_states,
             expert_routing_table=expert_routing_table,
@@ -776,11 +777,10 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
             measurement_mode=True,
         )
 
-
         amax = []
         for i in range(self.num_experts):
             if i in self.experts_range:
-                amax.append(intermidiate_amax[i-self.experts_min])
+                amax.append(intermidiate_amax[i - self.experts_min])
             else:
                 amax.append(torch.tensor(0, device="hpu", dtype=intermidiate_amax[0].dtype))
 
@@ -791,8 +791,8 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
 
     def extra_repr(self) -> str:
         member_names = ["scale_input"]
-        for x in range(1, self.num_experts+1):
-            member_names.append("scale_intermediate["+str(x)+"]")
+        for x in range(1, self.num_experts + 1):
+            member_names.append("scale_intermediate[" + str(x) + "]")
         return extra_representation(
             self.extra_repr_org(),
             self.class_name_org,
@@ -800,6 +800,101 @@ class PatchedGaudiMixtralSparseMoeBlock(PatchedModuleBase):
         )
 
 
+class PatchedGaudiDeepseekV3MoE(PatchedGaudiMixtralSparseMoeBlock):
+    """The patched module for the Optimum Habana DeepseekV3MoE BF16 and FP8 models.
+    
+    This MoE module differs from the Mixtral MoE by chunking the Gaudi mixture of 
+    experts op for models like DeepSeek with large number of experts. The
+    size of the chunks is set using SLICE_MAX_EXPERT environment variable.
+
+    For FP8 models, we need to requantize weights as follows:
+    - At measurement stage, we dequantize the FP8 weights to BF16.
+    - At quantization stage, we use the same `forward_quant` method for both BF16 and FP.
+    """
+    def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+
+        # Check if FP8 model
+        self._is_fp8 = False
+        if hasattr(mod.config, "quantization_config"):
+            if hasattr(mod.config.quantization_config, "quant_method"):
+                self._is_fp8 = (mod.config.quantization_config.quant_method == 'fp8')
+                
+    def call_dynamic_moe_quant_op(self,
+                                  hidden_states,
+                                  expert_routing_table,
+                                  router_weights,
+                                  permuted_weights=False,
+                                  activation="silu"):
+        
+        gate_proj_list = [self.experts[i].gate_proj.weight for i in self.experts_range]
+        down_proj_list = [self.experts[i].down_proj.weight for i in self.experts_range]
+        up_proj_list = [self.experts[i].up_proj.weight for i in self.experts_range]
+        scale_gate_proj = [self.experts[i].gate_proj.scale_weight for i in self.experts_range]
+        scale_down_proj = [self.experts[i].down_proj.scale_weight for i in self.experts_range]
+        scale_up_proj = [self.experts[i].up_proj.scale_weight for i in self.experts_range]
+        qinput = self.quant_input(hidden_states)
+        return self.dynamic_moe_op(
+            hidden_states=qinput,
+            expert_routing_table=expert_routing_table,
+            router_weights=router_weights,
+            w1=gate_proj_list,
+            w2=up_proj_list,
+            w3=down_proj_list,
+            d_scale_w1=scale_gate_proj,
+            d_scale_w2=scale_up_proj,
+            d_scale_w3=scale_down_proj,
+            d_scale_hidden_states=self.scale_input,
+            d_scale_intermediate_hidden_states=self.scale_intermediate,
+            permuted_weights=False,
+            activation=activation,
+            experts_min=self.experts_min,
+            experts_max=self.experts_max,
+        )
+        
+    def call_dynamic_moe_measure_op(self,
+                                    hidden_states,
+                                    expert_routing_table,
+                                    router_weights,
+                                    permuted_weights=True,
+                                    activation="silu"):
+        if self._is_fp8:
+            gate_proj_list = [self.experts[i].gate_proj.get_dequant_weight() for i in self.experts_range]
+            down_proj_list = [self.experts[i].down_proj.get_dequant_weight() for i in self.experts_range]
+            up_proj_list = [self.experts[i].up_proj.get_dequant_weight() for i in self.experts_range]
+        else:
+            gate_proj_list = [self.experts[i].gate_proj.weight for i in self.experts_range]
+            down_proj_list = [self.experts[i].down_proj.weight for i in self.experts_range]
+            up_proj_list = [self.experts[i].up_proj.weight for i in self.experts_range]
+        
+        measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
+        output, intermediate_amax = torch.ops.hpu.mixture_of_experts.fp8_measurement(
+            hidden_states=hidden_states,
+            expert_routing_table=expert_routing_table,
+            router_weights=router_weights,
+            w1=gate_proj_list,
+            w2=up_proj_list,
+            w3=down_proj_list,
+            permuted_weights=permuted_weights,
+            activation=activation,
+            experts_min=self.experts_min,
+            experts_max=self.experts_max,
+            measurement_mode=True,
+        )
+
+        amax = []
+        for i in range(self.num_experts):
+            if i in self.experts_range:
+                amax.append(intermediate_amax[i-self.experts_min])
+            else:
+                amax.append(torch.tensor(0, device="hpu", dtype=intermediate_amax[0].dtype))
+
+        output_measure_list = [output] + amax
+
+        measure_output(output_measure_list, self._mod_extra_config.outputs)
+        return output
+
+    
 class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
@@ -813,7 +908,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
             self.register_scale(
                 "scale_intermediate",
-                [mod_extra_config.scale.inputs[x] for x in range(1, self.experts_used+1)],
+                [mod_extra_config.scale.inputs[x] for x in range(1, self.experts_used + 1)],
                 self.scale_format,
             )
             self.is_dynamic_quantization = isinstance(self.quant_input, QuantDynamicInput)
@@ -823,12 +918,20 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             if self.is_dynamic_quantization:
                 self.forward = self.forward_dynamic_quant
 
+    def _get_extra_kwargs(self, tokens_num: int):
+        kwargs = {}
+        if hasattr(self.orig_mod, "_get_extra_kwargs"):
+            kwargs = self.orig_mod._get_extra_kwargs(tokens_num)
+        return kwargs
+
     def forward_quant(self,
                       hidden_states,
                       expert_routing_table,
                       router_weights,
                       permuted_weights=True,
                       activation="silu"):
+        tokens_num, hidden_dim = hidden_states.shape
+        extra_kwargs = self._get_extra_kwargs(tokens_num)
         experts_range = range(self.experts_used)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]
@@ -849,6 +952,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             activation=activation,
             experts_min=self.experts_min,
             experts_max=self.experts_max,
+            **extra_kwargs,
         )
         return output
 
@@ -910,7 +1014,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         return output
 
     def extra_repr(self) -> str:
-        member_names = ["scale_input", "scale_intermediate"] 
+        member_names = ["scale_input", "scale_intermediate"]
         # for x in range(1, self.num_experts+1):
         #     member_names.append("scale_intermediate["+str(x)+"]")
         return extra_representation(
@@ -919,23 +1023,24 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             get_current_repr(self, *member_names),
         )
 
+
 class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOp):
     """The patched module for the VLLMMixtureOfExpertsOp module with FP8 weights.
-    
+
     There are some models like Deepseek R1/V3 with FP8 weights, we need to requantize it.
-    
+
     The main difference between this module and the PatchedVllmMixtureOfExpertsOp is that the weights are FP8.
     - At measurement stage, we dequantize the weights to BF16.
     - At quantization stage, we use the same `forward_quant` method as the PatchedVllmMixtureOfExpertsOp.
     """
 
     def forward_measure(
-        self,
-        x,
-        topk_ids,
-        topk_weights,
-        permuted_weights=True,
-        activation="silu"):
+            self,
+            x,
+            topk_ids,
+            topk_weights,
+            permuted_weights=True,
+            activation="silu"):
         hidden_states = x
         measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
         min_expert = self.experts_min
@@ -964,12 +1069,14 @@ class PatchedVllmMixtureOfExpertsOpFP8(PatchedVllmMixtureOfExpertsOp):
         measure_output(output_measure_list, self._mod_extra_config.outputs)
         return output
 
+
 class PatchedMoeFP8Matmul(PatchedMoeMatmul):
     """The patched module for the MoeMatmul module with FP8 weights."""
 
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.get_dequant_weight = self.orig_mod.get_dequant_weight
+
 
 class PatchedKVCache(PatchedModuleBase):
     # Module to patch KVCache module from llama model
@@ -1064,7 +1171,7 @@ class PatchedVLLMKVCache(PatchedModuleBase):
             qinput = self.quant_input(input)
             output_cache = self.orig_mod(qinput, cache, *args, **kwargs)
         else:
-            # In cross-attention during decode stage kv cache isn't updated 
+            # In cross-attention during decode stage kv cache isn't updated
             # so input is None and we don't store it
             output_cache = cache
         return self.dequant_output(output_cache)
@@ -1153,18 +1260,39 @@ class PatchedConv2d(PatchedModuleBase):
         )
 
 
-class PatchedSoftmax(PatchedModuleBase):
+class PatchedSoftmaxBase(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.dequant_output = self._mod_extra_config.outputs[0]
             if self.use_qdq:
-                self.quant_input = qdq(nn.Parameter(torch.Tensor([1.0])), torch.float8_e4m3fn, torch.bfloat16)
+                self.quant_input = qdq(nn.Parameter(torch.Tensor([1.0])), self.lp_dtype, self.hp_dtype)
             else:
                 # input scale is 1 assuming the input to SM is descaled because we are using HW supported scales
                 self.register_scale("scale_input", torch.Tensor([1.0]), self.scale_format)
-                self.register_scale("scale_output", torch.Tensor([1 / mod_extra_config.scale.outputs[0]]), self.scale_format)
-                self.softmax_fp8 = get_quantized_func_wrapper(OP_TYPE.SOFTMAX, self.scale_format)
+                self.register_scale("scale_output", torch.Tensor(
+                    [1 / mod_extra_config.scale.outputs[0]]), self.scale_format)
+            self.softmax_kernel_op = get_quantized_func_wrapper(
+                self.get_op_type(), self.scale_format)
+
+    @staticmethod
+    @abstractmethod
+    def get_op_type():
+        """Forward function with Q-DQ mode for quantization stage."""
+        raise NotImplementedError("get_op_type is not implemented")
+
+    def extra_repr(self) -> str:
+        return extra_representation(
+            self.extra_repr_org(),
+            self.class_name_org,
+            get_current_repr(self, "scale_input", "scale_output") if not self.use_qdq else "",
+        )
+
+class PatchedSoftmax(PatchedSoftmaxBase):
+
+    @staticmethod
+    def get_op_type():
+        return OP_TYPE.SOFTMAX
 
     def forward_qdq(self, x, dim=None, invAttnHead=None):
         x = self.quant_input(x)
@@ -1172,7 +1300,7 @@ class PatchedSoftmax(PatchedModuleBase):
         return output
 
     def forward_quant(self, x, dim=None, invAttnHead=None):
-        output = self.softmax_fp8(x, dim, self.scale_input, self.scale_output, invAttnHead)
+        output = self.softmax_kernel_op(x, dim, self.scale_input, self.scale_output, invAttnHead)
         return self.dequant_output(output)
 
     def forward_measure(self, x, dim=None, invAttnHead=None):
@@ -1181,12 +1309,29 @@ class PatchedSoftmax(PatchedModuleBase):
         measure_output((output,), self._mod_extra_config.outputs)
         return output
 
-    def extra_repr(self) -> str:
-        return extra_representation(
-            self.extra_repr_org(),
-            self.class_name_org,
-            get_current_repr(self, "scale_input", "scale_output") if not self.use_qdq else "",
-        )
+
+class PatchedBlockSoftmaxConstMax(PatchedSoftmaxBase):
+
+    @staticmethod
+    def get_op_type():
+        return OP_TYPE.BLOCK_SOFTMAX_CONST_MAX
+
+    def forward_qdq(self, attn, block_bias, block_groups, batch_size, global_max):
+        q_attn = self.quant_input(attn)
+        output = self.softmax_kernel_op(q_attn, block_bias, block_groups, batch_size, global_max)
+        return output
+
+    def forward_quant(self, attn, block_bias, block_groups, batch_size, global_max):
+        output_fp8 = self.softmax_kernel_op(attn, block_bias, block_groups, batch_size, global_max,
+                                                  output_scale=self.scale_output, output_dtype=torch.float8_e4m3fn)
+        output = self.dequant_output(output_fp8)
+        return output
+
+    def forward_measure(self, attn, block_bias, block_groups, batch_size, global_max):
+        measure_input((attn,), observer=self._mod_extra_config.inputs)
+        output = self.orig_mod(attn, block_bias, block_groups, batch_size, global_max)
+        measure_output((output,), self._mod_extra_config.outputs)
+        return output
 
 
 class PatchedLoRACompatibleLinear(PatchedLinearBase):
@@ -1284,8 +1429,10 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
             self.register_scale("scale_q", mod_extra_config.scale.inputs[0].type(torch.float32), self.scale_format)
             self.register_scale("scale_k", mod_extra_config.scale.inputs[1].type(torch.float32), self.scale_format)
             self.register_scale("scale_v", mod_extra_config.scale.inputs[2].type(torch.float32), self.scale_format)
-            self.register_scale("descale_amax", mod_extra_config.scale.inputs[3].type(torch.float32), self.scale_format)
-            self.register_scale("scale_output", 1 / mod_extra_config.scale.outputs[0].type(torch.float32), self.scale_format)
+            self.register_scale("descale_amax", mod_extra_config.scale.inputs[3].type(
+                torch.float32), self.scale_format)
+            self.register_scale("scale_output", 1 /
+                                mod_extra_config.scale.outputs[0].type(torch.float32), self.scale_format)
             self.register_scale("scale_amax", 1 / self.descale_amax, self.scale_format)
 
     def forward_qdq(
@@ -1319,7 +1466,7 @@ class PatchedModuleFusedSDPA(PatchedModuleBase):
             recompute,
             valid_seq_len,
             seq_padding_type,
-            )
+        )
         return results
 
     def forward_quant(

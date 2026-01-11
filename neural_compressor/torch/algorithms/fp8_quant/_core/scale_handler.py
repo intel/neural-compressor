@@ -56,6 +56,10 @@ def create_scale_tensor(orig_scales, scale_format):
         raise ValueError("unexpected scale format value {}".format(scale_format))
 
 def scale_to_cpu(scale_tensor):
+    # Note: If the tensor has only one element, create a torch scalar (0-dim tensor).
+    # Otherwise, it cause a hang in the MoE op. See SW-239190 for details.
+    if scale_tensor.numel() == 1:
+        scale_tensor = torch.tensor(scale_tensor.item(), dtype=scale_tensor.dtype)
     return scale_tensor.to("cpu")
 
 def scale_to_const(scale_tensor):

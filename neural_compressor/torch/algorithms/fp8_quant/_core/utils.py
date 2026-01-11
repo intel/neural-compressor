@@ -74,7 +74,7 @@ def should_quantize(config, mod_type, name):
         return not config.cfg["dynamic_quantization"]
     def quantize_dynamic_op(config, mod_type):
         # TODO [SW-217813]: support dynamic quantization in all ops and remove supported_dynamic_ops
-        return config.cfg["dynamic_quantization"] and is_supported_dynamic_op(mod_default_dict[mod_type].type)
+        return config.cfg["dynamic_quantization"] and is_supported_dynamic_op(mod_type)
 
     ret = (
         mod_is_not_blocked(mod_type, config)

@@ -21,6 +21,7 @@ class OP_TYPE(Enum):
     LINEAR_GEMM = auto()
     MATMUL_GEMM = auto()
     SOFTMAX = auto()
+    BLOCK_SOFTMAX_CONST_MAX = auto()
     CONV = auto()
     FSDPA = auto()
     CAST_TO_FP8 = auto()
