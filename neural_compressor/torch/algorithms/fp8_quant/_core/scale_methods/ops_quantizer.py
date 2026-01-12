@@ -26,15 +26,17 @@ cur_device = auto_detect_accelerator().current_device_name()
 
 class BaseOpQuantizer:
 
-    def __init__(self, config, mod, measurement, params, op_type):
-        self.scales_method_factory = ScaleMethodFactory(config, params, mod, op_type)
+    def __init__(self, config, mod, measurement, params, mod_type_str):
+        hqt_config = get_hqt_config(mod).cfg
+        module_type = hqt_config["mod_dict"][mod_type_str]
+        self.scales_method_factory = ScaleMethodFactory(config, params, mod, module_type)
         self.mod = mod
         self.params = params
         self.measurement = measurement
         self.inputs_scales_creators = []
         self.output_scales_creators = []
         self.params_scales_creators = []
-        self.is_dynamic = get_hqt_config(mod).cfg["dynamic_quantization"] and is_supported_dynamic_op(op_type)
+        self.is_dynamic = hqt_config["dynamic_quantization"] and is_supported_dynamic_op(mod_type_str)
 
         logger.debug("%s %s", self.__class__.__name__, self.__dict__)
 
@@ -101,8 +103,10 @@ class BaseOpQuantizer:
 
 class LinearOpQuantizer(BaseOpQuantizer):
 
-    def __init__(self, config, mod, measurement, params, module_type):
-        super().__init__(config, mod, measurement, params, module_type)
+    def __init__(self, config, mod, measurement, params, mod_type_str):
+        super().__init__(config, mod, measurement, params, mod_type_str)
+        hqt_config = get_hqt_config(mod).cfg
+        module_type = hqt_config["mod_dict"][mod_type_str]
         if module_type == "row_parallel_linear" and get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]:
             self.scales_method_factory.output_scale_method_config.backoff = 1.0
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic))
@@ -114,11 +118,11 @@ class LinearOpQuantizer(BaseOpQuantizer):
         input_scales = self.calc_input_scales(num_of_inputs=1)
         output_measurement = self.measurement.outputs[0] if self.measurement is not None else []
         rescaled_weight = self.mod.weight if hasattr(self.mod, 'weight') else None
+        if rescaled_weight is not None:
+            rescaled_weight = dequant_original_fp8_weight_if_needed(self.mod, rescaled_weight)
         if self.scales_method_factory.scale_method_config_map[QuantTensorName.WEIGHT_IN_CH].scale_value_type != ScaleValueType.DUMMY_SCALES:
             # Calculating weight in hpu to support scale calculation CGUID torch.ops.hpu.calculate_scale_for_cast
             rescaled_weight = rescaled_weight.to(cur_device)
-        if rescaled_weight is not None:
-            rescaled_weight = dequant_original_fp8_weight_if_needed(self.mod, rescaled_weight)
         if self.weight_ich_scale_calc is not None:
             weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST)
             rescaled_weight = torch.div(rescaled_weight, weight_scales_in_ch.reshape([1, -1]))
@@ -196,8 +200,8 @@ class LinearOpQuantizer(BaseOpQuantizer):
         return ModuleConfig(input_config, output_config, params_config)
 
 class RowParallelLinearOpQuantizer(LinearOpQuantizer):
-    def __init__(self, config, mod, measurement, params, module_type):
-        super().__init__(config, mod, measurement, params, module_type)
+    def __init__(self, config, mod, measurement, params, mod_type_str):
+        super().__init__(config, mod, measurement, params, mod_type_str)
         self.allreduce_quantization_enabled = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
         if self.allreduce_quantization_enabled:
             self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
@@ -240,8 +244,8 @@ class RowParallelLinearOpQuantizer(LinearOpQuantizer):
 
 class MatmulOpQuantizer(BaseOpQuantizer):
 
-    def __init__(self, config, mod, measurement, params, module_type):
-        super().__init__(config, mod, measurement, params, module_type)
+    def __init__(self, config, mod, measurement, params, mod_type_str):
+        super().__init__(config, mod, measurement, params, mod_type_str)
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
@@ -275,8 +279,8 @@ class MatmulOpQuantizer(BaseOpQuantizer):
 
 class SoftmaxOpQuantizer(BaseOpQuantizer):
 
-    def __init__(self, config, mod, measurement, params, module_type):
-        super().__init__(config, mod, measurement, params, module_type)
+    def __init__(self, config, mod, measurement, params, mod_type_str):
+        super().__init__(config, mod, measurement, params, mod_type_str)
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
 
     def get_scales_module_config(self):
@@ -295,8 +299,8 @@ class SoftmaxOpQuantizer(BaseOpQuantizer):
 
 class FsdpaOpQuantizer(BaseOpQuantizer):
 
-    def __init__(self, config, mod, measurement, params, module_type):
-        super().__init__(config, mod, measurement, params, module_type)
+    def __init__(self, config, mod, measurement, params, mod_type_str):
+        super().__init__(config, mod, measurement, params, mod_type_str)
         self.num_of_inputs = 4
         self.inputs_scales_creators = [
             self.scales_method_factory.get_scale_method(QuantTensorName.INPUT) for i in range(self.num_of_inputs)
@@ -333,8 +337,8 @@ class FsdpaOpQuantizer(BaseOpQuantizer):
 
 class KVCacheOpQuantizer(BaseOpQuantizer):
 
-    def __init__(self, config, mod, measurement, params, module_type):
-        super().__init__(config, mod, measurement, params, module_type)
+    def __init__(self, config, mod, measurement, params, mod_type_str):
+        super().__init__(config, mod, measurement, params, mod_type_str)
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
         self.output_scales_creators.append(self.inputs_scales_creators[0])
 
@@ -373,8 +377,8 @@ class KVCacheOpQuantizer(BaseOpQuantizer):
 
 class DynamicMoeOpQuantizer(BaseOpQuantizer):
 
-    def __init__(self, config, mod, measurement, params, module_type):
-        super().__init__(config, mod, measurement, params, module_type)
+    def __init__(self, config, mod, measurement, params, mod_type_str):
+        super().__init__(config, mod, measurement, params, mod_type_str)
         num_of_inputs = len(self.measurement.inputs) if self.measurement is not None else 1
         if hasattr(self.mod, "local_num_experts"):
             num_of_experts = self.mod.local_num_experts
@@ -496,5 +500,7 @@ ops_quantizer_map = {"linear": LinearOpQuantizer,
                       "embedding": EmbeddingOpQuantizer,
                      }
 
-def get_op_quantizer(config, mod, measurement, params, module_type):
-    return ops_quantizer_map[module_type](config, mod, measurement, params, module_type)
+def get_op_quantizer(config, mod, measurement, params, mod_type_str):
+    hqt_config = get_hqt_config(mod).cfg
+    module_type = hqt_config["mod_dict"][mod_type_str]
+    return ops_quantizer_map[module_type](config, mod, measurement, params, mod_type_str)
