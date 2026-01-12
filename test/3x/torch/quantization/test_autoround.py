@@ -88,8 +88,8 @@ class TestAutoRoundCPU:
         self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
             torchscript=True,
-        ).to('cpu')
-        self.inp = torch.ones([1, 10], dtype=torch.long, device='cpu')
+        ).to("cpu")
+        self.inp = torch.ones([1, 10], dtype=torch.long, device="cpu")
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
         )
