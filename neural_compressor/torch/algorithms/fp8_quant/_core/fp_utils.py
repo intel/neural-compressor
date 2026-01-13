@@ -20,6 +20,9 @@ from neural_compressor.torch.utils import logger
 
 cur_accelerator = auto_detect_accelerator()
 
+from neural_compressor.torch.utils import environ
+from neural_compressor.common.utils import logger
+
 descale_fcn = lambda x, scale: torch.mul(x, scale)
 scale_fcn = lambda x, scale: torch.div(x, scale)
 cast_fcn = lambda x, dtype: x.to(dtype=dtype)
@@ -154,6 +157,9 @@ FP8_143_SCALES_TRAITS = {
 }
 
 def calc_scale_from_maxabs(xmaxabs, fullscale, backoff=1):
+    if environ.INC_FORCE_NAIVE_SCALING:
+        backoff = 1.0
+        logger.warning_once(f"Enabled naive scaling, backoff is set to {backoff}")
     scale = xmaxabs / (fullscale * backoff)
     return scale
 

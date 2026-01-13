@@ -18,6 +18,8 @@ from ..common import get_device_type_for_scales
 from .scales_method import *
 from ...utils.logger import logger
 from .scale_method_config import ScaleRoundMethod, ScaleValueType, ScaleGranularity, CfgStr
+from neural_compressor.torch.utils import environ
+from neural_compressor.common.utils import logger
 
 class QuantTensorName(Enum):
     INPUT = auto()
@@ -53,6 +55,10 @@ class ScaleMethodFactory:
     def get_scale_method(self, tensor_type, is_dynamic=False):
         backoff = 1.0 if is_dynamic else self.scale_method_config_map[tensor_type].backoff
         scale_round_method = self.scale_method_config_map[tensor_type].rounding_method
+        if environ.INC_FORCE_NAIVE_SCALING:
+            logger.warning_once("Enabled naive scaling")
+            return scale_round_method
+
         scale_value_type = self.scale_method_config_map[tensor_type].scale_value_type
         scale_granularity = self.scale_method_config_map[tensor_type].granularity
 
