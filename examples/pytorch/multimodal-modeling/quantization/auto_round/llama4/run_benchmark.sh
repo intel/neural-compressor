@@ -62,7 +62,7 @@ function run_benchmark {
     fi
 
     if [[ "${kv_cache_dtype}" == "fp8" ]]; then
-        export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+        export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
         export VLLM_ATTENTION_BACKEND="FLASHINFER"
         echo "Using FP8 for KV cache"
     fi
