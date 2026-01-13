@@ -4,6 +4,7 @@ import shutil
 
 import pytest
 import torch
+from packaging.version import Version
 
 from neural_compressor.torch.quantization import SmoothQuantConfig, convert, get_default_sq_config, prepare, quantize
 from neural_compressor.torch.utils import is_ipex_available
@@ -33,8 +34,7 @@ example_inputs = torch.rand([1, 3])
 def run_fn(model):
     for i in range(10):
         model(example_inputs)
-
-
+@pytest.mark.skipif(not Version(torch.__version__) < Version("2.9.0"), reason="only for torch<2.9.0 [ipex]")
 class TestSmoothQuant:
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)

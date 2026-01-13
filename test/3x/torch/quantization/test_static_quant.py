@@ -4,6 +4,7 @@ import shutil
 
 import pytest
 import torch
+from packaging.version import Version
 
 try:
     import intel_extension_for_pytorch as ipex
@@ -52,7 +53,7 @@ def run_fn(model):
     model(torch.rand((1, 30)))
     model(torch.rand((1, 30)))
 
-
+@pytest.mark.skipif(not Version(torch.__version__) < Version("2.9.0"), reason="only for torch<2.9.0 [ipex]")
 class TestStaticQuant:
     def setup_class(self):
         self.fp32_model = build_simple_torch_model()
