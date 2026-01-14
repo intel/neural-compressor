@@ -39,7 +39,7 @@ done
 
 # for fp8 kv cache
 if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
-    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
     export VLLM_ATTENTION_BACKEND="FLASHINFER"
     echo "Using FP8 for KV cache"
 fi
@@ -77,7 +77,6 @@ fi
 # Set common environment variables
 export VLLM_ENABLE_AR_EXT=1
 export TORCH_COMPILE_DISABLE=1
-export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
 
 # Function to run evaluation for specific tasks
 run_evaluation() {
