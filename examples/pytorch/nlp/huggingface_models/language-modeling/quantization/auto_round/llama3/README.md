@@ -13,18 +13,6 @@ pip install auto-round==0.9.3
 pip install -r requirements.txt
 ```
 
-**Before neural-compressor v3.7 and auto-round v0.9.1 release, please install from source for the latest updates:**
-
-```bash 
-# neural-compressor-pt
-INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@master
-# auto-round
-pip install git+https://github.com/intel/auto-round.git@v0.9.3rc
-# other requirements
-pip install -r requirements.txt
-```
-
-
 ## Quantization
 
 ### Demo (`MXFP4`, `MXFP8`, `NVFP4`, `uNVFP4`)
@@ -92,7 +80,8 @@ Here we provide several recipes for Llama3 models. The relative accuracy loss of
 
 #### Llama 3.1 8B MXFP8
 
-AutoRound tuning helps improve the accuracy, `iters` and `nsamples` is higher than default.
+RTN (Round-to-Nearest) is enough to keep accuracy.
+
 ```bash
 # Quantize and export AutoRound format
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP8

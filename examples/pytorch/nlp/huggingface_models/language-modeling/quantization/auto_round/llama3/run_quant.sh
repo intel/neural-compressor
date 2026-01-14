@@ -50,14 +50,13 @@ case "$TOPOLOGY" in
         case "$DTYPE" in
             "mxfp8")
                 echo "Running Llama 3.1 8B MXFP8 quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP8 --iters 1000 --nsamples 512 --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP8 --iters 0 --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
                     $COMMON_ARGS \
                     --dtype MXFP8 \
-                    --iters 1000 \
-                    --nsamples 512 \
+                    --iters 0 \
                     --export_path "$OUTPUT_MODEL"
                 ;;
             "mxfp4")
