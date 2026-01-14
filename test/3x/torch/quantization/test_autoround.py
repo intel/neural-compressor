@@ -121,7 +121,7 @@ class TestAutoRoundCPU:
         model = prepare(model=fp32_model, quant_config=quant_config)
 
         run_fn(model, self.dataloader)
-        q_model = convert(model=model, quant_config=quant_config)
+        q_model = convert(model)
         out = q_model(self.inp)[0]
         assert torch.allclose(out, self.label, atol=1e-1)
         assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
