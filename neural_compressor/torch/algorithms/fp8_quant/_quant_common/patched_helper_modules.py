@@ -19,7 +19,7 @@ from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules i
     PatchedVllmMixtureOfExpertsOpFP8 as INCPatchedVllmMixtureOfExpertsOpFP8,
     PatchedModuleFusedSDPA as INCPatchedModuleFusedSDPA,
 )
-
+from neural_compressor.torch.utils import logger
 
 class OoTPatchedVllmMixtureOfExpertsOpFP8(INCPatchedVllmMixtureOfExpertsOpFP8):
     def _slice_moe(
@@ -557,10 +557,50 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
             return d_out
 
 
+# -----------------------------------------------------------------------------
+# Naive Scaling (OOT): opt-in via INC_FORCE_NAIVE_SCALING, no default behavior change
+# -----------------------------------------------------------------------------
+
+# Preserve existing usage: controlled by env var INC_FORCE_NAIVE_SCALING
+INC_FORCE_NAIVE_SCALING = os.environ.get("INC_FORCE_NAIVE_SCALING", "0").lower() in ("1", "true", "yes")
+
+# Expose the flag on INC's environ module to keep the same access pattern
+from neural_compressor.torch.utils import environ as inc_environ
+
+setattr(inc_environ, "INC_FORCE_NAIVE_SCALING", INC_FORCE_NAIVE_SCALING)
+
+# Patch FP8 scale calculation to force backoff=1.0 when naive scaling is enabled
+from neural_compressor.torch.algorithms.fp8_quant._core import fp_utils as inc_fp_utils
+from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods import (
+    scale_method_factory as inc_scale_method_factory,
+)
+from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import calc_maxabs_scale as inc_calc_maxabs_scale
+from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods.scale_method_factory import (
+    parse_rounding_method as inc_parse_rounding_method,
+    ScaleIdentity,
+)
+
+
+def oot_parse_rounding_method(config, device_for_scales):
+    round_method = ScaleIdentity()
+    if inc_environ.INC_FORCE_NAIVE_SCALING:
+        logger.warning_once("Enabled naive scaling")
+        return round_method
+    return inc_parse_rounding_method(config, device_for_scales)
+
+
+def oot_maxabs_scale(xmaxabs, fullscale, backoff=1):
+    if inc_environ.INC_FORCE_NAIVE_SCALING:
+        logger.warning_once("Using naive scaling with backoff=1.0 for maxabs scale calculation")
+        backoff = 1.0
+        return inc_calc_maxabs_scale(xmaxabs, fullscale, backoff=backoff)
+    return inc_calc_maxabs_scale(xmaxabs, fullscale, backoff=backoff)
+
+
 INC_APPLY_OOT_PATCH = os.environ.get("INC_APPLY_OOT_PATCH", "0").lower() in ("1", "true", "yes")
 if INC_APPLY_OOT_PATCH:
-    from neural_compressor.torch.utils import logger
-
     logger.info("=========================== Applying INC Out of Tree Patches ===========================")
     inc_modules.PatchedVllmMixtureOfExpertsOpFP8 = OoTPatchedVllmMixtureOfExpertsOpFP8
     inc_modules.PatchedModuleFusedSDPA = OoTPatchedModuleFusedSDPA
+    inc_fp_utils.calc_maxabs_scale = oot_maxabs_scale
+    inc_scale_method_factory.parse_rounding_method = oot_parse_rounding_method
