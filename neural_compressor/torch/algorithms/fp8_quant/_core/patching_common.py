@@ -80,15 +80,20 @@ _mod_default_dict = {
     "LoRACompatibleLinear": ModuleInfo("linear", PatchedLoRACompatibleLinear),
     "LoRACompatibleConv": ModuleInfo("linear", PatchedLoRACompatibleConv),
     "Softmax": ModuleInfo("softmax", PatchedSoftmax),
+    "BlockSoftmaxConstMax": ModuleInfo("softmax", PatchedBlockSoftmaxConstMax),
     "ModuleFusedSDPA": ModuleInfo("fused_sdpa", PatchedModuleFusedSDPA),
     "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul),
     "MoeFP8Matmul": ModuleInfo("linear", PatchedMoeFP8Matmul),
     "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
     # Note: `no_quantize_op` indicates that this module is patched but does not require measurement or quantization.
     "FusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False),
+    "SharedFusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False),
     "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
+    "GaudiDeepseekV3MoE": ModuleInfo("dynamic_moe", PatchedGaudiDeepseekV3MoE),
+    "GaudiFP8Linear": ModuleInfo("linear", PatchedMoeFP8Matmul),
     "VllmMixtureOfExpertsOp": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOp),
     "VllmMixtureOfExpertsOpFP8": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8),
+    "VllmMixtureOfExpertsOpFP8PerChannel": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8),
 }
 
 
@@ -124,7 +129,7 @@ def _import_xpu_modules():
     if not cur_accelerator.current_device_name().startswith("xpu"):
         return
     PATCHED_MODULE_TABLE["xpu"].update({"Linear": ModuleInfo("linear", PatchedLinear),
-                                        "Matmul": ModuleInfo("matmul", PatchedMatmul),})
+                                        "Matmul": ModuleInfo("matmul", PatchedMatmul), })
     PATCHED_MODULE_TYPES_TABLE["xpu"].update({"linear": _mod_types["linear"]})
 
 
@@ -154,5 +159,6 @@ def _import_device_modules():
         _import_cpu_modules()
     else:
         logger.warning("No HPU or XPU devices were detected. No Patched Modules available.")
+
 
 _import_device_modules()

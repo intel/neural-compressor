@@ -54,11 +54,20 @@ accelerate launch --config-file accelerate_config/fsdp1.yaml \
 
 ##### Step 2: 
 
-Save the model directly to a get post training quantization model with using [auto-round](https://github.com/intel/auto-round).
+Save the model directly to get a post training quantization model by following this example [auto_round
+](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3).
 
 
 ```
-python quantize_autoround.py 
+CUDA_VISIBLE_DEVICES=0 python ../auto_round/llama3/quantize.py  \
+    --model_name_or_path ./llama3.1-finetuned  \
+    --quantize \
+    --dtype MXFP4 \
+    --enable_torch_compile \
+    --low_gpu_mem_usage \
+    --export_format llm_compressor \
+    --export_path llama3.1-finetuned-rtn-MXFP4 \
+    --iters 0
 ```
 
 ##### Step 3: 

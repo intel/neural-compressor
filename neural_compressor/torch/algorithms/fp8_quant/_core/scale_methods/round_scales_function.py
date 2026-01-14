@@ -13,7 +13,7 @@
 # limitations under the License.
 import torch
 
-from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import FP8_143_SCALES, FP8_143_SCALES_TRAITS, calculate_scale_rounding, ScaleCalculationRoundingMode
+from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import FP8_143_SCALES, FP8_143_SCALES_TRAITS, calculate_scale_rounding_with_cguid, ScaleCalculationRoundingMode
 #TODO [SW-224612]: Use cguid to calc scales and remoce check
 from ..common import is_calc_scale_rounding_with_cguid
 
@@ -34,7 +34,7 @@ class ScaleToPow2:
 
     #TODO [SW-224612]: Use cguid to calc scales and remove special function
     def calc_with_cguid(self, scale):
-        scale_pow2 = calculate_scale_rounding(scale, ScaleCalculationRoundingMode.SCALE_TO_POW2_ROUNDING)
+        scale_pow2 = calculate_scale_rounding_with_cguid(scale, ScaleCalculationRoundingMode.SCALE_TO_POW2_ROUNDING)
         return scale_pow2
 
     def calc(self, scale):
