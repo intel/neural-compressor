@@ -236,8 +236,8 @@ class MatmulOpQuantizer(BaseOpQuantizer):
 
     def __init__(self, config, mod, measurement, params, mod_type_str):
         super().__init__(config, mod, measurement, params, mod_type_str)
-        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic, tensor_type_index=1))
-        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic, tensor_type_index=2))
+        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic, scale_dim_index=-1))
+        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic, scale_dim_index=-2))
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT, self.is_dynamic))
 
 
@@ -358,9 +358,6 @@ class KVCacheOpQuantizer(BaseOpQuantizer):
         super().__init__(config, mod, measurement, params, mod_type_str)
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic))
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT, self.is_dynamic))
-        if self.is_dynamic:
-            self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic, tensor_type_index=2))
-            self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT, self.is_dynamic, tensor_type_index=2))
 
     # TODO: Remove after implementing lp_dtype in OHF.
     def init_input_config(self, scales_inv):

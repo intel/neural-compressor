@@ -17,6 +17,7 @@ import torch
 import torch.nn as nn
 import types
 import functools
+import os
 
 from .._core.quant_dequant import QuantDequant as qdq
 from .._core.quantized_func_wrappers import get_quantized_func_wrapper, OP_TYPE
@@ -1180,15 +1181,16 @@ class PatchedVLLMKVCache(PatchedModuleBase):
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
             if self.is_dynamic_quantization:
-                self.quant_on_hidden = self._mod_extra_config.inputs[1]
-                self.dequant_on_hidden = self._mod_extra_config.outputs[1]
+                assert os.getenv("VLLM_DYNAMIC_KV_QUANT") is not None, "VLLM_DYNAMIC_KV_QUANT env var must be set for dynamic kv cache quantization"
                 if hasattr(mod, 'is_v_cache') and mod.is_v_cache:
+                    from .._core.fp_utils import get_fullscale
                     self.is_v_cache = True
+                    device_type = auto_detect_accelerator().get_inc_accelerator_type()
+                    self.full_scale = get_fullscale(self.lp_dtype, device_type)
                 else:
                     self.is_v_cache = False
                 self.forward = self.forward_quant_dynamic
                 self.fetch_from_cache = self.fetch_from_cache_dynamic
-                self.scales_on_hidden = None
                 self.cur_device = auto_detect_accelerator().current_device_name()
             else:
                 self.forward = self.forward_quant_static
@@ -1201,23 +1203,27 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         output_cache = self.orig_mod(qinput, *args, **kwargs)
         return output_cache
 
-    def forward_quant_static(self, input, cache, slot_mapping, scales=None, *args, **kwargs):
+    def forward_quant_static(self, input, cache, slot_mapping, *args, **kwargs):
         if input is not None:
             qinput = self.quant_input(input)
-            output_cache = self.orig_mod(qinput, cache, slot_mapping, scales, *args, **kwargs)
+            output_cache = self.orig_mod(qinput, cache, slot_mapping, *args, **kwargs)
         else:
             # In cross-attention during decode stage kv cache isn't updated
             # so input is None and we don't store it
             output_cache = cache
         return self.dequant_output(output_cache)
 
-    def forward_quant_dynamic(self, input, cache, slot_mapping, scales=None, *args, **kwargs):
+    # input is a new Key/Value, input.size => (batch_size, num_kv_heads, head_size)
+    def forward_quant_dynamic(self, input, cache, slot_mapping, scales=None, block_size=None, *args, **kwargs):
         if input is not None:
             qinput, scale = self.quant_input(input)
             if scales is not None:
-                scales.index_copy_(0, slot_mapping, scale)
-                if self.is_v_cache:
-                    self.update_scales_on_hidden(input, slot_mapping)
+                if self.is_v_cache and block_size is not None:
+                    # in v cache scales is a tuple: (scales_on_token_dim, scales_on_hidden_dim)
+                    scales[0].index_copy_(0, slot_mapping, scale)
+                    self.update_scales_on_hidden(input, scales, slot_mapping, block_size)
+                else:
+                    scales.index_copy_(0, slot_mapping, scale)
             output_cache = self.orig_mod(qinput, cache, slot_mapping, scales, *args, **kwargs)
         else:
             # In cross-attention during decode stage kv cache isn't updated
@@ -1235,6 +1241,9 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         measure_output((output_cache, ), self._mod_extra_config.outputs)
         return output_cache
 
+    # cache.size => (num_blocks, block_size, num_kv_heads, head_size)
+    # scale_on_token_dim.size => (num_blocks, block_size, num_kv_heads, 1)
+    # scale_on_hidden_dim.size => (num_blocks, num_kv_heads, 1)
     def fetch_from_cache_static(self, cache, blocks, scales=None):
         if cache.dtype != self.lp_dtype:
             quant_cache = self.quant_input(cache)
@@ -1250,39 +1259,50 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         else:
             quant_cache, cur_scales = self.fetch_cache_and_scales(cache, blocks, scales)
         cache_dequanted = self.dequant_output(quant_cache, cur_scales)
-        if self.is_v_cache:
-            cache_dequanted = self.convert_on_hidden(cache_dequanted)
+        if self.is_v_cache and scales is not None:
+            cache_dequanted = self.convert_on_hidden(cache_dequanted, scales, blocks)
         return cache_dequanted
 
     def fetch_cache_and_scales(self, cache, blocks, scales=None):
+        if self.is_v_cache and scales is not None:
+            cur_scales = scales[0]
+        else:
+            cur_scales = scales
         if self.orig_mod.use_contiguous_pa:
-            cur_scales = scales[:blocks.size(0)] if scales is not None else None
+            cur_scales = cur_scales[:blocks.size(0)] if cur_scales is not None else None
             cur_cache = cache[:blocks.size(0)]
         else:
-            cur_scales = scales.index_select(0, blocks) if scales is not None else None
+            cur_scales = cur_scales.index_select(0, blocks) if cur_scales is not None else None
             cur_cache = cache.index_select(0, blocks)
         return cur_cache, cur_scales
 
-    def update_scales_on_hidden(self, input, slot_mapping):
-        from .._core.fp_utils import calculate_scale_maxabs_with_cguid, get_fullscale, ScaleCalculationMaxMode
-        if self.scales_on_hidden is None:
-            self.scales_on_hidden = nn.Parameter(torch.ones(input.size(-1), device=self.cur_device, dtype=self.hp_dtype), requires_grad=False)
-            device_type = auto_detect_accelerator().get_inc_accelerator_type()
-            self.full_scale = get_fullscale(self.lp_dtype, device_type)
+    def update_scales_on_hidden(self, input, scales, slot_mapping, block_size):
+        from .._core.fp_utils import calculate_scale_maxabs_with_cguid, calculate_scale_rounding_with_cguid, ScaleCalculationMaxMode, ScaleCalculationRoundingMode
         scale_tensor = calculate_scale_maxabs_with_cguid(
-            input,
+            input.unsqueeze(1),
             ScaleCalculationMaxMode.MAX_ABS_PCS_CALCULATION,
-            reduceAxis=-2,
-            reduceKeepdim=True,
+            reduceAxis=1,
+            reduceKeepdim=False,
             fullscale=self.full_scale,
-            backoff=1,
+            backoff=0.5,
         )
-        self.scales_on_hidden.copy_(torch.maximum(torch.amax(scale_tensor.squeeze(), dim=-2), self.scales_on_hidden))
+        pow2_tensor = calculate_scale_rounding_with_cguid(scale_tensor, ScaleCalculationRoundingMode.SCALE_TO_POW2_ROUNDING)
+        block_mapping = slot_mapping // block_size
+        block_map_list = block_mapping.tolist()
+        if len(block_map_list) != len(set(block_map_list)):
+            # for the prompt, getting the max scale of its tokens and assign it to its blocks as the scale on hidden dim
+            max_scale = torch.max(pow2_tensor, dim=0)
+            pow2_tensor.copy_(max_scale[0])
+        scales[1].index_copy_(0, block_mapping, torch.maximum(pow2_tensor, scales[1].index_select(0, block_mapping)))
 
-    def convert_on_hidden(self, cache_dequanted):
+    def convert_on_hidden(self, cache_dequanted, scales, blocks):
         # quanting and dequanting on hidden dim to allow AV matmul in fp8 - graph-compiler will optimize
-        cache_quanted_on_h, scales = self.quant_on_hidden(cache_dequanted, self.scales_on_hidden)
-        return self.dequant_on_hidden(cache_quanted_on_h, scales)
+        if self.orig_mod.use_contiguous_pa:
+            cur_scale_on_h = scales[1][:blocks.size(0)]
+        else:
+            cur_scale_on_h = scales[1].index_select(0, blocks)
+        cache_quanted_on_h, dq_scales = self.quant_input(cache_dequanted, cur_scale_on_h.unsqueeze(1))
+        return self.dequant_output(cache_quanted_on_h, dq_scales)
 
     def extra_repr(self) -> str:
         return extra_representation(

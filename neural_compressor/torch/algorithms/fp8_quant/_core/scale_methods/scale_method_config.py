@@ -66,7 +66,7 @@ class CfgStr(Enum):
     LAYERS_SLASH_PATTERN= r"layers/(\d+)"
 
 class ScaleMethodConfig:
-    def __init__(self, 
+    def __init__(self,
                  granularity=ScaleGranularity.PTS,
                  scale_value_type=ScaleValueType.MAXABS,
                  rounding_method=ScaleRoundMethod.IDENTITY,
@@ -88,11 +88,11 @@ class ScaleMethodConfig:
             self.scale_value_type,
             self.rounding_method
         ))
-    
+
     def __eq__(self, other):
         if not isinstance(other, ScaleMethodConfig):
             return False
-        
+
         # Only check the three fields that define uniqueness
         return (self.granularity == other.granularity and
                 self.scale_value_type == other.scale_value_type and
