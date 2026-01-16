@@ -101,10 +101,13 @@ class OoTScaleMethodFactory(ScaleMethodFactory):
 
 
 INC_APPLY_OOT_PATCH = os.environ.get("INC_APPLY_OOT_PATCH", "0").lower() in ("1", "true", "yes")
+INC_FORCE_NAIVE_SCALING = os.getenv("INC_FORCE_NAIVE_SCALING", "0").lower() in ["1", "true"]
 if INC_APPLY_OOT_PATCH:
     from neural_compressor.torch.utils import logger
 
     logger.info("=========================== Applying INC Out of Tree Patches ===========================")
     inc_modules.PatchedVllmMixtureOfExpertsOpFP8 = OoTPatchedVllmMixtureOfExpertsOpFP8
-    from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods import scale_method_factory as inc_scale_method_factory
-    inc_scale_method_factory.ScaleMethodFactory = OoTScaleMethodFactory
+    if INC_FORCE_NAIVE_SCALING:
+        logger.info("Applying OoT Patch: Forcing Naive Scaling Method for all modules.")
+        from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods import scale_method_factory as inc_scale_method_factory
+        inc_scale_method_factory.ScaleMethodFactory = OoTScaleMethodFactory
