@@ -88,6 +88,17 @@ class OoTPatchedVllmMixtureOfExpertsOpFP8(INCPatchedVllmMixtureOfExpertsOpFP8):
         else:
             return self._chunk_moe(hidden_states, expert_routing_table, router_weights, permuted_weights, activation)
 
+from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods.scale_method_factory import ScaleMethodFactory
+
+class OoTScaleMethodFactory(ScaleMethodFactory):
+
+    def get_scale_method(self, tensor_type, is_dynamic=False):
+        backoff = 1.0 if is_dynamic else self.scale_method_config_map[tensor_type].backoff
+        scale_round_method = self.scale_method_config_map[tensor_type].rounding_method
+        self.scale_method_config_map[tensor_type].rounding_method = "IDENTITY"
+        self.scale_method_config_map[tensor_type].backoff = 1.0
+        return super().get_scale_method(tensor_type, is_dynamic)
+
 
 INC_APPLY_OOT_PATCH = os.environ.get("INC_APPLY_OOT_PATCH", "0").lower() in ("1", "true", "yes")
 if INC_APPLY_OOT_PATCH:
@@ -95,3 +106,5 @@ if INC_APPLY_OOT_PATCH:
 
     logger.info("=========================== Applying INC Out of Tree Patches ===========================")
     inc_modules.PatchedVllmMixtureOfExpertsOpFP8 = OoTPatchedVllmMixtureOfExpertsOpFP8
+    from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods import scale_method_factory as inc_scale_method_factory
+    inc_scale_method_factory.ScaleMethodFactory = OoTScaleMethodFactory
