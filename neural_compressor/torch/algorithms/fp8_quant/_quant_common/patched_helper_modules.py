@@ -95,7 +95,8 @@ class OoTScaleMethodFactory(ScaleMethodFactory):
     def get_scale_method(self, tensor_type, is_dynamic=False):
         backoff = 1.0 if is_dynamic else self.scale_method_config_map[tensor_type].backoff
         scale_round_method = self.scale_method_config_map[tensor_type].rounding_method
-        self.scale_method_config_map[tensor_type].rounding_method = "IDENTITY"
+        from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods.scale_method_config import ScaleRoundMethod
+        self.scale_method_config_map[tensor_type].rounding_method = ScaleRoundMethod.IDENTITY
         self.scale_method_config_map[tensor_type].backoff = 1.0
         return super().get_scale_method(tensor_type, is_dynamic)
 
