@@ -242,9 +242,6 @@ class Fp8cfg:
             Fp8cfg.set_gaudi_device_for_scales(custom_config, measured_global_config, scale_method_config)
 
         if measured_global_config["scale_format"] == ScaleFormat.SCALAR:
-            if auto_detect_accelerator().current_device_name() == "cpu":
-                measured_global_config["scale_format"] = ScaleFormat.CONST
-                logger.warning(f"Cannot use 'scale_format = SCALAR' when running FP8 quantization on CPU device")
             if check_scale_method_fields(scale_method_config, granularity_weight=ScaleGranularity.PCS, reducer=any) or \
                check_scale_method_fields(scale_method_config, granularity_activation=ScaleGranularity.PCS, reducer=any):
                 measured_global_config["scale_format"] = ScaleFormat.CONST
