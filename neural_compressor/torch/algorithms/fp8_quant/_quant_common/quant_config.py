@@ -28,7 +28,7 @@ from ..utils.logger import logger
 from ..prepare_quant.prepare_model import get_world_size, get_local_rank
 from .._core.scale_methods.scale_method_parser import parse_scale_method, validate_and_populate_scale_method, convert_scale_method_strings_to_enum
 from .._core.scale_methods.scale_method_config import get_scale_method_from_config, check_scale_method_fields, ScaleMethodString, CfgStr, ScaleGranularity, ScaleValueType, ScaleRoundMethod
-
+from neural_compressor.torch.utils import logger
 
 class QuantMode(Enum):
     NONE = 0
@@ -218,6 +218,29 @@ class Fp8cfg:
                     measured_global_config["blocklist"] = custom_config[keys]
                 else:
                     measured_global_config[keys] = custom_config[keys]
+
+        INC_MEASUREMENT_DUMP_PATH_PREFIX = os.getenv("INC_MEASUREMENT_DUMP_PATH_PREFIX", None)
+        if INC_MEASUREMENT_DUMP_PATH_PREFIX is not None:
+            dump_stats_path = os.path.join(INC_MEASUREMENT_DUMP_PATH_PREFIX, measured_global_config["dump_stats_path"])
+            measured_global_config["dump_stats_path"] = dump_stats_path
+            logger.info(
+                f"INC_MEASUREMENT_DUMP_PATH_PREFIX is set to {INC_MEASUREMENT_DUMP_PATH_PREFIX}, dump_stats_path is set to {dump_stats_path}"
+            )
+        # check if the directory exists
+
+        dir_path = os.path.dirname(measured_global_config["dump_stats_path"])
+        abs_path = os.path.abspath(dir_path)
+        quant_mode = measured_global_config["mode"]
+        if quant_mode == QuantMode.QUANTIZE:
+            if not (os.path.exists(dir_path) or os.path.exists(abs_path)):
+                raise ValueError(
+                    (
+                        f"The measurement dump directory '{dir_path}' does not exist,"
+                        f" the path is determined by the environment variable INC_MEASUREMENT_DUMP_PATH_PREFIX"
+                        f" and the dump_stats_path in the quantization config file."
+                    )
+                )
+
         measured_global_config["scale_method"] = parse_scale_method(measured_global_config["scale_method"])
         scale_method_config = measured_global_config["scale_method"]
         validate_and_populate_scale_method(scale_method_config)
