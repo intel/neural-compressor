@@ -9,6 +9,7 @@ TASK_NAME="piqa,hellaswag,mmlu"
 TP_SIZE=8
 BATCH_SIZE=512
 KV_CACHE_DTYPE="auto"
+ATTN_DTYPE="None"
 
 # Function to display usage
 usage() {
@@ -45,6 +46,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -kv)
             KV_CACHE_DTYPE="$2"
+            shift 2
+            ;;
+        -attn)
+            ATTN_DTYPE="$2"
             shift 2
             ;;
         -b)
