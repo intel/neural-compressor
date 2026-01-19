@@ -74,7 +74,6 @@ def quant_model(args):
         logger.warning("When using static kv dtype or static attn dtype as fp8, setting iters to 0.")
         iters = 0
     fp32_model, tokenizer = get_model_and_tokenizer(args.model)
-    breakpoint()
     quant_config = AutoRoundConfig(
         tokenizer=tokenizer,
         scheme=config["scheme"],
