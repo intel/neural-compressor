@@ -27,12 +27,12 @@ topologies_config = {
         "iters": 0,
     },
     "mxfp4": {
-        "scheme": "MXFP4",
+        "scheme": "MXFP4_RCEIL",
         "fp_layers": "lm_head,mlp.gate,self_attn",
         "iters": 200,
     },
     "mxfp4_fp8kv": {
-        "scheme": "MXFP4",
+        "scheme": "MXFP4_RCEIL",
         "fp_layers": "lm_head,mlp.gate,self_attn",
         "iters": 0,
         "static_kv_dtype": "fp8",
