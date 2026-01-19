@@ -9,7 +9,7 @@ QUANT_TYPE="mxfp8"
 MODEL_PATH="/path/to/quantized_model"
 TP_SIZE=8
 KV_CACHE_DTYPE="auto"
-ATTN_CACHE_DTYPE="None"
+ATTN_DTYPE="None"
 
 # Function to display usage
 usage() {
@@ -52,7 +52,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         -attn)
-            ATTN_CACHE_DTYPE="$2"
+            ATTN_DTYPE="$2"
             shift 2
             ;;
         *)
@@ -94,7 +94,7 @@ echo "Running $QUANT_TYPE_UPPER test with:"
 echo "  Model: $MODEL_PATH"
 echo "  Tensor Parallelism: $TP_SIZE"
 echo "  KV Cache Dtype: $KV_CACHE_DTYPE"
-echo "  Attention Cache Dtype: $ATTN_CACHE_DTYPE"
+echo "  Attention Dtype: $ATTN_DTYPE"
 echo ""
 
 # Set environment variables based on quantization type
@@ -118,9 +118,10 @@ if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
 fi
 
 # for fp8 attention cache
-if [[ "$ATTN_CACHE_DTYPE" == "fp8" ]]; then
+if [[ "$ATTN_DTYPE" == "fp8" ]]; then
     export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
     export VLLM_ATTENTION_BACKEND="FLASHINFER"
+    KV_CACHE_DTYPE="fp8"
     echo "Using FP8 Attention"
 fi
 
