@@ -28,7 +28,7 @@ topologies_config = {
         "iters": 0,
     },
     "mxfp4": {
-        "scheme": "MXFP4",
+        "scheme": "MXFP4_RCEIL",
         "fp_layers": "lm_head,self_attn",
         "iters": 0,
     },
