@@ -48,7 +48,7 @@ NVFP4 uses a two-level scaling approach to maintain accuracy while reducing prec
 
 The dequantization formula can be expressed as:
 
-$$\text{dequantized\_value} = \text{quantized\_value} \times \text{block\_scale} \times \text{global\_scale}$$
+`dequantized_value = quantized_value × block_scale × global_scale`
 
 This hierarchical scaling strategy balances compression efficiency with numerical accuracy, enabling NVFP4 to maintain model performance while significantly reducing memory footprint.
 
@@ -70,14 +70,13 @@ tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code
 output_dir = "./saved_inc"
 
 # quantization configuration
+# `iters=0` means RTN (fast, no optimization); use default `iters=200` if accuracy is poor
 quant_config = AutoRoundConfig(
-    tokenizer=tokenizer,
-    nsamples=32,
-    seqlen=32,
-    iters=20,
-    scheme="NVFP4",  # NVFP4 format
-    export_format="llm_compressor",
-    output_dir=output_dir,  # default is "temp_auto_round"
+    tokenizer=tokenizer,  # Tokenizer for processing calibration data
+    scheme="NVFP4",  # NVFP4 quantization scheme
+    iters=0,  # Number of optimization iterations (default: 200)
+    export_format="llm_compressor",  # Export format for the quantized model
+    output_dir=output_dir,  # Directory to save the quantized model (default: "temp_auto_round")
 )
 
 # quantize the model and save to output_dir

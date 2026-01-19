@@ -76,7 +76,7 @@ OUTPUT_DIR="${MODEL_NAME}-tp${TP_SIZE}-eval"
 
 # Create output directory
 mkdir -p ${OUTPUT_DIR}
-
+export NCCL_NVLS_ENABLE=0
 # Set environment variables based on the quantization scheme
 if [[ "$SCHEME" == "mxfp4" ]]; then
     VLLM_AR_MXFP4_MODULAR_MOE=1
@@ -107,8 +107,10 @@ fi
 
 # for fp8 kv cache
 if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
-    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
     export VLLM_ATTENTION_BACKEND="FLASHINFER_MLA"
+    # 512 * 1024 * 1024
+    export VLLM_AR_FLASHINFER_WORKSPACE_BUFFER_SIZE=1073741824
     echo "Using FP8 for KV cache"
 fi
 

@@ -16,7 +16,7 @@ pip uninstall flash_attn
 ### Quantize Model
 - Export model path
 ```bash
-export MODEL=unsloth/DeepSeek-R1-BF1
+export MODEL=unsloth/DeepSeek-R1-BF16
 ```
 
 - MXFP8

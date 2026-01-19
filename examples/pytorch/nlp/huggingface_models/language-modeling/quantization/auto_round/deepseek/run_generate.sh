@@ -110,8 +110,10 @@ fi
 
 # for fp8 kv cache
 if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
-    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
     export VLLM_ATTENTION_BACKEND="FLASHINFER_MLA"
+    # 1024 * 1024 * 1024
+    export VLLM_AR_FLASHINFER_WORKSPACE_BUFFER_SIZE=1073741824
     echo "Using FP8 for KV cache"
 fi
 
