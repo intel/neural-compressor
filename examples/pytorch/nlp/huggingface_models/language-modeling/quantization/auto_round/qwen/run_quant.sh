@@ -5,7 +5,7 @@ MODEL=""
 TARGET=""
 OUTPUT_DIR=""
 STATIC_KV_DTYPE="None"
-STATIC_ATTN_DTYEP="None"
+STATIC_ATTENTION_DTYPE="None"
 
 usage() {
   echo "Usage: $0 --model MODEL -t [mxfp4|mxfp8] --output_dir DIR -kv DTYPE"
@@ -39,7 +39,7 @@ while [[ $# -gt 0 ]]; do
       shift 2
       ;;
     -attn)
-      STATIC_ATTN_DTYPE="$2"
+      STATIC_ATTENTION_DTYPE="$2"
       shift 2
       ;;
     -h|--help)
@@ -62,4 +62,4 @@ python quantize.py \
   --use_autoround_format \
   --output_dir "$OUTPUT_DIR" \
   $( [ "$STATIC_KV_DTYPE" != "None" ] && echo "--static_kv_dtype $STATIC_KV_DTYPE" ) \
-  $( [ "$STATIC_ATTN_DTYPE" != "None" ] && echo "--static_attn_dtype $STATIC_ATTN_DTYPE" )
+  $( [ "$STATIC_ATTENTION_DTYPE" != "None" ] && echo "--static_attention_dtype $STATIC_ATTENTION_DTYPE" )
