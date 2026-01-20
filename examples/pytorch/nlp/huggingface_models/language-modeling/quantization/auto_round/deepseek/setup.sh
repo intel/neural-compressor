@@ -3,7 +3,7 @@ pip install setuptools --upgrade
 pip install packaging --upgrade
 pip install -U "huggingface_hub[cli]"
 # Install vllm
-git clone -b ds-fp8kv  --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
+git clone -b fused-moe-ar --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
 VLLM_USE_PRECOMPILED=1 pip install --editable . -v
 cd ..
 # Uninstall flash_attn to avoid conflicts
