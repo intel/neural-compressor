@@ -165,6 +165,9 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 <section id="llama3-quantization-recipes">
 <h3>Llama3 Quantization Recipes<a class="headerlink" href="#llama3-quantization-recipes" title="Link to this heading"></a></h3>
 <p>Here we provide several recipes for Llama3 models. The relative accuracy loss of quantized model should be less than 1%.</p>
+<blockquote>
+<div><p>Note: You can also enable static quantization for KV cache by adding <code class="docutils literal notranslate"><span class="pre">--static_kv_dtype</span> <span class="pre">fp8</span></code> argument to <code class="docutils literal notranslate"><span class="pre">quantize.py</span></code>， or <code class="docutils literal notranslate"><span class="pre">--static_kv_dtype=fp8</span></code> argument to <code class="docutils literal notranslate"><span class="pre">run_quant.sh</span></code> and <code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code>.</p>
+</div></blockquote>
 <section id="llama-3-1-8b-mxfp8">
 <h4>Llama 3.1 8B MXFP8<a class="headerlink" href="#llama-3-1-8b-mxfp8" title="Link to this heading"></a></h4>
 <p>RTN (Round-to-Nearest) is enough to keep accuracy.</p>
@@ -192,7 +195,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 <span class="w">    </span>--low_gpu_mem_usage<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--export_format<span class="w"> </span>auto_round<span class="w">  </span><span class="se">\</span>
 <span class="w">    </span>--export_path<span class="w"> </span>llama3.1-8B-MXFP4-MXFP8<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--tasks<span class="w"> </span>mmlu<span class="w"> </span>piqa<span class="w"> </span>hellaswag<span class="w"> </span>gsm8k<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--tasks<span class="w"> </span>mmlu_llama<span class="w"> </span>piqa<span class="w"> </span>hellaswag<span class="w"> </span>gsm8k_llama<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--eval_batch_size<span class="w"> </span><span class="m">32</span>
 </pre></div>
 </div>
@@ -296,8 +299,7 @@ git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </spa
 <p>The script automatically:</p>
 <ul class="simple">
 <li><p>Detects available GPUs from <code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code> and sets <code class="docutils literal notranslate"><span class="pre">tensor_parallel_size</span></code> accordingly</p></li>
-<li><p>Handles different <code class="docutils literal notranslate"><span class="pre">add_bos_token</span></code> settings for different tasks (GSM8K requires <code class="docutils literal notranslate"><span class="pre">False</span></code>, others use <code class="docutils literal notranslate"><span class="pre">True</span></code>)</p></li>
-<li><p>Runs default tasks: <code class="docutils literal notranslate"><span class="pre">piqa,hellaswag,mmlu,gsm8k</span></code> with batch size 8</p></li>
+<li><p>Runs default tasks: <code class="docutils literal notranslate"><span class="pre">piqa,hellaswag,mmlu_llama,gsm8k_llama</span></code> with batch size 8</p></li>
 <li><p>Supports custom task selection and batch size adjustment</p></li>
 </ul>
 </section>
@@ -347,7 +349,7 @@ git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </spa
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f8e14859700> 
+   <jinja2.runtime.BlockReference object at 0x7f21a1ff7950> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
