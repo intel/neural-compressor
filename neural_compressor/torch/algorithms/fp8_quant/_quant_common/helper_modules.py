@@ -1213,14 +1213,14 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         return self.dequant_output(output_cache)
 
     # input is a new Key/Value, input.size => (batch_size, num_kv_heads, head_size)
-    def forward_quant_dynamic(self, input, cache, slot_mapping, scales=None, block_size=None, *args, **kwargs):
+    def forward_quant_dynamic(self, input, cache, slot_mapping, scales=None, block_size=None, is_prompt=False, *args, **kwargs):
         if input is not None:
             qinput, scale = self.quant_input(input)
             if scales is not None:
                 if self.is_v_cache and block_size is not None:
                     # in v cache scales is a tuple: (scales_on_token_dim, scales_on_hidden_dim)
                     scales[0].index_copy_(0, slot_mapping, scale)
-                    self.update_scales_on_hidden(input, scales, slot_mapping, block_size)
+                    self.update_scales_on_hidden(input, scales, slot_mapping, block_size, is_prompt)
                 else:
                     scales.index_copy_(0, slot_mapping, scale)
             output_cache = self.orig_mod(qinput, cache, slot_mapping, scales, *args, **kwargs)
@@ -1275,7 +1275,7 @@ class PatchedVLLMKVCache(PatchedModuleBase):
             cur_cache = cache.index_select(0, blocks)
         return cur_cache, cur_scales
 
-    def update_scales_on_hidden(self, input, scales, slot_mapping, block_size):
+    def update_scales_on_hidden(self, input, scales, slot_mapping, block_size, is_prompt=False):
         from .._core.fp_utils import calculate_scale_maxabs_with_cguid, calculate_scale_rounding_with_cguid, ScaleCalculationMaxMode, ScaleCalculationRoundingMode
         scale_tensor = calculate_scale_maxabs_with_cguid(
             input.unsqueeze(1),
@@ -1287,8 +1287,7 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         )
         pow2_tensor = calculate_scale_rounding_with_cguid(scale_tensor, ScaleCalculationRoundingMode.SCALE_TO_POW2_ROUNDING)
         block_mapping = slot_mapping // block_size
-        block_map_list = block_mapping.tolist()
-        if len(block_map_list) != len(set(block_map_list)):
+        if is_prompt:
             # for the prompt, getting the max scale of its tokens and assign it to its blocks as the scale on hidden dim
             max_scale = torch.max(pow2_tensor, dim=0)
             pow2_tensor.copy_(max_scale[0])
