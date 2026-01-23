@@ -297,6 +297,7 @@ class OoTPatchedModuleFusedSDPA(INCPatchedModuleFusedSDPA):
                 )
 
                 if self.with_mark_step:
+                    # mark_step() cannot break the tensor slicing, use clone to isolate the graph
                     q_chunk = q_chunk.clone()
                     k_chunk = k_chunk.clone()
                     v_chunk = v_chunk.clone()
