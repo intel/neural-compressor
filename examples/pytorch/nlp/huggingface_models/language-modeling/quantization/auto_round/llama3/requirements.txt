@@ -5,3 +5,6 @@ lm_eval==0.4.9.2
 datasets==4.4.2
 auto-round==0.9.3
 neural-compressor-pt>=3.7
+jieba
+fuzzywuzzy
+rouge
