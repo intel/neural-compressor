@@ -41,6 +41,12 @@ To enable `fp8 kv cache`, please add `-kv fp8`:
 bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels -kv fp8
 ```
 
+  Attention
+```bash
+export MODEL=unsloth/DeepSeek-R1-BF16
+bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels -attn "fp8"
+```
+
 ## Evaluation
 
 ### Prompt Tests

@@ -69,17 +69,23 @@ def quant_model(args):
     config = topologies_config[args.t]
     export_format = config.get("export_format", "auto_round")
     output_dir = f"{args.output_dir}/quantized_model_{args.t}"
+    static_kv_dtype = args.static_kv_dtype
+    iters = config["iters"]
+    if (static_kv_dtype == "fp8" or args.static_attention_dtype == "fp8") and iters > 0:
+        logger.warning("When using static kv dtype or static attn dtype as fp8, setting iters to 0.")
+        iters = 0
     fp32_model, tokenizer = get_model_and_tokenizer(args.model)
     quant_config = AutoRoundConfig(
         tokenizer=tokenizer,
         scheme=config["scheme"],
         enable_torch_compile=args.enable_torch_compile,
-        iters=config["iters"],
+        iters=iters,
         fp_layers=config["fp_layers"],
         export_format=export_format,
         output_dir=output_dir,
         low_gpu_mem_usage=True,
-        static_kv_dtype=args.static_kv_dtype,
+        static_kv_dtype=static_kv_dtype,
+        static_attention_dtype=args.static_attention_dtype,
         reloading=False,
     )
 
@@ -117,6 +123,12 @@ if __name__ == "__main__":
         type=str,
         default=None,
         help="Data type to use KV Cache. e.g. fp8",
+    )
+    parser.add_argument(
+        "--static_attention_dtype",
+        type=str,
+        choices=["fp8", None],
+        help="Data type to use Attention Cache. e.g. fp8",
     )
     parser.add_argument(
         "--use_autoround_format",
