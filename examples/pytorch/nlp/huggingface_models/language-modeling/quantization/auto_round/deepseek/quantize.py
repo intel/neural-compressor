@@ -81,6 +81,8 @@ def quant_model(args):
         low_gpu_mem_usage=True,
         static_kv_dtype=args.static_kv_dtype,
         reloading=False,
+        trust_remote_code=False,
+        disable_trust_remote_code=True,
     )
 
     # quantizer execute
