@@ -70,8 +70,8 @@ def quant_model(args):
     if static_kv_dtype is not None and static_kv_dtype.lower() != "fp8":
         raise ValueError("Only 'fp8' is supported for static_kv_dtype currently.")
     iters = args.iters if args.iters is not None else config["iters"]
-    if static_kv_dtype == "fp8" and iters > 0:
-        logger.warning("When using static kv dtype as fp8, setting iters to 0.")
+    if (static_kv_dtype == "fp8" or args.static_attention_dtype == "fp8") and iters > 0:
+        logger.warning("When using static kv dtype or static attn dtype as fp8, setting iters to 0.")
         iters = 0
     fp32_model, tokenizer = get_model_and_tokenizer(args.model)
     quant_config = AutoRoundConfig(
@@ -84,6 +84,7 @@ def quant_model(args):
         disable_opt_rtn=True,
         low_gpu_mem_usage=True,
         static_kv_dtype=static_kv_dtype,
+        static_attention_dtype=args.static_attention_dtype,
         output_dir=output_dir,
         reloading=False,
     )
@@ -128,6 +129,12 @@ if __name__ == "__main__":
         choices=["fp8", "auto"],
         default="auto",
         help="Data type for KV cache. Options are 'fp8' or 'auto'.",
+    )
+    parser.add_argument(
+        "--static_attention_dtype",
+        type=str,
+        choices=["fp8", None],
+        help="Data type to use Attention Cache. e.g. fp8",
     )
     parser.add_argument(
         "--skip_attn",
