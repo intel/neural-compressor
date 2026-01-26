@@ -133,7 +133,7 @@ fi
 # for fp8 attention cache
 if [[ "$ATTN_DTYPE" == "fp8" ]]; then
     export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
-    export VLLM_ATTENTION_BACKEND="FLASHINFER"
+    export VLLM_ATTENTION_BACKEND="FLASHINFER_MLA"
     KV_CACHE_DTYPE="fp8"
     echo "Using FP8 Attention"
 fi
