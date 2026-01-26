@@ -89,6 +89,10 @@ echo "  Model: $MODEL_PATH"
 echo "  Tensor Parallelism: $TP_SIZE"
 echo ""
 
+#FIXME: (yiliu30) remove these envs once we have fixed the pynccl issues
+export NCCL_NVLS_ENABLE=0
+export VLLM_DISABLE_PYNCCL=1
+
 # Set environment variables based on quantization type
 # Set environment variables based on quantization type
 if [[ "$QUANT_TYPE_UPPER" == "MXFP4" ]]; then

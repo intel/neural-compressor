@@ -76,7 +76,9 @@ OUTPUT_DIR="${MODEL_NAME}-tp${TP_SIZE}-eval"
 
 # Create output directory
 mkdir -p ${OUTPUT_DIR}
+#FIXME: (yiliu30) remove these envs once we have fixed the pynccl issues
 export NCCL_NVLS_ENABLE=0
+export VLLM_DISABLE_PYNCCL=1
 # Set environment variables based on the quantization scheme
 if [[ "$SCHEME" == "mxfp4" ]]; then
     VLLM_AR_MXFP4_MODULAR_MOE=1
