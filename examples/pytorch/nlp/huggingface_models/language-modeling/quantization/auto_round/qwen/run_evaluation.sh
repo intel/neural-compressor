@@ -9,6 +9,7 @@ TASK_NAME="piqa,hellaswag,mmlu"
 TP_SIZE=8
 BATCH_SIZE=512
 KV_CACHE_DTYPE="auto"
+ATTN_DTYPE="None"
 
 # Function to display usage
 usage() {
@@ -45,6 +46,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -kv)
             KV_CACHE_DTYPE="$2"
+            shift 2
+            ;;
+        -attn)
+            ATTN_DTYPE="$2"
             shift 2
             ;;
         -b)
@@ -106,6 +111,14 @@ if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
     export VLLM_AR_FLASHINFER_WORKSPACE_BUFFER_SIZE=2147483648
     echo "VLLM_AR_FLASHINFER_WORKSPACE_BUFFER_SIZE: ${VLLM_AR_FLASHINFER_WORKSPACE_BUFFER_SIZE}"
     echo "Using FP8 for KV cache"
+fi
+
+# for fp8 attention cache
+if [[ "$ATTN_DTYPE" == "fp8" ]]; then
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+    export VLLM_ATTENTION_BACKEND="FLASHINFER"
+    KV_CACHE_DTYPE="fp8"
+    echo "Using FP8 Attention"
 fi
 
 # Run evaluation

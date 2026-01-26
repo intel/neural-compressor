@@ -9,6 +9,7 @@ QUANT_TYPE="mxfp8"
 MODEL_PATH="/path/to/quantized_model"
 TP_SIZE=8
 KV_CACHE_DTYPE="auto"
+ATTN_DTYPE="None"
 
 
 # Function to display usage
@@ -18,12 +19,14 @@ usage() {
     echo "  -m: Path to quantized model (required)"
     echo "  -tp: Tensor parallelism size (default: 8)"
     echo "  -kv: Data type for KV cache (default: auto)"
+    echo "  -attn: Data type for Attention cache (default: None)"
     echo ""
     echo "Examples:"
     echo "  $0 -s mxfp4 -m /path/to/my/model -tp 4"
     echo "  $0 -m /path/to/my/model"
     echo "  $0 -s mxfp8 -m /path/to/my/model"
-    each "  $0 -kv fp8 -m /path/to/my/model"
+    echo "  $0 -kv fp8 -m /path/to/my/model"
+    echo "  $0 -m /path/to/my/model -attn fp8"
 }
 
 # Parse command line arguments
@@ -43,6 +46,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -kv)
             KV_CACHE_DTYPE="$2"
+            shift 2
+            ;;
+        -attn)
+            ATTN_DTYPE="$2"
             shift 2
             ;;
         -h)
@@ -87,6 +94,8 @@ fi
 echo "Running $QUANT_TYPE_UPPER test with:"
 echo "  Model: $MODEL_PATH"
 echo "  Tensor Parallelism: $TP_SIZE"
+echo "  KV Cache Dtype: $KV_CACHE_DTYPE"
+echo "  Attention Dtype: $ATTN_DTYPE"
 echo ""
 
 #FIXME: (yiliu30) remove these envs once we have fixed the pynccl issues
@@ -119,6 +128,14 @@ if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
     # 1024 * 1024 * 1024
     export VLLM_AR_FLASHINFER_WORKSPACE_BUFFER_SIZE=1073741824
     echo "Using FP8 for KV cache"
+fi
+
+# for fp8 attention cache
+if [[ "$ATTN_DTYPE" == "fp8" ]]; then
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+    export VLLM_ATTENTION_BACKEND="FLASHINFER"
+    KV_CACHE_DTYPE="fp8"
+    echo "Using FP8 Attention"
 fi
 
 # Common environment variables
