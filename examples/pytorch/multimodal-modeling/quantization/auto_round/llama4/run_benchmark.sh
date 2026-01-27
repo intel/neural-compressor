@@ -62,9 +62,9 @@ function run_benchmark {
         model="vllm-vlm"
         extra_cmd=${extra_cmd}" --apply_chat_template"
     elif [[ "${tasks}" == *"longbench"* ]]; then
-	model="vllm"
+	    model="vllm"
         extra_cmd="--seed 42 --apply_chat_template --gen_kwargs {\"temperature\":0.0} "
-	extra_model_args="max_model_len=66000,gpu_memory_utilization=0.7"
+	    extra_model_args="max_model_len=66000,gpu_memory_utilization=0.7"
     else
         model="vllm"
     fi
