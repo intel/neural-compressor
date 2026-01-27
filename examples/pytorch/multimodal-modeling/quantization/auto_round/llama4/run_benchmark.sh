@@ -30,6 +30,9 @@ function init_params {
       --static_kv_dtype=*)
           kv_cache_dtype=$(echo $var |cut -f2 -d=)
       ;;
+      --static_attention_dtype=*)
+          attention_dtype=$(echo $var |cut -f2 -d=)
+      ;;
     esac
   done
 
@@ -41,6 +44,7 @@ function run_benchmark {
     extra_model_args=""
     extra_cmd=""
     kv_cache_dtype=${kv_cache_dtype:="auto"}
+    attention_dtype=${attention_dtype:="auto"}
     batch_size=${batch_size:=1}
 
     if [ "${topology}" = "llama4_mxfp4" ]; then
@@ -57,6 +61,10 @@ function run_benchmark {
     if [[ "${tasks}" == *"chartqa"* || "${tasks}" == *"mmmu_val"* ]]; then
         model="vllm-vlm"
         extra_cmd=${extra_cmd}" --apply_chat_template"
+    elif [[ "${tasks}" == *"longbench"* ]]; then
+	model="vllm"
+        extra_cmd="--seed 42 --apply_chat_template --gen_kwargs {\"temperature\":0.0} "
+	extra_model_args="max_model_len=66000,gpu_memory_utilization=0.7"
     else
         model="vllm"
     fi
@@ -65,6 +73,13 @@ function run_benchmark {
         export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
         export VLLM_ATTENTION_BACKEND="FLASHINFER"
         echo "Using FP8 for KV cache"
+    fi
+
+    if [[ "${attention_dtype}" == "fp8" ]]; then
+        export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+        export VLLM_ATTENTION_BACKEND="FLASHINFER"
+        kv_cache_dtype="fp8"
+        echo "Using FP8 Attention"
     fi
 
     NCCL_NVLS_ENABLE=0 VLLM_USE_STANDALONE_COMPILE=0 VLLM_WORKER_MULTIPROC_METHOD=spawn \
