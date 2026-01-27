@@ -3,7 +3,7 @@ pip install setuptools --upgrade
 pip install packaging --upgrade
 pip install transformers==4.57.3
 pip install -U "huggingface_hub[cli]"
-# Intsall auto-round
+# Install auto-round
 git clone -b fix-ds-attn https://github.com/intel/auto-round.git && cd auto-round
 pip install -e .
 cd ..
