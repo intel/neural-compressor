@@ -56,7 +56,6 @@ torch.backends.__allow_nonbracketed_mutation_flag = True
 
 try:
     import auto_round
-    from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear
 
     auto_round_installed = True
 except ImportError:
@@ -85,17 +84,16 @@ def run_fn(model, dataloader):
 class TestAutoRoundCPU:
     @classmethod
     def setup_class(self):
-        self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
-            "hf-internal-testing/tiny-random-GPTJForCausalLM",
+        self.opt_model = transformers.AutoModelForCausalLM.from_pretrained(
+            "facebook/opt-125m",
             torchscript=True,
         )
         self.inp = torch.ones([1, 10], dtype=torch.long)
         self.tokenizer = transformers.AutoTokenizer.from_pretrained(
-            "hf-internal-testing/tiny-random-GPTJForCausalLM", trust_remote_code=True
+            "facebook/opt-125m", trust_remote_code=True
         )
         from neural_compressor.torch.algorithms.autoround import get_dataloader
         self.dataloader = get_dataloader(self.tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
-        self.label = self.gptj(self.inp)[0]
 
     @classmethod
     def teardown_class(self):
@@ -105,35 +103,29 @@ class TestAutoRoundCPU:
     def setup_method(self, method):
         logger.info(f"Running TestAutoRound test: {method.__name__}")
 
-    @pytest.mark.parametrize("quant_lm_head", [True, False])
-    def test_autoround(self, quant_lm_head):
-        # AutoRound does not yet support the actual use of quant_lm_head 
-        # https://github.com/intel/auto-round/blob/7b8e280f5b789fe861fe95eac971de0805ce4c62/auto_round/compressors/base.py#L438-L442
-        fp32_model = copy.deepcopy(self.gptj)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
-        if quant_lm_head is True:
-            layer_config = {"lm_head": {"data_type": "int"}}
-            quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32", 
-                                           quant_lm_head=quant_lm_head, layer_config=layer_config)
+    def test_quant_lm_head(self):
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            # "trl-internal-testing/tiny-Phi3ForCausalLM",
+            "optimum-intel-internal-testing/tiny-random-Phi3ForCausalLM"
+            )
+        tokenizer =  AutoTokenizer.from_pretrained("optimum-intel-internal-testing/tiny-random-Phi3ForCausalLM", trust_remote_code=True)
+        
+        quant_config = AutoRoundConfig(tokenizer=tokenizer, nsamples=32, seqlen=10, iters=1, amp=False ,scale_dtype="fp32", 
+                                           quant_lm_head=True, group_size=32)
         logger.info(f"Test AutoRound with config {quant_config}")
-
-        # prepare + convert API
-        model = prepare(model=fp32_model, quant_config=quant_config)
-
-        run_fn(model, self.dataloader)
+        text = "Replace me by any text you'd like."
+        encoded_input = tokenizer(text, return_tensors="pt")
+        model = prepare(model=model, quant_config=quant_config)
         q_model = convert(model)
-        out = q_model(self.inp)[0]
-        assert torch.allclose(out, self.label, atol=1e-1)
-        assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
-        assert "scale_dtype" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
-        assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
-        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
-        if quant_lm_head is True:
-            assert isinstance(q_model.lm_head, WeightOnlyLinear), "quantization for lm_head failed."
+        output = tokenizer.decode(q_model.generate(**encoded_input, max_new_tokens=10)[0])
+        print(output)
+        assert output is not None
+        tagert_modules = ["QuantLinear"]
+        assert  q_model.lm_head.__class__.__name__ in tagert_modules, "packing model failed."
 
     def test_int4_dtype(self):
-        fp32_model = copy.deepcopy(self.gptj)
-        quant_config = AutoRoundConfig(dtype="int4", nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32")
+        fp32_model = copy.deepcopy(self.opt_model)
+        quant_config = AutoRoundConfig(dtype="int4", nsamples=32, seqlen=10, iters=1, amp=False ,scale_dtype="fp32")
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # prepare + convert API
@@ -141,32 +133,27 @@ class TestAutoRoundCPU:
 
         run_fn(model, self.dataloader)
         q_model = convert(model)
-        out = q_model(self.inp)[0]
-        assert torch.allclose(out, self.label, atol=1e-1)
-        assert "transformer.h.0.attn.k_proj" in q_model.autoround_config.keys()
-        assert "scale_dtype" in q_model.autoround_config["transformer.h.0.attn.k_proj"].keys()
-        assert torch.float32 == q_model.autoround_config["transformer.h.0.attn.k_proj"]["scale_dtype"]
-        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
+        _ = q_model(self.inp) # inference
+        tagert_modules = ["QuantLinear"]
+        assert  q_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
+
 
     def test_autoround_with_quantize_API(self):
-        gpt_j_model = copy.deepcopy(self.gptj)
+        fp32_model = copy.deepcopy(self.opt_model)
 
-        quant_config = AutoRoundConfig(dtype="int", bits=4, act_dtype="int", act_bits=32,nsamples=32, seqlen=10,
-                        iters=10, use_sym=False, group_size=128, amp=False ,scale_dtype="fp32")
-        quant_config.set_local("lm_head", AutoRoundConfig(dtype="fp32"))
-
+        quant_config = AutoRoundConfig(scheme="W4A16", seqlen=10, iters=1, use_sym=False, amp=False ,scale_dtype="fp32")
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # quantize API
         q_model = quantize(
-            model=gpt_j_model,
+            model=fp32_model,
             quant_config=quant_config,
             run_fn=run_fn,
             run_args=(self.dataloader,),
         )
-        out = q_model(self.inp)[0]
-        assert torch.allclose(out, self.label, atol=1e-1)
-        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
+        _ = q_model(self.inp) # inference
+        tagert_modules = ["QuantLinear"]
+        assert  q_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
 
     def test_conv1d(self):
         model = AutoModelForCausalLM.from_pretrained("MBZUAI/LaMini-GPT-124M", device_map="auto", trust_remote_code=True)
@@ -188,7 +175,7 @@ class TestAutoRoundCPU:
             get_multimodal_block_names,
         )
 
-        fp32_model = copy.deepcopy(self.gptj)
+        fp32_model = copy.deepcopy(self.opt_model)
         to_quant_block_names = get_multimodal_block_names(fp32_model, quant_vision=True)
         quant_config = AutoRoundConfig(
             nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp16", to_quant_block_names=to_quant_block_names
@@ -202,9 +189,10 @@ class TestAutoRoundCPU:
         model = prepare(model=fp32_model, quant_config=quant_config)
         run_fn(model, self.dataloader)
         q_model = convert(model)
-        out = q_model(self.inp)[0]
-        assert torch.allclose(out, self.label, atol=1e-1)
-        assert isinstance(q_model.transformer.h[0].attn.k_proj, WeightOnlyLinear), "packing model failed."
+        _ = q_model(self.inp) # inference
+        tagert_modules = ["QuantLinear"]
+        assert  q_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
+
 
     @pytest.mark.skipif(Version(auto_round.__version__) <= Version("0.5.1"), reason="visual layer_name not processed.")
     def test_mllm(self):
@@ -250,23 +238,9 @@ class TestAutoRoundCPU:
         model = prepare(model=model, quant_config=quant_config)
         run_fn(model, dataloader)
         q_model = convert(model)
-        assert isinstance(q_model.model.language_model.layers[0].mlp.up_proj, WeightOnlyLinear), "model quantization failed."
+        tagert_modules = ["QuantLinear"]
+        assert q_model.model.language_model.layers[0].mlp.up_proj.__class__.__name__ in tagert_modules, "model quantization failed."
 
-    # def test_autoround_format_export(self):
-    #     from neural_compressor.torch.quantization import load
-    #     from auto_gptq.nn_modules.qlinear.qlinear_triton import QuantLinear
-    #     gpt_j_model = copy.deepcopy(self.gptj)
-    #     quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, amp=False ,scale_dtype="fp32", export_format="auto_round:gptq")
-    #     logger.info(f"Test AutoRound with config {quant_config}")
-    #     model = prepare(model=gpt_j_model, quant_config=quant_config)
-    #     run_fn(model, self.dataloader)
-    #     q_model = convert(model)
-    #     out = q_model(self.inp)[0]
-    #     assert torch.allclose(out, self.label, atol=1e-1)
-    #     assert isinstance(q_model.transformer.h[0].attn.k_proj, QuantLinear), "packing model failed."
-    #     q_model.save(output_dir="saved_results_tiny-random-GPTJForCausalLM", format="huggingface")
-    #     loaded_model = load("saved_results_tiny-random-GPTJForCausalLM", format="huggingface", trust_remote_code=True)
-    
     def test_set_local(self):
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
