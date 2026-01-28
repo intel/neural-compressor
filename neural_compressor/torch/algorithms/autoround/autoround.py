@@ -36,7 +36,6 @@ _is_auto_round_available()
 from auto_round import AutoRound, AutoRoundMLLM  # pylint: disable=E0401
 from auto_round.compressors.mllm.eval import lmms_eval, mllm_eval
 from auto_round.compressors.mllm.template import Template, get_template
-from auto_round.export.export_to_itrex.export import pack_model  # pylint: disable=E0401
 from auto_round.schemes import QuantizationScheme
 
 from neural_compressor.common.utils import Statistics
@@ -207,10 +206,6 @@ class AutoRoundQuantizer(Quantizer):
             model, weight_config = rounder.quantize()
             model.autoround_config = weight_config
             return rounder.save_quantized(output_dir=self.output_dir, inplace=True)
-        elif "itrex" in self.export_format:  # TODO: remove itrex related code later
-            model, weight_config = rounder.quantize()
-            model.autoround_config = weight_config
-            model = pack_model(model, weight_config, device=self.device, inplace=True)
         else:  # pragma: no cover
             rounder.quantize_and_save(output_dir=self.output_dir, format=self.export_format, inplace=True)
             model = rounder.model
