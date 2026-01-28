@@ -6,3 +6,4 @@ transformers<=4.57.6
 jieba
 fuzzywuzzy
 rouge
+hf_transfer
