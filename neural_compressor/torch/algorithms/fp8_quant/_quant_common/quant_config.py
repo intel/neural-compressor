@@ -98,10 +98,16 @@ _configs_that_use_enum_value = [
 ]
 
 # TODO [SW-217813]: support dynamic quantization in all ops and remove
-# TODO [SW-228723]: get a better way to list all linear ops, like set in ModuleInfo if supports dynamic
-supported_dynamic_ops = ["Linear", "RowParallelLinear", "ColumnParallelLinear", "MergedColumnParallelLinear", "QKVParallelLinear", "FalconLinear", "LoRACompatibleLinear", "ReplicatedLinear", "LinearLayer", "LinearAllreduce", "ScopedLinearAllReduce", "LmHeadLinearAllreduce", "FusedMoE", "GaudiMixtralSparseMoeBlock", "VllmMixtureOfExpertsOp", "VllmMixtureOfExpertsOpFP8", "GaudiDeepseekV3MoE", "GaudiFP8Linear"]
+from neural_compressor.torch.algorithms.fp8_quant.model_configs import get_patched_module_table, ModuleInfo
+
 def is_supported_dynamic_op(op_str):
-    ret = op_str in supported_dynamic_ops
+    """
+    Dynamically checks if the given op supports dynamic quantization
+    by looking up its ModuleInfo and checking for a 'supports_dynamic_quantization' attribute.
+    """
+    patched_table = get_patched_module_table()
+    info = patched_table.get(op_str)
+    ret = getattr(info, "supports_dynamic_quantization", False) if info is not None else False
     logger.trace("Checking if %s is supported for dynamic quantization: %s", op_str, ret)
     return ret
 

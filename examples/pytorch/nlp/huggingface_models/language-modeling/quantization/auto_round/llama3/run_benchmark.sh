@@ -6,6 +6,7 @@
 TASKS="piqa,hellaswag,mmlu_llama,gsm8k_llama"
 BATCH_SIZE=64
 GPU_MEMORY_UTILIZATION=0.8
+KV_CACHE_DTYPE="auto"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -25,12 +26,23 @@ while [[ $# -gt 0 ]]; do
             GPU_MEMORY_UTILIZATION="${1#*=}"
             shift
             ;;
+        --static_kv_dtype=*)
+            KV_CACHE_DTYPE="${1#*=}"
+            shift
+            ;;
         *)
             echo "Unknown parameter: $1"
             exit 1
             ;;
     esac
 done
+
+# for fp8 kv cache
+if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
+    export VLLM_ATTENTION_BACKEND="FLASHINFER"
+    echo "Using FP8 for KV cache"
+fi
 
 # Validate required parameters
 if [[ -z "$MODEL_PATH" ]]; then
@@ -75,11 +87,11 @@ run_evaluation() {
     echo "Running evaluation for tasks: $tasks (add_bos_token=$add_bos_token)"
     
     # Print the command being executed
-    local cmd="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192 --tasks $tasks --batch_size $BATCH_SIZE $extra_args"
+    local cmd="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192,kv_cache_dtype=${KV_CACHE_DTYPE} --tasks $tasks --batch_size $BATCH_SIZE $extra_args"
     echo "Executing command: $cmd"
     
     lm_eval --model vllm \
-        --model_args pretrained="$MODEL_PATH",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192 \
+        --model_args pretrained="$MODEL_PATH",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192,kv_cache_dtype=${KV_CACHE_DTYPE} \
         --tasks $tasks \
         --batch_size $BATCH_SIZE \
         $extra_args

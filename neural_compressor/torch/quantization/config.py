@@ -878,7 +878,7 @@ class AutoRoundConfig(TorchBaseConfig):
         scale_dtype: str = "fp16",
         use_layer_wise: bool = False,
         to_quant_block_names: list = None,
-        export_format: str = "itrex",
+        export_format: str = "auto_round",
         # v0.4
         enable_norm_bias_tuning: bool = False,
         enable_torch_compile: bool = False,
@@ -942,7 +942,7 @@ class AutoRoundConfig(TorchBaseConfig):
               have different choices.
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             to_quant_block_names (list): A list whose elements are list of block's layer names to be quantized.
-            export_format (str, optional): The format used for exporting the quantized model. Defaults to "itrex".
+            export_format (str, optional): The format used for exporting the quantized model. Defaults to "auto_round".
             enable_norm_bias_tuning (bool): Whether to enable fast norm/layer_bias tuning.
             enable_torch_compile (bool): Whether to enable torch compile to optimize quant_block/layer, torch>=2.6 True.
             quant_nontext_module (bool): Whether to quantize nontext module.

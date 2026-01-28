@@ -3,6 +3,7 @@
 # Usage: CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP8
 
 # Parse command line arguments
+KV_CACHE_DTYPE="auto"
 while [[ $# -gt 0 ]]; do
     case $1 in
         --topology=*)
@@ -19,6 +20,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --output_model=*)
             OUTPUT_MODEL="${1#*=}"
+            shift
+            ;;
+        --static_kv_dtype=*)
+            KV_CACHE_DTYPE="${1#*=}"
             shift
             ;;
         *)
@@ -43,21 +48,24 @@ echo "  Input Model: $INPUT_MODEL"
 echo "  Output Model: $OUTPUT_MODEL"
 
 # Set common parameters
-COMMON_ARGS="--quantize --enable_torch_compile --low_gpu_mem_usage --export_format auto_round"
+if [ "$KV_CACHE_DTYPE" = "auto" ]; then
+    COMMON_ARGS="--quantize --enable_torch_compile --low_gpu_mem_usage --export_format auto_round"
+else
+    COMMON_ARGS="--quantize --enable_torch_compile --low_gpu_mem_usage --export_format auto_round --static_kv_dtype $KV_CACHE_DTYPE"
+fi
 
 case "$TOPOLOGY" in
     "Llama-3.1-8B")
         case "$DTYPE" in
             "mxfp8")
                 echo "Running Llama 3.1 8B MXFP8 quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP8 --iters 1000 --nsamples 512 --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP8 --iters 0 --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
                     $COMMON_ARGS \
                     --dtype MXFP8 \
-                    --iters 1000 \
-                    --nsamples 512 \
+                    --iters 0 \
                     --export_path "$OUTPUT_MODEL"
                 ;;
             "mxfp4")

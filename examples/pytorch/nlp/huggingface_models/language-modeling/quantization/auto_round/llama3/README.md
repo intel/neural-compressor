@@ -13,18 +13,6 @@ pip install auto-round==0.9.3
 pip install -r requirements.txt
 ```
 
-**Before neural-compressor v3.7 and auto-round v0.9.1 release, please install from source for the latest updates:**
-
-```bash 
-# neural-compressor-pt
-INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@master
-# auto-round
-pip install git+https://github.com/intel/auto-round.git@v0.9.3rc
-# other requirements
-pip install -r requirements.txt
-```
-
-
 ## Quantization
 
 ### Demo (`MXFP4`, `MXFP8`, `NVFP4`, `uNVFP4`)
@@ -90,9 +78,12 @@ Notes:
 
 Here we provide several recipes for Llama3 models. The relative accuracy loss of quantized model should be less than 1%.
 
+> Note: You can also enable static quantization for KV cache by adding `--static_kv_dtype fp8` argument to `quantize.py`， or `--static_kv_dtype=fp8` argument to `run_quant.sh` and `run_benchmark.sh`.
+
 #### Llama 3.1 8B MXFP8
 
-AutoRound tuning helps improve the accuracy, `iters` and `nsamples` is higher than default.
+RTN (Round-to-Nearest) is enough to keep accuracy.
+
 ```bash
 # Quantize and export AutoRound format
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP8
@@ -121,7 +112,7 @@ CUDA_VISIBLE_DEVICES=0 python quantize.py  \
     --low_gpu_mem_usage \
     --export_format auto_round  \
     --export_path llama3.1-8B-MXFP4-MXFP8 \
-    --tasks mmlu piqa hellaswag gsm8k \
+    --tasks mmlu_llama piqa hellaswag gsm8k_llama \
     --eval_batch_size 32
 ```
 
@@ -219,8 +210,7 @@ CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.1-70B-MXFP8 
 
 The script automatically:
 - Detects available GPUs from `CUDA_VISIBLE_DEVICES` and sets `tensor_parallel_size` accordingly
-- Handles different `add_bos_token` settings for different tasks (GSM8K requires `False`, others use `True`)
-- Runs default tasks: `piqa,hellaswag,mmlu,gsm8k` with batch size 8
+- Runs default tasks: `piqa,hellaswag,mmlu_llama,gsm8k_llama` with batch size 8
 - Supports custom task selection and batch size adjustment
 
 
