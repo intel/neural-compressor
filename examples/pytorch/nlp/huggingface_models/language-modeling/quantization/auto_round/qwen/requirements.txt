@@ -1,2 +1,2 @@
-lm-eval==0.4.9.1
+lm-eval==0.4.10
 loguru
