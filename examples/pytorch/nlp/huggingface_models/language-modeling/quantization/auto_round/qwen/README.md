@@ -2,9 +2,9 @@ This example provides an end-to-end workflow to quantize Qwen models to MXFP4/MX
 
 ## Requirement
 ```bash
-pip install neural-compressor-pt==3.7
+pip install neural-compressor-pt
 # auto-round
-pip install auto-round==0.9.3
+pip install auto-round
 # vLLM
 git clone -b fused-moe-ar --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
 VLLM_USE_PRECOMPILED=1 pip install --editable . -vvv
@@ -37,6 +37,12 @@ bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels
 ```bash
 export MODEL=Qwen/Qwen3-30B-A3B
 bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels -kv "fp8"
+```
+
+  Attention
+```bash
+export MODEL=Qwen/Qwen3-30B-A3B
+bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels -attn "fp8"
 ```
 
 ## Evaluation

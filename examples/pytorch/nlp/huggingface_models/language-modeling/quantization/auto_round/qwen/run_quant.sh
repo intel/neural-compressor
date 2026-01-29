@@ -5,6 +5,7 @@ MODEL=""
 TARGET=""
 OUTPUT_DIR=""
 STATIC_KV_DTYPE="None"
+STATIC_ATTENTION_DTYPE="None"
 
 usage() {
   echo "Usage: $0 --model MODEL -t [mxfp4|mxfp8] --output_dir DIR -kv DTYPE"
@@ -12,6 +13,7 @@ usage() {
   echo "  -t           quantization target (e.g. mxfp8, mxfp4)"
   echo "  --output_dir output directory for quantized model"
   echo "  -kv          Data type for static kv cache (default: None)"
+  echo "  -attn        Data type for static attention cache (default: None)"
   echo ""
   echo "Examples:"
   echo "  $0 --model /path/to/my/model -t mxfp4 --output_dir /path/to/output/dir"
@@ -36,6 +38,10 @@ while [[ $# -gt 0 ]]; do
       STATIC_KV_DTYPE="$2"
       shift 2
       ;;
+    -attn)
+      STATIC_ATTENTION_DTYPE="$2"
+      shift 2
+      ;;
     -h|--help)
       usage
       ;;
@@ -55,4 +61,5 @@ python quantize.py \
   -t "$TARGET" \
   --use_autoround_format \
   --output_dir "$OUTPUT_DIR" \
-  $( [ "$STATIC_KV_DTYPE" != "None" ] && echo "--static_kv_dtype $STATIC_KV_DTYPE" )
+  $( [ "$STATIC_KV_DTYPE" != "None" ] && echo "--static_kv_dtype $STATIC_KV_DTYPE" ) \
+  $( [ "$STATIC_ATTENTION_DTYPE" != "None" ] && echo "--static_attention_dtype $STATIC_ATTENTION_DTYPE" )
