@@ -67,6 +67,7 @@ function run_benchmark {
 	    extra_model_args="max_model_len=66000,gpu_memory_utilization=0.7"
     else
         model="vllm"
+		extra_model_args="max_model_len=8192,max_num_seqs=1024,max_gen_toks=2048,gpu_memory_utilization=0.7"
     fi
 
     if [[ "${kv_cache_dtype}" == "fp8" ]]; then
