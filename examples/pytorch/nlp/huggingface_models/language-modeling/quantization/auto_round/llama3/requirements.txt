@@ -8,3 +8,4 @@ neural-compressor-pt>=3.7
 jieba
 fuzzywuzzy
 rouge
+hf_transfer
