@@ -6,9 +6,9 @@ In this example, you can verify the accuracy on HPU/CUDA device with emulation o
 
 ```bash
 # neural-compressor-pt
-pip install neural-compressor-pt==3.7
+pip install neural-compressor-pt
 # auto-round
-pip install auto-round==0.9.3
+pip install auto-round
 # other requirements
 pip install -r requirements.txt
 ```
