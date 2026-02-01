@@ -80,7 +80,13 @@ def setup_parser():
         choices=["fp8", "float8_e4m3fn"],
         help="Data type for static quantize key and value."
     )
-
+    parser.add_argument(
+        "--static_attention_dtype",
+        default=None,
+        type=str,
+        choices=["fp8", "float8_e4m3fn"],
+        help="Data type for static quantize query, key and value."
+    )
     parser.add_argument(
         "--iters",
         "--iter",
@@ -122,6 +128,7 @@ def tune(args):
         output_dir=args.output_dir,
         processor=processor,
         static_kv_dtype=args.static_kv_dtype,
+        static_attention_dtype=args.static_attention_dtype,
         reloading=False,
     )
     model = prepare(model, qconfig)
