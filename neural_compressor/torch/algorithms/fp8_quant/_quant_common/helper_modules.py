@@ -178,6 +178,9 @@ class PatchedLinearBase(PatchedModuleBase):
             # When offloading weights to disk using device_map, the module forward is overridden.
             # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
             # So need to set PatchedLinear forward to be the right forward.
+            #TODO [GAUDISW-246018]: find a good solution for weights with 3 dims
+            if self.weight.dim() == 3:
+                self.weight.squeeze_()
             self.weight = nn.Parameter(self.weight.t().contiguous())
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
