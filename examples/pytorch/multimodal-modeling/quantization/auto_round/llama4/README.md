@@ -39,5 +39,5 @@ CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=llama4_mxfp4 --input_model=L
 ## 2. Benchmark
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --topology=llama4_mxfp4 --input_model=saved_results --tasks=piqa --batch_size=1 --tp_size=4
+CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --topology=llama4_mxfp4 --input_model=saved_results --tasks=piqa --batch_size=256 --tp_size=4
 ```
