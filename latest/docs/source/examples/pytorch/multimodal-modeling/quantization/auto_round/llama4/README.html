@@ -124,11 +124,12 @@ bash<span class="w"> </span>setup.sh
 </div>
 <blockquote>
 <div><p>Note: You can also enable static quantization for KV cache by adding <code class="docutils literal notranslate"><span class="pre">--static_kv_dtype</span> <span class="pre">fp8</span></code> argument to <code class="docutils literal notranslate"><span class="pre">main.py</span></code>， or <code class="docutils literal notranslate"><span class="pre">--static_kv_dtype=fp8</span></code> argument to <code class="docutils literal notranslate"><span class="pre">run_quant.sh</span></code> and <code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code>.</p>
+<p>You can also enable static quantization for attention by adding <code class="docutils literal notranslate"><span class="pre">--static_attention_dtype</span> <span class="pre">fp8</span></code> argument to <code class="docutils literal notranslate"><span class="pre">main.py</span></code>， or <code class="docutils literal notranslate"><span class="pre">--static_attention_dtype=fp8</span></code> argument to <code class="docutils literal notranslate"><span class="pre">run_quant.sh</span></code> and <code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code>. When enabled, it automatically sets KV cache dtype to fp8 as well.</p>
 </div></blockquote>
 </section>
 <section id="benchmark">
 <h2>2. Benchmark<a class="headerlink" href="#benchmark" title="Link to this heading"></a></h2>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--topology<span class="o">=</span>llama4_mxfp4<span class="w"> </span>--input_model<span class="o">=</span>saved_results<span class="w"> </span>--tasks<span class="o">=</span>piqa<span class="w"> </span>--batch_size<span class="o">=</span><span class="m">1</span><span class="w"> </span>--tp_size<span class="o">=</span><span class="m">4</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--topology<span class="o">=</span>llama4_mxfp4<span class="w"> </span>--input_model<span class="o">=</span>saved_results<span class="w"> </span>--tasks<span class="o">=</span>piqa<span class="w"> </span>--batch_size<span class="o">=</span><span class="m">256</span><span class="w"> </span>--tp_size<span class="o">=</span><span class="m">4</span>
 </pre></div>
 </div>
 </section>
@@ -148,7 +149,7 @@ bash<span class="w"> </span>setup.sh
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7ff20d5ff440> 
+   <jinja2.runtime.BlockReference object at 0x7fe9799f3f20> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

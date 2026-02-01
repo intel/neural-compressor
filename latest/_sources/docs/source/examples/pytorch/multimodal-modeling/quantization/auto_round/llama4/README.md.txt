@@ -33,9 +33,11 @@ CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=llama4_mxfp4 --input_model=L
 ```
 
 > Note: You can also enable static quantization for KV cache by adding `--static_kv_dtype fp8` argument to `main.py`， or `--static_kv_dtype=fp8` argument to `run_quant.sh` and `run_benchmark.sh`.
+>
+> You can also enable static quantization for attention by adding `--static_attention_dtype fp8` argument to `main.py`， or `--static_attention_dtype=fp8` argument to `run_quant.sh` and `run_benchmark.sh`. When enabled, it automatically sets KV cache dtype to fp8 as well.
 
 ## 2. Benchmark
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --topology=llama4_mxfp4 --input_model=saved_results --tasks=piqa --batch_size=1 --tp_size=4
+CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --topology=llama4_mxfp4 --input_model=saved_results --tasks=piqa --batch_size=256 --tp_size=4
 ```
