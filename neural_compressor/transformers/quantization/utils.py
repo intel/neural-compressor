@@ -26,7 +26,6 @@ from neural_compressor.common.utils import LazyImport, logger
 from neural_compressor.torch.algorithms.weight_only.modules import INCWeightOnlyLinear
 from neural_compressor.torch.algorithms.weight_only.utility import repack_awq_to_optimum_format
 from neural_compressor.torch.quantization import (
-    AutoRoundConfig,
     AWQConfig,
     GPTQConfig,
     RTNConfig,
@@ -343,16 +342,6 @@ def default_run_fn(model, tokenizer, dataset, max_length=512, n_samples=100, bat
             pass
 
 
-@torch.no_grad()
-def run_fn_for_autoround(model, dataloader):
-    for data in dataloader:
-        if isinstance(data, tuple) or isinstance(data, list):
-            model(*data)
-        elif isinstance(data, dict):
-            model(**data)
-        else:
-            model(data)
-
 
 def convert_to_quantized_model(model, config, device="cpu", for_inference=True):
     if device == "xpu" or device == torch.device("xpu"):
@@ -479,130 +468,8 @@ def convert_to_quantized_model(model, config, device="cpu", for_inference=True):
         model = prepare(model=model, quant_config=quant_config, example_inputs=example_inputs)
         run_fn(model, *run_args)
         model = convert(model)
-    elif config.quant_method.value == "autoround":
-        from auto_round.utils import is_mllm_model
-
-        if is_mllm_model(model):
-            from transformers import AutoProcessor, AutoTokenizer
-
-            from neural_compressor.torch.algorithms.weight_only.autoround import (
-                get_mllm_dataloader as get_autoround_dataloader,
-            )
-
-            tokenizer = AutoTokenizer.from_pretrained(model.config._name_or_path)
-            processor = AutoProcessor.from_pretrained(model.config._name_or_path, trust_remote_code=True)
-            (
-                dataloader,
-                template,
-                config.truncation,
-                config.batch_size,
-                config.gradient_accumulate_steps,
-                config.seq_len,
-                config.n_samples,
-            ) = get_autoround_dataloader(
-                template=None,
-                model=model,
-                tokenizer=tokenizer,
-                image_processor=None,
-                dataset=config.dataset,
-                extra_data_dir=None,
-                seqlen=config.seq_len,
-                batch_size=config.batch_size,
-                split=None,
-                apply_template=None,
-                truncation=False,
-                nsamples=config.n_samples,
-                seed=42,
-                gradient_accumulate_steps=config.gradient_accumulate_steps,
-                quant_nontext_module=config.quant_nontext_module,
-                processor=processor,
-            )
-        else:
-            from neural_compressor.torch.algorithms.weight_only.autoround import (
-                get_dataloader as get_autoround_dataloader,
-            )
-
-            dataloader = get_autoround_dataloader(
-                tokenizer=config.tokenizer,
-                seqlen=config.seq_len,
-                dataset_name=config.dataset,
-                seed=42,
-                bs=config.batch_size,
-                nsamples=config.n_samples,
-            )
-
-        device_map = get_accelerator().current_device_name()
-        quant_config = AutoRoundConfig(
-            dtype=dtype,
-            bits=config.bits,
-            use_sym=config.sym,
-            group_size=config.group_size,
-            device_map=device_map,
-            enable_quanted_input=not config.disable_quanted_input,
-            lr=config.lr,
-            minmax_lr=config.minmax_lr,
-            seqlen=config.seq_len,
-            nsamples=config.n_samples,
-            iters=config.iters,
-            batch_size=config.batch_size,
-            scale_dtype=config.scale_dtype,
-            use_layer_wise=config.use_layer_wise,
-            # vlm arguments
-            quant_nontext_module=config.quant_nontext_module,
-            truncation=config.truncation,
-            gradient_accumulate_steps=config.gradient_accumulate_steps,
-            export_format=config.export_format,
-        )
-
-        # vlm set non-text module config
-        if is_mllm_model(model):
-            from neural_compressor.torch.utils.utility import (
-                find_matching_blocks,
-                get_layer_names_in_block,
-                get_multimodal_block_names,
-            )
-
-            def set_nontext_module_config(model, to_quant_block_names, config):
-                all_block_list = get_multimodal_block_names(model, quant_vision=True)
-                all_block_set = set(tuple(block) for block in all_block_list)
-                quant_block_set = set(tuple(block) for block in to_quant_block_names)
-                set_to_full_prec = list(all_block_set - quant_block_set)
-                set_to_full_prec = get_layer_names_in_block(model, to_quant_block_names=set_to_full_prec)
-                for name in set_to_full_prec:
-                    config.modules_to_not_convert.append(name)
-
-                # skip layers not in blocks
-                config.modules_to_not_convert.append("model.vision_embed_tokens.img_projection*")
-                config.modules_to_not_convert.append("transformer.visual.attn_pool.*_proj")
-                config.modules_to_not_convert.append("model.mm_projector*")
-                config.modules_to_not_convert.append("multi_modal_projector")
-                config.modules_to_not_convert.append("visual.merger")
-
-            all_blocks = get_multimodal_block_names(model, quant_config.quant_nontext_module)
-            to_quant_block_names = find_matching_blocks(model, all_blocks, quant_config.to_quant_block_names)
-            set_nontext_module_config(model, to_quant_block_names, config)
-
-            for n, m in model.named_modules():
-                if isinstance(m, torch.nn.Linear) or isinstance(m, transformers.pytorch_utils.Conv1D):
-                    if m.weight.shape[0] % 32 != 0 or m.weight.shape[1] % 32 != 0:
-                        config.modules_to_not_convert.append(n)
-                        print(
-                            f"{n} will not be quantized due to its shape not being divisible by 32,"
-                            " resulting in an exporting issue to autogptq"
-                        )
-        if config.modules_to_not_convert != []:
-            for module in config.modules_to_not_convert:
-                module_name = ".*" + module
-                quant_config.set_local(module_name, AutoRoundConfig(dtype="fp32"))
-        logger.info(f"Do AutoRound algorithm with config {quant_config}")
-
-        run_fn = run_fn_for_autoround
-        run_args = (dataloader,)
-        model = prepare(model=model, quant_config=quant_config)
-        run_fn(model, *run_args)
-        model = convert(model)
     else:
-        assert False, "The Supported algorithm are RTN, AWQ, TEQ, GPTQ, AUTOROUND"
+        assert False, "The Supported algorithm are RTN, AWQ, TEQ, GPTQ"
 
     if device == "xpu" or device == torch.device("xpu"):
         logger.warning("The recommended ipex version is higher than 2.3.10 for xpu device.")
