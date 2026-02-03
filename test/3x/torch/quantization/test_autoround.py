@@ -729,7 +729,7 @@ class TestAutoRoundHPU:
         q_model = convert(model)
         _ = q_model(self.inp) # inference
         tagert_modules = ["QuantLinear"]
-        assert  q_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
+        assert q_model.model.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
 
 
     def test_autoround_with_quantize_API(self):
@@ -747,7 +747,7 @@ class TestAutoRoundHPU:
         )
         _ = q_model(self.inp) # inference
         tagert_modules = ["QuantLinear"]
-        assert  q_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
+        assert q_model.model.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
 
 @pytest.mark.skipif(not is_xpu_available(), reason="These tests are not supported on XPU for now.")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
