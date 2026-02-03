@@ -106,6 +106,8 @@ elif [[ "$SCHEME" == "mxfp8" ]]; then
     VLLM_ENABLE_STATIC_MOE=0
     VLLM_USE_DEEP_GEMM=0
     VLLM_ENABLE_AR_EXT=1
+elif [[ "$SCHEME" == "bf16" ]]; then
+    echo "No quantization scheme specified, run original model."
 else
     echo "Error: Invalid quantization scheme (-s). Must be 'mxfp4', 'nvfp4' or 'mxfp8'."
     usage
