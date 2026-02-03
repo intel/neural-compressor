@@ -718,7 +718,7 @@ class TestAutoRoundHPU:
         assert  q_model.lm_head.__class__.__name__ in tagert_modules, "packing model failed."
 
     def test_int4_dtype(self):
-        fp32_model = copy.deepcopy(self.opt_model)
+        fp32_model = copy.deepcopy(self.tiny_llama_model)
         quant_config = AutoRoundConfig(dtype="int4", nsamples=32, seqlen=10, iters=1, amp=False ,scale_dtype="fp32")
         logger.info(f"Test AutoRound with config {quant_config}")
 
@@ -733,7 +733,7 @@ class TestAutoRoundHPU:
 
 
     def test_autoround_with_quantize_API(self):
-        fp32_model = copy.deepcopy(self.opt_model)
+        fp32_model = copy.deepcopy(self.tiny_llama_model)
 
         quant_config = AutoRoundConfig(scheme="W4A16", seqlen=10, iters=1, use_sym=False, amp=False ,scale_dtype="fp32")
         logger.info(f"Test AutoRound with config {quant_config}")
