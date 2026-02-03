@@ -323,7 +323,6 @@ def default_run_fn(model, tokenizer, dataset, max_length=512, n_samples=100, bat
         collate_fn=collate_batch,
     )
     total_cnt = 0
-    from neural_compressor.torch.utils import get_accelerator
 
     device = get_accelerator().current_device_name()
     for i, (input_ids) in enumerate(calib_dataloader):
@@ -340,7 +339,6 @@ def default_run_fn(model, tokenizer, dataset, max_length=512, n_samples=100, bat
             )
         except ValueError:
             pass
-
 
 
 def convert_to_quantized_model(model, config, device="cpu", for_inference=True):
