@@ -746,7 +746,7 @@ class TestAutoRoundHPU:
             run_args=(self.dataloader,),
         )
         _ = q_model(self.inp) # inference
-        tagert_modules = ["QuantLinear"]
+        tagert_modules = ["WQLinear_GEMM"]
         assert q_model.model.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
 
 @pytest.mark.skipif(not is_xpu_available(), reason="These tests are not supported on XPU for now.")
