@@ -13,4 +13,4 @@
 # limitations under the License.
 """Utils for optimization."""
 
-from .quantization_config import RtnConfig, AwqConfig, TeqConfig, GPTQConfig, AutoRoundConfig
+from .quantization_config import RtnConfig, AwqConfig, TeqConfig, GPTQConfig

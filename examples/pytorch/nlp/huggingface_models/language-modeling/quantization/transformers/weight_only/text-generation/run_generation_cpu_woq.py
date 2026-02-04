@@ -11,7 +11,6 @@ from neural_compressor.transformers import (
     AwqConfig,
     TeqConfig,
     GPTQConfig,
-    AutoRoundConfig,
 )
 from distutils.util import strtobool
 
@@ -47,7 +46,7 @@ parser.add_argument("--woq", action="store_true")
 parser.add_argument(
     "--woq_algo",
     default="Rtn",
-    choices=["Rtn", "Awq", "Teq", "GPTQ", "AutoRound"],
+    choices=["Rtn", "Awq", "Teq", "GPTQ"],
     help="Weight-only algorithm.",
 )
 parser.add_argument(
@@ -138,26 +137,6 @@ parser.add_argument(
     action="store_true",
     help="Enables mean squared error (MSE) search.",
 )
-# ============AUTOROUND configs==============
-parser.add_argument(
-    "--lr",
-    type=float,
-    default=None,
-    help="learning rate, if None, it will be set to 1.0/iters automatically",
-)
-parser.add_argument(
-    "--minmax_lr",
-    type=float,
-    default=None,
-    help="minmax learning rate, if None,it will beset to be the same with lr",
-)
-parser.add_argument("--autoround_iters", default=200, type=int, help="num iters for autoround calibration.")
-parser.add_argument(
-    "--disable_quanted_input",
-    action="store_true",
-    help="whether to use the output of quantized block to tune the next block",
-)
-
 # ============BitsAndBytes configs==============
 parser.add_argument("--bitsandbytes", action="store_true")
 # ============AutoModel parameters==============
@@ -167,12 +146,6 @@ parser.add_argument("--_commit_hash", default=None, type=str)
 parser.add_argument("--trust_remote_code", action="store_true")\
 # =======================================
 args = parser.parse_args()
-# woq AutoRound algo expects the default scheme is asym, others are sym.
-if args.scheme is None:
-    if args.woq_algo == "AutoRound":
-        args.scheme = "asym"
-    else:
-        args.scheme = "sym"
 
 config = AutoConfig.from_pretrained(
     args.model,
@@ -268,25 +241,6 @@ if args.woq:
             use_layer_wise=args.use_layer_wise,
             true_sequential=args.true_sequential,
             quant_lm_head=args.quant_lm_head,
-        )
-    elif args.woq_algo == "AutoRound":
-        quantization_config = AutoRoundConfig(
-            tokenizer=tokenizer,
-            dataset=args.dataset,
-            bits=args.bits,
-            sym=True if args.scheme == "sym" else False,
-            n_samples=args.n_samples,
-            group_size=args.group_size,
-            compute_dtype=args.compute_dtype,
-            scale_dtype=args.scale_dtype,
-            weight_dtype=args.weight_dtype,
-            iters=args.autoround_iters,
-            seq_len=args.seq_len,
-            lr=args.lr,
-            minmax_lr=args.minmax_lr,
-            disable_quanted_input=args.disable_quanted_input,
-            quant_lm_head=args.quant_lm_head,
-            use_layer_wise=args.use_layer_wise,
         )
     else:
         assert False, "Please set the correct '--woq_algo'"

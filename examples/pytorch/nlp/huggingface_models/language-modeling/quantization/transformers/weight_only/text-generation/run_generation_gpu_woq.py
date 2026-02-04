@@ -6,7 +6,7 @@ import torch
 from transformers import AutoConfig, AutoTokenizer
 from transformers.generation import GenerationConfig
 import intel_extension_for_pytorch as ipex
-from neural_compressor.transformers import AutoModelForCausalLM, AutoRoundConfig, RtnConfig, GPTQConfig
+from neural_compressor.transformers import AutoModelForCausalLM, RtnConfig, GPTQConfig
 from neural_compressor.transformers.quantization.utils import convert_dtype_str2torch
 from neural_compressor.transformers.generation import _greedy_search, _beam_search
 from transformers.utils import check_min_version
@@ -55,7 +55,7 @@ parser.add_argument("--add_bos_token", action="store_true", help="whether to add
 # ============WeightOnlyQuant configs===============
 parser.add_argument("--bits", type=int, default=4, choices=[4])
 parser.add_argument("--woq", action="store_true")
-parser.add_argument("--woq_algo", default="Rtn", choices=['Rtn', 'GPTQ', 'AutoRound'], 
+parser.add_argument("--woq_algo", default="Rtn", choices=['Rtn', 'GPTQ'], 
                     help="Weight-only parameter.")
 parser.add_argument("--weight_dtype", type=str, default="int4",
                     choices=[
@@ -103,25 +103,6 @@ parser.add_argument(
     action="store_true",
     help="Use determined group to do quantization",
 )
-# ============AutoRound==================
-parser.add_argument(
-    "--lr",
-    type=float,
-    default=None,
-    help="learning rate, if None, it will be set to 1.0/iters automatically",
-)
-parser.add_argument(
-    "--minmax_lr",
-    type=float,
-    default=None,
-    help="minmax learning rate, if None,it will beset to be the same with lr",
-)
-parser.add_argument("--autoround_iters", default=200, type=int, help="num iters for autoround calibration.")
-parser.add_argument(
-    "--disable_quanted_input",
-    action="store_true",
-    help="whether to use the output of quantized block to tune the next block",
-)
 # =======================================
 args = parser.parse_args()
 torch_dtype = convert_dtype_str2torch(args.compute_dtype)
@@ -164,25 +145,6 @@ if args.woq:
             scale_dtype=args.compute_dtype,
             weight_dtype=args.weight_dtype,
             batch_size=args.batch_size,
-            quant_lm_head=args.quant_lm_head,
-            use_layer_wise=args.use_layer_wise,
-        )
-    elif args.woq_algo.lower() == "autoround":
-        quantization_config = AutoRoundConfig(
-            tokenizer=tokenizer,
-            dataset=args.dataset,
-            bits=args.bits,
-            sym=True if args.scheme == "sym" else False,
-            group_size=args.group_size,
-            compute_dtype=args.compute_dtype,
-            scale_dtype=args.compute_dtype,
-            weight_dtype=args.weight_dtype,
-            iters=args.autoround_iters,
-            seq_len=args.seq_len,
-            n_samples=args.n_samples,
-            lr=args.lr,
-            minmax_lr=args.minmax_lr,
-            disable_quanted_input=args.disable_quanted_input,
             quant_lm_head=args.quant_lm_head,
             use_layer_wise=args.use_layer_wise,
         )
