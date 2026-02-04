@@ -100,7 +100,7 @@ echo ""
 
 #FIXME: (yiliu30) remove these envs once we have fixed the pynccl issues
 export NCCL_NVLS_ENABLE=0
-export VLLM_DISABLE_PYNCCL=1
+# export VLLM_DISABLE_PYNCCL=1
 
 # Set environment variables based on quantization type
 # Set environment variables based on quantization type
