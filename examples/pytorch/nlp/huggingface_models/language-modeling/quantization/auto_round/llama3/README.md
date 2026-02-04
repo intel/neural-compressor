@@ -6,9 +6,9 @@ In this example, you can verify the accuracy on HPU/CUDA device with emulation o
 
 ```bash
 # neural-compressor-pt
-pip install neural-compressor-pt==3.7
+pip install neural-compressor-pt
 # auto-round
-pip install auto-round==0.9.3
+pip install auto-round
 # other requirements
 pip install -r requirements.txt
 ```
@@ -79,6 +79,8 @@ Notes:
 Here we provide several recipes for Llama3 models. The relative accuracy loss of quantized model should be less than 1%.
 
 > Note: You can also enable static quantization for KV cache by adding `--static_kv_dtype fp8` argument to `quantize.py`， or `--static_kv_dtype=fp8` argument to `run_quant.sh` and `run_benchmark.sh`.
+>
+> You can also enable static quantization for attention by adding `--static_attention_dtype fp8` argument to `quantize.py`， or `--static_attention_dtype=fp8` argument to `run_quant.sh` and `run_benchmark.sh`. When enabled, it automatically sets KV cache dtype to fp8 as well.
 
 #### Llama 3.1 8B MXFP8
 
@@ -210,8 +212,10 @@ CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.1-70B-MXFP8 
 
 The script automatically:
 - Detects available GPUs from `CUDA_VISIBLE_DEVICES` and sets `tensor_parallel_size` accordingly
-- Runs default tasks: `piqa,hellaswag,mmlu_llama,gsm8k_llama` with batch size 8
+- Runs default tasks: `piqa,hellaswag,mmlu_llama,gsm8k_llama` with batch size 64
 - Supports custom task selection and batch size adjustment
+- Handles special tasks like `mmlu_llama`, `gsm8k_llama` (with chat template) and `longbench` (with extended context length) automatically
+- For longbench dataset evaluation, use the `--tasks=longbench` parameter
 
 
 ### NVFP4
