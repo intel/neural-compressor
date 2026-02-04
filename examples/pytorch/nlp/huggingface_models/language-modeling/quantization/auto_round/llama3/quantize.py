@@ -221,9 +221,23 @@ if __name__ == "__main__":
     model, tokenizer = initialize_model_and_tokenizer(args.model_name_or_path)
 
     if args.quantize:
-        if args.dtype in ["uNVFP4", "NVFP4+"]:
-            from auto_round.schemes import QuantizationScheme
+        from auto_round.schemes import PRESET_SCHEMES, QuantizationScheme
 
+        # Check if RCEIL versions are available and use them instead
+        use_rceil = "MXFP4_RCEIL" in PRESET_SCHEMES and "MXFP8_RCEIL" in PRESET_SCHEMES
+        if use_rceil:
+            # Replace dtype if it's MXFP4 or MXFP8
+            if args.dtype == "MXFP4":
+                args.dtype = "MXFP4_RCEIL"
+            elif args.dtype == "MXFP8":
+                args.dtype = "MXFP8_RCEIL"
+            # Replace options list entries
+            args.options = [
+                "MXFP4_RCEIL" if opt == "MXFP4" else ("MXFP8_RCEIL" if opt == "MXFP8" else opt)
+                for opt in args.options
+            ]
+
+        if args.dtype in ["uNVFP4", "NVFP4+"]:
             uNVFP4 = QuantizationScheme.from_dict(
                 {
                     "bits": 4,
