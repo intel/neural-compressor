@@ -2,3 +2,4 @@ lm-eval==0.4.10
 loguru
 compressed-tensors==0.12.2
 hf_transfer
+transformers==4.57.3
