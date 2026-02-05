@@ -106,6 +106,7 @@ elif [[ "$SCHEME" == "mxfp8" ]]; then
     VLLM_ENABLE_STATIC_MOE=0
     VLLM_USE_DEEP_GEMM=0
     VLLM_ENABLE_AR_EXT=1
+    export VLLM_DISABLE_PYNCCL=1
 elif [[ "$SCHEME" == "fp8" ]]; then
     echo "Run original model."
     VLLM_USE_DEEP_GEMM=0
