@@ -26,7 +26,7 @@ pycocoevalcap
 detectron2@git+https://github.com/facebookresearch/detectron2.git
 accelerate
 diffusers
-sentencepiece==0.2.0
+sentencepiece==0.2.1
 av==12.1.0
 torchsde==0.2.6
 einops
