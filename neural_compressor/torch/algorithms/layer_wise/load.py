@@ -33,6 +33,7 @@ from torch.serialization import (
 )
 
 from neural_compressor.torch.algorithms.layer_wise import modified_pickle as pickle
+from neural_compressor.torch.utils import logger
 
 from .utils import torch
 
@@ -240,6 +241,14 @@ def load(
         >>> torch.load('module.pt', encoding='ascii')
     """
     torch._C._log_api_usage_once("torch.load")
+
+    # Security warning for layer-wise quantization checkpoint loading
+    logger.warning_once(
+        "Layer-wise quantization is loading a model checkpoint. "
+        "Please ensure you trust the source of the checkpoint. "
+        "Loading checkpoints from untrusted sources may execute arbitrary code.",
+    )
+
     # Add ability to force safe only weight loads via environment variable
     if os.getenv("TORCH_FORCE_WEIGHTS_ONLY_LOAD", "0").lower() in ["1", "y", "yes", "true"]:  # pragma: no cover
         weights_only = True
