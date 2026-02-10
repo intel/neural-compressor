@@ -15,4 +15,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques."""
-__version__ = "3.7.1"
+__version__ = "3.8"

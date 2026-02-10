@@ -22,7 +22,7 @@ You can install Neural Compressor using one of three options: Install single com
 
 The following prerequisites and requirements must be satisfied for a successful installation:
 
-- Python version: 3.10 or 3.11 or 3.12
+- Python version: 3.10 or 3.11 or 3.12 or 3.13
 
 > Notes:
 > - If you get some build issues, please check [frequently asked questions](faq.md) at first.
@@ -49,20 +49,6 @@ pip install tensorflow
 ### Install from Binary
 - Install from Pypi
 ```Shell
-# Install 2.X API + Framework extension API + PyTorch dependency
-pip install neural-compressor[pt]
-```
-```Shell
-# Install 2.X API + Framework extension API + TensorFlow dependency
-pip install neural-compressor[tf]
-```
-```Shell
-# Install 2.X API + Framework extension API
-# With this install CMD, some dependencies for framework extension API not installed, 
-# you can install them separately by `pip install -r requirements_pt.txt` or `pip install -r requirements_tf.txt`.
-pip install neural-compressor
-```
-```Shell
 # Framework extension API + PyTorch dependency
 pip install neural-compressor-pt
 ```
@@ -76,7 +62,6 @@ pip install neural-compressor-tf
 ```Shell
 git clone https://github.com/intel/neural-compressor.git
 cd neural-compressor
-pip install -r requirements.txt
 ```
 
 ```Shell
@@ -87,13 +72,6 @@ INC_PT_ONLY=1 pip install .
 ```Shell
 # TensorFlow framework extension API + TensorFlow dependency
 INC_TF_ONLY=1 pip install .
-```
-
-```Shell
-# Full Installation
-pip install .
-[optional] pip install -r requirements_pt.txt # for PyTorch framework extension API
-[optional] pip install -r requirements_tf.txt # for TensorFlow framework extension API
 ```
 
 ### Install from AI Kit
