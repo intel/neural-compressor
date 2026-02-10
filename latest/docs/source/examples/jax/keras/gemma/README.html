@@ -1,0 +1,256 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1. Create Environment &mdash; Intel® Neural Compressor 3.7.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">1. Create Environment</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/docs/source/examples/jax/keras/gemma/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <p>Keras Gemma3 model quantization</p>
+<p>============</p>
+<p>This document describes quantization of Keras Gemma models using Neural Compressor on Intel® Xeon® processors.</p>
+<section id="create-environment">
+<h1>1. Create Environment<a class="headerlink" href="#create-environment" title="Link to this heading"></a></h1>
+<p>It is worth conducting experiments in a separate environment. For example, you can use the conda environment from <a class="reference external" href="https://github.com/conda-forge/miniforge">conda-forge</a>. The binary for your environment could be found here: <a class="reference external" href="https://github.com/conda-forge/miniforge/releases/latest">miniforge</a></p>
+<p>To see performance improvements from quantization, you have to enable some JAX/XLA features by setting an environment variable:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">XLA_FLAGS</span><span class="o">=</span><span class="s2">&quot;\</span>
+<span class="s2">    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \</span>
+<span class="s2">    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \</span>
+<span class="s2">    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter&quot;</span>
+</pre></div>
+</div>
+<p>Without this flag, quantized model works in fake quantization mode (rounding tensors to a given fp8 format but later making calculations in 32-bit floating point format).</p>
+</section>
+<section id="install-modules">
+<h1>2. Install modules<a class="headerlink" href="#install-modules" title="Link to this heading"></a></h1>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="download-model">
+<h1>3. Download model<a class="headerlink" href="#download-model" title="Link to this heading"></a></h1>
+<p>The model can be downloaded manually from the <a class="reference external" href="https://www.kaggle.com/models/keras/gemma3/keras/gemma3_instruct_270m">Kaggle website</a> or you can register yourself to Kaggle and setup your authentication according to https://www.kaggle.com/docs/api#authentication. Once you have configured Kaggle authentication in your environment, simply specify the name of the registered model you intend to use (<a class="reference external" href="https://keras.io/keras_hub/api/models/gemma3/gemma3_backbone/">List of gemma3 models</a>). As default examples use gemma3_instruct_270m model.</p>
+</section>
+<section id="quantize-model">
+<h1>4. Quantize model<a class="headerlink" href="#quantize-model" title="Link to this heading"></a></h1>
+<p>To quantize the model you have to make 3 steps:</p>
+<ol class="simple">
+<li><p>Load the original model:</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">gemma_lm</span> <span class="o">=</span> <span class="n">Gemma3CausalLM</span><span class="o">.</span><span class="n">from_preset</span><span class="p">(</span><span class="s2">&quot;model_name or path_to_the_model&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Calibrate the model using a dataset similar to the one that will be used later. In our example - we use just one prompt. We can choose which floating point format will be used in quantized model.</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">&quot;fp8_e4m3&quot;</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">&quot;fp8_e4m3&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">calib_function</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">({</span><span class="s2">&quot;prompts&quot;</span><span class="p">:</span> <span class="s2">&quot;Describe the city of Moscow&quot;</span><span class="p">},</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+
+
+<span class="n">gemma_lm</span> <span class="o">=</span> <span class="n">quantize_model</span><span class="p">(</span><span class="n">gemma_lm</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_function</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Use quantized model</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">gemma_lm</span><span class="o">.</span><span class="n">generate</span><span class="p">({</span><span class="s2">&quot;prompts&quot;</span><span class="p">:</span> <span class="s2">&quot;Describe the city of Berlin?&quot;</span><span class="p">},</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Output after quantization:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can simply run this by running prepared <a class="reference external" href="quantization.py">quantization.py</a> example.
+When we run example, we can notice different answers of both models for the same prompt, but both should be reasonable. For example:<br />Original gemma3_instruct_270m model:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Describe the city of Berlin?
+
+Berlin is a vibrant and diverse city with a rich history, a thriving arts scene, and a strong sense of community. It&#39;s a place where you can find a wide variety of experiences, from exploring historical landmarks to enjoying the vibrant nightlife. Berlin is known for its iconic landmarks like the Brandenburg Gate, the Reichstag, and the Wall. The city is also known for its diverse cultural scene, with museums, theaters, and music venues. Berlin is a
+</pre></div>
+</div>
+<p>Quantized gemma3_instruct_270m model:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Describe the city of Berlin?
+
+Berlin is a vibrant, diverse, and historically rich city with a unique blend of cultures and traditions. It&#39;s a place where history is palpable, art, and music, and the very alive. The city&#39;s architecture is stunning, with a mix of modern and a unique blend of styles. The streets are lined with charming, bustling with people, and the atmosphere. The food is a delight, with a variety of cuisines, from the most delicious and
+</pre></div>
+</div>
+</section>
+<section id="save-and-load-quantized-model">
+<h1>5. Save and load quantized model<a class="headerlink" href="#save-and-load-quantized-model" title="Link to this heading"></a></h1>
+<p>Calibration costs time, so we can calibrate once on representative data sets and later reuse it many times. To achieve it saving model functionality is supported.
+You can run <a class="reference external" href="prepare_static.py">prepare_static.py</a> script:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">XLA_FLAGS</span><span class="o">=</span><span class="s2">&quot;\</span>
+<span class="s2">    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \</span>
+<span class="s2">    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \</span>
+<span class="s2">    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter&quot;</span>
+python<span class="w"> </span>prepare_static.py<span class="w"> </span>-m<span class="w"> </span>/path_to_your_gemma_model/gemma3_instruct_270m<span class="w"> </span>-q<span class="w"> </span>/path_to_store_your_quantized_model/gemma3_instruct_270m<span class="w"> </span>-p<span class="w"> </span>fp8_e4m3
+</pre></div>
+</div>
+<p>or, if default parameters works for you, just:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">XLA_FLAGS</span><span class="o">=</span><span class="s2">&quot;\</span>
+<span class="s2">    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \</span>
+<span class="s2">    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \</span>
+<span class="s2">    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter&quot;</span>
+python<span class="w"> </span>prepare_static.py
+</pre></div>
+</div>
+<p>After this step, the saved model is stored in the <code class="docutils literal notranslate"><span class="pre">/path_to_store_your_quantized_model/gemma3_instruct_270m</span></code> file. You can load and use it with <a class="reference external" href="use_static.py">use_static.py</a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">keras_hub.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gemma3CausalLM</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">neural_compressor.jax.quantization</span>
+<span class="n">gemma_lm</span> <span class="o">=</span> <span class="n">Gemma3CausalLM</span><span class="o">.</span><span class="n">from_preset</span><span class="p">(</span><span class="s2">&quot;/path_to_store_your_quantized_model/gemma3_instruct_270m&quot;</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">gemma_lm</span><span class="o">.</span><span class="n">generate</span><span class="p">({</span><span class="s2">&quot;prompts&quot;</span><span class="p">:</span> <span class="s2">&quot;Describe the city of Berlin?&quot;</span><span class="p">},</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can notice that even script does not directly use neural_compressor function, but requires importing neural_compressor.jax.quantization to load quantized model.</p>
+</section>
+<section id="some-debug">
+<h1>6. Some debug<a class="headerlink" href="#some-debug" title="Link to this heading"></a></h1>
+<p>If you are interested how your model looks like after quantization you can set environment variable:
+export LOGLEVEL=DEBUG
+and then use print_model() function in your script. To see how it works just uncomment line 4 in <a class="reference external" href="quantization.py">quantization.py</a></p>
+<p>Part of the gemma3_instruct_270m model could look like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">156</span><span class="p">]</span> <span class="o">----------------------------</span> <span class="n">internal</span> <span class="n">representation</span><span class="p">:</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">KerasQuantizedModelWrapper</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">InputLayer</span>                   <span class="o">.</span><span class="n">padding_mask</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">InputLayer</span>                   <span class="o">.</span><span class="n">token_ids</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">Gemma3Backbone</span>               <span class="o">.</span><span class="n">gemma3_backbone</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">InputLayer</span>                   <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">token_ids</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QStaticReversibleEmbedding</span>   <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">token_embedding</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QDQLayer</span>                     <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">token_embedding</span><span class="o">.</span><span class="n">inputs_qdq</span>                                      <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.26609924</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QDQLayer</span>                     <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">token_embedding</span><span class="o">.</span><span class="n">kernel_qdq</span>                                      <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00209263</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">InputLayer</span>                   <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">padding_mask</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">Gemma3DecoderBlock</span>           <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">RMSNormalization</span>             <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">pre_attention_norm</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">RMSNormalization</span>             <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">post_attention_norm</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QStaticCachedGemma3Attention</span> <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QStaticEinsumDense</span>           <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">query</span>                                 <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.61645776</span><span class="p">]</span> <span class="n">w_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00193569</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QStaticEinsumDense</span>           <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">key</span>                                   <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.61645776</span><span class="p">]</span> <span class="n">w_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00083269</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QStaticEinsumDense</span>           <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">value</span>                                 <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.61645776</span><span class="p">]</span> <span class="n">w_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00063651</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">RMSNormalization</span>             <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">query_norm</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">RMSNormalization</span>             <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">key_norm</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">Dropout</span>                      <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">dropout</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QStaticEinsumDense</span>           <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">attention_output</span>                      <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.15646777</span><span class="p">]</span> <span class="n">w_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00125558</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">Softmax</span>                      <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">softmax</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QStaticRotaryEmbedding</span>       <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">rotary_embedding</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QDQLayer</span>                     <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">rotary_embedding</span><span class="o">.</span><span class="n">positions_qdq</span>        <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.22098215</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QDQLayer</span>                     <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">rotary_embedding</span><span class="o">.</span><span class="n">inverse_freq_qdq</span>     <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00223214</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QDQLayer</span>                     <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">q_qdq</span>                                 <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00163109</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QDQLayer</span>                     <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">k_qdq</span>                                 <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.03631029</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QDQLayer</span>                     <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">attention_softmax_qdq</span>                 <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00223214</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">00</span><span class="p">:</span><span class="mi">01</span><span class="p">:</span><span class="mi">17</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">172</span><span class="p">]</span> <span class="n">QDQLayer</span>                     <span class="o">.</span><span class="n">gemma3_backbone</span><span class="o">.</span><span class="n">decoder_block_0</span><span class="o">.</span><span class="n">attention</span><span class="o">.</span><span class="n">v_qdq</span>                                 <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.20262058</span><span class="p">]</span>
+</pre></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fd1066c4590> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

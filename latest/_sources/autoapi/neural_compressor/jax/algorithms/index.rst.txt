@@ -1,0 +1,11 @@
+neural_compressor.jax.algorithms
+================================
+
+.. py:module:: neural_compressor.jax.algorithms
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor algorithms for JAX.
+
+
+

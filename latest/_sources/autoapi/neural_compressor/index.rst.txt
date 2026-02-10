@@ -20,6 +20,7 @@ Submodules
    /autoapi/neural_compressor/config/index
    /autoapi/neural_compressor/contrib/index
    /autoapi/neural_compressor/data/index
+   /autoapi/neural_compressor/jax/index
    /autoapi/neural_compressor/metric/index
    /autoapi/neural_compressor/mix_precision/index
    /autoapi/neural_compressor/model/index

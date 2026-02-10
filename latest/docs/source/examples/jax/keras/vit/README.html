@@ -1,0 +1,304 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>1. Create Environment &mdash; Intel® Neural Compressor 3.7.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">1. Create Environment</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/docs/source/examples/jax/keras/vit/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <p>Keras ViT Image Classifier model quantization</p>
+<p>============</p>
+<p>This document describes quantization of Keras ViT models using Neural Compressor on Intel® Xeon® processors.</p>
+<section id="create-environment">
+<h1>1. Create Environment<a class="headerlink" href="#create-environment" title="Link to this heading"></a></h1>
+<p>It is worth conducting experiments in a separate environment. For example, you can use the conda environment from <a class="reference external" href="https://github.com/conda-forge/miniforge">conda-forge</a>. The binary for your environment could be found here: <a class="reference external" href="https://github.com/conda-forge/miniforge/releases/latest">miniforge</a></p>
+<p>To see performance improvements from quantization, you have to enable some JAX/XLA features by setting an environment variable:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">XLA_FLAGS</span><span class="o">=</span><span class="s2">&quot;\</span>
+<span class="s2">    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \</span>
+<span class="s2">    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \</span>
+<span class="s2">    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter&quot;</span>
+</pre></div>
+</div>
+<p>Without this flag, quantized model works in fake quantization mode (rounding tensors to a given fp8 format but later making calculations in 32-bit floating point format).</p>
+</section>
+<section id="install-modules">
+<h1>2. Install modules<a class="headerlink" href="#install-modules" title="Link to this heading"></a></h1>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+</section>
+<section id="download-model">
+<h1>3. Download model<a class="headerlink" href="#download-model" title="Link to this heading"></a></h1>
+<p>The model can be downloaded using keras-hub preset loader:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">keras_hub.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ViTImageClassifier</span>
+<span class="kn">import</span><span class="w"> </span><span class="nn">keras</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">ViTImageClassifier</span><span class="o">.</span><span class="n">from_preset</span><span class="p">(</span><span class="s2">&quot;vit_base_patch16_224_imagenet&quot;</span><span class="p">)</span>
+
+<span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;/path/to/saved/model.keras&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="quantize-model">
+<h1>4. Quantize model<a class="headerlink" href="#quantize-model" title="Link to this heading"></a></h1>
+<p>To quantize the model you have to make 3 steps:</p>
+<ol class="simple">
+<li><p>Load the original model:</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">keras</span>
+
+<span class="n">vit_orig</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="s2">&quot;/path/to/original/model.keras&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Calibrate the model using a dataset similar to the one that will be used later. In our example - we use just one image. We can choose which floating point format will be used in quantized model.</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">tensorflow</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">tf</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">load_image</span><span class="p">(</span><span class="n">path</span><span class="p">):</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">io</span><span class="o">.</span><span class="n">read_file</span><span class="p">(</span><span class="n">path</span><span class="p">)</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">decode_jpeg</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">channels</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+    <span class="n">img</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">resize</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="p">[</span><span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">],</span> <span class="n">method</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">image</span><span class="o">.</span><span class="n">ResizeMethod</span><span class="o">.</span><span class="n">BILINEAR</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
+
+
+<span class="n">img</span> <span class="o">=</span> <span class="n">load_image</span><span class="p">(</span><span class="s2">&quot;./colva_beach_sq.jpg&quot;</span><span class="p">)</span>
+<span class="n">img</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.jax.quantization.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">&quot;fp8_e4m3&quot;</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">&quot;fp8_e4m3&quot;</span><span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">calib_function</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">quantize_model</span>
+
+<span class="n">vit_quantized</span> <span class="o">=</span> <span class="n">quantize_model</span><span class="p">(</span><span class="n">vit_orig</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_function</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Use the quantized model</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">vit_quantized</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+
+<span class="kn">from</span><span class="w"> </span><span class="nn">keras.applications.imagenet_utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">decode_predictions</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">print_predictions</span><span class="p">(</span><span class="n">preds</span><span class="p">):</span>
+    <span class="n">preds</span> <span class="o">=</span> <span class="n">decode_predictions</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
+    <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sample_preds</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">preds</span><span class="p">):</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Predictions for sample </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+        <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_preds</span><span class="p">):</span>
+            <span class="n">_</span><span class="p">,</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">score</span> <span class="o">=</span> <span class="n">pred</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    top-</span><span class="si">{</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: class=</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">, score=</span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+
+
+<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Output after quantization:&quot;</span><span class="p">)</span>
+<span class="n">print_predictions</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can run this by running prepared <a class="reference external" href="quantization.py">quantization.py</a> example.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>quantization.py<span class="w"> </span>-m<span class="w"> </span>/path/to/original/model.keras
+</pre></div>
+</div>
+<p>When we run the example, we can notice slightly different top-4 label probabilities. For example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>Output<span class="w"> </span>before<span class="w"> </span>quantization:
+Predictions<span class="w"> </span><span class="k">for</span><span class="w"> </span>sample<span class="w"> </span><span class="m">0</span>:
+<span class="w">    </span>top-1:<span class="w"> </span><span class="nv">class</span><span class="o">=</span>seashore,<span class="w"> </span><span class="nv">score</span><span class="o">=</span><span class="m">12</span>.2238
+<span class="w">    </span>top-2:<span class="w"> </span><span class="nv">class</span><span class="o">=</span>sandbar,<span class="w"> </span><span class="nv">score</span><span class="o">=</span><span class="m">8</span>.7158
+<span class="w">    </span>top-3:<span class="w"> </span><span class="nv">class</span><span class="o">=</span>lakeside,<span class="w"> </span><span class="nv">score</span><span class="o">=</span><span class="m">6</span>.5203
+<span class="w">    </span>top-4:<span class="w"> </span><span class="nv">class</span><span class="o">=</span>promontory,<span class="w"> </span><span class="nv">score</span><span class="o">=</span><span class="m">5</span>.9983
+
+Output<span class="w"> </span>after<span class="w"> </span>quantization:
+Predictions<span class="w"> </span><span class="k">for</span><span class="w"> </span>sample<span class="w"> </span><span class="m">0</span>:
+<span class="w">    </span>top-1:<span class="w"> </span><span class="nv">class</span><span class="o">=</span>seashore,<span class="w"> </span><span class="nv">score</span><span class="o">=</span><span class="m">12</span>.0924
+<span class="w">    </span>top-2:<span class="w"> </span><span class="nv">class</span><span class="o">=</span>sandbar,<span class="w"> </span><span class="nv">score</span><span class="o">=</span><span class="m">8</span>.6914
+<span class="w">    </span>top-3:<span class="w"> </span><span class="nv">class</span><span class="o">=</span>lakeside,<span class="w"> </span><span class="nv">score</span><span class="o">=</span><span class="m">6</span>.3961
+<span class="w">    </span>top-4:<span class="w"> </span><span class="nv">class</span><span class="o">=</span>promontory,<span class="w"> </span><span class="nv">score</span><span class="o">=</span><span class="m">5</span>.9991
+</pre></div>
+</div>
+</section>
+<section id="save-and-load-quantized-model">
+<h1>5. Save and load quantized model<a class="headerlink" href="#save-and-load-quantized-model" title="Link to this heading"></a></h1>
+<p>Calibration costs time, so we can calibrate once on representative data sets and later reuse it many times. To achieve it saving model functionality is supported.
+You can run <a class="reference external" href="prepare_static.py">prepare_static.py</a> script:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">XLA_FLAGS</span><span class="o">=</span><span class="s2">&quot;\</span>
+<span class="s2">    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \</span>
+<span class="s2">    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \</span>
+<span class="s2">    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter&quot;</span>
+python<span class="w"> </span>prepare_static.py<span class="w"> </span>-m<span class="w"> </span>/path/to/original/model.keras<span class="w"> </span>-q<span class="w"> </span>/path/to/quantized/model.keras<span class="w"> </span>-p<span class="w"> </span>fp8_e4m3
+</pre></div>
+</div>
+<p>or, if default parameters work for you, just:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">XLA_FLAGS</span><span class="o">=</span><span class="s2">&quot;\</span>
+<span class="s2">    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \</span>
+<span class="s2">    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \</span>
+<span class="s2">    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter&quot;</span>
+python<span class="w"> </span>prepare_static.py
+</pre></div>
+</div>
+<p>After this step we have saved model stored in the /path/to/quantized/model.keras file. You can load and use it with <a class="reference external" href="use_static.py">use_static.py</a></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">neural_compressor.jax.quantization</span>
+
+<span class="n">vit_quantized</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="s2">&quot;/path/to/quantized/model.keras&quot;</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">vit_quantized</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>You can notice that even though the script does not directly use neural_compressor, it requires importing neural_compressor.jax.quantization to load the quantized model.</p>
+</section>
+<section id="some-debug">
+<h1>6. Some debug<a class="headerlink" href="#some-debug" title="Link to this heading"></a></h1>
+<p>If you are interested how your model looks like after quantization you can set environment variable:
+export LOGLEVEL=DEBUG
+and then use print_model() function in your script. To see how it works just uncomment lines 39 and 64 in <a class="reference external" href="quantization.py">quantization.py</a></p>
+<p>Part of the vit model could look like:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">169</span><span class="p">]</span> <span class="o">-------------------------</span> <span class="n">internal</span> <span class="n">representation</span><span class="p">:</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">ViTImageClassifier</span>                                                                           
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">InputLayer</span>                <span class="o">.</span><span class="n">images</span>                                                            
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">ViTBackbone</span>               <span class="o">.</span><span class="n">vi_t_backbone</span>                                                     
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">InputLayer</span>                <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">images</span>                                              
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">ViTPatchingAndEmbedding</span>   <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_patching_and_embedding</span>                          
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">Conv2D</span>                    <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_patching_and_embedding</span><span class="o">.</span><span class="n">patch_embedding</span>          
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">Embedding</span>                 <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_patching_and_embedding</span><span class="o">.</span><span class="n">position_embedding</span>       
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">ViTEncoder</span>                <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span>                                         
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">ViTEncoderBlock</span>           <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span>                      
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">LayerNormalization</span>        <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">ln_1</span>                 
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">QStaticMultiHeadAttention</span> <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mha</span>                  
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">QStaticEinsumDense</span>        <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mha</span><span class="o">.</span><span class="n">query</span>             <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00189279</span><span class="p">]</span> <span class="n">w_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00415615</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">QStaticEinsumDense</span>        <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mha</span><span class="o">.</span><span class="n">key</span>               <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00189279</span><span class="p">]</span> <span class="n">w_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00370309</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">QStaticEinsumDense</span>        <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mha</span><span class="o">.</span><span class="n">value</span>             <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00189279</span><span class="p">]</span> <span class="n">w_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.0013797</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">Softmax</span>                   <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mha</span><span class="o">.</span><span class="n">softmax</span>          
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">Dropout</span>                   <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mha</span><span class="o">.</span><span class="n">dropout</span>          
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">QStaticEinsumDense</span>        <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mha</span><span class="o">.</span><span class="n">attention_output</span>  <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00718404</span><span class="p">]</span> <span class="n">w_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00568582</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">QDQLayer</span>                  <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mha</span><span class="o">.</span><span class="n">q_qdq</span>             <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00305243</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">QDQLayer</span>                  <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mha</span><span class="o">.</span><span class="n">k_qdq</span>             <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.02323515</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">QDQLayer</span>                  <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mha</span><span class="o">.</span><span class="n">a_qdq</span>             <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00223214</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">QDQLayer</span>                  <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mha</span><span class="o">.</span><span class="n">v_qdq</span>             <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00732226</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">Dropout</span>                   <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">dropout</span>              
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">LayerNormalization</span>        <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">ln_2</span>                 
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">MLP</span>                       <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mlp</span>                  
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">QStaticDense</span>              <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mlp</span><span class="o">.</span><span class="n">dense_1</span>           <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.01193694</span><span class="p">]</span> <span class="n">w_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00350214</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">QStaticDense</span>              <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mlp</span><span class="o">.</span><span class="n">dense_2</span>           <span class="n">a_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.01522314</span><span class="p">]</span> <span class="n">w_scale</span><span class="o">=</span><span class="p">[</span><span class="mf">0.00583878</span><span class="p">]</span>
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">Dropout</span>                   <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_1</span><span class="o">.</span><span class="n">mlp</span><span class="o">.</span><span class="n">dropout</span>          
+<span class="mi">1970</span><span class="o">-</span><span class="mi">01</span><span class="o">-</span><span class="mi">01</span> <span class="mi">03</span><span class="p">:</span><span class="mi">34</span><span class="p">:</span><span class="mi">46</span> <span class="p">[</span><span class="n">DEBUG</span><span class="p">][</span><span class="n">utility</span><span class="o">.</span><span class="n">py</span><span class="p">:</span><span class="mi">185</span><span class="p">]</span> <span class="n">ViTEncoderBlock</span>           <span class="o">.</span><span class="n">vi_t_backbone</span><span class="o">.</span><span class="n">vit_encoder</span><span class="o">.</span><span class="n">tranformer_block_2</span>                      
+</pre></div>
+</div>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fd1065be510> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

@@ -1,0 +1,204 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JAX &mdash; Intel® Neural Compressor 3.7.1 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">JAX</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../_sources/docs/source/3x/JAX.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="jax">
+<h1>JAX<a class="headerlink" href="#jax" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#quantization-api">Quantization API</a></p></li>
+<li><p><a class="reference external" href="#post-training-static-quantization">Post-Training Static Quantization</a></p></li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+<li><p><a class="reference external" href="#backend-and-device">Backend and Device</a></p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">neural_compressor_jax</span></code> provides an API for applying quantization on Keras models such as ViT and Gemma3.
+The following 8-bit floating-point formats are supported: <code class="docutils literal notranslate"><span class="pre">fp8_e4m3</span></code> and <code class="docutils literal notranslate"><span class="pre">fp8_e5m2</span></code>.</p>
+<p>Quantized models can be saved and loaded using standard Keras APIs
+(<a class="reference external" href="https://keras.io/api/models/model_saving_apis/model_saving_and_loading/#savemodel-function">save_model</a> and
+<a class="reference external" href="https://keras.io/api/models/model_saving_apis/model_saving_and_loading/#loadmodel-function">load_model</a>)
+or Keras Hub APIs
+(<a class="reference external" href="https://keras.io/keras_hub/api/base_classes/task/#savetopreset-method">save_to_preset</a> and
+<a class="reference external" href="https://keras.io/keras_hub/api/base_classes/task/#frompreset-method">from_preset</a>).
+This approach allows users to take advantage of pre-quantized models with minimal code change - just add one line:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">neural_compressor.jax</span>
+</pre></div>
+</div>
+<p>Quantization was developed primarily to improve the performance of Keras models on Intel® Xeon® processors,
+but it can potentially be used on other platforms as well.</p>
+</section>
+<section id="quantization-api">
+<h2>Quantization API<a class="headerlink" href="#quantization-api" title="Link to this heading"></a></h2>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">quantize_model</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
+    <span class="n">quant_config</span><span class="p">:</span> <span class="n">BaseConfig</span><span class="p">,</span>
+    <span class="n">calib_function</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
+<span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Return a quantized Keras model according to the given configuration.</span>
+
+<span class="sd">    Args:</span>
+<span class="sd">        model:          FP32 Keras model to be quantized.</span>
+<span class="sd">        quant_config:   Quantization configuration.</span>
+<span class="sd">        calib_function: Function used for model calibration, required for static quantization.</span>
+<span class="sd">        inplace:        When True, the original model is modified in-place and should not be used</span>
+<span class="sd">                        afterward. A value of False is not yet supported.</span>
+
+<span class="sd">    Returns:</span>
+<span class="sd">        The quantized model.</span>
+<span class="sd">    &quot;&quot;&quot;</span>
+</pre></div>
+</div>
+</section>
+<section id="post-training-static-quantization">
+<h2>Post-Training Static Quantization<a class="headerlink" href="#post-training-static-quantization" title="Link to this heading"></a></h2>
+<p>The maximum absolute values of weights and activations are collected offline using a <em>calibration</em> dataset.
+This dataset should be representative of the data distribution expected during inference.
+The calibration process runs on the original FP32 model and records tensor distributions for scale calculations.
+Typically, preparing several dozen samples is sufficient for calibration.</p>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<p>Examples of how to quantize a model and use a pre-quantized model can be found below:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="../../../examples/jax/keras/gemma/README.html">Gemma3</a></p></li>
+<li><p><a class="reference external" href="../../../examples/jax/keras/vit/README.html">ViT</a></p></li>
+<li><p><a class="reference external" href="../../../examples/jax/keras/helloworld/example_static.py">Simple model – quantization</a></p></li>
+<li><p><a class="reference external" href="../../../examples/jax/keras/helloworld/example_saving.py">Simple model – save and load</a></p></li>
+</ul>
+</section>
+<section id="backend-and-device">
+<h2>Backend and Device<a class="headerlink" href="#backend-and-device" title="Link to this heading"></a></h2>
+<p>Although Intel® Neural Compressor can run on any platform supporting 8-bit floating point with Keras using the JAX backend,
+performance improvements from quantization will be visible on Intel® Xeon® processors
+(with AMX-FP8 extension) with JAX version greater than <a class="reference external" href="https://github.com/jax-ml/jax/releases/tag/jax-v0.9.0">v0.9</a>
+(see the full <a class="reference external" href="https://github.com/jax-ml/jax/releases">JAX releases</a> page).</p>
+<p>To enable performance improvements from quantization, certain JAX/XLA features must be enabled by setting the following environment variable:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">XLA_FLAGS</span><span class="o">=</span><span class="s2">&quot;\</span>
+<span class="s2">    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \</span>
+<span class="s2">    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \</span>
+<span class="s2">    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter&quot;</span>
+</pre></div>
+</div>
+<p>Without this flag, quantized model operates in fake quantization mode, where tensors are rounded to the specified FP8 format but computations are still performed in 32-bit floating-point format.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fd106f0bb30> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
