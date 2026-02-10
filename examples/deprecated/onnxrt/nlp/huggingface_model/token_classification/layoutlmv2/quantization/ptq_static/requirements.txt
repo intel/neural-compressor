@@ -9,7 +9,7 @@ Pillow
 einops
 textdistance
 shapely
-protobuf==3.20.0
+protobuf==5.29.6
 torch
 torchvision
 setuptools
