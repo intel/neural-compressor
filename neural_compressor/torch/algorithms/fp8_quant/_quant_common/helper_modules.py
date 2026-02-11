@@ -170,9 +170,8 @@ def init_mixture_of_experts_linears(instance):
 class PatchedLinearBase(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        self.init_linear(mod_extra_config)
 
-
-    # TODO [SW-224538]: Move init_linear to PatchedLinearBase __init__
     def init_linear(self, mod_extra_config):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             # When offloading weights to disk using device_map, the module forward is overridden.
@@ -250,7 +249,6 @@ class PatchedLinearBase(PatchedModuleBase):
 class PatchedLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
 
     def forward_measure(self, input):
         measure_input((input,), observer=self._mod_extra_config.inputs)
@@ -269,7 +267,6 @@ class PatchedParallelLMHead(PatchedLinearBase):
         # ParallelLMHead's forward method should not be called because LMHead's weights should be used
         # in the sampler. (The forward itself throws RuntimeError exception)
         # So in order to quantize that quant_method we patch only the "apply" method.
-        self.init_linear(mod_extra_config)
         self.orig_linear_quant_apply = self.orig_mod.quant_method.apply
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             if self.use_qdq or self.fake_quant:
@@ -295,7 +292,6 @@ class PatchedParallelLMHead(PatchedLinearBase):
 class PatchedReplicatedLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
 
     def forward_qdq(self, input):
         bias = self.bias if not self.skip_bias_add else None
@@ -319,7 +315,6 @@ class PatchedReplicatedLinear(PatchedLinearBase):
 class PatchedLinearAllReduce(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
         self.scoped_version = mod.__class__.__name__ == "ScopedLinearAllReduce"
 
     def forward_qdq(self, input):
@@ -364,34 +359,41 @@ class PatchedLinearAllReduce(PatchedLinearBase):
 
 class PatchedRowParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         from .._core.external_func_impl import get_external_row_parallel_collective_func
         self.row_parallel_collective_func = get_external_row_parallel_collective_func()
         # TODO [SW-224403]: Enable dynamic quantization in row parallel allreduce
-        allreduce_quantization_enable = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
-        if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
-            self.forward = self.forward_measure_reduce if self.reduce_results and self.tp_size > 1 else self.forward_measure_no_reduce
-
-        elif self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            if self.fake_quant or self.use_qdq:
-                self.forward = self.forward_qdq
-            else:
-                if self.reduce_results and self.tp_size > 1:
-                    if allreduce_quantization_enable:
-                        self.forward = self.forward_quant_reduce_in_lp
-                    else:
-                        self.forward = self.forward_quant_reduce_in_hp
-                else:
-                    self.forward = self.forward_quant_no_reduce
-        self.init_linear(mod_extra_config)
+        self.allreduce_quantization_enable = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
+        
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        
+        # Finalize initialization after init_linear has been called
         if self.quantization_mode == QuantMode.QUANTIZE:
-            if allreduce_quantization_enable:
+            if self.allreduce_quantization_enable:
                 self.dequant_scatter_output = self._mod_extra_config.outputs[0]
                 self.quant_scatter_input = self._mod_extra_config.outputs[1]
                 self.quant_gather_input = self._mod_extra_config.outputs[2]
                 self.dequant_gather_output = self._mod_extra_config.outputs[3]
         from torch import distributed as dist
         self.world_size = dist.get_world_size()
+
+    def init_linear(self, mod_extra_config):
+        # Set up forward method before calling parent's init_linear
+        if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
+            self.forward = self.forward_measure_reduce if self.reduce_results and self.tp_size > 1 else self.forward_measure_no_reduce
+        elif self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
+            if self.fake_quant or self.use_qdq:
+                self.forward = self.forward_qdq
+            else:
+                if self.reduce_results and self.tp_size > 1:
+                    if self.allreduce_quantization_enable:
+                        self.forward = self.forward_quant_reduce_in_lp
+                    else:
+                        self.forward = self.forward_quant_reduce_in_hp
+                else:
+                    self.forward = self.forward_quant_no_reduce
+        
+        # Call parent's init_linear which sets up quantization parameters
+        super().init_linear(mod_extra_config)
 
     def resolve_input(self, input_):
         """
@@ -508,7 +510,6 @@ class PatchedRowParallelLinear(PatchedLinearBase):
 class PatchedColumnParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
         from .._core.external_func_impl import get_external_column_parallel_collective_func
         self.column_parallel_collective_func = get_external_column_parallel_collective_func()
 
@@ -549,7 +550,6 @@ class PatchedColumnParallelLinear(PatchedLinearBase):
 class PatchedLmHeadLinearAllreduce(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
 
     def forward_qdq(self, input):
         assert (
@@ -692,7 +692,6 @@ class PatchedMixtralMoE(PatchedModuleBase):
 class PatchedMoeMatmul(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
         self.weight = torch.nn.Parameter(self.weight.squeeze(), requires_grad=False)
         if (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             measure_input((torch.tensor(0),), observer=self._mod_extra_config.inputs)
@@ -1486,7 +1485,6 @@ class PatchedBlockSoftmaxConstMax(PatchedSoftmaxBase):
 class PatchedLoRACompatibleLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
 
     def forward_qdq(self, input, scale: float = 1.0):
         output = self.run_linear_qdq(input, self.bias)
