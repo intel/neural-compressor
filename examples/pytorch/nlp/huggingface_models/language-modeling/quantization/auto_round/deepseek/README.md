@@ -6,7 +6,7 @@ pip install neural-compressor-pt
 # auto-round
 pip install auto-round
 # vLLM
-git clone -b fused-moe-ar--single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
+git clone -b fused-moe-ar --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
 VLLM_USE_PRECOMPILED=1 pip install --editable . -vvv
 # other requirements
 pip install -r requirements.txt
@@ -27,7 +27,6 @@ bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
 - MXFP4
 ```bash
 bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels
-
 ```
 
 - NVFP4
