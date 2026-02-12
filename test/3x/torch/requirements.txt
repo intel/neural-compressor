@@ -1,4 +1,5 @@
-auto_round
+auto-round
+auto-round-lib
 compressed-tensors
 datasets
 deepspeed @ git+https://github.com/HabanaAI/DeepSpeed.git@1.23.0

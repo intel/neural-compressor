@@ -9,8 +9,8 @@ if [[ $1 = *"3x_pt"* ]]; then
         python setup.py pt bdist_wheel
     else
         echo -e "\n Install torch CPU ... "
-        pip install torch==2.9.0 torchvision --index-url https://download.pytorch.org/whl/cpu
-        # python -m pip install intel-extension-for-pytorch==2.8.0 oneccl_bind_pt --index-url https://pytorch-extension.intel.com/release-whl/stable/cpu/us/
+        pip install torch==2.9.1 torchvision --index-url https://download.pytorch.org/whl/cpu
+        pip install auto-round-lib==0.10.2.1
         python -m pip install --no-cache-dir -r requirements.txt
         python setup.py bdist_wheel
     fi
