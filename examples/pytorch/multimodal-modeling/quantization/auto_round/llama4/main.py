@@ -25,36 +25,75 @@ from neural_compressor.torch.quantization import (
 )
 
 
-class BasicArgumentParser(argparse.ArgumentParser):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.add_argument("--model", "--model_name", "--model_name_or_path",
-                          help="model name or path")
-
-        self.add_argument('--scheme', default="MXFP4", type=str,
-                          help="quantizaion scheme.")
-
-        self.add_argument("--device", "--devices", default="auto", type=str,
-                          help="the device to be used for tuning. The default is set to auto,"
-                               "allowing for automatic detection."
-                               "Currently, device settings support CPU, GPU, and HPU.")
-
-        self.add_argument("--export_format", default="llm_compressor", type=str,
-                          help="the format to save the model"
-                          )
-
-        self.add_argument("--output_dir", default="./tmp_autoround", type=str,
-                          help="the directory to save quantized model")
-
-        self.add_argument("--fp_layers", default="", type=str,
-                          help="layers to maintain original data type")
-
-
 def setup_parser():
-    parser = BasicArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Llama4 quantization.", formatter_class=argparse.ArgumentDefaultsHelpFormatter
+    )
+    parser.add_argument(
+        "--model",
+        "--model_name",
+        "--model_name_or_path",
+        help="model name or path"
+    )
 
-    parser.add_argument("--iters", "--iter", default=0, type=int,
-                        help=" iters")
+    parser.add_argument(
+        "--scheme",
+        default="MXFP4",
+        type=str,
+        help="quantizaion scheme."
+    )
+
+    parser.add_argument(
+        "--device",
+        "--devices",
+        default="auto",
+        type=str,
+        help="the device to be used for tuning. The default is set to auto,"
+             "allowing for automatic detection."
+             "Currently, device settings support CPU, GPU, and HPU."
+    )
+
+    parser.add_argument(
+        "--export_format",
+        default="llm_compressor",
+        type=str,
+        help="the format to save the model"
+    )
+
+    parser.add_argument(
+        "--output_dir",
+        default="./tmp_autoround",
+        type=str,
+        help="the directory to save quantized model"
+    )
+
+    parser.add_argument(
+        "--fp_layers",
+        default="",
+        type=str,
+        help="layers to maintain original data type"
+    )
+    parser.add_argument(
+        "--static_kv_dtype",
+        default=None,
+        type=str,
+        choices=["fp8", "float8_e4m3fn"],
+        help="Data type for static quantize key and value."
+    )
+    parser.add_argument(
+        "--static_attention_dtype",
+        default=None,
+        type=str,
+        choices=["fp8", "float8_e4m3fn"],
+        help="Data type for static quantize query, key and value."
+    )
+    parser.add_argument(
+        "--iters",
+        "--iter",
+        default=0,
+        type=int,
+        help=" iters"
+    )
 
     args = parser.parse_args()
     return args
@@ -85,9 +124,12 @@ def tune(args):
         iters=args.iters,
         scheme=args.scheme,
         layer_config=layer_config,
-        export_format="llm_compressor",
+        export_format=args.export_format,
         output_dir=args.output_dir,
         processor=processor,
+        static_kv_dtype=args.static_kv_dtype,
+        static_attention_dtype=args.static_attention_dtype,
+        reloading=False,
     )
     model = prepare(model, qconfig)
     model = convert(model, qconfig)

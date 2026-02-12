@@ -1,4 +1,5 @@
 import torch
+import pytest
 import habana_frameworks.torch.core as htcore
 
 from transformers import AutoModelForCausalLM, AutoTokenizer, AutoConfig
@@ -6,6 +7,7 @@ from neural_compressor.torch.quantization import FP8Config, convert, prepare, fi
 from neural_compressor.torch.utils import get_used_cpu_mem_MB
 
 
+@pytest.mark.skip(reason="https://github.com/huggingface/transformers/issues/43159")
 def test_two_step_layer_wise():
     # layer-wise is based on memory mapping technique and https://github.com/huggingface/transformers/pull/31771
     # Workaround of [SW-208658]: torch.use_deterministic_algorithms(True) will break memory mapping

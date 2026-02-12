@@ -5,7 +5,7 @@ Intel® Neural Compressor
 <h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, and ONNX Runtime)</h3>
 
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](https://github.com/intel/neural-compressor)
-[![version](https://img.shields.io/badge/release-3.6-green)](https://github.com/intel/neural-compressor/releases)
+[![version](https://img.shields.io/badge/release-3.7-green)](https://github.com/intel/neural-compressor/releases)
 [![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
 [![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/intel/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
@@ -27,11 +27,11 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
 * Collaborate with cloud marketplaces such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00) and [Microsoft Olive](https://github.com/microsoft/Olive), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), [ONNX Runtime](https://github.com/microsoft/onnxruntime), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
 ## What's New
+* [2025/12] [NVFP4 quantization](./docs/source/3x/PT_NVFP4Quant.md) experimental support
 * [2025/10] [MXFP8 / MXFP4 quantization](./docs/source/3x/PT_MXQuant.md) experimental support
 * [2025/09] FP8 dynamic quantization, including Linear, FusedMoE on Intel Gaudi AI Accelerators
 * [2025/05] FP8 static quantization of DeepSeek V3/R1 model on Intel Gaudi AI Accelerators
 * [2025/03] VLM quantization in transformers-like API on Intel CPU/GPU   
-* [2024/10] [Transformers-like API](./docs/source/3x/transformers_like_api.md) for INT4 inference on Intel CPU and GPU.
 
 ## Installation
 Choose the necessary framework dependencies to install based on your deploy environment.
@@ -58,7 +58,7 @@ To try on Intel Gaudi2, docker image with Gaudi Software Stack is recommended, p
 
 Run a container with an interactive shell, [more info](https://docs.habana.ai/en/latest/Installation_Guide/Additional_Installation/Docker_Installation.html#docker-installation)
 ```
-docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host vault.habana.ai/gaudi-docker/1.22.1/ubuntu24.04/habanalabs/pytorch-installer-2.7.1:latest
+docker run -it --runtime=habana -e HABANA_VISIBLE_DEVICES=all -e OMPI_MCA_btl_vader_single_copy_mechanism=none --cap-add=sys_nice --net=host --ipc=host vault.habana.ai/gaudi-docker/1.23.0/ubuntu24.04/habanalabs/pytorch-installer-2.9.0:latest
 ```
 
 > Note: Since Habana software >= 1.21.0, `PT_HPU_LAZY_MODE=0` is the default setting. However, most low-precision functions (such as `convert_from_uint4`) do not support this setting. Therefore, we recommend setting `PT_HPU_LAZY_MODE=1` to maintain compatibility.
@@ -126,16 +126,21 @@ model = load(
   </thead>
   <tbody>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/source/3x/PyTorch.md">Overview</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/3x/PT_DynamicQuant.md">Dynamic Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/3x/PT_StaticQuant.md">Static Quantization</a></td>
+        <td colspan="8" align="center"><a href="./docs/source/3x/PyTorch.md">Overview</a></td>
+    </tr>
+    <tr>
+        <td colspan="3" align="center"><a href="./docs/source/3x/PT_DynamicQuant.md">Dynamic Quantization</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/3x/PT_StaticQuant.md">Static Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_SmoothQuant.md">Smooth Quantization</a></td>
     </tr>
     <tr>
-        <td colspan="2" align="center"><a href="./docs/source/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/3x/PT_FP8Quant.md">FP8 Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/3x/PT_MXQuant.md">MX Quantization</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/3x/PT_FP8Quant.md">FP8 Quantization</a></td>
         <td colspan="2" align="center"><a href="./docs/source/3x/PT_MixedPrecision.md">Mixed Precision</a></td>
+    </tr>
+    <tr>
+        <td colspan="4" align="center"><a href="./docs/source/3x/PT_MXQuant.md">MX Quantization</a></td>
+        <td colspan="4" align="center"><a href="./docs/source/3x/PT_NVFP4Quant.md">NVFP4 Quantization</a></td>
     </tr>
   </tbody>
   <thead>

@@ -56,7 +56,7 @@ from ..quantization.utils import (
     save_low_bit,
     save_low_bit_for_inc,
 )
-from ..utils import AutoRoundConfig, AwqConfig, GPTQConfig, RtnConfig, TeqConfig
+from ..utils import AwqConfig, GPTQConfig, RtnConfig, TeqConfig
 
 
 def build_woq_model(model, quantization_config):
@@ -135,7 +135,7 @@ class _BaseINCAutoModelClass:
 
         if isinstance(
             quantization_config,
-            (RtnConfig, AwqConfig, TeqConfig, GPTQConfig, AutoRoundConfig),
+            (RtnConfig, AwqConfig, TeqConfig, GPTQConfig),
         ):
             logger.info("Applying Weight Only Quantization.")
             # set use_layer_wise on client
@@ -340,8 +340,6 @@ class _BaseINCAutoModelClass:
             quantization_config = TeqConfig.from_dict(quantization_config)
         elif quantization_config["quant_method"] == "gptq":
             quantization_config = GPTQConfig.from_dict(quantization_config)
-        elif quantization_config["quant_method"] in ["autoround", "intel/auto-round"]:
-            quantization_config = AutoRoundConfig.from_dict(quantization_config)
 
         assert quantization_config is not None, "Detect this model is not a low-bit model."
 

@@ -90,6 +90,11 @@ INC_TF_ONLY=1 pip install .
 ```
 
 ```Shell
+# JAX framework extension API + JAX dependency
+INC_JAX_ONLY=1 pip install .
+```
+
+```Shell
 # Full Installation
 pip install .
 [optional] pip install -r requirements_pt.txt # for PyTorch framework extension API

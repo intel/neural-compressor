@@ -36,7 +36,8 @@ steps:
       imageSource: ${{ parameters.imageSource }}
 
   - script: |
-      docker exec ${{ parameters.utContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts \
+      docker exec -e NUMA_NODE=${NUMA_NODE} -e NUMA_CPUSET=${NUMA_CPUSET} ${{ parameters.utContainerName }} \
+      bash -c "cd /neural-compressor/.azure-pipelines/scripts \
       && bash install_nc.sh ${{ parameters.utScriptFileName }} \
       && bash ut/${{ parameters.utScriptFileName }}.sh ${{ parameters.utTestMode }}"
     displayName: "Run UT"

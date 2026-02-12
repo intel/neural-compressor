@@ -3,8 +3,10 @@
 # Usage: CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=<path_to_quantized_model> [--tasks=<tasks>] [--batch_size=<size>]
 
 # Parse command line arguments
-TASKS="piqa,hellaswag,mmlu,gsm8k"
-BATCH_SIZE=8
+TASKS="piqa,hellaswag,mmlu_llama,gsm8k_llama"
+BATCH_SIZE=64
+GPU_MEMORY_UTILIZATION=0.8
+KV_CACHE_DTYPE="auto"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -20,12 +22,27 @@ while [[ $# -gt 0 ]]; do
             BATCH_SIZE="${1#*=}"
             shift
             ;;
+        --gpu_memory_utilization=*)
+            GPU_MEMORY_UTILIZATION="${1#*=}"
+            shift
+            ;;
+        --static_kv_dtype=*)
+            KV_CACHE_DTYPE="${1#*=}"
+            shift
+            ;;
         *)
             echo "Unknown parameter: $1"
             exit 1
             ;;
     esac
 done
+
+# for fp8 kv cache
+if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
+    export VLLM_ATTENTION_BACKEND="FLASHINFER"
+    echo "Using FP8 for KV cache"
+fi
 
 # Validate required parameters
 if [[ -z "$MODEL_PATH" ]]; then
@@ -48,6 +65,7 @@ echo "  Model Path: $MODEL_PATH"
 echo "  Tasks: $TASKS"
 echo "  Batch Size: $BATCH_SIZE"
 echo "  Tensor Parallel Size: $TENSOR_PARALLEL_SIZE"
+echo "  GPU Memory Utilization: $GPU_MEMORY_UTILIZATION"
 echo "  CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
 
 # Check if the model exists
@@ -64,51 +82,78 @@ export TORCH_COMPILE_DISABLE=1
 run_evaluation() {
     local tasks=$1
     local add_bos_token=$2
+    local extra_args=$3
     
     echo "Running evaluation for tasks: $tasks (add_bos_token=$add_bos_token)"
     
     # Print the command being executed
-    local cmd="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,data_parallel_size=1 --tasks $tasks --batch_size $BATCH_SIZE"
+    local cmd="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192,kv_cache_dtype=${KV_CACHE_DTYPE} --tasks $tasks --batch_size $BATCH_SIZE $extra_args"
     echo "Executing command: $cmd"
     
     lm_eval --model vllm \
-        --model_args pretrained="$MODEL_PATH",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,data_parallel_size=1 \
+        --model_args pretrained="$MODEL_PATH",add_bos_token=$add_bos_token,tensor_parallel_size=$TENSOR_PARALLEL_SIZE,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,data_parallel_size=1,max_model_len=8192,kv_cache_dtype=${KV_CACHE_DTYPE} \
         --tasks $tasks \
-        --batch_size $BATCH_SIZE
-        
+        --batch_size $BATCH_SIZE \
+        $extra_args
+
     if [[ $? -ne 0 ]]; then
         echo "Error: Evaluation failed for tasks: $tasks"
         return 1
     fi
 }
 
-# Check if tasks contain gsm8k (requires add_bos_token=False)
-if [[ "$TASKS" == *"gsm8k"* ]]; then
-    # If gsm8k is the only task
-    if [[ "$TASKS" == "gsm8k" ]]; then
-        run_evaluation "$TASKS" false
+
+# Check if tasks contain gsm8k_llama or mmlu_llama
+NEED_SPLIT=false
+OTHER_TASKS="$TASKS"
+SPECIAL_TASKS=""
+
+if [[ "$TASKS" == *"gsm8k_llama"* ]]; then
+    SPECIAL_TASKS="gsm8k_llama"
+    OTHER_TASKS=$(echo "$OTHER_TASKS" | sed 's/,*gsm8k_llama,*//' | sed 's/^,//' | sed 's/,$//')
+    NEED_SPLIT=true
+fi
+if [[ "$TASKS" == *"mmlu_llama"* ]]; then
+    if [[ -n "$SPECIAL_TASKS" ]]; then
+        SPECIAL_TASKS="$SPECIAL_TASKS,mmlu_llama"
     else
-        # Split tasks: run gsm8k separately with add_bos_token=False
-        OTHER_TASKS=$(echo "$TASKS" | sed 's/,*gsm8k,*//' | sed 's/^,//' | sed 's/,$//')
-        
-        if [[ -n "$OTHER_TASKS" ]]; then
-            echo "Running general tasks with add_bos_token=True"
-            run_evaluation "$OTHER_TASKS" true
-            
-            if [[ $? -eq 0 ]]; then
-                echo "Running GSM8K with add_bos_token=False"
-                run_evaluation "gsm8k" false
-            else
-                echo "Skipping GSM8K due to previous failure"
+        SPECIAL_TASKS="mmlu_llama"
+    fi
+    OTHER_TASKS=$(echo "$OTHER_TASKS" | sed 's/,*mmlu_llama,*//' | sed 's/^,//' | sed 's/,$//')
+    NEED_SPLIT=true
+fi
+
+if [[ "$NEED_SPLIT" == true ]]; then
+    if [[ -n "$OTHER_TASKS" ]]; then
+        echo "Running general tasks"
+        run_evaluation "$OTHER_TASKS" true ""
+        if [[ $? -eq 0 ]]; then
+            IFS=',' read -ra SPECIAL_ARRAY <<< "$SPECIAL_TASKS"
+            for special_task in "${SPECIAL_ARRAY[@]}"; do
+                echo "Running $special_task with chat template"
+                run_evaluation "$special_task" true "--apply_chat_template --fewshot_as_multiturn"
+                if [[ $? -ne 0 ]]; then
+                    echo "Benchmark failed on $special_task!"
+                    exit 1
+                fi
+            done
+        else
+            echo "Skipping special tasks due to previous failure"
+            exit 1
+        fi
+    else
+        IFS=',' read -ra SPECIAL_ARRAY <<< "$SPECIAL_TASKS"
+        for special_task in "${SPECIAL_ARRAY[@]}"; do
+            echo "Running $special_task with chat template"
+            run_evaluation "$special_task" true "--apply_chat_template --fewshot_as_multiturn"
+            if [[ $? -ne 0 ]]; then
+                echo "Benchmark failed on $special_task!"
                 exit 1
             fi
-        else
-            run_evaluation "gsm8k" false
-        fi
+        done
     fi
 else
-    # No gsm8k task, use add_bos_token=True for all tasks
-    run_evaluation "$TASKS" true
+    run_evaluation "$TASKS" true ""
 fi
 
 if [[ $? -eq 0 ]]; then

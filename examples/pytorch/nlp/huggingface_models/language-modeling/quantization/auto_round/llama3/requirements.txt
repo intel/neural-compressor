@@ -1,8 +1,7 @@
-transformers==4.56.2
-torch==2.7.0
-torchvision==0.22.0
-lm_eval==0.4.9.1
-datasets==3.6.0
-deepspeed==0.17.6
-auto-round>=0.8.0
-neural-compressor-pt>=3.6
+transformers==4.57.3
+torch==2.9.0
+torchvision==0.24.0
+lm_eval==0.4.9.2
+datasets==4.4.2
+auto-round==0.9.3
+neural-compressor-pt>=3.7

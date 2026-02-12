@@ -11,8 +11,6 @@ from neural_compressor.torch.utils import get_ipex_version
 from neural_compressor.common.utils.utility import CpuInfo
 from neural_compressor.transformers import (
     AutoModelForCausalLM,
-    Qwen2VLForConditionalGeneration,
-    AutoRoundConfig,
     AwqConfig,
     GPTQConfig,
     RtnConfig,

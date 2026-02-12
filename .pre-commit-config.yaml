@@ -70,7 +70,7 @@ repos:
         name: Unused noqa
 
   - repo: https://github.com/pycqa/isort
-    rev: 6.1.0
+    rev: 7.0.0
     hooks:
       - id: isort
         exclude: |
@@ -99,7 +99,7 @@ repos:
           )$
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 25.9.0
+    rev: 25.12.0
     hooks:
       - id: black
         files: (.*\.py)$
@@ -116,10 +116,11 @@ repos:
       - id: blacken-docs
         args: [--line-length=120, --skip-errors]
         additional_dependencies:
-          - black==25.9.0
+          - black==25.12.0
         exclude: |
           (?x)^(
               examples/.+|
+              docs/source/3x/JAX.md|
               neural_compressor/torch/algorithms/fp8_quant/.+|
               test/3x/torch/.+
           )$
@@ -142,7 +143,7 @@ repos:
           )$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.13.3
+    rev: v0.14.10
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --no-cache]

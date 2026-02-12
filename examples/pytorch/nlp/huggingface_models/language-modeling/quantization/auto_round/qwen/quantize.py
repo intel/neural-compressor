@@ -27,9 +27,15 @@ topologies_config = {
         "iters": 0,
     },
     "mxfp4": {
-        "scheme": "MXFP4",
+        "scheme": "MXFP4_RCEIL",
         "fp_layers": "lm_head,mlp.gate,self_attn",
         "iters": 200,
+    },
+    "mxfp4_fp8kv": {
+        "scheme": "MXFP4_RCEIL",
+        "fp_layers": "lm_head,mlp.gate,self_attn",
+        "iters": 0,
+        "static_kv_dtype": "fp8",
     },
 }
 
@@ -40,6 +46,7 @@ def get_model_and_tokenizer(model_name):
         model_name,
         device_map="cpu",
         trust_remote_code=True,
+        dtype="auto",
     )
     tokenizer = AutoTokenizer.from_pretrained(
         model_name,
@@ -54,19 +61,32 @@ def quant_model(args):
         convert,
         prepare,
     )
-
+    if args.t == "mxfp4" and args.kv_cache_dtype == "fp8":
+        args.t = "mxfp4_fp8kv"
     config = topologies_config[args.t]
     export_format = "auto_round" if args.use_autoround_format else "llm_compressor"
     output_dir = f"{args.output_dir}/quantized_model_{args.t}"
+    static_kv_dtype = args.static_kv_dtype if args.static_kv_dtype is not None else config.get("static_kv_dtype", None)
+    if static_kv_dtype is not None and static_kv_dtype.lower() != "fp8":
+        raise ValueError("Only 'fp8' is supported for static_kv_dtype currently.")
+    iters = args.iters if args.iters is not None else config["iters"]
+    if (static_kv_dtype == "fp8" or args.static_attention_dtype == "fp8") and iters > 0:
+        logger.warning("When using static kv dtype or static attn dtype as fp8, setting iters to 0.")
+        iters = 0
     fp32_model, tokenizer = get_model_and_tokenizer(args.model)
     quant_config = AutoRoundConfig(
         tokenizer=tokenizer,
         scheme=config["scheme"],
-        enable_torch_compile=args.enable_torch_compile,
-        iters=config["iters"],
+        enable_torch_compile=True,
+        iters=iters,
         fp_layers=config["fp_layers"],
         export_format=export_format,
+        disable_opt_rtn=True,
+        low_gpu_mem_usage=True,
+        static_kv_dtype=static_kv_dtype,
+        static_attention_dtype=args.static_attention_dtype,
         output_dir=output_dir,
+        reloading=False,
     )
 
     # quantizer execute
@@ -103,16 +123,35 @@ if __name__ == "__main__":
         action="store_true",
         help="Use AutoRound format for saving the quantized model.",
     )
-
+    parser.add_argument(
+        "--kv_cache_dtype",
+        type=str,
+        choices=["fp8", "auto"],
+        default="auto",
+        help="Data type for KV cache. Options are 'fp8' or 'auto'.",
+    )
+    parser.add_argument(
+        "--static_attention_dtype",
+        type=str,
+        choices=["fp8", None],
+        help="Data type to use Attention Cache. e.g. fp8",
+    )
     parser.add_argument(
         "--skip_attn",
         action="store_true",
         help="Skip quantize attention layers.",
     )
     parser.add_argument(
+        "--static_kv_dtype",
+        type=str,
+        default=None,
+        help="Data type to use KV Cache. e.g. fp8",
+    )
+
+    parser.add_argument(
         "--iters",
         type=int,
-        default=0,
+        default=None,
         help="Number of iterations for quantization.",
     )
     parser.add_argument(

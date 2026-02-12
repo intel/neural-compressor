@@ -15,8 +15,8 @@ git clone https://github.com/intel/neural-compressor.git
 cd neural-compressor/examples/pytorch/diffusion_model/diffusers/framepack
 # Use `INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@master` for the latest updates before neural-compressor v3.7 release
 pip install neural-compressor-pt==3.7
-# Use `pip install git+https://github.com/intel/auto-round.git@main` for the latest updates before auto-round v0.9.2 release
-pip install auto-round==0.9.2
+# Use `pip install git+https://github.com/intel/auto-round.git@main` for the latest updates before auto-round v0.9.3 release
+pip install auto-round==0.9.3
 
 bash setup.sh
 

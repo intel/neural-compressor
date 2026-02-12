@@ -25,6 +25,7 @@ try:  # backwards compatibility for 1.16
 except ImportError:
     pass
 
+
 class QuantizedHpuFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
     """
     Base class for wrapping calls to hpu custom fp8 ops.
@@ -33,6 +34,7 @@ class QuantizedHpuFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
     Concrete class may override base class methods in case custom op logic is unique, see examples in concrete
     classes below.
     """
+
     def __init__(self, scale_format, is_dynamic=False):
         self._quantized_func_ = self.get_quantized_func(scale_format, is_dynamic)
 
@@ -41,8 +43,6 @@ class QuantizedHpuFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
         raise NotImplementedError()
 
     def get_scalar_quantized_func(self):
-        if is_runtime_scale_patching():
-            return self.get_default_quantized_func()
         return self.get_default_quantized_func().scalar
 
     def get_dynamic_scalar_quantized_func(self):
@@ -62,10 +62,10 @@ class QuantizedHpuFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
             else:
                 return self.get_dynamic_quantized_func()
         else:
-            if scale_format == ScaleFormat.SCALAR:
-                return self.get_scalar_quantized_func()
-            else:
+            if is_runtime_scale_patching() or scale_format == ScaleFormat.CONST:
                 return self.get_default_quantized_func()
+            else:
+                return self.get_scalar_quantized_func()
 
     def __call__(self, *args, **kwargs):
         return self._quantized_func_(*args, **kwargs)
@@ -131,6 +131,14 @@ class QuantizedHpuSoftmax(QuantizedHpuFuncWrapperBase):
         return self.get_default_quantized_func().Scalar_scales
 
 
+class QuantizedHpuBlockSoftmaxConstMax(QuantizedHpuFuncWrapperBase):
+    def get_default_quantized_func(self):
+        return torch.ops.hpu.block_softmax_const_max
+
+    def get_scalar_quantized_func(self):
+        return self.get_default_quantized_func()
+
+
 class QuantizedHpuFSDPA(QuantizedHpuFuncWrapperBase):
     def get_default_quantized_func(self):
         return fp8_fused_sdpa
@@ -147,12 +155,14 @@ class QuantizedHpuDynamicMoe(QuantizedHpuFuncWrapperBase):
     def get_scalar_quantized_func(self):
         return torch.ops.hpu.mixture_of_experts.fp8_scalars
 
+
 class QuantizedHPUCastToFP8(QuantizedHpuFuncWrapperBase):
     def get_default_quantized_func(self):
         return torch.ops.hpu.cast_to_fp8_v2
 
     def __call__(self, *args, **kwargs):
         return self._quantized_func_(*args, **kwargs)[0]
+
 
 class QuantizedHPUCastFromFP8(QuantizedHpuFuncWrapperBase):
 
@@ -222,13 +232,14 @@ class QuantizedHPUDeQuantPC(QuantizedHpuFuncWrapperBase):
         return self._quantized_func_(input, scale, zero_point, axis, quant_min, quant_max, dtype=dtype, out_dtype=out_dtype)
 
 
-_OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES = {OP_TYPE.LINEAR_GEMM : QuantizedHpuMatmul,
+_OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES = {OP_TYPE.LINEAR_GEMM: QuantizedHpuMatmul,
                                           OP_TYPE.MATMUL_GEMM: QuantizedHpuMatmul,
-                                          OP_TYPE.SOFTMAX : QuantizedHpuSoftmax,
-                                          OP_TYPE.CONV  : QuantizedHpuConv,
-                                          OP_TYPE.FSDPA : QuantizedHpuFSDPA,
-                                          OP_TYPE.CAST_TO_FP8 : QuantizedHPUCastToFP8,
-                                          OP_TYPE.CAST_FROM_FP8 : QuantizedHPUCastFromFP8,
+                                          OP_TYPE.SOFTMAX: QuantizedHpuSoftmax,
+                                          OP_TYPE.BLOCK_SOFTMAX_CONST_MAX: QuantizedHpuBlockSoftmaxConstMax,
+                                          OP_TYPE.CONV: QuantizedHpuConv,
+                                          OP_TYPE.FSDPA: QuantizedHpuFSDPA,
+                                          OP_TYPE.CAST_TO_FP8: QuantizedHPUCastToFP8,
+                                          OP_TYPE.CAST_FROM_FP8: QuantizedHPUCastFromFP8,
                                           OP_TYPE.DYNAMIC_MOE: QuantizedHpuDynamicMoe,
                                           OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS: QuantizedHpuDynamicMoeFusedWeights,
                                           OP_TYPE.QUANT: QuantizedHPUQuant,
@@ -236,6 +247,7 @@ _OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES = {OP_TYPE.LINEAR_GEMM : QuantizedHpuMatm
                                           OP_TYPE.QUANT_PC: QuantizedHPUQuantPC,
                                           OP_TYPE.DEQUANT_PC: QuantizedHPUDeQuantPC,
                                           }
+
 
 def init_hpu_quantized_func_wrapper_factory():
     QuantizedFuncWrapperFactory.initialize(_OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES)

@@ -49,7 +49,7 @@ mkdir -p tensorflow/quantization/ptq
 mv ../3x_newapi tensorflow/quantization/ptq/newapi
 find . -name "test*.py" | sed "s,\.\/,python -m pytest --cov=${inc_path} --cov-append -vs --disable-warnings ,g" > run.sh
 cat run.sh
-bash run.sh 2>&1 | tee -a ${ut_log_name}
+numactl --physcpubind="${NUMA_CPUSET:-0-15}" --membind="${NUMA_NODE:-0}" bash run.sh 2>&1 | tee -a ${ut_log_name}
 
 # test for itex ut
 rm -rf tensorflow/*

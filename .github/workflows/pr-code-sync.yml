@@ -22,6 +22,9 @@ jobs:
   git-sync:
     if: ${{ contains(github.repository, 'intel-innersource') }}
     runs-on: [repo-sync]
+    permissions:
+      contents: read
+      pull-requests: write
     steps:
       - name: Git sync
         run: |

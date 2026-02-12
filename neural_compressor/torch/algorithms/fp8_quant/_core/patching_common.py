@@ -67,38 +67,43 @@ _mod_types = {
 
 _mod_default_dict = {
     "Matmul": ModuleInfo("matmul", PatchedMatmul),
-    "Linear": ModuleInfo("linear", PatchedLinear),
-    "ParallelLMHead": ModuleInfo("linear", PatchedParallelLMHead),
-    "RowParallelLinear": ModuleInfo("row_parallel_linear", PatchedRowParallelLinear),
-    "ColumnParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear),
-    "MergedColumnParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear),
-    "QKVParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear),
-    "FalconLinear": ModuleInfo("linear", PatchedLinear),
+    "Linear": ModuleInfo("linear", PatchedLinear, supports_dynamic_quantization=True),
+    "ParallelLMHead": ModuleInfo("linear", PatchedParallelLMHead, supports_dynamic_quantization=True),
+    "RowParallelLinear": ModuleInfo("row_parallel_linear", PatchedRowParallelLinear, supports_dynamic_quantization=True),
+    "ColumnParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear, supports_dynamic_quantization=True),
+    "MergedColumnParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear, supports_dynamic_quantization=True),
+    "QKVParallelLinear": ModuleInfo("linear", PatchedColumnParallelLinear, supports_dynamic_quantization=True),
+    "FalconLinear": ModuleInfo("linear", PatchedLinear, supports_dynamic_quantization=True),
     "KVCache": ModuleInfo("kv_cache", PatchedKVCache),
     "VLLMKVCache": ModuleInfo("kv_cache", PatchedVLLMKVCache),
     "Conv2d": ModuleInfo("linear", PatchedConv2d),
-    "LoRACompatibleLinear": ModuleInfo("linear", PatchedLoRACompatibleLinear),
+    "LoRACompatibleLinear": ModuleInfo("linear", PatchedLoRACompatibleLinear, supports_dynamic_quantization=True),
     "LoRACompatibleConv": ModuleInfo("linear", PatchedLoRACompatibleConv),
     "Softmax": ModuleInfo("softmax", PatchedSoftmax),
+    "BlockSoftmaxConstMax": ModuleInfo("softmax", PatchedBlockSoftmaxConstMax),
     "ModuleFusedSDPA": ModuleInfo("fused_sdpa", PatchedModuleFusedSDPA),
-    "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul),
-    "MoeFP8Matmul": ModuleInfo("linear", PatchedMoeFP8Matmul),
-    "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear),
+    "MoeMatmul": ModuleInfo("linear", PatchedMoeMatmul, supports_dynamic_quantization=True),
+    "MoeFP8Matmul": ModuleInfo("linear", PatchedMoeFP8Matmul, supports_dynamic_quantization=True),
+    "ReplicatedLinear": ModuleInfo("linear", PatchedReplicatedLinear, supports_dynamic_quantization=True),
     # Note: `no_quantize_op` indicates that this module is patched but does not require measurement or quantization.
-    "FusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False),
+    "FusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False, supports_dynamic_quantization=True),
+    "SharedFusedMoE": ModuleInfo("no_quantize_op", PatchedMixtralMoE, False, supports_dynamic_quantization=True),
     "GaudiMixtralSparseMoeBlock": ModuleInfo("dynamic_moe", PatchedGaudiMixtralSparseMoeBlock),
-    "VllmMixtureOfExpertsOp": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOp),
-    "VllmMixtureOfExpertsOpFP8": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8),
+    "GaudiDeepseekV3MoE": ModuleInfo("dynamic_moe", PatchedGaudiDeepseekV3MoE),
+    "GaudiFP8Linear": ModuleInfo("linear", PatchedMoeFP8Matmul),
+    "VllmMixtureOfExpertsOp": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOp, supports_dynamic_quantization=True),
+    "VllmMixtureOfExpertsOpFP8": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8, supports_dynamic_quantization=True),
+    "VllmMixtureOfExpertsOpFP8PerChannel": ModuleInfo("dynamic_moe", PatchedVllmMixtureOfExpertsOpFP8, supports_dynamic_quantization=True),
 }
 
 
 if deepspeed_exists:
     _mod_default_dict.update(
         {
-            "LinearLayer": ModuleInfo("linear", PatchedLinear),
-            "LinearAllreduce": ModuleInfo("linear", PatchedLinearAllReduce),
-            "ScopedLinearAllReduce": ModuleInfo("linear", PatchedLinearAllReduce),
-            "LmHeadLinearAllreduce": ModuleInfo("linear", PatchedLmHeadLinearAllreduce),
+            "LinearLayer": ModuleInfo("linear", PatchedLinear, supports_dynamic_quantization=True),
+            "LinearAllreduce": ModuleInfo("linear", PatchedLinearAllReduce, supports_dynamic_quantization=True),
+            "ScopedLinearAllReduce": ModuleInfo("linear", PatchedLinearAllReduce, supports_dynamic_quantization=True),
+            "LmHeadLinearAllreduce": ModuleInfo("linear", PatchedLmHeadLinearAllreduce, supports_dynamic_quantization=True),
         }
     )
 
@@ -124,7 +129,7 @@ def _import_xpu_modules():
     if not cur_accelerator.current_device_name().startswith("xpu"):
         return
     PATCHED_MODULE_TABLE["xpu"].update({"Linear": ModuleInfo("linear", PatchedLinear),
-                                        "Matmul": ModuleInfo("matmul", PatchedMatmul),})
+                                        "Matmul": ModuleInfo("matmul", PatchedMatmul), })
     PATCHED_MODULE_TYPES_TABLE["xpu"].update({"linear": _mod_types["linear"]})
 
 
@@ -154,5 +159,6 @@ def _import_device_modules():
         _import_cpu_modules()
     else:
         logger.warning("No HPU or XPU devices were detected. No Patched Modules available.")
+
 
 _import_device_modules()
