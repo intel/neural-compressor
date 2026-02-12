@@ -34,7 +34,7 @@ ut_log_name=${LOG_DIR}/ut_3x_pt.log
 
 find . -name "test*.py" | sed "s,\.\/,python -m pytest --cov=\"${inc_path}\" --cov-report term --html=report.html --self-contained-html  --cov-report xml:coverage.xml --cov-append -vs --disable-warnings ,g" > run.sh
 cat run.sh
-bash run.sh 2>&1 | tee ${ut_log_name}
+numactl --physcpubind="${NUMA_CPUSET:-0-15}" --membind="${NUMA_NODE:-0}" bash run.sh 2>&1 | tee ${ut_log_name}
 
 cp report.html ${LOG_DIR}/
 

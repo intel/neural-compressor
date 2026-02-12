@@ -65,6 +65,7 @@ stages:
               utScriptFileName: "run_basic_api"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_api"
+              utContainerName: "utTest$(NODE_LABEL)"
 
   - stage: Pruning
     displayName: Unit Test Pruning
@@ -79,6 +80,7 @@ stages:
               utScriptFileName: "run_basic_pt_pruning"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_pt-pruning"
+              utContainerName: "utTest$(NODE_LABEL)"
       # - job:
       #   displayName: Test TensorFlow Pruning
       #   steps:
@@ -130,3 +132,4 @@ stages:
               utScriptFileName: "run_basic_others"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_others"
+              utContainerName: "utTest$(NODE_LABEL)"
