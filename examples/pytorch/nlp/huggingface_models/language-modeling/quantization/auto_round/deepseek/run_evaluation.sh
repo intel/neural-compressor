@@ -8,6 +8,8 @@ SCHEME="mxfp8"
 TASK_NAME="piqa,hellaswag,mmlu"
 TP_SIZE=8
 BATCH_SIZE=512
+KV_CACHE_DTYPE="auto"
+ATTN_DTYPE="None"
 
 # Function to display usage
 usage() {
@@ -42,6 +44,14 @@ while [[ $# -gt 0 ]]; do
             TP_SIZE="$2"
             shift 2
             ;;
+        -kv)
+            KV_CACHE_DTYPE="$2"
+            shift 2
+            ;;
+        -attn)
+            ATTN_DTYPE="$2"
+            shift 2
+            ;;
         -b)
             BATCH_SIZE="$2"
             shift 2
@@ -71,7 +81,9 @@ OUTPUT_DIR="${MODEL_NAME}-tp${TP_SIZE}-eval"
 
 # Create output directory
 mkdir -p ${OUTPUT_DIR}
-
+#FIXME: (yiliu30) remove these envs once we have fixed the pynccl issues
+export NCCL_NVLS_ENABLE=0
+# export VLLM_DISABLE_PYNCCL=1
 # Set environment variables based on the quantization scheme
 if [[ "$SCHEME" == "mxfp4" ]]; then
     VLLM_AR_MXFP4_MODULAR_MOE=1
@@ -94,10 +106,31 @@ elif [[ "$SCHEME" == "mxfp8" ]]; then
     VLLM_ENABLE_STATIC_MOE=0
     VLLM_USE_DEEP_GEMM=0
     VLLM_ENABLE_AR_EXT=1
+    export VLLM_DISABLE_PYNCCL=1
+elif [[ "$SCHEME" == "fp8" ]]; then
+    echo "Run original model."
+    VLLM_USE_DEEP_GEMM=0
 else
     echo "Error: Invalid quantization scheme (-s). Must be 'mxfp4', 'nvfp4' or 'mxfp8'."
     usage
     exit 1
+fi
+
+# for fp8 kv cache
+if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
+    export VLLM_ATTENTION_BACKEND="FLASHINFER_MLA"
+    # 512 * 1024 * 1024
+    export VLLM_AR_FLASHINFER_WORKSPACE_BUFFER_SIZE=1073741824
+    echo "Using FP8 for KV cache"
+fi
+
+# for fp8 attention cache
+if [[ "$ATTN_DTYPE" == "fp8" ]]; then
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+    export VLLM_ATTENTION_BACKEND="FLASHINFER_MLA"
+    KV_CACHE_DTYPE="fp8"
+    echo "Using FP8 Attention"
 fi
 
 # Run evaluation
@@ -117,7 +150,7 @@ VLLM_ENABLE_STATIC_MOE=$VLLM_ENABLE_STATIC_MOE \
 VLLM_USE_DEEP_GEMM=$VLLM_USE_DEEP_GEMM \
 VLLM_ENABLE_V1_MULTIPROCESSING=1 \
 lm_eval --model vllm \
-  --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False" \
+  --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}" \
   --tasks $TASK_NAME \
   --batch_size $BATCH_SIZE \
   --log_samples \
