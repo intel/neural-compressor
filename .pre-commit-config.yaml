@@ -120,6 +120,7 @@ repos:
         exclude: |
           (?x)^(
               examples/.+|
+              docs/source/3x/JAX.md|
               neural_compressor/torch/algorithms/fp8_quant/.+|
               test/3x/torch/.+
           )$

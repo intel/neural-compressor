@@ -19,7 +19,11 @@ from .version import __version__
 
 import os
 
-if not (os.environ.get("INC_PT_ONLY", False) or os.environ.get("INC_TF_ONLY", False)):
+if not (
+    os.environ.get("INC_PT_ONLY", False)
+    or os.environ.get("INC_TF_ONLY", False)
+    or os.environ.get("INC_JAX_ONLY", False)
+):
     from .config import (
         DistillationConfig,
         PostTrainingQuantConfig,

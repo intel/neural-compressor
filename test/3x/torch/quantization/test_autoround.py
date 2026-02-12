@@ -698,55 +698,56 @@ class TestAutoRoundHPU:
         assert out is not None, "Loading compressed model failed."
 
 
-    @pytest.mark.parametrize("quant_lm_head", [True, False])
-    def test_autoround(self, quant_lm_head):
-        fp32_model = copy.deepcopy(self.tiny_llama_model)
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", amp=False ,scale_dtype="fp32", quant_lm_head=quant_lm_head)
+    def test_quant_lm_head(self):
+        model = transformers.AutoModelForCausalLM.from_pretrained(
+            "optimum-intel-internal-testing/tiny-random-Phi3ForCausalLM"
+            )
+        tokenizer =  AutoTokenizer.from_pretrained("optimum-intel-internal-testing/tiny-random-Phi3ForCausalLM", trust_remote_code=True)
+        
+        quant_config = AutoRoundConfig(tokenizer=tokenizer, nsamples=32, seqlen=10, iters=1, amp=False ,scale_dtype="fp32", 
+                                           quant_lm_head=True, group_size=32)
         logger.info(f"Test AutoRound with config {quant_config}")
-
-        # prepare + convert API
-        model = prepare(model=fp32_model, quant_config=quant_config)
-
-        run_fn(model, self.dataloader)
+        text = "Replace me by any text you'd like."
+        encoded_input = tokenizer(text, return_tensors="pt")
+        model = prepare(model=model, quant_config=quant_config)
         q_model = convert(model)
-        assert "model.layers.0.self_attn.k_proj" in q_model.autoround_config.keys()
-        assert "scale_dtype" in q_model.autoround_config["model.layers.0.self_attn.k_proj"].keys()
-        assert torch.float32 == q_model.autoround_config["model.layers.0.self_attn.k_proj"]["scale_dtype"]
-        assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
-        if quant_lm_head is True:
-            assert isinstance(q_model.lm_head, WeightOnlyLinear), "quantization for lm_head failed."
+        output = tokenizer.decode(q_model.generate(**encoded_input, max_new_tokens=10)[0])
+        print(output)
+        assert output is not None
+        tagert_modules = ["QuantLinear"]
+        assert  q_model.lm_head.__class__.__name__ in tagert_modules, "packing model failed."
 
     def test_int4_dtype(self):
         fp32_model = copy.deepcopy(self.tiny_llama_model)
-        quant_config = AutoRoundConfig(
-            dtype="int4", nsamples=32, seqlen=10, iters=10, act_dtype="fp32", amp=False ,scale_dtype="fp32"
-        )
+        quant_config = AutoRoundConfig(dtype="int4", nsamples=32, seqlen=10, iters=1, amp=False ,scale_dtype="fp32")
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # prepare + convert API
         model = prepare(model=fp32_model, quant_config=quant_config)
+
         run_fn(model, self.dataloader)
         q_model = convert(model)
-        assert "model.layers.0.self_attn.k_proj" in q_model.autoround_config.keys()
-        assert "scale_dtype" in q_model.autoround_config["model.layers.0.self_attn.k_proj"].keys()
-        assert torch.float32 == q_model.autoround_config["model.layers.0.self_attn.k_proj"]["scale_dtype"]
-        assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
+        _ = q_model(self.inp) # inference
+        tagert_modules = ["QuantLinear"]
+        assert q_model.model.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
+
 
     def test_autoround_with_quantize_API(self):
-        model = copy.deepcopy(self.tiny_llama_model)
+        fp32_model = copy.deepcopy(self.tiny_llama_model)
 
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=10, act_dtype="fp32", amp=False ,scale_dtype="fp32")
-
+        quant_config = AutoRoundConfig(scheme="W4A16", seqlen=10, iters=1, use_sym=False, amp=False ,scale_dtype="fp32")
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # quantize API
         q_model = quantize(
-            model=model,
+            model=fp32_model,
             quant_config=quant_config,
             run_fn=run_fn,
             run_args=(self.dataloader,),
         )
-        assert isinstance(q_model.model.layers[0].self_attn.k_proj, WeightOnlyLinear), "packing model failed."
+        _ = q_model(self.inp) # inference
+        tagert_modules = ["WQLinear_GEMM"]
+        assert q_model.model.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
 
 @pytest.mark.skipif(not is_xpu_available(), reason="These tests are not supported on XPU for now.")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")

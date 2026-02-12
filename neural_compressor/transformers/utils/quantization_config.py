@@ -39,7 +39,6 @@ class QuantizationMethod(str, Enum):
     GPTQ = "gptq"
     RTN = "rtn"
     AWQ = "awq"
-    AUTOROUND = "autoround"
     TEQ = "teq"
 
 
@@ -515,109 +514,6 @@ class TeqConfig(INCQuantizationConfigMixin):
 
         # get the default config dict
         default_config_dict = TeqConfig().to_dict()
-
-        serializable_config_dict = {}
-
-        # only serialize values that differ from the default config
-        for key, value in config_dict.items():
-            if value != default_config_dict[key]:
-                serializable_config_dict[key] = value
-
-        return serializable_config_dict
-
-
-class AutoRoundConfig(INCQuantizationConfigMixin):
-    def __init__(
-        self,
-        bits: int = 4,
-        tokenizer: Any = None,
-        dataset: str = "NeelNanda/pile-10k",
-        group_size: int = 128,
-        compute_dtype: Any = None,
-        weight_dtype: Any = None,
-        scale_dtype: Any = None,
-        sym: bool = False,
-        lr: float = None,
-        minmax_lr: float = None,
-        disable_quanted_input: bool = True,
-        n_samples: int = 128,
-        seq_len: int = 2048,
-        iters: int = 200,
-        use_layer_wise: bool = None,
-        quant_lm_head: bool = False,
-        # vlm arguments
-        quant_nontext_module: bool = False,
-        truncation: bool = False,
-        gradient_accumulate_steps: int = 1,
-        export_format="itrex",
-        **kwargs,
-    ):
-
-        from neural_compressor.transformers.quantization.utils import convert_dtype_torch2str
-
-        self.quant_method = QuantizationMethod.AUTOROUND
-        self.bits = bits
-        self.tokenizer = tokenizer
-        self.dataset = dataset
-        self.compute_dtype = compute_dtype
-        self.weight_dtype = "int4" if self.bits == 4 else "int8"
-        self.scale_dtype = scale_dtype
-        self.sym = sym
-        self.n_samples = n_samples
-        self.group_size = group_size
-        self.lr = lr
-        self.minmax_lr = minmax_lr
-        self.disable_quanted_input = disable_quanted_input
-        self.iters = iters
-        self.seq_len = seq_len
-        self.quant_lm_head = quant_lm_head
-        self.modules_to_not_convert = kwargs.get(
-            "modules_to_not_convert", ["lm_head", "transformer.output_layer", "embed_out"]
-        )
-        if self.quant_lm_head:
-            self.modules_to_not_convert = []
-        self.batch_size = kwargs.pop("batch_size", 8)
-        self.device = kwargs.get("device", "auto")
-        calib_iters = kwargs.get("calib_iters", None)
-        if iters is not None:
-            self.calib_iters = iters
-            if calib_iters is not None:
-                logger.info(
-                    "cannot be set simultaneously for 'iters' and 'calib_iters', "
-                    "we will use 'iters' as calibration iterations!"
-                )
-        else:
-            self.calib_iters = 200 if calib_iters is None else calib_iters
-        self.scheme = "sym" if self.sym else "asym"
-        if isinstance(compute_dtype, torch.dtype):
-            self.compute_dtype = convert_dtype_torch2str(compute_dtype)
-        else:
-            self.compute_dtype = compute_dtype
-
-        if isinstance(scale_dtype, torch.dtype):
-            self.scale_dtype = convert_dtype_torch2str(scale_dtype)
-        else:
-            self.scale_dtype = scale_dtype
-        self.use_layer_wise = use_layer_wise
-        self.model_path = kwargs.get("model_path", "")
-
-        # vlm arguments
-        self.quant_nontext_module = quant_nontext_module
-        self.truncation = truncation
-        self.gradient_accumulate_steps = gradient_accumulate_steps
-        self.export_format = export_format
-
-    def to_diff_dict(self) -> Dict[str, Any]:
-        """Removes all attributes from config which correspond to the default config attributes
-        for better readability and serializes to a Python dictionary.
-
-        Returns:
-            `Dict[str, Any]`: Dictionary of all the attributes that make up this configuration instance,
-        """
-        config_dict = self.to_dict()
-
-        # get the default config dict
-        default_config_dict = AutoRoundConfig().to_dict()
 
         serializable_config_dict = {}
 

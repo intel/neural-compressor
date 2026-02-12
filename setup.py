@@ -57,6 +57,7 @@ PKG_INSTALL_CFG = {
         "extras_require": {
             "pt": fetch_requirements("requirements_pt.txt"),
             "tf": fetch_requirements("requirements_tf.txt"),
+            "jax": fetch_requirements("requirements_jax.txt"),
         },
     },
     # 3.x pt binary build config, pip install neural-compressor-pt, install 3.x PyTorch API.
@@ -91,19 +92,39 @@ PKG_INSTALL_CFG = {
         "package_data": {"": ["*.yaml"]},
         "install_requires": fetch_requirements("requirements_tf.txt"),
     },
+    # 3.x JAX binary build config, pip install neural-compressor-jax, install 3.x JAX API.
+    "neural_compressor_jax": {
+        "project_name": "neural_compressor_jax",
+        "include_packages": find_packages(
+            include=[
+                "neural_compressor.common",
+                "neural_compressor.common.*",
+                "neural_compressor.jax",
+                "neural_compressor.jax.*",
+            ],
+        ),
+        "package_data": {"": ["*.yaml"]},
+        "install_requires": fetch_requirements("requirements_jax.txt"),
+    },
 }
 
 
 if __name__ == "__main__":
     # for setuptools>=80.0.0, `INC_PT_ONLY=1 pip install -e .`
-    if os.environ.get("INC_PT_ONLY", False) and os.environ.get("INC_TF_ONLY", False):
-        raise ValueError("Both INC_PT_ONLY and INC_TF_ONLY are set. Please set only one.")
+    only_set = []
+    cfg_key = "neural_compressor"
     if os.environ.get("INC_PT_ONLY", False):
         cfg_key = "neural_compressor_pt"
-    elif os.environ.get("INC_TF_ONLY", False):
+        only_set.append("INC_PT_ONLY")
+    if os.environ.get("INC_TF_ONLY", False):
         cfg_key = "neural_compressor_tf"
-    else:
-        cfg_key = "neural_compressor"
+        only_set.append("INC_TF_ONLY")
+    if os.environ.get("INC_JAX_ONLY", False):
+        cfg_key = "neural_compressor_jax"
+        only_set.append("INC_JAX_ONLY")
+    if len(only_set) > 1:
+        raise ValueError(f"Environment variables {' and '.join(only_set)} are set. Please set only one.")
+
     # for setuptools < 80.0.0, `python setup.py develop pt`
     if "pt" in sys.argv:
         sys.argv.remove("pt")
@@ -111,7 +132,9 @@ if __name__ == "__main__":
     if "tf" in sys.argv:
         sys.argv.remove("tf")
         cfg_key = "neural_compressor_tf"
-
+    if "jax" in sys.argv:
+        sys.argv.remove("jax")
+        cfg_key = "neural_compressor_jax"
     ext_modules = []
     cmdclass = {}
     project_name = PKG_INSTALL_CFG[cfg_key].get("project_name")

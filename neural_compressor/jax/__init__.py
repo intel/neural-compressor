@@ -1,4 +1,4 @@
-# Copyright (c) 2024 Intel Corporation
+# Copyright (c) 2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -11,6 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Utils for optimization."""
+"""Intel Neural Compressor JAX API."""
 
-from .quantization_config import RtnConfig, AwqConfig, TeqConfig, GPTQConfig
+from neural_compressor.jax.utils import register_algo
+from neural_compressor.jax.quantization import quantize_model, StaticQuantConfig, DynamicQuantConfig

@@ -17,7 +17,6 @@ from .utils import (
     AwqConfig,
     TeqConfig,
     GPTQConfig,
-    AutoRoundConfig,
 )
 from .models import (
     AutoModelForCausalLM,
