@@ -23,7 +23,6 @@ pip list
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/3x/coverage.3x_pt
 inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__[0])')
 cd /neural-compressor/test/3x || exit 1
-rm -rf tensorflow
 rm -rf torch/algorithms/fp8_quant
 rm -rf torch/quantization/fp8_quant
 rm -rf torch/algorithms/fp8_quant_xpu
@@ -32,7 +31,7 @@ LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_3x_pt.log
 
-find . -name "test*.py" | sed "s,\.\/,python -m pytest --cov=\"${inc_path}\" --cov-report term --html=report.html --self-contained-html  --cov-report xml:coverage.xml --cov-append -vs --disable-warnings ,g" > run.sh
+(find ./common -name "test*.py"; find ./torch -name "test*.py") | sed "s,\.\/,python -m pytest --cov=\"${inc_path}\" --cov-report term --html=report.html --self-contained-html  --cov-report xml:coverage.xml --cov-append -vs --disable-warnings ,g" > run.sh
 cat run.sh
 numactl --physcpubind="${NUMA_CPUSET:-0-15}" --membind="${NUMA_NODE:-0}" bash run.sh 2>&1 | tee ${ut_log_name}
 
