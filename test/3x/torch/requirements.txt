@@ -1,9 +1,9 @@
-auto_round
+auto-round @ git+https://github.com/intel/auto-round.git@v0.10.1rc
+auto-round-lib
 compressed-tensors
 datasets
 deepspeed @ git+https://github.com/HabanaAI/DeepSpeed.git@1.23.0
 expecttest
-intel_extension_for_pytorch
 numpy
 peft
 prettytable

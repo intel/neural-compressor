@@ -38,11 +38,6 @@ from neural_compressor.torch.utils import get_accelerator, is_ipex_available, is
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
 
-if is_package_available("auto_round"):
-    import auto_round
-    import transformers
-    from auto_round.export.export_to_itrex.model_wrapper import WeightOnlyLinear as auto_round_woq_linear
-
 from typing import Union
 
 torch = LazyImport("torch")
@@ -128,11 +123,9 @@ def _replace_linear(
             current_key_name = []
         current_key_name.append(name)
         is_removed = False
-        if (
-            isinstance(module, torch.nn.Linear)
-            or isinstance(module, INCWeightOnlyLinear)
-            or (is_package_available("auto_round") and isinstance(module, auto_round_woq_linear))
-        ) and (name not in modules_to_not_convert):
+        if (isinstance(module, torch.nn.Linear) or isinstance(module, INCWeightOnlyLinear)) and (
+            name not in modules_to_not_convert
+        ):
             # Check if the current key is not in the `modules_to_not_convert`
             if not any(key in ".".join(current_key_name) for key in modules_to_not_convert) and not any(
                 re.match(pattern, ".".join(current_key_name)) for pattern in modules_to_not_convert
