@@ -69,7 +69,7 @@ except ImportError:
     ct_installed = False
 
 
-tagert_modules = ["QuantLinear", "QuantLinearGPTQ"]
+tagert_modules = ["QuantLinear", "QuantLinearGPTQ", "QuantLinearAWQ"]
 
 @torch.no_grad()
 def run_fn(model, dataloader):
