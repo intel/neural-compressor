@@ -778,7 +778,7 @@ class TestAutoRoundGPU:
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
         inc_model = convert(model)
-        if scheme in ["FPW8A16"]: # FP8_STATIC loading not supported yet
+        if scheme in ["FPW8A16"]: # FPW8A16 loading not supported yet
             return
         inc_model = AutoModelForCausalLM.from_pretrained(
             output_dir,
