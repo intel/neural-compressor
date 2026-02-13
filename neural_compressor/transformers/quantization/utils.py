@@ -123,10 +123,9 @@ def _replace_linear(
             current_key_name = []
         current_key_name.append(name)
         is_removed = False
-        if (
-            isinstance(module, torch.nn.Linear)
-            or isinstance(module, INCWeightOnlyLinear)
-        ) and (name not in modules_to_not_convert):
+        if (isinstance(module, torch.nn.Linear) or isinstance(module, INCWeightOnlyLinear)) and (
+            name not in modules_to_not_convert
+        ):
             # Check if the current key is not in the `modules_to_not_convert`
             if not any(key in ".".join(current_key_name) for key in modules_to_not_convert) and not any(
                 re.match(pattern, ".".join(current_key_name)) for pattern in modules_to_not_convert
