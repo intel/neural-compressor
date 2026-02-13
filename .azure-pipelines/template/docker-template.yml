@@ -61,7 +61,7 @@ steps:
 
   - ${{ if eq(parameters.imageSource, 'build') }}:
       - script: |
-          docker image prune -a -f
+          docker image prune -f
           IMAGE="${{ parameters.repoName }}:${{ parameters.repoTag }}"
           if [[ ! $(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -Fx "$IMAGE") ]]; then
             docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) \

@@ -159,7 +159,7 @@ class TestAutoRoundCPU:
         tokenizer =  AutoTokenizer.from_pretrained("MBZUAI/LaMini-GPT-124M", trust_remote_code=True)
         text = "Replace me by any text you'd like."
         encoded_input = tokenizer(text, return_tensors="pt")
-        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=0, tokenizer=tokenizer, export_format="auto_round", device_map="cpu")
+        quant_config = AutoRoundConfig(nsamples=32, seqlen=10, iters=0, amp=False, tokenizer=tokenizer, export_format="auto_round", device_map="cpu")
         model = prepare(model=model, quant_config=quant_config)
         q_model = convert(model)
         output = tokenizer.decode(q_model.generate(**encoded_input, max_new_tokens=10)[0])
@@ -773,7 +773,7 @@ class TestAutoRoundGPU:
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
         inc_model = convert(model)
-        if scheme in ["FPW8A16"]: # FP8_STATIC loading not supported yet
+        if scheme in ["FPW8A16"]: # FPW8A16 loading not supported yet
             return
         inc_model = AutoModelForCausalLM.from_pretrained(
             output_dir,
