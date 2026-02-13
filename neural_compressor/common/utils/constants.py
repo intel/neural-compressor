@@ -26,6 +26,7 @@ EMPTY_WHITE_LIST = None
 BASE_CONFIG = "base_config"
 COMPOSABLE_CONFIG = "composable_config"
 RTN = "rtn"
+DYNAMIC_QUANT = "dynamic_quant"
 STATIC_QUANT = "static_quant"
 SMOOTH_QUANT = "smooth_quant"
 GPTQ = "gptq"

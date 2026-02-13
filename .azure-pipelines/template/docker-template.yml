@@ -61,10 +61,11 @@ steps:
 
   - ${{ if eq(parameters.imageSource, 'build') }}:
       - script: |
-          docker image prune -a -f
-          if [[ ! $(docker images | grep -i ${{ parameters.repoName }}:${{ parameters.repoTag }}) ]]; then
+          docker image prune -f
+          IMAGE="${{ parameters.repoName }}:${{ parameters.repoTag }}"
+          if [[ ! $(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -Fx "$IMAGE") ]]; then
             docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) \
-             -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/${{parameters.dockerFileName}}.devel -t ${{ parameters.repoName }}:${{ parameters.repoTag }} .
+             -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/${{parameters.dockerFileName}}.devel -t $IMAGE .
           fi
           docker images | grep -i ${{ parameters.repoName }}
           if [[ $? -ne 0 ]]; then

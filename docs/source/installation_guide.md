@@ -18,7 +18,6 @@
 
 ## Installation
 ### Prerequisites
-You can install Neural Compressor using one of three options: Install single component from binary or source, or get the Intel-optimized framework together with the library by installing the [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html).
 
 The following prerequisites and requirements must be satisfied for a successful installation:
 
@@ -74,15 +73,10 @@ INC_PT_ONLY=1 pip install .
 INC_TF_ONLY=1 pip install .
 ```
 
-### Install from AI Kit
-
-The Intel® Neural Compressor library is released as part of the [Intel® oneAPI AI Analytics Toolkit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit.html) (AI Kit). The AI Kit provides a consolidated package of Intel's latest deep learning and machine optimizations all in one place for ease of development. Along with Neural Compressor, the AI Kit includes Intel-optimized versions of deep learning frameworks (such as TensorFlow and PyTorch) and high-performing Python libraries to streamline end-to-end data science and AI workflows on Intel architectures.
-
-The AI Kit is distributed through many common channels, including from Intel's website, YUM, APT, Anaconda, and more. Select and [download](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit/download.html) the AI Kit distribution package that's best suited for you and follow the [Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html) for post-installation instructions.
-
-|Download|Guide|
-|-|-|
-|[Download AI Kit](https://software.intel.com/content/www/us/en/develop/tools/oneapi/ai-analytics-toolkit/) |[AI Kit Get Started Guide](https://software.intel.com/content/www/us/en/develop/documentation/get-started-with-ai-linux/top.html) |
+```Shell
+# JAX framework extension API + JAX dependency
+INC_JAX_ONLY=1 pip install .
+```
 
 ## System Requirements
 

@@ -51,6 +51,7 @@ stages:
                   modelName: ${{ model }}
                   framework: "pytorch"
                   APIVersion: "3x"
+                  modelContainerName: "model$(NODE_LABEL)"
 
   - stage: GenerateLogs
     displayName: Generate Report
@@ -63,7 +64,7 @@ stages:
           - script: |
               echo ${BUILD_SOURCESDIRECTORY}
               rm -fr ${BUILD_SOURCESDIRECTORY} || sudo rm -fr ${BUILD_SOURCESDIRECTORY} || true
-              echo y | docker system prune --all
+              docker system prune -f
             displayName: "Clean workspace"
           - checkout: self
             clean: true

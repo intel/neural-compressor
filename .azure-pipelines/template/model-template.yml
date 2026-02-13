@@ -8,7 +8,6 @@ parameters:
   - name: APIVersion
     type: string
     default: ""
-
   - name: modelContainerName
     type: string
     default: "model"

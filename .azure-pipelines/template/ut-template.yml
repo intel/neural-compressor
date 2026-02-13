@@ -5,6 +5,12 @@ parameters:
   - name: dockerFileName
     type: string
     default: "Dockerfile"
+  - name: repoName
+    type: string
+    default: "neural-compressor"
+  - name: repoTag
+    type: string
+    default: "py310"
   - name: repo
     type: string
     default: "https://github.com/intel/neural-compressor"
@@ -28,15 +34,16 @@ steps:
   - template: docker-template.yml
     parameters:
       dockerConfigName: ${{ parameters.dockerConfigName }}
-      repoName: "neural-compressor"
-      repoTag: "py310"
+      repoName: "${{ parameters.repoName }}"
+      repoTag: "${{ parameters.repoTag }}"
       dockerFileName: "${{ parameters.dockerFileName }}"
       containerName: ${{ parameters.utContainerName }}
       repo: ${{ parameters.repo }}
       imageSource: ${{ parameters.imageSource }}
 
   - script: |
-      docker exec ${{ parameters.utContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts \
+      docker exec -e NUMA_NODE=${NUMA_NODE} -e NUMA_CPUSET=${NUMA_CPUSET} ${{ parameters.utContainerName }} \
+      bash -c "cd /neural-compressor/.azure-pipelines/scripts \
       && bash install_nc.sh ${{ parameters.utScriptFileName }} \
       && bash ut/${{ parameters.utScriptFileName }}.sh ${{ parameters.utTestMode }}"
     displayName: "Run UT"

@@ -43,9 +43,11 @@ stages:
             parameters:
               dockerConfigName: "commonDockerConfig"
               dockerFileName: "ubuntu-2404"
+              repoTag: "$(IMAGE_TAG)"
               utScriptFileName: "3x/run_3x_pt"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x"
+              utContainerName: "utTest$(NODE_LABEL)"
 
 
   - stage: Torch_baseline
@@ -59,10 +61,12 @@ stages:
             parameters:
               dockerConfigName: "gitCloneDockerConfig"
               dockerFileName: "ubuntu-2404"
+              repoTag: "$(IMAGE_TAG)"
               utScriptFileName: "3x/run_3x_pt"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x_baseline"
               repo: $(REPO)
+              utContainerName: "utTest$(NODE_LABEL)"
 
   - stage: Coverage
     displayName: "Coverage Compare"

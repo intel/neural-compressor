@@ -4,14 +4,13 @@ import shutil
 
 import pytest
 import torch
+from packaging.version import Version
+from neural_compressor.torch.utils import is_ipex_available
 
-try:
+if is_ipex_available():
     import intel_extension_for_pytorch as ipex
-
-    is_ipex_available = True
-except:  # pragma: no cover
-    is_ipex_available = False
-    assert False, "Please install IPEX for static quantization."
+else:
+    pytest.skip("IPEX is not available, skipping tests.", allow_module_level=True)
 
 from neural_compressor.torch.quantization import (
     StaticQuantConfig,
@@ -52,7 +51,7 @@ def run_fn(model):
     model(torch.rand((1, 30)))
     model(torch.rand((1, 30)))
 
-
+@pytest.mark.skipif(not Version(torch.__version__) < Version("2.9.0"), reason="only for torch<2.9.0 [ipex]")
 class TestStaticQuant:
     def setup_class(self):
         self.fp32_model = build_simple_torch_model()
@@ -61,7 +60,7 @@ class TestStaticQuant:
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
 
-    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
+    @pytest.mark.skipif(not is_ipex_available() or device != "cpu", reason="Requires IPEX on CPU device")
     def test_static_quant_default(self):
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
@@ -78,7 +77,7 @@ class TestStaticQuant:
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
-    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
+    @pytest.mark.skipif(not is_ipex_available() or device != "cpu", reason="Requires IPEX on CPU device")
     def test_static_quant_fallback(self):
         fp32_model = copy.deepcopy(self.fp32_model)
         quant_config = get_default_static_config()
@@ -108,7 +107,7 @@ class TestStaticQuant:
                 dtype = q_model.tune_cfg[" "]["q_op_infos"][op]["input_tensor_infos"][0]["force_dtype"]
                 assert dtype == "torch.float32", "Failed to fallback fc2 layer, please check!"
 
-    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
+    @pytest.mark.skipif(not is_ipex_available() or device != "cpu", reason="Requires IPEX on CPU device")
     @pytest.mark.parametrize(
         "act_sym, act_algo",
         [
@@ -127,7 +126,7 @@ class TestStaticQuant:
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
-    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
+    @pytest.mark.skipif(not is_ipex_available() or device != "cpu", reason="Requires IPEX on CPU device")
     def test_static_quant_accuracy(self):
         class M(torch.nn.Module):
             def __init__(self):
@@ -156,7 +155,7 @@ class TestStaticQuant:
         # set a big atol to avoid random issue
         assert torch.allclose(output1, output2, atol=2e-2), "Accuracy gap atol > 0.02 is unexpected. Please check."
 
-    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
+    @pytest.mark.skipif(not is_ipex_available() or device != "cpu", reason="Requires IPEX on CPU device")
     def test_static_quant_save_load(self):
         from intel_extension_for_pytorch.quantization import convert as ipex_convert
         from intel_extension_for_pytorch.quantization import prepare as ipex_prepare
@@ -204,7 +203,7 @@ class TestStaticQuant:
         loaded_model = load("saved_results")
         assert isinstance(loaded_model, torch.jit.ScriptModule)
 
-    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
+    @pytest.mark.skipif(not is_ipex_available() or device != "cpu", reason="Requires IPEX on CPU device")
     def test_static_quant_with_quantize_API(self):
         # quantize API
         fp32_model = copy.deepcopy(self.fp32_model)
@@ -213,7 +212,7 @@ class TestStaticQuant:
         q_model = quantize(fp32_model, quant_config=quant_config, run_fn=run_fn, example_inputs=example_inputs)
         assert q_model is not None, "Quantization failed!"
 
-    @pytest.mark.skipif(not is_ipex_available or device != "cpu", reason="Requires IPEX on CPU device")
+    @pytest.mark.skipif(not is_ipex_available() or device != "cpu", reason="Requires IPEX on CPU device")
     def test_static_quant_mixed_precision(self):
         fp32_model = copy.deepcopy(self.fp32_model)
         example_inputs = self.input
@@ -235,7 +234,7 @@ class TestStaticQuant:
         q_model = convert(prepared_model)
         assert q_model is not None, "Quantization failed!"
 
-    @pytest.mark.skipif(not is_ipex_available or device == "cpu", reason="Requires IPEX on XPU device")
+    @pytest.mark.skipif(not is_ipex_available() or device == "cpu", reason="Requires IPEX on XPU device")
     @pytest.mark.parametrize(
         "act_sym, act_algo",
         [
