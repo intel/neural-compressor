@@ -148,7 +148,7 @@ jobs:
                 if [[ "$png_path" == *#* ]]; then
                   if [ -n "$changed_files" ] && echo "$changed_files" | grep -q "^${refer_path}$"; then
                     url_dev=$url_head$(echo "$real_path" | sed 's|.*/frameworks.ai.lpot.neural-compressor||' | sed 's|.*/neural-compressor||')#$(echo "$png_path" | cut -d '#' -f2)?ref=$HEAD_REF
-                    # echo "No.6----->url_dev is $url_dev"
+                    echo "No.6----->url_dev is $url_dev"
                     sleep $delay
                     # response=$(curl --max-time "${curl_timeout}" -I -L -s -o /dev/null -w "%{http_code}" "$url_dev")
                     response=$(curl -s -o /dev/null -w "%{http_code}" -H "Authorization: token $GITHUB_TOKEN" -H "Accept: application/vnd.github.v3.raw" "$url_dev")
