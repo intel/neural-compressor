@@ -1,5 +1,5 @@
 JAX
-===
+=====
 
 - [Introduction](#introduction)
 - [Quantization API](#quantization-api)
