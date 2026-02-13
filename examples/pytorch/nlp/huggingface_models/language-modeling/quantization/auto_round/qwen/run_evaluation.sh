@@ -253,8 +253,7 @@ run_longbench_eval() {
         --base-url http://localhost:${SERVER_PORT}/v1 \
         --model ${MODEL_PATH} \
         --max-context-length ${max_ctx_length} \
-        --num-threads 1
-        --num-examples 16
+        --num-threads 512
     
     echo "Evaluation completed! Results saved to ${OUTPUT_DIR}"
 }
