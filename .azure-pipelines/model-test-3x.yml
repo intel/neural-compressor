@@ -51,7 +51,7 @@ stages:
                   modelName: ${{ model }}
                   framework: "pytorch"
                   APIVersion: "3x"
-                  containerName: "model$(NODE_LABEL)"
+                  modelContainerName: "model$(NODE_LABEL)"
 
   - stage: GenerateLogs
     displayName: Generate Report
