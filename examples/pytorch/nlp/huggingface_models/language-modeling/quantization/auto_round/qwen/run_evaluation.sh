@@ -162,6 +162,7 @@ echo "Output directory: ${OUTPUT_DIR}"
 #   --show_config 2>&1 | tee ${OUTPUT_DIR}/log.txt
 
 
+# Export vLLM environment variables
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
 export VLLM_ENABLE_AR_EXT=$VLLM_ENABLE_AR_EXT
 export VLLM_AR_MXFP4_MODULAR_MOE=$VLLM_AR_MXFP4_MODULAR_MOE
@@ -172,70 +173,97 @@ export VLLM_USE_DEEP_GEMM=$VLLM_USE_DEEP_GEMM
 export VLLM_ENABLE_V1_MULTIPROCESSING=0
 
 
-if [[ "$TASK_NAME" != *"longbench"* ]]; then
+
+# Function to run standard lm-eval tasks
+run_standard_eval() {
     lm_eval --model vllm \
-      --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}" \
-      --tasks $TASK_NAME \
-      --batch_size $BATCH_SIZE \
-      --log_samples \
-      --seed 42 \
-      --output_path ${OUTPUT_DIR} \
-      --show_config 2>&1 | tee ${OUTPUT_DIR}/log.txt
-else
-    # Start vllm server in background
+        --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}" \
+        --tasks $TASK_NAME \
+        --batch_size $BATCH_SIZE \
+        --log_samples \
+        --seed 42 \
+        --output_path ${OUTPUT_DIR} \
+        --show_config 2>&1 | tee ${OUTPUT_DIR}/log.txt
+}
+
+# Function to start vLLM server
+start_vllm_server() {
     echo "Starting vLLM server on port ${SERVER_PORT}..."
     vllm serve ${MODEL_PATH} \
-    --port ${SERVER_PORT} \
-    --tensor-parallel-size ${TP_SIZE} \
-    --max-model-len ${max_length} \
-    --gpu-memory-utilization 0.8 \
-    --dtype bfloat16 \
-    --kv-cache-dtype ${KV_CACHE_DTYPE} \
-    --disable-log-requests \
-    > ${OUTPUT_DIR}/vllm_server.log 2>&1 &
-
+        --port ${SERVER_PORT} \
+        --tensor-parallel-size ${TP_SIZE} \
+        --max-model-len ${max_length} \
+        --gpu-memory-utilization 0.8 \
+        --dtype bfloat16 \
+        --kv-cache-dtype ${KV_CACHE_DTYPE} \
+        --disable-log-requests \
+        > ${OUTPUT_DIR}/vllm_server.log 2>&1 &
+    
     VLLM_PID=$!
     echo "vLLM server started with PID: ${VLLM_PID}"
+}
 
-    # Wait for server to be ready
+# Function to wait for vLLM server to be ready
+wait_for_server() {
+    local max_retries=300
+    local retry_count=0
+    
     echo "Waiting for vLLM server to be ready..."
-    MAX_RETRIES=300
-    RETRY_COUNT=0
-    while [ $RETRY_COUNT -lt $MAX_RETRIES ]; do
-    if curl -s http://localhost:${SERVER_PORT}/health > /dev/null 2>&1; then
-        echo "vLLM server is ready!"
-        break
-    fi
-    RETRY_COUNT=$((RETRY_COUNT + 1))
-    echo "Waiting for server... (${RETRY_COUNT}/${MAX_RETRIES})"
-    sleep 5
+    while [ $retry_count -lt $max_retries ]; do
+        if curl -s http://localhost:${SERVER_PORT}/health > /dev/null 2>&1; then
+            echo "vLLM server is ready!"
+            return 0
+        fi
+        retry_count=$((retry_count + 1))
+        echo "Waiting for server... (${retry_count}/${max_retries})"
+        sleep 5
     done
-
-    if [ $RETRY_COUNT -eq $MAX_RETRIES ]; then
+    
     echo "Error: vLLM server failed to start within expected time"
     echo "Check ${OUTPUT_DIR}/vllm_server.log for details"
+    return 1
+}
+
+# Function to cleanup vLLM server on exit
+cleanup_server() {
+    echo "Shutting down vLLM server..."
     kill $VLLM_PID 2>/dev/null || true
-    exit 1
-    fi
+    wait $VLLM_PID 2>/dev/null || true
+    echo "Server stopped"
+}
 
-    # Function to cleanup on exit
-    cleanup() {
-        echo "Shutting down vLLM server..."
+
+
+# Function to run longbench evaluation via API
+run_longbench_eval() {
+    start_vllm_server
+    
+    if ! wait_for_server; then
         kill $VLLM_PID 2>/dev/null || true
-        wait $VLLM_PID 2>/dev/null || true
-        echo "Server stopped"
-    }
-    trap cleanup EXIT INT TERM
-
-    # Run lm-eval using the running vllm server
-    echo "Running lm-eval against vLLM server..."
-
+        exit 1
+    fi
+    
+    # Setup cleanup trap
+    trap cleanup_server EXIT INT TERM
+    
+    # Run LongBench evaluation
+    echo "Running LongBench evaluation against vLLM server..."
     python -m long_bench_eval.cli \
-        --api-key YOUR_API_KEY \
+        --api-key dummy \
         --base-url http://localhost:${SERVER_PORT}/v1 \
         --model ${MODEL_PATH} \
-        --max-context-length 38912  \
+        --max-context-length ${max_ctx_length} \
         --num-threads 1
-
+        --num-examples 16
+    
     echo "Evaluation completed! Results saved to ${OUTPUT_DIR}"
+}
+
+# Main evaluation logic
+if [[ "$TASK_NAME" == *"longbench"* ]]; then
+    echo "Running LongBench v2 evaluation..."
+    run_longbench_eval
+else
+    echo "Running standard lm-eval tasks..."
+    run_standard_eval
 fi
