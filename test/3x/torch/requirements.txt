@@ -4,7 +4,6 @@ compressed-tensors
 datasets
 deepspeed @ git+https://github.com/HabanaAI/DeepSpeed.git@1.23.0
 expecttest
-intel_extension_for_pytorch
 numpy
 peft
 prettytable

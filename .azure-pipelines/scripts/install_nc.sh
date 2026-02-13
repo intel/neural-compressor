@@ -10,7 +10,7 @@ if [[ $1 = *"3x_pt"* ]]; then
     else
         echo -e "\n Install torch CPU ... "
         pip install torch==2.9.1 torchvision --index-url https://download.pytorch.org/whl/cpu
-        pip install auto-round-lib==0.10.2.1
+        pip install auto-round-lib==0.10.2.1 # mapping torch and auto-round version
         python -m pip install --no-cache-dir -r requirements.txt
         python setup.py bdist_wheel
     fi
