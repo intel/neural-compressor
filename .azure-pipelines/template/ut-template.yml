@@ -5,6 +5,12 @@ parameters:
   - name: dockerFileName
     type: string
     default: "Dockerfile"
+  - name: repoName
+    type: string
+    default: "neural-compressor"
+  - name: repoTag
+    type: string
+    default: "py310"
   - name: repo
     type: string
     default: "https://github.com/intel/neural-compressor"
@@ -28,8 +34,8 @@ steps:
   - template: docker-template.yml
     parameters:
       dockerConfigName: ${{ parameters.dockerConfigName }}
-      repoName: "neural-compressor"
-      repoTag: "py310"
+      repoName: "${{ parameters.repoName }}"
+      repoTag: "${{ parameters.repoTag }}"
       dockerFileName: "${{ parameters.dockerFileName }}"
       containerName: ${{ parameters.utContainerName }}
       repo: ${{ parameters.repo }}
