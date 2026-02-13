@@ -69,6 +69,8 @@ except ImportError:
     ct_installed = False
 
 
+tagert_modules = ["QuantLinear", "QuantLinearGPTQ"]
+
 @torch.no_grad()
 def run_fn(model, dataloader):
     for data in dataloader:
@@ -120,7 +122,6 @@ class TestAutoRoundCPU:
         output = tokenizer.decode(q_model.generate(**encoded_input, max_new_tokens=10)[0])
         print(output)
         assert output is not None
-        tagert_modules = ["QuantLinear"]
         assert  q_model.lm_head.__class__.__name__ in tagert_modules, "packing model failed."
 
     def test_int4_dtype(self):
@@ -134,7 +135,6 @@ class TestAutoRoundCPU:
         run_fn(model, self.dataloader)
         q_model = convert(model)
         _ = q_model(self.inp) # inference
-        tagert_modules = ["QuantLinear"]
         assert  q_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
 
 
@@ -152,7 +152,6 @@ class TestAutoRoundCPU:
             run_args=(self.dataloader,),
         )
         _ = q_model(self.inp) # inference
-        tagert_modules = ["QuantLinear"]
         assert  q_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
 
     def test_conv1d(self):
@@ -190,7 +189,6 @@ class TestAutoRoundCPU:
         run_fn(model, self.dataloader)
         q_model = convert(model)
         _ = q_model(self.inp) # inference
-        tagert_modules = ["QuantLinear"]
         assert  q_model.model.decoder.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
 
 
@@ -239,7 +237,6 @@ class TestAutoRoundCPU:
         model = prepare(model=model, quant_config=quant_config)
         run_fn(model, dataloader)
         q_model = convert(model)
-        tagert_modules = ["QuantLinear"]
         assert q_model.model.language_model.layers[0].mlp.up_proj.__class__.__name__ in tagert_modules, "model quantization failed."
 
     def test_set_local(self):
@@ -714,7 +711,6 @@ class TestAutoRoundHPU:
         output = tokenizer.decode(q_model.generate(**encoded_input, max_new_tokens=10)[0])
         print(output)
         assert output is not None
-        tagert_modules = ["QuantLinear"]
         assert  q_model.lm_head.__class__.__name__ in tagert_modules, "packing model failed."
 
     def test_int4_dtype(self):
@@ -728,7 +724,6 @@ class TestAutoRoundHPU:
         run_fn(model, self.dataloader)
         q_model = convert(model)
         _ = q_model(self.inp) # inference
-        tagert_modules = ["QuantLinear"]
         assert q_model.model.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
 
 
