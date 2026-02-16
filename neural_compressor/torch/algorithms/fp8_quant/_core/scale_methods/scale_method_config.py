@@ -32,6 +32,7 @@ class ScaleMethodString(Enum):
     MAXABS_POW2_OPT_WEIGHT = auto()
     MAXABS_ARBITRARY = auto()
     ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW = auto()
+    MAXABS_PCS_POW2 = auto()
 
 class ScaleGranularity(Enum):
     PTS = auto()
@@ -127,6 +128,11 @@ scale_method_config_mapping = {
     ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
     {
         CfgStr.WEIGHT:     ScaleMethodConfig(rounding_method= ScaleRoundMethod.HW_ALIGNED, backoff= 0.5),
+        CfgStr.ACTIVATION: ScaleMethodConfig(granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2)
+    },
+    ScaleMethodString.MAXABS_PCS_POW2:
+    {
+        CfgStr.WEIGHT:     ScaleMethodConfig(granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5),
         CfgStr.ACTIVATION: ScaleMethodConfig(granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2)
     },
     ScaleMethodString.MAXABS_HW_OPT_WEIGHT:

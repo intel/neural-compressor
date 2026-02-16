@@ -9,8 +9,6 @@ from neural_compressor.torch.algorithms.fp8_quant._core.scale_methods.scale_meth
 from ...test_hpu_utils import *
 from ...tester import *
 
-SUPPORTED_DYNAMIC_SCALES = [ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW]
-
 
 def get_test_vectors(*, dtype: torch.dtype, atol) -> typing.Iterable[TestVector]:
     yield TestVector(
@@ -94,8 +92,8 @@ def test_matmul_accuracy(
         if scale_method in HW_ALIGNED_SCALE_METHODS or scale_method in QUANT_ONLY_SCALE_METHODS:
             # When in dynamic quantization we don't support hw aligned scale methods and unit scale
             return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
-    else:
-        if scale_method in SUPPORTED_DYNAMIC_SCALES:
+    else :
+        if scale_method in SUPPORTED_DYNAMIC_QUANTIZATION_SCALES:
             # When in static quantization we don't support dynamic scale method
             return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
     return run()
