@@ -21,13 +21,10 @@ from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config imp
     ScaleMethodString,
     ScaleFormat,
     get_hqt_config,
+    SUPPORTED_DYNAMIC_QUANTIZATION_SCALES,
 )
 
 from neural_compressor.torch.quantization import prepare, convert, FP8Config # user level API
-
-SUPPORTED_DYNAMIC_SCALES= [
-    ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW
-]
 
 HW_ALIGNED_SCALE_METHODS = [
     ScaleMethodString.MAXABS_HW,

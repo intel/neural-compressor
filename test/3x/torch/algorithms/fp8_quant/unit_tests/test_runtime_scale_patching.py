@@ -6,7 +6,7 @@ import copy
 import habana_frameworks.torch.core as htcore
 import habana_frameworks.torch.utils.experimental as htexp
 
-from ..tester import RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST, run_with_raised_exception
+from ..tester import RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST, run_with_raised_exception, SUPPORTED_DYNAMIC_QUANTIZATION_SCALES
 from neural_compressor.torch.algorithms.fp8_quant._core.common import set_runtime_state
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleMethodString
 from neural_compressor.torch.quantization import FP8Config, convert, prepare, finalize_calibration
@@ -89,7 +89,7 @@ def test_no_assert(scale_method, scale_format,dynamic_scale_patching, temp_direc
     model(input)
     finalize_calibration(model)
 
-    if scale_method == ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
+    if scale_method in SUPPORTED_DYNAMIC_QUANTIZATION_SCALES:
         return run_with_raised_exception(run_convert, ValueError, "Unsupported config: scale_method")
     if dynamic_scale_patching:
         os.environ["RUNTIME_SCALE_PATCHING"] = "1"

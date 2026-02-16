@@ -102,7 +102,7 @@ def test_linear_accuracy(
             # When in dynamic quantization we don't support hw aligned scale methods and unit scale
             return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
     else :
-        if scale_method in SUPPORTED_DYNAMIC_SCALES:
+        if scale_method in SUPPORTED_DYNAMIC_QUANTIZATION_SCALES:
             # When in static quantization we don't support dynamic scale method
             return run_with_raised_exception(run, ValueError, "Unsupported config: scale_method")
     return run()
