@@ -1293,15 +1293,26 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         if is_prompt:
             # for the prompt, getting the max scale of its tokens and assign it to its blocks as the scale on hidden dim
             max_scale = torch.max(pow2_tensor, dim=0)
-            pow2_tensor.copy_(max_scale[0])
-        scales[1].index_copy_(0, block_mapping, torch.maximum(pow2_tensor, scales[1].index_select(0, block_mapping)))
+            max_pow2_tensor = max_scale[0].expand(block_mapping.size(0), pow2_tensor.size(1), pow2_tensor.size(2))
+            scales[1].index_copy_(0, block_mapping, max_pow2_tensor)
+        else:
+            new_blocks_locations = (slot_mapping % block_size) == 0
+            saved_scales = scales[1].index_select(0, block_mapping)
+            # zero out new sequence blocks so that the scale will be taken from the input tensor and not the old saved value
+            saved_scales[new_blocks_locations] = 0.0
+            scales[1].index_copy_(0, block_mapping, torch.maximum(pow2_tensor, saved_scales))
 
     def convert_on_hidden(self, cache_dequanted, scales, blocks):
-        # quanting and dequanting on hidden dim to allow AV matmul in fp8 - graph-compiler will optimize
+        # invalid blocks have idx of -1 or greater than max blocks in kv-cache so that they are not read/written by the device
+        # getting the invalid blocks indexes so that we can set them in the read scale tensor with valid scale values
+        invalid_block_idx = (blocks >= scales[1].size(0)) | (blocks == -1)
+
         if self.orig_mod.use_contiguous_pa:
             cur_scale_on_h = scales[1][:blocks.size(0)]
         else:
             cur_scale_on_h = scales[1].index_select(0, blocks)
+        # set valid values in invalid scale tensor locations to avoid zero scales errors
+        cur_scale_on_h[invalid_block_idx] = 1.0
         cache_quanted_on_h, dq_scales = self.quant_input(cache_dequanted, cur_scale_on_h.unsqueeze(1))
         return self.dequant_output(cache_quanted_on_h, dq_scales)
 
