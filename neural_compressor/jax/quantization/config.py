@@ -116,6 +116,18 @@ class DynamicQuantConfig(BaseConfig):
         """Get a default config set for tuning."""
         return DynamicQuantConfig(weight_dtype=["fp8_e4m3", "fp8_e5m2"], activation_dtype=["fp8_e4m3", "fp8_e5m2"])
 
+    @classmethod
+    def from_json_string(cls, json_string: str) -> "DynamicQuantConfig":
+        cfg = json.loads(json_string)
+        return cls.from_dict(cfg)
+
+    @classmethod
+    def from_dict(cls, config_dict: Dict) -> "DynamicQuantConfig":
+        weight_dtype = config_dict.get("weight_dtype", "fp8_e4m3")
+        activation_dtype = config_dict.get("activation_dtype", "fp8_e4m3")
+        white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
+        return cls(weight_dtype=weight_dtype, activation_dtype=activation_dtype, white_list=white_list)
+
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
 class StaticQuantConfig(BaseConfig):
