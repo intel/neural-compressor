@@ -167,6 +167,7 @@ class QDynamicMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
     def post_quantization_cleanup(self):
         pass
 
+    # fmt: off
     def _compute_attention(
         self,
         query,
@@ -206,7 +207,12 @@ class QDynamicMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
             )
 
         # Determine whether to use dot-product attention
-        use_dot_product_attention = not (self._dropout > 0.0 or return_attention_scores or (len(query.shape) != 4))
+        # use_dot_product_attention = not (
+        #     self._dropout > 0.0
+        #     or return_attention_scores
+        #     or (len(query.shape) != 4)
+        # )
+        use_dot_product_attention = False  # TODO Add dot_product_attention support
 
         if use_dot_product_attention:
             if attention_mask is not None:
@@ -215,8 +221,12 @@ class QDynamicMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
                 # key_seq_len].
                 mask_expansion_axis = -len(self._attention_axes) * 2 - 1
                 len_attention_scores_shape = 4  # Only accepts 4D inputs
-                for _ in range(len_attention_scores_shape - len(attention_mask.shape)):
-                    attention_mask = ops.expand_dims(attention_mask, axis=mask_expansion_axis)
+                for _ in range(
+                    len_attention_scores_shape - len(attention_mask.shape)
+                ):
+                    attention_mask = ops.expand_dims(
+                        attention_mask, axis=mask_expansion_axis
+                    )
                 attention_mask = ops.cast(attention_mask, dtype="bool")
             # Directly compute the attention output using dot-product attention
             attention_output = ops.dot_product_attention(
@@ -233,27 +243,37 @@ class QDynamicMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
 
         # Default behavior without flash attention, with explicit attention
         # scores
-        query = ops.multiply(query, ops.cast(self._inverse_sqrt_key_dim, query.dtype))
+        query = ops.multiply(
+            query, ops.cast(self._inverse_sqrt_key_dim, query.dtype)
+        )
 
-        key = self.qdq(key)
-        query = self.qdq(query)
         # Take the dot product between "query" and "key" to get the raw
         # attention scores.
+        key = self.qdq(key)
+        query = self.qdq(query)
         attention_scores = ops.einsum(self._dot_product_equation, key, query)
 
         # Apply the mask using the custom masked softmax
-        attention_scores = self._masked_softmax(attention_scores, attention_mask)
+        attention_scores = self._masked_softmax(
+            attention_scores, attention_mask
+        )
 
         # Apply dropout to the attention scores if needed
         if self._dropout > 0.0:
-            final_attn_scores = self._dropout_layer(attention_scores, training=training)
+            final_attn_scores = self._dropout_layer(
+                attention_scores, training=training
+            )
         else:
             final_attn_scores = attention_scores
+
+        # `context_layer` = [B, T, N, H]
         final_attn_scores = self.qdq(final_attn_scores)
         value = self.qdq(value)
-        # `context_layer` = [B, T, N, H]
-        attention_output = ops.einsum(self._combine_equation, final_attn_scores, value)
+        attention_output = ops.einsum(
+            self._combine_equation, final_attn_scores, value
+        )
         return attention_output, attention_scores
+    # fmt on
 
 
 verify_api(MultiHeadAttention, QDynamicMultiHeadAttention, "_compute_attention")
