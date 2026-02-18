@@ -102,68 +102,68 @@ class ScaleMethodConfig:
 scale_method_config_mapping = {
     ScaleMethodString.UNIT_SCALE:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type=ScaleValueType.FIXED_VALUE, rounding_method= ScaleRoundMethod.SCALE_UNIT),
-        CfgStr.ACTIVATION: ScaleMethodConfig(scale_value_type=ScaleValueType.FIXED_VALUE, rounding_method= ScaleRoundMethod.SCALE_UNIT)
+        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type=ScaleValueType.FIXED_VALUE, rounding_method=ScaleRoundMethod.SCALE_UNIT),
+        CfgStr.ACTIVATION: ScaleMethodConfig(scale_value_type=ScaleValueType.FIXED_VALUE, rounding_method=ScaleRoundMethod.SCALE_UNIT)
     },
     ScaleMethodString.HW_ALIGNED_SINGLE_SCALE:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type=ScaleValueType.FIXED_VALUE, rounding_method= ScaleRoundMethod.HW_ALIGNED_FIXED),
-        CfgStr.ACTIVATION: ScaleMethodConfig(scale_value_type=ScaleValueType.FIXED_VALUE, rounding_method= ScaleRoundMethod.HW_ALIGNED_FIXED)
+        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type=ScaleValueType.FIXED_VALUE, rounding_method=ScaleRoundMethod.HW_ALIGNED_FIXED),
+        CfgStr.ACTIVATION: ScaleMethodConfig(scale_value_type=ScaleValueType.FIXED_VALUE, rounding_method=ScaleRoundMethod.HW_ALIGNED_FIXED)
     },
     ScaleMethodString.MAXABS_HW:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(rounding_method= ScaleRoundMethod.HW_ALIGNED, backoff= 0.5),
-        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method= ScaleRoundMethod.HW_ALIGNED, backoff= 0.25)
+        CfgStr.WEIGHT:     ScaleMethodConfig(rounding_method=ScaleRoundMethod.HW_ALIGNED, backoff=0.5),
+        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method=ScaleRoundMethod.HW_ALIGNED, backoff=0.25)
     },
     ScaleMethodString.MAXABS_POW2:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(rounding_method= ScaleRoundMethod.POW2, backoff= 0.5),
-        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method= ScaleRoundMethod.POW2, backoff= 0.25)
+        CfgStr.WEIGHT:     ScaleMethodConfig(rounding_method=ScaleRoundMethod.POW2, backoff=0.5),
+        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method=ScaleRoundMethod.POW2, backoff=0.25)
     },
     ScaleMethodString.MAXABS_ARBITRARY:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(backoff= 0.5),
-        CfgStr.ACTIVATION: ScaleMethodConfig(backoff= 0.25)
+        CfgStr.WEIGHT:     ScaleMethodConfig(backoff=0.5),
+        CfgStr.ACTIVATION: ScaleMethodConfig(backoff=0.25)
     },
     ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(rounding_method= ScaleRoundMethod.HW_ALIGNED, backoff= 0.5),
-        CfgStr.ACTIVATION: ScaleMethodConfig(granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2)
+        CfgStr.WEIGHT:     ScaleMethodConfig(rounding_method=ScaleRoundMethod.HW_ALIGNED, backoff=0.5),
+        CfgStr.ACTIVATION: ScaleMethodConfig(granularity=ScaleGranularity.PCS, rounding_method=ScaleRoundMethod.POW2)
     },
     ScaleMethodString.MAXABS_PCS_POW2:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5),
-        CfgStr.ACTIVATION: ScaleMethodConfig(granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2)
+        CfgStr.WEIGHT:     ScaleMethodConfig(granularity=ScaleGranularity.PCS, rounding_method=ScaleRoundMethod.POW2, backoff=0.5),
+        CfgStr.ACTIVATION: ScaleMethodConfig(granularity=ScaleGranularity.PCS, rounding_method=ScaleRoundMethod.POW2)
     },
     ScaleMethodString.MAXABS_HW_OPT_WEIGHT:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type= ScaleValueType.OPT, rounding_method= ScaleRoundMethod.HW_ALIGNED, backoff= 0.5, params={"weight_scales": get_fp8_hw_alligned_scales(torch.float8_e4m3fn)}),
-        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method= ScaleRoundMethod.HW_ALIGNED, backoff= 0.25)
+        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type=ScaleValueType.OPT, rounding_method=ScaleRoundMethod.HW_ALIGNED, backoff=0.5, params={"weight_scales": get_fp8_hw_alligned_scales(torch.float8_e4m3fn)}),
+        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method=ScaleRoundMethod.HW_ALIGNED, backoff=0.25)
     },
     ScaleMethodString.MAXABS_POW2_OPT_WEIGHT:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type= ScaleValueType.OPT, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5, params={"weight_scales": [2.0**s for s in range(-10, 10)]}),
-        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method= ScaleRoundMethod.POW2, backoff= 0.25)
+        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type=ScaleValueType.OPT, rounding_method=ScaleRoundMethod.POW2, backoff=0.5, params={"weight_scales": [2.0**s for s in range(-10, 10)]}),
+        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method=ScaleRoundMethod.POW2, backoff=0.25)
     },
     ScaleMethodString.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5),
-        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method= ScaleRoundMethod.HW_ALIGNED, backoff= 0.25)
+        CfgStr.WEIGHT:     ScaleMethodConfig(granularity=ScaleGranularity.PCS, rounding_method=ScaleRoundMethod.POW2, backoff=0.5),
+        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method=ScaleRoundMethod.HW_ALIGNED, backoff=0.25)
     },
     ScaleMethodString.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type = ScaleValueType.OPT, granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5, params={"weight_scales": [2.0**s for s in range(-3, 5)]}),
-        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method= ScaleRoundMethod.HW_ALIGNED, backoff= 0.25)
+        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type=ScaleValueType.OPT, granularity=ScaleGranularity.PCS, rounding_method=ScaleRoundMethod.POW2, backoff=0.5, params={"weight_scales": [2.0**s for s in range(-3, 5)]}),
+        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method=ScaleRoundMethod.HW_ALIGNED, backoff=0.25)
     },
     ScaleMethodString.ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5),
-        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method= ScaleRoundMethod.POW2, backoff= 0.25)
+        CfgStr.WEIGHT:     ScaleMethodConfig(granularity=ScaleGranularity.PCS, rounding_method=ScaleRoundMethod.POW2, backoff=0.5),
+        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method=ScaleRoundMethod.POW2, backoff=0.25)
     },
     ScaleMethodString.ACT_MAXABS_POW2_WEIGHTS_PCS_OPT_POW2:
     {
-        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type = ScaleValueType.OPT, granularity= ScaleGranularity.PCS, rounding_method= ScaleRoundMethod.POW2, backoff= 0.5, params={"weight_scales": [2.0**s for s in range(-3, 5)]}),
-        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method= ScaleRoundMethod.POW2, backoff= 0.25)
+        CfgStr.WEIGHT:     ScaleMethodConfig(scale_value_type=ScaleValueType.OPT, granularity=ScaleGranularity.PCS, rounding_method=ScaleRoundMethod.POW2, backoff=0.5, params={"weight_scales": [2.0**s for s in range(-3, 5)]}),
+        CfgStr.ACTIVATION: ScaleMethodConfig(rounding_method=ScaleRoundMethod.POW2, backoff=0.25)
     },
 }
 
