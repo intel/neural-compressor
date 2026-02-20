@@ -1,8 +1,7 @@
-deprecated
-jax   # >=0.8.1 TODO: decide version
-jaxlib   # >=0.8.1 TODO: decide version
-keras==3.12.0  # fix the issue with version 3.13.0   
-keras-hub
+deprecated>=1.2.13
+jax>=0.8.3
+keras>=3.13.2  
+keras-hub>=0.26.0
 numpy
 opencv-python-headless
 Pillow
