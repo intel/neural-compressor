@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 #
-# Copyright (c) 2021 Intel Corporation
+# Copyright (c) 2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -16,23 +16,3 @@
 # limitations under the License.
 """Intel® Neural Compressor: An open-source Python library supporting popular model compression techniques."""
 from .version import __version__
-
-import os
-
-if not (
-    os.environ.get("INC_PT_ONLY", False)
-    or os.environ.get("INC_TF_ONLY", False)
-    or os.environ.get("INC_JAX_ONLY", False)
-):
-    from .config import (
-        DistillationConfig,
-        PostTrainingQuantConfig,
-        WeightPruningConfig,
-        QuantizationAwareTrainingConfig,
-        MixedPrecisionConfig,
-    )
-    from .contrib import *
-    from .model import *
-    from .metric import *
-    from .utils import options
-    from .utils.utility import set_random_seed, set_tensorboard, set_workspace, set_resume_from
