@@ -43,6 +43,20 @@ except Exception as error:
     assert False, "Error: Could not open '%s' due %s\n" % (filepath, error)
 
 PKG_INSTALL_CFG = {
+    # pip install neural-compressor, install the whole package with all APIs, including PyTorch, TensorFlow and JAX APIs.
+    "neural_compressor": {
+        "project_name": "neural_compressor",
+        "include_packages": find_packages(
+            include=["neural_compressor", "neural_compressor.*"],
+        ),
+        "package_data": {"": ["*.json", "*.yaml"]},
+        "extras_require": {
+            "pt": fetch_requirements("requirements_pt.txt"),
+            "tf": fetch_requirements("requirements_tf.txt"),
+            "jax": fetch_requirements("requirements_jax.txt"),
+        },
+    },
+
     # pip install neural-compressor-pt, install PyTorch API.
     "neural_compressor_pt": {
         "project_name": "neural_compressor_pt",
