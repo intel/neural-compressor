@@ -54,8 +54,6 @@ def calib_func(model, dataset, tokenizer=None):
         logits.append(logs.detach().cpu())
 
 
-
-
 def run_fn(model):
     model(torch.tensor([[10, 20, 30]], dtype=torch.long).to(device))
 
