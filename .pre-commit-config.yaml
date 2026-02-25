@@ -146,5 +146,5 @@ repos:
           (?x)^(
               examples/.+|
               neural_compressor/torch/algorithms/fp8_quant/.+|
-              test/3x/torch/.+
+              test/torch/.+
           )$
