@@ -12,26 +12,30 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from copy import deepcopy
-from typing import Any, Callable, Dict, List, Optional, Tuple, Union
+from typing import Any, Callable, Dict, List, Optional, OrderedDict, Tuple, Union
 
-import jax
 import keras
-import ml_dtypes
-from jax import numpy as jnp
-from keras.models import clone_model
-from keras.src.saving import serialization_lib
 
-from neural_compressor.common import logger
+from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import DYNAMIC_QUANT
-from neural_compressor.jax.quantization.config import DynamicQuantConfig
-from neural_compressor.jax.quantization.layers import convert_model_dynamic, dynamicquant_mapping
-from neural_compressor.jax.utils import algos_mapping, register_algo
+from neural_compressor.jax.quantization.layers_dynamic import dynamic_quant_mapping
+from neural_compressor.jax.quantization.saving import (
+    WRAPPER_MAPPING,
+    KerasQuantizedModelBackboneWrapper,
+    KerasQuantizedModelWrapper,
+)
+from neural_compressor.jax.utils import register_algo
 from neural_compressor.jax.utils.utility import dtype_mapping, iterate_over_layers
 
 
 @register_algo(name=DYNAMIC_QUANT)
-def dynamic_quantize(model: keras.Model, configs_mapping: DynamicQuantConfig, *args: Any, **kwargs: Any) -> Any:
+def dynamic_quantize(
+    model: keras.Model,
+    configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]] = None,
+    quant_config: Optional[BaseConfig] = None,
+    *args: Any,
+    **kwargs: Any
+) -> Any:
     """Quantize model using Dynamic quantization algorithm.
 
     Args:
@@ -57,10 +61,16 @@ def dynamic_quantize(model: keras.Model, configs_mapping: DynamicQuantConfig, *a
     # qmodel.set_weights(model.get_weights())
     qmodel = model
     operations = [
-        lambda layer: dynamicquant_mapping[layer.__class__].prepare(layer, weight_dtype, activation_dtype),
+        lambda layer: dynamic_quant_mapping[layer.__class__].prepare(layer, weight_dtype, activation_dtype),
         lambda layer: layer.add_variables(),
         lambda layer: layer.post_quantization_cleanup(),
     ]
-    iterate_over_layers(qmodel, operations, filter_function=lambda c: c in dynamicquant_mapping)
+    iterate_over_layers(qmodel, operations, filter_function=lambda c: c in dynamic_quant_mapping)
 
-    return qmodel
+    if hasattr(qmodel, "backbone"):
+        qmodel._tracker.unlock()
+        qmodel.backbone = KerasQuantizedModelBackboneWrapper(qmodel.backbone, quant_config)
+        qmodel._tracker.lock()
+
+    wrapper_cls = WRAPPER_MAPPING.get(qmodel.__class__, KerasQuantizedModelWrapper)
+    return wrapper_cls(qmodel, quant_config)

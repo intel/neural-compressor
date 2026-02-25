@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """The utility functions and classes for JAX."""
+import inspect
 import os
 from typing import Callable, Dict, Optional
 
@@ -283,3 +284,15 @@ def iterate_over_layers(model, operations, /, *, filter_function: Optional[Calla
                 operation(layer)
 
     return model
+
+
+def verify_api(orig_cls, quant_cls, method_name):
+    """Check if quantized layer method API matches original layer method API."""
+    orig_method = getattr(orig_cls, method_name)
+    quant_method = getattr(quant_cls, method_name)
+    if inspect.signature(orig_method) != inspect.signature(quant_method):
+        logger.error(
+            f"Signature of {orig_cls.__name__}.{method_name} has changed, "
+            f"please update {quant_cls.__name__} class to match it, "
+            "or revert Keras to earlier version where the signature is not changed.\n"
+        )

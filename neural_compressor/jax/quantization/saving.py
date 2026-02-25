@@ -14,18 +14,55 @@
 
 from typing import Optional
 
-import jax
 import keras
 import keras.src.utils.dtype_utils as dtype_utils
-import ml_dtypes
-import numpy as np
 from jax import numpy as jnp
 from keras_hub.models import Gemma3CausalLM, Gemma3Tokenizer, ViTImageClassifier
 from keras_hub.src.models.backbone import Backbone
 from keras_hub.src.models.task import Task
 from keras_hub.src.utils.preset_utils import get_preset_saver
 
-from ..quantization.config import BaseConfig
+from neural_compressor.common.base_config import config_registry
+from neural_compressor.jax.quantization.config import FRAMEWORK_NAME, BaseConfig, DynamicQuantConfig, StaticQuantConfig
+from neural_compressor.jax.utils.utility import dtype_mapping, iterate_over_layers
+
+
+def quant_config_to_json_object(quant_config: BaseConfig) -> dict:
+    """Serialize a quant config to a JSON-compatible dict with class name.
+
+    Args:
+        quant_config: The quantization config object to serialize.
+
+    Returns:
+        A dict with 'quantization_type' and 'config' keys.
+    """
+    return {
+        "quantization_type": quant_config.name,
+        "config": quant_config.to_dict(),
+    }
+
+
+def quant_config_from_json_object(json_obj: dict) -> BaseConfig:
+    """Deserialize a quant config from a JSON-compatible dict with class name.
+
+    Args:
+        json_obj: A dict with 'quantization_type' and 'config' keys.
+
+    Returns:
+        The instantiated quantization config object.
+
+    Raises:
+        ValueError: If the class name is unknown.
+    """
+    quant_type = json_obj.get("quantization_type")
+    config_dict = json_obj.get("config", {})
+
+    configs = config_registry.get_cls_configs()[FRAMEWORK_NAME]
+    if quant_type not in configs:
+        raise ValueError(f"Unknown config class: {quant_type}. Must be one of: {' or '.join(configs.keys())}.")
+
+    config_class = configs[quant_type]
+    return config_class.from_dict(config_dict)
 
 
 class SaveableLayerMixin:
@@ -85,7 +122,7 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
     def get_config(self):
         config = super().get_config()
         config["_wrapped_model"] = keras.saving.serialize_keras_object(self._wrapped_model)
-        config["_quant_config"] = self._quant_config.to_dict()
+        config["_quant_config"] = quant_config_to_json_object(self._quant_config)
         return config
 
     def __new__(cls, *args, **kwargs):
@@ -93,12 +130,9 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
 
     @classmethod
     def from_config(cls, config):
-        from neural_compressor.jax.algorithms.static import prepare_deserialized_quantized_model
-        from neural_compressor.jax.quantization.config import StaticQuantConfig
-
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
-        quant_config = config.get("_quant_config", None)
-        quant_config = StaticQuantConfig.from_dict(quant_config)
+        quant_config_json = config.get("_quant_config")
+        quant_config = quant_config_from_json_object(quant_config_json)
         qmodel = prepare_deserialized_quantized_model(model, quant_config)
         return qmodel
 
@@ -160,7 +194,7 @@ class KerasQuantizedModelWrapper(Task):
         config["_wrapped_model"] = keras.saving.serialize_keras_object(self._wrapped_model)
         if backbone_wrapper is not None:
             self.backbone = backbone_wrapper
-        config["_quant_config"] = self._quant_config.to_dict()
+        config["_quant_config"] = quant_config_to_json_object(self._quant_config)
         return config
 
     def __new__(cls, *args, **kwargs):
@@ -168,12 +202,9 @@ class KerasQuantizedModelWrapper(Task):
 
     @classmethod
     def from_config(cls, config):
-        from neural_compressor.jax.algorithms.static import prepare_deserialized_quantized_model
-        from neural_compressor.jax.quantization.config import StaticQuantConfig
-
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
-        quant_config = config.get("_quant_config", None)
-        quant_config = StaticQuantConfig.from_dict(quant_config)
+        quant_config_json = config.get("_quant_config")
+        quant_config = quant_config_from_json_object(quant_config_json)
         qmodel = prepare_deserialized_quantized_model(model, quant_config)
 
         return qmodel
@@ -211,3 +242,61 @@ WRAPPER_MAPPING = {
     ViTImageClassifier: KerasQuantizedViTWrapper,
     Gemma3Tokenizer: KerasQuantizedTokenizerWrapper,
 }
+
+
+def prepare_deserialized_quantized_model(
+    model: keras.Model,
+    quant_config: BaseConfig,
+) -> KerasQuantizedModelWrapper:
+    """Transform a loaded quantized model.
+
+    It prepares the model for inference by preparing the quantized layers.
+    Args:
+        model: loaded base keras model
+        quant_config: quantization configuration
+    Returns:
+        KerasQuantizedModelWrapper: the transformed quantized model
+    """
+    model_info = quant_config.get_model_info(model)
+    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+
+    for _, value in configs_mapping.items():
+        config = value
+        break
+
+    weight_dtype = dtype_mapping[config.weight_dtype]
+    activation_dtype = dtype_mapping[config.activation_dtype]
+
+    # Import here to avoid circular import with layers.py
+    from neural_compressor.jax.quantization.layers_dynamic import dynamic_quant_mapping
+    from neural_compressor.jax.quantization.layers_static import static_quant_mapping
+
+    if isinstance(quant_config, StaticQuantConfig):
+        layers_mapping = static_quant_mapping
+    elif isinstance(quant_config, DynamicQuantConfig):
+        layers_mapping = dynamic_quant_mapping
+    else:
+        raise ValueError(
+            f"Unsupported quant_config type {type(quant_config).__name__}. "
+            "Supported types are StaticQuantConfig and DynamicQuantConfig."
+        )
+
+    qmodel = model
+    operations = [
+        lambda layer: layers_mapping[layer.__class__].prepare(layer, weight_dtype, activation_dtype),
+        lambda layer: layer.add_variables(),
+        lambda layer: layer.post_quantization_cleanup(),
+    ]
+
+    iterate_over_layers(qmodel, operations, filter_function=lambda c: c in layers_mapping)
+    if isinstance(qmodel, Backbone):
+        qmodel = KerasQuantizedModelBackboneWrapper(qmodel, quant_config)
+    else:
+        wrapper_cls = WRAPPER_MAPPING.get(qmodel.__class__, KerasQuantizedModelWrapper)
+        qmodel = wrapper_cls(qmodel, quant_config)
+        if hasattr(qmodel, "backbone"):
+            qmodel._tracker.unlock()
+            qmodel.backbone = KerasQuantizedModelBackboneWrapper(qmodel.backbone, quant_config)
+            qmodel._tracker.lock()
+
+    return qmodel

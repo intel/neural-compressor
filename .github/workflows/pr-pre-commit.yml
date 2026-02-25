@@ -28,6 +28,7 @@ jobs:
         uses: actions/checkout@1e31de5234b9f8995739874a8ce0492dc87873e2
         with:
           fetch-depth: 0
+          ref: ${{ github.head_ref }}
 
       - name: Fix Code Style
         env:
@@ -54,7 +55,8 @@ jobs:
             git remote set-url origin https://x-access-token:${GITHUB_TOKEN}@github.com/${{ github.repository }}.git
             git add -A
             git commit -n -s -m "chore: apply pre-commit auto-fixes"
-            git push origin HEAD:${{ github.head_ref }}
+            branch=$(git rev-parse --abbrev-ref HEAD)
+            git push origin HEAD:${branch}
           else
             # If no changes are made, print a message
             echo "No auto-fixable changes were made by pre-commit."
