@@ -174,7 +174,7 @@ class TestAWQQuant:
         assert (
             id(model.model.decoder.embed_tokens.weight) == lm_head_id
         ), "The tied lm_head weight is not deep copied, please check!"
-    
+
     @pytest.mark.skip("Skipping test_awq_absorb_to_layer due to known issues with AWQ absorb layers.")
     def test_awq_absorb_to_layer(self):
         absorb_layer_dict = {

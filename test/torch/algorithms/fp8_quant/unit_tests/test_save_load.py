@@ -1,13 +1,15 @@
-import torch
+import shutil
+
 import habana_frameworks.torch.core as htcore
 import pytest
-import shutil
+import torch
 
 htcore.hpu_set_env()
 
 from transformers import LlamaConfig, LlamaForCausalLM
-from neural_compressor.torch.quantization import FP8Config, convert, prepare, save, load
+
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
+from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save
 
 torch.manual_seed(1)
 torch.set_grad_enabled(False)
@@ -24,6 +26,7 @@ def get_model_param_buffers(model):
 
 def compare_parameters_buffers(model1, model2):
     import torch
+
     dict1 = get_model_param_buffers(model1)
     dict2 = get_model_param_buffers(model2)
     keys1 = set(dict1.keys())
@@ -31,21 +34,33 @@ def compare_parameters_buffers(model1, model2):
     unique_keys_in_dict1 = keys1 - keys2
     unique_keys_in_dict2 = keys2 - keys1
     unique_keys = unique_keys_in_dict1.union(unique_keys_in_dict2)
-    assert len(dict1) == len(dict2), f"The number of parameters and buffers are different, {unique_keys}.\n" + \
-            f"unique_keys_in_model1: {unique_keys_in_dict1}\nunique_keys_in_model2: {unique_keys_in_dict2}\n"
+    assert len(dict1) == len(dict2), (
+        f"The number of parameters and buffers are different, {unique_keys}.\n"
+        + f"unique_keys_in_model1: {unique_keys_in_dict1}\nunique_keys_in_model2: {unique_keys_in_dict2}\n"
+    )
     for k, v in dict1.items():
         assert k in dict2, "k not in dict2"
-        assert v.dtype == dict2[k].dtype, f"dtype of {k} is differnt.\n{v.dtype}\n{dict2[k].dtype}"
-        assert torch.allclose(v, dict2[k]), f"{k} is differnt in model1 and model2.\n" + f"{v}\n" + f"{dict2[k]}\n"
+        assert v.dtype == dict2[k].dtype, f"dtype of {k} is different.\n{v.dtype}\n{dict2[k].dtype}"
+        assert torch.allclose(v, dict2[k]), f"{k} is different in model1 and model2.\n" + f"{v}\n" + f"{dict2[k]}\n"
 
 
-@pytest.mark.parametrize("scale_method", [
-    "unit_scale", "hw_aligned_single_scale", "maxabs_hw", "maxabs_pow2",
-    "maxabs_arbitrary", "maxabs_hw_opt_weight", "maxabs_pow2_opt_weight",
-    # per-channel
-    "act_maxabs_hw_weights_pcs_maxabs_pow2", "act_maxabs_hw_weights_pcs_opt_pow2",
-    "act_maxabs_pow2_weights_pcs_maxabs_pow2", "act_maxabs_pow2_weights_pcs_opt_pow2",
-])
+@pytest.mark.parametrize(
+    "scale_method",
+    [
+        "unit_scale",
+        "hw_aligned_single_scale",
+        "maxabs_hw",
+        "maxabs_pow2",
+        "maxabs_arbitrary",
+        "maxabs_hw_opt_weight",
+        "maxabs_pow2_opt_weight",
+        # per-channel
+        "act_maxabs_hw_weights_pcs_maxabs_pow2",
+        "act_maxabs_hw_weights_pcs_opt_pow2",
+        "act_maxabs_pow2_weights_pcs_maxabs_pow2",
+        "act_maxabs_pow2_weights_pcs_opt_pow2",
+    ],
+)
 @pytest.mark.parametrize("scale_format", ["const", "scalar"])
 def test_save_load(scale_method, scale_format):
     config = LlamaConfig(hidden_size=128, num_attention_heads=2, num_hidden_layers=2, vocab_size=512)
@@ -74,5 +89,6 @@ def test_save_load(scale_method, scale_format):
     with torch.no_grad():
         out1 = model(example_input)[0].cpu()
         out2 = new_model(example_input)[0].cpu()
-    assert (out1==out2).all(), \
-            f"The output of the model is different after save and load with scale_method: {scale_method}"
+    assert (
+        out1 == out2
+    ).all(), f"The output of the model is different after save and load with scale_method: {scale_method}"

@@ -1,20 +1,18 @@
 # -*- coding: utf-8 -*-
 
+import importlib
 import sys
 import types
-import importlib
-from types import SimpleNamespace
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 import torch
 import torch.nn as nn
 
 from neural_compressor.torch.algorithms.qat import quant_utils
-
-
-from neural_compressor.torch.algorithms.qat.tensor_quantizer import TensorQuantizer  # type: ignore
 from neural_compressor.torch.algorithms.qat.quant_linear import QuantLinear
+from neural_compressor.torch.algorithms.qat.tensor_quantizer import TensorQuantizer  # type: ignore
 
 
 class TinyModel(nn.Module):
@@ -40,6 +38,7 @@ class TinyModel(nn.Module):
 def sample_input():
     return torch.randn(2, 16)
 
+
 def make_quant_cfg(
     *,
     data_type="mx_fp8",
@@ -51,9 +50,7 @@ def make_quant_cfg(
     act_group_size=32,
     act_sym=True,
 ):
-    """
-    Build a lightweight namespace mimicking the attributes QuantLinear._setup expects.
-    """
+    """Build a lightweight namespace mimicking the attributes QuantLinear._setup expects."""
     return types.SimpleNamespace(
         data_type=data_type,
         bits=bits,
@@ -64,6 +61,7 @@ def make_quant_cfg(
         act_group_size=act_group_size,
         act_sym=act_sym,
     )
+
 
 @pytest.fixture
 def quant_cfg():
@@ -84,7 +82,6 @@ def test_convert_replaces_class_and_calls_setup(monkeypatch, quant_cfg):
 
 def test_replace_with_quant_linear_recursive(monkeypatch, quant_cfg):
     model = TinyModel()
-
 
     quant_utils.replace_with_quant_linear(model, quant_cfg=quant_cfg)
 

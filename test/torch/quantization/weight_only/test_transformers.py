@@ -7,8 +7,8 @@ import transformers
 from packaging.version import Version
 from transformers import AutoTokenizer
 
-from neural_compressor.torch.utils import get_ipex_version
 from neural_compressor.common.utils.utility import CpuInfo
+from neural_compressor.torch.utils import get_ipex_version
 from neural_compressor.transformers import (
     AutoModelForCausalLM,
     AwqConfig,
@@ -28,6 +28,7 @@ try:
     auto_round_installed = True
 except ImportError:
     auto_round_installed = False
+
 
 @pytest.mark.skipif(not Version(torch.__version__) < Version("2.9.0"), reason="only for torch<2.9.0 [ipex]")
 class TestTansformersLikeAPI:
@@ -226,7 +227,7 @@ class TestTansformersLikeAPI:
             quantization_config=woq_config,
         )
         woq_output = woq_model(dummy_input)[0]
-        
+
         # RTN
         woq_config = RtnConfig(bits=4, group_size=16)
         woq_model = AutoModelForCausalLM.from_pretrained(

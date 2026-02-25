@@ -6,40 +6,35 @@ import os
 import random
 import typing
 from dataclasses import dataclass
-from pytest import raises as pytest_raises
 from typing import Dict
 
-from .test_hpu_utils import get_device_name
-
-import torch
 import habana_frameworks.torch as ht
+import torch
+from pytest import raises as pytest_raises
+
 from neural_compressor.torch.algorithms.fp8_quant._core.patching_common import mod_default_dict
 from neural_compressor.torch.algorithms.fp8_quant._core.utils import should_quantize
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import (
     Fp8cfg,
     QuantMode,
-    ScaleMethodString,
     ScaleFormat,
+    ScaleMethodString,
     get_hqt_config,
 )
+from neural_compressor.torch.quantization import FP8Config, convert, prepare  # user level API
 
-from neural_compressor.torch.quantization import prepare, convert, FP8Config # user level API
+from .test_hpu_utils import get_device_name
 
-SUPPORTED_DYNAMIC_SCALES= [
-    ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW
-]
+SUPPORTED_DYNAMIC_SCALES = [ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW]
 
 HW_ALIGNED_SCALE_METHODS = [
     ScaleMethodString.MAXABS_HW,
     ScaleMethodString.MAXABS_HW_OPT_WEIGHT,
     ScaleMethodString.ACT_MAXABS_HW_WEIGHTS_PCS_MAXABS_POW2,
-    ScaleMethodString.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2
+    ScaleMethodString.ACT_MAXABS_HW_WEIGHTS_PCS_OPT_POW2,
 ]
 
-QUANT_ONLY_SCALE_METHODS = [
-    ScaleMethodString.UNIT_SCALE,
-    ScaleMethodString.HW_ALIGNED_SINGLE_SCALE
-]
+QUANT_ONLY_SCALE_METHODS = [ScaleMethodString.UNIT_SCALE, ScaleMethodString.HW_ALIGNED_SINGLE_SCALE]
 
 # TODO [SW-196641]: fix the following issues:
 SCALE_METHODS_SEGFAULT = [
@@ -71,8 +66,9 @@ RUNTIME_SCALE_PATCHING_SUPPORTED_METHODS_LIST = [
     ScaleMethodString.MAXABS_POW2,
     ScaleMethodString.MAXABS_HW_OPT_WEIGHT,
     ScaleMethodString.MAXABS_POW2_OPT_WEIGHT,
-    ScaleMethodString.MAXABS_ARBITRARY
+    ScaleMethodString.MAXABS_ARBITRARY,
 ]
+
 
 # Expects to get an exception. If there's no exception, the test will fail
 def run_with_raised_exception(test_to_run, error, error_str):
@@ -80,6 +76,7 @@ def run_with_raised_exception(test_to_run, error, error_str):
         test_to_run()
     assert error_str in str(exc.value)
     assert exc.type == error
+
 
 @dataclass
 class TestVector:
@@ -114,6 +111,7 @@ def _assert_quantized_correctly(*, reference_model: WrapModel, quantized_model: 
         if reference_model.has_name(reference_name):
             assert quantized_model.has_name(quantized_name), f"{quantized_name=} should be in the quantized model"
 
+
 import habana_frameworks.torch.core as htcore
 
 
@@ -129,20 +127,20 @@ def setup_quantization(
     **module_kwargs,
 ):
     config = get_API_level_config(
-            mode=mode,
-            lp_dtype=lp_dtype,
-            scale_method=scale_method,
-            device_type=device_type,
-            scale_format=scale_format,
-            dynamic_quantization=dynamic_quantization,
-            **module_kwargs,
-        )
-    if mode == QuantMode.MEASURE :
+        mode=mode,
+        lp_dtype=lp_dtype,
+        scale_method=scale_method,
+        device_type=device_type,
+        scale_format=scale_format,
+        dynamic_quantization=dynamic_quantization,
+        **module_kwargs,
+    )
+    if mode == QuantMode.MEASURE:
         prepare(quantized_model, config)
-    elif mode == QuantMode.QUANTIZE :
+    elif mode == QuantMode.QUANTIZE:
         convert(quantized_model, config)
     else:
-        raise(ValueError(), "Unexpected mode value - {}".format(mode))
+        raise (ValueError(), "Unexpected mode value - {}".format(mode))
 
     if use_hpu_graphs:
         quantized_model = ht.hpu.wrap_in_hpu_graph(quantized_model)
@@ -164,7 +162,7 @@ def run_accuracy_test(
     device_type: str = get_device_name(),
     scale_format: ScaleFormat = ScaleFormat.SCALAR,
     use_hpu_graphs: bool = True,
-    dynamic_quantization: bool = False
+    dynamic_quantization: bool = False,
 ):
     """Run both the reference and the quantized versions of this module,
     and compare the outputs on every test vector.
@@ -313,7 +311,7 @@ def _get_test_only_config(
     device_type: str = get_device_name(),
     scale_format: ScaleFormat = ScaleFormat.SCALAR,
     dynamic_quantization: bool = False,
-    **kwargs
+    **kwargs,
 ) -> Dict:
     """Should NOT be used externally.
 
@@ -331,12 +329,13 @@ def _get_test_only_config(
         "dump_stats_path": get_test_unique_dump_path(scale_method),
         "device_for_scales": device_type,
         "scale_format": scale_format.name,
-        "dynamic_quantization": str(dynamic_quantization)
+        "dynamic_quantization": str(dynamic_quantization),
     }
     if "dtype" in kwargs:
-       fp8_cfg["hp_dtype"] = DTYPE_TO_HPDTYPE_STR[kwargs["dtype"]]
+        fp8_cfg["hp_dtype"] = DTYPE_TO_HPDTYPE_STR[kwargs["dtype"]]
 
     return fp8_cfg
+
 
 def get_internal_config(
     *,
@@ -344,13 +343,14 @@ def get_internal_config(
     scale_method: ScaleMethodString,
     lp_dtype: torch.dtype,
     device_type: str = get_device_name(),
-    **kwargs
+    **kwargs,
 ) -> Fp8cfg:
-        return Fp8cfg.parse(_get_test_only_config(mode=mode,
-                                                  scale_method=scale_method,
-                                                  lp_dtype=lp_dtype,
-                                                  device_type=device_type,
-                                                  **kwargs))
+    return Fp8cfg.parse(
+        _get_test_only_config(
+            mode=mode, scale_method=scale_method, lp_dtype=lp_dtype, device_type=device_type, **kwargs
+        )
+    )
+
 
 def get_API_level_config(
     *,
@@ -360,12 +360,16 @@ def get_API_level_config(
     device_type: str = get_device_name(),
     scale_format: ScaleFormat = ScaleFormat.SCALAR,
     dynamic_quantization: bool = False,
-    **kwargs
-) ->FP8Config:
-    return FP8Config.from_dict(_get_test_only_config(mode=mode,
-                                                     scale_method=scale_method,
-                                                     lp_dtype=lp_dtype,
-                                                     device_type=device_type,
-                                                     scale_format=scale_format,
-                                                     dynamic_quantization=dynamic_quantization,
-                                                     **kwargs))
+    **kwargs,
+) -> FP8Config:
+    return FP8Config.from_dict(
+        _get_test_only_config(
+            mode=mode,
+            scale_method=scale_method,
+            lp_dtype=lp_dtype,
+            device_type=device_type,
+            scale_format=scale_format,
+            dynamic_quantization=dynamic_quantization,
+            **kwargs,
+        )
+    )

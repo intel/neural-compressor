@@ -186,9 +186,9 @@ class TestGPTQQuant:
 
     @pytest.mark.skipif(not is_hpu_available(), reason="These tests are not supported on HPU for now.")
     def test_block_wise(self):
-        from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE
         from neural_compressor.torch import load_empty_model
         from neural_compressor.torch.algorithms.layer_wise import load_first_layer_only
+        from neural_compressor.torch.algorithms.layer_wise.utils import LWQ_WORKSPACE
         from neural_compressor.torch.quantization import load
         from neural_compressor.torch.utils import get_used_cpu_mem_MB, get_used_hpu_mem_MB
 
@@ -219,23 +219,20 @@ class TestGPTQQuant:
         model = convert(model)
         cpu_mem_block_diff = get_used_cpu_mem_MB() - cpu_mem0
         hpu_mem_block_diff = get_used_hpu_mem_MB() - hpu_mem0
-        
-        kwargs = {'blockwise': True, 'blockwise_load_folder': None}
-        model.save(LWQ_WORKSPACE+"/checkpoint/", **kwargs)
 
-        kwargs = {'sharded_checkpoints': True}
+        kwargs = {"blockwise": True, "blockwise_load_folder": None}
+        model.save(LWQ_WORKSPACE + "/checkpoint/", **kwargs)
 
-        loaded_model = load(LWQ_WORKSPACE+"/checkpoint/", copy.deepcopy(self.tiny_gptj), **kwargs).to(device)
+        kwargs = {"sharded_checkpoints": True}
+
+        loaded_model = load(LWQ_WORKSPACE + "/checkpoint/", copy.deepcopy(self.tiny_gptj), **kwargs).to(device)
 
         out = loaded_model(self.example_inputs)[0]
 
-
         # remove lwq tmp directory
         shutil.rmtree(LWQ_WORKSPACE, ignore_errors=True)
-        
-        assert torch.allclose(
-            out, q_label, atol=0.05
-        ), f"block-wise and none-blockwise shouold be almost identical."    
+
+        assert torch.allclose(out, q_label, atol=0.05), "block-wise and none-blockwise shouold be almost identical."
 
         assert cpu_mem_diff > cpu_mem_block_diff, "block-wise should reduce memory."
         assert hpu_mem_diff > hpu_mem_block_diff, "block-wise should reduce memory."

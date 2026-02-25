@@ -11,12 +11,12 @@ from neural_compressor.torch.quantization import (
     convert,
     finalize_calibration,
     get_default_fp8_config,
+    load,
     prepare,
     quantize,
     save,
-    load
 )
-from neural_compressor.torch.utils import is_hpu_available, get_used_hpu_mem_MB
+from neural_compressor.torch.utils import get_used_hpu_mem_MB, is_hpu_available
 
 
 def change_to_cur_file_dir():
@@ -32,6 +32,7 @@ def calib_func(model):
     example_inputs = torch.tensor([[10, 20, 30, 40, 50, 60]], dtype=torch.long).to("hpu")
     for i in range(2):
         model(example_inputs)
+
 
 @pytest.mark.skipif(not is_hpu_available(), reason="HPU environment is required!")
 class TestFP8StaticQuantNLP:
@@ -93,6 +94,7 @@ class TestFP8StaticQuantCV:
     def setup_class(self):
         change_to_cur_file_dir()
         import torchvision
+
         self.resnet18 = torchvision.models.resnet18()
         self.cv_dummy_inputs = torch.randn([1, 3, 224, 224]).to("hpu")
 

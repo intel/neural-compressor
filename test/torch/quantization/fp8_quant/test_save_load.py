@@ -1,12 +1,13 @@
 import shutil
-import pytest
+
 import deepspeed
+import pytest
 import torch
 import transformers
 
-from neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model import get_world_size, get_local_rank
-from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedLinear
+from neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model import get_local_rank, get_world_size
+from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save
 from neural_compressor.torch.utils import get_used_hpu_mem_MB
 
 
@@ -21,6 +22,7 @@ def get_model_param_buffers(model):
 
 def compare_parameters_buffers(model1, model2, atol=1e-8):
     import torch
+
     dict1 = get_model_param_buffers(model1)
     dict2 = get_model_param_buffers(model2)
     keys1 = set(dict1.keys())
@@ -28,12 +30,16 @@ def compare_parameters_buffers(model1, model2, atol=1e-8):
     unique_keys_in_dict1 = keys1 - keys2
     unique_keys_in_dict2 = keys2 - keys1
     unique_keys = unique_keys_in_dict1.union(unique_keys_in_dict2)
-    assert len(dict1) == len(dict2), f"The number of parameters and buffers are different, {unique_keys}.\n" + \
-            f"unique_keys_in_model1: {unique_keys_in_dict1}\nunique_keys_in_model2: {unique_keys_in_dict2}\n" 
+    assert len(dict1) == len(dict2), (
+        f"The number of parameters and buffers are different, {unique_keys}.\n"
+        + f"unique_keys_in_model1: {unique_keys_in_dict1}\nunique_keys_in_model2: {unique_keys_in_dict2}\n"
+    )
     for k, v in dict1.items():
         assert k in dict2, "k not in dict2"
-        assert v.dtype == dict2[k].dtype, f"dtype of {k} is differnt.\n{v.dtype}\n{dict2[k].dtype}"
-        assert torch.allclose(v.float(), dict2[k].float(), atol=atol), f"{k} is differnt in model1 and model2.\n" + f"{v}\n" + f"{dict2[k]}\n"
+        assert v.dtype == dict2[k].dtype, f"dtype of {k} is different.\n{v.dtype}\n{dict2[k].dtype}"
+        assert torch.allclose(v.float(), dict2[k].float(), atol=atol), (
+            f"{k} is different in model1 and model2.\n" + f"{v}\n" + f"{dict2[k]}\n"
+        )
 
 
 @torch.no_grad()
@@ -76,6 +82,7 @@ def test_save_vllm_compatible_model():
     shutil.rmtree("saved_results_qwen", ignore_errors=True)
     shutil.rmtree("nc_workspace", ignore_errors=True)
 
+
 @pytest.mark.skip(reason="[SW-226589] Skip this test since the model was updated")
 def test_load_model_provided_by_neuralmagic():
     world_size = get_world_size()
@@ -98,6 +105,7 @@ def test_load_model_provided_by_neuralmagic():
     )
     assert isinstance(gen_ids, torch.Tensor)
 
+
 def init_model(world_size):
     name = "stas/tiny-random-llama-2"
     dtype = torch.bfloat16
@@ -115,6 +123,7 @@ def init_model(world_size):
     model = model.to(dtype)
     model = model.eval()
     return model
+
 
 @torch.no_grad()
 @pytest.mark.parametrize("scale_method", ["maxabs_hw", "act_maxabs_hw_weights_pcs_maxabs_pow2"])

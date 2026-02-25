@@ -1,10 +1,11 @@
+import habana_frameworks.torch.core as htcore
 import pytest
 import torch
 
-import habana_frameworks.torch.core as htcore
 htcore.hpu_set_env()
 
 from neural_compressor.torch.quantization import FP8Config, prepare
+
 
 # test purpose is to validate that FP8Config parsing from dict succeeds when fake quant default value is given
 def test_fakequant_default_config_from_dict():

@@ -1,8 +1,8 @@
 import copy
-import pytest
-import torch
 
 import habana_frameworks.torch.core as htcore
+import pytest
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 htcore.hpu_set_env()
@@ -21,8 +21,17 @@ def test_block_wise_measurement():
     tokenizer = AutoTokenizer.from_pretrained(model_name)
 
     model_block_wise = copy.deepcopy(model_normal)
-    config_normal = FP8Config(blocklist={"names": ["lm_head"],})
-    config_block_wise = FP8Config(blocklist={"names": ["lm_head"],}, measure_on_hpu=False)
+    config_normal = FP8Config(
+        blocklist={
+            "names": ["lm_head"],
+        }
+    )
+    config_block_wise = FP8Config(
+        blocklist={
+            "names": ["lm_head"],
+        },
+        measure_on_hpu=False,
+    )
     model_normal = prepare(model_normal, config_normal)
     mem1 = get_used_hpu_mem_MB()
     model_block_wise = prepare(model_block_wise, config_block_wise)
@@ -49,6 +58,6 @@ def test_block_wise_measurement():
     with torch.no_grad():
         output_normal = model_normal(**inputs).logits.cpu()
         output_block_wise = model_block_wise(**inputs).logits.cpu()
-    assert torch.allclose(output_normal, output_block_wise, rtol=0.01), \
-            f"block-wise measurement should have the same output as normal measurement"
-
+    assert torch.allclose(
+        output_normal, output_block_wise, rtol=0.01
+    ), "block-wise measurement should have the same output as normal measurement"

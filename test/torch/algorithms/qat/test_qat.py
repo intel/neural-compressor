@@ -1,24 +1,28 @@
 import math
 import types
+
+import pytest
 import torch
 import torch.nn as nn
-import pytest
 
 # Skip the whole module if auto_round (needed for get_quant_func inside TensorQuantizer) is not available
 auto_round = pytest.importorskip("auto_round")
 
-from neural_compressor.torch.quantization.quantize import prepare_qat
 from neural_compressor.torch.algorithms.qat.tensor_quantizer import TensorQuantizer
+from neural_compressor.torch.quantization.quantize import prepare_qat
 
 
 def setup_seed(seed):
-    import numpy as np
     import random
+
+    import numpy as np
+
     torch.manual_seed(seed)
     torch.cuda.manual_seed_all(seed)
     np.random.seed(seed)
     random.seed(seed)
     torch.backends.cudnn.deterministic = True
+
 
 class TinyModel(nn.Module):
     """Simple hierarchical model for recursive replacement tests."""
@@ -31,6 +35,7 @@ class TinyModel(nn.Module):
     def forward(self, x):
         x = self.fc1(x)
         return self.lm_head(x)
+
 
 def test_replace_quant_layer():
     """Check the inserted quant linear."""

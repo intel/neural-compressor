@@ -14,23 +14,23 @@
 
 import os
 
+import intel_perfcore_for_pytorch as ipex
 import pytest
 import torch
-import intel_perfcore_for_pytorch as ipex
 
-
-from neural_compressor.torch.algorithms.fp8_quant._core.quant_dequant import QuantInput, QuantDequant, DequantOutput
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleFormat, Fp8cfg, set_hqt_config
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedLinear, PatchedMatmul
-from neural_compressor.torch.algorithms.fp8_quant.model_configs import ModuleExtraConfig, ModuleConfig
+from neural_compressor.torch.algorithms.fp8_quant._core.quant_dequant import DequantOutput, QuantDequant, QuantInput
 from neural_compressor.torch.algorithms.fp8_quant._core.quantized_func_wrappers import (
+    clear_quantized_func_wrapper_factory,
     init_quantized_func_wrapper_factory,
-    clear_quantized_func_wrapper_factory)
-
+)
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedLinear, PatchedMatmul
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import Fp8cfg, ScaleFormat, set_hqt_config
+from neural_compressor.torch.algorithms.fp8_quant.model_configs import ModuleConfig, ModuleExtraConfig
 from neural_compressor.torch.quantization import (
     FP8Config,
     convert,
 )
+
 
 class Matmul(torch.nn.Module):
 
@@ -83,7 +83,10 @@ def test_xpu_basic_mamtul():
     # verify that we actually did the checks
     assert verified_matmul_quantized_func_wrapper and verified_quant_input_quantized_func_wrapper
 
+
 pytest.mark.xfail(reason="PYTORCHDGQ-6840 - enable once low-precision casting custom XPU ops are supported")
+
+
 def test_xpu_quantized_func_wrapper():
     # test for verifying xpu quantized wrapper logic
     my_model = MyModel()
@@ -113,17 +116,15 @@ def test_xpu_quantized_func_wrapper():
 
     # similar logic to scale calculation
     scales_mod_config = ModuleConfig([scale_in], [scale_out], {"weight": scale_weight})
-    module_ex_config = ModuleExtraConfig([quant_input],
-                                         [quant_output],
-                                         [quant_weight],
-                                         scales_mod_config,
-                                         {"lp_dtype": lp_dtype,
-                                          "hp_dtype": hp_dtype})
+    module_ex_config = ModuleExtraConfig(
+        [quant_input], [quant_output], [quant_weight], scales_mod_config, {"lp_dtype": lp_dtype, "hp_dtype": hp_dtype}
+    )
 
     patched_my_linear = PatchedLinear(my_model.my_linear, my_model, module_ex_config)
     assert patched_my_linear.matmul_fp8._quantized_func_ == torch.ops.torch_ipex.fp8_gemm
 
     clear_quantized_func_wrapper_factory()
+
 
 def test_xpu_basic_mamtul_qdq():
     # test convert flow and quantized func
@@ -147,12 +148,15 @@ def test_xpu_basic_mamtul_qdq():
     # verify that we actually did the checks
     assert verified_matmul_quantized_func_wrapper and verified_quant_input_quantized_func_wrapper
 
+
 def test_xpu_quantized_func_wrapper_qdq():
     # test for verifying xpu quantized wrapper logic
     my_model = MyModel()
 
     # set config object in the model
-    config = FP8Config(fp8_config="E4M3", scale_method="unit_scale", scale_format="const", mode="QUANTIZE", use_qdq=True)
+    config = FP8Config(
+        fp8_config="E4M3", scale_method="unit_scale", scale_format="const", mode="QUANTIZE", use_qdq=True
+    )
     fp8_cfg = Fp8cfg.parse(config.to_dict())
     set_hqt_config(my_model, fp8_cfg)
     set_hqt_config(my_model.my_linear, fp8_cfg)
@@ -183,12 +187,13 @@ def test_xpu_quantized_func_wrapper_qdq():
 
     # similar logic to scale calculation
     scales_mod_config = ModuleConfig([scale_in], [scale_out], {"weight": scale_weight})
-    module_ex_config = ModuleExtraConfig([quant_input],
-                                         [quant_output],
-                                         {"weight": weight_config},
-                                         scales_mod_config,
-                                         {"lp_dtype": lp_dtype,
-                                          "hp_dtype": hp_dtype})
+    module_ex_config = ModuleExtraConfig(
+        [quant_input],
+        [quant_output],
+        {"weight": weight_config},
+        scales_mod_config,
+        {"lp_dtype": lp_dtype, "hp_dtype": hp_dtype},
+    )
 
     patched_my_linear = PatchedLinear(my_model.my_linear, my_model, module_ex_config)
     # There is no quantized function wrapper for qdq.

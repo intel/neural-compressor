@@ -14,12 +14,12 @@
 
 import os
 import shutil
+
 import pytest
 import torch
 
 from neural_compressor.torch.algorithms.fp8_quant._core.quant_dequant import QuantDequant
-from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedLinear, PatchedEmbeddingBag
-
+from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedEmbeddingBag, PatchedLinear
 from neural_compressor.torch.quantization import (
     FP8Config,
     convert,
@@ -37,6 +37,7 @@ class MyModel(torch.nn.Module):
     def forward(self, input, offset):
         out = self.embed(input, offset)
         return self.my_linear(out)
+
 
 @pytest.mark.parametrize("scale_format", ["const", "scalar"])
 @pytest.mark.parametrize("scale_method", ["unit_scale", "MAXABS_ARBITRARY", "ACT_MAXABS_POW2_WEIGHTS_PCS_MAXABS_POW2"])
@@ -57,6 +58,7 @@ def test_cpu_basic_flow(scale_format, scale_method):
         if isinstance(mod, PatchedEmbeddingBag):
             assert not hasattr(mod, "quant_input"), "EmbeddingBag is not weight-only quantized"
     shutil.rmtree("hqt_output", ignore_errors=True)
+
 
 def test_cpu_quant_flow():
     my_model = MyModel()

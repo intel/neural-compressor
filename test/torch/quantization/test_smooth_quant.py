@@ -1,5 +1,5 @@
-import os
 import copy
+import os
 import shutil
 
 import pytest
@@ -12,6 +12,7 @@ from neural_compressor.torch.utils import is_ipex_available
 if is_ipex_available():
     import intel_extension_for_pytorch as ipex
 os.environ["FORCE_FP32"] = "1"
+
 
 class Model(torch.nn.Module):
     device = torch.device("cpu")
@@ -34,6 +35,8 @@ example_inputs = torch.rand([1, 3])
 def run_fn(model):
     for i in range(10):
         model(example_inputs)
+
+
 @pytest.mark.skipif(not Version(torch.__version__) < Version("2.9.0"), reason="only for torch<2.9.0 [ipex]")
 class TestSmoothQuant:
     def teardown_class(self):

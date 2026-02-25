@@ -83,9 +83,9 @@ class TestW8A8PT2EQuantizer:
         attention_mask = inputs.attention_mask
         input_ids = inputs.input_ids
 
-
-        from transformers.integrations.executorch import export_with_dynamic_cache
         from transformers import DynamicCache
+        from transformers.integrations.executorch import export_with_dynamic_cache
+
         ep = export_with_dynamic_cache(model, input_ids, attention_mask)
         model = ep.module()
         model._exported = True
@@ -109,11 +109,12 @@ class TestW8A8PT2EQuantizer:
 
         config.freezing = True
         opt_model = torch.compile(converted_model)
-        out = opt_model(input_ids=input_ids,
+        out = opt_model(
+            input_ids=input_ids,
             attention_mask=attention_mask,
             past_key_values=DynamicCache(config=model_config),
             use_cache=True,
-            )
+        )
         assert out.logits is not None
 
     @patch("neural_compressor.torch.algorithms.pt2e_quant.core.logger.error")

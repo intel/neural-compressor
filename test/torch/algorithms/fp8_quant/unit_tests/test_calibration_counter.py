@@ -1,9 +1,10 @@
 from pathlib import Path
-import torch
 
 import habana_frameworks.torch.core as htcore
+import torch
 
 from neural_compressor.torch.quantization import FP8Config, prepare
+
 
 class MyModel(torch.nn.Module):
     def __init__(self) -> None:
@@ -16,16 +17,18 @@ class MyModel(torch.nn.Module):
         x2 = self.fc2(inp)
         return x2
 
+
 calibration_counter = 50
 
 config_dict = {
     "mode": "MEASURE",
     "observer": "maxabs",
     "dump_stats_path": "",
-    "calibration_sample_interval": str(calibration_counter)
+    "calibration_sample_interval": str(calibration_counter),
 }
 
 import time
+
 
 def test_calibration_counter(inc_output_handler):
     config_dict["dump_stats_path"] = str(inc_output_handler)
@@ -43,7 +46,6 @@ def test_calibration_counter(inc_output_handler):
             # check no file was created
             assert not Path.exists(dump_stats_path_file_path)
         elif i == calibration_counter:
-            time.sleep(1) # wait for file to be created
+            time.sleep(1)  # wait for file to be created
             # check file was created
             assert Path.exists(dump_stats_path_file_path)
-

@@ -7,10 +7,12 @@ import torch
 
 from neural_compressor.torch.algorithms.fp8_quant._core.fp_utils import FP8_143_SCALES
 from neural_compressor.torch.algorithms.fp8_quant._core.quantized_func_wrappers.hpu.hpu_quantized_func_wrapper import (
-    QuantizedHpuMatmul
+    QuantizedHpuMatmul,
 )
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import ScaleFormat
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
+
+
 def run_test_matmul_fp8(
     *,
     hp_dtype: torch.dtype,

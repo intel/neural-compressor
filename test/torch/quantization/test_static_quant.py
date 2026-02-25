@@ -1,10 +1,11 @@
-import os
 import copy
+import os
 import shutil
 
 import pytest
 import torch
 from packaging.version import Version
+
 from neural_compressor.torch.utils import is_ipex_available
 
 if is_ipex_available():
@@ -23,6 +24,7 @@ from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerat
 
 device = auto_detect_accelerator().current_device()
 os.environ["FORCE_FP32"] = "1"
+
 
 def build_simple_torch_model():
     class Model(torch.nn.Module):
@@ -50,6 +52,7 @@ def build_simple_torch_model():
 def run_fn(model):
     model(torch.rand((1, 30)))
     model(torch.rand((1, 30)))
+
 
 @pytest.mark.skipif(not Version(torch.__version__) < Version("2.9.0"), reason="only for torch<2.9.0 [ipex]")
 class TestStaticQuant:

@@ -1,6 +1,8 @@
 import habana_frameworks.torch.hpu as hthpu
 import habana_frameworks.torch.utils.experimental as htexp
+
 from neural_compressor.torch.utils.auto_accelerator import INCAcceleratorType
+
 GAUDI = "GAUDI"
 GAUDI2 = "GAUDI2"
 GAUDI3 = "GAUDI3"
@@ -37,6 +39,7 @@ def is_gaudi2():
 def is_gaudi3():
     return is_device(GAUDI3)
 
+
 def htexp_device_type_to_inc_acclerator_type(htexp_device_type):
     if htexp_device_type == get_gaudi2_type():
         return INCAcceleratorType.GAUDI2
@@ -44,6 +47,7 @@ def htexp_device_type_to_inc_acclerator_type(htexp_device_type):
         return INCAcceleratorType.GAUDI3
     else:
         raise ValueError("Unexpected htexp_device_type {} ".format())
+
 
 device_type = [GAUDI2, GAUDI3]
 device_type_id = {GAUDI2: get_gaudi2_type(), GAUDI3: get_gaudi3_type()}

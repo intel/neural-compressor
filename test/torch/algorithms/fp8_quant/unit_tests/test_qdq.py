@@ -1,14 +1,15 @@
-import pytest
-import shutil
 import copy
-import torch
 import random
-import numpy as np
-import habana_frameworks.torch.core as htcore
+import shutil
 
+import habana_frameworks.torch.core as htcore
+import numpy as np
+import pytest
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
-from neural_compressor.torch.quantization import FP8Config, convert, prepare, save, load
+
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul, Softmax
+from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save
 
 htcore.hpu_set_env()
 
@@ -22,8 +23,8 @@ config_dict_qdq = {
     "observer": "maxabs",
     "scale_method": "MAXABS_HW",
     "scale_format": "CONST",  # TODO: remove 'scale_format' key-value after SW-202697 is solved
-    "allowlist": {"types": [], "names":  []},
-    "blocklist": {"types": [], "names":  []},
+    "allowlist": {"types": [], "names": []},
+    "blocklist": {"types": [], "names": []},
     "dump_stats_path": "./inc_output/measure_qdq",
     "use_qdq": True,
 }
@@ -34,11 +35,12 @@ config_dict = {
     "observer": "maxabs",
     "scale_method": "MAXABS_HW",
     "scale_format": "CONST",  # TODO: remove 'scale_format' key-value after SW-202697 is solved
-    "allowlist": {"types": [], "names":  []},
-    "blocklist": {"types": [], "names":  []},
+    "allowlist": {"types": [], "names": []},
+    "blocklist": {"types": [], "names": []},
     "dump_stats_path": "./inc_output/measure",
     "use_qdq": False,
 }
+
 
 class SimpleLinearModel(torch.nn.Module):
     def __init__(self, in_features, out_features, bias=True):
@@ -59,6 +61,7 @@ class SimpleConv2dModel(torch.nn.Module):
         x = self.conv(x)
         return x
 
+
 class SimpleMatMulModel(torch.nn.Module):
     def __init__(self):
         super(SimpleMatMulModel, self).__init__()
@@ -67,6 +70,7 @@ class SimpleMatMulModel(torch.nn.Module):
     def forward(self, x, y):
         output = self.matmul(x, y)
         return output
+
 
 class SimpleSoftmaxModel(torch.nn.Module):
     def __init__(self, dim=-1):
@@ -102,8 +106,13 @@ def prepare_model_to_compare(
     htcore.mark_step()
     return model_quant, model_qdq
 
+
 def test_PatchedConv2d():
-    model = SimpleConv2dModel(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1).to(torch.bfloat16).to("hpu")
+    model = (
+        SimpleConv2dModel(in_channels=3, out_channels=16, kernel_size=3, stride=1, padding=1)
+        .to(torch.bfloat16)
+        .to("hpu")
+    )
     model_quant, model_qdq = prepare_model_to_compare(model, config_dict, config_dict_qdq, "Conv2d")
     with torch.no_grad():
         for i in range(10):
@@ -121,10 +130,11 @@ def test_PatchedConv2d():
         output_quant = model_quant(input_tensor)
         output_qdq = model_qdq(input_tensor)
 
-    # comparsion
-    assert torch.allclose(output_quant, output_qdq, rtol=0.01, atol=5 * 1e-01), f"QDQ comparsion with Quant failed"
-    assert torch.allclose(output_quant, output, rtol=0.01, atol=5 * 1e-01), f"Quant comparsion with OriginModule failed"
-    assert torch.allclose(output_qdq, output, rtol=0.01, atol=5 * 1e-01), f"QDQ comparsion with OriginModule failed"
+    # comparison
+    assert torch.allclose(output_quant, output_qdq, rtol=0.01, atol=5 * 1e-01), "QDQ comparison with Quant failed"
+    assert torch.allclose(output_quant, output, rtol=0.01, atol=5 * 1e-01), "Quant comparison with OriginModule failed"
+    assert torch.allclose(output_qdq, output, rtol=0.01, atol=5 * 1e-01), "QDQ comparison with OriginModule failed"
+
 
 def test_PatchedMatmul():
     model = SimpleMatMulModel().to(torch.bfloat16).to("hpu")
@@ -148,10 +158,11 @@ def test_PatchedMatmul():
     output_qdq = model_qdq(x, y)
     htcore.mark_step()
 
-    # comparsion
-    assert torch.allclose(output_quant, output_qdq, rtol=0.01, atol=5 * 1e-01), f"QDQ comparsion with Quant failed"
-    assert torch.allclose(output_quant, output, rtol=0.01, atol=5 * 1e-01), f"Quant comparsion with OriginModule failed"
-    assert torch.allclose(output_qdq, output, rtol=0.01, atol=5 * 1e-01), f"QDQ comparsion with OriginModule failed"
+    # comparison
+    assert torch.allclose(output_quant, output_qdq, rtol=0.01, atol=5 * 1e-01), "QDQ comparison with Quant failed"
+    assert torch.allclose(output_quant, output, rtol=0.01, atol=5 * 1e-01), "Quant comparison with OriginModule failed"
+    assert torch.allclose(output_qdq, output, rtol=0.01, atol=5 * 1e-01), "QDQ comparison with OriginModule failed"
+
 
 def test_PatchedSoftmax():
     model = SimpleSoftmaxModel(dim=1).to(torch.bfloat16).to("hpu")
@@ -171,18 +182,15 @@ def test_PatchedSoftmax():
     output_quant = model_quant(x)
     output_qdq = model_qdq(x)
 
-    # comparsion
-    assert torch.allclose(output_quant, output_qdq, rtol=0.01, atol=1e-01), f"QDQ comparsion with Quant failed"
-    assert torch.allclose(output_quant, output, rtol=0.01, atol=1e-01), f"Quant comparsion with OriginModule failed"
-    assert torch.allclose(output_qdq, output, rtol=0.01, atol=1e-01), f"QDQ comparsion with OriginModule failed"
+    # comparison
+    assert torch.allclose(output_quant, output_qdq, rtol=0.01, atol=1e-01), "QDQ comparison with Quant failed"
+    assert torch.allclose(output_quant, output, rtol=0.01, atol=1e-01), "Quant comparison with OriginModule failed"
+    assert torch.allclose(output_qdq, output, rtol=0.01, atol=1e-01), "QDQ comparison with OriginModule failed"
 
 
 # Run both real quant and qdq quantization, and compare
 def test_qdq_model():
-    model = AutoModelForCausalLM.from_pretrained(
-        "stas/tiny-random-llama-2",
-        torch_dtype=torch.bfloat16
-    )
+    model = AutoModelForCausalLM.from_pretrained("stas/tiny-random-llama-2", torch_dtype=torch.bfloat16)
     tokenizer = AutoTokenizer.from_pretrained("stas/tiny-random-llama-2")
     model_quant, model_qdq = prepare_model_to_compare(model, config_dict, config_dict_qdq, "model")
 
@@ -214,8 +222,8 @@ def test_qdq_model():
         output_tmp = model_tmp(**inputs).logits.cpu()
         output_qdq_tmp = model_qdq_tmp(**inputs).logits.cpu()
 
-    assert torch.allclose(output_quant, output_tmp, atol=0.002), f"Loading quantized model failed"
-    assert torch.allclose(output_qdq, output_qdq_tmp, atol=0.002), f"Loading fake quantized model failed"
+    assert torch.allclose(output_quant, output_tmp, atol=0.002), "Loading quantized model failed"
+    assert torch.allclose(output_qdq, output_qdq_tmp, atol=0.002), "Loading fake quantized model failed"
     shutil.rmtree("model_tmp", ignore_errors=True)
     shutil.rmtree("model_qdq_tmp", ignore_errors=True)
 
@@ -245,7 +253,7 @@ def test_PatchedLinear(scale_method, scale_format, bias):
         output_qdq = model_qdq(input_tensor)
 
     htcore.mark_step()
-    # comparsion
-    assert torch.allclose(output_qdq, output_quant, rtol=0.01, atol=1e-01), f"QDQ comparsion with Quant failed"
-    assert torch.allclose(output_quant, output, rtol=0.01, atol=1e-01), f"Quant comparsion with OriginModule failed"
-    assert torch.allclose(output_qdq, output, rtol=0.01, atol=1e-01), f"QDQ comparsion with OriginModule failed"
+    # comparison
+    assert torch.allclose(output_qdq, output_quant, rtol=0.01, atol=1e-01), "QDQ comparison with Quant failed"
+    assert torch.allclose(output_quant, output, rtol=0.01, atol=1e-01), "Quant comparison with OriginModule failed"
+    assert torch.allclose(output_qdq, output, rtol=0.01, atol=1e-01), "QDQ comparison with OriginModule failed"

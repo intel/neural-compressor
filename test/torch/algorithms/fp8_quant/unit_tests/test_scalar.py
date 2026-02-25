@@ -1,15 +1,15 @@
 import copy
 import shutil
-import torch
 
 import habana_frameworks.torch.core as htcore
+import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
 htcore.hpu_set_env()
 
-from neural_compressor.torch.quantization import FP8Config, convert, prepare, save, load
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
 from neural_compressor.torch.algorithms.fp8_quant.save_load import process_model_for_scalar_scale
+from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save
 
 torch.manual_seed(1)
 
@@ -57,7 +57,7 @@ def test_scalar_model():
     model_const = AutoModelForCausalLM.from_pretrained(
         "stas/tiny-random-llama-2",
         torch_dtype=torch.bfloat16,
-        )
+    )
     tokenizer = AutoTokenizer.from_pretrained("stas/tiny-random-llama-2")
 
     model_scalar = copy.deepcopy(model_const)
@@ -88,7 +88,7 @@ def test_scalar_model():
     with torch.no_grad():
         output_const = model_const(**inputs).logits.cpu()
         output_scalar = model_scalar(**inputs).logits.cpu()
-    assert torch.allclose(output_const, output_scalar, rtol=0.01), f"Scalar on model failed"
+    assert torch.allclose(output_const, output_scalar, rtol=0.01), "Scalar on model failed"
 
     new_model_const = load("model_const", format="huggingface", device="hpu")
     new_model_scalar = load("model_scalar", format="huggingface", device="hpu")
@@ -99,7 +99,7 @@ def test_scalar_model():
     with torch.no_grad():
         output_const = new_model_const(inp_test).logits.cpu()
         output_scalar = new_model_scalar(inp_test).logits.cpu()
-    assert torch.allclose(output_const, output_scalar, rtol=0.01), f"Scalar save/load failed"
+    assert torch.allclose(output_const, output_scalar, rtol=0.01), "Scalar save/load failed"
     shutil.rmtree("model_const")
     shutil.rmtree("model_scalar")
 
@@ -125,8 +125,9 @@ def test_scalar_simple():
     model_scalar = convert(model_scalar)
 
     model_scalar = process_model_for_scalar_scale(model_scalar)
-    assert set(model_const.state_dict().keys()) == set(model_scalar.state_dict().keys()), \
-            f"Model with scalar scale should have the same state_dict as model with const scale."
+    assert set(model_const.state_dict().keys()) == set(
+        model_scalar.state_dict().keys()
+    ), "Model with scalar scale should have the same state_dict as model with const scale."
 
     htcore.hpu_initialize(model_const)
     htcore.hpu_initialize(model_scalar)
@@ -135,4 +136,4 @@ def test_scalar_simple():
     with torch.no_grad():
         output_const = model_const(inp_test).cpu()
         output_scalar = model_scalar(inp_test).cpu()
-    assert torch.allclose(output_const, output_scalar, rtol=0.01), f"Scalar failed"
+    assert torch.allclose(output_const, output_scalar, rtol=0.01), "Scalar failed"

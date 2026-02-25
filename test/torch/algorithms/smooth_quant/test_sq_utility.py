@@ -21,6 +21,7 @@ class Model(torch.nn.Module):
 
 model = Model()
 
+
 @pytest.mark.skipif(not Version(torch.__version__) < Version("2.9.0"), reason="only for torch<2.9.0 [ipex]")
 def test_captured_dataloader():
     from neural_compressor.torch.algorithms.smooth_quant import build_captured_dataloader

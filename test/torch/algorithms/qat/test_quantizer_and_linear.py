@@ -1,7 +1,8 @@
 import math
 import types
-import torch
+
 import pytest
+import torch
 import torch.nn as nn
 
 # Skip the whole module if auto_round (needed for get_quant_func inside TensorQuantizer) is not available
@@ -9,6 +10,7 @@ auto_round = pytest.importorskip("auto_round")
 
 from neural_compressor.torch.algorithms.qat.quant_linear import QuantLinear
 from neural_compressor.torch.algorithms.qat.tensor_quantizer import TensorQuantizer
+
 
 def make_quant_cfg(
     *,
@@ -21,9 +23,7 @@ def make_quant_cfg(
     act_group_size=32,
     act_sym=True,
 ):
-    """
-    Build a lightweight namespace mimicking the attributes QuantLinear._setup expects.
-    """
+    """Build a lightweight namespace mimicking the attributes QuantLinear._setup expects."""
     return types.SimpleNamespace(
         data_type=data_type,
         bits=bits,
@@ -37,8 +37,7 @@ def make_quant_cfg(
 
 
 def build_quant_linear(in_features=32, out_features=16, bias=True, quant_cfg=None, device="cpu", dtype=torch.float32):
-    """
-    Manually construct a QuantLinear since the class does not define an __init__.
+    """Manually construct a QuantLinear since the class does not define an __init__.
 
     Steps:
       1. Instantiate the module

@@ -29,6 +29,7 @@ def force_not_import_ipex(monkeypatch):
     monkeypatch.setattr("neural_compressor.torch.quantization.algorithm_entry.is_ipex_imported", _is_ipex_imported)
     monkeypatch.setattr("neural_compressor.torch.export.pt2e_export.is_ipex_imported", _is_ipex_imported)
 
+
 class TestPT2EQuantization:
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
@@ -214,10 +215,10 @@ class TestPT2EQuantization:
         # model = export_model_for_pt2e_quant(model, example_inputs=example_inputs)
         attention_mask = inputs.attention_mask
         input_ids = inputs.input_ids
-       
-        
-        from transformers.integrations.executorch import export_with_dynamic_cache
+
         from transformers import DynamicCache
+        from transformers.integrations.executorch import export_with_dynamic_cache
+
         ep = export_with_dynamic_cache(model, input_ids, attention_mask)
         model = ep.module()
         model._exported = True
@@ -242,10 +243,10 @@ class TestPT2EQuantization:
         config.freezing = True
         opt_model = torch.compile(converted_model)
         out = opt_model(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                past_key_values=DynamicCache(config=model_config),
-                use_cache=True,
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            past_key_values=DynamicCache(config=model_config),
+            use_cache=True,
         )
         assert out.logits is not None
 
@@ -314,8 +315,8 @@ class TestPT2EQuantization:
         # Just make sure the pattern matches, not the accuracy.
         # config1: int8 for all
         # config2: half precision for linear/conv
+        from neural_compressor.torch.quantization.autotune import TuningConfig, autotune
         from neural_compressor.torch.quantization.config import INT8StaticQuantConfig
-        from neural_compressor.torch.quantization.autotune import autotune, TuningConfig
 
         config1 = INT8StaticQuantConfig()
         config2 = INT8StaticQuantConfig().set_local(

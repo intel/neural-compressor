@@ -13,19 +13,18 @@
 # limitations under the License.
 
 import os
+import shutil
 
 import pytest
-import shutil
 import torch
-
+from transformers import LlamaConfig, LlamaForCausalLM
 
 from neural_compressor.torch.quantization import (
     FP8Config,
     convert,
-    save,
     load,
+    save,
 )
-from transformers import LlamaConfig, LlamaForCausalLM
 
 torch.manual_seed(1)
 torch.set_grad_enabled(False)
@@ -48,14 +47,18 @@ def compare_parameters_buffers(model1, model2):
     unique_keys_in_dict1 = keys1 - keys2
     unique_keys_in_dict2 = keys2 - keys1
     unique_keys = unique_keys_in_dict1.union(unique_keys_in_dict2)
-    assert len(dict1) == len(dict2), f"The number of parameters and buffers are different, {unique_keys}.\n" + \
-            f"unique_keys_in_model1: {unique_keys_in_dict1}\nunique_keys_in_model2: {unique_keys_in_dict2}\n"
+    assert len(dict1) == len(dict2), (
+        f"The number of parameters and buffers are different, {unique_keys}.\n"
+        + f"unique_keys_in_model1: {unique_keys_in_dict1}\nunique_keys_in_model2: {unique_keys_in_dict2}\n"
+    )
     for k, v in dict1.items():
         assert k in dict2, "k not in dict2"
-        assert v.dtype == dict2[k].dtype, f"dtype of {k} is differnt.\n{v.dtype}\n{dict2[k].dtype}"
+        assert v.dtype == dict2[k].dtype, f"dtype of {k} is different.\n{v.dtype}\n{dict2[k].dtype}"
 
         # torch.allclose operation doesn't support FP8 data type on CPU, so convert to fp32 to compare
-        assert torch.allclose(v.to(torch.float), dict2[k].to(torch.float)), f"{k} is differnt in model1 and model2.\n" + f"{v}\n" + f"{dict2[k]}\n"
+        assert torch.allclose(v.to(torch.float), dict2[k].to(torch.float)), (
+            f"{k} is different in model1 and model2.\n" + f"{v}\n" + f"{dict2[k]}\n"
+        )
 
 
 def test_save_load():
@@ -76,5 +79,6 @@ def test_save_load():
     with torch.no_grad():
         out1 = model(example_input)[0].cpu()
         out2 = new_model(example_input)[0].cpu()
-    assert (out1==out2).all(), \
-            f"The output of the model is different after save and load with scale_method: {scale_method}"
+    assert (
+        out1 == out2
+    ).all(), f"The output of the model is different after save and load with scale_method: {scale_method}"
