@@ -91,7 +91,7 @@ During runtime, Intel Neural Compressor will detect hardware automatically and t
 
 ## Get Start with FP8 Quantization
 [Demo Usage](https://github.com/intel/neural-compressor?tab=readme-ov-file#getting-started)    
-[Computer vision example](../../../examples/pytorch/cv/fp8_quant)
+[Computer vision example](../../examples/pytorch/cv/fp8_quant)
 
 ## Optimum-habana LLM example
 ### Overview

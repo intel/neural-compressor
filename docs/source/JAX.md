@@ -61,10 +61,10 @@ Typically, preparing several dozen samples is sufficient for calibration.
 
 Examples of how to quantize a model and use a pre-quantized model can be found below:
 
-- [Gemma3](../../../examples/jax/keras/gemma/README.md)
-- [ViT](../../../examples/jax/keras/vit/README.md)
-- [Simple model – quantization](../../../examples/jax/keras/helloworld/example_static.py)
-- [Simple model – save and load](../../../examples/jax/keras/helloworld/example_saving.py)
+- [Gemma3](../../examples/jax/keras/gemma/README.md)
+- [ViT](../../examples/jax/keras/vit/README.md)
+- [Simple model – quantization](../../examples/jax/keras/helloworld/example_static.py)
+- [Simple model – save and load](../../examples/jax/keras/helloworld/example_saving.py)
 
 ## Backend and Device
 
