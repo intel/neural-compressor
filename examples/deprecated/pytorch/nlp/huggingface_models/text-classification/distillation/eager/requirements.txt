@@ -1,9 +1,0 @@
-transformers==4.38.0
-torch>=1.8.0
-datasets>=1.2.1, <=1.8
-sentencepiece!=0.1.92
-protobuf
-scipy
-scikit-learn
-Keras-Preprocessing
-tqdm

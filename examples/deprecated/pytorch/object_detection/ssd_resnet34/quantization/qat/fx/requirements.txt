@@ -1,7 +1,0 @@
-git+https://github.com/mlperf/logging.git@0.7.0
-neural-compressor
-absl-py
-matplotlib
-pycocotools
-torch>=1.9.0
-torchvision>=0.10.0

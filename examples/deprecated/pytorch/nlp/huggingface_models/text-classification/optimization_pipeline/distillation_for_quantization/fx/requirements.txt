@@ -1,5 +1,0 @@
-transformers
-torch
-datasets
-accelerate
-tqdm

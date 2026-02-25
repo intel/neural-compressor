@@ -1,2 +1,0 @@
-intel-tensorflow>=2.12.0
-neural-compressor
