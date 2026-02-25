@@ -22,8 +22,6 @@ In particular, the tool provides the key features, typical examples, and open co
 * Support a wide range of Intel hardware such as [Intel Gaudi Al Accelerators](https://www.intel.com/content/www/us/en/products/details/processors/ai-accelerators/gaudi.html), [Intel Core Ultra Processors](https://www.intel.com/content/www/us/en/products/details/processors/core-ultra.html), [Intel Xeon Scalable Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/overview.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/overview.html) with extensive testing;
 support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing; support NVidia GPU for some WOQ algorithms like AutoRound and HQQ.
 
-* Validate popular LLMs such as [LLama2](/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), [Falcon](/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), [GPT-J](/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), [Bloom](/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), [OPT](/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm), and more than 10,000 broad models such as [Stable Diffusion](/examples/deprecated/pytorch/nlp/huggingface_models/text-to-image/quantization), [BERT-Large](/examples/deprecated/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx), and [ResNet50](/examples/deprecated/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx) from popular model hubs such as [Hugging Face](https://huggingface.co/), [Torch Vision](https://pytorch.org/vision/stable/index.html), and [ONNX Model Zoo](https://github.com/onnx/models#models), with automatic [accuracy-driven](/docs/source/design.md#workflow) quantization strategies
-
 * Collaborate with cloud marketplaces such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00) and [Microsoft Olive](https://github.com/microsoft/Olive), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), [ONNX Runtime](https://github.com/microsoft/onnxruntime), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
 
 ## What's New
@@ -45,10 +43,10 @@ Choose the necessary framework dependencies to install based on your deploy envi
 
 ### Install Neural Compressor from pypi
 ```
-# Install 2.X API + Framework extension API + PyTorch dependency
-pip install neural-compressor[pt]
-# Install 2.X API + Framework extension API + TensorFlow dependency
-pip install neural-compressor[tf]
+# Framework extension API + PyTorch dependency
+pip install neural-compressor-pt
+# Framework extension API + TensorFlow dependency
+pip install neural-compressor-tf
 ```    
 **Note**: Further installation methods can be found under [Installation Guide](./docs/source/installation_guide.md). check out our [FAQ](./docs/source/faq.md) for more details.
 
