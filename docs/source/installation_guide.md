@@ -8,8 +8,6 @@
 
     1.3. [Install from Source](#install-from-source)
 
-    1.4. [Install from AI Kit](#install-from-ai-kit)
-
 2. [System Requirements](#system-requirements)
 
    2.1. [Validated Hardware Environment](#validated-hardware-environment)
@@ -105,24 +103,18 @@ INC_JAX_ONLY=1 pip install .
 * Intel Data Center GPU Max Series (Ponte Vecchio)
 * Intel® Arc™ B-Series Graphics (Battlemage)
 
-#### Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:
-
-* Intel CPU, AMD/ARM CPU, and NVidia GPU. Please refer to the validated model [list](./validated_model_list.md#validated-onnx-qdq-int8-models-on-multiple-hardware-through-onnx-runtime).
-
 ### Validated Software Environment
 
 * OS version: CentOS 8.4, Ubuntu 24.04, MacOS Ventura 13.5, Windows 11
-* Python version: 3.10, 3.11, 3.12
+* Python version: 3.10, 3.11, 3.12, 3.13
 
 <table class="docutils">
 <thead>
   <tr style="vertical-align: middle; text-align: center;">
     <th>Framework</th>
     <th>TensorFlow</th>
-    <th>Intel®<br>Extension for<br>TensorFlow*</th>
     <th>PyTorch</th>
     <th>Intel®<br>Extension for<br>PyTorch*</th>
-    <th>ONNX<br>Runtime</th>
   </tr>
 </thead>
 <tbody>
@@ -132,10 +124,6 @@ INC_JAX_ONLY=1 pip install .
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.16.1>2.16.1</a><br>
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.15.0>2.15.0</a><br>
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.14.1>2.14.1</a><br></td>
-    <td class="tg-7zrl"> 
-    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.15.0.0>2.15.0.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.14.0.1>2.14.0.1</a><br>
-    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.13.0.0>2.13.0.0</a><br></td>
     <td class="tg-7zrl">
     <a href=https://github.com/pytorch/pytorch/tree/v2.8.0>2.8.0</a><br>
     <a href=https://github.com/pytorch/pytorch/tree/v2.7.1>2.7.1</a><br>
@@ -144,10 +132,6 @@ INC_JAX_ONLY=1 pip install .
     <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.8.0%2Bcpu>2.8.0</a><br>
     <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.7.0%2Bcpu>2.7.0</a><br>
     <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.6.0%2Bcpu>2.6.0</a><br></td>
-    <td class="tg-7zrl">
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.18.0>1.18.0</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.17.3>1.17.3</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.16.3>1.16.3</a><br></td>
   </tr>
 </tbody>
 </table>
