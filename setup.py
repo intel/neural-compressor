@@ -56,7 +56,6 @@ PKG_INSTALL_CFG = {
             "jax": fetch_requirements("requirements_jax.txt"),
         },
     },
-
     # pip install neural-compressor-pt, install PyTorch API.
     "neural_compressor_pt": {
         "project_name": "neural_compressor_pt",
