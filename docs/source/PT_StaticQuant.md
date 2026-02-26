@@ -7,13 +7,13 @@ PyTorch Static Quantization
         2.1.2 [Specify Quantization Rules](#specify-quantization-rules) \
         2.1.3 [Model Examples](#model-examples) \
     2.2 [Static Quantization with PT2E Backend](#static-quantization-with-pt2e-backend) \
-        2.2.1 [Usage Sample with PT2E](#usage-sample-with-pt2e)
+        2.2.1 [Usage Sample with PT2E](#usage-sample-with-pt2e)  
         2.2.2 [Model Examples with PT2E](#model-examples-with-pt2e)
 
 
 ## Introduction
 
-Post-Training Quantization (PTQ) is a technique used to convert a pre-trained floating-point model to a quantized model. This approach does not require model retraining. Instead, it uses calibration data to determine the optimal quantization parameters. Static quantization involves calibrating both weights and activations during the quantization process. Currently, we support two paths to perform static PTQ: [Intel Extension for PyTorch (IPEX)](https://github.com/intel/intel-extension-for-pytorch) and [PyTorch 2 Export Quantization (PT2E)](https://pytorch.org/tutorials/prototype/pt2e_quant_x86_inductor.html).
+Post-Training Quantization (PTQ) is a technique used to convert a pre-trained floating-point model to a quantized model. This approach does not require model retraining. Instead, it uses calibration data to determine the optimal quantization parameters. Static quantization involves calibrating both weights and activations during the quantization process. Currently, we support two paths to perform static PTQ [Intel Extension for PyTorch (IPEX)](https://github.com/intel/intel-extension-for-pytorch) and [PyTorch 2 Export Quantization (PT2E)](https://pytorch.org/tutorials/prototype/pt2e_quant_x86_inductor.html).
 
 ## Get Started
 

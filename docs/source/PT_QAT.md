@@ -69,9 +69,7 @@ Compared with PTQ, QAT offers:
 
 ## Quick Start
 
-This section walks through an end-to-end example based on the provided code and examples in:
-
-`[examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm_qat](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm_qat)`
+This section walks through an end-to-end [example](https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm_qat).
 
 ### 1. Setup Environment
 

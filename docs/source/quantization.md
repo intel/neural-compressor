@@ -33,9 +33,7 @@ $$
 
 where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integer zero point.
 
-### Symmetric & Asymmetric 
-
-----------------------------------------------
+### Symmetric & Asymmetric
 
 asymmetric quantization, in which we map the min/max range in the float tensor to the integer range. Here int8 range is [-128, 127], uint8 range is [0, 255].
 
@@ -46,8 +44,6 @@ If INT8 is specified, $Scale = (|X_{f_{max}} - X_{f_{min}}|) / 127$ and $ZeroPoi
 or
 
 If UINT8 is specified, $Scale = (|X_{f_{max}} - X_{f_{min}}|) / 255$ and $ZeroPoint = - X_{f_{min}} / Scale$.
-
-----------------------------------------------
 
 Symmetric quantization, in which we use the maximum absolute value in the float tensor as float range and map to the corresponding integer range. 
 
@@ -65,14 +61,12 @@ If UINT8 is specified, $Scale = max(abs(X_{f_{max}}), abs(X_{f_{min}})) / 255$ a
 
 Sometimes the reduce_range feature, that's using 7 bit width (1 sign bit + 6 data bits) to represent int8 range, may be needed on some early Xeon platforms, it's because those platforms may have overflow issues due to fp16 intermediate calculation result when executing int8 dot product operation. After AVX512_VNNI instruction is introduced, this issue gets solved by supporting fp32 intermediate data.
 
-----------------------------------------------
 
 #### Quantization Scheme in TensorFlow
 + Symmetric Quantization
     + int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)
     + uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))
 
-----------------------------------------------
 
 #### Quantization Scheme in PyTorch
 + Symmetric Quantization
@@ -81,27 +75,20 @@ Sometimes the reduce_range feature, that's using 7 bit width (1 sign bit + 6 dat
 + Asymmetric Quantization
     + uint8: scale = (rmax - rmin) / (max(uint8) - min(uint8)); zero_point = min(uint8)  - round(rmin / scale)
 
-----------------------------------------------
 
 #### Quantization Scheme in IPEX
 + Symmetric Quantization
     + int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)
     + uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))
 
-----------------------------------------------
 
 ### Per-tensor & Per-channel
 
-----------------------------------------------
-
 There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarsest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrices and per channel for 3D matrices. Similarly, the finest granularity is that each element has an individual set of quantization parameters.
-
 
 However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. **In the following part, We will show that per-channel could bring lower quantization loss but has some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization**
 
 #### Per-tensor example
-
-----------------------------------------------
 
 Suppose the weight tensor is：
 
@@ -179,8 +166,6 @@ The difference between $W$ and $W_{dq}$ shows that quantization affects precisio
 
 #### Per-channel example
 
-----------------------------------------------
-
 Similarly, the example of per-channel quantization is as follows:
 
 ```python
@@ -228,8 +213,6 @@ And the loss is
 Through this example, we can see that per-channel quantization has finer granularity and has lower loss (loss 5.6376e-07 for per-channel quantization and 7.3852e-07 for per-tensor quantization).
 
 #### Matmul quantization example
-
-----------------------------------------------
 
 For a linear layer in most model, $Y=X \cdot W$, we can quantize both the weights and activations in order to reduce the storage and accelerate inference.
 Using per-tensor scale quantization to show the process.
@@ -310,8 +293,6 @@ This approach is major quantization approach people should try because it could 
 
 #### Per-channel limitation
 
-----------------------------------------------
-
 Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We would prove it in the following image and the zero point of quantization would be ignored for simplicity.
 
 The image on the left presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics. In the middle image, we apply per-tensor quantization for activations and per-channel quantization for weights; the results after quantization that are denoted by $y_1$ and $y_2$, could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation (right image), we could not dequantize the  $y_1$ and  $y_2$ to float results.
@@ -320,8 +301,6 @@ The image on the left presents a normal linear forward  with 1x2 input $x$ and 2
     <img src="./imgs/sq_pc.png"/>
 </div>
 
-
-----------------------------------------------
 
 In the previous subsection, we have explained why per-channel quantization could not be applied for activation, even though it could lead to lower quantization loss. However, the quantization error loss of activation plays an important role in the accuracy loss of model quantization[1][6][7]. 
 

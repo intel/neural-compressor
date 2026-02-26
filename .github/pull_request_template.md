@@ -1,7 +1,6 @@
 ## Type of Change
 
-feature or bug fix or documentation or validation or others  
-API changed or not
+feature/bug fix/documentation/validation/others
 
 ## Description
 

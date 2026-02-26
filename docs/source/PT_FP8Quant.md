@@ -22,10 +22,10 @@ To harness FP8 capabilities — offering reduced memory usage and lower computat
 
 ## Support Matrix
 
-| Hardware | FP8 mode | FP8 QDQ mode |
-| :------- |:--------|:---------|
-| HPU      | &#10004; | &#10004; |
-| CPU      | &#10005; | &#10004; |
+| Hardware  | FP8 mode | FP8 QDQ mode |
+|:----------|:---------|:-------------|
+| HPU       | &#10004; | &#10004;     |
+| CPU       | &#10005; | &#10004;     |
 
 For FP8 mode, tensors are all represented in FP8 format and kernels are replaced to FP8 version explicitly.
 

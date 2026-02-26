@@ -95,15 +95,10 @@ done
 
 sed -i 's/.\/docs\/source\/_static/./g' ./source/docs/source/Welcome.md
 sed -i 's/.md/.html/g; s/.\/docs\/source\//.\//g' ./source/docs/source/Welcome.md
-#sed -i 's/\/examples\/README.html/https:\/\/github.com\/intel\/neural-compressor\/blob\/master\/examples\/README.md/g' ./source/docs/source/user_guide.md
 sed -i 's/https\:\/\/intel.github.io\/neural-compressor\/lates.\/api-doc\/apis.html/https\:\/\/intel.github.io\/neural-compressor\/latest\/docs\/source\/api-doc\/apis.html/g' ./source/docs/source/Welcome.md
 sed -i 's/\/examples\/pytorch/https:\/\/github.com\/intel\/neural-compressor\/blob\/master\/examples\/pytorch/g' ./source/docs/source/Welcome.md
-
 sed -i 's/examples\/README.html/https:\/\/github.com\/intel\/neural-compressor\/blob\/master\/examples\/README.md/g' ./source/docs/source/Welcome.md
-
 sed -i 's/\/examples\/README.md/https:\/\/github.com\/intel\/neural-compressor\/blob\/master\/examples\/README.md/g' ./source/docs/source/get_started.md
-
-sed -i 's/.\/validated_model_list.md\#/.\/validated_model_list.html\#/g' ./source/docs/source/installation_guide.md
 
 make clean
 make html

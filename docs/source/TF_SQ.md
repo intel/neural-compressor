@@ -1,11 +1,10 @@
 # Smooth Quant
 
-- [Smooth Quant](#smooth-quant)
-  - [Introduction](#introduction)
-  - [Usage](#usage)
-    - [Using a Fixed `alpha`](#using-a-fixed-alpha)
-    - [Determining the `alpha` through auto-tuning](#determining-the-alpha-through-auto-tuning)
-  - [Examples](#examples)
+- [Introduction](#introduction)
+- [Usage](#usage)
+  - [Using a Fixed `alpha`](#using-a-fixed-alpha)
+  - [Determining the `alpha` through auto-tuning](#determining-the-alpha-through-auto-tuning)
+- [Examples](#examples)
 
 
 ## Introduction
@@ -13,7 +12,6 @@
 Quantization is a common compression operation to reduce memory and accelerate inference by converting the floating point matrix to an integer matrix. For large language models (LLMs) with gigantic parameters, the systematic outliers make quantification of activations difficult.  [SmoothQuant](https://arxiv.org/abs/2211.10438), a training free post-training quantization (PTQ) solution, offline migrates this difficulty from activations to weights with a mathematically equivalent transformation.
 
 Please refer to the document of [Smooth Quant](smooth_quant.md) for detailed fundamental knowledge.
-
 
 ## Usage
 There are two ways to apply smooth quantization: 1) using a fixed `alpha` for the entire model or 2) determining the `alpha` through auto-tuning.
