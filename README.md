@@ -2,7 +2,7 @@
 
 Intel® Neural Compressor
 ===========================
-<h3> An open-source Python library supporting popular model compression techniques on mainstream deep learning frameworks (TensorFlow, PyTorch, and JAX)</h3>
+<h3> An open-source Python library supporting popular model compression techniques on mainstream deep learning frameworks (PyTorch, TensorFlow, and JAX)</h3>
 
 [![python](https://img.shields.io/badge/python-3.10%2B-blue)](https://github.com/intel/neural-compressor)
 [![version](https://img.shields.io/badge/release-3.7-green)](https://github.com/intel/neural-compressor/releases)
@@ -17,12 +17,10 @@ Intel® Neural Compressor
 
 Intel® Neural Compressor aims to provide popular model compression techniques such as Static Quantization, Dynamic Quantization, SmoothQuant, Weight-Only Quantization, Mixed Precision, etc.
 
-* Support advanced quantization of Large Language Models (LLMs) and Vision-Language Models (VLMs) such as LLaMA, OPT, Qwen, Phi, DeepSeek, etc. for various quantization techniques and multiple precisions with the integration of [AutoRound](https://github.com/intel/auto-round).
+* Support advanced quantization of Large Language Models (LLMs) and Vision-Language Models (VLMs) such as LLaMA, OPT, Qwen, Phi, DeepSeek, etc. on various quantization techniques and multiple low precisions with the integration of [AutoRound](https://github.com/intel/auto-round).
 
 * Support a wide range of Intel hardware such as [Intel Gaudi Al Accelerators](https://www.intel.com/content/www/us/en/products/details/processors/ai-accelerators/gaudi.html), [Intel Core Ultra Processors](https://www.intel.com/content/www/us/en/products/details/processors/core-ultra.html), [Intel Xeon Scalable Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/overview.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/overview.html) with extensive testing;
-support AMD CPU, ARM CPU, and NVidia GPU with limited test. 
-
-* Collaborate with cloud marketplaces such as [Google Cloud Platform](https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207), [Amazon Web Services](https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support), and [Azure](https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel), software platforms such as [Tencent TACO](https://new.qq.com/rain/a/20221202A00B9S00) and [Microsoft Olive](https://github.com/microsoft/Olive), and open AI ecosystem such as [Hugging Face](https://huggingface.co/blog/intel), [PyTorch](https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html), [ONNX](https://github.com/onnx/models#models), [ONNX Runtime](https://github.com/microsoft/onnxruntime), and [Lightning AI](https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst)
+support AMD CPU, ARM CPU, and NVidia GPU with limited testing. 
 
 ## What's New
 * [2025/12] [NVFP4 quantization](./docs/source/PT_NVFP4Quant.md) experimental support
