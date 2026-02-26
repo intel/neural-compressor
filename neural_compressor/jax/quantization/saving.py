@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from importlib import metadata as importlib_metadata
 from typing import Optional
 
 import keras
@@ -22,6 +23,7 @@ from keras_hub.src.models.backbone import Backbone
 from keras_hub.src.models.task import Task
 from keras_hub.src.utils.preset_utils import get_preset_saver
 
+from neural_compressor.common import logger
 from neural_compressor.common.base_config import config_registry
 from neural_compressor.jax.quantization.config import FRAMEWORK_NAME, BaseConfig, DynamicQuantConfig, StaticQuantConfig
 from neural_compressor.jax.utils.utility import dtype_mapping, iterate_over_layers
@@ -63,6 +65,32 @@ def quant_config_from_json_object(json_obj: dict) -> BaseConfig:
 
     config_class = configs[quant_type]
     return config_class.from_dict(config_dict)
+
+
+class VersionManager:
+    _MODULES = ["neural_compressor_jax", "keras", "keras_hub"]
+
+    @classmethod
+    def add_versions(cls, config):
+        config["_versions"] = {}
+        for package in cls._MODULES:
+            config["_versions"][package] = importlib_metadata.version(package)
+
+    @classmethod
+    def check_versions_mismatch(cls, config):
+        versions = config.get("_versions")
+        if versions is None:
+            logger.error(
+                "No version information found in the saved model. Please save model with newer version of neural_compressor."
+            )
+            return
+        for package, version_in_config in versions.items():
+            current_version = importlib_metadata.version(package)
+            if version_in_config != current_version:
+                logger.warning(
+                    f"{package}: version mismatch. Saved model: {version_in_config}, current version: {current_version}. "
+                    f"This could cause unexpected behavior."
+                )
 
 
 class SaveableLayerMixin:
@@ -121,8 +149,8 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
 
     def get_config(self):
         config = super().get_config()
-        config["_wrapped_model"] = keras.saving.serialize_keras_object(self._wrapped_model)
         config["_quant_config"] = quant_config_to_json_object(self._quant_config)
+        config["_wrapped_model"] = keras.saving.serialize_keras_object(self._wrapped_model)
         return config
 
     def __new__(cls, *args, **kwargs):
@@ -185,6 +213,8 @@ class KerasQuantizedModelWrapper(Task):
 
     def get_config(self):
         config = super().get_config()
+        VersionManager.add_versions(config)
+        config["_quant_config"] = quant_config_to_json_object(self._quant_config)
         # Save backbone without wrapper for load/save_model <-> preset api compatibility
         backbone_wrapper = None
         if hasattr(self, "backbone"):
@@ -194,7 +224,6 @@ class KerasQuantizedModelWrapper(Task):
         config["_wrapped_model"] = keras.saving.serialize_keras_object(self._wrapped_model)
         if backbone_wrapper is not None:
             self.backbone = backbone_wrapper
-        config["_quant_config"] = quant_config_to_json_object(self._quant_config)
         return config
 
     def __new__(cls, *args, **kwargs):
@@ -202,6 +231,7 @@ class KerasQuantizedModelWrapper(Task):
 
     @classmethod
     def from_config(cls, config):
+        VersionManager.check_versions_mismatch(config)
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
         quant_config_json = config.get("_quant_config")
         quant_config = quant_config_from_json_object(quant_config_json)
