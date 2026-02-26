@@ -46,12 +46,11 @@ pip install tensorflow
 ### Install from Binary
 - Install from Pypi
 ```Shell
-# Framework extension API for PyTorch/Tensorflow/JAX (start from v3.8)
+# Framework extension API for PyTorch/Tensorflow
 pip install neural-compressor
 # Framework extension API + specific dependency
 pip install neural-compressor[pt]
 pip install neural-compressor[tf]
-pip install neural-compressor[jax]
 ```
 ```Shell
 # Framework extension API + PyTorch dependency
