@@ -95,7 +95,7 @@ class ScaleMethodFactory:
                 return MaxAbsPts(scale_round_method, self.params, self.device_for_scales, backoff)
             ## maxabs/opt in channel PCS
             case (_, ScaleGranularity.PCS, QuantTensorName.WEIGHT_IN_CH, _)\
-                if scale_value_type in {ScaleValueType.MAXABS, ScaleValueType.OPT}:
+                if scale_value_type in {ScaleValueType.MAXABS, ScaleValueType.OPT, ScaleValueType.DUMMY_SCALES}:
                 return InputChannelScale(scale_round_method, self.params, self.device_for_scales)
             ## maxabs PCS
             case (ScaleValueType.MAXABS, ScaleGranularity.PCS, _, _):
