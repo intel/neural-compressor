@@ -1,5 +1,9 @@
 # Copyright (c) 2025-2026 Intel Corporation
 #
+# Portions of this code are derived from:
+# - Keras (https://github.com/keras-team/keras)
+# - Keras-hub, Copyright 2024, KerasHub authors (https://github.com/keras-team/keras-hub)
+#
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
 # You may obtain a copy of the License at

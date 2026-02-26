@@ -13,7 +13,6 @@
 # limitations under the License.
 """The utility functions and classes for JAX."""
 import inspect
-import os
 from typing import Callable, Dict, Optional
 
 algos_mapping: Dict[str, Callable] = {}
@@ -28,44 +27,24 @@ import ml_dtypes
 from jax import numpy as jnp
 from keras import ops, tree
 
-# TODO: move to keras/src/utils/dtype_utils.py
-# WA for missing float8 dtypes
-from keras.src.utils.dtype_utils import DTYPE_TO_SIZE
-
 from neural_compressor.common import logger
 
-# TODO make it more general
-WA_DTYPE_TO_SIZE = {
-    **{f"float{i}": i for i in (16, 32, 64)},
-    **{f"int{i}": i for i in (8, 16, 32, 64)},
-    **{f"uint{i}": i for i in (8, 16, 32, 64)},
-    "bfloat16": 16,
-    "bool": 1,
-    "float8_e4m3fn": 8,
-    "float8_e5m2": 8,
-}
+
+def add_fp8_support(function):
+    """Extend the given size function to support FP8 dtypes."""
+
+    def wrapper(dtype):
+        q_dtypes = ["float8_e4m3fn", "float8_e4m3", "float8_e5m2"]
+        if dtype in q_dtypes:
+            return 8
+        return function(dtype)
+
+    return wrapper
 
 
-def wa_dtype_size(dtype):
-    size = WA_DTYPE_TO_SIZE.get(dtype, None)
-    if size is None:
-        raise ValueError(f"Invalid dtype: {dtype}")
-    return size
-
-
-dtype_utils.dtype_size = wa_dtype_size
-
-get_dtype_size_in_bits_orig = tensor_utils.get_dtype_size_in_bits
-
-
-def wa_get_dtype_size_in_bits(dtype):
-    q_dtypes = ["float8_e4m3fn", "float8_e4m3", "float8_e5m2"]
-    if dtype in q_dtypes:
-        return 8
-    return get_dtype_size_in_bits_orig(dtype)
-
-
-tensor_utils.get_dtype_size_in_bits = wa_get_dtype_size_in_bits
+# Replace Keras and Keras-hub functions with the extended versions that support FP8.
+tensor_utils.get_dtype_size_in_bits = add_fp8_support(tensor_utils.get_dtype_size_in_bits)
+dtype_utils.dtype_size = add_fp8_support(dtype_utils.dtype_size)
 
 
 def register_algo(name):
