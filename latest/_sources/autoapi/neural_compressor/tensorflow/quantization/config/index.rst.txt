@@ -51,6 +51,13 @@ Module Contents
    Config class for tf smooth quantization.
 
 
+   .. py:attribute:: white_list
+
+      Get the white list of operator names or types.
+
+      :returns: The white list of operator names or types.
+
+
 .. py:function:: get_default_sq_config() -> SmoothQuantConfig
 
    Generate the default rtn config.

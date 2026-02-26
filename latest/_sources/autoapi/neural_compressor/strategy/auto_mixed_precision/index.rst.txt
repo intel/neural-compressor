@@ -20,7 +20,7 @@ Classes
 Module Contents
 ---------------
 
-.. py:class:: AutoMixedPrecisionTuneStrategy
+.. py:class:: AutoMixedPrecisionTuneStrategy(model, conf, q_dataloader=None, q_func=None, eval_func=None, eval_dataloader=None, eval_metric=None, resume=None, q_hooks=None)
 
 
 
