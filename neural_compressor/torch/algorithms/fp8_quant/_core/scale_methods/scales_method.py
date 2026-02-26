@@ -157,7 +157,11 @@ class UseFirstAdditionalScales(ScalesMethod):
 # used when running with dummy measurement (prepare_model_with_dummy_measurement)
 class DummyScales(ScalesMethod):
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        self.scale = torch.tensor(1.0).to(self.device)
+        out_channel_size = additional_kwargs.get("out_channel_size")
+        if out_channel_size is None:
+            self.scale = torch.tensor(1.0).to(self.device)
+        else:
+            self.scale = torch.ones([out_channel_size], dtype=self.hp_dtype, device=self.device)
         return self.scale
 
 
@@ -220,8 +224,7 @@ class InputChannelScale(ScalesMethod):
         if in_channel_size is None:
             raise ValueError("Missing 'in_channel_size' in additional_kwargs")
 
-        input_in_ch = torch.ones([in_channel_size, 1], dtype=self.hp_dtype, device=self.device)
-        return input_in_ch.flatten()
+        return torch.ones([in_channel_size], dtype=self.hp_dtype, device=self.device)
 
 class FixedScale(ScalesMethod):
     def __init__(self, round_scale_method, params, device_for_scales):

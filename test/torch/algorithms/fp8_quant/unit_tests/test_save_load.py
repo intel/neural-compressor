@@ -63,11 +63,6 @@ def compare_parameters_buffers(model1, model2):
 )
 @pytest.mark.parametrize("scale_format", ["const", "scalar"])
 def test_save_load(scale_method, scale_format):
-    if is_pytorch_at_least("2.10") and scale_method.startswith("act_maxabs_"):
-        # Loading 1D scale tensors for 0D scale tensors raises error since PT2.10
-        # https://github.com/pytorch/pytorch/commit/8a721888286734470a7d99d5a752ebf020a4bc90
-        pytest.skip("Loading 1D scale tensors for 0D scale tensors raises error since PT2.10 - need to be fixed GAUDISW-246083")
-
     config = LlamaConfig(hidden_size=128, num_attention_heads=2, num_hidden_layers=2, vocab_size=512)
     model = LlamaForCausalLM(config)
     model = model.to(torch.bfloat16)  # ensure all buffers are bf16 to avoid [SW-214576]

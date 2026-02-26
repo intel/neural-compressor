@@ -129,11 +129,6 @@ def init_model(world_size):
 @torch.no_grad()
 @pytest.mark.parametrize("scale_method", ["maxabs_hw", "act_maxabs_hw_weights_pcs_maxabs_pow2"])
 def test_default_save_load(scale_method):
-    if is_pytorch_at_least("2.10") and scale_method == "act_maxabs_hw_weights_pcs_maxabs_pow2":
-        # Loading 1D scale tensors for 0D scale tensors raises error since PT2.10
-        # https://github.com/pytorch/pytorch/commit/8a721888286734470a7d99d5a752ebf020a4bc90
-        pytest.skip("Loading 1D scale tensors for 0D scale tensors raises error since PT2.10 - need to be fixed GAUDISW-246083")
-
     world_size = get_world_size()
     local_rank = get_local_rank()
     example_inputs = torch.tensor([[10, 20]], dtype=torch.long).to("hpu")
