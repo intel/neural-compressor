@@ -91,9 +91,9 @@ RTN (Round-to-Nearest) is enough to keep accuracy.
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP8
 ```
 
-#### Llama 3.1 8B MXFP4 (Mixed with MXFP8, Target_bits=7.8)
+#### Llama 3.1 8B MXFP4 (Mixed with MXFP8, Target_bits=8)
 
-`Target_bits=7.8` is an empirical value.
+`Target_bits=8` is an empirical value considering scale bits (0.25 bits per weight).
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp4_mixed --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP4-MXFP8
