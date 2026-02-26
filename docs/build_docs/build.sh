@@ -128,7 +128,6 @@ if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
   cp -r ${SRC_FOLDER}/* ${DST_FOLDER}
   python update_html.py ${DST_FOLDER} ${VERSION}
   cp -r ./source/docs/source/imgs ${DST_FOLDER}/docs/source
-  cp -r ./source/docs/source/3x/imgs ${DST_FOLDER}/docs/source/3x
 
 
   cp source/_static/index.html ${DST_FOLDER}
@@ -143,7 +142,6 @@ if [[ ${UPDATE_LATEST_FOLDER} -eq 1 ]]; then
   cp -r ${SRC_FOLDER}/* ${LATEST_FOLDER}
   python update_html.py ${LATEST_FOLDER} ${VERSION}
   cp -r ./source/docs/source/imgs ${LATEST_FOLDER}/docs/source
-  cp -r ./source/docs/source/3x/imgs ${LATEST_FOLDER}/docs/source/3x
   cp source/_static/index.html ${LATEST_FOLDER}
 else
   echo "skip to create ${LATEST_FOLDER}"
