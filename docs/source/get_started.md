@@ -82,6 +82,3 @@ It also provides some common modules across different frameworks. For example, A
       </tr>
   </tbody>
 </table>
-
-> **Note**:
-> From 3.0 release, we recommend to use 3.X API. Compression techniques during training such as QAT, Pruning, Distillation only available in 2.X API which is available before 3.8 release.
