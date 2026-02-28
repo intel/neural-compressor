@@ -38,7 +38,7 @@ It also provides some common modules across different frameworks. For example, A
       <td colspan="2" align="center"><a href="design.md#workflow">Workflow</a></td>
       <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
       <td colspan="1" align="center"><a href="llm_recipes.md">LLMs Recipes</a></td>
-      <td colspan="1" align="center">Examples</td>
+      <td colspan="1" align="center"><a href="/examples/README.md">Examples</a></td>
     </tr>
   </tbody>
   <thead>
