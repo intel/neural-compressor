@@ -84,7 +84,6 @@ cp -rf ../docs/ ./source
 cp -f "../README.md" "./source/docs/source/Welcome.md"
 cp -f "../SECURITY.md" "./source/docs/source/SECURITY.md"
 cp -rf ../examples ./source/docs/source/
-#python add_readme.py ./source/docs/source/examples/3.x_api/README.md
 
 all_md_files=`find ./source/docs -name "*.md"`
 for md_file in ${all_md_files}
@@ -95,15 +94,10 @@ done
 
 sed -i 's/.\/docs\/source\/_static/./g' ./source/docs/source/Welcome.md
 sed -i 's/.md/.html/g; s/.\/docs\/source\//.\//g' ./source/docs/source/Welcome.md
-#sed -i 's/\/examples\/README.html/https:\/\/github.com\/intel\/neural-compressor\/blob\/master\/examples\/README.md/g' ./source/docs/source/user_guide.md
 sed -i 's/https\:\/\/intel.github.io\/neural-compressor\/lates.\/api-doc\/apis.html/https\:\/\/intel.github.io\/neural-compressor\/latest\/docs\/source\/api-doc\/apis.html/g' ./source/docs/source/Welcome.md
 sed -i 's/\/examples\/pytorch/https:\/\/github.com\/intel\/neural-compressor\/blob\/master\/examples\/pytorch/g' ./source/docs/source/Welcome.md
-
 sed -i 's/examples\/README.html/https:\/\/github.com\/intel\/neural-compressor\/blob\/master\/examples\/README.md/g' ./source/docs/source/Welcome.md
-
 sed -i 's/\/examples\/README.md/https:\/\/github.com\/intel\/neural-compressor\/blob\/master\/examples\/README.md/g' ./source/docs/source/get_started.md
-
-sed -i 's/.\/validated_model_list.md\#/.\/validated_model_list.html\#/g' ./source/docs/source/installation_guide.md
 
 make clean
 make html
@@ -133,7 +127,6 @@ if [[ ${UPDATE_VERSION_FOLDER} -eq 1 ]]; then
   cp -r ${SRC_FOLDER}/* ${DST_FOLDER}
   python update_html.py ${DST_FOLDER} ${VERSION}
   cp -r ./source/docs/source/imgs ${DST_FOLDER}/docs/source
-  cp -r ./source/docs/source/3x/imgs ${DST_FOLDER}/docs/source/3x
 
 
   cp source/_static/index.html ${DST_FOLDER}
@@ -148,7 +141,6 @@ if [[ ${UPDATE_LATEST_FOLDER} -eq 1 ]]; then
   cp -r ${SRC_FOLDER}/* ${LATEST_FOLDER}
   python update_html.py ${LATEST_FOLDER} ${VERSION}
   cp -r ./source/docs/source/imgs ${LATEST_FOLDER}/docs/source
-  cp -r ./source/docs/source/3x/imgs ${LATEST_FOLDER}/docs/source/3x
   cp source/_static/index.html ${LATEST_FOLDER}
 else
   echo "skip to create ${LATEST_FOLDER}"

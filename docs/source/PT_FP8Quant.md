@@ -22,10 +22,10 @@ To harness FP8 capabilities — offering reduced memory usage and lower computat
 
 ## Support Matrix
 
-| Hardware | FP8 mode | FP8 QDQ mode |
-| :------- |:--------|:---------|
-| HPU      | &#10004; | &#10004; |
-| CPU      | &#10005; | &#10004; |
+| Hardware  | FP8 mode | FP8 QDQ mode |
+|:----------|:---------|:-------------|
+| HPU       | &#10004; | &#10004;     |
+| CPU       | &#10005; | &#10004;     |
 
 For FP8 mode, tensors are all represented in FP8 format and kernels are replaced to FP8 version explicitly.
 
@@ -91,7 +91,7 @@ During runtime, Intel Neural Compressor will detect hardware automatically and t
 
 ## Get Start with FP8 Quantization
 [Demo Usage](https://github.com/intel/neural-compressor?tab=readme-ov-file#getting-started)    
-[Computer vision example](../../../examples/pytorch/cv/fp8_quant)
+[Computer vision example](../../examples/pytorch/cv/fp8_quant)
 
 ## Optimum-habana LLM example
 ### Overview

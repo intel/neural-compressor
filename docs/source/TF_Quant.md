@@ -3,7 +3,7 @@ TensorFlow Quantization
 ===============
 
 1. [Introduction](#introduction)
-2. [Usage](#usage)  
+2. [Get Started](#get-started)  
    2.1 [Without Accuracy Aware Tuning](#without-accuracy-aware-tuning)   
    2.2 [With Accuracy Aware Tuning](#with-accuracy-aware-tuning)   
    2.3 [Specify Quantization Rules](#specify-quantization-rules) 
@@ -15,12 +15,9 @@ TensorFlow Quantization
 
 For the detailed quantization fundamentals, please refer to the document for [Quantization](quantization.md).
 
-
 ## Get Started
 
-
 ### Without Accuracy Aware Tuning
-
 
 This means user could leverage Intel(R) Neural Compressor to directly generate a fully quantized model without accuracy aware tuning. It's user responsibility to ensure the accuracy of the quantized model meets expectation.
 

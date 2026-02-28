@@ -1,17 +1,15 @@
 TensorFlow
 ===============
 
-
-- [TensorFlow](#tensorflow)
-  - [Introduction](#introduction)
-  - [API for TensorFlow](#api-for-tensorflow)
-    - [Support Matrix](#support-matrix)
-      - [Quantization Scheme](#quantization-scheme)
-      - [Quantization Approaches](#quantization-approaches)
-        - [Post Training Static Quantization](#post-training-static-quantization)
-        - [Smooth Quantization](#smooth-quantization)
-        - [Mixed Precision](#mixed-precison)
-      - [Backend and Device](#backend-and-device)
+- [Introduction](#introduction)
+- [API for TensorFlow](#api-for-tensorflow)
+  - [Support Matrix](#support-matrix)
+    - [Quantization Scheme](#quantization-scheme)
+    - [Quantization Approaches](#quantization-approaches)
+      - [Post Training Static Quantization](#post-training-static-quantization)
+      - [Smooth Quantization](#smooth-quantization)
+      - [Mixed Precision](#mixed-precison)
+    - [Backend and Device](#backend-and-device)
 
 ## Introduction
 
@@ -23,7 +21,6 @@ In terms of ease of use, neural compressor is committed to providing flexible an
 ## API for TensorFlow
 
 Intel(R) Neural Compressor provides `quantize_model` and `autotune` as main interfaces for supported algorithms on TensorFlow framework.
-
 
 **quantize_model**
 
@@ -117,10 +114,10 @@ best_model = autotune(
 
 #### Quantization Scheme
 
-| Framework | Backend Library |  Symmetric Quantization | Asymmetric Quantization |
-| :-------------- |:---------------:| ---------------:|---------------:|
-| TensorFlow    | [oneDNN](https://github.com/oneapi-src/oneDNN) | Activation (int8/uint8), Weight (int8) | - |
-| Keras         | [ITEX](https://github.com/intel/intel-extension-for-tensorflow) | Activation (int8/uint8), Weight (int8) | - |
+| Framework  |                         Backend Library                         |         Symmetric Quantization          |  Asymmetric Quantization |
+|:-----------|:---------------------------------------------------------------:|:---------------------------------------:|-------------------------:|
+| TensorFlow |         [oneDNN](https://github.com/oneapi-src/oneDNN)          | Activation (int8/uint8), Weight (int8)  |                        - |
+| Keras      | [ITEX](https://github.com/intel/intel-extension-for-tensorflow) | Activation (int8/uint8), Weight (int8)  |                        - |
 
 
 + Symmetric Quantization
@@ -188,7 +185,6 @@ Refer to the [SQ Guide](./TF_SQ.md) for detailed information.
 
 ##### Mixed Precision
 The Mixed Precision (MP) is enabled with Post Training Static Quantization. Once `BF16` is supported on machine, the matched operators will be automatically converted.
-
 
 #### Backend and Device
 Intel(R) Neural Compressor supports TF GPU with [ITEX-XPU](https://github.com/intel/intel-extension-for-tensorflow). We will automatically run model on GPU by checking if it has been installed.

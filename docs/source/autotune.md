@@ -10,7 +10,7 @@ AutoTune
 
 ## Overview
 
-Intel® Neural Compressor aims to help users quickly deploy low-precision models by leveraging popular compression techniques, such as post-training quantization and weight-only quantization algorithms. Despite having a variety of these algorithms, finding the appropriate configuration for a model can be difficult and time-consuming. To address this, we built the `autotune` module based on the [strategy](../tuning_strategies.md) in 2.x for accuracy-aware tuning, which identifies the best algorithm configuration for models to achieve optimal performance under the certain accuracy criteria. This module allows users to easily use predefined tuning recipes and customize the tuning space as needed.
+Intel® Neural Compressor aims to help users quickly deploy low-precision models by leveraging popular compression techniques, such as post-training quantization and weight-only quantization algorithms. Despite having a variety of these algorithms, finding the appropriate configuration for a model can be difficult and time-consuming. This module allows users to easily use predefined tuning recipes and customize the tuning space as needed.
 
 ## How it Works
 
