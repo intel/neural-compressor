@@ -45,7 +45,7 @@ See [PR template](/.github/pull_request_template.md)
 
 ## Pull Request Status Checks Overview
 Intel® Neural Compressor use [Azure DevOps](https://learn.microsoft.com/en-us/azure/devops/pipelines/?view=azure-devops) for CI test.
-And generally use [Azure Cloud Instance](https://azure.microsoft.com/en-us/pricing/purchase-options/pay-as-you-go) to deploy pipelines.
+And generally use [Azure Cloud Instance](https://azure.microsoft.com/en-us) to deploy pipelines.
 
 | Test Name                              | Test Scope                           | Test Pass Criteria                                                       |
 |----------------------------------------|--------------------------------------|--------------------------------------------------------------------------|

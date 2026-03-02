@@ -124,9 +124,6 @@ best_model = autotune(
     + int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)
     + uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))
 
-
-+ oneDNN: [Lower Numerical Precision Deep Learning Inference and Training](https://software.intel.com/content/www/us/en/develop/articles/lower-numerical-precision-deep-learning-inference-and-training.html)
-
 #### Quantization Approaches
 
 The supported Quantization methods for TensorFlow and Keras are listed below:
