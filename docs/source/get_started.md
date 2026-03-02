@@ -34,11 +34,11 @@ It also provides some common modules across different frameworks. For example, A
   </thead>
   <tbody>
     <tr>
-      <td colspan="2" align="center"><a href="3x/design.md#architecture">Architecture</a></td>
-      <td colspan="2" align="center"><a href="3x/design.md#workflow">Workflow</a></td>
+      <td colspan="2" align="center"><a href="design.md#architecture">Architecture</a></td>
+      <td colspan="2" align="center"><a href="design.md#workflow">Workflow</a></td>
       <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="1" align="center"><a href="3x/llm_recipes.md">LLMs Recipes</a></td>
-      <td colspan="1" align="center">Examples</td>
+      <td colspan="1" align="center"><a href="llm_recipes.md">LLMs Recipes</a></td>
+      <td colspan="1" align="center"><a href="/examples/README.md">Examples</a></td>
     </tr>
   </tbody>
   <thead>
@@ -48,15 +48,15 @@ It also provides some common modules across different frameworks. For example, A
   </thead>
   <tbody>
     <tr>
-        <td colspan="2" align="center"><a href="3x/PyTorch.md">Overview</a></td>
-        <td colspan="2" align="center"><a href="3x/PT_StaticQuant.md">Static Quantization</a></td>
-        <td colspan="2" align="center"><a href="3x/PT_DynamicQuant.md">Dynamic Quantization</a></td>
-        <td colspan="2" align="center"><a href="3x/PT_SmoothQuant.md">Smooth Quantization</a></td>
+        <td colspan="2" align="center"><a href="PyTorch.md">Overview</a></td>
+        <td colspan="2" align="center"><a href="PT_StaticQuant.md">Static Quantization</a></td>
+        <td colspan="2" align="center"><a href="PT_DynamicQuant.md">Dynamic Quantization</a></td>
+        <td colspan="2" align="center"><a href="PT_SmoothQuant.md">Smooth Quantization</a></td>
     </tr>
     <tr>
-        <td colspan="3" align="center"><a href="3x/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
-        <td colspan="3" align="center"><a href="3x/PT_MXQuant.md">MX Quantization</a></td>
-        <td colspan="2" align="center"><a href="3x/PT_MixedPrecision.md">Mixed Precision</a></td>
+        <td colspan="3" align="center"><a href="PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
+        <td colspan="3" align="center"><a href="PT_MXQuant.md">MX Quantization</a></td>
+        <td colspan="2" align="center"><a href="PT_MixedPrecision.md">Mixed Precision</a></td>
     </tr>
   </tbody>
   <thead>
@@ -66,9 +66,9 @@ It also provides some common modules across different frameworks. For example, A
   </thead>
   <tbody>
       <tr>
-          <td colspan="3" align="center"><a href="3x/TensorFlow.md">Overview</a></td>
-          <td colspan="3" align="center"><a href="3x/TF_Quant.md">Static Quantization</a></td>
-          <td colspan="2" align="center"><a href="3x/TF_SQ.md">Smooth Quantization</a></td>
+          <td colspan="3" align="center"><a href="TensorFlow.md">Overview</a></td>
+          <td colspan="3" align="center"><a href="TF_Quant.md">Static Quantization</a></td>
+          <td colspan="2" align="center"><a href="TF_SQ.md">Smooth Quantization</a></td>
       </tr>
   </tbody>
   <thead>
@@ -78,10 +78,7 @@ It also provides some common modules across different frameworks. For example, A
   </thead>
   <tbody>
       <tr>
-          <td colspan="8" align="center"><a href="3x/autotune.md">Auto Tune</a></td>
+          <td colspan="8" align="center"><a href="autotune.md">Auto Tune</a></td>
       </tr>
   </tbody>
 </table>
-
-> **Note**:
-> From 3.0 release, we recommend to use 3.X API. Compression techniques during training such as QAT, Pruning, Distillation only available in [2.X API](https://github.com/intel/neural-compressor/blob/master/docs/source/2x_user_guide.md) currently.

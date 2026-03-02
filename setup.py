@@ -43,24 +43,20 @@ except Exception as error:
     assert False, "Error: Could not open '%s' due %s\n" % (filepath, error)
 
 PKG_INSTALL_CFG = {
-    # overall installation config, pip install neural-compressor
+    # pip install neural-compressor, install the whole package with all APIs, including PyTorch, TensorFlow and JAX APIs.
     "neural_compressor": {
         "project_name": "neural_compressor",
         "include_packages": find_packages(
             include=["neural_compressor", "neural_compressor.*"],
-            exclude=[
-                "neural_compressor.template",
-            ],
         ),
-        "package_data": {"": ["*.yaml"]},
-        "install_requires": fetch_requirements("requirements.txt"),
+        "package_data": {"": ["*.json", "*.yaml"]},
         "extras_require": {
             "pt": fetch_requirements("requirements_pt.txt"),
             "tf": fetch_requirements("requirements_tf.txt"),
             "jax": fetch_requirements("requirements_jax.txt"),
         },
     },
-    # 3.x pt binary build config, pip install neural-compressor-pt, install 3.x PyTorch API.
+    # pip install neural-compressor-pt, install PyTorch API.
     "neural_compressor_pt": {
         "project_name": "neural_compressor_pt",
         "include_packages": find_packages(
@@ -78,7 +74,7 @@ PKG_INSTALL_CFG = {
         "package_data": {"": ["*.json"]},
         "install_requires": fetch_requirements("requirements_pt.txt"),
     },
-    # 3.x tf binary build config, pip install neural-compressor-tf, install 3.x TensorFlow API.
+    # pip install neural-compressor-tf, install TensorFlow API.
     "neural_compressor_tf": {
         "project_name": "neural_compressor_tf",
         "include_packages": find_packages(

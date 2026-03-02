@@ -10,13 +10,13 @@ pr:
     include:
       - neural_compressor/common
       - neural_compressor/tensorflow
-      - test/3x/tensorflow
-      - test/3x/common
+      - test/tensorflow
+      - test/common
       - setup.py
       - requirements_tf.txt
-      - .azure-pipelines/scripts/ut/3x/run_3x_tf.sh
+      - .azure-pipelines/scripts/ut/run_3x_tf.sh
       - .azure-pipelines/template/docker-template.yml
-      - .azure-pipelines/scripts/ut/3x/coverage.3x_tf
+      - .azure-pipelines/scripts/ut/coverage.3x_tf
 
 pool: ICX-16C
 
@@ -39,7 +39,7 @@ stages:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "3x/run_3x_tf"
+              utScriptFileName: "run_3x_tf"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x"
 
@@ -54,7 +54,7 @@ stages:
           - template: template/ut-template.yml
             parameters:
               dockerConfigName: "gitCloneDockerConfig"
-              utScriptFileName: "3x/run_3x_tf"
+              utScriptFileName: "run_3x_tf"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x_baseline"
               repo: $(REPO)
@@ -93,7 +93,7 @@ stages:
               echo "--- collect logs ---"
               docker exec collectLogs /bin/bash  +x -c "cd /neural-compressor/.azure-pipelines/scripts \
               && bash install_nc.sh 3x_tf \
-              && bash ut/3x/collect_log_3x.sh 3x_tf"
+              && bash ut/collect_log_3x.sh 3x_tf"
             displayName: "Collect UT Coverage"
 
           - task: PublishCodeCoverageResults@2
