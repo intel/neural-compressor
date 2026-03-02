@@ -15,23 +15,10 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
-   /autoapi/neural_compressor/algorithm/index
    /autoapi/neural_compressor/common/index
-   /autoapi/neural_compressor/config/index
-   /autoapi/neural_compressor/contrib/index
-   /autoapi/neural_compressor/data/index
    /autoapi/neural_compressor/jax/index
-   /autoapi/neural_compressor/metric/index
-   /autoapi/neural_compressor/mix_precision/index
-   /autoapi/neural_compressor/model/index
-   /autoapi/neural_compressor/objective/index
-   /autoapi/neural_compressor/profiling/index
-   /autoapi/neural_compressor/quantization/index
-   /autoapi/neural_compressor/strategy/index
    /autoapi/neural_compressor/tensorflow/index
    /autoapi/neural_compressor/torch/index
-   /autoapi/neural_compressor/training/index
-   /autoapi/neural_compressor/utils/index
    /autoapi/neural_compressor/version/index
 
 

@@ -1,0 +1,177 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Smooth Quant &mdash; Intel® Neural Compressor 3.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Smooth Quant</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/TF_SQ.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="smooth-quant">
+<h1>Smooth Quant<a class="headerlink" href="#smooth-quant" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#usage">Usage</a></p>
+<ul>
+<li><p><a class="reference external" href="#using-a-fixed-alpha">Using a Fixed <code class="docutils literal notranslate"><span class="pre">alpha</span></code></a></p></li>
+<li><p><a class="reference external" href="#determining-the-alpha-through-auto-tuning">Determining the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> through auto-tuning</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Quantization is a common compression operation to reduce memory and accelerate inference by converting the floating point matrix to an integer matrix. For large language models (LLMs) with gigantic parameters, the systematic outliers make quantification of activations difficult.  <a class="reference external" href="https://arxiv.org/abs/2211.10438">SmoothQuant</a>, a training free post-training quantization (PTQ) solution, offline migrates this difficulty from activations to weights with a mathematically equivalent transformation.</p>
+<p>Please refer to the document of <a class="reference external" href="smooth_quant.html">Smooth Quant</a> for detailed fundamental knowledge.</p>
+</section>
+<section id="usage">
+<h2>Usage<a class="headerlink" href="#usage" title="Link to this heading"></a></h2>
+<p>There are two ways to apply smooth quantization: 1) using a fixed <code class="docutils literal notranslate"><span class="pre">alpha</span></code> for the entire model or 2) determining the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> through auto-tuning.</p>
+<section id="using-a-fixed-alpha">
+<h3>Using a Fixed <code class="docutils literal notranslate"><span class="pre">alpha</span></code><a class="headerlink" href="#using-a-fixed-alpha" title="Link to this heading"></a></h3>
+<p>To set a fixed alpha for the entire model, users can follow this example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.tensorflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">SmoothQuantConfig</span><span class="p">,</span> <span class="n">StaticQuantConfig</span>
+
+<span class="n">quant_config</span> <span class="o">=</span> <span class="p">[</span><span class="n">SmoothQuantConfig</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.5</span><span class="p">),</span> <span class="n">StaticQuantConfig</span><span class="p">()]</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantize_model</span><span class="p">(</span><span class="n">output_graph_def</span><span class="p">,</span> <span class="p">[</span><span class="n">sq_config</span><span class="p">,</span> <span class="n">static_config</span><span class="p">],</span> <span class="n">calib_dataloader</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The <code class="docutils literal notranslate"><span class="pre">SmoothQuantConfig</span></code> should be combined with <code class="docutils literal notranslate"><span class="pre">StaticQuantConfig</span></code> in a list because we still need to insert QDQ and apply pattern fusion after the smoothing process.</p>
+</section>
+<section id="determining-the-alpha-through-auto-tuning">
+<h3>Determining the <code class="docutils literal notranslate"><span class="pre">alpha</span></code> through auto-tuning<a class="headerlink" href="#determining-the-alpha-through-auto-tuning" title="Link to this heading"></a></h3>
+<p>Users can search for the best <code class="docutils literal notranslate"><span class="pre">alpha</span></code>  for the entire model.The tuning process looks for the optimal <code class="docutils literal notranslate"><span class="pre">alpha</span></code> value from a list of <code class="docutils literal notranslate"><span class="pre">alpha</span></code> values provided by the user.</p>
+<p>Here is an example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.tensorflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span><span class="p">,</span> <span class="n">SmoothQuantConfig</span>
+
+<span class="n">custom_tune_config</span> <span class="o">=</span> <span class="n">TuningConfig</span><span class="p">(</span><span class="n">config_set</span><span class="o">=</span><span class="p">[</span><span class="n">SmoothQuantConfig</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="p">[</span><span class="mf">0.5</span><span class="p">,</span> <span class="mf">0.6</span><span class="p">,</span> <span class="mf">0.7</span><span class="p">]),</span> <span class="n">StaticQuantConfig</span><span class="p">()])</span>
+<span class="n">best_model</span> <span class="o">=</span> <span class="n">autotune</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;fp32_model&quot;</span><span class="p">,</span>
+    <span class="n">tune_config</span><span class="o">=</span><span class="n">custom_tune_config</span><span class="p">,</span>
+    <span class="n">eval_fn</span><span class="o">=</span><span class="n">eval_fn_wrapper</span><span class="p">,</span>
+    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">calib_dataloader</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<blockquote>
+<div><p>Please note that, it may a considerable amount of time as the tuning process applies each <code class="docutils literal notranslate"><span class="pre">alpha</span></code> to the entire model and uses the evaluation result on the entire dataset as the metric to determine the best <code class="docutils literal notranslate"><span class="pre">alpha</span></code>.</p>
+</div></blockquote>
+</section>
+</section>
+<section id="examples">
+<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
+<p>Users can also refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/tensorflow/nlp/large_language_models/quantization/ptq/smoothquant">examples</a> on how to apply smooth quant to a TensorFlow model with <code class="docutils literal notranslate"><span class="pre">neural_compressor.tensorflow</span></code>.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f67ac7b4110> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

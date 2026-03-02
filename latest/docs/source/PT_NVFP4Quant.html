@@ -1,0 +1,212 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NVFP4 Quantization &mdash; Intel® Neural Compressor 3.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">NVFP4 Quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/PT_NVFP4Quant.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="nvfp4-quantization">
+<h1>NVFP4 Quantization<a class="headerlink" href="#nvfp4-quantization" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#get-started-with-nvfp4-quantization-api">Get Started with NVFP4 Quantization API</a></p></li>
+<li><p><a class="reference external" href="#reference">Reference</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Large language models (LLMs) have revolutionized fields such as natural language understanding, generation, and multimodal processing. As these models grow, their computational and memory requirements increase, making efficient deployment challenging. To address these issues, quantization methods are employed to reduce model size and accelerate inference with minimal loss in accuracy.</p>
+<p>NVFP4 is a specialized 4-bit floating-point format (FP4) developed by NVIDIA for deep learning workloads. Compared to traditional INT8 or FP16 formats, NVFP4 offers further reductions in memory footprint and computational resource use, enabling efficient inference for LLMs and other neural networks on supported hardware.</p>
+<p>The following table summarizes the NVFP4 quantization format:</p>
+<table>
+  <tr>
+    <th>Format Name</th>
+    <th>Element Data type</th>
+    <th>Element Bits</th>
+    <th>Scaling Block Size</th>
+    <th>Scale Data Type</th> 
+    <th>Scale Bits</th>
+    <th>Global Tensor-Wise Scale Data Type</th> 
+    <th>Global Tensor-Wise Scale Bits</th>
+  </tr>
+  <tr>
+    <td>NVFP4</td>
+    <td>E2M1</td>
+    <td>4</td>
+    <td>16</td>
+    <td>UE4M3</td> 
+    <td>8</td>
+    <td>FP32</td> 
+    <td>32</td>
+  </tr>
+</table><blockquote>
+<div><p>Note: UE4M3 is the same data type as normal FP8 E4M3, here UE4M3 is named to remind that the sign bit remains 0 and scale is always positive.</p>
+</div></blockquote>
+<section id="understanding-the-scaling-mechanism">
+<h3>Understanding the Scaling Mechanism<a class="headerlink" href="#understanding-the-scaling-mechanism" title="Link to this heading"></a></h3>
+<p>NVFP4 uses a two-level scaling approach to maintain accuracy while reducing precision:</p>
+<ul class="simple">
+<li><p><strong>Block-wise Scale</strong>: The quantized tensor is divided into blocks of size 16 (the Scaling Block Size). Each block has its own scale factor stored in UE4M3 format (8 bits), which is used to convert the 4-bit E2M1 quantized values back to a higher precision representation. This fine-grained scaling helps preserve local variations in the data.</p></li>
+<li><p><strong>Global Tensor-Wise Scale</strong>: In addition to the block-wise scales, a single FP32 (32-bit) scale factor is applied to the entire tensor. This global scale provides an additional level of normalization for the whole weight or activation tensor. For activations, this global scale is static (computed during calibration and fixed during inference) to optimize performance.</p></li>
+</ul>
+<p>The dequantization formula can be expressed as:</p>
+<p><code class="docutils literal notranslate"><span class="pre">dequantized_value</span> <span class="pre">=</span> <span class="pre">quantized_value</span> <span class="pre">×</span> <span class="pre">block_scale</span> <span class="pre">×</span> <span class="pre">global_scale</span></code></p>
+<p>This hierarchical scaling strategy balances compression efficiency with numerical accuracy, enabling NVFP4 to maintain model performance while significantly reducing memory footprint.</p>
+<p>At similar accuracy levels, NVFP4 can deliver lower memory usage and improved compute efficiency for multiply-accumulate operations compared to higher-precision formats. Neural Compressor supports post-training quantization to NVFP4, providing recipes and APIs for users to quantize LLMs easily.</p>
+</section>
+</section>
+<section id="get-started-with-nvfp4-quantization-api">
+<h2>Get Started with NVFP4 Quantization API<a class="headerlink" href="#get-started-with-nvfp4-quantization-api" title="Link to this heading"></a></h2>
+<p>To quantize a model to the NVFP4 format, use the AutoRound Quantization API as shown below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoRoundConfig</span><span class="p">,</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
+
+<span class="n">fp32_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
+    <span class="s2">&quot;facebook/opt-125m&quot;</span><span class="p">,</span>
+    <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;facebook/opt-125m&quot;</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;./saved_inc&quot;</span>
+
+<span class="c1"># quantization configuration</span>
+<span class="c1"># `iters=0` means RTN (fast, no optimization); use default `iters=200` if accuracy is poor</span>
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">(</span>
+    <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>  <span class="c1"># Tokenizer for processing calibration data</span>
+    <span class="n">scheme</span><span class="o">=</span><span class="s2">&quot;NVFP4&quot;</span><span class="p">,</span>  <span class="c1"># NVFP4 quantization scheme</span>
+    <span class="n">iters</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># Number of optimization iterations (default: 200)</span>
+    <span class="n">export_format</span><span class="o">=</span><span class="s2">&quot;llm_compressor&quot;</span><span class="p">,</span>  <span class="c1"># Export format for the quantized model</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>  <span class="c1"># Directory to save the quantized model (default: &quot;temp_auto_round&quot;)</span>
+<span class="p">)</span>
+
+<span class="c1"># quantize the model and save to output_dir</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">fp32_model</span><span class="p">,</span> <span class="n">quant_config</span><span class="o">=</span><span class="n">quant_config</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+
+<span class="c1"># loading</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">torch_dtype</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+
+<span class="c1"># inference</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;There is a girl who likes adventure,&quot;</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">10</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
+</pre></div>
+</div>
+</section>
+<section id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h2>
+<p>[1]: NVIDIA, Introducing NVFP4 for efficient and accurate low-precision inference,NVIDIA Developer Blog, Jun. 2025. [Online]. Available: https://developer.nvidia.com/blog/introducing-nvfp4-for-efficient-and-accurate-low-precision-inference/</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f67ac988920> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

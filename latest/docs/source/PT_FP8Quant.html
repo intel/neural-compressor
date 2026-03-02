@@ -1,0 +1,662 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>FP8 Quantization &mdash; Intel® Neural Compressor 3.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">FP8 Quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/PT_FP8Quant.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="fp8-quantization">
+<h1>FP8 Quantization<a class="headerlink" href="#fp8-quantization" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#support-matrix">Support Matrix</a></p></li>
+<li><p><a class="reference external" href="#supported-parameters">Supported Parameters</a></p></li>
+<li><p><a class="reference external" href="#get-start-with-fp8-quantization">Get Start with FP8 Quantization</a></p></li>
+<li><p><a class="reference external" href="#optimum-habana-LLM-example">Optimum-habana LLM example</a></p></li>
+<li><p><a class="reference external" href="#VLLM-example">VLLM example</a></p></li>
+</ol>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Float point 8 (FP8) is a promising data type for low precision quantization which provides a data distribution that is completely different from INT8 and it’s shown as below.</p>
+<div align="center">
+    <img src="./imgs/fp8_dtype.png" height="250"/>
+</div><p>Intel Gaudi2, also known as HPU, provides this data type capability for low precision quantization, which includes <code class="docutils literal notranslate"><span class="pre">E4M3</span></code> and <code class="docutils literal notranslate"><span class="pre">E5M2</span></code>. For more information about these two data type, please refer to <a class="reference external" href="https://arxiv.org/abs/2209.05433">link</a>.</p>
+<p>To harness FP8 capabilities — offering reduced memory usage and lower computational costs — Intel Neural Compressor provides general quantization APIs to generate FP8 models.</p>
+</section>
+<section id="support-matrix">
+<h2>Support Matrix<a class="headerlink" href="#support-matrix" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Hardware</th>
+<th style="text-align: left;">FP8 mode</th>
+<th style="text-align: left;">FP8 QDQ mode</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">HPU</td>
+<td style="text-align: left;">&#10004;</td>
+<td style="text-align: left;">&#10004;</td>
+</tr>
+<tr>
+<td style="text-align: left;">CPU</td>
+<td style="text-align: left;">&#10005;</td>
+<td style="text-align: left;">&#10004;</td>
+</tr>
+</tbody>
+</table><p>For FP8 mode, tensors are all represented in FP8 format and kernels are replaced to FP8 version explicitly.</p>
+<p>For FP8 QDQ mode, activations are still in high precision and quant/dequant pairs are inserted. Frameworks can compile and fuse operators of FP8 QDQ model based on their own capability.</p>
+<p>During runtime, Intel Neural Compressor will detect hardware automatically and the priority is HPU &gt; CPU.</p>
+</section>
+<section id="supported-parameters">
+<h2>Supported Parameters<a class="headerlink" href="#supported-parameters" title="Link to this heading"></a></h2>
+<table class="tg"><thead>
+  <tr>
+    <th class="tg-fymr">Attribute</th>
+    <th class="tg-fymr">Description</th>
+    <th class="tg-fymr">Values</th>
+  </tr></thead>
+<tbody>
+  <tr>
+    <td class="tg-0pky">fp8_config</td>
+    <td class="tg-0pky">The target data type of FP8 quantization.</td>
+    <td class="tg-0pky">E4M3 (default) - As Fig. 2<br>E5M2 - As Fig. 1.</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">hp_dtype</td>
+    <td class="tg-0pky">The high precision data type of non-FP8 operators.</td>
+    <td class="tg-0pky">bf16 (default) - torch.bfloat16<br>fp16 - torch.float16.<br>fp32 - torch.float32.</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">observer</td>
+    <td class="tg-0pky">The observer to measure the statistics.</td>
+    <td class="tg-0pky">maxabs (default), saves all tensors to files.</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">allowlist</td>
+    <td class="tg-0pky">List of nn.Module names or types to quantize. When setting an empty list, all the supported modules will be quantized by default. See Supported Modules. Not setting the list at all is not recommended as it will set the allowlist to these modules only: torch.nn.Linear, torch.nn.Conv2d, and BMM.</td>
+    <td class="tg-0pky">Default = {'names': [], 'types': <span title=["Matmul","Linear","FalconLinear","KVCache","Conv2d","LoRACompatibleLinear","LoRACompatibleConv","Softmax","ModuleFusedSDPA","LinearLayer","LinearAllreduce","ScopedLinearAllReduce","LmHeadLinearAllreduce"]>FP8_WHITE_LIST}</span></td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">blocklist</td>
+    <td class="tg-0pky">List of nn.Module names or types not to quantize. Defaults to empty list, so you may omit it from the config file.</td>
+    <td class="tg-0pky">Default = {'names': [], 'types': ()}</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">mode</td>
+    <td class="tg-0pky">The mode, measure or quantize, to run HQT with.</td>
+    <td class="tg-0pky">MEASURE - Measure statistics of all modules and emit the results to dump_stats_path.<br>QUANTIZE - Quantize and run the model according to the provided measurements.<br>AUTO (default) - Select from [MEASURE, QUANTIZE] automatically.</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">dump_stats_path</td>
+    <td class="tg-0pky">The path to save and load the measurements. The path is created up until the level before last "/". The string after the last / will be used as prefix to all the measurement files that will be created.</td>
+    <td class="tg-0pky">Default = "./hqt_output/measure"</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">scale_method</td>
+    <td class="tg-0pky">The method for calculating the scale from the measurement.</td>
+    <td class="tg-0pky">- unit_scale - Always use scale of 1.<br>- hw_aligned_single_scale - Always use scale that's aligned to the corresponding HW accelerated scale.<br>- maxabs_hw (default) - Scale is calculated to stretch/compress the maxabs measurement to the full-scale of FP8 and then aligned to the corresponding HW accelerated scale.<br>- maxabs_pow2 - Scale is calculated to stretch/compress the maxabs measurement to the full-scale of FP8 and then rounded to the power of 2.<br>- maxabs_hw_opt_weight - Scale of model params (weights) is chosen as the scale that provides minimal mean-square-error between quantized and non-quantized weights, from all possible HW accelerated scales. Scale of activations is calculated the same as maxabs_hw.<br>- act_maxabs_pow2_weights_pcs_opt_pow2 - Scale of model params (weights) is calculated per-channel of the params tensor. The scale per-channel is calculated the same as maxabs_hw_opt_weight. Scale of activations is calculated the same as maxabs_pow2.<br>- act_maxabs_hw_weights_pcs_maxabs_pow2 - Scale of model params (weights) is calculated per-channel of the params tensor. The scale per-channel is calculated the same as maxabs_pow2. Scale of activations is calculated the same as maxabs_hw.</td>
+  </tr>
+  <tr>
+    <td class="tg-0pky">measure_exclude</td>
+    <td class="tg-0pky">If this attribute is not defined, the default is OUTPUT. Since most models do not require measuring output tensors, you can exclude it to speed up the measurement process.</td>
+    <td class="tg-0pky">NONE - All tensors are measured.<br>OUTPUT (default) - Excludes measurement of output tensors.</td>
+  </tr>
+</tbody></table></section>
+<section id="get-start-with-fp8-quantization">
+<h2>Get Start with FP8 Quantization<a class="headerlink" href="#get-start-with-fp8-quantization" title="Link to this heading"></a></h2>
+<p><a class="reference external" href="https://github.com/intel/neural-compressor?tab=readme-ov-file#getting-started">Demo Usage</a><br /><a class="reference external" href="../../examples/pytorch/cv/fp8_quant">Computer vision example</a></p>
+</section>
+<section id="optimum-habana-llm-example">
+<h2>Optimum-habana LLM example<a class="headerlink" href="#optimum-habana-llm-example" title="Link to this heading"></a></h2>
+<section id="overview">
+<h3>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h3>
+<p><a class="reference external" href="https://huggingface.co/docs/optimum">Optimum</a> is an extension of Transformers that provides a set of performance optimization tools to train and run models on targeted hardware with maximum efficiency.<br /><a class="reference external" href="https://github.com/huggingface/optimum-habana">Optimum-habana</a> is the interface between the Transformers, Diffusers libraries and Intel Gaudi AI Accelerators (HPU). It provides higher performance based on modified modeling files, and utilizes Intel Neural Compressor for FP8 quantization internally,  <a class="reference external" href="https://github.com/huggingface/optimum-habana/tree/main/examples/text-generation#running-with-fp8">running-with-fp8</a><br /><img alt="../../_images/optimum-habana.png" src="../../_images/optimum-habana.png" /></p>
+</section>
+<section id="installation">
+<h3>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h3>
+<p>Refer to <a class="reference external" href="https://github.com/huggingface/optimum-habana?tab=readme-ov-file#install-the-library-and-get-example-scripts">optimum-habana, install-the-library-and-get-example-scripts</a><br />Option to install from source,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ git clone https://github.com/huggingface/optimum-habana
+$ cd optimum-habana &amp;&amp; git checkout v1.14.0 (change the version)
+$ pip install -e .
+$ pip install git+https://github.com/HabanaAI/DeepSpeed.git@1.18.0
+$ cd examples/text-generation
+$ pip install -r requirements.txt
+$ pip install -r requirements_lm_eval.txt  (Option)
+</pre></div>
+</div>
+</section>
+<section id="check-neural-compressor-code">
+<h3>Check neural_compressor code<a class="headerlink" href="#check-neural-compressor-code" title="Link to this heading"></a></h3>
+<blockquote>
+<div><p>optimum-habana/examples/text-generation/utils.py</p>
+<blockquote>
+<div><p>initialize_model() -&gt; setup_model() -&gt; setup_quantization() -&gt; FP8Config/prepare()/convert()</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+<section id="fp8-kv-cache">
+<h3>FP8 KV cache<a class="headerlink" href="#fp8-kv-cache" title="Link to this heading"></a></h3>
+<p>Introduction: <a class="reference external" href="https://huggingface.co/blog/kv-cache-quantization">kv-cache-quantization in huggingface transformers</a></p>
+<p>BF16 KVCache Code -&gt; <a class="reference external" href="https://github.com/huggingface/optimum-habana/blob/main/optimum/habana/transformers/models/modeling_all_models.py">Modeling_all_models.py -&gt; KVCache()</a></p>
+<p>FP8 KVCache code trace with neural compressor support, for example Llama models,</p>
+<blockquote>
+<div><p>optimum-habana/optimum/habana/transformers/models/llama/modeling_llama.py</p>
+<blockquote>
+<div><p>GaudiLlamaForCausalLM()  -&gt; self.model()</p>
+<blockquote>
+<div><p>GaudiLlamaModel() -&gt; forward() -&gt; decoder_layer() -&gt;  GaudiLlamaDecoderLayer() forward() -&gt; pre_attn() -&gt; pre_attn_forward() -&gt; self.k_cache.update</p>
+</div></blockquote>
+</div></blockquote>
+</div></blockquote>
+<blockquote>
+<div><p>neural_compressor/torch/algorithms/fp8_quant/_quant_common/helper_modules.py</p>
+<blockquote>
+<div><p>PatchedKVCache() -&gt; update()<br />PatchedModuleFusedSDPA()</p>
+</div></blockquote>
+</div></blockquote>
+<p>Models list which support FP8 KV Cache,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">microsoft</span><span class="o">/</span><span class="n">Phi</span><span class="o">-</span><span class="mi">3</span><span class="o">-</span><span class="n">mini</span><span class="o">-</span><span class="mi">4</span><span class="n">k</span><span class="o">-</span><span class="n">instruct</span>
+<span class="n">bigcode</span><span class="o">/</span><span class="n">starcoder2</span><span class="o">-</span><span class="mi">3</span><span class="n">b</span>
+<span class="n">Qwen</span><span class="o">/</span><span class="n">Qwen2</span><span class="mf">.5</span><span class="o">-</span><span class="mi">7</span><span class="n">B</span><span class="o">-</span><span class="n">Instruct</span><span class="o">|</span>
+<span class="n">meta</span><span class="o">-</span><span class="n">llama</span><span class="o">/</span><span class="n">Llama</span><span class="o">-</span><span class="mf">3.2</span><span class="o">-</span><span class="mi">3</span><span class="n">B</span><span class="o">-</span><span class="n">Instruct</span>
+<span class="n">tiiuae</span><span class="o">/</span><span class="n">falcon</span><span class="o">-</span><span class="mi">7</span><span class="n">b</span><span class="o">-</span><span class="n">instruct</span>
+<span class="n">mistralai</span><span class="o">/</span><span class="n">Mixtral</span><span class="o">-</span><span class="mi">8</span><span class="n">x7B</span><span class="o">-</span><span class="n">Instruct</span><span class="o">-</span><span class="n">v0</span><span class="mf">.1</span>
+<span class="n">EleutherAI</span><span class="o">/</span><span class="n">gpt</span><span class="o">-</span><span class="n">j</span><span class="o">-</span><span class="mi">6</span><span class="n">b</span>
+<span class="n">mistralai</span><span class="o">/</span><span class="n">Mistral</span><span class="o">-</span><span class="n">Nemo</span><span class="o">-</span><span class="n">Instruct</span><span class="o">-</span><span class="mi">2407</span>
+<span class="o">...</span>
+</pre></div>
+</div>
+</section>
+<section id="running-with-fp8">
+<h3>Running with FP8<a class="headerlink" href="#running-with-fp8" title="Link to this heading"></a></h3>
+<p>Refer to <a class="reference external" href="https://github.com/huggingface/optimum-habana/tree/main/examples/text-generation#running-with-fp8">here</a>.<br />Change “–model_name_or_path” to be your model like someone in the above models list. “–use_kv_cache” is or not to enable FP8 KV cache.</p>
+</section>
+<section id="profiling">
+<h3>Profiling<a class="headerlink" href="#profiling" title="Link to this heading"></a></h3>
+<p>Add “–profiling_warmup_steps 5 –profiling_steps 2 –profiling_record_shapes” as args in the end of commandline of <code class="docutils literal notranslate"><span class="pre">run_generation.py</span></code>.<br />Refer to <a class="reference external" href="https://github.com/huggingface/optimum-habana/blob/c9e1c23620618e2f260c92c46dfeb163545ec5ba/optimum/habana/utils.py#L305">torch.profiler.ProfilerActivity.HPU</a>.</p>
+</section>
+<section id="fp8-accuracy">
+<h3>FP8 Accuracy<a class="headerlink" href="#fp8-accuracy" title="Link to this heading"></a></h3>
+<p>“lm_eval.tasks”, “lm_eval.evaluator”, “lm_eval” are installed from the above requirements_lm_eval.txt. The tasks can be set and the default is [”hellaswag”, “lambada_openai”, “piqa”, “winogrande”], <a class="reference external" href="https://github.com/EleutherAI/lm-evaluation-harness/">more info</a></p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th><code>Llama-3.1-8B-Instruct</code></th>
+<th>fp8 w/ fp8 KVCache</th>
+<th>bf16 w/ bf16 KVCache</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lambada_openai</td>
+<td>0.7299</td>
+<td>0.7359</td>
+</tr>
+<tr>
+<td>hellaswag</td>
+<td>0.5892</td>
+<td>0.5911</td>
+</tr>
+<tr>
+<td>piqa</td>
+<td>0.7965</td>
+<td>0.7998</td>
+</tr>
+<tr>
+<td>winogrande</td>
+<td>0.7474</td>
+<td>0.7372</td>
+</tr>
+<tr>
+<td>mmlu</td>
+<td>0.6599</td>
+<td>0.6829</td>
+</tr>
+</tbody>
+</table><table border="1" class="docutils">
+<thead>
+<tr>
+<th><code>Phi-3-mini-4k-instruct</code></th>
+<th>fp8 w/ fp8 KVCache</th>
+<th>bf16 w/ bf16 KVCache</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lambada_openai</td>
+<td>0.6420</td>
+<td>0.6552</td>
+</tr>
+<tr>
+<td>hellaswag</td>
+<td>0.5866</td>
+<td>0.5902</td>
+</tr>
+<tr>
+<td>piqa</td>
+<td>0.8041</td>
+<td>0.8014</td>
+</tr>
+<tr>
+<td>winogrande</td>
+<td>0.7324</td>
+<td>0.7348</td>
+</tr>
+<tr>
+<td>mmlu</td>
+<td>0.7035</td>
+<td>0.7055</td>
+</tr>
+</tbody>
+</table><table border="1" class="docutils">
+<thead>
+<tr>
+<th><code>Mistral-7B-Instruct-v0.2</code></th>
+<th>fp8 w/ fp8 KVCache</th>
+<th>bf16 w/ bf16 KVCache</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lambada_openai</td>
+<td>0.7126</td>
+<td>0.7165</td>
+</tr>
+<tr>
+<td>hellaswag</td>
+<td>0.6556</td>
+<td>0.6609</td>
+</tr>
+<tr>
+<td>piqa</td>
+<td>0.8014</td>
+<td>0.8025</td>
+</tr>
+<tr>
+<td>winogrande</td>
+<td>0.7253</td>
+<td>0.7388</td>
+</tr>
+<tr>
+<td>mmlu</td>
+<td>0.5833</td>
+<td>0.5919</td>
+</tr>
+</tbody>
+</table><table border="1" class="docutils">
+<thead>
+<tr>
+<th><code>Mistral-Nemo-Instruct-2407</code></th>
+<th>fp8 w/ fp8 KVCache</th>
+<th>bf16 w/ bf16 KVCache</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lambada_openai</td>
+<td>0.7568</td>
+<td>0.7596</td>
+</tr>
+<tr>
+<td>hellaswag</td>
+<td>0.6273</td>
+<td>0.6325</td>
+</tr>
+<tr>
+<td>piqa</td>
+<td>0.8150</td>
+<td>0.8085</td>
+</tr>
+<tr>
+<td>winogrande</td>
+<td>0.7419</td>
+<td>0.7482</td>
+</tr>
+<tr>
+<td>mmlu</td>
+<td>0.6684</td>
+<td>0.6840</td>
+</tr>
+</tbody>
+</table><table border="1" class="docutils">
+<thead>
+<tr>
+<th><code>bigscience/bloom-7b1</code></th>
+<th>fp8 w/ fp8 KVCache</th>
+<th>bf16 w/ bf16 KVCache</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lambada_openai</td>
+<td>0.5599</td>
+<td>0.5731</td>
+</tr>
+<tr>
+<td>hellaswag</td>
+<td>0.4632</td>
+<td>0.4639</td>
+</tr>
+<tr>
+<td>piqa</td>
+<td>0.7301</td>
+<td>0.7242</td>
+</tr>
+<tr>
+<td>winogrande</td>
+<td>0.6314</td>
+<td>0.6393</td>
+</tr>
+<tr>
+<td>mmlu</td>
+<td>0.2563</td>
+<td>0.2572</td>
+</tr>
+</tbody>
+</table><table border="1" class="docutils">
+<thead>
+<tr>
+<th><code>Mixtral-8x7B-Instruct-v0.1</code></th>
+<th>fp8 w/ fp8 KVCache</th>
+<th>bf16 w/ bf16 KVCache</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lambada_openai</td>
+<td>0.7805</td>
+<td>0.7778</td>
+</tr>
+<tr>
+<td>hellaswag</td>
+<td>0.6733</td>
+<td>0.6764</td>
+</tr>
+<tr>
+<td>piqa</td>
+<td>0.8324</td>
+<td>0.8351</td>
+</tr>
+<tr>
+<td>winogrande</td>
+<td>0.7680</td>
+<td>0.7672</td>
+</tr>
+<tr>
+<td>mmlu</td>
+<td>0.7031</td>
+<td>0.7026</td>
+</tr>
+</tbody>
+</table><table border="1" class="docutils">
+<thead>
+<tr>
+<th><code>EleutherAI/gpt-j-6b</code></th>
+<th>fp8 w/ fp8 KVCache</th>
+<th>bf16 w/ bf16 KVCache</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>lambada_openai</td>
+<td>0.6769</td>
+<td>0.6781</td>
+</tr>
+<tr>
+<td>hellaswag</td>
+<td>0.4928</td>
+<td>0.4958</td>
+</tr>
+<tr>
+<td>piqa</td>
+<td>0.7557</td>
+<td>0.7541</td>
+</tr>
+<tr>
+<td>winogrande</td>
+<td>0.6409</td>
+<td>0.6425</td>
+</tr>
+<tr>
+<td>mmlu</td>
+<td>0.2524</td>
+<td>0.2606</td>
+</tr>
+<tr>
+<td>&gt; Notes: For gpt-j model, if <code>--use_kv_cache</code> is set to enable KVCache quantization, <code>--reuse_cache</code> should also be set.</td>
+<td></td>
+<td></td>
+</tr>
+</tbody>
+</table></section>
+</section>
+<section id="vllm-example">
+<h2>VLLM example<a class="headerlink" href="#vllm-example" title="Link to this heading"></a></h2>
+<section id="id1">
+<h3>Overview<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<p><img alt="../../_images/vllm_gaudi.png" src="../../_images/vllm_gaudi.png" /></p>
+</section>
+<section id="id2">
+<h3>Installation<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
+<p>Refer to <a class="reference external" href="https://github.com/HabanaAI/vllm-fork">Habana vllm-fork</a> to install.<br />Option to install <code class="docutils literal notranslate"><span class="pre">vllm-hpu-extension</span></code>, <code class="docutils literal notranslate"><span class="pre">neural_compressor</span></code> and <code class="docutils literal notranslate"><span class="pre">vllm</span></code> from the source,</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ git clone https://github.com/HabanaAI/vllm-fork.git
+$ cd vllm-fork
+$ pip install -r requirements-hpu.txt
+$ python setup.py develop --user
+
+## Check
+$ pip list |grep vllm
+vllm                              0.6.3.dev1122+g2f43ebf5.d20241121.gaudi118 /home/fengding/vllm-fork
+vllm-hpu-extension                0.1
+
+## Validation
+$ VLLM_SKIP_WARMUP=true python3 examples/offline_inference.py
+......
+Prompt: &#39;Hello, my name is&#39;, Generated text: &#39; Kelly and I have a job to do.\nI need someone to come over&#39;
+Prompt: &#39;The president of the United States is&#39;, Generated text: &#39; facing a sharp criticism of his handling of the coronavirus pandemic, including&#39;
+Prompt: &#39;The capital of France is&#39;, Generated text: &#39; the capital of the Socialist Party of France (SPF), with its state-&#39;
+Prompt: &#39;The future of AI is&#39;, Generated text: &quot; in what&#39;s coming, not what&#39;s coming.\nI don&#39;t know what&quot;
+</pre></div>
+</div>
+</section>
+<section id="run-fp8-calibration">
+<h3>Run FP8 calibration<a class="headerlink" href="#run-fp8-calibration" title="Link to this heading"></a></h3>
+<p>Refer to <a class="reference external" href="https://github.com/HabanaAI/vllm-hpu-extension/tree/main/calibration">vllm-hpu-extension-&gt;calibration</a></p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ git clone https://github.com/HabanaAI/vllm-hpu-extension
+$ cd vllm-hpu-extension/calibration
+
+# For Llama-3.1.8B-Instruct
+$ ./calibrate_model.sh -m meta-llama/Llama-3.1-8B-Instruct -d /home/fengding/processed-data.pkl -o ./output_llama3.1.8b.Instruct -b 128 -t 1 -l 128
+    ## Generate scale factors in ./output_llama3.1.8b.Instruct
+</pre></div>
+</div>
+</section>
+<section id="start-vllm-server">
+<h3>Start vllm server<a class="headerlink" href="#start-vllm-server" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ cd vllm-fork/
+
+$ PT_HPU_ENABLE_LAZY_COLLECTIVES=true \
+PT_HPU_WEIGHT_SHARING=0 \
+VLLM_CONTIGUOUS_PA=true \
+VLLM_SKIP_WARMUP=true \
+QUANT_CONFIG=output_llama3.1.8b.Instruct/maxabs_quant_g2.json \
+python3 -m vllm.entrypoints.openai.api_server \
+--model meta-llama/Llama-3.1-8B-Instruct \
+--port 8080 \
+--gpu-memory-utilization 0.9 \
+--tensor-parallel-size 1 \
+--disable-log-requests \
+--block-size 128 \
+--quantization inc \
+--kv-cache-dtype fp8_inc \
+--device hpu \
+--weights-load-device cpu \
+--dtype bfloat16 \
+--num_scheduler_steps 16 2&gt;&amp;1 &gt; vllm_serving.log &amp;
+</pre></div>
+</div>
+<p>Refer to <a class="reference external" href="https://github.com/HabanaAI/vllm-fork/blob/habana_main/README_GAUDI.html">vllm-fork-&gt;README_GAUDI.html</a> for more details.</p>
+</section>
+<section id="start-client-to-test">
+<h3>Start client to test<a class="headerlink" href="#start-client-to-test" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl --noproxy &quot;*&quot; http://localhost:8080/v1/completions -H &quot;Content-Type: application/json&quot; -d &#39;{&quot;model&quot;: &quot;meta-llama/Llama-3.1-8B-Instruct&quot;, &quot;prompt&quot;: &quot;San Francisco is a&quot;, &quot;max_tokens&quot;: 100}&#39;
+</pre></div>
+</div>
+</section>
+<section id="run-benchmark">
+<h3>Run benchmark<a class="headerlink" href="#run-benchmark" title="Link to this heading"></a></h3>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">python</span> <span class="n">benchmarks</span><span class="o">/</span><span class="n">benchmark_serving</span><span class="o">.</span><span class="n">py</span> \
+<span class="o">--</span><span class="n">backend</span> <span class="n">vllm</span> \
+<span class="o">--</span><span class="n">model</span> <span class="n">meta</span><span class="o">-</span><span class="n">llama</span><span class="o">/</span><span class="n">Llama</span><span class="o">-</span><span class="mf">3.1</span><span class="o">-</span><span class="mi">8</span><span class="n">B</span><span class="o">-</span><span class="n">Instruct</span>  \
+<span class="o">--</span><span class="n">dataset</span><span class="o">-</span><span class="n">name</span> <span class="n">sonnet</span> \
+<span class="o">--</span><span class="n">dataset</span><span class="o">-</span><span class="n">path</span> <span class="n">benchmarks</span><span class="o">/</span><span class="n">sonnet</span><span class="o">.</span><span class="n">txt</span> \
+<span class="o">--</span><span class="n">request</span><span class="o">-</span><span class="n">rate</span> <span class="mi">128</span> \
+<span class="o">--</span><span class="n">num</span><span class="o">-</span><span class="n">prompts</span> <span class="mi">128</span> \
+<span class="o">--</span><span class="n">port</span> <span class="mi">8080</span> \
+<span class="o">--</span><span class="n">sonnet</span><span class="o">-</span><span class="nb">input</span><span class="o">-</span><span class="nb">len</span> <span class="mi">128</span> \
+<span class="o">--</span><span class="n">sonnet</span><span class="o">-</span><span class="n">output</span><span class="o">-</span><span class="nb">len</span> <span class="mi">128</span> \
+<span class="o">--</span><span class="n">sonnet</span><span class="o">-</span><span class="n">prefix</span><span class="o">-</span><span class="nb">len</span> <span class="mi">100</span>
+</pre></div>
+</div>
+</section>
+<section id="id3">
+<h3>FP8 KV cache<a class="headerlink" href="#id3" title="Link to this heading"></a></h3>
+<p>Code trace</p>
+<blockquote>
+<div><p>vllm-fork/vllm/attention/backends/hpu_attn.py</p>
+<blockquote>
+<div><p>from vllm_hpu_extension.utils import Matmul, Softmax, VLLMKVCache
+HPUAttentionImpl() -&gt; self.k_cache() / self.v_cache()</p>
+</div></blockquote>
+</div></blockquote>
+<blockquote>
+<div><p>neural_compressor/torch/algorithms/fp8_quant/_quant_common/helper_modules.py</p>
+<blockquote>
+<div><p>PatchedVLLMKVCache()</p>
+</div></blockquote>
+</div></blockquote>
+<blockquote>
+<div><p>neural_compressor/torch/algorithms/fp8_quant/common.py</p>
+<blockquote>
+<div><p>“VLLMKVCache”: ModuleInfo(”kv_cache”, PatchedVLLMKVCache)</p>
+</div></blockquote>
+</div></blockquote>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f67ac94fcb0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

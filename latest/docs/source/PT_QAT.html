@@ -1,0 +1,614 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PyTorch Quantization-Aware Training (QAT) &mdash; Intel® Neural Compressor 3.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">PyTorch Quantization-Aware Training (QAT)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/PT_QAT.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="pytorch-quantization-aware-training-qat">
+<h1>PyTorch Quantization-Aware Training (QAT)<a class="headerlink" href="#pytorch-quantization-aware-training-qat" title="Link to this heading"></a></h1>
+<p>This document describes how to use Quantization-Aware Training (QAT) in Intel Neural Compressor (INC) to achieve high-accuracy, hardware-friendly quantization for large language models (LLMs). QAT explicitly simulates quantization during training, significantly narrowing the accuracy gap compared to pure Post-Training Quantization (PTQ), especially under aggressive compression (e.g., 4-bit).</p>
+<hr class="docutils" />
+<section id="contents">
+<h2>Contents<a class="headerlink" href="#contents" title="Link to this heading"></a></h2>
+<ol class="simple">
+<li><p><a class="reference external" href="#overview">Overview</a></p></li>
+<li><p><a class="reference external" href="#qat-workflow-and-benefits">QAT Workflow and Benefits</a></p></li>
+<li><p><a class="reference external" href="#quick-start">Quick Start</a></p></li>
+<li><p><a class="reference external" href="#core-components">Core Components</a></p></li>
+<li><p><a class="reference external" href="#configuration-and-key-parameters">Configuration and Key Parameters</a></p></li>
+<li><p><a class="reference external" href="#best-practices-and-troubleshooting">Best Practices and Troubleshooting</a></p></li>
+<li><p><a class="reference external" href="#references">References</a></p></li>
+</ol>
+</section>
+<hr class="docutils" />
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>Quantization-Aware Training (QAT) is a training strategy that inserts “fake quantization” operators into the model during training. The forward pass mimics the quantized inference behavior, while gradients are still propagated in floating point. This allows the model to adapt to quantization noise and recover most of the accuracy that may be lost with PTQ-only workflows.</p>
+<p>In this repository, QAT is integrated with:</p>
+<ul class="simple">
+<li><p><strong>PyTorch</strong> and <strong>Hugging Face Transformers</strong></p></li>
+<li><p><strong>AutoRound</strong> for quantization schemes and kernels</p></li>
+<li><p><strong>Microscaling (MX) formats</strong> (e.g., MXFP4, MXFP8) for efficient deployment</p></li>
+</ul>
+<p>Although this document focuses on LLMs (e.g., Llama 3.x), the same concepts can be extended to other architectures.</p>
+</section>
+<hr class="docutils" />
+<section id="qat-workflow-and-benefits">
+<h2>QAT Workflow and Benefits<a class="headerlink" href="#qat-workflow-and-benefits" title="Link to this heading"></a></h2>
+<section id="high-level-workflow">
+<h3>High-Level Workflow<a class="headerlink" href="#high-level-workflow" title="Link to this heading"></a></h3>
+<p>A typical QAT pipeline consists of the following stages:</p>
+<ol class="simple">
+<li><p><strong>Train or Fine-Tune a Baseline Model</strong></p>
+<ul class="simple">
+<li><p>Train or fine-tune the model in FP32/BF16 to obtain a strong baseline.</p></li>
+<li><p>Example: fine-tune <code class="docutils literal notranslate"><span class="pre">meta-llama/Llama-3.1-8B</span></code> in BF16.</p></li>
+</ul>
+</li>
+<li><p><strong>Quantization-Aware Fine-Tuning (QAT)</strong></p>
+<ul class="simple">
+<li><p>Insert QAT modules into the model using <code class="docutils literal notranslate"><span class="pre">prepare_qat</span></code>.</p></li>
+<li><p>Optionally load the PTQ model weights as initialization.</p></li>
+<li><p>Fine-tune the quantized model with a small learning rate.</p></li>
+</ul>
+</li>
+<li><p><strong>Export and Deployment</strong></p>
+<ul class="simple">
+<li><p>Save the QAT model as a standard Hugging Face model directory.</p></li>
+<li><p>Deploy with compatible inference engines (e.g., vLLM), or export using INC/AutoRound export utilities for specific runtimes.</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="why-qat">
+<h3>Why QAT?<a class="headerlink" href="#why-qat" title="Link to this heading"></a></h3>
+<p>Compared with PTQ, QAT offers:</p>
+<ol class="simple">
+<li><p><strong>Higher Accuracy Under Aggressive Compression</strong></p>
+<ul class="simple">
+<li><p>QAT significantly reduces accuracy degradation for low-bit formats (e.g., MXFP4).</p></li>
+</ul>
+</li>
+<li><p><strong>Realistic Simulation of Inference Behavior</strong></p>
+<ul class="simple">
+<li><p>Fake-quant modules simulate the exact quantization scheme that will be used at inference, including MX formats.</p></li>
+</ul>
+</li>
+<li><p><strong>Better Robustness on LLMs</strong></p>
+<ul class="simple">
+<li><p>LLMs are often highly sensitive to weight perturbations; QAT helps the model adapt to such changes.</p></li>
+</ul>
+</li>
+<li><p><strong>Flexible Integration</strong></p>
+<ul class="simple">
+<li><p>QAT is implemented via modular PyTorch components (<code class="docutils literal notranslate"><span class="pre">QuantLinear</span></code>, <code class="docutils literal notranslate"><span class="pre">TensorQuantizer</span></code>) that can be inserted into standard Transformer architectures.</p></li>
+</ul>
+</li>
+</ol>
+</section>
+</section>
+<hr class="docutils" />
+<section id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
+<p>This section walks through an end-to-end <a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm_qat">example</a>.</p>
+<section id="setup-environment">
+<h3>1. Setup Environment<a class="headerlink" href="#setup-environment" title="Link to this heading"></a></h3>
+<p>From the <code class="docutils literal notranslate"><span class="pre">llm_qat</span></code> directory:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">requirements.txt</span></code> includes (among others):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">auto-round==0.9.3</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">neural-compressor-pt==3.7</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">transformers==4.53.0</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">accelerate</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">datasets</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">lm-eval</span></code></p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="baseline-fine-tuning-bf16">
+<h3>2. Baseline Fine-Tuning (BF16)<a class="headerlink" href="#baseline-fine-tuning-bf16" title="Link to this heading"></a></h3>
+<p>You can fine-tune a BF16 model using FSDP for Llama 3.1 as follows:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>accelerate<span class="w"> </span>launch<span class="w"> </span>--config-file<span class="w"> </span>accelerate_config/fsdp1.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>main.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_name_or_path<span class="w"> </span>meta-llama/Llama-3.1-8B<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_max_length<span class="w"> </span><span class="m">4096</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dataloader_drop_last<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--do_train<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--do_eval<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_dir<span class="w"> </span>./llama3.1-finetuned<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dataset<span class="w"> </span>Daring-Anteater<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--num_train_epochs<span class="w"> </span><span class="m">2</span>.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--per_device_train_batch_size<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--per_device_eval_batch_size<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--gradient_accumulation_steps<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--eval_accumulation_steps<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--save_strategy<span class="w"> </span>steps<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--save_steps<span class="w"> </span><span class="m">3000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--eval_strategy<span class="w"> </span>steps<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--eval_steps<span class="w"> </span><span class="m">3000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--load_best_model_at_end<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--save_total_limit<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--learning_rate<span class="w"> </span>1e-5<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--weight_decay<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--warmup_ratio<span class="w"> </span><span class="m">0</span>.1<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_scheduler_type<span class="w"> </span>linear<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--logging_steps<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--report_to<span class="w"> </span>tensorboard
+</pre></div>
+</div>
+<p>Key points (see <code class="docutils literal notranslate"><span class="pre">main.py</span></code>):</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">TrainingArguments</span></code> are extended with <code class="docutils literal notranslate"><span class="pre">model_max_length</span></code>, <code class="docutils literal notranslate"><span class="pre">bf16</span></code>, etc.</p></li>
+<li><p>Dataset is created via <code class="docutils literal notranslate"><span class="pre">make_supervised_data_module</span></code> (see <code class="docutils literal notranslate"><span class="pre">utils.py</span></code>).</p></li>
+<li><p>FSDP configuration is controlled by <code class="docutils literal notranslate"><span class="pre">accelerate_config/fsdp1.yaml</span></code> or <code class="docutils literal notranslate"><span class="pre">fsdp2.yaml</span></code>.</p></li>
+</ul>
+</section>
+<hr class="docutils" />
+<section id="qat-fine-tuning">
+<h3>3. QAT Fine-Tuning<a class="headerlink" href="#qat-fine-tuning" title="Link to this heading"></a></h3>
+<p>The core QAT logic is driven from <code class="docutils literal notranslate"><span class="pre">main.py</span></code> using a <code class="docutils literal notranslate"><span class="pre">QuantizationArguments</span></code> dataclass:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">QuantizationArguments</span><span class="p">:</span>
+    <span class="n">quant_scheme</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
+            <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Specify the quantization format for PTQ/QAT. If specified, PTQ/QAT will be enabled.&quot;</span><span class="p">,</span>
+            <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;MXFP8&quot;</span><span class="p">,</span> <span class="s2">&quot;MXFP4&quot;</span><span class="p">],</span>
+        <span class="p">},</span>
+    <span class="p">)</span>
+</pre></div>
+</div>
+<p>When <code class="docutils literal notranslate"><span class="pre">--quant_scheme</span></code> is provided, the model is prepared for QAT:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">quant_args</span><span class="o">.</span><span class="n">quant_scheme</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">:</span>
+    <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization.quantize</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare_qat</span>
+
+    <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+    <span class="k">if</span> <span class="n">quant_args</span><span class="o">.</span><span class="n">quant_scheme</span> <span class="o">==</span> <span class="s2">&quot;MXFP8&quot;</span><span class="p">:</span>
+        <span class="c1"># Default MXFP8 scheme</span>
+        <span class="n">prepare_qat</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+    <span class="k">if</span> <span class="n">quant_args</span><span class="o">.</span><span class="n">quant_scheme</span> <span class="o">==</span> <span class="s2">&quot;MXFP4&quot;</span><span class="p">:</span>
+        <span class="n">mappings</span> <span class="o">=</span> <span class="p">{</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">:</span> <span class="s2">&quot;MXFP4&quot;</span><span class="p">}</span>
+        <span class="n">prepare_qat</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">mappings</span><span class="p">)</span>
+
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Finish model preparation for QAT.&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="example-qat-with-mxfp4">
+<h4>Example: QAT with MXFP4<a class="headerlink" href="#example-qat-with-mxfp4" title="Link to this heading"></a></h4>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>accelerate<span class="w"> </span>launch<span class="w"> </span>--config-file<span class="w"> </span>accelerate_config/fsdp1.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>main.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_name_or_path<span class="w"> </span>./llama3.1-finetuned<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_max_length<span class="w"> </span><span class="m">4096</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dataloader_drop_last<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--do_train<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--do_eval<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--quant_scheme<span class="w"> </span>MXFP4<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_dir<span class="w"> </span>./llama3.1-finetuned-qat<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dataset<span class="w"> </span>Daring-Anteater<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max_steps<span class="w"> </span><span class="m">1000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--per_device_train_batch_size<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--per_device_eval_batch_size<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--gradient_accumulation_steps<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--eval_accumulation_steps<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--save_strategy<span class="w"> </span>steps<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--save_steps<span class="w"> </span><span class="m">3000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--eval_strategy<span class="w"> </span>steps<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--eval_steps<span class="w"> </span><span class="m">3000</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--load_best_model_at_end<span class="w"> </span>True<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--save_total_limit<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--learning_rate<span class="w"> </span>1e-5<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--weight_decay<span class="w"> </span><span class="m">0</span>.0<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--warmup_ratio<span class="w"> </span><span class="m">0</span>.03<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--lr_scheduler_type<span class="w"> </span>linear<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--logging_steps<span class="w"> </span><span class="m">1</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--report_to<span class="w"> </span>tensorboard
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="evaluation-and-deployment">
+<h3>4. Evaluation and Deployment<a class="headerlink" href="#evaluation-and-deployment" title="Link to this heading"></a></h3>
+<p>Once QAT training finishes, the model is saved in Hugging Face format via <code class="docutils literal notranslate"><span class="pre">QATTrainer.save_model</span></code>. You can evaluate it with vLLM and <code class="docutils literal notranslate"><span class="pre">lm_eval</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>lm_eval<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model<span class="w"> </span>vllm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_args<span class="w"> </span><span class="nv">pretrained</span><span class="o">=</span>./llama3.1-finetuned-qat,<span class="se">\</span>
+<span class="nv">tensor_parallel_size</span><span class="o">=</span><span class="m">1</span>,data_parallel_size<span class="o">=</span><span class="m">1</span>,<span class="se">\</span>
+<span class="nv">gpu_memory_utilization</span><span class="o">=</span><span class="m">0</span>.8,max_model_len<span class="o">=</span><span class="m">32768</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tasks<span class="w"> </span>gsm8k<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--batch_size<span class="w"> </span><span class="m">8</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">QATTrainer</span></code> also ensures the correct <code class="docutils literal notranslate"><span class="pre">dtype</span></code> is written back to <code class="docutils literal notranslate"><span class="pre">config.json</span></code> after FSDP training, which helps downstream inference libraries choose the right precision.</p>
+</section>
+</section>
+<hr class="docutils" />
+<section id="core-components">
+<h2>Core Components<a class="headerlink" href="#core-components" title="Link to this heading"></a></h2>
+<p>This section describes the key building blocks used by QAT under the hood.</p>
+<section id="prepare-qat-and-module-replacement">
+<h3>1. <code class="docutils literal notranslate"><span class="pre">prepare_qat</span></code> and Module Replacement<a class="headerlink" href="#prepare-qat-and-module-replacement" title="Link to this heading"></a></h3>
+<p>The QAT preparation uses utility functions in <code class="docutils literal notranslate"><span class="pre">neural_compressor/torch/algorithms/qat/quant_utils.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">replace_with_quant_linear</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_cfg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Recursively replace modules with quantized modules.&quot;&quot;&quot;</span>
+    <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_children</span><span class="p">():</span>
+        <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">):</span>
+            <span class="k">if</span> <span class="s2">&quot;lm_head&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+                <span class="k">continue</span>
+            <span class="c1"># Replace on the parent</span>
+            <span class="n">quantized</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">quant_cfg</span><span class="p">,</span> <span class="n">QuantLinear</span><span class="p">)</span>
+            <span class="nb">setattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">,</span> <span class="n">quantized</span><span class="p">)</span>
+        <span class="n">replace_with_quant_linear</span><span class="p">(</span><span class="nb">getattr</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">name</span><span class="p">),</span> <span class="n">quant_cfg</span><span class="o">=</span><span class="n">quant_cfg</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">model</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>All <code class="docutils literal notranslate"><span class="pre">nn.Linear</span></code> layers (except <code class="docutils literal notranslate"><span class="pre">lm_head</span></code> by default) are recursively replaced with <code class="docutils literal notranslate"><span class="pre">QuantLinear</span></code>.</p></li>
+<li><p>The quantization configuration (<code class="docutils literal notranslate"><span class="pre">quant_cfg</span></code>) is retrieved from AutoRound schemes (<code class="docutils literal notranslate"><span class="pre">preset_name_to_scheme</span></code>).</p></li>
+</ul>
+</section>
+<section id="quantlinear">
+<h3>2. <code class="docutils literal notranslate"><span class="pre">QuantLinear</span></code><a class="headerlink" href="#quantlinear" title="Link to this heading"></a></h3>
+<p>Defined in <code class="docutils literal notranslate"><span class="pre">neural_compressor/torch/algorithms/qat/quant_linear.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">QuantLinear</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">&quot;&quot;&quot;Quantized version of nn.Linear.&quot;&quot;&quot;</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+        <span class="n">qw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_quantizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
+        <span class="n">qi</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">input_quantizer</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="n">F</span><span class="o">.</span><span class="n">linear</span><span class="p">(</span><span class="n">qi</span><span class="p">,</span> <span class="n">qw</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">bias</span><span class="p">)</span>
+        <span class="n">out</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">output_quantizer</span><span class="p">(</span><span class="n">out</span><span class="p">)</span>
+        <span class="k">return</span> <span class="n">out</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">_setup</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">quant_cfg</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">weight_quantizer</span> <span class="o">=</span> <span class="n">TensorQuantizer</span><span class="p">(</span>
+            <span class="n">data_type</span><span class="o">=</span><span class="n">quant_cfg</span><span class="o">.</span><span class="n">data_type</span><span class="p">,</span>
+            <span class="n">block_size</span><span class="o">=</span><span class="n">quant_cfg</span><span class="o">.</span><span class="n">group_size</span><span class="p">,</span>
+            <span class="n">bits</span><span class="o">=</span><span class="n">quant_cfg</span><span class="o">.</span><span class="n">bits</span><span class="p">,</span>
+            <span class="n">sym</span><span class="o">=</span><span class="n">quant_cfg</span><span class="o">.</span><span class="n">sym</span><span class="p">,</span>
+            <span class="n">if_quant</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">learn_exponent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">input_quantizer</span> <span class="o">=</span> <span class="n">TensorQuantizer</span><span class="p">(</span>
+            <span class="n">data_type</span><span class="o">=</span><span class="n">quant_cfg</span><span class="o">.</span><span class="n">act_data_type</span><span class="p">,</span>
+            <span class="n">block_size</span><span class="o">=</span><span class="n">quant_cfg</span><span class="o">.</span><span class="n">act_group_size</span><span class="p">,</span>
+            <span class="n">bits</span><span class="o">=</span><span class="n">quant_cfg</span><span class="o">.</span><span class="n">act_bits</span><span class="p">,</span>
+            <span class="n">sym</span><span class="o">=</span><span class="n">quant_cfg</span><span class="o">.</span><span class="n">act_sym</span><span class="p">,</span>
+            <span class="n">if_quant</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+            <span class="n">learn_exponent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_quantizer</span> <span class="o">=</span> <span class="n">TensorQuantizer</span><span class="p">(</span>
+            <span class="n">data_type</span><span class="o">=</span><span class="n">quant_cfg</span><span class="o">.</span><span class="n">act_data_type</span><span class="p">,</span>
+            <span class="n">block_size</span><span class="o">=</span><span class="n">quant_cfg</span><span class="o">.</span><span class="n">act_group_size</span><span class="p">,</span>
+            <span class="n">bits</span><span class="o">=</span><span class="n">quant_cfg</span><span class="o">.</span><span class="n">act_bits</span><span class="p">,</span>
+            <span class="n">sym</span><span class="o">=</span><span class="n">quant_cfg</span><span class="o">.</span><span class="n">act_sym</span><span class="p">,</span>
+            <span class="n">if_quant</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="p">)</span>
+        <span class="c1"># Disable output quantization for now</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">output_quantizer</span><span class="o">.</span><span class="n">disable</span><span class="p">()</span>
+</pre></div>
+</div>
+<p>Key points:</p>
+<ul class="simple">
+<li><p><strong>Weight quantizer</strong>: usually MXFP4 or MXFP8 with block-wise scaling.</p></li>
+<li><p><strong>Input quantizer</strong>: activation quantization; configurable via AutoRound scheme.</p></li>
+<li><p><strong>Output quantizer</strong>: currently disabled (acts as a pure passthrough). This can be extended later if full activation quantization is needed.</p></li>
+</ul>
+</section>
+<section id="tensorquantizer">
+<h3>3. <code class="docutils literal notranslate"><span class="pre">TensorQuantizer</span></code><a class="headerlink" href="#tensorquantizer" title="Link to this heading"></a></h3>
+<p>Defined in <code class="docutils literal notranslate"><span class="pre">neural_compressor/torch/algorithms/qat/tensor_quantizer.py</span></code>, this module encapsulates the fake-quant logic:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TensorQuantizer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
+        <span class="bp">self</span><span class="p">,</span>
+        <span class="n">data_type</span><span class="o">=</span><span class="s2">&quot;mx_fp8&quot;</span><span class="p">,</span>
+        <span class="n">bits</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
+        <span class="n">block_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">sym</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">if_quant</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+        <span class="n">learn_exponent</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
+        <span class="n">amax</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">scale_shape</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+        <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
+    <span class="p">):</span>
+        <span class="o">...</span>
+        <span class="k">assert</span> <span class="n">get_quant_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;The quantization function is imported from AutoRound, please install it.&quot;</span>
+
+        <span class="bp">self</span><span class="o">.</span><span class="n">quant_func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span> <span class="o">=</span> <span class="n">get_quant_func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_bits</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sym</span><span class="p">)</span>
+        <span class="o">...</span>
+</pre></div>
+</div>
+<p>In the forward pass:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">_disabled</span> <span class="ow">or</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">_if_quant</span><span class="p">):</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">_input_dtype</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">dtype</span>
+        <span class="k">return</span> <span class="n">inputs</span>
+
+    <span class="n">x</span> <span class="o">=</span> <span class="n">inputs</span><span class="o">.</span><span class="n">contiguous</span><span class="p">()</span>
+    <span class="k">if</span> <span class="bp">self</span><span class="o">.</span><span class="n">fake_quant</span><span class="p">:</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_fake_quantize</span><span class="p">(</span><span class="n">x</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span>
+    <span class="k">else</span><span class="p">:</span>
+        <span class="n">q</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">_real_quantize</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+    <span class="k">return</span> <span class="n">q</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">inputs</span><span class="o">.</span><span class="n">dtype</span><span class="p">)</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Uses AutoRound’s <code class="docutils literal notranslate"><span class="pre">get_quant_func</span></code> to obtain the proper quantizer for <code class="docutils literal notranslate"><span class="pre">mx_fp4</span></code>, <code class="docutils literal notranslate"><span class="pre">mx_fp8</span></code>, etc.</p></li>
+<li><p>Supports block-wise exponent sharing (<code class="docutils literal notranslate"><span class="pre">block_size</span></code>) and optional saving of scales.</p></li>
+<li><p>For MX formats, <code class="docutils literal notranslate"><span class="pre">weight_pack</span></code> can pack weights and E8M0 scales to efficient storage formats.</p></li>
+</ul>
+</section>
+<section id="qat-specific-trainer-qattrainer">
+<h3>4. QAT-Specific Trainer (<code class="docutils literal notranslate"><span class="pre">QATTrainer</span></code>)<a class="headerlink" href="#qat-specific-trainer-qattrainer" title="Link to this heading"></a></h3>
+<p>Defined in <code class="docutils literal notranslate"><span class="pre">examples/.../llm_qat/utils.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">QATTrainer</span><span class="p">(</span><span class="n">Trainer</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="nf">save_model</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="c1"># Handle FSDP state-dict types and dtype rewriting</span>
+        <span class="o">...</span>
+        <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_train</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">should_save</span><span class="p">:</span>
+            <span class="n">out_dir</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_config_json_dtype</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_original_dtype</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+</pre></div>
+</div>
+<ul class="simple">
+<li><p>Extends Hugging Face’s <code class="docutils literal notranslate"><span class="pre">Trainer</span></code> to handle:</p>
+<ul>
+<li><p>FSDP full-state-dict export at the final checkpoint.</p></li>
+<li><p>Ensuring that <code class="docutils literal notranslate"><span class="pre">config.json</span></code> contains the original model dtype (<code class="docutils literal notranslate"><span class="pre">dtype</span></code> or <code class="docutils literal notranslate"><span class="pre">torch_dtype</span></code>), which is important for downstream inference.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="configuration-and-key-parameters">
+<h2>Configuration and Key Parameters<a class="headerlink" href="#configuration-and-key-parameters" title="Link to this heading"></a></h2>
+<section id="command-line-arguments-from-main-py">
+<h3>Command-Line Arguments (from <code class="docutils literal notranslate"><span class="pre">main.py</span></code>)<a class="headerlink" href="#command-line-arguments-from-main-py" title="Link to this heading"></a></h3>
+<ol class="simple">
+<li><p><strong>ModelArguments</strong></p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">ModelArguments</span><span class="p">:</span>
+    <span class="n">model_name_or_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;meta-llama/Llama-3.1-8B&quot;</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p><strong>TrainingArguments</strong> (extends <code class="docutils literal notranslate"><span class="pre">transformers.TrainingArguments</span></code>)</p></li>
+</ol>
+<p>Key fields:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">model_max_length</span></code>: maximum sequence length (e.g., 2048, 4096).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">dataloader_drop_last</span></code>: whether to drop the last batch (useful for distributed training).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">bf16</span></code>: enable BF16 for training.</p></li>
+</ul>
+<ol class="simple">
+<li><p><strong>DataArguments</strong></p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
+<span class="k">class</span><span class="w"> </span><span class="nc">DataArguments</span><span class="p">:</span>
+    <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;Daring-Anteater&quot;</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Daring-Anteater&quot;</span><span class="p">,</span> <span class="s2">&quot;cnn_dailymail&quot;</span><span class="p">]},</span>
+    <span class="p">)</span>
+    <span class="n">train_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># 0 = default / automatic</span>
+    <span class="n">eval_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
+</pre></div>
+</div>
+</section>
+<section id="autoround-quantization-schemes">
+<h3>AutoRound Quantization Schemes<a class="headerlink" href="#autoround-quantization-schemes" title="Link to this heading"></a></h3>
+<p>The mapping from scheme names to quantization configs is handled by AutoRound:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">auto_round.schemes</span><span class="w"> </span><span class="kn">import</span> <span class="n">preset_name_to_scheme</span>
+
+<span class="n">quant_cfg</span> <span class="o">=</span> <span class="n">preset_name_to_scheme</span><span class="p">(</span><span class="n">scheme</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>This <code class="docutils literal notranslate"><span class="pre">quant_cfg</span></code> is then used to initialize <code class="docutils literal notranslate"><span class="pre">TensorQuantizer</span></code> instances inside <code class="docutils literal notranslate"><span class="pre">QuantLinear</span></code>.</p>
+</section>
+<section id="detecting-quantization-format">
+<h3>Detecting Quantization Format<a class="headerlink" href="#detecting-quantization-format" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">get_quantization_format</span></code> inspects layers to determine the applied MX format:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">weight_quantizer</span><span class="o">.</span><span class="n">num_bits</span> <span class="o">==</span> <span class="mi">8</span> <span class="ow">and</span> <span class="n">weight_quantizer</span><span class="o">.</span><span class="n">data_type</span> <span class="o">==</span> <span class="s2">&quot;mx_fp8&quot;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="s2">&quot;MXFP8&quot;</span>
+<span class="k">if</span> <span class="n">weight_quantizer</span><span class="o">.</span><span class="n">num_bits</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span> <span class="n">weight_quantizer</span><span class="o">.</span><span class="n">data_type</span> <span class="o">==</span> <span class="s2">&quot;mx_fp4&quot;</span><span class="p">:</span>
+    <span class="k">return</span> <span class="s2">&quot;MXFP4&quot;</span>
+</pre></div>
+</div>
+</section>
+</section>
+<hr class="docutils" />
+<section id="best-practices-and-troubleshooting">
+<h2>Best Practices and Troubleshooting<a class="headerlink" href="#best-practices-and-troubleshooting" title="Link to this heading"></a></h2>
+<section id="recommended-workflow">
+<h3>Recommended Workflow<a class="headerlink" href="#recommended-workflow" title="Link to this heading"></a></h3>
+<ol class="simple">
+<li><p><strong>Start from a good FP32/BF16 baseline.</strong><br />Poor baselines are harder to recover with QAT.</p></li>
+<li><p><strong>Optionally pre-quantize with AutoRound.</strong></p>
+<ul class="simple">
+<li><p>Use PTQ to get an initial quantized model (especially for MXFP4).</p></li>
+<li><p>Then run QAT starting from this model to refine accuracy.</p></li>
+</ul>
+</li>
+<li><p><strong>Use small learning rates.</strong></p>
+<ul class="simple">
+<li><p>For QAT, start with <code class="docutils literal notranslate"><span class="pre">1e-5</span></code> or lower; higher learning rates can destabilize training.</p></li>
+</ul>
+</li>
+<li><p><strong>Monitor perplexity and accuracy during QAT.</strong></p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">get_metrics_with_perplexity</span></code> adds perplexity to evaluation metrics for easy monitoring.</p></li>
+</ul>
+</li>
+</ol>
+</section>
+<section id="memory-performance-issues">
+<h3>Memory / Performance Issues<a class="headerlink" href="#memory-performance-issues" title="Link to this heading"></a></h3>
+<p><strong>Issue: Out-of-Memory (OOM) during QAT</strong></p>
+<ul class="simple">
+<li><p>Reduce <code class="docutils literal notranslate"><span class="pre">per_device_train_batch_size</span></code> and/or <code class="docutils literal notranslate"><span class="pre">model_max_length</span></code>.</p></li>
+<li><p>Enable gradient checkpointing (<code class="docutils literal notranslate"><span class="pre">--gradient_checkpointing</span> <span class="pre">True</span></code> in HF args, and ensure <code class="docutils literal notranslate"><span class="pre">gradient_checkpointing_kwargs</span></code> is set when needed).</p></li>
+<li><p>Use FSDP configuration (<code class="docutils literal notranslate"><span class="pre">fsdp1.yaml</span></code> or <code class="docutils literal notranslate"><span class="pre">fsdp2.yaml</span></code>) for sharded training:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">fsdp_activation_checkpointing:</span> <span class="pre">true</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fsdp_cpu_ram_efficient_loading:</span> <span class="pre">true</span></code></p></li>
+</ul>
+</li>
+</ul>
+<p><strong>Issue: QAT Training Is Too Slow</strong></p>
+<ul class="simple">
+<li><p>Reduce <code class="docutils literal notranslate"><span class="pre">max_steps</span></code> or number of epochs for initial experiments.</p></li>
+<li><p>Use fewer training samples (<code class="docutils literal notranslate"><span class="pre">train_size</span></code>).</p></li>
+<li><p>Ensure BF16 mixed precision is enabled on supported hardware.</p></li>
+</ul>
+</section>
+<section id="accuracy-issues">
+<h3>Accuracy Issues<a class="headerlink" href="#accuracy-issues" title="Link to this heading"></a></h3>
+<p><strong>Issue: Large Accuracy Drop After QAT</strong></p>
+<ul class="simple">
+<li><p>Increase the number of training steps or epochs.</p></li>
+<li><p>Use a slightly higher precision scheme first (e.g., MXFP8), then transition to MXFP4 if needed.</p></li>
+<li><p>Ensure the dataset used for QAT matches your target task distribution as much as possible.</p></li>
+</ul>
+<p><strong>Issue: Model Loading / Inference Errors</strong></p>
+<ul class="simple">
+<li><p>Verify the model directory contains:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">config.json</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">pytorch_model.bin</span></code> / <code class="docutils literal notranslate"><span class="pre">model.safetensors</span></code></p></li>
+<li><p>tokenizer files</p></li>
+</ul>
+</li>
+<li><p>Ensure your inference stack (e.g., vLLM) supports the quantization format produced by AutoRound/INC. Some runtimes may require additional export steps.</p></li>
+</ul>
+</section>
+</section>
+<hr class="docutils" />
+<section id="references">
+<h2>References<a class="headerlink" href="#references" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>Intel Neural Compressor (INC)</strong><br /><a class="reference external" href="https://github.com/intel/neural-compressor">intel/neural-compressor</a></p></li>
+<li><p><strong>AutoRound</strong><br /><a class="reference external" href="https://github.com/intel/auto-round">intel/auto-round</a></p></li>
+<li><p><strong>QAT LLM Example</strong><br /><a class="reference external" href="https://github.com/intel/neural-compressor/tree/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm_qat">llm_qat example directory</a></p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f67ac79ad50> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

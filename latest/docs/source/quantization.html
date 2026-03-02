@@ -57,8 +57,7 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -91,29 +90,38 @@
   <section id="quantization">
 <h1>Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h1>
 <ol class="simple">
-<li><p><a class="reference external" href="#quantization-introduction">Quantization Introduction</a></p></li>
-<li><p><a class="reference external" href="#quantization-fundamentals">Quantization Fundamentals</a></p></li>
+<li><p>Introduction</p></li>
+<li><p>Quantization Fundamentals</p></li>
+<li><p>Quantization methods</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#dynamic-quantization">Dynamic Quantization</a></p></li>
+<li><p><a class="reference external" href="#static-quantization">Static Quantization</a></p></li>
+<li><p><a class="reference external" href="#smooth-quantization">Smooth Quantization</a></p></li>
+<li><p><a class="reference external" href="#weight-only-quantization">Weight Only Quantization</a></p></li>
+<li><p><a class="reference external" href="#quantization-aware-training">Quantization Aware Training</a></p></li>
 <li><p><a class="reference external" href="#accuracy-aware-tuning">Accuracy Aware Tuning</a></p></li>
-<li><p><a class="reference external" href="#supported-feature-matrix">Supported Feature Matrix</a></p></li>
-<li><p><a class="reference external" href="#get-started">Get Started</a><br />5.1 <a class="reference external" href="#post-training-quantization">Post Training Quantization</a><br />5.2 <a class="reference external" href="#quantization-aware-training-1">Quantization Aware Training</a><br />5.3 <a class="reference external" href="#specify-quantization-rules">Specify Quantization Rules</a><br />5.4 <a class="reference external" href="#specify-quantization-recipes">Specify Quantization Recipes</a><br />5.5 <a class="reference external" href="#specify-quantization-backend-and-device">Specify Quantization Backend and Device</a></p></li>
-<li><p><a class="reference external" href="#examples">Examples</a></p></li>
+</ul>
+</li>
 </ol>
-<section id="quantization-introduction">
-<h2>Quantization Introduction<a class="headerlink" href="#quantization-introduction" title="Link to this heading"></a></h2>
-<p>Quantization is a very popular deep learning model optimization technique invented for improving the speed of inference. It minimizes the number of bits required by converting a set of real-valued numbers into the lower bit data representation, such as int8 and int4, mainly on inference phase with minimal to no loss in accuracy. This way reduces the memory requirement, cache miss rate, and computational cost of using neural networks and finally achieve the goal of higher inference performance. On Intel 3rd Gen Intel® Xeon® Scalable Processors, user could expect up to 4x theoretical performance speedup. We expect further performance improvement with <a class="reference external" href="https://www.intel.com/content/www/us/en/products/docs/accelerator-engines/advanced-matrix-extensions/overview.html">Intel® Advanced Matrix Extensions</a> on 4th Gen Intel® Xeon® Scalable Processors.</p>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p>Quantization is a very popular deep learning model optimization technique invented for improving the speed of inference. It minimizes the number of bits required by converting a set of real-valued numbers into the lower bit data representation, such as int8 and int4, mainly on inference phase with minimal to no loss in accuracy. This way reduces the memory requirement, cache miss rate, and computational cost of using neural networks and finally achieve the goal of higher inference performance. On Intel 3rd Gen Intel Xeon Scalable Processors, user could expect up to 4x theoretical performance speedup. We expect further performance improvement with <a class="reference external" href="https://www.intel.com/content/www/us/en/products/docs/accelerator-engines/advanced-matrix-extensions/overview.html">Intel Advanced Matrix Extensions</a> on 4th Gen Intel Xeon Scalable Processors.</p>
 </section>
 <section id="quantization-fundamentals">
 <h2>Quantization Fundamentals<a class="headerlink" href="#quantization-fundamentals" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">Affine</span> <span class="pre">quantization</span></code> and <code class="docutils literal notranslate"><span class="pre">Scale</span> <span class="pre">quantization</span></code> are two common range mapping techniques used in tensor conversion between different data types.</p>
-<p>The math equation is like: $$X_{int8} = round(Scale \times X_{fp32} + ZeroPoint)$$.</p>
-<p><strong>Affine Quantization</strong></p>
-<p>This is so-called <code class="docutils literal notranslate"><span class="pre">asymmetric</span> <span class="pre">quantization</span></code>, in which we map the min/max range in the float tensor to the integer range. Here int8 range is [-128, 127], uint8 range is [0, 255].</p>
+<p>The equation of quantization is as follows:</p>
+<p>$$
+X_{int8} = round(X_{fp32}/S) + Z \tag{1}
+$$</p>
+<p>where $X_{fp32}$ is the input matrix, $S$ is the scale factor,  $Z$ is the integer zero point.</p>
+<section id="symmetric-asymmetric">
+<h3>Symmetric &amp; Asymmetric<a class="headerlink" href="#symmetric-asymmetric" title="Link to this heading"></a></h3>
+<p>asymmetric quantization, in which we map the min/max range in the float tensor to the integer range. Here int8 range is [-128, 127], uint8 range is [0, 255].</p>
 <p>here:</p>
 <p>If INT8 is specified, $Scale = (|X_{f_{max}} - X_{f_{min}}|) / 127$ and $ZeroPoint = -128 - X_{f_{min}} / Scale$.</p>
 <p>or</p>
 <p>If UINT8 is specified, $Scale = (|X_{f_{max}} - X_{f_{min}}|) / 255$ and $ZeroPoint = - X_{f_{min}} / Scale$.</p>
-<p><strong>Scale Quantization</strong></p>
-<p>This is so-called <code class="docutils literal notranslate"><span class="pre">Symmetric</span> <span class="pre">quantization</span></code>, in which we use the maximum absolute value in the float tensor as float range and map to the corresponding integer range.</p>
+<p>Symmetric quantization, in which we use the maximum absolute value in the float tensor as float range and map to the corresponding integer range.</p>
 <p>The math equation is like:</p>
 <p>here:</p>
 <p>If INT8 is specified, $Scale = max(abs(X_{f_{max}}), abs(X_{f_{min}})) / 127$ and $ZeroPoint = 0$.</p>
@@ -121,44 +129,7 @@
 <p>If UINT8 is specified, $Scale = max(abs(X_{f_{max}}), abs(X_{f_{min}})) / 255$ and $ZeroPoint = 128$.</p>
 <p><em>NOTE</em></p>
 <p>Sometimes the reduce_range feature, that’s using 7 bit width (1 sign bit + 6 data bits) to represent int8 range, may be needed on some early Xeon platforms, it’s because those platforms may have overflow issues due to fp16 intermediate calculation result when executing int8 dot product operation. After AVX512_VNNI instruction is introduced, this issue gets solved by supporting fp32 intermediate data.</p>
-<section id="quantization-support-matrix">
-<h3>Quantization Support Matrix<a class="headerlink" href="#quantization-support-matrix" title="Link to this heading"></a></h3>
-<table border="1" class="docutils">
-<thead>
-<tr>
-<th style="text-align: left;">Framework</th>
-<th style="text-align: center;">Backend Library</th>
-<th style="text-align: right;">Symmetric Quantization</th>
-<th style="text-align: right;">Asymmetric Quantization</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">TensorFlow</td>
-<td style="text-align: center;"><a href="https://github.com/oneapi-src/oneDNN">oneDNN</a></td>
-<td style="text-align: right;">Activation (int8/uint8), Weight (int8)</td>
-<td style="text-align: right;">-</td>
-</tr>
-<tr>
-<td style="text-align: left;">PyTorch</td>
-<td style="text-align: center;"><a href="https://github.com/pytorch/FBGEMM">FBGEMM</a></td>
-<td style="text-align: right;">Activation (uint8), Weight (int8)</td>
-<td style="text-align: right;">Activation (uint8)</td>
-</tr>
-<tr>
-<td style="text-align: left;">PyTorch(IPEX)</td>
-<td style="text-align: center;"><a href="https://github.com/oneapi-src/oneDNN">oneDNN</a></td>
-<td style="text-align: right;">Activation (int8/uint8), Weight (int8)</td>
-<td style="text-align: right;">-</td>
-</tr>
-<tr>
-<td style="text-align: left;">ONNX Runtime</td>
-<td style="text-align: center;"><a href="https://github.com/microsoft/onnxruntime/tree/master/onnxruntime/core/mlas">MLAS</a></td>
-<td style="text-align: right;">Weight (int8)</td>
-<td style="text-align: right;">Activation (uint8)</td>
-</tr>
-</tbody>
-</table><section id="quantization-scheme-in-tensorflow">
+<section id="quantization-scheme-in-tensorflow">
 <h4>Quantization Scheme in TensorFlow<a class="headerlink" href="#quantization-scheme-in-tensorflow" title="Link to this heading"></a></h4>
 <ul class="simple">
 <li><p>Symmetric Quantization</p>
@@ -196,541 +167,245 @@
 </li>
 </ul>
 </section>
-<section id="quantization-scheme-in-onnx-runtime">
-<h4>Quantization Scheme in ONNX Runtime<a class="headerlink" href="#quantization-scheme-in-onnx-runtime" title="Link to this heading"></a></h4>
-<ul class="simple">
-<li><p>Symmetric Quantization</p>
-<ul>
-<li><p>int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)</p></li>
-</ul>
-</li>
-<li><p>Asymmetric Quantization</p>
-<ul>
-<li><p>uint8: scale = (rmax - rmin) / (max(uint8) - min(uint8)); zero_point = min(uint8)  - round(rmin / scale)</p></li>
-</ul>
-</li>
-</ul>
 </section>
-<section id="reference">
-<h4>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h4>
-<ul class="simple">
-<li><p>oneDNN: <a class="reference external" href="https://software.intel.com/content/www/us/en/develop/articles/lower-numerical-precision-deep-learning-inference-and-training.html">Lower Numerical Precision Deep Learning Inference and Training</a></p></li>
-<li><p>FBGEMM: <a class="reference external" href="https://github.com/pytorch/pytorch/blob/master/torch/quantization/observer.py">FBGEMM Quantization</a></p></li>
-<li><p>MLAS:  <a class="reference external" href="https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/onnx_quantizer.py">MLAS Quantization</a></p></li>
-</ul>
+<section id="per-tensor-per-channel">
+<h3>Per-tensor &amp; Per-channel<a class="headerlink" href="#per-tensor-per-channel" title="Link to this heading"></a></h3>
+<p>There are several choices of sharing quantization parameters among tensor elements, also called quantization granularity. The coarsest level, per-tensor granularity, is that all elements in the tensor share the same quantization parameters. Finer granularity means sharing quantization parameters per row or per column for 2D matrices and per channel for 3D matrices. Similarly, the finest granularity is that each element has an individual set of quantization parameters.</p>
+<p>However, due to the model accuracy and computational consumption, per-tensor or per-channel are usually adopted. <strong>In the following part, We will show that per-channel could bring lower quantization loss but has some limitations, that is why normally we use per-channel for weight quantization and per-tensor for activation/input quantization</strong></p>
+<section id="per-tensor-example">
+<h4>Per-tensor example<a class="headerlink" href="#per-tensor-example" title="Link to this heading"></a></h4>
+<p>Suppose the weight tensor is：</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
+
+<span class="n">W</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">(</span>
+    <span class="p">[</span>
+        <span class="p">[</span><span class="mf">0.6839</span><span class="p">,</span> <span class="mf">0.4741</span><span class="p">,</span> <span class="mf">0.7451</span><span class="p">],</span>
+        <span class="p">[</span><span class="mf">0.9301</span><span class="p">,</span> <span class="mf">0.1742</span><span class="p">,</span> <span class="mf">0.6835</span><span class="p">],</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>According to the formula (1), we need scale $S$ and zero point $Z$ to calculate the integer matrix.</p>
+<p>$$
+S = \frac{X_{max} - X{min}}{2^b -1} \tag{2}
+$$</p>
+<p>$$
+Z = -round(X_{min/}/S) \tag{3}
+$$</p>
+<p>The per-tensor quantization function is:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">quantize</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+    <span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">2.0</span><span class="o">**</span><span class="n">num_bits</span> <span class="o">-</span> <span class="mf">1.0</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">x</span><span class="p">)</span> <span class="o">-</span> <span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">num_bits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">scale</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">clip</span><span class="p">(</span><span class="n">scale</span><span class="p">,</span> <span class="nb">min</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span>
+    <span class="n">zp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span> <span class="o">-</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">/</span> <span class="n">scale</span><span class="p">)</span>
+    <span class="n">q_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="n">scale</span> <span class="o">+</span> <span class="n">zp</span>
+    <span class="n">q_x</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span><span class="p">)</span><span class="o">.</span><span class="n">round_</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;scale = </span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">, zp = </span><span class="si">{</span><span class="n">zp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">zp</span>
+</pre></div>
+</div>
+<p>Then we can get the quantized $W_{q}$</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;<span class="w"> </span>W_q,<span class="w"> </span>scale,<span class="w"> </span><span class="nv">zp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>quantize<span class="o">(</span>W<span class="o">)</span>
+<span class="nv">scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span><span class="m">0</span>.00296431384049356,<span class="w"> </span><span class="nv">zp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>-59.0
+&gt;&gt;&gt;<span class="w"> </span>W_q
+tensor<span class="o">([[</span><span class="m">172</span>.,<span class="w"> </span><span class="m">101</span>.,<span class="w"> </span><span class="m">192</span>.<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="m">255</span>.,<span class="w">   </span><span class="m">0</span>.,<span class="w"> </span><span class="m">172</span>.<span class="o">]])</span>
+</pre></div>
+</div>
+<p>With the value of scale and zp, we can dequantize the tensor.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">dequantize</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">zp</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">scale</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">zp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;<span class="w"> </span><span class="nv">W_dq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize<span class="o">(</span>W_q,<span class="w"> </span><span class="m">0</span>.001,<span class="w"> </span>-50<span class="o">)</span>
+&gt;&gt;&gt;<span class="w"> </span>W_dq
+tensor<span class="o">([[</span><span class="m">0</span>.2220,<span class="w"> </span><span class="m">0</span>.1510,<span class="w"> </span><span class="m">0</span>.2420<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="m">0</span>.2570,<span class="w"> </span><span class="m">0</span>.0500,<span class="w"> </span><span class="m">0</span>.1890<span class="o">]])</span>
+&gt;&gt;&gt;<span class="w"> </span><span class="nv">loss</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.nn.MSELoss<span class="o">()(</span>W_dq,<span class="w"> </span>W<span class="o">)</span>
+&gt;&gt;&gt;<span class="w"> </span>loss.item<span class="o">()</span>
+<span class="m">0</span>.1983354538679123
+
+&gt;&gt;&gt;<span class="w"> </span><span class="nv">W_dq</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize<span class="o">(</span>W_q,<span class="w"> </span>scale,<span class="w"> </span>zp<span class="o">)</span>
+&gt;&gt;&gt;<span class="w"> </span>W_dq
+tensor<span class="o">([[</span><span class="m">0</span>.6848,<span class="w"> </span><span class="m">0</span>.4743,<span class="w"> </span><span class="m">0</span>.7440<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="m">0</span>.9308,<span class="w"> </span><span class="m">0</span>.1749,<span class="w"> </span><span class="m">0</span>.6848<span class="o">]])</span>
+&gt;&gt;&gt;<span class="w"> </span><span class="nv">loss</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.nn.MSELoss<span class="o">()(</span>W_dq,<span class="w"> </span>W<span class="o">)</span>
+&gt;&gt;&gt;<span class="w"> </span>loss.item<span class="o">()</span>
+<span class="m">7</span>.385297635664756e-07
+</pre></div>
+</div>
+<p>The difference between $W$ and $W_{dq}$ shows that quantization affects precision and appropriate values of scale and zero point will reduce the loss of precision.</p>
+</section>
+<section id="per-channel-example">
+<h4>Per-channel example<a class="headerlink" href="#per-channel-example" title="Link to this heading"></a></h4>
+<p>Similarly, the example of per-channel quantization is as follows:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">quantize_per_channel</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">num_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+    <span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span> <span class="o">=</span> <span class="mi">0</span><span class="p">,</span> <span class="mf">2.0</span><span class="o">**</span><span class="n">num_bits</span> <span class="o">-</span> <span class="mf">1.0</span>
+    <span class="n">x_tmp</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">detach</span><span class="p">()</span><span class="o">.</span><span class="n">reshape</span><span class="p">(</span><span class="n">x</span><span class="o">.</span><span class="n">shape</span><span class="p">[</span><span class="mi">0</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
+    <span class="n">scales</span> <span class="o">=</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">max</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span> <span class="o">/</span> <span class="p">(</span><span class="mi">2</span><span class="o">**</span><span class="n">num_bits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span>
+    <span class="n">zp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span> <span class="o">-</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">scales</span><span class="p">))</span>
+    <span class="n">q_x</span> <span class="o">=</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span> <span class="o">+</span> <span class="n">zp</span>
+    <span class="n">q_x</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span><span class="p">)</span><span class="o">.</span><span class="n">round_</span><span class="p">()</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;scales = </span><span class="si">{</span><span class="n">scales</span><span class="si">}</span><span class="s2">, </span><span class="se">\n</span><span class="s2"> zp = </span><span class="si">{</span><span class="n">zp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="k">return</span> <span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">zp</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">dequantize_per_channel</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">zp</span><span class="p">):</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">zp</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">scales</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">zp</span><span class="p">))</span>
+    <span class="k">return</span> <span class="n">scales</span> <span class="o">*</span> <span class="p">(</span><span class="n">q_x</span> <span class="o">-</span> <span class="n">zp</span><span class="p">)</span>
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;W_q,<span class="w"> </span>scales,<span class="w"> </span><span class="nv">zp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>quantize_per_channel<span class="o">(</span>W<span class="o">)</span>
+<span class="nv">scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>tensor<span class="o">([[</span><span class="m">0</span>.0029<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="m">0</span>.0036<span class="o">]])</span>,<span class="w"> </span>
+<span class="nv">zp</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>tensor<span class="o">([[</span>-162.<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="w"> </span>-48.<span class="o">]])</span>
+&gt;&gt;&gt;W_q
+tensor<span class="o">([[</span><span class="w"> </span><span class="m">72</span>.,<span class="w">   </span><span class="m">0</span>.,<span class="w">  </span><span class="m">93</span>.<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="m">207</span>.,<span class="w">   </span><span class="m">0</span>.,<span class="w"> </span><span class="m">139</span>.<span class="o">]])</span>
+
+&gt;&gt;&gt;W_dq<span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize_per_channel<span class="o">(</span>W_q,<span class="w"> </span>scales,<span class="w"> </span>zp<span class="o">)</span>
+&gt;&gt;&gt;W_dq
+tensor<span class="o">([[</span><span class="m">0</span>.6837,<span class="w"> </span><span class="m">0</span>.4734,<span class="w"> </span><span class="m">0</span>.7451<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="m">0</span>.9301,<span class="w"> </span><span class="m">0</span>.1751,<span class="w"> </span><span class="m">0</span>.6821<span class="o">]])</span>
+</pre></div>
+</div>
+<p>And the loss is</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;<span class="w"> </span><span class="nv">loss</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.nn.MSELoss<span class="o">()(</span>W_dq,<span class="w"> </span>W<span class="o">)</span>
+&gt;&gt;&gt;<span class="w"> </span>loss.item<span class="o">()</span>
+<span class="m">5</span>.637690492221736e-07
+</pre></div>
+</div>
+<p>Through this example, we can see that per-channel quantization has finer granularity and has lower loss (loss 5.6376e-07 for per-channel quantization and 7.3852e-07 for per-tensor quantization).</p>
+</section>
+<section id="matmul-quantization-example">
+<h4>Matmul quantization example<a class="headerlink" href="#matmul-quantization-example" title="Link to this heading"></a></h4>
+<p>For a linear layer in most model, $Y=X \cdot W$, we can quantize both the weights and activations in order to reduce the storage and accelerate inference.
+Using per-tensor scale quantization to show the process.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">quantize_per_tensor_absmax</span><span class="p">(</span><span class="n">x</span><span class="p">,</span> <span class="n">n_bits</span><span class="o">=</span><span class="mi">8</span><span class="p">):</span>
+    <span class="n">scales</span> <span class="o">=</span> <span class="n">x</span><span class="o">.</span><span class="n">abs</span><span class="p">()</span><span class="o">.</span><span class="n">max</span><span class="p">()</span>
+    <span class="n">q_max</span> <span class="o">=</span> <span class="mi">2</span> <span class="o">**</span> <span class="p">(</span><span class="n">n_bits</span> <span class="o">-</span> <span class="mi">1</span><span class="p">)</span> <span class="o">-</span> <span class="mi">1</span>
+    <span class="n">scales</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="nb">min</span><span class="o">=</span><span class="mf">1e-5</span><span class="p">)</span><span class="o">.</span><span class="n">div_</span><span class="p">(</span><span class="n">q_max</span><span class="p">)</span>
+    <span class="n">q_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="n">scales</span>
+    <span class="n">q_x</span> <span class="o">=</span> <span class="n">q_x</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="o">-</span><span class="n">q_max</span><span class="p">,</span> <span class="n">q_max</span><span class="p">)</span><span class="o">.</span><span class="n">round_</span><span class="p">()</span>
+    <span class="k">return</span> <span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">dequantize</span><span class="p">(</span><span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">):</span>
+    <span class="k">return</span> <span class="n">scale</span> <span class="o">*</span> <span class="n">q_x</span>
+</pre></div>
+</div>
+<p>Randomly initialize the $W$ and $Y$, then calculate the result of $Y=X \cdot W$</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;W<span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.rand<span class="o">(</span><span class="m">2</span>,<span class="w"> </span><span class="m">3</span>,<span class="w"> </span><span class="nv">dtype</span><span class="o">=</span>torch.float32<span class="o">)</span>
+&gt;&gt;&gt;X<span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.rand<span class="o">(</span><span class="m">3</span>,<span class="w"> </span><span class="m">4</span>,<span class="w"> </span><span class="nv">dtype</span><span class="o">=</span>torch.float32<span class="o">)</span>
+&gt;&gt;&gt;W
+tensor<span class="o">([[</span><span class="m">0</span>.0806,<span class="w"> </span><span class="m">0</span>.7589,<span class="w"> </span><span class="m">0</span>.6038<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="m">0</span>.3815,<span class="w"> </span><span class="m">0</span>.5040,<span class="w"> </span><span class="m">0</span>.7174<span class="o">]])</span>
+&gt;&gt;&gt;X
+tensor<span class="o">([[</span><span class="m">0</span>.5444,<span class="w"> </span><span class="m">0</span>.5826,<span class="w"> </span><span class="m">0</span>.7772,<span class="w"> </span><span class="m">0</span>.5555<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="m">0</span>.3740,<span class="w"> </span><span class="m">0</span>.3253,<span class="w"> </span><span class="m">0</span>.0698,<span class="w"> </span><span class="m">0</span>.1381<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="m">0</span>.5972,<span class="w"> </span><span class="m">0</span>.0086,<span class="w"> </span><span class="m">0</span>.0737,<span class="w"> </span><span class="m">0</span>.8298<span class="o">]])</span>
+&gt;&gt;&gt;Y<span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.matmul<span class="o">(</span>W,<span class="w"> </span>X<span class="o">)</span>
+&gt;&gt;&gt;Y
+tensor<span class="o">([[</span><span class="m">0</span>.6883,<span class="w"> </span><span class="m">0</span>.2991,<span class="w"> </span><span class="m">0</span>.1601,<span class="w"> </span><span class="m">0</span>.6506<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="m">0</span>.8246,<span class="w"> </span><span class="m">0</span>.3924,<span class="w"> </span><span class="m">0</span>.3845,<span class="w"> </span><span class="m">0</span>.8768<span class="o">]])</span>
+</pre></div>
+</div>
+<p>Quantize weight and activation, matmul(quantize(X), quantize(Y))</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;W_q,<span class="w"> </span><span class="nv">W_scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>quantize_per_tensor_absmax<span class="o">(</span>W<span class="o">)</span>
+&gt;&gt;&gt;X_q,<span class="w"> </span><span class="nv">X_scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>quantize_per_tensor_absmax<span class="o">(</span>X<span class="o">)</span>
+&gt;&gt;&gt;print<span class="o">(</span>f<span class="s1">&#39;{W_q}\n{W_scale.item()}&#39;</span><span class="o">)</span>
+&gt;&gt;&gt;print<span class="o">(</span>f<span class="s1">&#39;{X_q}\n{X_scale.item()}&#39;</span><span class="o">)</span>
+tensor<span class="o">([[</span><span class="w"> </span><span class="m">13</span>.,<span class="w"> </span><span class="m">127</span>.,<span class="w"> </span><span class="m">101</span>.<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="w"> </span><span class="m">64</span>.,<span class="w">  </span><span class="m">84</span>.,<span class="w"> </span><span class="m">120</span>.<span class="o">]])</span>
+<span class="m">0</span>.0059755356051027775
+tensor<span class="o">([[</span><span class="w"> </span><span class="m">83</span>.,<span class="w">  </span><span class="m">89</span>.,<span class="w"> </span><span class="m">119</span>.,<span class="w">  </span><span class="m">85</span>.<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="w"> </span><span class="m">57</span>.,<span class="w">  </span><span class="m">50</span>.,<span class="w">  </span><span class="m">11</span>.,<span class="w">  </span><span class="m">21</span>.<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="w"> </span><span class="m">91</span>.,<span class="w">   </span><span class="m">1</span>.,<span class="w">  </span><span class="m">11</span>.,<span class="w"> </span><span class="m">127</span>.<span class="o">]])</span>
+<span class="m">0</span>.006533813662827015
+
+&gt;&gt;&gt;Y_q<span class="w"> </span><span class="o">=</span><span class="w"> </span>torch.matmul<span class="o">(</span>W_q,<span class="w"> </span>X_q<span class="o">)</span>
+&gt;&gt;&gt;Y_q
+tensor<span class="o">([[</span><span class="m">17509</span>.,<span class="w">  </span><span class="m">7608</span>.,<span class="w">  </span><span class="m">4055</span>.,<span class="w"> </span><span class="m">16599</span>.<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="m">21020</span>.,<span class="w"> </span><span class="m">10016</span>.,<span class="w">  </span><span class="m">9860</span>.,<span class="w"> </span><span class="m">22444</span>.<span class="o">]])</span>
+&gt;&gt;&gt;Y_dq<span class="w"> </span><span class="o">=</span><span class="w"> </span>dequantize<span class="o">(</span>Y_q,<span class="w"> </span>W_scale<span class="w"> </span>*<span class="w"> </span>X_scale<span class="o">)</span>
+&gt;&gt;&gt;Y_dq
+tensor<span class="o">([[</span><span class="m">0</span>.6836,<span class="w"> </span><span class="m">0</span>.2970,<span class="w"> </span><span class="m">0</span>.1583,<span class="w"> </span><span class="m">0</span>.6481<span class="o">]</span>,
+<span class="w">        </span><span class="o">[</span><span class="m">0</span>.8207,<span class="w"> </span><span class="m">0</span>.3911,<span class="w"> </span><span class="m">0</span>.3850,<span class="w"> </span><span class="m">0</span>.8763<span class="o">]])</span>
+</pre></div>
+</div>
 </section>
 </section>
-<section id="quantization-approaches">
-<h3>Quantization Approaches<a class="headerlink" href="#quantization-approaches" title="Link to this heading"></a></h3>
-<p>Quantization has three different approaches:</p>
-<ol class="simple">
-<li><p>post training dynamic quantization</p></li>
-<li><p>post training static  quantization</p></li>
-<li><p>quantization aware training.</p></li>
-</ol>
-<p>The first two approaches belong to optimization on inference. The last belongs to optimization during training.</p>
-<section id="post-training-dynamic-quantization">
-<h4>Post Training Dynamic Quantization<a class="headerlink" href="#post-training-dynamic-quantization" title="Link to this heading"></a></h4>
+</section>
+<section id="dynamic-quantization">
+<h2>Dynamic Quantization<a class="headerlink" href="#dynamic-quantization" title="Link to this heading"></a></h2>
 <p>The weights of the neural network get quantized into int8 format from float32 format offline. The activations of the neural network is quantized as well with the min/max range collected during inference runtime.</p>
 <p>This approach is widely used in dynamic length neural networks, like NLP model.</p>
 </section>
-<section id="post-training-static-quantization">
-<h4>Post Training Static Quantization<a class="headerlink" href="#post-training-static-quantization" title="Link to this heading"></a></h4>
+<section id="static-quantization">
+<h2>Static Quantization<a class="headerlink" href="#static-quantization" title="Link to this heading"></a></h2>
 <p>Compared with <code class="docutils literal notranslate"><span class="pre">post</span> <span class="pre">training</span> <span class="pre">dynamic</span> <span class="pre">quantization</span></code>, the min/max range in weights and activations are collected offline on a so-called <code class="docutils literal notranslate"><span class="pre">calibration</span></code> dataset. This dataset should be able to represent the data distribution of those unseen inference dataset. The <code class="docutils literal notranslate"><span class="pre">calibration</span></code> process runs on the original fp32 model and dumps out all the tensor distributions for <code class="docutils literal notranslate"><span class="pre">Scale</span></code> and <code class="docutils literal notranslate"><span class="pre">ZeroPoint</span></code> calculations. Usually preparing 100 samples are enough for calibration.</p>
 <p>This approach is major quantization approach people should try because it could provide the better performance comparing with <code class="docutils literal notranslate"><span class="pre">post</span> <span class="pre">training</span> <span class="pre">dynamic</span> <span class="pre">quantization</span></code>.</p>
 </section>
+<section id="smooth-quantization">
+<h2>Smooth Quantization<a class="headerlink" href="#smooth-quantization" title="Link to this heading"></a></h2>
+<section id="per-channel-limitation">
+<h3>Per-channel limitation<a class="headerlink" href="#per-channel-limitation" title="Link to this heading"></a></h3>
+<p>Though per-channel quantization could bring lower quantization error, we could not apply it for activations due to the difficulty of the dequantization. We would prove it in the following image and the zero point of quantization would be ignored for simplicity.</p>
+<p>The image on the left presents a normal linear forward  with 1x2 input $x$ and 2x2 weight $w$. The results $y$ could be easily obtained by simple mathematics. In the middle image, we apply per-tensor quantization for activations and per-channel quantization for weights; the results after quantization that are denoted by $y_1$ and $y_2$, could be easily dequantized to the float results $y_{fp1}$ and $y_{fp2}$ by per channel scale $1.0/s_1s_x$ and $1.0/s_2s_x$. However, after applying per-channel quantization for activation (right image), we could not dequantize the  $y_1$ and  $y_2$ to float results.</p>
+<div align="center">
+    <img src="./imgs/sq_pc.png"/>
+</div><p>In the previous subsection, we have explained why per-channel quantization could not be applied for activation, even though it could lead to lower quantization loss. However, the quantization error loss of activation plays an important role in the accuracy loss of model quantization[1][6][7].</p>
+<p>To reduce the quantization loss of activations, lots of methods have been proposed. In the following, we briefly introduce SPIQ[6], Outlier Suppression[7] and Smoothquant[1]. All these three methods share a similar idea to migrate the difficulty from activation quantization to weight quantization but differ in how much difficulty to be transferred.</p>
+<p>So <strong>the first question is how to migrate the difficulty from activation to weights?</strong> The solution is straightforward, that is to convert the network to an output equivalent network that is presented in the image below and apply quantization to this equivalent network. The intuition is that each channel of activation could be scaled to make it more quantization-friendly, similar to a fake per-channel activation quantization.</p>
+<div align="center">
+    <img src="./imgs/sq_convert.png"/>
+</div><p>Please note that this conversion will make the quantization of weights more difficult, because the scales attached to weights shown above are per-input-channel, while quantization of weights is per-output-channel or per-tensor.</p>
+<p>So <strong>the second question is how much difficulty to be migrated</strong>, that is how to choose the <strong>conversion per-channel scale</strong> $s_{x1}$ and $s_{x2}$ from the above image. Different works adopt different ways.</p>
+<p><em>SPIQ</em> just adopts the quantization scale of activations as the conversion per-channel scale.</p>
+<p><em>Outlier suppression</em> adopts the scale of the preceding layernorm as the conversion per-channel scale.</p>
+<p><em>Smoothquant</em> introduces a hyperparameter $\alpha$ as a smooth factor to calculate the conversion per-channel scale and balance the quantization difficulty of activation and weight.</p>
+<p>$$
+s_j = max(|X_j|)^\alpha/max(|W_j|)^{1-\alpha} \tag{4}
+$$</p>
+<p>j is the index of the input channels.</p>
+<div align="center">
+    <img src="./imgs/smoothquant.png" height="250"/>
+</div><p>For most of the models such as OPT and BLOOM, $\alpha = 0.5$ is a well-balanced value to split the difficulty of weight and activation quantization. A larger $\alpha$ value could be used on models with more significant activation outliers to migrate more quantization difficulty to weights.</p>
+</section>
+</section>
+<section id="weight-only-quantization">
+<h2>Weight Only Quantization<a class="headerlink" href="#weight-only-quantization" title="Link to this heading"></a></h2>
+<p>As large language models (LLMs) become more prevalent, there is a growing need for new and improved quantization methods that can meet the computational demands of these modern architectures while maintaining the accuracy.  Compared to normal quantization like W8A8,  weight only quantization is probably a better trade-off to balance the performance and the accuracy, since we will see below that the bottleneck of deploying LLMs is the memory bandwidth and normally weight only quantization could lead to better accuracy.</p>
+<p>Model inference: Roughly speaking , two key steps are required to get the model’s result. The first one is moving the model from the memory to the cache piece by piece, in which, memory bandwidth $B$ and parameter count $P$ are the key factors, theoretically the time cost is  $P*4 /B$. The second one is  computation, in which, the device’s computation capacity  $C$  measured in FLOPS and the forward FLOPs $F$ play the key roles, theoretically the cost is $F/C$.</p>
+<p>Text generation:  The most famous application of LLMs is text generation, which predicts the next token/word  based on the inputs/context. To generate a sequence of texts, we need to predict them one by one. In this scenario,  $F\approx P$  if some operations like bmm are ignored and past key values have been saved. However, the  $C/B$ of the modern device could be to <strong>100X,</strong> that makes the memory bandwidth as the bottleneck in this scenario.</p>
+<p>Besides, as mentioned in many papers[1][2], activation quantization is the main reason to cause the accuracy drop. So for text generation task,  weight only quantization is a preferred option in most cases.</p>
+<p>Theoretically, round-to-nearest (RTN) is the most straightforward way to quantize weight using scale maps. However, when the number of bits is small (e.g. 3), the MSE loss is larger than expected. A group size is introduced to reduce elements using the same scale to improve accuracy.</p>
+<p>There are many excellent works for weight only quantization to improve its accuracy performance, such as AWQ[3], GPTQ[4], AutoRound[8]. Neural compressor integrates these popular algorithms in time to help customers leverage them and deploy them to their own tasks.</p>
+</section>
 <section id="quantization-aware-training">
-<h4>Quantization Aware Training<a class="headerlink" href="#quantization-aware-training" title="Link to this heading"></a></h4>
+<h2>Quantization Aware Training<a class="headerlink" href="#quantization-aware-training" title="Link to this heading"></a></h2>
 <p>Quantization aware training emulates inference-time quantization in the forward pass of the training process by inserting <code class="docutils literal notranslate"><span class="pre">fake</span> <span class="pre">quant</span></code> ops before those quantizable ops. With <code class="docutils literal notranslate"><span class="pre">quantization</span> <span class="pre">aware</span> <span class="pre">training</span></code>, all weights and activations are <code class="docutils literal notranslate"><span class="pre">fake</span> <span class="pre">quantized</span></code> during both the forward and backward passes of training: that is, float values are rounded to mimic int8 values, but all computations are still done with floating point numbers. Thus, all the weight adjustments during training are made while aware of the fact that the model will ultimately be quantized; after quantizing, therefore, this method will usually yield higher accuracy than either dynamic quantization or post-training static quantization.</p>
-</section>
-</section>
 </section>
 <section id="accuracy-aware-tuning">
 <h2>Accuracy Aware Tuning<a class="headerlink" href="#accuracy-aware-tuning" title="Link to this heading"></a></h2>
 <p>Accuracy aware tuning is one of unique features provided by Intel(R) Neural Compressor, compared with other 3rd party model compression tools. This feature can be used to solve accuracy loss pain points brought by applying low precision quantization and other lossy optimization methods.</p>
-<p>This tuning algorithm creates a tuning space by querying framework quantization capability and model structure, selects the ops to be quantized by the tuning strategy, generates quantized graph, and evaluates the accuracy of this quantized graph. The optimal model will be yielded if the pre-defined accuracy goal is met.</p>
-<p>Neural compressor also support to quantize all quantizable ops without accuracy tuning, user can decide whether to tune the model accuracy or not. Please refer to “Get Start” below.</p>
-<section id="working-flow">
-<h3>Working Flow<a class="headerlink" href="#working-flow" title="Link to this heading"></a></h3>
-<p>Currently <code class="docutils literal notranslate"><span class="pre">accuracy</span> <span class="pre">aware</span> <span class="pre">tuning</span></code> supports <code class="docutils literal notranslate"><span class="pre">post</span> <span class="pre">training</span> <span class="pre">quantization</span></code>, <code class="docutils literal notranslate"><span class="pre">quantization</span> <span class="pre">aware</span> <span class="pre">training</span></code>.</p>
+<p>This tuning algorithm creates a tuning space by querying framework quantization capability and model structure, selects the ops to be quantized by the tuning strategy, generates quantized graph, and evaluates the accuracy of this quantized graph. The optimal model will be yielded if the pre-defined accuracy goal is met. The <code class="docutils literal notranslate"><span class="pre">autotune</span></code> serves as a main interface of this algorithm.</p>
+<p>Neural compressor also support to quantize all quantizable ops without accuracy tuning, using <code class="docutils literal notranslate"><span class="pre">quantize_model</span></code> interface to achieve that.</p>
+<p>For supported quantization methods for <code class="docutils literal notranslate"><span class="pre">accuracy</span> <span class="pre">aware</span> <span class="pre">tuning</span></code> and the detailed API usage, please refer to the document of <a class="reference external" href="PyTorch.html">PyTorch</a> or <a class="reference external" href="TensorFlow.html">TensorFlow</a> respectively.</p>
 <p>User could refer to below chart to understand the whole tuning flow.</p>
-<img src="./imgs/accuracy_aware_tuning_flow.png" width=600 height=480 alt="accuracy aware tuning working flow"></section>
-</section>
-<section id="supported-feature-matrix">
-<h2>Supported Feature Matrix<a class="headerlink" href="#supported-feature-matrix" title="Link to this heading"></a></h2>
-<p>Quantization methods include the following three types:</p>
-<table class="center">
-    <thead>
-        <tr>
-            <th>Types</th>
-            <th>Quantization</th>
-            <th>Dataset Requirements</th>
-            <th>Framework</th>
-            <th>Backend</th>
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td rowspan="3" align="center">Post-Training Static Quantization (PTQ)</td>
-            <td rowspan="3" align="center">weights and activations</td>
-            <td rowspan="3" align="center">calibration</td>
-            <td align="center">PyTorch</td>
-            <td align="center"><a href="https://pytorch.org/docs/stable/quantization.html#eager-mode-quantization">PyTorch Eager</a>/<a href="https://pytorch.org/docs/stable/quantization.html#prototype-fx-graph-mode-quantization">PyTorch FX</a>/<a href="https://github.com/intel/intel-extension-for-pytorch">IPEX</a></td>
-        </tr>
-        <tr>
-            <td align="center">TensorFlow</td>
-            <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
-        </tr>
-        <tr>
-            <td align="center">ONNX Runtime</td>
-            <td align="center"><a href="https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/quantize.py">QLinearops/QDQ</a></td>
-        </tr>
-        <tr>
-            <td rowspan="2" align="center">Post-Training Dynamic Quantization</td>
-            <td rowspan="2" align="center">weights</td>
-            <td rowspan="2" align="center">none</td>
-            <td align="center">PyTorch</td>
-            <td align="center"><a href="https://pytorch.org/docs/stable/quantization.html#eager-mode-quantization">PyTorch eager mode</a>/<a href="https://pytorch.org/docs/stable/quantization.html#prototype-fx-graph-mode-quantization">PyTorch fx mode</a>/<a href="https://github.com/intel/intel-extension-for-pytorch">IPEX</a></td>
-        </tr>
-        <tr>
-            <td align="center">ONNX Runtime</td>
-            <td align="center"><a href="https://github.com/microsoft/onnxruntime/blob/master/onnxruntime/python/tools/quantization/quantize.py">QIntegerops</a></td>
-        </tr>  
-        <tr>
-            <td rowspan="2" align="center">Quantization-aware Training (QAT)</td>
-            <td rowspan="2" align="center">weights and activations</td>
-            <td rowspan="2" align="center">fine-tuning</td>
-            <td align="center">PyTorch</td>
-            <td align="center"><a href="https://pytorch.org/docs/stable/quantization.html#eager-mode-quantization">PyTorch eager mode</a>/<a href="https://pytorch.org/docs/stable/quantization.html#prototype-fx-graph-mode-quantization">PyTorch fx mode</a>/<a href="https://github.com/intel/intel-extension-for-pytorch">IPEX</a></td>
-        </tr>
-        <tr>
-            <td align="center">TensorFlow</td>
-            <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
-        </tr>
-    </tbody>
-</table>
-<br>
-<br></section>
-<section id="get-started">
-<h2>Get Started<a class="headerlink" href="#get-started" title="Link to this heading"></a></h2>
-<p>The design philosophy of the quantization interface of Intel(R) Neural Compressor is easy-of-use. It requests user to provide <code class="docutils literal notranslate"><span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">calibration</span> <span class="pre">dataloader</span></code>, and <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code>. Those parameters would be used to quantize and tune the model.</p>
-<p><code class="docutils literal notranslate"><span class="pre">model</span></code> is the framework model location or the framework model object.</p>
-<p><code class="docutils literal notranslate"><span class="pre">calibration</span> <span class="pre">dataloader</span></code> is used to load the data samples for calibration phase. In most cases, it could be the partial samples of the evaluation dataset.</p>
-<p>If a user needs to tune the model accuracy, the user should provide either <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code> or <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">dataloader</span></code> <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code>. If the user won’t to tune the model accuracy, then the user should provide neither <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code> nor <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">dataloader</span></code> <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code>.</p>
-<p><code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">function</span></code> is a function used to evaluate model accuracy. It is a optional. This function should be same with how user makes evaluation on fp32 model, just taking <code class="docutils literal notranslate"><span class="pre">model</span></code> as input and returning a scalar value represented the evaluation accuracy.</p>
-<p><code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">dataloader</span></code> is a data loader for evaluation. It is iterable and should yield a tuple of (input, label). The input could be a object, list, tuple or dict, depending on user implementation, as well as it can be taken as model input. The label should be able to take as input of supported metrics. If this parameter is not None, user needs to specify pre-defined evaluation metrics through configuration file and should set “eval_func” parameter as None. Tuner will combine model, eval_dataloader and pre-defined metrics to run evaluation process.</p>
-<p><code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code> is an object to compute the metric to evaluating the performance of the model or a dict of built-in metric configures, neural_compressor will initialize this class when evaluation. <code class="docutils literal notranslate"><span class="pre">evaluation</span> <span class="pre">metric</span></code> must be supported by neural compressor. Please refer to <a class="reference external" href="metric.html">metric.html</a>.</p>
-<p>User could execute:</p>
-<section id="post-training-quantization">
-<h3>Post Training Quantization<a class="headerlink" href="#post-training-quantization" title="Link to this heading"></a></h3>
-<ol class="simple">
-<li><p>Without Accuracy Aware Tuning</p></li>
-</ol>
-<p>This means user could leverage Intel(R) Neural Compressor to directly generate a fully quantized model without accuracy aware tuning. It’s user responsibility to ensure the accuracy of the quantized model meets expectation. Intel(R) Neural Compressor support <code class="docutils literal notranslate"><span class="pre">Post</span> <span class="pre">Training</span> <span class="pre">Static</span> <span class="pre">Quantization</span></code> and <code class="docutils literal notranslate"><span class="pre">Post</span> <span class="pre">Training</span> <span class="pre">Dynamic</span> <span class="pre">Quantization</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
-
-<span class="c1"># Original code</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">ResNet50</span><span class="p">()</span>
-<span class="n">val_dataset</span> <span class="o">=</span> <span class="o">...</span>
-<span class="n">val_dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataloader</span><span class="p">(</span>
-    <span class="n">val_dataset</span><span class="p">,</span>
-    <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
-    <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span>
-    <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="c1"># Quantization code</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">quantization</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
-
-<span class="n">conf</span> <span class="o">=</span> <span class="p">(</span>
-    <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
-<span class="p">)</span>  <span class="c1"># default approach is &quot;auto&quot;, you can set &quot;dynamic&quot;:PostTrainingQuantConfig(approach=&quot;dynamic&quot;)</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-    <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span>
-    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./output&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<ol class="simple">
-<li><p>With Accuracy Aware Tuning</p></li>
-</ol>
-<p>This means user could leverage the advance feature of Intel(R) Neural Compressor to tune out a best quantized model which has best accuracy and good performance. User should provide either <code class="docutils literal notranslate"><span class="pre">eval_func</span></code> or <code class="docutils literal notranslate"><span class="pre">eval_dataloader</span></code> <code class="docutils literal notranslate"><span class="pre">eval_metric</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
-
-
-<span class="c1"># Original code</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="n">val_loader</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
-    <span class="o">...</span>
-    <span class="k">return</span> <span class="n">top1</span><span class="o">.</span><span class="n">avg</span>
-
-
-<span class="n">model</span> <span class="o">=</span> <span class="n">ResNet50</span><span class="p">()</span>
-<span class="n">val_dataset</span> <span class="o">=</span> <span class="o">...</span>
-<span class="n">val_dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataloader</span><span class="p">(</span>
-    <span class="n">val_dataset</span><span class="p">,</span>
-    <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
-    <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span>
-    <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="p">)</span>
-
-<span class="c1"># Quantization code</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">quantization</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">PostTrainingQuantConfig</span>
-
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-    <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span>
-    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
-    <span class="n">eval_func</span><span class="o">=</span><span class="n">validate</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./output&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<p>or</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.metric</span><span class="w"> </span><span class="kn">import</span> <span class="n">METRICS</span>
-
-<span class="n">metrics</span> <span class="o">=</span> <span class="n">METRICS</span><span class="p">(</span><span class="s2">&quot;pytorch&quot;</span><span class="p">)</span>
-<span class="n">top1</span> <span class="o">=</span> <span class="n">metrics</span><span class="p">[</span><span class="s2">&quot;topk&quot;</span><span class="p">]()</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantization</span><span class="o">.</span><span class="n">fit</span><span class="p">(</span>
-    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
-    <span class="n">conf</span><span class="o">=</span><span class="n">conf</span><span class="p">,</span>
-    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
-    <span class="n">eval_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
-    <span class="n">eval_metric</span><span class="o">=</span><span class="n">top1</span><span class="p">,</span>
-<span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="id1">
-<h3>Quantization Aware Training<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
-<ol class="simple">
-<li><p>Without Accuracy Aware Tuning
-This method only requires the user to call the callback function during the training process. After the training is completed, after the training is completed, Neural Compressor will convert to quantized model.</p></li>
-</ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
-
-<span class="c1"># Original code</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">ResNet50</span><span class="p">()</span>
-<span class="n">train_dataset</span> <span class="o">=</span> <span class="o">...</span>
-<span class="n">train_dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataloader</span><span class="p">(</span>
-    <span class="n">train_dataset</span><span class="p">,</span>
-    <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
-    <span class="n">shuffle</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span>
-    <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">criterion</span> <span class="o">=</span> <span class="o">...</span>
-
-
-<span class="c1"># Quantization code</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span> <span class="o">...</span>
-
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantizationAwareTrainingConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.training</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare_compression</span>
-
-<span class="n">conf</span> <span class="o">=</span> <span class="n">QuantizationAwareTrainingConfig</span><span class="p">()</span>
-<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
-<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_begin</span><span class="p">()</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">compression_manager</span><span class="o">.</span><span class="n">model</span>
-<span class="n">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-<span class="n">compression_manager</span><span class="o">.</span><span class="n">callbacks</span><span class="o">.</span><span class="n">on_train_end</span><span class="p">()</span>
-<span class="n">compression_manager</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./output&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<ol class="simple">
-<li><p>With Accuracy Aware Tuning
-This method requires the user to provide training function and evaluation function to Neural Compressor, and in training function, the user should call the callback function.</p></li>
-</ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
-
-<span class="c1"># Original code</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">ResNet50</span><span class="p">()</span>
-<span class="n">val_dataset</span> <span class="o">=</span> <span class="o">...</span>
-<span class="n">val_dataloader</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">utils</span><span class="o">.</span><span class="n">data</span><span class="o">.</span><span class="n">Dataloader</span><span class="p">(</span>
-    <span class="n">val_dataset</span><span class="p">,</span>
-    <span class="n">batch_size</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span>
-    <span class="n">shuffle</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span>
-    <span class="n">num_workers</span><span class="o">=</span><span class="n">args</span><span class="o">.</span><span class="n">workers</span><span class="p">,</span>
-    <span class="n">ping_memory</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-<span class="p">)</span>
-<span class="n">criterion</span> <span class="o">=</span> <span class="o">...</span>
-
-
-<span class="k">def</span><span class="w"> </span><span class="nf">validate</span><span class="p">(</span><span class="n">val_loader</span><span class="p">,</span> <span class="n">model</span><span class="p">,</span> <span class="n">criterion</span><span class="p">,</span> <span class="n">args</span><span class="p">):</span>
-    <span class="o">...</span>
-    <span class="k">return</span> <span class="n">top1</span><span class="o">.</span><span class="n">avg</span>
-
-
-<span class="c1"># Quantization code</span>
-<span class="k">def</span><span class="w"> </span><span class="nf">train_func</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
-    <span class="o">...</span>
-    <span class="k">return</span> <span class="n">model</span>  <span class="c1"># user should return a best performance model here</span>
-
-
-<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">QuantizationAwareTrainingConfig</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.training</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare_compression</span><span class="p">,</span> <span class="n">fit</span>
-
-<span class="n">conf</span> <span class="o">=</span> <span class="n">QuantizationAwareTrainingConfig</span><span class="p">()</span>
-<span class="n">compression_manager</span> <span class="o">=</span> <span class="n">prepare_compression</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">conf</span><span class="p">)</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">fit</span><span class="p">(</span><span class="n">compression_manager</span><span class="o">=</span><span class="n">compression_manager</span><span class="p">,</span> <span class="n">train_func</span><span class="o">=</span><span class="n">train_func</span><span class="p">,</span> <span class="n">eval_func</span><span class="o">=</span><span class="n">validate</span><span class="p">)</span>
-<span class="n">compression_manager</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./output&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="specify-quantization-rules">
-<h3>Specify Quantization Rules<a class="headerlink" href="#specify-quantization-rules" title="Link to this heading"></a></h3>
-<p>Intel(R) Neural Compressor support specify quantization rules by operator name or operator type. Users can set <code class="docutils literal notranslate"><span class="pre">op_name_dict</span></code> and <code class="docutils literal notranslate"><span class="pre">op_type_dict</span></code> in config class to achieve the above purpose.</p>
-<ol class="simple">
-<li><p>Example of <code class="docutils literal notranslate"><span class="pre">op_name_dict</span></code></p></li>
-</ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">op_name_dict</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;layer1.0.conv1&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">],</span>
-        <span class="p">},</span>
-        <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">],</span>
-        <span class="p">},</span>
-    <span class="p">},</span>
-    <span class="s2">&quot;layer2.0.conv1&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;uint8&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;minmax&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;granularity&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;per_tensor&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sym&quot;</span><span class="p">],</span>
-        <span class="p">},</span>
-        <span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;int8&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;algorithm&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;minmax&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;granularity&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;per_channel&quot;</span><span class="p">],</span>
-            <span class="s2">&quot;scheme&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;sym&quot;</span><span class="p">],</span>
-        <span class="p">},</span>
-    <span class="p">},</span>
-<span class="p">}</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">op_name_dict</span><span class="o">=</span><span class="n">op_name_dict</span><span class="p">)</span>
-</pre></div>
-</div>
-<ol class="simple">
-<li><p>Example of <code class="docutils literal notranslate"><span class="pre">op_type_dict</span></code></p></li>
-</ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">op_type_dict</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;Conv&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;weight&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]},</span> <span class="s2">&quot;activation&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;fp32&quot;</span><span class="p">]}}}</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">op_type_dict</span><span class="o">=</span><span class="n">op_type_dict</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="specify-quantization-recipes">
-<h3>Specify Quantization Recipes<a class="headerlink" href="#specify-quantization-recipes" title="Link to this heading"></a></h3>
-<p>Intel(R) Neural Compressor support some quantization recipes. Users can set <code class="docutils literal notranslate"><span class="pre">recipes</span></code> in config class to achieve the above purpose. (<code class="docutils literal notranslate"><span class="pre">fast_bias_correction</span></code> and <code class="docutils literal notranslate"><span class="pre">weight_correction</span></code> is working in progress.)</p>
-<table border="1" class="docutils">
-<thead>
-<tr>
-<th style="text-align: left;">Recipes</th>
-<th style="text-align: center;">PyTorch</th>
-<th style="text-align: right;">Tensorflow</th>
-<th style="text-align: right;">ONNX Runtime</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align: left;">smooth_quant</td>
-<td style="text-align: center;">✅</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">✅</td>
-</tr>
-<tr>
-<td style="text-align: left;">smooth_quant_args</td>
-<td style="text-align: center;">✅</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">✅</td>
-</tr>
-<tr>
-<td style="text-align: left;">fast_bias_correction</td>
-<td style="text-align: center;">N/A</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">N/A</td>
-</tr>
-<tr>
-<td style="text-align: left;">weight_correction</td>
-<td style="text-align: center;">N/A</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">N/A</td>
-</tr>
-<tr>
-<td style="text-align: left;">first_conv_or_matmul_quantization</td>
-<td style="text-align: center;">N/A</td>
-<td style="text-align: right;">✅</td>
-<td style="text-align: right;">✅</td>
-</tr>
-<tr>
-<td style="text-align: left;">last_conv_or_matmul_quantization</td>
-<td style="text-align: center;">N/A</td>
-<td style="text-align: right;">✅</td>
-<td style="text-align: right;">✅</td>
-</tr>
-<tr>
-<td style="text-align: left;">pre_post_process_quantization</td>
-<td style="text-align: center;">N/A</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">✅</td>
-</tr>
-<tr>
-<td style="text-align: left;">gemm_to_matmul</td>
-<td style="text-align: center;">N/A</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">✅</td>
-</tr>
-<tr>
-<td style="text-align: left;">graph_optimization_level</td>
-<td style="text-align: center;">N/A</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">✅</td>
-</tr>
-<tr>
-<td style="text-align: left;">add_qdq_pair_to_weight</td>
-<td style="text-align: center;">N/A</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">✅</td>
-</tr>
-<tr>
-<td style="text-align: left;">optypes_to_exclude_output_quant</td>
-<td style="text-align: center;">N/A</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">✅</td>
-</tr>
-<tr>
-<td style="text-align: left;">dedicated_qdq_pair</td>
-<td style="text-align: center;">N/A</td>
-<td style="text-align: right;">N/A</td>
-<td style="text-align: right;">✅</td>
-</tr>
-</tbody>
-</table><p>Example of recipe:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">recipes</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;smooth_quant&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-    <span class="s2">&quot;smooth_quant_args&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;alpha&quot;</span><span class="p">:</span> <span class="mf">0.5</span><span class="p">,</span>
-    <span class="p">},</span>  <span class="c1"># default value is 0.5</span>
-    <span class="s2">&quot;fast_bias_correction&quot;</span><span class="p">:</span> <span class="kc">False</span><span class="p">,</span>
-<span class="p">}</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">recipes</span><span class="o">=</span><span class="n">recipes</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-<section id="specify-quantization-backend-and-device">
-<h3>Specify Quantization Backend and Device<a class="headerlink" href="#specify-quantization-backend-and-device" title="Link to this heading"></a></h3>
-<p>Intel(R) Neural Compressor support multi-framework: PyTorch, Tensorflow and ONNX Runtime. The neural compressor will automatically determine which framework to use based on the model type, but for backend and device, users need to set it themselves in configure object.</p>
-<table class="center">
-    <thead>
-        <tr>
-            <th>Framework</th>
-            <th>Backend</th>
-            <th>Backend Library</th>
-            <th>Backend Value</th>
-            <th>Support Device(cpu as default)</th> 
-        </tr>
-    </thead>
-    <tbody>
-        <tr>
-            <td rowspan="2" align="left">PyTorch</td>
-            <td align="left">FX</td>
-            <td align="left">FBGEMM</td>
-            <td align="left">"default"</td>
-            <td align="left">cpu</td>
-        </tr>
-        <tr>
-            <td align="left">IPEX</td>
-            <td align="left">OneDNN</td>
-            <td align="left">"ipex"</td>
-            <td align="left">cpu | Intel GPU</td>
-        </tr>
-        <tr>
-            <td rowspan="5" align="left">ONNX Runtime</td>
-            <td align="left">CPUExecutionProvider</td>
-            <td align="left">MLAS</td>
-            <td align="left">"default"</td>
-            <td align="left">cpu</td>
-        </tr>
-        <tr>
-            <td align="left">TensorrtExecutionProvider</td>
-            <td align="left">TensorRT</td>
-            <td align="left">"onnxrt_trt_ep"</td>
-            <td align="left">gpu</td>
-        </tr>
-        <tr>
-            <td align="left">CUDAExecutionProvider</td>
-            <td align="left">CUDA</td>
-            <td align="left">"onnxrt_cuda_ep"</td>
-            <td align="left">gpu</td>
-        </tr>
-        <tr>
-            <td align="left">DnnlExecutionProvider</td>
-            <td align="left">OneDNN</td>
-            <td align="left">"onnxrt_dnnl_ep"</td>
-            <td align="left">cpu</td>
-        </tr>
-        <tr>
-            <td align="left">DmlExecutionProvider*</td>
-            <td align="left">OneDNN</td>
-            <td align="left">"onnxrt_dml_ep"</td>
-            <td align="left">npu</td>
-        </tr>
-        <tr>
-            <td rowspan="2" align="left">Tensorflow</td>
-            <td align="left">Tensorflow</td>
-            <td align="left">OneDNN</td>
-            <td align="left">"default"</td>
-            <td align="left">cpu</td>
-        </tr>
-        <tr>
-            <td align="left">ITEX</td>
-            <td align="left">OneDNN</td>
-            <td align="left">"itex"</td>
-            <td align="left">cpu | gpu</td>
-        </tr>  
-    </tbody>
-</table>
-<br>
-<br><blockquote>
-<div><p><em><strong>Note</strong></em></p>
-<p>DmlExecutionProvider support works as experimental, please expect exceptions.</p>
-<p>Known limitation: the batch size of onnx models has to be fixed to 1 for DmlExecutionProvider, no multi-batch and dynamic batch support yet.</p>
-</div></blockquote>
-<p>Examples of configure:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with PT FX on CPU</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">()</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with IPEX on CPU</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;ipex&quot;</span><span class="p">)</span>
-<span class="c1"># run with IPEX on Intel GPU</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;ipex&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;xpu&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with ONNXRT CUDAExecutionProvider on GPU</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;onnxrt_cuda_ep&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;gpu&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with ONNXRT DmlExecutionProvider on NPU</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;onnxrt_dml_ep&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;npu&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># run with ITEX on GPU</span>
-<span class="n">conf</span> <span class="o">=</span> <span class="n">PostTrainingQuantConfig</span><span class="p">(</span><span class="n">backend</span><span class="o">=</span><span class="s2">&quot;itex&quot;</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;gpu&quot;</span><span class="p">)</span>
-</pre></div>
-</div>
-</section>
-</section>
-<section id="examples">
-<h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
-<p>User could refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/README.html">examples</a> on how to quantize a new model.
-If user wants to quantize an onnx model with npu, please refer to this <a class="reference external" href="../../examples/deprecated/onnxrt/image_recognition/onnx_model_zoo/shufflenet/quantization/ptq_static/README.html">example</a>. If user wants to quantize a pytorch model with Intel GPU, please refer to this <a class="reference external" href="../../examples/deprecated/pytorch/nlp/huggingface_models/question-answering/quantization/ptq_static/ipex/README.html">example</a>.</p>
+<img src="./imgs/workflow.png" alt="accuracy aware tuning working flow"></section>
+<section id="reference">
+<h2>Reference<a class="headerlink" href="#reference" title="Link to this heading"></a></h2>
+<p>[1]. Xiao, Guangxuan, et al. “Smoothquant: Accurate and efficient post-training quantization for large language models.” arXiv preprint arXiv:2211.10438 (2022).</p>
+<p>[2]. Wei, Xiuying, et al. “Outlier suppression: Pushing the limit of low-bit transformer language models.” arXiv preprint arXiv:2209.13325 (2022).</p>
+<p>[3]. Lin, Ji, et al. “AWQ: Activation-aware Weight Quantization for LLM Compression and Acceleration.” arXiv preprint arXiv:2306.00978 (2023).</p>
+<p>[4]. Frantar, Elias, et al. “Gptq: Accurate post-training quantization for generative pre-trained transformers.” arXiv preprint arXiv:2210.17323 (2022).</p>
+<p>[5]. Dettmers, Tim, et al. “Qlora: Efficient finetuning of quantized llms.” arXiv preprint arXiv:2305.14314 (2023).</p>
+<p>[6]. Yvinec, Edouard, et al. “SPIQ: Data-Free Per-Channel Static Input Quantization.” Proceedings of the IEEE/CVF Winter Conference on Applications of Computer Vision. 2023.</p>
+<p>[7]. Wei, Xiuying, et al. “Outlier suppression: Pushing the limit of low-bit transformer language models.” arXiv preprint arXiv:2209.13325 (2022).</p>
+<p>[8]. Cheng, Wenhua, et al. “Optimize weight rounding via signed gradient descent for the quantization of llms.” arXiv preprint arXiv:2309.05516 (2023).</p>
 </section>
 </section>
 
@@ -748,7 +423,7 @@ If user wants to quantize an onnx model with npu, please refer to this <a class=
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f813acc4980> 
+   <jinja2.runtime.BlockReference object at 0x7f67ac5ddca0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

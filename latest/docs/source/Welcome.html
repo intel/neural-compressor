@@ -57,8 +57,7 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -90,28 +89,27 @@
              
   <div align="center"><section id="intel-neural-compressor">
 <h1>Intel® Neural Compressor<a class="headerlink" href="#intel-neural-compressor" title="Link to this heading"></a></h1>
-<p><h3> An open-source Python library supporting popular model compression techniques on all mainstream deep learning frameworks (TensorFlow, PyTorch, and ONNX Runtime)</h3></p>
+<p><h3> An open-source Python library supporting popular model compression techniques on mainstream deep learning frameworks (PyTorch, TensorFlow, and JAX)</h3></p>
 <p><a class="reference external" href="https://github.com/intel/neural-compressor"><img alt="python" src="https://img.shields.io/badge/python-3.10%2B-blue" /></a>
 <a class="reference external" href="https://github.com/intel/neural-compressor/releases"><img alt="version" src="https://img.shields.io/badge/release-3.7-green" /></a>
 <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/LICENSE"><img alt="license" src="https://img.shields.io/badge/license-Apache%202-blue" /></a>
 <a class="reference external" href="https://github.com/intel/neural-compressor"><img alt="coverage" src="https://img.shields.io/badge/coverage-85%25-green" /></a>
 <a class="reference external" href="https://pepy.tech/project/neural-compressor"><img alt="Downloads" src="https://static.pepy.tech/personalized-badge/neural-compressor?period=total&amp;units=international_system&amp;left_color=grey&amp;right_color=green&amp;left_text=downloads" /></a></p>
-<p><a class="reference external" href="./3x/design.html#architecture">Architecture</a>   |   <a class="reference external" href="./3x/design.html#workflows">Workflow</a>   |   <a class="reference external" href="./llm_recipes.html">LLMs Recipes</a>   |   <a class="reference external" href="./validated_model_list.html">Results</a>   |   <a class="reference external" href="https://intel.github.io/neural-compressor">Documentations</a></p>
+<p><a class="reference external" href="./design.html#architecture">Architecture</a>   |   <a class="reference external" href="./design.html#workflows">Workflow</a>   |   <a class="reference external" href="https://intel.github.io/neural-compressor">Documentations</a></p>
 <hr class="docutils" />
-<div align="left"><p>Intel® Neural Compressor aims to provide popular model compression techniques such as quantization, pruning (sparsity), distillation, and neural architecture search on mainstream frameworks such as <a class="reference external" href="https://www.tensorflow.org/">TensorFlow</a>, <a class="reference external" href="https://pytorch.org/">PyTorch</a>, and <a class="reference external" href="https://onnxruntime.ai/">ONNX Runtime</a>,
-as well as Intel extensions such as <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow">Intel Extension for TensorFlow</a> and <a class="reference external" href="https://github.com/intel/intel-extension-for-pytorch">Intel Extension for PyTorch</a>.
-In particular, the tool provides the key features, typical examples, and open collaborations as below:</p>
+<div align="left"><p>Intel® Neural Compressor aims to provide popular model compression techniques such as Static Quantization, Dynamic Quantization, SmoothQuant, Weight-Only Quantization, Quantization-Aware Training, Mixed Precision, etc.</p>
 <ul class="simple">
-<li><p>Support a wide range of Intel hardware such as <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/ai-accelerators/gaudi.html">Intel Gaudi Al Accelerators</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/core-ultra.html">Intel Core Ultra Processors</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html">Intel Xeon Scalable Processors</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html">Intel Xeon CPU Max Series</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/overview.html">Intel Data Center GPU Flex Series</a>, and <a class="reference external" href="https://www.intel.com/content/www/us/en/products/overview.html">Intel Data Center GPU Max Series</a> with extensive testing;
-support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testing; support NVidia GPU for some WOQ algorithms like AutoRound and HQQ.</p></li>
-<li><p>Validate popular LLMs such as <a class="reference external" href="/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">LLama2</a>, <a class="reference external" href="/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">Falcon</a>, <a class="reference external" href="/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">GPT-J</a>, <a class="reference external" href="/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">Bloom</a>, <a class="reference external" href="/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm">OPT</a>, and more than 10,000 broad models such as <a class="reference external" href="/examples/deprecated/pytorch/nlp/huggingface_models/text-to-image/quantization">Stable Diffusion</a>, <a class="reference external" href="/examples/deprecated/pytorch/nlp/huggingface_models/text-classification/quantization/ptq_static/fx">BERT-Large</a>, and <a class="reference external" href="/examples/deprecated/pytorch/image_recognition/torchvision_models/quantization/ptq/cpu/fx">ResNet50</a> from popular model hubs such as <a class="reference external" href="https://huggingface.co/">Hugging Face</a>, <a class="reference external" href="https://pytorch.org/vision/stable/index.html">Torch Vision</a>, and <a class="reference external" href="https://github.com/onnx/models#models">ONNX Model Zoo</a>, with automatic [accuracy-driven]./design.html#workflow) quantization strategies</p></li>
-<li><p>Collaborate with cloud marketplaces such as <a class="reference external" href="https://console.cloud.google.com/marketplace/product/bitnami-launchpad/inc-tensorflow-intel?project=verdant-sensor-286207">Google Cloud Platform</a>, <a class="reference external" href="https://aws.amazon.com/marketplace/pp/prodview-yjyh2xmggbmga#pdp-support">Amazon Web Services</a>, and <a class="reference external" href="https://azuremarketplace.microsoft.com/en-us/marketplace/apps/bitnami.inc-tensorflow-intel">Azure</a>, software platforms such as <a class="reference external" href="https://new.qq.com/rain/a/20221202A00B9S00">Tencent TACO</a> and <a class="reference external" href="https://github.com/microsoft/Olive">Microsoft Olive</a>, and open AI ecosystem such as <a class="reference external" href="https://huggingface.co/blog/intel">Hugging Face</a>, <a class="reference external" href="https://pytorch.org/tutorials/recipes/intel_neural_compressor_for_pytorch.html">PyTorch</a>, <a class="reference external" href="https://github.com/onnx/models#models">ONNX</a>, <a class="reference external" href="https://github.com/microsoft/onnxruntime">ONNX Runtime</a>, and <a class="reference external" href="https://github.com/Lightning-AI/lightning/blob/master/docs/source-pytorch/advanced/post_training_quantization.rst">Lightning AI</a></p></li>
+<li><p>Support advanced quantization of Large Language Models (LLMs) and Vision-Language Models (VLMs) such as LLaMA, Qwen, DeepSeek, Flux, FramePack, etc.,
+across diverse quantization techniques and low-precision data types through integration with <a class="reference external" href="https://github.com/intel/auto-round">AutoRound</a>.</p></li>
+<li><p>Support a wide range of Intel hardware such as <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/ai-accelerators/gaudi.html">Intel Gaudi Al Accelerators</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/core-ultra.html">Intel Core Ultra Processors</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html">Intel Xeon Scalable Processors</a>,
+<a class="reference external" href="https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html">Intel Xeon CPU Max Series</a>, <a class="reference external" href="https://www.intel.com/content/www/us/en/products/overview.html">Intel Data Center GPU Flex Series</a>, and <a class="reference external" href="https://www.intel.com/content/www/us/en/products/overview.html">Intel Data Center GPU Max Series</a> with extensive testing;
+support AMD CPU, ARM CPU, and NVidia GPU with limited testing.</p></li>
 </ul>
 <section id="what-s-new">
 <h2>What’s New<a class="headerlink" href="#what-s-new" title="Link to this heading"></a></h2>
 <ul class="simple">
-<li><p>[2025/12] <a class="reference external" href="./3x/PT_NVFP4Quant.html">NVFP4 quantization</a> experimental support</p></li>
-<li><p>[2025/10] <a class="reference external" href="./3x/PT_MXQuant.html">MXFP8 / MXFP4 quantization</a> experimental support</p></li>
+<li><p>[2025/12] <a class="reference external" href="./PT_NVFP4Quant.html">NVFP4 quantization</a> experimental support</p></li>
+<li><p>[2025/10] <a class="reference external" href="./PT_MXQuant.html">MXFP8 / MXFP4 quantization</a> experimental support</p></li>
 <li><p>[2025/09] FP8 dynamic quantization, including Linear, FusedMoE on Intel Gaudi AI Accelerators</p></li>
 <li><p>[2025/05] FP8 static quantization of DeepSeek V3/R1 model on Intel Gaudi AI Accelerators</p></li>
 <li><p>[2025/03] VLM quantization in transformers-like API on Intel CPU/GPU</p></li>
@@ -125,17 +123,17 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
 <ul class="simple">
 <li><p><a class="reference external" href="https://intel.github.io/intel-extension-for-pytorch/cpu/latest/">Install intel_extension_for_pytorch for CPU</a></p></li>
 <li><p><a class="reference external" href="https://intel.github.io/intel-extension-for-pytorch/xpu/latest/">Install intel_extension_for_pytorch for Intel GPU</a></p></li>
-<li><p><a class="reference external" href="https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click">Use Docker Image with torch installed for HPU</a><br /><strong>Note</strong>: There is a version mapping between Intel Neural Compressor and Gaudi Software Stack, please refer to this <a class="reference external" href="./3x/gaudi_version_map.html">table</a> and make sure to use a matched combination.</p></li>
+<li><p><a class="reference external" href="https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click">Use Docker Image with torch installed for HPU</a><br /><strong>Note</strong>: There is a version mapping between Intel Neural Compressor and Gaudi Software Stack, please refer to this <a class="reference external" href="./gaudi_version_map.html">table</a> and make sure to use a matched combination.</p></li>
 <li><p><a class="reference external" href="https://pytorch.org/get-started/locally">Install torch for other platform</a></p></li>
 <li><p><a class="reference external" href="https://www.tensorflow.org/install">Install TensorFlow</a></p></li>
 </ul>
 </section>
 <section id="install-neural-compressor-from-pypi">
 <h3>Install Neural Compressor from pypi<a class="headerlink" href="#install-neural-compressor-from-pypi" title="Link to this heading"></a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install 2.X API + Framework extension API + PyTorch dependency</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="n">neural</span><span class="o">-</span><span class="n">compressor</span><span class="p">[</span><span class="n">pt</span><span class="p">]</span>
-<span class="c1"># Install 2.X API + Framework extension API + TensorFlow dependency</span>
-<span class="n">pip</span> <span class="n">install</span> <span class="n">neural</span><span class="o">-</span><span class="n">compressor</span><span class="p">[</span><span class="n">tf</span><span class="p">]</span>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="c1"># Framework extension API + PyTorch dependency</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">neural</span><span class="o">-</span><span class="n">compressor</span><span class="o">-</span><span class="n">pt</span>
+<span class="c1"># Framework extension API + TensorFlow dependency</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">neural</span><span class="o">-</span><span class="n">compressor</span><span class="o">-</span><span class="n">tf</span>
 </pre></div>
 </div>
 <p><strong>Note</strong>: Further installation methods can be found under <a class="reference external" href="./installation_guide.html">Installation Guide</a>. check out our <a class="reference external" href="./faq.html">FAQ</a> for more details.</p>
@@ -174,7 +172,7 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
 <span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </pre></div>
 </div>
-<p>More <a class="reference external" href="./3x/PT_FP8Quant.html">FP8 quantization doc</a>.</p>
+<p>More <a class="reference external" href="./PT_FP8Quant.html">FP8 quantization doc</a>.</p>
 <p><strong>Following example code demonstrates weight-only large language model loading</strong> on Intel Gaudi2 AI Accelerator.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">load</span>
 
@@ -199,8 +197,8 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
   </thead>
   <tbody>
     <tr>
-      <td colspan="2" align="center"><a href="./3x/design.html#architecture">Architecture</a></td>
-      <td colspan="2" align="center"><a href="./3x/design.html#workflows">Workflow</a></td>
+      <td colspan="2" align="center"><a href="./design.html#architecture">Architecture</a></td>
+      <td colspan="2" align="center"><a href="./design.html#workflows">Workflow</a></td>
       <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
       <td colspan="1" align="center"><a href="./llm_recipes.html">LLMs Recipes</a></td>
       <td colspan="1" align="center"><a href="./https://github.com/intel/neural-compressor/blob/master/examples/README.md">Examples</a></td>
@@ -213,21 +211,21 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
   </thead>
   <tbody>
     <tr>
-        <td colspan="8" align="center"><a href="./3x/PyTorch.html">Overview</a></td>
+        <td colspan="8" align="center"><a href="./PyTorch.html">Overview</a></td>
     </tr>
     <tr>
-        <td colspan="3" align="center"><a href="./3x/PT_DynamicQuant.html">Dynamic Quantization</a></td>
-        <td colspan="3" align="center"><a href="./3x/PT_StaticQuant.html">Static Quantization</a></td>
-        <td colspan="2" align="center"><a href="./3x/PT_SmoothQuant.html">Smooth Quantization</a></td>
+        <td colspan="3" align="center"><a href="./PT_DynamicQuant.html">Dynamic Quantization</a></td>
+        <td colspan="3" align="center"><a href="./PT_StaticQuant.html">Static Quantization</a></td>
+        <td colspan="2" align="center"><a href="./PT_SmoothQuant.html">Smooth Quantization</a></td>
     </tr>
     <tr>
-        <td colspan="3" align="center"><a href="./3x/PT_WeightOnlyQuant.html">Weight-Only Quantization</a></td>
-        <td colspan="3" align="center"><a href="./3x/PT_FP8Quant.html">FP8 Quantization</a></td>
-        <td colspan="2" align="center"><a href="./3x/PT_MixedPrecision.html">Mixed Precision</a></td>
+        <td colspan="3" align="center"><a href="./PT_WeightOnlyQuant.html">Weight-Only Quantization</a></td>
+        <td colspan="3" align="center"><a href="./PT_FP8Quant.html">FP8 Quantization</a></td>
+        <td colspan="2" align="center"><a href="./PT_MixedPrecision.html">Mixed Precision</a></td>
     </tr>
     <tr>
-        <td colspan="4" align="center"><a href="./3x/PT_MXQuant.html">MX Quantization</a></td>
-        <td colspan="4" align="center"><a href="./3x/PT_NVFP4Quant.html">NVFP4 Quantization</a></td>
+        <td colspan="4" align="center"><a href="./PT_MXQuant.html">MX Quantization</a></td>
+        <td colspan="4" align="center"><a href="./PT_NVFP4Quant.html">NVFP4 Quantization</a></td>
     </tr>
   </tbody>
   <thead>
@@ -237,9 +235,9 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
   </thead>
   <tbody>
       <tr>
-          <td colspan="3" align="center"><a href="./3x/TensorFlow.html">Overview</a></td>
-          <td colspan="3" align="center"><a href="./3x/TF_Quant.html">Static Quantization</a></td>
-          <td colspan="2" align="center"><a href="./3x/TF_SQ.html">Smooth Quantization</a></td>
+          <td colspan="3" align="center"><a href="./TensorFlow.html">Overview</a></td>
+          <td colspan="3" align="center"><a href="./TF_Quant.html">Static Quantization</a></td>
+          <td colspan="2" align="center"><a href="./TF_SQ.html">Smooth Quantization</a></td>
       </tr>
   </tbody>
   <thead>
@@ -249,7 +247,7 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
   </thead>
   <tbody>
       <tr>
-          <td colspan="8" align="center"><a href="./3x/transformers_like_api.html">Overview</a></td>
+          <td colspan="8" align="center"><a href="./transformers_like_api.html">Overview</a></td>
       </tr>
   </tbody>
   <thead>
@@ -259,23 +257,16 @@ support AMD CPU, ARM CPU, and NVidia GPU through ONNX Runtime with limited testi
   </thead>
   <tbody>
       <tr>
-          <td colspan="8" align="center"><a href="./3x/autotune.html">Auto Tune</a></td>
+          <td colspan="8" align="center"><a href="./autotune.html">Auto Tune</a></td>
       </tr>
   </tbody>
-</table><blockquote>
-<div><p><strong>Note</strong>:
-From 3.0 release, we recommend to use 3.X API. Compression techniques during training such as QAT, Pruning, Distillation only available in <a class="reference external" href="https://github.com/intel/neural-compressor/blob/maste./2x_user_guide.html">2.X API</a> currently.</p>
-</div></blockquote>
-</section>
+</table></section>
 <section id="selected-publications-events">
 <h2>Selected Publications/Events<a class="headerlink" href="#selected-publications-events" title="Link to this heading"></a></h2>
 <ul class="simple">
 <li><p>arXiv: <a class="reference external" href="https://arxiv.org/abs/2503.09975">Faster Inference of LLMs using FP8 on the Intel Gaudi</a> (Mar 2025)</p></li>
 <li><p>PyTorch landscape: <a class="reference external" href="https://landscape.pytorch.org/">PyTorch general optimizations</a> (Mar 2025)</p></li>
 <li><p>Blog on SqueezeBits: <a class="reference external" href="https://blog.squeezebits.com/intel-gaudi-4-fp8-quantization--40269">[Intel Gaudi] #4. FP8 Quantization</a> (Jan 2025)</p></li>
-<li><p>EMNLP’2024: <a class="reference external" href="https://arxiv.org/abs/2309.05516">Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs</a> (Sep 2024)</p></li>
-<li><p>arXiv: <a class="reference external" href="https://arxiv.org/abs/2309.14592">Efficient Post-training Quantization with FP8 Formats</a> (Sep 2023)</p></li>
-<li><p>arXiv: <a class="reference external" href="https://arxiv.org/abs/2309.05516">Optimize Weight Rounding via Signed Gradient Descent for the Quantization of LLMs</a> (Sep 2023)</p></li>
 </ul>
 <blockquote>
 <div><p><strong>Note</strong>:
@@ -295,8 +286,6 @@ View <a class="reference external" href="https://github.com/intel/neural-compres
 <ul class="simple">
 <li><p><a class="reference external" href="https://github.com/intel/neural-compressor/issues">GitHub Issues</a>: mainly for bug reports, new feature requests, question asking, etc.</p></li>
 <li><p><a class="reference external" href="mailto:inc&#46;maintainers&#37;&#52;&#48;intel&#46;com">Email</a>: welcome to raise any interesting research ideas on model compression techniques by email for collaborations.</p></li>
-<li><p><a class="reference external" href="https://discord.com/invite/Wxk3J3ZJkU">Discord Channel</a>: join the discord channel for more flexible technical discussion.</p></li>
-<li><p>[WeChat group]./imgs/wechat_group.jpg): scan the QA code to join the technical discussion.</p></li>
 </ul>
 </section>
 </section>
@@ -315,7 +304,7 @@ View <a class="reference external" href="https://github.com/intel/neural-compres
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f813405f980> 
+   <jinja2.runtime.BlockReference object at 0x7f67ac7bb350> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

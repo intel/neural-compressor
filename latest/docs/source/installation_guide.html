@@ -29,7 +29,7 @@
 
     <link rel="index" title="Index" href="../../genindex.html" />
     <link rel="search" title="Search" href="../../search.html" />
-    <link rel="next" title="Examples" href="examples_readme.html" />
+    <link rel="next" title="API" href="api-doc/apis.html" />
     <link rel="prev" title="Getting Started" href="get_started.html" /> 
 </head>
 
@@ -78,7 +78,6 @@
 <li class="toctree-l4"><a class="reference internal" href="#intel-neural-compressor-supports-hpus-based-on-heterogeneous-architecture-with-two-compute-engines-mme-and-tpc">Intel® Neural Compressor supports HPUs based on heterogeneous architecture with two compute engines (MME and TPC):</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#intel-neural-compressor-supports-cpus-based-on-intel-64-architecture-or-compatible-processors">Intel® Neural Compressor supports CPUs based on Intel 64 architecture or compatible processors:</a></li>
 <li class="toctree-l4"><a class="reference internal" href="#intel-neural-compressor-supports-gpus-built-on-intel-s-xe-architecture">Intel® Neural Compressor supports GPUs built on Intel’s Xe architecture:</a></li>
-<li class="toctree-l4"><a class="reference internal" href="#intel-neural-compressor-quantized-onnx-models-support-multiple-hardware-vendors-through-onnx-runtime">Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:</a></li>
 </ul>
 </li>
 <li class="toctree-l3"><a class="reference internal" href="#validated-software-environment">Validated Software Environment</a></li>
@@ -86,8 +85,7 @@
 </li>
 </ul>
 </li>
-<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -124,7 +122,6 @@
 <p>1.1. <a class="reference external" href="#prerequisites">Prerequisites</a></p>
 <p>1.2. <a class="reference external" href="#install-from-binary">Install from Binary</a></p>
 <p>1.3. <a class="reference external" href="#install-from-source">Install from Source</a></p>
-<p>1.4. <a class="reference external" href="#install-from-ai-kit">Install from AI Kit</a></p>
 </li>
 <li><p><a class="reference external" href="#system-requirements">System Requirements</a></p>
 <p>2.1. <a class="reference external" href="#validated-hardware-environment">Validated Hardware Environment</a></p>
@@ -137,7 +134,7 @@
 <h3>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h3>
 <p>The following prerequisites and requirements must be satisfied for a successful installation:</p>
 <ul class="simple">
-<li><p>Python version: 3.10 or 3.11 or 3.12</p></li>
+<li><p>Python version: 3.10 or 3.11 or 3.12 or 3.13</p></li>
 </ul>
 <blockquote>
 <div><p>Notes:</p>
@@ -178,18 +175,11 @@
 <ul class="simple">
 <li><p>Install from Pypi</p></li>
 </ul>
-<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install 2.X API + Framework extension API + PyTorch dependency</span>
-pip<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="o">[</span>pt<span class="o">]</span>
-</pre></div>
-</div>
-<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install 2.X API + Framework extension API + TensorFlow dependency</span>
-pip<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="o">[</span>tf<span class="o">]</span>
-</pre></div>
-</div>
-<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Install 2.X API + Framework extension API</span>
-<span class="c1"># With this install CMD, some dependencies for framework extension API not installed, </span>
-<span class="c1"># you can install them separately by `pip install -r requirements_pt.txt` or `pip install -r requirements_tf.txt`.</span>
+<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Framework extension API for PyTorch/Tensorflow</span>
 pip<span class="w"> </span>install<span class="w"> </span>neural-compressor
+<span class="c1"># Framework extension API + specific dependency</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="o">[</span>pt<span class="o">]</span>
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor<span class="o">[</span>tf<span class="o">]</span>
 </pre></div>
 </div>
 <div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Framework extension API + PyTorch dependency</span>
@@ -205,7 +195,6 @@ pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-tf
 <h3>Install from Source<a class="headerlink" href="#install-from-source" title="Link to this heading"></a></h3>
 <div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/intel/neural-compressor.git
 <span class="nb">cd</span><span class="w"> </span>neural-compressor
-pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </pre></div>
 </div>
 <div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># PyTorch framework extension API + PyTorch dependency</span>
@@ -218,12 +207,6 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 </div>
 <div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># JAX framework extension API + JAX dependency</span>
 <span class="nv">INC_JAX_ONLY</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
-</pre></div>
-</div>
-<div class="highlight-Shell notranslate"><div class="highlight"><pre><span></span><span class="c1"># Full Installation</span>
-pip<span class="w"> </span>install<span class="w"> </span>.
-<span class="o">[</span>optional<span class="o">]</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements_pt.txt<span class="w"> </span><span class="c1"># for PyTorch framework extension API</span>
-<span class="o">[</span>optional<span class="o">]</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements_tf.txt<span class="w"> </span><span class="c1"># for TensorFlow framework extension API</span>
 </pre></div>
 </div>
 </section>
@@ -254,28 +237,20 @@ pip<span class="w"> </span>install<span class="w"> </span>.
 <li><p>Intel® Arc™ B-Series Graphics (Battlemage)</p></li>
 </ul>
 </section>
-<section id="intel-neural-compressor-quantized-onnx-models-support-multiple-hardware-vendors-through-onnx-runtime">
-<h4>Intel® Neural Compressor quantized ONNX models support multiple hardware vendors through ONNX Runtime:<a class="headerlink" href="#intel-neural-compressor-quantized-onnx-models-support-multiple-hardware-vendors-through-onnx-runtime" title="Link to this heading"></a></h4>
-<ul class="simple">
-<li><p>Intel CPU, AMD/ARM CPU, and NVidia GPU. Please refer to the validated model <a class="reference external" href="./validated_model_list.html#validated-onnx-qdq-int8-models-on-multiple-hardware-through-onnx-runtime">list</a>.</p></li>
-</ul>
-</section>
 </section>
 <section id="validated-software-environment">
 <h3>Validated Software Environment<a class="headerlink" href="#validated-software-environment" title="Link to this heading"></a></h3>
 <ul class="simple">
 <li><p>OS version: CentOS 8.4, Ubuntu 24.04, MacOS Ventura 13.5, Windows 11</p></li>
-<li><p>Python version: 3.10, 3.11, 3.12</p></li>
+<li><p>Python version: 3.10, 3.11, 3.12, 3.13</p></li>
 </ul>
 <table class="docutils">
 <thead>
   <tr style="vertical-align: middle; text-align: center;">
     <th>Framework</th>
     <th>TensorFlow</th>
-    <th>Intel®<br>Extension for<br>TensorFlow*</th>
     <th>PyTorch</th>
     <th>Intel®<br>Extension for<br>PyTorch*</th>
-    <th>ONNX<br>Runtime</th>
   </tr>
 </thead>
 <tbody>
@@ -285,10 +260,6 @@ pip<span class="w"> </span>install<span class="w"> </span>.
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.16.1>2.16.1</a><br>
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.15.0>2.15.0</a><br>
     <a href=https://github.com/tensorflow/tensorflow/tree/v2.14.1>2.14.1</a><br></td>
-    <td class="tg-7zrl"> 
-    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.15.0.0>2.15.0.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.14.0.1>2.14.0.1</a><br>
-    <a href=https://github.com/intel/intel-extension-for-tensorflow/tree/v2.13.0.0>2.13.0.0</a><br></td>
     <td class="tg-7zrl">
     <a href=https://github.com/pytorch/pytorch/tree/v2.8.0>2.8.0</a><br>
     <a href=https://github.com/pytorch/pytorch/tree/v2.7.1>2.7.1</a><br>
@@ -297,10 +268,6 @@ pip<span class="w"> </span>install<span class="w"> </span>.
     <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.8.0%2Bcpu>2.8.0</a><br>
     <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.7.0%2Bcpu>2.7.0</a><br>
     <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.6.0%2Bcpu>2.6.0</a><br></td>
-    <td class="tg-7zrl">
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.18.0>1.18.0</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.17.3>1.17.3</a><br>
-    <a href=https://github.com/microsoft/onnxruntime/tree/v1.16.3>1.16.3</a><br></td>
   </tr>
 </tbody>
 </table></section>
@@ -312,7 +279,7 @@ pip<span class="w"> </span>install<span class="w"> </span>.
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
         <a href="get_started.html" class="btn btn-neutral float-left" title="Getting Started" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="examples_readme.html" class="btn btn-neutral float-right" title="Examples" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="api-doc/apis.html" class="btn btn-neutral float-right" title="API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
@@ -324,7 +291,7 @@ pip<span class="w"> </span>install<span class="w"> </span>.
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f813acfdb20> 
+   <jinja2.runtime.BlockReference object at 0x7f67ac69ad20> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

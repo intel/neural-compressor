@@ -6,7 +6,7 @@
   <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
 
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>APIs &mdash; Intel® Neural Compressor 3.8 documentation</title>
+  <title>API &mdash; Intel® Neural Compressor 3.8 documentation</title>
       <link rel="stylesheet" type="text/css" href="../../../_static/pygments.css?v=03e43079" />
       <link rel="stylesheet" type="text/css" href="../../../_static/css/theme.css?v=e59714d7" />
       <link rel="stylesheet" type="text/css" href="../../../_static/graphviz.css?v=4ae1632d" />
@@ -29,8 +29,8 @@
 
     <link rel="index" title="Index" href="../../../genindex.html" />
     <link rel="search" title="Search" href="../../../search.html" />
-    <link rel="next" title="3.0 API" href="api_3.html" />
-    <link rel="prev" title="Examples" href="../examples_readme.html" /> 
+    <link rel="next" title="Pytorch Quantization Base API" href="torch_quantization_common.html" />
+    <link rel="prev" title="Installation" href="../installation_guide.html" /> 
 </head>
 
 <body class="wy-body-for-nav"> 
@@ -59,10 +59,13 @@
               <ul class="current">
 <li class="toctree-l1"><a class="reference internal" href="../get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="../installation_guide.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="../examples_readme.html">Examples</a></li>
-<li class="toctree-l1 current"><a class="current reference internal" href="#">APIs</a><ul>
-<li class="toctree-l2"><a class="reference internal" href="api_3.html">3.0 API</a></li>
-<li class="toctree-l2"><a class="reference internal" href="api_2.html">2.0 API</a></li>
+<li class="toctree-l1 current"><a class="current reference internal" href="#">API</a><ul>
+<li class="toctree-l2"><a class="reference internal" href="torch_quantization_common.html">Pytorch Quantization Base API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torch_quantization_config.html">Pytorch Quantization Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="torch_quantization_autotune.html">Pytorch Quantization AutoTune</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tf_quantization_common.html">Tensorflow Quantization Base API</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tf_quantization_config.html">Tensorflow Quantization Config</a></li>
+<li class="toctree-l2"><a class="reference internal" href="tf_quantization_autotune.html">Tensorflow Quantization AutoTune</a></li>
 </ul>
 </li>
 <li class="toctree-l1"><a class="reference internal" href="../legal_information.html">Legal Information</a></li>
@@ -84,7 +87,7 @@
           <div role="navigation" aria-label="Page navigation">
   <ul class="wy-breadcrumbs">
       <li><a href="../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
-      <li class="breadcrumb-item active">APIs</li>
+      <li class="breadcrumb-item active">API</li>
       <li class="wy-breadcrumbs-aside">
             <a href="../../../_sources/docs/source/api-doc/apis.rst.txt" rel="nofollow"> View page source</a>
       </li>
@@ -94,16 +97,22 @@
           <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
            <div itemprop="articleBody">
              
-  <section id="apis">
-<h1>APIs<a class="headerlink" href="#apis" title="Link to this heading"></a></h1>
+  <section id="api">
+<h1>API<a class="headerlink" href="#api" title="Link to this heading"></a></h1>
+<p><strong>PyTorch Extension API:</strong></p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api_3.html">3.0 API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="torch_quantization_common.html">Pytorch Quantization Base API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="torch_quantization_config.html">Pytorch Quantization Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="torch_quantization_autotune.html">Pytorch Quantization AutoTune</a></li>
 </ul>
 </div>
+<p><strong>Tensorflow Extension API:</strong></p>
 <div class="toctree-wrapper compound">
 <ul>
-<li class="toctree-l1"><a class="reference internal" href="api_2.html">2.0 API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tf_quantization_common.html">Tensorflow Quantization Base API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tf_quantization_config.html">Tensorflow Quantization Config</a></li>
+<li class="toctree-l1"><a class="reference internal" href="tf_quantization_autotune.html">Tensorflow Quantization AutoTune</a></li>
 </ul>
 </div>
 </section>
@@ -112,8 +121,8 @@
            </div>
           </div>
           <footer><div class="rst-footer-buttons" role="navigation" aria-label="Footer">
-        <a href="../examples_readme.html" class="btn btn-neutral float-left" title="Examples" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
-        <a href="api_3.html" class="btn btn-neutral float-right" title="3.0 API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
+        <a href="../installation_guide.html" class="btn btn-neutral float-left" title="Installation" accesskey="p" rel="prev"><span class="fa fa-arrow-circle-left" aria-hidden="true"></span> Previous</a>
+        <a href="torch_quantization_common.html" class="btn btn-neutral float-right" title="Pytorch Quantization Base API" accesskey="n" rel="next">Next <span class="fa fa-arrow-circle-right" aria-hidden="true"></span></a>
     </div>
 
   <hr/>
@@ -125,7 +134,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f813a159ac0> 
+   <jinja2.runtime.BlockReference object at 0x7f67ac7b7920> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

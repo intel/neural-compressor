@@ -12,11 +12,7 @@ Sections
 
    docs/source/get_started.md
    docs/source/installation_guide.md
-   docs/source/user_guide.md
-   docs/source/examples_readme.md
    docs/source/api-doc/apis.rst
-   docs/source/releases_info.md
-   docs/source/contributions.md
    docs/source/legal_information.md
    docs/source/SECURITY.md
    Repo <https://github.com/intel/neural-compressor>

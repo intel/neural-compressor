@@ -15,14 +15,14 @@ See the accompanying [license](https://github.com/intel/neural-compressor/tree/m
 
 ## Citation
 
-If you use Intel® Neural Compressor in your research, or you wish to refer to the tuning results published in the [Validated Models](validated_model_list.html), use the following BibTeX entry.
+If you use Intel® Neural Compressor in your research, use the following BibTeX entry.
 
 ```
 @misc{Intel® Neural Compressor,
-  author =       {Feng Tian, Hanwen Chang, Haihao Shen, and Suyue Chen},
+  author =       {Huang Tai, Feng Tian, Haihao Shen, and Suyue Chen},
   title =        {Intel® Neural Compressor},
   howpublished = {\url{https://github.com/intel/neural-compressor}},
-  year =         {2022}
+  year =         {2026}
 }
 ```
 

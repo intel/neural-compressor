@@ -1,0 +1,345 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>TensorFlow &mdash; Intel® Neural Compressor 3.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">TensorFlow</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/TensorFlow.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="tensorflow">
+<h1>TensorFlow<a class="headerlink" href="#tensorflow" title="Link to this heading"></a></h1>
+<ul class="simple">
+<li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
+<li><p><a class="reference external" href="#api-for-tensorflow">API for TensorFlow</a></p>
+<ul>
+<li><p><a class="reference external" href="#support-matrix">Support Matrix</a></p>
+<ul>
+<li><p><a class="reference external" href="#quantization-scheme">Quantization Scheme</a></p></li>
+<li><p><a class="reference external" href="#quantization-approaches">Quantization Approaches</a></p>
+<ul>
+<li><p><a class="reference external" href="#post-training-static-quantization">Post Training Static Quantization</a></p></li>
+<li><p><a class="reference external" href="#smooth-quantization">Smooth Quantization</a></p></li>
+<li><p><a class="reference external" href="#mixed-precison">Mixed Precision</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#backend-and-device">Backend and Device</a></p></li>
+</ul>
+</li>
+</ul>
+</li>
+</ul>
+<section id="introduction">
+<h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">neural_compressor.tensorflow</span></code> provides a integrated API for applying quantization on various TensorFlow model format, such as <code class="docutils literal notranslate"><span class="pre">pb</span></code>, <code class="docutils literal notranslate"><span class="pre">saved_model</span></code> and <code class="docutils literal notranslate"><span class="pre">keras</span></code>. The comprehensive range of supported models includes but not limited to CV models, NLP models, and large language models.</p>
+<p>In terms of ease of use, neural compressor is committed to providing flexible and scalable user interfaces. While <code class="docutils literal notranslate"><span class="pre">quantize_model</span></code> is designed to provide a fast and straightforward quantization experience, the <code class="docutils literal notranslate"><span class="pre">autotune</span></code> offers an advanced option of reducing accuracy loss during quantization.</p>
+</section>
+<section id="api-for-tensorflow">
+<h2>API for TensorFlow<a class="headerlink" href="#api-for-tensorflow" title="Link to this heading"></a></h2>
+<p>Intel(R) Neural Compressor provides <code class="docutils literal notranslate"><span class="pre">quantize_model</span></code> and <code class="docutils literal notranslate"><span class="pre">autotune</span></code> as main interfaces for supported algorithms on TensorFlow framework.</p>
+<p><strong>quantize_model</strong></p>
+<p>The design philosophy of the <code class="docutils literal notranslate"><span class="pre">quantize_model</span></code> interface is easy-of-use. With minimal parameters requirement, including <code class="docutils literal notranslate"><span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">quant_config</span></code>, <code class="docutils literal notranslate"><span class="pre">calib_dataloader</span></code>, <code class="docutils literal notranslate"><span class="pre">calib_iteration</span></code>, it offers a straightforward choice of quantizing TF model in one-shot.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">quantize_model</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">],</span>
+    <span class="n">quant_config</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">BaseConfig</span><span class="p">,</span> <span class="nb">list</span><span class="p">],</span>
+    <span class="n">calib_dataloader</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">calib_iteration</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">calib_func</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">):</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">model</span></code> should be a string of the model’s location, the object of Keras model or INC TF model wrapper class.</p>
+<p><code class="docutils literal notranslate"><span class="pre">quant_config</span></code> is either the <code class="docutils literal notranslate"><span class="pre">StaticQuantConfig</span></code> object or a list contains <code class="docutils literal notranslate"><span class="pre">SmoothQuantConfig</span></code> and <code class="docutils literal notranslate"><span class="pre">StaticQuantConfig</span></code> to indicate what algorithm should be used and what specific quantization rules should be applied.</p>
+<p><code class="docutils literal notranslate"><span class="pre">calib_dataloader</span></code> is used to load the data samples for calibration phase. In most cases, it could be the partial samples of the evaluation dataset.</p>
+<p><code class="docutils literal notranslate"><span class="pre">calib_iteration</span></code> is used to decide how many iterations the calibration process will be run.</p>
+<p><code class="docutils literal notranslate"><span class="pre">calib_func</span></code> is a substitution for <code class="docutils literal notranslate"><span class="pre">calib_dataloader</span></code> when the built-in calibration function of INC does not work for model inference.</p>
+<p>Here is a simple example of using <code class="docutils literal notranslate"><span class="pre">quantize_model</span></code> interface with a dummy calibration dataloader and the default <code class="docutils literal notranslate"><span class="pre">StaticQuantConfig</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.tensorflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span><span class="p">,</span> <span class="n">quantize_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.tensorflow.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">DummyDataset</span>
+
+<span class="n">dataset</span> <span class="o">=</span> <span class="n">DummyDataset</span><span class="p">(</span><span class="n">shape</span><span class="o">=</span><span class="p">(</span><span class="mi">100</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">32</span><span class="p">,</span> <span class="mi">3</span><span class="p">),</span> <span class="n">label</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">MyDataLoader</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">dataset</span><span class="p">)</span>
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">()</span>
+
+<span class="n">qmodel</span> <span class="o">=</span> <span class="n">quantize_model</span><span class="p">(</span><span class="s2">&quot;fp32_model.pb&quot;</span><span class="p">,</span> <span class="n">quant_config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="p">)</span>
+</pre></div>
+</div>
+<p><strong>autotune</strong></p>
+<p>The <code class="docutils literal notranslate"><span class="pre">autotune</span></code> interface, on the other hand, provides greater flexibility and power. It’s particularly useful when accuracy is a critical factor. If the initial quantization doesn’t meet the tolerance of accuracy loss, <code class="docutils literal notranslate"><span class="pre">autotune</span></code> will iteratively try quantization rules according to the <code class="docutils literal notranslate"><span class="pre">tune_config</span></code>.</p>
+<p>Just like <code class="docutils literal notranslate"><span class="pre">quantize_model</span></code>, <code class="docutils literal notranslate"><span class="pre">autotune</span></code> requires <code class="docutils literal notranslate"><span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">calib_dataloader</span></code> and <code class="docutils literal notranslate"><span class="pre">calib_iteration</span></code>. And the <code class="docutils literal notranslate"><span class="pre">eval_fn</span></code>, <code class="docutils literal notranslate"><span class="pre">eval_args</span></code> are used to build evaluation process.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">autotune</span><span class="p">(</span>
+    <span class="n">model</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span> <span class="n">BaseModel</span><span class="p">],</span>
+    <span class="n">tune_config</span><span class="p">:</span> <span class="n">TuningConfig</span><span class="p">,</span>
+    <span class="n">eval_fn</span><span class="p">:</span> <span class="n">Callable</span><span class="p">,</span>
+    <span class="n">eval_args</span><span class="p">:</span> <span class="n">Optional</span><span class="p">[</span><span class="n">Tuple</span><span class="p">[</span><span class="n">Any</span><span class="p">]]</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">calib_dataloader</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+    <span class="n">calib_iteration</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">100</span><span class="p">,</span>
+    <span class="n">calib_func</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
+<span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Optional</span><span class="p">[</span><span class="n">BaseModel</span><span class="p">]:</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">model</span></code> should be a string of the model’s location, the object of Keras model or INC TF model wrapper class.</p>
+<p><code class="docutils literal notranslate"><span class="pre">tune_config</span></code> is the <code class="docutils literal notranslate"><span class="pre">TuningConfig</span></code> object which contains multiple quantization rules.</p>
+<p><code class="docutils literal notranslate"><span class="pre">eval_fn</span></code> is the evaluation function that measures the accuracy of a model.</p>
+<p><code class="docutils literal notranslate"><span class="pre">eval_args</span></code> is the supplemental arguments required by the defined evaluation function.</p>
+<p><code class="docutils literal notranslate"><span class="pre">calib_dataloader</span></code> is used to load the data samples for calibration phase. In most cases, it could be the partial samples of the evaluation dataset.</p>
+<p><code class="docutils literal notranslate"><span class="pre">calib_iteration</span></code> is used to decide how many iterations the calibration process will be run.</p>
+<p><code class="docutils literal notranslate"><span class="pre">calib_func</span></code> is a substitution for <code class="docutils literal notranslate"><span class="pre">calib_dataloader</span></code> when the built-in calibration function of INC does not work for model inference.</p>
+<p>Here is a simple example of using <code class="docutils literal notranslate"><span class="pre">autotune</span></code> interface with different quantization rules defined by a list of  <code class="docutils literal notranslate"><span class="pre">StaticQuantConfig</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.common.base_tuning</span><span class="w"> </span><span class="kn">import</span> <span class="n">TuningConfig</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.tensorflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span><span class="p">,</span> <span class="n">autotune</span>
+
+<span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">MyDataloader</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">Dataset</span><span class="p">())</span>
+<span class="n">custom_tune_config</span> <span class="o">=</span> <span class="n">TuningConfig</span><span class="p">(</span>
+    <span class="n">config_set</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_sym</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">act_sym</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_sym</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">act_sym</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+<span class="n">best_model</span> <span class="o">=</span> <span class="n">autotune</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;baseline_model&quot;</span><span class="p">,</span>
+    <span class="n">tune_config</span><span class="o">=</span><span class="n">custom_tune_config</span><span class="p">,</span>
+    <span class="n">eval_fn</span><span class="o">=</span><span class="n">eval_acc_fn</span><span class="p">,</span>
+    <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">calib_dataloader</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<section id="support-matrix">
+<h3>Support Matrix<a class="headerlink" href="#support-matrix" title="Link to this heading"></a></h3>
+<section id="quantization-scheme">
+<h4>Quantization Scheme<a class="headerlink" href="#quantization-scheme" title="Link to this heading"></a></h4>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th style="text-align: left;">Framework</th>
+<th style="text-align: center;">Backend Library</th>
+<th style="text-align: center;">Symmetric Quantization</th>
+<th style="text-align: right;">Asymmetric Quantization</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align: left;">TensorFlow</td>
+<td style="text-align: center;"><a href="https://github.com/oneapi-src/oneDNN">oneDNN</a></td>
+<td style="text-align: center;">Activation (int8/uint8), Weight (int8)</td>
+<td style="text-align: right;">-</td>
+</tr>
+<tr>
+<td style="text-align: left;">Keras</td>
+<td style="text-align: center;"><a href="https://github.com/intel/intel-extension-for-tensorflow">ITEX</a></td>
+<td style="text-align: center;">Activation (int8/uint8), Weight (int8)</td>
+<td style="text-align: right;">-</td>
+</tr>
+</tbody>
+</table><ul class="simple">
+<li><p>Symmetric Quantization</p>
+<ul>
+<li><p>int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)</p></li>
+<li><p>uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))</p></li>
+</ul>
+</li>
+</ul>
+</section>
+<section id="quantization-approaches">
+<h4>Quantization Approaches<a class="headerlink" href="#quantization-approaches" title="Link to this heading"></a></h4>
+<p>The supported Quantization methods for TensorFlow and Keras are listed below:</p>
+<table class="center">
+    <thead>
+        <tr>
+            <th>Types</th>
+            <th>Quantization</th>
+            <th>Dataset Requirements</th>
+            <th>Framework</th>
+            <th>Backend</th>
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan="2" align="center">Post-Training Static Quantization (PTQ)</td>
+            <td rowspan="2" align="center">weights and activations</td>
+            <td rowspan="2" align="center">calibration</td>
+            <td align="center">Keras</td>
+            <td align="center"><a href="https://github.com/intel/intel-extension-for-tensorflow">ITEX</a></td>
+        </tr>
+        <tr>
+            <td align="center">TensorFlow</td>
+            <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
+        </tr>
+        <tr>
+            <td rowspan="1" align="center">Smooth Quantization(SQ)</td>
+            <td rowspan="1" align="center">weights</td>
+            <td rowspan="1" align="center">calibration</td>
+            <td align="center">Tensorflow</td>
+            <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
+        </tr>
+        <tr>
+            <td rowspan="1" align="center">Mixed Precision(MP)</td>
+            <td rowspan="1" align="center">weights and activations</td>
+            <td rowspan="1" align="center">NA</td>
+            <td align="center">Tensorflow</td>
+            <td align="center"><a href="https://github.com/tensorflow/tensorflow">TensorFlow</a>/<a href="https://github.com/Intel-tensorflow/tensorflow">Intel TensorFlow</a></td>
+        </tr>
+    </tbody>
+</table>
+<br>
+<br><section id="post-training-static-quantization">
+<h5>Post Training Static Quantization<a class="headerlink" href="#post-training-static-quantization" title="Link to this heading"></a></h5>
+<p>The min/max range in weights and activations are collected offline on a so-called <code class="docutils literal notranslate"><span class="pre">calibration</span></code> dataset. This dataset should be able to represent the data distribution of those unseen inference dataset. The <code class="docutils literal notranslate"><span class="pre">calibration</span></code> process runs on the original fp32 model and dumps out all the tensor distributions for <code class="docutils literal notranslate"><span class="pre">Scale</span></code> and <code class="docutils literal notranslate"><span class="pre">ZeroPoint</span></code> calculations. Usually preparing 100 samples are enough for calibration.</p>
+<p>Refer to the <a class="reference external" href="./TF_Quant.html">PTQ Guide</a> for detailed information.</p>
+</section>
+<section id="smooth-quantization">
+<h5>Smooth Quantization<a class="headerlink" href="#smooth-quantization" title="Link to this heading"></a></h5>
+<p>Smooth Quantization (SQ) is an advanced quantization technique designed to optimize model performance while maintaining high accuracy. Unlike traditional quantization methods that can lead to significant accuracy loss, SQ focuses on a more refined approach by taking a balance between the scale of activations and weights.</p>
+<p>Refer to the <a class="reference external" href="./TF_SQ.html">SQ Guide</a> for detailed information.</p>
+</section>
+<section id="mixed-precision">
+<h5>Mixed Precision<a class="headerlink" href="#mixed-precision" title="Link to this heading"></a></h5>
+<p>The Mixed Precision (MP) is enabled with Post Training Static Quantization. Once <code class="docutils literal notranslate"><span class="pre">BF16</span></code> is supported on machine, the matched operators will be automatically converted.</p>
+</section>
+</section>
+<section id="backend-and-device">
+<h4>Backend and Device<a class="headerlink" href="#backend-and-device" title="Link to this heading"></a></h4>
+<p>Intel(R) Neural Compressor supports TF GPU with <a class="reference external" href="https://github.com/intel/intel-extension-for-tensorflow">ITEX-XPU</a>. We will automatically run model on GPU by checking if it has been installed.</p>
+<table class="center">
+    <thead>
+        <tr>
+            <th>Framework</th>
+            <th>Backend</th>
+            <th>Backend Library</th>
+            <th>Backend Value</th>
+            <th>Support Device(cpu as default)</th> 
+        </tr>
+    </thead>
+    <tbody>
+        <tr>
+            <td rowspan="2" align="left">TensorFlow</td>
+            <td align="left">TensorFlow</td>
+            <td align="left">OneDNN</td>
+            <td align="left">"default"</td>
+            <td align="left">cpu</td>
+        </tr>
+        <tr>
+            <td align="left">ITEX</td>
+            <td align="left">OneDNN</td>
+            <td align="left">"itex"</td>
+            <td align="left">cpu | gpu</td>
+        </tr>  
+    </tbody>
+</table>
+<br>
+<br></section>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f67ac7bbc20> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

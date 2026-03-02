@@ -57,8 +57,7 @@
               <ul>
 <li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
 <li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
-<li class="toctree-l1"><a class="reference internal" href="examples_readme.html">Examples</a></li>
-<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">APIs</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">API</a></li>
 <li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
 <li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
 <li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
@@ -143,14 +142,38 @@ If you are new to GitHub, view the pull request <a class="reference external" hr
 <section id="pull-request-status-checks-overview">
 <h2>Pull Request Status Checks Overview<a class="headerlink" href="#pull-request-status-checks-overview" title="Link to this heading"></a></h2>
 <p>Intel® Neural Compressor use <a class="reference external" href="https://learn.microsoft.com/en-us/azure/devops/pipelines/?view=azure-devops">Azure DevOps</a> for CI test.
-And generally use <a class="reference external" href="https://azure.microsoft.com/en-us/pricing/purchase-options/pay-as-you-go">Azure Cloud Instance</a> to deploy pipelines, e.g. Standard E16s v5.
-|     Test Name                 |     Test Scope                                |     Test Pass Criteria    |
-|——————————-|———————————————–|—————————|
-|     Code Scan                 |     Bandit/CopyRight/DocStyle/SpellCheck       |     PASS          |
-|     <a class="reference external" href="https://github.com/apps/dco/">DCO</a>     |     Use <code class="docutils literal notranslate"><span class="pre">git</span> <span class="pre">commit</span> <span class="pre">-s</span></code> to sign off     |     PASS          |
-|     Unit Test                 |     Pytest scripts under <a class="reference external" href="/test">test</a>                |      PASS (No failure, No core dump, No segmentation fault, No coverage drop)      |
-|     Model Test                |     Pytorch + TensorFlow + ONNX Runtime         |      PASS (Functionality pass, FP32/INT8 No performance regression)       |</p>
-</section>
+And generally use <a class="reference external" href="https://azure.microsoft.com/en-us">Azure Cloud Instance</a> to deploy pipelines.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Test Name</th>
+<th>Test Scope</th>
+<th>Test Pass Criteria</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>Code Scan</td>
+<td>Bandit/CopyRight/DocStyle/SpellCheck</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td><a href="https://github.com/apps/dco/">DCO</a></td>
+<td>Use <code>git commit -s</code> to sign off</td>
+<td>PASS</td>
+</tr>
+<tr>
+<td>Unit Test</td>
+<td>Pytest scripts under <a href="/test">test</a></td>
+<td>PASS (No failure, No core dump, No segmentation fault, No coverage drop)</td>
+</tr>
+<tr>
+<td>Model Test</td>
+<td>Pytorch models</td>
+<td>PASS (Functionality pass, FP32/INT8 No accuracy regression)</td>
+</tr>
+</tbody>
+</table></section>
 <section id="support">
 <h2>Support<a class="headerlink" href="#support" title="Link to this heading"></a></h2>
 <p>Submit your questions, feature requests, and bug reports to the
@@ -176,7 +199,7 @@ And generally use <a class="reference external" href="https://azure.microsoft.co
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f813a0cd100> 
+   <jinja2.runtime.BlockReference object at 0x7f67aca220c0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

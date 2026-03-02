@@ -1,0 +1,206 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AutoTune &mdash; Intel® Neural Compressor 3.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../genindex.html" />
+    <link rel="search" title="Search" href="../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">AutoTune</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../_sources/docs/source/autotune.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="autotune">
+<h1>AutoTune<a class="headerlink" href="#autotune" title="Link to this heading"></a></h1>
+<ol class="simple">
+<li><p><a class="reference external" href="#overview">Overview</a></p></li>
+<li><p><a class="reference external" href="#how-it-works">How it Works</a></p></li>
+<li><p><a class="reference external" href="#working-with-autotune">Working with Autotune</a> <br />3.1 <a class="reference external" href="#working-with-pytorch-model">Working with PyTorch Model</a> <br />3.1 <a class="reference external" href="#working-with-tensorflow-model">Working with Tensorflow Model</a></p></li>
+</ol>
+<section id="overview">
+<h2>Overview<a class="headerlink" href="#overview" title="Link to this heading"></a></h2>
+<p>Intel® Neural Compressor aims to help users quickly deploy low-precision models by leveraging popular compression techniques, such as post-training quantization and weight-only quantization algorithms. Despite having a variety of these algorithms, finding the appropriate configuration for a model can be difficult and time-consuming. This module allows users to easily use predefined tuning recipes and customize the tuning space as needed.</p>
+</section>
+<section id="how-it-works">
+<h2>How it Works<a class="headerlink" href="#how-it-works" title="Link to this heading"></a></h2>
+<p>The autotune module constructs the tuning space according to the pre-defined tuning set or users’ tuning set. It iterates the tuning space and applies the configuration on given float model then records and compares its evaluation result with the baseline. The tuning process stops when meeting the exit policy.</p>
+</section>
+<section id="working-with-autotune">
+<h2>Working with Autotune<a class="headerlink" href="#working-with-autotune" title="Link to this heading"></a></h2>
+<p>The <code class="docutils literal notranslate"><span class="pre">autotune</span></code> API is used across all of frameworks supported by INC. It accepts three primary arguments: <code class="docutils literal notranslate"><span class="pre">model</span></code>, <code class="docutils literal notranslate"><span class="pre">tune_config</span></code>, and <code class="docutils literal notranslate"><span class="pre">eval_fn</span></code>.</p>
+<p>The <code class="docutils literal notranslate"><span class="pre">TuningConfig</span></code> class defines the tuning process, including the tuning space, order, and exit policy.</p>
+<ul>
+<li><p>Define the tuning space</p>
+<p>User can define the tuning space by setting <code class="docutils literal notranslate"><span class="pre">config_set</span></code> with an algorithm configuration or a set of configurations.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Use the default tuning space</span>
+<span class="n">config_set</span> <span class="o">=</span> <span class="n">get_woq_tuning_config</span><span class="p">()</span>
+
+<span class="c1"># Customize the tuning space with one algorithm configurations</span>
+<span class="n">config_set</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">use_sym</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">group_size</span><span class="o">=</span><span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">64</span><span class="p">])</span>
+
+<span class="c1"># Customize the tuning space with two algorithm configurations</span>
+<span class="n">config_set</span> <span class="o">=</span> <span class="p">([</span><span class="n">RTNConfig</span><span class="p">(</span><span class="n">use_sym</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">group_size</span><span class="o">=</span><span class="mi">32</span><span class="p">),</span> <span class="n">GPTQConfig</span><span class="p">(</span><span class="n">group_size</span><span class="o">=</span><span class="mi">128</span><span class="p">,</span> <span class="n">use_sym</span><span class="o">=</span><span class="kc">False</span><span class="p">)],)</span>
+</pre></div>
+</div>
+</li>
+<li><p>Define the tuning order</p>
+<p>The tuning order determines how the process traverses the tuning space and samples configurations. Users can customize it by configuring the <code class="docutils literal notranslate"><span class="pre">sampler</span></code>. Currently, we provide the <code class="docutils literal notranslate"><span class="pre">default_sampler</span></code>, which samples configurations sequentially, always in the same order.</p>
+</li>
+<li><p>Define the exit policy</p>
+<p>The exit policy includes two components: accuracy goal (<code class="docutils literal notranslate"><span class="pre">tolerable_loss</span></code>) and the allowed number of trials (<code class="docutils literal notranslate"><span class="pre">max_trials</span></code>). The tuning process will stop when either condition is met.</p>
+</li>
+</ul>
+<section id="working-with-pytorch-model">
+<h3>Working with PyTorch Model<a class="headerlink" href="#working-with-pytorch-model" title="Link to this heading"></a></h3>
+<p>The example below demonstrates how to autotune a PyTorch model on four <code class="docutils literal notranslate"><span class="pre">RTNConfig</span></code> configurations.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">RTNConfig</span><span class="p">,</span> <span class="n">TuningConfig</span><span class="p">,</span> <span class="n">autotune</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">eval_fn</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">return</span> <span class="o">...</span>
+
+
+<span class="n">tune_config</span> <span class="o">=</span> <span class="n">TuningConfig</span><span class="p">(</span>
+    <span class="n">config_set</span><span class="o">=</span><span class="n">RTNConfig</span><span class="p">(</span><span class="n">use_sym</span><span class="o">=</span><span class="p">[</span><span class="kc">False</span><span class="p">,</span> <span class="kc">True</span><span class="p">],</span> <span class="n">group_size</span><span class="o">=</span><span class="p">[</span><span class="mi">32</span><span class="p">,</span> <span class="mi">128</span><span class="p">]),</span>
+    <span class="n">tolerable_loss</span><span class="o">=</span><span class="mf">0.2</span><span class="p">,</span>
+    <span class="n">max_trials</span><span class="o">=</span><span class="mi">10</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">autotune</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">tune_config</span><span class="o">=</span><span class="n">tune_config</span><span class="p">,</span> <span class="n">eval_fn</span><span class="o">=</span><span class="n">eval_fn</span><span class="p">)</span>
+</pre></div>
+</div>
+</section>
+<section id="working-with-tensorflow-model">
+<h3>Working with Tensorflow Model<a class="headerlink" href="#working-with-tensorflow-model" title="Link to this heading"></a></h3>
+<p>The example below demonstrates how to autotune a TensorFlow model on two <code class="docutils literal notranslate"><span class="pre">StaticQuantConfig</span></code> configurations.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.tensorflow.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span><span class="p">,</span> <span class="n">autotune</span>
+
+<span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">MyDataloader</span><span class="p">(</span><span class="o">...</span><span class="p">)</span>
+<span class="n">custom_tune_config</span> <span class="o">=</span> <span class="n">TuningConfig</span><span class="p">(</span>
+    <span class="n">config_set</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_sym</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">act_sym</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+        <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_sym</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">act_sym</span><span class="o">=</span><span class="kc">False</span><span class="p">),</span>
+    <span class="p">]</span>
+<span class="p">)</span>
+
+
+<span class="k">def</span><span class="w"> </span><span class="nf">eval_fn</span><span class="p">(</span><span class="n">model</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="nb">float</span><span class="p">:</span>
+    <span class="k">return</span> <span class="o">...</span>
+
+
+<span class="n">best_model</span> <span class="o">=</span> <span class="n">autotune</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="s2">&quot;baseline_model&quot;</span><span class="p">,</span> <span class="n">tune_config</span><span class="o">=</span><span class="n">custom_tune_config</span><span class="p">,</span> <span class="n">eval_fn</span><span class="o">=</span><span class="n">eval_fn</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">calib_dataloader</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f67ac94fe00> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
