@@ -3,11 +3,7 @@
 1. [Introduction](#Introduction)
 2. [Quantization Fundamentals](#Quantization-Fundamentals)
 3. [SmoothQuant and Our Enhancement](#SmoothQuant-and-Our-Enhancement)
-4. [Validated Models](#Validated-Models)
-5. [Usage](#Usage)
-6. [Supported Framework Matrix](#Supported-Framework-Matrix)
-
-
+4. [Supported Framework Matrix](#Supported-Framework-Matrix)
 
 ## Introduction
 
@@ -228,7 +224,6 @@ The image on the left presents a normal linear forward  with 1x2 input $x$ and 2
     <img src="./imgs/sq_pc.png"/>
 </div>
 
-
 ## SmoothQuant and Our Enhancement
 
 ### SmoothQuant
@@ -298,166 +293,14 @@ Our proposed method consists of 8 major steps:
 Multiple criteria (e.g min, max and mean) are supported to determine the $\alpha$ value of an input LayerNorm op of a transformer block. Both alpha range and criterion could be configured in auto_alpha_args.
 
 In our experiments, an $\alpha$ range of [0.0, 1.0] with a step_size of 0.1 is found to be well-balanced one for the majority of models.
-
-#### Engineering 
-
-*fully automated*: users only need to pass a model and dataloader.
-
-```python
-from neural_compressor.adaptor.torch_utils.waq import TorchSmoothQuant
-
-sq = TorchSmoothQuant(model, dataloader)
-alpha = "auto"  ##alpha could be a float number to disable auto-tuning and enable fixed-value alpha smoothquant.
-auto_alpha_args = {}
-sq.transform(alpha, auto_alpha_args=auto_alpha_args)
-```
-
-please note that we rely on torch jit to analyze the model. If you are using huggingface model, you could set torchscript to True when loading the model or set the return_dict to False"
-
-*support lots of fusing patterns*: when applying the conversion per-channel scales, a mul layer needs to be inserted, which will introduce some overhead. The official code fuses this op to the previous layernorm, while we support more fusing patterns, like linear_1->relu->linear_2, which means the scales of linear_1 will be fused to linear_2. All the supported patterns are shown below. Currently we only handle the layer whose scale could be fused, we are trying to support other layers, please stay tuned.
-
-```bash
-conv2d/linear->relu/leakyrelu/hardtanh->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm/
-
-conv2d/linear->conv2d/linear/layernorm/batchnorm/instancenorm/t5norm/llamanorm/groupnorm
-```
-
-## Validated Models
-Neural Compressor: 2.1
-
-IPEX (Intel Extension for PyTorch): 2.0/2.1
-
-Dataset: lambada_openai
-
-Task: text-generation provided by [ITREX](https://github.com/intel/intel-extension-for-transformers/tree/main/examples/huggingface/pytorch/text-generation/quantization)
-
-alpha [0.4, 0.6] is sweet spot region in SmoothQuant paper.
-
-A list of models that achieved a <1% accuracy drop is shown below.
-
-| Model/Last token accuracy |  FP32 Accuracy   | INT8 (w/ SmoothQuant) | Notes |
-|:----------:|:------:|:------:|-----------------------------------|
-| bigscience/bloom-560m | 0.354 | 0.3542 | alpha=0.5, Ipex 2.1 |
-| bigscience/bloom-1b7  | 0.4634 | 0.4936 | alpha=0.5, Ipex 2.0 |
-| bigscience/bloom-3b   | 0.518 | 0.5185 | alpha=0.8, Ipex 2.1 | 
-| bigscience/bloom-7b1  | 0.5764 | 0.5977 | alpha=0.5, Ipex 2.0 |
-| bigscience/bloomz-560m  | 0.3947 | 0.3930 | alpha=0.8, Ipex 2.1 |
-| bigscience/bloomz-1b7  | 0.4828 | 0.4906 | alpha=0.5, Ipex 2.1 |
-| bigscience/bloomz-3b   | 0.5018 | 0.4980 | alpha=0.5, Ipex 2.1 | 
-| bigscience/bloomz-7b1  | 0.5593 | 0.5552 | alpha=0.5, Ipex 2.1 |
-| facebook/opt-125m   | 0.379 | 0.3757 | alpha=0.5, Ipex 2.1 |
-| facebook/opt-350m   | 0.4516 | 0.4533 | alpha=0.8, Ipex 2.1 |
-| facebook/opt-1.3b   | 0.5789 | 0.5742 | alpha=0.8, Ipex 2.0 |
-| facebook/opt-2.7b   | 0.6365 | 0.6404 | alpha=0.5, Ipex 2.0 |
-| facebook/opt-6.7b   | 0.6769 | 0.6804 | alpha=0.5, Ipex 2.0 |
-| facebook/opt-13b   | 0.6872 | 0.6814 | alpha=0.5, Ipex 2.1 |
-| facebook/opt-30b   | 0.7149 | 0.7128 | alpha=0.5, Ipex 2.1 |
-| facebook/opt-66b   | 0.7398 | 0.7326 | alpha=0.5, Ipex 2.1 |       
-| LLaMa-7b | 0.7361 | 0.7357 | alpha=0.8, Ipex 2.1 |
-| LLaMa-13b | 0.7627 | 0.7590 | alpha=0.7, Ipex 2.1 |
-| LLaMa-30b | 0.7759 | 0.7840 | alpha=0.7, Ipex 2.1 |
-| LLaMa-65b | 0.7908 | 0.7957 | alpha=0.9, Ipex 2.1 |
-| LLaMa-2-7b-hf* | 0.7392 | 0.7335  | alpha=Auto, Ipex 2.1 |
-| LLaMa-2-7b-Chat* | 0.7058 | 0.6994 | alpha=Auto, Ipex 2.1 |
-| LLaMa-2-13b-hf* | 0.7677 | 0.7615  | alpha=Auto, Ipex 2.1 |
-| EleutherAI/gpt-j-6B* | 0.6831 | 0.6821 | alpha=1.0, Ipex 2.1 |
-| MBZUAI/LaMini-GPT-124m | 0.3804 | 0.3887 | alpha=0.5, Ipex 2.1 |
-| MBZUAI/LaMini-GPT-774m | 0.5048 | 0.5057 | alpha=0.5, Ipex 2.1 |
-| MBZUAI/LaMini-GPT-1.5b | 0.5443 | 0.5436 | alpha=0.5, Ipex 2.1 |
-| mosaicml/mpt-7b-chat | 0.655 | 0.6499 | alpha=0.7, Ipex 2.1 |
-| stabilityai/stablelm-base-alpha-3b | 0.4172 | 0.4149 | alpha=0.6, Ipex 2.1 |
-| togethercomputer/RedPajama-INCITE-Base-3B-v1 | 0.6542 | 0.6735 | alpha=0.5, Ipex 2.1 |
-| togethercomputer/RedPajama-INCITE-Chat-3B-v1* | 0.6718 | 0.6740 | alpha=0.5, Ipex 2.0 |
-| togethercomputer/RedPajama-INCITE-Instruct-3B-v1* | 0.6569 | 0.6621 | alpha=0.5, Ipex 2.0 |
-| togethercomputer/RedPajama-INCITE-Base-7B-v0.1* | 0.7143 | 0.7221 | alpha=0.5, Ipex 2.0 |
-| togethercomputer/RedPajama-INCITE-Instruct-7B-v0.1* | 0.6895 | 0.6953 | alpha=0.5, Ipex 2.0 |
-| databricks/dolly-v1-6b* | 0.6866 | 0.6895 | alpha=0.8, Ipex 2.1 |
-| databricks/dolly-v2-3b* | 0.6297 | 0.6247 | alpha=0.5, Ipex 2.1 |
-| tiiuae/falcon-7b-instruct | 0.6437 | 0.6392 | alpha=0.7, Pytorch |
-
-The results listed below are achieved using IPEX optimize_transformers in model initialization for better performance.   
-| Model/Last token accuracy |  FP32 Accuracy   | INT8 (w/ SmoothQuant) | Notes |
-|:----------:|:------:|:------:|-----------------------------------|
-| LLaMa-2-7b-hf* | 0.7392 | 0.7332  | alpha=Auto, Ipex 2.1 |
-| LLaMa-2-13b-hf* | 0.7677 | 0.7632  | alpha=Auto, Ipex 2.1 |
-
-
-Please note that for models with asterisk(*), we have set all add ops to FP32 during quantization step to achieve desirable results.
-
-## Usage
-
-There are two ways to apply smooth quantization: 1) using a fixed `alpha` for the entire model or 2) determining the `alpha` through auto-tuning.
-
-### Using a fixed `alpha`
-To set a fixed alpha for the entire model, users can follow this example:
-
-```python
-recipes = {
-    "smooth_quant": True,
-    "smooth_quant_args": {
-        "alpha": 0.5,
-        "folding": True,
-    },
-}
-conf = PostTrainingQuantConfig(recipes=recipes)
-```
-`smooth_quant_args` description:
-
-"alpha": a float value. Default is 0.5.
-
-"folding": whether to fold mul into the previous layer, where mul is required to update the input distribution during smoothing.
-- True: Fold inserted mul into the previous layer. IPEX will only insert mul for layers can do folding. 
-- False: Allow inserting mul to update the input distribution and no folding. IPEX (version>=2.1) can fuse inserted mul automatically. For Stock PyTorch, setting folding=False will convert the model to a QDQ model.
-
-### Determining the `alpha` through auto-tuning
-Users can search for the best `alpha` at two levels: 1) for the entire model, and 2) for each layer/block.
-
-#### Auto-tune the `alpha` for the entire model
-The tuning process looks for the optimal `alpha` value from a list of `alpha` values provided by the user.
-> Please note that, it may a considerable amount of time as the tuning process applies each `alpha` to the entire model and uses the evaluation result on the entire dataset as the metric to determine the best `alpha`.
-Here is an example:
-
-```python
-import numpy as np
-conf = PostTrainingQuantConfig(
-    quant_level='auto', # quant_level can also be 1
-    ...
-    recipes={"smooth_quant": True, 
-             "smooth_quant_args": {"alpha": np.arange(0.1, 0.5, 0.05).tolist()}
-    ...
-    }）
-```
-#### Auto-tune the `alpha` for each layer/block
-In this case, the tuning process searches the optimal `alpha` of each layer of the block by evaluating the loss with respect to FP32 output on a few batches of data.
-Here is an example:
-
-```python
-recipes = {"smooth_quant": True, 
-    "default_alpha": 0.7, # Baseline alpha-value for auto-tuning.
-    "smooth_quant_args": {"alpha": 'auto', "auto_alpha_args": {
-        "alpha_min": 0.0, # min value of auto-tuning alpha search space
-        "alpha_max": 1.0, # max value of auto-tuning alpha search space
-        "alpha_step": 0.1, # step_size of auto-tuning alpha search space
-        "shared_criterion": "mean", # Criterion for input LayerNorm op of a transformer block.
-        "do_blockwise": False, # Whether to enable block-wise auto-tuning.
-        }
-    }
-}
-conf = PostTrainingQuantConfig(recipes=recipes）
-```
-
-To get more information, please refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/deprecated/pytorch/nlp/huggingface_models/language-modeling/quantization/llm).
-
  
 ## Supported Framework Matrix
 
-| Framework | Alpha        | Folding    |
-|:---------:|--------------|------------|
-| PyTorch   | [0-1] / 'auto' | False      |
+| Framework | Alpha          | Folding                   |
+|:---------:|----------------|---------------------------|
+| PyTorch   | [0-1] / 'auto' | False                     |
 | IPEX      | [0-1] / 'auto' | True / False(Version>2.1) |
-| ONNX      | [0-1]        | True       |
-| Tensorflow| [0-1]        | False      |
-| ITEX      | [0-1]        | False      |
+| Tensorflow| [0-1]          | False                     |
 
 ## Reference
 

@@ -11,15 +11,15 @@ pr:
       - neural_compressor/common
       - neural_compressor/torch
       - neural_compressor/transformers
-      - test/3x/torch
-      - test/3x/common
+      - test/torch
+      - test/common
       - setup.py
       - requirements_pt.txt
       - .azure-pipelines/ut-3x-pt.yml
       - .azure-pipelines/template/docker-template.yml
       - .azure-pipelines/scripts/install_nc.sh
-      - .azure-pipelines/scripts/ut/3x/run_3x_pt.sh
-      - .azure-pipelines/scripts/ut/3x/coverage.3x_pt
+      - .azure-pipelines/scripts/ut/run_3x_pt.sh
+      - .azure-pipelines/scripts/ut/coverage.3x_pt
 
 pool: ICX-16C
 
@@ -44,7 +44,7 @@ stages:
               dockerConfigName: "commonDockerConfig"
               dockerFileName: "ubuntu-2404"
               repoTag: "$(IMAGE_TAG)"
-              utScriptFileName: "3x/run_3x_pt"
+              utScriptFileName: "run_3x_pt"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x"
               utContainerName: "utTest$(NODE_LABEL)"
@@ -62,7 +62,7 @@ stages:
               dockerConfigName: "gitCloneDockerConfig"
               dockerFileName: "ubuntu-2404"
               repoTag: "$(IMAGE_TAG)"
-              utScriptFileName: "3x/run_3x_pt"
+              utScriptFileName: "run_3x_pt"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x_baseline"
               repo: $(REPO)
@@ -93,7 +93,7 @@ stages:
               pip install -r requirements.txt
               python setup.py install pt
               cd ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/scripts
-              bash ut/3x/collect_log_3x.sh 3x_pt
+              bash ut/collect_log_3x.sh 3x_pt
             displayName: "Collect UT Coverage"
 
           - task: PublishCodeCoverageResults@2

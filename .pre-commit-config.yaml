@@ -20,11 +20,6 @@ repos:
               .vscode/settings_recommended.json
           )$
       - id: check-yaml
-        exclude: |
-          (?x)^(
-            neural_compressor/adaptor/tensorflow_itex.yaml|
-            neural_compressor/adaptor/tensorflow.yaml
-          )$
       - id: debug-statements
       - id: file-contents-sorter
         exclude: |
@@ -151,5 +146,5 @@ repos:
           (?x)^(
               examples/.+|
               neural_compressor/torch/algorithms/fp8_quant/.+|
-              test/3x/torch/.+
+              test/torch/.+
           )$

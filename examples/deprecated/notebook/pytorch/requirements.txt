@@ -1,5 +1,0 @@
-torch>=2.7.0+cpu -f https://download.pytorch.org/whl/torch_stable.html
-intel_extension_for_pytorch>=2.7.0
-transformers>=4.51.3
-datasets
-evaluate
