@@ -88,7 +88,7 @@ INC_JAX_ONLY=1 pip install .
 ### Validated Hardware Environment
 
 #### Intel® Neural Compressor supports HPUs based on heterogeneous architecture with two compute engines (MME and TPC): 
-* Intel Gaudi Al Accelerators (Gaudi2, Gaudi3)
+* Intel Gaudi AI Accelerators (Gaudi2, Gaudi3)
 
 #### Intel® Neural Compressor supports CPUs based on [Intel 64 architecture or compatible processors](https://en.wikipedia.org/wiki/X86-64):
 

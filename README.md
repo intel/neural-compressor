@@ -20,7 +20,7 @@ Intel® Neural Compressor aims to provide popular model compression techniques s
 * Support advanced quantization of Large Language Models (LLMs) and Vision-Language Models (VLMs) such as LLaMA, Qwen, DeepSeek, Flux, FramePack, etc., 
 across diverse quantization techniques and low-precision data types through integration with [AutoRound](https://github.com/intel/auto-round).
 
-* Support a wide range of Intel hardware such as [Intel Gaudi Al Accelerators](https://www.intel.com/content/www/us/en/products/details/processors/ai-accelerators/gaudi.html), [Intel Core Ultra Processors](https://www.intel.com/content/www/us/en/products/details/processors/core-ultra.html), [Intel Xeon Scalable Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), 
+* Support a wide range of Intel hardware such as [Intel Gaudi AI Accelerators](https://www.intel.com/content/www/us/en/products/details/processors/ai-accelerators/gaudi.html), [Intel Core Ultra Processors](https://www.intel.com/content/www/us/en/products/details/processors/core-ultra.html), [Intel Xeon Scalable Processors](https://www.intel.com/content/www/us/en/products/details/processors/xeon/scalable.html), 
 [Intel Xeon CPU Max Series](https://www.intel.com/content/www/us/en/products/details/processors/xeon/max-series.html), [Intel Data Center GPU Flex Series](https://www.intel.com/content/www/us/en/products/overview.html), and [Intel Data Center GPU Max Series](https://www.intel.com/content/www/us/en/products/overview.html) with extensive testing;
 support AMD CPU, ARM CPU, and NVidia GPU with limited testing. 
 
