@@ -169,6 +169,13 @@ if __name__ == "__main__":
         choices=["fp8", "float8_e4m3fn"],
         help="Data type for static quantize key and value.",
     )
+    parser.add_argument(
+        "--static_attention_dtype",
+        default=None,
+        type=str,
+        choices=["fp8", "float8_e4m3fn"],
+        help="Data type for static quantize key and value.",
+    )
     parser.add_argument("--use_recipe", action="store_true", help="whether to use recipe to quantize model")
     parser.add_argument("--recipe_file", type=str, default="recipes/Meta-Llama-3.1-8B-Instruct_6bits.json", help="path of recipe file")
     parser.add_argument("--iters", default=200, type=int, help="iters for autoround.")
@@ -214,9 +221,23 @@ if __name__ == "__main__":
     model, tokenizer = initialize_model_and_tokenizer(args.model_name_or_path)
 
     if args.quantize:
-        if args.dtype in ["uNVFP4", "NVFP4+"]:
-            from auto_round.schemes import QuantizationScheme
+        from auto_round.schemes import PRESET_SCHEMES, QuantizationScheme
 
+        # Check if RCEIL versions are available and use them instead
+        use_rceil = "MXFP4_RCEIL" in PRESET_SCHEMES and "MXFP8_RCEIL" in PRESET_SCHEMES
+        if use_rceil:
+            # Replace dtype if it's MXFP4 or MXFP8
+            if args.dtype == "MXFP4":
+                args.dtype = "MXFP4_RCEIL"
+            elif args.dtype == "MXFP8":
+                args.dtype = "MXFP8_RCEIL"
+            # Replace options list entries
+            args.options = [
+                "MXFP4_RCEIL" if opt == "MXFP4" else ("MXFP8_RCEIL" if opt == "MXFP8" else opt)
+                for opt in args.options
+            ]
+
+        if args.dtype in ["uNVFP4", "NVFP4+"]:
             uNVFP4 = QuantizationScheme.from_dict(
                 {
                     "bits": 4,
@@ -256,6 +277,7 @@ if __name__ == "__main__":
             options=args.options,
             shared_layers=args.shared_layers,
             static_kv_dtype=args.static_kv_dtype,
+            static_attention_dtype=args.static_attention_dtype,
             enable_torch_compile=args.enable_torch_compile,
             low_gpu_mem_usage=args.low_gpu_mem_usage,
             export_format=args.export_format,

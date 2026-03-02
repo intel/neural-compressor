@@ -4,6 +4,7 @@
 
 # Parse command line arguments
 KV_CACHE_DTYPE="auto"
+STATIC_ATTENTION_DTYPE="auto"
 while [[ $# -gt 0 ]]; do
     case $1 in
         --topology=*)
@@ -24,6 +25,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --static_kv_dtype=*)
             KV_CACHE_DTYPE="${1#*=}"
+            shift
+            ;;
+        --static_attention_dtype=*)
+            STATIC_ATTENTION_DTYPE="${1#*=}"
             shift
             ;;
         *)
@@ -48,10 +53,12 @@ echo "  Input Model: $INPUT_MODEL"
 echo "  Output Model: $OUTPUT_MODEL"
 
 # Set common parameters
-if [ "$KV_CACHE_DTYPE" = "auto" ]; then
-    COMMON_ARGS="--quantize --enable_torch_compile --low_gpu_mem_usage --export_format auto_round"
-else
-    COMMON_ARGS="--quantize --enable_torch_compile --low_gpu_mem_usage --export_format auto_round --static_kv_dtype $KV_CACHE_DTYPE"
+COMMON_ARGS="--quantize --enable_torch_compile --low_gpu_mem_usage --export_format auto_round"
+if [ "$KV_CACHE_DTYPE" != "auto" ]; then
+    COMMON_ARGS="$COMMON_ARGS --static_kv_dtype $KV_CACHE_DTYPE"
+fi
+if [ "$STATIC_ATTENTION_DTYPE" != "auto" ]; then
+    COMMON_ARGS="$COMMON_ARGS --static_attention_dtype $STATIC_ATTENTION_DTYPE"
 fi
 
 case "$TOPOLOGY" in
@@ -81,12 +88,12 @@ case "$TOPOLOGY" in
                 ;;
             "mxfp4_mixed")
                 echo "Running Llama 3.1 8B MXFP4 (Mixed with MXFP8) quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --target_bits 7.8 --options \"MXFP4\" \"MXFP8\" --shared_layers \"k_proj\" \"v_proj\" \"q_proj\" --shared_layers \"gate_proj\" \"up_proj\" --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --target_bits 8.0 --options \"MXFP4\" \"MXFP8\" --shared_layers \"k_proj\" \"v_proj\" \"q_proj\" --shared_layers \"gate_proj\" \"up_proj\" --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
                     $COMMON_ARGS \
-                    --target_bits 7.8 \
+                    --target_bits 8.0 \
                     --options "MXFP4" "MXFP8" \
                     --shared_layers "k_proj" "v_proj" "q_proj" \
                     --shared_layers "gate_proj" "up_proj" \
