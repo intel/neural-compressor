@@ -64,7 +64,7 @@ def get_default_llm_dataloader(tokenizer, dataset_name="NeelNanda/pile-10k", bs=
 
     Args:
         tokenizer (obj): tokenizer object.
-        seq_len (int, optional): _description_. Defaults to 128.
+        seq_len (int, optional): the sequence length of the input tokens. Defaults to 128.
         dataset_name (str, optional): dataset name. Defaults to "NeelNanda/pile-10k".
         seed (int, optional): random seed. Defaults to 42.
         bs (int, optional): batch size. Defaults to 8.

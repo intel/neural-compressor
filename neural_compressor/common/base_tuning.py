@@ -70,7 +70,7 @@ class Evaluator:
         def eval_acc(model):
             ...
 
-        def eval_perf(molde):
+        def eval_perf(model):
             ...
 
         # Usage
@@ -525,6 +525,10 @@ def init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, TuningLogger
 
     Args:
         tuning_config (TuningConfig): The configuration for the tuning process.
+
+    Returns:
+        Tuple[ConfigLoader, TuningLogger, TuningMonitor]: A tuple containing the config loader,
+            tuning logger, and tuning monitor.
     """
     config_loader = ConfigLoader(config_set=tuning_config.config_set, sampler=tuning_config.sampler)
     tuning_logger = TuningLogger()
