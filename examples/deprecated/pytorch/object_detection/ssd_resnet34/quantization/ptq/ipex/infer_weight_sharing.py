@@ -19,6 +19,7 @@
 #
 
 ### This file is originally from: [mlcommons repo](https://github.com/mlcommons/inference/tree/r0.5/others/cloud/single_stage_detector/pytorch/infer.py)
+import logging
 import os
 from argparse import ArgumentParser
 from re import M
@@ -213,6 +214,7 @@ def coco_eval(model, val_dataloader, cocoGt, encoder, inv_map, args):
     threshold = args.threshold
     use_cuda = not args.no_cuda and torch.cuda.is_available()
     model.eval()
+    stats = None
 
     if args.accuracy_mode:
         if args.iteration is not None:
@@ -648,6 +650,9 @@ def coco_eval(model, val_dataloader, cocoGt, encoder, inv_map, args):
     if args.use_throughput_benchmark:
         print("Predicting Ended, total time: {:.2f} s".format(time.time()-start))
         batch_size = args.batch_size
+        if stats is None:
+            logging.getLogger(__name__).error("throughput benchmark stats not available.")
+            exit(-1)
         latency = stats.latency_avg_ms
         perf = stats.iters_per_second * batch_size
         print('inference latency %.2f ms'%latency)

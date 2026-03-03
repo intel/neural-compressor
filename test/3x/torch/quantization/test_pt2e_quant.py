@@ -125,6 +125,8 @@ class TestPT2EQuantization:
         from neural_compressor.torch.quantization import load
 
         loaded_quantized_model = load("./saved_results")
+        if loaded_quantized_model is None:
+            logger.error("loaded_quantized_model is None")
         loaded_q_model_out = loaded_quantized_model(*example_inputs)
         assert torch.equal(loaded_q_model_out, q_model_out)
 
@@ -165,6 +167,8 @@ class TestPT2EQuantization:
         from torch._inductor import config
 
         config.freezing = True
+        if q_model is None:
+            logger.error("q_model is None")
         q_model_out = q_model(*example_inputs)
         assert torch.allclose(float_model_output, q_model_out, atol=1e-2), "Quantization failed!"
         opt_model = torch.compile(q_model)

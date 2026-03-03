@@ -156,7 +156,6 @@ class QuantizeNodeBase:
             self.input_graph = g.dump_graph()
             self._parse_graph(self.input_graph)
             new_match_node_name = match_node_name[:1] + [bias_node_name] + match_node_name[1:]
-            new_match_node_name = match_node_name[:1] + [bias_node_name] + match_node_name[1:]
 
             return new_match_node_name
 

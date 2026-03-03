@@ -189,11 +189,11 @@ def main_worker(args):
     model = compression_manager.model
 
     for epoch in range(args.start_epoch, args.epochs):
-        if args.distributed:
+        if args.distributed and train_sampler is not None:
             train_sampler.set_epoch(epoch)
         adjust_learning_rate(optimizer, epoch, args)
 
-        if args.distributed:
+        if args.distributed and train_loader.sampler is not None:
             train_loader.sampler.set_epoch(epoch)
 
         # train for one epoch

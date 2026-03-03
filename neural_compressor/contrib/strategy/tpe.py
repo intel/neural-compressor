@@ -102,6 +102,7 @@ class TpeTuneStrategy(TuneStrategy):
         ), "TPE strategy is only for post training static quantization!"
         """Initialize the tpe tuning strategy if the user specified to use it."""
         strategy_name = self.config.tuning_criterion.strategy
+        hyperopt = None
         if strategy_name.lower() == "tpe":
             try:
                 import hyperopt
@@ -115,7 +116,7 @@ class TpeTuneStrategy(TuneStrategy):
                 except:
                     assert False, "Unable to import hyperopt from the local environment."
         else:
-            pass
+            raise ValueError(f"TpeTuneStrategy requires strategy 'tpe', but got '{strategy_name}'.")
         self.hpopt_search_space = None
         self.warm_start = False
         self.cfg_evaluated = False

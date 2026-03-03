@@ -791,7 +791,7 @@ def main():
         else:
             lr_scheduler.step(start_epoch)
 
-    if utils.is_primary(args):
+    if utils.is_primary(args) and lr_scheduler is not None:
         _logger.info(
             f'Scheduled epochs: {num_epochs}. LR stepped per {"epoch" if lr_scheduler.t_in_epochs else "update"}.')
 

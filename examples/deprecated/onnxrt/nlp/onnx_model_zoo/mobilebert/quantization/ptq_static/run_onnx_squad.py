@@ -30,7 +30,6 @@ python onnx_squad.py --model $SQUAD_MODEL/squad.onnx \
 import argparse
 import collections
 import json
-import logging
 import math
 import os
 import sys

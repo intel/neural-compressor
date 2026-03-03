@@ -315,6 +315,10 @@ def _greedy_search(
             )
             if synced_gpus and this_peer_finished:
                 continue  # don't waste resources running the code we don't need
+            if outputs is None:
+                raise RuntimeError("Model forward returned None during greedy search.")
+            if outputs is None:
+                raise RuntimeError("Model forward returned None during greedy search.")
             next_token_logits = outputs.logits[:, -1, :]
 
         # pre-process distribution

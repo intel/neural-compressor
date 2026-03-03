@@ -113,7 +113,10 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             # FIXME We only quantize the MatMul op which second input node type is const. This is a
             # workaround for RNN model like LTSM.
             if parent_node.op != "Const":
-                self.logger.debug("The weight node of matched_node {} is not Const or Const + Enter, skipped")
+                self.logger.debug(
+                    "The weight node of matched_node %s is not Const or Const + Enter, skipped",
+                    matched_node.node.name,
+                )
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 self.output_graph = self.input_graph
                 return []
@@ -329,7 +332,10 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             # FIXME We only quantize the MatMul op which second input node type is const. This is a
             # workaround for RNN model like LTSM.
             if parent_node.op != "Const":
-                self.logger.debug("The weight node of matched_node {} is not Const or Const + Enter, skipped")
+                self.logger.debug(
+                    "The weight node of matched_node %s is not Const or Const + Enter, skipped",
+                    matched_node.node.name,
+                )
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 self.output_graph = self.input_graph
                 return []
@@ -580,7 +586,10 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             # FIXME We only quantize the MatMul op which second input node type is const. This is a
             # workaround for RNN model like LTSM.
             if parent_node.op != "Const":
-                self.logger.debug("The weight node of matched_node {} is not Const or Const + Enter, skipped")
+                self.logger.debug(
+                    "The weight node of matched_node %s is not Const or Const + Enter, skipped",
+                    matched_node.node.name,
+                )
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 self.output_graph = self.input_graph
                 return []
@@ -729,7 +738,10 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             # FIXME We only quantize the MatMul op which second input node type is const. This is a
             # workaround for RNN model like LTSM.
             if parent_node.op != "Const":
-                self.logger.debug("The weight node of matched_node {} is not Const or Const + Enter, skipped")
+                self.logger.debug(
+                    "The weight node of matched_node %s is not Const or Const + Enter, skipped",
+                    matched_node.node.name,
+                )
                 self.exclude_matmul_nodes.append(matched_node.node.name)
                 self.output_graph = self.input_graph
                 return []

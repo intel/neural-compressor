@@ -127,7 +127,7 @@ class FuseDecomposedINOptimizer:  # pragma: no cover
                 gamma_op, gamma_reshape_op = bypass_reshape(input_node_map, scale_op.input[1])
                 if rsqrt_op.op != "Rsqrt":
                     continue
-                if gamma_op.op != "Const":
+                if gamma_op is None or gamma_op.op != "Const":
                     continue
             else:
                 continue

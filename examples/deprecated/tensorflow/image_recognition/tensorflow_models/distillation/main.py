@@ -19,6 +19,7 @@ import argparse
 import random
 import datetime
 import tensorflow as tf
+
 from neural_compressor.conf.dotdict import DotDict
 from neural_compressor.training import prepare_compression
 from neural_compressor.config import DistillationConfig, KnowledgeDistillationLossConfig

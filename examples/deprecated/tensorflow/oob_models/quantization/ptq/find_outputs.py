@@ -111,6 +111,8 @@ def _load_pb(graph_def: [tf_v1.GraphDef, tf_v1.MetaGraphDef], graph_file_name: s
     return graph_def
 
 def children(op_name: str, graph: tf_v1.Graph):
+    if graph is None:
+        return set()
     op = graph.get_operation_by_name(op_name)
     return set(op for out in op.outputs for op in out.consumers())
 

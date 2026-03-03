@@ -358,6 +358,7 @@ class TorchSmoothQuant:
         # Check if input_maxes match self.absorb_to_layer
         # (due to self._get_all_layer_names use layer tree instead of forward_path)
         if not folding and self.need_calibration:
+            input_mins, input_maxes = self.input_mins, self.input_maxes
             if len(self.input_mins) == 0:  ##there are some modules not used in forward
                 calib = Calibration(self.model, self.dataloader, self.q_func, self.device)  ##
                 input_mins, input_maxes = calib.calibrate(

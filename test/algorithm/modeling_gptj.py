@@ -688,6 +688,9 @@ class GPTJModel(GPTJPreTrainedModel):
                     output_attentions=output_attentions,
                 )
 
+            if outputs is None:
+                raise RuntimeError("Transformer block returned None output.")
+
             hidden_states = outputs[0]
             if use_cache is True:
                 presents = presents + (outputs[1],)

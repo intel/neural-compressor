@@ -134,6 +134,8 @@ class SQLinearWrapper(torch.nn.Module):
         # calculate scale and zero_point
         if dtype == torch.quint8:
             quant_min, quant_max = 0, 255
+        else:
+            raise ValueError(f"Unsupported dtype for quantization parameters: {dtype}")
         min_val = torch.min(input_minmax[0] * input_scale)
         max_val = torch.max(input_minmax[1] * input_scale)
         # work when min_val bigger than zero.

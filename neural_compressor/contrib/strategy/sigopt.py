@@ -114,6 +114,7 @@ class SigOptTuneStrategy(TuneStrategy):
         logger.info("*** Initialize SigOpt tuning")
         self.config = self._initialize_config(conf)
         strategy_name = self.config.tuning_criterion.strategy
+        sigopt = None
         if strategy_name.lower() == "sigopt":
             try:
                 import sigopt
@@ -127,7 +128,7 @@ class SigOptTuneStrategy(TuneStrategy):
                 except:
                     assert False, "Unable to import sigopt from the local environment."
         else:
-            pass
+            raise ValueError(f"SigOptTuneStrategy requires strategy 'sigopt', but got '{strategy_name}'.")
         # SigOpt init
         strategy_kwargs = self.config.tuning_criterion.strategy_kwargs
         client_token = strategy_kwargs.get("sigopt_api_token", None)

@@ -105,7 +105,7 @@ def _mlperf_print(key, value=None, benchmark=None, stack_offset=0,
 
   return_value = None
 
-  if (tag_set is None and not PATTERN.match(key)) or key not in tag_set:
+  if (tag_set is None and not PATTERN.match(key)) or (tag_set is not None and key not in tag_set):
     raise ValueError('Invalid key for MLPerf print: ' + str(key))
 
   if value is not None and deferred:

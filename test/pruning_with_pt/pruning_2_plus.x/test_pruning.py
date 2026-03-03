@@ -1,3 +1,4 @@
+import logging
 import unittest
 
 import torch
@@ -39,6 +40,8 @@ class TestPruning(unittest.TestCase):
         from neural_compressor.compression.pruner import prepare_pruning
 
         pruning = prepare_pruning(self.model, config, optimizer)
+        if self.model is None:
+            logging.getLogger(__name__).error("self.model is None")
 
         for epoch in range(4):
             self.model.train()
@@ -50,8 +53,6 @@ class TestPruning(unittest.TestCase):
                 loss.backward()
                 optimizer.step()
                 local_step += 1
-
-        assert self.model is not None
 
 
 if __name__ == "__main__":

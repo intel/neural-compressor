@@ -157,7 +157,7 @@ class PostCompressionUtils(object):
         layer.weight.copy_(_w.contiguous())
         layer.weight.requires_grad = True
 
-        if prune_bias and layer.bias is not None:
+        if prune_bias and _b is not None and layer.bias is not None:
             layer.bias.requires_grad = False
             layer.bias.copy_(_b.contiguous())
             layer.bias.requires_grad = True

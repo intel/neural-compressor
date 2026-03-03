@@ -49,7 +49,7 @@ class PostCseOptimizer(GraphRewriterBase):
         for i in attr_keys:
             hash_str += str(node.attr[i])
 
-        return hashlib.md5(hash_str.encode("utf-8")).hexdigest()  # nosec
+        return hashlib.sha3_256(hash_str.encode("utf-8")).hexdigest()# nosec
 
     @dump_elapsed_time("Pass PostCseOptimizer")
     def do_transformation(self):

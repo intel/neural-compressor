@@ -375,15 +375,15 @@ def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **
         else:
             q_mapping = tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
 
+    if kwargs is None:
+        kwargs = {}
+
     if tune_cfg["framework"] == "pytorch_fx":  # pragma: no cover
         # For torch.fx approach
         assert (
             version.release >= Version("1.8.0").release
         ), "Please use PyTroch 1.8 or higher version with pytorch_fx backend"
         from torch.quantization.quantize_fx import convert_fx, prepare_fx, prepare_qat_fx
-
-        if kwargs is None:
-            kwargs = {}
         prepare_custom_config_dict = kwargs.get("prepare_custom_config_dict", None)
         convert_custom_config_dict = kwargs.get("convert_custom_config_dict", None)
 

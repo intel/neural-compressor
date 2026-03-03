@@ -124,7 +124,7 @@ def train300_mlperf_coco(args):
             from apex.parallel import DistributedDataParallel as DDP
             if 'WORLD_SIZE' in os.environ:
                 args.distributed = int(os.environ['WORLD_SIZE']) > 1
-        except:
+        except Exception:
             raise ImportError("Please install APEX from https://github.com/nvidia/apex")
 
     local_seed = args.seed

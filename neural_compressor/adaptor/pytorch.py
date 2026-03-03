@@ -4596,7 +4596,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
 
         # for layer_wise quant mode
         recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
-        if recipe_cfgs.get("layer_wise_quant", False):
+        if recipe_cfgs and recipe_cfgs.get("layer_wise_quant", False):
             from .torch_utils.layer_wise_quant.utils import LWQ_WORKSPACE, _get_path, load_module
 
             os.makedirs(LWQ_WORKSPACE, exist_ok=True)

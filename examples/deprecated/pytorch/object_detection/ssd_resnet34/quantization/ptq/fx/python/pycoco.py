@@ -269,7 +269,7 @@ class COCO:
                         img = np.ones( (m.shape[0], m.shape[1], 3) )
                         if ann['iscrowd'] == 1:
                             color_mask = np.array([2.0,166.0,101.0])/255
-                        if ann['iscrowd'] == 0:
+                        else:
                             color_mask = np.random.random((1, 3)).tolist()[0]
                         for i in range(3):
                             img[:,:,i] = color_mask[i]

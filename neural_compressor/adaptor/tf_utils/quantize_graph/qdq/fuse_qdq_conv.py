@@ -1504,6 +1504,7 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
 
         if add_a_node.op != "Const" and add_b_node.op == "Const":
             need_insert_dummy_biasadd = 0
+        new_match_node_name = match_node_name
         if need_insert_dummy_biasadd:
             new_match_node_name = self._insert_dummy_biasadd(match_node_name, matched_node)
             # after insert dummy biasadd, that is Conv+dummybiasadd+add+add+relu6+mul+mul

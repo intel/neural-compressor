@@ -271,6 +271,7 @@ def _replace_linear(
 def default_run_fn(model, tokenizer, dataset, max_length=512, n_samples=100, batch_size=8, algo="rtn"):
     from torch.utils.data import DataLoader
 
+    calib_dataset = dataset
     if isinstance(dataset, (str, bytes, os.PathLike)):
         calib_dataset = load_dataset(dataset, split="train")
     calib_dataset = calib_dataset.shuffle(seed=42)

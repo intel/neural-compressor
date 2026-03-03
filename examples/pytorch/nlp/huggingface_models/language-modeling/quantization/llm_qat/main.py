@@ -115,6 +115,8 @@ def train():
     tokenizer = AutoTokenizer.from_pretrained(
         model_args.model_name_or_path, model_max_length=training_args.model_max_length
     )
+    if tokenizer is None:
+        raise ValueError(f"Failed to load tokenizer from {model_args.model_name_or_path}")
     tokenizer.pad_token_id = tokenizer.eos_token_id
 
     # We set model.config.use_cache to False for training when gradient_checkpointing=False.

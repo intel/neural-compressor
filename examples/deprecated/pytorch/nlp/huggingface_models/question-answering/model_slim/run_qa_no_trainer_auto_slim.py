@@ -483,6 +483,7 @@ def main():
         set_seed(args.seed)
 
     # Handle the repository creation
+    repo = None
     if accelerator.is_main_process:
         if args.push_to_hub:
             if args.hub_model_id is None:

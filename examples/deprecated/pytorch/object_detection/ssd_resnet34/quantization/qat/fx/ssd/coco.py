@@ -45,6 +45,7 @@ __version__ = '2.0'
 # Licensed under the Simplified BSD License [see bsd.txt]
 
 import json
+import logging
 import time
 import matplotlib.pyplot as plt
 from matplotlib.collections import PatchCollection
@@ -312,6 +313,9 @@ class COCO:
         else:
             anns = resFile
         assert type(anns) == list, 'results in not an array of objects'
+        if len(anns) == 0:
+            logging.getLogger(__name__).error('results array is empty')
+            return res
         annsImgIds = [ann['image_id'] for ann in anns]
         assert set(annsImgIds) == (set(annsImgIds) & set(self.getImgIds())), \
                'Results do not correspond to current coco set'

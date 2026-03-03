@@ -77,9 +77,9 @@ def model_slim_mha(model, dataloader=None):
 def parse_auto_slim_config(model, dataloader=None, ffn2_sparsity=0.0, mha_sparsity=0.0, **kwargs):
     """Get model slim pruning configs."""
     auto_slim_configs = []
-    if ffn2_sparsity > 0 and ffn2_sparsity < 1:
+    if ffn2_sparsity > 0.0 and ffn2_sparsity < 1.0:  # noqa: coverity[dead_code] - reachable with non-default args
         auto_slim_configs += generate_ffn2_pruning_config(model, dataloader, ffn2_sparsity, **kwargs)
-    if mha_sparsity > 0 and mha_sparsity < 1:
+    if mha_sparsity > 0.0 and mha_sparsity < 1.0:  # noqa: coverity[dead_code] - reachable with non-default args
         auto_slim_configs += generate_mha_pruning_config(model, dataloader, mha_sparsity, **kwargs)
     return auto_slim_configs
 

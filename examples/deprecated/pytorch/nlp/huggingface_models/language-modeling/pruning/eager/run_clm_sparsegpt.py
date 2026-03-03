@@ -486,6 +486,7 @@ def main():
     # To speed up this part, we use multiprocessing. See the documentation of the map method for more information:
     # https://huggingface.co/docs/datasets/package_reference/main_classes.html#datasets.Dataset.map
 
+    lm_datasets = None
     if RANK in {-1, 0}:
         lm_datasets = tokenized_datasets.map(
             group_texts,
@@ -494,7 +495,10 @@ def main():
             load_from_cache_file=not args.overwrite_cache,
             desc=f"Grouping texts in chunks of {block_size}",
         )
-        
+
+    if lm_datasets is None:
+        raise RuntimeError("lm_datasets was not initialized. This code path requires RANK in {-1, 0}.")
+
     train_dataset = lm_datasets["train"]
     
     # DataLoaders creation:

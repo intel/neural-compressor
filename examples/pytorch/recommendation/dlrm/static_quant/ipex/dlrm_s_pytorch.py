@@ -1060,10 +1060,10 @@ def run():
 
                     # print time, loss and accuracy
                     if should_print or should_test:
-                        gT = 1000.0 * total_time / total_iter if args.print_time else -1
+                        gT = 1000.0 * total_time / total_iter if args.print_time and total_iter > 0 else -1
                         total_time = 0
 
-                        train_loss = total_loss / total_samp
+                        train_loss = total_loss / total_samp if total_samp > 0 else 0
                         total_loss = 0
 
                         str_run_type = (

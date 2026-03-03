@@ -105,8 +105,9 @@ def create_optimizer(loss, init_lr, num_train_steps, num_warmup_steps, accum_ste
               lambda: [accum_vars[i].assign(grad) for i, grad in enumerate(cgrads)],
               lambda: [accum_vars[i].assign_add(grad) for i, grad in enumerate(cgrads)])
 
-    def applyGrads(accum_vars, current_step):
+    def applyGrads(accum_vars, current_step):  # noqa: E501 (current_step kept for API compat)
           #tf.compat.v1.logging.info("\t\t APPLYING GRADIENTS....:", global_step)
+          _ = current_step  # used by tf.cond lambda signature
           return optimizer.apply_gradients(list(zip(accum_vars, tvars)), global_step=global_step)
 
     apply_step = tf.identity(tf.cast(tf.math.equal(current_step % accum_steps, 0), dtype=tf.bool), name="apply_step")

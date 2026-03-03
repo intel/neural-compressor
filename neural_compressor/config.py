@@ -1019,6 +1019,8 @@ class _BaseQuantizationConfig:
             "autoround_args": autoround_args,
         }
         self._recipes = {}
+        if recipes is None:
+            recipes = {}
         for k in RECIPES.keys():
             if k in recipes and RECIPES[k](recipes[k]):
                 self._recipes.update({k: recipes[k]})

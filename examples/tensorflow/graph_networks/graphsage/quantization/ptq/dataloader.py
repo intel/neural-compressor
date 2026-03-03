@@ -27,7 +27,8 @@ from networkx.readwrite import json_graph
 
 
 def load_data(prefix, normalize=True, load_walks=False):
-    G_data = json.load(open(prefix + "-G.json"))
+    with open(prefix + "-G.json") as f:
+        G_data = json.load(f)
     G = json_graph.node_link_graph(G_data)
     if isinstance(list(G.nodes())[0], int):
         conversion = lambda n : int(n)
@@ -39,10 +40,12 @@ def load_data(prefix, normalize=True, load_walks=False):
     else:
         print("No features present.. Only identity features will be used.")
         feats = None
-    id_map = json.load(open(prefix + "-id_map.json"))
+    with open(prefix + "-id_map.json") as f:
+        id_map = json.load(f)
     id_map = {conversion(k):int(v) for k,v in id_map.items()}
     walks = []
-    class_map = json.load(open(prefix + "-class_map.json"))
+    with open(prefix + "-class_map.json") as f:
+        class_map = json.load(f)
     if isinstance(list(class_map.values())[0], list):
         lab_conversion = lambda n : n
     else:
