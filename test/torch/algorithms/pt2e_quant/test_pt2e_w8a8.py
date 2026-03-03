@@ -66,8 +66,8 @@ class TestW8A8PT2EQuantizer:
         config.freezing = True
         opt_model = torch.compile(converted_model)
         out = opt_model(*example_inputs)
-        logger.warning("out shape is %s", out.shape)
         assert out is not None
+        logger.warning("out shape is %s", out.shape)
 
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     def test_quantizer_on_llm(self):
