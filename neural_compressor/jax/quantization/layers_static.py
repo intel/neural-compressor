@@ -346,6 +346,7 @@ verify_api(Dense, QStaticDense, "call")
 @register_static_quantized_layer(EinsumDense)
 class QStaticEinsumDense(QStaticDenseMixin, EinsumDense):
     """Statically quantized EinsumDense layer."""
+
     pass
 
 

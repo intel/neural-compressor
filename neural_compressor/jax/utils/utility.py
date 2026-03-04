@@ -129,6 +129,7 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
     Returns:
         jnp.ndarray: Computed scale tensor.
     """
+
     # fp8 quantization
     @partial(jax.lax.composite, name="inc.get_scale_fp8")
     def float_get_scale(orig_weight):

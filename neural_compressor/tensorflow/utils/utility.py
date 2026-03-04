@@ -124,6 +124,7 @@ def dump_elapsed_time(customized_msg=""):
 
     def f(func):
         """Wrap the function to log elapsed execution time."""
+
         def fi(*args, **kwargs):
             """Execute the function and log elapsed time."""
             start = time.time()
@@ -196,6 +197,7 @@ def disable_random(seed=1):
 
     def decorator(func):
         """Decorate a function to disable TensorFlow randomness."""
+
         def wrapper(*args, **kw):
             """Reset graph state and run the wrapped function."""
             tf.compat.v1.disable_eager_execution()

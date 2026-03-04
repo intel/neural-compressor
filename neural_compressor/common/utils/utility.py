@@ -242,6 +242,7 @@ def dump_elapsed_time(customized_msg=""):
         Returns:
             Callable: Wrapped function that logs elapsed time.
         """
+
         def fi(*args, **kwargs):
             """Execute the function and log elapsed time."""
             start = time.time()
@@ -308,6 +309,7 @@ def log_process(mode=Mode.QUANTIZE):
 
     def log_process_wrapper(func):
         """Wrap a function to log execution start and end."""
+
         def inner_wrapper(*args, **kwargs):
             """Execute the wrapped function with start/end logging."""
             start_log = default_tuning_logger.execution_start

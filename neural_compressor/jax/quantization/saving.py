@@ -296,18 +296,21 @@ class KerasQuantizedModelWrapper(Task):
 @keras.saving.register_keras_serializable(package="INC", name=None)
 class KerasQuantizedGemmaWrapper(KerasQuantizedModelWrapper, Gemma3CausalLM):
     """Quantized wrapper for Gemma3CausalLM models."""
+
     backbone_cls = KerasQuantizedModelBackboneWrapper
 
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
 class KerasQuantizedViTWrapper(KerasQuantizedModelWrapper, ViTImageClassifier):
     """Quantized wrapper for ViTImageClassifier models."""
+
     backbone_cls = KerasQuantizedModelBackboneWrapper
 
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
 class KerasQuantizedTokenizerWrapper(KerasQuantizedModelWrapper, Gemma3Tokenizer):
     """Quantized wrapper for Gemma3Tokenizer models."""
+
     backbone_cls = KerasQuantizedModelBackboneWrapper
 
 

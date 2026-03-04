@@ -66,7 +66,7 @@ def register_dynamic_quantized_layer(clso):
 
 class DynamicQDQLayer(keras.layers.Layer, SaveableLayerMixin):
     """Layer that applies dynamic quantize-dequantize to activations."""
-    
+
     def __init__(self, name, activation_dtype, asymmetric=False):
         super().__init__(name=name)
         self.activation_dtype = activation_dtype
@@ -197,6 +197,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
 @register_dynamic_quantized_layer(Dense)
 class QDynamicDense(QDynamicDenseMixin, Dense):
     """Dynamically quantized Dense layer."""
+
     pass
 
 
@@ -206,6 +207,7 @@ verify_api(Dense, QDynamicDense, "call")
 @register_dynamic_quantized_layer(EinsumDense)
 class QDynamicEinsumDense(QDynamicDenseMixin, EinsumDense):
     """Dynamically quantized EinsumDense layer."""
+
     pass
 
 
