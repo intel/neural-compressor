@@ -21,6 +21,7 @@
 
 import keras
 import numpy as np
+from jax import numpy as jnp
 from keras import ops
 from keras.layers import Dense, EinsumDense, MultiHeadAttention
 from keras_hub.layers import ReversibleEmbedding
@@ -29,7 +30,12 @@ from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttent
 
 from neural_compressor.common import logger
 from neural_compressor.jax.quantization.saving import SaveableLayerMixin
-from neural_compressor.jax.utils.utility import get_dequantize_fun, get_quantize_fun, get_scale, verify_api
+from neural_compressor.jax.utils.utility import (
+    get_dequantize_fun,
+    get_q_params,
+    get_quantize_fun,
+    verify_api,
+)
 
 if keras.config.backend() != "jax":
     raise ValueError(
@@ -60,11 +66,30 @@ def register_dynamic_quantized_layer(clso):
 
 class DynamicQDQLayer(keras.layers.Layer, SaveableLayerMixin):
     """Layer that applies dynamic quantize-dequantize to activations."""
-
-    def __init__(self, *args, **kwargs):
-        """Initialize the dynamic QDQ layer."""
-        super().__init__(*args, **kwargs)
+    
+    def __init__(self, name, activation_dtype, asymmetric=False):
+        super().__init__(name=name)
+        self.activation_dtype = activation_dtype
+        self._is_asymmetric = asymmetric
         self.supports_masking = True
+
+    def add_variables(self):
+        self._tracker.unlock()
+        self.aquantfun = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_asymmetric)
+        self.adequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_asymmetric)
+        self._tracker.lock()
+
+    def call_symmetric(self, inputs, batch_min_max, mask=None):
+        ascale, _ = get_q_params(batch_min_max, self.activation_dtype, asymmetric=False)
+        x = self.aquantfun(inputs, ascale)
+        x = self.adequantfun(x, ascale)
+        return x
+
+    def call_asymmetric(self, inputs, batch_min_max, mask=None):
+        ascale, azero_point = get_q_params(batch_min_max, self.activation_dtype, asymmetric=True)
+        x = self.aquantfun(inputs, ascale, azero_point)
+        x = self.adequantfun(x, ascale, azero_point)
+        return x
 
     def call(self, inputs, mask=None):
         """Apply dynamic activation quantize-dequantize.
@@ -92,34 +117,12 @@ class DynamicQDQLayer(keras.layers.Layer, SaveableLayerMixin):
         else:
             batch_min = keras.ops.min(inputs)
             batch_max = keras.ops.max(inputs)
-        ascale = get_scale(keras.ops.array((batch_min, batch_max)), self.activation_dtype)
-        x = self.aquantfun(inputs, ascale)
-        x = self.adequantfun(x, ascale)
-        return x
 
-    @classmethod
-    def prepare(cls, orig, activation_dtype):
-        """Convert a layer instance into a dynamic QDQ layer.
+        batch_min_max = keras.ops.array((batch_min, batch_max))
 
-        Args:
-            orig: Original layer instance.
-            activation_dtype: Activation dtype to quantize to.
-
-        Returns:
-            The updated layer instance.
-        """
-        orig._tracker.unlock()
-        orig.__class__ = cls
-        orig.activation_dtype = activation_dtype
-        orig._tracker.lock()
-        return orig
-
-    def add_variables(self):
-        """Create quantization helper functions for the layer."""
-        self._tracker.unlock()
-        self.aquantfun = get_quantize_fun(dtype=self.activation_dtype)
-        self.adequantfun = get_dequantize_fun(dtype=self.compute_dtype)
-        self._tracker.lock()
+        if self._is_asymmetric:
+            return self.call_asymmetric(inputs, batch_min_max, mask)
+        return self.call_symmetric(inputs, batch_min_max, mask)
 
 
 class QDynamicDenseMixin(SaveableLayerMixin):
@@ -140,8 +143,8 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         orig._tracker.unlock()
         orig.__class__ = cls
         orig.weight_dtype = weight_dtype
-        orig.input_qdq = DynamicQDQLayer.prepare(DynamicQDQLayer(name="input_qdq"), activation_dtype)
-
+        orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
+        orig.input_qdq = DynamicQDQLayer("input_qdq", activation_dtype, orig._is_int8)
         orig._tracker.lock()
         return orig
 
@@ -149,12 +152,16 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         """Create quantization variables and cached weight tensor."""
         self._tracker.unlock()
         self.input_qdq.add_variables()
-        wscale = get_scale(self._kernel.value, self.weight_dtype)
+        wscale, _ = get_q_params(self._kernel.value, self.weight_dtype, asymmetric=False)
         self.wscale = self.add_weight(
-            name="weight_scale", shape=wscale.shape, initializer=keras.initializers.Constant(wscale), trainable=False
+            name="weight_scale",
+            shape=wscale.shape,
+            initializer=keras.initializers.Constant(wscale),
+            trainable=False,
+            dtype=self.compute_dtype,
         )
-        wquantfun = get_quantize_fun(dtype=self.weight_dtype)
-        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype)
+        wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
         self._kernel_quant = self.add_weight(
             name="kernel_quant",
             shape=self._kernel.shape,
@@ -163,6 +170,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
             dtype=self.weight_dtype,
             autocast=False,
         )
+
         self._kernel_quant.assign(wquantfun(self._kernel.value, scale=self.wscale.value))
         self._tracker.lock()
 
@@ -213,14 +221,19 @@ class QDynamicMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
         """Convert a MultiHeadAttention instance for dynamic quantization."""
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.qdq = DynamicQDQLayer.prepare(DynamicQDQLayer(name="qdq"), activation_dtype)
-
+        orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
+        orig.q_qdq = DynamicQDQLayer("q_qdq", activation_dtype, False)
+        orig.k_qdq = DynamicQDQLayer("k_qdq", activation_dtype, orig._is_int8)
+        orig.a_qdq = DynamicQDQLayer("a_qdq", activation_dtype, orig._is_int8)
+        orig.v_qdq = DynamicQDQLayer("v_qdq", activation_dtype, False)
         orig._tracker.lock()
         return orig
 
     def add_variables(self):
-        """Create activation QDQ helper layer."""
-        self.qdq.add_variables()
+        self.q_qdq.add_variables()
+        self.k_qdq.add_variables()
+        self.a_qdq.add_variables()
+        self.v_qdq.add_variables()
 
     def post_quantization_cleanup(self):
         """Finalize dynamic quantization with no extra cleanup."""
@@ -308,8 +321,8 @@ class QDynamicMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
 
         # Take the dot product between "query" and "key" to get the raw
         # attention scores.
-        key = self.qdq(key)
-        query = self.qdq(query)
+        key = self.k_qdq(key)
+        query = self.q_qdq(query)
         attention_scores = ops.einsum(self._dot_product_equation, key, query)
 
         # Apply the mask using the custom masked softmax
@@ -326,8 +339,8 @@ class QDynamicMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
             final_attn_scores = attention_scores
 
         # `context_layer` = [B, T, N, H]
-        final_attn_scores = self.qdq(final_attn_scores)
-        value = self.qdq(value)
+        final_attn_scores = self.a_qdq(final_attn_scores)
+        value = self.v_qdq(value)
         attention_output = ops.einsum(
             self._combine_equation, final_attn_scores, value
         )
@@ -347,7 +360,7 @@ class QDynamicCachedGemma3Attention(CachedGemma3Attention, SaveableLayerMixin):
         """Convert a CachedGemma3Attention instance for dynamic quantization."""
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.qdq = DynamicQDQLayer.prepare(DynamicQDQLayer(name="qdq"), activation_dtype)
+        orig.qdq = DynamicQDQLayer("qdq", activation_dtype, False)
         orig._tracker.lock()
         return orig
 
@@ -409,9 +422,8 @@ class QDynamicCachedGemma3Attention(CachedGemma3Attention, SaveableLayerMixin):
 
         if attention_mask is not None:
             attention_mask = attention_mask[:, None, None, :, :]
-        orig_dtype = attention_logits.dtype
+
         attention_softmax = self.softmax(attention_logits, mask=attention_mask)
-        # attention_softmax = ops.cast(attention_softmax, orig_dtype)
 
         if self.dropout:
             attention_softmax = self.dropout_layer(attention_softmax, training=training)
@@ -434,8 +446,7 @@ class QDynamicGemma3VisionAttention(Gemma3VisionAttention, SaveableLayerMixin):
         """Convert a Gemma3VisionAttention instance for dynamic quantization."""
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.qdq = DynamicQDQLayer.prepare(DynamicQDQLayer(name="qdq"), activation_dtype)
-
+        orig.qdq = DynamicQDQLayer("qdq", activation_dtype, False)
         orig._tracker.lock()
         return orig
 
@@ -508,13 +519,15 @@ class QDynamicReversibleEmbedding(ReversibleEmbedding, SaveableLayerMixin):
         """Convert a ReversibleEmbedding instance for dynamic quantization."""
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.qdq = DynamicQDQLayer.prepare(DynamicQDQLayer(name="qdq"), activation_dtype)
+        orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
+        orig.inputs_qdq = DynamicQDQLayer("inputs_qdq", activation_dtype, orig._is_int8)
+        orig.kernel_qdq = DynamicQDQLayer("kernel_qdq", activation_dtype, False)
         orig._tracker.lock()
         return orig
 
     def add_variables(self):
-        """Create activation QDQ helper layer."""
-        self.qdq.add_variables()
+        self.inputs_qdq.add_variables()
+        self.kernel_qdq.add_variables()
 
     def post_quantization_cleanup(self):
         """Finalize dynamic quantization with no extra cleanup."""
@@ -532,8 +545,8 @@ class QDynamicReversibleEmbedding(ReversibleEmbedding, SaveableLayerMixin):
             if self.reverse_dtype is not None:
                 inputs = ops.cast(inputs, self.reverse_dtype)
                 kernel = ops.cast(kernel, self.reverse_dtype)
-            inputs = self.qdq(inputs)
-            kernel = self.qdq(kernel)
+            inputs = self.inputs_qdq(inputs)
+            kernel = self.kernel_qdq(kernel)
             logits = ops.matmul(inputs, kernel)
             # Optionally soft-cap logits.
             if self.logit_soft_cap is not None:
