@@ -252,7 +252,9 @@ run_longbench_eval() {
         --base-url http://localhost:${SERVER_PORT}/v1 \
         --model ${MODEL_PATH} \
         --max-context-length ${max_ctx_length} \
-        --num-threads 512
+        --num-threads 1 \
+        --deterministic \
+        --categories "Long In-context Learning"
     
     echo "Evaluation completed! Results saved to ${OUTPUT_DIR}"
 }

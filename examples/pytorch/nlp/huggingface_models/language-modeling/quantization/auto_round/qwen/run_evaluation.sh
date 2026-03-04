@@ -232,8 +232,6 @@ cleanup_server() {
     echo "Server stopped"
 }
 
-categories="Multi-Document QA"
-echo "Using categories : ${categories}"
 
 # Function to run longbench evaluation via API
 run_longbench_eval() {
