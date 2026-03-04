@@ -102,7 +102,7 @@ class DynamicQuantConfig(BaseConfig):
         """Register supported configs for dynamic quantization.
 
         Returns:
-            None: Updates the class-level supported configuration list.
+            List[OperatorConfig]: List of supported configs for the framework.
         """
         supported_configs = []
         dynamic_config = DynamicQuantConfig(
@@ -113,6 +113,7 @@ class DynamicQuantConfig(BaseConfig):
         operators = [keras.layers.Dense]
         supported_configs.append(OperatorConfig(config=dynamic_config, operators=operators))
         cls.supported_configs = supported_configs
+        return supported_configs
 
     @staticmethod
     def get_model_info(model) -> List[Tuple[str, Callable]]:
@@ -239,7 +240,7 @@ class StaticQuantConfig(BaseConfig):
         """Register supported configs for static quantization.
 
         Returns:
-            None: Updates the class-level supported configuration list.
+            List[OperatorConfig]: List of supported configs for the framework.
         """
         supported_configs = []
         static_config = StaticQuantConfig(
@@ -250,6 +251,7 @@ class StaticQuantConfig(BaseConfig):
         operators = [keras.layers.Dense]
         supported_configs.append(OperatorConfig(config=static_config, operators=operators))
         cls.supported_configs = supported_configs
+        return supported_configs
 
     @staticmethod
     def get_model_info(model) -> List[Tuple[str, Callable]]:

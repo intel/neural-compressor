@@ -264,7 +264,7 @@ def get_q_params(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.flo
         asymmetric (bool): Whether to compute asymmetric quantization parameters.
 
     Returns:
-        Tuple[jnp.ndarray, Optional[jnp.ndarray]]: Scale and zero-point. Zero-point is ``None`` for floating-point
+        Tuple[jnp.ndarray, Optional[jnp.ndarray]]: Scale and zero-point. Zero-point is `None` for floating-point
         dtypes or symmetric quantization.
     """
 
