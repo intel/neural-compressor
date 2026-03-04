@@ -236,13 +236,12 @@ def get_dataloader(tokenizer, seqlen, dataset_name="NeelNanda/pile-10k", seed=42
 
     Args:
         tokenizer (Tokenizer): The tokenizer to use for tokenization.
-        seqlen (int): The exact sequence length. samples < seqlen will be dropped,
-                      samples longer than seqlen will be truncated
+        seqlen (int): The exact sequence length. Samples shorter than `seqlen` will be dropped,
+            and samples longer than `seqlen` will be truncated.
         dataset_name (str, optional): The name of the dataset or datasets separated by commas.
-                                     Defaults to "NeelNanda/pile-10k".
-        split (str, optional): The data split to use. Defaults to None.
+            Defaults to "NeelNanda/pile-10k".
         seed (int, optional): The random seed for reproducibility. Defaults to 42.
-        bs (int, optional): The batch size. Defaults to 4.
+        bs (int, optional): The batch size. Defaults to 8.
         nsamples (int, optional): The total number of samples to include. Defaults to 128.
 
     Returns:
@@ -275,16 +274,23 @@ def get_mllm_dataloader(
     """Generate a DataLoader for calibration using specified parameters.
 
     Args:
-        template (Template): The template to specify process for different mllms.
-        model (Model): The model to quantized.
+        model (Model): The model to quantize.
         tokenizer (Tokenizer): The tokenizer to use for tokenization.
-        Dataset_name (str): The name or path of the dataset.
-        extra_data_dir (str): The path for extra data such as images, audio or videos.
-        seqlen (int): The exact sequence length. samples < seqlen will be dropped,
-                      samples longer than seqlen will be truncated
-        bs (int, optional): The batch size. Defaults to 4.
+        template (Template, optional): The template to specify process for different MLLMs.
+        processor (transformers.AutoProcessor, optional): The processor for multi-modal inputs.
+        image_processor (object, optional): The image processor for multi-modal inputs.
+        dataset (str, optional): The name or path of the dataset.
+        extra_data_dir (str, optional): The path for extra data such as images, audio, or videos.
+        seqlen (int, optional): The exact sequence length. Samples shorter than `seqlen` will be dropped,
+            and samples longer than `seqlen` will be truncated.
+        batch_size (int, optional): The batch size. Defaults to 8.
         split (str, optional): The data split to use. Defaults to None.
-        apply_template: Whether to apply chat template in tokenization.
+        apply_template (bool, optional): Whether to apply chat template in tokenization.
+        truncation (bool, optional): Whether to truncate sequences during tokenization.
+        seed (int, optional): The random seed for reproducibility. Defaults to 42.
+        nsamples (int, optional): The total number of samples to include. Defaults to 128.
+        gradient_accumulate_steps (int, optional): The number of gradient accumulation steps. Defaults to 1.
+        quant_nontext_module (bool, optional): Whether to quantize non-text modules. Defaults to False.
 
     Returns:
         DataLoader: The DataLoader for the calibrated datasets.
