@@ -256,7 +256,7 @@ run_longbench_eval() {
         --max-context-length ${max_ctx_length} \
         --num-threads 1 \
         --deterministic \
-        --categories "Long Structured Data"
+        --categories "Long Structured Data Understanding"
     
     echo "Evaluation completed! Results saved to ${OUTPUT_DIR}"
 }
