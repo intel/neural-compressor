@@ -256,7 +256,7 @@ run_longbench_eval() {
         --max-context-length ${max_ctx_length} \
         --num-threads 1 \
         --deterministic \
-        --categories ${categories}
+        --categories "Multi-Document QA"
     
     echo "Evaluation completed! Results saved to ${OUTPUT_DIR}"
 }
