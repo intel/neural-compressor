@@ -83,7 +83,7 @@ class DynamicQDQLayer(keras.layers.Layer, SaveableLayerMixin):
             asymmetric (bool): Whether to use asymmetric quantization.
 
         Returns:
-            None: Initializes the layer instance.
+            None.
         """
         super().__init__(name=name)
         self.activation_dtype = activation_dtype

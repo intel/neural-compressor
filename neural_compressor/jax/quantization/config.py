@@ -83,7 +83,7 @@ class DynamicQuantConfig(BaseConfig):
             white_list (list): A list of supported operators of this algorithm.
 
         Returns:
-            None: Initializes the configuration instance.
+            None.
         """
         super().__init__(white_list=white_list)
         if not isinstance(weight_dtype, list):
@@ -219,7 +219,7 @@ class StaticQuantConfig(BaseConfig):
             white_list (list): A list of supported operators of this algorithm.
 
         Returns:
-            None: Initializes the configuration instance.
+            None.
         """
         super().__init__(white_list=white_list)
         if not isinstance(weight_dtype, list):

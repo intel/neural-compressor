@@ -82,7 +82,7 @@ class MinMaxObserver(keras.layers.Layer):
             **kwargs: Keyword arguments for the base layer.
 
         Returns:
-            None: Initializes the observer layer.
+            None.
         """
         super().__init__(*args, **kwargs, name="min_max")
         # Track running min/max as non-trainable weights
@@ -155,7 +155,7 @@ class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
             asymmetric (bool): Whether to use asymmetric quantization.
 
         Returns:
-            None: Initializes the layer instance.
+            None.
         """
         super().__init__(name=name)
         self.activation_dtype = activation_dtype
