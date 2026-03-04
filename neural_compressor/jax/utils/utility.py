@@ -31,10 +31,24 @@ from neural_compressor.common import logger
 
 
 def add_fp8_support(function):
-    """Extend the given size function to support FP8 dtypes."""
+    """Extend a dtype size function to support FP8 dtypes.
+
+    Args:
+        function (Callable): Function that returns the size of a dtype in bits.
+
+    Returns:
+        Callable: Wrapped function that handles FP8 dtypes.
+    """
 
     def wrapper(dtype):
-        """Return dtype size in bits with added FP8 support."""
+        """Return dtype size in bits with added FP8 support.
+
+        Args:
+            dtype (str): Dtype name to query.
+
+        Returns:
+            int: Size of the dtype in bits.
+        """
         q_dtypes = ["float8_e4m3fn", "float8_e4m3", "float8_e5m2"]
         if dtype in q_dtypes:
             return 8
@@ -78,21 +92,57 @@ def register_algo(name):
 
 
 def get_quantize_fun(dtype=ml_dtypes.float8_e4m3, asymmetric=False):
+    """Create a quantization function for the specified dtype.
+
+    Args:
+        dtype (jnp.dtype): Target quantization dtype.
+        asymmetric (bool): Whether to use asymmetric quantization for integer dtypes.
+
+    Returns:
+        Callable: Quantization function that maps tensors to the target dtype.
+    """
     @partial(jax.lax.composite, name="inc.quantize_fp8")
     def quantize_tensor_float(x, scale):
-        """Quantize floating-point tensors using clamping."""
+        """Quantize floating-point tensors using clamping.
+
+        Args:
+            x (jnp.ndarray): Input tensor.
+            scale (jnp.ndarray): Scale factor for quantization.
+
+        Returns:
+            jnp.ndarray: Quantized tensor.
+        """
         return jax.lax.clamp(
             jnp.finfo(dtype).min.astype(x.dtype), x / scale, jnp.finfo(dtype).max.astype(x.dtype)
         ).astype(dtype)
 
     @partial(jax.lax.composite, name="inc.quantize_int8")
     def quantize_tensor_int(x, scale):
+        """Quantize integer tensors using symmetric scaling.
+
+        Args:
+            x (jnp.ndarray): Input tensor.
+            scale (jnp.ndarray): Scale factor for quantization.
+
+        Returns:
+            jnp.ndarray: Quantized tensor.
+        """
         val = jnp.round(x / scale)
         val = jnp.clip(val, jnp.iinfo(dtype).min, jnp.iinfo(dtype).max)
         return val.astype(dtype)
 
     @partial(jax.lax.composite, name="inc.quantize_int8_asymmetric")
     def quantize_tensor_int_asymmetric(x, scale, zero_point):
+        """Quantize integer tensors using asymmetric scaling.
+
+        Args:
+            x (jnp.ndarray): Input tensor.
+            scale (jnp.ndarray): Scale factor for quantization.
+            zero_point (jnp.ndarray): Zero point offset.
+
+        Returns:
+            jnp.ndarray: Quantized tensor.
+        """
         val = jnp.round(x / scale) + zero_point
         val = jnp.clip(val, jnp.iinfo(dtype).min, jnp.iinfo(dtype).max)
         return val.astype(dtype)
@@ -106,13 +156,40 @@ def get_quantize_fun(dtype=ml_dtypes.float8_e4m3, asymmetric=False):
 
 
 def get_dequantize_fun(dtype=jnp.float32, asymmetric=False):
+    """Create a dequantization function for the specified dtype.
+
+    Args:
+        dtype (jnp.dtype): Output dtype after dequantization.
+        asymmetric (bool): Whether to use asymmetric dequantization.
+
+    Returns:
+        Callable: Function that dequantizes tensors.
+    """
     @partial(jax.lax.composite, name="inc.dequantize")
     def dequantize(x, scale):
-        """Dequantize a tensor by applying the scale."""
+        """Dequantize a tensor by applying the scale.
+
+        Args:
+            x (jnp.ndarray): Quantized tensor.
+            scale (jnp.ndarray): Scale factor used for quantization.
+
+        Returns:
+            jnp.ndarray: Dequantized tensor.
+        """
         return x.astype(dtype) * scale
 
     @partial(jax.lax.composite, name="inc.dequantize_asymmetric")
     def dequantize_asymmetric(x, scale, zero_point=jnp.array(0, dtype=dtype)):
+        """Dequantize a tensor with asymmetric scaling.
+
+        Args:
+            x (jnp.ndarray): Quantized tensor.
+            scale (jnp.ndarray): Scale factor used for quantization.
+            zero_point (jnp.ndarray): Zero point offset.
+
+        Returns:
+            jnp.ndarray: Dequantized tensor.
+        """
         return (x.astype(dtype) - zero_point) * scale
 
     return dequantize_asymmetric if asymmetric else dequantize
@@ -122,9 +199,9 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
     """Compute the quantization scale for a weight tensor.
 
     Args:
-        orig_weight: Weight tensor to analyze.
-        dtype: Target quantized dtype.
-        compute_dtype: dtype for scale computation.
+        orig_weight (jnp.ndarray): Weight tensor to analyze.
+        dtype (jnp.dtype): Target quantized dtype.
+        compute_dtype (jnp.dtype): dtype for scale computation.
 
     Returns:
         jnp.ndarray: Computed scale tensor.
@@ -133,7 +210,14 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
     # fp8 quantization
     @partial(jax.lax.composite, name="inc.get_scale_fp8")
     def float_get_scale(orig_weight):
-        """Compute scale for floating-point quantization."""
+        """Compute scale for floating-point quantization.
+
+        Args:
+            orig_weight (jnp.ndarray): Weight tensor to analyze.
+
+        Returns:
+            jnp.ndarray: Computed scale tensor.
+        """
         if 0 in orig_weight.shape:
             # For empty tensor, return scale as 1.0
             return jnp.array(1.0, dtype=compute_dtype)
@@ -145,6 +229,14 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
 
     @partial(jax.lax.composite, name="inc.get_scale_int")
     def integer_get_scale(orig_weight):
+        """Compute scale for integer quantization.
+
+        Args:
+            orig_weight (jnp.ndarray): Weight tensor to analyze.
+
+        Returns:
+            jnp.ndarray: Computed scale tensor.
+        """
         if 0 in orig_weight.shape:
             # For empty tensor, return scale as 1.0
             return jnp.array(1.0, dtype=compute_dtype)
@@ -163,9 +255,29 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
 
 
 def get_q_params(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32, asymmetric=False):
+    """Compute quantization scale and zero-point for a weight tensor.
+
+    Args:
+        orig_weight (jnp.ndarray): Weight tensor to analyze.
+        dtype (jnp.dtype): Target quantized dtype.
+        compute_dtype (jnp.dtype): dtype for scale computation.
+        asymmetric (bool): Whether to compute asymmetric quantization parameters.
+
+    Returns:
+        Tuple[jnp.ndarray, Optional[jnp.ndarray]]: Scale and zero-point. Zero-point is ``None`` for floating-point
+        dtypes or symmetric quantization.
+    """
 
     @partial(jax.lax.composite, name="inc.get_q_params_int")
     def integer_get_q_params(orig_weight):
+        """Compute scale and zero-point for integer quantization.
+
+        Args:
+            orig_weight (jnp.ndarray): Weight tensor to analyze.
+
+        Returns:
+            Tuple[jnp.ndarray, jnp.ndarray]: Scale and zero-point tensors.
+        """
         if 0 in orig_weight.shape:
             # For empty tensor, return scale as 1.0
             return jnp.array(1.0, dtype=compute_dtype), jnp.array(0.0, dtype=compute_dtype)
@@ -192,14 +304,27 @@ def print_model(container, max_lines=999999, internal=True, str_length=(0, 0), p
     """Print the model structure.
 
     Args:
-        container: The model or layer to be printed.
-        max_lines: The maximum number of elements to print.
-        internal: Whether to print layers from internal _layers (True) or public layers API (False).
-        str_length: Tuple with max lengths for class name and path.
+        container (keras.Model): The model or layer to be printed.
+        max_lines (int): The maximum number of elements to print.
+        internal (bool): Whether to print layers from internal _layers (True) or public layers API (False).
+        str_length (Tuple[int, int]): Tuple with max lengths for class name and path.
+        path (str): Prefix path for the current layer.
+
+    Returns:
+        None: Logs model structure via the logger.
     """
 
     def get_str_length(container, max_long=(0, 0), path=""):
-        """Compute maximum string lengths for aligned model printing."""
+        """Compute maximum string lengths for aligned model printing.
+
+        Args:
+            container (keras.Layer): Layer or model to inspect.
+            max_long (Tuple[int, int]): Current maximum lengths.
+            path (str): Path prefix for this layer.
+
+        Returns:
+            Tuple[int, int]: Updated maximum lengths for class name and path.
+        """
         current = (len(container.__class__.__name__), len(path))
         max_long = (max(current[0], max_long[0]), max(current[1], max_long[1]))
         if hasattr(container, "_layers"):
@@ -252,15 +377,28 @@ dtype_mapping = {
 
 
 def causal_lm_make_replace_generate_function(self, revert=False):
-    """Replace generate function for the model to version suitable for calibration,
-    where non-trainable are also stored.
+    """Replace generate function for calibration and restore on demand.
 
-    For revert=True, restore the original generate function.
+    Args:
+        self (keras.Model): Causal language model instance to modify.
+        revert (bool): When True, restore the original generate function.
+
+    Returns:
+        Callable: Updated generate function.
     """
 
     @partial(jax.jit, static_argnames=["stop_token_ids"])
     def compiled_generate_function(inputs, stop_token_ids, state):
-        """JIT-compiled generate function for calibration-friendly state handling."""
+        """JIT-compiled generate function for calibration-friendly state handling.
+
+        Args:
+            inputs (jnp.ndarray): Input tokens for generation.
+            stop_token_ids (Tuple[int, ...]): Token IDs used to stop generation.
+            state (Tuple[Any, Any, Any]): Tuple of sampler, trainable, and non-trainable variables.
+
+        Returns:
+            Tuple[Any, List[Any], List[Any]]: Outputs, updated non-trainable variables, and sampler variables.
+        """
         (
             sampler_variables,
             trainable_variables,
@@ -290,7 +428,15 @@ def causal_lm_make_replace_generate_function(self, revert=False):
         inputs,
         stop_token_ids=None,
     ):
-        """Wrapper around generate_step to preserve variable state."""
+        """Wrapper around generate_step to preserve variable state.
+
+        Args:
+            inputs (jnp.ndarray): Input tokens for generation.
+            stop_token_ids (Optional[Tuple[int, ...]]): Token IDs used to stop generation.
+
+        Returns:
+            Any: Model outputs from generate_step.
+        """
         if isinstance(stop_token_ids, list):
             stop_token_ids = tuple(stop_token_ids)
 
@@ -331,12 +477,12 @@ def iterate_over_layers(model, operations, /, *, filter_function: Optional[Calla
     """Apply operations to model layers matching the filter function.
 
     Args:
-        model: Keras model with a _flatten_layers iterator.
+        model (keras.Model): Keras model with a _flatten_layers iterator.
         operations (Iterable[Callable]): Operations to apply to each layer.
         filter_function (Callable, optional): Predicate to select layers. Defaults to always True.
 
     Returns:
-        The original model after operations have been applied.
+        keras.Model: The original model after operations have been applied.
     """
     for layer in model._flatten_layers():
 
@@ -348,7 +494,16 @@ def iterate_over_layers(model, operations, /, *, filter_function: Optional[Calla
 
 
 def verify_api(orig_cls, quant_cls, method_name):
-    """Check if quantized layer method API matches original layer method API."""
+    """Check if quantized layer method API matches original layer method API.
+
+    Args:
+        orig_cls (type): Original layer class.
+        quant_cls (type): Quantized layer class.
+        method_name (str): Method name to compare.
+
+    Returns:
+        None: Logs an error if the method signatures differ.
+    """
     orig_method = getattr(orig_cls, method_name)
     quant_method = getattr(quant_cls, method_name)
     if inspect.signature(orig_method) != inspect.signature(quant_method):

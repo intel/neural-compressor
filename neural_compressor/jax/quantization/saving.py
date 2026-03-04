@@ -35,10 +35,10 @@ def quant_config_to_json_object(quant_config: BaseConfig) -> dict:
     """Serialize a quant config to a JSON-compatible dict with class name.
 
     Args:
-        quant_config: The quantization config object to serialize.
+        quant_config (BaseConfig): The quantization config object to serialize.
 
     Returns:
-        A dict with 'quantization_type' and 'config' keys.
+        dict: A dict with 'quantization_type' and 'config' keys.
     """
     return {
         "quantization_type": quant_config.name,
@@ -50,10 +50,10 @@ def quant_config_from_json_object(json_obj: dict) -> BaseConfig:
     """Deserialize a quant config from a JSON-compatible dict with class name.
 
     Args:
-        json_obj: A dict with 'quantization_type' and 'config' keys.
+        json_obj (dict): A dict with 'quantization_type' and 'config' keys.
 
     Returns:
-        The instantiated quantization config object.
+        BaseConfig: The instantiated quantization config object.
 
     Raises:
         ValueError: If the class name is unknown.
@@ -80,6 +80,9 @@ class VersionManager:
 
         Args:
             config (dict): Configuration dictionary to update in-place.
+
+        Returns:
+            None: Updates the config dictionary in-place.
         """
         config["_versions"] = {}
         for package in cls._MODULES:
@@ -91,6 +94,9 @@ class VersionManager:
 
         Args:
             config (dict): Configuration dictionary that may include version metadata.
+
+        Returns:
+            None: Logs warnings if mismatches are found.
         """
         versions = config.get("_versions")
         if versions is None:
@@ -115,6 +121,9 @@ class SaveableLayerMixin:
 
         Args:
             store (dict): Mutable mapping to receive serialized variables.
+
+        Returns:
+            None: Updates the store mapping with serialized variables.
         """
         weight_dtype = getattr(self, "weight_dtype", None)
         for var in self._trainable_variables + self._non_trainable_variables:
@@ -131,6 +140,9 @@ class SaveableLayerMixin:
 
         Args:
             store (dict): Mapping containing serialized variables.
+
+        Returns:
+            None: Loads variables into the layer.
         """
         weight_dtype = getattr(self, "weight_dtype", None)
         for var in self._trainable_variables + self._non_trainable_variables:
@@ -146,7 +158,15 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
     """Wrapper that preserves quantization config when saving Keras backbones."""
 
     def __init__(self, model, quant_config: Optional[BaseConfig] = None):
-        """Initialize the wrapper around a backbone model."""
+        """Initialize the wrapper around a backbone model.
+
+        Args:
+            model (keras.Model): Backbone model to wrap.
+            quant_config (Optional[BaseConfig]): Quantization configuration.
+
+        Returns:
+            None: Initializes the wrapper.
+        """
         object.__setattr__(self, "_wrapped_model", model)
         object.__setattr__(
             self,
@@ -167,31 +187,65 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
         object.__setattr__(self, "_quant_config", quant_config)
 
     def __getattribute__(self, name):
-        """Delegate attribute access to the wrapped model."""
+        """Delegate attribute access to the wrapped model.
+
+        Args:
+            name (str): Attribute name to access.
+
+        Returns:
+            Any: Attribute value from the wrapper or wrapped model.
+        """
         if name in object.__getattribute__(self, "fields"):
             return object.__getattribute__(self, name)
         return object.__getattribute__(self, "_wrapped_model").__getattribute__(name)
 
     def __setattr__(self, name, value):
-        """Delegate attribute updates to the wrapped model."""
+        """Delegate attribute updates to the wrapped model.
+
+        Args:
+            name (str): Attribute name to update.
+            value (Any): Value to assign.
+
+        Returns:
+            None: Updates the attribute on the wrapper or wrapped model.
+        """
         if name in object.__getattribute__(self, "fields"):
             return object.__setattr__(self, name, value)
         return object.__getattribute__(self, "_wrapped_model").__setattr__(name, value)
 
     def get_config(self):
-        """Serialize the wrapper configuration for Keras saving."""
+        """Serialize the wrapper configuration for Keras saving.
+
+        Returns:
+            dict: Serialized configuration for the wrapper.
+        """
         config = super().get_config()
         config["_quant_config"] = quant_config_to_json_object(self._quant_config)
         config["_wrapped_model"] = keras.saving.serialize_keras_object(self._wrapped_model)
         return config
 
     def __new__(cls, *args, **kwargs):
-        """Bypass BaseModel __new__ to allow manual initialization."""
+        """Bypass BaseModel __new__ to allow manual initialization.
+
+        Args:
+            *args: Positional arguments for object creation.
+            **kwargs: Keyword arguments for object creation.
+
+        Returns:
+            KerasQuantizedModelBackboneWrapper: New wrapper instance.
+        """
         return object.__new__(cls)
 
     @classmethod
     def from_config(cls, config):
-        """Recreate a wrapper from a serialized config dictionary."""
+        """Recreate a wrapper from a serialized config dictionary.
+
+        Args:
+            config (dict): Serialized configuration dictionary.
+
+        Returns:
+            KerasQuantizedModelWrapper: Reconstructed quantized model wrapper.
+        """
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
         quant_config_json = config.get("_quant_config")
         quant_config = quant_config_from_json_object(quant_config_json)
@@ -206,6 +260,9 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
             max_shard_size: `int` or `float`. Maximum size in GB for each
                 sharded file. If `None`, no sharding will be done. Defaults to
                 `10`.
+
+        Returns:
+            None: Writes the preset files to disk.
         """
         saver = get_preset_saver(preset_dir)
         saver.save_backbone(self, max_shard_size=max_shard_size)
@@ -218,7 +275,15 @@ class KerasQuantizedModelWrapper(Task):
     backbone_cls = KerasQuantizedModelBackboneWrapper
 
     def __init__(self, model, quant_config: Optional[BaseConfig] = None):
-        """Initialize the wrapper around a task model."""
+        """Initialize the wrapper around a task model.
+
+        Args:
+            model (keras.Model): Task model to wrap.
+            quant_config (Optional[BaseConfig]): Quantization configuration.
+
+        Returns:
+            None: Initializes the wrapper.
+        """
         object.__setattr__(self, "_wrapped_model", model)
         object.__setattr__(
             self,
@@ -238,19 +303,38 @@ class KerasQuantizedModelWrapper(Task):
         object.__setattr__(self, "_quant_config", quant_config)
 
     def __getattribute__(self, name):
-        """Delegate attribute access to the wrapped model."""
+        """Delegate attribute access to the wrapped model.
+
+        Args:
+            name (str): Attribute name to access.
+
+        Returns:
+            Any: Attribute value from the wrapper or wrapped model.
+        """
         if name in object.__getattribute__(self, "fields"):
             return object.__getattribute__(self, name)
         return object.__getattribute__(self, "_wrapped_model").__getattribute__(name)
 
     def __setattr__(self, name, value):
-        """Delegate attribute updates to the wrapped model."""
+        """Delegate attribute updates to the wrapped model.
+
+        Args:
+            name (str): Attribute name to update.
+            value (Any): Value to assign.
+
+        Returns:
+            None: Updates the attribute on the wrapper or wrapped model.
+        """
         if name in object.__getattribute__(self, "fields"):
             return object.__setattr__(self, name, value)
         return object.__getattribute__(self, "_wrapped_model").__setattr__(name, value)
 
     def get_config(self):
-        """Serialize the wrapper configuration for Keras saving."""
+        """Serialize the wrapper configuration for Keras saving.
+
+        Returns:
+            dict: Serialized configuration for the wrapper.
+        """
         config = super().get_config()
         VersionManager.add_versions(config)
         config["_quant_config"] = quant_config_to_json_object(self._quant_config)
@@ -266,12 +350,27 @@ class KerasQuantizedModelWrapper(Task):
         return config
 
     def __new__(cls, *args, **kwargs):
-        """Bypass BaseModel __new__ to allow manual initialization."""
+        """Bypass BaseModel __new__ to allow manual initialization.
+
+        Args:
+            *args: Positional arguments for object creation.
+            **kwargs: Keyword arguments for object creation.
+
+        Returns:
+            KerasQuantizedModelWrapper: New wrapper instance.
+        """
         return object.__new__(cls)
 
     @classmethod
     def from_config(cls, config):
-        """Recreate a wrapper from a serialized config dictionary."""
+        """Recreate a wrapper from a serialized config dictionary.
+
+        Args:
+            config (dict): Serialized configuration dictionary.
+
+        Returns:
+            KerasQuantizedModelWrapper: Reconstructed quantized model wrapper.
+        """
         VersionManager.check_versions_mismatch(config)
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
         quant_config_json = config.get("_quant_config")
@@ -288,6 +387,9 @@ class KerasQuantizedModelWrapper(Task):
             max_shard_size: `int` or `float`. Maximum size in GB for each
                 sharded file. If `None`, no sharding will be done. Defaults to
                 `10`.
+
+        Returns:
+            None: Writes the preset files to disk.
         """
         saver = get_preset_saver(preset_dir)
         saver.save_task(self, max_shard_size=max_shard_size)
@@ -329,10 +431,10 @@ def prepare_deserialized_quantized_model(
 
     It prepares the model for inference by preparing the quantized layers.
     Args:
-        model: loaded base keras model
-        quant_config: quantization configuration
+        model (keras.Model): Loaded base keras model.
+        quant_config (BaseConfig): Quantization configuration.
     Returns:
-        KerasQuantizedModelWrapper: the transformed quantized model
+        KerasQuantizedModelWrapper: The transformed quantized model wrapper.
     """
     model_info = quant_config.get_model_info(model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
