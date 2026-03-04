@@ -232,7 +232,8 @@ cleanup_server() {
     echo "Server stopped"
 }
 
-
+categories="Multi-Document QA"
+echo "Using categories : ${categories}"
 
 # Function to run longbench evaluation via API
 run_longbench_eval() {
@@ -255,7 +256,7 @@ run_longbench_eval() {
         --max-context-length ${max_ctx_length} \
         --num-threads 1 \
         --deterministic \
-        --categories multi_document_qa
+        --categories ${categories}
     
     echo "Evaluation completed! Results saved to ${OUTPUT_DIR}"
 }
