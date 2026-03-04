@@ -98,11 +98,11 @@ class DynamicQuantConfig(BaseConfig):
         self._post_init()
 
     @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
+    def register_supported_configs(cls) -> None:
         """Register supported configs for dynamic quantization.
 
         Returns:
-            List[OperatorConfig]: List of supported configs for the framework.
+            None: Updates the class-level supported configuration list.
         """
         supported_configs = []
         dynamic_config = DynamicQuantConfig(
@@ -113,10 +113,9 @@ class DynamicQuantConfig(BaseConfig):
         operators = [keras.layers.Dense]
         supported_configs.append(OperatorConfig(config=dynamic_config, operators=operators))
         cls.supported_configs = supported_configs
-        return supported_configs
 
     @staticmethod
-    def get_model_info(model) -> List[Tuple[str, Callable]]:
+    def get_model_info(model) -> List[Tuple[str, str]]:
         """Get concrete node names for supported operators.
 
         Args:
@@ -236,11 +235,11 @@ class StaticQuantConfig(BaseConfig):
         self._post_init()
 
     @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
+    def register_supported_configs(cls) -> None:
         """Register supported configs for static quantization.
 
         Returns:
-            List[OperatorConfig]: List of supported configs for the framework.
+            None: Updates the class-level supported configuration list.
         """
         supported_configs = []
         static_config = StaticQuantConfig(
@@ -251,10 +250,9 @@ class StaticQuantConfig(BaseConfig):
         operators = [keras.layers.Dense]
         supported_configs.append(OperatorConfig(config=static_config, operators=operators))
         cls.supported_configs = supported_configs
-        return supported_configs
 
     @staticmethod
-    def get_model_info(model) -> List[Tuple[str, Callable]]:
+    def get_model_info(model) -> List[Tuple[str, str]]:
         """Get concrete node names for supported operators.
 
         Args:
