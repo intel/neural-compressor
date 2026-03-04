@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
+import jax.numpy as jnp
 import keras
 
 from neural_compressor.common.base_config import (
@@ -32,6 +33,7 @@ from neural_compressor.common.base_config import (
     register_supported_configs_for_fwk,
 )
 from neural_compressor.common.utils import DYNAMIC_QUANT, STATIC_QUANT
+from neural_compressor.jax.utils.utility import dtype_mapping
 
 FRAMEWORK_NAME = "jax"
 
@@ -52,6 +54,7 @@ class DynamicQuantConfig(BaseConfig):
 
     Supported dtypes:
         - "fp8": 8-bit floating-point quantization (uses ml_dtypes.float8_e4m3 by default)
+        - "int8": 8-bit integer quantization
 
     FP8 formats available:
         - "fp8_e4m3": 4 exponent bits, 3 mantissa bits (default for "fp8")
@@ -80,6 +83,13 @@ class DynamicQuantConfig(BaseConfig):
             white_list (list): A list of supported operators of this algorithm.
         """
         super().__init__(white_list=white_list)
+        if not isinstance(weight_dtype, list):
+            jnp_weight_dtype = dtype_mapping[weight_dtype]
+            jnp_activation_dtype = dtype_mapping[activation_dtype]
+            if (
+                jnp.issubdtype(jnp_weight_dtype, jnp.floating) and jnp.issubdtype(jnp_activation_dtype, jnp.integer)
+            ) or (jnp.issubdtype(jnp_weight_dtype, jnp.integer) and jnp.issubdtype(jnp_activation_dtype, jnp.floating)):
+                raise ValueError("Mixed quantization with floating-point and integer dtypes is not supported.")
         self.weight_dtype = weight_dtype
         self.activation_dtype = activation_dtype
         self._post_init()
@@ -89,8 +99,8 @@ class DynamicQuantConfig(BaseConfig):
         """Register supported configs."""
         supported_configs = []
         dynamic_config = DynamicQuantConfig(
-            weight_dtype=["fp8", "fp8_e4m3", "fp8_e5m2"],
-            activation_dtype=["fp8", "fp8_e4m3", "fp8_e5m2"],
+            weight_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
+            activation_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
         )
         # Basic JAX operators for quantization
         operators = [keras.layers.Dense]
@@ -114,7 +124,10 @@ class DynamicQuantConfig(BaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "DynamicQuantConfig", List["DynamicQuantConfig"]]:
         """Get a default config set for tuning."""
-        return DynamicQuantConfig(weight_dtype=["fp8_e4m3", "fp8_e5m2"], activation_dtype=["fp8_e4m3", "fp8_e5m2"])
+        return DynamicQuantConfig(
+            weight_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
+            activation_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
+        )
 
     @classmethod
     def from_json_string(cls, json_string: str) -> "DynamicQuantConfig":
@@ -126,7 +139,11 @@ class DynamicQuantConfig(BaseConfig):
         weight_dtype = config_dict.get("weight_dtype", "fp8_e4m3")
         activation_dtype = config_dict.get("activation_dtype", "fp8_e4m3")
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
-        return cls(weight_dtype=weight_dtype, activation_dtype=activation_dtype, white_list=white_list)
+        return cls(
+            weight_dtype=weight_dtype,
+            activation_dtype=activation_dtype,
+            white_list=white_list,
+        )
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
@@ -139,6 +156,7 @@ class StaticQuantConfig(BaseConfig):
 
     Supported dtypes:
         - "fp8": 8-bit floating-point quantization (uses ml_dtypes.float8_e4m3 by default)
+        - "int8": 8-bit integer quantization
 
     FP8 formats available:
         - "fp8_e4m3": 4 exponent bits, 3 mantissa bits (default for "fp8")
@@ -167,6 +185,14 @@ class StaticQuantConfig(BaseConfig):
             white_list (list): A list of supported operators of this algorithm.
         """
         super().__init__(white_list=white_list)
+        if not isinstance(weight_dtype, list):
+            jnp_weight_dtype = dtype_mapping[weight_dtype]
+            jnp_activation_dtype = dtype_mapping[activation_dtype]
+            if (
+                jnp.issubdtype(jnp_weight_dtype, jnp.floating) and jnp.issubdtype(jnp_activation_dtype, jnp.integer)
+            ) or (jnp.issubdtype(jnp_weight_dtype, jnp.integer) and jnp.issubdtype(jnp_activation_dtype, jnp.floating)):
+                raise ValueError("Mixed quantization with floating-point and integer dtypes is not supported.")
+
         self.weight_dtype = weight_dtype
         self.activation_dtype = activation_dtype
         self._post_init()
@@ -176,8 +202,8 @@ class StaticQuantConfig(BaseConfig):
         """Register supported configs."""
         supported_configs = []
         static_config = StaticQuantConfig(
-            weight_dtype=["fp8", "fp8_e4m3", "fp8_e5m2"],
-            activation_dtype=["fp8", "fp8_e4m3", "fp8_e5m2"],
+            weight_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
+            activation_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
         )
         # Basic JAX operators for quantization
         operators = [keras.layers.Dense]
@@ -201,7 +227,10 @@ class StaticQuantConfig(BaseConfig):
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
         """Get a default config set for tuning."""
-        return StaticQuantConfig(weight_dtype=["fp8_e4m3", "fp8_e5m2"], activation_dtype=["fp8_e4m3", "fp8_e5m2"])
+        return StaticQuantConfig(
+            weight_dtype=["fp8_e4m3", "fp8_e5m2", "int8"],
+            activation_dtype=["fp8_e4m3", "fp8_e5m2", "int8"],
+        )
 
     @classmethod
     def from_json_string(cls, json_string: str) -> "StaticQuantConfig":
@@ -213,7 +242,11 @@ class StaticQuantConfig(BaseConfig):
         weight_dtype = config_dict.get("weight_dtype", "fp8_e5m2")
         activation_dtype = config_dict.get("activation_dtype", "fp8_e5m2")
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
-        return cls(weight_dtype=weight_dtype, activation_dtype=activation_dtype, white_list=white_list)
+        return cls(
+            weight_dtype=weight_dtype,
+            activation_dtype=activation_dtype,
+            white_list=white_list,
+        )
 
 
 register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)

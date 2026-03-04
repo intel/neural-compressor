@@ -68,7 +68,7 @@ def register_algo(name):
     return decorator
 
 
-def get_quantize_fun(dtype=ml_dtypes.float8_e4m3):
+def get_quantize_fun(dtype=ml_dtypes.float8_e4m3, asymmetric=False):
     @partial(jax.lax.composite, name="inc.quantize_fp8")
     def quantize_tensor_float(x, scale):
         return jax.lax.clamp(
@@ -77,22 +77,34 @@ def get_quantize_fun(dtype=ml_dtypes.float8_e4m3):
 
     @partial(jax.lax.composite, name="inc.quantize_int8")
     def quantize_tensor_int(x, scale):
-        return jnp.clip(jnp.round(x / scale), jnp.iinfo(dtype).min, jnp.iinfo(dtype).max).astype(dtype)
+        val = jnp.round(x / scale)
+        val = jnp.clip(val, jnp.iinfo(dtype).min, jnp.iinfo(dtype).max)
+        return val.astype(dtype)
+
+    @partial(jax.lax.composite, name="inc.quantize_int8_asymmetric")
+    def quantize_tensor_int_asymmetric(x, scale, zero_point):
+        val = jnp.round(x / scale) + zero_point
+        val = jnp.clip(val, jnp.iinfo(dtype).min, jnp.iinfo(dtype).max)
+        return val.astype(dtype)
 
     if jnp.issubdtype(dtype, jnp.floating):
         return quantize_tensor_float
     elif jnp.issubdtype(dtype, jnp.integer):
-        return quantize_tensor_int
+        return quantize_tensor_int_asymmetric if asymmetric else quantize_tensor_int
     else:
         raise ValueError(f"Unsupported dtype: {dtype}")
 
 
-def get_dequantize_fun(dtype=jnp.float32):
+def get_dequantize_fun(dtype=jnp.float32, asymmetric=False):
     @partial(jax.lax.composite, name="inc.dequantize")
     def dequantize(x, scale):
         return x.astype(dtype) * scale
 
-    return dequantize
+    @partial(jax.lax.composite, name="inc.dequantize_asymmetric")
+    def dequantize_asymmetric(x, scale, zero_point=jnp.array(0, dtype=dtype)):
+        return (x.astype(dtype) - zero_point) * scale
+
+    return dequantize_asymmetric if asymmetric else dequantize
 
 
 def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32):
@@ -110,12 +122,45 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
 
     @partial(jax.lax.composite, name="inc.get_scale_int")
     def integer_get_scale(orig_weight):
-        return (jnp.max(jnp.abs(orig_weight), keepdims=True) / jnp.iinfo(dtype).max).reshape((1,)).astype(compute_dtype)
+        if 0 in orig_weight.shape:
+            # For empty tensor, return scale as 1.0
+            return jnp.array(1.0, dtype=compute_dtype)
+        return (
+            (jnp.max(jnp.abs(orig_weight), keepdims=True) / jnp.array(jnp.iinfo(dtype).max).astype(orig_weight.dtype))
+            .reshape((1,))
+            .astype(compute_dtype)
+        )
 
     if jnp.issubdtype(dtype, jnp.floating):
         return float_get_scale(orig_weight)
     elif jnp.issubdtype(dtype, jnp.integer):
         return integer_get_scale(orig_weight)
+    else:
+        raise ValueError(f"Unsupported dtype: {dtype}")
+
+
+def get_q_params(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32, asymmetric=False):
+
+    @partial(jax.lax.composite, name="inc.get_q_params_int")
+    def integer_get_q_params(orig_weight):
+        if 0 in orig_weight.shape:
+            # For empty tensor, return scale as 1.0
+            return jnp.array(1.0, dtype=compute_dtype), jnp.array(0.0, dtype=compute_dtype)
+        orig_min = jnp.min(orig_weight).astype(compute_dtype)
+        orig_max = jnp.max(orig_weight).astype(compute_dtype)
+        int_min = jnp.array(jnp.iinfo(dtype).min).astype(compute_dtype)
+        int_max = jnp.array(jnp.iinfo(dtype).max).astype(compute_dtype)
+        scale = (orig_max - orig_min) / (int_max - int_min)
+        zero_point = jnp.round(int_min - orig_min / scale)
+        return scale.reshape((1,)).astype(compute_dtype), zero_point.reshape((1,)).astype(compute_dtype)
+
+    if jnp.issubdtype(dtype, jnp.floating):
+        return get_scale(orig_weight, dtype, compute_dtype), None
+    elif jnp.issubdtype(dtype, jnp.integer):
+        if asymmetric:
+            return integer_get_q_params(orig_weight)
+        else:
+            return get_scale(orig_weight, dtype, compute_dtype), None
     else:
         raise ValueError(f"Unsupported dtype: {dtype}")
 
@@ -158,6 +203,8 @@ def print_model(container, max_lines=999999, internal=True, str_length=(0, 0), p
         additional_info += f" min,max={container.min_val.value:9.4g},{container.max_val.value:9.4g}"
     if hasattr(container, "ascale"):
         additional_info += f" a_scale={container.ascale._value}"
+    if hasattr(container, "azero_point"):
+        additional_info += f" a_zero_point={container.azero_point._value}"
     if hasattr(container, "wscale"):
         additional_info += f" w_scale={container.wscale._value}"
     logger.debug(f"{container.__class__.__name__:{str_length[0]}} {path:{str_length[1]}}{additional_info}")

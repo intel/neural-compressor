@@ -91,4 +91,5 @@ def static_quantize(
         qmodel._tracker.lock()
 
     wrapper_cls = WRAPPER_MAPPING.get(qmodel.__class__, KerasQuantizedModelWrapper)
+
     return wrapper_cls(qmodel, quant_config)
