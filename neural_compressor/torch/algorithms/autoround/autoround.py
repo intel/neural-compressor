@@ -142,7 +142,7 @@ class AutoRoundQuantizer(Quantizer):
         self.device = self.accelerator.name()
 
     def _is_w4afp8(self) -> bool:
-        """Return whether the configuration requests W4A FP8 quantization.
+        """Return whether the configuration requests W4AFP8 quantization.
 
         Returns:
             bool: True when using fp8_to_int_sym data type.

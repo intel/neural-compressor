@@ -53,7 +53,13 @@ def dequant_original_fp8_weight_if_needed(mod: torch.nn.Module, param: torch.Ten
     return param
 
 class QuantTensorType(Enum):
-    """Enum describing the type of quantized tensor representation."""
+    """Enum describing the type of quantized tensor representation.
+
+    Attributes:
+        MEASUREMENTS: Tensor values captured from calibration measurements.
+        CONST: Constant quantized tensors derived from stored parameters.
+        DYNAMIC: Dynamically computed quantized tensors at runtime.
+    """
 
     MEASUREMENTS = auto()
     CONST = auto()
@@ -61,7 +67,11 @@ class QuantTensorType(Enum):
 
 
 class ShapeList:
-    """Container for storing a list-like shape payload."""
+    """Container for transporting shape information through format conversions.
+
+    Attributes:
+        data (list[int] | None): Shape dimensions carried with the wrapper.
+    """
 
     data = None
 
@@ -124,8 +134,11 @@ def save_npz(d, fname):
 def load_npz(fname):
     """Load a Python object from a NumPy NPZ archive.
 
+    Warning:
+        NumPy may deserialize pickled objects during load. Only use trusted files.
+
     Args:
-        fname (str): Source file path.
+        fname (str): Source file path to the NPZ archive.
 
     Returns:
         Any: The stored object from the archive.

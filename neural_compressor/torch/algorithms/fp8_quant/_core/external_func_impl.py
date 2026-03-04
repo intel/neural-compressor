@@ -39,7 +39,9 @@ def get_external_column_parallel_collective_func():
     Returns:
         Callable: The tensor-model-parallel all-gather function.
     """
-    assert tensor_model_parallel_all_gather is not None, "Couldn't import function tensor_model_parallel_all_gather from external source"
+    assert (
+        tensor_model_parallel_all_gather is not None
+    ), "Could not import function tensor_model_parallel_all_gather from external source"
     return tensor_model_parallel_all_gather
 
 def get_external_row_parallel_collective_func():
@@ -48,5 +50,7 @@ def get_external_row_parallel_collective_func():
     Returns:
         Callable: The tensor-model-parallel all-reduce function.
     """
-    assert tensor_model_parallel_all_reduce is not None, "Couldn't import function tensor_model_parallel_all_reduce from external source"
+    assert (
+        tensor_model_parallel_all_reduce is not None
+    ), "Could not import function tensor_model_parallel_all_reduce from external source"
     return tensor_model_parallel_all_reduce
