@@ -34,6 +34,7 @@ def add_fp8_support(function):
     """Extend the given size function to support FP8 dtypes."""
 
     def wrapper(dtype):
+        """Return dtype size in bits with added FP8 support."""
         q_dtypes = ["float8_e4m3fn", "float8_e4m3", "float8_e5m2"]
         if dtype in q_dtypes:
             return 8
@@ -62,6 +63,14 @@ def register_algo(name):
     """
 
     def decorator(algo_func):
+        """Register an algorithm implementation in the global mapping.
+
+        Args:
+            algo_func (Callable): Algorithm implementation to register.
+
+        Returns:
+            Callable: The original algorithm function.
+        """
         algos_mapping[name] = algo_func
         return algo_func
 
@@ -69,14 +78,24 @@ def register_algo(name):
 
 
 def get_quantize_fun(dtype=ml_dtypes.float8_e4m3):
+    """Return a quantization function for the requested dtype.
+
+    Args:
+        dtype: Target quantized dtype.
+
+    Returns:
+        Callable: Function that quantizes a tensor with the provided scale.
+    """
     @partial(jax.lax.composite, name="inc.quantize_fp8")
     def quantize_tensor_float(x, scale):
+        """Quantize floating-point tensors using clamping."""
         return jax.lax.clamp(
             jnp.finfo(dtype).min.astype(x.dtype), x / scale, jnp.finfo(dtype).max.astype(x.dtype)
         ).astype(dtype)
 
     @partial(jax.lax.composite, name="inc.quantize_int8")
     def quantize_tensor_int(x, scale):
+        """Quantize integer tensors using rounding and clipping."""
         return jnp.clip(jnp.round(x / scale), jnp.iinfo(dtype).min, jnp.iinfo(dtype).max).astype(dtype)
 
     if jnp.issubdtype(dtype, jnp.floating):
@@ -88,17 +107,37 @@ def get_quantize_fun(dtype=ml_dtypes.float8_e4m3):
 
 
 def get_dequantize_fun(dtype=jnp.float32):
+    """Return a dequantization function for the requested dtype.
+
+    Args:
+        dtype: Target dequantized dtype.
+
+    Returns:
+        Callable: Function that dequantizes a tensor with the provided scale.
+    """
     @partial(jax.lax.composite, name="inc.dequantize")
     def dequantize(x, scale):
+        """Dequantize a tensor by applying the scale."""
         return x.astype(dtype) * scale
 
     return dequantize
 
 
 def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32):
+    """Compute the quantization scale for a weight tensor.
+
+    Args:
+        orig_weight: Weight tensor to analyze.
+        dtype: Target quantized dtype.
+        compute_dtype: dtype for scale computation.
+
+    Returns:
+        jnp.ndarray: Computed scale tensor.
+    """
     # fp8 quantization
     @partial(jax.lax.composite, name="inc.get_scale_fp8")
     def float_get_scale(orig_weight):
+        """Compute scale for floating-point quantization."""
         if 0 in orig_weight.shape:
             # For empty tensor, return scale as 1.0
             return jnp.array(1.0, dtype=compute_dtype)
@@ -110,6 +149,7 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
 
     @partial(jax.lax.composite, name="inc.get_scale_int")
     def integer_get_scale(orig_weight):
+        """Compute scale for integer quantization."""
         return (jnp.max(jnp.abs(orig_weight), keepdims=True) / jnp.iinfo(dtype).max).reshape((1,)).astype(compute_dtype)
 
     if jnp.issubdtype(dtype, jnp.floating):
@@ -131,6 +171,7 @@ def print_model(container, max_lines=999999, internal=True, str_length=(0, 0), p
     """
 
     def get_str_length(container, max_long=(0, 0), path=""):
+        """Compute maximum string lengths for aligned model printing."""
         current = (len(container.__class__.__name__), len(path))
         max_long = (max(current[0], max_long[0]), max(current[1], max_long[1]))
         if hasattr(container, "_layers"):
@@ -189,6 +230,7 @@ def causal_lm_make_replace_generate_function(self, revert=False):
 
     @partial(jax.jit, static_argnames=["stop_token_ids"])
     def compiled_generate_function(inputs, stop_token_ids, state):
+        """JIT-compiled generate function for calibration-friendly state handling."""
         (
             sampler_variables,
             trainable_variables,
@@ -218,6 +260,7 @@ def causal_lm_make_replace_generate_function(self, revert=False):
         inputs,
         stop_token_ids=None,
     ):
+        """Wrapper around generate_step to preserve variable state."""
         if isinstance(stop_token_ids, list):
             stop_token_ids = tuple(stop_token_ids)
 
@@ -255,7 +298,16 @@ def causal_lm_make_replace_generate_function(self, revert=False):
 
 
 def iterate_over_layers(model, operations, /, *, filter_function: Optional[Callable] = lambda _: True):
+    """Apply operations to model layers matching the filter function.
 
+    Args:
+        model: Keras model with a _flatten_layers iterator.
+        operations (Iterable[Callable]): Operations to apply to each layer.
+        filter_function (Callable, optional): Predicate to select layers. Defaults to always True.
+
+    Returns:
+        The original model after operations have been applied.
+    """
     for layer in model._flatten_layers():
 
         if filter_function(layer.__class__):

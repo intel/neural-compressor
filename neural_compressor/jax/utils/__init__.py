@@ -1,3 +1,5 @@
+"""JAX utility exports for algorithm registration."""
+
 # Copyright (c) 2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

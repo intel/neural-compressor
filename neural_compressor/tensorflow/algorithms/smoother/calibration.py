@@ -125,6 +125,7 @@ class SmoothQuantCalibration:
                     # sometimes the input_tensor is not the same order with inputs
                     # we should check and pair them
                     def check_shape(tensor, data):
+                        """Validate that a tensor shape matches the sample data."""
                         # scalar or 1 dim default True
                         if (
                             tensor.shape is None
@@ -451,6 +452,7 @@ class SmoothQuantCalibrationLLM(SmoothQuantCalibration):
         del sampling_graph_def
 
     def _get_weight_tensors(self):
+        """Load and cache weight tensors needed for smooth quantization."""
         model = load.load(self.model, [tag_constants.SERVING])
         for weight_tensor in model.variables:
             parsed_name = self.weight_name_mapping(weight_tensor.name)

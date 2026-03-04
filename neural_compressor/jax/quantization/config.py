@@ -118,11 +118,27 @@ class DynamicQuantConfig(BaseConfig):
 
     @classmethod
     def from_json_string(cls, json_string: str) -> "DynamicQuantConfig":
+        """Create a DynamicQuantConfig from a JSON string.
+
+        Args:
+            json_string (str): JSON string describing the config.
+
+        Returns:
+            DynamicQuantConfig: Parsed configuration instance.
+        """
         cfg = json.loads(json_string)
         return cls.from_dict(cfg)
 
     @classmethod
     def from_dict(cls, config_dict: Dict) -> "DynamicQuantConfig":
+        """Create a DynamicQuantConfig from a dictionary.
+
+        Args:
+            config_dict (Dict): Configuration fields.
+
+        Returns:
+            DynamicQuantConfig: Parsed configuration instance.
+        """
         weight_dtype = config_dict.get("weight_dtype", "fp8_e4m3")
         activation_dtype = config_dict.get("activation_dtype", "fp8_e4m3")
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
@@ -205,11 +221,27 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def from_json_string(cls, json_string: str) -> "StaticQuantConfig":
+        """Create a StaticQuantConfig from a JSON string.
+
+        Args:
+            json_string (str): JSON string describing the config.
+
+        Returns:
+            StaticQuantConfig: Parsed configuration instance.
+        """
         cfg = json.loads(json_string)
         return cls.from_dict(cfg)
 
     @classmethod
     def from_dict(cls, config_dict: Dict) -> "StaticQuantConfig":
+        """Create a StaticQuantConfig from a dictionary.
+
+        Args:
+            config_dict (Dict): Configuration fields.
+
+        Returns:
+            StaticQuantConfig: Parsed configuration instance.
+        """
         weight_dtype = config_dict.get("weight_dtype", "fp8_e5m2")
         activation_dtype = config_dict.get("activation_dtype", "fp8_e5m2")
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)

@@ -1,3 +1,5 @@
+"""Static quantized layer implementations for JAX-backed Keras models."""
+
 # Copyright (c) 2025-2026 Intel Corporation
 #
 # Portions of this code are derived from:
@@ -43,6 +45,14 @@ def register_static_quantized_layer(clso):
     """Register quantized layer class for original layer class."""
 
     def decorator(cls):
+        """Attach the quantized class to the static mapping.
+
+        Args:
+            cls: Quantized layer class to register.
+
+        Returns:
+            The same class, for decorator chaining.
+        """
         static_quant_mapping[clso] = cls
         return cls
 
@@ -50,7 +60,10 @@ def register_static_quantized_layer(clso):
 
 
 class MinMaxObserver(keras.layers.Layer):
+    """Observer that tracks running min/max values for calibration."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize the min/max observer layer."""
         super().__init__(*args, **kwargs, name="min_max")
         # Track running min/max as non-trainable weights
         self.min_val = self.add_weight(
@@ -62,6 +75,15 @@ class MinMaxObserver(keras.layers.Layer):
         self.supports_masking = True
 
     def call(self, inputs, mask=None):
+        """Update min/max statistics during calibration.
+
+        Args:
+            inputs: Input tensor to observe.
+            mask: Optional mask to ignore padded elements.
+
+        Returns:
+            The original inputs for passthrough.
+        """
         if 0 not in inputs.shape:
             if mask is not None:
                 # Expand mask to match input dimensions if needed
@@ -82,18 +104,24 @@ class MinMaxObserver(keras.layers.Layer):
         return inputs
 
     def build(self, input_shape):
+        """Override build with no additional variables."""
         pass
 
     def get_calibrated_range(self):
+        """Return the calibrated min/max range as a tensor."""
         return ops.array((self.min_val, self.max_val))
 
 
 class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
+    """Layer that applies static quantize-dequantize to activations."""
+
     def __init__(self, *args, **kwargs):
+        """Initialize the static QDQ layer."""
         super().__init__(*args, **kwargs)
         self.supports_masking = True
 
     def call(self, inputs, mask=None):
+        """Apply calibration observer or quantized activation path."""
         if not self._is_quantized:
             x = self.input_observer(inputs, mask=mask)
             return x
@@ -104,6 +132,7 @@ class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
 
     @classmethod
     def prepare(cls, orig, activation_dtype):
+        """Convert a layer instance into a static QDQ layer."""
         orig._tracker.unlock()
         orig.__class__ = cls
         orig.activation_dtype = activation_dtype
@@ -112,6 +141,7 @@ class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
         return orig
 
     def post_quantization_cleanup(self):
+        """Remove observer layers after conversion."""
         self._tracker.unlock()
         if hasattr(self, "_layers") and hasattr(self, "input_observer"):
             if self.input_observer in self._layers:
@@ -121,6 +151,7 @@ class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
         self._tracker.lock()
 
     def convert(self):
+        """Compute activation scale and finalize static quantization."""
         self._tracker.unlock()
         arange = self.input_observer.get_calibrated_range()
         ascale = get_scale(arange, self.activation_dtype)
@@ -136,6 +167,7 @@ class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
         self._tracker.lock()
 
     def add_variables(self):
+        """Create quantization variables and helper functions."""
         self._tracker.unlock()
         self.ascale = self.add_weight(
             name="activation_scale",
@@ -150,15 +182,18 @@ class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
         self._tracker.lock()
 
     def add_observers(self):
+        """Attach observer layers for calibration."""
         self._tracker.unlock()
         self.input_observer = MinMaxObserver()
         self._tracker.lock()
 
 
 class QStaticDenseMixin(SaveableLayerMixin):
+    """Mixin that adds static quantization to dense-like layers."""
 
     @classmethod
     def prepare(cls, orig, weight_dtype, activation_dtype):
+        """Convert a dense-like layer instance for static quantization."""
         orig._tracker.unlock()
         orig.__class__ = cls
         orig.weight_dtype = weight_dtype
@@ -169,6 +204,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
         return orig
 
     def add_variables(self):
+        """Create quantization variables for activations and weights."""
         self._tracker.unlock()
 
         self.ascale = self.add_weight(
@@ -204,6 +240,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
+        """Remove original weights and observers after conversion."""
         self._tracker.unlock()
         if hasattr(self, "_kernel") and self._kernel in self._trainable_variables:
             self._trainable_variables.remove(self._kernel)
@@ -219,11 +256,13 @@ class QStaticDenseMixin(SaveableLayerMixin):
         self._tracker.lock()
 
     def add_observers(self):
+        """Attach observer layers for calibration."""
         self._tracker.unlock()
         self.input_observer = MinMaxObserver()
         self._tracker.lock()
 
     def convert(self):
+        """Compute activation/weight scales and quantize weights."""
         self._tracker.unlock()
         arange = self.input_observer.get_calibrated_range()
         ascale = get_scale(arange, self.activation_dtype)
@@ -245,6 +284,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
 
     @property
     def kernel(self):
+        """Return the dequantized kernel tensor."""
         if self._is_quantized:
             w = self.wdequantfun(self.w.value, self.wscale.value)
             return w
@@ -252,11 +292,13 @@ class QStaticDenseMixin(SaveableLayerMixin):
         return ret.value
 
     def call(self, inputs, training=None):
+        """Run calibration observer before the dense computation."""
         x = self.input_observer(inputs)
         x = super().call(x, training=training)
         return x
 
     def call_quantized(self, inputs, training=None):
+        """Run the quantized dense computation."""
         ascale = self.ascale.value
         x = self.aquantfun(inputs, ascale)
         x = self.adequantfun(x, ascale)
@@ -266,6 +308,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
 
 @register_static_quantized_layer(keras.layers.Dense)
 class QStaticDense(QStaticDenseMixin, keras.layers.Dense):
+    """Statically quantized Dense layer."""
     pass
 
 
@@ -274,6 +317,7 @@ verify_api(Dense, QStaticDense, "call")
 
 @register_static_quantized_layer(EinsumDense)
 class QStaticEinsumDense(QStaticDenseMixin, EinsumDense):
+    """Statically quantized EinsumDense layer."""
     pass
 
 
@@ -282,8 +326,11 @@ verify_api(EinsumDense, QStaticEinsumDense, "call")
 
 @register_static_quantized_layer(MultiHeadAttention)
 class QStaticMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
+    """Statically quantized MultiHeadAttention layer."""
+
     @classmethod
     def prepare(cls, orig, weight_dtype, activation_dtype):
+        """Convert a MultiHeadAttention instance for static quantization."""
         orig._tracker.unlock()
         orig.__class__ = cls
         orig.q_qdq = StaticQDQLayer.prepare(StaticQDQLayer(name="q_qdq"), activation_dtype)
@@ -295,18 +342,21 @@ class QStaticMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
         return orig
 
     def add_variables(self):
+        """Create quantization variables for activation QDQ."""
         self.q_qdq.add_variables()
         self.k_qdq.add_variables()
         self.a_qdq.add_variables()
         self.v_qdq.add_variables()
 
     def add_observers(self):
+        """Attach observer layers for calibration."""
         self.q_qdq.add_observers()
         self.k_qdq.add_observers()
         self.a_qdq.add_observers()
         self.v_qdq.add_observers()
 
     def post_quantization_cleanup(self):
+        """Finalize static quantization and mark the layer as quantized."""
         self._tracker.unlock()
         self.q_qdq.post_quantization_cleanup()
         self.k_qdq.post_quantization_cleanup()
@@ -316,6 +366,7 @@ class QStaticMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
         self._tracker.lock()
 
     def convert(self):
+        """Convert observer statistics into quantization parameters."""
         self.q_qdq.convert()
         self.k_qdq.convert()
         self.a_qdq.convert()
@@ -435,8 +486,11 @@ verify_api(MultiHeadAttention, QStaticMultiHeadAttention, "_compute_attention")
 
 @register_static_quantized_layer(CachedGemma3Attention)
 class QStaticCachedGemma3Attention(CachedGemma3Attention, SaveableLayerMixin):
+    """Statically quantized CachedGemma3Attention layer."""
+
     @classmethod
     def prepare(cls, orig, weight_dtype, activation_dtype):
+        """Convert a CachedGemma3Attention instance for static quantization."""
         orig._tracker.unlock()
         orig.__class__ = cls
         orig.q_qdq = StaticQDQLayer.prepare(StaticQDQLayer(name="q_qdq"), activation_dtype)
@@ -450,18 +504,21 @@ class QStaticCachedGemma3Attention(CachedGemma3Attention, SaveableLayerMixin):
         return orig
 
     def add_variables(self):
+        """Create quantization variables for activation QDQ."""
         self.q_qdq.add_variables()
         self.k_qdq.add_variables()
         self.attention_softmax_qdq.add_variables()
         self.v_qdq.add_variables()
 
     def add_observers(self):
+        """Attach observer layers for calibration."""
         self.q_qdq.add_observers()
         self.k_qdq.add_observers()
         self.attention_softmax_qdq.add_observers()
         self.v_qdq.add_observers()
 
     def post_quantization_cleanup(self):
+        """Finalize static quantization and mark the layer as quantized."""
         self._tracker.unlock()
         self.q_qdq.post_quantization_cleanup()
         self.k_qdq.post_quantization_cleanup()
@@ -471,6 +528,7 @@ class QStaticCachedGemma3Attention(CachedGemma3Attention, SaveableLayerMixin):
         self._tracker.lock()
 
     def convert(self):
+        """Convert observer statistics into quantization parameters."""
         self.q_qdq.convert()
         self.k_qdq.convert()
         self.attention_softmax_qdq.convert()
@@ -485,6 +543,7 @@ class QStaticCachedGemma3Attention(CachedGemma3Attention, SaveableLayerMixin):
         training=False,
         cache_update_index=0,
     ):
+        """Compute attention with static activation quantization."""
         if self.query_head_dim_normalize:
             query_normalization = 1 / np.sqrt(self.head_dim)
         else:
@@ -543,8 +602,11 @@ verify_api(CachedGemma3Attention, QStaticCachedGemma3Attention, "_compute_attent
 
 @register_static_quantized_layer(Gemma3VisionAttention)
 class QStaticGemma3VisionAttention(Gemma3VisionAttention, SaveableLayerMixin):
+    """Statically quantized Gemma3VisionAttention layer."""
+
     @classmethod
     def prepare(cls, orig, weight_dtype, activation_dtype):
+        """Convert a Gemma3VisionAttention instance for static quantization."""
         orig._tracker.unlock()
         orig.__class__ = cls
         orig.query_qdq = StaticQDQLayer.prepare(StaticQDQLayer(name="query_qdq"), activation_dtype)
@@ -558,18 +620,21 @@ class QStaticGemma3VisionAttention(Gemma3VisionAttention, SaveableLayerMixin):
         return orig
 
     def add_variables(self):
+        """Create quantization variables for activation QDQ."""
         self.query_qdq.add_variables()
         self.key_qdq.add_variables()
         self.dropout_attention_probs_qdq.add_variables()
         self.value_qdq.add_variables()
 
     def add_observers(self):
+        """Attach observer layers for calibration."""
         self.query_qdq.add_observers()
         self.key_qdq.add_observers()
         self.dropout_attention_probs_qdq.add_observers()
         self.value_qdq.add_observers()
 
     def post_quantization_cleanup(self):
+        """Finalize static quantization and mark the layer as quantized."""
         self._tracker.unlock()
         self.query_qdq.post_quantization_cleanup()
         self.key_qdq.post_quantization_cleanup()
@@ -579,6 +644,7 @@ class QStaticGemma3VisionAttention(Gemma3VisionAttention, SaveableLayerMixin):
         self._tracker.lock()
 
     def convert(self):
+        """Convert observer statistics into quantization parameters."""
         self.query_qdq.convert()
         self.key_qdq.convert()
         self.dropout_attention_probs_qdq.convert()
@@ -591,6 +657,7 @@ class QStaticGemma3VisionAttention(Gemma3VisionAttention, SaveableLayerMixin):
         return_attention_scores=None,
         training=False,
     ):
+        """Compute vision attention with static activation quantization."""
         batch_size = ops.shape(x)[0]
         mixed_query_layer = self.query_proj(inputs=x)
         mixed_key_layer = self.key_proj(inputs=x)
@@ -637,8 +704,11 @@ verify_api(Gemma3VisionAttention, QStaticGemma3VisionAttention, "call")
 
 # @register_static_quantized_layer(RotaryEmbedding)
 class QStaticRotaryEmbedding(RotaryEmbedding, SaveableLayerMixin):
+    """Statically quantized RotaryEmbedding layer."""
+
     @classmethod
     def prepare(cls, orig, weight_dtype, activation_dtype):
+        """Convert a RotaryEmbedding instance for static quantization."""
         orig._tracker.unlock()
         orig.__class__ = cls
         orig.positions_qdq = StaticQDQLayer.prepare(StaticQDQLayer(name="positions_qdq"), activation_dtype)
@@ -648,14 +718,17 @@ class QStaticRotaryEmbedding(RotaryEmbedding, SaveableLayerMixin):
         return orig
 
     def add_variables(self):
+        """Create quantization variables for activation QDQ."""
         self.positions_qdq.add_variables()
         self.inverse_freq_qdq.add_variables()
 
     def add_observers(self):
+        """Attach observer layers for calibration."""
         self.positions_qdq.add_observers()
         self.inverse_freq_qdq.add_observers()
 
     def post_quantization_cleanup(self):
+        """Finalize static quantization and mark the layer as quantized."""
         self._tracker.unlock()
         self.positions_qdq.post_quantization_cleanup()
         self.inverse_freq_qdq.post_quantization_cleanup()
@@ -663,10 +736,12 @@ class QStaticRotaryEmbedding(RotaryEmbedding, SaveableLayerMixin):
         self._tracker.lock()
 
     def convert(self):
+        """Convert observer statistics into quantization parameters."""
         self.positions_qdq.convert()
         self.inverse_freq_qdq.convert()
 
     def _compute_cos_sin_embedding(self, inputs, start_index=0, positions=None):
+        """Compute cosine/sine embeddings with quantized inputs."""
         feature_axis = len(inputs.shape) - 1
         sequence_axis = 1
 
@@ -702,8 +777,11 @@ class QStaticRotaryEmbedding(RotaryEmbedding, SaveableLayerMixin):
 
 @register_static_quantized_layer(ReversibleEmbedding)
 class QStaticReversibleEmbedding(ReversibleEmbedding, SaveableLayerMixin):
+    """Statically quantized ReversibleEmbedding layer."""
+
     @classmethod
     def prepare(cls, orig, weight_dtype, activation_dtype):
+        """Convert a ReversibleEmbedding instance for static quantization."""
         orig._tracker.unlock()
         orig.__class__ = cls
         orig.inputs_qdq = StaticQDQLayer.prepare(StaticQDQLayer(name="inputs_qdq"), activation_dtype)
@@ -713,14 +791,17 @@ class QStaticReversibleEmbedding(ReversibleEmbedding, SaveableLayerMixin):
         return orig
 
     def add_variables(self):
+        """Create quantization variables for activation QDQ."""
         self.inputs_qdq.add_variables()
         self.kernel_qdq.add_variables()
 
     def add_observers(self):
+        """Attach observer layers for calibration."""
         self.inputs_qdq.add_observers()
         self.kernel_qdq.add_observers()
 
     def post_quantization_cleanup(self):
+        """Finalize static quantization and mark the layer as quantized."""
         self._tracker.unlock()
         self.inputs_qdq.post_quantization_cleanup()
         self.kernel_qdq.post_quantization_cleanup()
@@ -728,11 +809,13 @@ class QStaticReversibleEmbedding(ReversibleEmbedding, SaveableLayerMixin):
         self._tracker.lock()
 
     def convert(self):
+        """Convert observer statistics into quantization parameters."""
         # TODO maybe make kernel (offline) quantization for reversible embedding (self.embeddings in our path) ?
         self.inputs_qdq.convert()
         self.kernel_qdq.convert()
 
     def call(self, inputs, reverse=False):
+        """Compute forward or reverse embedding with static quantization."""
         if reverse:
             if self.tie_weights:
                 kernel = ops.transpose(ops.convert_to_tensor(self.embeddings))

@@ -1,3 +1,5 @@
+"""Serialization helpers for JAX quantized Keras models."""
+
 # Copyright (c) 2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -68,16 +70,28 @@ def quant_config_from_json_object(json_obj: dict) -> BaseConfig:
 
 
 class VersionManager:
+    """Handle version metadata for serialized quantized models."""
+
     _MODULES = ["neural_compressor_jax", "keras", "keras_hub"]
 
     @classmethod
     def add_versions(cls, config):
+        """Insert package versions into the serialized config.
+
+        Args:
+            config (dict): Configuration dictionary to update in-place.
+        """
         config["_versions"] = {}
         for package in cls._MODULES:
             config["_versions"][package] = importlib_metadata.version(package)
 
     @classmethod
     def check_versions_mismatch(cls, config):
+        """Check for version mismatches between saved and current packages.
+
+        Args:
+            config (dict): Configuration dictionary that may include version metadata.
+        """
         versions = config.get("_versions")
         if versions is None:
             logger.error(
@@ -94,7 +108,14 @@ class VersionManager:
 
 
 class SaveableLayerMixin:
+    """Mixin for saving and loading quantized layer variables."""
+
     def save_own_variables(self, store):
+        """Save layer variables into the provided store.
+
+        Args:
+            store (dict): Mutable mapping to receive serialized variables.
+        """
         weight_dtype = getattr(self, "weight_dtype", None)
         for var in self._trainable_variables + self._non_trainable_variables:
             is_one_byte_format = dtype_utils.dtype_size(var.dtype) == 8
@@ -106,6 +127,11 @@ class SaveableLayerMixin:
             store[var.name] = value_to_save
 
     def load_own_variables(self, store):
+        """Load layer variables from the provided store.
+
+        Args:
+            store (dict): Mapping containing serialized variables.
+        """
         weight_dtype = getattr(self, "weight_dtype", None)
         for var in self._trainable_variables + self._non_trainable_variables:
             value_to_load = store[var.name]
@@ -117,7 +143,10 @@ class SaveableLayerMixin:
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
 class KerasQuantizedModelBackboneWrapper(Backbone):
+    """Wrapper that preserves quantization config when saving Keras backbones."""
+
     def __init__(self, model, quant_config: Optional[BaseConfig] = None):
+        """Initialize the wrapper around a backbone model."""
         object.__setattr__(self, "_wrapped_model", model)
         object.__setattr__(
             self,
@@ -138,26 +167,31 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
         object.__setattr__(self, "_quant_config", quant_config)
 
     def __getattribute__(self, name):
+        """Delegate attribute access to the wrapped model."""
         if name in object.__getattribute__(self, "fields"):
             return object.__getattribute__(self, name)
         return object.__getattribute__(self, "_wrapped_model").__getattribute__(name)
 
     def __setattr__(self, name, value):
+        """Delegate attribute updates to the wrapped model."""
         if name in object.__getattribute__(self, "fields"):
             return object.__setattr__(self, name, value)
         return object.__getattribute__(self, "_wrapped_model").__setattr__(name, value)
 
     def get_config(self):
+        """Serialize the wrapper configuration for Keras saving."""
         config = super().get_config()
         config["_quant_config"] = quant_config_to_json_object(self._quant_config)
         config["_wrapped_model"] = keras.saving.serialize_keras_object(self._wrapped_model)
         return config
 
     def __new__(cls, *args, **kwargs):
+        """Bypass BaseModel __new__ to allow manual initialization."""
         return object.__new__(cls)
 
     @classmethod
     def from_config(cls, config):
+        """Recreate a wrapper from a serialized config dictionary."""
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
         quant_config_json = config.get("_quant_config")
         quant_config = quant_config_from_json_object(quant_config_json)
@@ -179,10 +213,12 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
 class KerasQuantizedModelWrapper(Task):
+    """Wrapper that preserves quantization config for Keras tasks."""
 
     backbone_cls = KerasQuantizedModelBackboneWrapper
 
     def __init__(self, model, quant_config: Optional[BaseConfig] = None):
+        """Initialize the wrapper around a task model."""
         object.__setattr__(self, "_wrapped_model", model)
         object.__setattr__(
             self,
@@ -202,16 +238,19 @@ class KerasQuantizedModelWrapper(Task):
         object.__setattr__(self, "_quant_config", quant_config)
 
     def __getattribute__(self, name):
+        """Delegate attribute access to the wrapped model."""
         if name in object.__getattribute__(self, "fields"):
             return object.__getattribute__(self, name)
         return object.__getattribute__(self, "_wrapped_model").__getattribute__(name)
 
     def __setattr__(self, name, value):
+        """Delegate attribute updates to the wrapped model."""
         if name in object.__getattribute__(self, "fields"):
             return object.__setattr__(self, name, value)
         return object.__getattribute__(self, "_wrapped_model").__setattr__(name, value)
 
     def get_config(self):
+        """Serialize the wrapper configuration for Keras saving."""
         config = super().get_config()
         VersionManager.add_versions(config)
         config["_quant_config"] = quant_config_to_json_object(self._quant_config)
@@ -227,10 +266,12 @@ class KerasQuantizedModelWrapper(Task):
         return config
 
     def __new__(cls, *args, **kwargs):
+        """Bypass BaseModel __new__ to allow manual initialization."""
         return object.__new__(cls)
 
     @classmethod
     def from_config(cls, config):
+        """Recreate a wrapper from a serialized config dictionary."""
         VersionManager.check_versions_mismatch(config)
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
         quant_config_json = config.get("_quant_config")
@@ -254,16 +295,19 @@ class KerasQuantizedModelWrapper(Task):
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
 class KerasQuantizedGemmaWrapper(KerasQuantizedModelWrapper, Gemma3CausalLM):
+    """Quantized wrapper for Gemma3CausalLM models."""
     backbone_cls = KerasQuantizedModelBackboneWrapper
 
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
 class KerasQuantizedViTWrapper(KerasQuantizedModelWrapper, ViTImageClassifier):
+    """Quantized wrapper for ViTImageClassifier models."""
     backbone_cls = KerasQuantizedModelBackboneWrapper
 
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
 class KerasQuantizedTokenizerWrapper(KerasQuantizedModelWrapper, Gemma3Tokenizer):
+    """Quantized wrapper for Gemma3Tokenizer models."""
     backbone_cls = KerasQuantizedModelBackboneWrapper
 
 
