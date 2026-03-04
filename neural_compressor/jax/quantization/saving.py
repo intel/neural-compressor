@@ -165,7 +165,7 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
             quant_config (Optional[BaseConfig]): Quantization configuration.
 
         Returns:
-            None.
+            None: Initializes the wrapper.
         """
         object.__setattr__(self, "_wrapped_model", model)
         object.__setattr__(
@@ -282,7 +282,7 @@ class KerasQuantizedModelWrapper(Task):
             quant_config (Optional[BaseConfig]): Quantization configuration.
 
         Returns:
-            None.
+            None: Initializes the wrapper.
         """
         object.__setattr__(self, "_wrapped_model", model)
         object.__setattr__(
