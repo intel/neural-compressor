@@ -1,3 +1,5 @@
+"""Scale loading helpers for FP8 quantization preparation."""
+
 # Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -23,8 +25,41 @@ import torch
 
 
 
-def load_layer_scales(mod, mod_name, config, mod_type_str, measurement, scales, scale_file, scales_file_format,
-                      scales_obj, scaling_method_config, scale_config, save_file, scale_method_config_by_mod_map):
+def load_layer_scales(
+    mod,
+    mod_name,
+    config,
+    mod_type_str,
+    measurement,
+    scales,
+    scale_file,
+    scales_file_format,
+    scales_obj,
+    scaling_method_config,
+    scale_config,
+    save_file,
+    scale_method_config_by_mod_map,
+):
+    """Load or calculate scales for a module and build quant-dequant configs.
+
+    Args:
+        mod (torch.nn.Module): Target module.
+        mod_name (str): Qualified module name.
+        config: Quantization configuration object.
+        mod_type_str (str): Module type identifier string.
+        measurement (dict): Measurements collected during calibration.
+        scales (dict): Cached module scale configurations.
+        scale_file (str | None): Optional path to persist scale data.
+        scales_file_format (type): File format for serialized scales.
+        scales_obj (dict): Cache of serialized scale objects.
+        scaling_method_config: Scaling method configuration.
+        scale_config: Scale configuration object.
+        save_file (bool): Flag indicating whether to write updated scales to disk.
+        scale_method_config_by_mod_map (dict): Output map for per-module method configs.
+
+    Returns:
+        tuple[ModuleExtraConfig | None, bool]: The module extra config and updated save flag.
+    """
     module_type = mod_default_dict[mod_type_str].type
     logger.debug(
         "Preparing quantization functions for module %s module_type=%s",

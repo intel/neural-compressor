@@ -50,15 +50,14 @@ def preprocess_quant_config(model, quant_config, mode="prepare", example_inputs=
     """Preprocess the quantization configuration.
 
     Args:
-        model: a float model to be quantized.
-        quant_config: a quantization configuration.
-        mode (str, optional): Which mode is in use currently. Defaults to "prepare".
-        run_fn: a calibration function for calibrating the model. Defaults to None.
-        example_inputs: used to trace torch model.
+        model (torch.nn.Module): Float model to be quantized.
+        quant_config (BaseConfig | dict): Quantization configuration or configuration dictionary.
+        mode (str, optional): Quantization mode to prepare for. Defaults to "prepare".
+        example_inputs (Any, optional): Example inputs for tracing the model. Defaults to None.
+        run_fn (Callable | None): Calibration function for collecting statistics. Defaults to None.
 
     Returns:
-        model: model to be quantized.
-        OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
+        tuple[torch.nn.Module, dict]: Updated model and configuration mapping.
     """
     registered_configs = config_registry.get_cls_configs()
     if isinstance(quant_config, dict):

@@ -23,6 +23,11 @@ import torch
 
 @lru_cache(None)
 def _is_auto_round_available():
+    """Check whether the AutoRound package is importable.
+
+    Returns:
+        bool: True when the auto_round package can be imported.
+    """
     try:
         import auto_round  # pylint: disable=E0401
     except ImportError:
@@ -137,6 +142,11 @@ class AutoRoundQuantizer(Quantizer):
         self.device = self.accelerator.name()
 
     def _is_w4afp8(self) -> bool:
+        """Return whether the configuration requests W4A FP8 quantization.
+
+        Returns:
+            bool: True when using fp8_to_int_sym data type.
+        """
         return self.data_type == "fp8_to_int_sym"
 
     def prepare(self, model: torch.nn.Module, *args, **kwargs):

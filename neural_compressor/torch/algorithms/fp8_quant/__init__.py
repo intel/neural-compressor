@@ -1,3 +1,5 @@
+"""Public entry points for the FP8 quantization algorithm."""
+
 # Copyright (c) 2024 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");

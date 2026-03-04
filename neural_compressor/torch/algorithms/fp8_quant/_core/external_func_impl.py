@@ -1,3 +1,5 @@
+"""External distributed collective function import helpers."""
+
 # Copyright (c) 2025 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -32,9 +34,19 @@ except ImportError:
         tensor_model_parallel_all_reduce = None
 
 def get_external_column_parallel_collective_func():
+    """Return the column-parallel all-gather collective from external runtime.
+
+    Returns:
+        Callable: The tensor-model-parallel all-gather function.
+    """
     assert tensor_model_parallel_all_gather is not None, "Couldn't import function tensor_model_parallel_all_gather from external source"
     return tensor_model_parallel_all_gather
 
 def get_external_row_parallel_collective_func():
+    """Return the row-parallel all-reduce collective from external runtime.
+
+    Returns:
+        Callable: The tensor-model-parallel all-reduce function.
+    """
     assert tensor_model_parallel_all_reduce is not None, "Couldn't import function tensor_model_parallel_all_reduce from external source"
     return tensor_model_parallel_all_reduce
