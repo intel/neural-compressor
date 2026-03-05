@@ -1,0 +1,54 @@
+neural_compressor.jax.quantization.quantize
+===========================================
+
+.. py:module:: neural_compressor.jax.quantization.quantize
+
+.. autoapi-nested-parse::
+
+   Intel Neural Compressor JAX quantization base API.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.jax.quantization.quantize.need_apply
+   neural_compressor.jax.quantization.quantize.quantize_model
+
+
+Module Contents
+---------------
+
+.. py:function:: need_apply(configs_mapping: Dict[Tuple[str, callable], neural_compressor.common.base_config.BaseConfig], algo_name)
+
+   Determine whether a quantization algorithm should be applied.
+
+   :param configs_mapping: Mapping of layer identifiers to configs.
+   :type configs_mapping: Dict[Tuple[str, callable], BaseConfig]
+   :param algo_name: Algorithm name to check.
+   :type algo_name: str
+
+   :returns: True if any config matches the algorithm name.
+   :rtype: bool
+
+
+.. py:function:: quantize_model(model: keras.Model, quant_config: neural_compressor.common.base_config.BaseConfig, calib_function: Callable = None, inplace: bool = True)
+
+   Return a quantized Keras model according to the given configuration.
+
+   :param model: FP32 Keras model to be quantized.
+   :type model: keras.Model
+   :param quant_config: Quantization configuration.
+   :type quant_config: BaseConfig
+   :param calib_function: Function used for model calibration, required for static quantization.
+   :type calib_function: Callable, optional
+   :param inplace: When True, the original model is modified in-place and should not be used afterward. A value of
+                   False is not yet supported.
+   :type inplace: bool
+
+   :returns: The quantized model.
+   :rtype: keras.Model
+
+

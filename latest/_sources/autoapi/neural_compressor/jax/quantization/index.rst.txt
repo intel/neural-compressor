@@ -1,0 +1,24 @@
+neural_compressor.jax.quantization
+==================================
+
+.. py:module:: neural_compressor.jax.quantization
+
+.. autoapi-nested-parse::
+
+   Public JAX quantization API exports.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/jax/quantization/config/index
+   /autoapi/neural_compressor/jax/quantization/layers_dynamic/index
+   /autoapi/neural_compressor/jax/quantization/layers_static/index
+   /autoapi/neural_compressor/jax/quantization/quantize/index
+   /autoapi/neural_compressor/jax/quantization/saving/index
+
+

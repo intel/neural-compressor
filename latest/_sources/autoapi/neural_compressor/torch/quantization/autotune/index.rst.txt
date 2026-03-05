@@ -42,9 +42,9 @@ Module Contents
 
    The main entry of auto-tune.
 
-   :param model: _description_
+   :param model: The model to be quantized.
    :type model: torch.nn.Module
-   :param tune_config: _description_
+   :param tune_config: The configuration for the auto-tuning process.
    :type tune_config: TuningConfig
    :param eval_fn: for evaluation of quantized models.
    :type eval_fn: Callable

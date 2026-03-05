@@ -1,0 +1,104 @@
+neural_compressor.jax.quantization.layers_dynamic
+=================================================
+
+.. py:module:: neural_compressor.jax.quantization.layers_dynamic
+
+.. autoapi-nested-parse::
+
+   Dynamic quantized layer implementations for JAX-backed Keras models.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.jax.quantization.layers_dynamic.DynamicQDQLayer
+   neural_compressor.jax.quantization.layers_dynamic.QDynamicDenseMixin
+   neural_compressor.jax.quantization.layers_dynamic.QDynamicDense
+   neural_compressor.jax.quantization.layers_dynamic.QDynamicEinsumDense
+   neural_compressor.jax.quantization.layers_dynamic.QDynamicMultiHeadAttention
+   neural_compressor.jax.quantization.layers_dynamic.QDynamicCachedGemma3Attention
+   neural_compressor.jax.quantization.layers_dynamic.QDynamicGemma3VisionAttention
+   neural_compressor.jax.quantization.layers_dynamic.QDynamicReversibleEmbedding
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.jax.quantization.layers_dynamic.register_dynamic_quantized_layer
+
+
+Module Contents
+---------------
+
+.. py:function:: register_dynamic_quantized_layer(clso)
+
+   Register quantized layer class for an original layer class.
+
+   :param clso: Original layer class to map to a quantized implementation.
+   :type clso: type
+
+   :returns: Decorator that registers the quantized class.
+   :rtype: Callable
+
+
+.. py:class:: DynamicQDQLayer(name, activation_dtype, asymmetric=False)
+
+
+
+   Layer that applies dynamic quantize-dequantize to activations.
+
+
+.. py:class:: QDynamicDenseMixin
+
+
+
+   Mixin that adds dynamic quantization to dense-like layers.
+
+
+.. py:class:: QDynamicDense
+
+
+
+   Dynamically quantized Dense layer.
+
+
+.. py:class:: QDynamicEinsumDense
+
+
+
+   Dynamically quantized EinsumDense layer.
+
+
+.. py:class:: QDynamicMultiHeadAttention
+
+
+
+   Dynamically quantized MultiHeadAttention layer.
+
+
+.. py:class:: QDynamicCachedGemma3Attention
+
+
+
+   Dynamically quantized CachedGemma3Attention layer.
+
+
+.. py:class:: QDynamicGemma3VisionAttention
+
+
+
+   Dynamically quantized Gemma3VisionAttention layer.
+
+
+.. py:class:: QDynamicReversibleEmbedding
+
+
+
+   Dynamically quantized ReversibleEmbedding layer.
+
+

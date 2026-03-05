@@ -1,0 +1,46 @@
+neural_compressor.torch.algorithms.fp8_quant.observer
+=====================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fp8_quant.observer
+
+.. autoapi-nested-parse::
+
+   Base class and helper functions for registering observers.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fp8_quant.observer.ObserverBase
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fp8_quant.observer.register_observer
+
+
+Module Contents
+---------------
+
+.. py:class:: ObserverBase(name, mod, d_shape=None, params=None, device=cur_device)
+
+
+
+   Helper class that provides a standard way to create an ABC using
+   inheritance.
+
+
+.. py:function:: register_observer(observer_type)
+
+   Decorate and register all observer subclasses.
+
+   :param observer_type: The observer registration name.
+   :type observer_type: str
+
+

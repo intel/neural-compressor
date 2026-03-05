@@ -1,0 +1,121 @@
+neural_compressor.jax.quantization.saving
+=========================================
+
+.. py:module:: neural_compressor.jax.quantization.saving
+
+.. autoapi-nested-parse::
+
+   Serialization helpers for JAX quantized Keras models.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.jax.quantization.saving.VersionManager
+   neural_compressor.jax.quantization.saving.SaveableLayerMixin
+   neural_compressor.jax.quantization.saving.KerasQuantizedModelBackboneWrapper
+   neural_compressor.jax.quantization.saving.KerasQuantizedModelWrapper
+   neural_compressor.jax.quantization.saving.KerasQuantizedGemmaWrapper
+   neural_compressor.jax.quantization.saving.KerasQuantizedViTWrapper
+   neural_compressor.jax.quantization.saving.KerasQuantizedTokenizerWrapper
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.jax.quantization.saving.quant_config_to_json_object
+   neural_compressor.jax.quantization.saving.quant_config_from_json_object
+   neural_compressor.jax.quantization.saving.prepare_deserialized_quantized_model
+
+
+Module Contents
+---------------
+
+.. py:function:: quant_config_to_json_object(quant_config: neural_compressor.jax.quantization.config.BaseConfig) -> dict
+
+   Serialize a quant config to a JSON-compatible dict with class name.
+
+   :param quant_config: The quantization config object to serialize.
+   :type quant_config: BaseConfig
+
+   :returns: A dict with 'quantization_type' and 'config' keys.
+   :rtype: dict
+
+
+.. py:function:: quant_config_from_json_object(json_obj: dict) -> neural_compressor.jax.quantization.config.BaseConfig
+
+   Deserialize a quant config from a JSON-compatible dict with class name.
+
+   :param json_obj: A dict with 'quantization_type' and 'config' keys.
+   :type json_obj: dict
+
+   :returns: The instantiated quantization config object.
+   :rtype: BaseConfig
+
+   :raises ValueError: If the class name is unknown.
+
+
+.. py:class:: VersionManager
+
+   Handle version metadata for serialized quantized models.
+
+
+.. py:class:: SaveableLayerMixin
+
+   Mixin for saving and loading quantized layer variables.
+
+
+.. py:class:: KerasQuantizedModelBackboneWrapper(model, quant_config: Optional[neural_compressor.jax.quantization.config.BaseConfig] = None)
+
+
+
+   Wrapper that preserves quantization config when saving Keras backbones.
+
+
+.. py:class:: KerasQuantizedModelWrapper(model, quant_config: Optional[neural_compressor.jax.quantization.config.BaseConfig] = None)
+
+
+
+   Wrapper that preserves quantization config for Keras tasks.
+
+
+.. py:class:: KerasQuantizedGemmaWrapper(model, quant_config: Optional[neural_compressor.jax.quantization.config.BaseConfig] = None)
+
+
+
+   Quantized wrapper for Gemma3CausalLM models.
+
+
+.. py:class:: KerasQuantizedViTWrapper(model, quant_config: Optional[neural_compressor.jax.quantization.config.BaseConfig] = None)
+
+
+
+   Quantized wrapper for ViTImageClassifier models.
+
+
+.. py:class:: KerasQuantizedTokenizerWrapper(model, quant_config: Optional[neural_compressor.jax.quantization.config.BaseConfig] = None)
+
+
+
+   Quantized wrapper for Gemma3Tokenizer models.
+
+
+.. py:function:: prepare_deserialized_quantized_model(model: keras.Model, quant_config: neural_compressor.jax.quantization.config.BaseConfig) -> KerasQuantizedModelWrapper
+
+   Transform a loaded quantized model.
+
+   It prepares the model for inference by preparing the quantized layers.
+   :param model: Loaded base keras model.
+   :type model: keras.Model
+   :param quant_config: Quantization configuration.
+   :type quant_config: BaseConfig
+
+   :returns: The transformed quantized model wrapper.
+   :rtype: KerasQuantizedModelWrapper
+
+

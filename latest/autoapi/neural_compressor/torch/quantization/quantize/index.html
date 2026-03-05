@@ -147,19 +147,18 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> – a float model to be quantized.</p></li>
-<li><p><strong>quant_config</strong> – a quantization configuration.</p></li>
-<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – Which mode is in use currently. Defaults to “prepare”.</p></li>
-<li><p><strong>run_fn</strong> – a calibration function for calibrating the model. Defaults to None.</p></li>
-<li><p><strong>example_inputs</strong> – used to trace torch model.</p></li>
+<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – Float model to be quantized.</p></li>
+<li><p><strong>quant_config</strong> (<a class="reference internal" href="../../../common/base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><em>BaseConfig</em></a><em> | </em><em>dict</em>) – Quantization configuration or configuration dictionary.</p></li>
+<li><p><strong>mode</strong> (<em>str</em><em>, </em><em>optional</em>) – Quantization mode to prepare for. Defaults to “prepare”.</p></li>
+<li><p><strong>example_inputs</strong> (<em>Any</em><em>, </em><em>optional</em>) – Example inputs for tracing the model. Defaults to None.</p></li>
+<li><p><strong>run_fn</strong> (<em>Callable</em><em> | </em><em>None</em>) – Calibration function for collecting statistics. Defaults to None.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>model to be quantized.
-OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.</p>
+<dd class="field-even"><p>Updated model and configuration mapping.</p>
 </dd>
 <dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>model</p>
+<dd class="field-odd"><p>tuple[torch.nn.Module, dict]</p>
 </dd>
 </dl>
 </dd></dl>
@@ -265,7 +264,7 @@ is mutated</p></li>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f53e99e8ce0> 
+   <jinja2.runtime.BlockReference object at 0x7f18e5378a10> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

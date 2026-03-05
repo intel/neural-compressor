@@ -132,13 +132,12 @@
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>tokenizer</strong> (<em>Tokenizer</em>) – The tokenizer to use for tokenization.</p></li>
-<li><p><strong>seqlen</strong> (<em>int</em>) – The exact sequence length. samples &lt; seqlen will be dropped,
-samples longer than seqlen will be truncated</p></li>
+<li><p><strong>seqlen</strong> (<em>int</em>) – The exact sequence length. Samples shorter than <cite>seqlen</cite> will be dropped,
+and samples longer than <cite>seqlen</cite> will be truncated.</p></li>
 <li><p><strong>dataset_name</strong> (<em>str</em><em>, </em><em>optional</em>) – The name of the dataset or datasets separated by commas.
 Defaults to “NeelNanda/pile-10k”.</p></li>
-<li><p><strong>split</strong> (<em>str</em><em>, </em><em>optional</em>) – The data split to use. Defaults to None.</p></li>
 <li><p><strong>seed</strong> (<em>int</em><em>, </em><em>optional</em>) – The random seed for reproducibility. Defaults to 42.</p></li>
-<li><p><strong>bs</strong> (<em>int</em><em>, </em><em>optional</em>) – The batch size. Defaults to 4.</p></li>
+<li><p><strong>bs</strong> (<em>int</em><em>, </em><em>optional</em>) – The batch size. Defaults to 8.</p></li>
 <li><p><strong>nsamples</strong> (<em>int</em><em>, </em><em>optional</em>) – The total number of samples to include. Defaults to 128.</p></li>
 </ul>
 </dd>
@@ -158,16 +157,23 @@ Defaults to “NeelNanda/pile-10k”.</p></li>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>template</strong> (<em>Template</em>) – The template to specify process for different mllms.</p></li>
-<li><p><strong>model</strong> (<a class="reference internal" href="../../../../tensorflow/utils/model/index.html#neural_compressor.tensorflow.utils.model.Model" title="neural_compressor.tensorflow.utils.model.Model"><em>Model</em></a>) – The model to quantized.</p></li>
+<li><p><strong>model</strong> (<a class="reference internal" href="../../../../tensorflow/utils/model/index.html#neural_compressor.tensorflow.utils.model.Model" title="neural_compressor.tensorflow.utils.model.Model"><em>Model</em></a>) – The model to quantize.</p></li>
 <li><p><strong>tokenizer</strong> (<em>Tokenizer</em>) – The tokenizer to use for tokenization.</p></li>
-<li><p><strong>Dataset_name</strong> (<em>str</em>) – The name or path of the dataset.</p></li>
-<li><p><strong>extra_data_dir</strong> (<em>str</em>) – The path for extra data such as images, audio or videos.</p></li>
-<li><p><strong>seqlen</strong> (<em>int</em>) – The exact sequence length. samples &lt; seqlen will be dropped,
-samples longer than seqlen will be truncated</p></li>
-<li><p><strong>bs</strong> (<em>int</em><em>, </em><em>optional</em>) – The batch size. Defaults to 4.</p></li>
+<li><p><strong>template</strong> (<em>Template</em><em>, </em><em>optional</em>) – The template to specify process for different MLLMs.</p></li>
+<li><p><strong>processor</strong> (<em>transformers.AutoProcessor</em><em>, </em><em>optional</em>) – The processor for multi-modal inputs.</p></li>
+<li><p><strong>image_processor</strong> (<em>object</em><em>, </em><em>optional</em>) – The image processor for multi-modal inputs.</p></li>
+<li><p><strong>dataset</strong> (<em>str</em><em>, </em><em>optional</em>) – The name or path of the dataset.</p></li>
+<li><p><strong>extra_data_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – The path for extra data such as images, audio, or videos.</p></li>
+<li><p><strong>seqlen</strong> (<em>int</em><em>, </em><em>optional</em>) – The exact sequence length. Samples shorter than <cite>seqlen</cite> will be dropped,
+and samples longer than <cite>seqlen</cite> will be truncated.</p></li>
+<li><p><strong>batch_size</strong> (<em>int</em><em>, </em><em>optional</em>) – The batch size. Defaults to 8.</p></li>
 <li><p><strong>split</strong> (<em>str</em><em>, </em><em>optional</em>) – The data split to use. Defaults to None.</p></li>
-<li><p><strong>apply_template</strong> – Whether to apply chat template in tokenization.</p></li>
+<li><p><strong>apply_template</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to apply chat template in tokenization.</p></li>
+<li><p><strong>truncation</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to truncate sequences during tokenization.</p></li>
+<li><p><strong>seed</strong> (<em>int</em><em>, </em><em>optional</em>) – The random seed for reproducibility. Defaults to 42.</p></li>
+<li><p><strong>nsamples</strong> (<em>int</em><em>, </em><em>optional</em>) – The total number of samples to include. Defaults to 128.</p></li>
+<li><p><strong>gradient_accumulate_steps</strong> (<em>int</em><em>, </em><em>optional</em>) – The number of gradient accumulation steps. Defaults to 1.</p></li>
+<li><p><strong>quant_nontext_module</strong> (<em>bool</em><em>, </em><em>optional</em>) – Whether to quantize non-text modules. Defaults to False.</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -202,7 +208,7 @@ samples longer than seqlen will be truncated</p></li>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f53ea129550> 
+   <jinja2.runtime.BlockReference object at 0x7f18e5a5fe90> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

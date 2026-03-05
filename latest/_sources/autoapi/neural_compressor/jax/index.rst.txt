@@ -16,5 +16,7 @@ Submodules
    :maxdepth: 1
 
    /autoapi/neural_compressor/jax/algorithms/index
+   /autoapi/neural_compressor/jax/quantization/index
+   /autoapi/neural_compressor/jax/utils/index
 
 

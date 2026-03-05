@@ -1,0 +1,55 @@
+neural_compressor.torch.algorithms.fp8_quant.scaling_method_base
+================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fp8_quant.scaling_method_base
+
+.. autoapi-nested-parse::
+
+   Base class and helper functions for registering scaling methods.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fp8_quant.scaling_method_base.ScalingMethodBase
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fp8_quant.scaling_method_base.register_scaling_methods
+
+
+Module Contents
+---------------
+
+.. py:class:: ScalingMethodBase
+
+
+
+   Base class for scaling methods.
+
+   This class defines the interface for generating scaling methods for patched modules.
+
+
+.. py:function:: register_scaling_methods(patch_module_type: str, scaling_method_name: str)
+
+   Register a scaling method for a patched module.
+
+   :param patch_module_type: The type of the patched module.
+   :type patch_module_type: str
+   :param scaling_method_name: The name of the scaling method.
+   :type scaling_method_name: str
+
+   .. rubric:: Examples
+
+   @register_scaling_methods("linear", "unit_scale")
+   class ScaleByMax(ScalingMethodBase):
+       ...
+
+

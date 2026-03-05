@@ -9,3 +9,13 @@ neural_compressor.jax.algorithms
 
 
 
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/jax/algorithms/dynamic/index
+   /autoapi/neural_compressor/jax/algorithms/static/index
+
+

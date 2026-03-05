@@ -1,0 +1,40 @@
+neural_compressor.jax.algorithms.static
+=======================================
+
+.. py:module:: neural_compressor.jax.algorithms.static
+
+.. autoapi-nested-parse::
+
+   Static quantization algorithm entry point for JAX models.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.jax.algorithms.static.static_quantize
+
+
+Module Contents
+---------------
+
+.. py:function:: static_quantize(model: keras.Model, configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, neural_compressor.common.base_config.BaseConfig]]] = None, quant_config: Optional[neural_compressor.common.base_config.BaseConfig] = None, calib_function: Optional[Callable] = None) -> keras.Model
+
+   Quantize model using Static quantization algorithm.
+
+   :param model: JAX model to be quantized.
+   :type model: keras.Model
+   :param configs_mapping: Mapping of configurations
+                           for the algorithm.
+   :type configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]]
+   :param quant_config: Quantization configuration for wrapper selection.
+   :type quant_config: Optional[BaseConfig]
+   :param calib_function: Calibration function used to collect activation statistics.
+   :type calib_function: Optional[Callable]
+
+   :returns: The quantized model wrapped for inference.
+   :rtype: keras.Model
+
+

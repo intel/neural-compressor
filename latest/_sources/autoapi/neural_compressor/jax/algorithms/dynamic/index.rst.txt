@@ -1,0 +1,42 @@
+neural_compressor.jax.algorithms.dynamic
+========================================
+
+.. py:module:: neural_compressor.jax.algorithms.dynamic
+
+.. autoapi-nested-parse::
+
+   Dynamic quantization algorithm entry point for JAX models.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.jax.algorithms.dynamic.dynamic_quantize
+
+
+Module Contents
+---------------
+
+.. py:function:: dynamic_quantize(model: keras.Model, configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, neural_compressor.common.base_config.BaseConfig]]] = None, quant_config: Optional[neural_compressor.common.base_config.BaseConfig] = None, *args: Any, **kwargs: Any) -> Any
+
+   Quantize model using Dynamic quantization algorithm.
+
+   :param model: JAX model to be quantized.
+   :type model: keras.Model
+   :param configs_mapping: Mapping of configurations
+                           for the algorithm.
+   :type configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]]
+   :param quant_config: Quantization configuration for wrapper selection.
+   :type quant_config: Optional[BaseConfig]
+   :param \*args: Additional positional arguments (unused).
+   :type \*args: Any
+   :param \*\*kwargs: Additional keyword arguments (unused).
+   :type \*\*kwargs: Any
+
+   :returns: The quantized model wrapped for inference.
+   :rtype: keras.Model
+
+

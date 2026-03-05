@@ -1,0 +1,376 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.jax.utils.utility &mdash; Intel® Neural Compressor 3.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.jax.utils.utility</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/jax/utils/utility/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.jax.utils.utility">
+<span id="neural-compressor-jax-utils-utility"></span><h1>neural_compressor.jax.utils.utility<a class="headerlink" href="#module-neural_compressor.jax.utils.utility" title="Link to this heading"></a></h1>
+<p>The utility functions and classes for JAX.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.add_fp8_support" title="neural_compressor.jax.utils.utility.add_fp8_support"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_fp8_support</span></code></a>(function)</p></td>
+<td><p>Extend a dtype size function to support FP8 dtypes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.register_algo" title="neural_compressor.jax.utils.utility.register_algo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_algo</span></code></a>(name)</p></td>
+<td><p>Decorator function to register algorithms in the algos_mapping dictionary.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_quantize_fun" title="neural_compressor.jax.utils.utility.get_quantize_fun"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantize_fun</span></code></a>([dtype, asymmetric])</p></td>
+<td><p>Create a quantization function for the specified dtype.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_dequantize_fun" title="neural_compressor.jax.utils.utility.get_dequantize_fun"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dequantize_fun</span></code></a>([dtype, asymmetric])</p></td>
+<td><p>Create a dequantization function for the specified dtype.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_scale" title="neural_compressor.jax.utils.utility.get_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_scale</span></code></a>(orig_weight[, dtype, compute_dtype])</p></td>
+<td><p>Compute the quantization scale for a weight tensor.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_q_params" title="neural_compressor.jax.utils.utility.get_q_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_q_params</span></code></a>(orig_weight[, dtype, compute_dtype, ...])</p></td>
+<td><p>Compute quantization scale and zero-point for a weight tensor.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.print_model" title="neural_compressor.jax.utils.utility.print_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_model</span></code></a>(container[, max_lines, internal, ...])</p></td>
+<td><p>Print the model structure.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function" title="neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">causal_lm_make_replace_generate_function</span></code></a>(self[, revert])</p></td>
+<td><p>Replace generate function for calibration and restore on demand.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.iterate_over_layers" title="neural_compressor.jax.utils.utility.iterate_over_layers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iterate_over_layers</span></code></a>(model, operations, /, *[, ...])</p></td>
+<td><p>Apply operations to model layers matching the filter function.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.verify_api" title="neural_compressor.jax.utils.utility.verify_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_api</span></code></a>(orig_cls, quant_cls, method_name)</p></td>
+<td><p>Check if quantized layer method API matches original layer method API.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.add_fp8_support">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">add_fp8_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.add_fp8_support" title="Link to this definition"></a></dt>
+<dd><p>Extend a dtype size function to support FP8 dtypes.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>function</strong> (<em>Callable</em>) – Function that returns the size of a dtype in bits.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Wrapped function that handles FP8 dtypes.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.register_algo">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">register_algo</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.register_algo" title="Link to this definition"></a></dt>
+<dd><p>Decorator function to register algorithms in the algos_mapping dictionary.</p>
+<dl>
+<dt>Usage example:</dt><dd><p>&#64;register_algo(name=example_algo)
+def example_algo(model: tf.keras.Model, quant_config: StaticQuantConfig) -&gt; tf.keras.Model:</p>
+<blockquote>
+<div><p>…</p>
+</div></blockquote>
+</dd>
+</dl>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>name</strong> (<em>str</em>) – The name under which the algorithm function will be registered.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The decorator function to be used with algorithm functions.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>decorator</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.get_quantize_fun">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_quantize_fun</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ml_dtypes.float8_e4m3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">asymmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.get_quantize_fun" title="Link to this definition"></a></dt>
+<dd><p>Create a quantization function for the specified dtype.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dtype</strong> (<em>jnp.dtype</em>) – Target quantization dtype.</p></li>
+<li><p><strong>asymmetric</strong> (<em>bool</em>) – Whether to use asymmetric quantization for integer dtypes.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Quantization function that maps tensors to the target dtype.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.get_dequantize_fun">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_dequantize_fun</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">jnp.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">asymmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.get_dequantize_fun" title="Link to this definition"></a></dt>
+<dd><p>Create a dequantization function for the specified dtype.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>dtype</strong> (<em>jnp.dtype</em>) – Output dtype after dequantization.</p></li>
+<li><p><strong>asymmetric</strong> (<em>bool</em>) – Whether to use asymmetric dequantization.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Function that dequantizes tensors.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.get_scale">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orig_weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ml_dtypes.float8_e4m3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">jnp.float32</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.get_scale" title="Link to this definition"></a></dt>
+<dd><p>Compute the quantization scale for a weight tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>orig_weight</strong> (<em>jnp.ndarray</em>) – Weight tensor to analyze.</p></li>
+<li><p><strong>dtype</strong> (<em>jnp.dtype</em>) – Target quantized dtype.</p></li>
+<li><p><strong>compute_dtype</strong> (<em>jnp.dtype</em>) – dtype for scale computation.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Computed scale tensor.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>jnp.ndarray</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.get_q_params">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_q_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orig_weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ml_dtypes.float8_e4m3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">jnp.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">asymmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.get_q_params" title="Link to this definition"></a></dt>
+<dd><p>Compute quantization scale and zero-point for a weight tensor.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>orig_weight</strong> (<em>jnp.ndarray</em>) – Weight tensor to analyze.</p></li>
+<li><p><strong>dtype</strong> (<em>jnp.dtype</em>) – Target quantized dtype.</p></li>
+<li><p><strong>compute_dtype</strong> (<em>jnp.dtype</em>) – dtype for scale computation.</p></li>
+<li><p><strong>asymmetric</strong> (<em>bool</em>) – Whether to compute asymmetric quantization parameters.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Scale and zero-point. Zero-point is <cite>None</cite> for floating-point
+dtypes or symmetric quantization.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Tuple[jnp.ndarray, Optional[jnp.ndarray]]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.print_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">print_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">container</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_lines</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">999999</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">internal</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">str_length</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">(0,</span> <span class="pre">0)</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">''</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.print_model" title="Link to this definition"></a></dt>
+<dd><p>Print the model structure.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>container</strong> (<em>keras.Model</em>) – The model or layer to be printed.</p></li>
+<li><p><strong>max_lines</strong> (<em>int</em>) – The maximum number of elements to print.</p></li>
+<li><p><strong>internal</strong> (<em>bool</em>) – Whether to print layers from internal _layers (True) or public layers API (False).</p></li>
+<li><p><strong>str_length</strong> (<em>Tuple</em><em>[</em><em>int</em><em>, </em><em>int</em><em>]</em>) – Tuple with max lengths for class name and path.</p></li>
+<li><p><strong>path</strong> (<em>str</em>) – Prefix path for the current layer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Logs model structure via the logger.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">causal_lm_make_replace_generate_function</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">revert</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function" title="Link to this definition"></a></dt>
+<dd><p>Replace generate function for calibration and restore on demand.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>self</strong> (<em>keras.Model</em>) – Causal language model instance to modify.</p></li>
+<li><p><strong>revert</strong> (<em>bool</em>) – When True, restore the original generate function.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Updated generate function.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>Callable</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.iterate_over_layers">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">iterate_over_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operations</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">lambda</span> <span class="pre">_:</span> <span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.iterate_over_layers" title="Link to this definition"></a></dt>
+<dd><p>Apply operations to model layers matching the filter function.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>keras.Model</em>) – Keras model with a _flatten_layers iterator.</p></li>
+<li><p><strong>operations</strong> (<em>Iterable</em><em>[</em><em>Callable</em><em>]</em>) – Operations to apply to each layer.</p></li>
+<li><p><strong>filter_function</strong> (<em>Callable</em><em>, </em><em>optional</em>) – Predicate to select layers. Defaults to always True.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The original model after operations have been applied.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>keras.Model</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.verify_api">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">verify_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orig_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.verify_api" title="Link to this definition"></a></dt>
+<dd><p>Check if quantized layer method API matches original layer method API.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>orig_cls</strong> (<em>type</em>) – Original layer class.</p></li>
+<li><p><strong>quant_cls</strong> (<em>type</em>) – Quantized layer class.</p></li>
+<li><p><strong>method_name</strong> (<em>str</em>) – Method name to compare.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Logs an error if the method signatures differ.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f18e695c8c0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

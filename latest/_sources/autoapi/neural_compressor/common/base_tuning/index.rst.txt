@@ -51,7 +51,7 @@ Module Contents
    def eval_acc(model):
        ...
 
-   def eval_perf(molde):
+   def eval_perf(model):
        ...
 
    # Usage
@@ -136,5 +136,11 @@ Module Contents
 
    :param tuning_config: The configuration for the tuning process.
    :type tuning_config: TuningConfig
+
+   :returns:
+
+             A tuple containing the config loader,
+                 tuning logger, and tuning monitor.
+   :rtype: Tuple[ConfigLoader, TuningLogger, TuningMonitor]
 
 

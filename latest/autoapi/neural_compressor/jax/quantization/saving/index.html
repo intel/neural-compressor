@@ -1,0 +1,270 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.jax.quantization.saving &mdash; Intel® Neural Compressor 3.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.jax.quantization.saving</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/jax/quantization/saving/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.jax.quantization.saving">
+<span id="neural-compressor-jax-quantization-saving"></span><h1>neural_compressor.jax.quantization.saving<a class="headerlink" href="#module-neural_compressor.jax.quantization.saving" title="Link to this heading"></a></h1>
+<p>Serialization helpers for JAX quantized Keras models.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.VersionManager" title="neural_compressor.jax.quantization.saving.VersionManager"><code class="xref py py-obj docutils literal notranslate"><span class="pre">VersionManager</span></code></a></p></td>
+<td><p>Handle version metadata for serialized quantized models.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.SaveableLayerMixin" title="neural_compressor.jax.quantization.saving.SaveableLayerMixin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SaveableLayerMixin</span></code></a></p></td>
+<td><p>Mixin for saving and loading quantized layer variables.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.KerasQuantizedModelBackboneWrapper" title="neural_compressor.jax.quantization.saving.KerasQuantizedModelBackboneWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KerasQuantizedModelBackboneWrapper</span></code></a></p></td>
+<td><p>Wrapper that preserves quantization config when saving Keras backbones.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.KerasQuantizedModelWrapper" title="neural_compressor.jax.quantization.saving.KerasQuantizedModelWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KerasQuantizedModelWrapper</span></code></a></p></td>
+<td><p>Wrapper that preserves quantization config for Keras tasks.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.KerasQuantizedGemmaWrapper" title="neural_compressor.jax.quantization.saving.KerasQuantizedGemmaWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KerasQuantizedGemmaWrapper</span></code></a></p></td>
+<td><p>Quantized wrapper for Gemma3CausalLM models.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.KerasQuantizedViTWrapper" title="neural_compressor.jax.quantization.saving.KerasQuantizedViTWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KerasQuantizedViTWrapper</span></code></a></p></td>
+<td><p>Quantized wrapper for ViTImageClassifier models.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.KerasQuantizedTokenizerWrapper" title="neural_compressor.jax.quantization.saving.KerasQuantizedTokenizerWrapper"><code class="xref py py-obj docutils literal notranslate"><span class="pre">KerasQuantizedTokenizerWrapper</span></code></a></p></td>
+<td><p>Quantized wrapper for Gemma3Tokenizer models.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.quant_config_to_json_object" title="neural_compressor.jax.quantization.saving.quant_config_to_json_object"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_config_to_json_object</span></code></a>(→ dict)</p></td>
+<td><p>Serialize a quant config to a JSON-compatible dict with class name.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.quant_config_from_json_object" title="neural_compressor.jax.quantization.saving.quant_config_from_json_object"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_config_from_json_object</span></code></a>(...)</p></td>
+<td><p>Deserialize a quant config from a JSON-compatible dict with class name.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.prepare_deserialized_quantized_model" title="neural_compressor.jax.quantization.saving.prepare_deserialized_quantized_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_deserialized_quantized_model</span></code></a>(...)</p></td>
+<td><p>Transform a loaded quantized model.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.quant_config_to_json_object">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">quant_config_to_json_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.jax.quantization.config.BaseConfig</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.quant_config_to_json_object" title="Link to this definition"></a></dt>
+<dd><p>Serialize a quant config to a JSON-compatible dict with class name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>quant_config</strong> (<a class="reference internal" href="../../../common/base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig"><em>BaseConfig</em></a>) – The quantization config object to serialize.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>A dict with ‘quantization_type’ and ‘config’ keys.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>dict</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.quant_config_from_json_object">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">quant_config_from_json_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">neural_compressor.jax.quantization.config.BaseConfig</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.quant_config_from_json_object" title="Link to this definition"></a></dt>
+<dd><p>Deserialize a quant config from a JSON-compatible dict with class name.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>json_obj</strong> (<em>dict</em>) – A dict with ‘quantization_type’ and ‘config’ keys.</p>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>The instantiated quantization config object.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p><a class="reference internal" href="../../../common/base_config/index.html#neural_compressor.common.base_config.BaseConfig" title="neural_compressor.common.base_config.BaseConfig">BaseConfig</a></p>
+</dd>
+<dt class="field-even">Raises<span class="colon">:</span></dt>
+<dd class="field-even"><p><strong>ValueError</strong> – If the class name is unknown.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.VersionManager">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">VersionManager</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.VersionManager" title="Link to this definition"></a></dt>
+<dd><p>Handle version metadata for serialized quantized models.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.SaveableLayerMixin">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">SaveableLayerMixin</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.SaveableLayerMixin" title="Link to this definition"></a></dt>
+<dd><p>Mixin for saving and loading quantized layer variables.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.KerasQuantizedModelBackboneWrapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">KerasQuantizedModelBackboneWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.jax.quantization.config.BaseConfig</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.KerasQuantizedModelBackboneWrapper" title="Link to this definition"></a></dt>
+<dd><p>Wrapper that preserves quantization config when saving Keras backbones.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.KerasQuantizedModelWrapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">KerasQuantizedModelWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.jax.quantization.config.BaseConfig</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.KerasQuantizedModelWrapper" title="Link to this definition"></a></dt>
+<dd><p>Wrapper that preserves quantization config for Keras tasks.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.KerasQuantizedGemmaWrapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">KerasQuantizedGemmaWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.jax.quantization.config.BaseConfig</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.KerasQuantizedGemmaWrapper" title="Link to this definition"></a></dt>
+<dd><p>Quantized wrapper for Gemma3CausalLM models.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.KerasQuantizedViTWrapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">KerasQuantizedViTWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.jax.quantization.config.BaseConfig</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.KerasQuantizedViTWrapper" title="Link to this definition"></a></dt>
+<dd><p>Quantized wrapper for ViTImageClassifier models.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.KerasQuantizedTokenizerWrapper">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">KerasQuantizedTokenizerWrapper</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.jax.quantization.config.BaseConfig</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.KerasQuantizedTokenizerWrapper" title="Link to this definition"></a></dt>
+<dd><p>Quantized wrapper for Gemma3Tokenizer models.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.prepare_deserialized_quantized_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">prepare_deserialized_quantized_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">keras.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.jax.quantization.config.BaseConfig</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neural_compressor.jax.quantization.saving.KerasQuantizedModelWrapper" title="neural_compressor.jax.quantization.saving.KerasQuantizedModelWrapper"><span class="pre">KerasQuantizedModelWrapper</span></a></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.prepare_deserialized_quantized_model" title="Link to this definition"></a></dt>
+<dd><p>Transform a loaded quantized model.</p>
+<p>It prepares the model for inference by preparing the quantized layers.
+:param model: Loaded base keras model.
+:type model: keras.Model
+:param quant_config: Quantization configuration.
+:type quant_config: BaseConfig</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>The transformed quantized model wrapper.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.KerasQuantizedModelWrapper" title="neural_compressor.jax.quantization.saving.KerasQuantizedModelWrapper">KerasQuantizedModelWrapper</a></p>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f18e6b0bce0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

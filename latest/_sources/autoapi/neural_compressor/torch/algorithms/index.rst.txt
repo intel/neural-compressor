@@ -17,6 +17,7 @@ Submodules
 
    /autoapi/neural_compressor/torch/algorithms/autoround/index
    /autoapi/neural_compressor/torch/algorithms/base_algorithm/index
+   /autoapi/neural_compressor/torch/algorithms/fp8_quant/index
    /autoapi/neural_compressor/torch/algorithms/layer_wise/index
    /autoapi/neural_compressor/torch/algorithms/mixed_precision/index
    /autoapi/neural_compressor/torch/algorithms/mx_quant/index

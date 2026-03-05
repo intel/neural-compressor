@@ -1,0 +1,22 @@
+neural_compressor.torch.algorithms.fp8_quant
+============================================
+
+.. py:module:: neural_compressor.torch.algorithms.fp8_quant
+
+.. autoapi-nested-parse::
+
+   Public entry points for the FP8 quantization algorithm.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/algorithms/fp8_quant/observer/index
+   /autoapi/neural_compressor/torch/algorithms/fp8_quant/patched_module_base/index
+   /autoapi/neural_compressor/torch/algorithms/fp8_quant/scaling_method_base/index
+
+

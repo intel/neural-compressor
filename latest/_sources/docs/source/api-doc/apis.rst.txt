@@ -18,3 +18,11 @@ API
    tf_quantization_common.rst
    tf_quantization_config.rst
    tf_quantization_autotune.rst
+
+** JAX Extension API:**
+
+.. toctree::
+   :maxdepth: 1
+
+   jax_quantization_common.rst
+   jax_quantization_config.rst

@@ -43,16 +43,19 @@ Module Contents
 
    Preprocess the quantization configuration.
 
-   :param model: a float model to be quantized.
-   :param quant_config: a quantization configuration.
-   :param mode: Which mode is in use currently. Defaults to "prepare".
+   :param model: Float model to be quantized.
+   :type model: torch.nn.Module
+   :param quant_config: Quantization configuration or configuration dictionary.
+   :type quant_config: BaseConfig | dict
+   :param mode: Quantization mode to prepare for. Defaults to "prepare".
    :type mode: str, optional
-   :param run_fn: a calibration function for calibrating the model. Defaults to None.
-   :param example_inputs: used to trace torch model.
+   :param example_inputs: Example inputs for tracing the model. Defaults to None.
+   :type example_inputs: Any, optional
+   :param run_fn: Calibration function for collecting statistics. Defaults to None.
+   :type run_fn: Callable | None
 
-   :returns: model to be quantized.
-             OrderedDictType[Union[str, str], OrderedDictType[str, BaseConfig]]: The configuration mapping.
-   :rtype: model
+   :returns: Updated model and configuration mapping.
+   :rtype: tuple[torch.nn.Module, dict]
 
 
 .. py:function:: quantize(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig, run_fn: Callable = None, run_args: Any = None, inplace: bool = True, example_inputs: Any = None) -> torch.nn.Module

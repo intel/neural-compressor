@@ -1,0 +1,71 @@
+neural_compressor.torch.algorithms.fp8_quant.patched_module_base
+================================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fp8_quant.patched_module_base
+
+.. autoapi-nested-parse::
+
+   Base class for patched modules and helper functions for registering patched modules.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fp8_quant.patched_module_base.PatchedModuleBase
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fp8_quant.patched_module_base.register_patched_module
+
+
+Module Contents
+---------------
+
+.. py:function:: register_patched_module(supported_float_module_types: Union[str, Type[torch.nn.Module], List[str], List[Type[torch.nn.Module]]], device_types: Optional[Union[str, List[str]]] = 'all') -> None
+
+   Register a patched module with support for specific float module types and device types.
+
+   :param supported_float_module_types: The float module types to support. Can be a single string, a single torch.nn.Module type,
+                                        or a list containing strings and/or torch.nn.Module types.
+   :type supported_float_module_types: Union[str, Type[torch.nn.Module], List[Union[str, Type[torch.nn.Module]]]]
+   :param device_types: The device types to support. Can be a single string or a list of strings.
+                        Defaults to "all", which means the patched module will be registered for *all device* types.
+   :type device_types: Optional[Union[str, List[str]]], optional
+
+   .. rubric:: Examples
+
+   1. Register a patched module for `ModuleFusedSDPA` on HPU device:
+   @register_patched_module("ModuleFusedSDPA", device_types="hpu")
+   class PatchedModuleFusedSDPA(PatchedModuleBase):
+       ...
+
+   2. Register a patched module for `Linear` and `RowParallelLinear` on all devices:
+   @register_patched_module(["Linear", "RowParallelLinear"])
+   class PatchedLinear(PatchedModuleBase):
+       ...
+
+
+.. py:class:: PatchedModuleBase(mod: torch.nn.Module, parent: torch.nn.Module, mod_extra_config: neural_compressor.torch.algorithms.fp8_quant.model_configs.ModuleExtraConfig, *args, **kwargs)
+
+
+
+   Base class for patched modules.
+
+   The patched module is used to replace the original high precision module in the model at `prepare` and `convert` stages.
+   To make the patched module compatible with the module-agnostic patching process, the patched module should
+   provide a set of module configurations by implementing the following abstract methods:
+       - get_type
+       - get_module_type
+   The patched module should also implement the following methods for its specific functionalities:
+       - forward_measure
+       - forward_quant
+       - forward_qdq(Optional), only required when using Q-DQ mode for quantization stage.
+
+
