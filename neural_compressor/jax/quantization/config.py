@@ -21,6 +21,7 @@ from __future__ import annotations
 import json
 from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
+import jax.numpy as jnp
 import keras
 
 from neural_compressor.common.base_config import (
@@ -32,12 +33,13 @@ from neural_compressor.common.base_config import (
     register_supported_configs_for_fwk,
 )
 from neural_compressor.common.utils import DYNAMIC_QUANT, STATIC_QUANT
+from neural_compressor.jax.utils.utility import dtype_mapping
 
 FRAMEWORK_NAME = "jax"
 
 
 class OperatorConfig(NamedTuple):
-    """The config for operator."""
+    """Configuration pairing a quantization config with supported operators."""
 
     config: BaseConfig
     operators: List[str]
@@ -52,6 +54,7 @@ class DynamicQuantConfig(BaseConfig):
 
     Supported dtypes:
         - "fp8": 8-bit floating-point quantization (uses ml_dtypes.float8_e4m3 by default)
+        - "int8": 8-bit integer quantization
 
     FP8 formats available:
         - "fp8_e4m3": 4 exponent bits, 3 mantissa bits (default for "fp8")
@@ -78,19 +81,33 @@ class DynamicQuantConfig(BaseConfig):
             weight_dtype (str): Data type for weights, default is "fp8_e4m3".
             activation_dtype (str): Data type for activations, default is "fp8_e4m3".
             white_list (list): A list of supported operators of this algorithm.
+
+        Returns:
+            None: Initializes the configuration instance.
         """
         super().__init__(white_list=white_list)
+        if not isinstance(weight_dtype, list):
+            jnp_weight_dtype = dtype_mapping[weight_dtype]
+            jnp_activation_dtype = dtype_mapping[activation_dtype]
+            if (
+                jnp.issubdtype(jnp_weight_dtype, jnp.floating) and jnp.issubdtype(jnp_activation_dtype, jnp.integer)
+            ) or (jnp.issubdtype(jnp_weight_dtype, jnp.integer) and jnp.issubdtype(jnp_activation_dtype, jnp.floating)):
+                raise ValueError("Mixed quantization with floating-point and integer dtypes is not supported.")
         self.weight_dtype = weight_dtype
         self.activation_dtype = activation_dtype
         self._post_init()
 
     @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
-        """Register supported configs."""
+    def register_supported_configs(cls) -> None:
+        """Register supported configs for dynamic quantization.
+
+        Returns:
+            None: Updates the class-level supported configuration list.
+        """
         supported_configs = []
         dynamic_config = DynamicQuantConfig(
-            weight_dtype=["fp8", "fp8_e4m3", "fp8_e5m2"],
-            activation_dtype=["fp8", "fp8_e4m3", "fp8_e5m2"],
+            weight_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
+            activation_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
         )
         # Basic JAX operators for quantization
         operators = [keras.layers.Dense]
@@ -98,8 +115,15 @@ class DynamicQuantConfig(BaseConfig):
         cls.supported_configs = supported_configs
 
     @staticmethod
-    def get_model_info(model) -> List[Tuple[str, Callable]]:
-        """Get concrete node names for supported operators."""
+    def get_model_info(model) -> List[Tuple[str, str]]:
+        """Get concrete node names for supported operators.
+
+        Args:
+            model (keras.Model): Keras model to inspect.
+
+        Returns:
+            List[Tuple[str, str]]: List of (layer name, layer class name) pairs.
+        """
         white_list = ["Dense", "EinsumDense"]
         filter_result = []
 
@@ -113,20 +137,47 @@ class DynamicQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "DynamicQuantConfig", List["DynamicQuantConfig"]]:
-        """Get a default config set for tuning."""
-        return DynamicQuantConfig(weight_dtype=["fp8_e4m3", "fp8_e5m2"], activation_dtype=["fp8_e4m3", "fp8_e5m2"])
+        """Get a default config set for tuning.
+
+        Returns:
+            DynamicQuantConfig: Configuration to use for tuning.
+        """
+        return DynamicQuantConfig(
+            weight_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
+            activation_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
+        )
 
     @classmethod
     def from_json_string(cls, json_string: str) -> "DynamicQuantConfig":
+        """Create a DynamicQuantConfig from a JSON string.
+
+        Args:
+            json_string (str): JSON string describing the config.
+
+        Returns:
+            DynamicQuantConfig: Parsed configuration instance.
+        """
         cfg = json.loads(json_string)
         return cls.from_dict(cfg)
 
     @classmethod
     def from_dict(cls, config_dict: Dict) -> "DynamicQuantConfig":
+        """Create a DynamicQuantConfig from a dictionary.
+
+        Args:
+            config_dict (Dict): Configuration fields.
+
+        Returns:
+            DynamicQuantConfig: Parsed configuration instance.
+        """
         weight_dtype = config_dict.get("weight_dtype", "fp8_e4m3")
         activation_dtype = config_dict.get("activation_dtype", "fp8_e4m3")
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
-        return cls(weight_dtype=weight_dtype, activation_dtype=activation_dtype, white_list=white_list)
+        return cls(
+            weight_dtype=weight_dtype,
+            activation_dtype=activation_dtype,
+            white_list=white_list,
+        )
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
@@ -139,6 +190,7 @@ class StaticQuantConfig(BaseConfig):
 
     Supported dtypes:
         - "fp8": 8-bit floating-point quantization (uses ml_dtypes.float8_e4m3 by default)
+        - "int8": 8-bit integer quantization
 
     FP8 formats available:
         - "fp8_e4m3": 4 exponent bits, 3 mantissa bits (default for "fp8")
@@ -165,19 +217,34 @@ class StaticQuantConfig(BaseConfig):
             weight_dtype (str): Data type for weights, default is "fp8_e4m3".
             activation_dtype (str): Data type for activations, default is "fp8_e4m3".
             white_list (list): A list of supported operators of this algorithm.
+
+        Returns:
+            None: Initializes the configuration instance.
         """
         super().__init__(white_list=white_list)
+        if not isinstance(weight_dtype, list):
+            jnp_weight_dtype = dtype_mapping[weight_dtype]
+            jnp_activation_dtype = dtype_mapping[activation_dtype]
+            if (
+                jnp.issubdtype(jnp_weight_dtype, jnp.floating) and jnp.issubdtype(jnp_activation_dtype, jnp.integer)
+            ) or (jnp.issubdtype(jnp_weight_dtype, jnp.integer) and jnp.issubdtype(jnp_activation_dtype, jnp.floating)):
+                raise ValueError("Mixed quantization with floating-point and integer dtypes is not supported.")
+
         self.weight_dtype = weight_dtype
         self.activation_dtype = activation_dtype
         self._post_init()
 
     @classmethod
-    def register_supported_configs(cls) -> List[OperatorConfig]:
-        """Register supported configs."""
+    def register_supported_configs(cls) -> None:
+        """Register supported configs for static quantization.
+
+        Returns:
+            None: Updates the class-level supported configuration list.
+        """
         supported_configs = []
         static_config = StaticQuantConfig(
-            weight_dtype=["fp8", "fp8_e4m3", "fp8_e5m2"],
-            activation_dtype=["fp8", "fp8_e4m3", "fp8_e5m2"],
+            weight_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
+            activation_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
         )
         # Basic JAX operators for quantization
         operators = [keras.layers.Dense]
@@ -185,8 +252,15 @@ class StaticQuantConfig(BaseConfig):
         cls.supported_configs = supported_configs
 
     @staticmethod
-    def get_model_info(model) -> List[Tuple[str, Callable]]:
-        """Get concrete node names for supported operators."""
+    def get_model_info(model) -> List[Tuple[str, str]]:
+        """Get concrete node names for supported operators.
+
+        Args:
+            model (keras.Model): Keras model to inspect.
+
+        Returns:
+            List[Tuple[str, str]]: List of (layer name, layer class name) pairs.
+        """
         white_list = ["Dense", "EinsumDense", "MultiHeadAttention"]
         filter_result = []
 
@@ -200,27 +274,58 @@ class StaticQuantConfig(BaseConfig):
 
     @classmethod
     def get_config_set_for_tuning(cls) -> Union[None, "StaticQuantConfig", List["StaticQuantConfig"]]:
-        """Get a default config set for tuning."""
-        return StaticQuantConfig(weight_dtype=["fp8_e4m3", "fp8_e5m2"], activation_dtype=["fp8_e4m3", "fp8_e5m2"])
+        """Get a default config set for tuning.
+
+        Returns:
+            StaticQuantConfig: Configuration to use for tuning.
+        """
+        return StaticQuantConfig(
+            weight_dtype=["fp8_e4m3", "fp8_e5m2", "int8"],
+            activation_dtype=["fp8_e4m3", "fp8_e5m2", "int8"],
+        )
 
     @classmethod
     def from_json_string(cls, json_string: str) -> "StaticQuantConfig":
+        """Create a StaticQuantConfig from a JSON string.
+
+        Args:
+            json_string (str): JSON string describing the config.
+
+        Returns:
+            StaticQuantConfig: Parsed configuration instance.
+        """
         cfg = json.loads(json_string)
         return cls.from_dict(cfg)
 
     @classmethod
     def from_dict(cls, config_dict: Dict) -> "StaticQuantConfig":
+        """Create a StaticQuantConfig from a dictionary.
+
+        Args:
+            config_dict (Dict): Configuration fields.
+
+        Returns:
+            StaticQuantConfig: Parsed configuration instance.
+        """
         weight_dtype = config_dict.get("weight_dtype", "fp8_e5m2")
         activation_dtype = config_dict.get("activation_dtype", "fp8_e5m2")
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
-        return cls(weight_dtype=weight_dtype, activation_dtype=activation_dtype, white_list=white_list)
+        return cls(
+            weight_dtype=weight_dtype,
+            activation_dtype=activation_dtype,
+            white_list=white_list,
+        )
 
 
 register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 
 
 def get_all_registered_configs() -> Dict[str, BaseConfig]:
-    """Get all registered configs for JAX framework."""
+    """Get all registered configs for JAX framework.
+
+    Returns:
+        Dict[str, BaseConfig]: Mapping of config names to config classes.
+    """
     registered_configs = config_registry.get_cls_configs()
     return registered_configs.get(FRAMEWORK_NAME, {})
 
@@ -229,7 +334,7 @@ def get_default_dynamic_config() -> DynamicQuantConfig:
     """Generate the default Dynamic quantization config.
 
     Returns:
-        the default JAX Dynamic quantization config.
+        DynamicQuantConfig: The default JAX Dynamic quantization config.
     """
     return DynamicQuantConfig()
 
@@ -238,6 +343,6 @@ def get_default_static_config() -> StaticQuantConfig:
     """Generate the default Static quantization config.
 
     Returns:
-        the default JAX Static quantization config.
+        StaticQuantConfig: The default JAX Static quantization config.
     """
     return StaticQuantConfig()

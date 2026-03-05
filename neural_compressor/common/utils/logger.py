@@ -152,6 +152,14 @@ logger = Logger
 
 
 def _get_log_msg(mode):
+    """Map a Mode enum value to a human-readable log message.
+
+    Args:
+        mode (Mode): Execution mode enum.
+
+    Returns:
+        str | None: Log message string or None when mode is unsupported.
+    """
     log_msg = None
     if mode == Mode.QUANTIZE:
         log_msg = "Quantization"

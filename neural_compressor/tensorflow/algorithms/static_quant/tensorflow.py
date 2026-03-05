@@ -110,6 +110,7 @@ class TensorFlowAdaptor:
         self._last_dequantize_ops = None
 
     def _check_itex(self):  # pragma: no cover
+        """Verify that Intel Extension for TensorFlow is installed."""
         try:
             import intel_extension_for_tensorflow
         except:
@@ -587,6 +588,7 @@ class TensorFlowAdaptor:
         )
 
         def check_match(patterns, input_pattern):
+            """Check whether an input pattern matches a configured pattern list."""
             for i in patterns:
                 if input_pattern == [i for i in i.replace("+", " ").strip().split(" ") if i]:  # pragma: no cover
                     return True
@@ -946,6 +948,7 @@ class TensorflowQuery:
         config = None
 
         def _compare(version1, version2):
+            """Compare two TensorFlow version strings for sorting."""
             if parse_version(version1) == parse_version(version2):  # pragma: no cover
                 return 0
             elif parse_version(version1) < parse_version(version2):
@@ -1414,6 +1417,7 @@ class TensorflowQuery:
         """Translate the patterns defined in the yaml to internal pattern expression."""
 
         def _generate_pattern(data):
+            """Generate a normalized internal pattern from op sequences."""
             length = [len(i) for i in data]
             res = []
             for index in range(max(length)):

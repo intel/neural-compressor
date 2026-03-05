@@ -337,6 +337,20 @@ class BaseDataLoader:
         shuffle,
         distributed,
     ):
+        """Yield batches from the dataset using the configured sampler.
+
+        Args:
+            dataset: Dataset to iterate.
+            batch_size (int): Batch size.
+            last_batch: Last batch handling mode.
+            collate_fn (Callable): Function to collate batch samples.
+            sampler: Sampler instance (unused; generated internally).
+            batch_sampler: Batch sampler instance (unused; generated internally).
+            num_workers (int): Worker count (unused for TF).
+            pin_memory (bool): Pin memory flag.
+            shuffle (bool): Whether to shuffle (handled by sampler).
+            distributed (bool): Whether to use distributed sampling.
+        """
         sampler = self._generate_sampler(dataset, distributed)
         self.batch_sampler = BatchSampler(sampler, batch_size, self.drop_last)
 
@@ -353,6 +367,15 @@ class BaseDataLoader:
                 return
 
     def _generate_sampler(self, dataset, distributed):
+        """Create a sampler based on dataset capabilities.
+
+        Args:
+            dataset: Dataset object to inspect.
+            distributed (bool): Whether to use distributed sampling.
+
+        Returns:
+            Sampler: IterableSampler or SequentialSampler depending on dataset type.
+        """
         if hasattr(dataset, "__getitem__"):
             self.dataset_type = "index"
             return SequentialSampler(dataset, distributed)

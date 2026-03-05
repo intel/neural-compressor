@@ -133,6 +133,7 @@ class KerasAdaptor:
                         break
 
     def _fuse_bn_keras3(self, fuse_conv_bn, fp32_layers):  # pragma: no cover
+        """Fuse batch normalization into convolution layers for Keras 3 graphs."""
         fuse_layers = []
         fused_bn_name = ""
         for idx, layer in enumerate(fp32_layers):
@@ -180,6 +181,7 @@ class KerasAdaptor:
         return fuse_layers
 
     def _fuse_bn_keras2(self, fuse_conv_bn, fp32_layers):  # pragma: no cover
+        """Fuse batch normalization into convolution layers for Keras 2 graphs."""
         fuse_layers = []
         for idx, layer in enumerate(fp32_layers):
             if hasattr(layer, "_inbound_nodes"):
@@ -250,6 +252,17 @@ class KerasAdaptor:
         fp32_layers = fuse_bn_model.layers
 
         def fuse_conv_bn(conv_weight, bn_weight, conv_type="Conv2D", eps=1.0e-5):
+            """Fuse convolution weights with batch normalization parameters.
+
+            Args:
+                conv_weight (list[np.ndarray]): Convolution weights and optional bias.
+                bn_weight (list[np.ndarray]): BatchNorm parameters.
+                conv_type (str): Convolution layer type.
+                eps (float): Epsilon used in BatchNorm.
+
+            Returns:
+                list[np.ndarray]: Fused convolution weights (and bias).
+            """
             assert conv_type in [
                 "Conv2D",
                 "DepthwiseConv2D",

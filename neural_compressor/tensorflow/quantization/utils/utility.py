@@ -315,6 +315,7 @@ def strip_equivalent_nodes(graph_def, output_node_names):
     stripped_graph_info = stripped_graph.parse_graph()
 
     def is_equivalent_input(input_tensor_list_1, input_tensor_list_2):
+        """Check whether two input tensor lists are equivalent."""
         if len(input_tensor_list_1) != len(input_tensor_list_2):
             return False
         const_num = 0
@@ -435,6 +436,7 @@ def generate_feed_dict(input_tensor, inputs):
             # sometimes the input_tensor is not the same order with inputs
             # we should check and pair them
             def check_shape(tensor, data):
+                """Validate that a tensor shape matches the sample data."""
                 # scalar or 1 dim default True
                 if tensor.shape is None or len(tensor.shape.dims) == 1 or not hasattr(data, "shape"):
                     return True

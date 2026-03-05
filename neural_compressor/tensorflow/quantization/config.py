@@ -47,6 +47,8 @@ __all__ = [
 
 
 class OperatorConfig(NamedTuple):
+    """Configuration tuple describing operators and validation functions."""
+
     config: BaseConfig
     operators: List[Union[str, Callable]]
     valid_func_list: List[Callable] = []

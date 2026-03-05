@@ -291,6 +291,7 @@ class GraphConverter:
                     # sometimes the input_tensor is not the same order with inputs
                     # we should check and pair them
                     def check_shape(tensor, data):
+                        """Validate that a tensor shape matches the sample data."""
                         # scalar or 1 dim default True
                         if (
                             tensor.shape is None
@@ -330,6 +331,11 @@ class GraphConverter:
         os.environ["ITEX_REMAPPER"] = "1"
 
     def _inference_llm(self, model):
+        """Run inference for large language models during calibration.
+
+        Args:
+            model: TensorFlow model wrapper with input_tensor_names and model signatures.
+        """
         input_tensor_names = model.input_tensor_names
         auto_trackable = model.model
         infer = auto_trackable.signatures["serving_default"]

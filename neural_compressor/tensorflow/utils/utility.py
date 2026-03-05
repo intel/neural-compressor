@@ -74,6 +74,14 @@ def register_algo(name):
     """
 
     def decorator(algo_func):
+        """Register the algorithm function in the global mapping.
+
+        Args:
+            algo_func (Callable): Algorithm implementation to register.
+
+        Returns:
+            Callable: The original algorithm function.
+        """
         algos_mapping[name] = algo_func
         return algo_func
 
@@ -115,7 +123,10 @@ def dump_elapsed_time(customized_msg=""):
     """
 
     def f(func):
+        """Wrap the function to log elapsed execution time."""
+
         def fi(*args, **kwargs):
+            """Execute the function and log elapsed time."""
             start = time.time()
             res = func(*args, **kwargs)
             end = time.time()
@@ -185,7 +196,10 @@ def disable_random(seed=1):
     import tensorflow as tf
 
     def decorator(func):
+        """Decorate a function to disable TensorFlow randomness."""
+
         def wrapper(*args, **kw):
+            """Reset graph state and run the wrapped function."""
             tf.compat.v1.disable_eager_execution()
             tf.compat.v1.reset_default_graph()
             tf.compat.v1.set_random_seed(seed)

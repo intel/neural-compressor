@@ -1,3 +1,5 @@
+"""Static quantization algorithm entry point for JAX models."""
+
 # Copyright (c) 2025 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -43,11 +45,14 @@ def static_quantize(
     """Quantize model using Static quantization algorithm.
 
     Args:
-        model: a JAX model to be quantized.
-        configs_mapping: mapping of configurations for the algorithm.
+        model (keras.Model): JAX model to be quantized.
+        configs_mapping (Optional[OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]]): Mapping of configurations
+            for the algorithm.
+        quant_config (Optional[BaseConfig]): Quantization configuration for wrapper selection.
+        calib_function (Optional[Callable]): Calibration function used to collect activation statistics.
 
     Returns:
-        q_model: the quantized model
+        keras.Model: The quantized model wrapped for inference.
     """
     for _, value in configs_mapping.items():
         config = value
@@ -91,4 +96,5 @@ def static_quantize(
         qmodel._tracker.lock()
 
     wrapper_cls = WRAPPER_MAPPING.get(qmodel.__class__, KerasQuantizedModelWrapper)
+
     return wrapper_cls(qmodel, quant_config)

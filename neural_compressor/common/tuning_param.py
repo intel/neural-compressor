@@ -100,6 +100,8 @@ class TuningParam:
         """
 
         class DynamicInputArgsModel(BaseModel):
+            """Pydantic model for validating dynamic input arguments."""
+
             input_args: expect_args_type
 
         return DynamicInputArgsModel

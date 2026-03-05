@@ -25,7 +25,15 @@ from neural_compressor.jax.utils import algos_mapping
 
 
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
-    """Whether to apply the algorithm."""
+    """Determine whether a quantization algorithm should be applied.
+
+    Args:
+        configs_mapping (Dict[Tuple[str, callable], BaseConfig]): Mapping of layer identifiers to configs.
+        algo_name (str): Algorithm name to check.
+
+    Returns:
+        bool: True if any config matches the algorithm name.
+    """
     return any(config.name == algo_name for config in configs_mapping.values())
 
 
@@ -40,14 +48,14 @@ def quantize_model(
     """Return a quantized Keras model according to the given configuration.
 
     Args:
-        model:          FP32 Keras model to be quantized.
-        quant_config:   Quantization configuration.
-        calib_function: Function used for model calibration, required for static quantization.
-        inplace:        When True, the original model is modified in-place and should not be used
-                        afterward. A value of False is not yet supported.
+        model (keras.Model): FP32 Keras model to be quantized.
+        quant_config (BaseConfig): Quantization configuration.
+        calib_function (Callable, optional): Function used for model calibration, required for static quantization.
+        inplace (bool): When True, the original model is modified in-place and should not be used afterward. A value of
+            False is not yet supported.
 
     Returns:
-        The quantized model.
+        keras.Model: The quantized model.
     """
 # fmt: on
     if not inplace:
