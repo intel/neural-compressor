@@ -61,6 +61,7 @@ class GraphFoldConstantOptimizer(GraphRewriterBase):
         end_node = self.graph_info[end_node_name].node
 
         def can_broadcast(s1, s2):
+            """Check whether two tensor shapes can be broadcast together."""
             if s1.shape and s2.shape:
                 s1a = np.asarray(s1.shape)
                 s2a = np.asarray(s2.shape)

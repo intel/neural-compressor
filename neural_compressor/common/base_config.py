@@ -97,6 +97,14 @@ class ConfigRegistry(object):
         """
 
         def decorator(config_cls):
+            """Register the configuration class for the given framework and algorithm.
+
+            Args:
+                config_cls: Configuration class to register.
+
+            Returns:
+                The same configuration class for decorator chaining.
+            """
             cls.registered_configs.setdefault(framework_name, {})
             cls.registered_configs[framework_name][algo_name] = {"priority": priority, "cls": config_cls}
             return config_cls
@@ -207,6 +215,7 @@ class BaseConfig(ABC):
         self._white_list = white_list
 
     def _post_init(self):
+        """Populate global and local configs based on the whitelist settings."""
         if self.white_list == DEFAULT_WHITE_LIST:
             global_config = self.get_params_dict()
             self._global_config = self.__class__(**global_config, white_list=None)
@@ -558,6 +567,11 @@ class BaseConfig(ABC):
         return config_list
 
     def _get_op_name_op_type_config(self):
+        """Split local configs into op-type and op-name mappings.
+
+        Returns:
+            tuple[dict, dict]: Mapping of op types to configs and op names to configs.
+        """
         op_type_config_dict = dict()
         op_name_config_dict = dict()
         for name, config in self.local_config.items():
@@ -604,6 +618,14 @@ class BaseConfig(ABC):
 
     @staticmethod
     def _op_type_to_str(op_type: Callable) -> str:
+        """Convert an operator type to a string key.
+
+        Args:
+            op_type (Callable): Operator type or callable object.
+
+        Returns:
+            str: String identifier for the operator type.
+        """
         # * Ort and TF may override this method.
         op_type_name = getattr(op_type, "__name__", "")
         if op_type_name == "":
@@ -612,6 +634,14 @@ class BaseConfig(ABC):
 
     @staticmethod
     def _is_op_type(name: str) -> bool:
+        """Check whether the identifier represents an operator type.
+
+        Args:
+            name (str): Operator identifier.
+
+        Returns:
+            bool: True if the identifier is an operator type, otherwise False.
+        """
         # * Ort and TF may override this method.
         return not isinstance(name, str)
 

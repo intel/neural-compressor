@@ -253,6 +253,14 @@ def frozen_pb_session(model, input_tensor_names, output_tensor_names, **kwargs):
 
 
 def _contains_function_with_implements_attr(saved_model_proto):
+    """Check whether SavedModel functions declare implementation attributes.
+
+    Args:
+        saved_model_proto: Loaded SavedModel protocol buffer.
+
+    Returns:
+        bool: True if a function contains _implements or api_implements attributes.
+    """
     meta_graph = saved_model_proto.meta_graphs[0]
     for function in meta_graph.graph_def.library.function:
         if function.attr.get("_implements", None) or function.attr.get("api_implements", None):  # pragma: no cover
@@ -954,6 +962,15 @@ class TensorflowBaseModel(BaseModel):
         self.model_type = "graph_def"
 
     def _load_sess(self, model, **kwargs):
+        """Load a TensorFlow session for the wrapped model.
+
+        Args:
+            model: Model path or graph object.
+            **kwargs: Additional session creation arguments.
+
+        Returns:
+            tf.compat.v1.Session: Initialized session object.
+        """
         if self.name:
             kwargs.update({"name": self.name})
         # assert self.model_type, 'model type not set....'

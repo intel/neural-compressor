@@ -244,6 +244,7 @@ class GraphAnalyzer:
         """
 
         def _validate_input(data, criteria):
+            """Check whether a node op matches the criteria."""
             if isinstance(criteria, str) and data == criteria:
                 return True
 
@@ -275,6 +276,7 @@ class GraphAnalyzer:
             return is_subset
 
         def _dfs(op_names, op_types, graph_info, node, pattern):
+            """Depth-first search to match graph patterns."""
             if pattern == []:
                 return
             start_index = 0
@@ -1025,6 +1027,7 @@ class GraphRewriterHelper:
         """
 
         def gen_per_iter(data):
+            """Normalize per-iteration log entries for min/max values."""
             res = []
             requant_tmp = []
             for i in data:

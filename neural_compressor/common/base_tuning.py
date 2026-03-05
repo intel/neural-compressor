@@ -70,7 +70,7 @@ class Evaluator:
         def eval_acc(model):
             ...
 
-        def eval_perf(molde):
+        def eval_perf(model):
             ...
 
         # Usage
@@ -109,6 +109,16 @@ class Evaluator:
         return result
 
     def _update_the_objective_score(self, eval_pair, eval_result, overall_result) -> float:
+        """Update the aggregated objective score with a weighted evaluation result.
+
+        Args:
+            eval_pair (dict): Evaluation function metadata including weight.
+            eval_result (float): Result from the evaluation function.
+            overall_result (float): Current aggregated score.
+
+        Returns:
+            float: Updated aggregated score.
+        """
         return overall_result + eval_result * eval_pair[self.WEIGHT]
 
     def get_number_of_eval_functions(self) -> int:
@@ -120,6 +130,11 @@ class Evaluator:
         return len(self.eval_fn_registry)
 
     def _set_eval_fn_registry(self, user_eval_fns: List[Dict]) -> None:
+        """Normalize and store evaluation function metadata.
+
+        Args:
+            user_eval_fns (List[Dict]): User-provided evaluation function configs.
+        """
         self.eval_fn_registry = [
             {
                 self.EVAL_FN: user_eval_fn_pair[self.EVAL_FN],
@@ -202,12 +217,28 @@ class ConfigSet:
 
     @classmethod
     def _from_single_config(cls, config: BaseConfig) -> List[BaseConfig]:
+        """Expand a single config into a list of configs.
+
+        Args:
+            config (BaseConfig): Configuration to expand.
+
+        Returns:
+            List[BaseConfig]: Expanded configuration list.
+        """
         config_list = []
         config_list = config.expand()
         return config_list
 
     @classmethod
     def _from_list_of_configs(cls, fwk_configs: List[BaseConfig]) -> List[BaseConfig]:
+        """Expand a list of configs into a single list.
+
+        Args:
+            fwk_configs (List[BaseConfig]): Configurations to expand.
+
+        Returns:
+            List[BaseConfig]: Expanded configuration list.
+        """
         config_list = []
         for config in fwk_configs:
             config_list += cls._from_single_config(config)
@@ -378,12 +409,26 @@ class TuningConfig:
 
 
 class _TrialRecord:
+    """Record information for a single tuning trial."""
+
     @staticmethod
     def _generate_unique_id():
+        """Generate a unique identifier for a trial record.
+
+        Returns:
+            str: Unique identifier string.
+        """
         unique_id = str(uuid.uuid4())
         return unique_id
 
     def __init__(self, trial_index: int, trial_result: Union[int, float], quant_config: BaseConfig):
+        """Initialize a trial record.
+
+        Args:
+            trial_index (int): Trial index in the tuning loop.
+            trial_result (Union[int, float]): Evaluation result for the trial.
+            quant_config (BaseConfig): Quantization configuration used for the trial.
+        """
         # The unique id to refer to one trial
         self.trial_id = _TrialRecord._generate_unique_id()
         self.trial_index = trial_index
@@ -525,6 +570,10 @@ def init_tuning(tuning_config: TuningConfig) -> Tuple[ConfigLoader, TuningLogger
 
     Args:
         tuning_config (TuningConfig): The configuration for the tuning process.
+
+    Returns:
+        Tuple[ConfigLoader, TuningLogger, TuningMonitor]: A tuple containing the config loader,
+            tuning logger, and tuning monitor.
     """
     config_loader = ConfigLoader(config_set=tuning_config.config_set, sampler=tuning_config.sampler)
     tuning_logger = TuningLogger()

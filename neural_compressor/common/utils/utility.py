@@ -136,6 +136,11 @@ class CpuInfo(object):
 
     @staticmethod
     def _detect_cores():
+        """Detect physical CPU core count using psutil.
+
+        Returns:
+            int: Number of physical CPU cores.
+        """
         physical_cores = psutil.cpu_count(logical=False)
         return physical_cores
 
@@ -181,6 +186,11 @@ class CpuInfo(object):
         self._sockets = num_of_sockets
 
     def _get_number_of_sockets(self) -> int:
+        """Detect the number of CPU sockets available.
+
+        Returns:
+            int: Number of CPU sockets detected.
+        """
         if "arch" in self._info and "ARM" in self._info["arch"]:  # pragma: no cover
             return 1
 
@@ -224,7 +234,17 @@ def dump_elapsed_time(customized_msg=""):
     """
 
     def f(func):
+        """Decorator factory that times the wrapped function.
+
+        Args:
+            func (Callable): Function to wrap.
+
+        Returns:
+            Callable: Wrapped function that logs elapsed time.
+        """
+
         def fi(*args, **kwargs):
+            """Execute the function and log elapsed time."""
             start = time.time()
             res = func(*args, **kwargs)
             end = time.time()
@@ -288,7 +308,10 @@ def log_process(mode=Mode.QUANTIZE):
     """
 
     def log_process_wrapper(func):
+        """Wrap a function to log execution start and end."""
+
         def inner_wrapper(*args, **kwargs):
+            """Execute the wrapped function with start/end logging."""
             start_log = default_tuning_logger.execution_start
             end_log = default_tuning_logger.execution_end
 
@@ -321,6 +344,7 @@ def call_counter(func):
     """
 
     def wrapper(*args, **kwargs):
+        """Increment call count and invoke the wrapped function."""
         FUNC_CALL_COUNTS[func.__name__] += 1
         return func(*args, **kwargs)
 

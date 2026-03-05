@@ -55,6 +55,14 @@ def get_all_config_set() -> Union[BaseConfig, List[BaseConfig]]:
 
 
 def _deepcopy_warp(model):
+    """Create a deep copy of the model while preserving specific attributes.
+
+    Args:
+        model (torch.nn.Module): The model to deep copy.
+
+    Returns:
+        torch.nn.Module: A deep copy of the model with preserved attributes.
+    """
     additional_attr_lst = ["_exported", "dynamic_shapes"]
     original_attr = {key: getattr(model, key, None) for key in additional_attr_lst}
     new_model = deepcopy(model)
@@ -64,7 +72,15 @@ def _deepcopy_warp(model):
 
 
 def _preprocess_model_quant_config(model, quant_config):
-    """Preprocess model and quant config before quantization."""
+    """Preprocess model and quant config before quantization.
+
+    Args:
+        model (torch.nn.Module): The model to be quantized.
+        quant_config (TuningConfig): The quantization configuration to preprocess.
+
+    Returns:
+        Tuple[torch.nn.Module, TuningConfig]: The preprocessed model and quantization configuration.
+    """
     for config in quant_config.config_set:
         # handle tokenizer attribute in AutoRoundConfig
         if isinstance(config, AutoRoundConfig):
@@ -88,8 +104,8 @@ def autotune(
     """The main entry of auto-tune.
 
     Args:
-        model (torch.nn.Module): _description_
-        tune_config (TuningConfig): _description_
+        model (torch.nn.Module): The model to be quantized.
+        tune_config (TuningConfig): The configuration for the auto-tuning process.
         eval_fn (Callable): for evaluation of quantized models.
         eval_args (tuple, optional): arguments used by eval_fn. Defaults to None.
         run_fn (Callable, optional): for calibration to quantize model. Defaults to None.

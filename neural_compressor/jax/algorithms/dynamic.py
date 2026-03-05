@@ -1,3 +1,5 @@
+"""Dynamic quantization algorithm entry point for JAX models."""
+
 # Copyright (c) 2025-2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -39,11 +41,15 @@ def dynamic_quantize(
     """Quantize model using Dynamic quantization algorithm.
 
     Args:
-        model: a JAX model to be quantized.
-        configs_mapping: mapping of configurations for the algorithm.
+        model (keras.Model): JAX model to be quantized.
+        configs_mapping (Optional[OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]]): Mapping of configurations
+            for the algorithm.
+        quant_config (Optional[BaseConfig]): Quantization configuration for wrapper selection.
+        *args (Any): Additional positional arguments (unused).
+        **kwargs (Any): Additional keyword arguments (unused).
 
     Returns:
-        q_model: the quantized model.
+        keras.Model: The quantized model wrapped for inference.
     """
     for _, value in configs_mapping.items():
         config = value

@@ -1767,7 +1767,7 @@ class FP8Config(TorchBaseConfig):
             allowlist (dict, optional): Whether to execute fp8 quantization for specific op names or types. Defaults to {"names": [], "types": FP8_WHITE_LIST}.
             mode (str, optional): Choose the quantization mode. Defaults to "AUTO".
             scale_method (str or dict, optional): Select method used to generate scale from calibration info. Can be a string or a dict. Defaults to "maxabs_hw".
-            scale_params (dict, optional): _description_. Defaults to {}.
+            scale_params (dict, optional): Scaling parameters that override the default ones for specific modules. Defaults to {}.
             observer (str, optional): Params of scales. Defaults to "maxabs".
             mod_dict (dict, optional): The dict of modules to quantize. Defaults to {}.
             measure_exclude (str, optional): Select INPUT/OUTPUT to be exculded by measurement. Defaults to "OUTPUT".

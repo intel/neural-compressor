@@ -1,3 +1,5 @@
+"""Dynamic quantized layer implementations for JAX-backed Keras models."""
+
 # Copyright (c) 2025-2026 Intel Corporation
 #
 # Portions of this code are derived from:
@@ -45,9 +47,24 @@ dynamic_quant_mapping = {}
 
 
 def register_dynamic_quantized_layer(clso):
-    """Register quantized layer class for original layer class."""
+    """Register quantized layer class for an original layer class.
+
+    Args:
+        clso (type): Original layer class to map to a quantized implementation.
+
+    Returns:
+        Callable: Decorator that registers the quantized class.
+    """
 
     def decorator(cls):
+        """Attach the quantized class to the dynamic mapping.
+
+        Args:
+            cls (type): Quantized layer class to register.
+
+        Returns:
+            type: The same class, for decorator chaining.
+        """
         dynamic_quant_mapping[clso] = cls
         return cls
 
@@ -55,31 +72,77 @@ def register_dynamic_quantized_layer(clso):
 
 
 class DynamicQDQLayer(keras.layers.Layer, SaveableLayerMixin):
+    """Layer that applies dynamic quantize-dequantize to activations."""
+
     def __init__(self, name, activation_dtype, asymmetric=False):
+        """Initialize the dynamic QDQ helper layer.
+
+        Args:
+            name (str): Layer name.
+            activation_dtype (jnp.dtype): Activation dtype used for quantization.
+            asymmetric (bool): Whether to use asymmetric quantization.
+
+        Returns:
+            None: Initializes the layer instance.
+        """
         super().__init__(name=name)
         self.activation_dtype = activation_dtype
         self._is_asymmetric = asymmetric
         self.supports_masking = True
 
     def add_variables(self):
+        """Create quantization helper functions for activations.
+
+        Returns:
+            None: Initializes quantization functions.
+        """
         self._tracker.unlock()
         self.aquantfun = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_asymmetric)
         self.adequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_asymmetric)
         self._tracker.lock()
 
     def call_symmetric(self, inputs, batch_min_max, mask=None):
+        """Apply symmetric quantization to inputs.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            batch_min_max (jnp.ndarray): Min/max tensor for the batch.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            jnp.ndarray: Quantized-dequantized tensor.
+        """
         ascale, _ = get_q_params(batch_min_max, self.activation_dtype, asymmetric=False)
         x = self.aquantfun(inputs, ascale)
         x = self.adequantfun(x, ascale)
         return x
 
     def call_asymmetric(self, inputs, batch_min_max, mask=None):
+        """Apply asymmetric quantization to inputs.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            batch_min_max (jnp.ndarray): Min/max tensor for the batch.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            jnp.ndarray: Quantized-dequantized tensor.
+        """
         ascale, azero_point = get_q_params(batch_min_max, self.activation_dtype, asymmetric=True)
         x = self.aquantfun(inputs, ascale, azero_point)
         x = self.adequantfun(x, ascale, azero_point)
         return x
 
     def call(self, inputs, mask=None):
+        """Apply dynamic activation quantize-dequantize.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            jnp.ndarray: Tensor with quantize-dequantize applied.
+        """
         if any([dim == 0 for dim in inputs.shape]):
             # Skip quantization for zero-size inputs
             return inputs
@@ -105,8 +168,20 @@ class DynamicQDQLayer(keras.layers.Layer, SaveableLayerMixin):
 
 
 class QDynamicDenseMixin(SaveableLayerMixin):
+    """Mixin that adds dynamic quantization to dense-like layers."""
+
     @classmethod
     def prepare(cls, orig, weight_dtype, activation_dtype):
+        """Convert a dense-like layer instance for dynamic quantization.
+
+        Args:
+            orig (keras.layers.Layer): Original layer instance.
+            weight_dtype (jnp.dtype): Dtype for quantized weights.
+            activation_dtype (jnp.dtype): Dtype for quantized activations.
+
+        Returns:
+            keras.layers.Layer: The updated layer instance.
+        """
         orig._tracker.unlock()
         orig.__class__ = cls
         orig.weight_dtype = weight_dtype
@@ -116,6 +191,11 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         return orig
 
     def add_variables(self):
+        """Create quantization variables and cached weight tensor.
+
+        Returns:
+            None: Initializes quantization variables.
+        """
         self._tracker.unlock()
         self.input_qdq.add_variables()
         wscale, _ = get_q_params(self._kernel.value, self.weight_dtype, asymmetric=False)
@@ -141,6 +221,11 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
+        """Remove original weights after quantization is complete.
+
+        Returns:
+            None: Cleans up original weights.
+        """
         self._tracker.unlock()
         self._trainable_variables.remove(self._kernel)
         del self._kernel
@@ -148,10 +233,24 @@ class QDynamicDenseMixin(SaveableLayerMixin):
 
     @property
     def kernel(self):
+        """Return the dequantized kernel tensor.
+
+        Returns:
+            jnp.ndarray: Dequantized kernel tensor.
+        """
         w = self.wdequantfun(self._kernel_quant.value, self.wscale.value)
         return w
 
     def call(self, inputs, training=None):
+        """Apply quantized input processing before the dense computation.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            training (Optional[bool]): Training mode flag.
+
+        Returns:
+            jnp.ndarray: Layer output tensor.
+        """
         x = self.input_qdq(inputs)
         x = super().call(x, training=training)
         return x
@@ -159,6 +258,8 @@ class QDynamicDenseMixin(SaveableLayerMixin):
 
 @register_dynamic_quantized_layer(Dense)
 class QDynamicDense(QDynamicDenseMixin, Dense):
+    """Dynamically quantized Dense layer."""
+
     pass
 
 
@@ -167,6 +268,8 @@ verify_api(Dense, QDynamicDense, "call")
 
 @register_dynamic_quantized_layer(EinsumDense)
 class QDynamicEinsumDense(QDynamicDenseMixin, EinsumDense):
+    """Dynamically quantized EinsumDense layer."""
+
     pass
 
 
@@ -175,8 +278,20 @@ verify_api(EinsumDense, QDynamicEinsumDense, "call")
 
 @register_dynamic_quantized_layer(MultiHeadAttention)
 class QDynamicMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
+    """Dynamically quantized MultiHeadAttention layer."""
+
     @classmethod
     def prepare(cls, orig, weight_dtype, activation_dtype):
+        """Convert a MultiHeadAttention instance for dynamic quantization.
+
+        Args:
+            orig (keras.layers.MultiHeadAttention): Original layer instance.
+            weight_dtype (jnp.dtype): Dtype for quantized weights.
+            activation_dtype (jnp.dtype): Dtype for quantized activations.
+
+        Returns:
+            keras.layers.MultiHeadAttention: Updated layer instance.
+        """
         orig._tracker.unlock()
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
@@ -188,12 +303,22 @@ class QDynamicMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
         return orig
 
     def add_variables(self):
+        """Create quantization helper layers for activations.
+
+        Returns:
+            None: Initializes quantization helper layers.
+        """
         self.q_qdq.add_variables()
         self.k_qdq.add_variables()
         self.a_qdq.add_variables()
         self.v_qdq.add_variables()
 
     def post_quantization_cleanup(self):
+        """Finalize dynamic quantization with no extra cleanup.
+
+        Returns:
+            None: Keeps the layer ready for inference.
+        """
         pass
 
     # fmt: off
@@ -224,8 +349,7 @@ class QDynamicMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
                 nothing).
 
         Returns:
-          attention_output: Multi-headed outputs of attention computation.
-          attention_scores: Multi-headed attention weights.
+          Tuple[jnp.ndarray, Optional[jnp.ndarray]]: Attention outputs and attention scores.
         """
         # Check for flash attention constraints
         if self._flash_attention and return_attention_scores:
@@ -310,8 +434,20 @@ verify_api(MultiHeadAttention, QDynamicMultiHeadAttention, "_compute_attention")
 
 @register_dynamic_quantized_layer(CachedGemma3Attention)
 class QDynamicCachedGemma3Attention(CachedGemma3Attention, SaveableLayerMixin):
+    """Dynamically quantized CachedGemma3Attention layer."""
+
     @classmethod
     def prepare(cls, orig, weight_dtype, activation_dtype):
+        """Convert a CachedGemma3Attention instance for dynamic quantization.
+
+        Args:
+            orig (CachedGemma3Attention): Original layer instance.
+            weight_dtype (jnp.dtype): Dtype for quantized weights.
+            activation_dtype (jnp.dtype): Dtype for quantized activations.
+
+        Returns:
+            CachedGemma3Attention: Updated layer instance.
+        """
         orig._tracker.unlock()
         orig.__class__ = cls
         orig.qdq = DynamicQDQLayer("qdq", activation_dtype, False)
@@ -319,9 +455,19 @@ class QDynamicCachedGemma3Attention(CachedGemma3Attention, SaveableLayerMixin):
         return orig
 
     def add_variables(self):
+        """Create activation QDQ helper layer.
+
+        Returns:
+            None: Initializes activation helper layer.
+        """
         self.qdq.add_variables()
 
     def post_quantization_cleanup(self):
+        """Finalize dynamic quantization with no extra cleanup.
+
+        Returns:
+            None: Keeps the layer ready for inference.
+        """
         pass
 
     def _compute_attention(
@@ -333,6 +479,19 @@ class QDynamicCachedGemma3Attention(CachedGemma3Attention, SaveableLayerMixin):
         training=False,
         cache_update_index=0,
     ):
+        """Compute attention with dynamic activation quantization.
+
+        Args:
+            q (jnp.ndarray): Query tensor.
+            k (jnp.ndarray): Key tensor.
+            v (jnp.ndarray): Value tensor.
+            attention_mask (Optional[jnp.ndarray]): Optional attention mask.
+            training (bool): Training mode flag.
+            cache_update_index (int): Cache update index for generation.
+
+        Returns:
+            jnp.ndarray: Attention output tensor.
+        """
         if self.query_head_dim_normalize:
             query_normalization = 1 / np.sqrt(self.head_dim)
         else:
@@ -390,8 +549,20 @@ verify_api(CachedGemma3Attention, QDynamicCachedGemma3Attention, "_compute_atten
 
 @register_dynamic_quantized_layer(Gemma3VisionAttention)
 class QDynamicGemma3VisionAttention(Gemma3VisionAttention, SaveableLayerMixin):
+    """Dynamically quantized Gemma3VisionAttention layer."""
+
     @classmethod
     def prepare(cls, orig, weight_dtype, activation_dtype):
+        """Convert a Gemma3VisionAttention instance for dynamic quantization.
+
+        Args:
+            orig (Gemma3VisionAttention): Original layer instance.
+            weight_dtype (jnp.dtype): Dtype for quantized weights.
+            activation_dtype (jnp.dtype): Dtype for quantized activations.
+
+        Returns:
+            Gemma3VisionAttention: Updated layer instance.
+        """
         orig._tracker.unlock()
         orig.__class__ = cls
         orig.qdq = DynamicQDQLayer("qdq", activation_dtype, False)
@@ -399,9 +570,19 @@ class QDynamicGemma3VisionAttention(Gemma3VisionAttention, SaveableLayerMixin):
         return orig
 
     def add_variables(self):
+        """Create activation QDQ helper layer.
+
+        Returns:
+            None: Initializes activation helper layer.
+        """
         self.qdq.add_variables()
 
     def post_quantization_cleanup(self):
+        """Finalize dynamic quantization with no extra cleanup.
+
+        Returns:
+            None: Keeps the layer ready for inference.
+        """
         pass
 
     def call(
@@ -411,6 +592,17 @@ class QDynamicGemma3VisionAttention(Gemma3VisionAttention, SaveableLayerMixin):
         return_attention_scores=None,
         training=False,
     ):
+        """Compute vision attention with quantized activations.
+
+        Args:
+            x (jnp.ndarray): Input tensor.
+            attention_mask (Optional[jnp.ndarray]): Optional attention mask.
+            return_attention_scores (Optional[bool]): Whether to return attention scores.
+            training (bool): Training mode flag.
+
+        Returns:
+            Tuple[jnp.ndarray, jnp.ndarray]: Attention output and attention probabilities.
+        """
         batch_size = ops.shape(x)[0]
         mixed_query_layer = self.query_proj(inputs=x)
         mixed_key_layer = self.key_proj(inputs=x)
@@ -457,8 +649,20 @@ verify_api(Gemma3VisionAttention, QDynamicGemma3VisionAttention, "call")
 
 @register_dynamic_quantized_layer(ReversibleEmbedding)
 class QDynamicReversibleEmbedding(ReversibleEmbedding, SaveableLayerMixin):
+    """Dynamically quantized ReversibleEmbedding layer."""
+
     @classmethod
     def prepare(cls, orig, weight_dtype, activation_dtype):
+        """Convert a ReversibleEmbedding instance for dynamic quantization.
+
+        Args:
+            orig (ReversibleEmbedding): Original layer instance.
+            weight_dtype (jnp.dtype): Dtype for quantized weights.
+            activation_dtype (jnp.dtype): Dtype for quantized activations.
+
+        Returns:
+            ReversibleEmbedding: Updated layer instance.
+        """
         orig._tracker.unlock()
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
@@ -468,15 +672,34 @@ class QDynamicReversibleEmbedding(ReversibleEmbedding, SaveableLayerMixin):
         return orig
 
     def add_variables(self):
+        """Create activation QDQ helper layers.
+
+        Returns:
+            None: Initializes activation helper layers.
+        """
         self.inputs_qdq.add_variables()
         self.kernel_qdq.add_variables()
 
     def post_quantization_cleanup(self):
+        """Finalize dynamic quantization with no extra cleanup.
+
+        Returns:
+            None: Keeps the layer ready for inference.
+        """
         pass
 
     # TODO maybe make kernel (offline) quantization for reversible embedding (self.embeddings in our path) ?
 
     def call(self, inputs, reverse=False):
+        """Compute forward or reverse embedding with activation quantization.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            reverse (bool): Whether to compute the reverse embedding.
+
+        Returns:
+            jnp.ndarray: Embedded outputs or logits.
+        """
         if reverse:
             if self.tie_weights:
                 kernel = ops.transpose(ops.convert_to_tensor(self.embeddings))
