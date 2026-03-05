@@ -101,6 +101,7 @@ def get_quantize_fun(dtype=ml_dtypes.float8_e4m3, asymmetric=False):
     Returns:
         Callable: Quantization function that maps tensors to the target dtype.
     """
+
     @partial(jax.lax.composite, name="inc.quantize_fp8")
     def quantize_tensor_float(x, scale):
         """Quantize floating-point tensors using clamping.
@@ -165,6 +166,7 @@ def get_dequantize_fun(dtype=jnp.float32, asymmetric=False):
     Returns:
         Callable: Function that dequantizes tensors.
     """
+
     @partial(jax.lax.composite, name="inc.dequantize")
     def dequantize(x, scale):
         """Dequantize a tensor by applying the scale.
