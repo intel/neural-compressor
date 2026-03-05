@@ -3,9 +3,6 @@
 
 name: Check hyperlinks and relative path validity
 
-permissions:
-  contents: read
-
 on:
   pull_request:
     branches: ["master", "master_next"]
@@ -15,6 +12,9 @@ on:
 concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
+
+permissions:
+  contents: read
 
 jobs:
   check-the-validity-of-hyperlinks-in-README:
