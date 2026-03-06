@@ -198,4 +198,3 @@ class TestAutoRoundHPU:
         _ = q_model(self.inp)  # inference
         tagert_modules = ["WQLinear_GEMM"]
         assert q_model.model.layers[0].self_attn.k_proj.__class__.__name__ in tagert_modules, "packing model failed."
-
