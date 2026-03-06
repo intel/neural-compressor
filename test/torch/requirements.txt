@@ -1,4 +1,4 @@
-auto-round @ git+https://github.com/intel/auto-round.git@v0.10.1rc
+auto-round @ git+https://github.com/intel/auto-round.git@main
 auto-round-lib
 compressed-tensors
 datasets

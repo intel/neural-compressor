@@ -23,16 +23,16 @@ pip install beautifulsoup4==4.13.5
 echo "##[endgroup]"
 pip list
 
-export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.3x_pt_fp8
+export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.3x_pt_hpu
 inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__[0])')
 cd /neural-compressor/test || exit 1
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
-ut_log_name=${LOG_DIR}/ut_3x_pt_fp8.log
+ut_log_name=${LOG_DIR}/ut_3x_pt_hpu.log
 pytest --cov="${inc_path}" -vs --disable-warnings --html=report_1.html --self-contained-html torch/quantization/weight_only/test_load.py 2>&1 | tee -a ${ut_log_name}
 pytest --cov="${inc_path}" -vs --disable-warnings --html=report_2.html --self-contained-html torch/quantization/weight_only/test_rtn.py 2>&1 | tee -a ${ut_log_name}
-pytest --cov="${inc_path}" -vs --disable-warnings --html=report_3.html --self-contained-html torch/quantization/test_autoround.py 2>&1 | tee -a ${ut_log_name}
+pytest --cov="${inc_path}" -vs --disable-warnings --html=report_3.html --self-contained-html torch/quantization/test_autoround_hpu.py 2>&1 | tee -a ${ut_log_name}
 
 # Below folder contains some special configuration for pytest so we need to enter the path and run it separately
 cd /neural-compressor/test/torch/algorithms/fp8_quant

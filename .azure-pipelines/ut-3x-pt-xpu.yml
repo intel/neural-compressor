@@ -1,0 +1,45 @@
+trigger: none
+
+pr:
+  autoCancel: true
+  drafts: false
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - neural_compressor/common
+      - neural_compressor/torch
+      - test/torch/quantization/test_autoround_xpu.py
+      - setup.py
+      - requirements_pt.txt
+      - .azure-pipelines/ut-3x-pt-xpu.yml
+      - .azure-pipelines/template/docker-template.yml
+      - .azure-pipelines/scripts/install_nc.sh
+      - .azure-pipelines/scripts/ut/run_3x_pt_xpu.sh
+
+pool: B60
+
+variables:
+  IMAGE_NAME: "neural-compressor"
+  IMAGE_TAG: "py312-xpu"
+  DOCKERFILE_NAME: "Dockerfile_xpu"
+  UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
+  REPO: $(Build.Repository.Uri)
+
+stages:
+  - stage: Torch
+    displayName: Unit Test 3x Torch
+    dependsOn: []
+    jobs:
+      - job:
+        displayName: Unit Test 3x Torch
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              dockerFileName: $(DOCKERFILE_NAME)
+              repoTag: "$(IMAGE_TAG)"
+              utScriptFileName: "run_3x_pt_xpu"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut_3x_xpu"
