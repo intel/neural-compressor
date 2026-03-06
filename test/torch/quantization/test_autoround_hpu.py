@@ -6,7 +6,6 @@ from functools import lru_cache
 import pytest
 import torch
 import transformers
-from packaging.version import Version, parse
 from transformers import AutoModelForCausalLM, AutoTokenizer, LlamaConfig
 
 
@@ -44,7 +43,6 @@ if is_habana_framework_installed():
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     convert,
-    get_default_AutoRound_config,
     prepare,
     quantize,
 )

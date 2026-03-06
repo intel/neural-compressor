@@ -1,7 +1,4 @@
-import copy
-import os
 import shutil
-from functools import lru_cache
 
 import pytest
 import torch
@@ -15,9 +12,7 @@ def is_xpu_available():
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     convert,
-    get_default_AutoRound_config,
     prepare,
-    quantize,
 )
 from neural_compressor.torch.utils import logger
 
@@ -75,7 +70,7 @@ class TestAutoRoundGPU:
 
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
-        inc_model = convert(model)
+        convert(model)
         if scheme in ["FPW8A16"]:  # FPW8A16 loading not supported yet
             return
         inc_model = AutoModelForCausalLM.from_pretrained(
@@ -173,7 +168,7 @@ class TestAutoRoundGPU:
 
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
-        inc_model = convert(model)
+        convert(model)
         inc_model = Qwen2VLForConditionalGeneration.from_pretrained(
             output_dir,
         )
