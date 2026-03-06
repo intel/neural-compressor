@@ -88,8 +88,8 @@ max_gen_toks=2048
 
 # update max_length based on the task
 if [[ "$TASK_NAME" == *"longbench"* ]]; then
-    max_length=40960
-    max_gen_toks=8192
+    max_length=131072
+    max_gen_toks=2048
 fi
 
 max_ctx_length=$((max_length - max_gen_toks))
@@ -196,6 +196,7 @@ start_vllm_server() {
         --gpu-memory-utilization 0.8 \
         --dtype bfloat16 \
         --kv-cache-dtype ${KV_CACHE_DTYPE} \
+        --rope-scaling '{"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}' \
         --disable-log-requests \
         > ${OUTPUT_DIR}/vllm_server.log 2>&1 &
     
