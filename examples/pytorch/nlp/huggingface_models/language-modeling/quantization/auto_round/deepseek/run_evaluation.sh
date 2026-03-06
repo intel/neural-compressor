@@ -89,7 +89,7 @@ max_gen_toks=2048
 # update max_length based on the task
 if [[ "$TASK_NAME" == *"longbench"* ]]; then
     max_length=131072 # 128k
-    max_gen_toks=4096
+    max_gen_toks=2048
 fi
 
 max_ctx_length=$((max_length - max_gen_toks))
