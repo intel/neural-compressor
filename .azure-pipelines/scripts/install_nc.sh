@@ -6,7 +6,7 @@ if [[ $1 = *"3x_pt"* ]]; then
     python -m pip install --no-cache-dir -r requirements_pt.txt
     if [[ $1 = *"hpu"* ]]; then
         pip uninstall neural_compressor_3x_pt -y || true
-    if [[ $1 = *"xpu"* ]]; then
+    elif [[ $1 = *"xpu"* ]]; then
         echo -e "\n Install torch XPU ... "
         pip install torch==2.9.1 torchvision --index-url https://download.pytorch.org/whl/xpu
         pip install auto-round-lib==0.10.2.1 # mapping torch and auto-round version
