@@ -11,6 +11,7 @@ import transformers
 def is_xpu_available():
     return torch.xpu.is_available()
 
+
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     convert,
@@ -32,6 +33,7 @@ except ImportError:
 
 tagert_modules = ["QuantLinear", "QuantLinearGPTQ", "QuantLinearAWQ"]
 
+
 @torch.no_grad()
 def run_fn(model, dataloader):
     for data in dataloader:
@@ -41,6 +43,7 @@ def run_fn(model, dataloader):
             model(**data)
         else:
             model(data)
+
 
 @pytest.mark.skipif(not is_xpu_available(), reason="XPU is not available")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
@@ -206,4 +209,3 @@ class TestAutoRoundGPU:
         inc_model = convert(model)
         assert inc_model is not None
         shutil.rmtree(output_dir, ignore_errors=True)
- 

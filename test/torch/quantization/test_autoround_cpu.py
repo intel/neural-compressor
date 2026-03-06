@@ -9,7 +9,6 @@ import transformers
 from packaging.version import Version
 from transformers import AutoModelForCausalLM, AutoTokenizer
 
-
 from neural_compressor.torch.quantization import (
     AutoRoundConfig,
     convert,
@@ -635,4 +634,3 @@ class TestAutoRoundCPU:
                 getattr(attn, "q_scale", None) is not None
             ), f"Missing q_scale in attention for scheme={scheme}, static_attention_dtype={static_attention_dtype}"
         shutil.rmtree(output_dir, ignore_errors=True)
-
