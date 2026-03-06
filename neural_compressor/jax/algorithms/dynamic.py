@@ -66,7 +66,9 @@ def dynamic_quantize(
     # qmodel.set_weights(model.get_weights())
     qmodel = model
     operations = [
-        lambda layer: dynamic_quant_mapping[layer.__class__].prepare(layer, weight_dtype, activation_dtype),
+        lambda layer: dynamic_quant_mapping[layer.__class__].prepare(
+            layer, weight_dtype, activation_dtype, quant_config.const_scale, quant_config.const_weight
+        ),
         lambda layer: layer.add_variables(),
         lambda layer: layer.post_quantization_cleanup(),
     ]

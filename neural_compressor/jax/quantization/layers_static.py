@@ -137,16 +137,17 @@ class MinMaxObserver(keras.layers.Layer):
         return ops.array((self.min_val, self.max_val))
 
 
-class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
+class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies static quantize-dequantize to activations."""
 
-    def __init__(self, name, activation_dtype, asymmetric=False):
+    def __init__(self, name, activation_dtype, asymmetric=False, const_scale=False):
         """Initialize the static QDQ helper layer.
 
         Args:
             name (str): Layer name.
             activation_dtype (jnp.dtype): Activation dtype used for quantization.
             asymmetric (bool): Whether to use asymmetric quantization.
+            const_scale (bool): Whether to use constant scales.
 
         Returns:
             None: Initializes the layer instance.
@@ -156,6 +157,13 @@ class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
         self._is_asymmetric = asymmetric
         self.supports_masking = True
         self._is_quantized = False
+        self.const_scale = const_scale
+        if const_scale:
+            self._const_variables = ["ascale"]
+            if asymmetric:
+                self._const_variables.append("azero_point")
+        else:
+            self._const_variables = []
 
     def add_observers(self):
         """Attach observer layers for calibration.
@@ -176,7 +184,7 @@ class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
         self._tracker.unlock()
         if self._is_asymmetric:
             self.azero_point = self.add_weight(
-                name="activation_zero_point",
+                name="azero_point",
                 shape=(1,),
                 initializer="zeros",
                 trainable=False,
@@ -184,7 +192,7 @@ class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
                 dtype=self.compute_dtype,
             )
         self.ascale = self.add_weight(
-            name="activation_scale",
+            name="ascale",
             shape=(1,),
             initializer="zeros",
             trainable=False,
@@ -228,6 +236,14 @@ class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
             if self.input_observer in self._layers:
                 self._layers.remove(self.input_observer)
                 del self.input_observer
+
+        # convert some variables to const if needed
+        for name in self._const_variables:
+            var = getattr(self, name)
+            value = jnp.array(var.value)
+            self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+            setattr(self, name, value)
+
         self.call = self.call_asymmetric if self._is_asymmetric else self.call_symmetric
         self._is_quantized = True
         self._tracker.lock()
@@ -255,7 +271,12 @@ class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
         Returns:
             jnp.ndarray: Quantized-dequantized tensor.
         """
-        ascale = self.ascale.value
+
+        if self.const_scale:
+            ascale = self.ascale
+        else:
+            ascale = self.ascale.value
+
         x = self.aquantfun(inputs, ascale)
         x = self.adequantfun(x, ascale)
         return x
@@ -270,8 +291,12 @@ class StaticQDQLayer(keras.layers.Layer, SaveableLayerMixin):
         Returns:
             jnp.ndarray: Quantized-dequantized tensor.
         """
-        ascale = self.ascale.value
-        zero_point = self.azero_point.value
+        if self.const_scale:
+            ascale = self.ascale
+            zero_point = self.azero_point
+        else:
+            ascale = self.ascale.value
+            zero_point = self.azero_point.value
         x = self.aquantfun(inputs, ascale, zero_point)
         x = self.adequantfun(x, ascale, zero_point)
         return x
@@ -281,24 +306,36 @@ class QStaticDenseMixin(SaveableLayerMixin):
     """Mixin that adds static quantization to dense-like layers."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype):
+    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
         """Convert a dense-like layer instance for static quantization.
 
         Args:
             orig (keras.layers.Layer): Original layer instance.
             weight_dtype (jnp.dtype): Dtype for quantized weights.
             activation_dtype (jnp.dtype): Dtype for quantized activations.
+            const_scale (bool): Whether to use constant scales.
+            const_weight (bool): Whether to use constant weight.
 
         Returns:
-            keras.layers.Layer: Updated layer instance.
+            keras.layers.Layer: The updated layer instance.
         """
         orig._tracker.unlock()
         orig.__class__ = cls
         orig.weight_dtype = weight_dtype
         orig.activation_dtype = activation_dtype
+        orig.const_scale = const_scale
+        orig.const_weight = const_weight
         orig._is_quantized = False
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.kernel_shape = orig.kernel.shape
+        if const_scale:
+            orig._const_variables = ["ascale", "wscale"]
+            if orig._is_int8:
+                orig._const_variables.append("azero_point")
+        else:
+            orig._const_variables = []
+        if const_weight:
+            orig._const_variables.append("w")
         orig._tracker.lock()
         return orig
 
@@ -329,7 +366,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
                 dtype=self.compute_dtype,
             )
         self.ascale = self.add_weight(
-            name="activation_scale",
+            name="ascale",
             shape=(1,),
             initializer="zeros",
             trainable=False,
@@ -337,7 +374,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
             dtype=self.compute_dtype,
         )
         self.wscale = self.add_weight(
-            name="weight_scale",
+            name="wscale",
             shape=(1,),
             initializer="zeros",
             trainable=False,
@@ -345,7 +382,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
             dtype=self.compute_dtype,
         )
         self.w = self.add_weight(
-            name="quantized_kernel",
+            name="w",
             shape=self.kernel_shape,
             initializer="zeros",
             trainable=False,
@@ -401,6 +438,14 @@ class QStaticDenseMixin(SaveableLayerMixin):
             self._trainable_variables.remove(self._kernel)
             del self._kernel
 
+        # convert variables to attributes (const) if needed
+        for name in self._const_variables:
+            var = getattr(self, name)
+            value = jnp.array(var.value)
+            self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+            delattr(self, name)
+            setattr(self, name, value)
+
         if hasattr(self, "_layers") and hasattr(self, "input_observer"):
             if self.input_observer in self._layers:
                 self._layers.remove(self.input_observer)
@@ -418,7 +463,15 @@ class QStaticDenseMixin(SaveableLayerMixin):
             jnp.ndarray: Dequantized kernel tensor.
         """
         if self._is_quantized:
-            w = self.wdequantfun(self.w.value, self.wscale.value)
+            if self.const_weight:
+                w = self.w
+            else:
+                w = self.w.value
+            if self.const_scale:
+                wscale = self.wscale
+            else:
+                wscale = self.wscale.value
+            w = self.wdequantfun(w, wscale)
             return w
         ret = super().kernel
         return ret.value
@@ -447,7 +500,10 @@ class QStaticDenseMixin(SaveableLayerMixin):
         Returns:
             jnp.ndarray: Layer output tensor.
         """
-        ascale = self.ascale.value
+        if self.const_scale:
+            ascale = self.ascale
+        else:
+            ascale = self.ascale.value
         x = self.aquantfun(inputs, ascale)
         x = self.adequantfun(x, ascale)
         x = super().call(x, training=training)
@@ -463,8 +519,12 @@ class QStaticDenseMixin(SaveableLayerMixin):
         Returns:
             jnp.ndarray: Layer output tensor.
         """
-        ascale = self.ascale.value
-        zero_point = self.azero_point.value
+        if self.const_scale:
+            ascale = self.ascale
+            zero_point = self.azero_point
+        else:
+            ascale = self.ascale.value
+            zero_point = self.azero_point.value
         x = self.aquantfun(inputs, ascale, zero_point)
         x = self.adequantfun(x, ascale, zero_point)
         x = super().call(x, training=training)
@@ -492,17 +552,19 @@ verify_api(EinsumDense, QStaticEinsumDense, "call")
 
 
 @register_static_quantized_layer(MultiHeadAttention)
-class QStaticMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
+class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
     """Statically quantized MultiHeadAttention layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype):
+    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
         """Convert a MultiHeadAttention instance for static quantization.
 
         Args:
             orig (keras.layers.MultiHeadAttention): Original layer instance.
             weight_dtype (jnp.dtype): Dtype for quantized weights.
             activation_dtype (jnp.dtype): Dtype for quantized activations.
+            const_scale (bool): Whether to use constant scales.
+            const_weight (bool): ignored, included for API consistency.
 
         Returns:
             keras.layers.MultiHeadAttention: Updated layer instance.
@@ -511,12 +573,12 @@ class QStaticMultiHeadAttention(MultiHeadAttention, SaveableLayerMixin):
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.q_qdq = StaticQDQLayer(
-            "q_qdq", activation_dtype, False
+            "q_qdq", activation_dtype, False, const_scale
         )  # the second argument of einsum has to be quantized symmetrically for onednn to work
-        orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, orig._is_int8)
-        orig.a_qdq = StaticQDQLayer("a_qdq", activation_dtype, orig._is_int8)
+        orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, orig._is_int8, const_scale)
+        orig.a_qdq = StaticQDQLayer("a_qdq", activation_dtype, orig._is_int8, const_scale)
         orig.v_qdq = StaticQDQLayer(
-            "v_qdq", activation_dtype, False
+            "v_qdq", activation_dtype, False, const_scale
         )  # the second argument of einsum has to be quantized symmetrically for onednn to work
         orig._is_quantized = False
         orig._tracker.lock()
@@ -681,11 +743,11 @@ verify_api(MultiHeadAttention, QStaticMultiHeadAttention, "_compute_attention")
 
 
 @register_static_quantized_layer(CachedGemma3Attention)
-class QStaticCachedGemma3Attention(CachedGemma3Attention, SaveableLayerMixin):
+class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
     """Statically quantized CachedGemma3Attention layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype):
+    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
         """Convert a CachedGemma3Attention instance for static quantization.
 
         Args:
@@ -698,10 +760,10 @@ class QStaticCachedGemma3Attention(CachedGemma3Attention, SaveableLayerMixin):
         """
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.q_qdq = StaticQDQLayer("q_qdq", activation_dtype, False)
-        orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, False)
-        orig.attention_softmax_qdq = StaticQDQLayer("attention_softmax_qdq", activation_dtype, False)
-        orig.v_qdq = StaticQDQLayer("v_qdq", activation_dtype, False)
+        orig.q_qdq = StaticQDQLayer("q_qdq", activation_dtype, False, const_scale)
+        orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, False, const_scale)
+        orig.attention_softmax_qdq = StaticQDQLayer("attention_softmax_qdq", activation_dtype, False, const_scale)
+        orig.v_qdq = StaticQDQLayer("v_qdq", activation_dtype, False, const_scale)
         orig._is_quantized = False
         orig._tracker.lock()
         return orig
@@ -831,27 +893,31 @@ verify_api(CachedGemma3Attention, QStaticCachedGemma3Attention, "_compute_attent
 
 
 @register_static_quantized_layer(Gemma3VisionAttention)
-class QStaticGemma3VisionAttention(Gemma3VisionAttention, SaveableLayerMixin):
+class QStaticGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
     """Statically quantized Gemma3VisionAttention layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype):
+    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
         """Convert a Gemma3VisionAttention instance for static quantization.
 
         Args:
             orig (Gemma3VisionAttention): Original layer instance.
             weight_dtype (jnp.dtype): Dtype for quantized weights.
             activation_dtype (jnp.dtype): Dtype for quantized activations.
+            const_scale (bool): Whether to use constant scales.
+            const_weight (bool): ignored, included for API consistency.
 
         Returns:
             Gemma3VisionAttention: Updated layer instance.
         """
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.query_qdq = StaticQDQLayer("query_qdq", activation_dtype, False)
-        orig.key_qdq = StaticQDQLayer("key_qdq", activation_dtype, False)
-        orig.dropout_attention_probs_qdq = StaticQDQLayer("dropout_attention_probs_qdq", activation_dtype, False)
-        orig.value_qdq = StaticQDQLayer("value_qdq", activation_dtype, False)
+        orig.query_qdq = StaticQDQLayer("query_qdq", activation_dtype, False, const_scale)
+        orig.key_qdq = StaticQDQLayer("key_qdq", activation_dtype, False, const_scale)
+        orig.dropout_attention_probs_qdq = StaticQDQLayer(
+            "dropout_attention_probs_qdq", activation_dtype, False, const_scale
+        )
+        orig.value_qdq = StaticQDQLayer("value_qdq", activation_dtype, False, const_scale)
         orig._is_quantized = False
         orig._tracker.lock()
         return orig
@@ -966,25 +1032,27 @@ verify_api(Gemma3VisionAttention, QStaticGemma3VisionAttention, "call")
 
 
 # @register_static_quantized_layer(RotaryEmbedding)
-class QStaticRotaryEmbedding(RotaryEmbedding, SaveableLayerMixin):
+class QStaticRotaryEmbedding(SaveableLayerMixin, RotaryEmbedding):
     """Statically quantized RotaryEmbedding layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype):
+    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
         """Convert a RotaryEmbedding instance for static quantization.
 
         Args:
             orig (RotaryEmbedding): Original layer instance.
             weight_dtype (jnp.dtype): Dtype for quantized weights.
             activation_dtype (jnp.dtype): Dtype for quantized activations.
+            const_scale (bool): Whether to use constant scales.
+            const_weight (bool): ignored, included for API consistency.
 
         Returns:
             RotaryEmbedding: Updated layer instance.
         """
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.positions_qdq = StaticQDQLayer("positions_qdq", activation_dtype, False)
-        orig.inverse_freq_qdq = StaticQDQLayer("inverse_freq_qdq", activation_dtype, False)
+        orig.positions_qdq = StaticQDQLayer("positions_qdq", activation_dtype, False, const_scale)
+        orig.inverse_freq_qdq = StaticQDQLayer("inverse_freq_qdq", activation_dtype, False, const_scale)
         orig._is_quantized = False
         orig._tracker.lock()
         return orig
@@ -1073,11 +1141,11 @@ class QStaticRotaryEmbedding(RotaryEmbedding, SaveableLayerMixin):
 
 
 @register_static_quantized_layer(ReversibleEmbedding)
-class QStaticReversibleEmbedding(ReversibleEmbedding, SaveableLayerMixin):
+class QStaticReversibleEmbedding(SaveableLayerMixin, ReversibleEmbedding):
     """Statically quantized ReversibleEmbedding layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype):
+    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
         """Convert a ReversibleEmbedding instance for static quantization.
 
         Args:
@@ -1091,8 +1159,10 @@ class QStaticReversibleEmbedding(ReversibleEmbedding, SaveableLayerMixin):
         orig._tracker.unlock()
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
-        orig.inputs_qdq = StaticQDQLayer("inputs_qdq", activation_dtype, orig._is_int8)
-        orig.kernel_qdq = StaticQDQLayer("kernel_qdq", activation_dtype, False)
+        orig.inputs_qdq = StaticQDQLayer("inputs_qdq", activation_dtype, orig._is_int8, const_scale)
+        orig.kernel_qdq = StaticQDQLayer("kernel_qdq", activation_dtype, False, const_scale)
+        orig.const_scale = const_scale
+        orig.const_weight = const_weight
         orig._is_quantized = False
         orig._tracker.lock()
         return orig
