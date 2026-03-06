@@ -31,4 +31,4 @@ fi
 
 echo -e "\n pip list after install Neural Compressor ... "
 echo "##[endgroup]"
-pip list
+python -m pip list
