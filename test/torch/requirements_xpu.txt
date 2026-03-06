@@ -1,0 +1,2 @@
+auto-round @ git+https://github.com/intel/auto-round.git@main
+auto-round-lib

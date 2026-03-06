@@ -25,7 +25,7 @@ parameters:
     default: "coverage"
   - name: utContainerName
     type: string
-    default: "utTest"
+    default: "INCUnitTest"
   - name: imageSource
     type: string
     default: "build"
