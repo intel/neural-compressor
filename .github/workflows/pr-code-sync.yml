@@ -20,6 +20,9 @@ env:
   EXTERNAL_REPO: intel/neural-compressor
   EXTERNAL_BRANCH: master
 
+permissions:
+  contents: read
+
 jobs:
   git-sync:
     if: ${{ contains(github.repository, 'intel-innersource') }}
