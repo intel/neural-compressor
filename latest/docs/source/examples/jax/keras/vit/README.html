@@ -104,7 +104,15 @@
 </section>
 <section id="install-modules">
 <h1>2. Install modules<a class="headerlink" href="#install-modules" title="Link to this heading"></a></h1>
+<p>After the Neural Compressor v3.8 release you can install required binaries:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+</pre></div>
+</div>
+<p>Alternatively, you can always install Neural Compressor from the source code:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">pushd</span><span class="w"> </span>../../../..<span class="w">  </span><span class="c1"># go to the root directory of the Neural Compressor source code</span>
+<span class="nv">INC_JAX_ONLY</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
+<span class="nb">popd</span>
+pip<span class="w"> </span>install<span class="w"> </span>tensorflow
 </pre></div>
 </div>
 </section>
@@ -284,7 +292,7 @@ and then use print_model() function in your script. To see how it works just unc
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fd33970c680> 
+   <jinja2.runtime.BlockReference object at 0x7fda120ba480> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

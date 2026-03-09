@@ -21,9 +21,17 @@ Without this flag, quantized model works in fake quantization mode (rounding ten
 
 ## 2. Install modules
 
+After the Neural Compressor v3.8 release you can install required binaries:
 ```bash
 pip install -r requirements.txt
 ```
+Alternatively, you can always install Neural Compressor from the source code:
+```bash
+pushd ../../../..  # go to the root directory of the Neural Compressor source code
+INC_JAX_ONLY=1 pip install .
+popd
+```
+
 
 ## 3. Download model
 
