@@ -64,7 +64,9 @@ pytest_html_merger -i ./report -o ./report.html
 
 cp report.html ${LOG_DIR}/
 
-if [ $(grep -c '== FAILURES ==' ${ut_log_name}) != 0 ] || [ $(grep -c '== ERRORS ==' ${ut_log_name}) != 0 ] || [ $(grep -c ' passed' ${ut_log_name}) == 0 ]; then
+set -x
+if [ $(grep -c '== FAILURES ==' ${ut_log_name}) != 0 ] || [ $(grep -c '== ERRORS ==' ${ut_log_name}) != 0 ] || \
+[ $(grep -c 'Killed' ${ut_log_name}) != 0 ] || [ $(grep -c 'core dumped' ${ut_log_name}) != 0 ] || [ $(grep -c ' passed' ${ut_log_name}) == 0 ]; then
     echo "Find errors in pytest case, please check the output..."
     echo "Please search for '== FAILURES ==' or '== ERRORS =='"
     exit 1
