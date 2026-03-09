@@ -60,28 +60,37 @@ except ImportError:
 
 tagert_modules = ["QuantLinear", "QuantLinearGPTQ", "QuantLinearAWQ"]
 
+@torch.no_grad()
+def run_fn(model, dataloader):
+    for data in dataloader:
+        if isinstance(data, tuple) or isinstance(data, list):
+            model(*data)
+        elif isinstance(data, dict):
+            model(**data)
+        else:
+            model(data)
 
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")
 @pytest.mark.skipif(os.getenv("PT_HPU_LAZY_MODE", "0") == "1", reason="Lazy mode is enabled")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
 class TestAutoRoundHPU:
     @classmethod
-    def setup_class(self):
+    def setup_class(cls):
 
         model_name = "TheBloke/Llama-2-7B-Chat-GPTQ"
         from neural_compressor.torch.algorithms.autoround import get_dataloader
 
         config = LlamaConfig(num_hidden_layers=2)
         with transformers.modeling_utils.no_init_weights():
-            self.tiny_llama_model = AutoModelForCausalLM.from_config(config=config)
+            cls.tiny_llama_model = AutoModelForCausalLM.from_config(config=config)
 
         tokenizer = transformers.AutoTokenizer.from_pretrained(model_name, trust_remote_code=True)
-        self.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
-        self.inp = torch.ones([1, 10], dtype=torch.long)
-        self.label = self.tiny_llama_model(self.inp)[0]
+        cls.dataloader = get_dataloader(tokenizer, 32, dataset_name="NeelNanda/pile-10k", seed=42, bs=8, nsamples=10)
+        cls.inp = torch.ones([1, 10], dtype=torch.long)
+        cls.label = cls.tiny_llama_model(cls.inp)[0]
 
     @classmethod
-    def teardown_class(self):
+    def teardown_class(cls):
         shutil.rmtree("saved_results", ignore_errors=True)
 
     def setup_method(self, method):

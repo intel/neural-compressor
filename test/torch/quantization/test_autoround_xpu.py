@@ -14,7 +14,6 @@ from neural_compressor.torch.quantization import (
     convert,
     prepare,
 )
-from neural_compressor.torch.utils import logger
 
 torch.backends.__allow_nonbracketed_mutation_flag = True
 
@@ -42,7 +41,7 @@ def run_fn(model, dataloader):
 
 @pytest.mark.skipif(not is_xpu_available(), reason="XPU is not available")
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
-class TestAutoRoundGPU:
+class TestAutoRoundXPU:
     @pytest.mark.parametrize(
         "scheme", ["W4A16", "W2A16", "W3A16", "W8A16", "MXFP4", "MXFP8", "NVFP4", "FPW8A16", "FP8_STATIC"]
     )
@@ -102,7 +101,6 @@ class TestAutoRoundGPU:
         model = AutoModelForCausalLM.from_pretrained(
             quantized_model_path,
         )
-        tokenizer = AutoTokenizer.from_pretrained(quantized_model_path)
         out_ar = model(inp)[0]
         assert torch.all(out_ar.eq(out))
         shutil.rmtree(output_dir, ignore_errors=True)
@@ -117,7 +115,6 @@ class TestAutoRoundGPU:
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
         )
-        inp = torch.ones([1, 10], dtype=torch.long)
         tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
 
         output_dir = "./saved_inc"
