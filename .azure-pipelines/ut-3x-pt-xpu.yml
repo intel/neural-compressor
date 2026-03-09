@@ -43,3 +43,4 @@ stages:
               utScriptFileName: "run_3x_pt_xpu"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x_xpu"
+              utContainerName: "INCUnitTest$(NODE_LABEL)"
