@@ -1,12 +1,8 @@
 #!/bin/bash
-
+set -x
 echo -e "##[group]Install Neural Compressor ... "
 cd /neural-compressor
-if command -v pip &> /dev/null; then
-    alias pip="pip"
-else
-    alias pip="uv pip"
-fi
+
 if [[ $1 = *"3x_pt"* ]]; then
     pip install --no-cache-dir -r requirements_pt.txt
     if [[ $1 = *"hpu"* ]]; then

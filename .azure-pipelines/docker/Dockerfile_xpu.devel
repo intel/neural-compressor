@@ -27,7 +27,7 @@ RUN apt-get install -y software-properties-common \
     && apt-get install -y libze-intel-gpu-raytracing
 
 COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
-
+RUN ln -s /usr/local/bin/uv /usr/local/bin/pip
 ARG USER_ID=1000
 ARG GROUP_ID=1000
 
