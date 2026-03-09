@@ -358,8 +358,7 @@ if __name__ == "__main__":
         text_encoder_2.requires_grad_(False)
         image_encoder.requires_grad_(False)
 
-        if not os.path.exists(args.output_video_path):
-            os.makedirs(args.output_video_path)
+        os.makedirs(args.output_video_path, exist_ok=True)
 
         init_process_group(backend="nccl")
         local_rank = int(os.environ["LOCAL_RANK"])
