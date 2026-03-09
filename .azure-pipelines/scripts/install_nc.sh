@@ -30,6 +30,7 @@ else
     pip install dist/neural_compressor*.whl --force-reinstall
 fi
 
-echo -e "\n pip list after install Neural Compressor ... "
 echo "##[endgroup]"
+
+echo -e "\n pip list after install Neural Compressor ... "
 pip list

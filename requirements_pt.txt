@@ -3,3 +3,4 @@ prettytable
 psutil
 py-cpuinfo
 pydantic
+packaging
