@@ -10,11 +10,20 @@ python -c "import neural_compressor.common"
 echo "##[section]import check pass"
 
 echo "##[group]set up UT env..."
-export ZE_AFFINITY_MASK=2,3 # set xpu affinity
 export LD_LIBRARY_PATH=${HOME}/.local/lib/:$LD_LIBRARY_PATH
 uv pip install -r /neural-compressor/test/torch/requirements_xpu.txt
 uv pip install pytest-cov pytest-html
 uv pip list
+echo "##[endgroup]"
+
+echo "##[group]check xpu env..."
+echo "ZE_AFFINITY_MASK: ${ZE_AFFINITY_MASK}"
+python - <<'PY'
+import torch
+print("torch:", torch.__version__)
+print("xpu available:", torch.xpu.is_available())
+print("xpu count:", torch.xpu.device_count())
+PY
 echo "##[endgroup]"
 
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.3x_pt
