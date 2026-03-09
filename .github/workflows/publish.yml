@@ -3,11 +3,14 @@
 # CI for public repo only
 
 name: Publish IO
-permissions: {}
+
 
 on:
   push:
     branches: [master]
+
+permissions:
+  contents: read
 
 jobs:
   build:
