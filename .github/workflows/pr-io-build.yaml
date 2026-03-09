@@ -13,6 +13,9 @@ concurrency:
   group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
   cancel-in-progress: true
 
+permissions:
+  contents: read
+
 jobs:
   build-on-pr:
     runs-on: ${{ contains(github.repository, 'intel-innersource') && 'self-hosted' || 'ubuntu-latest' }}
