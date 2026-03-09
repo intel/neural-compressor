@@ -60,6 +60,7 @@ except ImportError:
 
 tagert_modules = ["QuantLinear", "QuantLinearGPTQ", "QuantLinearAWQ"]
 
+
 @torch.no_grad()
 def run_fn(model, dataloader):
     for data in dataloader:
@@ -69,6 +70,7 @@ def run_fn(model, dataloader):
             model(**data)
         else:
             model(data)
+
 
 @pytest.mark.skipif(not is_habana_framework_installed(), reason="Habana framework is not installed")
 @pytest.mark.skipif(os.getenv("PT_HPU_LAZY_MODE", "0") == "1", reason="Lazy mode is enabled")
