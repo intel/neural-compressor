@@ -22,7 +22,8 @@ steps:
       containerName: ${{ parameters.modelContainerName }}
 
   - script: |
-      docker exec ${{ parameters.modelContainerName }} bash -c "cd /neural-compressor/.azure-pipelines/scripts/models \
+      docker exec -e NUMA_NODE=${NUMA_NODE} -e NUMA_CPUSET=${NUMA_CPUSET} ${{ parameters.modelContainerName }} \
+      bash -c "cd /neural-compressor/.azure-pipelines/scripts/models \
       && bash run_${{ parameters.framework }}_models_trigger.sh --model=${{ parameters.modelName }} --mode='env_setup'"
     displayName: Env setup
 
