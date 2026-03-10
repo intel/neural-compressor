@@ -5,6 +5,7 @@ echo "${test_case}"
 
 echo "##[section]Run import check"
 set -e
+os.environ["KERAS_BACKEND"] = "jax"
 python -c "import neural_compressor.jax"
 python -c "import neural_compressor.common"
 echo "##[section]import check pass"
