@@ -24,7 +24,6 @@ from neural_compressor.jax.quantization.layers_dynamic import dynamic_quant_mapp
 from neural_compressor.jax.quantization.saving import (
     WRAPPER_MAPPING,
     KerasQuantizedModelBackboneWrapper,
-    KerasQuantizedModelWrapper,
 )
 from neural_compressor.jax.utils import register_algo
 from neural_compressor.jax.utils.utility import dtype_mapping, iterate_over_layers
@@ -78,5 +77,5 @@ def dynamic_quantize(
         qmodel.backbone = KerasQuantizedModelBackboneWrapper(qmodel.backbone, quant_config)
         qmodel._tracker.lock()
 
-    wrapper_cls = WRAPPER_MAPPING.get(qmodel.__class__, KerasQuantizedModelWrapper)
+    wrapper_cls = WRAPPER_MAPPING[qmodel.__class__]
     return wrapper_cls(qmodel, quant_config)

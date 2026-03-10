@@ -14,15 +14,15 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
+from collections import defaultdict
 from importlib import metadata as importlib_metadata
-from typing import Optional
+from typing import Optional, Union
 
 import keras
 import keras.src.utils.dtype_utils as dtype_utils
 from jax import numpy as jnp
 from keras_hub.models import Gemma3CausalLM, Gemma3Tokenizer, ViTImageClassifier
 from keras_hub.src.models.backbone import Backbone
-from keras_hub.src.models.task import Task
 from keras_hub.src.utils.preset_utils import get_preset_saver
 
 from neural_compressor.common import logger
@@ -183,7 +183,7 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
         )
         # self.__class__ = model.__class__
         if quant_config is None:
-            raise ValueError("quant_config must be provided for KerasQuantizedModelWrapper.")
+            raise ValueError(f"quant_config must be provided for {self.__class__.__name__}.")
         object.__setattr__(self, "_quant_config", quant_config)
 
     def __getattribute__(self, name):
@@ -244,7 +244,7 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
             config (dict): Serialized configuration dictionary.
 
         Returns:
-            KerasQuantizedModelWrapper: Reconstructed quantized model wrapper.
+            KerasQuantizedModelBackboneWrapper: Reconstructed quantized model backbone wrapper.
         """
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
         quant_config_json = config.get("_quant_config")
@@ -269,7 +269,7 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
 
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
-class KerasQuantizedModelWrapper(Task):
+class KerasQuantizedModelWrapperMixin:
     """Wrapper that preserves quantization config for Keras tasks."""
 
     backbone_cls = KerasQuantizedModelBackboneWrapper
@@ -299,7 +299,7 @@ class KerasQuantizedModelWrapper(Task):
             },
         )
         if quant_config is None:
-            raise ValueError("quant_config must be provided for KerasQuantizedModelWrapper.")
+            raise ValueError(f"quant_config must be provided for {self.__class__.__name__}.")
         object.__setattr__(self, "_quant_config", quant_config)
 
     def __getattribute__(self, name):
@@ -357,7 +357,7 @@ class KerasQuantizedModelWrapper(Task):
             **kwargs: Keyword arguments for object creation.
 
         Returns:
-            KerasQuantizedModelWrapper: New wrapper instance.
+            KerasQuantizedModelWrapperMixin: New wrapper instance.
         """
         return object.__new__(cls)
 
@@ -369,7 +369,7 @@ class KerasQuantizedModelWrapper(Task):
             config (dict): Serialized configuration dictionary.
 
         Returns:
-            KerasQuantizedModelWrapper: Reconstructed quantized model wrapper.
+            KerasQuantizedModelWrapperMixin: Reconstructed quantized model wrapper.
         """
         VersionManager.check_versions_mismatch(config)
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
@@ -396,37 +396,47 @@ class KerasQuantizedModelWrapper(Task):
 
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
-class KerasQuantizedGemmaWrapper(KerasQuantizedModelWrapper, Gemma3CausalLM):
+class KerasQuantizedModelWrapper(KerasQuantizedModelWrapperMixin, keras.Model):
+    """Generic quantized model wrapper for Keras models without specific backbone or task structure."""
+
+    pass
+
+
+@keras.saving.register_keras_serializable(package="INC", name=None)
+class KerasQuantizedGemmaWrapper(KerasQuantizedModelWrapperMixin, Gemma3CausalLM):
     """Quantized wrapper for Gemma3CausalLM models."""
 
     backbone_cls = KerasQuantizedModelBackboneWrapper
 
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
-class KerasQuantizedViTWrapper(KerasQuantizedModelWrapper, ViTImageClassifier):
+class KerasQuantizedViTWrapper(KerasQuantizedModelWrapperMixin, ViTImageClassifier):
     """Quantized wrapper for ViTImageClassifier models."""
 
     backbone_cls = KerasQuantizedModelBackboneWrapper
 
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
-class KerasQuantizedTokenizerWrapper(KerasQuantizedModelWrapper, Gemma3Tokenizer):
+class KerasQuantizedTokenizerWrapper(KerasQuantizedModelWrapperMixin, Gemma3Tokenizer):
     """Quantized wrapper for Gemma3Tokenizer models."""
 
     backbone_cls = KerasQuantizedModelBackboneWrapper
 
 
-WRAPPER_MAPPING = {
-    Gemma3CausalLM: KerasQuantizedGemmaWrapper,
-    ViTImageClassifier: KerasQuantizedViTWrapper,
-    Gemma3Tokenizer: KerasQuantizedTokenizerWrapper,
-}
+WRAPPER_MAPPING = defaultdict(lambda: KerasQuantizedModelWrapper)
+WRAPPER_MAPPING.update(
+    {
+        Gemma3CausalLM: KerasQuantizedGemmaWrapper,
+        ViTImageClassifier: KerasQuantizedViTWrapper,
+        Gemma3Tokenizer: KerasQuantizedTokenizerWrapper,
+    }
+)
 
 
 def prepare_deserialized_quantized_model(
     model: keras.Model,
     quant_config: BaseConfig,
-) -> KerasQuantizedModelWrapper:
+) -> Union[KerasQuantizedModelWrapperMixin, KerasQuantizedModelBackboneWrapper]:
     """Transform a loaded quantized model.
 
     It prepares the model for inference by preparing the quantized layers.
@@ -434,7 +444,7 @@ def prepare_deserialized_quantized_model(
         model (keras.Model): Loaded base keras model.
         quant_config (BaseConfig): Quantization configuration.
     Returns:
-        KerasQuantizedModelWrapper: The transformed quantized model wrapper.
+        Union[KerasQuantizedModelWrapperMixin, KerasQuantizedModelBackboneWrapper]: The transformed quantized model/backbone wrapper.
     """
     model_info = quant_config.get_model_info(model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
@@ -471,7 +481,7 @@ def prepare_deserialized_quantized_model(
     if isinstance(qmodel, Backbone):
         qmodel = KerasQuantizedModelBackboneWrapper(qmodel, quant_config)
     else:
-        wrapper_cls = WRAPPER_MAPPING.get(qmodel.__class__, KerasQuantizedModelWrapper)
+        wrapper_cls = WRAPPER_MAPPING[qmodel.__class__]
         qmodel = wrapper_cls(qmodel, quant_config)
         if hasattr(qmodel, "backbone"):
             qmodel._tracker.unlock()
