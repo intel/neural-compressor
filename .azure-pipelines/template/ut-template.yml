@@ -25,7 +25,7 @@ parameters:
     default: "coverage"
   - name: utContainerName
     type: string
-    default: "utTest"
+    default: "INCUnitTest"
   - name: imageSource
     type: string
     default: "build"
@@ -42,7 +42,7 @@ steps:
       imageSource: ${{ parameters.imageSource }}
 
   - script: |
-      docker exec -e NUMA_NODE=${NUMA_NODE} -e NUMA_CPUSET=${NUMA_CPUSET} ${{ parameters.utContainerName }} \
+      docker exec -e NUMA_NODE=${NUMA_NODE} -e NUMA_CPUSET=${NUMA_CPUSET} -e ZE_AFFINITY_MASK=${ZE_AFFINITY_MASK} ${{ parameters.utContainerName }} \
       bash -c "cd /neural-compressor/.azure-pipelines/scripts \
       && bash install_nc.sh ${{ parameters.utScriptFileName }} \
       && bash ut/${{ parameters.utScriptFileName }}.sh ${{ parameters.utTestMode }}"

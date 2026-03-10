@@ -26,6 +26,8 @@ cd /neural-compressor/test || exit 1
 rm -rf torch/algorithms/fp8_quant
 rm -rf torch/quantization/fp8_quant
 rm -rf torch/algorithms/fp8_quant_xpu
+rm -rf torch/quantization/test_autoround_xpu.py
+rm -rf torch/quantization/test_autoround_hpu.py
 
 LOG_DIR=/neural-compressor/log_dir
 mkdir -p ${LOG_DIR}
@@ -37,7 +39,9 @@ numactl --physcpubind="${NUMA_CPUSET:-0-15}" --membind="${NUMA_NODE:-0}" bash ru
 
 cp report.html ${LOG_DIR}/
 
-if [ $(grep -c '== FAILURES ==' ${ut_log_name}) != 0 ] || [ $(grep -c '== ERRORS ==' ${ut_log_name}) != 0 ] || [ $(grep -c ' passed' ${ut_log_name}) == 0 ]; then
+set -x
+if [ $(grep -c '== FAILURES ==' ${ut_log_name}) != 0 ] || [ $(grep -c '== ERRORS ==' ${ut_log_name}) != 0 ] || \
+[ $(grep -c 'Killed' ${ut_log_name}) != 0 ] || [ $(grep -c 'core dumped' ${ut_log_name}) != 0 ] || [ $(grep -c ' passed' ${ut_log_name}) == 0 ]; then
     echo "Find errors in pytest case, please check the output..."
     echo "Please search for '== FAILURES ==' or '== ERRORS =='"
     exit 1

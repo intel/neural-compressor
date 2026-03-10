@@ -8,11 +8,11 @@ pr:
       - master
   paths:
     include:
-      - .azure-pipelines/scripts/ut/run_3x_pt_fp8.sh
+      - .azure-pipelines/scripts/ut/run_3x_pt_hpu.sh
       - .azure-pipelines/scripts/install_nc.sh
       - .azure-pipelines/ut-3x-pt-fp8.yml
       - .azure-pipelines/template/docker-template.yml
-      - .azure-pipelines/scripts/ut/coverage.3x_pt_fp8
+      - .azure-pipelines/scripts/ut/coverage.3x_pt_hpu
       - neural_compressor/common
       - neural_compressor/torch
       - neural_compressor/transformers
@@ -30,7 +30,7 @@ variables:
   IMAGE_TAG: "py310"
   UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   DOWNLOAD_PATH: $(Build.SourcesDirectory)/log_dir
-  ARTIFACT_NAME: "UT_coverage_report_3x_pt_fp8"
+  ARTIFACT_NAME: "UT_coverage_report_3x_pt_hpu"
   REPO: $(Build.Repository.Uri)
 
 stages:
@@ -46,7 +46,7 @@ stages:
             parameters:
               imageSource: "pull"
               dockerConfigName: "commonDockerConfig"
-              utScriptFileName: "run_3x_pt_fp8"
+              utScriptFileName: "run_3x_pt_hpu"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x"
 
@@ -62,7 +62,7 @@ stages:
             parameters:
               imageSource: "pull"
               dockerConfigName: "gitCloneDockerConfig"
-              utScriptFileName: "run_3x_pt_fp8"
+              utScriptFileName: "run_3x_pt_hpu"
               uploadPath: $(UPLOAD_PATH)
               utArtifact: "ut_3x_baseline"
 
@@ -90,7 +90,7 @@ stages:
               pip install -U pip setuptools
               python setup.py install pt
               cd ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/scripts
-              bash ut/collect_log_3x.sh 3x_pt_fp8
+              bash ut/collect_log_3x.sh 3x_pt_hpu
             displayName: "Collect UT Coverage"
 
           - task: PublishCodeCoverageResults@2

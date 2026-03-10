@@ -52,8 +52,7 @@ else
     TORCH_VISION_VERSION=${torchvision_version}
 fi
 
-
-/bin/bash run_model_trigger_common.sh \
+numactl --physcpubind="${NUMA_CPUSET:-0-15}" --membind="${NUMA_NODE:-0}" bash run_model_trigger_common.sh \
     --yaml=${yaml} \
     --framework=${FRAMEWORK} \
     --fwk_ver=${FRAMEWORK_VERSION} \
