@@ -17,6 +17,7 @@ Classes
    neural_compressor.jax.quantization.saving.VersionManager
    neural_compressor.jax.quantization.saving.SaveableLayerMixin
    neural_compressor.jax.quantization.saving.KerasQuantizedModelBackboneWrapper
+   neural_compressor.jax.quantization.saving.KerasQuantizedModelWrapperMixin
    neural_compressor.jax.quantization.saving.KerasQuantizedModelWrapper
    neural_compressor.jax.quantization.saving.KerasQuantizedGemmaWrapper
    neural_compressor.jax.quantization.saving.KerasQuantizedViTWrapper
@@ -77,11 +78,16 @@ Module Contents
    Wrapper that preserves quantization config when saving Keras backbones.
 
 
+.. py:class:: KerasQuantizedModelWrapperMixin(model, quant_config: Optional[neural_compressor.jax.quantization.config.BaseConfig] = None)
+
+   Wrapper that preserves quantization config for Keras tasks.
+
+
 .. py:class:: KerasQuantizedModelWrapper(model, quant_config: Optional[neural_compressor.jax.quantization.config.BaseConfig] = None)
 
 
 
-   Wrapper that preserves quantization config for Keras tasks.
+   Generic quantized model wrapper for Keras models without specific backbone or task structure.
 
 
 .. py:class:: KerasQuantizedGemmaWrapper(model, quant_config: Optional[neural_compressor.jax.quantization.config.BaseConfig] = None)
@@ -105,7 +111,7 @@ Module Contents
    Quantized wrapper for Gemma3Tokenizer models.
 
 
-.. py:function:: prepare_deserialized_quantized_model(model: keras.Model, quant_config: neural_compressor.jax.quantization.config.BaseConfig) -> KerasQuantizedModelWrapper
+.. py:function:: prepare_deserialized_quantized_model(model: keras.Model, quant_config: neural_compressor.jax.quantization.config.BaseConfig) -> Union[KerasQuantizedModelWrapperMixin, KerasQuantizedModelBackboneWrapper]
 
    Transform a loaded quantized model.
 
@@ -115,7 +121,7 @@ Module Contents
    :param quant_config: Quantization configuration.
    :type quant_config: BaseConfig
 
-   :returns: The transformed quantized model wrapper.
-   :rtype: KerasQuantizedModelWrapper
+   :returns: The transformed quantized model/backbone wrapper.
+   :rtype: Union[KerasQuantizedModelWrapperMixin, KerasQuantizedModelBackboneWrapper]
 
 
