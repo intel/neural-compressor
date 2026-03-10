@@ -37,12 +37,6 @@ from neural_compressor.jax.utils.utility import (
     verify_api,
 )
 
-if keras.config.backend() != "jax":
-    raise ValueError(
-        f"{__name__} only supports JAX backend, but the current backend is {keras.config.backend()}.\n"
-        'Consider setting KERAS_BACKEND env var to "jax".'
-    )
-
 dynamic_quant_mapping = {}
 
 
