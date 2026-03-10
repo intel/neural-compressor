@@ -27,7 +27,7 @@ elif [[ $1 = *"3x_tf"* ]]; then
 elif [[ $1 = *"3x_jax"* ]]; then
     python -m pip install --no-cache-dir -r requirements.txt
     python -m pip install --no-cache-dir -r requirements_jax.txt
-    python setup.py bdist_wheel
+    python setup.py jax bdist_wheel
     pip install dist/neural_compressor*.whl --force-reinstall
 else
     python -m pip install --no-cache-dir -r requirements.txt
