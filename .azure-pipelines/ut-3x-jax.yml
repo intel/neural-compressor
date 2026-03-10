@@ -22,7 +22,7 @@ pool: ICX-16C
 
 variables:
   IMAGE_NAME: "neural-compressor"
-  IMAGE_TAG: "py310"
+  IMAGE_TAG: "py312"
   UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   DOWNLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   ARTIFACT_NAME: "UT_coverage_report_3x_jax"
