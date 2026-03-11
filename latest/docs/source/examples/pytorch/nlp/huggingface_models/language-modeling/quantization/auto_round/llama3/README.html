@@ -93,9 +93,9 @@
 <section id="requirement">
 <h2>Requirement<a class="headerlink" href="#requirement" title="Link to this heading"></a></h2>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># neural-compressor-pt</span>
-pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-pt<span class="o">==</span><span class="m">3</span>.7
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-pt
 <span class="c1"># auto-round</span>
-pip<span class="w"> </span>install<span class="w"> </span>auto-round<span class="o">==</span><span class="m">0</span>.9.3
+pip<span class="w"> </span>install<span class="w"> </span>auto-round
 <span class="c1"># other requirements</span>
 pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
 </pre></div>
@@ -166,6 +166,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 <p>Here we provide several recipes for Llama3 models. The relative accuracy loss of quantized model should be less than 1%.</p>
 <blockquote>
 <div><p>Note: You can also enable static quantization for KV cache by adding <code class="docutils literal notranslate"><span class="pre">--static_kv_dtype</span> <span class="pre">fp8</span></code> argument to <code class="docutils literal notranslate"><span class="pre">quantize.py</span></code>， or <code class="docutils literal notranslate"><span class="pre">--static_kv_dtype=fp8</span></code> argument to <code class="docutils literal notranslate"><span class="pre">run_quant.sh</span></code> and <code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code>.</p>
+<p>You can also enable static quantization for attention by adding <code class="docutils literal notranslate"><span class="pre">--static_attention_dtype</span> <span class="pre">fp8</span></code> argument to <code class="docutils literal notranslate"><span class="pre">quantize.py</span></code>， or <code class="docutils literal notranslate"><span class="pre">--static_attention_dtype=fp8</span></code> argument to <code class="docutils literal notranslate"><span class="pre">run_quant.sh</span></code> and <code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code>. When enabled, it automatically sets KV cache dtype to fp8 as well.</p>
 </div></blockquote>
 <section id="llama-3-1-8b-mxfp8">
 <h4>Llama 3.1 8B MXFP8<a class="headerlink" href="#llama-3-1-8b-mxfp8" title="Link to this heading"></a></h4>
@@ -298,8 +299,10 @@ git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </spa
 <p>The script automatically:</p>
 <ul class="simple">
 <li><p>Detects available GPUs from <code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code> and sets <code class="docutils literal notranslate"><span class="pre">tensor_parallel_size</span></code> accordingly</p></li>
-<li><p>Runs default tasks: <code class="docutils literal notranslate"><span class="pre">piqa,hellaswag,mmlu_llama,gsm8k_llama</span></code> with batch size 8</p></li>
+<li><p>Runs default tasks: <code class="docutils literal notranslate"><span class="pre">piqa,hellaswag,mmlu_llama,gsm8k_llama</span></code> with batch size 64</p></li>
 <li><p>Supports custom task selection and batch size adjustment</p></li>
+<li><p>Handles special tasks like <code class="docutils literal notranslate"><span class="pre">mmlu_llama</span></code>, <code class="docutils literal notranslate"><span class="pre">gsm8k_llama</span></code> (with chat template) and <code class="docutils literal notranslate"><span class="pre">longbench</span></code> (with extended context length) automatically</p></li>
+<li><p>For longbench dataset evaluation, use the <code class="docutils literal notranslate"><span class="pre">--tasks=longbench</span></code> parameter</p></li>
 </ul>
 </section>
 </section>
@@ -348,7 +351,7 @@ git<span class="w"> </span>clone<span class="w"> </span>-b<span class="w"> </spa
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f38b80e9370> 
+   <jinja2.runtime.BlockReference object at 0x7ff67ede39b0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
