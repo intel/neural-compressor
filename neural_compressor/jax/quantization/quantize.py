@@ -21,7 +21,7 @@ import keras
 from neural_compressor.common import logger
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
 from neural_compressor.common.utils import Mode, log_process
-from neural_compressor.jax.utils import algos_mapping
+from neural_compressor.jax.utils import algos_mapping, check_backend
 
 
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
@@ -58,6 +58,7 @@ def quantize_model(
         keras.Model: The quantized model.
     """
 # fmt: on
+    check_backend()
     if not inplace:
         raise NotImplementedError("Out of place quantization is not supported yet. "
                                   "Please set parameter inplace=True for quantize_model() to modify the model in-place")

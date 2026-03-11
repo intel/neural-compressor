@@ -14,4 +14,4 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from neural_compressor.jax.utils.utility import algos_mapping, register_algo
+from neural_compressor.jax.utils.utility import algos_mapping, register_algo, check_backend

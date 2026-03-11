@@ -28,7 +28,7 @@ from keras_hub.src.utils.preset_utils import get_preset_saver
 from neural_compressor.common import logger
 from neural_compressor.common.base_config import config_registry
 from neural_compressor.jax.quantization.config import FRAMEWORK_NAME, BaseConfig, DynamicQuantConfig, StaticQuantConfig
-from neural_compressor.jax.utils.utility import dtype_mapping, iterate_over_layers
+from neural_compressor.jax.utils.utility import check_backend, dtype_mapping, iterate_over_layers
 
 
 def quant_config_to_json_object(quant_config: BaseConfig) -> dict:
@@ -446,6 +446,7 @@ def prepare_deserialized_quantized_model(
     Returns:
         Union[KerasQuantizedModelWrapperMixin, KerasQuantizedModelBackboneWrapper]: The transformed quantized model/backbone wrapper.
     """
+    check_backend()
     model_info = quant_config.get_model_info(model)
     configs_mapping = quant_config.to_config_mapping(model_info=model_info)
 
