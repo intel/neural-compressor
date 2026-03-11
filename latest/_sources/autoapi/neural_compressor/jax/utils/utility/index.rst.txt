@@ -14,6 +14,7 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.jax.utils.utility.check_backend
    neural_compressor.jax.utils.utility.add_fp8_support
    neural_compressor.jax.utils.utility.register_algo
    neural_compressor.jax.utils.utility.get_quantize_fun
@@ -28,6 +29,11 @@ Functions
 
 Module Contents
 ---------------
+
+.. py:function:: check_backend(raise_error=True)
+
+   Check if the current Keras backend is JAX and log a warning or error if not.
+
 
 .. py:function:: add_fp8_support(function)
 

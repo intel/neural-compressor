@@ -94,34 +94,37 @@
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.add_fp8_support" title="neural_compressor.jax.utils.utility.add_fp8_support"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_fp8_support</span></code></a>(function)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.check_backend" title="neural_compressor.jax.utils.utility.check_backend"><code class="xref py py-obj docutils literal notranslate"><span class="pre">check_backend</span></code></a>([raise_error])</p></td>
+<td><p>Check if the current Keras backend is JAX and log a warning or error if not.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.add_fp8_support" title="neural_compressor.jax.utils.utility.add_fp8_support"><code class="xref py py-obj docutils literal notranslate"><span class="pre">add_fp8_support</span></code></a>(function)</p></td>
 <td><p>Extend a dtype size function to support FP8 dtypes.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.register_algo" title="neural_compressor.jax.utils.utility.register_algo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_algo</span></code></a>(name)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.register_algo" title="neural_compressor.jax.utils.utility.register_algo"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_algo</span></code></a>(name)</p></td>
 <td><p>Decorator function to register algorithms in the algos_mapping dictionary.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_quantize_fun" title="neural_compressor.jax.utils.utility.get_quantize_fun"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantize_fun</span></code></a>([dtype, asymmetric])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_quantize_fun" title="neural_compressor.jax.utils.utility.get_quantize_fun"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantize_fun</span></code></a>([dtype, asymmetric])</p></td>
 <td><p>Create a quantization function for the specified dtype.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_dequantize_fun" title="neural_compressor.jax.utils.utility.get_dequantize_fun"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dequantize_fun</span></code></a>([dtype, asymmetric])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_dequantize_fun" title="neural_compressor.jax.utils.utility.get_dequantize_fun"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dequantize_fun</span></code></a>([dtype, asymmetric])</p></td>
 <td><p>Create a dequantization function for the specified dtype.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_scale" title="neural_compressor.jax.utils.utility.get_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_scale</span></code></a>(orig_weight[, dtype, compute_dtype])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_scale" title="neural_compressor.jax.utils.utility.get_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_scale</span></code></a>(orig_weight[, dtype, compute_dtype])</p></td>
 <td><p>Compute the quantization scale for a weight tensor.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_q_params" title="neural_compressor.jax.utils.utility.get_q_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_q_params</span></code></a>(orig_weight[, dtype, compute_dtype, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_q_params" title="neural_compressor.jax.utils.utility.get_q_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_q_params</span></code></a>(orig_weight[, dtype, compute_dtype, ...])</p></td>
 <td><p>Compute quantization scale and zero-point for a weight tensor.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.print_model" title="neural_compressor.jax.utils.utility.print_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_model</span></code></a>(container[, max_lines, internal, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.print_model" title="neural_compressor.jax.utils.utility.print_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">print_model</span></code></a>(container[, max_lines, internal, ...])</p></td>
 <td><p>Print the model structure.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function" title="neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">causal_lm_make_replace_generate_function</span></code></a>(self[, revert])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function" title="neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">causal_lm_make_replace_generate_function</span></code></a>(self[, revert])</p></td>
 <td><p>Replace generate function for calibration and restore on demand.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.iterate_over_layers" title="neural_compressor.jax.utils.utility.iterate_over_layers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iterate_over_layers</span></code></a>(model, operations, /, *[, ...])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.iterate_over_layers" title="neural_compressor.jax.utils.utility.iterate_over_layers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iterate_over_layers</span></code></a>(model, operations, /, *[, ...])</p></td>
 <td><p>Apply operations to model layers matching the filter function.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.verify_api" title="neural_compressor.jax.utils.utility.verify_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_api</span></code></a>(orig_cls, quant_cls, method_name)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.verify_api" title="neural_compressor.jax.utils.utility.verify_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_api</span></code></a>(orig_cls, quant_cls, method_name)</p></td>
 <td><p>Check if quantized layer method API matches original layer method API.</p></td>
 </tr>
 </tbody>
@@ -129,6 +132,12 @@
 </section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.check_backend">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">check_backend</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">raise_error</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.check_backend" title="Link to this definition"></a></dt>
+<dd><p>Check if the current Keras backend is JAX and log a warning or error if not.</p>
+</dd></dl>
+
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.add_fp8_support">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">add_fp8_support</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">function</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.add_fp8_support" title="Link to this definition"></a></dt>
@@ -357,7 +366,7 @@ dtypes or symmetric quantization.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fe0176e48c0> 
+   <jinja2.runtime.BlockReference object at 0x7fcf7c108b60> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

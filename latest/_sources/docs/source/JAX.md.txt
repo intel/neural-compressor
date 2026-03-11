@@ -10,7 +10,8 @@ JAX
 
 ## Introduction
 
-`neural_compressor_jax` provides an API for applying quantization on Keras models such as ViT and Gemma3.
+`neural_compressor.jax` provides an API for applying quantization to Keras models such as ViT and Gemma3.
+Since only JAX is supported as the Keras backend, the environment variable `KERAS_BACKEND` should be set to `jax`.
 The following 8-bit floating-point formats are supported: `fp8_e4m3` and `fp8_e5m2`.
 
 Quantized models can be saved and loaded using standard Keras APIs
