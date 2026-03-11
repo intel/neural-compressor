@@ -1,0 +1,45 @@
+trigger: none
+
+pr:
+  autoCancel: true
+  drafts: false
+  branches:
+    include:
+      - master
+  paths:
+    include:
+      - neural_compressor/common
+      - neural_compressor/jax
+      - test/jax
+      - test/common
+      - setup.py
+      - requirements_jax.txt
+      - .azure-pipelines/scripts/ut/run_3x_jax.sh
+      - .azure-pipelines/template/docker-template.yml
+      - .azure-pipelines/scripts/ut/coverage.3x_jax
+
+pool: ICX-16C
+
+variables:
+  IMAGE_NAME: "neural-compressor"
+  IMAGE_TAG: "py312"
+  UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
+  DOWNLOAD_PATH: $(Build.SourcesDirectory)/log_dir
+
+stages:
+  - stage: JAX
+    displayName: Unit Test 3x JAX
+    dependsOn: []
+    jobs:
+      - job:
+        displayName: Unit Test 3x JAX
+        steps:
+          - template: template/ut-template.yml
+            parameters:
+              dockerConfigName: "commonDockerConfig"
+              dockerFileName: "ubuntu-2404"
+              repoTag: "$(IMAGE_TAG)"
+              utScriptFileName: "run_3x_jax"
+              uploadPath: $(UPLOAD_PATH)
+              utArtifact: "ut_3x_jax"
+              utContainerName: "INCUnitTest$(NODE_LABEL)"
