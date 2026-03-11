@@ -672,10 +672,13 @@ def coco_eval(model, val_dataloader, cocoGt, encoder, inv_map, args):
         E.evaluate()
         E.accumulate()
         E.summarize()
-        print("Current AP: {:.5f} AP goal: {:.5f}".format(E.stats[0], threshold))
-        print("Accuracy: {:.5f} ".format(E.stats[0]))
-
-        return (E.stats[0] >= threshold) #Average Precision  (AP) @[ IoU=050:0.95 | area=   all | maxDets=100 ]
+        if E.stats is not None and len(E.stats) > 0:
+            print("Current AP: {:.5f} AP goal: {:.5f}".format(E.stats[0], threshold))
+            print("Accuracy: {:.5f} ".format(E.stats[0]))
+            return (E.stats[0] >= threshold) #Average Precision  (AP) @[ IoU=050:0.95 | area=   all | maxDets=100 ]
+        else:
+            print("Warning: COCOeval stats are empty")
+            return False
 
 
 def eval_ssd_r34_mlperf_coco(args):

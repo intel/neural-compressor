@@ -91,7 +91,7 @@ parser.add_argument('--add_origin_loss', default=True,
                     help='whether add origin loss')
 
 args = parser.parse_args()
-logger.info(f"{args}")
+logger.debug("Parsed arguments: %s", args)
 
 best_score = 0
 
@@ -354,7 +354,7 @@ def main_worker(args):
         train_func(model, compression_manager)
         compression_manager.save(args.output_model)
         accu = eval_func(model, compression_manager)
-        logging.info("Distilled model Accuracy:", accu)
+        logging.info("Distilled model Accuracy: %s", accu)
     else:
 
         def objective(trial):

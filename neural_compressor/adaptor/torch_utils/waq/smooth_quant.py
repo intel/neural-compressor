@@ -347,7 +347,7 @@ class TorchSmoothQuant:
                     self_absorb_layers.pop(i)
         self.absorb_to_layer.update(self_absorb_layers)
 
-        if self.absorb_to_layer is None and no_absorb_layers is None:
+        if self.absorb_to_layer is None or no_absorb_layers is None:
             logger.warning(
                 "sorry, could not trace the model, smooth quant is ignored."
                 "If you are using huggingface model,"
@@ -576,7 +576,7 @@ class TorchSmoothQuant:
         )
         if not skip_unsupported_layers:
             return absorb_to_layer
-        if absorb_to_layer is None and no_absorb_layers is None:
+        if absorb_to_layer is None or no_absorb_layers is None:
             logger.warning(
                 "sorry, could not trace the model, smooth quant is skipped."
                 "If you are using huggingface model,"

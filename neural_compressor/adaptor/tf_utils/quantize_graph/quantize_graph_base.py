@@ -37,9 +37,6 @@ class QuantizeGraphBase:
 
     def register_transformer(self, node_name, entry):
         """Register transformers API."""
-        if node_name not in self.transformers:
-            self.transformers[node_name] = {}
-
         self.transformers[node_name] = entry
 
     def do_transform(self):
@@ -256,8 +253,9 @@ class QuantizeNodeBase:
                             matched_node_name.clear()
                             self.logger.debug("Fail to match {}.".format(sub_rule))
                             break
-                        self.logger.debug("Match {} on nodes {}.".format(sub_rule, matched_node_name))
-                        return sub_rule, matched_node_name
+                        else:
+                            self.logger.debug("Match {} on nodes {}.".format(sub_rule, matched_node_name))
+                            return sub_rule, matched_node_name
 
         return None, None
 

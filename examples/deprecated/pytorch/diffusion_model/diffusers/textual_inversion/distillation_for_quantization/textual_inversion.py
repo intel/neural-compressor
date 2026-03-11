@@ -860,18 +860,19 @@ def main():
             # Also save the newly trained embeddings
             save_path = os.path.join(args.output_dir, "learned_embeds.bin")
             save_progress(text_encoder, placeholder_token_id, accelerator, args, save_path)
+            optimized_model_images = None
         else:
             setattr(pipeline, "unet", accelerator.unwrap_model(model))
             pipeline.save_pretrained(args.output_dir)
             if args.do_quantization:
                 pipeline = pipeline.to(torch.device("cpu"))
-            
+
             optimized_model_images = generate_images(pipeline, prompt=prompt, seed=args.seed)
             optimized_model_images.save(
                 os.path.join(args.output_dir, "{}_optimized_model.png".format("_".join(prompt.split())))
             )
 
-        if args.push_to_hub:
+        if args.push_to_hub and repo is not None:
             repo.push_to_hub(commit_message="End of training", blocking=False, auto_lfs_prune=True)
 
     accelerator.end_training()
@@ -883,11 +884,10 @@ def main():
         loaded_model.eval()
 
         setattr(pipeline, "unet", loaded_model)
-        if args.do_quantization:
-            pipeline = pipeline.to(torch.device("cpu"))
+        pipeline = pipeline.to(torch.device("cpu"))
         
         loaded_model_images = generate_images(pipeline, prompt=prompt, seed=args.seed)
-        if loaded_model_images != optimized_model_images:
+        if optimized_model_images is not None and loaded_model_images != optimized_model_images:
             logger.info("The quantized model was not successfully loaded.")
         else:
             logger.info(f"The quantized model was successfully loaded.")

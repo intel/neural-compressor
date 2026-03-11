@@ -207,7 +207,7 @@ class INCQuantizationConfigMixin(QuantizationConfig):
                 Additional key word arguments passed along to the [`~utils.PushToHubMixin.push_to_hub`] method.
         """
         if os.path.isfile(save_directory):
-            raise AssertionError(f"Provided path ({save_directory}) should be a directory, not a file")
+            raise ValueError(f"Provided path ({save_directory}) should be a directory, not a file")
 
         os.makedirs(save_directory, exist_ok=True)
 

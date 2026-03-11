@@ -588,7 +588,7 @@ class TensorFlowAdaptor:
 
         def check_match(patterns, input_pattern):
             for i in patterns:
-                if input_pattern == [i for i in i.replace("+", " ").strip().split(" ") if i]:  # pragma: no cover
+                if input_pattern == [j for j in i.replace("+", " ").strip().split(" ") if j]:  # pragma: no cover
                     return True
             return False
 

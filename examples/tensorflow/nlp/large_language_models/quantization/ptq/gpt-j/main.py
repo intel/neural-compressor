@@ -344,6 +344,8 @@ def main():
                 acc_result = evaluate(model.model)
                 print("Batch size = %d" % run_args.batch_size)
                 print("Accuracy: %.5f" % acc_result)
+            else:
+                logger.warning("Unknown benchmark mode: %s", run_args.mode)
 
 if __name__ == "__main__":
     main()

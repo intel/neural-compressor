@@ -594,6 +594,8 @@ def main():
             data_files["validation"] = args.validation_file
         if args.test_file is not None:
             data_files["test"] = args.test_file
+        if args.train_file is None:
+            logger.error("args.train_file is None, cannot determine file extension")
         extension = args.train_file.split(".")[-1]
         raw_datasets = load_dataset(extension, data_files=data_files, field="data")
     
@@ -648,7 +650,8 @@ def main():
         model = AutoModelForSeq2SeqLM.from_config(config)
 
     model.resize_token_embeddings(len(tokenizer))
-    teacher_model.resize_token_embeddings(len(tokenizer))
+    if args.distill_loss_weight > 0:
+        teacher_model.resize_token_embeddings(len(tokenizer))
 
     # Set decoder_start_token_id
     if model.config.decoder_start_token_id is None and isinstance(tokenizer, (MBartTokenizer, MBartTokenizerFast)):

@@ -125,10 +125,10 @@ def main_worker():
 
     global best_acc1
 
-    print("=> using pre-trained model '{}'".format(args.topology))
+    logger.info("=> using pre-trained model '%s'", args.topology)
     model = tf.keras.applications.MobileNet(weights='imagenet')
 
-    print("=> using pre-trained teacher model '{}'".format(args.teacher))
+    logger.info("=> using pre-trained teacher model '%s'", args.teacher)
     teacher_model = tf.keras.applications.DenseNet201(weights='imagenet')
 
     if args.distillation:

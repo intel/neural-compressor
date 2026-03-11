@@ -538,7 +538,7 @@ class TensorFlowAdaptor(Adaptor):
                     metric.update(results, reference)
 
         acc = 0 if metrics is None else [metric.result() for metric in metrics]
-        if tensorboard:
+        if tensorboard and writer is not None:
             new_dir = temp_dir + "_acc_" + str(acc)
             writer.close()
             if os.path.isdir(new_dir):
@@ -994,7 +994,7 @@ class TensorFlowAdaptor(Adaptor):
 
         def check_match(patterns, input_pattern):
             for i in patterns:
-                if input_pattern == [i for i in i.replace("+", " ").strip().split(" ") if i]:
+                if input_pattern == [j for j in i.replace("+", " ").strip().split(" ") if j]:
                     return True
             return False
 
@@ -1115,7 +1115,7 @@ class TensorFlowAdaptor(Adaptor):
                     bias_add_node.attr["value"].tensor.dtype = qint32_type
                     current_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=qint32_type))
 
-            if is_weight:
+            if is_weight and len(current_node.input) > 5:
                 tmp_const_node = Helper.create_constant_node(
                     current_node.name + "_weights_tmp", tensor_content.transpose(2, 3, 1, 0), dtypes.float32
                 )

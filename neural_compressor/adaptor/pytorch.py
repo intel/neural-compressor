@@ -4620,7 +4620,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                 m = fetch_module(model, op_name)
                 # load weight if use layer-wise quant mode
                 recipe_cfgs = tune_cfg.get("recipe_cfgs", None)
-                if recipe_cfgs.get("layer_wise_quant", False):
+                if recipe_cfgs is not None and recipe_cfgs.get("layer_wise_quant", False):
                     # load weight
                     load_module(model, op_name, model_path, device=self.device)
                 m = rtn_quantize(
@@ -4634,7 +4634,7 @@ class PyTorchWeightOnlyAdaptor(TemplateAdaptor):
                     enable_mse_search=enable_mse_search,
                     group_dim=group_dim,
                 )
-                if recipe_cfgs.get("layer_wise_quant", False):
+                if recipe_cfgs is not None and recipe_cfgs.get("layer_wise_quant", False):
                     # save and clean weight
                     from .torch_utils.layer_wise_quant.utils import clean_module_weight
 

@@ -749,7 +749,7 @@ def main():
         )
         if accelerator.is_main_process:
             tokenizer.save_pretrained(output_dir)
-            if args.push_to_hub:
+            if args.push_to_hub and repo is not None:
                 repo.push_to_hub(commit_message="End of pruning", auto_lfs_prune=True)
     
     if not args.auto_slim:

@@ -452,7 +452,7 @@ def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_ful
     org_weight = m.weight.data.clone()
     logger.debug("Searching the best clip range with RTN algorithm")
     best_error = float("inf")
-    best_clip_ratio = None
+    best_clip_ratio = 1.0
     n_grid = 200
     max_shrink = 0.2
     history = []
@@ -814,6 +814,8 @@ class GraphTrace:
         Returns:
             list: nodes.
         """
+        if traced_model is None:
+            return []
         if isinstance(op_types, str):
             op_types = [op_types]
         nodes = []

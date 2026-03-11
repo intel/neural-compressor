@@ -327,6 +327,7 @@ class DefaultBoxes(object):
     def __call__(self, order="ltrb"):
         if order == "ltrb": return self.dboxes_ltrb
         if order == "xywh": return self.dboxes
+        raise ValueError(f"Invalid order: {order}. Must be 'ltrb' or 'xywh'")
 
 
 # This function is from https://github.com/chauhan-utk/ssd.DomainAdaptation.

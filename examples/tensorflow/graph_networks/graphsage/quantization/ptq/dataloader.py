@@ -31,7 +31,7 @@ def load_data(prefix, normalize=True, load_walks=False):
         G_data = json.load(f)
     G = json_graph.node_link_graph(G_data)
     if isinstance(list(G.nodes())[0], int):
-        conversion = lambda n : int(n)
+        conversion = int
     else:
         conversion = lambda n : n
 
@@ -49,7 +49,7 @@ def load_data(prefix, normalize=True, load_walks=False):
     if isinstance(list(class_map.values())[0], list):
         lab_conversion = lambda n : n
     else:
-        lab_conversion = lambda n : int(n)
+        lab_conversion = int
 
     class_map = {conversion(k):lab_conversion(v) for k,v in class_map.items()}
 
@@ -72,7 +72,7 @@ def load_data(prefix, normalize=True, load_walks=False):
         else:
             G[edge[0]][edge[1]]['train_removed'] = False
 
-    if normalize and not feats is None:
+    if normalize and feats is not None:
         from sklearn.preprocessing import StandardScaler
         train_ids = np.array([id_map[n] for n in G.nodes() if not G.nodes[n]['val'] and not G.nodes[n]['test']])
         train_feats = feats[train_ids]

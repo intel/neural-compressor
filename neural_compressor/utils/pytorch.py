@@ -337,7 +337,7 @@ def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **
     if (
         recipe_cfgs
         and recipe_cfgs.get("smooth_quant", False)
-        and not recipe_cfgs["smooth_quant_args"]["folding"]
+        and not recipe_cfgs.get("smooth_quant_args", {}).get("folding", True)
         and approach_quant_mode != "dynamic"
     ):
         from ..adaptor.torch_utils.model_wrapper import _wrapper_qdq_linear, _wrapper_sq_linear
@@ -355,6 +355,9 @@ def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **
         model = _wrap_lwq_layer(model, recipe_cfgs["lwq_layers"], fx_op_cfgs)
         model.load_state_dict(stat_dict)
         return model
+
+    if kwargs is None:
+        kwargs = {}
 
     for _, op_cfg in tune_cfg["op"].items():
         if "quant_mode" not in op_cfg["activation"]:
@@ -374,9 +377,6 @@ def load(checkpoint_dir=None, model=None, layer_wise=False, history_cfg=None, **
             q_mapping = tq.quantization_mappings.get_dynamic_quant_module_mappings()
         else:
             q_mapping = tq.quantization_mappings.get_default_dynamic_quant_module_mappings()
-
-    if kwargs is None:
-        kwargs = {}
 
     if tune_cfg["framework"] == "pytorch_fx":  # pragma: no cover
         # For torch.fx approach

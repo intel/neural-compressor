@@ -37,9 +37,6 @@ class QuantizeGraphBase:
 
     def register_transformer(self, node_name, entry):
         """Register transformers API."""
-        if node_name not in self.transformers:
-            self.transformers[node_name] = {}
-
         self.transformers[node_name] = entry
 
     def do_transform(self):

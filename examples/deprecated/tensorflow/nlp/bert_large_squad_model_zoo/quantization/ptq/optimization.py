@@ -228,9 +228,11 @@ class AdamWeightDecayOptimizer(tf.compat.v1.train.Optimizer):
         next_param = tf.cast(param, update_with_lr.dtype) - update_with_lr
 
       
-        param, m, v = tf.cast(next_param, param.dtype), tf.cast(m, m.dtype), tf.cast(v, v.dtype)
+        next_param_cast = tf.cast(next_param, param.dtype)
+        next_m_cast = tf.cast(next_m, m.dtype)
+        next_v_cast = tf.cast(next_v, v.dtype)
 
-        assignments.extend([param, m, v])
+        assignments.extend([param.assign(next_param_cast), m.assign(next_m_cast), v.assign(next_v_cast)])
     return tf.group(*assignments, name=name)
 
   def _do_use_weight_decay(self, param_name):
@@ -239,8 +241,11 @@ class AdamWeightDecayOptimizer(tf.compat.v1.train.Optimizer):
       return False
     if self.exclude_from_weight_decay:
       for r in self.exclude_from_weight_decay:
-        if re.search(r, param_name) is not None:
-          return False
+        try:
+          if re.search(r, param_name) is not None:
+            return False
+        except re.error:
+          continue
     return True
 
   def _get_variable_name(self, param_name):

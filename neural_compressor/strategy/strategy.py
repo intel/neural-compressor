@@ -895,6 +895,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
         For recipes with multiple values. such as alpha of smooth quant, apply it one by one.
         """
         for recipe_name, recipe_vals in self._tuning_recipes.items():
+            new_tune_cfg = None
             if (
                 recipe_name in FALLBACK_RECIPES_SET
                 and "recipes_ops" in self.capability
@@ -905,7 +906,7 @@ class TuneStrategy(metaclass=TuneStrategyMeta):
                     copy.deepcopy(tune_cfg), self.capability["recipes_ops"][recipe_name], self.tuning_space
                 )
                 yield new_tune_cfg
-            if recipe_name == "smooth_quant":  # pragma: no cover
+            if recipe_name == "smooth_quant" and new_tune_cfg is not None:  # pragma: no cover
                 sq_args = {"smooth_quant": True}
                 if "recipe_cfgs" not in new_tune_cfg:
                     new_tune_cfg["recipe_cfgs"] = sq_args

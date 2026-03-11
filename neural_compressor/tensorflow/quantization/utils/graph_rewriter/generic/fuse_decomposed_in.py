@@ -343,7 +343,7 @@ def bypass_reshape(input_node_map, input_name):
     reshape_ndef = None
     maybe_reshape_ndef = node_from_map(input_node_map, input_name)
     input_ndef = maybe_reshape_ndef
-    if maybe_reshape_ndef.op == "Reshape":
+    if maybe_reshape_ndef is not None and maybe_reshape_ndef.op == "Reshape":
         reshpae_input0_ndef = node_from_map(input_node_map, maybe_reshape_ndef.input[0])
         reshpae_input1_ndef = node_from_map(input_node_map, maybe_reshape_ndef.input[1])
         if (

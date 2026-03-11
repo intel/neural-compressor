@@ -521,6 +521,8 @@ def main():
             data_files["validation"] = args.validation_file
         if args.test_file is not None:
             data_files["test"] = args.test_file
+        if args.train_file is None:
+            logger.error("args.train_file is None, cannot determine file extension")
         extension = args.train_file.split(".")[-1]
         raw_datasets = load_dataset(extension, data_files=data_files, field="data")
     # See more about loading any type of standard or custom dataset (from files, python dict, pandas DataFrame, etc) at
@@ -1092,9 +1094,10 @@ def main():
             if accelerator.is_main_process:
                 tokenizer.save_pretrained(args.output_dir)
                 config.save_pretrained(args.output_dir)
-                repo.push_to_hub(
-                    commit_message=f"Training in progress epoch {epoch}", blocking=False, auto_lfs_prune=True
-                )
+                if repo is not None:
+                    repo.push_to_hub(
+                        commit_message=f"Training in progress epoch {epoch}", blocking=False, auto_lfs_prune=True
+                    )
 
         # eval each epoch
         logger.info(f"***** Running Evaluation*****")

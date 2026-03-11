@@ -120,7 +120,7 @@ class HQQTensorHandle:
 
         # Reshape for grouping
         if (group_size is not None) and channel_wise:
-            W = W.reshape([-1, group_size]) if (axis == 1) else W.reshape([group_size, -1])
+            W = W.reshape([group_size, -1]) if (axis == 0) else W.reshape([-1, group_size])
 
         # Get min/max values
         if not channel_wise:

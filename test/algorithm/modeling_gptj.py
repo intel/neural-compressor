@@ -692,10 +692,10 @@ class GPTJModel(GPTJPreTrainedModel):
                 raise RuntimeError("Transformer block returned None output.")
 
             hidden_states = outputs[0]
-            if use_cache is True:
+            if use_cache is True and len(outputs) > 1:
                 presents = presents + (outputs[1],)
 
-            if output_attentions:
+            if output_attentions and len(outputs) > (2 if use_cache else 1):
                 all_self_attentions = all_self_attentions + (outputs[2 if use_cache else 1],)
 
             # Model Parallel: If it's the last layer for that device, put things on the next device

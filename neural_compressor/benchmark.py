@@ -159,7 +159,7 @@ def run_instance(model, conf, b_dataloader=None, b_func=None):
             "backend": conf.backend if conf.backend is not None else "default",
             "format": "default",
         }
-        framework = conf.framework.lower()
+        framework = conf.framework.lower() if conf.framework is not None else ""
         if "tensorflow" in framework:
             framework_specific_info.update(
                 {"inputs": conf.inputs, "outputs": conf.outputs, "recipes": {}, "workspace_path": options.workspace}

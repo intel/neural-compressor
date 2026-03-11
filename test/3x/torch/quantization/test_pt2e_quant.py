@@ -132,8 +132,8 @@ class TestPT2EQuantization:
 
         opt_model = torch.compile(q_model)
         out = opt_model(*example_inputs)
-        logger.warning("out shape is %s", out.shape)
         assert out is not None
+        logger.warning("out shape is %s", out.shape)
 
     @pytest.mark.skipif(not GT_OR_EQUAL_TORCH_VERSION_2_5, reason="Requires torch>=2.5")
     def test_quantize_simple_model_with_set_local(self, force_not_import_ipex):
@@ -200,8 +200,8 @@ class TestPT2EQuantization:
         config.freezing = True
         opt_model = torch.compile(q_model)
         out = opt_model(*example_inputs)
-        logger.warning("out shape is %s", out.shape)
         assert out is not None
+        logger.warning("out shape is %s", out.shape)
 
     @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     def test_prepare_and_convert_on_llm(self, force_not_import_ipex):

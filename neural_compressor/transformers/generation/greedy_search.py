@@ -329,16 +329,21 @@ def _greedy_search(
             if output_scores:
                 scores += (next_tokens_scores,)
             if output_attentions:
-                decoder_attentions += (
-                    (outputs.decoder_attentions,) if self.config.is_encoder_decoder else (outputs.attentions,)
-                )
+                attns = outputs.decoder_attentions if self.config.is_encoder_decoder else outputs.attentions
+                if attns is not None:
+                    decoder_attentions += (attns,)
                 if self.config.is_encoder_decoder:
-                    cross_attentions += (outputs.cross_attentions,)
+                    cross_attns = outputs.cross_attentions
+                    if cross_attns is not None:
+                        cross_attentions += (cross_attns,)
 
             if output_hidden_states:
-                decoder_hidden_states += (
-                    (outputs.decoder_hidden_states,) if self.config.is_encoder_decoder else (outputs.hidden_states,)
-                )
+                if self.config.is_encoder_decoder:
+                    hidden = outputs.decoder_hidden_states
+                else:
+                    hidden = outputs.hidden_states
+                if hidden is not None:
+                    decoder_hidden_states += (hidden,)
 
         # argmax
         next_tokens = torch.argmax(next_tokens_scores, dim=-1)

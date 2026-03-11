@@ -204,9 +204,10 @@ class COCO:
         :return: anns (object array) : loaded ann objects
         """
         if _isArrayLike(ids):
-            return [self.anns[id] for id in ids]
+            return [self.anns[id] for id in ids if id in self.anns]
         elif type(ids) == int:
-            return [self.anns[ids]]
+            return [self.anns[ids]] if ids in self.anns else []
+        return []
 
     def loadCats(self, ids=[]):
         """
@@ -215,9 +216,10 @@ class COCO:
         :return: cats (object array) : loaded cat objects
         """
         if _isArrayLike(ids):
-            return [self.cats[id] for id in ids]
+            return [self.cats[id] for id in ids if id in self.cats]
         elif type(ids) == int:
-            return [self.cats[ids]]
+            return [self.cats[ids]] if ids in self.cats else []
+        return []
 
     def loadImgs(self, ids=[]):
         """
@@ -226,9 +228,10 @@ class COCO:
         :return: imgs (object array) : loaded img objects
         """
         if _isArrayLike(ids):
-            return [self.imgs[id] for id in ids]
+            return [self.imgs[id] for id in ids if id in self.imgs]
         elif type(ids) == int:
-            return [self.imgs[ids]]
+            return [self.imgs[ids]] if ids in self.imgs else []
+        return []
 
     def showAnns(self, anns):
         """

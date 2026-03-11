@@ -114,6 +114,7 @@ class TestW8A8PT2EQuantizer:
             past_key_values=DynamicCache(config=model_config),
             use_cache=True,
             )
+        assert out is not None
         assert out.logits is not None
 
     @patch("neural_compressor.torch.algorithms.pt2e_quant.core.logger.error")

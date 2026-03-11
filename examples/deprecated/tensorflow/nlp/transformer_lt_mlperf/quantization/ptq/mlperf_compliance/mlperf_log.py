@@ -121,6 +121,9 @@ def _mlperf_print(key, value=None, benchmark=None, stack_offset=0,
     str_json = json.dumps(value)
     tag = '{key}: {value}'.format(key=key, value=str_json)
 
+  if benchmark is None:
+    benchmark = "unknown"
+
   callsite = get_caller(2 + stack_offset, root_dir=root_dir)
   now = time.time()
 

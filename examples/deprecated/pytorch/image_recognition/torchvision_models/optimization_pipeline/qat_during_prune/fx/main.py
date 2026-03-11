@@ -223,7 +223,8 @@ def main_worker(args):
     df, total_sparsity = compression_manager.model.report_sparsity()
     print("Total sparsity of INT8 model is {}".format(total_sparsity))
     print(df)
-    compression_manager.save(args.output_model)
+    if args.output_model is not None:
+        compression_manager.save(args.output_model)
 
 
 def train(train_loader, model, criterion, optimizer, epoch, args, compression_manager):

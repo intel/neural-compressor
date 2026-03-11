@@ -30,9 +30,12 @@ python onnx_squad.py --model $SQUAD_MODEL/squad.onnx \
 import argparse
 import collections
 import json
+import logging
 import math
 import os
 import sys
+
+logger = logging.getLogger(__name__)
 from timeit import default_timer as timer
 
 import numpy as np
@@ -552,14 +555,11 @@ def main():
                 "segment_ids": segment_ids[idx:idx + bs]}
         result = sess.run(["start_logits","end_logits"], data)
         in_batch = result[0].shape[1]
-        start_logits = [float(x) for x in result[0][0].flat]
-        end_logits = [float(x) for x in result[1][0].flat]
         for i in range(0, in_batch):
             unique_id = len(all_results)
-            # all_results.append(RawResult(unique_id=unique_id, start_logits=result[0][0][i], end_logits=result[1][0][i]))
-            all_results.append(RawResult(unique_id=unique_id, start_logits=start_logits, end_logits=end_logits))
+            all_results.append(RawResult(unique_id=unique_id, start_logits=result[0][0][i], end_logits=result[1][0][i]))
             if unique_id > 0 and unique_id % 10000 == 0:
-                print("at {} {}sec per item".format(unique_id, (timer() - start) / unique_id))
+                logger.info("at %s %.2fsec per item", unique_id, (timer() - start) / unique_id)
     end = timer()
 
     print("total time: {}sec, {}sec per item".format(end - start, (end - start) / len(all_results)))

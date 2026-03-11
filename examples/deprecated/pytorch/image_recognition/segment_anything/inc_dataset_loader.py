@@ -74,6 +74,11 @@ class INC_SAMVOC2012Dataset(object):
                 for child in root:
                     if child.tag == 'object':
                         details = [file_name]
+                        object_name = None
+                        xmin = None
+                        ymin = None
+                        xmax = None
+                        ymax = None
                         for node in child:
                             if node.tag == 'name':
                                 object_name = node.text
@@ -88,6 +93,8 @@ class INC_SAMVOC2012Dataset(object):
                                     if coordinates.tag == 'ymin':
                                         ymin = int(coordinates.text)
                                 boundary = [xmin, ymin, xmax, ymax]
+                        if object_name is None or None in boundary:
+                            continue
                         details.append(object_name)
                         details.append(boundary)
                         self.num_of_data += 1

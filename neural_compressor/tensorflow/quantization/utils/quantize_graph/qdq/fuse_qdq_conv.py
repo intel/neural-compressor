@@ -1775,12 +1775,16 @@ class FuseNodeStartWithConv2d(QuantizeNodeBase):
         sumadd_b_node_name = helper.node_name_from_input(third_node.input[1])
         sumadd_b_node = self.node_name_mapping[sumadd_b_node_name].node
         if sumadd_a_node.op != "Const" and sumadd_b_node.op == "Const":
-            return self.apply_newly_conv_biasadd_fusion(match_node_name[:3] + [new_match_node_name[-1]])
+            if match_node_name is None:
+                self.logger.error("match_node_name is None")
+            return self.apply_newly_conv_biasadd_fusion(match_node_name[:3] + [match_node_name[-1]])
 
         sum_index = 1 if match_node_name[2] == self.node_name_mapping[match_node_name[3]].node.input[0] else 0
         sum_node_name = self.node_name_mapping[match_node_name[3]].node.input[sum_index]
         deq_node = self.node_name_mapping[sum_node_name].node
         if deq_node.op != "Dequantize" or deq_node.op.find("Quantize") != -1:
+            if match_node_name is None:
+                self.logger.error("match_node_name is None")
             return self.apply_newly_conv_biasadd_fusion(match_node_name[:3] + [match_node_name[-1]])
 
         control_inputs, normal_inputs = self._get_node_input(matched_node.node.name)

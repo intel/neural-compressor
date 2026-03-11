@@ -114,7 +114,7 @@ def children(op_name: str, graph: tf_v1.Graph):
     if graph is None:
         return set()
     op = graph.get_operation_by_name(op_name)
-    return set(op for out in op.outputs for op in out.consumers())
+    return set(consumer for out in op.outputs for consumer in out.consumers())
 
 def _load_protobuf_from_file(container, filename):
     with open(filename, 'rb') as fin:
@@ -182,7 +182,7 @@ def get_input_output(graph_path, args):
         output_nodes = summarize_graph(graph_def, fix_dynamic_shape)
         graph_prefix = graph_path[:-5]
         output_freeze_model_dir = graph_prefix + "_freeze.pb"
-        output_graph_def = freeze_graph(input_checkpoint=graph_prefix, output_graph=output_freeze_model_dir, output_node_names=output_nodes['outputs'])
+        output_graph_def = freeze_graph(input_checkpoint=graph_prefix, output_graph=output_freeze_model_dir, output_node_names=output_nodes.get('outputs', ''))
         print("****** {} is a ckpt model, now save freezed model at {}".format(graph_path, output_freeze_model_dir))
         # output_nodes = summarize_graph(output_graph_def, fix_dynamic_shape)
 

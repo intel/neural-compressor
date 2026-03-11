@@ -782,6 +782,8 @@ def run():
     if not (args.load_model == ""):
         print("Loading saved model {}".format(args.load_model))
         ld_model = torch.load(args.load_model, map_location=torch.device("cpu"))
+        if ld_model is None:
+            raise ValueError("Failed to load model")
         dlrm.load_state_dict(ld_model["state_dict"])
         ld_j = ld_model["iter"]
         ld_k = ld_model["epoch"]

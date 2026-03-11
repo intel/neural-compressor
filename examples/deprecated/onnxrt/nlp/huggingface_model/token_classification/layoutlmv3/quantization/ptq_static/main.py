@@ -386,7 +386,7 @@ def main():
                     label_ids.append(-100)
                     bbox_inputs.append([0, 0, 0, 0])
                 # We set the label for the first token of each word.
-                elif word_idx != previous_word_idx:
+                elif word_idx is not None and word_idx != previous_word_idx:
                     label_ids.append(label_to_id[label[word_idx]])
                     bbox_inputs.append(bbox[word_idx])
                 # For the other tokens in a word, we set the label to either the current label or -100, depending on

@@ -256,10 +256,9 @@ def benchmark(val_loader, model, args):
             images = images.to('mps')
         break
     
+    start = time.time()
     with torch.no_grad():        
         for i in range(total_iters):
-            if i == total_iters:
-                break
             if i == warmup_iters:
                 start = time.time()
             

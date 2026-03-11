@@ -117,7 +117,7 @@ def train300_mlperf_coco(args):
     global torch
     from coco import COCO
     # Check that GPUs are actually available
-    use_cuda = False
+    use_cuda = not args.no_cuda and torch.cuda.is_available()
     args.distributed = False
     if use_cuda:
         try:
@@ -425,7 +425,7 @@ def train300_mlperf_coco(args):
             from neural_compressor import benchmark
             b_conf = BenchmarkConfig(cores_per_instance=4, num_of_instance=1)
             benchmark.fit(new_model, conf=b_conf, b_func=eval_func)
-        return
+        return True
 
     return False
 

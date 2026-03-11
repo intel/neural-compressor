@@ -107,6 +107,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         quantizev2_weights_name = None
         weights_min_name = None
         weights_max_name = None
+        q_weights_inputs = None
         # no QDQ inserted for 'Enter' node in phase 1
         if weight_node.op == "Enter":  # pragma: no cover
             parent_node = self.node_name_mapping[helper.node_name_from_input(weight_node.input[0])].node
@@ -158,9 +159,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             add_a_node = self.node_name_mapping[add_a_node_name].node
             add_b_node_name = helper.node_name_from_input(second_node.input[1])
             add_b_node = self.node_name_mapping[add_b_node_name].node
-            if (add_a_node.op != "Const" and add_b_node.op == "Const") or (
-                add_a_node.op != "Const" and add_b_node.op == "Enter"
-            ):
+            if add_a_node.op != "Const" and add_b_node.op in ("Const", "Enter"):
                 need_insert_dummy_biasadd = 0
                 offset = 0
             if need_insert_dummy_biasadd:
@@ -325,6 +324,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         weights_min_name = None
         weights_max_name = None
         quantizev2_weights_name = None
+        q_weights_inputs = None
 
         # no QDQ inserted for 'Enter' node in phase 1
         if weight_node.op == "Enter":  # pragma: no cover
@@ -393,9 +393,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
             add_a_node = self.node_name_mapping[add_a_node_name].node
             add_b_node_name = helper.node_name_from_input(second_node.input[1])
             add_b_node = self.node_name_mapping[add_b_node_name].node
-            if (add_a_node.op != "Const" and add_b_node.op == "Const") or (
-                add_a_node.op != "Const" and add_b_node.op == "Enter"
-            ):
+            if add_a_node.op != "Const" and add_b_node.op in ("Const", "Enter"):
                 single_matmul_fusion = False
             else:
                 return self.apply_matmul_biasadd_fusion(match_node_name[:2] + [match_node_name[-1]])
@@ -580,6 +578,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         weights_min_name = None
         weights_max_name = None
         quantizev2_y_name = None
+        q_y_inputs = None
 
         if weight_node.op == "Enter":
             parent_node = self.node_name_mapping[helper.node_name_from_input(weight_node.input[0])].node
@@ -733,6 +732,7 @@ class FuseNodeStartWithMatmul(QuantizeNodeBase):
         weights_min_name = None
         weights_max_name = None
         quantizev2_weights_name = None
+        q_weights_inputs = None
         if weight_node.op == "Enter":
             parent_node = self.node_name_mapping[helper.node_name_from_input(weight_node.input[0])].node
             # FIXME We only quantize the MatMul op which second input node type is const. This is a

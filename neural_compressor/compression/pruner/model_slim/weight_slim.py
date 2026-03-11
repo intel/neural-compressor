@@ -328,6 +328,8 @@ class MHACompression(object):
         return list(common_indice)
 
     def mask_mha_weights(self, head_mask=None):
+        if head_mask is None:
+            raise ValueError("head_mask cannot be None")
         head_size = getattr(self.mha[0], self.attributes_for_this_mha["head_size"])
         head_nums = getattr(self.mha[0], self.attributes_for_this_mha["head_nums"])
         # check

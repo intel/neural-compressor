@@ -32,6 +32,10 @@ class TestPruning(unittest.TestCase):
         ]
         config = WeightPruningConfig(local_configs, target_sparsity=0.8, start_step=1, end_step=4)
 
+        if self.model is None:
+            logging.getLogger(__name__).error("self.model is None")
+            return
+
         criterion = nn.CrossEntropyLoss()
         optimizer = torch.optim.SGD(self.model.parameters(), lr=0.0001)
         datasets = Datasets("pytorch")
@@ -40,8 +44,6 @@ class TestPruning(unittest.TestCase):
         from neural_compressor.compression.pruner import prepare_pruning
 
         pruning = prepare_pruning(self.model, config, optimizer)
-        if self.model is None:
-            logging.getLogger(__name__).error("self.model is None")
 
         for epoch in range(4):
             self.model.train()

@@ -496,6 +496,8 @@ def main():
             data_files["validation"] = args.validation_file
         if args.test_file is not None:
             data_files["test"] = args.test_file
+        if args.train_file is None:
+            logger.error("args.train_file is None, cannot determine file extension")
         extension = args.train_file.split(".")[-1]
         raw_datasets = load_dataset(extension, data_files=data_files, field="data")
     # See more about loading any type of standard or custom dataset (from files, python dict, pandas DataFrame, etc) at
@@ -840,7 +842,7 @@ def main():
                         batch = move_input_to_device(batch, next(teacher_model.parameters()).device)
                         outputs = teacher_model(**batch).cpu().detach().numpy()
                         if accelerator.num_processes > 1:
-                            outputs_list = [None for i in range(accelerator.num_processes)]
+                            outputs_list = [None for _ in range(accelerator.num_processes)]
                             torch.distributed.all_gather_object(outputs_list, outputs)
                             outputs = np.concatenate(outputs_list, axis=0)
                         teacher_logits += [[s,e] for s,e in zip(outputs[0::2], outputs[1::2])]

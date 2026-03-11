@@ -345,6 +345,8 @@ def main():
             data_files["train"] = args.train_file
         if args.validation_file is not None:
             data_files["validation"] = args.validation_file
+        if args.train_file is None:
+            logger.error("args.train_file is None, cannot determine file extension")
         extension = args.train_file.split(".")[-1]
         if extension == "txt":
             extension = "text"
