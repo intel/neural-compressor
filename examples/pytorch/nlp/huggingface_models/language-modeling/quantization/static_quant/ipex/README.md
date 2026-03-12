@@ -8,8 +8,10 @@ The script `run_clm_no_trainer.py` supports `GPTJ`, `OPT`, `LLaMA2`, `BLOOM` and
 ## 1. Create Environment
 ```
 # Installation
+pip install transformers < 4.48.0
 pip install -r requirements.txt
 ```
+note: `transformers` version should be less than 4.48.0 to run this example, but it may cause security vulnerabilities, please use it with caution. CVE-2024-11393,CVE-2024-11394,CVE-2024-11392,CVE-2024-12720,CVE-2025-5197,CVE-2025-3264,CVE-2025-3263,CVE-2025-6051,CVE-2025-6921,CVE-2025-6638,CVE-2025-3933,CVE-2025-2099,CVE-2025-1194,CVE-2025-3777. 
 
 # Run
 
