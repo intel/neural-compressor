@@ -22,8 +22,6 @@ terms are listed below.
    mlperf-training
    Copyright 2018 The MLPerf Authors
 
-   onnx/models
-
    tensor2tensor
 
    Transformer
@@ -32,6 +30,11 @@ terms are listed below.
    Copyright [2019] [Division of Medical Image Computing, German Cancer Research Center (DKFZ), Heidelberg, Germany]
 
    Diffusers
+
+   Keras
+
+   Keras-hub
+   Copyright 2024, KerasHub authors. All rights reserved.
 
 
                                 Apache License
