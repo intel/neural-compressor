@@ -62,7 +62,7 @@ pip install neural-compressor-tf
 ```
 
 ### Install from Source
-
+The latest code on master branch may not be stable. Feel free to open an [issue](https://github.com/intel/neural-compressor/issues) if you encounter an error.  
 ```Shell
 git clone https://github.com/intel/neural-compressor.git
 cd neural-compressor
