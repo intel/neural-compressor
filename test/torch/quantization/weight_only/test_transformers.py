@@ -9,13 +9,14 @@ from transformers import AutoTokenizer
 
 from neural_compressor.common.utils.utility import CpuInfo
 from neural_compressor.torch.utils import get_ipex_version
-from neural_compressor.transformers import (
-    AutoModelForCausalLM,
-    AwqConfig,
-    GPTQConfig,
-    RtnConfig,
-    TeqConfig,
-)
+if Version(transformers.__version__) < Version("5.0.0"):
+    from neural_compressor.transformers import (
+        AutoModelForCausalLM,
+        AwqConfig,
+        GPTQConfig,
+        RtnConfig,
+        TeqConfig,
+    )
 
 torch.manual_seed(42)
 
@@ -31,6 +32,7 @@ except ImportError:
 
 
 @pytest.mark.skipif(not Version(torch.__version__) < Version("2.9.0"), reason="only for torch<2.9.0 [ipex]")
+@pytest.mark.skipif(not Version(transformers.__version__) < Version("5.0.0"), reason="only for transformers<5.0.0")
 class TestTansformersLikeAPI:
     def setup_class(self):
         self.model_name_or_path = "hf-tiny-model-private/tiny-random-GPTJForCausalLM"
