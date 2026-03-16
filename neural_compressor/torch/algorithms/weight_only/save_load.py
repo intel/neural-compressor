@@ -594,10 +594,11 @@ class WOQModelLoader:
         return model_class, config
 
     def _get_loaded_state_dict(self, config):
+        import transformers
         from transformers.configuration_utils import PretrainedConfig
         from transformers.modeling_utils import get_checkpoint_shard_files, load_state_dict
         from transformers.utils import cached_file, extract_commit_hash
-        import transformers
+
         if transformers.__version__ < "5.0.0":  # pragma: no cover
             from transformers.utils import is_safetensors_available
 
@@ -622,14 +623,13 @@ class WOQModelLoader:
         if transformers.__version__ < "5.0.0":  # pragma: no cover
             if use_safetensors is None and not is_safetensors_available():
                 use_safetensors = False
-        
+
         if transformers.__version__ < "5.0.0":  # pragma: no cover
             if use_hpu_safetensors is None and not is_safetensors_available():
                 use_hpu_safetensors = False
-        else: # pragma: no cover
+        else:  # pragma: no cover
             if use_hpu_safetensors is None:
                 use_hpu_safetensors = False
-            
 
         if use_auth_token is not None:  # pragma: no cover
             logger.warn(
@@ -742,8 +742,9 @@ class WOQModelLoader:
 
     def _get_resolved_archive_file(self, **kwargs):
         """Get weight archive file of model."""
-        from transformers.modeling_utils import _add_variant
         import transformers
+        from transformers.modeling_utils import _add_variant
+
         is_transformers_v5 = transformers.__version__ >= "5.0.0"
         from transformers.utils import (
             SAFE_WEIGHTS_INDEX_NAME,
@@ -753,9 +754,9 @@ class WOQModelLoader:
             cached_file,
             has_file,
         )
+
         if not is_transformers_v5:
-            from transformers.utils import is_remote_url, download_url 
-                
+            from transformers.utils import download_url, is_remote_url
 
         use_safetensors = kwargs.pop("use_safetensors")
         variant = kwargs.pop("variant")
@@ -915,9 +916,10 @@ class WOQModelLoader:
     def _init_hf_model(self, model_class, config):
         import transformers
         from accelerate.big_modeling import init_empty_weights
+
         if transformers.__version__ < "5.0.0":  # pragma: no cover
             from transformers.modeling_utils import no_init_weights
-        else: # pragma: no cover
+        else:  # pragma: no cover
             from transformers.initialization import no_init_weights
         from transformers.utils import ContextManagers
 
@@ -954,6 +956,7 @@ class WOQModelLoader:
 
             if parse(transformers.__version__) >= parse("5.0.0"):
                 from transformers.modeling_utils import local_torch_dtype
+
                 local_torch_dtype(torch_dtype, model_class.__name__)
                 dtype_orig = None
             elif parse(transformers.__version__) >= parse("4.56.0"):

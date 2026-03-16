@@ -9,6 +9,7 @@ from transformers import AutoTokenizer
 
 from neural_compressor.common.utils.utility import CpuInfo
 from neural_compressor.torch.utils import get_ipex_version
+
 if Version(transformers.__version__) < Version("5.0.0"):
     from neural_compressor.transformers import (
         AutoModelForCausalLM,
