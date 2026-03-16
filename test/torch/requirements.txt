@@ -11,4 +11,4 @@ psutil
 pytest
 torchao
 torchvision
-transformers < 5.0.0
+transformers
