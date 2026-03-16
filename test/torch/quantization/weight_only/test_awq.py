@@ -18,7 +18,6 @@ device = accelerator.current_device_name()
 def get_gpt_j():
     tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
         "hf-internal-testing/tiny-random-GPTJForCausalLM",
-        torchscript=True,
         device_map=device,
     )
     return tiny_gptj
@@ -45,7 +44,6 @@ class TestAWQQuant:
         self.tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
             device_map=device,
-            torchscript=True,
         )
         self.example_inputs = torch.ones([1, 10], dtype=torch.long).to(device)
         self.label = self.tiny_gptj(self.example_inputs)[0]
