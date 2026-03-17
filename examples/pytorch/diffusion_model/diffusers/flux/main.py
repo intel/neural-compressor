@@ -124,7 +124,10 @@ if __name__ == '__main__':
 
         os.makedirs(args.output_image_path, exist_ok=True)
 
-        if os.path.exists(args.output_dir) and os.path.exists(os.path.join(args.output_dir, "diffusion_pytorch_model.safetensors.index.json")):
+        if args.scheme in ["MXFP8", "FP8"]:
+            if not (os.path.exists(args.output_dir) and os.path.exists(os.path.join(args.output_dir, "diffusion_pytorch_model.safetensors.index.json"))):
+                raise ValueError("Don't supply quantized_model_path or quantized model doesn't exist!")
+
             print(f"Loading quantized model from {args.output_dir}")
             model = FluxTransformer2DModel.from_pretrained(args.output_dir, torch_dtype=torch.bfloat16)
 
@@ -156,8 +159,8 @@ if __name__ == '__main__':
 
             pipe.transformer = model
 
-        else:
-            print("Don't supply quantized_model_path or quantized model doesn't exist, evaluate BF16 accuracy.")
+        elif args.scheme == "BF16":
+            print("Evaluate BF16 accuracy.")
 
         inference_worker(args.eval_dataset, pipe.to(device), args.output_image_path)
 
