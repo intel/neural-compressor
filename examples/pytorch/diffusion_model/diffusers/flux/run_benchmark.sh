@@ -46,11 +46,14 @@ function run_benchmark {
     dataset_location=${dataset_location:="captions_source.tsv"}
     limit=${limit:=-1}
     output_image_path=${output_image_path:="./tmp_imgs"}
+	tuned_checkpoint=${tuned_checkpoint:="./tmp_autoround"}
 
     if [ "${topology}" = "flux_fp8" ]; then
         extra_cmd="--scheme FP8 --inference"
     elif [ "${topology}" = "flux_mxfp8" ]; then
         extra_cmd="--scheme MXFP8 --inference"
+	elif [ "${topology}" = "flux_bf16" ]; then
+		extra_cmd="--scheme BF16 --inference"
     fi
 
     if [ -n "$CUDA_VISIBLE_DEVICES" ]; then
