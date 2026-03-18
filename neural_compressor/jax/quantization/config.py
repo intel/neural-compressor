@@ -65,6 +65,8 @@ class DynamicQuantConfig(BaseConfig):
     params_list = [
         "weight_dtype",
         "activation_dtype",
+        "const_scale",
+        "const_weight",
     ]
 
     name = DYNAMIC_QUANT
@@ -73,6 +75,8 @@ class DynamicQuantConfig(BaseConfig):
         self,
         weight_dtype: str = "fp8_e4m3",
         activation_dtype: str = "fp8_e4m3",
+        const_scale: bool = False,
+        const_weight: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init Dynamic quantization config.
@@ -80,6 +84,8 @@ class DynamicQuantConfig(BaseConfig):
         Args:
             weight_dtype (str): Data type for weights, default is "fp8_e4m3".
             activation_dtype (str): Data type for activations, default is "fp8_e4m3".
+            const_scale (bool): Whether to use a constant scale factor for quantization.
+            const_weight (bool): Whether to use constant quantized weights.
             white_list (list): A list of supported operators of this algorithm.
 
         Returns:
@@ -95,6 +101,8 @@ class DynamicQuantConfig(BaseConfig):
                 raise ValueError("Mixed quantization with floating-point and integer dtypes is not supported.")
         self.weight_dtype = weight_dtype
         self.activation_dtype = activation_dtype
+        self.const_scale = const_scale
+        self.const_weight = const_weight
         self._post_init()
 
     @classmethod
@@ -172,10 +180,14 @@ class DynamicQuantConfig(BaseConfig):
         """
         weight_dtype = config_dict.get("weight_dtype", "fp8_e4m3")
         activation_dtype = config_dict.get("activation_dtype", "fp8_e4m3")
+        const_scale = config_dict.get("const_scale", False)
+        const_weight = config_dict.get("const_weight", False)
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
         return cls(
             weight_dtype=weight_dtype,
             activation_dtype=activation_dtype,
+            const_scale=const_scale,
+            const_weight=const_weight,
             white_list=white_list,
         )
 
@@ -201,6 +213,8 @@ class StaticQuantConfig(BaseConfig):
     params_list = [
         "weight_dtype",
         "activation_dtype",
+        "const_scale",
+        "const_weight",
     ]
 
     name = STATIC_QUANT
@@ -209,6 +223,8 @@ class StaticQuantConfig(BaseConfig):
         self,
         weight_dtype: str = "fp8_e4m3",
         activation_dtype: str = "fp8_e4m3",
+        const_scale: bool = False,
+        const_weight: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
     ):
         """Init Static quantization config.
@@ -216,6 +232,8 @@ class StaticQuantConfig(BaseConfig):
         Args:
             weight_dtype (str): Data type for weights, default is "fp8_e4m3".
             activation_dtype (str): Data type for activations, default is "fp8_e4m3".
+            const_scale (bool): Whether to use a constant scale factor for quantization.
+            const_weight (bool): Whether to use constant quantized weights.
             white_list (list): A list of supported operators of this algorithm.
 
         Returns:
@@ -232,6 +250,8 @@ class StaticQuantConfig(BaseConfig):
 
         self.weight_dtype = weight_dtype
         self.activation_dtype = activation_dtype
+        self.const_scale = const_scale
+        self.const_weight = const_weight
         self._post_init()
 
     @classmethod
@@ -309,10 +329,14 @@ class StaticQuantConfig(BaseConfig):
         """
         weight_dtype = config_dict.get("weight_dtype", "fp8_e5m2")
         activation_dtype = config_dict.get("activation_dtype", "fp8_e5m2")
+        const_scale = config_dict.get("const_scale", False)
+        const_weight = config_dict.get("const_weight", False)
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
         return cls(
             weight_dtype=weight_dtype,
             activation_dtype=activation_dtype,
+            const_scale=const_scale,
+            const_weight=const_weight,
             white_list=white_list,
         )
 

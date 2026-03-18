@@ -1,6 +1,6 @@
 """Static quantization algorithm entry point for JAX models."""
 
-# Copyright (c) 2025 Intel Corporation
+# Copyright (c) 2025-2026 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -73,7 +73,9 @@ def static_quantize(
         causal_lm_make_replace_generate_function(qmodel)
 
     operations = [
-        lambda layer: static_quant_mapping[layer.__class__].prepare(layer, weight_dtype, activation_dtype),
+        lambda layer: static_quant_mapping[layer.__class__].prepare(
+            layer, weight_dtype, activation_dtype, quant_config.const_scale, quant_config.const_weight
+        ),
         lambda layer: layer.add_observers(),
     ]
     iterate_over_layers(qmodel, operations, filter_function=lambda c: c in static_quant_mapping)
