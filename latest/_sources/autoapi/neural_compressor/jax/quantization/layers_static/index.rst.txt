@@ -55,7 +55,7 @@ Module Contents
    Observer that tracks running min/max values for calibration.
 
 
-.. py:class:: StaticQDQLayer(name, activation_dtype, asymmetric=False)
+.. py:class:: StaticQDQLayer(name, activation_dtype, asymmetric=False, const_scale=False)
 
 
 
