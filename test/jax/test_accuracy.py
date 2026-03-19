@@ -76,11 +76,11 @@ def verify_model(model, calib_tensor, test_input):
             x, xexpected, rtol=1e-5
         ), f"Output mismatch in layer {q_layer.name}: expected {xexpected}, got {x}"
         assert jnp.allclose(
-            q_layer.ascale.value, calib_scale, rtol=1e-5
-        ), f"Activation scale mismatch in layer {layer.name}: expected {calib_scale}, got {q_layer.ascale.value}"
+            q_layer.a_scale.value, calib_scale, rtol=1e-5
+        ), f"Activation scale mismatch in layer {layer.name}: expected {calib_scale}, got {q_layer.a_scale.value}"
         assert jnp.allclose(
-            q_layer.wscale.value, expected_wscale, rtol=1e-5
-        ), f"Weight scale mismatch in layer {layer.name}: expected {expected_wscale}, got {q_layer.wscale.value}"
+            q_layer.w_scale.value, expected_wscale, rtol=1e-5
+        ), f"Weight scale mismatch in layer {layer.name}: expected {expected_wscale}, got {q_layer.w_scale.value}"
         test_input = x  # For next layer input
 
 
@@ -122,18 +122,18 @@ def test_simple_linear_model_accuracy():
     quantized_output = jax.jit(q_model)(test_input)
     print(f"quantized_output: {quantized_output}")
     print(f"expected_output: {expected_output}")
-    print(f"Weight scale: {q_model.layers[0].wscale}, Expected weight scale: {expected_weight_scale}")
-    print(f"Activation scale: {q_model.layers[0].ascale}, Expected activation scale: {expected_scale}")
+    print(f"Weight scale: {q_model.layers[0].w_scale}, Expected weight scale: {expected_weight_scale}")
+    print(f"Activation scale: {q_model.layers[0].a_scale}, Expected activation scale: {expected_scale}")
 
     assert jnp.allclose(
         quantized_output, expected_output, rtol=1e-5
     ), f"Quantized output mismatch: expected {expected_output}, got {quantized_output}"
     assert jnp.allclose(
-        q_model.layers[0].wscale.value, expected_weight_scale, rtol=1e-5
-    ), f"Weight scale mismatch: expected {expected_weight_scale}, got {q_model.layers[0].wscale.value}"
+        q_model.layers[0].w_scale.value, expected_weight_scale, rtol=1e-5
+    ), f"Weight scale mismatch: expected {expected_weight_scale}, got {q_model.layers[0].w_scale.value}"
     assert jnp.allclose(
-        q_model.layers[0].ascale.value, expected_scale, rtol=1e-5
-    ), f"Activation scale mismatch: expected {expected_scale}, got {q_model.layers[0].ascale.value}"
+        q_model.layers[0].a_scale.value, expected_scale, rtol=1e-5
+    ), f"Activation scale mismatch: expected {expected_scale}, got {q_model.layers[0].a_scale.value}"
 
 
 def test_simple_linear_model_with_verify_util():

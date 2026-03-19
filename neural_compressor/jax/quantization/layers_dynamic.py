@@ -106,9 +106,9 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         Returns:
             jnp.ndarray: Quantized-dequantized tensor.
         """
-        ascale, _ = get_q_params(batch_min_max, self.activation_dtype, asymmetric=False)
-        x = self.aquantfun(inputs, ascale)
-        x = self.adequantfun(x, ascale)
+        a_scale, _ = get_q_params(batch_min_max, self.activation_dtype, asymmetric=False)
+        x = self.aquantfun(inputs, a_scale)
+        x = self.adequantfun(x, a_scale)
         return x
 
     def call_asymmetric(self, inputs, batch_min_max, mask=None):
@@ -122,9 +122,9 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         Returns:
             jnp.ndarray: Quantized-dequantized tensor.
         """
-        ascale, azero_point = get_q_params(batch_min_max, self.activation_dtype, asymmetric=True)
-        x = self.aquantfun(inputs, ascale, azero_point)
-        x = self.adequantfun(x, ascale, azero_point)
+        a_scale, a_zero_point = get_q_params(batch_min_max, self.activation_dtype, asymmetric=True)
+        x = self.aquantfun(inputs, a_scale, a_zero_point)
+        x = self.adequantfun(x, a_scale, a_zero_point)
         return x
 
     def call(self, inputs, mask=None):
@@ -186,11 +186,11 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.input_qdq = DynamicQDQLayer("input_qdq", activation_dtype, orig._is_int8)
         if const_scale:
-            orig._const_variables = ["wscale"]
+            orig._const_variables = ["w_scale"]
         else:
             orig._const_variables = []
         if const_weight:
-            orig._const_variables.append("w")
+            orig._const_variables.append("_kernel_quant")
         orig._tracker.lock()
         return orig
 
@@ -202,18 +202,18 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         """
         self._tracker.unlock()
         self.input_qdq.add_variables()
-        wscale, _ = get_q_params(self._kernel.value, self.weight_dtype, asymmetric=False)
-        self.wscale = self.add_weight(
-            name="weight_scale",
-            shape=wscale.shape,
-            initializer=keras.initializers.Constant(wscale),
+        w_scale, _ = get_q_params(self._kernel.value, self.weight_dtype, asymmetric=False)
+        self.w_scale = self.add_weight(
+            name="w_scale",
+            shape=w_scale.shape,
+            initializer=keras.initializers.Constant(w_scale),
             trainable=False,
             dtype=self.compute_dtype,
         )
         wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
-        self.w = self.add_weight(
-            name="kernel_quant",
+        self._kernel_quant = self.add_weight(
+            name="_kernel_quant",
             shape=self._kernel.shape,
             initializer="zeros",
             trainable=False,
@@ -221,7 +221,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
             autocast=False,
         )
 
-        self.w.assign(wquantfun(self._kernel.value, scale=self.wscale.value))
+        self._kernel_quant.assign(wquantfun(self._kernel.value, scale=self.w_scale.value))
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
@@ -252,16 +252,16 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         """
 
         if self.const_weight:
-            w = self.w
+            _kernel_quant = self._kernel_quant
         else:
-            w = self.w.value
+            _kernel_quant = self._kernel_quant.value
         if self.const_scale:
-            wscale = self.wscale
+            w_scale = self.w_scale
         else:
-            wscale = self.wscale.value
+            w_scale = self.w_scale.value
 
-        w = self.wdequantfun(w, wscale)
-        return w
+        _kernel_quant = self.wdequantfun(_kernel_quant, w_scale)
+        return _kernel_quant
 
     def call(self, inputs, training=None):
         """Apply quantized input processing before the dense computation.
