@@ -135,6 +135,17 @@ class SaveableLayerMixin:
                 value_to_save = jnp.asarray(var.value)
             store[var.name] = value_to_save
 
+        if hasattr(self, "_const_variables"):
+            for name in self._const_variables:
+                value = getattr(self, name)
+                is_one_byte_format = dtype_utils.dtype_size(value.dtype.name) == 8
+                if is_one_byte_format and value.dtype == weight_dtype:
+                    # Weights in 8 bit format will be stored as their int8 bit representation
+                    value_to_save = jnp.asarray(value).view(jnp.int8)
+                else:
+                    value_to_save = jnp.asarray(value)
+                store[name] = value_to_save
+
     def load_own_variables(self, store):
         """Load layer variables from the provided store.
 
@@ -151,6 +162,18 @@ class SaveableLayerMixin:
                 # Quantized weights are saved in int8 format, need to convert back to original dtype
                 value_to_load = value_to_load.view(var.dtype)
             var.assign(value_to_load)
+
+        if hasattr(self, "_const_variables"):
+            for name in self._const_variables:
+                if name in store:
+                    value_to_load = store[name]
+                    var_dtype = getattr(self, name).dtype
+                    if (value_to_load.dtype == jnp.int8) and (var_dtype == weight_dtype):
+                        # Quantized weights are saved in int8 format, need to convert back to original dtype
+                        value_to_load = value_to_load.view(var_dtype)
+                    setattr(self, name, jnp.asarray(value_to_load))
+                else:
+                    raise ValueError(f"Constant variable '{name}' not found in the saved model for {self._path}.")
 
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
@@ -463,8 +486,10 @@ def prepare_deserialized_quantized_model(
 
     if isinstance(quant_config, StaticQuantConfig):
         layers_mapping = static_quant_mapping
+        additional_params = (weight_dtype, activation_dtype, quant_config.const_scale, quant_config.const_weight)
     elif isinstance(quant_config, DynamicQuantConfig):
         layers_mapping = dynamic_quant_mapping
+        additional_params = (weight_dtype, activation_dtype, quant_config.const_scale, quant_config.const_weight)
     else:
         raise ValueError(
             f"Unsupported quant_config type {type(quant_config).__name__}. "
@@ -473,7 +498,7 @@ def prepare_deserialized_quantized_model(
 
     qmodel = model
     operations = [
-        lambda layer: layers_mapping[layer.__class__].prepare(layer, weight_dtype, activation_dtype),
+        lambda layer: layers_mapping[layer.__class__].prepare(layer, *additional_params),
         lambda layer: layer.add_variables(),
         lambda layer: layer.post_quantization_cleanup(),
     ]
