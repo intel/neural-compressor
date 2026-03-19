@@ -369,21 +369,21 @@ def print_model(container, max_lines=999999, internal=True, str_length=(0, 0), p
     additional_info = ""
     if hasattr(container, "min_val") and hasattr(container, "max_val"):
         additional_info += f" min,max={container.min_val.value:9.4g},{container.max_val.value:9.4g}"
-    if hasattr(container, "ascale"):
-        if isinstance(container.ascale, jax.Array):
-            additional_info += f" a_scale(attr)={container.ascale}"
+    if hasattr(container, "a_scale"):
+        if isinstance(container.a_scale, jax.Array):
+            additional_info += f" a_scale(attr)={container.a_scale}"
         else:
-            additional_info += f" a_scale={container.ascale.value}"
-    if hasattr(container, "azero_point"):
-        if isinstance(container.azero_point, jax.Array):
-            additional_info += f" a_zero_point(attr)={container.azero_point}"
+            additional_info += f" a_scale={container.a_scale.value}"
+    if hasattr(container, "a_zero_point"):
+        if isinstance(container.a_zero_point, jax.Array):
+            additional_info += f" a_zero_point(attr)={container.a_zero_point}"
         else:
-            additional_info += f" a_zero_point={container.azero_point.value}"
-    if hasattr(container, "wscale"):
-        if isinstance(container.wscale, jax.Array):
-            additional_info += f" w_scale(attr)={container.wscale}"
+            additional_info += f" a_zero_point={container.a_zero_point.value}"
+    if hasattr(container, "w_scale"):
+        if isinstance(container.w_scale, jax.Array):
+            additional_info += f" w_scale(attr)={container.w_scale}"
         else:
-            additional_info += f" w_scale={container.wscale.value}"
+            additional_info += f" w_scale={container.w_scale.value}"
     logger.debug(f"{container.__class__.__name__:{str_length[0]}} {path:{str_length[1]}}{additional_info}")
 
     if internal:

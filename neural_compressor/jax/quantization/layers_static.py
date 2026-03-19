@@ -159,9 +159,9 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         self._is_quantized = False
         self.const_scale = const_scale
         if const_scale:
-            self._const_variables = ["ascale"]
+            self._const_variables = ["a_scale"]
             if asymmetric:
-                self._const_variables.append("azero_point")
+                self._const_variables.append("a_zero_point")
         else:
             self._const_variables = []
 
@@ -183,16 +183,16 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         """
         self._tracker.unlock()
         if self._is_asymmetric:
-            self.azero_point = self.add_weight(
-                name="azero_point",
+            self.a_zero_point = self.add_weight(
+                name="a_zero_point",
                 shape=(1,),
                 initializer="zeros",
                 trainable=False,
                 autocast=False,
                 dtype=self.compute_dtype,
             )
-        self.ascale = self.add_weight(
-            name="ascale",
+        self.a_scale = self.add_weight(
+            name="a_scale",
             shape=(1,),
             initializer="zeros",
             trainable=False,
@@ -211,8 +211,8 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         """
         self._tracker.unlock()
         arange = self.input_observer.get_calibrated_range()
-        ascale, azero_point = get_q_params(arange, self.activation_dtype, asymmetric=self._is_asymmetric)
-        if ascale == jnp.inf:
+        a_scale, a_zero_point = get_q_params(arange, self.activation_dtype, asymmetric=self._is_asymmetric)
+        if a_scale == jnp.inf:
             logger.warning(
                 f"Activation scale is inf for layer {self._path}. This may be caused by missing calibration data. "
                 "Please make sure to run calibration with representative dataset."
@@ -220,9 +220,9 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             self._is_quantized = False
             self._tracker.lock()
             return
-        self.ascale.assign(ascale)
+        self.a_scale.assign(a_scale)
         if self._is_asymmetric:
-            self.azero_point.assign(azero_point)
+            self.a_zero_point.assign(a_zero_point)
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
@@ -273,12 +273,12 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         """
 
         if self.const_scale:
-            ascale = self.ascale
+            a_scale = self.a_scale
         else:
-            ascale = self.ascale.value
+            a_scale = self.a_scale.value
 
-        x = self.aquantfun(inputs, ascale)
-        x = self.adequantfun(x, ascale)
+        x = self.aquantfun(inputs, a_scale)
+        x = self.adequantfun(x, a_scale)
         return x
 
     def call_asymmetric(self, inputs, mask=None):
@@ -292,13 +292,13 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             jnp.ndarray: Quantized-dequantized tensor.
         """
         if self.const_scale:
-            ascale = self.ascale
-            zero_point = self.azero_point
+            a_scale = self.a_scale
+            a_zero_point = self.a_zero_point
         else:
-            ascale = self.ascale.value
-            zero_point = self.azero_point.value
-        x = self.aquantfun(inputs, ascale, zero_point)
-        x = self.adequantfun(x, ascale, zero_point)
+            a_scale = self.a_scale.value
+            a_zero_point = self.a_zero_point.value
+        x = self.aquantfun(inputs, a_scale, a_zero_point)
+        x = self.adequantfun(x, a_scale, a_zero_point)
         return x
 
 
@@ -329,13 +329,13 @@ class QStaticDenseMixin(SaveableLayerMixin):
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.kernel_shape = orig.kernel.shape
         if const_scale:
-            orig._const_variables = ["ascale", "wscale"]
+            orig._const_variables = ["a_scale", "w_scale"]
             if orig._is_int8:
-                orig._const_variables.append("azero_point")
+                orig._const_variables.append("a_zero_point")
         else:
             orig._const_variables = []
         if const_weight:
-            orig._const_variables.append("w")
+            orig._const_variables.append("_kernel_quant")
         orig._tracker.lock()
         return orig
 
@@ -357,32 +357,32 @@ class QStaticDenseMixin(SaveableLayerMixin):
         """
         self._tracker.unlock()
         if self._is_int8:
-            self.azero_point = self.add_weight(
-                name="activation_zero_point",
+            self.a_zero_point = self.add_weight(
+                name="a_zero_point",
                 shape=(1,),
                 initializer="zeros",
                 trainable=False,
                 autocast=False,
                 dtype=self.compute_dtype,
             )
-        self.ascale = self.add_weight(
-            name="ascale",
+        self.a_scale = self.add_weight(
+            name="a_scale",
             shape=(1,),
             initializer="zeros",
             trainable=False,
             autocast=False,
             dtype=self.compute_dtype,
         )
-        self.wscale = self.add_weight(
-            name="wscale",
+        self.w_scale = self.add_weight(
+            name="w_scale",
             shape=(1,),
             initializer="zeros",
             trainable=False,
             autocast=False,
             dtype=self.compute_dtype,
         )
-        self.w = self.add_weight(
-            name="w",
+        self._kernel_quant = self.add_weight(
+            name="_kernel_quant",
             shape=self.kernel_shape,
             initializer="zeros",
             trainable=False,
@@ -406,8 +406,8 @@ class QStaticDenseMixin(SaveableLayerMixin):
         self._tracker.unlock()
 
         arange = self.input_observer.get_calibrated_range()
-        ascale, azero_point = get_q_params(arange, self.activation_dtype, asymmetric=self._is_int8)
-        if ascale == jnp.inf:
+        a_scale, a_zero_point = get_q_params(arange, self.activation_dtype, asymmetric=self._is_int8)
+        if a_scale == jnp.inf:
             logger.warning(
                 f"Activation scale is inf for layer {self._path}. This may be caused by missing calibration data. "
                 "Please make sure to run calibration with representative dataset."
@@ -416,15 +416,15 @@ class QStaticDenseMixin(SaveableLayerMixin):
             self._is_quantized = False
             self._tracker.lock()
             return
-        self.ascale.assign(ascale)
+        self.a_scale.assign(a_scale)
         if self._is_int8:
-            self.azero_point.assign(azero_point)
+            self.a_zero_point.assign(a_zero_point)
 
-        wscale, _ = get_q_params(self.kernel, self.weight_dtype, asymmetric=False)
-        self.wscale.assign(wscale)
+        w_scale, _ = get_q_params(self.kernel, self.weight_dtype, asymmetric=False)
+        self.w_scale.assign(w_scale)
 
-        w = self.wquantfun(self.kernel, self.wscale.value)
-        self.w.assign(w)
+        _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value)
+        self._kernel_quant.assign(_kernel_quant)
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
@@ -464,15 +464,15 @@ class QStaticDenseMixin(SaveableLayerMixin):
         """
         if self._is_quantized:
             if self.const_weight:
-                w = self.w
+                _kernel_quant = self._kernel_quant
             else:
-                w = self.w.value
+                _kernel_quant = self._kernel_quant.value
             if self.const_scale:
-                wscale = self.wscale
+                w_scale = self.w_scale
             else:
-                wscale = self.wscale.value
-            w = self.wdequantfun(w, wscale)
-            return w
+                w_scale = self.w_scale.value
+            _kernel_quant = self.wdequantfun(_kernel_quant, w_scale)
+            return _kernel_quant
         ret = super().kernel
         return ret.value
 
@@ -501,11 +501,11 @@ class QStaticDenseMixin(SaveableLayerMixin):
             jnp.ndarray: Layer output tensor.
         """
         if self.const_scale:
-            ascale = self.ascale
+            a_scale = self.a_scale
         else:
-            ascale = self.ascale.value
-        x = self.aquantfun(inputs, ascale)
-        x = self.adequantfun(x, ascale)
+            a_scale = self.a_scale.value
+        x = self.aquantfun(inputs, a_scale)
+        x = self.adequantfun(x, a_scale)
         x = super().call(x, training=training)
         return x
 
@@ -520,13 +520,13 @@ class QStaticDenseMixin(SaveableLayerMixin):
             jnp.ndarray: Layer output tensor.
         """
         if self.const_scale:
-            ascale = self.ascale
-            zero_point = self.azero_point
+            a_scale = self.a_scale
+            a_zero_point = self.a_zero_point
         else:
-            ascale = self.ascale.value
-            zero_point = self.azero_point.value
-        x = self.aquantfun(inputs, ascale, zero_point)
-        x = self.adequantfun(x, ascale, zero_point)
+            a_scale = self.a_scale.value
+            a_zero_point = self.a_zero_point.value
+        x = self.aquantfun(inputs, a_scale, a_zero_point)
+        x = self.adequantfun(x, a_scale, a_zero_point)
         x = super().call(x, training=training)
         return x
 
