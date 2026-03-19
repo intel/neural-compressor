@@ -189,7 +189,7 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
                 initializer="zeros",
                 trainable=False,
                 autocast=False,
-                dtype=self.compute_dtype,
+                dtype=jnp.int32,
             )
         self.a_scale = self.add_weight(
             name="a_scale",
@@ -332,6 +332,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
             orig._const_variables = ["a_scale", "w_scale"]
             if orig._is_int8:
                 orig._const_variables.append("a_zero_point")
+                orig._const_variables.append("w_zero_point")
         else:
             orig._const_variables = []
         if const_weight:
@@ -363,7 +364,15 @@ class QStaticDenseMixin(SaveableLayerMixin):
                 initializer="zeros",
                 trainable=False,
                 autocast=False,
-                dtype=self.compute_dtype,
+                dtype=jnp.int32,
+            )
+            self.w_zero_point = self.add_weight(
+                name="w_zero_point",
+                shape=(1,),
+                initializer="zeros",
+                trainable=False,
+                autocast=False,
+                dtype=jnp.int32,
             )
         self.a_scale = self.add_weight(
             name="a_scale",
@@ -392,8 +401,8 @@ class QStaticDenseMixin(SaveableLayerMixin):
 
         self.aquantfun = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_int8)
         self.adequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_int8)
-        self.wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
-        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
+        self.wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=self._is_int8)
+        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_int8)
 
         self._tracker.lock()
 
@@ -420,10 +429,13 @@ class QStaticDenseMixin(SaveableLayerMixin):
         if self._is_int8:
             self.a_zero_point.assign(a_zero_point)
 
-        w_scale, _ = get_q_params(self.kernel, self.weight_dtype, asymmetric=False)
+        w_scale, w_zero_point = get_q_params(self.kernel, self.weight_dtype, asymmetric=self._is_int8)
         self.w_scale.assign(w_scale)
-
-        _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value)
+        if self._is_int8:
+            self.w_zero_point.assign(w_zero_point)
+            _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value, self.w_zero_point.value)
+        else:
+            _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value)
         self._kernel_quant.assign(_kernel_quant)
         self._tracker.lock()
 
@@ -469,9 +481,16 @@ class QStaticDenseMixin(SaveableLayerMixin):
                 _kernel_quant = self._kernel_quant.value
             if self.const_scale:
                 w_scale = self.w_scale
+                if self._is_int8:
+                    w_zero_point = self.w_zero_point
             else:
                 w_scale = self.w_scale.value
-            _kernel_quant = self.wdequantfun(_kernel_quant, w_scale)
+                if self._is_int8:
+                    w_zero_point = self.w_zero_point.value
+            if self._is_int8:
+                _kernel_quant = self.wdequantfun(_kernel_quant, w_scale, w_zero_point)
+            else:
+                _kernel_quant = self.wdequantfun(_kernel_quant, w_scale)
             return _kernel_quant
         ret = super().kernel
         return ret.value
@@ -573,12 +592,12 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.q_qdq = StaticQDQLayer(
-            "q_qdq", activation_dtype, False, const_scale
+            "q_qdq", activation_dtype, orig._is_int8, const_scale
         )  # the second argument of einsum has to be quantized symmetrically for onednn to work
         orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, orig._is_int8, const_scale)
         orig.a_qdq = StaticQDQLayer("a_qdq", activation_dtype, orig._is_int8, const_scale)
         orig.v_qdq = StaticQDQLayer(
-            "v_qdq", activation_dtype, False, const_scale
+            "v_qdq", activation_dtype, orig._is_int8, const_scale
         )  # the second argument of einsum has to be quantized symmetrically for onednn to work
         orig._is_quantized = False
         orig._tracker.lock()
@@ -1051,8 +1070,9 @@ class QStaticRotaryEmbedding(SaveableLayerMixin, RotaryEmbedding):
         """
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.positions_qdq = StaticQDQLayer("positions_qdq", activation_dtype, False, const_scale)
-        orig.inverse_freq_qdq = StaticQDQLayer("inverse_freq_qdq", activation_dtype, False, const_scale)
+        orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
+        orig.positions_qdq = StaticQDQLayer("positions_qdq", activation_dtype, orig._is_int8, const_scale)
+        orig.inverse_freq_qdq = StaticQDQLayer("inverse_freq_qdq", activation_dtype, orig._is_int8, const_scale)
         orig._is_quantized = False
         orig._tracker.lock()
         return orig
@@ -1160,7 +1180,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, ReversibleEmbedding):
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.inputs_qdq = StaticQDQLayer("inputs_qdq", activation_dtype, orig._is_int8, const_scale)
-        orig.kernel_qdq = StaticQDQLayer("kernel_qdq", activation_dtype, False, const_scale)
+        orig.kernel_qdq = StaticQDQLayer("kernel_qdq", activation_dtype, orig._is_int8, const_scale)
         orig.const_scale = const_scale
         orig.const_weight = const_weight
         orig._is_quantized = False

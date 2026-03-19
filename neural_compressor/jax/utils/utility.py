@@ -119,7 +119,7 @@ def get_quantize_fun(dtype=ml_dtypes.float8_e4m3, asymmetric=False):
         Callable: Quantization function that maps tensors to the target dtype.
     """
 
-    @partial(jax.lax.composite, name="inc.quantize_fp8")
+    @partial(jax.lax.composite, name="inc.quantize")
     def quantize_tensor_float(x, scale):
         """Quantize floating-point tensors using clamping.
 
@@ -134,7 +134,7 @@ def get_quantize_fun(dtype=ml_dtypes.float8_e4m3, asymmetric=False):
             jnp.finfo(dtype).min.astype(x.dtype), x / scale, jnp.finfo(dtype).max.astype(x.dtype)
         ).astype(dtype)
 
-    @partial(jax.lax.composite, name="inc.quantize_int8")
+    @partial(jax.lax.composite, name="inc.quantize")
     def quantize_tensor_int(x, scale):
         """Quantize integer tensors using symmetric scaling.
 
@@ -149,7 +149,7 @@ def get_quantize_fun(dtype=ml_dtypes.float8_e4m3, asymmetric=False):
         val = jnp.clip(val, jnp.iinfo(dtype).min, jnp.iinfo(dtype).max)
         return val.astype(dtype)
 
-    @partial(jax.lax.composite, name="inc.quantize_int8_asymmetric")
+    @partial(jax.lax.composite, name="inc.quantize")
     def quantize_tensor_int_asymmetric(x, scale, zero_point):
         """Quantize integer tensors using asymmetric scaling.
 
@@ -197,7 +197,7 @@ def get_dequantize_fun(dtype=jnp.float32, asymmetric=False):
         """
         return x.astype(dtype) * scale
 
-    @partial(jax.lax.composite, name="inc.dequantize_asymmetric")
+    @partial(jax.lax.composite, name="inc.dequantize")
     def dequantize_asymmetric(x, scale, zero_point=jnp.array(0, dtype=dtype)):
         """Dequantize a tensor with asymmetric scaling.
 
@@ -209,7 +209,8 @@ def get_dequantize_fun(dtype=jnp.float32, asymmetric=False):
         Returns:
             jnp.ndarray: Dequantized tensor.
         """
-        return (x.astype(dtype) - zero_point) * scale
+        negated_zero_point = -zero_point
+        return (x.astype(dtype) + negated_zero_point) * scale
 
     return dequantize_asymmetric if asymmetric else dequantize
 
@@ -273,7 +274,9 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
         raise ValueError(f"Unsupported dtype: {dtype}")
 
 
-def get_q_params(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32, asymmetric=False):
+def get_q_params(
+    orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32, asymmetric=False, emulate_asymmetric=True
+):
     """Compute quantization scale and zero-point for a weight tensor.
 
     Args:
@@ -281,6 +284,7 @@ def get_q_params(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.flo
         dtype (jnp.dtype): Target quantized dtype.
         compute_dtype (jnp.dtype): dtype for scale computation.
         asymmetric (bool): Whether to compute asymmetric quantization parameters.
+        emulate_asymmetric (bool): Whether to emulate asymmetric quantization using symmetric quantization with zero_poin=0
 
     Returns:
         Tuple[jnp.ndarray, Optional[jnp.ndarray]]: Scale and zero-point. Zero-point is `None` for floating-point
@@ -306,12 +310,14 @@ def get_q_params(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.flo
         int_max = jnp.array(jnp.iinfo(dtype).max).astype(compute_dtype)
         scale = (orig_max - orig_min) / (int_max - int_min)
         zero_point = jnp.round(int_min - orig_min / scale)
-        return scale.reshape((1,)).astype(compute_dtype), zero_point.reshape((1,)).astype(compute_dtype)
+        return scale.reshape((1,)).astype(compute_dtype), zero_point.reshape((1,)).astype(jnp.int32)
 
     if jnp.issubdtype(dtype, jnp.floating):
         return get_scale(orig_weight, dtype, compute_dtype), None
     elif jnp.issubdtype(dtype, jnp.integer):
         if asymmetric:
+            if emulate_asymmetric:
+                return get_scale(orig_weight, dtype, compute_dtype), jnp.array((0,), dtype=jnp.int32)
             return integer_get_q_params(orig_weight)
         else:
             return get_scale(orig_weight, dtype, compute_dtype), None
