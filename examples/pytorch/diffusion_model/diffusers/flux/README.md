@@ -37,6 +37,14 @@ bash run_quant.sh --topology=flux_mxfp8 --input_model=FLUX.1-dev --output_model=
 
 ## Evaluation
 
+### BF16:
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --topology=flux_bf16 --input_model=FLUX.1-dev
+```
+
+### MXFP8 or FP8:
+
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --topology=flux_mxfp8 --input_model=FLUX.1-dev --quantized_model=mxfp8_model
 ```
