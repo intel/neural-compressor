@@ -2,7 +2,7 @@
 # PyTorch AutoRound
 
 ## Overview
-AutoRound is an advanced weight-only quantization algorithm integrated into Neural Compressor for low-bit LLM inference. As a key algorithm component of INC, AutoRound enables efficient quantization across a wide range of models and features, consistently delivering noticeable accuracy improvements over alternatives like SignRound. While requiring additional tuning time, it provides a robust foundation for INC's comprehensive quantization capabilities.
+AutoRound is an advanced weight-only quantization algorithm integrated into Neural Compressor for low-bit LLM inference. As a key algorithm component of INC, AutoRound enables efficient quantization across a wide range of models and features while consistently achieving superior accuracy. While requiring additional tuning time, it provides a robust foundation for INC's comprehensive quantization capabilities.
 
 ## Supported Features
 
@@ -13,6 +13,8 @@ AutoRound is an advanced weight-only quantization algorithm integrated into Neur
 - **NVFP4 Quantization** - NVFP4 is a specialized 4-bit floating-point format (FP4) developed by NVIDIA for deep learning workloads. See [NVFP4 Quantization](./PT_NVFP4Quant.md).
 
 - **Quantization-Aware Training (QAT)** - Fine-tune models during quantization to achieve better accuracy. See [Quantization-Aware Training](./PT_QAT.md) for details.
+
+- **FP8 KV Cache and Attention Static Quantization (Experimental)** - The support for the FP8 data type enhances inference performance by quantizing key-value cache and attention computations to FP8 precision.
 
 ## Getting Started
 
