@@ -4,8 +4,8 @@ Intel® Neural Compressor
 ===========================
 <h3> An open-source Python library supporting popular model compression techniques on mainstream deep learning frameworks (PyTorch, TensorFlow, and JAX)</h3>
 
-[![python](https://img.shields.io/badge/python-3.10%2B-blue)](https://github.com/intel/neural-compressor)
-[![version](https://img.shields.io/badge/release-3.7-green)](https://github.com/intel/neural-compressor/releases)
+[![python](https://img.shields.io/badge/python-3.11%2B-blue)](https://github.com/intel/neural-compressor)
+[![version](https://img.shields.io/badge/release-3.8-green)](https://github.com/intel/neural-compressor/releases)
 [![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
 [![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/intel/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
@@ -25,6 +25,8 @@ across diverse quantization techniques and low-precision data types through inte
 support AMD CPU, ARM CPU, and NVidia GPU with limited testing. 
 
 ## What's New
+* [2026/03] FP8 quantization support for [Keras/JAX](./docs/source/JAX.md) (experimental) 
+* [2026/03] FP8 KV cache/Attention static quantization (experimental) 
 * [2025/12] [NVFP4 quantization](./docs/source/PT_NVFP4Quant.md) experimental support
 * [2025/10] [MXFP8 / MXFP4 quantization](./docs/source/PT_MXQuant.md) experimental support
 * [2025/09] FP8 dynamic quantization, including Linear, FusedMoE on Intel Gaudi AI Accelerators
@@ -47,6 +49,8 @@ Choose the necessary framework dependencies to install based on your deploy envi
 pip install neural-compressor-pt
 # Framework extension API + TensorFlow dependency
 pip install neural-compressor-tf
+# Framework extension API + JAX dependency, available since v3.8
+pip install neural-compressor-jax
 ```    
 **Note**: Further installation methods can be found under [Installation Guide](./docs/source/installation_guide.md). check out our [FAQ](./docs/source/faq.md) for more details.
 
@@ -113,8 +117,7 @@ model = load(
       <td colspan="2" align="center"><a href="./docs/source/design.md#architecture">Architecture</a></td>
       <td colspan="2" align="center"><a href="./docs/source/design.md#workflows">Workflow</a></td>
       <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="1" align="center"><a href="./docs/source/llm_recipes.md">LLMs Recipes</a></td>
-      <td colspan="1" align="center"><a href="./examples/README.md">Examples</a></td>
+      <td colspan="2" align="center"><a href="./examples/README.md">Examples</a></td>
     </tr>
   </tbody>
   <thead>
@@ -161,6 +164,16 @@ model = load(
   <tbody>
       <tr>
           <td colspan="8" align="center"><a href="./docs/source/transformers_like_api.md">Overview</a></td>
+      </tr>
+  </tbody>
+  <thead>
+      <tr>
+        <th colspan="8">JAX Extension APIs</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td colspan="8" align="center"><a href="./docs/source/JAX.md">Overview</a></td>
       </tr>
   </tbody>
   <thead>

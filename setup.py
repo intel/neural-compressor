@@ -158,7 +158,7 @@ if __name__ == "__main__":
         ext_modules=ext_modules,
         cmdclass=cmdclass,
         extras_require=extras_require,
-        python_requires=">=3.7.0",
+        python_requires=">=3.11.0",
         classifiers=[
             "Intended Audience :: Science/Research",
             "Programming Language :: Python :: 3",
