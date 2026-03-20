@@ -86,7 +86,6 @@ if args.quantize:
             return outputs
     
     wrapped_model = ModelWrapperForExport(user_model)
-    # wrapped_model = user_model
     
     def get_example_inputs(tokenizer):
         text = "Hello, welcome to LLM world."
@@ -101,7 +100,7 @@ if args.quantize:
     # torch._dynamo.config.cache_size_limit = 4 # set limitation if out of memory
     batch = Dim(name="batch_size", max=args.max_batch_size)
     seq_len = Dim(name="seq_len", max=args.max_num_tokens)
-    dynamic_shapes = {"input_ids": {batch, seq_len}}
+    dynamic_shapes = {"input_ids": {0: batch, 1: seq_len}}
     example_inputs = get_example_inputs(tokenizer)
     exported_model = export(wrapped_model, example_inputs=example_inputs, dynamic_shapes=dynamic_shapes)
     
