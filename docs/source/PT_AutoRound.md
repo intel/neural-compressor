@@ -2,7 +2,7 @@
 # PyTorch AutoRound
 
 ## Overview
-AutoRound is an advanced weight-only quantization algorithm for low-bits LLM inference. It's tailored for a wide range of models and consistently delivers noticeable improvements, often significantly outperforming SignRound with the cost of more tuning time for quantization.
+AutoRound is an advanced weight-only quantization algorithm integrated into Neural Compressor for low-bit LLM inference. As a key algorithm component of INC, AutoRound enables efficient quantization across a wide range of models and features, consistently delivering noticeable accuracy improvements over alternatives like SignRound. While requiring additional tuning time, it provides a robust foundation for INC's comprehensive quantization capabilities.
 
 ## Supported Features
 
@@ -16,6 +16,8 @@ AutoRound is an advanced weight-only quantization algorithm for low-bits LLM inf
 
 ## Getting Started
 
+### Basic Usage
+
 ```python
 from neural_compressor.torch.quantization import prepare, convert, AutoRoundConfig
 
@@ -24,6 +26,33 @@ model = prepare(model, quant_config)
 model = convert(model)
 
 # For more detailed usage, please refer to the [Supported Features] documentation.
+```
+### FP8 KV Cache and FP8 Attention support
+```python
+from transformers import AutoModelForCausalLM, AutoTokenizer
+from neural_compressor.torch.quantization import (
+    AutoRoundConfig,
+    convert,
+    prepare,
+)
+
+fp32_model = AutoModelForCausalLM.from_pretrained("facebook/opt-125m")
+tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
+
+output_dir = "./saved_inc"
+quant_config = AutoRoundConfig(
+    tokenizer=tokenizer,
+    scheme="MXFP4", # MXFP4, MXFP8, NVFP4
+    iters=0, # rtn mode
+    seqlen=2,
+    static_kv_dtype="fp8", # None, fp8, float16
+    static_attention_dtype=None, # None, fp8
+    export_format="auto_round",
+    output_dir=output_dir,
+)
+
+model = prepare(model=fp32_model, quant_config=quant_config)
+model = convert(model)
 ```
 
 ## Reference
