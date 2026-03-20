@@ -78,7 +78,7 @@ fi
 
 # Extract model name and set output directory
 MODEL_NAME=$(basename ${MODEL_PATH})
-OUTPUT_DIR="./${MODEL_NAME}-tp${TP_SIZE}-eval"
+OUTPUT_DIR="${MODEL_NAME}-tp${TP_SIZE}-eval"
 # Create output directory
 mkdir -p ${OUTPUT_DIR}
 
