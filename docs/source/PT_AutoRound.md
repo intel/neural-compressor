@@ -23,7 +23,7 @@ quant_config = AutoRoundConfig(tokenizer=tokenizer)  # tokenizer used for calibr
 model = prepare(model, quant_config)
 model = convert(model)
 
-# For more detailed usage, please refer to the [Supported Features] documentation. 
+# For more detailed usage, please refer to the [Supported Features] documentation.
 ```
 
 ## Reference
