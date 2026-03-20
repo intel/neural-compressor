@@ -10,6 +10,7 @@ TP_SIZE=8
 BATCH_SIZE=512
 KV_CACHE_DTYPE="auto"
 ATTN_DTYPE="None"
+SEQ_LENGTHS=""
 
 # Function to display usage
 usage() {
@@ -77,7 +78,7 @@ fi
 
 # Extract model name and set output directory
 MODEL_NAME=$(basename ${MODEL_PATH})
-OUTPUT_DIR="${MODEL_NAME}-tp${TP_SIZE}-eval"
+OUTPUT_DIR="./${MODEL_NAME}-tp${TP_SIZE}-eval"
 # Create output directory
 mkdir -p ${OUTPUT_DIR}
 
@@ -90,6 +91,16 @@ max_gen_toks=2048
 if [[ "$TASK_NAME" == *"longbench"* ]]; then
     max_length=131072
     max_gen_toks=2048
+fi
+
+# update max_length based on the task
+if [[ "$TASK_NAME" == *"ruler"* ]]; then
+    MODEL_MAX_POS=131072
+    max_length=${MODEL_MAX_POS}
+    max_gen_toks=50
+    SEQ_LENGTHS="${MODEL_MAX_POS}"
+    TASK_NAME="niah_multiquery"
+    BATCH_SIZE=64
 fi
 
 max_ctx_length=$((max_length - max_gen_toks))
@@ -260,10 +271,42 @@ run_longbench_eval() {
     echo "Evaluation completed! Results saved to ${OUTPUT_DIR}"
 }
 
+# Function to run ruler evaluation via API
+run_ruler_eval() {
+    start_vllm_server
+    
+    if ! wait_for_server; then
+        kill $VLLM_PID 2>/dev/null || true
+        exit 1
+    fi
+    
+    # Setup cleanup trap
+    trap cleanup_server EXIT INT TERM
+    
+    # Run Ruler evaluation
+    echo "Running Ruler evaluation against vLLM server..."
+    lm_eval \
+        --model local-completions \
+        --model_args "model=$MODEL_PATH,base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=64,max_retries=500,tokenized_requests=False,max_gen_toks=${max_gen_toks}" \
+        --tasks $TASK_NAME \
+        --metadata="{\"max_seq_lengths\":[${SEQ_LENGTHS}],\"tokenizer\":\"${MODEL_PATH}\"}" \
+        --gen_kwargs "max_gen_toks=${max_gen_toks}" \
+        --batch_size ${BATCH_SIZE} \
+        --output_path "${OUTPUT_DIR}/seq_${SEQ_LENGTHS}" \
+        --limit 64 \
+        --seed 42 
+
+    echo "Evaluation completed! Results saved to ${OUTPUT_DIR}"
+}
+
+
 # Main evaluation logic
 if [[ "$TASK_NAME" == *"longbench"* ]]; then
     echo "Running LongBench v2 evaluation..."
     run_longbench_eval
+elif [[ "$TASK_NAME" == *"niah"* ]]; then
+    echo "Running RULER evaluation..."
+    run_ruler_eval
 else
     echo "Running standard lm-eval tasks..."
     run_standard_eval
