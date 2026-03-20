@@ -42,10 +42,8 @@ args = parser.parse_args()
 
 
 def get_user_model():
-    torchscript = False
     user_model = AutoModelForCausalLM.from_pretrained(
         args.model,
-        torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
         trust_remote_code=args.trust_remote_code,
         revision=args.revision,
     )
@@ -70,6 +68,26 @@ if args.quantize:
         )
     from neural_compressor.torch.export import export
     from torch.export import Dim
+    
+    # Create a wrapper to ensure torch.export compatible output
+    class ModelWrapperForExport(torch.nn.Module):
+        def __init__(self, model):
+            super().__init__()
+            self.model = model
+            # Ensure return_dict=False so model returns tuple
+            self.model.config.return_dict = False
+            
+        def forward(self, input_ids):
+            outputs = self.model(input_ids)
+            # Only return logits (first element), discard past_key_values
+            # This makes the output compatible with torch.export
+            if isinstance(outputs, tuple):
+                return outputs[0]  # return only logits
+            return outputs
+    
+    wrapped_model = ModelWrapperForExport(user_model)
+    # wrapped_model = user_model
+    
     def get_example_inputs(tokenizer):
         text = "Hello, welcome to LLM world."
         encoded_input = tokenizer(text, return_tensors="pt")
@@ -83,9 +101,9 @@ if args.quantize:
     # torch._dynamo.config.cache_size_limit = 4 # set limitation if out of memory
     batch = Dim(name="batch_size", max=args.max_batch_size)
     seq_len = Dim(name="seq_len", max=args.max_num_tokens)
-    dynamic_shapes = {"input_ids": (batch, seq_len)}
+    dynamic_shapes = {"input_ids": {batch, seq_len}}
     example_inputs = get_example_inputs(tokenizer)
-    exported_model = export(user_model, example_inputs=example_inputs, dynamic_shapes=dynamic_shapes)
+    exported_model = export(wrapped_model, example_inputs=example_inputs, dynamic_shapes=dynamic_shapes)
     
     quant_config = get_default_static_config()
     # prepare
