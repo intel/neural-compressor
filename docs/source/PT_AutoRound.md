@@ -6,13 +6,13 @@ AutoRound is an advanced weight-only quantization algorithm for low-bits LLM inf
 
 ## Supported Features
 
-- **Weight-Only Quantization (WoQ)** - Quantize model weights while keeping activations in full precision. See [Weight-Only Quantization](./PT_WeightOnlyQuantization.md) for details.
+- **Weight-Only Quantization (WoQ)** - Quantize model weights while keeping activations in full precision. See [Weight-Only Quantization](./PT_WeightOnlyQuant.md) for details.
 
-- **MX Quantization** - Neural Compressor seamlessly applies the MX data type to post-training quantization, offering meticulously crafted recipes to empower users to quantize LLMs without sacrificing accuracy. Refer to [MX Quantization](./PT_MXQuant.md).
+- **Microscaling (MX) Quantization** - Neural Compressor seamlessly applies the MX data type to post-training quantization, offering meticulously crafted recipes to empower users to quantize LLMs without sacrificing accuracy. Refer to [MX Quantization](./PT_MXQuant.md).
 
-- **NVFP4 Quantization** - NVFP4 is a specialized 4-bit floating-point format (FP4) developed by NVIDIA for deep learning workloads. See [NVFP4 Quantization](./PT_NVFloat4Quant.md).
+- **NVFP4 Quantization** - NVFP4 is a specialized 4-bit floating-point format (FP4) developed by NVIDIA for deep learning workloads. See [NVFP4 Quantization](./PT_NVFP4Quant.md).
 
-- **Quantization-Aware Training (QAT)** - Fine-tune models during quantization to achieve better accuracy. See [Quantization-Aware Training](./PT_QuantizationAwareTraining.md) for details.
+- **Quantization-Aware Training (QAT)** - Fine-tune models during quantization to achieve better accuracy. See [Quantization-Aware Training](./PT_QAT.md) for details.
 
 ## Getting Started
 
