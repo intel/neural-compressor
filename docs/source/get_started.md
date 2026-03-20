@@ -34,10 +34,10 @@ It also provides some common modules across different frameworks. For example, A
   </thead>
   <tbody>
     <tr>
-      <td colspan="2" align="center"><a href="./docs/source/design.md#architecture">Architecture</a></td>
-      <td colspan="2" align="center"><a href="./docs/source/design.md#workflows">Workflow</a></td>
+      <td colspan="2" align="center"><a href="design.md#architecture">Architecture</a></td>
+      <td colspan="2" align="center"><a href="design.md#workflow">Workflow</a></td>
       <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="2" align="center"><a href="./examples/README.md">Examples</a></td>
+      <td colspan="2" align="center"><a href="/examples/README.md">Examples</a></td>
     </tr>
   </tbody>
   <thead>
@@ -47,21 +47,15 @@ It also provides some common modules across different frameworks. For example, A
   </thead>
   <tbody>
     <tr>
-        <td colspan="8" align="center"><a href="./docs/source/PyTorch.md">Overview</a></td>
+        <td colspan="2" align="center"><a href="PyTorch.md">Overview</a></td>
+        <td colspan="2" align="center"><a href="PT_StaticQuant.md">Static Quantization</a></td>
+        <td colspan="2" align="center"><a href="PT_DynamicQuant.md">Dynamic Quantization</a></td>
+        <td colspan="2" align="center"><a href="PT_SmoothQuant.md">Smooth Quantization</a></td>
     </tr>
     <tr>
-        <td colspan="3" align="center"><a href="./docs/source/PT_DynamicQuant.md">Dynamic Quantization</a></td>
-        <td colspan="3" align="center"><a href="./docs/source/PT_StaticQuant.md">Static Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/PT_SmoothQuant.md">Smooth Quantization</a></td>
-    </tr>
-    <tr>
-        <td colspan="3" align="center"><a href="./docs/source/PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
-        <td colspan="3" align="center"><a href="./docs/source/PT_FP8Quant.md">FP8 Quantization</a></td>
-        <td colspan="2" align="center"><a href="./docs/source/PT_MixedPrecision.md">Mixed Precision</a></td>
-    </tr>
-    <tr>
-        <td colspan="4" align="center"><a href="./docs/source/PT_MXQuant.md">MX Quantization</a></td>
-        <td colspan="4" align="center"><a href="./docs/source/PT_NVFP4Quant.md">NVFP4 Quantization</a></td>
+        <td colspan="3" align="center"><a href="PT_WeightOnlyQuant.md">Weight-Only Quantization</a></td>
+        <td colspan="3" align="center"><a href="PT_MXQuant.md">MX Quantization</a></td>
+        <td colspan="2" align="center"><a href="PT_MixedPrecision.md">Mixed Precision</a></td>
     </tr>
   </tbody>
   <thead>
@@ -71,9 +65,9 @@ It also provides some common modules across different frameworks. For example, A
   </thead>
   <tbody>
       <tr>
-          <td colspan="3" align="center"><a href="./docs/source/TensorFlow.md">Overview</a></td>
-          <td colspan="3" align="center"><a href="./docs/source/TF_Quant.md">Static Quantization</a></td>
-          <td colspan="2" align="center"><a href="./docs/source/TF_SQ.md">Smooth Quantization</a></td>
+          <td colspan="3" align="center"><a href="TensorFlow.md">Overview</a></td>
+          <td colspan="3" align="center"><a href="TF_Quant.md">Static Quantization</a></td>
+          <td colspan="2" align="center"><a href="TF_SQ.md">Smooth Quantization</a></td>
       </tr>
   </tbody>
   <thead>
@@ -83,7 +77,7 @@ It also provides some common modules across different frameworks. For example, A
   </thead>
   <tbody>
       <tr>
-          <td colspan="8" align="center"><a href="./docs/source/transformers_like_api.md">Overview</a></td>
+          <td colspan="8" align="center"><a href="transformers_like_api.md">Overview</a></td>
       </tr>
   </tbody>
   <thead>
@@ -93,7 +87,7 @@ It also provides some common modules across different frameworks. For example, A
   </thead>
   <tbody>
       <tr>
-          <td colspan="8" align="center"><a href="./docs/source/JAX.md">Overview</a></td>
+          <td colspan="8" align="center"><a href="JAX.md">Overview</a></td>
       </tr>
   </tbody>
   <thead>
@@ -103,7 +97,7 @@ It also provides some common modules across different frameworks. For example, A
   </thead>
   <tbody>
       <tr>
-          <td colspan="8" align="center"><a href="./docs/source/autotune.md">Auto Tune</a></td>
+          <td colspan="8" align="center"><a href="autotune.md">Auto Tune</a></td>
       </tr>
   </tbody>
 </table>

@@ -24,7 +24,7 @@ The following prerequisites and requirements must be satisfied for a successful 
 > Notes:
 > - If you get some build issues, please check [frequently asked questions](faq.md) at first.
 
-### Install Framework for Torch Backend (on-demand)
+### Install Framework for PyTorch Backend (on-demand)
 Intel Neural Compressor supports PyTorch with CPU, GPU and HPU. Please install the corresponding PyTorch version based on your hardware environment.
 #### Install torch for CPU
 ```Shell

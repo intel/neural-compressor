@@ -35,13 +35,13 @@ support AMD CPU, ARM CPU, and NVidia GPU with limited testing.
 
 ## Installation
 Choose the necessary framework dependencies to install based on your deploy environment.
-### Install Framework
+### Install Framework for PyTorch Backend (on-demand)
+Intel Neural Compressor supports PyTorch with CPU, GPU and HPU. Please install the corresponding PyTorch version based on your hardware environment.
 * [Install intel_extension_for_pytorch for CPU](https://intel.github.io/intel-extension-for-pytorch/cpu/latest/)    
 * [Install intel_extension_for_pytorch for Intel GPU](https://intel.github.io/intel-extension-for-pytorch/xpu/latest/)    
 * [Use Docker Image with torch installed for HPU](https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click)    
   **Note**: There is a version mapping between Intel Neural Compressor and Gaudi Software Stack, please refer to this [table](./docs/source/gaudi_version_map.md) and make sure to use a matched combination.    
 * [Install torch for other platform](https://pytorch.org/get-started/locally)    
-* [Install TensorFlow](https://www.tensorflow.org/install)    
 
 ### Install Neural Compressor from pypi
 ```
