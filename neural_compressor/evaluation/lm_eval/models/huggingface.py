@@ -34,12 +34,11 @@ from packaging.version import Version
 from peft import PeftModel
 from peft import __version__ as PEFT_VERSION
 from tqdm import tqdm
+from transformers import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM
 from transformers.models.auto.modeling_auto import (
     MODEL_FOR_CAUSAL_LM_MAPPING_NAMES,
     MODEL_FOR_SEQ_TO_SEQ_CAUSAL_LM_MAPPING_NAMES,
 )
-
-from transformers import AutoModel, AutoModelForCausalLM, AutoModelForSeq2SeqLM
 
 try:
     from lm_eval.evaluator_utils import eval_logger
