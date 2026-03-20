@@ -2,7 +2,7 @@
 # PyTorch AutoRound
 
 ## Overview
-AutoRound is an advanced weight-only quantization algorithm integrated into Neural Compressor for low-bit LLM inference. As a key algorithm component of INC, AutoRound enables efficient quantization across a wide range of models and features while consistently achieving superior accuracy. While requiring additional tuning time, it provides a robust foundation for INC's comprehensive quantization capabilities.
+AutoRound is an advanced model quantization algorithm integrated into Neural Compressor for low-bit LLM. As a key algorithm component of INC, AutoRound enables efficient quantization across a wide range of models and features while consistently achieving superior accuracy. While requiring additional tuning time, it provides a robust foundation for INC's comprehensive quantization capabilities.
 
 ## Supported Features
 
