@@ -44,11 +44,11 @@ tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code
 output_dir = "./saved_inc"
 quant_config = AutoRoundConfig(
     tokenizer=tokenizer,
-    scheme="MXFP4", # MXFP4, MXFP8, NVFP4
-    iters=0, # rtn mode
+    scheme="MXFP4",  # MXFP4, MXFP8, NVFP4
+    iters=0,  # rtn mode
     seqlen=2,
-    static_kv_dtype="fp8", # None, fp8, float16
-    static_attention_dtype=None, # None, fp8
+    static_kv_dtype="fp8",  # None, fp8, float16
+    static_attention_dtype=None,  # None, fp8
     export_format="auto_round",
     output_dir=output_dir,
 )
