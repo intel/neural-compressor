@@ -8,3 +8,4 @@ VLLM_USE_PRECOMPILED=1 pip install . -v
 cd ..
 # Uninstall flash_attn to avoid conflicts
 pip uninstall flash_attn -y
+pip install lm_eval["ruler"]
