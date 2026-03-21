@@ -1,4 +1,5 @@
 lm-eval==0.4.10
+lm-eval[api]
 loguru
 hf_transfer
 transformers==4.57.3
