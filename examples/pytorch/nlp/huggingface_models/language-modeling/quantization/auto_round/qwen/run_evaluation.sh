@@ -293,7 +293,6 @@ run_ruler_eval() {
         --gen_kwargs "max_gen_toks=${max_gen_toks}" \
         --batch_size ${BATCH_SIZE} \
         --output_path "${OUTPUT_DIR}/seq_${SEQ_LENGTHS}" \
-        --limit 64 \
         --seed 42 
 
     echo "Evaluation completed! Results saved to ${OUTPUT_DIR}"
