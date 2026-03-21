@@ -100,7 +100,7 @@ if [[ "$TASK_NAME" == *"ruler"* ]]; then
     max_gen_toks=50
     SEQ_LENGTHS="${MODEL_MAX_POS}"
     TASK_NAME="niah_multiquery"
-    BATCH_SIZE=64
+    BATCH_SIZE=32
 fi
 
 max_ctx_length=$((max_length - max_gen_toks))
@@ -287,7 +287,7 @@ run_ruler_eval() {
     echo "Running Ruler evaluation against vLLM server..."
     lm_eval \
         --model local-completions \
-        --model_args "model=$MODEL_PATH,base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=64,max_retries=500,tokenized_requests=False,max_gen_toks=${max_gen_toks}" \
+        --model_args "model=$MODEL_PATH,base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=1,max_retries=50,timeout=500,tokenized_requests=False,max_gen_toks=${max_gen_toks}" \
         --tasks $TASK_NAME \
         --metadata="{\"max_seq_lengths\":[${SEQ_LENGTHS}],\"tokenizer\":\"${MODEL_PATH}\"}" \
         --gen_kwargs "max_gen_toks=${max_gen_toks}" \
