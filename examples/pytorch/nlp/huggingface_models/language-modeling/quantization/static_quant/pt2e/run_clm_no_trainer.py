@@ -148,7 +148,7 @@ if args.performance:
     print("The length of input tokens = {:d}".format(input_leng))
     import time
 
-    total_iters = args.iters
+    total_iters = 100 # args.iters
     warmup_iters = 5
     with torch.no_grad():
         for i in range(total_iters):
