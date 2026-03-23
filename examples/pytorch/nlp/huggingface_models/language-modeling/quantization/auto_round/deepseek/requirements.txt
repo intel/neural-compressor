@@ -1,4 +1,5 @@
 lm-eval==0.4.10
+lm-eval[api]
 loguru
 compressed-tensors==0.12.2
 hf_transfer
