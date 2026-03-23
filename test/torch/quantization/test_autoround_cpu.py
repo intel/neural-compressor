@@ -259,8 +259,8 @@ class TestAutoRoundCPU:
             device_map="cpu",
         )
         logger.info(f"Test AutoRound with config {quant_config}")
-        quant_config.set_local("self.attn", AutoRoundConfig(dtype="fp16"))
-        # {"self_attn": {"bits": 4, "data_type": "nv_fp", "act_bits": 16, "group_size": 16}}
+        quant_config.set_local("self_attn", AutoRoundConfig(bits=16, data_type="float", act_bits=16))
+        # quant_config.layer_config = {"self_attn": {"bits": 16, "data_type": "float", "act_bits": 16}}
 
         # prepare + convert API
         model = prepare(model=fp32_model, quant_config=quant_config)
@@ -282,7 +282,8 @@ class TestAutoRoundCPU:
         tokenizer = transformers.AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
         from auto_round import AutoRound
 
-        layer_config = {"self.attn": {"data_type": "fp16"}}
+        # layer_config = {"self.attn": {"data_type": "fp16"}}
+        layer_config = {"self_attn": {"bits": 16, "data_type": "float", "act_bits": 16}}
         ar = AutoRound(
             tokenizer=tokenizer,
             model=fp32_model,
