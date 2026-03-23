@@ -35,7 +35,7 @@ except ImportError:
     ct_installed = False
 
 
-tagert_modules = ["QuantLinear", "QuantLinearGPTQ", "QuantLinearAWQ"]
+tagert_modules = ["QuantLinear", "QuantLinearGPTQ", "QuantLinearAWQ", "WQLinear_GEMM"]
 
 
 @torch.no_grad()
@@ -55,7 +55,6 @@ class TestAutoRoundCPU:
     def setup_class(self):
         self.opt_model = transformers.AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
-            torchscript=True,
         ).to("cpu")
         self.inp = torch.ones([1, 10], dtype=torch.long, device="cpu")
         self.tokenizer = transformers.AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
@@ -242,7 +241,6 @@ class TestAutoRoundCPU:
     def test_set_local(self):
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
-            torchscript=True,
             device_map="cpu",
         )
         inp = torch.ones([1, 10], dtype=torch.long, device="cpu")
@@ -278,7 +276,6 @@ class TestAutoRoundCPU:
         # AutoRound API
         fp32_model = transformers.AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
-            torchscript=True,
             device_map="cpu",
         )
         inp = torch.ones([1, 10], dtype=torch.long, device="cpu")
@@ -319,7 +316,6 @@ class TestAutoRoundCPU:
         # INC API
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
-            torchscript=True,
             device_map="cpu",
         )
         inp = torch.ones([1, 10], dtype=torch.long, device="cpu")
@@ -354,7 +350,6 @@ class TestAutoRoundCPU:
         # AutoRound API
         fp32_model = transformers.AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
-            torchscript=True,
             device_map="cpu",
         )
         inp = torch.ones([1, 10], dtype=torch.long, device="cpu")
@@ -390,7 +385,6 @@ class TestAutoRoundCPU:
     def test_target_bits(self):
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
-            torchscript=True,
             device_map="cpu",
         )
         tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
@@ -433,7 +427,6 @@ class TestAutoRoundCPU:
 
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
-            torchscript=True,
             device_map="cpu",
         )
         tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
@@ -463,7 +456,6 @@ class TestAutoRoundCPU:
     def test_static_attention_dtype(self):
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
-            torchscript=True,
             device_map="cpu",
         )
         tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
@@ -504,7 +496,6 @@ class TestAutoRoundCPU:
     def test_static_afp8_export(self, static_kv_dtype):
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
-            torchscript=True,
             device_map="cpu",
         )
         tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
