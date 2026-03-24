@@ -90,8 +90,8 @@
   <div align="center"><section id="intel-neural-compressor">
 <h1>Intel® Neural Compressor<a class="headerlink" href="#intel-neural-compressor" title="Link to this heading"></a></h1>
 <p><h3> An open-source Python library supporting popular model compression techniques on mainstream deep learning frameworks (PyTorch, TensorFlow, and JAX)</h3></p>
-<p><a class="reference external" href="https://github.com/intel/neural-compressor"><img alt="python" src="https://img.shields.io/badge/python-3.10%2B-blue" /></a>
-<a class="reference external" href="https://github.com/intel/neural-compressor/releases"><img alt="version" src="https://img.shields.io/badge/release-3.7-green" /></a>
+<p><a class="reference external" href="https://github.com/intel/neural-compressor"><img alt="python" src="https://img.shields.io/badge/python-3.11%2B-blue" /></a>
+<a class="reference external" href="https://github.com/intel/neural-compressor/releases"><img alt="version" src="https://img.shields.io/badge/release-3.8-green" /></a>
 <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/LICENSE"><img alt="license" src="https://img.shields.io/badge/license-Apache%202-blue" /></a>
 <a class="reference external" href="https://github.com/intel/neural-compressor"><img alt="coverage" src="https://img.shields.io/badge/coverage-85%25-green" /></a>
 <a class="reference external" href="https://pepy.tech/project/neural-compressor"><img alt="Downloads" src="https://static.pepy.tech/personalized-badge/neural-compressor?period=total&amp;units=international_system&amp;left_color=grey&amp;right_color=green&amp;left_text=downloads" /></a></p>
@@ -108,6 +108,8 @@ support AMD CPU, ARM CPU, and NVidia GPU with limited testing.</p></li>
 <section id="what-s-new">
 <h2>What’s New<a class="headerlink" href="#what-s-new" title="Link to this heading"></a></h2>
 <ul class="simple">
+<li><p>[2026/03] FP8 quantization support for <a class="reference external" href="./JAX.html">Keras/JAX</a> (experimental)</p></li>
+<li><p>[2026/03] FP8 KV cache/Attention static quantization (experimental)</p></li>
 <li><p>[2025/12] <a class="reference external" href="./PT_NVFP4Quant.html">NVFP4 quantization</a> experimental support</p></li>
 <li><p>[2025/10] <a class="reference external" href="./PT_MXQuant.html">MXFP8 / MXFP4 quantization</a> experimental support</p></li>
 <li><p>[2025/09] FP8 dynamic quantization, including Linear, FusedMoE on Intel Gaudi AI Accelerators</p></li>
@@ -118,14 +120,14 @@ support AMD CPU, ARM CPU, and NVidia GPU with limited testing.</p></li>
 <section id="installation">
 <h2>Installation<a class="headerlink" href="#installation" title="Link to this heading"></a></h2>
 <p>Choose the necessary framework dependencies to install based on your deploy environment.</p>
-<section id="install-framework">
-<h3>Install Framework<a class="headerlink" href="#install-framework" title="Link to this heading"></a></h3>
+<section id="install-framework-for-pytorch-backend-on-demand">
+<h3>Install Framework for PyTorch Backend (on-demand)<a class="headerlink" href="#install-framework-for-pytorch-backend-on-demand" title="Link to this heading"></a></h3>
+<p>Intel Neural Compressor supports PyTorch with CPU, GPU and HPU. Please install the corresponding PyTorch version based on your hardware environment.</p>
 <ul class="simple">
 <li><p><a class="reference external" href="https://intel.github.io/intel-extension-for-pytorch/cpu/latest/">Install intel_extension_for_pytorch for CPU</a></p></li>
 <li><p><a class="reference external" href="https://intel.github.io/intel-extension-for-pytorch/xpu/latest/">Install intel_extension_for_pytorch for Intel GPU</a></p></li>
 <li><p><a class="reference external" href="https://docs.habana.ai/en/latest/Installation_Guide/Bare_Metal_Fresh_OS.html#bare-metal-fresh-os-single-click">Use Docker Image with torch installed for HPU</a><br /><strong>Note</strong>: There is a version mapping between Intel Neural Compressor and Gaudi Software Stack, please refer to this <a class="reference external" href="./gaudi_version_map.html">table</a> and make sure to use a matched combination.</p></li>
 <li><p><a class="reference external" href="https://pytorch.org/get-started/locally">Install torch for other platform</a></p></li>
-<li><p><a class="reference external" href="https://www.tensorflow.org/install">Install TensorFlow</a></p></li>
 </ul>
 </section>
 <section id="install-neural-compressor-from-pypi">
@@ -134,6 +136,8 @@ support AMD CPU, ARM CPU, and NVidia GPU with limited testing.</p></li>
 <span class="n">pip</span> <span class="n">install</span> <span class="n">neural</span><span class="o">-</span><span class="n">compressor</span><span class="o">-</span><span class="n">pt</span>
 <span class="c1"># Framework extension API + TensorFlow dependency</span>
 <span class="n">pip</span> <span class="n">install</span> <span class="n">neural</span><span class="o">-</span><span class="n">compressor</span><span class="o">-</span><span class="n">tf</span>
+<span class="c1"># Framework extension API + JAX dependency, available since v3.8</span>
+<span class="n">pip</span> <span class="n">install</span> <span class="n">neural</span><span class="o">-</span><span class="n">compressor</span><span class="o">-</span><span class="n">jax</span>
 </pre></div>
 </div>
 <p><strong>Note</strong>: Further installation methods can be found under <a class="reference external" href="./installation_guide.html">Installation Guide</a>. check out our <a class="reference external" href="./faq.html">FAQ</a> for more details.</p>
@@ -200,8 +204,7 @@ support AMD CPU, ARM CPU, and NVidia GPU with limited testing.</p></li>
       <td colspan="2" align="center"><a href="./design.html#architecture">Architecture</a></td>
       <td colspan="2" align="center"><a href="./design.html#workflows">Workflow</a></td>
       <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="1" align="center"><a href="./llm_recipes.html">LLMs Recipes</a></td>
-      <td colspan="1" align="center"><a href="./https://github.com/intel/neural-compressor/blob/master/examples/README.md">Examples</a></td>
+      <td colspan="2" align="center"><a href="./https://github.com/intel/neural-compressor/blob/master/examples/README.md">Examples</a></td>
     </tr>
   </tbody>
   <thead>
@@ -248,6 +251,16 @@ support AMD CPU, ARM CPU, and NVidia GPU with limited testing.</p></li>
   <tbody>
       <tr>
           <td colspan="8" align="center"><a href="./transformers_like_api.html">Overview</a></td>
+      </tr>
+  </tbody>
+  <thead>
+      <tr>
+        <th colspan="8">JAX Extension APIs</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td colspan="8" align="center"><a href="./JAX.html">Overview</a></td>
       </tr>
   </tbody>
   <thead>
@@ -304,7 +317,7 @@ View <a class="reference external" href="https://github.com/intel/neural-compres
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f59787a2030> 
+   <jinja2.runtime.BlockReference object at 0x7ff7249ffc50> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

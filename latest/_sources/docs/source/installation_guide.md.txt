@@ -24,7 +24,8 @@ The following prerequisites and requirements must be satisfied for a successful 
 > Notes:
 > - If you get some build issues, please check [frequently asked questions](faq.html) at first.
 
-### Install Framework
+### Install Framework for PyTorch Backend (on-demand)
+Intel Neural Compressor supports PyTorch with CPU, GPU and HPU. Please install the corresponding PyTorch version based on your hardware environment.
 #### Install torch for CPU
 ```Shell
 pip install torch --index-url https://download.pytorch.org/whl/cpu
@@ -38,19 +39,15 @@ https://intel.github.io/intel-extension-for-pytorch/index.html#installation
 #### Install torch for other platform
 https://pytorch.org/get-started/locally
 
-#### Install tensorflow
-```Shell
-pip install tensorflow
-```
-
 ### Install from Binary
 - Install from Pypi
 ```Shell
-# Framework extension API for PyTorch/Tensorflow
+# Framework extension API for PyTorch/Tensorflow/JAX
 pip install neural-compressor
-# Framework extension API + specific dependency
+# Framework extension API + corresponding framework dependency
 pip install neural-compressor[pt]
 pip install neural-compressor[tf]
+pip install neural-compressor[jax] # JAX support is available since v3.8
 ```
 ```Shell
 # Framework extension API + PyTorch dependency
@@ -59,6 +56,10 @@ pip install neural-compressor-pt
 ```Shell
 # Framework extension API + TensorFlow dependency
 pip install neural-compressor-tf
+```
+```Shell
+# Framework extension API + JAX dependency, available since v3.8
+pip install neural-compressor-jax
 ```
 
 ### Install from Source
@@ -80,7 +81,7 @@ INC_TF_ONLY=1 pip install .
 ```
 
 ```Shell
-# JAX framework extension API + JAX dependency
+# JAX framework extension API + JAX dependency, available since v3.8
 INC_JAX_ONLY=1 pip install .
 ```
 
@@ -95,18 +96,15 @@ INC_JAX_ONLY=1 pip install .
 
 * Intel Xeon Scalable processor (Sapphire Rapids, Emerald Rapids, Granite Rapids)
 * Intel Xeon CPU Max Series (Sapphire Rapids HBM)
-* Intel Core Ultra Processors (Meteor Lake, Lunar Lake)
 
 #### Intel® Neural Compressor supports GPUs built on Intel's Xe architecture:
 
-* Intel Data Center GPU Flex Series (Arctic Sound-M)
-* Intel Data Center GPU Max Series (Ponte Vecchio)
 * Intel® Arc™ B-Series Graphics (Battlemage)
 
 ### Validated Software Environment
 
-* OS version: CentOS 8.4, Ubuntu 24.04, MacOS Ventura 13.5, Windows 11
-* Python version: 3.10, 3.11, 3.12, 3.13
+* OS version: Ubuntu 24.04, MacOS Ventura 13.5, Windows 11
+* Python version: 3.11, 3.12, 3.13
 
 <table class="docutils">
 <thead>
@@ -114,24 +112,19 @@ INC_JAX_ONLY=1 pip install .
     <th>Framework</th>
     <th>TensorFlow</th>
     <th>PyTorch</th>
-    <th>Intel®<br>Extension for<br>PyTorch*</th>
+    <th>JAX</th>
   </tr>
 </thead>
 <tbody>
   <tr align="center">
     <th>Version</th>
     <td class="tg-7zrl">
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.16.1>2.16.1</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.15.0>2.15.0</a><br>
-    <a href=https://github.com/tensorflow/tensorflow/tree/v2.14.1>2.14.1</a><br></td>
+    <a href=https://github.com/tensorflow/tensorflow/releases/tag/v2.19.0>2.19.0</a><br></td>
     <td class="tg-7zrl">
-    <a href=https://github.com/pytorch/pytorch/tree/v2.8.0>2.8.0</a><br>
-    <a href=https://github.com/pytorch/pytorch/tree/v2.7.1>2.7.1</a><br>
-    <a href=https://github.com/pytorch/pytorch/tree/v2.6.0>2.6.0</a><br></td>
+    <a href=https://github.com/pytorch/pytorch/releases/tag/v2.10.0>2.10.0</a><br>
+    <a href=https://github.com/pytorch/pytorch/releases/tag/v2.9.1>2.9.1</a><br></td>
     <td class="tg-7zrl">
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.8.0%2Bcpu>2.8.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.7.0%2Bcpu>2.7.0</a><br>
-    <a href=https://github.com/intel/intel-extension-for-pytorch/tree/v2.6.0%2Bcpu>2.6.0</a><br></td>
+    <a href=https://github.com/jax-ml/jax/releases/tag/jax-v0.9.1>0.9</a><br></td>
   </tr>
 </tbody>
 </table>
