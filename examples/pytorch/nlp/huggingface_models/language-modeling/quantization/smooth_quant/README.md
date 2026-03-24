@@ -1,4 +1,4 @@
-Step-by-Step
+Step-by-Step (Deprecated)
 ============
 This document describes the step-by-step instructions to run large language models (LLMs) using Smooth Quantization on 4th Gen Intel® Xeon® Scalable Processor (codenamed Sapphire Rapids) with PyTorch and Intel® Extension for PyTorch.
 
