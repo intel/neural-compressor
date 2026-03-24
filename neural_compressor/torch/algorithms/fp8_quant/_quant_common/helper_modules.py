@@ -682,7 +682,7 @@ class PatchedMoeMatmul(PatchedLinearBase):
         if (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             measure_input((torch.tensor(0),), observer=self._mod_extra_config.inputs)
         else:
-            self.weight = torch.nn.Parameter(self.weight.squeeze(), requires_grad=False)
+            self.weight = torch.nn.Parameter(self.weight.squeeze().t().contiguous(), requires_grad=False)
 
     def forward_qdq(self, input, *args, **kwargs):
         return self.run_linear_qdq(input, None)
@@ -930,15 +930,21 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                       router_weights,
                       permuted_weights=True,
                       activation="silu"):
-        tokens_num, hidden_dim = hidden_states.shape
-        extra_kwargs = self._get_extra_kwargs(tokens_num)
         experts_range = range(self.experts_used)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
+        w12_bias_lst = [self.w13_list[i].bias for i in experts_range]
+        w3_bias_lst = [self.w2_list[i].bias for i in experts_range]
         qinput = self.quant_input(hidden_states)
-        output = self.dynamic_moe_op(
+        extra_kwargs = {
+            "w12_bias": w12_bias_lst,
+            "w3_bias": w3_bias_lst,
+            "alpha": 1.702,
+            "limit": 7.0,
+        }
+        output = torch.ops.hpu.mixture_of_experts(
             hidden_states=qinput,
             expert_routing_table=expert_routing_table,
             router_weights=router_weights,
@@ -949,7 +955,6 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             d_scale_hidden_states=self.scale_input,
             d_scale_intermediate_hidden_states=self.scale_intermediate,
             permuted_weights=False,
-            activation=activation,
             experts_min=self.experts_min,
             experts_max=self.experts_max,
             **extra_kwargs,
@@ -969,7 +974,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
         qinput_fp8, input_scale = self.quant_input(hidden_states)
-        output = self.dynamic_moe_op(
+        output = torch.ops.hpu.mixture_of_experts(
             hidden_states=qinput_fp8,
             expert_routing_table=expert_routing_table,
             router_weights=router_weights,
@@ -979,7 +984,6 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             d_scale_w3=scale_w2,
             d_scale_hidden_states=input_scale,
             permuted_weights=False,
-            activation=activation,
             experts_min=self.experts_min,
             experts_max=self.experts_max
         )
@@ -995,17 +999,25 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         w1_list = [self.w13_list[i].weight.squeeze() for i in experts_range]
         w2_list = [self.w2_list[i].weight.squeeze() for i in experts_range]
         measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
-        output, intermidiate_amax = torch.ops.hpu.mixture_of_experts.fp8_measurement_fused_weights(
+        w12_bias_lst = [self.w13_list[i].bias for i in experts_range]
+        w3_bias_lst = [self.w2_list[i].bias for i in experts_range]
+        extra_kwargs = {
+            "measure_per_token": True,
+            "alpha": 1.702,
+            "limit": 7.0,
+        }
+        output, intermidiate_amax = torch.ops.hpu.mixture_of_experts(
             hidden_states=hidden_states,
             expert_routing_table=expert_routing_table,
             router_weights=router_weights,
             w12=w1_list,
             w3=w2_list,
+            w12_bias=w12_bias_lst,
+            w3_bias=w3_bias_lst,
             permuted_weights=permuted_weights,
-            activation=activation,
             experts_min=self.experts_min,
             experts_max=self.experts_max,
-            measurement_mode=True,
+            **extra_kwargs,
         )
         output_measure_list = [output]
         for i in range(self.num_experts):
