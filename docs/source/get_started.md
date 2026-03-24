@@ -21,9 +21,9 @@ quantized_model = convert(model=prepared_model)
 ```
 
 ## Feature Matrix
-Intel Neural Compressor 3.X extends PyTorch and TensorFlow's APIs to support compression techniques.
+Intel Neural Compressor extends PyTorch, TensorFlow and JAX's APIs to support compression techniques.
 The below table provides a quick overview of the APIs available in Intel Neural Compressor 3.X.
-The Intel Neural Compressor 3.X mainly focuses on quantization-related features, especially for algorithms that benefit LLM accuracy and inference.
+The project mainly focuses on quantization-related features, especially for algorithms that benefit LLM accuracy and inference.
 It also provides some common modules across different frameworks. For example, Auto-tune support accuracy driven quantization and mixed precision, benchmark aimed to measure the multiple instances performance of the quantized model.
 
 <table class="docutils">
@@ -37,8 +37,7 @@ It also provides some common modules across different frameworks. For example, A
       <td colspan="2" align="center"><a href="design.md#architecture">Architecture</a></td>
       <td colspan="2" align="center"><a href="design.md#workflow">Workflow</a></td>
       <td colspan="2" align="center"><a href="https://intel.github.io/neural-compressor/latest/docs/source/api-doc/apis.html">APIs</a></td>
-      <td colspan="1" align="center"><a href="llm_recipes.md">LLMs Recipes</a></td>
-      <td colspan="1" align="center"><a href="/examples/README.md">Examples</a></td>
+      <td colspan="2" align="center"><a href="/examples/README.md">Examples</a></td>
     </tr>
   </tbody>
   <thead>
@@ -69,6 +68,26 @@ It also provides some common modules across different frameworks. For example, A
           <td colspan="3" align="center"><a href="TensorFlow.md">Overview</a></td>
           <td colspan="3" align="center"><a href="TF_Quant.md">Static Quantization</a></td>
           <td colspan="2" align="center"><a href="TF_SQ.md">Smooth Quantization</a></td>
+      </tr>
+  </tbody>
+  <thead>
+      <tr>
+        <th colspan="8">Transformers-like APIs</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td colspan="8" align="center"><a href="transformers_like_api.md">Overview</a></td>
+      </tr>
+  </tbody>
+  <thead>
+      <tr>
+        <th colspan="8">JAX Extension APIs</th>
+      </tr>
+  </thead>
+  <tbody>
+      <tr>
+          <td colspan="8" align="center"><a href="JAX.md">Overview</a></td>
       </tr>
   </tbody>
   <thead>
