@@ -26,7 +26,7 @@ support AMD CPU, ARM CPU, and NVidia GPU with limited testing.
 
 ## What's New
 * [2026/03] FP8 quantization support for [Keras/JAX](./docs/source/JAX.md) (experimental) 
-* [2026/03] FP8 KV cache/Attention static quantization (experimental) 
+* [2026/03] FP8 KV cache/Attention static quantization with [AutoRound](./docs/source/PT_AutoRound.md) (experimental) 
 * [2025/12] [NVFP4 quantization](./docs/source/PT_NVFP4Quant.md) experimental support
 * [2025/10] [MXFP8 / MXFP4 quantization](./docs/source/PT_MXQuant.md) experimental support
 * [2025/09] FP8 dynamic quantization, including Linear, FusedMoE on Intel Gaudi AI Accelerators
