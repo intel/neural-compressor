@@ -141,6 +141,7 @@ if args.performance:
 
     config.freezing = True
     model_config = user_model.config
+    eager_model = user_model
     user_model = torch.compile(user_model)
     user_model.config = model_config
 
@@ -150,12 +151,22 @@ if args.performance:
 
     total_iters = args.iters
     warmup_iters = 5
-    with torch.no_grad():
-        for i in range(total_iters):
-            if i == warmup_iters:
-                start = time.time()
-            user_model(example_inputs)
-        end = time.time()
+    try:
+        with torch.no_grad():
+            for i in range(total_iters):
+                if i == warmup_iters:
+                    start = time.time()
+                user_model(example_inputs)
+            end = time.time()
+    except Exception as e:
+        print(f"Compiled model failed: {e}, falling back to eager model")
+        user_model = eager_model
+        with torch.no_grad():
+            for i in range(total_iters):
+                if i == warmup_iters:
+                    start = time.time()
+                user_model(example_inputs)
+            end = time.time()
     latency = (end - start) / ((total_iters - warmup_iters) * args.batch_size)
     throughput = ((total_iters - warmup_iters) * args.batch_size) / (end - start)
     print("Latency: {:.3f} ms".format(latency * 10**3))
