@@ -209,6 +209,10 @@ def static_quant_entry(
     if not is_ipex_imported():
         return pt2e_static_quant_entry(model, configs_mapping, mode, *args, **kwargs)
     logger.info("Quantize model with the static quant algorithm.")
+    logger.warning(
+        "Static Quantization with IPEX(Intel Extension for PyTorch) is deprecated. "
+        "Please use PT2E quantization instead."
+    )
     from neural_compressor.torch.algorithms.static_quant import StaticQuantQuantizer
 
     # convert the user config into internal format
@@ -348,6 +352,7 @@ def smooth_quant_entry(
         torch.nn.Module: prepared model or quantized model.
     """
     logger.info("Quantize model with the smooth quant algorithm.")
+    logger.warning("Smooth quantization with IPEX(Intel Extension for PyTorch) is deprecated.")
     from neural_compressor.torch.algorithms.smooth_quant import SmoothQuantQuantizer, TorchSmoothQuant
 
     # convert the user config into internal format
