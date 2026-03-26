@@ -11,6 +11,7 @@ BATCH_SIZE=512
 KV_CACHE_DTYPE="auto"
 ATTN_DTYPE="None"
 SEQ_LENGTHS=""
+RULER_MAX_POS=""
 
 # Function to display usage
 usage() {
@@ -20,6 +21,7 @@ usage() {
     echo "  -t: Task name(s) to evaluate (default: piqa,hellaswag,mmlu)"
     echo "  -tp: Tensor parallelism size (default: 8)"
     echo "  -b: Batch size (default: 512)"
+    echo "  -ruler-max-pos: Max position length for RULER eval (default: 65536)"
     echo ""
     echo "Examples:"
     echo "  $0 -m /path/to/model -s mxfp4 -t gsm8k -tp 4 -b 256"
@@ -55,6 +57,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         -b)
             BATCH_SIZE="$2"
+            shift 2
+            ;;
+        -ruler-max-pos)
+            RULER_MAX_POS="$2"
             shift 2
             ;;
         -h|--help)
@@ -95,9 +101,9 @@ fi
 
 # update max_length based on the task
 if [[ "$TASK_NAME" == *"ruler"* ]]; then
-    MODEL_MAX_POS=131072
+    MODEL_MAX_POS=${RULER_MAX_POS:-65536}
     max_length=${MODEL_MAX_POS}
-    max_gen_toks=50
+    max_gen_toks=128
     SEQ_LENGTHS="${MODEL_MAX_POS}"
     TASK_NAME="niah_multiquery"
     BATCH_SIZE=32
