@@ -275,7 +275,7 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
 
 
 def get_q_params(
-    orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32, asymmetric=False, emulate_asymmetric=True
+    orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32, asymmetric=False, emulate_asymmetric=False
 ):
     """Compute quantization scale and zero-point for a weight tensor.
 
