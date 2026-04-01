@@ -442,7 +442,9 @@ class QStaticDenseMixin(SaveableLayerMixin):
         if self._is_int8:
             self.a_zero_point.assign(a_zero_point)
 
-        w_scale, w_zero_point = get_q_params(self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=self._is_int8)
+        w_scale, w_zero_point = get_q_params(
+            self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=self._is_int8
+        )
         self.w_scale.assign(w_scale)
         if self._is_int8:
             self.w_zero_point.assign(w_zero_point)
@@ -1086,7 +1088,9 @@ class QStaticRotaryEmbedding(SaveableLayerMixin, RotaryEmbedding):
         orig._tracker.unlock()
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
-        orig.positions_qdq = StaticQDQLayer("positions_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
+        orig.positions_qdq = StaticQDQLayer(
+            "positions_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale
+        )
         orig.inverse_freq_qdq = StaticQDQLayer(
             "inverse_freq_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale
         )
