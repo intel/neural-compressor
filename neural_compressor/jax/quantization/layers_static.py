@@ -181,7 +181,7 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             None: Adds observer layers.
         """
         self._tracker.unlock()
-        self.input_observer = MinMaxObserver(dtype=self.dtype)
+        self.input_observer = MinMaxObserver(dtype=self.dtype_policy)
         self._tracker.lock()
 
     def add_variables(self):
@@ -223,7 +223,7 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         a_scale, a_zero_point = get_q_params(
             arange, self.activation_dtype, self.compute_dtype, asymmetric=self._is_asymmetric
         )
-        if a_scale == jnp.inf:
+        if jnp.isinf(a_scale).any().item():
             logger.warning(
                 f"Activation scale is inf for layer {self._path}. This may be caused by missing calibration data. "
                 "Please make sure to run calibration with representative dataset."
@@ -417,8 +417,10 @@ class QStaticDenseMixin(SaveableLayerMixin):
         self._tracker.unlock()
 
         arange = self.input_observer.get_calibrated_range()
-        a_scale, a_zero_point = get_q_params(arange, self.activation_dtype, self.dtype, asymmetric=self._is_int8)
-        if a_scale == jnp.inf:
+        a_scale, a_zero_point = get_q_params(
+            arange, self.activation_dtype, self.compute_dtype, asymmetric=self._is_int8
+        )
+        if jnp.isinf(a_scale).any().item():
             logger.warning(
                 f"Activation scale is inf for layer {self._path}. This may be caused by missing calibration data. "
                 "Please make sure to run calibration with representative dataset."

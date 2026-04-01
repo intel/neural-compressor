@@ -185,7 +185,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         orig.const_scale = const_scale
         orig.const_weight = const_weight
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
-        orig.input_qdq = DynamicQDQLayer("input_qdq", activation_dtype, orig.dtype, orig._is_int8)
+        orig.input_qdq = DynamicQDQLayer("input_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
         if const_scale:
             orig._const_variables = ["w_scale"]
         else:
@@ -320,10 +320,10 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         orig._tracker.unlock()
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
-        orig.q_qdq = DynamicQDQLayer("q_qdq", activation_dtype, orig.dtype, False)
-        orig.k_qdq = DynamicQDQLayer("k_qdq", activation_dtype, orig.dtype, orig._is_int8)
-        orig.a_qdq = DynamicQDQLayer("a_qdq", activation_dtype, orig.dtype, orig._is_int8)
-        orig.v_qdq = DynamicQDQLayer("v_qdq", activation_dtype, orig.dtype, False)
+        orig.q_qdq = DynamicQDQLayer("q_qdq", activation_dtype, orig.dtype_policy, False)
+        orig.k_qdq = DynamicQDQLayer("k_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
+        orig.a_qdq = DynamicQDQLayer("a_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
+        orig.v_qdq = DynamicQDQLayer("v_qdq", activation_dtype, orig.dtype_policy, False)
         orig._tracker.lock()
         return orig
 
@@ -477,7 +477,7 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         """
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.qdq = DynamicQDQLayer("qdq", activation_dtype, orig.dtype, False)
+        orig.qdq = DynamicQDQLayer("qdq", activation_dtype, orig.dtype_policy, False)
         orig._tracker.lock()
         return orig
 
@@ -594,7 +594,7 @@ class QDynamicGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
         """
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.qdq = DynamicQDQLayer("qdq", activation_dtype, orig.dtype, False)
+        orig.qdq = DynamicQDQLayer("qdq", activation_dtype, orig.dtype_policy, False)
         orig._tracker.lock()
         return orig
 
@@ -697,8 +697,8 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, ReversibleEmbedding):
         orig._tracker.unlock()
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
-        orig.inputs_qdq = DynamicQDQLayer("inputs_qdq", activation_dtype, orig.dtype, orig._is_int8)
-        orig.kernel_qdq = DynamicQDQLayer("kernel_qdq", weight_dtype, orig.dtype, False)
+        orig.inputs_qdq = DynamicQDQLayer("inputs_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
+        orig.kernel_qdq = DynamicQDQLayer("kernel_qdq", weight_dtype, orig.dtype_policy, False)
         orig._tracker.lock()
         return orig
 
