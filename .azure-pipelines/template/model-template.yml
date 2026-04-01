@@ -18,7 +18,7 @@ steps:
       dockerConfigName: "commonDockerConfig"
       repoName: "neural-compressor"
       repoTag: "py312"
-      dockerFileName: "Dockerfile"
+      dockerFileName: "ubuntu-2404"
       containerName: ${{ parameters.modelContainerName }}
 
   - script: |
