@@ -12,4 +12,5 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """Intel Neural Compressor Pytorch API."""
+
 from .utils import load_empty_model

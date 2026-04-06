@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """AWQ quantization."""
+
 # Copied from neural_compressor/adaptor/torch_utils/awq.py
 
 import copy

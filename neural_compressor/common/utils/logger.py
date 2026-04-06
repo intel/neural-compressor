@@ -16,7 +16,6 @@
 # limitations under the License.
 """Logger: handles logging functionalities."""
 
-
 import functools
 import logging
 import os
