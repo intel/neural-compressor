@@ -19,7 +19,7 @@ if [[ $1 = *"3x_pt"* ]]; then
     python setup.py pt bdist_wheel
     uv pip install --no-deps dist/neural_compressor*.whl --force-reinstall
 elif [[ $1 = *"3x_tf"* ]]; then
-	pip install tensorflow==2.19.0
+	pip install tensorflow==2.19.0 uv
     python -m pip install --no-cache-dir -r requirements_tf.txt
     python setup.py tf bdist_wheel
     pip install dist/neural_compressor*.whl --force-reinstall
@@ -35,4 +35,4 @@ fi
 echo "##[endgroup]"
 
 echo -e "\n pip list after install Neural Compressor ... "
-pip list
+uv pip list
