@@ -86,7 +86,7 @@ if [ -f "requirements.txt" ]; then
     fi
     n=0
     until [ "$n" -ge 5 ]; do
-        python -m pip install -r requirements.txt && break
+        uv pip install -r requirements.txt && break
         n=$((n + 1))
         sleep 5
     done

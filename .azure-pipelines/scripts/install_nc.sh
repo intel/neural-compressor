@@ -17,7 +17,7 @@ if [[ $1 = *"3x_pt"* ]]; then
         uv pip install torch==2.11.0 auto-round-lib # mapping torch and auto-round version
     fi
     python setup.py pt bdist_wheel
-    pip install --no-deps dist/neural_compressor*.whl --force-reinstall
+    uv pip install --no-deps dist/neural_compressor*.whl --force-reinstall
 elif [[ $1 = *"3x_tf"* ]]; then
 	pip install tensorflow==2.19.0
     python -m pip install --no-cache-dir -r requirements_tf.txt

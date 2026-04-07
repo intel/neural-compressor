@@ -89,6 +89,7 @@ stages:
 
           - script: |
               cd ${BUILD_SOURCESDIRECTORY}
+              pip install uv
               uv pip install -U pip setuptools
               uv pip install -r requirements.txt
               python setup.py install pt
