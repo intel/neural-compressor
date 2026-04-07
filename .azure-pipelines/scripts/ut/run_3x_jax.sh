@@ -3,12 +3,6 @@ python -c "import neural_compressor as nc"
 test_case="run 3x JAX"
 echo "${test_case}"
 
-echo "##[section]Run import check"
-set -e
-python -c "import neural_compressor.jax"
-python -c "import neural_compressor.common"
-echo "##[section]import check pass"
-
 # install requirements
 echo "##[group]set up UT env..."
 uv pip install -r /neural-compressor/requirements_jax.txt
@@ -18,6 +12,13 @@ if [ -f /neural-compressor/test/jax/requirements.txt ]; then
 fi
 uv pip install pytest-cov pytest-html pytest-html-merger beautifulsoup4==4.13.5
 echo "##[endgroup]"
+
+echo "##[section]Run import check"
+set -e
+python -c "import neural_compressor.jax"
+python -c "import neural_compressor.common"
+echo "##[section]import check pass"
+
 uv pip list
 
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.3x_jax
