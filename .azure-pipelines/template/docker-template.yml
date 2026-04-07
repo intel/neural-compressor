@@ -51,10 +51,8 @@ steps:
       - script: |
           docker image prune -f
           IMAGE="${{ parameters.repoName }}:${{ parameters.repoTag }}"
-          if [[ ! $(docker image ls --format '{{.Repository}}:{{.Tag}}' | grep -Fx "$IMAGE") ]]; then
-            docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) \
-             -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/${{parameters.dockerFileName}}.devel -t $IMAGE .
-          fi
+          docker build --build-arg USER_ID=$(id -u) --build-arg GROUP_ID=$(id -g) \
+            -f ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/docker/${{parameters.dockerFileName}}.devel -t $IMAGE .
           docker images | grep -i ${{ parameters.repoName }}
           if [[ $? -ne 0 ]]; then
             echo "NO Such Repo"
