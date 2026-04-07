@@ -12,7 +12,7 @@ repos:
           (?x)^(
               examples/.+|
               neural_compressor/torch/algorithms/fp8_quant/.+|
-              test/3x/torch/algorithms/fp8_quant/.+
+              test/torch/algorithms/fp8_quant/.+
           )$
       - id: check-json
         exclude: |
@@ -39,7 +39,7 @@ repos:
               examples/.+|
               neural_compressor/torch/utils/.+|
               neural_compressor/torch/algorithms/fp8_quant/.+|
-              test/3x/torch/quantization/.+
+              test/torch/quantization/.+
           )$
 
   - repo: https://github.com/Lucas-C/pre-commit-hooks
@@ -72,7 +72,7 @@ repos:
           (?x)^(
               examples/.+|
               neural_compressor/torch/algorithms/fp8_quant/.+|
-              test/3x/torch/.+
+              test/torch/.+
           )$
 
   - repo: https://github.com/PyCQA/docformatter
@@ -91,7 +91,7 @@ repos:
           (?x)^(
               examples/.+|
               neural_compressor/torch/algorithms/fp8_quant/.+|
-              test/3x/torch/.+
+              test/torch/.+
           )$
 
   - repo: https://github.com/psf/black-pre-commit-mirror
@@ -103,7 +103,7 @@ repos:
           (?x)^(
               examples/.+|
               neural_compressor/torch/algorithms/fp8_quant/.+|
-              test/3x/torch/.+
+              test/torch/.+
           )$
 
   - repo: https://github.com/asottile/blacken-docs
@@ -112,13 +112,13 @@ repos:
       - id: blacken-docs
         args: [--line-length=120, --skip-errors]
         additional_dependencies:
-          - black==25.12.0
+          - black==26.3.1
         exclude: |
           (?x)^(
               examples/.+|
-              docs/source/3x/JAX.md|
+              docs/source/JAX.md|
               neural_compressor/torch/algorithms/fp8_quant/.+|
-              test/3x/torch/.+
+              test/torch/.+
           )$
 
   - repo: https://github.com/codespell-project/codespell
@@ -131,11 +131,9 @@ repos:
         exclude: |
           (?x)^(
               examples/.*(txt|patch)|
-              examples/deprecated/onnxrt/nlp/huggingface_model/text_generation/llama/quantization/ptq_static/prompt.json|
               neural_compressor/torch/algorithms/fp8_quant/internal/diffusion_evaluation/SR_evaluation/imagenet1000_clsidx_to_labels.txt|
-              neural_compressor/evaluation/hf_eval/datasets/cnn_validation.json|
               neural_compressor/torch/algorithms/fp8_quant/.+|
-              test/3x/torch/.+
+              test/torch/.+
           )$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
