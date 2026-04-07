@@ -48,7 +48,6 @@ ENV UV_NO_PROGRESS=1 \
     TQDM_MININTERVAL=120 \
     HF_HUB_DISABLE_PROGRESS_BARS=1
 
-RUN pip config set global.break-system-packages true
 RUN uv venv --python=3.12 /home/hostuser/.venv
 RUN which python && python --version
 
