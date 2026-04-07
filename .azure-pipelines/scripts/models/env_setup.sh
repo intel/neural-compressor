@@ -69,16 +69,11 @@ bash /neural-compressor/.azure-pipelines/scripts/install_nc.sh ${inc_new_api}
 cd ${WORK_SOURCE_DIR}/${model_src_dir}
 
 if [[ "${fwk_ver}" != "latest" ]]; then
-    pip install ruamel.yaml==0.17.40
-    pip install psutil
-    pip install protobuf==4.23.4
-    if [[ "${framework}" == "pytorch" ]]; then
-        pip install torch==${fwk_ver} --index-url https://download.pytorch.org/whl/cpu
-        pip install torchvision==${torch_vision_ver} --index-url https://download.pytorch.org/whl/cpu
-    elif [[ "${framework}" == "onnxrt" ]]; then
-        pip install onnx==1.15.0
-        pip install onnxruntime==${fwk_ver}
-    fi
+    uv pip install ruamel.yaml==0.17.40
+    uv pip install psutil
+    uv pip install protobuf==4.23.4
+    uv pip install torch==${fwk_ver} --index-url https://download.pytorch.org/whl/cpu
+    uv pip install torchvision==${torch_vision_ver} --index-url https://download.pytorch.org/whl/cpu
 fi
 
 if [ -f "requirements.txt" ]; then
@@ -95,7 +90,7 @@ if [ -f "requirements.txt" ]; then
         n=$((n + 1))
         sleep 5
     done
-    pip list
+    uv pip list
 else
     $BOLD_RED && echo "Not found requirements.txt file." && $RESET
 fi

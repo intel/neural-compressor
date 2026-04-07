@@ -19,12 +19,8 @@ FROM ubuntu:${UBUNTU_VER}
 ENV LANG C.UTF-8
 
 RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
-    python3 \
-    python3-pip \
-    python3.12-dev \
-    autoconf \
     build-essential \
-    cmake \
+    ca-certificates \
     git \
     libomp-dev \
     numactl \
@@ -34,7 +30,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends --fix-missing \
     jq \
     vim
 
-RUN ln -sf $(which python3) /usr/bin/python
+COPY --from=ghcr.io/astral-sh/uv:latest /uv /usr/local/bin/uv
 
 ARG USER_ID=1000
 ARG GROUP_ID=1000
@@ -44,10 +40,16 @@ RUN groupadd -g ${GROUP_ID} hostgroup && \
 
 USER hostuser
 
-ENV PATH="/home/hostuser/.local/bin:$PATH"
+ENV PATH="/home/hostuser/.venv/bin:$PATH"
+ENV VIRTUAL_ENV="/home/hostuser/.venv"
+ENV UV_NO_PROGRESS=1 \
+    UV_LINK_MODE=copy \
+    TZ='Asia/Shanghai' \
+    TQDM_MININTERVAL=120 \
+    HF_HUB_DISABLE_PROGRESS_BARS=1
+
 RUN pip config set global.break-system-packages true
-RUN pip install pip packaging --upgrade
-RUN pip install --no-cache-dir setuptools
-RUN pip list
+RUN uv venv --python=3.12 /home/hostuser/.venv
+RUN which python && python --version
 
 WORKDIR /

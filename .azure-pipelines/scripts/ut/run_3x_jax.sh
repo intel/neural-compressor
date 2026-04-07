@@ -11,17 +11,14 @@ echo "##[section]import check pass"
 
 # install requirements
 echo "##[group]set up UT env..."
-pip install -r /neural-compressor/requirements_jax.txt
+uv pip install -r /neural-compressor/requirements_jax.txt
 # Check if test/jax/requirements.txt exists and install it (optional)
 if [ -f /neural-compressor/test/jax/requirements.txt ]; then
-    pip install -r /neural-compressor/test/jax/requirements.txt
+    uv pip install -r /neural-compressor/test/jax/requirements.txt
 fi
-pip install pytest-cov
-pip install pytest-html
-pip install pytest-html-merger
-pip install beautifulsoup4==4.13.5
+uv pip install pytest-cov pytest-html pytest-html-merger beautifulsoup4==4.13.5
 echo "##[endgroup]"
-pip list
+uv pip list
 
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.3x_jax
 inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__[0])')
