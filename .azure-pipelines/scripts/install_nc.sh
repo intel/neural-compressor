@@ -5,6 +5,7 @@ cd /neural-compressor
 
 if ! command -v uv &> /dev/null; then
     pip install uv
+    export UV_SYSTEM_PYTHON=1
 fi
 
 if [[ $1 = *"3x_pt"* ]]; then
