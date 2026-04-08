@@ -11,7 +11,7 @@ echo "##[section]import check pass"
 
 echo "##[group]set up UT env..."
 export LD_LIBRARY_PATH=${HOME}/.venv/lib/:$LD_LIBRARY_PATH
-uv pip install -r /neural-compressor/test/torch/requirements_xpu.txt
+uv pip install -r /neural-compressor/test/torch/requirements_xpu.txt --extra-index-url https://download.pytorch.org/whl/xpu
 uv pip install pytest-cov pytest-html
 uv pip list
 echo "##[endgroup]"
