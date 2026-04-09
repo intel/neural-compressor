@@ -13,7 +13,10 @@ echo "##[section]import check pass"
 echo "##[group]set up UT env..."
 export LD_LIBRARY_PATH=${HOME}/.venv/lib/:$LD_LIBRARY_PATH
 sed -i '/^deepspeed/d' /neural-compressor/test/torch/requirements.txt
-uv pip install -r /neural-compressor/test/torch/requirements.txt
+uv pip install -r /neural-compressor/test/torch/requirements.txt \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    --index-strategy unsafe-best-match \
+    --upgrade
 uv pip install pytest-cov pytest-html beautifulsoup4==4.13.5
 echo "##[endgroup]"
 uv pip list

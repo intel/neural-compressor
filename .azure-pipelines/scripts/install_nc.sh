@@ -37,7 +37,7 @@ else
     uv pip install dist/neural_compressor*.whl --force-reinstall
 fi
 
-echo "##[endgroup]"
-
 echo -e "\n pip list after install Neural Compressor ... "
 uv pip list
+
+echo "##[endgroup]"

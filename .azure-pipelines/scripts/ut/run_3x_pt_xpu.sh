@@ -13,10 +13,11 @@ echo "##[group]set up UT env..."
 export LD_LIBRARY_PATH=${HOME}/.venv/lib/:$LD_LIBRARY_PATH
 uv pip install -r /neural-compressor/test/torch/requirements_xpu.txt \
     --extra-index-url https://download.pytorch.org/whl/xpu \
-    --index-strategy unsafe-best-match
+    --index-strategy unsafe-best-match \
+    --upgrade
 uv pip install pytest-cov pytest-html
-uv pip list
 echo "##[endgroup]"
+uv pip list
 
 echo "##[group]check xpu env..."
 echo "ZE_AFFINITY_MASK: ${ZE_AFFINITY_MASK}"
