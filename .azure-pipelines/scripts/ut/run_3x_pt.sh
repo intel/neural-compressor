@@ -17,6 +17,7 @@ uv pip install -r /neural-compressor/test/torch/requirements.txt \
     --extra-index-url https://download.pytorch.org/whl/cpu \
     --index-strategy unsafe-best-match \
     --upgrade
+uv pip install torch==2.11.0 torchvision --index-url https://download.pytorch.org/whl/cpu
 uv pip install pytest-cov pytest-html beautifulsoup4==4.13.5
 echo "##[endgroup]"
 uv pip list
