@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Accuracy-focused tests for JAX quantization on specific model architectures.
-Tests various 1-layer and 2-layer models with known behaviors and data patterns.
+Tests 2-layer model with known behaviors and data patterns.
 
 Key FP8 quantization insights:
 - FP8_E5M2 has discrete representable values (not continuous scaling)
@@ -13,6 +13,7 @@ Key FP8 quantization insights:
 import os
 
 import pytest
+from jax_test_utility import compute_expected_qdq_dense_output
 
 os.environ["KERAS_BACKEND"] = "jax"
 from functools import reduce
@@ -22,144 +23,109 @@ import keras
 import ml_dtypes
 from jax import numpy as jnp
 
-from neural_compressor.jax import StaticQuantConfig, quantize_model
+from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
 from neural_compressor.jax.utils.utility import dtype_mapping
 
-
-def forward_dense(config, layer, x, calib_scale):
-    weight_dtype = dtype_mapping[config.weight_dtype]
-    activation_dtype = dtype_mapping[config.activation_dtype]
-    orig_dtype = layer.dtype
-    kernel = layer.kernel
-    bias = layer.bias if layer.use_bias else None
-    expected_ascale = calib_scale
-    expected_wscale = jnp.max(jnp.abs(kernel)) / jnp.finfo(weight_dtype).max.astype(orig_dtype)
-    qdqkernel = jax.lax.clamp(
-        jnp.finfo(weight_dtype).min.astype(kernel.dtype),
-        kernel / expected_wscale,
-        jnp.finfo(weight_dtype).max.astype(kernel.dtype),
-    ).astype(weight_dtype)
-    qdqkernel = qdqkernel.astype(orig_dtype) * expected_wscale
-    qdqx = jax.lax.clamp(
-        jnp.finfo(activation_dtype).min.astype(x.dtype),
-        x / expected_ascale,
-        jnp.finfo(activation_dtype).max.astype(x.dtype),
-    ).astype(activation_dtype)
-    qdqx = (x / expected_ascale).astype(activation_dtype)
-    qdqx = qdqx.astype(orig_dtype) * expected_ascale
-    y = jnp.matmul(qdqx, qdqkernel)
-    if bias is not None:
-        y += bias
-    y = layer.activation(y)
-    return y, expected_wscale
+_fp8_dtypes = ["fp8_e4m3", "fp8_e5m2"]
+_int_dtypes = ["int8"]
+# Valid (weight_dtype, activation_dtype) pairs:
+# all fp8 cross-combinations + same-dtype integer pairs
+_dtype_pairs = [(f1, f2) for f1 in _fp8_dtypes for f2 in _fp8_dtypes] + [(i, i) for i in _int_dtypes]
 
 
-def verify_model(model, calib_tensor, test_input):
-    config = StaticQuantConfig(weight_dtype="fp8_e5m2", activation_dtype="fp8_e5m2")
-    # Calculate per-layer calibration results
-    calib_tensor_orig = calib_tensor
-    calib_scales = []
-    for layer in model.layers:
-        calib_scale = jnp.max(jnp.abs(calib_tensor)) / jnp.finfo(dtype_mapping[config.activation_dtype]).max.astype(
-            model.dtype
-        )
-        calib_scales.append(calib_scale)
-        calib_tensor = layer(calib_tensor)
-    calib_tensor = calib_tensor_orig
-    calib_fn = lambda m: m(calib_tensor)
-    q_model = quantize_model(model, config, calib_fn)
-
-    for calib_scale, q_layer, layer in zip(calib_scales, q_model.layers, model.layers):
-        x = q_layer.call(test_input)
-        xexpected, expected_wscale = forward_dense(config, layer, test_input, calib_scale)
-        assert jnp.allclose(
-            x, xexpected, rtol=1e-5
-        ), f"Output mismatch in layer {q_layer.name}: expected {xexpected}, got {x}"
-        assert jnp.allclose(
-            q_layer.a_scale.value, calib_scale, rtol=1e-5
-        ), f"Activation scale mismatch in layer {layer.name}: expected {calib_scale}, got {q_layer.a_scale.value}"
-        assert jnp.allclose(
-            q_layer.w_scale.value, expected_wscale, rtol=1e-5
-        ), f"Weight scale mismatch in layer {layer.name}: expected {expected_wscale}, got {q_layer.w_scale.value}"
-        test_input = x  # For next layer input
+def _read_value(var_or_array, is_const):
+    """Return numeric value whether variable has `.value` or is a plain array."""
+    return var_or_array if is_const else var_or_array.value
 
 
-def test_simple_linear_model_accuracy():
-    """Test accuracy on a simple linear model: y = 2x (no bias)."""
-    # Create single layer linear model
-    dtype = ml_dtypes.float8_e5m2
-    model = keras.Sequential([keras.layers.Dense(1, activation="linear", input_shape=(1,), use_bias=False)])
+@pytest.mark.parametrize(
+    "weight_dtype,activation_dtype",
+    _dtype_pairs,
+    ids=[f"weight_dtype={w}-activation_dtype={a}" for w, a in _dtype_pairs],
+)
+@pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
+@pytest.mark.parametrize("dynamic", [False, True], ids=["dynamic=False", "dynamic=True"])
+@pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
+@pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
+def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, model_dtype, dynamic, c_scale, c_weight):
+    """Test accuracy on a simple linear model."""
 
-    calib_tensor = jnp.array([[2.0], [1.0], [3.0]])
-    expected_scale = max(jnp.abs(calib_tensor)) / jnp.finfo(dtype).max.astype(jnp.float32)
-    # Test input
-
-    # Initialize and set known weights
-    _ = model(jnp.array([[1.0]]))
-    weights = jnp.array([[2.0]])
-    model.layers[0].set_weights((weights,))  # y = 2x
-    expected_weight_scale = weights / jnp.finfo(dtype).max.astype(jnp.float32)
-
-    # expected_output = jnp.array([])
-    def calib_function(model):
-        _ = model(calib_tensor)
-
-    config = StaticQuantConfig(weight_dtype="fp8_e5m2", activation_dtype="fp8_e5m2")
-    q_model = quantize_model(model, config, calib_function)
-    test_input = jnp.array([[1.0], [2.0], [2.0], [0.0], [-1.0]])
-    # expected range absmax: 3.0
-    # expected scale: 3/57344
-    # expected weight scale: 2/57344
-    # w = 57344
-    # z = [1.0, 2.0, 2.0, 0.0, -1.0]*3/57344
-    # z = [19114.667, 38229.33333333, 38229.33333333, 0.0, -19114.666667]
-    # z ~ [20480, 40960, 40960, 0, -20480]
-    # z = w*z = [20480, 40960, 40960, 0, -20480]*57344
-    # o = w*z*s*ws = [20480, 40960, 40960, 0, -20480]*57344*3/57344*2/57344
-    # o = [20480, 40960, 40960, 0, -20480]*6/57344
-    # o = [2.142857, 4.285714, 4.285714, 0, -2.142857]
-    expected_output = jnp.array([[2.142857], [4.285714], [4.285714], [0.0], [-2.142857]])
-    quantized_output = jax.jit(q_model)(test_input)
-    print(f"quantized_output: {quantized_output}")
-    print(f"expected_output: {expected_output}")
-    print(f"Weight scale: {q_model.layers[0].w_scale}, Expected weight scale: {expected_weight_scale}")
-    print(f"Activation scale: {q_model.layers[0].a_scale}, Expected activation scale: {expected_scale}")
-
-    assert jnp.allclose(
-        quantized_output, expected_output, rtol=1e-5
-    ), f"Quantized output mismatch: expected {expected_output}, got {quantized_output}"
-    assert jnp.allclose(
-        q_model.layers[0].w_scale.value, expected_weight_scale, rtol=1e-5
-    ), f"Weight scale mismatch: expected {expected_weight_scale}, got {q_model.layers[0].w_scale.value}"
-    assert jnp.allclose(
-        q_model.layers[0].a_scale.value, expected_scale, rtol=1e-5
-    ), f"Activation scale mismatch: expected {expected_scale}, got {q_model.layers[0].a_scale.value}"
-
-
-def test_simple_linear_model_with_verify_util():
-    """Test accuracy on a simple linear model using verify_model utility: y = 2x (no bias)."""
-    # Create single layer linear model - same as test_simple_linear_model_accuracy
+    # Build model
+    model_dtype_jnp = jnp.dtype(model_dtype)
     model = keras.Sequential(
         [
             keras.Input(shape=(8,)),
-            keras.layers.Dense(4, activation="linear", use_bias=False),
-            keras.layers.Dense(1, activation="linear", use_bias=False),
+            keras.layers.Dense(4, activation="linear", use_bias=False, dtype=model_dtype_jnp),
+            keras.layers.Dense(1, activation="linear", use_bias=False, dtype=model_dtype_jnp),
         ]
     )
 
-    # Same calibration data
-    calib_tensor = jnp.arange(1, 9).reshape((1, 8))
-    # Initialize and set known weights
+    # Set weights
+    all_weights = []
     for i, layer in enumerate(model.layers):
         kernel = layer.get_weights()[0]  # These dense layers only have kernel weights
         shape = kernel.shape
         num_values = reduce(lambda x, y: x * y, shape)
-        new_weights = jnp.arange(0, 1, 1 / num_values) + i
-        new_weights = new_weights.reshape(shape)
-        layer.set_weights((new_weights,))
+        weights = jnp.linspace(-1, 1, num_values) + 0.1 * (i + 1)
+        weights = weights.reshape(shape)
+        layer.set_weights((weights,))
+        all_weights.append(weights)
 
-    # Same test input
-    test_input = jnp.array([1.0, 2.0, 2.0, 0.0, -1.0, 3.0, -3.0, 0.5]).reshape(1, 8)
+    # Prepare inputs and calibration set
+    test_input = jnp.array([1.0, 2.0, 2.0, 0.0, -1.0, -3.0, 0.5, float(jnp.finfo("float8_e5m2").max + 100)]).reshape(
+        1, 8
+    )
+    calib_tensor = jnp.arange(1, 9).reshape((1, 8))
 
-    # Use verify_model utility instead of manual verification
-    verify_model(model, calib_tensor, test_input)
+    def calib_function(model):
+        _ = model(calib_tensor)
+
+    # Create quantization config
+    if dynamic:
+        config = DynamicQuantConfig(
+            weight_dtype=weight_dtype,
+            activation_dtype=activation_dtype,
+            const_scale=c_scale,
+            const_weight=c_weight,
+        )
+        q_model = quantize_model(model, config)
+    else:
+        config = StaticQuantConfig(
+            weight_dtype=weight_dtype,
+            activation_dtype=activation_dtype,
+            const_scale=c_scale,
+            const_weight=c_weight,
+        )
+        q_model = quantize_model(model, config, calib_function)
+
+    # Calculate expected outputs and scales
+    expected_output, expected_activation_scales, expected_weight_scales = compute_expected_qdq_dense_output(
+        test_input,
+        calib_tensor,
+        all_weights,
+        dtype_mapping[weight_dtype],
+        dtype_mapping[activation_dtype],
+        dynamic=dynamic,
+        model_dtype=model_dtype,
+    )
+
+    # Run quantization
+    quantized_output = jax.jit(q_model)(test_input)
+
+    # Compare results with expectations
+    assert jnp.allclose(
+        quantized_output, expected_output, rtol=1e-5
+    ), f"Quantized output mismatch: expected {expected_output}, got {quantized_output}"
+
+    for i, (q_layer, exp_w_scale) in enumerate(zip(q_model.layers, expected_weight_scales)):
+        w_scale_val = _read_value(q_layer.w_scale, c_scale)
+        assert jnp.allclose(
+            jnp.array(w_scale_val), jnp.array(exp_w_scale), rtol=1e-5
+        ), f"Weight scale mismatch at layer {i}: expected {exp_w_scale}, got {w_scale_val}"
+
+    if not dynamic:
+        for i, (q_layer, exp_a_scale) in enumerate(zip(q_model.layers, expected_activation_scales)):
+            a_scale_val = _read_value(q_layer.a_scale, c_scale)
+            assert jnp.allclose(
+                jnp.array(a_scale_val), jnp.array(exp_a_scale), rtol=1e-5
+            ), f"Activation scale mismatch at layer {i}: expected {exp_a_scale}, got {a_scale_val}"
