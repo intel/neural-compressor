@@ -30,7 +30,7 @@ _fp8_dtypes = ["fp8_e4m3", "fp8_e5m2"]
 _int_dtypes = ["int8"]
 # Valid (weight_dtype, activation_dtype) pairs:
 # all fp8 cross-combinations + same-dtype integer pairs
-_dtype_pairs = [(x, y) for x in _fp8_dtypes for y in _fp8_dtypes] + [(x, x) for x in _int_dtypes]
+_dtype_pairs = [(f1, f2) for f1 in _fp8_dtypes for f2 in _fp8_dtypes] + [(i, i) for i in _int_dtypes]
 
 
 def forward_dense(config, layer, x, calib_scale):
