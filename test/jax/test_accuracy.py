@@ -26,7 +26,11 @@ from jax import numpy as jnp
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
 from neural_compressor.jax.utils.utility import dtype_mapping
 
-dtypes_list = ["fp8_e4m3", "fp8_e5m2", "int8"]
+_fp8_dtypes = ["fp8_e4m3", "fp8_e5m2"]
+_int_dtypes = ["int8"]
+# Valid (weight_dtype, activation_dtype) pairs:
+# all fp8 cross-combinations + same-dtype integer pairs
+_dtype_pairs = [(x, y) for x in _fp8_dtypes for y in _fp8_dtypes] + [(x, x) for x in _int_dtypes]
 
 
 def forward_dense(config, layer, x, calib_scale):
@@ -87,17 +91,16 @@ def verify_model(model, calib_tensor, test_input):
         test_input = x  # For next layer input
 
 
-@pytest.mark.parametrize("weight_dtype", dtypes_list, ids=[f"weight_dtype={dtype}" for dtype in dtypes_list])
-@pytest.mark.parametrize("activation_dtype", dtypes_list, ids=[f"activation_dtype={dtype}" for dtype in dtypes_list])
+@pytest.mark.parametrize(
+    "weight_dtype,activation_dtype",
+    _dtype_pairs,
+    ids=[f"weight_dtype={w}-activation_dtype={a}" for w, a in _dtype_pairs],
+)
 @pytest.mark.parametrize("dynamic", [False, True], ids=["dynamic=False", "dynamic=True"])
 @pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
 @pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
 def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, dynamic, c_scale, c_weight):
     """Test accuracy on a simple linear model: y = 2x (no bias)."""
-
-    if weight_dtype == "int8" or activation_dtype == "int8":
-        if weight_dtype != activation_dtype:
-            pytest.skip("Mixed quantization with floating-point and integer dtypes is not supported.")
 
     # Create single layer linear model
     model = keras.Sequential([keras.layers.Dense(1, activation="linear", input_shape=(1,), use_bias=False)])
