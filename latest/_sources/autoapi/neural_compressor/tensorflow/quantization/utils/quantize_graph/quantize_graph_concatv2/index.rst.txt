@@ -20,7 +20,7 @@ Classes
 Module Contents
 ---------------
 
-.. py:class:: FuseNodeStartWithConcatV2
+.. py:class:: FuseNodeStartWithConcatV2(**kwargs)
 
 
 
