@@ -84,8 +84,7 @@ def get_gpt_j():
     import transformers
 
     tiny_gptj = transformers.AutoModelForCausalLM.from_pretrained(
-        "hf-internal-testing/tiny-random-GPTJForCausalLM",
-        torchscript=True,
+        "hf-internal-testing/tiny-random-GPTJForCausalLM"
     )
     return tiny_gptj
 
