@@ -16,10 +16,7 @@ sed -i '/^auto-round/d' /neural-compressor/test/torch/requirements.txt
 cat /neural-compressor/test/torch/requirements.txt
 pip install -r /neural-compressor/test/torch/requirements.txt
 pip install auto-round-hpu
-pip install pytest-cov
-pip install pytest-html
-pip install pytest-html-merger
-pip install beautifulsoup4==4.13.5
+pip install pytest-cov pytest-html pytest-html-merger beautifulsoup4==4.13.5
 echo "##[endgroup]"
 pip list
 
