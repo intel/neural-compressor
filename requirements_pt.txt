@@ -1,7 +1,7 @@
-torchao
 numpy
 packaging
 prettytable
 psutil
 py-cpuinfo
 pydantic
+torchao

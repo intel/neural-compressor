@@ -5,10 +5,10 @@ import pytest
 import torch
 
 from neural_compressor.common.utils import logger
-from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
 from neural_compressor.torch.algorithms.pt2e_quant import pt2e_compat
+from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
 from neural_compressor.torch.export import export_model_for_pt2e_quant
-from neural_compressor.torch.utils import TORCH_VERSION_2_11_0, TORCH_VERSION_2_2_2, get_torch_version
+from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, TORCH_VERSION_2_11_0, get_torch_version
 
 
 class TestW8A8PT2EQuantizer:
@@ -156,6 +156,8 @@ class TestPT2ECompat:
                 raise ModuleNotFoundError("No module named 'torchao'")
             return original_import_module(name)
 
-        with patch("neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat.import_module", side_effect=fake_import_module):
+        with patch(
+            "neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat.import_module", side_effect=fake_import_module
+        ):
             with pytest.raises(ModuleNotFoundError, match="torch>=2.11 requires `torchao` for PT2E quantization"):
                 pt2e_compat._load_pt2e_modules()

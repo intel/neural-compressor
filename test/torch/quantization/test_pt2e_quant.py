@@ -18,8 +18,8 @@ from neural_compressor.torch.quantization import (
 )
 from neural_compressor.torch.utils import (
     GT_OR_EQUAL_TORCH_VERSION_2_5,
-    TORCH_VERSION_2_11_0,
     TORCH_VERSION_2_2_2,
+    TORCH_VERSION_2_11_0,
     get_torch_version,
 )
 
