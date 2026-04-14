@@ -92,7 +92,7 @@ class TestGPTQHybrid:
         model.model.decoder.layers = torch.nn.ModuleList([model.model.decoder.layers[0]])
         return model
 
-    @pytest.mark.skip(True, reason="Temporarily skipping due to low priority.")
+    @pytest.mark.skip(reason="Temporarily skipping due to low priority.")
     @torch.no_grad()
     def test_fp8_aware_gptq(self):
         """This test checks W4A8 DPQ algorirthm."""
