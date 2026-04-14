@@ -6,8 +6,9 @@ import torch
 
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
+from neural_compressor.torch.algorithms.pt2e_quant import pt2e_compat
 from neural_compressor.torch.export import export_model_for_pt2e_quant
-from neural_compressor.torch.utils import TORCH_VERSION_2_2_2, get_torch_version
+from neural_compressor.torch.utils import TORCH_VERSION_2_11_0, TORCH_VERSION_2_2_2, get_torch_version
 
 
 class TestW8A8PT2EQuantizer:
@@ -125,3 +126,36 @@ class TestW8A8PT2EQuantizer:
         assert exported_model is None
         call_args_list = mock_error.call_args_list
         assert any(["Failed to export the model" in msg for msg in [info[0][0] for info in call_args_list]])
+
+
+class TestPT2ECompat:
+    def test_legacy_imports_for_torch_lt_2_11(self):
+        if get_torch_version() >= TORCH_VERSION_2_11_0:
+            pytest.skip("Legacy PT2E import path is only available for torch<2.11 in this environment.")
+
+        pt2e_module, quantizer_module, xnnpack_module = pt2e_compat._load_pt2e_modules()
+
+        assert pt2e_module.__name__ == "torch.ao.quantization.quantize_pt2e"
+        assert quantizer_module.__name__ == "torch.ao.quantization.quantizer.x86_inductor_quantizer"
+        assert xnnpack_module.__name__ == "torch.ao.quantization.quantizer.xnnpack_quantizer"
+
+    @pytest.mark.skipif(get_torch_version() < TORCH_VERSION_2_11_0, reason="Requires torch>=2.11")
+    def test_torchao_imports_for_torch_ge_2_11(self):
+        pt2e_module, quantizer_module, xnnpack_module = pt2e_compat._load_pt2e_modules()
+
+        assert pt2e_module.__name__ == "torchao.quantization.pt2e"
+        assert quantizer_module.__name__ == "torchao.quantization.pt2e.quantizer.x86_inductor_quantizer"
+        assert xnnpack_module.__name__ == "torchao.quantization.pt2e.quantizer.xnnpack_quantizer"
+
+    @pytest.mark.skipif(get_torch_version() < TORCH_VERSION_2_11_0, reason="Requires torch>=2.11")
+    def test_missing_torchao_fails_fast(self):
+        original_import_module = pt2e_compat.import_module
+
+        def fake_import_module(name):
+            if name.startswith("torchao."):
+                raise ModuleNotFoundError("No module named 'torchao'")
+            return original_import_module(name)
+
+        with patch("neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat.import_module", side_effect=fake_import_module):
+            with pytest.raises(ModuleNotFoundError, match="torch>=2.11 requires `torchao` for PT2E quantization"):
+                pt2e_compat._load_pt2e_modules()

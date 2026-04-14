@@ -19,13 +19,16 @@
 from typing import Any
 
 import torch
-import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
-from torch.ao.quantization.quantize_pt2e import convert_pt2e, prepare_pt2e
-from torch.ao.quantization.quantizer.x86_inductor_quantizer import X86InductorQuantizer
 from torch.fx.graph_module import GraphModule
 
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.algorithms.base_algorithm import Quantizer
+from neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat import (
+    X86InductorQuantizer,
+    convert_pt2e,
+    prepare_pt2e,
+    xiq,
+)
 from neural_compressor.torch.algorithms.pt2e_quant import half_precision_rewriter as hp_rewriter
 from neural_compressor.torch.algorithms.pt2e_quant.utility import create_xiq_quantizer_from_pt2e_config
 

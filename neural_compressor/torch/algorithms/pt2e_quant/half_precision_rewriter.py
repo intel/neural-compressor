@@ -19,14 +19,13 @@ from functools import partial
 from typing import Any, Callable, Dict, List, Tuple
 
 import torch
-import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
-import torch.ao.quantization.quantizer.xnnpack_quantizer as xpq
 from torch.fx import subgraph_rewriter
 from torch.fx.experimental.proxy_tensor import make_fx
 from torch.fx.subgraph_rewriter import Match
 from typing_extensions import TypeAlias
 
 from neural_compressor.common import logger, utils
+from neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat import xiq, xpq
 
 # =============================================================================
 # Search and replace patterns

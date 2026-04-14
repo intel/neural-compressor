@@ -16,7 +16,6 @@
 from typing import Dict
 
 import torch
-import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
 from torch.ao.quantization.observer import (
     HistogramObserver,
     MinMaxObserver,
@@ -24,8 +23,8 @@ from torch.ao.quantization.observer import (
     PlaceholderObserver,
 )
 from torch.ao.quantization.quantizer import QuantizationSpec
-from torch.ao.quantization.quantizer.x86_inductor_quantizer import QuantizationConfig, X86InductorQuantizer
 
+from neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat import QuantizationConfig, X86InductorQuantizer, xiq
 from neural_compressor.torch.utils import GT_OR_EQUAL_TORCH_VERSION_2_5, logger
 
 
