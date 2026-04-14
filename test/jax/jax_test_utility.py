@@ -43,12 +43,10 @@ def compute_expected_qdq_dense_output(test_input, calib_data, weights, weight_dt
 
     # Compute scales
     input_samples = test_input if dynamic else calib_data
-    # Activation scale: for integer dtypes use asymmetric range-based formula
     if np.issubdtype(activation_dtype, np.integer):
         input_max = np.max(input_samples)
         input_min = np.min(input_samples)
         a_scale = np.float32((input_max - input_min) / (a_max - a_min))
-        # zero point is used for asymmetric quantization
         a_zero_point = np.round(a_min - input_min / a_scale)
     else:
         a_scale = np.float32(np.max(np.abs(input_samples)) / a_max)
@@ -56,12 +54,15 @@ def compute_expected_qdq_dense_output(test_input, calib_data, weights, weight_dt
 
     w_scale = np.float32(np.max(np.abs(weights)) / w_max)
 
-    # QDQ weights (with clip)
-    qdq_weights = np.clip(weights / w_scale, w_min, w_max).astype(np.float32) * w_scale
+    # QDQ weights
+    if np.issubdtype(weight_dtype, np.integer):
+        qdq_weights = np.clip(np.round(weights / w_scale), w_min, w_max).astype(weight_dtype)
+    else:
+        qdq_weights = np.clip(weights / w_scale, w_min, w_max).astype(weight_dtype)
+    qdq_weights = qdq_weights.astype(np.float32) * w_scale
 
-    # QDQ input (with clip to activation range)
+    # QDQ input
     if np.issubdtype(activation_dtype, np.integer):
-        # asymmetric integer quantization: round(x/scale) + zero_point
         val = np.round(test_input / a_scale) + a_zero_point
         val = np.clip(val, a_min, a_max).astype(activation_dtype)
         qdq_input = (val.astype(np.float32) - a_zero_point) * a_scale

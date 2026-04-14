@@ -140,21 +140,21 @@ def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, dynamic, c
     if not dynamic:
         print(f"Activation scale: {q_model.layers[0].a_scale}, Expected activation scale: {expected_activation_scale}")
 
-    def _read_value(var_or_array):
+    def _read_value(var_or_array, c_scale):
         """Return numeric value whether variable has `.value` or is a plain array."""
-        return var_or_array.value if hasattr(var_or_array, "value") else var_or_array
+        return var_or_array.value if not c_scale else var_or_array
 
     assert jnp.allclose(
         quantized_output, expected_output, rtol=1e-5
     ), f"Quantized output mismatch: expected {expected_output}, got {quantized_output}"
 
-    w_scale_val = _read_value(q_model.layers[0].w_scale)
+    w_scale_val = _read_value(q_model.layers[0].w_scale, c_scale)
     assert jnp.allclose(
         w_scale_val, expected_weight_scale, rtol=1e-5
     ), f"Weight scale mismatch: expected {expected_weight_scale}, got {w_scale_val}"
 
     if not dynamic:
-        a_scale_val = _read_value(q_model.layers[0].a_scale)
+        a_scale_val = _read_value(q_model.layers[0].a_scale, c_scale)
         assert jnp.allclose(
             a_scale_val, expected_activation_scale, rtol=1e-5
         ), f"Activation scale mismatch: expected {expected_activation_scale}, got {a_scale_val}"
