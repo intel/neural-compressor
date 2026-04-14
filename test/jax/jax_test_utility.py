@@ -3,8 +3,18 @@
 This file provides helper functions used by tests in test/jax/
 """
 
-import jax
-from jax import numpy as jnp
+import ml_dtypes
+import numpy as np
+
+
+def _dtype_min_max(dtype, out_dtype=np.float32):
+    """Return (min, max) representable values for dtype, cast to out_dtype.
+
+    Uses ml_dtypes.finfo for floating-point types (including FP8) and
+    np.iinfo for integer types.
+    """
+    info = np.iinfo(dtype) if np.issubdtype(dtype, np.integer) else ml_dtypes.finfo(dtype)
+    return np.array(info.min, dtype=out_dtype), np.array(info.max, dtype=out_dtype)
 
 
 def compute_expected_qdq_dense_output(test_input, calib_data, weights, weight_dtype, activation_dtype, dynamic):
@@ -23,56 +33,43 @@ def compute_expected_qdq_dense_output(test_input, calib_data, weights, weight_dt
     Returns:
         tuple: (expected_output, activation_scale, weight_scale)
     """
-    orig_dtype = jnp.float32
+    # Convert inputs to float32 numpy arrays to decouple from JAX
+    test_input = np.asarray(test_input, dtype=np.float32)
+    calib_data = np.asarray(calib_data, dtype=np.float32)
+    weights = np.asarray(weights, dtype=np.float32)
 
-    def get_min_max_values(dtype):
-        if jnp.issubdtype(dtype, jnp.integer):
-            max = jnp.array(jnp.iinfo(dtype).max)
-            min = jnp.array(jnp.iinfo(dtype).min)
-        else:
-            max = jnp.finfo(dtype).max
-            min = jnp.finfo(dtype).min
-        return min.astype(orig_dtype), max.astype(orig_dtype)
-
-    w_min, w_max = get_min_max_values(weight_dtype)
-    a_min, a_max = get_min_max_values(activation_dtype)
+    w_min, w_max = _dtype_min_max(weight_dtype)
+    a_min, a_max = _dtype_min_max(activation_dtype)
 
     # Compute scales
     input_samples = test_input if dynamic else calib_data
     # Activation scale: for integer dtypes use asymmetric range-based formula
-    if jnp.issubdtype(activation_dtype, jnp.integer):
-        int_max = jnp.array(jnp.iinfo(activation_dtype).max).astype(orig_dtype)
-        int_min = jnp.array(jnp.iinfo(activation_dtype).min).astype(orig_dtype)
-        input_max = jnp.max(input_samples).astype(orig_dtype)
-        input_min = jnp.min(input_samples).astype(orig_dtype)
-        a_scale = (input_max - input_min) / (int_max - int_min)
+    if np.issubdtype(activation_dtype, np.integer):
+        input_max = np.max(input_samples)
+        input_min = np.min(input_samples)
+        a_scale = np.float32((input_max - input_min) / (a_max - a_min))
         # zero point is used for asymmetric quantization
-        a_zero_point = jnp.round(int_min - input_min / a_scale)
+        a_zero_point = np.round(a_min - input_min / a_scale)
     else:
-        a_scale = jnp.max(jnp.abs(input_samples)) / a_max
+        a_scale = np.float32(np.max(np.abs(input_samples)) / a_max)
         a_zero_point = None
 
-    w_scale = jnp.max(jnp.abs(weights)) / w_max
+    w_scale = np.float32(np.max(np.abs(weights)) / w_max)
 
-    # QDQ weights (with clamp)
-    qdq_weights = jax.lax.clamp(w_min, weights / w_scale, w_max).astype(weight_dtype)
-    qdq_weights = qdq_weights.astype(orig_dtype) * w_scale
+    # QDQ weights (with clip)
+    qdq_weights = np.clip(weights / w_scale, w_min, w_max).astype(np.float32) * w_scale
 
-    # QDQ input (with clamp to activation range)
-    if jnp.issubdtype(activation_dtype, jnp.integer):
+    # QDQ input (with clip to activation range)
+    if np.issubdtype(activation_dtype, np.integer):
         # asymmetric integer quantization: round(x/scale) + zero_point
-        val = jnp.round(test_input / a_scale) + a_zero_point
-        val = jnp.clip(val, a_min.astype(val.dtype), a_max.astype(val.dtype)).astype(activation_dtype)
-        qdq_input = (val.astype(orig_dtype) - a_zero_point) * a_scale
+        val = np.round(test_input / a_scale) + a_zero_point
+        val = np.clip(val, a_min, a_max).astype(activation_dtype)
+        qdq_input = (val.astype(np.float32) - a_zero_point) * a_scale
     else:
-        qdq_input = jax.lax.clamp(
-            a_min.astype(test_input.dtype),
-            test_input / a_scale,
-            a_max.astype(test_input.dtype),
-        ).astype(activation_dtype)
-        qdq_input = qdq_input.astype(orig_dtype) * a_scale
+        qdq_input = np.clip(test_input / a_scale, a_min, a_max).astype(activation_dtype)
+        qdq_input = qdq_input.astype(np.float32) * a_scale
 
     # Compute output
-    output = jnp.matmul(qdq_input, qdq_weights)
+    output = np.matmul(qdq_input, qdq_weights)
 
     return output, a_scale, w_scale
