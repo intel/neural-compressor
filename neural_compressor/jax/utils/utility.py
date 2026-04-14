@@ -274,9 +274,7 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
         raise ValueError(f"Unsupported dtype: {dtype}")
 
 
-def get_q_params(
-    orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32, asymmetric=False, emulate_asymmetric=False
-):
+def get_q_params(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32, asymmetric=False):
     """Compute quantization scale and zero-point for a weight tensor.
 
     Args:
@@ -284,7 +282,6 @@ def get_q_params(
         dtype (jnp.dtype): Target quantized dtype.
         compute_dtype (jnp.dtype): dtype for scale computation.
         asymmetric (bool): Whether to compute asymmetric quantization parameters.
-        emulate_asymmetric (bool): Whether to emulate asymmetric quantization using symmetric quantization with zero_poin=0
 
     Returns:
         Tuple[jnp.ndarray, Optional[jnp.ndarray]]: Scale and zero-point. Zero-point is `None` for floating-point
@@ -303,7 +300,7 @@ def get_q_params(
         """
         if 0 in orig_weight.shape:
             # For empty tensor, return scale as 1.0
-            return jnp.array(1.0, dtype=compute_dtype), jnp.array(0.0, dtype=compute_dtype)
+            return jnp.array(1.0, dtype=compute_dtype), jnp.array(0.0, dtype=jnp.int32)
         orig_min = jnp.min(orig_weight).astype(compute_dtype)
         orig_max = jnp.max(orig_weight).astype(compute_dtype)
         int_min = jnp.array(jnp.iinfo(dtype).min).astype(compute_dtype)
@@ -316,8 +313,6 @@ def get_q_params(
         return get_scale(orig_weight, dtype, compute_dtype), None
     elif jnp.issubdtype(dtype, jnp.integer):
         if asymmetric:
-            if emulate_asymmetric:
-                return get_scale(orig_weight, dtype, compute_dtype), jnp.array((0,), dtype=jnp.int32)
             return integer_get_q_params(orig_weight)
         else:
             return get_scale(orig_weight, dtype, compute_dtype), None

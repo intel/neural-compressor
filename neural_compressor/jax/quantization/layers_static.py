@@ -435,10 +435,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
 
         w_scale, _ = get_q_params(self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=False)
         self.w_scale.assign(w_scale)
-        if self._is_int8:
-            _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value)
-        else:
-            _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value)
+        _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value)
         self._kernel_quant.assign(_kernel_quant)
         self._tracker.lock()
 
