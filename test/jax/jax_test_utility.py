@@ -24,20 +24,18 @@ def compute_expected_qdq_dense_output(test_input, calib_data, weights, weight_dt
         tuple: (expected_output, activation_scale, weight_scale)
     """
     orig_dtype = jnp.float32
-    # Use iinfo for integer dtypes and finfo for floating dtypes
-    if jnp.issubdtype(weight_dtype, jnp.integer):
-        w_max = jnp.array(jnp.iinfo(weight_dtype).max).astype(orig_dtype)
-        w_min = jnp.array(jnp.iinfo(weight_dtype).min).astype(orig_dtype)
-    else:
-        w_max = jnp.finfo(weight_dtype).max.astype(orig_dtype)
-        w_min = jnp.finfo(weight_dtype).min.astype(orig_dtype)
 
-    if jnp.issubdtype(activation_dtype, jnp.integer):
-        a_max = jnp.array(jnp.iinfo(activation_dtype).max).astype(orig_dtype)
-        a_min = jnp.array(jnp.iinfo(activation_dtype).min).astype(orig_dtype)
-    else:
-        a_max = jnp.finfo(activation_dtype).max.astype(orig_dtype)
-        a_min = jnp.finfo(activation_dtype).min.astype(orig_dtype)
+    def get_min_max_values(dtype):
+        if jnp.issubdtype(dtype, jnp.integer):
+            max = jnp.array(jnp.iinfo(dtype).max)
+            min = jnp.array(jnp.iinfo(dtype).min)
+        else:
+            max = jnp.finfo(dtype).max
+            min = jnp.finfo(dtype).min
+        return min.astype(orig_dtype), max.astype(orig_dtype)
+
+    w_min, w_max = get_min_max_values(weight_dtype)
+    a_min, a_max = get_min_max_values(activation_dtype)
 
     # Compute scales
     input_samples = test_input if dynamic else calib_data

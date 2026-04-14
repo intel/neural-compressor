@@ -87,17 +87,17 @@ def verify_model(model, calib_tensor, test_input):
         test_input = x  # For next layer input
 
 
-@pytest.mark.parametrize("weight_dtype", dtypes_list, ids=[f"(weight_dtype={dtype})" for dtype in dtypes_list])
-@pytest.mark.parametrize("activation_dtype", dtypes_list, ids=[f"(activation_dtype={dtype})" for dtype in dtypes_list])
-@pytest.mark.parametrize("dynamic", [False, True], ids=["(dynamic=False)", "(dynamic=True)"])
-@pytest.mark.parametrize("const_scale", [False, True], ids=["(const_scale=False)", "(const_scale=True)"])
-@pytest.mark.parametrize("const_weight", [False, True], ids=["(const_weight=False)", "(const_weight=True)"])
-def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, dynamic, const_scale, const_weight):
+@pytest.mark.parametrize("weight_dtype", dtypes_list, ids=[f"weight_dtype={dtype}" for dtype in dtypes_list])
+@pytest.mark.parametrize("activation_dtype", dtypes_list, ids=[f"activation_dtype={dtype}" for dtype in dtypes_list])
+@pytest.mark.parametrize("dynamic", [False, True], ids=["dynamic=False", "dynamic=True"])
+@pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
+@pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
+def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, dynamic, c_scale, c_weight):
     """Test accuracy on a simple linear model: y = 2x (no bias)."""
 
     if weight_dtype == "int8" or activation_dtype == "int8":
         if weight_dtype != activation_dtype:
-            return  # Mixed quantization with floating-point and integer dtypes is not supported.
+            pytest.skip("Mixed quantization with floating-point and integer dtypes is not supported.")
 
     # Create single layer linear model
     model = keras.Sequential([keras.layers.Dense(1, activation="linear", input_shape=(1,), use_bias=False)])
@@ -116,16 +116,16 @@ def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, dynamic, c
         config = DynamicQuantConfig(
             weight_dtype=weight_dtype,
             activation_dtype=activation_dtype,
-            const_scale=const_scale,
-            const_weight=const_weight,
+            const_scale=c_scale,
+            const_weight=c_weight,
         )
         q_model = quantize_model(model, config)
     else:
         config = StaticQuantConfig(
             weight_dtype=weight_dtype,
             activation_dtype=activation_dtype,
-            const_scale=const_scale,
-            const_weight=const_weight,
+            const_scale=c_scale,
+            const_weight=c_weight,
         )
         q_model = quantize_model(model, config, calib_function)
     test_input = jnp.array([[1.0], [2.0], [2.0], [0.0], [-1.0]])
