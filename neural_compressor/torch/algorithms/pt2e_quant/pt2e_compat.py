@@ -14,12 +14,8 @@
 """Compatibility imports for PT2E quantization APIs."""
 
 from importlib import import_module
-from typing import Optional
 
 from neural_compressor.torch.utils import TORCH_VERSION_2_11_0, get_torch_version
-
-_PT2E_MODULES = None
-_PT2E_IMPORT_ERROR: Optional[ModuleNotFoundError] = None
 
 
 def _load_pt2e_modules():
@@ -41,67 +37,19 @@ def _load_pt2e_modules():
     return pt2e_module, quantizer_module, xnnpack_module, ao_quantization_module
 
 
-def _get_pt2e_modules():
-    global _PT2E_MODULES
-    global _PT2E_IMPORT_ERROR
+_PT2E_MODULE, xiq, xpq, _AO_QUANTIZATION_MODULE = _load_pt2e_modules()
 
-    if _PT2E_MODULES is None:
-        try:
-            _PT2E_MODULES = _load_pt2e_modules()
-            _PT2E_IMPORT_ERROR = None
-        except ModuleNotFoundError as exc:
-            _PT2E_IMPORT_ERROR = exc
-            raise
-    return _PT2E_MODULES
-
-
-def is_pt2e_available():
-    try:
-        _get_pt2e_modules()
-    except ModuleNotFoundError:
-        return False
-    return True
-
-
-def get_pt2e_import_error():
-    try:
-        _get_pt2e_modules()
-    except ModuleNotFoundError as exc:
-        return str(exc)
-    return None
-
-
-def __getattr__(name):
-    if name in {
-        "prepare_pt2e",
-        "convert_pt2e",
-        "move_exported_model_to_eval",
-        "xiq",
-        "xpq",
-        "X86InductorQuantizer",
-        "QuantizationConfig",
-    }:
-        pt2e_module, xiq_module, xpq_module, ao_quantization_module = _get_pt2e_modules()
-        attr_mapping = {
-            "prepare_pt2e": pt2e_module.prepare_pt2e,
-            "convert_pt2e": pt2e_module.convert_pt2e,
-            "move_exported_model_to_eval": (
-                pt2e_module.move_exported_model_to_eval
-                if get_torch_version() >= TORCH_VERSION_2_11_0
-                else ao_quantization_module.move_exported_model_to_eval
-            ),
-            "xiq": xiq_module,
-            "xpq": xpq_module,
-            "X86InductorQuantizer": xiq_module.X86InductorQuantizer,
-            "QuantizationConfig": xiq_module.QuantizationConfig,
-        }
-        return attr_mapping[name]
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
-
+prepare_pt2e = _PT2E_MODULE.prepare_pt2e
+convert_pt2e = _PT2E_MODULE.convert_pt2e
+move_exported_model_to_eval = (
+    _PT2E_MODULE.move_exported_model_to_eval
+    if get_torch_version() >= TORCH_VERSION_2_11_0
+    else _AO_QUANTIZATION_MODULE.move_exported_model_to_eval
+)
+X86InductorQuantizer = xiq.X86InductorQuantizer
+QuantizationConfig = xiq.QuantizationConfig
 
 __all__ = [
-    "is_pt2e_available",
-    "get_pt2e_import_error",
     "prepare_pt2e",
     "convert_pt2e",
     "move_exported_model_to_eval",

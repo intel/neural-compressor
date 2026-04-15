@@ -14,14 +14,5 @@
 """The PT2E-related modules."""
 
 
+from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
 from .save_load import save, load
-
-__all__ = ["W8A8PT2EQuantizer", "save", "load"]
-
-
-def __getattr__(name):
-    if name == "W8A8PT2EQuantizer":
-        from neural_compressor.torch.algorithms.pt2e_quant.core import W8A8PT2EQuantizer
-
-        return W8A8PT2EQuantizer
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
