@@ -87,7 +87,7 @@ stages:
 
           - script: |
               cd ${BUILD_SOURCESDIRECTORY}
-              pip install -U pip setuptools
+              pip install -U pip setuptools uv
               python setup.py install pt
               cd ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/scripts
               bash ut/collect_log_3x.sh 3x_pt_hpu
