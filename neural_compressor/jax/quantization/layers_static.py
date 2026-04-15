@@ -249,12 +249,12 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
                 if hasattr(self, "_layers") and self.input_observer in self._layers:
                     self._layers.remove(self.input_observer)
             # Set call to pass-through/original
-            if hasattr(self, 'call'):
+            if hasattr(self, "call"):
                 # pass through
                 pass
             self._const_variables = []
             self._tracker.lock()
-            return        
+            return
         if hasattr(self, "_layers") and hasattr(self, "input_observer"):
             if self.input_observer in self._layers:
                 self._layers.remove(self.input_observer)
@@ -464,7 +464,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
                 if hasattr(self, "_layers") and self.input_observer in self._layers:
                     self._layers.remove(self.input_observer)
             # Set call to pass-through/original
-            if hasattr(self, 'call'):
+            if hasattr(self, "call"):
                 pass
             self._const_variables = []
             self._tracker.lock()
