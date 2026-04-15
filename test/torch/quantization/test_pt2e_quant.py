@@ -25,6 +25,9 @@ from neural_compressor.torch.utils import (
 
 torch.manual_seed(0)
 
+PT2E_DEPS_AVAILABLE = pt2e_compat.is_pt2e_available()
+PT2E_SKIP_REASON = pt2e_compat.get_pt2e_import_error() or "PT2E quantization dependencies are unavailable."
+
 
 @pytest.fixture
 def force_not_import_ipex(monkeypatch):
@@ -36,6 +39,10 @@ def force_not_import_ipex(monkeypatch):
     monkeypatch.setattr("neural_compressor.torch.export.pt2e_export.is_ipex_imported", _is_ipex_imported)
 
 
+@pytest.mark.skipif(
+    get_torch_version() >= TORCH_VERSION_2_11_0 and not PT2E_DEPS_AVAILABLE,
+    reason=PT2E_SKIP_REASON,
+)
 class TestPT2EQuantization:
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
@@ -373,6 +380,7 @@ class TestPT2EQuantization:
         assert out is not None
 
     @pytest.mark.skipif(get_torch_version() < TORCH_VERSION_2_11_0, reason="Requires torch>=2.11")
+    @pytest.mark.skipif(not PT2E_DEPS_AVAILABLE, reason=PT2E_SKIP_REASON)
     def test_pt2e_compat_uses_torchao_on_torch_2_11_plus(self, force_not_import_ipex):
         pt2e_module, quantizer_module, xnnpack_module = pt2e_compat._load_pt2e_modules()
 
