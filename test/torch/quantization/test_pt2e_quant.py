@@ -374,8 +374,8 @@ class TestPT2EQuantization:
 
     @pytest.mark.skipif(get_torch_version() < TORCH_VERSION_2_11_0, reason="Requires torch>=2.11")
     def test_pt2e_compat_uses_torchao_on_torch_2_11_plus(self, force_not_import_ipex):
-        pt2e_module, quantizer_module, xnnpack_module = pt2e_compat._load_pt2e_modules()
+        pt2e_module, quantizer_module, xnnpack_module, _ = pt2e_compat._load_pt2e_modules()
 
         assert pt2e_module.__name__ == "torchao.quantization.pt2e"
         assert quantizer_module.__name__ == "torchao.quantization.pt2e.quantizer.x86_inductor_quantizer"
-        assert xnnpack_module.__name__ == "torchao.quantization.pt2e.quantizer.xnnpack_quantizer"
+        assert xnnpack_module.__name__ == "torchao.quantization.pt2e.quantizer"

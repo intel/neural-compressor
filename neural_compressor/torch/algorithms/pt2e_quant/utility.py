@@ -22,10 +22,14 @@ from torch.ao.quantization.observer import (
     PerChannelMinMaxObserver,
     PlaceholderObserver,
 )
-from torch.ao.quantization.quantizer import QuantizationSpec
 
 from neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat import QuantizationConfig, X86InductorQuantizer, xiq
-from neural_compressor.torch.utils import GT_OR_EQUAL_TORCH_VERSION_2_5, logger
+from neural_compressor.torch.utils import GT_OR_EQUAL_TORCH_VERSION_2_5, TORCH_VERSION_2_11_0, get_torch_version, logger
+
+if get_torch_version() >= TORCH_VERSION_2_11_0:
+    from torchao.quantization.pt2e.quantizer import QuantizationSpec
+else:
+    from torch.ao.quantization.quantizer import QuantizationSpec
 
 
 def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=False) -> QuantizationSpec:

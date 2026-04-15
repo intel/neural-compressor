@@ -133,7 +133,7 @@ class TestPT2ECompat:
         if get_torch_version() >= TORCH_VERSION_2_11_0:
             pytest.skip("Legacy PT2E import path is only available for torch<2.11 in this environment.")
 
-        pt2e_module, quantizer_module, xnnpack_module = pt2e_compat._load_pt2e_modules()
+        pt2e_module, quantizer_module, xnnpack_module, _ = pt2e_compat._load_pt2e_modules()
 
         assert pt2e_module.__name__ == "torch.ao.quantization.quantize_pt2e"
         assert quantizer_module.__name__ == "torch.ao.quantization.quantizer.x86_inductor_quantizer"
@@ -141,11 +141,11 @@ class TestPT2ECompat:
 
     @pytest.mark.skipif(get_torch_version() < TORCH_VERSION_2_11_0, reason="Requires torch>=2.11")
     def test_torchao_imports_for_torch_ge_2_11(self):
-        pt2e_module, quantizer_module, xnnpack_module = pt2e_compat._load_pt2e_modules()
+        pt2e_module, quantizer_module, xnnpack_module, _ = pt2e_compat._load_pt2e_modules()
 
         assert pt2e_module.__name__ == "torchao.quantization.pt2e"
         assert quantizer_module.__name__ == "torchao.quantization.pt2e.quantizer.x86_inductor_quantizer"
-        assert xnnpack_module.__name__ == "torchao.quantization.pt2e.quantizer.xnnpack_quantizer"
+        assert xnnpack_module.__name__ == "torchao.quantization.pt2e.quantizer"
 
     @pytest.mark.skipif(get_torch_version() < TORCH_VERSION_2_11_0, reason="Requires torch>=2.11")
     def test_missing_torchao_fails_fast(self):

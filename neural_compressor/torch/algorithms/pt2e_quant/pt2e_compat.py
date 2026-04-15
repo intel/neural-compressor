@@ -23,7 +23,7 @@ def _load_pt2e_modules():
         try:
             pt2e_module = import_module("torchao.quantization.pt2e")
             quantizer_module = import_module("torchao.quantization.pt2e.quantizer.x86_inductor_quantizer")
-            xnnpack_module = import_module("torchao.quantization.pt2e.quantizer.xnnpack_quantizer")
+            xnnpack_module = import_module("torchao.quantization.pt2e.quantizer")
             ao_quantization_module = None
         except ModuleNotFoundError as exc:
             raise ModuleNotFoundError(
@@ -39,8 +39,13 @@ def _load_pt2e_modules():
 
 _PT2E_MODULE, xiq, xpq, _AO_QUANTIZATION_MODULE = _load_pt2e_modules()
 
-prepare_pt2e = _PT2E_MODULE.prepare_pt2e
-convert_pt2e = _PT2E_MODULE.convert_pt2e
+if get_torch_version() >= TORCH_VERSION_2_11_0:
+    _PT2E_QUANTIZE_MODULE = import_module("torchao.quantization.pt2e.quantize_pt2e")
+    prepare_pt2e = _PT2E_QUANTIZE_MODULE.prepare_pt2e
+    convert_pt2e = _PT2E_QUANTIZE_MODULE.convert_pt2e
+else:
+    prepare_pt2e = _PT2E_MODULE.prepare_pt2e
+    convert_pt2e = _PT2E_MODULE.convert_pt2e
 move_exported_model_to_eval = (
     _PT2E_MODULE.move_exported_model_to_eval
     if get_torch_version() >= TORCH_VERSION_2_11_0

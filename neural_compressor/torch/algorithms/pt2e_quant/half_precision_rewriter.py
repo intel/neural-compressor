@@ -222,14 +222,23 @@ def _parse_node_candidate_set_from_user_config(config, gm):
     op_type_configs, op_name_configs = config._get_op_name_op_type_config()
     op_type_filters = []
     op_name_filters = []
+
+    def _get_module_type_filter(module_type):
+        def module_type_filter(n):
+            nn_module_stack = n.meta.get("nn_module_stack", {})
+            types = [module_t for _, module_t in nn_module_stack.values()]
+            return module_type in types
+
+        return module_type_filter
+
     for op_type_name, config in op_type_configs.items():  # pragma: no cover
         op_type = getattr(torch.nn, op_type_name)
         if config.act_dtype in ["fp16", "bf16"]:  # pragma: no cover
-            filter = xpq._get_module_type_filter(op_type)
+            filter = _get_module_type_filter(op_type)
             op_type_filters.append(filter)
     for op_name, config in op_name_configs.items():
         if config.act_dtype in ["fp16", "bf16"]:  # pragma: no cover
-            filter = xpq._get_module_name_filter(op_name)
+            filter = xpq.get_module_name_filter(op_name)
             op_name_filters.append(filter)
     node_set_from_user_config = set()
     all_filters = op_type_filters + op_name_filters
