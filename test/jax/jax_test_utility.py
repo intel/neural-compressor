@@ -37,36 +37,36 @@ def compute_expected_qdq_dense_output(
     calib_data = np.asarray(calib_data, dtype=model_dtype)
     weights = np.asarray(weights, dtype=model_dtype)
 
-    w_min, w_max = _dtype_min_max(weight_dtype, out_dtype=model_dtype)
-    a_min, a_max = _dtype_min_max(activation_dtype, out_dtype=model_dtype)
+    w_dtype_min, w_dtype_max = _dtype_min_max(weight_dtype, out_dtype=model_dtype)
+    a_dtype_min, a_dtype_max = _dtype_min_max(activation_dtype, out_dtype=model_dtype)
 
     # Compute scales
     input_samples = test_input if dynamic else calib_data
     if np.issubdtype(activation_dtype, np.integer):
         input_max = np.max(input_samples)
         input_min = np.min(input_samples)
-        a_scale = np.array((input_max - input_min) / (a_max - a_min), dtype=model_dtype)
-        a_zero_point = np.round(a_min - input_min / a_scale)
+        a_scale = np.array((input_max - input_min) / (a_dtype_max - a_dtype_min), dtype=model_dtype)
+        a_zero_point = np.round(a_dtype_min - input_min / a_scale)
     else:
-        a_scale = np.array(np.max(np.abs(input_samples)) / a_max, dtype=model_dtype)
+        a_scale = np.array(np.max(np.abs(input_samples)) / a_dtype_max, dtype=model_dtype)
         a_zero_point = None
 
-    w_scale = np.array(np.max(np.abs(weights)) / w_max, dtype=model_dtype)
+    w_scale = np.array(np.max(np.abs(weights)) / w_dtype_max, dtype=model_dtype)
 
     # QDQ weights
     if np.issubdtype(weight_dtype, np.integer):
-        qdq_weights = np.clip(np.round(weights / w_scale), w_min, w_max).astype(weight_dtype)
+        qdq_weights = np.clip(np.round(weights / w_scale), w_dtype_min, w_dtype_max).astype(weight_dtype)
     else:
-        qdq_weights = np.clip(weights / w_scale, w_min, w_max).astype(weight_dtype)
+        qdq_weights = np.clip(weights / w_scale, w_dtype_min, w_dtype_max).astype(weight_dtype)
     qdq_weights = qdq_weights.astype(model_dtype) * w_scale
 
     # QDQ input
     if np.issubdtype(activation_dtype, np.integer):
         val = np.round(test_input / a_scale) + a_zero_point
-        val = np.clip(val, a_min, a_max).astype(activation_dtype)
+        val = np.clip(val, a_dtype_min, a_dtype_max).astype(activation_dtype)
         qdq_input = (val.astype(model_dtype) - a_zero_point) * a_scale
     else:
-        qdq_input = np.clip(test_input / a_scale, a_min, a_max).astype(activation_dtype)
+        qdq_input = np.clip(test_input / a_scale, a_dtype_min, a_dtype_max).astype(activation_dtype)
         qdq_input = qdq_input.astype(model_dtype) * a_scale
 
     # Compute output
