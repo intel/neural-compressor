@@ -96,20 +96,24 @@ def verify_model(model, calib_tensor, test_input):
     _dtype_pairs,
     ids=[f"weight_dtype={w}-activation_dtype={a}" for w, a in _dtype_pairs],
 )
+@pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
 @pytest.mark.parametrize("dynamic", [False, True], ids=["dynamic=False", "dynamic=True"])
 @pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
 @pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
-def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, dynamic, c_scale, c_weight):
+def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, model_dtype, dynamic, c_scale, c_weight):
     """Test accuracy on a simple linear model: y = 2x (no bias)."""
 
     # Create single layer linear model
-    model = keras.Sequential([keras.layers.Dense(1, activation="linear", input_shape=(1,), use_bias=False)])
+    model_dtype_jnp = jnp.dtype(model_dtype)
+    model = keras.Sequential(
+        [keras.layers.Dense(1, activation="linear", input_shape=(1,), use_bias=False, dtype=model_dtype_jnp)]
+    )
 
-    calib_tensor = jnp.array([[2.0], [1.0], [3.0]])
+    calib_tensor = jnp.array([[2.0], [1.0], [3.0]], dtype=model_dtype_jnp)
 
     # Initialize and set known weights
-    _ = model(jnp.array([[1.0]]))
-    weights = jnp.array([[2.0]])
+    _ = model(jnp.array([[1.0]], dtype=model_dtype_jnp))
+    weights = jnp.array([[2.0]], dtype=model_dtype_jnp)
     model.layers[0].set_weights((weights,))  # y = 2x
 
     def calib_function(model):
@@ -131,9 +135,15 @@ def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, dynamic, c
             const_weight=c_weight,
         )
         q_model = quantize_model(model, config, calib_function)
-    test_input = jnp.array([[1.0], [2.0], [2.0], [0.0], [-1.0]])
+    test_input = jnp.array([[1.0], [2.0], [2.0], [0.0], [-1.0]], dtype=model_dtype_jnp)
     expected_output, expected_activation_scale, expected_weight_scale = compute_expected_qdq_dense_output(
-        test_input, calib_tensor, weights, dtype_mapping[weight_dtype], dtype_mapping[activation_dtype], dynamic=dynamic
+        test_input,
+        calib_tensor,
+        weights,
+        dtype_mapping[weight_dtype],
+        dtype_mapping[activation_dtype],
+        dynamic=dynamic,
+        model_dtype=model_dtype,
     )
 
     quantized_output = jax.jit(q_model)(test_input)
