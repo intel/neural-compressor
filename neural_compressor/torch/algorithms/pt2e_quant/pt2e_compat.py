@@ -18,7 +18,6 @@ from typing import Optional
 
 from neural_compressor.torch.utils import TORCH_VERSION_2_11_0, get_torch_version
 
-
 _PT2E_MODULES = None
 _PT2E_IMPORT_ERROR: Optional[ModuleNotFoundError] = None
 
