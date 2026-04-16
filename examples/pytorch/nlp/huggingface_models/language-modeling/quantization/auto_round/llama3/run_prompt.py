@@ -10,7 +10,8 @@ quantized_model_path=args.saved_model_path
 
 model = AutoModelForCausalLM.from_pretrained(
     quantized_model_path,
-    device_map="auto"
+    device_map="auto",
+    dtype="bfloat16",
 )
 
 tokenizer = AutoTokenizer.from_pretrained(quantized_model_path)
