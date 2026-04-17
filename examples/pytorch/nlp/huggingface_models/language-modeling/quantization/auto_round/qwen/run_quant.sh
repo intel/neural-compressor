@@ -4,6 +4,7 @@ set -e
 MODEL=""
 TARGET=""
 OUTPUT_DIR=""
+EXPORT_FORMAT="auto_round"
 STATIC_KV_DTYPE="None"
 STATIC_ATTENTION_DTYPE="None"
 
