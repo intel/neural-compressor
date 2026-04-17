@@ -13,7 +13,6 @@
 # limitations under the License.
 """HQQ Quantizer."""
 
-
 from typing import Callable, List, Optional, Tuple
 
 import torch

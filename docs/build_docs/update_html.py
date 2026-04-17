@@ -31,9 +31,7 @@ def update_version_link(version, folder_name, index_file):
               <a href="{}versions.html">{}▼</a>
               <p>Click link above to switch version</p>
             </div>
-<div role="search">\n""".format(
-            index_path, folder_name
-        )
+<div role="search">\n""".format(index_path, folder_name)
         # print(index_buf.find(key_str))
         index_buf = index_buf.replace(key_str, version_list)
         # print(index_buf)
