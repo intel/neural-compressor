@@ -1,4 +1,5 @@
 pip install -r requirements.txt
+pip install lm-eval==0.4.10
 pip install setuptools --upgrade
 pip install packaging --upgrade
 pip install -U "huggingface_hub[cli]"
