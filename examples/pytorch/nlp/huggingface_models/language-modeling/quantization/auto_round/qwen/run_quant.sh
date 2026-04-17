@@ -12,6 +12,7 @@ usage() {
   echo "  --model      Hugging Face model ID or local path"
   echo "  -t           quantization target (e.g. mxfp8, mxfp4)"
   echo "  --output_dir output directory for quantized model"
+  echo "  -f           quantize model export_format (defailt: auto_round)"
   echo "  -kv          Data type for static kv cache (default: None)"
   echo "  -attn        Data type for static attention cache (default: None)"
   echo ""
@@ -32,6 +33,10 @@ while [[ $# -gt 0 ]]; do
       ;;
     --output_dir)
       OUTPUT_DIR="$2"
+      shift 2
+      ;;
+    -f)
+      EXPORT_FORMAT="$2"
       shift 2
       ;;
     -kv)
@@ -59,7 +64,7 @@ done
 python quantize.py \
   --model "$MODEL" \
   -t "$TARGET" \
-  --use_autoround_format \
+  --export_format "$EXPORT_FORMAT" \
   --output_dir "$OUTPUT_DIR" \
   $( [ "$STATIC_KV_DTYPE" != "None" ] && echo "--static_kv_dtype $STATIC_KV_DTYPE" ) \
   $( [ "$STATIC_ATTENTION_DTYPE" != "None" ] && echo "--static_attention_dtype $STATIC_ATTENTION_DTYPE" )
