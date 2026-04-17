@@ -167,6 +167,7 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         self.supports_masking = True
         self._is_quantized = False
         self.const_scale = const_scale
+        self.show_warning = True
         if const_scale:
             self._const_variables = ["a_scale"]
             if asymmetric:
@@ -224,10 +225,11 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             arange, self.activation_dtype, self.compute_dtype, asymmetric=self._is_asymmetric
         )
         if jnp.isinf(a_scale).any().item():
-            logger.warning(
-                f"Activation scale is inf for layer {self._path}. This may be caused by missing calibration data. "
-                "Please make sure to run calibration with representative dataset."
-            )
+            if self.show_warning:
+                logger.warning(
+                    f"Activation scale is inf for layer {self._path}. This may be caused by missing calibration data. "
+                    "Please make sure to run calibration with representative dataset."
+                )
             self._is_quantized = False
             self._tracker.lock()
             return
@@ -235,6 +237,20 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         if self._is_asymmetric:
             self.a_zero_point.assign(a_zero_point)
         self._tracker.lock()
+
+    def is_calibrated(self):
+        """Check if the layer has been properly calibrated.
+
+        Returns:
+            bool: True if scale are set to valid values, False otherwise.
+        """
+        # 0 scale value indicates that calibration not happen for given layer
+        # cause could be missing proper calibration data or particular instance is not used due to model dataflow
+        return not np.all(self.a_scale.value == 0)  # TODO here np instead of jnp
+
+    def switch_warning(self, param):
+        """Enable or disable warnings."""
+        self.show_warning = param
 
     def post_quantization_cleanup(self):
         """Remove observers and finalize quantized call path.
@@ -621,7 +637,11 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
             None: Updates QDQ helpers with calibrated values.
         """
         self.q_qdq.convert()
+        show_warning = not self.q_qdq.is_calibrated()
         self.k_qdq.convert()
+        # Disable warning for activation when query is calibrated,
+        # as when use_dot_product_attention path is used, activation is not used.
+        self.a_qdq.switch_warning(show_warning)
         self.a_qdq.convert()
         self.v_qdq.convert()
 
@@ -678,12 +698,11 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
             )
 
         # Determine whether to use dot-product attention
-        # use_dot_product_attention = not (
-        #     self._dropout > 0.0
-        #     or return_attention_scores
-        #     or (len(query.shape) != 4)
-        # )
-        use_dot_product_attention = False  # TODO Add dot_product_attention support
+        use_dot_product_attention = not (
+            self._dropout > 0.0
+            or return_attention_scores
+            or (len(query.shape) != 4)
+        )
 
         if use_dot_product_attention:
             if attention_mask is not None:
@@ -700,6 +719,9 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
                     )
                 attention_mask = ops.cast(attention_mask, dtype="bool")
             # Directly compute the attention output using dot-product attention
+            query = self.q_qdq(query)
+            key = self.k_qdq(key)
+            value = self.v_qdq(value)
             attention_output = ops.dot_product_attention(
                 query=query,
                 key=key,
