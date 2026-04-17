@@ -14,7 +14,7 @@ usage() {
   echo "  -kv datatype for kv cache (auto, fp8)"
   echo "  -attn        Data type for static attention cache (default: None)"
   echo "  --output_dir output directory for quantized model"
-  echo "  -f           quantize model export_format (defailt: auto_round)"
+  echo "  -f           quantize model export_format (default: auto_round)"
   exit 1
 }
 

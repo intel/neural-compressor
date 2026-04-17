@@ -12,7 +12,7 @@ usage() {
   echo "  --model      Hugging Face model ID or local path"
   echo "  -t           quantization target (e.g. mxfp8, mxfp4)"
   echo "  --output_dir output directory for quantized model"
-  echo "  -f           quantize model export_format (defailt: auto_round)"
+  echo "  -f           quantize model export_format (default: auto_round)"
   echo "  -kv          Data type for static kv cache (default: None)"
   echo "  -attn        Data type for static attention cache (default: None)"
   echo ""
