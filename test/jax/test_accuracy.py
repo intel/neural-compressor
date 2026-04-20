@@ -124,7 +124,7 @@ def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, model_dtyp
         kernel = layer.get_weights()[0]  # These dense layers only have kernel weights
         shape = kernel.shape
         num_values = reduce(lambda x, y: x * y, shape)
-        weights = jnp.arange(0, 1, 1 / num_values) + i
+         weights = jnp.linspace(-1, 1, num_values) + 0.1 * (i + 1)
         weights = weights.reshape(shape)
         layer.set_weights((weights,))
         all_weights.append(weights)
