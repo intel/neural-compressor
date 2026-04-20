@@ -201,6 +201,14 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         """
         return self.call_asymmetric(inputs, self._fixed_a_scale, self._fixed_a_zero_point)
 
+    def post_quantization_cleanup(self):
+        """Finalize dynamic quantization with no extra cleanup.
+
+        Returns:
+            None: Keeps the layer ready for inference.
+        """
+        pass
+
 
 class QDynamicDenseMixin(SaveableLayerMixin):
     """Mixin that adds dynamic quantization to dense-like layers."""
@@ -271,16 +279,22 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         Returns:
             None: Cleans up original weights.
         """
+        if not hasattr(self, "_kernel"):
+            # post_quantization_cleanup was already called before. Cleanup is done
+            return
+
         self._tracker.unlock()
         self._trainable_variables.remove(self._kernel)
         del self._kernel
 
-        # convert variables to attributes (const) if needed
-        for name in self._const_variables:
-            var = getattr(self, name)
-            value = jnp.array(var.value)
-            self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
-            setattr(self, name, value)
+        model_is_during_load = self.w_scale == 0.0
+        if not model_is_during_load:
+            # convert variables to attributes (const) if needed
+            for name in self._const_variables:
+                var = getattr(self, name)
+                value = jnp.array(var.value)
+                self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+                setattr(self, name, value)
 
         self._tracker.lock()
 

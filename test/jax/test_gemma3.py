@@ -125,3 +125,37 @@ def test_image_recognition(colva_beach_sq, quantization_dtype, dynamic):
     elements_in_the_picture = ["beach", "chair", "tree", "building", "sea"]
     matches = sum(1 for element in elements_in_the_picture if element in answer.lower())
     assert matches >= 3, f"Expected at least 3 elements from {elements_in_the_picture} in answer (found {matches})."
+
+
+def test_static_quantization_with_incomplete_calibration(random_string, colva_beach_sq, quantization_dtype):
+    model_dtype = "bfloat16"
+    gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_4b-v1", model_dtype)
+
+    # Run calibration without image in input, so vision layer won't activate during calibration
+    def calib_text_fn(model):
+        _ = model.generate(random_string, max_length=100)
+
+    config = StaticQuantConfig(
+        weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=False, const_weight=False
+    )
+    gemma_q = quantize_model(gemma, config, calib_text_fn)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
+        keras.saving.save_model(gemma_q, save_path)
+        gemma_q = keras.saving.load_model(save_path)
+
+    answer = gemma_q.generate(
+        {
+            "images": colva_beach_sq,
+            "prompts": "Enumerate all elements in the picture: <start_of_image>?",
+        },
+        max_length=500,
+        strip_prompt=True,
+    )
+    print(f"Gemma answer: {answer}")
+    assert len(answer) > 0
+
+    elements_in_the_picture = ["beach", "chair", "tree", "building", "sea"]
+    matches = sum(1 for element in elements_in_the_picture if element in answer.lower())
+    assert matches >= 3, f"Expected at least 3 elements from {elements_in_the_picture} in answer (found {matches})."

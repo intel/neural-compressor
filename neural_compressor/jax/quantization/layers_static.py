@@ -175,7 +175,7 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         self.activation_dtype = activation_dtype
         self._is_asymmetric = asymmetric
         self.supports_masking = True
-        self._is_quantized = False
+        self._is_quantized = None
         self.const_scale = const_scale
         self.fixed_range = fixed_range
         if fixed_range is not None:
@@ -256,6 +256,7 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         self.a_scale.assign(a_scale)
         if self._is_asymmetric:
             self.a_zero_point.assign(a_zero_point)
+        self._is_quantized = True
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
@@ -264,21 +265,38 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         Returns:
             None: Cleans up observers and sets quantized call.
         """
+        if self._is_quantized is None:
+            return
+
         self._tracker.unlock()
+        if self._is_quantized:
+            self.call = self.call_asymmetric if self._is_asymmetric else self.call_symmetric
+
+            model_is_during_load = self.a_scale == 0.0
+            if not model_is_during_load:
+                # convert variables to attributes (const) if needed
+                for name in self._const_variables:
+                    var = getattr(self, name)
+                    value = jnp.array(var.value)
+                    self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+                    setattr(self, name, value)
+        else:
+            self.call = self.call_passthrough
+            attrs_to_remove = [self.a_scale]
+            if self._is_asymmetric:
+                attrs_to_remove.append(self.a_zero_point)
+            for attr in attrs_to_remove:
+                self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not attr]
+                del attr
+            # All variables which names are stored in _const_variables are deleted in above loop
+            # so _const_variables can be cleared
+            self._const_variables.clear()
+
         if hasattr(self, "_layers") and hasattr(self, "input_observer"):
             if self.input_observer in self._layers:
                 self._layers.remove(self.input_observer)
                 del self.input_observer
 
-        # convert some variables to const if needed
-        for name in self._const_variables:
-            var = getattr(self, name)
-            value = jnp.array(var.value)
-            self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
-            setattr(self, name, value)
-
-        self.call = self.call_asymmetric if self._is_asymmetric else self.call_symmetric
-        self._is_quantized = True
         self._tracker.lock()
 
     def call(self, inputs, mask=None):
@@ -370,7 +388,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
         orig.activation_dtype = activation_dtype
         orig.const_scale = const_scale
         orig.const_weight = const_weight
-        orig._is_quantized = False
+        orig._is_quantized = None
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.kernel_shape = orig.kernel.shape
         if const_scale:
@@ -459,7 +477,6 @@ class QStaticDenseMixin(SaveableLayerMixin):
                 f"Activation scale is inf for layer {self._path}. This may be caused by missing calibration data. "
                 "Please make sure to run calibration with representative dataset."
             )
-            self.call = super().call
             self._is_quantized = False
             self._tracker.lock()
             return
@@ -471,6 +488,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
         self.w_scale.assign(w_scale)
         _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value)
         self._kernel_quant.assign(_kernel_quant)
+        self._is_quantized = True
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
@@ -479,26 +497,43 @@ class QStaticDenseMixin(SaveableLayerMixin):
         Returns:
             None: Cleans up observers and original weights.
         """
+        if self._is_quantized is None:
+            return
+
         self._tracker.unlock()
-        if hasattr(self, "_kernel") and self._kernel in self._trainable_variables:
+        if self._is_quantized:
+            self.call = self.call_int8 if self._is_int8 else self.call_fp8
+
             self._trainable_variables.remove(self._kernel)
             del self._kernel
 
-        # convert variables to attributes (const) if needed
-        for name in self._const_variables:
-            var = getattr(self, name)
-            value = jnp.array(var.value)
-            self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
-            delattr(self, name)
-            setattr(self, name, value)
+            model_is_during_load = self.a_scale == 0.0
+            if not model_is_during_load:
+                # convert variables to attributes (const) if needed
+                for name in self._const_variables:
+                    var = getattr(self, name)
+                    value = jnp.array(var.value)
+                    self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+                    delattr(self, name)
+                    setattr(self, name, value)
+        else:
+            self.call = super().call
+
+            attrs_to_remove = [self.a_scale, self.w_scale, self._kernel_quant]
+            if self._is_int8:
+                attrs_to_remove.append(self.a_zero_point)
+            for attr in attrs_to_remove:
+                self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not attr]
+                del attr
+
+            # All variables which names are stored in _const_variables are deleted in above loop
+            # so _const_variables can be cleared
+            self._const_variables.clear()
 
         if hasattr(self, "_layers") and hasattr(self, "input_observer"):
             if self.input_observer in self._layers:
                 self._layers.remove(self.input_observer)
                 del self.input_observer
-
-        self.call = self.call_int8 if self._is_int8 else self.call_fp8
-        self._is_quantized = True
         self._tracker.lock()
 
     @property
@@ -626,7 +661,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
             "a_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale, fixed_range=(0.0, 1.0)
         )
         orig.v_qdq = StaticQDQLayer("v_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
-        orig._is_quantized = False
+        orig._is_quantized = None
         orig._tracker.lock()
         return orig
 
@@ -834,7 +869,7 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             "attention_softmax_qdq", activation_dtype, orig.dtype_policy, False, const_scale
         )
         orig.v_qdq = StaticQDQLayer("v_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
-        orig._is_quantized = False
+        orig._is_quantized = None
         orig._tracker.lock()
         return orig
 
@@ -988,7 +1023,7 @@ class QStaticGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
             "dropout_attention_probs_qdq", activation_dtype, orig.dtype_policy, False, const_scale
         )
         orig.value_qdq = StaticQDQLayer("value_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
-        orig._is_quantized = False
+        orig._is_quantized = None
         orig._tracker.lock()
         return orig
 
@@ -1128,7 +1163,7 @@ class QStaticRotaryEmbedding(SaveableLayerMixin, RotaryEmbedding):
         orig.inverse_freq_qdq = StaticQDQLayer(
             "inverse_freq_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale
         )
-        orig._is_quantized = False
+        orig._is_quantized = None
         orig._tracker.lock()
         return orig
 
@@ -1238,7 +1273,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, ReversibleEmbedding):
         orig.kernel_qdq = StaticQDQLayer("kernel_qdq", weight_dtype, orig.dtype_policy, orig._is_int8, const_scale)
         orig.const_scale = const_scale
         orig.const_weight = const_weight
-        orig._is_quantized = False
+        orig._is_quantized = None
         orig._tracker.lock()
         return orig
 
