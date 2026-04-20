@@ -8,7 +8,7 @@ os.environ["KERAS_BACKEND"] = "jax"
 
 import jax.numpy as jnp
 import pytest
-from jax import nn
+from jax import nn, random
 from keras.applications.imagenet_utils import decode_predictions
 from keras_hub.models import ViTImageClassifier
 from PIL import Image
@@ -40,6 +40,12 @@ def load_image(image_path, target_size=(224, 224)):
     return normalized_pixels
 
 
+def create_random_image():
+    key = random.PRNGKey(0)
+    img = random.uniform(key, shape=(1, 224, 224, 3), minval=0.0, maxval=1.0, dtype=jnp.float32)
+    return img
+
+
 def classify_image(model, input, labels_n=1):
     out = model(input)
     probs = nn.softmax(out, axis=-1)
@@ -59,7 +65,7 @@ def test_image_classification(dynamic, model_dtype):
     image = load_image(image_path)
 
     def calib_fn(model):
-        _ = model(image)
+        _ = model(create_random_image())
 
     if dynamic:
         config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
