@@ -130,7 +130,7 @@ class LinearOpQuantizer(BaseOpQuantizer):
                 # Calculating weight in hpu to support scale calculation CGUID torch.ops.hpu.calculate_scale_for_cast
                 rescaled_weight = rescaled_weight.to(cur_device)
         extra_kwargs = {}
-        if self.weight_ich_scale_calc is not None:
+        if self.weight_ich_scale_calc is not None and rescaled_weight is not None:
             weights_input_channel_dim_size = rescaled_weight.size(1)
             weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST, in_channel_size=weights_input_channel_dim_size)
             if self.scales_method_factory.scale_method_config_map[QuantTensorName.WEIGHT_IN_CH].scale_value_type == ScaleValueType.DUMMY_SCALES:
@@ -241,11 +241,12 @@ class MatmulOpQuantizer(BaseOpQuantizer):
         self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic, scale_dim_index=-2))
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT, self.is_dynamic))
 
+
     def get_scales_module_config(self):
         input_scales = self.calc_input_scales(num_of_inputs=2)
 
         output_scales = None
-        if not self.is_dynamic:
+        if not self.is_dynamic and input_scales[0] is not None and input_scales[1] is not None:
             output_scales = input_scales[0] * input_scales[1]
         return ModuleConfig(input_scales, (output_scales,), {})
 
@@ -292,7 +293,7 @@ class B2B_MatmulOpQuantizer(MatmulOpQuantizer):
 
 
         output_scales = None
-        if not self.is_dynamic:
+        if not self.is_dynamic and input_scales[0] is not None and input_scales[1] is not None:
             output_scales = input_scales[0] * input_scales[1]
         return ModuleConfig(input_scales, (output_scales,), {})
 
@@ -406,7 +407,7 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
             num_of_experts = self.mod.num_experts
         else:
             num_of_experts = 8
-        
+
         self.inputs_scales_creators = [
             self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, is_dynamic=self.is_dynamic)
             for i in range(num_of_inputs + num_of_experts)

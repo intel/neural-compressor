@@ -125,7 +125,7 @@ def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86Induct
                 _nn_func_type = getattr(torch.nn.functional, op_type, None)
                 if _nn_func_type:
                     quantizer.set_function_type_qconfig(
-                        _nn_module_type, _map_inc_config_to_torch_quant_config(config, is_dynamic)
+                        _nn_func_type, _map_inc_config_to_torch_quant_config(config, is_dynamic)
                     )
         if op_name_config_dict:
             for op_name, config in op_name_config_dict.items():
