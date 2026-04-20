@@ -13,14 +13,14 @@ from keras.applications.imagenet_utils import decode_predictions
 from keras_hub.models import ViTImageClassifier
 from neural_compressor.jax import quantize_model, DynamicQuantConfig, StaticQuantConfig
 
-def load_model_from_preset(modelType, preset, allow_download=False, dtype="float32"):
+def load_model_from_preset(model_type, preset, allow_download=False, dtype="float32"):
     datasets_path = "/models/"
     model_path = datasets_path + preset
 
     if os.path.exists(model_path):
-        return modelType.from_preset(model_path, dtype=dtype)
+        return model_type.from_preset(model_path, dtype=dtype)
     elif allow_download:
-        model = modelType.from_preset(preset, dtype=dtype)
+        model = model_type.from_preset(preset, dtype=dtype)
         model.save_to_preset(model_path)
         return model
     else:
