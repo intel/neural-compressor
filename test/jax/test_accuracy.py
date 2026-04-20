@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
 """Accuracy-focused tests for JAX quantization on specific model architectures.
-Tests various 1-layer and 2-layer models with known behaviors and data patterns.
+Tests 2-layer model with known behaviors and data patterns.
 
 Key FP8 quantization insights:
 - FP8_E5M2 has discrete representable values (not continuous scaling)
@@ -31,64 +31,6 @@ _int_dtypes = ["int8"]
 # Valid (weight_dtype, activation_dtype) pairs:
 # all fp8 cross-combinations + same-dtype integer pairs
 _dtype_pairs = [(f1, f2) for f1 in _fp8_dtypes for f2 in _fp8_dtypes] + [(i, i) for i in _int_dtypes]
-
-
-def forward_dense(config, layer, x, calib_scale):
-    weight_dtype = dtype_mapping[config.weight_dtype]
-    activation_dtype = dtype_mapping[config.activation_dtype]
-    orig_dtype = layer.dtype
-    kernel = layer.kernel
-    bias = layer.bias if layer.use_bias else None
-    expected_ascale = calib_scale
-    expected_wscale = jnp.max(jnp.abs(kernel)) / jnp.finfo(weight_dtype).max.astype(orig_dtype)
-    qdqkernel = jax.lax.clamp(
-        jnp.finfo(weight_dtype).min.astype(kernel.dtype),
-        kernel / expected_wscale,
-        jnp.finfo(weight_dtype).max.astype(kernel.dtype),
-    ).astype(weight_dtype)
-    qdqkernel = qdqkernel.astype(orig_dtype) * expected_wscale
-    qdqx = jax.lax.clamp(
-        jnp.finfo(activation_dtype).min.astype(x.dtype),
-        x / expected_ascale,
-        jnp.finfo(activation_dtype).max.astype(x.dtype),
-    ).astype(activation_dtype)
-    qdqx = (x / expected_ascale).astype(activation_dtype)
-    qdqx = qdqx.astype(orig_dtype) * expected_ascale
-    y = jnp.matmul(qdqx, qdqkernel)
-    if bias is not None:
-        y += bias
-    y = layer.activation(y)
-    return y, expected_wscale
-
-
-def verify_model(model, calib_tensor, test_input):
-    config = StaticQuantConfig(weight_dtype="fp8_e5m2", activation_dtype="fp8_e5m2")
-    # Calculate per-layer calibration results
-    calib_tensor_orig = calib_tensor
-    calib_scales = []
-    for layer in model.layers:
-        calib_scale = jnp.max(jnp.abs(calib_tensor)) / jnp.finfo(dtype_mapping[config.activation_dtype]).max.astype(
-            model.dtype
-        )
-        calib_scales.append(calib_scale)
-        calib_tensor = layer(calib_tensor)
-    calib_tensor = calib_tensor_orig
-    calib_fn = lambda m: m(calib_tensor)
-    q_model = quantize_model(model, config, calib_fn)
-
-    for calib_scale, q_layer, layer in zip(calib_scales, q_model.layers, model.layers):
-        x = q_layer.call(test_input)
-        xexpected, expected_wscale = forward_dense(config, layer, test_input, calib_scale)
-        assert jnp.allclose(
-            x, xexpected, rtol=1e-5
-        ), f"Output mismatch in layer {q_layer.name}: expected {xexpected}, got {x}"
-        assert jnp.allclose(
-            q_layer.a_scale.value, calib_scale, rtol=1e-5
-        ), f"Activation scale mismatch in layer {layer.name}: expected {calib_scale}, got {q_layer.a_scale.value}"
-        assert jnp.allclose(
-            q_layer.w_scale.value, expected_wscale, rtol=1e-5
-        ), f"Weight scale mismatch in layer {layer.name}: expected {expected_wscale}, got {q_layer.w_scale.value}"
-        test_input = x  # For next layer input
 
 
 def _read_value(var_or_array, is_const):
@@ -124,7 +66,7 @@ def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, model_dtyp
         kernel = layer.get_weights()[0]  # These dense layers only have kernel weights
         shape = kernel.shape
         num_values = reduce(lambda x, y: x * y, shape)
-         weights = jnp.linspace(-1, 1, num_values) + 0.1 * (i + 1)
+        weights = jnp.linspace(-1, 1, num_values) + 0.1 * (i + 1)
         weights = weights.reshape(shape)
         layer.set_weights((weights,))
         all_weights.append(weights)
@@ -187,32 +129,3 @@ def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, model_dtyp
             assert jnp.allclose(
                 jnp.array(a_scale_val), jnp.array(exp_a_scale), rtol=1e-5
             ), f"Activation scale mismatch at layer {i}: expected {exp_a_scale}, got {a_scale_val}"
-
-
-def test_simple_linear_model_with_verify_util():
-    """Test accuracy on a simple linear model using verify_model utility: y = 2x (no bias)."""
-    # Create single layer linear model - same as test_simple_linear_model_accuracy
-    model = keras.Sequential(
-        [
-            keras.Input(shape=(8,)),
-            keras.layers.Dense(4, activation="linear", use_bias=False),
-            keras.layers.Dense(1, activation="linear", use_bias=False),
-        ]
-    )
-
-    # Same calibration data
-    calib_tensor = jnp.arange(1, 9).reshape((1, 8))
-    # Initialize and set known weights
-    for i, layer in enumerate(model.layers):
-        kernel = layer.get_weights()[0]  # These dense layers only have kernel weights
-        shape = kernel.shape
-        num_values = reduce(lambda x, y: x * y, shape)
-        new_weights = jnp.arange(0, 1, 1 / num_values) + i
-        new_weights = new_weights.reshape(shape)
-        layer.set_weights((new_weights,))
-
-    # Same test input
-    test_input = jnp.array([1.0, 2.0, 2.0, 0.0, -1.0, 3.0, -3.0, 0.5]).reshape(1, 8)
-
-    # Use verify_model utility instead of manual verification
-    verify_model(model, calib_tensor, test_input)
