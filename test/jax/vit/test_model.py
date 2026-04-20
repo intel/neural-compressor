@@ -13,14 +13,14 @@ from keras.applications.imagenet_utils import decode_predictions
 from keras_hub.models import ViTImageClassifier
 from neural_compressor.jax import quantize_model, DynamicQuantConfig, StaticQuantConfig
 
-def load_model_from_preset(modelType, preset, allow_download=False):
+def load_model_from_preset(modelType, preset, allow_download=False, dtype="float32"):
     datasets_path = "/models/"
     model_path = datasets_path + preset
 
     if os.path.exists(model_path):
-        return modelType.from_preset(model_path)
+        return modelType.from_preset(model_path, dtype=dtype)
     elif allow_download:
-        model = modelType.from_preset(preset)
+        model = modelType.from_preset(preset, dtype=dtype)
         model.save_to_preset(model_path)
         return model
     else:
@@ -31,9 +31,9 @@ def load_image(image_path, target_size=(224, 224)):
     if img.mode != "RGB":
         img = img.convert("RGB")
     img = img.resize(target_size, Image.BILINEAR)
-    arr = jnp.array(img).astype(jnp.float32) / 255.0
-    arr = jnp.expand_dims(arr, 0)
-    return arr
+    normalized_pixels = jnp.array(img).astype(jnp.float32) / 255.0
+    normalized_pixels = jnp.expand_dims(normalized_pixels, 0)
+    return normalized_pixels
 
 def classify_image(model, input, labels_n=1):
     out = model(input)
@@ -42,16 +42,17 @@ def classify_image(model, input, labels_n=1):
     return [class_name for (_, class_name, _) in labels]
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
-def test_image_classification(dynamic):
+@pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
+def test_image_classification(dynamic, model_dtype):
     image_path = "./examples/jax/keras/vit/colva_beach_sq.jpg"
     expected_labels = ['seashore', 'sandbar', 'lakeside', 'promontory', 'beacon']
     quantization_dtype = "fp8_e4m3"
 
-    vit = load_model_from_preset(ViTImageClassifier, "vit_base_patch16_224_imagenet", True)
-    input = load_image(image_path)
+    vit = load_model_from_preset(ViTImageClassifier, "vit_base_patch16_224_imagenet", True, model_dtype)
+    image = load_image(image_path)
     
     def calib_fn(model):
-        _ = model(input)
+        _ = model(image)
 
     if dynamic:
         config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
@@ -60,5 +61,5 @@ def test_image_classification(dynamic):
         config = StaticQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
         vit_q = quantize_model(vit, config, calib_fn)
     
-    actual_labels = classify_image(vit_q, input, len(expected_labels))
+    actual_labels = classify_image(vit_q, image, len(expected_labels))
     assert expected_labels == actual_labels
