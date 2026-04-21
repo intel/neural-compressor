@@ -11,9 +11,10 @@ import pytest
 from jax import nn, random
 from keras.applications.imagenet_utils import decode_predictions
 from keras_hub.models import ViTImageClassifier
-from PIL import Image
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
+
+from ..jax_test_utility import load_image, load_model_from_preset
 
 
 @pytest.fixture(scope="module")
@@ -21,14 +22,7 @@ def colva_beach_sq():
     repo_root_path = f"{os.path.dirname(__file__)}/../../.."
     image_path = f"{repo_root_path}/examples/jax/keras/vit/colva_beach_sq.jpg"
     target_size = (224, 224)
-
-    img = Image.open(image_path)
-    if img.mode != "RGB":
-        img = img.convert("RGB")
-    img = img.resize(target_size, Image.BILINEAR)
-    normalized_pixels = jnp.array(img).astype(jnp.float32) / 255.0
-    normalized_pixels = jnp.expand_dims(normalized_pixels, 0)
-    return normalized_pixels
+    return load_image(image_path, target_size)
 
 
 @pytest.fixture(scope="module")
@@ -36,18 +30,6 @@ def random_image():
     key = random.PRNGKey(0)
     img = random.uniform(key, shape=(1, 224, 224, 3), minval=0.0, maxval=1.0, dtype=jnp.float32)
     return img
-
-
-def load_model_from_preset(model_type, preset, dtype="float32"):
-    datasets_path = os.environ.get("DATASETS_PATH")
-    if datasets_path is None:
-        datasets_path = "/models/"
-
-    model_path = f"{datasets_path}/{preset}"
-    if os.path.exists(model_path):
-        return model_type.from_preset(model_path, dtype=dtype)
-    else:
-        raise Exception(f"Model path does not exist: {model_path}")
 
 
 def classify_image(model, input, labels_n=1):

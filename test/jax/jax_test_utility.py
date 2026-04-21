@@ -3,8 +3,12 @@
 This file provides helper functions used by tests in test/jax/
 """
 
+import os
+
 import ml_dtypes
 import numpy as np
+from jax import numpy as jnp
+from PIL import Image
 
 
 def _dtype_min_max(dtype, out_dtype):
@@ -95,3 +99,25 @@ def compute_expected_qdq_dense_output(
         current_input = _matmul(qdq_input, qdq_weights)
 
     return current_input, all_a_scales, all_w_scales
+
+
+def load_image(image_path, target_size):
+    img = Image.open(image_path)
+    if img.mode != "RGB":
+        img = img.convert("RGB")
+    img = img.resize(target_size, Image.BILINEAR)
+    normalized_pixels = jnp.array(img).astype(jnp.float32) / 255.0
+    normalized_pixels = jnp.expand_dims(normalized_pixels, 0)
+    return normalized_pixels
+
+
+def load_model_from_preset(model_type, preset, dtype="float32"):
+    datasets_path = os.environ.get("DATASETS_PATH")
+    if datasets_path is None:
+        datasets_path = "/models/"
+
+    model_path = f"{datasets_path}/{preset}"
+    if os.path.exists(model_path):
+        return model_type.from_preset(model_path, dtype=dtype)
+    else:
+        raise Exception(f"Model path does not exist: {model_path}")
