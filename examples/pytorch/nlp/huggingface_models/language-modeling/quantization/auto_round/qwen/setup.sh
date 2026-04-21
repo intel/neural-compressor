@@ -50,7 +50,7 @@ if [[ "$DEVICE" == "xpu" ]]; then
     cd vllm
     uv pip install --upgrade pip
     uv pip install -v -r requirements/xpu.txt
-    uv pip uninstall -y triton triton-xpu
+    uv pip uninstall triton triton-xpu
     uv pip install triton-xpu==3.6.0 --extra-index-url https://download.pytorch.org/whl/xpu
     VLLM_TARGET_DEVICE=xpu uv pip install --no-build-isolation --no-deps . -v
     cd ..
@@ -63,7 +63,6 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         uv pip install vllm==0.19.1
         git clone https://github.com/yiliu30/vllm-qdq-plugin.git
         uv pip install vllm-qdq-plugin/ -v
-        cd ..
     else
         # use default setting 
         git clone -b fused-moe-ar  --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
@@ -90,5 +89,5 @@ elif [[ "$BENCH_TOOL" == "aisbench" ]]; then
 fi
 
 # Uninstall flash_attn to avoid conflicts
-uv pip uninstall flash_attn -y
+uv pip uninstall flash_attn
 
