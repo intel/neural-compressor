@@ -74,7 +74,7 @@ def get_model_and_tokenizer(model_name):
     return fp32_model, tokenizer
 
 def is_dense_model(model_name):
-    dense_model_lst = ["Qwen3-32B", "Qwen3-08B"]
+    dense_model_lst = ["Qwen3-32B", "Qwen3-8B"]
     return any(dense_model in model_name for dense_model in dense_model_lst)
 
 
