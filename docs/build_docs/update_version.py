@@ -14,9 +14,7 @@ def main(folder, version):
             return
         key_str = '<li><a href="latest">latest</a></li>'
         new_ver = """<li><a href="latest">latest</a></li>
-        <li><a href="{}">{}</a></li>""".format(
-            version, version
-        )
+        <li><a href="{}">{}</a></li>""".format(version, version)
         ver_buf = ver_buf.replace(key_str, new_ver)
 
     with open(version_file, "w") as f:

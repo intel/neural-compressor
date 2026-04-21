@@ -13,7 +13,6 @@
 # limitations under the License.
 """Utility functions for bit packing."""
 
-
 from typing import Callable, Dict, Tuple
 
 import numba
