@@ -39,6 +39,25 @@ topologies_config = {
     },
 }
 
+dense_topologies_config = {
+    "mxfp8": {
+        "scheme": "MXFP8",
+        "fp_layers": "lm_head",
+        "iters": 0,
+    },
+    "mxfp4": {
+        "scheme": "MXFP4",
+        "fp_layers": "lm_head,self_attn",
+        "iters": 0, # FIXME: use 200?
+    },
+    "mxfp4_fp8kv": {
+        "scheme": "MXFP4",
+        "fp_layers": "lm_head,self_attn",
+        "iters": 0,
+        "static_kv_dtype": "fp8",
+    },
+}
+
 
 def get_model_and_tokenizer(model_name):
     # Load model and tokenizer
@@ -54,6 +73,10 @@ def get_model_and_tokenizer(model_name):
     )
     return fp32_model, tokenizer
 
+def is_dense_model(model_name):
+    dense_model_lst = ["Qwen3-32B", "Qwen3-08B"]
+    return any(dense_model in model_name for dense_model in dense_model_lst)
+
 
 def quant_model(args):
     from neural_compressor.torch.quantization import (
@@ -63,7 +86,10 @@ def quant_model(args):
     )
     if args.t == "mxfp4" and args.kv_cache_dtype == "fp8":
         args.t = "mxfp4_fp8kv"
-    config = topologies_config[args.t]
+    if is_dense_model(args.model):
+        config = dense_topologies_config[args.t]
+    else:
+        config = topologies_config[args.t]
     export_format = "auto_round" if args.use_autoround_format else "llm_compressor"
     output_dir = f"{args.output_dir}/quantized_model_{args.t}"
     static_kv_dtype = args.static_kv_dtype if args.static_kv_dtype is not None else config.get("static_kv_dtype", None)
