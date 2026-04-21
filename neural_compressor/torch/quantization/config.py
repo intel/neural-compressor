@@ -876,7 +876,7 @@ class AutoRoundConfig(TorchBaseConfig):
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
         scale_dtype: str = "fp16",
-        use_layer_wise: bool = False,
+        use_layer_wise: bool = True,
         to_quant_block_names: list = None,
         export_format: str = "auto_round",
         # v0.4
