@@ -16,11 +16,9 @@ usage() {
   echo "  -f           quantize model export_format (default: auto_round)"
   echo "  -kv          Data type for static kv cache (default: None)"
   echo "  -attn        Data type for static attention cache (default: None)"
-  echo "  --no_autoround_format disable AutoRound export format"
   echo ""
   echo "Examples:"
   echo "  $0 --model /path/to/my/model -t mxfp4 --output_dir /path/to/output/dir"
-  echo "  $0 --model /path/to/my/model -t mxfp4 --output_dir /path/to/output/dir --no_autoround_format"
   exit 1
 }
 
