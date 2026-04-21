@@ -2,7 +2,6 @@ auto-round @ git+https://github.com/intel/auto-round.git@main
 auto-round-lib
 compressed-tensors
 datasets
-deepspeed @ git+https://github.com/HabanaAI/DeepSpeed.git@1.23.0
 expecttest
 numpy
 peft
@@ -12,3 +11,4 @@ pytest
 torchao
 torchvision
 transformers
+accelerate
