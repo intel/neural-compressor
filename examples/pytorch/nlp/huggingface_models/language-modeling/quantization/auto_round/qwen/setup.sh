@@ -76,6 +76,19 @@ else
     exit 1
 fi
 
+if [[ "$BENCH_TOOL" == "lm_eval" ]]; then
+    uv pip install lm-eval==0.4.10
+    uv pip install lm-eval[api]
+    if [[ "$TASKS" == *"longbench"* ]]; then
+        uv pip install "long-bench-eval @ git+https://github.com/yiliu30/long-bench-eval"
+    fi
+    if [[ "$TASKS" == *"ruler"* ]]; then
+        uv pip install lm_eval["ruler"]
+    fi
+elif [[ "$BENCH_TOOL" == "aisbench" ]]; then
+    echo "Installing aisbench..."
+fi
+
 # Uninstall flash_attn to avoid conflicts
 uv pip uninstall flash_attn -y
 
