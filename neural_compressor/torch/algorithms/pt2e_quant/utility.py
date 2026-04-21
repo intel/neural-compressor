@@ -16,6 +16,7 @@
 from typing import Dict
 
 import torch
+
 from neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat import QuantizationConfig, X86InductorQuantizer, xiq
 from neural_compressor.torch.utils import GT_OR_EQUAL_TORCH_VERSION_2_5, TORCH_VERSION_2_11_0, get_torch_version, logger
 
