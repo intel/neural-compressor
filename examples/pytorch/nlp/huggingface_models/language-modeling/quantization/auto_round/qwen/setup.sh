@@ -40,20 +40,9 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ "$DEVICE" == "xpu" ]]; then
+    # support quant only on xpu for now
     uv pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/xpu
     uv pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/xpu
-    uv pip install setuptools --upgrade
-    uv pip install packaging --upgrade
-    uv pip install -U "huggingface_hub[cli]"
-    # install vllm and plugins
-    git clone -b v0.19.1 --single-branch  https://github.com/vllm-project/vllm.git
-    cd vllm
-    uv pip install --upgrade pip
-    uv pip install -v -r requirements/xpu.txt
-    uv pip uninstall triton triton-xpu
-    uv pip install triton-xpu==3.6.0 --extra-index-url https://download.pytorch.org/whl/xpu
-    VLLM_TARGET_DEVICE=xpu uv pip install --no-build-isolation --no-deps . -v
-    cd ..
 elif [[ "$DEVICE" == "gpu" ]]; then
     uv pip install -r requirements.txt
     uv pip install setuptools --upgrade
@@ -69,25 +58,22 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         VLLM_USE_PRECOMPILED=1 uv pip install . -v
         cd ..
     fi
+    if [[ "$BENCH_TOOL" == "lm_eval" ]]; then
+        uv pip install lm-eval==0.4.10
+        uv pip install lm-eval[api]
+        if [[ "$TASKS" == *"longbench"* ]]; then
+            uv pip install "long-bench-eval @ git+https://github.com/yiliu30/long-bench-eval"
+        fi
+        if [[ "$TASKS" == *"ruler"* ]]; then
+            uv pip install lm_eval["ruler"]
+        fi
+    elif [[ "$BENCH_TOOL" == "aisbench" ]]; then
+        echo "Installing aisbench..."
+    fi
+    # Uninstall flash_attn to avoid conflicts
+    uv pip uninstall flash_attn
 else
     echo "Unsupported device: $DEVICE. Supported devices are gpu and xpu."
     usage
     exit 1
 fi
-
-if [[ "$BENCH_TOOL" == "lm_eval" ]]; then
-    uv pip install lm-eval==0.4.10
-    uv pip install lm-eval[api]
-    if [[ "$TASKS" == *"longbench"* ]]; then
-        uv pip install "long-bench-eval @ git+https://github.com/yiliu30/long-bench-eval"
-    fi
-    if [[ "$TASKS" == *"ruler"* ]]; then
-        uv pip install lm_eval["ruler"]
-    fi
-elif [[ "$BENCH_TOOL" == "aisbench" ]]; then
-    echo "Installing aisbench..."
-fi
-
-# Uninstall flash_attn to avoid conflicts
-uv pip uninstall flash_attn
-
