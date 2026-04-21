@@ -81,10 +81,18 @@ class MinMaxObserver(keras.layers.Layer):
         super().__init__(*args, **kwargs, name="min_max")
         # Track running min/max as non-trainable weights
         self.min_val = self.add_weight(
-            shape=(), initializer=keras.initializers.Constant(float("inf")), trainable=False, name="min_val"
+            shape=(),
+            initializer=keras.initializers.Constant(np.inf),
+            trainable=False,
+            name="min_val",
+            dtype=self.compute_dtype,
         )
         self.max_val = self.add_weight(
-            shape=(), initializer=keras.initializers.Constant(float("-inf")), trainable=False, name="max_val"
+            shape=(),
+            initializer=keras.initializers.Constant(-np.inf),
+            trainable=False,
+            name="max_val",
+            dtype=self.compute_dtype,
         )
         self.supports_masking = True
 
@@ -105,8 +113,8 @@ class MinMaxObserver(keras.layers.Layer):
                     for _ in range(len(inputs.shape) - len(mask.shape)):
                         mask = ops.expand_dims(mask, axis=-1)
                 # Apply mask to exclude masked positions
-                masked_inputs_min = ops.where(mask, inputs, float("inf"))
-                masked_inputs_max = ops.where(mask, inputs, float("-inf"))
+                masked_inputs_min = ops.where(mask, inputs, jnp.array(float("inf"), dtype=inputs.dtype))
+                masked_inputs_max = ops.where(mask, inputs, jnp.array(float("-inf"), dtype=inputs.dtype))
                 batch_min = keras.ops.min(masked_inputs_min)
                 batch_max = keras.ops.max(masked_inputs_max)
             else:
@@ -140,19 +148,20 @@ class MinMaxObserver(keras.layers.Layer):
 class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies static quantize-dequantize to activations."""
 
-    def __init__(self, name, activation_dtype, asymmetric=False, const_scale=False):
+    def __init__(self, name, activation_dtype, dtype="float32", asymmetric=False, const_scale=False):
         """Initialize the static QDQ helper layer.
 
         Args:
             name (str): Layer name.
             activation_dtype (jnp.dtype): Activation dtype used for quantization.
+            dtype (str | keras.DTypePolicy): dtype for the layer - see keras.layers.Layer API for details.
             asymmetric (bool): Whether to use asymmetric quantization.
             const_scale (bool): Whether to use constant scales.
 
         Returns:
             None: Initializes the layer instance.
         """
-        super().__init__(name=name)
+        super().__init__(name=name, dtype=dtype)
         self.activation_dtype = activation_dtype
         self._is_asymmetric = asymmetric
         self.supports_masking = True
@@ -172,7 +181,7 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             None: Adds observer layers.
         """
         self._tracker.unlock()
-        self.input_observer = MinMaxObserver()
+        self.input_observer = MinMaxObserver(dtype=self.dtype_policy)
         self._tracker.lock()
 
     def add_variables(self):
@@ -189,7 +198,7 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
                 initializer="zeros",
                 trainable=False,
                 autocast=False,
-                dtype=self.compute_dtype,
+                dtype=jnp.int32,
             )
         self.a_scale = self.add_weight(
             name="a_scale",
@@ -211,8 +220,10 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         """
         self._tracker.unlock()
         arange = self.input_observer.get_calibrated_range()
-        a_scale, a_zero_point = get_q_params(arange, self.activation_dtype, asymmetric=self._is_asymmetric)
-        if a_scale == jnp.inf:
+        a_scale, a_zero_point = get_q_params(
+            arange, self.activation_dtype, self.compute_dtype, asymmetric=self._is_asymmetric
+        )
+        if jnp.isinf(a_scale).any().item():
             logger.warning(
                 f"Activation scale is inf for layer {self._path}. This may be caused by missing calibration data. "
                 "Please make sure to run calibration with representative dataset."
@@ -346,7 +357,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
             None: Adds observer layers.
         """
         self._tracker.unlock()
-        self.input_observer = MinMaxObserver()
+        self.input_observer = MinMaxObserver(dtype=self.dtype_policy)
         self._tracker.lock()
 
     def add_variables(self):
@@ -363,7 +374,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
                 initializer="zeros",
                 trainable=False,
                 autocast=False,
-                dtype=self.compute_dtype,
+                dtype=jnp.int32,
             )
         self.a_scale = self.add_weight(
             name="a_scale",
@@ -406,8 +417,10 @@ class QStaticDenseMixin(SaveableLayerMixin):
         self._tracker.unlock()
 
         arange = self.input_observer.get_calibrated_range()
-        a_scale, a_zero_point = get_q_params(arange, self.activation_dtype, asymmetric=self._is_int8)
-        if a_scale == jnp.inf:
+        a_scale, a_zero_point = get_q_params(
+            arange, self.activation_dtype, self.compute_dtype, asymmetric=self._is_int8
+        )
+        if jnp.isinf(a_scale).any().item():
             logger.warning(
                 f"Activation scale is inf for layer {self._path}. This may be caused by missing calibration data. "
                 "Please make sure to run calibration with representative dataset."
@@ -420,9 +433,8 @@ class QStaticDenseMixin(SaveableLayerMixin):
         if self._is_int8:
             self.a_zero_point.assign(a_zero_point)
 
-        w_scale, _ = get_q_params(self.kernel, self.weight_dtype, asymmetric=False)
+        w_scale, _ = get_q_params(self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=False)
         self.w_scale.assign(w_scale)
-
         _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value)
         self._kernel_quant.assign(_kernel_quant)
         self._tracker.lock()
@@ -572,14 +584,10 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         orig._tracker.unlock()
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
-        orig.q_qdq = StaticQDQLayer(
-            "q_qdq", activation_dtype, False, const_scale
-        )  # the second argument of einsum has to be quantized symmetrically for onednn to work
-        orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, orig._is_int8, const_scale)
-        orig.a_qdq = StaticQDQLayer("a_qdq", activation_dtype, orig._is_int8, const_scale)
-        orig.v_qdq = StaticQDQLayer(
-            "v_qdq", activation_dtype, False, const_scale
-        )  # the second argument of einsum has to be quantized symmetrically for onednn to work
+        orig.q_qdq = StaticQDQLayer("q_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
+        orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
+        orig.a_qdq = StaticQDQLayer("a_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
+        orig.v_qdq = StaticQDQLayer("v_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
         orig._is_quantized = False
         orig._tracker.lock()
         return orig
@@ -760,10 +768,12 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         """
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.q_qdq = StaticQDQLayer("q_qdq", activation_dtype, False, const_scale)
-        orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, False, const_scale)
-        orig.attention_softmax_qdq = StaticQDQLayer("attention_softmax_qdq", activation_dtype, False, const_scale)
-        orig.v_qdq = StaticQDQLayer("v_qdq", activation_dtype, False, const_scale)
+        orig.q_qdq = StaticQDQLayer("q_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
+        orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
+        orig.attention_softmax_qdq = StaticQDQLayer(
+            "attention_softmax_qdq", activation_dtype, orig.dtype_policy, False, const_scale
+        )
+        orig.v_qdq = StaticQDQLayer("v_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
         orig._is_quantized = False
         orig._tracker.lock()
         return orig
@@ -912,12 +922,12 @@ class QStaticGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
         """
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.query_qdq = StaticQDQLayer("query_qdq", activation_dtype, False, const_scale)
-        orig.key_qdq = StaticQDQLayer("key_qdq", activation_dtype, False, const_scale)
+        orig.query_qdq = StaticQDQLayer("query_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
+        orig.key_qdq = StaticQDQLayer("key_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
         orig.dropout_attention_probs_qdq = StaticQDQLayer(
-            "dropout_attention_probs_qdq", activation_dtype, False, const_scale
+            "dropout_attention_probs_qdq", activation_dtype, orig.dtype_policy, False, const_scale
         )
-        orig.value_qdq = StaticQDQLayer("value_qdq", activation_dtype, False, const_scale)
+        orig.value_qdq = StaticQDQLayer("value_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
         orig._is_quantized = False
         orig._tracker.lock()
         return orig
@@ -1051,8 +1061,13 @@ class QStaticRotaryEmbedding(SaveableLayerMixin, RotaryEmbedding):
         """
         orig._tracker.unlock()
         orig.__class__ = cls
-        orig.positions_qdq = StaticQDQLayer("positions_qdq", activation_dtype, False, const_scale)
-        orig.inverse_freq_qdq = StaticQDQLayer("inverse_freq_qdq", activation_dtype, False, const_scale)
+        orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
+        orig.positions_qdq = StaticQDQLayer(
+            "positions_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale
+        )
+        orig.inverse_freq_qdq = StaticQDQLayer(
+            "inverse_freq_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale
+        )
         orig._is_quantized = False
         orig._tracker.lock()
         return orig
@@ -1159,8 +1174,8 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, ReversibleEmbedding):
         orig._tracker.unlock()
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
-        orig.inputs_qdq = StaticQDQLayer("inputs_qdq", activation_dtype, orig._is_int8, const_scale)
-        orig.kernel_qdq = StaticQDQLayer("kernel_qdq", activation_dtype, False, const_scale)
+        orig.inputs_qdq = StaticQDQLayer("inputs_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
+        orig.kernel_qdq = StaticQDQLayer("kernel_qdq", weight_dtype, orig.dtype_policy, orig._is_int8, const_scale)
         orig.const_scale = const_scale
         orig.const_weight = const_weight
         orig._is_quantized = False

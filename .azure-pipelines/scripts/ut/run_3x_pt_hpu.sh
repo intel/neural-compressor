@@ -18,10 +18,7 @@ pip install -r /neural-compressor/test/torch/requirements.txt
 pip install deepspeed@git+https://github.com/HabanaAI/DeepSpeed.git@main --no-deps
 pip install msgpack  # deepspeed dependency
 pip install auto-round-hpu
-pip install pytest-cov
-pip install pytest-html
-pip install pytest-html-merger
-pip install beautifulsoup4==4.13.5
+pip install pytest-cov pytest-html pytest-html-merger beautifulsoup4==4.13.5
 echo "##[endgroup]"
 pip list
 

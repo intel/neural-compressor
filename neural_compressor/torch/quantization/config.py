@@ -17,7 +17,6 @@
 # pylint:disable=import-error
 """Intel Neural Compressor Pytorch quantization config API."""
 
-
 import copy
 import inspect
 import json

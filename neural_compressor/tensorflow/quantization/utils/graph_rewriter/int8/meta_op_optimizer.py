@@ -16,7 +16,6 @@
 # limitations under the License.
 """Meta OP Graph Rewriter."""
 
-
 from tensorflow.python.framework import dtypes
 
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer
