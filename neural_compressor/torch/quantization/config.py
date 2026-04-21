@@ -133,7 +133,7 @@ class RTNConfig(TorchBaseConfig):
         use_full_range: bool = False,
         use_mse_search: bool = False,
         # layer wise
-        use_layer_wise: bool = False,
+        use_layer_wise: bool = True,
         model_path: str = "",
         # double quant
         use_double_quant: bool = False,
@@ -157,7 +157,7 @@ class RTNConfig(TorchBaseConfig):
             group_dim (int): Dimension for grouping. Default is 1.
             use_full_range (bool): Enables full range for activations. Default is False.
             use_mse_search (bool): Enables mean squared error (MSE) search. Default is False.
-            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            use_layer_wise (bool): Enables quantize model per layer. Defaults to True.
             model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization. Default is False.
             double_quant_dtype (str): Data type for double_quant scale. Default is "int".
@@ -285,7 +285,7 @@ class RTNConfig(TorchBaseConfig):
         """
         pre_defined_configs: Dict[torch_utils.ProcessorType, RTNConfig] = {}
         pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
-        pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
+        pre_defined_configs[torch_utils.ProcessorType.Server] = cls(use_layer_wise=False)
         return pre_defined_configs
 
 
@@ -876,7 +876,7 @@ class AutoRoundConfig(TorchBaseConfig):
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
         scale_dtype: str = "fp16",
-        use_layer_wise: bool = True,
+        use_layer_wise: bool = False,
         to_quant_block_names: list = None,
         export_format: str = "auto_round",
         # v0.4
