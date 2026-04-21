@@ -1,3 +1,4 @@
+accelerate
 auto-round @ git+https://github.com/intel/auto-round.git@main
 auto-round-lib
 compressed-tensors >= 0.15.0
@@ -11,4 +12,3 @@ pytest
 torchao
 torchvision
 transformers >= 5.5.0
-accelerate
