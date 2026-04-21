@@ -4,15 +4,16 @@ set -e
 MODEL=""
 TARGET=""
 OUTPUT_DIR=""
+EXPORT_FORMAT="auto_round"
 STATIC_KV_DTYPE="None"
 STATIC_ATTENTION_DTYPE="None"
-USE_AUTOROUND_FORMAT="true"
 
 usage() {
   echo "Usage: $0 --model MODEL -t [mxfp4|mxfp8] --output_dir DIR -kv DTYPE"
   echo "  --model      Hugging Face model ID or local path"
   echo "  -t           quantization target (e.g. mxfp8, mxfp4)"
   echo "  --output_dir output directory for quantized model"
+  echo "  -f           quantize model export_format (default: auto_round)"
   echo "  -kv          Data type for static kv cache (default: None)"
   echo "  -attn        Data type for static attention cache (default: None)"
   echo "  --no_autoround_format disable AutoRound export format"
@@ -37,6 +38,10 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_DIR="$2"
       shift 2
       ;;
+    -f)
+      EXPORT_FORMAT="$2"
+      shift 2
+      ;;
     -kv)
       STATIC_KV_DTYPE="$2"
       shift 2
@@ -44,10 +49,6 @@ while [[ $# -gt 0 ]]; do
     -attn)
       STATIC_ATTENTION_DTYPE="$2"
       shift 2
-      ;;
-    --no_autoround_format)
-      USE_AUTOROUND_FORMAT="false"
-      shift
       ;;
     -h|--help)
       usage
@@ -66,7 +67,7 @@ done
 python quantize.py \
   --model "$MODEL" \
   -t "$TARGET" \
-  $( [ "$USE_AUTOROUND_FORMAT" = "true" ] && echo "--use_autoround_format" ) \
+  --export_format "$EXPORT_FORMAT" \
   --output_dir "$OUTPUT_DIR" \
   $( [ "$STATIC_KV_DTYPE" != "None" ] && echo "--static_kv_dtype $STATIC_KV_DTYPE" ) \
   $( [ "$STATIC_ATTENTION_DTYPE" != "None" ] && echo "--static_attention_dtype $STATIC_ATTENTION_DTYPE" )

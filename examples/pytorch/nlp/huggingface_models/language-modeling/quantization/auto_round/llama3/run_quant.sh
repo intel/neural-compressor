@@ -5,6 +5,7 @@
 # Parse command line arguments
 KV_CACHE_DTYPE="auto"
 STATIC_ATTENTION_DTYPE="auto"
+EXPORT_FORMAT="auto_round"
 while [[ $# -gt 0 ]]; do
     case $1 in
         --topology=*)
@@ -31,6 +32,10 @@ while [[ $# -gt 0 ]]; do
             STATIC_ATTENTION_DTYPE="${1#*=}"
             shift
             ;;
+        --export_format=*)
+            EXPORT_FORMAT="${1#*=}"
+            shift
+            ;;
         *)
             echo "Unknown parameter: $1"
             exit 1
@@ -53,7 +58,7 @@ echo "  Input Model: $INPUT_MODEL"
 echo "  Output Model: $OUTPUT_MODEL"
 
 # Set common parameters
-COMMON_ARGS="--quantize --enable_torch_compile --low_gpu_mem_usage --export_format auto_round"
+COMMON_ARGS="--quantize --enable_torch_compile --low_gpu_mem_usage --export_format $EXPORT_FORMAT"
 if [ "$KV_CACHE_DTYPE" != "auto" ]; then
     COMMON_ARGS="$COMMON_ARGS --static_kv_dtype $KV_CACHE_DTYPE"
 fi
