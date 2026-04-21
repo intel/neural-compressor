@@ -132,11 +132,14 @@ export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=0
 export VLLM_USE_DEEP_GEMM=0
 export VLLM_ENABLE_V1_MULTIPROCESSING=0
 
+export VLLM_QDQ=1
+
 echo "Environment variables set:"
 echo "  VLLM_AR_MXFP4_MODULAR_MOE=$VLLM_AR_MXFP4_MODULAR_MOE"
 echo "  VLLM_MXFP4_PRE_UNPACK_TO_FP8=$VLLM_MXFP4_PRE_UNPACK_TO_FP8"
 echo "  VLLM_ENABLE_AR_EXT=$VLLM_ENABLE_AR_EXT"
 echo ""
+
 
 # Run the model
 echo "Starting model generation..."
@@ -148,5 +151,4 @@ python generate.py \
     --max-num-seqs 4 \
     --gpu_memory_utilization 0.75 \
     --no-enable-prefix-caching \
-    --enable_expert_parallel \
     --kv-cache-dtype $KV_CACHE_DTYPE

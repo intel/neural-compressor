@@ -158,6 +158,8 @@ if [[ "$ATTN_DTYPE" == "fp8" ]]; then
     echo "Using FP8 Attention"
 fi
 
+
+export VLLM_QDQ=1
 # Run evaluation
 echo "Evaluating model: ${MODEL_PATH}"
 echo "Quantization scheme: ${SCHEME}"
