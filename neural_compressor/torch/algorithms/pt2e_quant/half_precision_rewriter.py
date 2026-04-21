@@ -224,10 +224,16 @@ def _parse_node_candidate_set_from_user_config(config, gm):
     op_name_filters = []
 
     def _get_module_type_filter(module_type):
+        module_type_names = {
+            module_type,
+            module_type.__name__,
+            f"{module_type.__module__}.{module_type.__name__}",
+        }
+
         def module_type_filter(n):
             nn_module_stack = n.meta.get("nn_module_stack", {})
             types = [module_t for _, module_t in nn_module_stack.values()]
-            return module_type in types
+            return any(module_t in module_type_names for module_t in types)
 
         return module_type_filter
 

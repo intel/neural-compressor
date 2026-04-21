@@ -16,13 +16,6 @@
 from typing import Dict
 
 import torch
-from torch.ao.quantization.observer import (
-    HistogramObserver,
-    MinMaxObserver,
-    PerChannelMinMaxObserver,
-    PlaceholderObserver,
-)
-
 from neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat import QuantizationConfig, X86InductorQuantizer, xiq
 from neural_compressor.torch.utils import GT_OR_EQUAL_TORCH_VERSION_2_5, TORCH_VERSION_2_11_0, get_torch_version, logger
 
@@ -53,12 +46,12 @@ def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=Fals
         "per_tensor": {True: torch.per_tensor_symmetric, False: torch.per_tensor_affine},
     }
     observer_mapping = {
-        "placeholder": PlaceholderObserver,
-        "minmax": MinMaxObserver,
-        "kl": HistogramObserver,
-        "per_channel_minmax": PerChannelMinMaxObserver,
+        "placeholder": xiq.PlaceholderObserver,
+        "minmax": getattr(xiq, "MovingAverageMinMaxObserver"),
+        "kl": getattr(xiq, "HistogramObserver"),
+        "per_channel_minmax": getattr(xiq, "PerChannelMinMaxObserver"),
     }
-    # Force to use placeholder observer for dynamic quantization
+    # Dynamic PT2E quantization on torchao expects PlaceholderObserver from the PT2E quantizer module.
     if is_dynamic:
         algo = "placeholder"
     if f"{granularity}_{algo}" in observer_mapping:
@@ -72,7 +65,7 @@ def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=Fals
         quant_min=min_max_mapping[select_dtype][0],
         quant_max=min_max_mapping[select_dtype][1],
         observer_or_fake_quant_ctr=observer_or_fake_quant_ctr,
-        ch_axis=0,
+        ch_axis=0 if granularity == "per_channel" else None,
         qscheme=qscheme,
         is_dynamic=is_dynamic,
     )
@@ -128,7 +121,7 @@ def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86Induct
                 _nn_func_type = getattr(torch.nn.functional, op_type, None)
                 if _nn_func_type:
                     quantizer.set_function_type_qconfig(
-                        _nn_module_type, _map_inc_config_to_torch_quant_config(config, is_dynamic)
+                        _nn_func_type, _map_inc_config_to_torch_quant_config(config, is_dynamic)
                     )
         if op_name_config_dict:
             for op_name, config in op_name_config_dict.items():
