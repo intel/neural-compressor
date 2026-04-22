@@ -53,7 +53,8 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         git clone https://github.com/yiliu30/vllm-qdq-plugin.git
         uv pip install vllm-qdq-plugin/ -v
     else
-        # use default setting 
+        # use default setting for AR format, required by fused-moe-ar
+        pip install torch==2.9.0
         git clone -b fused-moe-ar  --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
         VLLM_USE_PRECOMPILED=1 uv pip install . -v
         cd ..
