@@ -6,23 +6,25 @@ import os
 
 os.environ["KERAS_BACKEND"] = "jax"
 
+import tempfile
+
 import jax.numpy as jnp
+import keras
 import pytest
-from jax import nn, random
+from jax import random
+from jax_test_utility import load_image, load_model_from_preset
 from keras.applications.imagenet_utils import decode_predictions
 from keras_hub.models import ViTImageClassifier
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
 
-from ..jax_test_utility import load_image, load_model_from_preset
-
 
 @pytest.fixture(scope="module")
 def colva_beach_sq():
-    repo_root_path = f"{os.path.dirname(__file__)}/../../.."
+    repo_root_path = f"{os.path.dirname(__file__)}/../.."
     image_path = f"{repo_root_path}/examples/jax/keras/vit/colva_beach_sq.jpg"
     target_size = (224, 224)
-    return load_image(image_path, target_size)
+    return load_image(image_path, target_size, True)
 
 
 @pytest.fixture(scope="module")
@@ -34,8 +36,7 @@ def random_image():
 
 def classify_image(model, input, labels_n=1):
     out = model(input)
-    probs = nn.softmax(out, axis=-1)
-    labels = decode_predictions(jnp.array(probs), top=labels_n)[0]
+    labels = decode_predictions(jnp.array(out), top=labels_n)[0]
     return [class_name for (_, class_name, _) in labels]
 
 
@@ -53,8 +54,15 @@ def test_image_classification(dynamic, model_dtype, colva_beach_sq, random_image
         config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
         vit_q = quantize_model(vit, config, None)
     else:
-        config = StaticQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
+        config = StaticQuantConfig(
+            weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=True, const_weight=True
+        )
         vit_q = quantize_model(vit, config, calib_fn)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        save_path = os.path.join(tmpdir, "vit_quantized.keras")
+        keras.saving.save_model(vit_q, save_path)
+        vit_q = keras.saving.load_model(save_path)
 
     actual_labels = classify_image(vit_q, colva_beach_sq, len(expected_labels))
     assert expected_labels == actual_labels
