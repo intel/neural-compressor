@@ -30,8 +30,10 @@ from neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat import (
     prepare_pt2e,
     xiq,
 )
-from neural_compressor.torch.algorithms.pt2e_quant.utility import create_xiq_quantizer_from_pt2e_config
-from neural_compressor.torch.algorithms.pt2e_quant.utility import create_default_xiq_quantizer_config
+from neural_compressor.torch.algorithms.pt2e_quant.utility import (
+    create_default_xiq_quantizer_config,
+    create_xiq_quantizer_from_pt2e_config,
+)
 
 
 class W8A8PT2EQuantizer(Quantizer):
