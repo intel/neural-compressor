@@ -56,7 +56,7 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         # use default setting for AR format, required by fused-moe-ar
         pip install torch==2.9.0
         git clone -b fused-moe-ar  --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
-        VLLM_USE_PRECOMPILED=1 uv pip install . -v
+        VLLM_USE_PRECOMPILED=1 uv pip install --prerelease=allow . -v
         cd ..
     fi
     if [[ "$BENCH_TOOL" == "lm_eval" ]]; then
