@@ -206,7 +206,7 @@ class TestPT2EQuantization:
         logger.warning("out shape is %s", out.shape)
         assert out is not None
 
-    @pytest.mark.skipif(True, reason="Requires torch>=2.3.0")
+    @pytest.mark.skipif(get_torch_version() <= TORCH_VERSION_2_2_2, reason="Requires torch>=2.3.0")
     def test_prepare_and_convert_on_llm(self, force_not_import_ipex):
         from transformers import AutoModelForCausalLM, AutoTokenizer
 
