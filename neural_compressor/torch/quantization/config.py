@@ -876,7 +876,7 @@ class AutoRoundConfig(TorchBaseConfig):
         not_use_best_mse: bool = False,
         dynamic_max_gap: int = -1,
         scale_dtype: str = "fp16",
-        use_layer_wise: bool = False,
+        use_layer_wise: bool = True,
         to_quant_block_names: list = None,
         export_format: str = "auto_round",
         # v0.4
@@ -940,7 +940,7 @@ class AutoRoundConfig(TorchBaseConfig):
             dynamic_max_gap (int): The dynamic maximum gap (default is -1).
             scale_dtype (str): The data type of quantization scale to be used (default is "float16"), different kernels
               have different choices.
-            use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
+            use_layer_wise (bool): Enables quantize model per layer. Defaults to True.
             to_quant_block_names (list): A list whose elements are list of block's layer names to be quantized.
             export_format (str, optional): The format used for exporting the quantized model. Defaults to "auto_round".
             enable_norm_bias_tuning (bool): Whether to enable fast norm/layer_bias tuning.
@@ -1103,7 +1103,7 @@ class AutoRoundConfig(TorchBaseConfig):
         """
         pre_defined_configs: Dict[torch_utils.ProcessorType, AutoRoundConfig] = {}
         pre_defined_configs[torch_utils.ProcessorType.Client] = cls(use_layer_wise=True)
-        pre_defined_configs[torch_utils.ProcessorType.Server] = cls()
+        pre_defined_configs[torch_utils.ProcessorType.Server] = cls(use_layer_wise=False)
         return pre_defined_configs
 
 

@@ -360,6 +360,16 @@ class TestQuantConfigBasedonProcessorType:
         assert not rtn_config.use_layer_wise, f"Expect use_layer_wise to be `False`, got {rtn_config.use_layer_wise}"
         gptq_config = get_default_gptq_config()
         assert not gptq_config.use_layer_wise, f"Expect use_layer_wise to be `False`, got {gptq_config.use_layer_wise}"
+        autoround_config = get_default_AutoRound_config()
+        assert (
+            autoround_config.use_layer_wise is False
+        ), f"Expect use_layer_wise to be `False`, got {autoround_config.use_layer_wise}"
+
+    def test_autoround_raw_default_uses_layer_wise(self):
+        autoround_config = AutoRoundConfig()
+        assert (
+            autoround_config.use_layer_wise is True
+        ), f"Expect use_layer_wise to be `True`, got {autoround_config.use_layer_wise}"
 
     @pytest.mark.parametrize("p_type", [None, torch_utils.ProcessorType.Client, torch_utils.ProcessorType.Server])
     def test_get_default_config(self, p_type):
