@@ -78,21 +78,49 @@ def _map_inc_config_to_torch_quant_config(inc_config, is_dynamic=False) -> Quant
     if inc_config.act_dtype in NOT_QUANT_DTYPES and inc_config.w_dtype in NOT_QUANT_DTYPES:  # pragma: no cover
         logger.debug("Got non-quantizable data types, skipping quantization.")
         return None
-    default_quant_config = xiq.get_default_x86_inductor_quantization_config(is_dynamic=is_dynamic)
     input_act_quant_spec = create_quant_spec_from_config(
+        inc_config.act_dtype, inc_config.act_sym, inc_config.act_granularity, inc_config.act_algo, is_dynamic=is_dynamic
+    )
+    output_act_quant_spec = create_quant_spec_from_config(
         inc_config.act_dtype, inc_config.act_sym, inc_config.act_granularity, inc_config.act_algo, is_dynamic=is_dynamic
     )
     weight_quant_spec = create_quant_spec_from_config(
         inc_config.w_dtype, inc_config.w_sym, inc_config.w_granularity, inc_config.w_algo
     )
+    default_quant_config = xiq.get_default_x86_inductor_quantization_config(is_dynamic=is_dynamic)
     quant_config = QuantizationConfig(
         input_activation=input_act_quant_spec,
-        output_activation=default_quant_config.output_activation,
+        output_activation=output_act_quant_spec,
         weight=weight_quant_spec,
         bias=default_quant_config.bias,
         is_qat=False,
     )
     return quant_config
+
+
+def create_default_xiq_quantizer_config(is_dynamic=False) -> QuantizationConfig:
+    """Create the default PT2E config using INC defaults for both input and output activations."""
+    default_quant_config = xiq.get_default_x86_inductor_quantization_config(is_dynamic=is_dynamic)
+    act_quant_spec = create_quant_spec_from_config(
+        dtype="uint8",
+        sym=False,
+        granularity="per_tensor",
+        algo="minmax",
+        is_dynamic=is_dynamic,
+    )
+    weight_quant_spec = create_quant_spec_from_config(
+        dtype="int8",
+        sym=True,
+        granularity="per_channel",
+        algo="minmax",
+    )
+    return QuantizationConfig(
+        input_activation=act_quant_spec,
+        output_activation=act_quant_spec,
+        weight=weight_quant_spec,
+        bias=default_quant_config.bias,
+        is_qat=False,
+    )
 
 
 def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86InductorQuantizer:
