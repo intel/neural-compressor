@@ -159,7 +159,6 @@ if [[ "$ATTN_DTYPE" == "fp8" ]]; then
 fi
 
 
-export VLLM_QDQ=1
 # Run evaluation
 echo "Evaluating model: ${MODEL_PATH}"
 echo "Quantization scheme: ${SCHEME}"
@@ -167,8 +166,6 @@ echo "Tasks: ${TASK_NAME}"
 echo "Tensor parallelism size: ${TP_SIZE}"
 echo "Batch size: ${BATCH_SIZE}"
 echo "Output directory: ${OUTPUT_DIR}"
-
-
 
 
 # lm_eval --model vllm \
@@ -190,8 +187,10 @@ export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=$VLLM_MXFP4_PRE_UNPACK_WEIGHTS
 export VLLM_ENABLE_STATIC_MOE=$VLLM_ENABLE_STATIC_MOE
 export VLLM_USE_DEEP_GEMM=$VLLM_USE_DEEP_GEMM
 export VLLM_ENABLE_V1_MULTIPROCESSING=0
-
-
+# For https://github.com/yiliu30/vllm-qdq-plugin.git CT format eval
+export VLLM_QDQ=1
+# A100 need to close torch compile
+export TORCH_COMPILE_DISABLE=1
 
 # Function to run standard lm-eval tasks
 run_standard_eval() {
