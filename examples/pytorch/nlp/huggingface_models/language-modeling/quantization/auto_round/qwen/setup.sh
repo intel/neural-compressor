@@ -9,7 +9,7 @@ usage() {
 }
 
 DEVICE="gpu"
-FORMAT="LLMC"
+FORMAT="AR"
 TASKS="hellaswag,piqa,mmlu,gsm8k"
 BENCH_TOOL="lm_eval"
 
