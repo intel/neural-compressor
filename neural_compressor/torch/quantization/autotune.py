@@ -13,7 +13,6 @@
 # limitations under the License.
 """Intel Neural Compressor Pytorch quantization AutoTune API."""
 
-
 from copy import deepcopy
 from typing import Callable, List, Optional, Union
 

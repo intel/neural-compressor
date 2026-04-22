@@ -435,10 +435,8 @@ class HFLM(TemplateLM):
                 self.AUTO_MODEL_CLASS = AutoModelForCausalLM
             else:
                 if not trust_remote_code:
-                    eval_logger.warning(
-                        "HF model type is neither marked as CausalLM or Seq2SeqLM. \
-                    This is expected if your model requires `trust_remote_code=True` but may be an error otherwise."
-                    )
+                    eval_logger.warning("HF model type is neither marked as CausalLM or Seq2SeqLM. \
+                    This is expected if your model requires `trust_remote_code=True` but may be an error otherwise.")
                 # if model type is neither in HF transformers causal or seq2seq model registries
                 # then we default to AutoModelForCausalLM
                 self.AUTO_MODEL_CLASS = AutoModelForCausalLM

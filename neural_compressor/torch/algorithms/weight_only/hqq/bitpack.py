@@ -21,7 +21,6 @@
 #####################################################
 """Bit packing logic for HQQ."""
 
-
 import numpy as np
 import torch
 

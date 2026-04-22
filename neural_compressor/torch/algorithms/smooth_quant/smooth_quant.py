@@ -16,7 +16,6 @@
 # limitations under the License.
 """The quantizer using SmoothQuant path."""
 
-
 import json
 import os
 

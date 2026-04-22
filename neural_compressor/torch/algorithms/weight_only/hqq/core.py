@@ -20,7 +20,6 @@
 # and `QTensor` to decouple the data structure and the quantization logic.
 """The HQQ modules."""
 
-
 from typing import Any, Dict, Mapping, Tuple
 
 import torch
