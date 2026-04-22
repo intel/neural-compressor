@@ -12,7 +12,7 @@ echo "##[section]import check pass"
 # install requirements
 echo "##[group]set up UT env..."
 export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
-sed -i '/^auto-round/d;/^deepspeed;/^compressed-tensors/d' /neural-compressor/test/torch/requirements.txt
+sed -i '/^auto-round/d;/^deepspeed/d;/^compressed-tensors/d' /neural-compressor/test/torch/requirements.txt
 pip install -r /neural-compressor/test/torch/requirements.txt
 pip install compressed-tensors>=0.15.0 deepspeed@git+https://github.com/HabanaAI/DeepSpeed.git@1.23.0 --no-deps
 pip install auto-round-hpu
