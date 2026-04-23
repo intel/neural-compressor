@@ -107,11 +107,19 @@ class RTNQuantizer(Quantizer):
         device = get_accelerator(kwargs.pop("device", "auto")).current_device_name()
         model_device = get_model_device(model)  # return model on the same device
 
+        preserved_tied_weights = {}
         # for transformers model. If lm_head is tied from embedding, we deepcopy it.
         if quant_lm_head and getattr(getattr(model, "config", None), "tie_word_embeddings", False):
-            for key in model._tied_weights_keys:
-                weight = get_attr(model, key)
-                set_attr(model, key, copy.deepcopy(weight))
+            tied_weights_keys = getattr(model, "_tied_weights_keys", {})
+            if isinstance(tied_weights_keys, dict):
+                for source_key, target_key in tied_weights_keys.items():
+                    preserved_tied_weights[target_key] = get_attr(model, target_key)
+                    weight = get_attr(model, source_key)
+                    set_attr(model, source_key, copy.deepcopy(weight))
+            else:
+                for key in tied_weights_keys:
+                    weight = get_attr(model, key)
+                    set_attr(model, key, copy.deepcopy(weight))
 
         assert isinstance(model, torch.nn.Module), "only support torch module"
         if is_transformers_imported():
@@ -133,9 +141,14 @@ class RTNQuantizer(Quantizer):
             from neural_compressor.torch.algorithms.layer_wise.utils import get_path, load_module
 
             if model_path == "":
-                model_path = model.path
-            assert model_path, "model_path should not be None."
-            model_path = get_path(model_path)
+                model_path = getattr(model, "path", "")
+            if not model_path:
+                logger.warning(
+                    "Layer-wise RTN requires a checkpoint-backed model path. Falling back to regular conversion."
+                )
+                use_layer_wise = False
+            else:
+                model_path = get_path(model_path)
 
         for name, m in model.named_modules():
             if use_layer_wise and len(list(m.named_children())) == 0:
@@ -251,4 +264,7 @@ class RTNQuantizer(Quantizer):
                 new_module.to(model_device)
         if not use_layer_wise:
             model.to(model_device)
+        for target_key, target_weight in preserved_tied_weights.items():
+            if get_attr(model, target_key) is not target_weight:
+                set_attr(model, target_key, target_weight)
         return model

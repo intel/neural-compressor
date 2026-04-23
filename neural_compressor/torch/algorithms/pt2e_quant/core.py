@@ -19,15 +19,21 @@
 from typing import Any
 
 import torch
-import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
-from torch.ao.quantization.quantize_pt2e import convert_pt2e, prepare_pt2e
-from torch.ao.quantization.quantizer.x86_inductor_quantizer import X86InductorQuantizer
 from torch.fx.graph_module import GraphModule
 
 from neural_compressor.common.utils import logger
 from neural_compressor.torch.algorithms.base_algorithm import Quantizer
 from neural_compressor.torch.algorithms.pt2e_quant import half_precision_rewriter as hp_rewriter
-from neural_compressor.torch.algorithms.pt2e_quant.utility import create_xiq_quantizer_from_pt2e_config
+from neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat import (
+    X86InductorQuantizer,
+    convert_pt2e,
+    prepare_pt2e,
+    xiq,
+)
+from neural_compressor.torch.algorithms.pt2e_quant.utility import (
+    create_default_xiq_quantizer_config,
+    create_xiq_quantizer_from_pt2e_config,
+)
 
 
 class W8A8PT2EQuantizer(Quantizer):
@@ -51,9 +57,7 @@ class W8A8PT2EQuantizer(Quantizer):
         """
         if not quant_config:
             quantizer = X86InductorQuantizer()
-            quantizer.set_global(
-                xiq.get_default_x86_inductor_quantization_config(is_dynamic=W8A8PT2EQuantizer.is_dynamic)
-            )
+            quantizer.set_global(create_default_xiq_quantizer_config(is_dynamic=W8A8PT2EQuantizer.is_dynamic))
         else:
             quantizer = create_xiq_quantizer_from_pt2e_config(quant_config, is_dynamic=W8A8PT2EQuantizer.is_dynamic)
         return quantizer
@@ -76,6 +80,7 @@ class W8A8PT2EQuantizer(Quantizer):
         assert model._exported, "The model should be exported before preparing it for calibration."
         quantizer = self.update_quantizer_based_on_quant_config(quant_config)
         prepared_model = prepare_pt2e(model, quantizer)
+        prepared_model = self._skip_observers_for_non_float_tensors(prepared_model)
         return prepared_model
 
     def convert(self, model: GraphModule, *args: Any, **kwargs: Any) -> GraphModule:
@@ -105,3 +110,27 @@ class W8A8PT2EQuantizer(Quantizer):
         logger.info("Try to convert %d nodes to half precision.", len(half_precision_node_set))
         hp_rewriter.transformation(model, half_precision_node_set, torch.float16)
         hp_rewriter.transformation(model, half_precision_node_set, torch.bfloat16)
+
+    @staticmethod
+    def _skip_observers_for_non_float_tensors(model: GraphModule) -> GraphModule:
+        """Bypass observers that land on integer/bool tensors in exported LLM graphs."""
+        graph = model.graph
+        modified = False
+        for node in list(graph.nodes):
+            if node.op != "call_module" or not str(node.target).startswith("activation_post_process"):
+                continue
+            if not node.args:
+                continue
+            input_node = node.args[0]
+            if not hasattr(input_node, "meta"):
+                continue
+            value = input_node.meta.get("val", None)
+            if not isinstance(value, torch.Tensor) or torch.is_floating_point(value):
+                continue
+            node.replace_all_uses_with(input_node)
+            graph.erase_node(node)
+            modified = True
+        if modified:
+            graph.eliminate_dead_code()
+            model.recompile()
+        return model
