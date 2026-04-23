@@ -1,0 +1,65 @@
+# Copyright (c) 2026 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Compatibility imports for PT2E quantization APIs."""
+
+from importlib import import_module
+
+from neural_compressor.torch.utils import TORCH_VERSION_2_11_0, get_torch_version
+
+
+def _load_pt2e_modules():
+    if get_torch_version() >= TORCH_VERSION_2_11_0:
+        try:
+            pt2e_module = import_module("torchao.quantization.pt2e")
+            quantizer_module = import_module("torchao.quantization.pt2e.quantizer.x86_inductor_quantizer")
+            xnnpack_module = import_module("torchao.quantization.pt2e.quantizer")
+            ao_quantization_module = None
+        except ModuleNotFoundError as exc:
+            raise ModuleNotFoundError(
+                "torch>=2.11 requires `torchao` for PT2E quantization. Please install torchao."
+            ) from exc
+    else:
+        pt2e_module = import_module("torch.ao.quantization.quantize_pt2e")
+        quantizer_module = import_module("torch.ao.quantization.quantizer.x86_inductor_quantizer")
+        xnnpack_module = import_module("torch.ao.quantization.quantizer.xnnpack_quantizer")
+        ao_quantization_module = import_module("torch.ao.quantization")
+    return pt2e_module, quantizer_module, xnnpack_module, ao_quantization_module
+
+
+_PT2E_MODULE, xiq, xpq, _AO_QUANTIZATION_MODULE = _load_pt2e_modules()
+
+if get_torch_version() >= TORCH_VERSION_2_11_0:
+    _PT2E_QUANTIZE_MODULE = import_module("torchao.quantization.pt2e.quantize_pt2e")
+    prepare_pt2e = _PT2E_QUANTIZE_MODULE.prepare_pt2e
+    convert_pt2e = _PT2E_QUANTIZE_MODULE.convert_pt2e
+else:
+    prepare_pt2e = _PT2E_MODULE.prepare_pt2e
+    convert_pt2e = _PT2E_MODULE.convert_pt2e
+move_exported_model_to_eval = (
+    _PT2E_MODULE.move_exported_model_to_eval
+    if get_torch_version() >= TORCH_VERSION_2_11_0
+    else _AO_QUANTIZATION_MODULE.move_exported_model_to_eval
+)
+X86InductorQuantizer = xiq.X86InductorQuantizer
+QuantizationConfig = xiq.QuantizationConfig
+
+__all__ = [
+    "prepare_pt2e",
+    "convert_pt2e",
+    "move_exported_model_to_eval",
+    "xiq",
+    "xpq",
+    "X86InductorQuantizer",
+    "QuantizationConfig",
+]
