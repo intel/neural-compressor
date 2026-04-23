@@ -11,7 +11,7 @@ BATCH_SIZE=512
 KV_CACHE_DTYPE="auto"
 ATTN_DTYPE="None"
 SEQ_LENGTHS=""
-RULER_MAX_POS=""
+RULER_MAX_POS="65536"
 
 # Function to display usage
 usage() {
