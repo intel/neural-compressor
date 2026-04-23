@@ -1,0 +1,11 @@
+neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat
+=========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat
+
+.. autoapi-nested-parse::
+
+   Compatibility imports for PT2E quantization APIs.
+
+
+

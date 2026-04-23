@@ -15,13 +15,14 @@ Functions
 .. autoapisummary::
 
    neural_compressor.torch.algorithms.pt2e_quant.utility.create_quant_spec_from_config
+   neural_compressor.torch.algorithms.pt2e_quant.utility.create_default_xiq_quantizer_config
    neural_compressor.torch.algorithms.pt2e_quant.utility.create_xiq_quantizer_from_pt2e_config
 
 
 Module Contents
 ---------------
 
-.. py:function:: create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=False) -> torch.ao.quantization.quantizer.QuantizationSpec
+.. py:function:: create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=False) -> torchao.quantization.pt2e.quantizer.QuantizationSpec
 
    Create a quantization specification based on the given configuration.
 
@@ -40,7 +41,12 @@ Module Contents
    :rtype: QuantizationSpec
 
 
-.. py:function:: create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> torch.ao.quantization.quantizer.x86_inductor_quantizer.X86InductorQuantizer
+.. py:function:: create_default_xiq_quantizer_config(is_dynamic=False) -> neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat.QuantizationConfig
+
+   Create the default PT2E config using INC defaults for both input and output activations.
+
+
+.. py:function:: create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat.X86InductorQuantizer
 
    Creates an instance of X86InductorQuantizer based on the given configuration.
 
