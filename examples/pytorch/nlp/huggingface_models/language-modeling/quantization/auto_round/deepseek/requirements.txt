@@ -4,5 +4,6 @@ loguru
 compressed-tensors==0.12.2
 hf_transfer
 transformers==4.57.3
+torch==2.9.0
 # pip install git+https://github.com/yiliu30/long-bench-eval
 long-bench-eval @ git+https://github.com/yiliu30/long-bench-eval
