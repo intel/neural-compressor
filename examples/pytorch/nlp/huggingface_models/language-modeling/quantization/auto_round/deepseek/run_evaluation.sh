@@ -188,7 +188,8 @@ export VLLM_ENABLE_STATIC_MOE=$VLLM_ENABLE_STATIC_MOE
 export VLLM_USE_DEEP_GEMM=$VLLM_USE_DEEP_GEMM
 export VLLM_ENABLE_V1_MULTIPROCESSING=0
 
-
+# A100 need to close torch compile
+export TORCH_COMPILE_DISABLE=1
 
 # Function to run standard lm-eval tasks
 run_standard_eval() {
