@@ -67,8 +67,8 @@ done
 
 # Validate quantization type
 QUANT_TYPE_UPPER=$(echo "$QUANT_TYPE" | tr '[:lower:]' '[:upper:]')
-if [[ "$QUANT_TYPE_UPPER" != "MXFP4" && "$QUANT_TYPE_UPPER" != "MXFP8" ]]; then
-    echo "Error: Quantization type must be mxfp4 or mxfp8"
+if [[ "$QUANT_TYPE_UPPER" != "MXFP4" && "$QUANT_TYPE_UPPER" != "MXFP8" && "$QUANT_TYPE_UPPER" != "NVFP4" ]]; then
+    echo "Error: Quantization type must be mxfp4, mxfp8, or nvfp4"
     usage
     exit 1
 fi
