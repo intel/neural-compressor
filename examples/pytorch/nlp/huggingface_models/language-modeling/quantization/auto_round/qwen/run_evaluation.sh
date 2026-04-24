@@ -101,7 +101,7 @@ fi
 
 # update max_length based on the task
 if [[ "$TASK_NAME" == *"ruler"* ]]; then
-    MODEL_MAX_POS=${RULER_MAX_POS:-65536}
+    MODEL_MAX_POS=${RULER_MAX_POS:-131072}
     max_length=${MODEL_MAX_POS}
     max_gen_toks=128
     SEQ_LENGTHS="${MODEL_MAX_POS}"
@@ -134,8 +134,11 @@ elif [[ "$SCHEME" == "mxfp8" ]]; then
 elif [[ "$SCHEME" == "bf16" ]]; then
     echo "Run original model."
     VLLM_USE_DEEP_GEMM=0
+elif [[ "$SCHEME" == "nvfp4" ]]; then
+    echo "Run NVFP4 model."
+    VLLM_USE_DEEP_GEMM=0
 else
-    echo "Error: Invalid quantization scheme (-s). Must be 'mxfp4' or 'mxfp8'."
+    echo "Error: Invalid quantization scheme (-s). Must be 'mxfp4', 'mxfp8', or 'nvfp4'."
     usage
     exit 1
 fi

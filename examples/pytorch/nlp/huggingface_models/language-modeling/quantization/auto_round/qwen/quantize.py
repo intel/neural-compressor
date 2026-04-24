@@ -31,6 +31,11 @@ topologies_config = {
         "fp_layers": "lm_head,mlp.gate,self_attn",
         "iters": 200,
     },
+    "nvfp4": {
+        "scheme": "NVFP4",
+        "fp_layers": "lm_head,mlp.gate,self_attn",
+        "iters": 0,
+    },
     "mxfp4_fp8kv": {
         "scheme": "MXFP4_RCEIL",
         "fp_layers": "lm_head,mlp.gate,self_attn",
@@ -43,6 +48,11 @@ dense_topologies_config = {
     "mxfp8": {
         "scheme": "MXFP8",
         "fp_layers": "lm_head",
+        "iters": 0,
+    },
+    "nvfp4": {
+        "scheme": "NVFP4",
+        "fp_layers": "lm_head,self_attn",
         "iters": 0,
     },
     "mxfp4": {
@@ -74,7 +84,7 @@ def get_model_and_tokenizer(model_name):
     return fp32_model, tokenizer
 
 def is_dense_model(model_name):
-    dense_model_lst = ["Qwen3-32B", "Qwen3-8B"]
+    dense_model_lst = ["Qwen3-32B", "Qwen3-8B", "Qwen3-0.6B"]
     return any(dense_model in model_name for dense_model in dense_model_lst)
 
 
