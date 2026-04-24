@@ -101,7 +101,7 @@ fi
 
 # update max_length based on the task
 if [[ "$TASK_NAME" == *"ruler"* ]]; then
-    MODEL_MAX_POS=${RULER_MAX_POS:-65536}
+    MODEL_MAX_POS=${RULER_MAX_POS:-131072}
     max_length=${MODEL_MAX_POS}
     max_gen_toks=128
     SEQ_LENGTHS="${MODEL_MAX_POS}"
