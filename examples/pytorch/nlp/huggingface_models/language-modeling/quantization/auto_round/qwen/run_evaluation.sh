@@ -216,7 +216,7 @@ start_vllm_server() {
     VLLM_VERSION=$(python -c "import vllm; print(vllm.__version__)" 2>/dev/null || echo "0.0.0")
     VLLM_MAJOR_MINOR=$(echo "$VLLM_VERSION" | awk -F. '{printf "%d%02d", $1, $2}')
     if [ "$VLLM_MAJOR_MINOR" -ge 19 ] 2>/dev/null; then
-        ROPE_ARG='--hf-overrides {"rope_scaling":{"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}}'
+        ROPE_ARG='--hf-overrides {"rope_parameters":{"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}}'
     else
         ROPE_ARG='--rope-scaling {"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}'
     fi
