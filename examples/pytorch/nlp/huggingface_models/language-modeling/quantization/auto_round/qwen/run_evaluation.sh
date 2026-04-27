@@ -231,6 +231,7 @@ start_vllm_server() {
         --max-model-len ${max_length} \
         --gpu-memory-utilization 0.8 \
         --dtype bfloat16 \
+        --attention-config.backend TRITON_ATTN \
         --kv-cache-dtype ${KV_CACHE_DTYPE} \
         ${ROPE_FLAG} "${ROPE_VALUE}" \
         > ${OUTPUT_DIR}/vllm_server.log 2>&1 &
