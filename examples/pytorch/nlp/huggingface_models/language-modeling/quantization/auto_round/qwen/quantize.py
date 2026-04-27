@@ -31,9 +31,38 @@ topologies_config = {
         "fp_layers": "lm_head,mlp.gate,self_attn",
         "iters": 200,
     },
+    "nvfp4": {
+        "scheme": "NVFP4",
+        "fp_layers": "lm_head,mlp.gate,self_attn",
+        "iters": 0,
+    },
     "mxfp4_fp8kv": {
         "scheme": "MXFP4_RCEIL",
         "fp_layers": "lm_head,mlp.gate,self_attn",
+        "iters": 0,
+        "static_kv_dtype": "fp8",
+    },
+}
+
+dense_topologies_config = {
+    "mxfp8": {
+        "scheme": "MXFP8",
+        "fp_layers": "lm_head",
+        "iters": 0,
+    },
+    "nvfp4": {
+        "scheme": "NVFP4",
+        "fp_layers": "lm_head,self_attn",
+        "iters": 0,
+    },
+    "mxfp4": {
+        "scheme": "MXFP4",
+        "fp_layers": "lm_head,self_attn",
+        "iters": 0, # FIXME: use 200?
+    },
+    "mxfp4_fp8kv": {
+        "scheme": "MXFP4",
+        "fp_layers": "lm_head,self_attn",
         "iters": 0,
         "static_kv_dtype": "fp8",
     },
@@ -54,6 +83,10 @@ def get_model_and_tokenizer(model_name):
     )
     return fp32_model, tokenizer
 
+def is_dense_model(model_name):
+    dense_model_lst = ["Qwen3-32B", "Qwen3-8B", "Qwen3-0.6B"]
+    return any(dense_model in model_name for dense_model in dense_model_lst)
+
 
 def quant_model(args):
     from neural_compressor.torch.quantization import (
@@ -63,8 +96,10 @@ def quant_model(args):
     )
     if args.t == "mxfp4" and args.kv_cache_dtype == "fp8":
         args.t = "mxfp4_fp8kv"
-    config = topologies_config[args.t]
-    export_format = "auto_round" if args.use_autoround_format else "llm_compressor"
+    if is_dense_model(args.model):
+        config = dense_topologies_config[args.t]
+    else:
+        config = topologies_config[args.t]
     output_dir = f"{args.output_dir}/quantized_model_{args.t}"
     static_kv_dtype = args.static_kv_dtype if args.static_kv_dtype is not None else config.get("static_kv_dtype", None)
     if static_kv_dtype is not None and static_kv_dtype.lower() != "fp8":
@@ -74,13 +109,15 @@ def quant_model(args):
         logger.warning("When using static kv dtype or static attn dtype as fp8, setting iters to 0.")
         iters = 0
     fp32_model, tokenizer = get_model_and_tokenizer(args.model)
+    # if export_format is llm_compressor, scheme with RCEIL is not supported. 
+    scheme = config["scheme"] if args.export_format == "auto_round" else config["scheme"].replace("_RCEIL", "")
     quant_config = AutoRoundConfig(
         tokenizer=tokenizer,
-        scheme=config["scheme"],
+        scheme=scheme,
         enable_torch_compile=True,
         iters=iters,
         fp_layers=config["fp_layers"],
-        export_format=export_format,
+        export_format=args.export_format,
         disable_opt_rtn=True,
         low_gpu_mem_usage=True,
         static_kv_dtype=static_kv_dtype,
@@ -119,9 +156,11 @@ if __name__ == "__main__":
         help="Enable torch compile for the model.",
     )
     parser.add_argument(
-        "--use_autoround_format",
-        action="store_true",
-        help="Use AutoRound format for saving the quantized model.",
+        "--export_format",
+        type=str,
+        choices=["auto_round", "llm_compressor"],
+        default="auto_round",
+        help="Export format for the quantized model. Options are 'auto_round' or 'llm_compressor'.",
     )
     parser.add_argument(
         "--kv_cache_dtype",

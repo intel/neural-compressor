@@ -101,7 +101,7 @@ fi
 
 # update max_length based on the task
 if [[ "$TASK_NAME" == *"ruler"* ]]; then
-    MODEL_MAX_POS=${RULER_MAX_POS:-65536}
+    MODEL_MAX_POS=${RULER_MAX_POS:-131072}
     max_length=${MODEL_MAX_POS}
     max_gen_toks=128
     SEQ_LENGTHS="${MODEL_MAX_POS}"
@@ -134,8 +134,11 @@ elif [[ "$SCHEME" == "mxfp8" ]]; then
 elif [[ "$SCHEME" == "bf16" ]]; then
     echo "Run original model."
     VLLM_USE_DEEP_GEMM=0
+elif [[ "$SCHEME" == "nvfp4" ]]; then
+    echo "Run NVFP4 model."
+    VLLM_USE_DEEP_GEMM=0
 else
-    echo "Error: Invalid quantization scheme (-s). Must be 'mxfp4' or 'mxfp8'."
+    echo "Error: Invalid quantization scheme (-s). Must be 'mxfp4', 'mxfp8', or 'nvfp4'."
     usage
     exit 1
 fi
@@ -158,6 +161,7 @@ if [[ "$ATTN_DTYPE" == "fp8" ]]; then
     echo "Using FP8 Attention"
 fi
 
+
 # Run evaluation
 echo "Evaluating model: ${MODEL_PATH}"
 echo "Quantization scheme: ${SCHEME}"
@@ -165,8 +169,6 @@ echo "Tasks: ${TASK_NAME}"
 echo "Tensor parallelism size: ${TP_SIZE}"
 echo "Batch size: ${BATCH_SIZE}"
 echo "Output directory: ${OUTPUT_DIR}"
-
-
 
 
 # lm_eval --model vllm \
@@ -188,8 +190,10 @@ export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=$VLLM_MXFP4_PRE_UNPACK_WEIGHTS
 export VLLM_ENABLE_STATIC_MOE=$VLLM_ENABLE_STATIC_MOE
 export VLLM_USE_DEEP_GEMM=$VLLM_USE_DEEP_GEMM
 export VLLM_ENABLE_V1_MULTIPROCESSING=0
-
-
+# For https://github.com/yiliu30/vllm-qdq-plugin.git CT format eval
+export VLLM_QDQ=1
+# A100 need to close torch compile
+export TORCH_COMPILE_DISABLE=1
 
 # Function to run standard lm-eval tasks
 run_standard_eval() {
@@ -206,15 +210,30 @@ run_standard_eval() {
 # Function to start vLLM server
 start_vllm_server() {
     echo "Starting vLLM server on port ${SERVER_PORT}..."
+
+    # Detect vLLM version for backward-compatible rope scaling
+    # vLLM >= 0.19 removed --rope-scaling; use --hf-overrides instead
+    VLLM_VERSION=$(python -c "import vllm; print(vllm.__version__)" 2>/dev/null || echo "0.0.0")
+    VLLM_MAJOR_MINOR=$(echo "$VLLM_VERSION" | awk -F. '{printf "%d%02d", $1, $2}')
+    ROPE_SCALING_JSON='{"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}'
+    if [ "$VLLM_MAJOR_MINOR" -ge 19 ] 2>/dev/null; then
+        ROPE_FLAG="--hf-overrides"
+        ROPE_VALUE="{\"rope_scaling\":${ROPE_SCALING_JSON},\"max_position_embeddings\":131072}"
+    else
+        ROPE_FLAG="--rope-scaling"
+        ROPE_VALUE="${ROPE_SCALING_JSON}"
+    fi
+    echo "vLLM version: ${VLLM_VERSION}, using: ${ROPE_FLAG} '${ROPE_VALUE}'"
+
     vllm serve ${MODEL_PATH} \
         --port ${SERVER_PORT} \
         --tensor-parallel-size ${TP_SIZE} \
         --max-model-len ${max_length} \
         --gpu-memory-utilization 0.8 \
         --dtype bfloat16 \
+        --attention-config.backend TRITON_ATTN \
         --kv-cache-dtype ${KV_CACHE_DTYPE} \
-        --rope-scaling '{"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}' \
-        --disable-log-requests \
+        ${ROPE_FLAG} "${ROPE_VALUE}" \
         > ${OUTPUT_DIR}/vllm_server.log 2>&1 &
     
     VLLM_PID=$!

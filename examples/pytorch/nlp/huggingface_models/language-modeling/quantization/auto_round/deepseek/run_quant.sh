@@ -4,6 +4,7 @@ set -e
 MODEL=""
 TARGET=""
 OUTPUT_DIR=""
+EXPORT_FORMAT="auto_round"
 STATIC_KV_DTYPE="None"
 STATIC_ATTENTION_DTYPE="None"
 
@@ -14,6 +15,7 @@ usage() {
   echo "  -kv datatype for kv cache (auto, fp8)"
   echo "  -attn        Data type for static attention cache (default: None)"
   echo "  --output_dir output directory for quantized model"
+  echo "  -f           quantize model export_format (default: auto_round)"
   exit 1
 }
 
@@ -39,6 +41,10 @@ while [[ $# -gt 0 ]]; do
       OUTPUT_DIR="$2"
       shift 2
       ;;
+    -f)
+      EXPORT_FORMAT="$2"
+      shift 2
+      ;;
     -h|--help)
       usage
       ;;
@@ -57,7 +63,7 @@ AR_LOG_LEVEL=TRACE \
 python quantize.py \
   --model "$MODEL" \
   -t "$TARGET" \
-  --use_autoround_format \
+  --export_format "$EXPORT_FORMAT" \
   --output_dir "$OUTPUT_DIR" \
   $( [ "$STATIC_KV_DTYPE" != "None" ] && echo "--static_kv_dtype $STATIC_KV_DTYPE" ) \
   $( [ "$STATIC_ATTENTION_DTYPE" != "None" ] && echo "--static_attention_dtype $STATIC_ATTENTION_DTYPE" )
