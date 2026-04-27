@@ -233,7 +233,6 @@ start_vllm_server() {
         --dtype bfloat16 \
         --kv-cache-dtype ${KV_CACHE_DTYPE} \
         ${ROPE_FLAG} "${ROPE_VALUE}" \
-        --disable-log-requests \
         > ${OUTPUT_DIR}/vllm_server.log 2>&1 &
     
     VLLM_PID=$!
