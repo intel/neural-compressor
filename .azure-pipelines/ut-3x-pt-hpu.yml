@@ -74,6 +74,10 @@ stages:
     jobs:
       - job: CollectDatafiles
         steps:
+          - checkout: self
+            clean: true
+            displayName: "Checkout out Repo"
+
           - task: DownloadPipelineArtifact@2
             inputs:
               artifact:
