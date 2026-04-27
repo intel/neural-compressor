@@ -8,10 +8,10 @@ usage() {
     echo "  --bench_tool benchmarking tool to use (lm_eval or aisbench)"
 }
 
-DEVICE="gpu"
-FORMAT="AR"
-TASKS="hellaswag,piqa,mmlu,gsm8k"
-BENCH_TOOL="lm_eval"
+DEVICE="${DEVICE:-gpu}"
+FORMAT="${FORMAT:-AR}"
+TASKS="${TASKS:-hellaswag,piqa,mmlu,gsm8k}"
+BENCH_TOOL="${BENCH_TOOL:-lm_eval}"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
