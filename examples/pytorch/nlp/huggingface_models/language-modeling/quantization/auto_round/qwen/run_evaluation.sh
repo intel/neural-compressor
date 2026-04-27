@@ -218,7 +218,7 @@ start_vllm_server() {
     ROPE_SCALING_JSON='{"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}'
     if [ "$VLLM_MAJOR_MINOR" -ge 19 ] 2>/dev/null; then
         ROPE_FLAG="--hf-overrides"
-        ROPE_VALUE="{\"rope_scaling\":${ROPE_SCALING_JSON}}"
+        ROPE_VALUE="{\"rope_scaling\":${ROPE_SCALING_JSON},\"max_position_embeddings\":131072}"
     else
         ROPE_FLAG="--rope-scaling"
         ROPE_VALUE="${ROPE_SCALING_JSON}"
