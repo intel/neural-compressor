@@ -215,21 +215,24 @@ start_vllm_server() {
     # vLLM >= 0.19 removed --rope-scaling; use --hf-overrides instead
     VLLM_VERSION=$(python -c "import vllm; print(vllm.__version__)" 2>/dev/null || echo "0.0.0")
     VLLM_MAJOR_MINOR=$(echo "$VLLM_VERSION" | awk -F. '{printf "%d%02d", $1, $2}')
+    ROPE_SCALING_JSON='{"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}'
     if [ "$VLLM_MAJOR_MINOR" -ge 19 ] 2>/dev/null; then
-        ROPE_ARG='--hf-overrides {"rope_parameters":{"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}}'
+        ROPE_FLAG="--hf-overrides"
+        ROPE_VALUE="{\"rope_scaling\":${ROPE_SCALING_JSON}}"
     else
-        ROPE_ARG='--rope-scaling {"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}'
+        ROPE_FLAG="--rope-scaling"
+        ROPE_VALUE="${ROPE_SCALING_JSON}"
     fi
-    echo "vLLM version: ${VLLM_VERSION}, using rope arg: ${ROPE_ARG}"
+    echo "vLLM version: ${VLLM_VERSION}, using: ${ROPE_FLAG} '${ROPE_VALUE}'"
 
-    eval vllm serve ${MODEL_PATH} \
+    vllm serve ${MODEL_PATH} \
         --port ${SERVER_PORT} \
         --tensor-parallel-size ${TP_SIZE} \
         --max-model-len ${max_length} \
         --gpu-memory-utilization 0.8 \
         --dtype bfloat16 \
         --kv-cache-dtype ${KV_CACHE_DTYPE} \
-        "${ROPE_ARG}" \
+        ${ROPE_FLAG} "${ROPE_VALUE}" \
         --disable-log-requests \
         > ${OUTPUT_DIR}/vllm_server.log 2>&1 &
     
