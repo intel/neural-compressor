@@ -9,7 +9,7 @@ tool configuration (`pyproject.toml`).
 ## Python formatting – black
 
 - Use **black** style formatting for all Python files (excluding `examples/`,
-  `neural_compressor/torch/algorithms/fp8_quant/`, and `test/3x/torch/`).
+  `neural_compressor/torch/algorithms/fp8_quant/`, and `test/torch/`).
 - Line length: **120 characters**.
 - Use double quotes for strings.
 - Indent with 4 spaces; never use tabs.
@@ -22,7 +22,7 @@ tool configuration (`pyproject.toml`).
 - Treat `neural_compressor` as a first-party package.
 - Do not modify `__init__.py` files' imports.
 - Applies to all Python files except `examples/`,
-  `neural_compressor/torch/algorithms/fp8_quant/`, and `test/3x/torch/`.
+  `neural_compressor/torch/algorithms/fp8_quant/`, and `test/torch/`.
 
 ## Linting – ruff
 
@@ -33,7 +33,7 @@ tool configuration (`pyproject.toml`).
   flagged as issues:
   - `E402` – module-level import not at top of file
   - `E501` – line too long
-  - `E721` – type comparison (use `isinstance()` is preferred but not enforced)
+  - `E721` – type comparison (using `isinstance()` is preferred but not enforced)
   - `E722` – bare `except`
   - `E731` – lambda assigned to variable
   - `E741` – ambiguous variable names (`l`, `O`, `I`)
@@ -50,14 +50,14 @@ tool configuration (`pyproject.toml`).
 - Do not wrap summary lines or description lines (wrapping is disabled).
 - Docstrings must be **black**-compatible.
 - Applies to all Python files except `examples/`,
-  `neural_compressor/torch/algorithms/fp8_quant/`, and `test/3x/torch/`.
+  `neural_compressor/torch/algorithms/fp8_quant/`, and `test/torch/`.
 
 ## Docstring examples in documentation – blacken-docs
 
 - Code blocks inside Markdown and reStructuredText documentation files must also
   follow **black** formatting with line length **120**.
-- Applies to all docs except `examples/`, `docs/source/3x/JAX.md`,
-  `neural_compressor/torch/algorithms/fp8_quant/`, and `test/3x/torch/`.
+- Applies to all docs except `examples/`, `docs/source/JAX.md`,
+  `neural_compressor/torch/algorithms/fp8_quant/`, and `test/torch/`.
 
 ## Security – bandit
 
@@ -87,11 +87,11 @@ tool configuration (`pyproject.toml`).
 
 - No trailing whitespace in `.py`, `.rst`, `.cmake`, `.yaml`, or `.yml` files
   (except files under `examples/`, `neural_compressor/torch/utils/`,
-  `neural_compressor/torch/algorithms/fp8_quant/`, and `test/3x/torch/quantization/`).
+  `neural_compressor/torch/algorithms/fp8_quant/`, and `test/torch/quantization/`).
 - All `.py`, `.md`, `.rst`, `.yaml`, and `.yml` files must end with a single newline
   character (except files under `examples/`,
   `neural_compressor/torch/algorithms/fp8_quant/`, and
-  `test/3x/torch/algorithms/fp8_quant/`).
+  `test/torch/algorithms/fp8_quant/`).
 - JSON files must be valid (except `.vscode/settings_recommended.json`).
 - YAML files must be valid.
 
@@ -102,7 +102,7 @@ tool configuration (`pyproject.toml`).
   first 40 lines). The header template is:
 
   ```
-  # Copyright (c) 2026 Intel Corporation  # replace with the current year
+  # Copyright (c) YYYY Intel Corporation
   #
   # Licensed under the Apache License, Version 2.0 (the "License");
   # you may not use this file except in compliance with the License.
