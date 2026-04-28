@@ -12,8 +12,7 @@ echo "##[section]import check pass"
 # install requirements
 echo "##[group]set up UT env..."
 export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
-sed -i '/^auto-round/d' /neural-compressor/test/torch/requirements.txt
-cat /neural-compressor/test/torch/requirements.txt
+sed -i '/^auto-round/d;/^torchvision/d' /neural-compressor/test/torch/requirements.txt
 pip install -r /neural-compressor/test/torch/requirements.txt
 pip install deepspeed@git+https://github.com/HabanaAI/DeepSpeed.git@main --no-deps
 pip install msgpack  # deepspeed dependency

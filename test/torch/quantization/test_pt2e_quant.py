@@ -5,6 +5,7 @@ import torch
 import torch.testing._internal.common_quantization as torch_test_quant_common
 
 from neural_compressor.common.utils import logger
+from neural_compressor.torch.algorithms.pt2e_quant import pt2e_compat
 from neural_compressor.torch.export import export
 from neural_compressor.torch.quantization import (
     DynamicQuantConfig,
@@ -15,7 +16,12 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
-from neural_compressor.torch.utils import GT_OR_EQUAL_TORCH_VERSION_2_5, TORCH_VERSION_2_2_2, get_torch_version
+from neural_compressor.torch.utils import (
+    GT_OR_EQUAL_TORCH_VERSION_2_5,
+    TORCH_VERSION_2_2_2,
+    TORCH_VERSION_2_11_0,
+    get_torch_version,
+)
 
 torch.manual_seed(0)
 
@@ -363,3 +369,11 @@ class TestPT2EQuantization:
         opt_model = torch.compile(qmodel)
         out = opt_model(*example_inputs)
         assert out is not None
+
+    @pytest.mark.skipif(get_torch_version() < TORCH_VERSION_2_11_0, reason="Requires torch>=2.11")
+    def test_pt2e_compat_uses_torchao_on_torch_2_11_plus(self, force_not_import_ipex):
+        pt2e_module, quantizer_module, xnnpack_module, _ = pt2e_compat._load_pt2e_modules()
+
+        assert pt2e_module.__name__ == "torchao.quantization.pt2e"
+        assert quantizer_module.__name__ == "torchao.quantization.pt2e.quantizer.x86_inductor_quantizer"
+        assert xnnpack_module.__name__ == "torchao.quantization.pt2e.quantizer"

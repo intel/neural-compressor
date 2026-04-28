@@ -16,17 +16,14 @@
 from typing import Dict
 
 import torch
-import torch.ao.quantization.quantizer.x86_inductor_quantizer as xiq
-from torch.ao.quantization.observer import (
-    HistogramObserver,
-    MinMaxObserver,
-    PerChannelMinMaxObserver,
-    PlaceholderObserver,
-)
-from torch.ao.quantization.quantizer import QuantizationSpec
-from torch.ao.quantization.quantizer.x86_inductor_quantizer import QuantizationConfig, X86InductorQuantizer
 
-from neural_compressor.torch.utils import GT_OR_EQUAL_TORCH_VERSION_2_5, logger
+from neural_compressor.torch.algorithms.pt2e_quant.pt2e_compat import QuantizationConfig, X86InductorQuantizer, xiq
+from neural_compressor.torch.utils import GT_OR_EQUAL_TORCH_VERSION_2_5, TORCH_VERSION_2_11_0, get_torch_version, logger
+
+if get_torch_version() >= TORCH_VERSION_2_11_0:
+    from torchao.quantization.pt2e.quantizer import QuantizationSpec
+else:
+    from torch.ao.quantization.quantizer import QuantizationSpec
 
 
 def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=False) -> QuantizationSpec:
@@ -50,12 +47,12 @@ def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=Fals
         "per_tensor": {True: torch.per_tensor_symmetric, False: torch.per_tensor_affine},
     }
     observer_mapping = {
-        "placeholder": PlaceholderObserver,
-        "minmax": MinMaxObserver,
-        "kl": HistogramObserver,
-        "per_channel_minmax": PerChannelMinMaxObserver,
+        "placeholder": xiq.PlaceholderObserver,
+        "minmax": getattr(xiq, "MovingAverageMinMaxObserver"),
+        "kl": getattr(xiq, "HistogramObserver"),
+        "per_channel_minmax": getattr(xiq, "PerChannelMinMaxObserver"),
     }
-    # Force to use placeholder observer for dynamic quantization
+    # Dynamic PT2E quantization on torchao expects PlaceholderObserver from the PT2E quantizer module.
     if is_dynamic:
         algo = "placeholder"
     if f"{granularity}_{algo}" in observer_mapping:
@@ -69,7 +66,7 @@ def create_quant_spec_from_config(dtype, sym, granularity, algo, is_dynamic=Fals
         quant_min=min_max_mapping[select_dtype][0],
         quant_max=min_max_mapping[select_dtype][1],
         observer_or_fake_quant_ctr=observer_or_fake_quant_ctr,
-        ch_axis=0,
+        ch_axis=0 if granularity == "per_channel" else None,
         qscheme=qscheme,
         is_dynamic=is_dynamic,
     )
@@ -81,21 +78,49 @@ def _map_inc_config_to_torch_quant_config(inc_config, is_dynamic=False) -> Quant
     if inc_config.act_dtype in NOT_QUANT_DTYPES and inc_config.w_dtype in NOT_QUANT_DTYPES:  # pragma: no cover
         logger.debug("Got non-quantizable data types, skipping quantization.")
         return None
-    default_quant_config = xiq.get_default_x86_inductor_quantization_config(is_dynamic=is_dynamic)
     input_act_quant_spec = create_quant_spec_from_config(
+        inc_config.act_dtype, inc_config.act_sym, inc_config.act_granularity, inc_config.act_algo, is_dynamic=is_dynamic
+    )
+    output_act_quant_spec = create_quant_spec_from_config(
         inc_config.act_dtype, inc_config.act_sym, inc_config.act_granularity, inc_config.act_algo, is_dynamic=is_dynamic
     )
     weight_quant_spec = create_quant_spec_from_config(
         inc_config.w_dtype, inc_config.w_sym, inc_config.w_granularity, inc_config.w_algo
     )
+    default_quant_config = xiq.get_default_x86_inductor_quantization_config(is_dynamic=is_dynamic)
     quant_config = QuantizationConfig(
         input_activation=input_act_quant_spec,
-        output_activation=default_quant_config.output_activation,
+        output_activation=output_act_quant_spec,
         weight=weight_quant_spec,
         bias=default_quant_config.bias,
         is_qat=False,
     )
     return quant_config
+
+
+def create_default_xiq_quantizer_config(is_dynamic=False) -> QuantizationConfig:
+    """Create the default PT2E config using INC defaults for both input and output activations."""
+    default_quant_config = xiq.get_default_x86_inductor_quantization_config(is_dynamic=is_dynamic)
+    act_quant_spec = create_quant_spec_from_config(
+        dtype="uint8",
+        sym=False,
+        granularity="per_tensor",
+        algo="minmax",
+        is_dynamic=is_dynamic,
+    )
+    weight_quant_spec = create_quant_spec_from_config(
+        dtype="int8",
+        sym=True,
+        granularity="per_channel",
+        algo="minmax",
+    )
+    return QuantizationConfig(
+        input_activation=act_quant_spec,
+        output_activation=act_quant_spec,
+        weight=weight_quant_spec,
+        bias=default_quant_config.bias,
+        is_qat=False,
+    )
 
 
 def create_xiq_quantizer_from_pt2e_config(config, is_dynamic=False) -> X86InductorQuantizer:

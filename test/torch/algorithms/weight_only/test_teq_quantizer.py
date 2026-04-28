@@ -78,7 +78,6 @@ class TestTEQWeightOnlyQuant(unittest.TestCase):
     def setUpClass(self):
         self.gptj = transformers.AutoModelForCausalLM.from_pretrained(
             "hf-internal-testing/tiny-random-GPTJForCausalLM",
-            torchscript=True,
         )
         self.gptj.seqlen = 512
 
