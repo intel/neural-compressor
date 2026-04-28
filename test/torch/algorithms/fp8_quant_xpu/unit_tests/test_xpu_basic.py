@@ -37,8 +37,8 @@ class Matmul(torch.nn.Module):
     def __init__(self, dim=16):
         super().__init__()
 
-    def forward(self, input, other):
-        return torch.matmul(input, other)
+    def forward(self, input, other, **kwargs):
+        return torch.matmul(input, other, **kwargs)
 
 
 class MyModelMatmul(torch.nn.Module):
@@ -83,10 +83,7 @@ def test_xpu_basic_mamtul():
     # verify that we actually did the checks
     assert verified_matmul_quantized_func_wrapper and verified_quant_input_quantized_func_wrapper
 
-
-pytest.mark.xfail(reason="PYTORCHDGQ-6840 - enable once low-precision casting custom XPU ops are supported")
-
-
+@pytest.mark.skip(reason="PYTORCHDGQ-6840 - enable once low-precision casting custom XPU ops are supported")
 def test_xpu_quantized_func_wrapper():
     # test for verifying xpu quantized wrapper logic
     my_model = MyModel()

@@ -24,7 +24,7 @@ def register_scale_round_method(name):
         scale_round_method_registry[name] = cls
         return cls
     return decorator
- 
+
 @register_scale_round_method("POW2")
 class ScaleToPow2:
     def __init__(self):

@@ -2271,6 +2271,7 @@ class TorchSmoothQuant:  # pragma: no cover
         # Check if input_maxes match self.absorb_to_layer
         # (due to self._get_all_layer_names use layer tree instead of forward_path)
         if not folding and self.need_calibration:
+            input_mins, input_maxes = self.input_mins, self.input_maxes
             if len(self.input_mins) == 0:  ##there are some modules not used in forward
                 calib = Calibration(self.model, self.dataloader, self.q_func, self.device)  ##
                 input_mins, input_maxes = calib.calibrate(
@@ -2616,6 +2617,8 @@ class SQLinearWrapper(torch.nn.Module):  # pragma: no cover
         """
         if dtype == torch.quint8:
             quant_min, quant_max = 0, 255
+        else:
+            raise ValueError(f"Unsupported dtype for quantization parameters: {dtype}")
         min_val = torch.min(input_minmax[0] * input_scale)
         max_val = torch.max(input_minmax[1] * input_scale)
         # work when min_val bigger than zero.

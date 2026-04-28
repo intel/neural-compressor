@@ -367,7 +367,7 @@ def quant_tensor(
             weight2, scale2, zp2 = weight2
             weight = torch.cat([weight1, weight2], dim=1)
             scale = torch.cat([scale1, scale2], dim=1)
-            zp = None if zp2 is None else torch.cat([zp1, zp2], dim=1)
+            zp = None if (zp1 is None or zp2 is None) else torch.cat([zp1, zp2], dim=1)
             accelerator.synchronize()
             orig_weight.copy_(weight)
             return orig_weight, scale, zp

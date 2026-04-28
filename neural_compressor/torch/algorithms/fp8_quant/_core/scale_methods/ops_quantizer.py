@@ -17,7 +17,7 @@ import torch
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config import get_hqt_config, is_supported_dynamic_op
 from .scale_method_factory import ScaleMethodFactory, QuantTensorName, ScaleValueType
 from ..common import ModuleConfig, QuantTensorType
-from ..quant_dequant import DequantOutput, QuantDequant, QuantDequantNone, QuantInput, QuantDynamicInput
+from ..quant_dequant import DequantOutput, QuantDequant, QuantDequantNone, QuantInput, QuantDynamicInput, DequantDynamicOutput
 from ...utils.logger import logger
 from neural_compressor.torch.algorithms.fp8_quant._core.common import dequant_original_fp8_weight_if_needed
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
@@ -37,16 +37,15 @@ class BaseOpQuantizer:
         self.output_scales_creators = []
         self.params_scales_creators = []
         self.is_dynamic = hqt_config["dynamic_quantization"] and is_supported_dynamic_op(mod_type_str)
-
+        self.update_module_configuration()
         logger.debug("%s %s", self.__class__.__name__, self.__dict__)
 
-    def get_module_configuration(self):
-        scale_format = get_hqt_config(self.mod).cfg["scale_format"]
-        use_qdq = get_hqt_config(self.mod).cfg["use_qdq"]
-        fake_quant = get_hqt_config(self.mod).cfg["fake_quant"]
-        lp_dtype = self.params["lp_dtype"]
-        hp_dtype = self.params["hp_dtype"]
-        return scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype
+    def update_module_configuration(self):
+        self.scale_format = get_hqt_config(self.mod).cfg["scale_format"]
+        self.use_qdq = get_hqt_config(self.mod).cfg["use_qdq"]
+        self.fake_quant = get_hqt_config(self.mod).cfg["fake_quant"]
+        self.lp_dtype = self.params["lp_dtype"]
+        self.hp_dtype = self.params["hp_dtype"]
 
     @abstractmethod
     def get_scales_module_config(self) -> ModuleConfig:
@@ -83,10 +82,10 @@ class BaseOpQuantizer:
             output_scales = self.output_scales_creators[0].calc_scales(output_measurement, QuantTensorType.MEASUREMENTS)
         return (output_scales,)
 
-    def init_input_config(self, scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
-        if use_qdq or fake_quant:
+    def init_input_config(self, scales_inv):
+        if self.use_qdq or self.fake_quant:
             input_config = [
-                QuantDequant(s_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq)
+                QuantDequant(s_inv, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format, use_qdq=self.use_qdq)
                 for s_inv in scales_inv
             ]
         else:
@@ -94,10 +93,10 @@ class BaseOpQuantizer:
             for input_scales_creator, s_inv in zip(self.inputs_scales_creators, scales_inv):
                 if self.is_dynamic:
                     input_config.append(
-                        QuantDynamicInput(input_scales_creator, lp_dtype, hp_dtype, scale_format=scale_format)
+                        QuantDynamicInput(input_scales_creator, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)
                     )
                 else:
-                    input_config.append(QuantInput(s_inv, lp_dtype, hp_dtype, scale_format=scale_format))
+                    input_config.append(QuantInput(s_inv, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format))
         return input_config
 
 
@@ -114,47 +113,52 @@ class LinearOpQuantizer(BaseOpQuantizer):
         self.weight_ich_scale_calc = self.scales_method_factory.get_scale_method(QuantTensorName.WEIGHT_IN_CH)
         self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT, self.is_dynamic))
 
+    def calc_output_scales(self, input_0, input_1):
+        output_measurement = self.measurement.outputs[0] if self.measurement is not None else []
+        output_scales = None
+        if not self.is_dynamic:
+            output_scales = self.output_scales_creators[0].calc_scales(
+                output_measurement, QuantTensorType.MEASUREMENTS, input0=input_0, input1=input_1)
+        return (output_scales,)
+
     def get_scales_module_config(self):
         input_scales = self.calc_input_scales(num_of_inputs=1)
-        output_measurement = self.measurement.outputs[0] if self.measurement is not None else []
         rescaled_weight = self.mod.weight if hasattr(self.mod, 'weight') else None
         if rescaled_weight is not None:
             rescaled_weight = dequant_original_fp8_weight_if_needed(self.mod, rescaled_weight)
-        if self.scales_method_factory.scale_method_config_map[QuantTensorName.WEIGHT_IN_CH].scale_value_type != ScaleValueType.DUMMY_SCALES:
-            # Calculating weight in hpu to support scale calculation CGUID torch.ops.hpu.calculate_scale_for_cast
-            rescaled_weight = rescaled_weight.to(cur_device)
-        if self.weight_ich_scale_calc is not None:
-            weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST)
-            rescaled_weight = torch.div(rescaled_weight, weight_scales_in_ch.reshape([1, -1]))
-        weights_scales_out_ch = self.weight_och_scale_calc.calc_scales(rescaled_weight, QuantTensorType.CONST)
-
+            if self.scales_method_factory.scale_method_config_map[QuantTensorName.WEIGHT_IN_CH].scale_value_type != ScaleValueType.DUMMY_SCALES:
+                # Calculating weight in hpu to support scale calculation CGUID torch.ops.hpu.calculate_scale_for_cast
+                rescaled_weight = rescaled_weight.to(cur_device)
+        extra_kwargs = {}
+        if self.weight_ich_scale_calc is not None and rescaled_weight is not None:
+            weights_input_channel_dim_size = rescaled_weight.size(1)
+            weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST, in_channel_size=weights_input_channel_dim_size)
+            if self.scales_method_factory.scale_method_config_map[QuantTensorName.WEIGHT_IN_CH].scale_value_type == ScaleValueType.DUMMY_SCALES:
+                extra_kwargs = {"out_channel_size": rescaled_weight.size(0)}
+        weights_scales_out_ch = self.weight_och_scale_calc.calc_scales(rescaled_weight, QuantTensorType.CONST, **extra_kwargs)
         params_config = (
             {"weight": weights_scales_out_ch}
             if (self.weight_ich_scale_calc is None)
             else {"weight": {0: weights_scales_out_ch, 1: weight_scales_in_ch}}
         )
-        output_scales = None
-        if not self.is_dynamic:
-            output_scales = self.output_scales_creators[0].calc_scales(
-                output_measurement, QuantTensorType.MEASUREMENTS, input0=weights_scales_out_ch, input1=input_scales[0]
-            )
+        output_scales = self.calc_output_scales(weights_scales_out_ch, input_scales[0])
         return ModuleConfig(
             input_scales,
-            (output_scales,),
+            output_scales,
             params_config,
         )
 
-    def init_weight_config(self, scales, scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
-        if use_qdq:
+    def init_weight_config(self, scales, scales_inv):
+        if self.use_qdq:
             # to ensure the weights to be loaded to the device in fp8
             weight_config = [
-                QuantInput(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq),
-                DequantOutput(scales, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq),
+                QuantInput(scales_inv, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format, use_qdq=self.use_qdq),
+                DequantOutput(scales, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format, use_qdq=self.use_qdq),
             ]
-        elif fake_quant:
-            weight_config = [QuantDequant(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format)]
+        elif self.fake_quant:
+            weight_config = [QuantDequant(scales_inv, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)]
         else:
-            weight_config = [QuantInput(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format)]
+            weight_config = [QuantInput(scales_inv, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)]
         return weight_config
 
     def init_weights_from_module(self, params_config):
@@ -164,38 +168,25 @@ class LinearOpQuantizer(BaseOpQuantizer):
         else:
             self.weight_och_scale_calc.scale = params_config
 
-    def get_output_config(self, lp_dtype, hp_dtype, scale_format):
-        output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
+    def get_output_config(self):
+        output_config = [QuantDequantNone(self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)]
         return output_config
 
     def scales_module_config_to_q_and_dq(self, module):
         self.init_scales_from_module_config(module)
         self.init_weights_from_module(module.params["weight"])
-        scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = self.get_module_configuration()
-        input_config = super().init_input_config(
-            (self.inputs_scales_creators[0].calc_invert_scales(),),
-            lp_dtype,
-            hp_dtype,
-            scale_format,
-            use_qdq,
-            fake_quant,
-        )
+        input_config = super().init_input_config((self.inputs_scales_creators[0].calc_invert_scales(),))
         # outputs as bf16, and descaled in gemm under PatchedLinear, so no need to work here
-        output_config = self.get_output_config(lp_dtype, hp_dtype, scale_format=scale_format)
+        output_config = self.get_output_config()
         weight_config = self.init_weight_config(
             self.weight_och_scale_calc.scale,
-            self.weight_och_scale_calc.calc_invert_scales(),
-            lp_dtype,
-            hp_dtype,
-            scale_format,
-            use_qdq,
-            fake_quant,
+            self.weight_och_scale_calc.calc_invert_scales()
         )
         params_config = {"weight": weight_config}
         if hasattr(self.mod, "bias") and (getattr(self.mod, "bias") is not None):
             # In PatchedLinear the bias is added to the output of gemm.
             # The output is expected to be descaled and in bf16, so we don't need to touch the bias.
-            bias_config = [QuantDequantNone(lp_dtype, hp_dtype)]
+            bias_config = [QuantDequantNone(self.lp_dtype, self.hp_dtype)]
             params_config.update({"bias": bias_config})
         return ModuleConfig(input_config, output_config, params_config)
 
@@ -226,19 +217,19 @@ class RowParallelLinearOpQuantizer(LinearOpQuantizer):
         module_config.outputs = (module_config.outputs[0], output_scales,)
         return module_config
 
-    def get_output_config(self, lp_dtype, hp_dtype, scale_format):
+    def get_output_config(self):
         if not self.allreduce_quantization_enabled:
-            return super().get_output_config(lp_dtype, hp_dtype, scale_format)
+            return super().get_output_config()
         scale_0 = self.output_scales_creators[0].scale
         inv_scale_0 = self.output_scales_creators[0].calc_invert_scales()
-        output_config_dq_scatter_output = DequantOutput(scale_0, lp_dtype, hp_dtype, scale_format=scale_format)
-        output_config_q_scatter_input = QuantInput(inv_scale_0, lp_dtype, hp_dtype, scale_format=scale_format)
+        output_config_dq_scatter_output = DequantOutput(scale_0, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)
+        output_config_q_scatter_input = QuantInput(inv_scale_0, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)
         output_config = [output_config_dq_scatter_output,
                          output_config_q_scatter_input]
         inv_scale_1 = self.output_scales_creators[1].calc_invert_scales()
         scale_1 = self.output_scales_creators[1].scale
-        output_config_q_gather_input = QuantInput(inv_scale_1, lp_dtype, hp_dtype, scale_format=scale_format)
-        output_config_dq_gather_output = DequantOutput(scale_1, lp_dtype, hp_dtype, scale_format=scale_format)
+        output_config_q_gather_input = QuantInput(inv_scale_1, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)
+        output_config_dq_gather_output = DequantOutput(scale_1, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)
         output_config.extend([output_config_q_gather_input, output_config_dq_gather_output])
         return output_config
 
@@ -246,35 +237,66 @@ class MatmulOpQuantizer(BaseOpQuantizer):
 
     def __init__(self, config, mod, measurement, params, mod_type_str):
         super().__init__(config, mod, measurement, params, mod_type_str)
-        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
-        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
-        self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT))
+        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic, scale_dim_index=-1))
+        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic, scale_dim_index=-2))
+        self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT, self.is_dynamic))
+
 
     def get_scales_module_config(self):
         input_scales = self.calc_input_scales(num_of_inputs=2)
 
-        output_scales = input_scales[0] * input_scales[1]
+        output_scales = None
+        if not self.is_dynamic and input_scales[0] is not None and input_scales[1] is not None:
+            output_scales = input_scales[0] * input_scales[1]
         return ModuleConfig(input_scales, (output_scales,), {})
 
     def scales_module_config_to_q_and_dq(self, module):
         self.init_scales_from_module_config(module)
-        scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = super().get_module_configuration()
         input_config = super().init_input_config(
-            (self.inputs_scales_creators[0].calc_invert_scales(), self.inputs_scales_creators[1].calc_invert_scales()),
-            lp_dtype,
-            hp_dtype,
-            scale_format,
-            use_qdq,
-            fake_quant,
+            (self.inputs_scales_creators[0].calc_invert_scales(), self.inputs_scales_creators[1].calc_invert_scales())
         )
 
         # 4bit->8bit inputs, no need to quant
         if hasattr(self.mod, "no_input_quant"):
-            input_config[1] = QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)
+            input_config[1] = QuantDequantNone(self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)
 
         # outputs as bf16, and descaled in gemm under PatchedLinear, so no need to work here
-        output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
+        output_config = [QuantDequantNone(self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)]
         return ModuleConfig(input_config, output_config)
+
+
+## Batch2Block and Block2Batch Matmul Op Quantizer, need special handling for input scales
+## First input is matrix of 0 and 1, so its scale is always 1
+## Second input is corrupt with garbage values, so its scale is taken from output scale
+class B2B_MatmulOpQuantizer(MatmulOpQuantizer):
+    def __init__(self, config, mod, measurement, params, mod_type_str):
+        super().__init__(config, mod, measurement, params, mod_type_str)
+
+    def get_scales_module_config(self):
+        input_scales = []
+        ## first input is matrix of 0 and 1
+        input_measurement = self.measurement.inputs[0] if self.measurement is not None else []
+        input_scale = None
+        if not self.is_dynamic:
+            input_scale = self.inputs_scales_creators[0].calc_scales(
+                input_measurement, QuantTensorType.MEASUREMENTS
+            )
+        input_scales.append(input_scale)
+        ## second input is corrupt with garbage values - use measurement from output
+        input_measurement = self.measurement.outputs[0] if self.measurement is not None else []
+        input_scale = None
+        if not self.is_dynamic:
+            input_scale = self.inputs_scales_creators[1].calc_scales(
+                input_measurement, QuantTensorType.MEASUREMENTS
+            )
+        input_scales.append(input_scale)
+
+
+        output_scales = None
+        if not self.is_dynamic and input_scales[0] is not None and input_scales[1] is not None:
+            output_scales = input_scales[0] * input_scales[1]
+        return ModuleConfig(input_scales, (output_scales,), {})
+
 
 
 class SoftmaxOpQuantizer(BaseOpQuantizer):
@@ -290,9 +312,8 @@ class SoftmaxOpQuantizer(BaseOpQuantizer):
 
     def scales_module_config_to_q_and_dq(self, module):
         self.init_scales_from_module_config(module)
-        scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = super().get_module_configuration()
         output_config = [
-            DequantOutput(self.output_scales_creators[0].scale, lp_dtype, hp_dtype, scale_format=scale_format)
+            DequantOutput(self.output_scales_creators[0].scale, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)
         ]
         return ModuleConfig([], output_config, {})
 
@@ -322,15 +343,12 @@ class FsdpaOpQuantizer(BaseOpQuantizer):
 
     def scales_module_config_to_q_and_dq(self, module):
         self.init_scales_from_module_config(module)
-        scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = super().get_module_configuration()
         input_scales_inv = [
             self.inputs_scales_creators[i].calc_invert_scales() for i in range(len(self.inputs_scales_creators))
         ]
-        input_config = super().init_input_config(
-            input_scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant
-        )
+        input_config = super().init_input_config(input_scales_inv)
         output_config = [
-            DequantOutput(self.output_scales_creators[0].scale, lp_dtype, hp_dtype, scale_format=scale_format)
+            DequantOutput(self.output_scales_creators[0].scale, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)
         ]
         return ModuleConfig(input_config, output_config, {})
 
@@ -339,39 +357,42 @@ class KVCacheOpQuantizer(BaseOpQuantizer):
 
     def __init__(self, config, mod, measurement, params, mod_type_str):
         super().__init__(config, mod, measurement, params, mod_type_str)
-        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT))
-        self.output_scales_creators.append(self.inputs_scales_creators[0])
+        self.inputs_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, self.is_dynamic))
+        self.output_scales_creators.append(self.scales_method_factory.get_scale_method(QuantTensorName.OUTPUT, self.is_dynamic))
 
     # TODO: Remove after implementing lp_dtype in OHF.
-    def init_input_config(self, scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
-        input_config = super().init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, False, fake_quant)
-        if use_qdq:
+    def init_input_config(self, scales_inv):
+        input_config = super().init_input_config(scales_inv)
+        if self.use_qdq:
             input_config.extend([
-                QuantDequant(s_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq)
+                QuantDequant(s_inv, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format, use_qdq=self.use_qdq)
                 for s_inv in scales_inv
             ])
         return input_config
 
     def get_scales_module_config(self):
         input_scales = self.calc_input_scales(num_of_inputs=1)
-        self.output_scales_creators[0].scale = self.inputs_scales_creators[0].scale
-        output_scales = [self.output_scales_creators[0].scale]
+        if self.is_dynamic:
+            output_scales = self.calc_output_scales()
+        else:
+            self.output_scales_creators[0].scale = self.inputs_scales_creators[0].scale
+            output_scales = [self.output_scales_creators[0].scale]
         return ModuleConfig(input_scales, output_scales, {})
+
+    def get_output_config(self):
+        if self.is_dynamic:
+            output_config = [DequantDynamicOutput(self.lp_dtype, self.hp_dtype, scale_format=self.scale_format) for s in self.output_scales_creators]
+        else:
+            output_config = [DequantOutput(self.output_scales_creators[0].scale, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format, use_qdq=self.use_qdq)]
+        return output_config
 
     def scales_module_config_to_q_and_dq(self, module):
         self.init_scales_from_module_config(module)
-        scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = super().get_module_configuration()
         input_scales_inv = [
             self.inputs_scales_creators[i].calc_invert_scales() for i in range(len(self.inputs_scales_creators))
         ]
-        # TODO: After implementing lp_dtype in OHF can call:
-        # `super().init_input_config(scales_inv, lp_dtype, hp_dtype, scale_format, False, fake_quant)`
-        input_config = self.init_input_config(
-            input_scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant
-        )
-        output_config = [
-            DequantOutput(self.output_scales_creators[0].scale, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=False)
-        ]
+        input_config = self.init_input_config(input_scales_inv)
+        output_config = self.get_output_config()
         return ModuleConfig(input_config, output_config)
 
 
@@ -386,7 +407,7 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
             num_of_experts = self.mod.num_experts
         else:
             num_of_experts = 8
-        
+
         self.inputs_scales_creators = [
             self.scales_method_factory.get_scale_method(QuantTensorName.INPUT, is_dynamic=self.is_dynamic)
             for i in range(num_of_inputs + num_of_experts)
@@ -414,17 +435,13 @@ class DynamicMoeOpQuantizer(BaseOpQuantizer):
 
     def scales_module_config_to_q_and_dq(self, module):
         self.init_scales_from_module_config(module)
-        scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = super().get_module_configuration()
         input_scales_inv = [
             self.inputs_scales_creators[i].calc_invert_scales() for i in range(len(self.inputs_scales_creators))
         ]
-        input_config = super().init_input_config(
-            input_scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant
-        )
-        output_config = [QuantDequantNone(lp_dtype, hp_dtype, scale_format=scale_format)]
+        input_config = super().init_input_config(input_scales_inv)
+        output_config = [QuantDequantNone(self.lp_dtype, self.hp_dtype, scale_format=self.scale_format)]
         return ModuleConfig(input_config, output_config)
 
-    
 
 class EmbeddingOpQuantizer(BaseOpQuantizer):
 
@@ -455,12 +472,12 @@ class EmbeddingOpQuantizer(BaseOpQuantizer):
             params_config,
         )
 
-    def init_weight_config(self, scales, scales_inv, lp_dtype, hp_dtype, scale_format, use_qdq, fake_quant):
-        if use_qdq:
+    def init_weight_config(self, scales, scales_inv):
+        if self.use_qdq:
             # to ensure the weights to be loaded to the device in fp8
             weight_config = [
-                QuantInput(scales_inv, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq),
-                DequantOutput(scales, lp_dtype, hp_dtype, scale_format=scale_format, use_qdq=use_qdq),
+                QuantInput(scales_inv, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format, use_qdq=self.use_qdq),
+                DequantOutput(scales, self.lp_dtype, self.hp_dtype, scale_format=self.scale_format, use_qdq=self.use_qdq),
             ]
         else:
             raise ValueError("For FP8 quantization, {} only supports QDQ mode now!".format(self.mod.__class__.__name__))
@@ -476,22 +493,20 @@ class EmbeddingOpQuantizer(BaseOpQuantizer):
     def scales_module_config_to_q_and_dq(self, module):
         self.init_scales_from_module_config(module)
         self.init_weights_from_module(module.params["weight"])
-        scale_format, use_qdq, fake_quant, lp_dtype, hp_dtype = self.get_module_configuration()
         weight_config = self.init_weight_config(
             self.weight_och_scale_calc.scale,
             self.weight_och_scale_calc.calc_invert_scales(),
-            lp_dtype,
-            hp_dtype,
-            scale_format,
-            use_qdq,
-            fake_quant,
         )
         params_config = {"weight": weight_config}
         return ModuleConfig([], [], params_config)
 
 
+
+
+
 ops_quantizer_map = {"linear": LinearOpQuantizer,
                       "matmul": MatmulOpQuantizer,
+                      "b2b_matmul": B2B_MatmulOpQuantizer,
                       "fused_sdpa": FsdpaOpQuantizer,
                       "softmax": SoftmaxOpQuantizer,
                       "kv_cache": KVCacheOpQuantizer,

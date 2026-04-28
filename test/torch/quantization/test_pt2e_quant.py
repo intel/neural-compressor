@@ -35,7 +35,6 @@ def force_not_import_ipex(monkeypatch):
     monkeypatch.setattr("neural_compressor.torch.quantization.algorithm_entry.is_ipex_imported", _is_ipex_imported)
     monkeypatch.setattr("neural_compressor.torch.export.pt2e_export.is_ipex_imported", _is_ipex_imported)
 
-
 class TestPT2EQuantization:
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
@@ -132,6 +131,8 @@ class TestPT2EQuantization:
         from neural_compressor.torch.quantization import load
 
         loaded_quantized_model = load("./saved_results")
+        if loaded_quantized_model is None:
+            logger.error("loaded_quantized_model is None")
         loaded_q_model_out = loaded_quantized_model(*example_inputs)
         assert torch.equal(loaded_q_model_out, q_model_out)
 
@@ -172,6 +173,8 @@ class TestPT2EQuantization:
         from torch._inductor import config
 
         config.freezing = True
+        if q_model is None:
+            logger.error("q_model is None")
         q_model_out = q_model(*example_inputs)
         assert torch.allclose(float_model_output, q_model_out, atol=1e-2), "Quantization failed!"
         opt_model = torch.compile(q_model)
@@ -222,9 +225,9 @@ class TestPT2EQuantization:
         attention_mask = inputs.attention_mask
         input_ids = inputs.input_ids
 
-        from transformers import DynamicCache
-        from transformers.integrations.executorch import export_with_dynamic_cache
 
+        from transformers.integrations.executorch import export_with_dynamic_cache
+        from transformers import DynamicCache
         ep = export_with_dynamic_cache(model, input_ids, attention_mask)
         model = ep.module()
         model._exported = True
@@ -235,12 +238,7 @@ class TestPT2EQuantization:
         prepare_model = prepare(model, quant_config)
         # calibrate
         for i in range(2):
-            prepare_model(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                past_key_values=DynamicCache(config=model_config),
-                use_cache=True,
-            )
+            prepare_model(**example_inputs)
         # convert
         converted_model = convert(prepare_model)
         # inference
@@ -249,10 +247,10 @@ class TestPT2EQuantization:
         config.freezing = True
         opt_model = torch.compile(converted_model)
         out = opt_model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            past_key_values=DynamicCache(config=model_config),
-            use_cache=True,
+                input_ids=input_ids,
+                attention_mask=attention_mask,
+                past_key_values=DynamicCache(config=model_config),
+                use_cache=True,
         )
         assert out.logits is not None
 
@@ -321,8 +319,8 @@ class TestPT2EQuantization:
         # Just make sure the pattern matches, not the accuracy.
         # config1: int8 for all
         # config2: half precision for linear/conv
-        from neural_compressor.torch.quantization.autotune import TuningConfig, autotune
         from neural_compressor.torch.quantization.config import INT8StaticQuantConfig
+        from neural_compressor.torch.quantization.autotune import autotune, TuningConfig
 
         config1 = INT8StaticQuantConfig()
         config2 = INT8StaticQuantConfig().set_local(

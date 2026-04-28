@@ -45,9 +45,9 @@ class Matmul(torch.nn.Module):
         """Init the Matmul object."""
         super().__init__()
 
-    def forward(self, X, Y):
+    def forward(self, X, Y, **kwargs):
         """Forward function."""
-        return torch.matmul(X, Y)
+        return torch.matmul(X, Y, **kwargs)
 
 
 class QDQLayer(torch.nn.Module):

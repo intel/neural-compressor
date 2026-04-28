@@ -1,19 +1,22 @@
 import habana_frameworks.torch.core as htcore
 import pytest
 import torch
+from huggingface_hub import snapshot_download
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
 from neural_compressor.torch.quantization import FP8Config, convert, finalize_calibration, prepare
 from neural_compressor.torch.utils import get_used_cpu_mem_MB
 
 
-@pytest.mark.skip(reason="https://github.com/huggingface/transformers/issues/43159")
 def test_two_step_layer_wise():
     # layer-wise is based on memory mapping technique and https://github.com/huggingface/transformers/pull/31771
     # Workaround of [SW-208658]: torch.use_deterministic_algorithms(True) will break memory mapping
     tmp_memory_flag = torch.utils.deterministic.fill_uninitialized_memory
     torch.utils.deterministic.fill_uninitialized_memory = False
     model_name = "facebook/opt-125m"
+    # Pre-download all model files to local cache before memory measurement,
+    # so that from_pretrained can use memory mapping on local files.
+    snapshot_download(repo_id=model_name)
     config = AutoConfig.from_pretrained(model_name)
     # requires transformers >= 4.43.0, torch_dtype=config.torch_dtype
     # facebook/opt-125m parameters on disk is in torch.float16 dtype
@@ -21,7 +24,6 @@ def test_two_step_layer_wise():
     model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=config.torch_dtype, use_safetensors=True)
     cpu_mem1 = get_used_cpu_mem_MB()
     assert (cpu_mem1 - cpu_mem0) < 100, "model with memory mapping should use no more than 100MiB."
-
     qconfig = FP8Config()
     model = prepare(model, qconfig)
 

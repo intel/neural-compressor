@@ -5,6 +5,7 @@ import pytest
 import torch
 import transformers
 
+from habana_frameworks.torch.utils.version_checker import is_pytorch_at_least
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import PatchedLinear
 from neural_compressor.torch.algorithms.fp8_quant.prepare_quant.prepare_model import get_local_rank, get_world_size
 from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save

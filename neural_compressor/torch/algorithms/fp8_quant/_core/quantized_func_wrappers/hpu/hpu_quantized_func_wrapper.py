@@ -43,6 +43,8 @@ class QuantizedHpuFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
         raise NotImplementedError()
 
     def get_scalar_quantized_func(self):
+        if is_runtime_scale_patching():
+            return self.get_default_quantized_func()
         return self.get_default_quantized_func().scalar
 
     def get_dynamic_scalar_quantized_func(self):
@@ -64,8 +66,10 @@ class QuantizedHpuFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
         else:
             if is_runtime_scale_patching() or scale_format == ScaleFormat.CONST:
                 return self.get_default_quantized_func()
-            else:
+            elif scale_format == ScaleFormat.SCALAR:
                 return self.get_scalar_quantized_func()
+            else:
+                return self.get_default_quantized_func()
 
     def __call__(self, *args, **kwargs):
         return self._quantized_func_(*args, **kwargs)

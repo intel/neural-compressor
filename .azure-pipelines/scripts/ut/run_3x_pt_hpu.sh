@@ -14,6 +14,8 @@ echo "##[group]set up UT env..."
 export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
 sed -i '/^auto-round/d;/^torchvision/d' /neural-compressor/test/torch/requirements.txt
 pip install -r /neural-compressor/test/torch/requirements.txt
+pip install deepspeed@git+https://github.com/HabanaAI/DeepSpeed.git@main --no-deps
+pip install msgpack  # deepspeed dependency
 pip install auto-round-hpu
 pip install pytest-cov pytest-html pytest-html-merger beautifulsoup4==4.13.5
 echo "##[endgroup]"
