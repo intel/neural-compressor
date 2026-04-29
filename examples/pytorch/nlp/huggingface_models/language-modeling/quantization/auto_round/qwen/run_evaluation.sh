@@ -103,7 +103,7 @@ fi
 if [[ "$TASK_NAME" == *"ruler"* ]]; then
     MODEL_MAX_POS=${RULER_MAX_POS:-131072}
     max_length=${MODEL_MAX_POS}
-    max_gen_toks=128
+    max_gen_toks=50
     SEQ_LENGTHS="${MODEL_MAX_POS}"
     TASK_NAME="niah_multiquery"
     BATCH_SIZE=32
