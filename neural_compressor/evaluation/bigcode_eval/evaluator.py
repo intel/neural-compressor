@@ -86,10 +86,8 @@ def evaluate(
     evaluator = Evaluator(accelerator, model, tokenizer, args)
 
     if args.load_generations_intermediate_paths and len(args.load_generations_intermediate_paths) != len(task_names):
-        raise ValueError(
-            "If passing --load_generations_intermediate_paths, \
-            must pass equal number of files as number of tasks"
-        )
+        raise ValueError("If passing --load_generations_intermediate_paths, \
+            must pass equal number of files as number of tasks")
 
     for idx, task in enumerate(task_names):
         intermediate_generations = None

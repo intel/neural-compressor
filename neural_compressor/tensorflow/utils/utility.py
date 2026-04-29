@@ -146,7 +146,7 @@ def combine_histogram(old_hist, arr):
     new_max = np.max(arr)
     new_min = np.min(arr)
     new_th = max(abs(new_min), abs(new_max))
-    (old_hist, old_hist_edges, old_min, old_max, old_th) = old_hist
+    old_hist, old_hist_edges, old_min, old_max, old_th = old_hist
     if new_th <= old_th:
         hist, _ = np.histogram(arr, bins=len(old_hist), range=(-old_th, old_th))
         return (old_hist + hist, old_hist_edges, min(old_min, new_min), max(old_max, new_max), old_th)

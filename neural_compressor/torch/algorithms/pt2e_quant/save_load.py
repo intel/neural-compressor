@@ -13,7 +13,6 @@
 # limitations under the License.
 """Save and load the quantized model."""
 
-
 import json
 import os
 

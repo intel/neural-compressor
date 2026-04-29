@@ -2,15 +2,15 @@ This example provides an end-to-end workflow to quantize Qwen models to MXFP4/MX
 
 ## Requirement
 ```bash
-pip install neural-compressor-pt
+uv pip install neural-compressor-pt
 # auto-round
-pip install auto-round
+uv pip install auto-round
 # vLLM
 git clone -b fused-moe-ar --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
-VLLM_USE_PRECOMPILED=1 pip install --editable . -vvv
+VLLM_USE_PRECOMPILED=1 uv pip install --editable . -vvv
 # other requirements
-pip install -r requirements.txt
-pip uninstall flash_attn
+uv pip install -r requirements.txt
+uv pip uninstall flash_attn
 ```
 
 ### Quantize Model

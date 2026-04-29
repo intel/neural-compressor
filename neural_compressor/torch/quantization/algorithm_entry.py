@@ -319,6 +319,7 @@ def pt2e_static_quant_entry(
     example_inputs = kwargs.get("example_inputs", None)
     inplace = kwargs.get("inplace", True)
     dynamic_shapes = model.dynamic_shapes
+    W8A8PT2EQuantizer.is_dynamic = False
     for _, quant_config in configs_mapping.items():
         if quant_config.name == STATIC_QUANT:
             w8a8_quantizer = W8A8PT2EQuantizer(quant_config=quant_config)

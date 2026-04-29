@@ -21,7 +21,6 @@
 # https://github.com/microsoft/DeepSpeed/blob/master/accelerator/abstract_accelerator.py.
 """Auto Accelerator Module."""
 
-
 # To keep it simply, only add the APIs we need.
 
 import gc

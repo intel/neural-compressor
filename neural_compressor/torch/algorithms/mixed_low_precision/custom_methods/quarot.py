@@ -77,7 +77,7 @@ def matmul_hadU(X, transpose=False):
         output[:, :, 0, :] = input[:, :, 0, :] + input[:, :, 1, :]
         output[:, :, 1, :] = input[:, :, 0, :] - input[:, :, 1, :]
         output = output.view(input.shape[0], input.shape[1], -1)
-        (input, output) = (output, input)
+        input, output = (output, input)
     del output
     if K > 1:
         input = hadK.view(1, K, K).to(input) @ input

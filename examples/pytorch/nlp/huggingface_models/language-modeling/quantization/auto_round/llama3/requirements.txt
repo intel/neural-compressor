@@ -1,6 +1,7 @@
-transformers==4.57.3
-torch==2.9.0
-torchvision==0.24.0
+transformers==4.56.0
+compressed-tensors==0.15.0.1
+torch
+torchvision
 lm_eval==0.4.10
 datasets==4.4.2
 auto-round>=0.9.3

@@ -16,7 +16,6 @@
 # limitations under the License.
 """The quantizer using StaticQuant path."""
 
-
 import json
 import os
 from copy import deepcopy

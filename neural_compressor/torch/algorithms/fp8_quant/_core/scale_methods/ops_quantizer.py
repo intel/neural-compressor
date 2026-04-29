@@ -457,7 +457,8 @@ class EmbeddingOpQuantizer(BaseOpQuantizer):
         input_scales = self.calc_input_scales(num_of_inputs=1)
 
         if self.weight_ich_scale_calc is not None:
-            weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST)
+            weights_input_channel_dim_size = weight.size(1) if weight is not None else None
+            weight_scales_in_ch = self.weight_ich_scale_calc.calc_scales(input_scales[0], QuantTensorType.CONST, in_channel_size=weights_input_channel_dim_size)
             weight = torch.div(weight, weight_scales_in_ch.reshape([1, -1]))
         weights_scales_out_ch = self.weight_och_scale_calc.calc_scales(weight, QuantTensorType.CONST)
 

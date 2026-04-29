@@ -12,6 +12,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 """AutoRound quantization."""
+
 import copy
 import json
 import time
@@ -217,7 +218,10 @@ class AutoRoundQuantizer(Quantizer):
             model.autoround_config = weight_config
             return rounder.save_quantized(output_dir=self.output_dir, inplace=True)
         else:  # pragma: no cover
-            rounder.quantize_and_save(output_dir=self.output_dir, format=self.export_format, inplace=True)
+            _, quantized_model_path = rounder.quantize_and_save(
+                output_dir=self.output_dir, format=self.export_format, inplace=True
+            )
+            self.output_dir = quantized_model_path
             model = rounder.model
             model.autoround_config = rounder.layer_config
 
@@ -235,8 +239,8 @@ class AutoRoundQuantizer(Quantizer):
                 import transformers  # pylint: disable=E0401
 
                 model = transformers.AutoModelForCausalLM.from_pretrained(self.output_dir)
-            except:
-                pass
+            except Exception as e:
+                logger.error(f"Error reloading model: {e}")
 
         return model
 

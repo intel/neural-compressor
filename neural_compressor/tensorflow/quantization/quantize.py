@@ -13,7 +13,6 @@
 # limitations under the License.
 """Intel Neural Compressor Tensorflow quantization base API."""
 
-
 from typing import Any, Callable, Dict, Tuple, Union
 
 import tensorflow as tf

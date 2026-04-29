@@ -224,7 +224,7 @@ if __name__ == "__main__":
         from auto_round.schemes import PRESET_SCHEMES, QuantizationScheme
 
         # Check if RCEIL versions are available and use them instead
-        use_rceil = "MXFP4_RCEIL" in PRESET_SCHEMES and "MXFP8_RCEIL" in PRESET_SCHEMES
+        use_rceil = "MXFP4_RCEIL" in PRESET_SCHEMES and "MXFP8_RCEIL" in PRESET_SCHEMES and args.export_format != "llm_compressor"
         if use_rceil:
             # Replace dtype if it's MXFP4 or MXFP8
             if args.dtype == "MXFP4":
