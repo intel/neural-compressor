@@ -5,6 +5,7 @@
 # Parse command line arguments
 KV_CACHE_DTYPE="auto"
 STATIC_ATTENTION_DTYPE="auto"
+GRADIENT_ACCUMULATE_STEPS=1
 while [[ $# -gt 0 ]]; do
     case $1 in
         --topology=*)
@@ -21,6 +22,10 @@ while [[ $# -gt 0 ]]; do
             ;;
         --output_model=*)
             OUTPUT_MODEL="${1#*=}"
+            shift
+            ;;
+        --gradient_accumulate_steps=*)
+            GRADIENT_ACCUMULATE_STEPS="${1#*=}"
             shift
             ;;
         --static_kv_dtype=*)
@@ -133,7 +138,7 @@ case "$TOPOLOGY" in
                 ;;
             "mxfp4_mixed")
                 echo "Running Llama 3.3 70B MXFP4 (Mixed with MXFP8) quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --target_bits 5.8 --options \"MXFP4\" \"MXFP8\" --shared_layers \"k_proj\" \"v_proj\" \"q_proj\" --shared_layers \"gate_proj\" \"up_proj\" --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --target_bits 5.8 --options \"MXFP4\" \"MXFP8\" --shared_layers \"k_proj\" \"v_proj\" \"q_proj\" --shared_layers \"gate_proj\" \"up_proj\" --gradient_accumulate_steps \"$GRADIENT_ACCUMULATE_STEPS\" --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
@@ -142,6 +147,7 @@ case "$TOPOLOGY" in
                     --options "MXFP4" "MXFP8" \
                     --shared_layers "k_proj" "v_proj" "q_proj" \
                     --shared_layers "gate_proj" "up_proj" \
+                    --gradient_accumulate_steps "$GRADIENT_ACCUMULATE_STEPS" \
                     --export_path "$OUTPUT_MODEL"
                 ;;
             *)

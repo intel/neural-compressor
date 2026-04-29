@@ -181,6 +181,8 @@ if __name__ == "__main__":
     parser.add_argument("--iters", default=200, type=int, help="iters for autoround.")
     parser.add_argument("--seqlen", default=2048, type=int, help="sequence length for autoround.")
     parser.add_argument("--nsamples", default=128, type=int, help="number of samples for autoround.")
+    parser.add_argument("--batch_size", default=8, type=int, help="batch size for autoround.")
+    parser.add_argument("--gradient_accumulate_steps", default=1, type=int, help="number of gradient accumulation steps for autoround.")
     parser.add_argument("--save", action="store_true", help="whether to save the quantized model")
     parser.add_argument("--export_path", type=str, default="saved_results", help="path to save the quantized model")
     parser.add_argument("--export_format", type=str, default="auto_round", help="format to save the quantized model")
@@ -267,6 +269,7 @@ if __name__ == "__main__":
         # preprocess
         if isinstance(args.target_bits, list) and len(args.target_bits) == 1:
             args.target_bits = args.target_bits[0]
+        batch_size_to_accumulate = args.batch_size // args.gradient_accumulate_steps
         config = AutoRoundConfig(
             tokenizer=tokenizer,
             iters=args.iters,
@@ -284,6 +287,8 @@ if __name__ == "__main__":
             output_dir=args.export_path,
             device_map=args.device_map,
             layer_config=layer_config if (args.use_recipe or args.quant_lm_head) else None,
+            gradient_accumulate_steps=args.gradient_accumulate_steps,
+            batch_size=batch_size_to_accumulate,
         )
         if isinstance(args.target_bits, list) and len(args.target_bits) > 1:
             args.tune_tasks = args.tasks if args.tune_tasks is None else args.tune_tasks
