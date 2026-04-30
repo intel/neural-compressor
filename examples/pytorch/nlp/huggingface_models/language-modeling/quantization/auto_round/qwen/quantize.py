@@ -100,7 +100,7 @@ def quant_model(args):
         config = dense_topologies_config[args.t]
     else:
         config = topologies_config[args.t]
-    output_dir = f"{args.output_dir}/quantized_model_{args.t}"
+    output_dir = f"{args.output_dir}"
     static_kv_dtype = args.static_kv_dtype if args.static_kv_dtype is not None else config.get("static_kv_dtype", None)
     if static_kv_dtype is not None and static_kv_dtype.lower() != "fp8":
         raise ValueError("Only 'fp8' is supported for static_kv_dtype currently.")
