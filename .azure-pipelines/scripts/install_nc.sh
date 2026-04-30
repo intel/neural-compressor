@@ -11,7 +11,7 @@ fi
 if [[ $1 = *"3x_pt"* ]]; then
     uv pip install --no-cache-dir -r requirements_pt.txt
     if [[ $1 = *"hpu"* ]]; then
-        uv pip uninstall neural_compressor_3x_pt -y || true
+        uv pip uninstall neural_compressor_3x_pt
     elif [[ $1 = *"xpu"* ]]; then
         echo -e "\n Install torch XPU ... "
         uv pip install torch==2.11.0 torchvision --index-url https://download.pytorch.org/whl/xpu
