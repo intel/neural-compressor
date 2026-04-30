@@ -193,7 +193,7 @@ export VLLM_ENABLE_V1_MULTIPROCESSING=0
 # For https://github.com/yiliu30/vllm-qdq-plugin.git CT format eval
 export VLLM_QDQ=1
 # A100 need to close torch compile
-export TORCH_COMPILE_DISABLE=1
+# export TORCH_COMPILE_DISABLE=1
 
 # Function to run standard lm-eval tasks
 run_standard_eval() {
