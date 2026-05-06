@@ -577,7 +577,7 @@ class QStaticConv2DMixin(QStaticDenseMixin, Conv2D):
             jnp.ndarray: Layer output tensor.
         """
         x = self.input_observer(inputs)
-        x = super(Conv2D, self).call(x)
+        x = super(QStaticDenseMixin, self).call(x)
         return x
 
     def call_fp8(self, inputs):
@@ -596,7 +596,7 @@ class QStaticConv2DMixin(QStaticDenseMixin, Conv2D):
             a_scale = self.a_scale.value
         x = self.aquantfun(inputs, a_scale)
         x = self.adequantfun(x, a_scale)
-        x = super(Conv2D, self).call(x)
+        x = super(QStaticDenseMixin, self).call(x)
         return x
 
     def call_int8(self, inputs):
@@ -617,7 +617,7 @@ class QStaticConv2DMixin(QStaticDenseMixin, Conv2D):
             a_zero_point = self.a_zero_point.value
         x = self.aquantfun(inputs, a_scale, a_zero_point)
         x = self.adequantfun(x, a_scale, a_zero_point)
-        x = super(Conv2D, self).call(x)
+        x = super(QStaticDenseMixin, self).call(x)
         return x
 
 
