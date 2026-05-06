@@ -19,11 +19,6 @@ from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantiz
 
 
 @pytest.fixture
-def model_dtype():
-    return "float32"
-
-
-@pytest.fixture
 def quantization_dtype():
     return "fp8_e4m3"
 
@@ -44,7 +39,8 @@ def random_string():
 
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
-def test_text_prompt(random_string, model_dtype, quantization_dtype, dynamic):
+def test_text_prompt(random_string, quantization_dtype, dynamic):
+    model_dtype = "float32"
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_270m", model_dtype)
 
     def calib_fn(model):
@@ -70,7 +66,8 @@ def test_text_prompt(random_string, model_dtype, quantization_dtype, dynamic):
 
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
-def test_image_recognition(colva_beach_sq, model_dtype, quantization_dtype, dynamic):
+def test_image_recognition(colva_beach_sq, quantization_dtype, dynamic):
+    model_dtype = "bfloat16"
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_4b-v1", model_dtype)
 
     def calib_fn(model):
