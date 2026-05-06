@@ -16,7 +16,6 @@
 # limitations under the License.
 """Intel Neural Compressor TF quantization config API."""
 
-
 from __future__ import annotations
 
 from enum import Enum

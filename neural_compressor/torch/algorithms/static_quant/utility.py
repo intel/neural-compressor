@@ -13,7 +13,6 @@
 # limitations under the License.
 """Utility functions for Static quantization."""
 
-
 import copy
 import json
 import os

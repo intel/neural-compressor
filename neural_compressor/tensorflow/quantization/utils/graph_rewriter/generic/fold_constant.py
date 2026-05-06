@@ -16,7 +16,6 @@
 # limitations under the License.
 """Folding Const Graph Rewriter."""
 
-
 import numpy as np
 import tensorflow as tf
 from tensorflow.python.platform import tf_logging

@@ -14,7 +14,6 @@
 # limitations under the License.
 """The StaticQuant-related modules."""
 
-
 from .utility import *
 from .static_quant import StaticQuantQuantizer
 from .save_load import save, load

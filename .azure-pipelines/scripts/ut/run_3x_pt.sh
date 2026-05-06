@@ -11,14 +11,16 @@ echo "##[section]import check pass"
 
 # install requirements
 echo "##[group]set up UT env..."
-export LD_LIBRARY_PATH=${HOME}/.local/lib/:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH=${HOME}/.venv/lib/:$LD_LIBRARY_PATH
 sed -i '/^deepspeed/d' /neural-compressor/test/torch/requirements.txt
-pip install -r /neural-compressor/test/torch/requirements.txt
-pip install pytest-cov
-pip install pytest-html
-pip install beautifulsoup4==4.13.5
+uv pip install -r /neural-compressor/test/torch/requirements.txt \
+    --extra-index-url https://download.pytorch.org/whl/cpu \
+    --index-strategy unsafe-best-match \
+    --upgrade
+uv pip install torch==2.11.0 torchvision --index-url https://download.pytorch.org/whl/cpu
+uv pip install pytest-cov pytest-html beautifulsoup4==4.13.5
 echo "##[endgroup]"
-pip list
+uv pip list
 
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.3x_pt
 inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__[0])')

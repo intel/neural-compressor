@@ -16,7 +16,6 @@
 # limitations under the License.
 """Fetch Weight from Reshape Graph Rewriter."""
 
-
 import numpy as np
 from tensorflow.python.framework import dtypes
 

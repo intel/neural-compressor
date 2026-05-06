@@ -13,7 +13,6 @@
 # limitations under the License.
 """Intel Neural Compressor Tensorflow quantization AutoTune API."""
 
-
 from copy import deepcopy
 from typing import Any, Callable, Dict, List, Optional, Tuple, Union
 

@@ -13,7 +13,6 @@
 # limitations under the License.
 """The tunable parameters module."""
 
-
 import typing
 from enum import Enum, auto
 from typing import Any

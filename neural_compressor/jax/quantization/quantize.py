@@ -13,7 +13,6 @@
 # limitations under the License.
 """Intel Neural Compressor JAX quantization base API."""
 
-
 from typing import Any, Callable, Dict, Tuple, Union
 
 import keras

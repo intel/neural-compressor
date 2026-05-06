@@ -16,7 +16,6 @@
 # limitations under the License.
 """ExpandDims Graph Rewriter."""
 
-
 import numpy as np
 from tensorflow.python.framework import dtypes
 

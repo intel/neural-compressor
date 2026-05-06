@@ -13,7 +13,6 @@
 # limitations under the License.
 """Save and load the quantized model."""
 
-
 # pylint:disable=import-error
 import torch
 

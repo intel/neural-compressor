@@ -13,7 +13,6 @@
 # limitations under the License.
 """Utility functions for Smooth quantization."""
 
-
 import copy
 import json
 import os
@@ -1712,10 +1711,8 @@ class AutoAlpha:  # pragma: no cover
                 max_key = key if ratio > max_ratio else max_key
                 max_ratio = max(ratio, max_ratio)
                 ratio_info[op_name] = ratio
-                logger.debug(
-                    f"final loss: {op_name}: {loss_}; @alpha {best_alphas[key]}; \
-                    fp32_output norm: {fp32_norm}; ratio: {ratio}"
-                )
+                logger.debug(f"final loss: {op_name}: {loss_}; @alpha {best_alphas[key]}; \
+                    fp32_output norm: {fp32_norm}; ratio: {ratio}")
         import operator
 
         ratio_info = dict(sorted(ratio_info.items(), key=operator.itemgetter(1), reverse=True))

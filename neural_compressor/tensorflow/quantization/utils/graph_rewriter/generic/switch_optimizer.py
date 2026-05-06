@@ -16,7 +16,6 @@
 # limitations under the License.
 """Switch Graph Rewriter."""
 
-
 from tensorflow.python.framework import tensor_util
 
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer

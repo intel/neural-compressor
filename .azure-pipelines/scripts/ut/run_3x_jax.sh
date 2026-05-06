@@ -3,25 +3,23 @@ python -c "import neural_compressor as nc"
 test_case="run 3x JAX"
 echo "${test_case}"
 
+# install requirements
+echo "##[group]set up UT env..."
+uv pip install -r /neural-compressor/requirements_jax.txt
+# Check if test/jax/requirements.txt exists and install it (optional)
+if [ -f /neural-compressor/test/jax/requirements.txt ]; then
+    uv pip install -r /neural-compressor/test/jax/requirements.txt
+fi
+uv pip install pytest-cov pytest-html pytest-html-merger beautifulsoup4==4.13.5
+echo "##[endgroup]"
+
 echo "##[section]Run import check"
 set -e
 python -c "import neural_compressor.jax"
 python -c "import neural_compressor.common"
 echo "##[section]import check pass"
 
-# install requirements
-echo "##[group]set up UT env..."
-pip install -r /neural-compressor/requirements_jax.txt
-# Check if test/jax/requirements.txt exists and install it (optional)
-if [ -f /neural-compressor/test/jax/requirements.txt ]; then
-    pip install -r /neural-compressor/test/jax/requirements.txt
-fi
-pip install pytest-cov
-pip install pytest-html
-pip install pytest-html-merger
-pip install beautifulsoup4==4.13.5
-echo "##[endgroup]"
-pip list
+uv pip list
 
 export COVERAGE_RCFILE=/neural-compressor/.azure-pipelines/scripts/ut/coverage.3x_jax
 inc_path=$(python -c 'import neural_compressor; print(neural_compressor.__path__[0])')
