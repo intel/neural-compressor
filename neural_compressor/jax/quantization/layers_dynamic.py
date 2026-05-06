@@ -23,7 +23,7 @@ import keras
 import numpy as np
 from jax import numpy as jnp
 from keras import ops
-from keras.layers import Dense, EinsumDense, MultiHeadAttention
+from keras.layers import Conv2D, Dense, EinsumDense, MultiHeadAttention
 from keras_hub.layers import ReversibleEmbedding
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
@@ -297,6 +297,34 @@ class QDynamicEinsumDense(QDynamicDenseMixin, EinsumDense):
 
 
 verify_api(EinsumDense, QDynamicEinsumDense, "call")
+
+
+class QDynamicConv2DMixin(QDynamicDenseMixin, Conv2D):
+    """Mixin that adds dynamic quantization to Conv2D layers."""
+
+    def call(self, inputs):
+        """Apply quantized input processing before the convolution computation.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            training (Optional[bool]): Training mode flag.
+
+        Returns:
+            jnp.ndarray: Layer output tensor.
+        """
+        x = self.input_qdq(inputs)
+        x = super(QDynamicDenseMixin, self).call(x)
+        return x
+
+
+@register_dynamic_quantized_layer(Conv2D)
+class QDynamicConv2D(QDynamicConv2DMixin, Conv2D):
+    """Dynamically quantized Conv2D layer."""
+
+    pass
+
+
+verify_api(Conv2D, QDynamicConv2D, "call")
 
 
 @register_dynamic_quantized_layer(MultiHeadAttention)
