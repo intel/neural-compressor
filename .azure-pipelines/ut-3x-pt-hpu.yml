@@ -74,6 +74,10 @@ stages:
     jobs:
       - job: CollectDatafiles
         steps:
+          - checkout: self
+            clean: true
+            displayName: "Checkout out Repo"
+
           - task: DownloadPipelineArtifact@2
             inputs:
               artifact:
@@ -87,10 +91,16 @@ stages:
 
           - script: |
               cd ${BUILD_SOURCESDIRECTORY}
-              pip install -U pip setuptools uv
+              pip install -U uv
+              uv pip install setuptools
+              uv pip install -r requirements_pt.txt
               python setup.py install pt
               cd ${BUILD_SOURCESDIRECTORY}/.azure-pipelines/scripts
               bash ut/collect_log_3x.sh 3x_pt_hpu
+            env:
+              PYTHONUNBUFFERED: '1'
+              UV_NO_PROGRESS: '1'
+              UV_SYSTEM_PYTHON: '1'
             displayName: "Collect UT Coverage"
 
           - task: PublishCodeCoverageResults@2

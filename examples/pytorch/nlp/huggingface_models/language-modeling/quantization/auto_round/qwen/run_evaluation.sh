@@ -103,7 +103,7 @@ fi
 if [[ "$TASK_NAME" == *"ruler"* ]]; then
     MODEL_MAX_POS=${RULER_MAX_POS:-131072}
     max_length=${MODEL_MAX_POS}
-    max_gen_toks=128
+    max_gen_toks=50
     SEQ_LENGTHS="${MODEL_MAX_POS}"
     TASK_NAME="niah_multiquery"
     BATCH_SIZE=32
@@ -161,7 +161,6 @@ if [[ "$ATTN_DTYPE" == "fp8" ]]; then
     echo "Using FP8 Attention"
 fi
 
-export VLLM_LOGGING_LEVEL=DEBUG
 # Run evaluation
 echo "Evaluating model: ${MODEL_PATH}"
 echo "Quantization scheme: ${SCHEME}"
@@ -193,7 +192,7 @@ export VLLM_ENABLE_V1_MULTIPROCESSING=0
 # For https://github.com/yiliu30/vllm-qdq-plugin.git CT format eval
 export VLLM_QDQ=1
 # A100 need to close torch compile
-export TORCH_COMPILE_DISABLE=1
+# export TORCH_COMPILE_DISABLE=1
 
 # Function to run standard lm-eval tasks
 run_standard_eval() {

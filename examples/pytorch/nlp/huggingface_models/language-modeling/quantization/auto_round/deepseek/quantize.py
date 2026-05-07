@@ -66,7 +66,7 @@ def quant_model(args):
     )
 
     config = topologies_config[args.t]
-    output_dir = f"{args.output_dir}/quantized_model_{args.t}"
+    output_dir = f"{args.output_dir}"
     static_kv_dtype = args.static_kv_dtype
     iters = config["iters"]
     if (static_kv_dtype == "fp8" or args.static_attention_dtype == "fp8") and iters > 0:

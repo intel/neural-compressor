@@ -275,7 +275,7 @@ class HQQLinear(torch.nn.Linear):
 
     def forward(self, input: torch.Tensor) -> torch.Tensor:
         """Forward pass of the HQQ linear module."""
-        out = torch.matmul(input, self.dequantize_weight().t())
+        out = torch.matmul(input, self.dequantize_weight().t().to(input.dtype))
         if self.bias is not None:
             out += self.bias
         return out

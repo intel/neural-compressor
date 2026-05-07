@@ -385,12 +385,11 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
             )
 
         # Determine whether to use dot-product attention
-        # use_dot_product_attention = not (
-        #     self._dropout > 0.0
-        #     or return_attention_scores
-        #     or (len(query.shape) != 4)
-        # )
-        use_dot_product_attention = False  # TODO Add dot_product_attention support
+        use_dot_product_attention = not (
+            self._dropout > 0.0
+            or return_attention_scores
+            or (len(query.shape) != 4)
+        )
 
         if use_dot_product_attention:
             if attention_mask is not None:
@@ -407,6 +406,9 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
                     )
                 attention_mask = ops.cast(attention_mask, dtype="bool")
             # Directly compute the attention output using dot-product attention
+            query = self.q_qdq(query)
+            key = self.k_qdq(key)
+            value = self.v_qdq(value)
             attention_output = ops.dot_product_attention(
                 query=query,
                 key=key,

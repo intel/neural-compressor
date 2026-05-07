@@ -11,7 +11,6 @@ BATCH_SIZE=512
 KV_CACHE_DTYPE="auto"
 ATTN_DTYPE="None"
 SEQ_LENGTHS=""
-RULER_MAX_POS="65536"
 
 # Function to display usage
 usage() {
@@ -211,7 +210,7 @@ export VLLM_USE_DEEP_GEMM=$VLLM_USE_DEEP_GEMM
 export VLLM_ENABLE_V1_MULTIPROCESSING=0
 
 # A100 need to close torch compile
-export TORCH_COMPILE_DISABLE=1
+# export TORCH_COMPILE_DISABLE=1
 
 # Function to run standard lm-eval tasks
 run_standard_eval() {
