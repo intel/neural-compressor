@@ -148,7 +148,7 @@ class MinMaxObserver(keras.layers.Layer):
 class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies static quantize-dequantize to activations."""
 
-    def __init__(self, name, activation_dtype, dtype="float32", asymmetric=False, const_scale=False):
+    def __init__(self, name, activation_dtype, dtype="float32", asymmetric=False, const_scale=False, fixed_range=None):
         """Initialize the static QDQ helper layer.
 
         Args:
@@ -157,6 +157,8 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             dtype (str | keras.DTypePolicy): dtype for the layer - see keras.layers.Layer API for details.
             asymmetric (bool): Whether to use asymmetric quantization.
             const_scale (bool): Whether to use constant scales.
+            fixed_range (Optional[Tuple[float, float]]): If provided, use this (min, max) range
+                instead of collecting calibration data via observers.
 
         Returns:
             None: Initializes the layer instance.
@@ -167,6 +169,9 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         self.supports_masking = True
         self._is_quantized = False
         self.const_scale = const_scale
+        self.fixed_range = fixed_range
+        if fixed_range is not None:
+            self.call = self.call_passthrough
         if const_scale:
             self._const_variables = ["a_scale"]
             if asymmetric:
@@ -177,9 +182,13 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     def add_observers(self):
         """Attach observer layers for calibration.
 
+        Skipped when fixed_range is set, as no calibration data is needed.
+
         Returns:
             None: Adds observer layers.
         """
+        if self.fixed_range is not None:
+            return
         self._tracker.unlock()
         self.input_observer = MinMaxObserver(dtype=self.dtype_policy)
         self._tracker.lock()
@@ -215,11 +224,16 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     def convert(self):
         """Compute activation scale and finalize static quantization.
 
+        Uses fixed_range if set, otherwise reads from the calibration observer.
+
         Returns:
             None: Updates activation scale variables.
         """
         self._tracker.unlock()
-        arange = self.input_observer.get_calibrated_range()
+        if self.fixed_range is not None:
+            arange = ops.array(self.fixed_range)
+        else:
+            arange = self.input_observer.get_calibrated_range()
         a_scale, a_zero_point = get_q_params(
             arange, self.activation_dtype, self.compute_dtype, asymmetric=self._is_asymmetric
         )
@@ -271,6 +285,18 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         """
         x = self.input_observer(inputs, mask=mask)
         return x
+
+    def call_passthrough(self, inputs, mask=None):
+        """Pass inputs through without observation.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            jnp.ndarray: Unmodified inputs.
+        """
+        return inputs
 
     def call_symmetric(self, inputs, mask=None):
         """Apply symmetric quantize-dequantize to inputs.
@@ -588,7 +614,9 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         # f_qdq is used for quantize/dequantize of query tensor on fallback path (without using dot_product_attention)
         orig.f_qdq = StaticQDQLayer("f_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
         orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
-        orig.a_qdq = StaticQDQLayer("a_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
+        orig.a_qdq = StaticQDQLayer(
+            "a_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale, fixed_range=(0.0, 1.0)
+        )
         orig.v_qdq = StaticQDQLayer("v_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
         orig._is_quantized = False
         orig._tracker.lock()
@@ -695,6 +723,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         )
         # For calibration always use fallback path as it can collect data for both paths
         use_dot_product_attention = use_dot_product_attention and self._is_quantized
+        use_dot_product_attention = False
 
         if use_dot_product_attention:
             if attention_mask is not None:

@@ -68,7 +68,7 @@ def register_dynamic_quantized_layer(clso):
 class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies dynamic quantize-dequantize to activations."""
 
-    def __init__(self, name, activation_dtype, dtype="float32", asymmetric=False):
+    def __init__(self, name, activation_dtype, dtype="float32", asymmetric=False, fixed_range=None):
         """Initialize the dynamic QDQ helper layer.
 
         Args:
@@ -76,6 +76,8 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             activation_dtype (jnp.dtype): Activation dtype used for quantization.
             dtype (str): dtype for the layer - see keras.layers.Layer API for details.
             asymmetric (bool): Whether to use asymmetric quantization.
+            fixed_range (Optional[Tuple[float, float]]): If provided, use this (min, max) range
+                instead of computing min/max dynamically per batch.
 
         Returns:
             None: Initializes the layer instance.
@@ -84,9 +86,13 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         self.activation_dtype = activation_dtype
         self._is_asymmetric = asymmetric
         self.supports_masking = True
+        self.fixed_range = fixed_range
 
     def add_variables(self):
         """Create quantization helper functions for activations.
+
+        When fixed_range is set, pre-computes scale (and zero point) so that
+        call avoids per-batch min/max computation.
 
         Returns:
             None: Initializes quantization functions.
@@ -94,36 +100,42 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         self._tracker.unlock()
         self.aquantfun = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_asymmetric)
         self.adequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_asymmetric)
+        if self.fixed_range is not None:
+            fixed_min_max = ops.array(self.fixed_range)
+            a_scale, a_zero_point = get_q_params(
+                fixed_min_max, self.activation_dtype, self.compute_dtype, asymmetric=self._is_asymmetric
+            )
+            self._fixed_a_scale = a_scale
+            if self._is_asymmetric:
+                self._fixed_a_zero_point = a_zero_point
+            self.call = self.call_fixed_asymmetric if self._is_asymmetric else self.call_fixed_symmetric
         self._tracker.lock()
 
-    def call_symmetric(self, inputs, batch_min_max, mask=None):
-        """Apply symmetric quantization to inputs.
+    def call_symmetric(self, inputs, a_scale):
+        """Apply symmetric quantize-dequantize with given scale.
 
         Args:
             inputs (jnp.ndarray): Input tensor.
-            batch_min_max (jnp.ndarray): Min/max tensor for the batch.
-            mask (Optional[jnp.ndarray]): Optional mask tensor.
+            a_scale (jnp.ndarray): Quantization scale.
 
         Returns:
             jnp.ndarray: Quantized-dequantized tensor.
         """
-        a_scale, _ = get_q_params(batch_min_max, self.activation_dtype, self.compute_dtype, asymmetric=False)
         x = self.aquantfun(inputs, a_scale)
         x = self.adequantfun(x, a_scale)
         return x
 
-    def call_asymmetric(self, inputs, batch_min_max, mask=None):
-        """Apply asymmetric quantization to inputs.
+    def call_asymmetric(self, inputs, a_scale, a_zero_point):
+        """Apply asymmetric quantize-dequantize with given scale and zero point.
 
         Args:
             inputs (jnp.ndarray): Input tensor.
-            batch_min_max (jnp.ndarray): Min/max tensor for the batch.
-            mask (Optional[jnp.ndarray]): Optional mask tensor.
+            a_scale (jnp.ndarray): Quantization scale.
+            a_zero_point (jnp.ndarray): Quantization zero point.
 
         Returns:
             jnp.ndarray: Quantized-dequantized tensor.
         """
-        a_scale, a_zero_point = get_q_params(batch_min_max, self.activation_dtype, self.compute_dtype, asymmetric=True)
         x = self.aquantfun(inputs, a_scale, a_zero_point)
         x = self.adequantfun(x, a_scale, a_zero_point)
         return x
@@ -158,8 +170,36 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         batch_min_max = keras.ops.array((batch_min, batch_max))
 
         if self._is_asymmetric:
-            return self.call_asymmetric(inputs, batch_min_max, mask)
-        return self.call_symmetric(inputs, batch_min_max, mask)
+            a_scale, a_zero_point = get_q_params(
+                batch_min_max, self.activation_dtype, self.compute_dtype, asymmetric=True
+            )
+            return self.call_asymmetric(inputs, a_scale, a_zero_point)
+        a_scale, _ = get_q_params(batch_min_max, self.activation_dtype, self.compute_dtype, asymmetric=False)
+        return self.call_symmetric(inputs, a_scale)
+
+    def call_fixed_symmetric(self, inputs, mask=None):
+        """Apply symmetric quantization using a pre-computed fixed scale.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            jnp.ndarray: Quantized-dequantized tensor.
+        """
+        return self.call_symmetric(inputs, self._fixed_a_scale)
+
+    def call_fixed_asymmetric(self, inputs, mask=None):
+        """Apply asymmetric quantization using a pre-computed fixed scale.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            jnp.ndarray: Quantized-dequantized tensor.
+        """
+        return self.call_asymmetric(inputs, self._fixed_a_scale, self._fixed_a_zero_point)
 
 
 class QDynamicDenseMixin(SaveableLayerMixin):
@@ -322,7 +362,9 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.q_qdq = DynamicQDQLayer("q_qdq", activation_dtype, orig.dtype_policy, False)
         orig.k_qdq = DynamicQDQLayer("k_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
-        orig.a_qdq = DynamicQDQLayer("a_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
+        orig.a_qdq = DynamicQDQLayer(
+            "a_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, fixed_range=(0.0, 1.0)
+        )
         orig.v_qdq = DynamicQDQLayer("v_qdq", activation_dtype, orig.dtype_policy, False)
         orig._tracker.lock()
         return orig
