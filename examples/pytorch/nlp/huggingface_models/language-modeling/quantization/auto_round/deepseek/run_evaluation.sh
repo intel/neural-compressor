@@ -89,6 +89,25 @@ OUTPUT_DIR="${MODEL_NAME}-tp${TP_SIZE}-eval"
 mkdir -p ${OUTPUT_DIR}
 
 
+VLLM_EXTRA_ARGS=""
+###############################################################################
+# For deepseek-v4 force kv_cache to fp8
+###############################################################################
+if [[ "${MODEL_NAME,,}" == *"deepseek-v4"* ]]; then
+    KV_CACHE_DTYPE="fp8"
+    echo "Detected DeepSeek-V4 model, forcing KV cache dtype to FP8"
+    # for scheme mxfp4,
+    if [[ "$SCHEME" == "mxfp4" ]]; then
+        echo "Forcing MXFP4 quantization for DeepSeek-V4 model"
+        export VLLM_MARLIN_MOE_QDQ_MODE=FORCE_MXFP4
+        export VLLM_QDQ=1
+        VLLM_EXTRA_ARGS="tokenizer_mode=deepseek_v4"
+        echo "Set vLLM_MARLIN_MOE_QDQ_MODE=FORCE_MXFP4 and VLLM_QDQ=1 for MXFP4 quantization on DeepSeek-V4"
+    fi
+fi
+###############################################################################
+
+
 SERVER_PORT=8000
 max_length=8192
 max_gen_toks=2048
@@ -145,6 +164,9 @@ elif [[ "$SCHEME" == "mxfp8" ]]; then
 elif [[ "$SCHEME" == "fp8" ]]; then
     echo "Run original model."
     VLLM_USE_DEEP_GEMM=0
+elif [[ "$SCHEME" == "w4a8" ]]; then
+    echo "Run DS V4 model."
+    VLLM_USE_DEEP_GEMM=0
 else
     echo "Error: Invalid quantization scheme (-s). Must be 'mxfp4', 'nvfp4' or 'mxfp8'."
     usage
@@ -194,11 +216,12 @@ export TORCH_COMPILE_DISABLE=1
 # Function to run standard lm-eval tasks
 run_standard_eval() {
     lm_eval --model vllm \
-        --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}" \
+        --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}${VLLM_EXTRA_ARGS:+,${VLLM_EXTRA_ARGS}}" \
         --tasks $TASK_NAME \
         --batch_size $BATCH_SIZE \
         --log_samples \
         --seed 42 \
+        --limit 64 \
         --output_path ${OUTPUT_DIR} \
         --show_config 2>&1 | tee ${OUTPUT_DIR}/log.txt
 }
@@ -214,6 +237,7 @@ start_vllm_server() {
         --dtype bfloat16 \
         --kv-cache-dtype ${KV_CACHE_DTYPE} \
         --disable-log-requests \
+        ${VLLM_EXTRA_ARGS} \
         > ${OUTPUT_DIR}/vllm_server.log 2>&1 &
     
     VLLM_PID=$!

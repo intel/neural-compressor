@@ -161,7 +161,7 @@ if [[ "$ATTN_DTYPE" == "fp8" ]]; then
     echo "Using FP8 Attention"
 fi
 
-
+export VLLM_LOGGING_LEVEL=DEBUG
 # Run evaluation
 echo "Evaluating model: ${MODEL_PATH}"
 echo "Quantization scheme: ${SCHEME}"
@@ -317,6 +317,7 @@ run_ruler_eval() {
         --metadata="{\"max_seq_lengths\":[${SEQ_LENGTHS}],\"tokenizer\":\"${MODEL_PATH}\"}" \
         --gen_kwargs "max_gen_toks=${max_gen_toks}" \
         --batch_size ${BATCH_SIZE} \
+        --limit 16 \
         --output_path "${OUTPUT_DIR}/seq_${SEQ_LENGTHS}" \
         --seed 42 
 
