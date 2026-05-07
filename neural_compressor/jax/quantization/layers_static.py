@@ -585,6 +585,8 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.q_qdq = StaticQDQLayer("q_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
+        # f_qdq is used for quantize/dequantize of query tensor on fallback path (without using dot_product_attention)
+        orig.f_qdq = StaticQDQLayer("f_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
         orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
         orig.a_qdq = StaticQDQLayer("a_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
         orig.v_qdq = StaticQDQLayer("v_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
@@ -599,6 +601,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
             None: Adds observer layers.
         """
         self.q_qdq.add_observers()
+        self.f_qdq.add_observers()
         self.k_qdq.add_observers()
         self.a_qdq.add_observers()
         self.v_qdq.add_observers()
@@ -610,6 +613,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
             None: Initializes QDQ helper variables.
         """
         self.q_qdq.add_variables()
+        self.f_qdq.add_variables()
         self.k_qdq.add_variables()
         self.a_qdq.add_variables()
         self.v_qdq.add_variables()
@@ -620,7 +624,12 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         Returns:
             None: Updates QDQ helpers with calibrated values.
         """
-        self.q_qdq.convert()
+        self.f_qdq.convert()
+        # Calculate the scale for query for dot product attention path
+        # from the fallback path used in calibration
+        self.q_qdq.a_scale.assign(self.f_qdq.a_scale / self._inverse_sqrt_key_dim)
+        if self.q_qdq._is_asymmetric:
+            self.q_qdq.a_zero_point.assign(jnp.array(self.f_qdq.a_zero_point.value))
         self.k_qdq.convert()
         self.a_qdq.convert()
         self.v_qdq.convert()
@@ -633,6 +642,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         """
         self._tracker.unlock()
         self.q_qdq.post_quantization_cleanup()
+        self.f_qdq.post_quantization_cleanup()
         self.k_qdq.post_quantization_cleanup()
         self.a_qdq.post_quantization_cleanup()
         self.v_qdq.post_quantization_cleanup()
@@ -678,12 +688,13 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
             )
 
         # Determine whether to use dot-product attention
-        # use_dot_product_attention = not (
-        #     self._dropout > 0.0
-        #     or return_attention_scores
-        #     or (len(query.shape) != 4)
-        # )
-        use_dot_product_attention = False  # TODO Add dot_product_attention support
+        use_dot_product_attention = not (
+            self._dropout > 0.0
+            or return_attention_scores
+            or (len(query.shape) != 4)
+        )
+        # For calibration always use fallback path as it can collect data for both paths
+        use_dot_product_attention = use_dot_product_attention and self._is_quantized
 
         if use_dot_product_attention:
             if attention_mask is not None:
@@ -700,6 +711,9 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
                     )
                 attention_mask = ops.cast(attention_mask, dtype="bool")
             # Directly compute the attention output using dot-product attention
+            query = self.q_qdq(query)
+            key = self.k_qdq(key)
+            value = self.v_qdq(value)
             attention_output = ops.dot_product_attention(
                 query=query,
                 key=key,
@@ -721,7 +735,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         # Take the dot product between "query" and "key" to get the raw
         # attention scores.
         key = self.k_qdq(key)
-        query = self.q_qdq(query)
+        query = self.f_qdq(query)
         attention_scores = ops.einsum(self._dot_product_equation, key, query)
 
         # Apply the mask using the custom masked softmax
