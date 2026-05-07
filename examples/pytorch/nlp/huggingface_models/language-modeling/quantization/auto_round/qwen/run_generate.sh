@@ -1,4 +1,3 @@
-# Works for CT format only
 #!/bin/bash
 set -e
 

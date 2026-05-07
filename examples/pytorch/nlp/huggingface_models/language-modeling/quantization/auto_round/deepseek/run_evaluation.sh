@@ -220,7 +220,6 @@ run_standard_eval() {
         --batch_size $BATCH_SIZE \
         --log_samples \
         --seed 42 \
-        --limit 64 \
         --output_path ${OUTPUT_DIR} \
         --show_config 2>&1 | tee ${OUTPUT_DIR}/log.txt
 }
