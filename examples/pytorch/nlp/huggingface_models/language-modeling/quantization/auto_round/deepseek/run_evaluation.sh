@@ -165,7 +165,6 @@ elif [[ "$SCHEME" == "fp8" ]]; then
     VLLM_USE_DEEP_GEMM=0
 elif [[ "$SCHEME" == "w4a8" ]]; then
     echo "Run DS V4 model."
-    VLLM_USE_DEEP_GEMM=0
 else
     echo "Error: Invalid quantization scheme (-s). Must be 'mxfp4', 'nvfp4' or 'mxfp8'."
     usage
