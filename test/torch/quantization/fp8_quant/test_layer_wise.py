@@ -1,25 +1,35 @@
 import habana_frameworks.torch.core as htcore
 import pytest
 import torch
+import gc
 from huggingface_hub import snapshot_download
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 
 from neural_compressor.torch.quantization import FP8Config, convert, finalize_calibration, prepare
 from neural_compressor.torch.utils import get_used_cpu_mem_MB
+import transformers
+from packaging import version
+
+support_memory_mapping = False
+if version.parse(transformers.__version__) < version.parse("5.8.0"):
+    support_memory_mapping = True
 
 
+@pytest.mark.skipif(not support_memory_mapping, reason="This test is for layer-wise quantization which is based on memory mapping technique, transformers < 5.8.0")
 def test_two_step_layer_wise():
     # layer-wise is based on memory mapping technique and https://github.com/huggingface/transformers/pull/31771
     # Workaround of [SW-208658]: torch.use_deterministic_algorithms(True) will break memory mapping
     tmp_memory_flag = torch.utils.deterministic.fill_uninitialized_memory
     torch.utils.deterministic.fill_uninitialized_memory = False
     model_name = "facebook/opt-125m"
-    # Pre-download all model files to local cache before memory measurement,
-    # so that from_pretrained can use memory mapping on local files.
-    snapshot_download(repo_id=model_name)
-    config = AutoConfig.from_pretrained(model_name)
     # requires transformers >= 4.43.0, torch_dtype=config.torch_dtype
     # facebook/opt-125m parameters on disk is in torch.float16 dtype
+    config = AutoConfig.from_pretrained(model_name)
+    ### Download model files to local and convert bin to safetensors ###
+    model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=config.torch_dtype, use_safetensors=True)
+    del model
+    ### End of downloading and converting model files ###
+    gc.collect()
     cpu_mem0 = get_used_cpu_mem_MB()
     model = AutoModelForCausalLM.from_pretrained(model_name, torch_dtype=config.torch_dtype, use_safetensors=True)
     cpu_mem1 = get_used_cpu_mem_MB()

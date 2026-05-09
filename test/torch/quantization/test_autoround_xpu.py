@@ -64,16 +64,16 @@ class TestAutoRoundXPU:
             device_map="xpu",
             scheme=scheme,
             export_format="auto_round",
-            output_dir=output_dir,  # default is "temp_auto_round"
+            output_dir=output_dir,  # default is "tmp_auto_round"
         )
 
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
-        convert(model)
+        q_model = convert(model)
         if scheme in ["FPW8A16"]:  # FPW8A16 loading not supported yet
             return
         inc_model = AutoModelForCausalLM.from_pretrained(
-            output_dir,
+            q_model.name_or_path,
         )
         out = inc_model(inp)[0]
 
@@ -97,7 +97,7 @@ class TestAutoRoundXPU:
             scheme=scheme,
         )
         quantized_model_path = "./saved_ar"
-        ar.quantize_and_save(output_dir=quantized_model_path, inplace=True, format="auto_round")
+        _, quantized_model_path = ar.quantize_and_save(output_dir=quantized_model_path, inplace=True, format="auto_round")
         model = AutoModelForCausalLM.from_pretrained(
             quantized_model_path,
         )
@@ -126,7 +126,7 @@ class TestAutoRoundXPU:
             device_map="xpu",
             scheme=scheme,
             export_format=format,
-            output_dir=output_dir,  # default is "temp_auto_round"
+            output_dir=output_dir,  # default is "tmp_auto_round"
         )
 
         # quantizer execute
@@ -160,14 +160,14 @@ class TestAutoRoundXPU:
             device_map="xpu:0",
             scheme=scheme,
             export_format="auto_round",
-            output_dir=output_dir,  # default is "temp_auto_round"
+            output_dir=output_dir,  # default is "tmp_auto_round"
         )
 
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
-        convert(model)
+        q_model = convert(model)
         inc_model = Qwen2VLForConditionalGeneration.from_pretrained(
-            output_dir,
+            q_model.name_or_path,
         )
         assert inc_model is not None
         shutil.rmtree(output_dir, ignore_errors=True)
@@ -192,7 +192,7 @@ class TestAutoRoundXPU:
             device_map="xpu",
             scheme=scheme,
             export_format="auto_round",
-            output_dir=output_dir,  # default is "temp_auto_round"
+            output_dir=output_dir,  # default is "tmp_auto_round"
             quant_lm_head=True,
         )
 
