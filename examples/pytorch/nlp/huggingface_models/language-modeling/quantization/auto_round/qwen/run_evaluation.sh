@@ -101,10 +101,15 @@ fi
 
 # update max_length based on the task
 if [[ "$TASK_NAME" == *"ruler"* ]]; then
-    MODEL_MAX_POS=${RULER_MAX_POS:-131072}
+    # MODEL_MAX_POS=${RULER_MAX_POS:-131072}
+    MODEL_MAX_POS=${RULER_MAX_POS:-32768}
     max_length=${MODEL_MAX_POS}
-    max_gen_toks=50
+    max_gen_toks=128
     SEQ_LENGTHS="${MODEL_MAX_POS}"
+    SEQ_LENGTHS=32768
+    # SEQ_LENGTHS=8192
+    # SEQ_LENGTHS=16384
+    # SEQ_LENGTHS=4096
     TASK_NAME="niah_multiquery"
     BATCH_SIZE=32
 fi
@@ -124,6 +129,7 @@ if [[ "$SCHEME" == "mxfp4" ]]; then
     VLLM_ENABLE_STATIC_MOE=0
     VLLM_USE_DEEP_GEMM=0
     VLLM_ENABLE_AR_EXT=1
+    export VLLM_QDQ=1
 elif [[ "$SCHEME" == "mxfp8" ]]; then
     VLLM_AR_MXFP4_MODULAR_MOE=0
     VLLM_MXFP4_PRE_UNPACK_TO_FP8=0
@@ -131,6 +137,7 @@ elif [[ "$SCHEME" == "mxfp8" ]]; then
     VLLM_ENABLE_STATIC_MOE=0
     VLLM_USE_DEEP_GEMM=0
     VLLM_ENABLE_AR_EXT=1
+    export VLLM_QDQ=1
 elif [[ "$SCHEME" == "bf16" ]]; then
     echo "Run original model."
     VLLM_USE_DEEP_GEMM=0
@@ -191,7 +198,7 @@ export VLLM_ENABLE_STATIC_MOE=$VLLM_ENABLE_STATIC_MOE
 export VLLM_USE_DEEP_GEMM=$VLLM_USE_DEEP_GEMM
 export VLLM_ENABLE_V1_MULTIPROCESSING=0
 # For https://github.com/yiliu30/vllm-qdq-plugin.git CT format eval
-export VLLM_QDQ=1
+
 # A100 need to close torch compile
 # export TORCH_COMPILE_DISABLE=1
 
@@ -203,6 +210,7 @@ run_standard_eval() {
         --batch_size $BATCH_SIZE \
         --log_samples \
         --seed 42 \
+        --limit 64 \
         --output_path ${OUTPUT_DIR} \
         --show_config 2>&1 | tee ${OUTPUT_DIR}/log.txt
 }
@@ -316,6 +324,8 @@ run_ruler_eval() {
         --metadata="{\"max_seq_lengths\":[${SEQ_LENGTHS}],\"tokenizer\":\"${MODEL_PATH}\"}" \
         --gen_kwargs "max_gen_toks=${max_gen_toks}" \
         --batch_size ${BATCH_SIZE} \
+        --limit 4 \
+        --log_samples \
         --output_path "${OUTPUT_DIR}/seq_${SEQ_LENGTHS}" \
         --seed 42 
 

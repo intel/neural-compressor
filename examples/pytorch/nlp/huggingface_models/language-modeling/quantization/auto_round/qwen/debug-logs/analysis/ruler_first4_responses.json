@@ -1,0 +1,329 @@
+{
+  "generated_at_utc": "2026-05-08T12:03:22.636385+00:00",
+  "input_root": "quantized_model_nvfp4-tp4-eval",
+  "max_questions_per_run": 4,
+  "num_runs": 5,
+  "runs": [
+    {
+      "seq_length": 4096,
+      "seq_dir": "quantized_model_nvfp4-tp4-eval/seq_4096",
+      "source_file": "quantized_model_nvfp4-tp4-eval/seq_4096/__media__jenkins__saved_models__Qwen3-235B-A22B_nvfp4_LLMC__quantized_model_nvfp4/samples_niah_multiquery_2026-05-08T11-52-23.136565.jsonl",
+      "num_source_rows": 4,
+      "num_selected_questions": 4,
+      "questions": [
+        {
+          "question_index": 0,
+          "question_number": 1,
+          "doc_id": 0,
+          "question": "What are all the special magic numbers for used-postfix, squealing-probe, annoying-doorbell, and deranged-assurance mentioned in the provided text?",
+          "resp_items": [
+            " as follows:\n\n1. used-postfix: 8082668\n2. squealing-probe: 2065818\n3. annoying-doorbell: 2839607\n4. deranged-assurance: 3684052\n\nThese numbers are presented as \"special magic numbers\" associated with specific phrases or concepts in the text. The numbers are likely arbitrary or symbolic within the context of the article. The special magic numbers mentioned in the text are:\n\n1. used-postfix: 8082668\n2. squealing"
+          ],
+          "filtered_response": " as follows:\n\n1. used-postfix: 8082668\n2. squealing-probe: 2065818\n3. annoying-doorbell: 2839607\n4. deranged-assurance: 3684052\n\nThese numbers are presented as \"special magic numbers\" associated with specific phrases or concepts in the text. The numbers are likely arbitrary or symbolic within the context of the article. The special magic numbers mentioned in the text are:\n\n1. used-postfix: 8082668\n2. squealing",
+          "metric_values": {
+            "4096": 1.0
+          }
+        },
+        {
+          "question_index": 1,
+          "question_number": 2,
+          "doc_id": 1,
+          "question": "What are all the special magic numbers for tested-shout, colorful-whack, utter-contrast, and nondescript-rotation mentioned in the provided text?",
+          "resp_items": [
+            ":\n\n1. Tested-shout: 6707197\n2. Colorful-whack: 5924115\n3. Utter-contrast: 5476583\n4. Nondescript-rotation: 3653446\n\nThese numbers are presented as special magic numbers for each of the mentioned terms. The numbers are extracted directly from the provided text. The numbers are presented in the text as follows:\n\n- \"One of the special magic numbers for colorful-whack is: 5924115.\"\n- \"One of"
+          ],
+          "filtered_response": ":\n\n1. Tested-shout: 6707197\n2. Colorful-whack: 5924115\n3. Utter-contrast: 5476583\n4. Nondescript-rotation: 3653446\n\nThese numbers are presented as special magic numbers for each of the mentioned terms. The numbers are extracted directly from the provided text. The numbers are presented in the text as follows:\n\n- \"One of the special magic numbers for colorful-whack is: 5924115.\"\n- \"One of",
+          "metric_values": {
+            "4096": 1.0
+          }
+        },
+        {
+          "question_index": 2,
+          "question_number": 3,
+          "doc_id": 2,
+          "question": "What are all the special magic numbers for tenuous-epauliere, dirty-sniffle, strong-curd, and deranged-asparagus mentioned in the provided text?",
+          "resp_items": [
+            " as follows:\n\n1. Tenuous-epauliere: 9517169\n2. Dirty-sniffle: 9897858\n3. Strong-curd: 4337174\n4. Deranged-asparagus: 7273233\n\nThese numbers are explicitly mentioned in the text as the special magic numbers for each of the specified conditions. The text provides these numbers in the context of discussing the importance of credentials versus performance in various societal and organizational contexts. The special magic numbers are presented as examples of specific data points that are relevant to the"
+          ],
+          "filtered_response": " as follows:\n\n1. Tenuous-epauliere: 9517169\n2. Dirty-sniffle: 9897858\n3. Strong-curd: 4337174\n4. Deranged-asparagus: 7273233\n\nThese numbers are explicitly mentioned in the text as the special magic numbers for each of the specified conditions. The text provides these numbers in the context of discussing the importance of credentials versus performance in various societal and organizational contexts. The special magic numbers are presented as examples of specific data points that are relevant to the",
+          "metric_values": {
+            "4096": 1.0
+          }
+        },
+        {
+          "question_index": 3,
+          "question_number": 4,
+          "doc_id": 3,
+          "question": "What are all the special magic numbers for bright-urgency, billowy-offence, fragile-tub, and fortunate-coevolution mentioned in the provided text?",
+          "resp_items": [
+            ":\n\n1. Bright-urgency: 9153566\n2. Billowy-offence: 9937326\n3. Fragile-tub: 2321324\n4. Fortunate-coevolution: 1971823\n\nThese numbers are presented in the text as specific to each concept. The text is a long essay discussing various topics including credentialism, performance measurement, and startup culture. The special magic numbers are mentioned in the context of these discussions, but without further context or explanation, their significance remains tied to the specific concepts they"
+          ],
+          "filtered_response": ":\n\n1. Bright-urgency: 9153566\n2. Billowy-offence: 9937326\n3. Fragile-tub: 2321324\n4. Fortunate-coevolution: 1971823\n\nThese numbers are presented in the text as specific to each concept. The text is a long essay discussing various topics including credentialism, performance measurement, and startup culture. The special magic numbers are mentioned in the context of these discussions, but without further context or explanation, their significance remains tied to the specific concepts they",
+          "metric_values": {
+            "4096": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "seq_length": 8192,
+      "seq_dir": "quantized_model_nvfp4-tp4-eval/seq_8192",
+      "source_file": "quantized_model_nvfp4-tp4-eval/seq_8192/__media__jenkins__saved_models__Qwen3-235B-A22B_nvfp4_LLMC__quantized_model_nvfp4/samples_niah_multiquery_2026-05-08T11-42-20.213252.jsonl",
+      "num_source_rows": 4,
+      "num_selected_questions": 4,
+      "questions": [
+        {
+          "question_index": 0,
+          "question_number": 1,
+          "doc_id": 0,
+          "question": "What are all the special magic numbers for mindless-kilometer, freezing-milk, round-webinar, and worried-purse mentioned in the provided text?",
+          "resp_items": [
+            " 4194548 and 3219824? 4194548 and 3219824? 4194548 and 3219824? 4194548 and 3219824? 4194548 and 3219824? 4194548? 4194548? 4194548? 4194548? 4"
+          ],
+          "filtered_response": " 4194548 and 3219824? 4194548 and 3219824? 4194548 and 3219824? 4194548 and 3219824? 4194548 and 3219824? 4194548? 4194548? 4194548? 4194548? 4",
+          "metric_values": {
+            "4096": -1.0,
+            "8192": 0.5
+          }
+        },
+        {
+          "question_index": 1,
+          "question_number": 2,
+          "doc_id": 1,
+          "question": "What are all the special magic numbers for x-rated-ratepayer, eminent-weight, coherent-chestnut, and axiomatic-watch mentioned in the provided text?",
+          "resp_items": [
+            " 6692553, 4191175, 7754864, and 7754864. The numbers are 6692553, 4191175, 7754864, and 6692553, 4191175, 7754864, and 6692553, 4191175, 7754864, 6692"
+          ],
+          "filtered_response": " 6692553, 4191175, 7754864, and 7754864. The numbers are 6692553, 4191175, 7754864, and 6692553, 4191175, 7754864, and 6692553, 4191175, 7754864, 6692",
+          "metric_values": {
+            "4096": -1.0,
+            "8192": 0.75
+          }
+        },
+        {
+          "question_index": 2,
+          "question_number": 3,
+          "doc_id": 2,
+          "question": "What are all the special magic numbers for scattered-prize, capricious-foal, boiling-decadence, and aromatic-molding mentioned in the provided text?",
+          "resp_items": [
+            " the numbers that are mentioned in the text. The numbers are 1247595, 2642635, 4965789, and 8434500. The numbers are 1247595, 2642635, 4965789, 8434500, and 1247595, 2642635, 4965789, and 8434500. The numbers"
+          ],
+          "filtered_response": " the numbers that are mentioned in the text. The numbers are 1247595, 2642635, 4965789, and 8434500. The numbers are 1247595, 2642635, 4965789, 8434500, and 1247595, 2642635, 4965789, and 8434500. The numbers",
+          "metric_values": {
+            "4096": -1.0,
+            "8192": 1.0
+          }
+        },
+        {
+          "question_index": 3,
+          "question_number": 4,
+          "doc_id": 3,
+          "question": "What are all the special magic numbers for loutish-revolution, onerous-shine, nasty-course, and madly-titanium mentioned in the provided text?",
+          "resp_items": [
+            " 1036161, 5785687, 5449368, and 9164991. The numbers are the same as the ones mentioned in the text. The numbers are 1036161, 5785687, 5449368, and 9164991. The numbers are 1036161, 5785687, 5449368, and 916499"
+          ],
+          "filtered_response": " 1036161, 5785687, 5449368, and 9164991. The numbers are the same as the ones mentioned in the text. The numbers are 1036161, 5785687, 5449368, and 9164991. The numbers are 1036161, 5785687, 5449368, and 916499",
+          "metric_values": {
+            "4096": -1.0,
+            "8192": 1.0
+          }
+        }
+      ]
+    },
+    {
+      "seq_length": 16384,
+      "seq_dir": "quantized_model_nvfp4-tp4-eval/seq_16384",
+      "source_file": "quantized_model_nvfp4-tp4-eval/seq_16384/__media__jenkins__saved_models__Qwen3-235B-A22B_nvfp4_LLMC__quantized_model_nvfp4/samples_niah_multiquery_2026-05-08T11-49-27.935194.jsonl",
+      "num_source_rows": 4,
+      "num_selected_questions": 4,
+      "questions": [
+        {
+          "question_index": 0,
+          "question_number": 1,
+          "doc_id": 0,
+          "question": "What are all the special magic numbers for ancient-thermostat, round-activation, abaft-body, and lazy-lay mentioned in the provided text?",
+          "resp_items": [
+            " a lot of the own, and the other people. And the other people. But the same as the other people. If you're not the same as the other way, more than one line of code, and the rest of the same as the rest of the same as the same as the other people. The same as the was a lot of the same as the example. If you're a lot of the same as the same as the same as the same as the as the same as the as the as the as the same as the language, in the same as the, as the same as the same as the same as the"
+          ],
+          "filtered_response": " a lot of the own, and the other people. And the other people. But the same as the other people. If you're not the same as the other way, more than one line of code, and the rest of the same as the rest of the same as the same as the other people. The same as the was a lot of the same as the example. If you're a lot of the same as the same as the same as the same as the as the same as the as the as the as the same as the language, in the same as the, as the same as the same as the same as the",
+          "metric_values": {
+            "4096": -1.0,
+            "16384": 0.0
+          }
+        },
+        {
+          "question_index": 1,
+          "question_number": 2,
+          "doc_id": 1,
+          "question": "What are all the special magic numbers for wakeful-fundraising, impartial-impudence, unadvised-survival, and secretive-revitalization mentioned in the provided text?",
+          "resp_items": [
+            " the, and a lot of the most of the most of the way, So, and the same way. So, and the same. So, and the the same way. So, but the same way. I'm not sure if you're not sure if you're not the same as the same, but the same way. So, but the same way. But the same way. So, but the same way. In the same way, the same way as the same way. But the same way. So the own way. So, but the same way, but the same way, but the same way. So,"
+          ],
+          "filtered_response": " the, and a lot of the most of the most of the way, So, and the same way. So, and the same. So, and the the same way. So, but the same way. I'm not sure if you're not sure if you're not the same as the same, but the same way. So, but the same way. But the same way. So, but the same way. In the same way, the same way as the same way. But the same way. So the own way. So, but the same way, but the same way, but the same way. So,",
+          "metric_values": {
+            "4096": -1.0,
+            "16384": 0.0
+          }
+        },
+        {
+          "question_index": 2,
+          "question_number": 3,
+          "doc_id": 2,
+          "question": "What are all the special magic numbers for overt-celebration, nutty-throne, new-rear, and hapless-syrup mentioned in the provided text?",
+          "resp_items": [
+            " you looking for the same as the be the, but the same, and the same. The same. The same. The same. The same. less, and the same. as well as the same. The same. The same. The same. I'm not the same. the same as the same. The same. The same. The original [in the same way as the same way as the same. The same way. The same way. The same way. The same way. The same way. The same way. The same way. The same way. The same way. The same way. The same way."
+          ],
+          "filtered_response": " you looking for the same as the be the, but the same, and the same. The same. The same. The same. The same. less, and the same. as well as the same. The same. The same. The same. I'm not the same. the same as the same. The same. The same. The original [in the same way as the same way as the same. The same way. The same way. The same way. The same way. The same way. The same way. The same way. The same way. The same way. The same way. The same way.",
+          "metric_values": {
+            "4096": -1.0,
+            "16384": 0.0
+          }
+        },
+        {
+          "question_index": 3,
+          "question_number": 4,
+          "doc_id": 3,
+          "question": "What are all the special magic numbers for annoyed-cigarette, defeated-dig, fluffy-legume, and few-storage mentioned in the provided text?",
+          "resp_items": [
+            " the same as the other people's a language. The other way of the own, but the problem, and the same, but the the own, but the same way, but the same way. I do not want to be the same as the to be the same as the be the same as the same as the other people. I'm not the same as the day is the same as the the same as the same as the same. But the same as the'm not the same as the same as the same as the same as the same as the same as the same as the same as the as the answer to the same question"
+          ],
+          "filtered_response": " the same as the other people's a language. The other way of the own, but the problem, and the same, but the the own, but the same way, but the same way. I do not want to be the same as the to be the same as the be the same as the same as the other people. I'm not the same as the day is the same as the the same as the same as the same. But the same as the'm not the same as the same as the same as the same as the same as the same as the same as the same as the as the answer to the same question",
+          "metric_values": {
+            "4096": -1.0,
+            "16384": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "seq_length": 32768,
+      "seq_dir": "quantized_model_nvfp4-tp4-eval/seq_32768",
+      "source_file": "quantized_model_nvfp4-tp4-eval/seq_32768/__media__jenkins__saved_models__Qwen3-235B-A22B_nvfp4_LLMC__quantized_model_nvfp4/samples_niah_multiquery_2026-05-08T11-38-06.003485.jsonl",
+      "num_source_rows": 4,
+      "num_selected_questions": 4,
+      "questions": [
+        {
+          "question_index": 0,
+          "question_number": 1,
+          "doc_id": 0,
+          "question": "What are all the special magic numbers for royal-textual, grieving-reporter, warlike-lack, and verdant-soap mentioned in the provided text?",
+          "resp_items": [
+            ", and, but, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and"
+          ],
+          "filtered_response": ", and, but, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+          "metric_values": {
+            "4096": -1.0,
+            "32768": 0.0
+          }
+        },
+        {
+          "question_index": 1,
+          "question_number": 2,
+          "doc_id": 1,
+          "question": "What are all the special magic numbers for unequaled-manufacturer, adamant-wrecker, flaky-child, and smelly-role mentioned in the provided text?",
+          "resp_items": [
+            ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and"
+          ],
+          "filtered_response": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+          "metric_values": {
+            "4096": -1.0,
+            "32768": 0.0
+          }
+        },
+        {
+          "question_index": 2,
+          "question_number": 3,
+          "doc_id": 2,
+          "question": "What are all the special magic numbers for inexpensive-disco, uncovered-tactics, juicy-godparent, and callous-story mentioned in the provided text?",
+          "resp_items": [
+            ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and"
+          ],
+          "filtered_response": ", and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+          "metric_values": {
+            "4096": -1.0,
+            "32768": 0.0
+          }
+        },
+        {
+          "question_index": 3,
+          "question_number": 4,
+          "doc_id": 3,
+          "question": "What are all the special magic numbers for onerous-mode, melted-trail, hushed-aluminum, and illustrious-stockings mentioned in the provided text?",
+          "resp_items": [
+            ", and so, and so, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and"
+          ],
+          "filtered_response": ", and so, and so, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and, and",
+          "metric_values": {
+            "4096": -1.0,
+            "32768": 0.0
+          }
+        }
+      ]
+    },
+    {
+      "seq_length": 131072,
+      "seq_dir": "quantized_model_nvfp4-tp4-eval/seq_131072",
+      "source_file": "quantized_model_nvfp4-tp4-eval/seq_131072/__media__jenkins__saved_models__Qwen3-235B-A22B_nvfp4_LLMC__quantized_model_nvfp4/samples_niah_multiquery_2026-05-08T10-57-50.542877.jsonl",
+      "num_source_rows": 16,
+      "num_selected_questions": 4,
+      "questions": [
+        {
+          "question_index": 0,
+          "question_number": 1,
+          "doc_id": 0,
+          "question": "What are all the special magic numbers for threatening-optimization, ahead-stove, obscene-platform, and puffy-beef mentioned in the provided text?",
+          "resp_items": [
+            " the\n\n and the same time the same time the time the time the, the the the, the the the the the time the. the the time the the. the time the\n the, the\n the\n the, the, the one time the the the the the the one of the one time the time the the the. the. the, the is the was the is the time the.\n the, the the one time the time the time the the is the is the is the. the\n the, the, the\n the one time the one time the time time time time. the is the is the,"
+          ],
+          "filtered_response": " the\n\n and the same time the same time the time the time the, the the the, the the the the the time the. the the time the the. the time the\n the, the\n the\n the, the, the one time the the the the the the one of the one time the time the the the. the. the, the is the was the is the time the.\n the, the the one time the time the time the the is the is the is the. the\n the, the, the\n the one time the one time the time time time time. the is the is the,",
+          "metric_values": {
+            "4096": -1.0,
+            "131072": 0.0
+          }
+        },
+        {
+          "question_index": 1,
+          "question_number": 2,
+          "doc_id": 1,
+          "question": "What are all the special magic numbers for picayune-eurocentrism, futuristic-click, erect-punishment, and lucky-broom mentioned in the provided text?",
+          "resp_items": [
+            " the\n the the time the. the time the the time the time the the time the time the time the time the time the is a\n the in the is the is is is is, the is the, the time. the time thehow,llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll"
+          ],
+          "filtered_response": " the\n the the time the. the time the the time the time the the time the time the time the time the time the is a\n the in the is the is is is is, the is the, the time. the time thehow,llllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll",
+          "metric_values": {
+            "4096": -1.0,
+            "131072": 0.0
+          }
+        },
+        {
+          "question_index": 2,
+          "question_number": 3,
+          "doc_id": 2,
+          "question": "What are all the special magic numbers for adorable-deduce, aware-interval, icy-hate, and rhetorical-step-daughter mentioned in the provided text?",
+          "resp_items": [
+            " the same to be a. the time the\n\n\n\n the a. the. the time the, the. the the time the the the the the the the the the the the the the the the the the the time the time the the the the of the time the time the\n the the the time the the the. the time the the the just in the time the time the time the time the time the same, the just the, the, the the time the the time the time the time the\n the time the the the time time time time thellllllllllllllllllllllllll"
+          ],
+          "filtered_response": " the same to be a. the time the\n\n\n\n the a. the. the time the, the. the the time the the the the the the the the the the the the the the the the the the time the time the the the the of the time the time the\n the the the time the the the. the time the the the just in the time the time the time the time the time the same, the just the, the, the the time the the time the time the time the\n the time the the the time time time time thellllllllllllllllllllllllll",
+          "metric_values": {
+            "4096": -1.0,
+            "131072": 0.0
+          }
+        },
+        {
+          "question_index": 3,
+          "question_number": 4,
+          "doc_id": 3,
+          "question": "What are all the special magic numbers for knowing-stole, dusty-smolt, roasted-burst, and fat-glue mentioned in the provided text?",
+          "resp_items": [
+            "\n\n\n but it's the is it is a, but is a, but, but and\n\n it's. It was a, but. It was it is, but. it. it is and, it is the, and, and. It, and is and, and, and time the time the the, the, and, and, in which, the is a, in which it is a. it is a\npurllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll"
+          ],
+          "filtered_response": "\n\n\n but it's the is it is a, but is a, but, but and\n\n it's. It was a, but. It was it is, but. it. it is and, it is the, and, and. It, and is and, and, and time the time the the, the, and, and, in which, the is a, in which it is a. it is a\npurllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll",
+          "metric_values": {
+            "4096": -1.0,
+            "131072": 0.0
+          }
+        }
+      ]
+    }
+  ]
+}
