@@ -1,5 +1,18 @@
 # NVFP4 Long-Context Debug Status Report
 
+### File-Verified Runs
+
+| Test | Condition | Result | Evidence | Note |
+|---|---|---|---|---|
+| Short-context baseline | NVFP4, `seq_4096` | `1.0`, normal answer | `results_2026-05-08T11-52-23.136565.json`, `analysis/ruler_first4_responses.json:22` | Healthy baseline |
+| First degradation point | NVFP4, `seq_8192` | `0.8125`, repeated numbers start | `results_2026-05-08T11-42-20.213252.json:7`, `analysis/ruler_first4_responses.json:83` | Still partly correct |
+| Initial bad 16k run | NVFP4, `seq_16384` | `0.0`, phrase repetition | `results_2026-05-08T11-49-27.935194.json:7`, `analysis/ruler_first4_responses.json:148` | Long-context failure visible |
+| Initial bad 32k run | NVFP4, `seq_32768` | `0.0`, `and, and, and` loop | `results_2026-05-08T11-38-06.003485.json:7`, `analysis/ruler_first4_responses.json:213` | Severe collapse |
+| Initial bad 128k run | NVFP4, `seq_131072` | `0.0`, `the time`-style loop | `results_2026-05-08T10-57-50.542877.json:7`, `analysis/ruler_first4_responses.json:278` | Severe collapse |
+| Later good 16k run | NVFP4, `seq_16384` | `1.0`, normal answer | `results_2026-05-08T12-53-34.618507.json:7`, `samples_niah_multiquery_2026-05-08T12-53-34.618507.jsonl` | Remove Yarn |
+| Later good 32k run | NVFP4, `seq_32768` | `1.0`, normal answer | `results_2026-05-08T12-59-45.943858.json:7`, `samples_niah_multiquery_2026-05-08T12-59-45.943858.jsonl` | Remove Yarn |
+
+
 ## Executive Summary
 
 This debug session started from a clear symptom: the quantized NVFP4 Qwen3-235B-A22B model produced normal RULER answers at short context, then gradually degraded into repeated phrases and repeated single words as context length increased.
@@ -43,17 +56,7 @@ The main symptom was:
 
 ## Current Test Summary
 
-### File-Verified Runs
 
-| Test | Condition | Result | Evidence | Note |
-|---|---|---|---|---|
-| Short-context baseline | NVFP4, `seq_4096` | `1.0`, normal answer | `results_2026-05-08T11-52-23.136565.json`, `analysis/ruler_first4_responses.json:22` | Healthy baseline |
-| First degradation point | NVFP4, `seq_8192` | `0.8125`, repeated numbers start | `results_2026-05-08T11-42-20.213252.json:7`, `analysis/ruler_first4_responses.json:83` | Still partly correct |
-| Initial bad 16k run | NVFP4, `seq_16384` | `0.0`, phrase repetition | `results_2026-05-08T11-49-27.935194.json:7`, `analysis/ruler_first4_responses.json:148` | Long-context failure visible |
-| Initial bad 32k run | NVFP4, `seq_32768` | `0.0`, `and, and, and` loop | `results_2026-05-08T11-38-06.003485.json:7`, `analysis/ruler_first4_responses.json:213` | Severe collapse |
-| Initial bad 128k run | NVFP4, `seq_131072` | `0.0`, `the time`-style loop | `results_2026-05-08T10-57-50.542877.json:7`, `analysis/ruler_first4_responses.json:278` | Severe collapse |
-| Later good 16k run | NVFP4, `seq_16384` | `1.0`, normal answer | `results_2026-05-08T12-53-34.618507.json:7`, `samples_niah_multiquery_2026-05-08T12-53-34.618507.jsonl` | Remove Yarn |
-| Later good 32k run | NVFP4, `seq_32768` | `1.0`, normal answer | `results_2026-05-08T12-59-45.943858.json:7`, `samples_niah_multiquery_2026-05-08T12-59-45.943858.jsonl` | Remove Yarn |
 
 ### Session-Reported Findings
 
