@@ -25,7 +25,7 @@ def colva_beach_sq():
     repo_root_path = f"{os.path.dirname(__file__)}/../.."
     image_path = f"{repo_root_path}/examples/jax/keras/vit/colva_beach_sq.jpg"
     target_size = (224, 224)
-    return load_image(image_path, target_size, True)
+    return load_image(image_path, target_size)
 
 
 @pytest.fixture(scope="module")
