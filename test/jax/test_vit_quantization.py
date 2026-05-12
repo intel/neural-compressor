@@ -31,7 +31,7 @@ def colva_beach_sq():
 @pytest.fixture(scope="module")
 def random_image():
     key = random.PRNGKey(0)
-    img = random.uniform(key, shape=(1, 224, 224, 3), minval=0.0, maxval=1.0, dtype=jnp.float32)
+    img = random.randint(key, shape=(1, 224, 224, 3), minval=0, maxval=256, dtype=jnp.uint8)
     return img
 
 
