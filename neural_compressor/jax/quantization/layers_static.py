@@ -144,6 +144,14 @@ class MinMaxObserver(keras.layers.Layer):
         """
         return ops.array((self.min_val, self.max_val))
 
+    def is_calibrated(self):
+        """Check if the observer has valid calibration data.
+
+        Returns:
+            bool: True if calibrated, False if min (and interrnally max) are still at initial values.
+        """
+        return not (jnp.isinf(self.min_val.value).any())
+
 
 class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies static quantize-dequantize to activations."""
@@ -652,12 +660,26 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         Returns:
             None: Updates QDQ helpers with calibrated values.
         """
-        self.f_qdq.convert()
-        # Calculate the scale for query for dot product attention path
-        # from the fallback path used in calibration
-        self.q_qdq.a_scale.assign(self.f_qdq.a_scale / self._inverse_sqrt_key_dim)
-        if self.q_qdq._is_asymmetric:
-            self.q_qdq.a_zero_point.assign(jnp.array(self.f_qdq.a_zero_point.value))
+        if self.q_qdq.input_observer.is_calibrated():
+            self.q_qdq.convert()
+            if not self.f_qdq.input_observer.is_calibrated():
+                # Calculate the scale for query in the fallback path
+                # from the dot product attention path used in calibration
+                self.f_qdq.a_scale.assign(self.q_qdq.a_scale * self._inverse_sqrt_key_dim)
+                if self.f_qdq._is_asymmetric:
+                    self.f_qdq.a_zero_point.assign(jnp.array(self.q_qdq.a_zero_point.value))
+            else:
+                self.f_qdq.convert()
+        else:
+            self.f_qdq.convert()
+            if not self.q_qdq.input_observer.is_calibrated():
+                # Calculate the scale for query for dot product attention path
+                # from the fallback path used in calibration
+                self.q_qdq.a_scale.assign(self.f_qdq.a_scale / self._inverse_sqrt_key_dim)
+                if self.q_qdq._is_asymmetric:
+                    self.q_qdq.a_zero_point.assign(jnp.array(self.f_qdq.a_zero_point.value))
+            else:
+                self.q_qdq.convert()
         self.k_qdq.convert()
         self.a_qdq.convert()
         self.v_qdq.convert()
@@ -721,9 +743,6 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
             or return_attention_scores
             or (len(query.shape) != 4)
         )
-        # For calibration always use fallback path as it can collect data for both paths
-        use_dot_product_attention = use_dot_product_attention and self._is_quantized
-        use_dot_product_attention = False
 
         if use_dot_product_attention:
             if attention_mask is not None:
