@@ -672,14 +672,12 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
                 self.f_qdq.convert()
         else:
             self.f_qdq.convert()
-            if not self.q_qdq.input_observer.is_calibrated():
-                # Calculate the scale for query for dot product attention path
-                # from the fallback path used in calibration
-                self.q_qdq.a_scale.assign(self.f_qdq.a_scale / self._inverse_sqrt_key_dim)
-                if self.q_qdq._is_asymmetric:
-                    self.q_qdq.a_zero_point.assign(jnp.array(self.f_qdq.a_zero_point.value))
-            else:
-                self.q_qdq.convert()
+            # Calculate the scale for query for dot product attention path
+            # from the fallback path used in calibration
+            self.q_qdq.a_scale.assign(self.f_qdq.a_scale / self._inverse_sqrt_key_dim)
+            if self.q_qdq._is_asymmetric:
+                self.q_qdq.a_zero_point.assign(jnp.array(self.f_qdq.a_zero_point.value))
+
         self.k_qdq.convert()
         self.a_qdq.convert()
         self.v_qdq.convert()
