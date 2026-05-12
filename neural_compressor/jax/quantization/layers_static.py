@@ -148,7 +148,7 @@ class MinMaxObserver(keras.layers.Layer):
         """Check if the observer has valid calibration data.
 
         Returns:
-            bool: True if calibrated, False if min (and interrnally max) are still at initial values.
+            bool: True if calibrated, False if min (and internally max) are still at initial values.
         """
         return not (jnp.isinf(self.min_val.value).any())
 
