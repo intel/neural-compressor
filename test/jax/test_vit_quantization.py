@@ -36,7 +36,7 @@ def random_image():
 
 
 def classify_image(model, image, top_k=1):
-    out = model(image)
+    out = model.predict(image)
     labels = decode_predictions(jnp.array(out), top=top_k)[0]
     probs = jax.nn.softmax(jnp.array(out)[0])
     top_probs = [probs[i] for i in jnp.argsort(probs, descending=True)[:top_k]]
@@ -54,7 +54,7 @@ def test_image_classification(dynamic, model_dtype, quantization_dtype, colva_be
     expected_labels = classify_image(vit, colva_beach_sq)
 
     def calib_fn(model):
-        _ = model(random_image)
+        _ = model.predict(random_image)
 
     if dynamic:
         config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
