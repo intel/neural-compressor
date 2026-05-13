@@ -35,11 +35,11 @@ def random_image():
     return img
 
 
-def classify_image(model, image, labels_n=1):
+def classify_image(model, image, top_k=1):
     out = model(image)
-    labels = decode_predictions(jnp.array(out), top=labels_n)[0]
+    labels = decode_predictions(jnp.array(out), top=top_k)[0]
     probs = jax.nn.softmax(jnp.array(out)[0])
-    top_probs = [probs[i] for i in jnp.argsort(probs, descending=True)[:5]]
+    top_probs = [probs[i] for i in jnp.argsort(probs, descending=True)[:top_k]]
     return [(class_name, prob) for ((_, class_name, _), prob) in zip(labels, top_probs)]
 
 
