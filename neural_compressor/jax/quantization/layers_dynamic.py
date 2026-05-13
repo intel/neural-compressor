@@ -360,12 +360,10 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         orig._tracker.unlock()
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
-        orig.q_qdq = DynamicQDQLayer("q_qdq", activation_dtype, orig.dtype_policy, False)
-        orig.k_qdq = DynamicQDQLayer("k_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
+        orig.qdq = DynamicQDQLayer("qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
         orig.a_qdq = DynamicQDQLayer(
             "a_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, fixed_range=(0.0, 1.0)
         )
-        orig.v_qdq = DynamicQDQLayer("v_qdq", activation_dtype, orig.dtype_policy, False)
         orig._tracker.lock()
         return orig
 
@@ -375,10 +373,8 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         Returns:
             None: Initializes quantization helper layers.
         """
-        self.q_qdq.add_variables()
-        self.k_qdq.add_variables()
+        self.qdq.add_variables()
         self.a_qdq.add_variables()
-        self.v_qdq.add_variables()
 
     def post_quantization_cleanup(self):
         """Finalize dynamic quantization with no extra cleanup.
@@ -448,9 +444,9 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
                     )
                 attention_mask = ops.cast(attention_mask, dtype="bool")
             # Directly compute the attention output using dot-product attention
-            query = self.q_qdq(query)
-            key = self.k_qdq(key)
-            value = self.v_qdq(value)
+            query = self.qdq(query)
+            key = self.qdq(key)
+            value = self.qdq(value)
             attention_output = ops.dot_product_attention(
                 query=query,
                 key=key,
@@ -471,8 +467,8 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
 
         # Take the dot product between "query" and "key" to get the raw
         # attention scores.
-        key = self.k_qdq(key)
-        query = self.q_qdq(query)
+        key = self.qdq(key)
+        query = self.qdq(query)
         attention_scores = ops.einsum(self._dot_product_equation, key, query)
 
         # Apply the mask using the custom masked softmax
@@ -490,7 +486,7 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
 
         # `context_layer` = [B, T, N, H]
         final_attn_scores = self.a_qdq(final_attn_scores)
-        value = self.v_qdq(value)
+        value = self.qdq(value)
         attention_output = ops.einsum(
             self._combine_equation, final_attn_scores, value
         )
