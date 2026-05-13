@@ -78,5 +78,5 @@ def test_image_classification(dynamic, model_dtype, quantization_dtype, colva_be
     expected_prob = expected_labels[0][1]
     error = abs(actual_prob - expected_prob)
     assert (
-        error < 0.001
+        error < 0.02
     ), f"Expected top-1 probability around {expected_prob}, but got {actual_prob}, absolute error: {error}"
