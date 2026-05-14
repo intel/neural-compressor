@@ -8,6 +8,7 @@ os.environ["KERAS_BACKEND"] = "jax"
 
 import tempfile
 
+import jax
 import jax.numpy as jnp
 import keras
 import pytest
@@ -24,31 +25,36 @@ def colva_beach_sq():
     repo_root_path = f"{os.path.dirname(__file__)}/../.."
     image_path = f"{repo_root_path}/examples/jax/keras/vit/colva_beach_sq.jpg"
     target_size = (224, 224)
-    return load_image(image_path, target_size, True)
+    return load_image(image_path, target_size)
 
 
 @pytest.fixture(scope="module")
 def random_image():
     key = random.PRNGKey(0)
-    img = random.uniform(key, shape=(1, 224, 224, 3), minval=0.0, maxval=1.0, dtype=jnp.float32)
+    img = random.randint(key, shape=(1, 224, 224, 3), minval=0, maxval=256, dtype=jnp.uint8)
     return img
 
 
-def classify_image(model, image, labels_n=1):
-    out = model(image)
-    labels = decode_predictions(jnp.array(out), top=labels_n)[0]
-    return [class_name for (_, class_name, _) in labels]
+def classify_image(model, image, top_k=1):
+    out = model.predict(image)
+    labels = decode_predictions(jnp.array(out), top=top_k)[0]
+    probs = jax.nn.softmax(jnp.array(out)[0])
+    top_probs = [probs[i] for i in jnp.argsort(probs, descending=True)[:top_k]]
+    return [(class_name, prob) for ((_, class_name, _), prob) in zip(labels, top_probs)]
 
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
 @pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
-def test_image_classification(dynamic, model_dtype, colva_beach_sq, random_image):
-    expected_labels = ["seashore", "sandbar", "lakeside", "promontory", "beacon"]
-    quantization_dtype = "fp8_e4m3"
+@pytest.mark.parametrize(
+    "quantization_dtype", ["fp8_e4m3", "int8"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=int8"]
+)
+def test_image_classification(dynamic, model_dtype, quantization_dtype, colva_beach_sq, random_image):
     vit = load_model_from_preset(ViTImageClassifier, "vit_base_patch16_224_imagenet", model_dtype)
 
+    expected_labels = classify_image(vit, colva_beach_sq)
+
     def calib_fn(model):
-        _ = model(random_image)
+        _ = model.predict(random_image)
 
     if dynamic:
         config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
@@ -64,5 +70,13 @@ def test_image_classification(dynamic, model_dtype, colva_beach_sq, random_image
         keras.saving.save_model(vit_q, save_path)
         vit_q = keras.saving.load_model(save_path)
 
-    actual_labels = classify_image(vit_q, colva_beach_sq, len(expected_labels))
-    assert expected_labels == actual_labels
+    actual_labels = classify_image(vit_q, colva_beach_sq)
+    assert (
+        actual_labels[0][0] == expected_labels[0][0]
+    ), f"Expected top-1 label '{expected_labels[0][0]}', but got '{actual_labels[0][0]}'"
+    actual_prob = actual_labels[0][1]
+    expected_prob = expected_labels[0][1]
+    error = abs(actual_prob - expected_prob)
+    assert (
+        error < 0.02
+    ), f"Expected top-1 probability around {expected_prob}, but got {actual_prob}, absolute error: {error}"
