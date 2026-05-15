@@ -10,13 +10,20 @@ usage() {
 
 detect_cuda_version() {
     local cuda_version=""
+    local candidate_version=""
 
     if command -v nvidia-smi >/dev/null 2>&1; then
-        cuda_version=$(nvidia-smi --query-gpu=cuda_version --format=csv,noheader 2>/dev/null | head -n 1 | tr -d '[:space:]')
+        candidate_version=$(nvidia-smi 2>/dev/null | sed -n 's/.*CUDA Version: \([^ ]*\).*/\1/p' | head -n 1)
+        if [[ "$candidate_version" =~ ^[0-9.]+$ ]]; then
+            cuda_version="$candidate_version"
+        fi
     fi
 
     if [[ -z "$cuda_version" ]] && command -v nvcc >/dev/null 2>&1; then
-        cuda_version=$(nvcc --version | awk '/release/ {print $6}' | sed 's/^V//; s/,//')
+        candidate_version=$(nvcc --version | awk '/release/ {print $6}' | sed 's/^V//; s/,//')
+        if [[ "$candidate_version" =~ ^[0-9.]+$ ]]; then
+            cuda_version="$candidate_version"
+        fi
     fi
 
     if [[ -z "$cuda_version" ]]; then
@@ -81,6 +88,7 @@ elif [[ "$DEVICE" == "gpu" ]]; then
             exit 1
         fi
         uv pip install vllm==0.20.2 --extra-index-url ${VLLM_CUDA_INDEX} --extra-index-url ${PYTORCH_CUDA_INDEX} --index-strategy unsafe-best-match
+        uv pip install torch torchvision --extra-index-url ${PYTORCH_CUDA_INDEX} --index-strategy unsafe-best-match
         uv pip install ray
         git clone https://github.com/yiliu30/vllm-qdq-plugin.git
         uv pip install vllm-qdq-plugin/ -v
