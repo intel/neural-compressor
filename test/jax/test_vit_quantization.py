@@ -7,13 +7,14 @@ import os
 os.environ["KERAS_BACKEND"] = "jax"
 
 import tempfile
+import time
 
 import jax
 import jax.numpy as jnp
 import keras
 import pytest
-from jax import random
-from jax_test_utility import load_image, load_model_from_preset
+from jax import clear_caches, random
+from jax_test_utility import compute_model_hash, load_image, load_model_from_preset
 from keras.applications.imagenet_utils import decode_predictions
 from keras_hub.models import ViTImageClassifier
 
@@ -44,11 +45,12 @@ def classify_image(model, image, top_k=1):
 
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
+@pytest.mark.parametrize("inplace", [True, False], ids=["inplace=True", "inplace=False"])
 @pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "int8"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=int8"]
 )
-def test_image_classification(dynamic, model_dtype, quantization_dtype, colva_beach_sq, random_image):
+def test_image_classification(dynamic, inplace, model_dtype, quantization_dtype, colva_beach_sq, random_image):
     vit = load_model_from_preset(ViTImageClassifier, "vit_base_patch16_224_imagenet", model_dtype)
 
     expected_labels = classify_image(vit, colva_beach_sq)
@@ -58,12 +60,12 @@ def test_image_classification(dynamic, model_dtype, quantization_dtype, colva_be
 
     if dynamic:
         config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
-        vit_q = quantize_model(vit, config, None)
+        vit_q = quantize_model(vit, config, None, inplace=inplace)
     else:
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=True, const_weight=True
         )
-        vit_q = quantize_model(vit, config, calib_fn)
+        vit_q = quantize_model(vit, config, calib_fn, inplace=inplace)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "vit_quantized.keras")
@@ -80,3 +82,48 @@ def test_image_classification(dynamic, model_dtype, quantization_dtype, colva_be
     assert (
         error < 0.02
     ), f"Expected top-1 probability around {expected_prob}, but got {actual_prob}, absolute error: {error}"
+
+
+@pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
+def test_inplace_false(dynamic, random_image):
+    quantization_dtype = "fp8_e4m3"
+    model_dtype = "bfloat16"
+
+    def calib_fn(model):
+        _ = model.predict(random_image)
+
+    vit = load_model_from_preset(ViTImageClassifier, "vit_base_patch16_224_imagenet", model_dtype)
+    if dynamic:
+        config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
+        _calib_fn = None
+    else:
+        config = StaticQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
+        _calib_fn = calib_fn
+
+    hash_before_quantization = compute_model_hash(vit)
+
+    # inplace=False, measure time
+    clear_caches()
+    start = time.perf_counter()
+    vit_q = quantize_model(vit, config, _calib_fn, inplace=False)
+    duration_inplace_false = time.perf_counter() - start
+
+    # Assert original model is untouched
+    hash_after_quantization = compute_model_hash(vit)
+    assert hash_before_quantization == hash_after_quantization, "Original model was modified despite inplace=False"
+
+    # Assert quantized model is not original
+    assert vit_q is not vit
+    hash_quantized = compute_model_hash(vit_q)
+    assert hash_quantized != hash_before_quantization, "Quantized model should differ from the original"
+
+    # inplace=True, measure time
+    clear_caches()
+    start = time.perf_counter()
+    vit_q = quantize_model(vit, config, _calib_fn, inplace=True)
+    duration_inplace_true = time.perf_counter() - start
+
+    # Compare quantization performance
+    duration_difference = duration_inplace_false - duration_inplace_true
+    performance_hit = (duration_difference / duration_inplace_true) * 100
+    print(f"performance hit: {performance_hit:.2f}%")
