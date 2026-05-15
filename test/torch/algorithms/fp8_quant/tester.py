@@ -20,12 +20,11 @@ from neural_compressor.torch.algorithms.fp8_quant._quant_common.quant_config imp
     ScaleFormat,
     ScaleMethodString,
     get_hqt_config,
+    SUPPORTED_DYNAMIC_QUANTIZATION_SCALES,
 )
 from neural_compressor.torch.quantization import FP8Config, convert, prepare  # user level API
 
 from .test_hpu_utils import get_device_name
-
-SUPPORTED_DYNAMIC_SCALES = [ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW]
 
 HW_ALIGNED_SCALE_METHODS = [
     ScaleMethodString.MAXABS_HW,

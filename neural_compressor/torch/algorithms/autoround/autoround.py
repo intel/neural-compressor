@@ -40,7 +40,6 @@ def _is_auto_round_available():
 _is_auto_round_available()
 
 from auto_round import AutoRound, AutoRoundMLLM  # pylint: disable=E0401
-from auto_round.compressors.mllm.eval import lmms_eval, mllm_eval
 from auto_round.compressors.mllm.template import Template, get_template
 from auto_round.schemes import QuantizationScheme
 
@@ -178,6 +177,13 @@ class AutoRoundQuantizer(Quantizer):
         elif pipe is None:
             tokenizer = "Placeholder"
             self.dataset = CapturedDataloader(model.args_list, model.kwargs_list)
+        # Retrieve processor/image_processor/template from model if they were attached there
+        # (moved from quant_config to model to avoid duplicating large objects in per-layer configs)
+        for _attr in ("processor", "image_processor", "template"):
+            _val = getattr(model.orig_model, _attr, None)
+            if _val is not None:
+                setattr(self, _attr, _val)
+                delattr(model.orig_model, _attr)
         model = model.orig_model
         if pipe is not None:
             model = pipe
@@ -218,7 +224,10 @@ class AutoRoundQuantizer(Quantizer):
             model.autoround_config = weight_config
             return rounder.save_quantized(output_dir=self.output_dir, inplace=True)
         else:  # pragma: no cover
-            rounder.quantize_and_save(output_dir=self.output_dir, format=self.export_format, inplace=True)
+            _, quantized_model_path = rounder.quantize_and_save(
+                output_dir=self.output_dir, format=self.export_format, inplace=True
+            )
+            self.output_dir = quantized_model_path
             model = rounder.model
             model.autoround_config = rounder.layer_config
 
@@ -236,9 +245,10 @@ class AutoRoundQuantizer(Quantizer):
                 import transformers  # pylint: disable=E0401
 
                 model = transformers.AutoModelForCausalLM.from_pretrained(self.output_dir)
-            except:
-                pass
+            except Exception as e:
+                logger.error(f"Error reloading model: {e}")
 
+        setattr(model, "name_or_path", self.output_dir)  # model is saved in a subfolder of output_dir based on scheme
         return model
 
 
@@ -307,7 +317,6 @@ def get_mllm_dataloader(
         DataLoader: The DataLoader for the calibrated datasets.
     """
     from auto_round.calib_dataset import CALIB_DATASETS
-    from auto_round.compressors.mllm.compressor import _only_text_test
     from auto_round.compressors.mllm.dataset import get_mllm_dataloader  # pylint: disable=E0401
 
     template = template if template is not None else model.config.model_type
@@ -315,19 +324,11 @@ def get_mllm_dataloader(
         template, model=model, tokenizer=tokenizer, processor=processor, image_processor=image_processor
     )
     dataset = template.default_dataset if dataset is None else dataset
-    if quant_nontext_module or (
-        dataset in CALIB_DATASETS.keys() and not _only_text_test(model, tokenizer, "cpu", template.model_type)
-    ):
-        if quant_nontext_module:
-            logger.warning(
-                "Quantitative nontext module is not supported for plain text datasets,"
-                "will use liuhaotian/llava_conv_58k with default config as an alternative."
-            )
-        else:
-            logger.warning(
-                f"{model.config.model_type} not support for {dataset},"
-                " will use liuhaotian/llava_conv_58k with default config as an alternative."
-            )
+    if quant_nontext_module:
+        logger.warning(
+            "Quantitative nontext module is not supported for plain text datasets,"
+            "will use liuhaotian/llava_conv_58k with default config as an alternative."
+        )
         dataset = "liuhaotian/llava_conv_58k"
         seqlen = 512 if seqlen is None else seqlen
         truncation = False

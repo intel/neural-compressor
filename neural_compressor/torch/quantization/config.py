@@ -902,7 +902,7 @@ class AutoRoundConfig(TorchBaseConfig):
         auto_scheme_method: str = "default",
         auto_scheme_device_map: str = None,
         auto_scheme_batch_size: int = None,
-        output_dir: str = "./temp_auto_round",
+        output_dir: str = "./tmp_auto_round",
         # Tuning space
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         **kwargs,
@@ -963,7 +963,7 @@ class AutoRoundConfig(TorchBaseConfig):
                 auto_scheme_method (str): The method for automatic scheme selection (default is "default").
                 auto_scheme_device_map (str): The device map for automatic scheme selection (default is None).
                 auto_scheme_batch_size (int): The batch size for automatic scheme selection (default is 8).
-            output_dir (str): The output directory for temporary files (default is "./temp_auto_round").
+            output_dir (str): The output directory for temporary files (default is "./tmp_auto_round").
         """
         super().__init__(white_list=white_list)
         # these two params are lists but not tunable
@@ -1049,9 +1049,18 @@ class AutoRoundConfig(TorchBaseConfig):
         """
         result = dict()
         for param, value in self.__dict__.items():
-            # tokenizer: excluded to avoid duplicating large tokenizer objects in per-layer configs.
-            # The tokenizer is attached at the model level to ensure a single shared instance.
-            if param not in ["_global_config", "_local_config", "_white_list", "tokenizer"]:
+            # tokenizer, processor, image_processor and template are usually large objects and are not tunable
+            # parameters, thus they are excluded to avoid duplicating large tokenizer objects in per-layer configs.
+            # They are attached at the model level to ensure a single shared instance.
+            if param not in [
+                "_global_config",
+                "_local_config",
+                "_white_list",
+                "tokenizer",
+                "processor",
+                "image_processor",
+                "template",
+            ]:
                 result[param] = value
         return result
 

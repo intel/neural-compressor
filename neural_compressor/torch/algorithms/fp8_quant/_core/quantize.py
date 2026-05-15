@@ -268,7 +268,8 @@ def quantize(model, mod_list):
     elif config.cfg["mode"] == QuantMode.LOAD:
         # no measurement and scale file
         scale_method_config = {CfgStr.ACTIVATION: ScaleMethodConfig(scale_value_type=ScaleValueType.DUMMY_SCALES),
-                               CfgStr.WEIGHT: ScaleMethodConfig(scale_value_type=ScaleValueType.DUMMY_SCALES)}
+                               CfgStr.WEIGHT: ScaleMethodConfig(scale_value_type=ScaleValueType.DUMMY_SCALES, 
+                                                                granularity=scale_method_config[CfgStr.DEFAULT][CfgStr.WEIGHT].granularity)}
         prepare_model_with_dummy_measurement(model, mod_list, scale_method_config, scale_config)
     else:
         raise Exception("unexpected mode, expected QuantMode.QUANTIZE or QuantMode.LOAD")
