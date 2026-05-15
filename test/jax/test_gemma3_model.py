@@ -63,7 +63,7 @@ def test_text_prompt(random_string, quantization_dtype, dynamic):
 
     if dynamic:
         config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
-        gemma_q = quantize_model(gemma, config, None)
+        gemma_q = quantize_model(gemma, config)
     else:
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=True, const_weight=True
@@ -96,7 +96,7 @@ def test_image_recognition(colva_beach_sq, quantization_dtype, dynamic):
 
     if dynamic:
         config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
-        gemma_q = quantize_model(gemma, config, None)
+        gemma_q = quantize_model(gemma, config)
     else:
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=True, const_weight=True
