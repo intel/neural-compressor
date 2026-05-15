@@ -81,12 +81,13 @@ def _preprocess_model_quant_config(model, quant_config):
         Tuple[torch.nn.Module, TuningConfig]: The preprocessed model and quantization configuration.
     """
     for config in quant_config.config_set:
-        # handle tokenizer attribute in AutoRoundConfig
+        # handle tokenizer/processor/image_processor/template attributes in AutoRoundConfig
         if isinstance(config, AutoRoundConfig):
-            _tokenizer_backup = getattr(config, "tokenizer", None)
-            if _tokenizer_backup is not None:
-                setattr(model, "tokenizer", _tokenizer_backup)
-                delattr(config, "tokenizer")
+            for _attr in ("tokenizer", "processor", "image_processor", "template"):
+                _backup = getattr(config, _attr, None)
+                if _backup is not None:
+                    setattr(model, _attr, _backup)
+                    delattr(config, _attr)
     return model, quant_config
 
 

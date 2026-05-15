@@ -17,14 +17,14 @@ import torch
 import torch.nn as nn
 import types
 import functools
+import os
 
-from .._core.quant_dequant import QuantDequant as qdq, QuantDynamicInput
+from .._core.quant_dequant import QuantDequant as qdq
 from .._core.quantized_func_wrappers import get_quantized_func_wrapper, OP_TYPE
 from .quant_config import QuantMode, get_hqt_config
 from ..patched_module_base import PatchedModuleBase, get_call_wrapper
 from .._core.scale_handler import get_scale_dtype, ScaleFormat
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
-cur_accelerator = auto_detect_accelerator()
 
 
 class BMM(nn.Module):
@@ -107,6 +107,7 @@ class PatchedMatmul(PatchedModuleBase):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_input_0 = self._mod_extra_config.inputs[0]
             self.quant_input_1 = self._mod_extra_config.inputs[1]
+
             if not self.use_qdq and not self.fake_quant:
                 self.register_scale("scale_input", mod_extra_config.scale.inputs[0], self.scale_format)
                 self.register_scale("scale_other", mod_extra_config.scale.inputs[1], self.scale_format)
@@ -114,28 +115,39 @@ class PatchedMatmul(PatchedModuleBase):
                 # in DPQ we want to use the scales measured in the quantization process
                 if hasattr(parent, 'scale_bf16_to_fp8') and parent.scale_bf16_to_fp8 > 0:
                     self.scale_other = torch.nn.Parameter(parent.scale_bf16_to_fp8)
+                if self.is_dynamic_quantization:
+                    self.forward = self.forward_dynamic
 
-    def forward_quant(self, input, other):
+    def forward_quant(self, input, other, out=None):
         qinput = self.quant_input_0(input)
         qother = self.quant_input_1(other)
-        output = self.matmul_fp8(qinput,
-                                 qother,
-                                 out_dtype=self._mod_extra_config.config_params["hp_dtype"],
-                                 scale_input_inv=self.scale_input,
-                                 scale_other_inv=self.scale_other)
-        return output
+        return self.forward_impl(qinput, self.scale_input, qother, self.scale_other, out)
 
-    def forward_qdq(self, input, other):
+    def forward_dynamic(self, input, other, out=None):
+        qinput, scale_input = self.quant_input_0(input)
+        qother, scale_other = self.quant_input_1(other)
+        return self.forward_impl(qinput, scale_input, qother, scale_other, out)
+
+    def forward_impl(self, qinput, scale_input, qother, scale_other, out=None):
+        out = self.matmul_fp8(qinput,
+                              qother,
+                              out=out,
+                              out_dtype=self._mod_extra_config.config_params["hp_dtype"],
+                              scale_input_inv=scale_input,
+                              scale_other_inv=scale_other)
+        return out
+
+    def forward_qdq(self, input, other, out=None):
         qinput = self.quant_input_0(input)
         qother = self.quant_input_1(other)
-        output = torch.matmul(qinput, qother)
-        return output
+        out = torch.matmul(qinput, qother, out=out)
+        return out
 
-    def forward_measure(self, input, other):
+    def forward_measure(self, input, other, out=None):
         measure_input((input, other), observer=self._mod_extra_config.inputs)
-        output = self.orig_mod(input, other)
-        measure_output((output,), self._mod_extra_config.outputs)
-        return output
+        out = self.orig_mod(input, other, out=out)
+        measure_output((out,), self._mod_extra_config.outputs)
+        return out
 
     def extra_repr(self) -> str:
         return extra_representation(
@@ -158,13 +170,16 @@ def init_mixture_of_experts_linears(instance):
 class PatchedLinearBase(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        self.init_linear(mod_extra_config)
 
-    # TODO [SW-224538]: Move init_linear to PatchedLinearBase __init__
     def init_linear(self, mod_extra_config):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             # When offloading weights to disk using device_map, the module forward is overridden.
             # __dict__.update call again overrides the PatchedLinear forward with the forward that device_map planted.
             # So need to set PatchedLinear forward to be the right forward.
+            #TODO [GAUDISW-246018]: find a good solution for weights with 3 dims
+            if self.weight.dim() == 3:
+                self.weight.squeeze_()
             self.weight = nn.Parameter(self.weight.t().contiguous())
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
@@ -187,7 +202,6 @@ class PatchedLinearBase(PatchedModuleBase):
                     # only ScaleFormat.CONST is supported for per-channel scale now.
                     self.register_scale("scale_weight", mod_extra_config.scale.params["weight"][0], ScaleFormat.CONST)
 
-            self.is_dynamic_quantization = isinstance(self.quant_input, QuantDynamicInput)
             self.quant_input_func = self.quant_input_and_get_scale_dynamic if self.is_dynamic_quantization else self.quant_input_and_get_scale_static
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             init_mixture_of_experts_linears(self)
@@ -235,7 +249,6 @@ class PatchedLinearBase(PatchedModuleBase):
 class PatchedLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
 
     def forward_measure(self, input):
         measure_input((input,), observer=self._mod_extra_config.inputs)
@@ -254,7 +267,6 @@ class PatchedParallelLMHead(PatchedLinearBase):
         # ParallelLMHead's forward method should not be called because LMHead's weights should be used
         # in the sampler. (The forward itself throws RuntimeError exception)
         # So in order to quantize that quant_method we patch only the "apply" method.
-        self.init_linear(mod_extra_config)
         self.orig_linear_quant_apply = self.orig_mod.quant_method.apply
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             if self.use_qdq or self.fake_quant:
@@ -280,7 +292,6 @@ class PatchedParallelLMHead(PatchedLinearBase):
 class PatchedReplicatedLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
 
     def forward_qdq(self, input):
         bias = self.bias if not self.skip_bias_add else None
@@ -304,7 +315,6 @@ class PatchedReplicatedLinear(PatchedLinearBase):
 class PatchedLinearAllReduce(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
         self.scoped_version = mod.__class__.__name__ == "ScopedLinearAllReduce"
 
     def forward_qdq(self, input):
@@ -349,34 +359,41 @@ class PatchedLinearAllReduce(PatchedLinearBase):
 
 class PatchedRowParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
-        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         from .._core.external_func_impl import get_external_row_parallel_collective_func
         self.row_parallel_collective_func = get_external_row_parallel_collective_func()
         # TODO [SW-224403]: Enable dynamic quantization in row parallel allreduce
-        allreduce_quantization_enable = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
-        if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
-            self.forward = self.forward_measure_reduce if self.reduce_results and self.tp_size > 1 else self.forward_measure_no_reduce
-
-        elif self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            if self.fake_quant or self.use_qdq:
-                self.forward = self.forward_qdq
-            else:
-                if self.reduce_results and self.tp_size > 1:
-                    if allreduce_quantization_enable:
-                        self.forward = self.forward_quant_reduce_in_lp
-                    else:
-                        self.forward = self.forward_quant_reduce_in_hp
-                else:
-                    self.forward = self.forward_quant_no_reduce
-        self.init_linear(mod_extra_config)
+        self.allreduce_quantization_enable = get_hqt_config(mod).cfg["row_parallel_linear_allreduce_quantization"]
+        
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+        
+        # Finalize initialization after init_linear has been called
         if self.quantization_mode == QuantMode.QUANTIZE:
-            if allreduce_quantization_enable:
+            if self.allreduce_quantization_enable:
                 self.dequant_scatter_output = self._mod_extra_config.outputs[0]
                 self.quant_scatter_input = self._mod_extra_config.outputs[1]
                 self.quant_gather_input = self._mod_extra_config.outputs[2]
                 self.dequant_gather_output = self._mod_extra_config.outputs[3]
         from torch import distributed as dist
         self.world_size = dist.get_world_size()
+
+    def init_linear(self, mod_extra_config):
+        # Set up forward method before calling parent's init_linear
+        if self.quantization_mode in (QuantMode.MEASURE, QuantMode.SHAPE):
+            self.forward = self.forward_measure_reduce if self.reduce_results and self.tp_size > 1 else self.forward_measure_no_reduce
+        elif self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
+            if self.fake_quant or self.use_qdq:
+                self.forward = self.forward_qdq
+            else:
+                if self.reduce_results and self.tp_size > 1:
+                    if self.allreduce_quantization_enable:
+                        self.forward = self.forward_quant_reduce_in_lp
+                    else:
+                        self.forward = self.forward_quant_reduce_in_hp
+                else:
+                    self.forward = self.forward_quant_no_reduce
+        
+        # Call parent's init_linear which sets up quantization parameters
+        super().init_linear(mod_extra_config)
 
     def resolve_input(self, input_):
         """
@@ -493,7 +510,6 @@ class PatchedRowParallelLinear(PatchedLinearBase):
 class PatchedColumnParallelLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
         from .._core.external_func_impl import get_external_column_parallel_collective_func
         self.column_parallel_collective_func = get_external_column_parallel_collective_func()
 
@@ -534,7 +550,6 @@ class PatchedColumnParallelLinear(PatchedLinearBase):
 class PatchedLmHeadLinearAllreduce(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
 
     def forward_qdq(self, input):
         assert (
@@ -641,13 +656,12 @@ class PatchedMixtralMoE(PatchedModuleBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         # remove the MoE weights that are quanted by PatchedMoeMatmul
-        if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
-            delattr(mod, "w13_weight")
-            delattr(mod, "w2_weight")
-            setattr(mod, "w13_weight", None)
-            setattr(mod, "w2_weight", None)
-            setattr(self, "w13_weight", None)
-            setattr(self, "w2_weight", None)
+        delattr(mod, "w13_weight")
+        delattr(mod, "w2_weight")
+        setattr(mod, "w13_weight", None)
+        setattr(mod, "w2_weight", None)
+        setattr(self, "w13_weight", None)
+        setattr(self, "w2_weight", None)
         self.forward = self.forward_orig
 
     # copied from https://github.com/HabanaAI/vllm-fork/blob/93b8bad8478451349d0c76b3116d3ad863a3b48e/vllm/model_executor/layers/fused_moe/layer.py#L1429
@@ -678,11 +692,9 @@ class PatchedMixtralMoE(PatchedModuleBase):
 class PatchedMoeMatmul(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
+        self.weight = torch.nn.Parameter(self.weight.squeeze(), requires_grad=False)
         if (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             measure_input((torch.tensor(0),), observer=self._mod_extra_config.inputs)
-        else:
-            self.weight = torch.nn.Parameter(self.weight.squeeze(), requires_grad=False)
 
     def forward_qdq(self, input, *args, **kwargs):
         return self.run_linear_qdq(input, None)
@@ -911,12 +923,12 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                 [mod_extra_config.scale.inputs[x] for x in range(1, self.experts_used + 1)],
                 self.scale_format,
             )
-            self.is_dynamic_quantization = isinstance(self.quant_input, QuantDynamicInput)
             self.dynamic_moe_op = get_quantized_func_wrapper(
                 OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, scale_format=self.scale_format, is_dynamic=self.is_dynamic_quantization
             )
             if self.is_dynamic_quantization:
                 self.forward = self.forward_dynamic_quant
+        self.dispatch_fn = self._get_dispatch_func()
 
     def _get_extra_kwargs(self, tokens_num: int):
         kwargs = {}
@@ -924,20 +936,31 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             kwargs = self.orig_mod._get_extra_kwargs(tokens_num)
         return kwargs
 
+    # For vLLM Data Parallel https://github.com/vllm-project/vllm-gaudi/pull/684
+    def _get_dispatch_func(self):
+        def identity(x):
+            return x
+        if hasattr(self.orig_mod, "_get_dispatch_func"):
+            fn = self.orig_mod._get_dispatch_func()
+            if fn is not None:
+                return fn
+        return identity
+
     def forward_quant(self,
                       hidden_states,
                       expert_routing_table,
                       router_weights,
                       permuted_weights=True,
                       activation="silu"):
-        tokens_num, hidden_dim = hidden_states.shape
-        extra_kwargs = self._get_extra_kwargs(tokens_num)
         experts_range = range(self.experts_used)
         w1_list = [self.w13_list[i].weight for i in experts_range]
         w2_list = [self.w2_list[i].weight for i in experts_range]
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
         qinput = self.quant_input(hidden_states)
+        qinput = self.dispatch_fn(qinput)
+        tokens_num, hidden_dim = qinput.shape
+        extra_kwargs = self._get_extra_kwargs(tokens_num)
         output = self.dynamic_moe_op(
             hidden_states=qinput,
             expert_routing_table=expert_routing_table,
@@ -969,6 +992,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         scale_w1 = [self.w13_list[i].scale_weight for i in experts_range]
         scale_w2 = [self.w2_list[i].scale_weight for i in experts_range]
         qinput_fp8, input_scale = self.quant_input(hidden_states)
+        qinput_fp8 = self.dispatch_fn(qinput_fp8)
         output = self.dynamic_moe_op(
             hidden_states=qinput_fp8,
             expert_routing_table=expert_routing_table,
@@ -1158,6 +1182,21 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
             self.quant_input = self._mod_extra_config.inputs[0]
             self.dequant_output = self._mod_extra_config.outputs[0]
+            if self.is_dynamic_quantization:
+                assert os.getenv("VLLM_DYNAMIC_KV_QUANT") is not None, "VLLM_DYNAMIC_KV_QUANT env var must be set for dynamic kv cache quantization"
+                if hasattr(mod, 'is_v_cache') and mod.is_v_cache:
+                    from .._core.fp_utils import get_fullscale
+                    self.is_v_cache = True
+                    device_type = auto_detect_accelerator().get_inc_accelerator_type()
+                    self.full_scale = get_fullscale(self.lp_dtype, device_type)
+                else:
+                    self.is_v_cache = False
+                self.forward = self.forward_quant_dynamic
+                self.fetch_from_cache = self.fetch_from_cache_dynamic
+                self.cur_device = auto_detect_accelerator().current_device_name()
+            else:
+                self.forward = self.forward_quant_static
+                self.fetch_from_cache = self.fetch_from_cache_static
         elif (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             self.fetch_from_cache = mod.fetch_from_cache
 
@@ -1166,27 +1205,48 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         output_cache = self.orig_mod(qinput, *args, **kwargs)
         return output_cache
 
-    def forward_quant(self, input, cache, *args, **kwargs):
+    def forward_quant_static(self, input, cache, slot_mapping, *args, **kwargs):
         if input is not None:
             qinput = self.quant_input(input)
-            output_cache = self.orig_mod(qinput, cache, *args, **kwargs)
+            output_cache = self.orig_mod(qinput, cache, slot_mapping, *args, **kwargs)
         else:
             # In cross-attention during decode stage kv cache isn't updated
             # so input is None and we don't store it
             output_cache = cache
         return self.dequant_output(output_cache)
 
-    def forward_measure(self, input, cache, *args, **kwargs):
+    # input is a new Key/Value, input.size => (batch_size, num_kv_heads, head_size)
+    def forward_quant_dynamic(self, input, cache, slot_mapping, scales=None, block_size=None, is_prompt=False, *args, **kwargs):
+        if input is not None:
+            qinput, scale = self.quant_input(input)
+            if scales is not None:
+                if self.is_v_cache and block_size is not None:
+                    # in v cache scales is a tuple: (scales_on_token_dim, scales_on_hidden_dim)
+                    scales[0].index_copy_(0, slot_mapping, scale)
+                    self.update_scales_on_hidden(input, scales, slot_mapping, block_size, is_prompt)
+                else:
+                    scales.index_copy_(0, slot_mapping, scale)
+            output_cache = self.orig_mod(qinput, cache, slot_mapping, scales, *args, **kwargs)
+        else:
+            # In cross-attention during decode stage kv cache isn't updated
+            # so input is None and we don't store it
+            output_cache = cache
+        return output_cache
+
+    def forward_measure(self, input, cache, slot_mapping, *args, **kwargs):
         # In cross-attention during decode stage kv cache isn't updated
         # so input is None and we don't measure it
         if input is None:
             return cache
         measure_input((input, ), self._mod_extra_config.inputs)
-        output_cache = self.orig_mod(input, cache, *args, **kwargs)
+        output_cache = self.orig_mod(input, cache, slot_mapping, *args, **kwargs)
         measure_output((output_cache, ), self._mod_extra_config.outputs)
         return output_cache
 
-    def fetch_from_cache(self, cache, blocks):
+    # cache.size => (num_blocks, block_size, num_kv_heads, head_size)
+    # scale_on_token_dim.size => (num_blocks, block_size, num_kv_heads, 1)
+    # scale_on_hidden_dim.size => (num_blocks, num_kv_heads, 1)
+    def fetch_from_cache_static(self, cache, blocks, scales=None):
         if cache.dtype != self.lp_dtype:
             quant_cache = self.quant_input(cache)
         else:
@@ -1194,12 +1254,107 @@ class PatchedVLLMKVCache(PatchedModuleBase):
         output_cache = self.orig_mod.fetch_from_cache(quant_cache, blocks)
         return self.dequant_output(output_cache)
 
+    def fetch_from_cache_dynamic(self, cache, blocks, scales=None):
+        if cache.dtype != self.lp_dtype:
+            cur_cache, cur_scales = self.fetch_cache_and_scales(cache, blocks, scales)
+            quant_cache, _ = self.quant_input(cur_cache, cur_scales)
+        else:
+            quant_cache, cur_scales = self.fetch_cache_and_scales(cache, blocks, scales)
+        cache_dequanted = self.dequant_output(quant_cache, cur_scales)
+        if self.is_v_cache and scales is not None:
+            cache_dequanted = self.convert_on_hidden(cache_dequanted, scales, blocks)
+        return cache_dequanted
+
+    def fetch_cache_and_scales(self, cache, blocks, scales=None):
+        if self.is_v_cache and scales is not None:
+            cur_scales = scales[0]
+        else:
+            cur_scales = scales
+        if self.orig_mod.use_contiguous_pa:
+            cur_scales = cur_scales[:blocks.size(0)] if cur_scales is not None else None
+            cur_cache = cache[:blocks.size(0)]
+        else:
+            cur_scales = cur_scales.index_select(0, blocks) if cur_scales is not None else None
+            cur_cache = cache.index_select(0, blocks)
+        return cur_cache, cur_scales
+
+    def update_scales_on_hidden(self, input, scales, slot_mapping, block_size, is_prompt=False):
+        from .._core.fp_utils import calculate_scale_maxabs_with_cguid, calculate_scale_rounding_with_cguid, ScaleCalculationMaxMode, ScaleCalculationRoundingMode
+        scale_tensor = calculate_scale_maxabs_with_cguid(
+            input.unsqueeze(1),
+            ScaleCalculationMaxMode.MAX_ABS_PCS_CALCULATION,
+            reduceAxis=1,
+            reduceKeepdim=False,
+            fullscale=self.full_scale,
+            backoff=0.5,
+        )
+        pow2_tensor = calculate_scale_rounding_with_cguid(scale_tensor, ScaleCalculationRoundingMode.SCALE_TO_POW2_ROUNDING)
+        block_mapping = slot_mapping // block_size
+        if is_prompt:
+            # for the prompt, getting the max scale of its tokens and assign it to its blocks as the scale on hidden dim
+            max_scale = torch.max(pow2_tensor, dim=0)
+            max_pow2_tensor = max_scale[0].expand(block_mapping.size(0), pow2_tensor.size(1), pow2_tensor.size(2))
+            scales[1].index_copy_(0, block_mapping, max_pow2_tensor)
+        else:
+            new_blocks_locations = (slot_mapping % block_size) == 0
+            saved_scales = scales[1].index_select(0, block_mapping)
+            # zero out new sequence blocks so that the scale will be taken from the input tensor and not the old saved value
+            saved_scales[new_blocks_locations] = 0.0
+            scales[1].index_copy_(0, block_mapping, torch.maximum(pow2_tensor, saved_scales))
+
+    def convert_on_hidden(self, cache_dequanted, scales, blocks):
+        # invalid blocks have idx of -1 or greater than max blocks in kv-cache so that they are not read/written by the device
+        # getting the invalid blocks indexes so that we can set them in the read scale tensor with valid scale values
+        invalid_block_idx = (blocks >= scales[1].size(0)) | (blocks == -1)
+
+        if self.orig_mod.use_contiguous_pa:
+            cur_scale_on_h = scales[1][:blocks.size(0)]
+        else:
+            cur_scale_on_h = scales[1].index_select(0, blocks)
+        # set valid values in invalid scale tensor locations to avoid zero scales errors
+        cur_scale_on_h[invalid_block_idx] = 1.0
+        cache_quanted_on_h, dq_scales = self.quant_input(cache_dequanted, cur_scale_on_h.unsqueeze(1))
+        return self.dequant_output(cache_quanted_on_h, dq_scales)
+
     def extra_repr(self) -> str:
         return extra_representation(
             self.extra_repr_org(),
             self.class_name_org,
             get_current_repr(self),
         )
+
+##TODO SW-242485 -  move this function to base conv class
+def compute_padding(padding, kernel_size, stride=(1, 1), input_size=None):
+    """
+    Compute padding values based on padding type and stride.
+
+    Args:
+        padding: controls the amount of padding applied to the input.
+                It can be either a string {‘valid’, ‘same’} or an int / a tuple of
+                ints giving the amount of implicit padding applied on both sides.
+        kernel_size : (ch_in, ch_out, kernel_height, kernel_width)
+        stride (tuple): (stride_height, stride_width)
+        input_size (tuple): (ch_in, ch_out, input_height, input_width), optional for exact SAME padding
+
+    Returns:
+        Tuple: (pad_h, pad_w) - pad_h and pad_w is half of the total padding_h and padding_w, padding added to all four sides of the input
+    """
+
+    if isinstance(padding, list) or isinstance(padding, tuple):
+        return padding
+    elif padding == "valid":
+        return 0
+    elif padding == "same":
+        in_h, in_w = input_size[2], input_size[3]
+        sh, sw = stride
+        kh, kw = kernel_size[2], kernel_size[3]
+        out_h = (in_h + sh - 1) // sh
+        out_w = (in_w + sw - 1) // sw
+        pad_h_total = max((out_h - 1) * sh + kh - in_h, 0)
+        pad_w_total = max((out_w - 1) * sw + kw - in_w, 0)
+        return (int(pad_h_total/2), int(pad_w_total/2))
+    else:
+        raise ValueError(f"Unsupported padding type: {padding}")
 
 
 def init_conv(instance, mod_extra_config):
@@ -1219,6 +1374,7 @@ class PatchedConv2d(PatchedModuleBase):
         init_conv(self, mod_extra_config)
 
     def forward_qdq(self, input):
+        padding = compute_padding(self.padding,self.weight.size(), self.stride, input.size() )
         qweight = self.dequant_weights(self.weight, )
         qinput = self.quant_input(input)
         output = torch.nn.functional.conv2d(
@@ -1226,19 +1382,20 @@ class PatchedConv2d(PatchedModuleBase):
             qweight,
             self.bias,
             self.stride,
-            self.padding,
+            padding,
             self.dilation,
             self.groups,
         )
         return output
 
     def forward_quant(self, input):
+        padding = compute_padding(self.padding,self.weight.size(), self.stride, input.size() )
         qinput = self.quant_input(input)
         output = self.conv2d_fp8(qinput,
                                  self.weight,
                                  self.bias,
                                  self.stride,
-                                 self.padding,
+                                 padding,
                                  self.dilation,
                                  self.groups,
                                  out_dtype=self._mod_extra_config.config_params["hp_dtype"],
@@ -1247,6 +1404,8 @@ class PatchedConv2d(PatchedModuleBase):
         return output
 
     def forward_measure(self, input):
+        padding = compute_padding(self.padding,self.weight.size(), self.stride, input.size() )
+        self.padding = padding
         measure_input((input,), observer=self._mod_extra_config.inputs)
         output = self.orig_mod(input)
         measure_output((output,), self._mod_extra_config.outputs)
@@ -1337,7 +1496,6 @@ class PatchedBlockSoftmaxConstMax(PatchedSoftmaxBase):
 class PatchedLoRACompatibleLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
-        self.init_linear(mod_extra_config)
 
     def forward_qdq(self, input, scale: float = 1.0):
         output = self.run_linear_qdq(input, self.bias)
@@ -1389,11 +1547,12 @@ class PatchedLoRACompatibleConv(PatchedModuleBase):
             # TODO SW-174899 support lora layer quantization
             _raise_lora_layer_error(self.class_name_org)
         else:
+            padding = compute_padding(self.padding,self.weight.size(), self.stride, input.size() )
             output = self.conv2d_fp8(qinput,
                                      self.weight,
                                      self.bias,
                                      self.stride,
-                                     self.padding,
+                                     padding,
                                      self.dilation,
                                      self.groups,
                                      out_dtype=self._mod_extra_config.config_params["hp_dtype"],
@@ -1402,6 +1561,8 @@ class PatchedLoRACompatibleConv(PatchedModuleBase):
         return output
 
     def forward_measure(self, input, scale: float = 1.0):
+        padding = compute_padding(self.padding,self.weight.size(), self.stride, input.size() )
+        self.padding = padding
         measure_input((input,), observer=self._mod_extra_config.inputs)
         output = self.orig_mod(input, scale)
         measure_output((output,), self._mod_extra_config.outputs)

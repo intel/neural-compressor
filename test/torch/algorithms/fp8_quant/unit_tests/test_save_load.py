@@ -7,7 +7,7 @@ import torch
 htcore.hpu_set_env()
 
 from transformers import LlamaConfig, LlamaForCausalLM
-
+from habana_frameworks.torch.utils.version_checker import is_pytorch_at_least
 from neural_compressor.torch.algorithms.fp8_quant._quant_common.helper_modules import Matmul
 from neural_compressor.torch.quantization import FP8Config, convert, load, prepare, save
 
