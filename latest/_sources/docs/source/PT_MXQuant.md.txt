@@ -107,7 +107,7 @@ quant_config = AutoRoundConfig(
     iters=0,  # Number of optimization iterations (default: 200)
     scheme="MXFP4",  # MX quantization scheme: "MXFP4", "MXFP8"
     export_format="auto_round",  # Export format for the quantized model
-    output_dir=output_dir,  # Directory to save the quantized model (default: "temp_auto_round")
+    output_dir=output_dir,  # Directory to save the quantized model (default: "tmp_auto_round")
 )
 
 # quantize the model and save to output_dir
