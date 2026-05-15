@@ -8,6 +8,25 @@ usage() {
     echo "  --bench_tool benchmarking tool to use (lm_eval or aisbench)"
 }
 
+detect_cuda_version() {
+    local cuda_version=""
+
+    if command -v nvidia-smi >/dev/null 2>&1; then
+        cuda_version=$(nvidia-smi --query-gpu=cuda_version --format=csv,noheader 2>/dev/null | head -n 1 | tr -d '[:space:]')
+    fi
+
+    if [[ -z "$cuda_version" ]] && command -v nvcc >/dev/null 2>&1; then
+        cuda_version=$(nvcc --version | awk '/release/ {print $6}' | sed 's/^V//; s/,//')
+    fi
+
+    if [[ -z "$cuda_version" ]]; then
+        echo "Unable to detect CUDA version from nvidia-smi or nvcc." >&2
+        exit 1
+    fi
+
+    echo "$cuda_version"
+}
+
 DEVICE="${DEVICE:-gpu}"
 FORMAT="${FORMAT:-AR}"
 TASKS="${TASKS:-hellaswag,piqa,mmlu,gsm8k}"
@@ -49,16 +68,19 @@ elif [[ "$DEVICE" == "gpu" ]]; then
     uv pip install packaging --upgrade
     uv pip install -U "huggingface_hub[cli]"
     if [[ "$FORMAT" == "LLMC" ]]; then
-        # get torch cuda version, and install vllm with the same cuda version to avoid conflicts
-        CUDA_VERSION=$(python -c "import torch; print(torch.version.cuda)")
+        CUDA_VERSION=$(detect_cuda_version)
+        echo "Detected system CUDA version: $CUDA_VERSION"
         if [[ "$CUDA_VERSION" == "12."* ]]; then
-            uv pip install vllm==0.20.2 --extra-index-url https://wheels.vllm.ai/0.20.2/cu129 --extra-index-url https://download.pytorch.org/whl/cu129 --index-strategy unsafe-best-match
+            PYTORCH_CUDA_INDEX="https://download.pytorch.org/whl/cu129"
+            VLLM_CUDA_INDEX="https://wheels.vllm.ai/0.20.2/cu129"
         elif [[ "$CUDA_VERSION" == "13."* ]]; then
-            uv pip install vllm==0.20.2 --extra-index-url https://wheels.vllm.ai/0.20.2/cu130 --extra-index-url https://download.pytorch.org/whl/cu130 --index-strategy unsafe-best-match
+            PYTORCH_CUDA_INDEX="https://download.pytorch.org/whl/cu130"
+            VLLM_CUDA_INDEX="https://wheels.vllm.ai/0.20.2/cu130"
         else
             echo "Unsupported CUDA version: $CUDA_VERSION. Supported versions are 12.x and 13.x."
             exit 1
         fi
+        uv pip install vllm==0.20.2 --extra-index-url ${VLLM_CUDA_INDEX} --extra-index-url ${PYTORCH_CUDA_INDEX} --index-strategy unsafe-best-match
         uv pip install ray
         git clone https://github.com/yiliu30/vllm-qdq-plugin.git
         uv pip install vllm-qdq-plugin/ -v
