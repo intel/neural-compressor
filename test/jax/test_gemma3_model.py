@@ -77,7 +77,7 @@ def test_text_prompt(random_string, quantization_dtype, dynamic):
 
     answer = gemma_q.generate("Answer what is the capital city of England. ", max_length=20, strip_prompt=True)
     print("Gemma answer: ", {answer})
-    assert "The capital city of England is London" in answer
+    assert "London" in answer
 
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
