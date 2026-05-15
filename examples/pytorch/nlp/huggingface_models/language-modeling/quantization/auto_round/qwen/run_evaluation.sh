@@ -322,6 +322,88 @@ run_ruler_eval() {
     echo "Evaluation completed! Results saved to ${OUTPUT_DIR}"
 }
 
+prepare_aisbench() {
+    if [[ ! -d benchmark ]]; then
+        git clone https://github.com/AISBench/benchmark.git
+    fi
+    cd benchmark/
+    pip3 install -e ./ --use-pep517
+    uv pip install math-verify==0.5.2
+    
+    if [[ "$TASK_NAME" == "aisbench_math500" ]]; then
+        aisbench_datasets="math500_gen_0_shot_cot_chat_prompt"
+        max_gen_toks=4096
+        if [[ ! -d ais_bench/datasets/math ]]; then
+            cd ais_bench/datasets
+            wget http://opencompass.oss-cn-shanghai.aliyuncs.com/datasets/data/math.zip
+            unzip math.zip
+            rm math.zip
+            cd ../../
+        fi
+    fi
+
+    if [[ "$TASK_NAME" == "aisbench_mmlu" ]]; then
+        aisbench_datasets="mmlu_gen_0_shot_cot_chat_prompt"
+        max_gen_toks=2048
+        if [[ ! -d ais_bench/datasets/mmlu ]]; then
+            cd ais_bench/datasets
+            wget http://opencompass.oss-cn-shanghai.aliyuncs.com/datasets/data/mmlu.zip
+            unzip mmlu.zip
+            rm mmlu.zip
+            cd ../../
+        fi
+    fi
+    
+    AISBENCH_MODEL_CFG="ais_bench/benchmark/configs/models/vllm_api/vllm_api_general_chat.py"
+    cat > "${AISBENCH_MODEL_CFG}" <<EOF
+from ais_bench.benchmark.models import VLLMCustomAPIChat
+from ais_bench.benchmark.utils.postprocess.model_postprocessors import extract_non_reasoning_content
+
+models = [
+    dict(
+        attr="service",
+        type=VLLMCustomAPIChat,
+        abbr="vllm-api-general-chat",
+        path=r'''${MODEL_PATH}''',
+        model="",
+        stream=False,
+        request_rate=0,
+        use_timestamp=False,
+        retry=2,
+        api_key="",
+        host_ip="localhost",
+        host_port=${SERVER_PORT},
+        url=r'''http://localhost:${SERVER_PORT}''',
+        max_out_len=${max_gen_toks},
+        batch_size=${BATCH_SIZE},
+        trust_remote_code=False,
+        generation_kwargs=dict(
+            temperature=0,
+            ignore_eos=False,
+        ),
+        pred_postprocessor=dict(type=extract_non_reasoning_content),
+    )
+]
+EOF
+
+    cd ../
+}
+
+
+run_aisbench_eval() {
+    prepare_aisbench
+    start_vllm_server
+    
+    if ! wait_for_server; then
+        kill $VLLM_PID 2>/dev/null || true
+        exit 1
+    fi
+    
+    # Setup cleanup trap
+    trap cleanup_server EXIT INT TERM
+    
+    ais_bench --models vllm_api_general_chat --datasets ${aisbench_datasets}
+}
 
 # Main evaluation logic
 if [[ "$TASK_NAME" == *"longbench"* ]]; then
@@ -330,6 +412,9 @@ if [[ "$TASK_NAME" == *"longbench"* ]]; then
 elif [[ "$TASK_NAME" == *"niah"* ]]; then
     echo "Running RULER evaluation..."
     run_ruler_eval
+elif [[ "$TASK_NAME" == *"aisbench"* ]]; then
+    echo "Running AISBench evaluation..."
+    run_aisbench_eval
 else
     echo "Running standard lm-eval tasks..."
     run_standard_eval
