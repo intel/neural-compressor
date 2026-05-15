@@ -1,5 +1,18 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
+# Copyright (c) 2026 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
 """Tests for Gemma model after quantization."""
 
 import os
@@ -7,8 +20,10 @@ import os
 os.environ["KERAS_BACKEND"] = "jax"
 
 import random
+import shutil
 import string
 import tempfile
+from pathlib import Path
 
 import keras
 import pytest
@@ -28,7 +43,7 @@ def colva_beach_sq():
     repo_root_path = f"{os.path.dirname(__file__)}/../.."
     image_path = f"{repo_root_path}/examples/jax/keras/vit/colva_beach_sq.jpg"
     target_size = (224, 224)
-    return load_image(image_path, target_size, False)
+    return load_image(image_path, target_size)
 
 
 @pytest.fixture(scope="module")
@@ -89,9 +104,12 @@ def test_image_recognition(colva_beach_sq, quantization_dtype, dynamic):
         gemma_q = quantize_model(gemma, config, calib_fn)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
-        keras.saving.save_model(gemma_q, save_path)
-        gemma_q = keras.saving.load_model(save_path)
+        save_path = Path(os.path.join(tmpdir, "gemma3_quantized"))
+        if save_path.exists():
+            shutil.rmtree(save_path)
+        save_path.mkdir(parents=False)
+        gemma_q.save_to_preset(save_path)
+        gemma_q = Gemma3CausalLM.from_preset(str(save_path), dtype=model_dtype)
 
     answer = gemma_q.generate(
         {
