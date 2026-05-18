@@ -20,7 +20,6 @@ import os
 os.environ["KERAS_BACKEND"] = "jax"
 
 import random
-import shutil
 import string
 import tempfile
 from pathlib import Path
@@ -73,9 +72,9 @@ def test_text_prompt(random_string, quantization_dtype, dynamic):
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
         keras.saving.save_model(gemma_q, save_path)
-        gemma_q = keras.saving.load_model(save_path)
+        gemma_q_loaded = keras.saving.load_model(save_path)
 
-    answer = gemma_q.generate("Answer what is the capital city of England. ", max_length=20, strip_prompt=True)
+    answer = gemma_q_loaded.generate("Answer what is the capital city of England. ", max_length=20, strip_prompt=True)
     print("Gemma answer: ", {answer})
     assert "London" in answer
 
@@ -99,24 +98,21 @@ def test_image_recognition(colva_beach_sq, quantization_dtype, dynamic):
         gemma_q = quantize_model(gemma, config)
     else:
         config = StaticQuantConfig(
-            weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=True, const_weight=True
+            weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=False, const_weight=False
         )
         gemma_q = quantize_model(gemma, config, calib_fn)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = Path(os.path.join(tmpdir, "gemma3_quantized"))
-        if save_path.exists():
-            shutil.rmtree(save_path)
-        save_path.mkdir(parents=False)
         gemma_q.save_to_preset(save_path)
-        gemma_q = Gemma3CausalLM.from_preset(str(save_path), dtype=model_dtype)
+        gemma_q_loaded = Gemma3CausalLM.from_preset(str(save_path), dtype=model_dtype)
 
-    answer = gemma_q.generate(
+    answer = gemma_q_loaded.generate(
         {
             "images": colva_beach_sq,
             "prompts": "Enumerate all elements in the picture: <start_of_image>?",
         },
-        max_length=500,
+        max_length=400,
     )
     print(answer)
 
