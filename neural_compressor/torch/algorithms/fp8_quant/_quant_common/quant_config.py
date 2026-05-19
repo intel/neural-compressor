@@ -29,6 +29,12 @@ from ..prepare_quant.prepare_model import get_world_size, get_local_rank
 from .._core.scale_methods.scale_method_parser import parse_scale_method, validate_and_populate_scale_method, convert_scale_method_strings_to_enum
 from .._core.scale_methods.scale_method_config import get_scale_method_from_config, check_scale_method_fields, ScaleMethodString, CfgStr, ScaleGranularity, ScaleValueType, ScaleRoundMethod
 
+# Scale methods that are only supported in dynamic quantization
+SUPPORTED_DYNAMIC_QUANTIZATION_SCALES = [
+    ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW,
+    ScaleMethodString.MAXABS_PCS_POW2
+]
+
 
 class QuantMode(Enum):
     NONE = 0
@@ -253,6 +259,8 @@ class Fp8cfg:
         dynamic_quantization = measured_global_config["dynamic_quantization"]
         # TODO [SW-217814]: get dynamic methods in a better way, or support file handling in dynamic mode
         if dynamic_quantization:
+            if measured_global_config["use_qdq"] or measured_global_config["fake_quant"]:
+                raise ValueError("Currently dynamic quantization is not supported for qdq and fake quant.")
             if auto_detect_accelerator().current_device_name() == "cpu":
                 raise ValueError("Currently CPU device doesn't support dynamic quantization")
             logger.info(f"NOTE: Using dynamic scale method, only supported ops will be quantized.")
@@ -274,10 +282,12 @@ class Fp8cfg:
             if measured_global_config["row_parallel_linear_allreduce_quantization"]:
                 raise ValueError(f"Dynamic quantization is not supported when using row_parallel_linear_allreduce_quantization")
         else:
-            if check_scale_method_fields(scale_method_config, scale_method= ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW, reducer=any):
-                raise ValueError(
-                    f"Unsupported config: scale_method ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW is supported only in dynamic quantization"
-                )
+            # Check if any of the dynamic-only scale methods are being used
+            for scale_method in SUPPORTED_DYNAMIC_QUANTIZATION_SCALES:
+                if check_scale_method_fields(scale_method_config, scale_method=scale_method, reducer=any):
+                    raise ValueError(
+                        f"Unsupported config: scale_method {scale_method.name} is supported only in dynamic quantization"
+                    )
 
         if (dynamic_quantization or
             check_scale_method_fields(scale_method_config, scale_value_type_activation= ScaleValueType.FIXED_VALUE, scale_value_type_weight= ScaleValueType.FIXED_VALUE, reducer=all)) and \

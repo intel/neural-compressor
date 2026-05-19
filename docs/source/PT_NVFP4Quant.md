@@ -76,7 +76,7 @@ quant_config = AutoRoundConfig(
     scheme="NVFP4",  # NVFP4 quantization scheme
     iters=0,  # Number of optimization iterations (default: 200)
     export_format="llm_compressor",  # Export format for the quantized model
-    output_dir=output_dir,  # Directory to save the quantized model (default: "temp_auto_round")
+    output_dir=output_dir,  # Directory to save the quantized model (default: "tmp_auto_round")
 )
 
 # quantize the model and save to output_dir

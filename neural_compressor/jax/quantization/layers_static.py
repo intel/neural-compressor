@@ -144,11 +144,19 @@ class MinMaxObserver(keras.layers.Layer):
         """
         return ops.array((self.min_val, self.max_val))
 
+    def is_calibrated(self):
+        """Check if the observer has valid calibration data.
+
+        Returns:
+            bool: True if calibrated, False if min (and internally max) are still at initial values.
+        """
+        return not (jnp.isinf(self.min_val.value).any())
+
 
 class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies static quantize-dequantize to activations."""
 
-    def __init__(self, name, activation_dtype, dtype="float32", asymmetric=False, const_scale=False):
+    def __init__(self, name, activation_dtype, dtype="float32", asymmetric=False, const_scale=False, fixed_range=None):
         """Initialize the static QDQ helper layer.
 
         Args:
@@ -157,6 +165,8 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             dtype (str | keras.DTypePolicy): dtype for the layer - see keras.layers.Layer API for details.
             asymmetric (bool): Whether to use asymmetric quantization.
             const_scale (bool): Whether to use constant scales.
+            fixed_range (Optional[Tuple[float, float]]): If provided, use this (min, max) range
+                instead of collecting calibration data via observers.
 
         Returns:
             None: Initializes the layer instance.
@@ -167,6 +177,9 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         self.supports_masking = True
         self._is_quantized = False
         self.const_scale = const_scale
+        self.fixed_range = fixed_range
+        if fixed_range is not None:
+            self.call = self.call_passthrough
         if const_scale:
             self._const_variables = ["a_scale"]
             if asymmetric:
@@ -177,9 +190,13 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     def add_observers(self):
         """Attach observer layers for calibration.
 
+        Skipped when fixed_range is set, as no calibration data is needed.
+
         Returns:
             None: Adds observer layers.
         """
+        if self.fixed_range is not None:
+            return
         self._tracker.unlock()
         self.input_observer = MinMaxObserver(dtype=self.dtype_policy)
         self._tracker.lock()
@@ -215,11 +232,16 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     def convert(self):
         """Compute activation scale and finalize static quantization.
 
+        Uses fixed_range if set, otherwise reads from the calibration observer.
+
         Returns:
             None: Updates activation scale variables.
         """
         self._tracker.unlock()
-        arange = self.input_observer.get_calibrated_range()
+        if self.fixed_range is not None:
+            arange = ops.array(self.fixed_range)
+        else:
+            arange = self.input_observer.get_calibrated_range()
         a_scale, a_zero_point = get_q_params(
             arange, self.activation_dtype, self.compute_dtype, asymmetric=self._is_asymmetric
         )
@@ -271,6 +293,18 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         """
         x = self.input_observer(inputs, mask=mask)
         return x
+
+    def call_passthrough(self, inputs, mask=None):
+        """Pass inputs through without observation.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            jnp.ndarray: Unmodified inputs.
+        """
+        return inputs
 
     def call_symmetric(self, inputs, mask=None):
         """Apply symmetric quantize-dequantize to inputs.
@@ -653,8 +687,12 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         orig.__class__ = cls
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.q_qdq = StaticQDQLayer("q_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
+        # f_qdq is used for quantize/dequantize of query tensor on fallback path (without using dot_product_attention)
+        orig.f_qdq = StaticQDQLayer("f_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
         orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
-        orig.a_qdq = StaticQDQLayer("a_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
+        orig.a_qdq = StaticQDQLayer(
+            "a_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale, fixed_range=(0.0, 1.0)
+        )
         orig.v_qdq = StaticQDQLayer("v_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
         orig._is_quantized = False
         orig._tracker.lock()
@@ -667,6 +705,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
             None: Adds observer layers.
         """
         self.q_qdq.add_observers()
+        self.f_qdq.add_observers()
         self.k_qdq.add_observers()
         self.a_qdq.add_observers()
         self.v_qdq.add_observers()
@@ -678,6 +717,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
             None: Initializes QDQ helper variables.
         """
         self.q_qdq.add_variables()
+        self.f_qdq.add_variables()
         self.k_qdq.add_variables()
         self.a_qdq.add_variables()
         self.v_qdq.add_variables()
@@ -688,7 +728,24 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         Returns:
             None: Updates QDQ helpers with calibrated values.
         """
-        self.q_qdq.convert()
+        if self.q_qdq.input_observer.is_calibrated():
+            self.q_qdq.convert()
+            if not self.f_qdq.input_observer.is_calibrated():
+                # Calculate the scale for query in the fallback path
+                # from the dot product attention path used in calibration
+                self.f_qdq.a_scale.assign(self.q_qdq.a_scale * self._inverse_sqrt_key_dim)
+                if self.f_qdq._is_asymmetric:
+                    self.f_qdq.a_zero_point.assign(jnp.array(self.q_qdq.a_zero_point.value))
+            else:
+                self.f_qdq.convert()
+        else:
+            self.f_qdq.convert()
+            # Calculate the scale for query for dot product attention path
+            # from the fallback path used in calibration
+            self.q_qdq.a_scale.assign(self.f_qdq.a_scale / self._inverse_sqrt_key_dim)
+            if self.q_qdq._is_asymmetric:
+                self.q_qdq.a_zero_point.assign(jnp.array(self.f_qdq.a_zero_point.value))
+
         self.k_qdq.convert()
         self.a_qdq.convert()
         self.v_qdq.convert()
@@ -701,6 +758,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         """
         self._tracker.unlock()
         self.q_qdq.post_quantization_cleanup()
+        self.f_qdq.post_quantization_cleanup()
         self.k_qdq.post_quantization_cleanup()
         self.a_qdq.post_quantization_cleanup()
         self.v_qdq.post_quantization_cleanup()
@@ -746,12 +804,11 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
             )
 
         # Determine whether to use dot-product attention
-        # use_dot_product_attention = not (
-        #     self._dropout > 0.0
-        #     or return_attention_scores
-        #     or (len(query.shape) != 4)
-        # )
-        use_dot_product_attention = False  # TODO Add dot_product_attention support
+        use_dot_product_attention = not (
+            self._dropout > 0.0
+            or return_attention_scores
+            or (len(query.shape) != 4)
+        )
 
         if use_dot_product_attention:
             if attention_mask is not None:
@@ -768,6 +825,9 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
                     )
                 attention_mask = ops.cast(attention_mask, dtype="bool")
             # Directly compute the attention output using dot-product attention
+            query = self.q_qdq(query)
+            key = self.k_qdq(key)
+            value = self.v_qdq(value)
             attention_output = ops.dot_product_attention(
                 query=query,
                 key=key,
@@ -789,7 +849,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
         # Take the dot product between "query" and "key" to get the raw
         # attention scores.
         key = self.k_qdq(key)
-        query = self.q_qdq(query)
+        query = self.f_qdq(query)
         attention_scores = ops.einsum(self._dot_product_equation, key, query)
 
         # Apply the mask using the custom masked softmax

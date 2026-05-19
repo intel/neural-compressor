@@ -89,10 +89,11 @@ def preprocess_quant_config(model, quant_config, mode="prepare", example_inputs=
                 )
         model_info = quant_config.get_model_info(model, example_inputs)
     elif isinstance(quant_config, AutoRoundConfig):
-        _tokenizer_backup = getattr(quant_config, "tokenizer", None)
-        if _tokenizer_backup is not None:
-            setattr(model, "tokenizer", _tokenizer_backup)
-            delattr(quant_config, "tokenizer")
+        for _attr in ("tokenizer", "processor", "image_processor", "template"):
+            _backup = getattr(quant_config, _attr, None)
+            if _backup is not None:
+                setattr(model, _attr, _backup)
+                delattr(quant_config, _attr)
         model_info = quant_config.get_model_info(model=model)
     else:
         model_info = quant_config.get_model_info(model=model)

@@ -129,7 +129,7 @@ class TestAutoRoundHPU:
         from neural_compressor.torch.algorithms.weight_only.save_load import load
 
         model = load(
-            model_name_or_path="temp_auto_round",
+            model_name_or_path=q_model.name_or_path,
             original_model=copy.deepcopy(self.tiny_llama_model),
             device="hpu",
             format="huggingface",

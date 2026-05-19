@@ -101,17 +101,14 @@ def compute_expected_qdq_dense_output(
     return current_input, all_a_scales, all_w_scales
 
 
-def load_image(image_path, target_size, normalize):
+def load_image(image_path, target_size):
     with Image.open(image_path) as img:
         if img.mode != "RGB":
             img = img.convert("RGB")
         img = img.resize(target_size, Image.BILINEAR)
         pixels = jnp.array(img)
-    if normalize:
-        normalized_pixels = pixels.astype(jnp.float32) / 255.0
-        return jnp.expand_dims(normalized_pixels, 0)
-    else:
-        return jnp.expand_dims(pixels, 0)
+
+    return jnp.expand_dims(pixels, 0)
 
 
 def load_model_from_preset(model_type, preset, dtype="float32"):
