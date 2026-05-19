@@ -52,7 +52,7 @@ def check_tests_to_skip(scale_method, scale_value_type_weight=None, scale_value_
         or scale_value_type_activation == ScaleValueType.DUMMY_SCALES
     ):
         pytest.xfail("Dummy scales is not a scale method")
-    if scale_method in SUPPORTED_DYNAMIC_SCALES:
+    if scale_method in SUPPORTED_DYNAMIC_QUANTIZATION_SCALES:
         pytest.xfail("Key error")
 
 

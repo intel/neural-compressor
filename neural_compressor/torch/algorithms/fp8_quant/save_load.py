@@ -435,7 +435,8 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
 
     # fp8 model provided by neuralmagic.
     if (
-        "quant_method" in quantization_config
+        isinstance(quantization_config, dict)
+        and "quant_method" in quantization_config
         and quantization_config["quant_method"] in ["fp8", "compressed-tensors"]
     ):
         from_neuralmagic = True

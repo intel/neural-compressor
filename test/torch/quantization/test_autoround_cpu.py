@@ -35,7 +35,7 @@ except ImportError:
     ct_installed = False
 
 
-tagert_modules = ["QuantLinear", "QuantLinearGPTQ", "QuantLinearAWQ", "WQLinear_GEMM"]
+tagert_modules = ["QuantLinear", "QuantLinearGPTQ", "QuantLinearAWQ", "WQLinear_GEMM", 'AwqTorchQuantLinear']
 
 
 @torch.no_grad()
@@ -67,7 +67,7 @@ class TestAutoRoundCPU:
     @classmethod
     def teardown_class(self):
         shutil.rmtree("saved_results", ignore_errors=True)
-        shutil.rmtree("temp_auto_round", ignore_errors=True)
+        shutil.rmtree("tmp_auto_round", ignore_errors=True)
 
     def setup_method(self, method):
         logger.info(f"Running TestAutoRound test: {method.__name__}")
@@ -204,6 +204,7 @@ class TestAutoRoundCPU:
             template=None,
             model=model,
             tokenizer=tokenizer,
+            processor=processor,
             image_processor=None,
             dataset="NeelNanda/pile-10k",
             extra_data_dir=None,
@@ -216,7 +217,6 @@ class TestAutoRoundCPU:
             nsamples=1,
             gradient_accumulate_steps=1,
             quant_nontext_module=True,
-            processor=processor,
         )
         quant_config = AutoRoundConfig(
             bits=4,
@@ -229,6 +229,8 @@ class TestAutoRoundCPU:
             truncation=truncation,
             gradient_accumulate_steps=gradient_accumulate_steps,
             device_map="cpu",
+            tokenizer=tokenizer,
+            processor=processor,
         )
 
         model = prepare(model=model, quant_config=quant_config)
@@ -238,13 +240,13 @@ class TestAutoRoundCPU:
             q_model.model.language_model.layers[0].mlp.up_proj.__class__.__name__ in tagert_modules
         ), "model quantization failed."
 
-    def test_set_local(self):
+    def test_set_local(self, tmp_path):
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
             device_map="cpu",
         )
         inp = torch.ones([1, 10], dtype=torch.long, device="cpu")
-        output_dir = "./saved_inc"
+        output_dir = tmp_path
         tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
         quant_config = AutoRoundConfig(
             tokenizer=tokenizer,
@@ -265,6 +267,9 @@ class TestAutoRoundCPU:
         # prepare + convert API
         model = prepare(model=fp32_model, quant_config=quant_config)
         q_model = convert(model)
+
+        # Autoround applied subfolder for formats during saving, such as, './saved_inc/opt-125m-w4g128'.
+        output_dir = q_model.name_or_path
         model = AutoModelForCausalLM.from_pretrained(
             output_dir,
             torch_dtype="auto",
@@ -297,8 +302,12 @@ class TestAutoRoundCPU:
             export_format="auto_round",
             device_map="cpu",
         )
-        quantized_model_path = "./saved_ar"
-        ar.quantize_and_save(output_dir=quantized_model_path, inplace=True, format="auto_round")
+        quantized_model_path = tmp_path / "saved_ar"
+
+        # Autoround applied subfolder for formats during saving, such as, './saved_inc/opt-125m-w4g128'.
+        _, quantized_model_path = ar.quantize_and_save(
+            output_dir=quantized_model_path, inplace=True, format="auto_round"
+        )
         model = AutoModelForCausalLM.from_pretrained(
             quantized_model_path,
             torch_dtype="auto",
@@ -306,14 +315,13 @@ class TestAutoRoundCPU:
         )
         out_ar = model(inp)[0]
         assert torch.all(out_ar.eq(out))
-        shutil.rmtree("./saved_inc", ignore_errors=True)
         shutil.rmtree(quantized_model_path, ignore_errors=True)
 
     @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
     @pytest.mark.parametrize(
         "scheme", ["W4A16", "W2A16", "W3A16", "W8A16", "MXFP4", "MXFP8", "NVFP4", "FPW8A16", "FP8_STATIC"]
     )
-    def test_scheme(self, scheme):
+    def test_scheme(self, scheme, tmp_path):
         # INC API
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
@@ -322,7 +330,7 @@ class TestAutoRoundCPU:
         inp = torch.ones([1, 10], dtype=torch.long, device="cpu")
         tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
 
-        output_dir = "./saved_inc"
+        output_dir = tmp_path
         quant_config = AutoRoundConfig(
             tokenizer=tokenizer,
             nsamples=32,
@@ -332,13 +340,15 @@ class TestAutoRoundCPU:
             scale_dtype="fp16",
             scheme=scheme,
             export_format="auto_round",
-            output_dir=output_dir,  # default is "temp_auto_round"
+            output_dir=output_dir,  # default is "tmp_auto_round"
             device_map="cpu",
         )
 
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
         inc_model = convert(model)
+        # Autoround applied subfolder for formats during saving, such as, './saved_inc/opt-125m-w4g128'.
+        output_dir = inc_model.name_or_path
         if scheme in ["FPW8A16"]:  # FP8_STATIC loading not supported yet
             return
         inc_model = AutoModelForCausalLM.from_pretrained(
@@ -368,8 +378,12 @@ class TestAutoRoundCPU:
             scheme=scheme,
             device_map="cpu",
         )
-        quantized_model_path = "./saved_ar"
-        ar.quantize_and_save(output_dir=quantized_model_path, inplace=True, format="auto_round")
+        quantized_model_path = tmp_path / "saved_ar"
+
+        # Autoround applied subfolder for formats during saving, such as, './saved_inc/opt-125m-w4g128'.
+        _, quantized_model_path = ar.quantize_and_save(
+            output_dir=quantized_model_path, inplace=True, format="auto_round"
+        )
         model = AutoModelForCausalLM.from_pretrained(
             quantized_model_path,
             torch_dtype="auto",
@@ -378,19 +392,18 @@ class TestAutoRoundCPU:
         tokenizer = AutoTokenizer.from_pretrained(quantized_model_path)
         out_ar = model(inp)[0]
         assert torch.all(out_ar.eq(out))
-        shutil.rmtree(output_dir, ignore_errors=True)
         shutil.rmtree(quantized_model_path, ignore_errors=True)
 
     @pytest.mark.skipif(not ct_installed, reason="The compressed-tensors module is not installed.")
     @pytest.mark.skipif(Version(auto_round.__version__) < Version("0.9.0"), reason="target bits is not supported.")
-    def test_target_bits(self):
+    def test_target_bits(self, tmp_path):
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
             device_map="cpu",
         )
         tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
 
-        output_dir = "./saved_inc"
+        output_dir = tmp_path
         quant_config = AutoRoundConfig(
             tokenizer=tokenizer,
             nsamples=32,
@@ -454,14 +467,14 @@ class TestAutoRoundCPU:
             and best_model.model.decoder.layers[1].fc1.__class__.__name__ in target_modules
         ), "model is not quantized correctly, please check."
 
-    def test_static_attention_dtype(self):
+    def test_static_attention_dtype(self, tmp_path):
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
             device_map="cpu",
         )
         tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
 
-        output_dir = "./saved_inc"
+        output_dir = tmp_path
         quant_config = AutoRoundConfig(
             tokenizer=tokenizer,
             iters=0,
@@ -476,6 +489,7 @@ class TestAutoRoundCPU:
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
         model = convert(model)
+        output_dir = model.name_or_path
 
         from safetensors import safe_open
 
@@ -491,17 +505,16 @@ class TestAutoRoundCPU:
             assert weight_name in f.keys()
             assert f.get_tensor(weight_name).shape == torch.Size([1])
             assert f.get_tensor(weight_name).dtype == torch.float32
-        shutil.rmtree(output_dir, ignore_errors=True)
 
     @pytest.mark.parametrize("static_kv_dtype", [None, "fp8", "float16"])
-    def test_static_afp8_export(self, static_kv_dtype):
+    def test_static_afp8_export(self, static_kv_dtype, tmp_path):
         fp32_model = AutoModelForCausalLM.from_pretrained(
             "facebook/opt-125m",
             device_map="cpu",
         )
         tokenizer = AutoTokenizer.from_pretrained("facebook/opt-125m", trust_remote_code=True)
 
-        output_dir = "./saved_inc"
+        output_dir = tmp_path
         quant_config = AutoRoundConfig(
             tokenizer=tokenizer,
             bits=8,
@@ -523,6 +536,7 @@ class TestAutoRoundCPU:
         # quantizer execute
         model = prepare(model=fp32_model, quant_config=quant_config)
         model = convert(model)
+        output_dir = model.name_or_path
 
         from safetensors import safe_open
 
@@ -559,7 +573,6 @@ class TestAutoRoundCPU:
                     print(f"Prompt: {prompt}")
                     print(f"Output: {output}")
                     assert output is not None, "Output should not be None"
-        shutil.rmtree(output_dir, ignore_errors=True)
 
     @pytest.mark.parametrize(
         "scheme,  static_kv_dtype, static_attention_dtype",
@@ -572,7 +585,7 @@ class TestAutoRoundCPU:
             ("NVFP4", "fp8", None),
         ],
     )
-    def test_fp8_kv_attn(self, scheme, static_kv_dtype, static_attention_dtype):
+    def test_fp8_kv_attn(self, scheme, static_kv_dtype, static_attention_dtype, tmp_path):
 
         from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
         from transformers.models.opt.modeling_opt import OPTForCausalLM
@@ -583,7 +596,7 @@ class TestAutoRoundCPU:
         model = OPTForCausalLM(config)
         tokenizer = AutoTokenizer.from_pretrained(model_name)
 
-        output_dir = "./saved_inc"
+        output_dir = tmp_path
         quant_config = AutoRoundConfig(
             tokenizer=tokenizer,
             scheme=scheme,
@@ -625,4 +638,3 @@ class TestAutoRoundCPU:
             assert (
                 getattr(attn, "q_scale", None) is not None
             ), f"Missing q_scale in attention for scheme={scheme}, static_attention_dtype={static_attention_dtype}"
-        shutil.rmtree(output_dir, ignore_errors=True)

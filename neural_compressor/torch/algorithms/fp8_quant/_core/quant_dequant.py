@@ -18,6 +18,7 @@ from torch.ao.quantization.fx._decomposed import quantized_decomposed_lib
 from abc import abstractmethod
 from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 from .quantized_func_wrappers import get_quantized_func_wrapper, OP_TYPE
+from .fp_utils import invert_scale
 
 
 cur_accelerator = auto_detect_accelerator()
@@ -69,23 +70,23 @@ class QuantDequantBase(nn.Module):
 
 class QuantDequantNone(QuantDequantBase):
     def __init__(self, lp_dtype, hp_dtype, *args, **kwargs):
-        super(QuantDequantNone, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
+        super().__init__(lp_dtype, hp_dtype, *args, **kwargs)
 
     def forward(self, *args, **kwargs):
         return args[0]
 
     def extra_repr(self) -> str:
-        repr = super(QuantDequantNone, self).extra_repr()
+        repr = super().extra_repr()
         return f"{repr}, doesn't quantize nor dequantize"
 
 
 class QuantInput(QuantDequantBase):
     def __init__(self, scale_inv, lp_dtype, hp_dtype, *args, **kwargs):
-        super(QuantInput, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
+        super().__init__(lp_dtype, hp_dtype, *args, **kwargs)
         scale_inv = scale_inv.unsqueeze(1) if (scale_inv.numel() > 1 and not self.use_qdq) else scale_inv
         self.register_scale("scale_inv", scale_inv, self.scale_format)
         if self.use_qdq:
-            self.register_scale("scale", 1 / self.scale_inv, self.scale_format)
+            self.register_scale("scale", invert_scale(self.scale_inv), self.scale_format)
             op_type = OP_TYPE.QUANT_PC if self.scale_format == ScaleFormat.CONST and self.scale.numel() > 1 else OP_TYPE.QUANT
         else:
             op_type = OP_TYPE.CAST_TO_FP8
@@ -106,40 +107,40 @@ class QuantInput(QuantDequantBase):
             )
 
     def extra_repr(self) -> str:
-        repr = super(QuantInput, self).extra_repr()
+        repr = super().extra_repr()
         dtype = get_scale_dtype(self.scale_inv)
         return f"{repr}, scale_inv dtype={dtype}"
 
 
 class QuantDynamicInput(QuantDequantBase):
     def __init__(self, input_scales_creator, lp_dtype, hp_dtype, *args, **kwargs):
-        super(QuantDynamicInput, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
+        super().__init__(lp_dtype, hp_dtype, *args, **kwargs)
         self.input_scales_creator = input_scales_creator
-
         self.cast_to_op = get_quantized_func_wrapper(OP_TYPE.CAST_TO_FP8, self.scale_format)
 
-    def calculate_scales(self, x):
-        scale = self.input_scales_creator.calc_scales(x, QuantTensorType.DYNAMIC)
+    def calculate_scales(self, x, in_scale = None):
+        if in_scale is None:
+            scale = self.input_scales_creator.calc_scales(x, QuantTensorType.DYNAMIC)
+        else:
+            scale = in_scale
         scale_inv = self.input_scales_creator.invert_scales(scale)
         return scale, scale_inv
 
-    def forward(self, x):
-        scale, scale_inv = self.calculate_scales(x)
-
+    def forward(self, x, in_scale=None):
+        scale, scale_inv = self.calculate_scales(x, in_scale)
         ret = self.cast_to_op(x, scale_inv, False, False, self.lp_dtype)
-
         return ret, scale
 
     #TODO [SW-224609]: implement forward qdq
 
     def extra_repr(self) -> str:
-        repr = super(QuantDynamicInput, self).extra_repr()
+        repr = super().extra_repr()
         return f"{repr} input_scales_creator={self.input_scales_creator}"
 
 
 class DequantOutput(QuantDequantBase):
     def __init__(self, scale, lp_dtype, hp_dtype, *args, **kwargs):
-        super(DequantOutput, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
+        super().__init__(lp_dtype, hp_dtype, *args, **kwargs)
         self.register_scale("scale", scale, self.scale_format)
         if self.use_qdq:
             op_type = OP_TYPE.DEQUANT_PC if self.scale_format == ScaleFormat.CONST and self.scale.numel() > 1 else OP_TYPE.DEQUANT
@@ -163,16 +164,25 @@ class DequantOutput(QuantDequantBase):
             )
 
     def extra_repr(self) -> str:
-        repr = super(DequantOutput, self).extra_repr()
+        repr = super().extra_repr()
         dtype = get_scale_dtype(self.scale)
         return f"{repr}, scale dtype={dtype}"
 
 
+class DequantDynamicOutput(QuantDequantBase):
+    def __init__(self, lp_dtype, hp_dtype, *args, **kwargs):
+        super().__init__(lp_dtype, hp_dtype, *args, **kwargs)
+        self.cast_from_op = get_quantized_func_wrapper(OP_TYPE.CAST_FROM_FP8, self.scale_format)
+
+    def forward(self, x, scale):
+        return self.cast_from_op(x, scale, self.hp_dtype)
+
+
 class QuantDequant(QuantDequantBase):
     def __init__(self, scale_inv, lp_dtype, hp_dtype, *args, **kwargs):
-        super(QuantDequant, self).__init__(lp_dtype, hp_dtype, *args, **kwargs)
+        super().__init__(lp_dtype, hp_dtype, *args, **kwargs)
         self.register_scale("scale_inv", scale_inv, self.scale_format)
-        self.register_scale("scale", 1 / scale_inv, self.scale_format)
+        self.register_scale("scale", invert_scale(scale_inv), self.scale_format)
         self.quantize_op = (
            get_quantized_func_wrapper(OP_TYPE.QUANT, self.scale_format)
            if self.use_qdq
@@ -215,5 +225,5 @@ class QuantDequant(QuantDequantBase):
         return z
 
     def extra_repr(self) -> str:
-        repr = super(QuantDequant, self).extra_repr()
+        repr = super().extra_repr()
         return f"{repr}, Quantize, and then dequantize"

@@ -347,15 +347,9 @@ class GPTQConfig(INCQuantizationConfigMixin):
         self.device = kwargs.get("device", "auto")
         self.scheme = "sym" if self.sym else "asym"
 
-        if isinstance(compute_dtype, torch.dtype):
-            self.compute_dtype = compute_dtype
-        else:
-            self.compute_dtype = compute_dtype
+        self.compute_dtype = compute_dtype
 
-        if isinstance(scale_dtype, torch.dtype):
-            self.scale_dtype = scale_dtype
-        else:
-            self.scale_dtype = scale_dtype
+        self.scale_dtype = scale_dtype
 
         self.post_init_gptq()
 

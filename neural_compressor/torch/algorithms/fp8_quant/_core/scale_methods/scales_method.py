@@ -102,6 +102,23 @@ class MaxAbsPts(MaxAbsMethod):
         return scale_tensor
 
 
+class MaxAbsDynamicPts(MaxAbsPts):
+    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None):
+        super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, is_dynamic=True)
+        logger.trace("%s %s",self.__class__.__name__, self.__dict__)
+
+    def get_scale_funcs_dict(self):
+        scale_funcs_dict = super().get_scale_funcs_dict()
+        scale_funcs_dict[QuantTensorType.DYNAMIC] = self.calc_scale_from_const_tensor
+        return scale_funcs_dict
+
+    def calc_scales(self, tensor, tensor_type, **additional_kwargs):
+        # In dynamic quantization the scale is changed each time,
+        # and setting scale as a member is not supported in hpu graphs and torch.compile
+        # (it can break the graph)
+        return self._calculate_maxabs_scale(tensor, tensor_type, **additional_kwargs)
+
+
 ## MulAdditionalScales Get 2 input scales, and return their multiplication.
 # used for linear and matmul outputs
 class MulAdditionalScales(ScalesMethod):
@@ -140,12 +157,15 @@ class UseFirstAdditionalScales(ScalesMethod):
 # used when running with dummy measurement (prepare_model_with_dummy_measurement)
 class DummyScales(ScalesMethod):
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        self.scale = torch.tensor(1.0).to(self.device)
+        out_channel_size = additional_kwargs.get("out_channel_size")
+        if out_channel_size is None:
+            self.scale = torch.tensor(1.0).to(self.device)
+        else:
+            self.scale = torch.ones([out_channel_size], dtype=self.hp_dtype, device=self.device)
         return self.scale
 
 
 class MaxAbsPcs(MaxAbsMethod):
-
     def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None, dim=1, keepdim=False, is_dynamic=False):
         super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, is_dynamic=is_dynamic)
         self.dim = dim
@@ -177,18 +197,36 @@ class MaxAbsPcs(MaxAbsMethod):
         return scale_tensor
 
 
-## InputChannelScale used for input channel in PCS mode
-class InputChannelScale(ScalesMethod):
-    def __init__(self, round_scale_method, params, device_for_scales, in_channel_size):
-        super().__init__(round_scale_method, params, device_for_scales)
-        self.in_channel_size = in_channel_size
+class MaxAbsDynamicPcs(MaxAbsPcs):
+    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None, dim=-1):
+        super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, dim=dim, keepdim=True, is_dynamic=True)
+        logger.trace("%s %s", self.__class__.__name__, self.__dict__)
+
+    def get_scale_funcs_dict(self):
+        scale_funcs_dict = super().get_scale_funcs_dict()
+        scale_funcs_dict[QuantTensorType.DYNAMIC] = self.calc_scale_from_const_tensor_no_reshape
+        return scale_funcs_dict
 
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        input_in_ch = torch.ones([self.in_channel_size, 1], dtype=self.hp_dtype, device=self.device)
-        return  input_in_ch.flatten()
+        # In dynamic quantization the scale is changed each time,
+        # and setting scale as a member is not supported in hpu graphs and torch.compile
+        # (it can break the graph)
+        return self._calculate_maxabs_scale(tensor, tensor_type, **additional_kwargs)
+
+
+## InputChannelScale used for input channel in PCS mode
+class InputChannelScale(ScalesMethod):
+    def __init__(self, round_scale_method, params, device_for_scales):
+        super().__init__(round_scale_method, params, device_for_scales)
+
+    def calc_scales(self, tensor, tensor_type, **additional_kwargs):
+        in_channel_size = additional_kwargs.get("in_channel_size")
+        if in_channel_size is None:
+            raise ValueError("Missing 'in_channel_size' in additional_kwargs")
+
+        return torch.ones([in_channel_size], dtype=self.hp_dtype, device=self.device)
 
 class FixedScale(ScalesMethod):
-    
     def __init__(self, round_scale_method, params, device_for_scales):
         super().__init__(round_scale_method, params, device_for_scales)
         self.round_scale_method = round_scale_method
@@ -199,7 +237,6 @@ class FixedScale(ScalesMethod):
 
 
 class OptScalesPts(ScalesMethod):
-
     def __init__(self, round_scale_method, optional_scales_list, params, device_for_scales, backoff):
         super().__init__(round_scale_method, params, device_for_scales)
         self.round_scale_method = round_scale_method
@@ -209,6 +246,7 @@ class OptScalesPts(ScalesMethod):
     def calc_scales(self, tensor, tensor_type, **additional_kwargs):
         self.scale = self.round_scale_method.calc(mmse_scale(tensor, self.optional_scales_list, self.lp_dtype, self.hp_dtype))
         return self.scale
+
 
 class OptScalesPcs(ScalesMethod):
     def __init__(self, round_scale_method, optional_scales_list, params, device_for_scales, backoff):
@@ -230,39 +268,3 @@ class OptScalesPcs(ScalesMethod):
         ).unsqueeze(1)
         self.scale = self.round_scale_method.calc(const_opt_scale_out_ch).flatten()
         return self.scale
-
-
-class MaxAbsDynamicPcs(MaxAbsPcs):
-
-    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None):
-        super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, -1, True, True)
-        logger.trace("%s %s", self.__class__.__name__, self.__dict__)
-
-    def get_scale_funcs_dict(self):
-        scale_funcs_dict = super().get_scale_funcs_dict()
-        scale_funcs_dict[QuantTensorType.DYNAMIC] = self.calc_scale_from_const_tensor_no_reshape
-        return scale_funcs_dict
-
-    def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        # In dynamic quantization the scale is changed each time,
-        # and setting scale as a member is not supported in hpu graphs and torch.compile
-        # (it can break the graph)
-        return self._calculate_maxabs_scale(tensor, tensor_type)
-
-
-class MaxAbsDynamicPts(MaxAbsPts):
-
-    def __init__(self, round_scale_method, params, device_for_scales, backoff, fullscale=None):
-        super().__init__(round_scale_method, params, device_for_scales, backoff, fullscale, True)
-        logger.trace("%s %s",self.__class__.__name__, self.__dict__)
-
-    def get_scale_funcs_dict(self):
-        scale_funcs_dict = super().get_scale_funcs_dict()
-        scale_funcs_dict[QuantTensorType.DYNAMIC] = self.calc_scale_from_const_tensor
-        return scale_funcs_dict
-
-    def calc_scales(self, tensor, tensor_type, **additional_kwargs):
-        # In dynamic quantization the scale is changed each time,
-        # and setting scale as a member is not supported in hpu graphs and torch.compile
-        # (it can break the graph)
-        return self._calculate_maxabs_scale(tensor, tensor_type)

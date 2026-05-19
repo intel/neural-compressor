@@ -22,9 +22,8 @@ def get_test_vectors(
 @pytest.mark.parametrize("lp_dtype", [torch.float8_e4m3fn], ids=["fp8_e4m3fn"])
 @pytest.mark.parametrize("scale_method", ScaleMethodString)
 @pytest.mark.parametrize("device_type", device_type)
-def test_conv2d_accuracy(
-    hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethodString, device_type: str
-):
+@pytest.mark.parametrize("padding_type",["valid", "same", [1,1]], ids=["valid", "same", "int_padding"])
+def test_conv2d_accuracy(hp_dtype: torch.dtype, lp_dtype: torch.dtype, scale_method: ScaleMethodString, device_type: str, padding_type):
     # TODO [SW-196641]: fix the following issues:
     if scale_method in SCALE_METHODS_SEGFAULT:
         pytest.skip("Not supported")
@@ -49,7 +48,7 @@ def test_conv2d_accuracy(
                 "in_channels": C_in,
                 "out_channels": C_out,
                 "kernel_size": K,
-                "padding": 1,
+                "padding": padding_type,
                 "bias": False,
                 "device": "hpu",
                 "dtype": hp_dtype,
@@ -66,8 +65,6 @@ def test_conv2d_accuracy(
     elif device_type_id[device_type] != get_device_type():
         if not (device_type_id[device_type] == get_gaudi2_type() and is_gaudi3()):
             return run_with_raised_exception(run, ValueError, "Unsupported config: device_for_scales=")
-    elif scale_method == ScaleMethodString.ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW:
-        return run_with_raised_exception(
-            run, ValueError, "Unsupported config: scale_method ACT_MAXABS_PCS_POW2_WEIGHT_MAXABS_PTS_POW2_HW"
-        )
+    elif scale_method in SUPPORTED_DYNAMIC_QUANTIZATION_SCALES:
+        return run_with_raised_exception(run, ValueError, f"Unsupported config: scale_method {scale_method.name}")
     return run()

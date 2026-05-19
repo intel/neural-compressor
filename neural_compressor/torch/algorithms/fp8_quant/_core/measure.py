@@ -131,6 +131,8 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
         d_shapes (dict, optional): Defaults to None.
     """
     top_level_config = get_hqt_config(model)
+    if top_level_config is None:
+        raise ValueError("HQT config is not initialized on the model.")
     config = top_level_config.cfg
     setup_calibration_counter(model, config)
     skip_outputs_measurements = config["measure_exclude"] & (MeasureExclude.OUTPUT | MeasureExclude.ALL)
