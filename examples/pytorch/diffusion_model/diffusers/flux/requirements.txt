@@ -1,4 +1,4 @@
-diffusers==0.35.1
+diffusers==0.38.0
 pandas==2.2.2
 clip==0.2.0
 image-reward==1.5
