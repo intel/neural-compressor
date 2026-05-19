@@ -123,6 +123,7 @@ def quant_model(args):
         static_kv_dtype=static_kv_dtype,
         static_attention_dtype=args.static_attention_dtype,
         output_dir=output_dir,
+        device_map=args.device_map,
         reloading=False,
     )
 
@@ -198,6 +199,12 @@ if __name__ == "__main__":
         type=str,
         default="./",
         help="Directory to save the quantized model.",
+    )
+    parser.add_argument(
+        "--device_map", 
+        type=str, 
+        default="auto", 
+        help="device map for model",
     )
 
     args = parser.parse_args()
