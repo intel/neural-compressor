@@ -109,9 +109,9 @@ def test_image_recognition(colva_beach_sq, quantization_dtype, dynamic):
         gemma_q = quantize_model(gemma, config, calib_fn)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        save_path = Path(os.path.join(tmpdir, "gemma3_quantized"))
+        save_path = os.path.join(tmpdir, "gemma3_quantized")
         gemma_q.save_to_preset(save_path)
-        gemma_q_loaded = Gemma3CausalLM.from_preset(str(save_path), dtype=model_dtype)
+        gemma_q_loaded = Gemma3CausalLM.from_preset(save_path, dtype=model_dtype)
 
     answer = gemma_q_loaded.generate(
         {
