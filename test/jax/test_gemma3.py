@@ -143,9 +143,9 @@ def test_static_quantization_with_incomplete_calibration(random_string, colva_be
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
         keras.saving.save_model(gemma_q, save_path)
-        gemma_q = keras.saving.load_model(save_path)
+        gemma_q_loaded = keras.saving.load_model(save_path)
 
-    answer = gemma_q.generate(
+    answer = gemma_q_loaded.generate(
         {
             "images": colva_beach_sq,
             "prompts": "Enumerate all elements in the picture: <start_of_image>?",
