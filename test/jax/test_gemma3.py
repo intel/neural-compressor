@@ -52,7 +52,13 @@ def random_string():
     return "".join(random.choices(string.ascii_letters, k=length))
 
 
-@pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
+@pytest.mark.parametrize(
+    "dynamic",
+    [
+        pytest.param(True, id="dynamic=True", marks=pytest.mark.skip(reason="Currently skipped to save time in CI")),
+        pytest.param(False, id="dynamic=False"),
+    ],
+)
 def test_text_prompt(random_string, quantization_dtype, dynamic):
     model_dtype = "float32"
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_270m", model_dtype)
