@@ -150,7 +150,7 @@ def test_static_quantization_with_incomplete_calibration(random_string, colva_be
             "images": colva_beach_sq,
             "prompts": "Enumerate all elements in the picture: <start_of_image>?",
         },
-        max_length=500,
+        max_length=400,
         strip_prompt=True,
     )
     print(f"Gemma answer: {answer}")
