@@ -1,7 +1,7 @@
-diffusers==0.35.1
+diffusers==0.38.0
 pandas==2.2.2
 clip==0.2.0
 image-reward==1.5
 torchmetrics==1.8.2
-transformers==4.55.0
+transformers==5.0.0rc3
 sentencepiece

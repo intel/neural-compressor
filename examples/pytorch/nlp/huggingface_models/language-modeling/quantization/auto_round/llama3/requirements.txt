@@ -1,4 +1,4 @@
-transformers==4.56.0
+transformers==5.0.0rc3
 compressed-tensors==0.15.0.1
 torch
 torchvision
