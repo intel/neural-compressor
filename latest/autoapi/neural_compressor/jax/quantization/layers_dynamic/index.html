@@ -106,6 +106,12 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_dynamic.QDynamicEinsumDense" title="neural_compressor.jax.quantization.layers_dynamic.QDynamicEinsumDense"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QDynamicEinsumDense</span></code></a></p></td>
 <td><p>Dynamically quantized EinsumDense layer.</p></td>
 </tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_dynamic.QDynamicConv2DMixin" title="neural_compressor.jax.quantization.layers_dynamic.QDynamicConv2DMixin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QDynamicConv2DMixin</span></code></a></p></td>
+<td><p>Mixin that adds dynamic quantization to Conv2D layers.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_dynamic.QDynamicConv2D" title="neural_compressor.jax.quantization.layers_dynamic.QDynamicConv2D"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QDynamicConv2D</span></code></a></p></td>
+<td><p>Dynamically quantized Conv2D layer.</p></td>
+</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_dynamic.QDynamicMultiHeadAttention" title="neural_compressor.jax.quantization.layers_dynamic.QDynamicMultiHeadAttention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QDynamicMultiHeadAttention</span></code></a></p></td>
 <td><p>Dynamically quantized MultiHeadAttention layer.</p></td>
 </tr>
@@ -175,6 +181,18 @@
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.layers_dynamic.QDynamicConv2DMixin">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.layers_dynamic.</span></span><span class="sig-name descname"><span class="pre">QDynamicConv2DMixin</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/layers_dynamic.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.layers_dynamic.QDynamicConv2DMixin" title="Link to this definition"></a></dt>
+<dd><p>Mixin that adds dynamic quantization to Conv2D layers.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.layers_dynamic.QDynamicConv2D">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.layers_dynamic.</span></span><span class="sig-name descname"><span class="pre">QDynamicConv2D</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/layers_dynamic.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.layers_dynamic.QDynamicConv2D" title="Link to this definition"></a></dt>
+<dd><p>Dynamically quantized Conv2D layer.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.jax.quantization.layers_dynamic.QDynamicMultiHeadAttention">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.layers_dynamic.</span></span><span class="sig-name descname"><span class="pre">QDynamicMultiHeadAttention</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/layers_dynamic.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.layers_dynamic.QDynamicMultiHeadAttention" title="Link to this definition"></a></dt>
 <dd><p>Dynamically quantized MultiHeadAttention layer.</p>
@@ -215,7 +233,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fd490894bf0> 
+   <jinja2.runtime.BlockReference object at 0x7f51d49e05f0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

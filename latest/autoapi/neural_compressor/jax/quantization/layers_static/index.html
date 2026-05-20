@@ -109,6 +109,12 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticEinsumDense" title="neural_compressor.jax.quantization.layers_static.QStaticEinsumDense"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticEinsumDense</span></code></a></p></td>
 <td><p>Statically quantized EinsumDense layer.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticConv2DMixin" title="neural_compressor.jax.quantization.layers_static.QStaticConv2DMixin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticConv2DMixin</span></code></a></p></td>
+<td><p>Mixin that adds static quantization to Conv2D layers.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticConv2d" title="neural_compressor.jax.quantization.layers_static.QStaticConv2d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticConv2d</span></code></a></p></td>
+<td><p>Statically quantized Conv2D layer.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticMultiHeadAttention" title="neural_compressor.jax.quantization.layers_static.QStaticMultiHeadAttention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticMultiHeadAttention</span></code></a></p></td>
 <td><p>Statically quantized MultiHeadAttention layer.</p></td>
 </tr>
@@ -187,6 +193,18 @@
 </dd></dl>
 
 <dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.layers_static.QStaticConv2DMixin">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.layers_static.</span></span><span class="sig-name descname"><span class="pre">QStaticConv2DMixin</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/layers_static.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.layers_static.QStaticConv2DMixin" title="Link to this definition"></a></dt>
+<dd><p>Mixin that adds static quantization to Conv2D layers.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.layers_static.QStaticConv2d">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.layers_static.</span></span><span class="sig-name descname"><span class="pre">QStaticConv2d</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/layers_static.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.layers_static.QStaticConv2d" title="Link to this definition"></a></dt>
+<dd><p>Statically quantized Conv2D layer.</p>
+</dd></dl>
+
+<dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.jax.quantization.layers_static.QStaticMultiHeadAttention">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.layers_static.</span></span><span class="sig-name descname"><span class="pre">QStaticMultiHeadAttention</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/jax/quantization/layers_static.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.layers_static.QStaticMultiHeadAttention" title="Link to this definition"></a></dt>
 <dd><p>Statically quantized MultiHeadAttention layer.</p>
@@ -233,7 +251,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fd490832ed0> 
+   <jinja2.runtime.BlockReference object at 0x7f51d52be5a0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

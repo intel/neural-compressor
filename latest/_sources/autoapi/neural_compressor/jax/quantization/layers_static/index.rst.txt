@@ -19,6 +19,8 @@ Classes
    neural_compressor.jax.quantization.layers_static.QStaticDenseMixin
    neural_compressor.jax.quantization.layers_static.QStaticDense
    neural_compressor.jax.quantization.layers_static.QStaticEinsumDense
+   neural_compressor.jax.quantization.layers_static.QStaticConv2DMixin
+   neural_compressor.jax.quantization.layers_static.QStaticConv2d
    neural_compressor.jax.quantization.layers_static.QStaticMultiHeadAttention
    neural_compressor.jax.quantization.layers_static.QStaticCachedGemma3Attention
    neural_compressor.jax.quantization.layers_static.QStaticGemma3VisionAttention
@@ -81,6 +83,20 @@ Module Contents
 
 
    Statically quantized EinsumDense layer.
+
+
+.. py:class:: QStaticConv2DMixin
+
+
+
+   Mixin that adds static quantization to Conv2D layers.
+
+
+.. py:class:: QStaticConv2d
+
+
+
+   Statically quantized Conv2D layer.
 
 
 .. py:class:: QStaticMultiHeadAttention

@@ -18,6 +18,8 @@ Classes
    neural_compressor.jax.quantization.layers_dynamic.QDynamicDenseMixin
    neural_compressor.jax.quantization.layers_dynamic.QDynamicDense
    neural_compressor.jax.quantization.layers_dynamic.QDynamicEinsumDense
+   neural_compressor.jax.quantization.layers_dynamic.QDynamicConv2DMixin
+   neural_compressor.jax.quantization.layers_dynamic.QDynamicConv2D
    neural_compressor.jax.quantization.layers_dynamic.QDynamicMultiHeadAttention
    neural_compressor.jax.quantization.layers_dynamic.QDynamicCachedGemma3Attention
    neural_compressor.jax.quantization.layers_dynamic.QDynamicGemma3VisionAttention
@@ -72,6 +74,20 @@ Module Contents
 
 
    Dynamically quantized EinsumDense layer.
+
+
+.. py:class:: QDynamicConv2DMixin
+
+
+
+   Mixin that adds dynamic quantization to Conv2D layers.
+
+
+.. py:class:: QDynamicConv2D
+
+
+
+   Dynamically quantized Conv2D layer.
 
 
 .. py:class:: QDynamicMultiHeadAttention
