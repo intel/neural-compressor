@@ -48,6 +48,7 @@ def classify_image(model, image, top_k=1):
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "int8"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=int8"]
 )
+@pytest.mark.model_test(model="vit")
 def test_image_classification(dynamic, model_dtype, quantization_dtype, colva_beach_sq, random_image):
     vit = load_model_from_preset(ViTImageClassifier, "vit_base_patch16_224_imagenet", model_dtype)
 

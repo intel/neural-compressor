@@ -107,3 +107,9 @@ docstring-code-format = false
 # This only has an effect when the `docstring-code-format` setting is
 # enabled.
 docstring-code-line-length = "dynamic"
+
+[pytest]
+markers = [
+    "unit_test",
+    "model_test"
+]

@@ -47,6 +47,7 @@ def _read_value(var_or_array, is_const):
 @pytest.mark.parametrize("dynamic", [False, True], ids=["dynamic=False", "dynamic=True"])
 @pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
 @pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
+@pytest.mark.unit_test
 def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, model_dtype, dynamic, c_scale, c_weight):
     """Test accuracy on a simple linear model."""
 

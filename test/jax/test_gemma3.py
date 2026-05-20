@@ -59,6 +59,7 @@ def random_string():
         pytest.param(False, id="dynamic=False"),
     ],
 )
+@pytest.mark.model_test(model="gemma3")
 def test_text_prompt(random_string, quantization_dtype, dynamic):
     model_dtype = "float32"
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_270m", model_dtype)
@@ -86,6 +87,7 @@ def test_text_prompt(random_string, quantization_dtype, dynamic):
 
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
+@pytest.mark.model_test(model="gemma3")
 def test_image_recognition(colva_beach_sq, quantization_dtype, dynamic):
     model_dtype = "bfloat16"
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_4b-v1", model_dtype)

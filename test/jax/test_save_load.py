@@ -72,6 +72,7 @@ def create_test_data():
 class TestDynamicQuantSaveLoad:
     """Test save/load for DynamicQuantConfig."""
 
+    @pytest.mark.unit_test
     def test_dynamic_quant_save_load(self, weight_dtype, activation_dtype, const_scale, const_weight):
         """Test save/load with DynamicQuantConfig."""
         model = create_simple_model()
@@ -125,6 +126,7 @@ class TestDynamicQuantSaveLoad:
 class TestStaticQuantSaveLoad:
     """Test save/load for StaticQuantConfig."""
 
+    @pytest.mark.unit_test
     def test_static_quant_save_load(self, weight_dtype, activation_dtype, const_scale, const_weight):
         """Test save/load with StaticQuantConfig."""
         model = create_simple_model()
@@ -174,6 +176,7 @@ class TestStaticQuantSaveLoad:
 class TestMultipleRoundTrips:
     """Test multiple save/load round trips."""
 
+    @pytest.mark.unit_test
     def test_dynamic_quant_multiple_saves(self):
         """Test that model can be saved and loaded multiple times."""
         model = create_simple_model()
@@ -205,6 +208,7 @@ class TestMultipleRoundTrips:
             assert current_model._quant_config.const_scale == config.const_scale
             assert current_model._quant_config.const_weight == config.const_weight
 
+    @pytest.mark.unit_test
     def test_static_quant_multiple_saves(self):
         """Test that static quantized model can be saved and loaded multiple times."""
         model = create_simple_model()
