@@ -5,3 +5,4 @@ image-reward==1.5
 torchmetrics==1.8.2
 transformers==4.55.0
 sentencepiece
+safetensors==0.8.0rc0
