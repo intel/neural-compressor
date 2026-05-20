@@ -713,6 +713,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
             self.q_qdq.a_scale.assign(self.f_qdq.a_scale / self._inverse_sqrt_key_dim)
             if self.q_qdq._is_asymmetric:
                 self.q_qdq.a_zero_point.assign(jnp.array(self.f_qdq.a_zero_point.value))
+            self.q_qdq._is_quantized = True
 
         self.k_qdq.convert()
         self.a_qdq.convert()
