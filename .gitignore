@@ -24,3 +24,6 @@ node_modules
 build_tmp
 hqt_output*/
 inc_output*/
+outputs/
+tmp/
+benchmark/
