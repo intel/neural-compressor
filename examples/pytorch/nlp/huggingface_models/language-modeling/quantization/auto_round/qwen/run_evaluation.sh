@@ -12,6 +12,8 @@ KV_CACHE_DTYPE="auto"
 ATTN_DTYPE="None"
 SEQ_LENGTHS=""
 RULER_MAX_POS=""
+EXTRA_ARGS=""
+LM_EVAL_EXTRA_ARGS=""
 
 # Function to display usage
 usage() {
@@ -103,7 +105,7 @@ fi
 if [[ "$TASK_NAME" == *"ruler"* ]]; then
     MODEL_MAX_POS=${RULER_MAX_POS:-131072}
     max_length=${MODEL_MAX_POS}
-    max_gen_toks=50
+    max_gen_toks=128
     SEQ_LENGTHS="${MODEL_MAX_POS}"
     TASK_NAME="niah_multiquery"
     BATCH_SIZE=32
@@ -153,12 +155,12 @@ if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
     echo "Using FP8 for KV cache"
 fi
 
-# for fp8 attention cache
+# for fp8 attention cache，for LLMC format only
 if [[ "$ATTN_DTYPE" == "fp8" ]]; then
-    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
-    export VLLM_ATTENTION_BACKEND="FLASHINFER"
     KV_CACHE_DTYPE="fp8"
-    echo "Using FP8 Attention"
+    EXTRA_ARGS="--attention-backend TRITON_ATTN"
+    LM_EVAL_EXTRA_ARGS=",attention_backend=TRITON_ATTN"
+    echo "Using FP8 Attention with TRITON_ATTN backend"
 fi
 
 
@@ -198,7 +200,7 @@ export VLLM_QDQ=1
 # Function to run standard lm-eval tasks
 run_standard_eval() {
     lm_eval --model vllm \
-        --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}" \
+        --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}${LM_EVAL_EXTRA_ARGS}" \
         --tasks $TASK_NAME \
         --batch_size $BATCH_SIZE \
         --log_samples \
@@ -233,6 +235,7 @@ start_vllm_server() {
         --dtype bfloat16 \
         --kv-cache-dtype ${KV_CACHE_DTYPE} \
         ${ROPE_FLAG} "${ROPE_VALUE}" \
+        ${EXTRA_ARGS} \
         > ${OUTPUT_DIR}/vllm_server.log 2>&1 &
     
     VLLM_PID=$!
