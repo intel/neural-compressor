@@ -1,12 +1,5 @@
-transformers==4.56.0
-compressed-tensors==0.15.0.1
-torch
-torchvision
-lm_eval==0.4.10
-datasets==4.4.2
-auto-round>=0.9.3
-neural-compressor-pt>=3.7
-jieba
-fuzzywuzzy
-rouge
+loguru
 hf_transfer
+transformers==4.57.3
+compressed-tensors==0.15.0.1
+
