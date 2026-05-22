@@ -155,6 +155,15 @@ class SaveableLayerMixin:
         Returns:
             None: Loads variables into the layer.
         """
+        if self.__class__.__name__.startswith("Dynamic") or self.__class__.__name__.startswith("QDynamic"):
+            # Dynamic layers are always quantized
+            self._is_quantized = True
+        else:
+            # Static layers may not be quantized depending on calibration samples
+            # Quantized layers always have a_scale
+            self._is_quantized = "a_scale" in store
+        self.post_quantization_cleanup()
+
         weight_dtype = getattr(self, "weight_dtype", None)
         for var in self._trainable_variables + self._non_trainable_variables:
             value_to_load = store[var.name]
