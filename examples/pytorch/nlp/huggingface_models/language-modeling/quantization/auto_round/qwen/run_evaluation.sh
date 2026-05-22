@@ -155,22 +155,13 @@ if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
     echo "Using FP8 for KV cache"
 fi
 
-# for fp8 attention cache
+# for fp8 attention cache，for LLMC format only
 if [[ "$ATTN_DTYPE" == "fp8" ]]; then
-    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
-    export VLLM_ATTENTION_BACKEND="FLASHINFER"
-    KV_CACHE_DTYPE="fp8"
-    echo "Using FP8 Attention"
-fi
-
-# for fp8 attention cache
-if [[ "$ATTN_DTYPE" == "fp8-llmc" ]]; then
     KV_CACHE_DTYPE="fp8"
     EXTRA_ARGS="--attention-backend TRITON_ATTN"
     LM_EVAL_EXTRA_ARGS=",attention_backend=TRITON_ATTN"
     echo "Using FP8 Attention with TRITON_ATTN backend"
 fi
-
 
 
 # Run evaluation
