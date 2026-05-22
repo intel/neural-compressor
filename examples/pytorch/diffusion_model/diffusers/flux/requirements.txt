@@ -3,7 +3,7 @@ pandas==2.2.2
 clip==0.2.0
 image-reward==1.5
 torchmetrics==1.8.2
-transformers==4.57.3
+transformers==5.0.0rc3
 sentencepiece
 safetensors==0.8.0rc0
 tabulate==0.10.0
