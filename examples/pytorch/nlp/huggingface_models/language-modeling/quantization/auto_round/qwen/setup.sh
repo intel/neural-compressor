@@ -75,19 +75,11 @@ elif [[ "$DEVICE" == "gpu" ]]; then
     uv pip install packaging --upgrade
     uv pip install -U "huggingface_hub[cli]"
     if [[ "$FORMAT" == "LLMC" ]]; then
-        CUDA_VERSION=$(detect_cuda_version)
-        echo "Detected system CUDA version: $CUDA_VERSION"
-        if [[ "$CUDA_VERSION" == "12."* ]]; then
-            uv pip install vllm==0.20.2 --extra-index-url https://wheels.vllm.ai/0.20.2/cu129 --extra-index-url https://download.pytorch.org/whl/cu129 --index-strategy unsafe-best-match
-            uv pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu129 --index-strategy unsafe-best-match
-        elif [[ "$CUDA_VERSION" == "13."* ]]; then
-            uv pip install vllm==0.20.2
-        else
-            echo "Unsupported CUDA version: $CUDA_VERSION. Supported versions are 12.x and 13.x."
-            exit 1
-        fi
-
         uv pip install ray
+        # use official vllm after PR merge, https://github.com/vllm-project/vllm/pull/42916
+        git clone -b fp8-attn-rebase --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
+        VLLM_USE_PRECOMPILED=1 uv pip install --prerelease=allow . -v
+        cd ..
         git clone https://github.com/yiliu30/vllm-qdq-plugin.git
         uv pip install vllm-qdq-plugin/ -v
     else
