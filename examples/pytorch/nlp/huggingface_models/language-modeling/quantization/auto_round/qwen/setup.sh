@@ -35,7 +35,7 @@ detect_cuda_version() {
 }
 
 DEVICE="${DEVICE:-gpu}"
-FORMAT="${FORMAT:-AR}"
+FORMAT="${FORMAT:-LLMC}"
 TASKS="${TASKS:-hellaswag,piqa,mmlu,gsm8k}"
 BENCH_TOOL="${BENCH_TOOL:-lm_eval}"
 
@@ -67,7 +67,7 @@ done
 
 if [[ "$DEVICE" == "xpu" ]]; then
     # support quant only on xpu for now
-    uv pip install torch==2.10.0 torchvision==0.25.0 --index-url https://download.pytorch.org/whl/xpu
+    uv pip install torch==2.11.0 torchvision==0.26.0 --index-url https://download.pytorch.org/whl/xpu
     uv pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/xpu
 elif [[ "$DEVICE" == "gpu" ]]; then
     uv pip install -r requirements.txt

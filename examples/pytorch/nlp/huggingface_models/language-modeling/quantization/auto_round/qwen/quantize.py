@@ -160,7 +160,7 @@ if __name__ == "__main__":
         "--export_format",
         type=str,
         choices=["auto_round", "llm_compressor"],
-        default="auto_round",
+        default="llm_compressor",
         help="Export format for the quantized model. Options are 'auto_round' or 'llm_compressor'.",
     )
     parser.add_argument(
