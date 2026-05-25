@@ -116,7 +116,7 @@ def quant_model(args):
         scheme=scheme,
         enable_torch_compile=True,
         iters=iters,
-        fp_layers=config["fp_layers"],
+        ignore_layers=config["fp_layers"],
         export_format=args.export_format,
         disable_opt_rtn=True,
         low_gpu_mem_usage=True,
