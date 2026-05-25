@@ -18,8 +18,8 @@
 
 from __future__ import annotations
 
-import fnmatch
 import json
+import re
 from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import jax.numpy as jnp
@@ -48,7 +48,7 @@ def _layer_matches_filter(
     """Check if a layer passes include/exclude filters.
 
     Each filter entry is matched against both the layer class name (exact match)
-    and the layer path (fnmatch pattern match).
+    and the layer path (regex search).
 
     Args:
         layer_id: Layer path or name identifier.
@@ -62,7 +62,7 @@ def _layer_matches_filter(
     def _matches(pattern: str) -> bool:
         if pattern == class_name:
             return True
-        return fnmatch.fnmatch(layer_id, pattern)
+        return re.search(pattern, layer_id) is not None
 
     if include is not None:
         if not any(_matches(p) for p in include):
