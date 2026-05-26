@@ -498,54 +498,31 @@ def prepare_deserialized_quantized_model(
     from neural_compressor.jax.quantization.layers_dynamic import dynamic_quant_mapping
     from neural_compressor.jax.quantization.layers_static import static_quant_mapping
 
-    # Build configs_mapping - handle ComposableConfig by iterating sub-configs
+    # Determine per-config parameters for each sub-config in ComposableConfig
     if isinstance(quant_config, ComposableConfig):
-        from collections import OrderedDict
-        configs_mapping = OrderedDict()
-        for sub_config in quant_config.config_list:
-            sub_model_info = sub_config.get_model_info(model)
-            sub_mapping = sub_config.to_config_mapping(model_info=sub_model_info)
-            configs_mapping.update(sub_mapping)
+        config_list = quant_config.config_list
     else:
-        model_info = quant_config.get_model_info(model)
-        configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+        config_list = [quant_config]
 
+    # For deserialization, directly check layer class against layers_mapping
+    # (bypasses white_list which may not cover all quantized layer types)
     qmodel = model
-
-    # Apply per-layer preparation based on each layer's config
     for layer in qmodel._flatten_layers():
-        layer_id = layer.path if layer.path else layer.name
-        layer_key = (layer_id, layer.__class__.__name__)
+        for cfg in config_list:
+            if cfg.name == "static_quant" and layer.__class__ in static_quant_mapping:
+                layers_mapping = static_quant_mapping
+            elif cfg.name == "dynamic_quant" and layer.__class__ in dynamic_quant_mapping:
+                layers_mapping = dynamic_quant_mapping
+            else:
+                continue
 
-        # Look up config: try path-based key first, fallback to class-based match
-        # (layer.path may be None for sub-layers in freshly deserialized models)
-        config = None
-        if layer_key in configs_mapping:
-            config = configs_mapping[layer_key]
-        elif layer.path is None:
-            # Fallback: find any config entry matching this layer's class name
-            class_name = layer.__class__.__name__
-            for key, val in configs_mapping.items():
-                if key[1] == class_name:
-                    config = val
-                    break
-
-        if config is None:
-            continue
-
-        if config.name == "static_quant" and layer.__class__ in static_quant_mapping:
-            layers_mapping = static_quant_mapping
-        elif config.name == "dynamic_quant" and layer.__class__ in dynamic_quant_mapping:
-            layers_mapping = dynamic_quant_mapping
-        else:
-            continue
-
-        weight_dtype = dtype_mapping[config.weight_dtype]
-        activation_dtype = dtype_mapping[config.activation_dtype]
-        additional_params = (weight_dtype, activation_dtype, config.const_scale, config.const_weight)
-        layers_mapping[layer.__class__].prepare(layer, *additional_params)
-        layer.add_variables()
-        layer.post_quantization_cleanup()
+            weight_dtype = dtype_mapping[cfg.weight_dtype]
+            activation_dtype = dtype_mapping[cfg.activation_dtype]
+            additional_params = (weight_dtype, activation_dtype, cfg.const_scale, cfg.const_weight)
+            layers_mapping[layer.__class__].prepare(layer, *additional_params)
+            layer.add_variables()
+            layer.post_quantization_cleanup()
+            break
 
     if isinstance(qmodel, Backbone):
         qmodel = KerasQuantizedModelBackboneWrapper(qmodel, quant_config)
