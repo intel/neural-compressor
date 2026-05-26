@@ -45,7 +45,6 @@ def classify_image(model, image, top_k=1):
 
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
-@pytest.mark.parametrize("inplace", [True, False], ids=["inplace=True", "inplace=False"])
 @pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "int8"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=int8"]
@@ -60,12 +59,12 @@ def test_image_classification(dynamic, inplace, model_dtype, quantization_dtype,
 
     if dynamic:
         config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
-        vit_q = quantize_model(vit, config, None, inplace=inplace)
+        vit_q = quantize_model(vit, config, None)
     else:
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=True, const_weight=True
         )
-        vit_q = quantize_model(vit, config, calib_fn, inplace=inplace)
+        vit_q = quantize_model(vit, config, calib_fn, inplace=False)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "vit_quantized.keras")

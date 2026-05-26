@@ -74,7 +74,7 @@ def test_text_prompt(random_string, quantization_dtype, dynamic):
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=True, const_weight=True
         )
-        gemma_q = quantize_model(gemma, config, calib_fn)
+        gemma_q = quantize_model(gemma, config, calib_fn, inplace=False)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
@@ -107,7 +107,7 @@ def test_image_recognition(colva_beach_sq, quantization_dtype, dynamic):
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=False, const_weight=False
         )
-        gemma_q = quantize_model(gemma, config, calib_fn, inplace=False)
+        gemma_q = quantize_model(gemma, config, calib_fn)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "gemma3_quantized")
