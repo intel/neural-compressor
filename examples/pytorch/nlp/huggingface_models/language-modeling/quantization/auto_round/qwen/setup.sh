@@ -78,7 +78,6 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         uv pip install ray
         # use official vllm after PR merge, https://github.com/vllm-project/vllm/pull/42916
         git clone -b fp8-attn-rebase --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
-        git fetch --tags
         VLLM_USE_PRECOMPILED=1 uv pip install --prerelease=allow . -v
         cd ..
         git clone https://github.com/yiliu30/vllm-qdq-plugin.git
@@ -87,7 +86,6 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         # use default setting for AR format, required by fused-moe-ar
         uv pip install torch==2.9.0
         git clone -b fused-moe-ar  --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
-        git fetch --tags
         VLLM_USE_PRECOMPILED=1 uv pip install --prerelease=allow . -v
         cd ..
     fi
