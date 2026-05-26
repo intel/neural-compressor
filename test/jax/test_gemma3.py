@@ -171,7 +171,6 @@ def test_inplace_false(dynamic, random_string):
     def calib_fn(model):
         _ = model.generate(random_string, max_length=100)
 
-    config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
     if dynamic:
         config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
         _calib_fn = None

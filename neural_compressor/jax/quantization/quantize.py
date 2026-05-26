@@ -68,8 +68,8 @@ class QuickClone:
     def _build_var_map(self):
         """Builds a path->value map for name-based copy in add_weight.
 
-        Keys use the full path AND also the path with the top-level model name
-        stripped, because from_config may rebuild layers under a different parent
+        Keys use the path with the top-level model name stripped, because from_config
+        rebuilds layers under a different parent.
         (e.g. Sequential: original path is "sequential/dense/kernel", but during
         from_config self.path is just "dense", giving a lookup key "dense/kernel").
         """
@@ -117,12 +117,11 @@ class QuickClone:
             return
         visited.add(key)
         if hasattr(orig_obj, "proto") and hasattr(new_obj, "set_proto"):
-            if orig_obj.proto is not None and new_obj.proto is None:
-                new_obj.set_proto(orig_obj.proto)
+            new_obj.set_proto(orig_obj.proto)
         for attr_name in vars(orig_obj):
             orig_attr = getattr(orig_obj, attr_name, None)
             new_attr = getattr(new_obj, attr_name, None)
-            if orig_attr is not None and new_attr is not None and isinstance(orig_attr, keras.layers.Layer):
+            if isinstance(orig_attr, keras.layers.Layer):
                 self._restore_protos(orig_attr, new_attr, visited)
 
     def _build_all_layers(self, model):
@@ -149,7 +148,12 @@ class QuickClone:
             self._value = jnp.array(value)
 
         def __call__(self, shape, dtype=None):
-            return self._value
+            value = self._value
+            if dtype is not None:
+                value = jnp.array(value, dtype=dtype)
+            if shape is not None and tuple(value.shape) != tuple(shape):
+                value = jnp.reshape(value, shape)
+            return value
 
         def get_config(self):
             return {}
