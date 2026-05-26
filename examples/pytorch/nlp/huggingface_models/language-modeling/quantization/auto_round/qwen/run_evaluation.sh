@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eo pipefail
 
 # Usage: ./run_evaluation.sh -m [model_path] -s [mxfp4|mxfp8] -t [task_name] -tp [tensor_parallel_size] -b [batch_size]
 # Default values
@@ -185,12 +185,12 @@ echo "Output directory: ${OUTPUT_DIR}"
 
 # Export vLLM environment variables
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
-export VLLM_ENABLE_AR_EXT=$VLLM_ENABLE_AR_EXT
-export VLLM_AR_MXFP4_MODULAR_MOE=$VLLM_AR_MXFP4_MODULAR_MOE
-export VLLM_MXFP4_PRE_UNPACK_TO_FP8=$VLLM_MXFP4_PRE_UNPACK_TO_FP8
-export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=$VLLM_MXFP4_PRE_UNPACK_WEIGHTS
-export VLLM_ENABLE_STATIC_MOE=$VLLM_ENABLE_STATIC_MOE
-export VLLM_USE_DEEP_GEMM=$VLLM_USE_DEEP_GEMM
+export VLLM_ENABLE_AR_EXT=${VLLM_ENABLE_AR_EXT:-}
+export VLLM_AR_MXFP4_MODULAR_MOE=${VLLM_AR_MXFP4_MODULAR_MOE:-}
+export VLLM_MXFP4_PRE_UNPACK_TO_FP8=${VLLM_MXFP4_PRE_UNPACK_TO_FP8:-}
+export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=${VLLM_MXFP4_PRE_UNPACK_WEIGHTS:-}
+export VLLM_ENABLE_STATIC_MOE=${VLLM_ENABLE_STATIC_MOE:-}
+export VLLM_USE_DEEP_GEMM=${VLLM_USE_DEEP_GEMM:-}
 export VLLM_ENABLE_V1_MULTIPROCESSING=0
 # For https://github.com/yiliu30/vllm-qdq-plugin.git CT format eval
 export VLLM_QDQ=1
