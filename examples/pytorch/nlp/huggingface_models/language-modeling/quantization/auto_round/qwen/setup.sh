@@ -78,6 +78,7 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         uv pip install ray
         # use official vllm after PR merge, https://github.com/vllm-project/vllm/pull/42916
         git clone -b fp8-attn-rebase --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
+        git fetch --tags
         VLLM_USE_PRECOMPILED=1 uv pip install --prerelease=allow . -v
         cd ..
         git clone https://github.com/yiliu30/vllm-qdq-plugin.git
