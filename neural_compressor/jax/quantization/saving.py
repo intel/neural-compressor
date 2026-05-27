@@ -156,7 +156,7 @@ class SaveableLayerMixin:
             None: Loads variables into the layer.
         """
 
-        # In some cases load_own_variables() may be called multiple times on for the same layer.
+        # In some cases load_own_variables() may be called multiple times for the same layer.
         # Since this function modifies weights and removes variables, this behaviour causes crashes during loading.
         #
         # To prevent that we can check if _is_quantized is None, since this should be initial value and is
