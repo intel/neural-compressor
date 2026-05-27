@@ -47,10 +47,7 @@ def dynamic_quantize(
         keras.Model: The quantized model.
     """
     # Build set of layer paths that this algorithm should process
-    layer_configs = {
-        op_name: cfg for (op_name, _op_type), cfg in configs_mapping.items()
-        if cfg.name == DYNAMIC_QUANT
-    }
+    layer_configs = {op_name: cfg for (op_name, _op_type), cfg in configs_mapping.items() if cfg.name == DYNAMIC_QUANT}
 
     qmodel = model
 
