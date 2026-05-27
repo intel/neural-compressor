@@ -27,7 +27,13 @@ from keras_hub.src.utils.preset_utils import get_preset_saver
 
 from neural_compressor.common import logger
 from neural_compressor.common.base_config import ComposableConfig, config_registry
-from neural_compressor.jax.quantization.config import FRAMEWORK_NAME, BaseConfig, DynamicQuantConfig, StaticQuantConfig
+from neural_compressor.jax.quantization.config import (
+    FRAMEWORK_NAME,
+    BaseConfig,
+    DynamicQuantConfig,
+    StaticQuantConfig,
+    _layer_matches_filter,
+)
 from neural_compressor.jax.utils.utility import check_backend, dtype_mapping, iterate_over_layers
 
 
@@ -506,6 +512,7 @@ def prepare_deserialized_quantized_model(
 
     # For deserialization, directly check layer class against layers_mapping
     # (bypasses white_list which may not cover all quantized layer types)
+    # Also respects include/exclude filters from config
     qmodel = model
     for layer in qmodel._flatten_layers():
         for cfg in config_list:
@@ -515,6 +522,15 @@ def prepare_deserialized_quantized_model(
                 layers_mapping = dynamic_quant_mapping
             else:
                 continue
+
+            # Check include/exclude filters if set on the config
+            include = getattr(cfg, "_include", None)
+            exclude = getattr(cfg, "_exclude", None)
+            if include is not None or exclude is not None:
+                layer_id = layer.path or layer.name
+                class_name = layer.__class__.__name__
+                if not _layer_matches_filter(layer_id, class_name, include, exclude):
+                    continue
 
             weight_dtype = dtype_mapping[cfg.weight_dtype]
             activation_dtype = dtype_mapping[cfg.activation_dtype]

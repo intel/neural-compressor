@@ -66,11 +66,7 @@ def _build_configs_mapping_composable(model, quant_config: ComposableConfig) -> 
         sub_mapping = sub_config.to_config_mapping(model_info=sub_model_info)
         for key in sub_mapping:
             if key in configs_mapping:
-                raise ValueError(
-                    f"Layer '{key[0]}' (type={key[1]}) is assigned to multiple quantization configs. "
-                    f"Each layer can only be quantized by one algorithm. "
-                    f"Use 'include'/'exclude' parameters to resolve the overlap."
-                )
+                logger.debug(f"Layer {key} quant config override from {configs_mapping[key]} to {sub_mapping[key]}")
         configs_mapping.update(sub_mapping)
     return configs_mapping
 

@@ -59,6 +59,7 @@ def _layer_matches_filter(
     Returns:
         True if the layer should be included in quantization.
     """
+
     def _matches(pattern: str) -> bool:
         if pattern == class_name:
             return True
