@@ -25,9 +25,19 @@ def parse_args():
     parser.add_argument("--quantize", action="store_true")
     parser.add_argument("--inference", action="store_true")
     parser.add_argument("--output_dir", "--quantized_model_path", default="./tmp_autoround", type=str, help="Directory to save quantized transformer weights")
-    parser.add_argument("--prompt_file", type=str, default=None, help="T2V prompt txt file path")
+    parser.add_argument("--prompt_folder", type=str, default=None, help="T2V prompt folder path")
     parser.add_argument("--image_folder", type=str, default=None, help="I2V image folder path")
     parser.add_argument("--info_json", type=str, default=None, help="I2V info json file path")
+    parser.add_argument(
+        "--dimension",
+        type=str,
+        default=None,
+        help=(
+            "VBench dimension used by t2v/i2v evaluation or input filtering "
+            "(validated examples: t2v=subject_consistency,overall_consistency; "
+            "i2v=i2v_subject,i2v_background)"
+        ),
+    )
     parser.add_argument("--output_video_path", default="./tmp_video", type=str, help="Directory to save generated videos")
     parser.add_argument("--limit", default=-1, type=int, help="Limit the number of prompts for evaluation")
     parser.add_argument("--seed", default=42, type=int, help="Random seed")
@@ -122,15 +132,27 @@ def load_quantized_transformers(pipe, output_dir):
 
 
 def build_t2v_inputs(args):
-    prompt_file = args.prompt_file
+    prompt_folder = args.prompt_folder
 
-    if not prompt_file:
-        raise ValueError("--prompt_file is required for t2v inference/eval")
+    if not prompt_folder:
+        raise ValueError("--prompt_folder is required for t2v inference/eval")
+    if not args.dimension:
+        raise ValueError("--dimension is required for t2v inference/eval")
+    if not os.path.isdir(prompt_folder):
+        raise FileNotFoundError(f"Prompt folder not found: {prompt_folder}")
+
+    prompt_file = os.path.join(prompt_folder, f"{args.dimension}.txt")
     if not os.path.exists(prompt_file):
-        raise FileNotFoundError(f"Prompt file not found: {prompt_file}")
+        raise FileNotFoundError(f"Prompt file not found for dimension '{args.dimension}': {prompt_file}")
 
     with open(prompt_file, "r", encoding="utf-8") as f:
         prompt_list = [line.strip() for line in f if line.strip()]
+
+    if args.dimension not in {"subject_consistency", "overall_consistency"}:
+        print(
+            "[WARN] t2v --dimension is not in validated examples "
+            "(subject_consistency, overall_consistency). Continue anyway."
+        )
 
     if args.limit >= 0:
         prompt_list = prompt_list[: args.limit]
@@ -146,6 +168,11 @@ def build_i2v_inputs(args):
         raise ValueError("--image_folder is required for i2v inference/eval")
     if not info_json:
         raise ValueError("--info_json is required for i2v inference/eval")
+    if not args.dimension:
+        raise ValueError(
+            "--dimension is required for i2v inference/eval "
+            "(validated examples: i2v_subject, i2v_background)"
+        )
     if not os.path.isdir(image_folder):
         raise FileNotFoundError(f"Image folder not found: {image_folder}")
     if not os.path.exists(info_json):
@@ -156,6 +183,9 @@ def build_i2v_inputs(args):
 
     results = []
     for info in info_list:
+        if args.dimension not in info["dimension"]:
+            continue
+
         image_path = os.path.join(image_folder, info["image_name"])
         if not os.path.exists(image_path):
             continue

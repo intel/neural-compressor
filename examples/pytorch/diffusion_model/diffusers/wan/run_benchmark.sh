@@ -18,9 +18,15 @@ function ensure_vbench_repo {
 }
 
 function prepare_vbench_inputs {
-  if [ "${task}" = "t2v" ] && [ -z "${prompt_file}" ]; then
-    echo "Error: --prompt_file is required for task=t2v"
-    exit 1
+  if [ "${task}" = "t2v" ]; then
+    if [ -z "${prompt_folder}" ]; then
+      echo "Error: --prompt_folder is required for task=t2v"
+      exit 1
+    fi
+    if [ -z "${dimension}" ]; then
+      echo "Error: --dimension is required for task=t2v"
+      exit 1
+    fi
   fi
 
   if [ "${task}" = "i2v" ]; then
@@ -32,10 +38,14 @@ function prepare_vbench_inputs {
       echo "Error: --info_json is required for task=i2v"
       exit 1
     fi
+    if [ -z "${dimension}" ]; then
+      echo "Error: --dimension is required for task=i2v"
+      exit 1
+    fi
   fi
 
-  if [ -n "${prompt_file}" ] && [ ! -f "${prompt_file}" ]; then
-    echo "Error: prompt_file not found: ${prompt_file}"
+  if [ -n "${prompt_folder}" ] && [ ! -d "${prompt_folder}" ]; then
+    echo "Error: prompt_folder not found: ${prompt_folder}"
     exit 1
   fi
   if [ -n "${image_folder}" ] && [ ! -d "${image_folder}" ]; then
@@ -49,41 +59,94 @@ function prepare_vbench_inputs {
 }
 
 function init_params {
-  for var in "$@"
-  do
-    case $var in
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
       --topology=*)
-        topology="${var#*=}"
+        topology="${1#*=}"
+        shift
+      ;;
+      --topology)
+        topology="$2"
+        shift 2
       ;;
       --input_model=*)
-        input_model="${var#*=}"
+        input_model="${1#*=}"
+        shift
+      ;;
+      --input_model)
+        input_model="$2"
+        shift 2
       ;;
       --task=*)
-        task="${var#*=}"
+        task="${1#*=}"
+        shift
+      ;;
+      --task)
+        task="$2"
+        shift 2
       ;;
       --quantized_model=*)
-        tuned_checkpoint="${var#*=}"
+        tuned_checkpoint="${1#*=}"
+        shift
+      ;;
+      --quantized_model)
+        tuned_checkpoint="$2"
+        shift 2
       ;;
       --output_video_path=*)
-        output_video_path="${var#*=}"
+        output_video_path="${1#*=}"
+        shift
       ;;
-      --prompt_file=*)
-        prompt_file="${var#*=}"
+      --output_video_path)
+        output_video_path="$2"
+        shift 2
+      ;;
+      --prompt_folder=*)
+        prompt_folder="${1#*=}"
+        shift
+      ;;
+      --prompt_folder)
+        prompt_folder="$2"
+        shift 2
       ;;
       --image_folder=*)
-        image_folder="${var#*=}"
+        image_folder="${1#*=}"
+        shift
+      ;;
+      --image_folder)
+        image_folder="$2"
+        shift 2
       ;;
       --info_json=*)
-        info_json="${var#*=}"
+        info_json="${1#*=}"
+        shift
+      ;;
+      --info_json)
+        info_json="$2"
+        shift 2
+      ;;
+      --dimension=*)
+        dimension="${1#*=}"
+        shift
+      ;;
+      --dimension)
+        dimension="$2"
+        shift 2
       ;;
       --limit=*)
-        limit="${var#*=}"
+        limit="${1#*=}"
+        shift
+      ;;
+      --limit)
+        limit="$2"
+        shift 2
       ;;
       --accuracy)
         accuracy=true
+        shift
       ;;
       *)
-        echo "Error: No such parameter: ${var}"
+        echo "Error: No such parameter: $1"
         exit 1
       ;;
     esac
@@ -127,8 +190,8 @@ function run_benchmark {
     --inference
   )
 
-  if [ -n "${prompt_file}" ]; then
-    benchmark_cmd+=(--prompt_file "${prompt_file}")
+  if [ -n "${prompt_folder}" ]; then
+    benchmark_cmd+=(--prompt_folder "${prompt_folder}")
   fi
   if [ -n "${image_folder}" ]; then
     benchmark_cmd+=(--image_folder "${image_folder}")
@@ -136,15 +199,24 @@ function run_benchmark {
   if [ -n "${info_json}" ]; then
     benchmark_cmd+=(--info_json "${info_json}")
   fi
+  if [ -n "${dimension}" ]; then
+    benchmark_cmd+=(--dimension "${dimension}")
+  fi
 
   "${benchmark_cmd[@]}"
 
   if [ "${accuracy}" = "true" ]; then
     if [ "${task}" = "t2v" ]; then
       echo "Start VBench evaluation for t2v..."
+      local t2v_dims
+      if [ -n "${dimension}" ]; then
+        t2v_dims="${dimension}"
+      else
+        t2v_dims="subject_consistency motion_smoothness aesthetic_quality imaging_quality overall_consistency"
+      fi
       pushd VBench
       python evaluate.py \
-        --dimension subject_consistency motion_smoothness aesthetic_quality imaging_quality overall_consistency \
+        --dimension ${t2v_dims} \
         --videos_path "${output_video_path}" \
         --mode=vbench_standard
       popd
