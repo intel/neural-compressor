@@ -36,7 +36,7 @@ detect_cuda_version() {
 
 DEVICE="${DEVICE:-gpu}"
 FORMAT="${FORMAT:-LLMC}"
-TASKS="${TASKS:-hellaswag,piqa,mmlu,gsm8k}"
+TASKS="${TASKS:-hellaswag,piqa,mmlu,gsm8k,ruler}"
 BENCH_TOOL="${BENCH_TOOL:-lm_eval}"
 
 while [[ $# -gt 0 ]]; do
@@ -90,13 +90,11 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         cd ..
     fi
     if [[ "$BENCH_TOOL" == "lm_eval" ]]; then
-        uv pip install lm-eval==0.4.10
+        uv pip install lm-eval==0.4.12
         uv pip install lm-eval[api]
+        uv pip install lm-eval["ruler"]
         if [[ "$TASKS" == *"longbench"* ]]; then
             uv pip install "long-bench-eval @ git+https://github.com/yiliu30/long-bench-eval"
-        fi
-        if [[ "$TASKS" == *"ruler"* ]]; then
-            uv pip install lm_eval["ruler"]
         fi
     elif [[ "$BENCH_TOOL" == "aisbench" ]]; then
         echo "Installing aisbench..."
