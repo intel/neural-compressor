@@ -44,7 +44,7 @@ def quantize_model(
     model: keras.Model,
     quant_config: BaseConfig,
     calib_function: Callable = None,
-    inplace: bool = False
+    inplace: bool = True
 ):
     """Return a quantized Keras model according to the given configuration.
 
