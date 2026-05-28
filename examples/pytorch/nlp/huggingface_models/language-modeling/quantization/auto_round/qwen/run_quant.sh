@@ -4,7 +4,7 @@ set -e
 MODEL=""
 TARGET=""
 OUTPUT_DIR=""
-EXPORT_FORMAT="auto_round"
+EXPORT_FORMAT="llm_compressor"
 STATIC_KV_DTYPE="None"
 STATIC_ATTENTION_DTYPE="None"
 

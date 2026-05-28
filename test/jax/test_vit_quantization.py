@@ -67,10 +67,10 @@ def test_image_classification(dynamic, model_dtype, quantization_dtype, colva_be
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "vit_quantized.keras")
-        keras.saving.save_model(vit_q, save_path)
-        vit_q = keras.saving.load_model(save_path)
+        vit_q.save_to_preset(save_path)
+        vit_q_loaded = ViTImageClassifier.from_preset(save_path, dtype=model_dtype)
 
-    actual_labels = classify_image(vit_q, colva_beach_sq)
+    actual_labels = classify_image(vit_q_loaded, colva_beach_sq)
     assert (
         actual_labels[0][0] == expected_labels[0][0]
     ), f"Expected top-1 label '{expected_labels[0][0]}', but got '{actual_labels[0][0]}'"
