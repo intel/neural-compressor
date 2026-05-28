@@ -318,6 +318,7 @@ function run_benchmark {
       python evaluate_i2v.py \
         --dimension "i2v_background i2v_subject subject_consistency background_consistency motion_smoothness" \
         --videos_path "${output_video_path}" \
+        --ratio "16-9" \
         --mode=vbench_standard
       popd
     else

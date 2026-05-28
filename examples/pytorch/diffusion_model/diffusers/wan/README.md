@@ -147,6 +147,7 @@ cd /path/to/VBench
 python evaluate_i2v.py \
   --dimension i2v_background i2v_subject subject_consistency background_consistency motion_smoothness \
   --videos_path /path/to/wan_i2v_bf16_video \
+  --ratio 16-9 \
   --mode vbench_standard
 ```
 
