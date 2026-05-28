@@ -50,6 +50,17 @@ def parse_args():
     parser.add_argument("--fps", default=16, type=int)
     parser.add_argument("--ratio", default="16-9", type=str, help="Aspect ratio used by i2v VBench dataset")
     parser.add_argument("--image_max_area", default=480 * 832, type=int, help="Maximum i2v image area")
+    parser.add_argument(
+        "--mxfp8_chunk_rows",
+        default=2048,
+        type=int,
+        help="Row chunk size for MXFP8 activation QDQ",
+    )
+    parser.add_argument(
+        "--disable_mxfp8_inplace_qdq",
+        action="store_true",
+        help="Disable in-place MXFP8 activation QDQ",
+    )
     return parser.parse_args()
 
 
@@ -101,7 +112,7 @@ def quantize_pipleine(pipe, args):
     convert(pipe, qconfig)
 
 
-def apply_activation_qdq(pipe, scheme):
+def apply_activation_qdq(pipe, scheme, runtime_args):
     if scheme == "BF16":
         return
 
@@ -111,7 +122,32 @@ def apply_activation_qdq(pipe, scheme):
             return module.orig_forward(qdq_x, *f_args, **f_kwargs)
     else:
         def act_qdq_forward(module, x, *f_args, **f_kwargs):
-            qdq_x, _, _ = quant_mx_rceil(x, bits=8, group_size=32, data_type="mx_fp_rceil")
+            chunk_rows = max(1, int(getattr(runtime_args, "mxfp8_chunk_rows", 2048)))
+            use_inplace = not getattr(runtime_args, "disable_mxfp8_inplace_qdq", False)
+
+            if use_inplace and x.is_cuda:
+                # Chunked in-place QDQ reduces peak activation memory on large tensors.
+                x_2d = x.reshape(-1, x.shape[-1])
+                total_rows = x_2d.shape[0]
+                for start in range(0, total_rows, chunk_rows):
+                    end = min(start + chunk_rows, total_rows)
+                    qdq_chunk = quant_mx_rceil(
+                        x_2d[start:end],
+                        bits=8,
+                        group_size=32,
+                        data_type="mx_fp_rceil",
+                    )[0]
+                    x_2d[start:end].copy_(qdq_chunk)
+                    del qdq_chunk
+                qdq_x = x
+            else:
+                qdq_x = quant_mx_rceil(
+                    x,
+                    bits=8,
+                    group_size=32,
+                    data_type="mx_fp_rceil",
+                )[0]
+
             return module.orig_forward(qdq_x, *f_args, **f_kwargs)
 
     for module_name in ["transformer", "transformer_2"]:
@@ -198,6 +234,7 @@ def build_i2v_inputs(args):
 
     if args.limit >= 0:
         results = results[: args.limit]
+
     return results
 
 
@@ -273,7 +310,7 @@ def main():
     if args.inference:
         if args.scheme in ["FP8", "MXFP8"]:
             load_quantized_transformers(pipe, args.output_dir)
-            apply_activation_qdq(pipe, args.scheme)
+            apply_activation_qdq(pipe, args.scheme, args)
         run_inference(args, pipe)
 
 

@@ -133,6 +133,14 @@ function init_params {
         dimension="$2"
         shift 2
       ;;
+      --gpu_ids=*)
+        gpu_ids="${1#*=}"
+        shift
+      ;;
+      --gpu_ids)
+        gpu_ids="$2"
+        shift 2
+      ;;
       --limit=*)
         limit="${1#*=}"
         shift
@@ -179,52 +187,136 @@ function run_benchmark {
 
   prepare_vbench_inputs
 
-  benchmark_cmd=(
-    python3 main.py
-    --model "${input_model}"
-    --task "${task}"
-    --scheme "${scheme}"
-    --output_dir "${tuned_checkpoint}"
-    --output_video_path "${output_video_path}"
-    --limit "${limit}"
-    --inference
-  )
+  normalized_dimensions="${dimension//,/ }"
+  read -r -a dimension_list <<< "${normalized_dimensions}"
 
-  if [ -n "${prompt_folder}" ]; then
-    benchmark_cmd+=(--prompt_folder "${prompt_folder}")
-  fi
-  if [ -n "${image_folder}" ]; then
-    benchmark_cmd+=(--image_folder "${image_folder}")
-  fi
-  if [ -n "${info_json}" ]; then
-    benchmark_cmd+=(--info_json "${info_json}")
-  fi
-  if [ -n "${dimension}" ]; then
-    benchmark_cmd+=(--dimension "${dimension}")
+  if [ -n "${gpu_ids}" ]; then
+    gpu_list="${gpu_ids}"
+  else
+    gpu_list="${CUDA_VISIBLE_DEVICES:-}"
   fi
 
-  "${benchmark_cmd[@]}"
+  if [ -n "${gpu_list}" ]; then
+    normalized_gpu_ids="${gpu_list//,/ }"
+    read -r -a gpu_array <<< "${normalized_gpu_ids}"
+    visible_gpus=${#gpu_array[@]}
+    echo "visible_gpus: ${visible_gpus}"
+  else
+    gpu_array=()
+  fi
+
+  mkdir -p "${output_video_path}"
+  shard_tmp_root="${output_video_path}/.prompt_shards"
+
+  function build_benchmark_cmd {
+    local cur_prompt_folder="$2"
+    local cur_info_json="$3"
+    local cmd=(
+      python3 main.py
+      --model "${input_model}"
+      --task "${task}"
+      --scheme "${scheme}"
+      --output_dir "${tuned_checkpoint}"
+      --output_video_path "${output_video_path}"
+      --limit "${limit}"
+      --inference
+    )
+
+    if [ -n "${cur_prompt_folder}" ]; then
+      cmd+=(--prompt_folder "${cur_prompt_folder}")
+    elif [ -n "${prompt_folder}" ]; then
+      cmd+=(--prompt_folder "${prompt_folder}")
+    fi
+    if [ -n "${image_folder}" ]; then
+      cmd+=(--image_folder "${image_folder}")
+    fi
+    if [ -n "${cur_info_json}" ]; then
+      cmd+=(--info_json "${cur_info_json}")
+    elif [ -n "${info_json}" ]; then
+      cmd+=(--info_json "${info_json}")
+    fi
+    if [ -n "$1" ]; then
+      cmd+=(--dimension "$1")
+    fi
+
+    printf '%q ' "${cmd[@]}"
+  }
+
+  if [ ${#gpu_array[@]} -eq 0 ]; then
+    if [ ${#dimension_list[@]} -eq 0 ]; then
+      eval "$(build_benchmark_cmd "" "" "")"
+    else
+      for cur_dimension in "${dimension_list[@]}"; do
+        eval "$(build_benchmark_cmd "${cur_dimension}" "" "")"
+      done
+    fi
+  else
+    if [ ${#dimension_list[@]} -eq 0 ]; then
+      echo "Error: multi-GPU sharding requires --dimension"
+      exit 1
+    fi
+
+    num_shards=${#gpu_array[@]}
+    for cur_dimension in "${dimension_list[@]}"; do
+      dim_shard_root="${shard_tmp_root}/${cur_dimension}"
+      rm -rf "${dim_shard_root}"
+      if [ "${task}" = "t2v" ]; then
+        prompt_file="${prompt_folder}/${cur_dimension}.txt"
+        python3 split_t2v_prompts.py \
+          --prompt_file "${prompt_file}" \
+          --num_shards "${num_shards}" \
+          --output_root "${dim_shard_root}"
+      else
+        python3 split_i2v_info.py \
+          --info_json "${info_json}" \
+          --dimension "${cur_dimension}" \
+          --num_shards "${num_shards}" \
+          --output_root "${dim_shard_root}"
+      fi
+
+      program_pid=()
+      for shard_id in "${!gpu_array[@]}"; do
+        gpu_id="${gpu_array[$shard_id]}"
+        log_suffix="${cur_dimension}"
+        if [ -z "${log_suffix}" ]; then
+          log_suffix="all"
+        fi
+        log_file="${output_video_path}/${log_suffix}.gpu${gpu_id}.log"
+        shard_prompt_folder=""
+        shard_info_json=""
+
+        if [ "${task}" = "t2v" ]; then
+          shard_prompt_folder="${dim_shard_root}/shard_${shard_id}"
+        else
+          shard_info_json="${dim_shard_root}/shard_${shard_id}/info.json"
+        fi
+
+        cmd="$(build_benchmark_cmd "${cur_dimension}" "${shard_prompt_folder}" "${shard_info_json}")"
+        CUDA_VISIBLE_DEVICES="${gpu_id}" bash -lc "${cmd}" > "${log_file}" 2>&1 &
+        program_pid+=("$!")
+        echo "Start (PID: ${program_pid[-1]}, GPU: ${gpu_id}, dimension: ${cur_dimension})"
+      done
+
+      for pid in "${program_pid[@]}"; do
+        wait "${pid}" || exit 1
+      done
+    done
+  fi
 
   if [ "${accuracy}" = "true" ]; then
     if [ "${task}" = "t2v" ]; then
       echo "Start VBench evaluation for t2v..."
-      local t2v_dims
-      if [ -n "${dimension}" ]; then
-        t2v_dims="${dimension}"
-      else
-        t2v_dims="subject_consistency motion_smoothness aesthetic_quality imaging_quality overall_consistency"
-      fi
       pushd VBench
       python evaluate.py \
-        --dimension ${t2v_dims} \
+        --dimension "subject_consistency motion_smoothness aesthetic_quality imaging_quality overall_consistency" \
         --videos_path "${output_video_path}" \
-        --mode=vbench_standard
+        --mode=vbench_standard 
       popd
     elif [ "${task}" = "i2v" ]; then
       echo "Start VBench evaluation for i2v..."
       pushd VBench
       python evaluate_i2v.py \
-        --dimension i2v_background i2v_subject subject_consistency background_consistency motion_smoothness \
+        --dimension "i2v_background i2v_subject subject_consistency background_consistency motion_smoothness" \
         --videos_path "${output_video_path}" \
         --mode=vbench_standard
       popd
