@@ -13,7 +13,6 @@ import jax
 import jax.numpy as jnp
 import keras
 import pytest
-from jax import clear_caches, random
 from jax_test_utility import compute_model_hash, load_image, load_model_from_preset
 from keras.applications.imagenet_utils import decode_predictions
 from keras_hub.models import ViTImageClassifier
@@ -31,8 +30,8 @@ def colva_beach_sq():
 
 @pytest.fixture(scope="module")
 def random_image():
-    key = random.PRNGKey(0)
-    img = random.randint(key, shape=(1, 224, 224, 3), minval=0, maxval=256, dtype=jnp.uint8)
+    key = jax.random.PRNGKey(0)
+    img = jax.random.randint(key, shape=(1, 224, 224, 3), minval=0, maxval=256, dtype=jnp.uint8)
     return img
 
 
@@ -102,7 +101,7 @@ def test_inplace_false(dynamic, random_image):
     hash_before_quantization = compute_model_hash(vit)
 
     # inplace=False, measure time
-    clear_caches()
+    jax.clear_caches()
     start = time.perf_counter()
     vit_q = quantize_model(vit, config, _calib_fn, inplace=False)
     duration_inplace_false = time.perf_counter() - start
@@ -117,7 +116,7 @@ def test_inplace_false(dynamic, random_image):
     assert hash_quantized != hash_before_quantization, "Quantized model should differ from the original"
 
     # inplace=True, measure time
-    clear_caches()
+    jax.clear_caches()
     start = time.perf_counter()
     vit_q = quantize_model(vit, config, _calib_fn, inplace=True)
     duration_inplace_true = time.perf_counter() - start

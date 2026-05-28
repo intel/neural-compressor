@@ -24,9 +24,9 @@ import string
 import tempfile
 import time
 
+import jax
 import keras
 import pytest
-from jax import clear_caches
 from jax_test_utility import compute_model_hash, load_image, load_model_from_preset
 from keras_hub.models import Gemma3CausalLM
 
@@ -181,7 +181,7 @@ def test_inplace_false(dynamic, random_string):
     hash_before_quantization = compute_model_hash(gemma)
 
     # inplace=False, measure time
-    clear_caches()
+    jax.clear_caches()
     start = time.perf_counter()
     gemma_q = quantize_model(gemma, config, _calib_fn, inplace=False)
     duration_inplace_false = time.perf_counter() - start
@@ -196,7 +196,7 @@ def test_inplace_false(dynamic, random_string):
     assert hash_quantized != hash_before_quantization, "Quantized model should differ from the original"
 
     # inplace=True, measure time
-    clear_caches()
+    jax.clear_caches()
     start = time.perf_counter()
     gemma_q = quantize_model(gemma, config, _calib_fn, inplace=True)
     duration_inplace_true = time.perf_counter() - start
