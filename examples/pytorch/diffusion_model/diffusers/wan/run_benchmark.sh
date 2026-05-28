@@ -149,6 +149,18 @@ function init_params {
         limit="$2"
         shift 2
       ;;
+      --mxfp8_chunk_rows=*)
+        mxfp8_chunk_rows="${1#*=}"
+        shift
+      ;;
+      --mxfp8_chunk_rows)
+        mxfp8_chunk_rows="$2"
+        shift 2
+      ;;
+      --disable_mxfp8_inplace_qdq)
+        disable_mxfp8_inplace_qdq=true
+        shift
+      ;;
       --accuracy)
         accuracy=true
         shift
@@ -167,6 +179,7 @@ function run_benchmark {
   tuned_checkpoint=${tuned_checkpoint:="./tmp_autoround"}
   output_video_path=${output_video_path:="./tmp_video"}
   accuracy=${accuracy:=false}
+  disable_mxfp8_inplace_qdq=${disable_mxfp8_inplace_qdq:=false}
 
   if [[ ! "${output_video_path}" = /* ]]; then
     output_video_path=$(realpath -s "$(pwd)/${output_video_path}")
@@ -237,6 +250,12 @@ function run_benchmark {
     fi
     if [ -n "$1" ]; then
       cmd+=(--dimension "$1")
+    fi
+    if [ -n "${mxfp8_chunk_rows}" ]; then
+      cmd+=(--mxfp8_chunk_rows "${mxfp8_chunk_rows}")
+    fi
+    if [ "${disable_mxfp8_inplace_qdq}" = "true" ]; then
+      cmd+=(--disable_mxfp8_inplace_qdq)
     fi
 
     printf '%q ' "${cmd[@]}"
