@@ -44,8 +44,7 @@ Module Contents
    :type quant_config: BaseConfig
    :param calib_function: Function used for model calibration, required for static quantization.
    :type calib_function: Callable, optional
-   :param inplace: When True, the original model is modified in-place and should not be used afterward. A value of
-                   False is not yet supported.
+   :param inplace: When True, the original model is modified in-place and should not be used afterward. False creates a copy of original model
    :type inplace: bool
 
    :returns: The quantized model.
