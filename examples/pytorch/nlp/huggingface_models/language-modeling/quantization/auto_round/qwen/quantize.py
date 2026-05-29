@@ -116,13 +116,14 @@ def quant_model(args):
         scheme=scheme,
         enable_torch_compile=True,
         iters=iters,
-        fp_layers=config["fp_layers"],
+        ignore_layers=config["fp_layers"],
         export_format=args.export_format,
         disable_opt_rtn=True,
         low_gpu_mem_usage=True,
         static_kv_dtype=static_kv_dtype,
         static_attention_dtype=args.static_attention_dtype,
         output_dir=output_dir,
+        device_map=args.device_map,
         reloading=False,
     )
 
@@ -159,7 +160,7 @@ if __name__ == "__main__":
         "--export_format",
         type=str,
         choices=["auto_round", "llm_compressor"],
-        default="auto_round",
+        default="llm_compressor",
         help="Export format for the quantized model. Options are 'auto_round' or 'llm_compressor'.",
     )
     parser.add_argument(
@@ -198,6 +199,12 @@ if __name__ == "__main__":
         type=str,
         default="./",
         help="Directory to save the quantized model.",
+    )
+    parser.add_argument(
+        "--device_map", 
+        type=str, 
+        default="auto", 
+        help="device map for model",
     )
 
     args = parser.parse_args()

@@ -80,7 +80,7 @@ def quant_model(args):
         scheme=scheme,
         enable_torch_compile=args.enable_torch_compile,
         iters=iters,
-        fp_layers=config["fp_layers"],
+        ignore_layers=config["fp_layers"],
         export_format=args.export_format,
         output_dir=output_dir,
         low_gpu_mem_usage=True,

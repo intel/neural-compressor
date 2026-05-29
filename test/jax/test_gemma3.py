@@ -19,10 +19,12 @@ import os
 import random
 import string
 import tempfile
+import time
 
+import jax
 import keras
 import pytest
-from jax_test_utility import load_image, load_model_from_preset
+from jax_test_utility import compute_model_hash, load_image, load_model_from_preset
 from keras_hub.models import Gemma3CausalLM
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
@@ -69,7 +71,7 @@ def test_text_prompt(random_string, quantization_dtype, dynamic):
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=True, const_weight=True
         )
-        gemma_q = quantize_model(gemma, config, calib_fn)
+        gemma_q = quantize_model(gemma, config, calib_fn, inplace=False)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
@@ -121,3 +123,82 @@ def test_image_recognition(colva_beach_sq, quantization_dtype, dynamic):
     elements_in_the_picture = ["beach", "chair", "tree", "building", "sea"]
     matches = sum(1 for element in elements_in_the_picture if element in answer.lower())
     assert matches >= 3, f"Expected at least 3 elements from {elements_in_the_picture} in answer (found {matches})."
+
+
+def test_static_quantization_with_incomplete_calibration(random_string, colva_beach_sq, quantization_dtype):
+    model_dtype = "bfloat16"
+    gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_4b-v1", model_dtype)
+
+    # Run calibration without image in input, so vision layer won't activate during calibration
+    def calib_text_fn(model):
+        _ = model.generate(random_string, max_length=100)
+
+    config = StaticQuantConfig(
+        weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=False, const_weight=False
+    )
+    gemma_q = quantize_model(gemma, config, calib_text_fn)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
+        keras.saving.save_model(gemma_q, save_path)
+        gemma_q_loaded = keras.saving.load_model(save_path)
+
+    answer = gemma_q_loaded.generate(
+        {
+            "images": colva_beach_sq,
+            "prompts": "Enumerate all elements in the picture: <start_of_image>?",
+        },
+        max_length=400,
+        strip_prompt=True,
+    )
+    print(f"Gemma answer: {answer}")
+    assert len(answer) > 0
+
+    elements_in_the_picture = ["beach", "chair", "tree", "building", "sea"]
+    matches = sum(1 for element in elements_in_the_picture if element in answer.lower())
+    assert matches >= 3, f"Expected at least 3 elements from {elements_in_the_picture} in answer (found {matches})."
+
+
+@pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
+def test_inplace_false(dynamic, random_string):
+    quantization_dtype = "fp8_e4m3"
+    model_dtype = "bfloat16"
+    gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_270m", model_dtype)
+
+    def calib_fn(model):
+        _ = model.generate(random_string, max_length=100)
+
+    if dynamic:
+        config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
+        _calib_fn = None
+    else:
+        config = StaticQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
+        _calib_fn = calib_fn
+
+    hash_before_quantization = compute_model_hash(gemma)
+
+    # inplace=False, measure time
+    jax.clear_caches()
+    start = time.perf_counter()
+    gemma_q = quantize_model(gemma, config, _calib_fn, inplace=False)
+    duration_inplace_false = time.perf_counter() - start
+
+    # Assert original model is untouched
+    hash_after_quantization = compute_model_hash(gemma)
+    assert hash_before_quantization == hash_after_quantization, "Original model was modified despite inplace=False"
+
+    # Assert quantized model is not original
+    assert gemma_q is not gemma
+    hash_quantized = compute_model_hash(gemma_q)
+    assert hash_quantized != hash_before_quantization, "Quantized model should differ from the original"
+
+    # inplace=True, measure time
+    jax.clear_caches()
+    start = time.perf_counter()
+    gemma_q = quantize_model(gemma, config, _calib_fn, inplace=True)
+    duration_inplace_true = time.perf_counter() - start
+
+    # Compare quantization performance
+    duration_difference = duration_inplace_false - duration_inplace_true
+    performance_hit = (duration_difference / duration_inplace_true) * 100
+    print(f"performance hit: {performance_hit:.2f}%")

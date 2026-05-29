@@ -42,7 +42,8 @@ def _read_value(var_or_array, is_const):
 @pytest.mark.parametrize("dynamic", [False, True], ids=["dynamic=False", "dynamic=True"])
 @pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
 @pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
-def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, model_dtype, dynamic, c_scale, c_weight):
+@pytest.mark.parametrize("inplace", [False, True], ids=["inplace=False", "inplace=True"])
+def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, model_dtype, dynamic, c_scale, c_weight, inplace):
     """Test accuracy on a simple linear model."""
 
     # Build model
@@ -83,7 +84,7 @@ def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, model_dtyp
             const_scale=c_scale,
             const_weight=c_weight,
         )
-        q_model = quantize_model(model, config)
+        q_model = quantize_model(model, config, inplace=inplace)
     else:
         config = StaticQuantConfig(
             weight_dtype=weight_dtype,
@@ -91,7 +92,7 @@ def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, model_dtyp
             const_scale=c_scale,
             const_weight=c_weight,
         )
-        q_model = quantize_model(model, config, calib_function)
+        q_model = quantize_model(model, config, calib_function, inplace=inplace)
 
     # Calculate expected outputs and scales
     expected_output, expected_activation_scales, expected_weight_scales = compute_expected_qdq_dense_output(
