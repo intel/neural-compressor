@@ -3,17 +3,14 @@
 """Tests for ViT model after quantization."""
 
 import os
-
-os.environ["KERAS_BACKEND"] = "jax"
-
 import tempfile
+import time
 
 import jax
 import jax.numpy as jnp
 import keras
 import pytest
-from jax import random
-from jax_test_utility import load_image, load_model_from_preset
+from jax_test_utility import compute_model_hash, load_image, load_model_from_preset
 from keras.applications.imagenet_utils import decode_predictions
 from keras_hub.models import ViTImageClassifier
 
@@ -30,8 +27,8 @@ def colva_beach_sq():
 
 @pytest.fixture(scope="module")
 def random_image():
-    key = random.PRNGKey(0)
-    img = random.randint(key, shape=(1, 224, 224, 3), minval=0, maxval=256, dtype=jnp.uint8)
+    key = jax.random.PRNGKey(0)
+    img = jax.random.randint(key, shape=(1, 224, 224, 3), minval=0, maxval=256, dtype=jnp.uint8)
     return img
 
 
@@ -96,7 +93,7 @@ def test_image_classification(
             const_scale=c_scale,
             const_weight=c_weight,
         )
-        vit_q = quantize_model(vit, config, calib_fn)
+        vit_q = quantize_model(vit, config, calib_fn, inplace=False)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "vit_quantized.keras")
@@ -117,3 +114,48 @@ def test_image_classification(
     assert (
         error < 0.02
     ), f"Expected top-1 probability around {expected_prob}, but got {actual_prob}, absolute error: {error}"
+
+
+@pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
+def test_inplace_false(dynamic, random_image):
+    quantization_dtype = "fp8_e4m3"
+    model_dtype = "bfloat16"
+
+    def calib_fn(model):
+        _ = model.predict(random_image)
+
+    vit = load_model_from_preset(ViTImageClassifier, "vit_base_patch16_224_imagenet", model_dtype)
+    if dynamic:
+        config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
+        _calib_fn = None
+    else:
+        config = StaticQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
+        _calib_fn = calib_fn
+
+    hash_before_quantization = compute_model_hash(vit)
+
+    # inplace=False, measure time
+    jax.clear_caches()
+    start = time.perf_counter()
+    vit_q = quantize_model(vit, config, _calib_fn, inplace=False)
+    duration_inplace_false = time.perf_counter() - start
+
+    # Assert original model is untouched
+    hash_after_quantization = compute_model_hash(vit)
+    assert hash_before_quantization == hash_after_quantization, "Original model was modified despite inplace=False"
+
+    # Assert quantized model is not original
+    assert vit_q is not vit
+    hash_quantized = compute_model_hash(vit_q)
+    assert hash_quantized != hash_before_quantization, "Quantized model should differ from the original"
+
+    # inplace=True, measure time
+    jax.clear_caches()
+    start = time.perf_counter()
+    vit_q = quantize_model(vit, config, _calib_fn, inplace=True)
+    duration_inplace_true = time.perf_counter() - start
+
+    # Compare quantization performance
+    duration_difference = duration_inplace_false - duration_inplace_true
+    performance_hit = (duration_difference / duration_inplace_true) * 100
+    print(f"performance hit: {performance_hit:.2f}%")

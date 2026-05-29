@@ -10,17 +10,13 @@ Key FP8 quantization insights:
 - Scale factors determine the range mapping to FP8's limited precision
 """
 
-import os
-
-import pytest
-from jax_test_utility import compute_expected_qdq_dense_output
-
-os.environ["KERAS_BACKEND"] = "jax"
 from functools import reduce
 
 import jax
 import keras
+import pytest
 from jax import numpy as jnp
+from jax_test_utility import compute_expected_qdq_dense_output
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
 from neural_compressor.jax.utils.utility import dtype_mapping
@@ -40,6 +36,7 @@ def _read_value(var_or_array, is_const):
 @pytest.mark.parametrize("dynamic", [False, True], ids=["dynamic=False", "dynamic=True"])
 @pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
 @pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
+@pytest.mark.parametrize("inplace", [False, True], ids=["inplace=False", "inplace=True"])
 @pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
 @pytest.mark.parametrize(
     "weight_dtype,activation_dtype",
@@ -47,7 +44,7 @@ def _read_value(var_or_array, is_const):
     ids=[f"weight_dtype={w}-activation_dtype={a}" for w, a in _dtype_pairs],
 )
 @pytest.mark.CI_test
-def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, model_dtype, weight_dtype, activation_dtype):
+def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model_dtype, weight_dtype, activation_dtype):
     """Test accuracy on a simple linear model."""
 
     # Build model
@@ -88,7 +85,7 @@ def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, model_dtype, w
             const_scale=c_scale,
             const_weight=c_weight,
         )
-        q_model = quantize_model(model, config)
+        q_model = quantize_model(model, config, inplace=inplace)
     else:
         config = StaticQuantConfig(
             weight_dtype=weight_dtype,
@@ -96,7 +93,7 @@ def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, model_dtype, w
             const_scale=c_scale,
             const_weight=c_weight,
         )
-        q_model = quantize_model(model, config, calib_function)
+        q_model = quantize_model(model, config, calib_function, inplace=inplace)
 
     # Calculate expected outputs and scales
     expected_output, expected_activation_scales, expected_weight_scales = compute_expected_qdq_dense_output(
