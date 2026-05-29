@@ -3,9 +3,6 @@
 """Tests for ViT model after quantization."""
 
 import os
-
-os.environ["KERAS_BACKEND"] = "jax"
-
 import tempfile
 import time
 

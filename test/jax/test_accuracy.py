@@ -10,18 +10,13 @@ Key FP8 quantization insights:
 - Scale factors determine the range mapping to FP8's limited precision
 """
 
-import os
-
-import pytest
-from jax_test_utility import compute_expected_qdq_dense_output
-
-os.environ["KERAS_BACKEND"] = "jax"
 from functools import reduce
 
 import jax
 import keras
-import ml_dtypes
+import pytest
 from jax import numpy as jnp
+from jax_test_utility import compute_expected_qdq_dense_output
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
 from neural_compressor.jax.utils.utility import dtype_mapping

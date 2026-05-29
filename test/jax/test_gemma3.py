@@ -16,9 +16,6 @@
 """Tests for Gemma model after quantization."""
 
 import os
-
-os.environ["KERAS_BACKEND"] = "jax"
-
 import random
 import string
 import tempfile
