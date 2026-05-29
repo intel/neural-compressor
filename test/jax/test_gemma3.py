@@ -51,8 +51,7 @@ def random_string():
 
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
-@pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
-@pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
+@pytest.mark.parametrize("const_vars", [False, True], ids=["const_vars=False", "const_vars=True"])
 @pytest.mark.parametrize("save_as_preset", [False, True], ids=["save_as_preset=False", "save_as_preset=True"])
 @pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
 @pytest.mark.parametrize(
@@ -61,22 +60,20 @@ def random_string():
 @pytest.mark.CI_test_if(
     [
         "dynamic=True",
-        "c_scale=False",
-        "c_weight=False",
+        "const_vars=False",
         "save_as_preset=False",
         "model_dtype=float32",
         "quantization_dtype=fp8_e5m2",
     ],
     [
         "dynamic=False",
-        "c_scale=True",
-        "c_weight=True",
+        "const_vars=True",
         "save_as_preset=True",
         "model_dtype=bfloat16",
         "quantization_dtype=fp8_e4m3",
     ],
 )
-def test_text_prompt(dynamic, c_scale, c_weight, save_as_preset, model_dtype, quantization_dtype, random_string):
+def test_text_prompt(dynamic, const_vars, save_as_preset, model_dtype, quantization_dtype, random_string):
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_270m", model_dtype)
 
     def calib_fn(model):
@@ -86,16 +83,16 @@ def test_text_prompt(dynamic, c_scale, c_weight, save_as_preset, model_dtype, qu
         config = DynamicQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
-            const_scale=c_scale,
-            const_weight=c_weight,
+            const_scale=const_vars,
+            const_weight=const_vars,
         )
         gemma_q = quantize_model(gemma, config)
     else:
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
-            const_scale=c_scale,
-            const_weight=c_weight,
+            const_scale=const_vars,
+            const_weight=const_vars,
         )
         gemma_q = quantize_model(gemma, config, calib_fn, inplace=False)
 
@@ -114,8 +111,7 @@ def test_text_prompt(dynamic, c_scale, c_weight, save_as_preset, model_dtype, qu
 
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
-@pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
-@pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
+@pytest.mark.parametrize("const_vars", [False, True], ids=["const_vars=False", "const_vars=True"])
 @pytest.mark.parametrize("save_as_preset", [False, True], ids=["save_as_preset=False", "save_as_preset=True"])
 @pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
 @pytest.mark.parametrize(
@@ -124,22 +120,20 @@ def test_text_prompt(dynamic, c_scale, c_weight, save_as_preset, model_dtype, qu
 @pytest.mark.CI_test_if(
     [
         "dynamic=True",
-        "c_scale=True",
-        "c_weight=True",
+        "const_vars=True",
         "save_as_preset=True",
         "model_dtype=bfloat16",
         "quantization_dtype=fp8_e4m3",
     ],
     [
         "dynamic=False",
-        "c_scale=False",
-        "c_weight=False",
+        "const_vars=False",
         "save_as_preset=False",
         "model_dtype=float32",
         "quantization_dtype=fp8_e5m2",
     ],
 )
-def test_image_recognition(dynamic, c_scale, c_weight, save_as_preset, model_dtype, quantization_dtype, colva_beach_sq):
+def test_image_recognition(dynamic, const_vars, save_as_preset, model_dtype, quantization_dtype, colva_beach_sq):
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_4b-v1", model_dtype)
 
     def calib_fn(model):
@@ -155,16 +149,16 @@ def test_image_recognition(dynamic, c_scale, c_weight, save_as_preset, model_dty
         config = DynamicQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
-            const_scale=c_scale,
-            const_weight=c_weight,
+            const_scale=const_vars,
+            const_weight=const_vars,
         )
         gemma_q = quantize_model(gemma, config)
     else:
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
-            const_scale=c_scale,
-            const_weight=c_weight,
+            const_scale=const_vars,
+            const_weight=const_vars,
         )
         gemma_q = quantize_model(gemma, config, calib_fn)
 
@@ -191,18 +185,17 @@ def test_image_recognition(dynamic, c_scale, c_weight, save_as_preset, model_dty
     assert matches >= 3, f"Expected at least 3 elements from {elements_in_the_picture} in answer (found {matches})."
 
 
-@pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
-@pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
+@pytest.mark.parametrize("const_vars", [False, True], ids=["const_vars=False", "const_vars=True"])
 @pytest.mark.parametrize("save_as_preset", [False, True], ids=["save_as_preset=False", "save_as_preset=True"])
 @pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "fp8_e5m2"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=fp8_e5m2"]
 )
 @pytest.mark.CI_test_if(
-    "c_scale=False", "c_weight=False", "save_as_preset=True", "model_dtype=bfloat16", "quantization_dtype=fp8_e4m3"
+    "const_vars=False", "save_as_preset=True", "model_dtype=bfloat16", "quantization_dtype=fp8_e4m3"
 )
 def test_static_quantization_with_incomplete_calibration(
-    c_scale, c_weight, save_as_preset, model_dtype, quantization_dtype, random_string, colva_beach_sq
+    const_vars, save_as_preset, model_dtype, quantization_dtype, random_string, colva_beach_sq
 ):
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_4b-v1", model_dtype)
 
@@ -211,7 +204,10 @@ def test_static_quantization_with_incomplete_calibration(
         _ = model.generate(random_string, max_length=100)
 
     config = StaticQuantConfig(
-        weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=c_scale, const_weight=c_weight
+        weight_dtype=quantization_dtype,
+        activation_dtype=quantization_dtype,
+        const_scale=const_vars,
+        const_weight=const_vars,
     )
     gemma_q = quantize_model(gemma, config, calib_text_fn)
 

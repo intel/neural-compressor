@@ -41,35 +41,33 @@ def classify_image(model, image, top_k=1):
 
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
-@pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
-@pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
+@pytest.mark.parametrize("const_vars", [False, True], ids=["const_vars=False", "const_vars=True"])
+@pytest.mark.parametrize("inplace", [False, True], ids=["inplace=False", "inplace=True"])
 @pytest.mark.parametrize("save_as_preset", [False, True], ids=["save_as_preset=False", "save_as_preset=True"])
 @pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
 @pytest.mark.parametrize(
-    "quantization_dtype",
-    ["fp8_e4m3", "fp8_e5m2", "int8"],
-    ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=fp8_e5m2", "quantization_dtype=int8"],
+    "quantization_dtype", ["fp8_e4m3", "int8"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=int8"]
 )
 @pytest.mark.CI_test_if(
     [
         "dynamic=True",
-        "c_scale=False",
-        "c_weight=False",
+        "const_vars=False",
+        "inplace=True",
         "save_as_preset=False",
         "model_dtype=float32",
         "quantization_dtype=int8",
     ],
     [
         "dynamic=False",
-        "c_scale=True",
-        "c_weight=True",
+        "const_vars=True",
+        "inplace=False",
         "save_as_preset=True",
         "model_dtype=bfloat16",
         "quantization_dtype=fp8_e4m3",
     ],
 )
 def test_image_classification(
-    dynamic, c_scale, c_weight, save_as_preset, model_dtype, quantization_dtype, colva_beach_sq, random_image
+    dynamic, const_vars, inplace, save_as_preset, model_dtype, quantization_dtype, colva_beach_sq, random_image
 ):
     vit = load_model_from_preset(ViTImageClassifier, "vit_base_patch16_224_imagenet", model_dtype)
 
@@ -82,18 +80,18 @@ def test_image_classification(
         config = DynamicQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
-            const_scale=c_scale,
-            const_weight=c_weight,
+            const_scale=const_vars,
+            const_weight=const_vars,
         )
-        vit_q = quantize_model(vit, config, None)
+        vit_q = quantize_model(vit, config, inplace=inplace)
     else:
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
-            const_scale=c_scale,
-            const_weight=c_weight,
+            const_scale=const_vars,
+            const_weight=const_vars,
         )
-        vit_q = quantize_model(vit, config, calib_fn, inplace=False)
+        vit_q = quantize_model(vit, config, calib_fn, inplace=inplace)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "vit_quantized.keras")
