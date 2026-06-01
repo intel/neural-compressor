@@ -1,5 +1,5 @@
 #!/bin/bash
-set -euo pipefail
+set -eo pipefail
 
 # Usage: ./run_evaluation.sh -m [model_path] -s [mxfp4|mxfp8] -t [task_name] -tp [tensor_parallel_size] -b [batch_size]
 # Default values
@@ -185,15 +185,16 @@ echo "Output directory: ${OUTPUT_DIR}"
 
 # Export vLLM environment variables
 export VLLM_WORKER_MULTIPROC_METHOD=spawn
-export VLLM_ENABLE_AR_EXT=$VLLM_ENABLE_AR_EXT
-export VLLM_AR_MXFP4_MODULAR_MOE=$VLLM_AR_MXFP4_MODULAR_MOE
-export VLLM_MXFP4_PRE_UNPACK_TO_FP8=$VLLM_MXFP4_PRE_UNPACK_TO_FP8
-export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=$VLLM_MXFP4_PRE_UNPACK_WEIGHTS
-export VLLM_ENABLE_STATIC_MOE=$VLLM_ENABLE_STATIC_MOE
-export VLLM_USE_DEEP_GEMM=$VLLM_USE_DEEP_GEMM
+export VLLM_ENABLE_AR_EXT=${VLLM_ENABLE_AR_EXT:-}
+export VLLM_AR_MXFP4_MODULAR_MOE=${VLLM_AR_MXFP4_MODULAR_MOE:-}
+export VLLM_MXFP4_PRE_UNPACK_TO_FP8=${VLLM_MXFP4_PRE_UNPACK_TO_FP8:-}
+export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=${VLLM_MXFP4_PRE_UNPACK_WEIGHTS:-}
+export VLLM_ENABLE_STATIC_MOE=${VLLM_ENABLE_STATIC_MOE:-}
+export VLLM_USE_DEEP_GEMM=${VLLM_USE_DEEP_GEMM:-}
 export VLLM_ENABLE_V1_MULTIPROCESSING=0
 # For https://github.com/yiliu30/vllm-qdq-plugin.git CT format eval
 export VLLM_QDQ=1
+export VLLM_MXFP4_USE_MARLIN=1
 # A100 need to close torch compile
 # export TORCH_COMPILE_DISABLE=1
 
@@ -314,7 +315,7 @@ run_ruler_eval() {
     echo "Running Ruler evaluation against vLLM server..."
     lm_eval \
         --model local-completions \
-        --model_args "model=$MODEL_PATH,base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=1,max_retries=50,timeout=500,tokenized_requests=False,max_gen_toks=${max_gen_toks}" \
+        --model_args "model=$MODEL_PATH,base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=1,max_retries=50,timeout=500,tokenized_requests=False,max_gen_toks=${max_gen_toks},max_length=${max_length}" \
         --tasks $TASK_NAME \
         --metadata="{\"max_seq_lengths\":[${SEQ_LENGTHS}],\"tokenizer\":\"${MODEL_PATH}\"}" \
         --gen_kwargs "max_gen_toks=${max_gen_toks}" \

@@ -89,7 +89,11 @@ fi
 
 # Set common environment variables
 export VLLM_ENABLE_AR_EXT=1
-export TORCH_COMPILE_DISABLE=1
+# A100 need to close torch compile
+# export TORCH_COMPILE_DISABLE=1
+# For https://github.com/yiliu30/vllm-qdq-plugin.git CT format eval
+export VLLM_QDQ=1
+export VLLM_MXFP4_USE_MARLIN=1
 
 # Function to run evaluation for specific tasks
 run_evaluation() {
