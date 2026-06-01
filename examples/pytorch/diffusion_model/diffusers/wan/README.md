@@ -7,12 +7,13 @@ This example provides a unified Wan entry for quantization and evaluation, with 
 ## 1. Environment
 
 ```shell
-pip install -r requirements.txt
 # Use latest dev branch if needed before release
 # INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@master
 # pip install git+https://github.com/intel/auto-round.git@main
 pip install neural-compressor-pt
 pip install auto-round
+# evaluation
+pip install VBench
 ```
 
 ## 2. Prepare Model
@@ -40,9 +41,6 @@ huggingface-cli download Wan-AI/Wan2.2-I2V-A14B-Diffusers \
 Clone VBench to prepare the required dataset, then download i2v data:
 
 ```bash
-# recommended: install VBench from pip
-python3 -m pip install VBench
-
 # required for dataset preparation
 git clone https://github.com/Vchitect/VBench.git
 cd VBench
