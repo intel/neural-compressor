@@ -9,11 +9,8 @@ preserving both the quantization configuration and the quantized behavior.
 import os
 import tempfile
 
-import pytest
-
-os.environ["KERAS_BACKEND"] = "jax"
-
 import keras
+import pytest
 from jax import numpy as jnp
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model

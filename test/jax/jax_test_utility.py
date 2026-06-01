@@ -3,6 +3,8 @@
 This file provides helper functions used by tests in test/jax/
 """
 
+import hashlib
+import json
 import os
 
 import ml_dtypes
@@ -118,3 +120,12 @@ def load_model_from_preset(model_type, preset, dtype="float32"):
         return model_type.from_preset(model_path, dtype=dtype)
     else:
         raise FileNotFoundError(f"Model path does not exist: {model_path}")
+
+
+def compute_model_hash(model):
+    """Compute a SHA-256 hash of the model's config and all variable values."""
+    h = hashlib.sha256()
+    h.update(json.dumps(model.get_config(), sort_keys=True, default=str).encode())
+    for w in model.weights:
+        h.update(w.numpy().tobytes())
+    return h.hexdigest()
