@@ -50,7 +50,8 @@ pip install neural-compressor-pt
 # Framework extension API + TensorFlow dependency
 pip install neural-compressor-tf
 # Framework extension API + JAX dependency, available since v3.8
-pip install neural-compressor-jax
+# JAX only support build from source installation method before [PyPI support](https://github.com/pypi/support/issues/10012) is available
+INC_JAX_ONLY=1 pip install . 
 ```    
 **Note**: Further installation methods can be found under [Installation Guide](./docs/source/installation_guide.md). check out our [FAQ](./docs/source/faq.md) for more details.
 
