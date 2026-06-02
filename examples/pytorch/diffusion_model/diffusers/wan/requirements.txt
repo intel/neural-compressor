@@ -1,0 +1,21 @@
+# Core runtime
+numpy
+torch
+torchvision
+diffusers
+transformers
+accelerate
+huggingface_hub
+safetensors
+
+# Quantization stack
+neural-compressor-pt
+auto-round
+
+# Utilities used by example scripts
+pillow
+einops
+requests
+
+# Evaluation package (dataset/eval helpers)
+VBench

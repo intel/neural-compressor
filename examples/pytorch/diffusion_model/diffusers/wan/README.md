@@ -10,10 +10,9 @@ This example provides a unified Wan entry for quantization and evaluation, with 
 # Use latest dev branch if needed before release
 # INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@master
 # pip install git+https://github.com/intel/auto-round.git@main
-pip install neural-compressor-pt
-pip install auto-round
-# evaluation
-pip install VBench
+
+# install all runtime dependencies (including evaluation package VBench)
+pip install -r requirements.txt
 ```
 
 ## 2. Prepare Model
@@ -26,14 +25,15 @@ Use a local Wan diffusers model path, for example:
 Download example (from Hugging Face):
 
 ```bash
+# optional: update CLI to latest version
 pip install -U "huggingface_hub[cli]"
 
 # t2v model
-huggingface-cli download Wan-AI/Wan2.2-T2V-A14B-Diffusers \
+hf download Wan-AI/Wan2.2-T2V-A14B-Diffusers \
   --local-dir /path/to/Wan2.2-T2V-A14B-Diffusers
 
 # i2v model
-huggingface-cli download Wan-AI/Wan2.2-I2V-A14B-Diffusers \
+hf download Wan-AI/Wan2.2-I2V-A14B-Diffusers \
   --local-dir /path/to/Wan2.2-I2V-A14B-Diffusers
 ```
 
