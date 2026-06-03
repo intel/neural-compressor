@@ -126,9 +126,9 @@ class DynamicQuantConfig(BaseConfig):
             const_weight (bool): Whether to use constant quantized weights.
             white_list (list): A list of supported operators of this algorithm.
             include (Optional[List[str]]): List of layer class names or path patterns to include.
-                When set, only matching layers are quantized. Supports fnmatch patterns.
+                When set, only matching layers are quantized. Supports regular expression patterns.
             exclude (Optional[List[str]]): List of layer class names or path patterns to exclude.
-                Matching layers are skipped. Supports fnmatch patterns.
+                Matching layers are skipped. Supports regular expression patterns.
 
         Returns:
             None: Initializes the configuration instance.
