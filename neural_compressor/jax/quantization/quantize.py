@@ -20,7 +20,7 @@ import keras
 from keras_hub.src.models.causal_lm import CausalLM
 
 from neural_compressor.common import logger
-from neural_compressor.common.base_config import BaseConfig
+from neural_compressor.common.base_config import BaseConfig, ComposableConfig
 from neural_compressor.common.utils import STATIC_QUANT, Mode, log_process
 from neural_compressor.jax.quantization.saving import (
     WRAPPER_MAPPING,
