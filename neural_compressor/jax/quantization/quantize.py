@@ -14,13 +14,13 @@
 """Intel Neural Compressor JAX quantization base API."""
 
 from collections import OrderedDict
-from typing import Any, Callable, Dict, Tuple, Union
+from typing import Callable, Dict, Tuple
 
 import keras
 from keras_hub.src.models.causal_lm import CausalLM
 
 from neural_compressor.common import logger
-from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
+from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import STATIC_QUANT, Mode, log_process
 from neural_compressor.jax.quantization.saving import (
     WRAPPER_MAPPING,
@@ -28,6 +28,8 @@ from neural_compressor.jax.quantization.saving import (
 )
 from neural_compressor.jax.utils import algos_mapping, check_backend
 from neural_compressor.jax.utils.utility import causal_lm_make_replace_generate_function
+
+from .clone_model import clone_model
 
 
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
@@ -86,8 +88,7 @@ def quantize_model(
         quant_config (BaseConfig): Quantization configuration. Can be a single config
             or a ComposableConfig (created via config1 + config2).
         calib_function (Callable, optional): Function used for model calibration, required for static quantization.
-        inplace (bool): When True, the original model is modified in-place and should not be used afterward. A value of
-            False is not yet supported.
+        inplace (bool): When True, the original model is modified in-place and should not be used afterward. False creates a copy of original model
 
     Returns:
         keras.Model: The quantized model.
@@ -95,8 +96,7 @@ def quantize_model(
 # fmt: on
     check_backend()
     if not inplace:
-        raise NotImplementedError("Out of place quantization is not supported yet. "
-                                  "Please set parameter inplace=True for quantize_model() to modify the model in-place")
+        model = clone_model(model)
 
     # Build configs_mapping - handle ComposableConfig by calling sub-configs individually
     if isinstance(quant_config, ComposableConfig):

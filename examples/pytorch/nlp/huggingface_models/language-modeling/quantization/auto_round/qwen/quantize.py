@@ -58,7 +58,7 @@ dense_topologies_config = {
     "mxfp4": {
         "scheme": "MXFP4",
         "fp_layers": "lm_head,self_attn",
-        "iters": 0, # FIXME: use 200?
+        "iters": 200,
     },
     "mxfp4_fp8kv": {
         "scheme": "MXFP4",
@@ -116,7 +116,7 @@ def quant_model(args):
         scheme=scheme,
         enable_torch_compile=True,
         iters=iters,
-        fp_layers=config["fp_layers"],
+        ignore_layers=config["fp_layers"],
         export_format=args.export_format,
         disable_opt_rtn=True,
         low_gpu_mem_usage=True,
@@ -160,7 +160,7 @@ if __name__ == "__main__":
         "--export_format",
         type=str,
         choices=["auto_round", "llm_compressor"],
-        default="auto_round",
+        default="llm_compressor",
         help="Export format for the quantized model. Options are 'auto_round' or 'llm_compressor'.",
     )
     parser.add_argument(

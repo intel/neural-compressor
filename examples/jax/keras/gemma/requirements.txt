@@ -1,1 +1,0 @@
-neural-compressor-jax

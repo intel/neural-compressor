@@ -173,8 +173,14 @@ class SaveableLayerMixin:
         Returns:
             None: Loads variables into the layer.
         """
+
+        # In some cases load_own_variables() may be called multiple times for the same layer.
+        # Since this function modifies weights and removes variables, this behaviour causes crashes during loading.
+        # To prevent that we can check if _is_quantized is None, since this should be initial value and is
+        # modified later in this function
         if hasattr(self, "_is_quantized") and self._is_quantized is not None:
             return
+
         if self.__class__.__name__.startswith("Dynamic") or self.__class__.__name__.startswith("QDynamic"):
             # Dynamic layers are always quantized
             self._is_quantized = True
