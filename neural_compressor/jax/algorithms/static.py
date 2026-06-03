@@ -45,7 +45,7 @@ def static_quantize(
         calib_function (Optional[Callable]): Calibration function used to collect activation statistics.
 
     Returns:
-        keras.Model: The quantized model.
+        keras.Model: The model with quantized layers.
     """
     # Build set of layer paths that this algorithm should process
     layer_configs = {op_path: cfg for (op_path, _op_type), cfg in configs_mapping.items() if cfg.name == STATIC_QUANT}
