@@ -33,8 +33,8 @@ gemma_lm = Gemma3CausalLM.from_preset(args.model_path)
 print_model(gemma_lm)
 
 output = gemma_lm.generate({"prompts": "Describe the city of Berlin?"}, max_length=100)
-
 print("\nOutput before quantization:\n", output)
+
 print("\nPrepare quantization config")
 config = StaticQuantConfig(weight_dtype=args.precision, activation_dtype=args.precision)
 
