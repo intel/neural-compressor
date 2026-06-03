@@ -213,7 +213,13 @@ class DynamicQuantConfig(BaseConfig):
         Returns:
             List[Tuple[str, str]]: List of (layer path, layer class name) pairs.
         """
-        white_list = ["Dense", "EinsumDense"]
+        white_list = self.white_list
+        if white_list is None:
+            white_list = []
+        elif white_list == DEFAULT_WHITE_LIST:
+            from neural_compressor.jax.quantization.layers_dynamic import dynamic_quant_mapping
+
+            white_list = [layer_class.__name__ for layer_class in dynamic_quant_mapping.keys()]
         filter_result = []
 
         for layer in model._flatten_layers(recursive=True):
@@ -414,7 +420,13 @@ class StaticQuantConfig(BaseConfig):
         Returns:
             List[Tuple[str, str]]: List of (layer path, layer class name) pairs.
         """
-        white_list = ["Dense", "EinsumDense", "MultiHeadAttention"]
+        white_list = self.white_list
+        if white_list is None:
+            white_list = []
+        elif white_list == DEFAULT_WHITE_LIST:
+            from neural_compressor.jax.quantization.layers_static import static_quant_mapping
+
+            white_list = [layer_class.__name__ for layer_class in static_quant_mapping.keys()]
         filter_result = []
 
         for layer in model._flatten_layers(recursive=True):

@@ -51,13 +51,12 @@ def dynamic_quantize(
 
     qmodel = model
 
-    def _filter(layer_class):
-        return layer_class in dynamic_quant_mapping
-
-    def _apply_operations(layer):
+    for layer in qmodel._flatten_layers():
+        if layer.__class__ not in dynamic_quant_mapping:
+            continue
         layer_id = layer.path if layer.path else layer.name
         if layer_id not in layer_configs:
-            return
+            continue
         config = layer_configs[layer_id]
         weight_dtype = dtype_mapping[config.weight_dtype]
         activation_dtype = dtype_mapping[config.activation_dtype]
@@ -66,9 +65,5 @@ def dynamic_quantize(
         )
         layer.add_variables()
         layer.post_quantization_cleanup()
-
-    for layer in qmodel._flatten_layers():
-        if _filter(layer.__class__):
-            _apply_operations(layer)
 
     return qmodel

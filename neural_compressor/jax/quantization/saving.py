@@ -30,8 +30,6 @@ from neural_compressor.common.base_config import ComposableConfig, config_regist
 from neural_compressor.jax.quantization.config import (
     FRAMEWORK_NAME,
     BaseConfig,
-    DynamicQuantConfig,
-    StaticQuantConfig,
     _layer_matches_filter,
 )
 from neural_compressor.jax.utils.utility import check_backend, dtype_mapping, iterate_over_layers
@@ -175,6 +173,8 @@ class SaveableLayerMixin:
         Returns:
             None: Loads variables into the layer.
         """
+        if hasattr(self, "_is_quantized") and self._is_quantized is not None:
+            return
         if self.__class__.__name__.startswith("Dynamic") or self.__class__.__name__.startswith("QDynamic"):
             # Dynamic layers are always quantized
             self._is_quantized = True
