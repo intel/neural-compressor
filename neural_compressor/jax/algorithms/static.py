@@ -52,7 +52,6 @@ def static_quantize(
 
     qmodel = model
 
-    # Phase 1: Prepare layers and add observers
     for layer in qmodel._flatten_layers():
         layer_id = layer.path if layer.path else layer.name
         if layer_id not in layer_configs:
@@ -65,10 +64,8 @@ def static_quantize(
         )
         layer.add_observers()
 
-    # Phase 2: Run calibration on original model with observers
     calib_function(qmodel)
 
-    # Phase 3: Convert observed layers to quantized form
     operations = [
         lambda layer: layer.add_variables(),
         lambda layer: layer.convert(),

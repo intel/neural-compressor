@@ -48,19 +48,15 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
 def _build_configs_mapping_composable(model, quant_config: ComposableConfig) -> OrderedDict:
     """Build a unified configs_mapping from a ComposableConfig.
 
-    Calls each sub-config's to_config_mapping() individually (bypassing the buggy
-    ComposableConfig.to_config_mapping in base_config.py) and merges results.
-    Validates that no layer is assigned to multiple sub-configs.
+    Calls each sub-config's to_config_mapping() individually and merges results.
+    Resolves conflicts by last-config-wins.
 
     Args:
         model: Keras model to quantize.
         quant_config: ComposableConfig containing multiple sub-configs.
 
     Returns:
-        OrderedDict mapping (op_name, op_type) to BaseConfig.
-
-    Raises:
-        ValueError: If a layer appears in more than one sub-config.
+        OrderedDict mapping (op_name, op_type) to config.
     """
     configs_mapping = OrderedDict()
     for sub_config in quant_config.config_list:
@@ -109,7 +105,7 @@ def quantize_model(
     if isinstance(model, CausalLM):
         causal_lm_make_replace_generate_function(model)
 
-    # Execute algorithms - static first to ensure calibration runs on original FP32 model
+    # Execute algorithms - static first to ensure calibration runs on original FP32/BF16 model
     algo_order = sorted(algos_mapping.keys(), key=lambda name: (0 if name == STATIC_QUANT else 1))
     for algo_name in algo_order:
         algo_func = algos_mapping[algo_name]
@@ -121,7 +117,6 @@ def quantize_model(
     if isinstance(model, CausalLM):
         causal_lm_make_replace_generate_function(model, revert=True)
 
-    # Centralized model wrapping
     if hasattr(model, "backbone"):
         model._tracker.unlock()
         model.backbone = KerasQuantizedModelBackboneWrapper(model.backbone, quant_config)
