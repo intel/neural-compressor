@@ -54,8 +54,6 @@ def static_quantize(
 
     # Phase 1: Prepare layers and add observers
     for layer in qmodel._flatten_layers():
-        if layer.__class__ not in static_quant_mapping:
-            continue
         layer_id = layer.path if layer.path else layer.name
         if layer_id not in layer_configs:
             continue

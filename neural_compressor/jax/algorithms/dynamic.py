@@ -52,8 +52,6 @@ def dynamic_quantize(
     qmodel = model
 
     for layer in qmodel._flatten_layers():
-        if layer.__class__ not in dynamic_quant_mapping:
-            continue
         layer_id = layer.path if layer.path else layer.name
         if layer_id not in layer_configs:
             continue
