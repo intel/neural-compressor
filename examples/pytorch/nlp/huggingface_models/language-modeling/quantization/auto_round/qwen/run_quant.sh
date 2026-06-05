@@ -61,7 +61,7 @@ done
 [ -z "$MODEL" ] && echo "Error: --model is required" && usage
 [ -z "$TARGET" ] && echo "Error: -t is required" && usage
 [ -z "$OUTPUT_DIR" ] && echo "Error: --output_dir is required" && usage
-
+export AR_DYNAMO_CACHE_SIZE_LIMIT=8 # for tuning duration regression test
 python quantize.py \
   --model "$MODEL" \
   -t "$TARGET" \
