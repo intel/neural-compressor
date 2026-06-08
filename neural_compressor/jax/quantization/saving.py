@@ -27,12 +27,13 @@ from keras_hub.src.utils.preset_utils import get_preset_saver
 
 from neural_compressor.common import logger
 from neural_compressor.common.base_config import ComposableConfig, config_registry
+from neural_compressor.common.utils import DYNAMIC_QUANT, STATIC_QUANT
 from neural_compressor.jax.quantization.config import (
     FRAMEWORK_NAME,
     BaseConfig,
     _layer_matches_filter,
 )
-from neural_compressor.jax.utils.utility import check_backend, dtype_mapping, iterate_over_layers
+from neural_compressor.jax.utils.utility import check_backend, dtype_mapping
 
 
 def quant_config_to_json_object(quant_config: BaseConfig) -> dict:
@@ -522,16 +523,16 @@ def prepare_deserialized_quantized_model(
     qmodel = model
     for layer in qmodel._flatten_layers():
         for cfg in config_list:
-            if cfg.name == "static_quant" and layer.__class__ in static_quant_mapping:
+            if cfg.name == STATIC_QUANT and layer.__class__ in static_quant_mapping:
                 layers_mapping = static_quant_mapping
-            elif cfg.name == "dynamic_quant" and layer.__class__ in dynamic_quant_mapping:
+            elif cfg.name == DYNAMIC_QUANT and layer.__class__ in dynamic_quant_mapping:
                 layers_mapping = dynamic_quant_mapping
             else:
                 continue
 
             # Check include/exclude filters if set on the config
-            include = getattr(cfg, "_include", None)
-            exclude = getattr(cfg, "_exclude", None)
+            include = cfg.include
+            exclude = cfg.exclude
             if include is not None or exclude is not None:
                 layer_id = layer.path or layer.name
                 class_name = layer.__class__.__name__
