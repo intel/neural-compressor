@@ -20,11 +20,11 @@
 
 
 import keras
+import keras.layers
+import keras_hub.layers
 import numpy as np
 from jax import numpy as jnp
 from keras import ops
-from keras.layers import Conv2D, Dense, EinsumDense, MultiHeadAttention
-from keras_hub.layers import ReversibleEmbedding
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
 
@@ -333,27 +333,27 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         return x
 
 
-@register_dynamic_quantized_layer(Dense)
-class QDynamicDense(QDynamicDenseMixin, Dense):
+@register_dynamic_quantized_layer(keras.layers.Dense)
+class QDynamicDense(QDynamicDenseMixin, keras.layers.Dense):
     """Dynamically quantized Dense layer."""
 
     pass
 
 
-verify_api(Dense, QDynamicDense, "call")
+verify_api(keras.layers.Dense, QDynamicDense, "call")
 
 
-@register_dynamic_quantized_layer(EinsumDense)
-class QDynamicEinsumDense(QDynamicDenseMixin, EinsumDense):
+@register_dynamic_quantized_layer(keras.layers.EinsumDense)
+class QDynamicEinsumDense(QDynamicDenseMixin, keras.layers.EinsumDense):
     """Dynamically quantized EinsumDense layer."""
 
     pass
 
 
-verify_api(EinsumDense, QDynamicEinsumDense, "call")
+verify_api(keras.layers.EinsumDense, QDynamicEinsumDense, "call")
 
 
-class QDynamicConv2DMixin(QDynamicDenseMixin, Conv2D):
+class QDynamicConv2DMixin(QDynamicDenseMixin, keras.layers.Conv2D):
     """Mixin that adds dynamic quantization to Conv2D layers."""
 
     def call(self, inputs):
@@ -371,18 +371,18 @@ class QDynamicConv2DMixin(QDynamicDenseMixin, Conv2D):
         return x
 
 
-@register_dynamic_quantized_layer(Conv2D)
-class QDynamicConv2D(QDynamicConv2DMixin, Conv2D):
+@register_dynamic_quantized_layer(keras.layers.Conv2D)
+class QDynamicConv2D(QDynamicConv2DMixin, keras.layers.Conv2D):
     """Dynamically quantized Conv2D layer."""
 
     pass
 
 
-verify_api(Conv2D, QDynamicConv2D, "call")
+verify_api(keras.layers.Conv2D, QDynamicConv2D, "call")
 
 
-@register_dynamic_quantized_layer(MultiHeadAttention)
-class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
+@register_dynamic_quantized_layer(keras.layers.MultiHeadAttention)
+class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttention):
     """Dynamically quantized MultiHeadAttention layer."""
 
     @classmethod
@@ -536,7 +536,7 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
     # fmt on
 
 
-verify_api(MultiHeadAttention, QDynamicMultiHeadAttention, "_compute_attention")
+verify_api(keras.layers.MultiHeadAttention, QDynamicMultiHeadAttention, "_compute_attention")
 
 
 @register_dynamic_quantized_layer(CachedGemma3Attention)
@@ -758,8 +758,9 @@ class QDynamicGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
 verify_api(Gemma3VisionAttention, QDynamicGemma3VisionAttention, "call")
 
 
-@register_dynamic_quantized_layer(ReversibleEmbedding)
-class QDynamicReversibleEmbedding(SaveableLayerMixin, ReversibleEmbedding):
+@register_dynamic_quantized_layer(keras_hub.layers.ReversibleEmbedding)
+@register_dynamic_quantized_layer(keras.layers.ReversibleEmbedding)
+class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbedding):
     """Dynamically quantized ReversibleEmbedding layer."""
 
     @classmethod
@@ -830,7 +831,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, ReversibleEmbedding):
                 logits = ops.tanh(logits / soft_cap) * soft_cap
             return logits
 
-        return super(ReversibleEmbedding, self).call(inputs)
+        return super(keras.layers.ReversibleEmbedding, self).call(inputs)
 
 
-verify_api(ReversibleEmbedding, QDynamicReversibleEmbedding, "call")
+verify_api(keras.layers.ReversibleEmbedding, QDynamicReversibleEmbedding, "call")
