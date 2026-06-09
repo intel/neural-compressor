@@ -13,7 +13,7 @@ echo "##[section]import check pass"
 echo "##[group]set up UT env..."
 export LD_LIBRARY_PATH=/usr/local/lib/:$LD_LIBRARY_PATH
 sed -i '/^auto-round/d;/^torchvision/d' /neural-compressor/test/torch/requirements.txt
-pip install compressed_tensors<0.16 # to limit pytorch version requested by compressed_tensors
+pip install compressed-tensors==0.15.0.1 # to limit pytorch version requested by compressed_tensors
 pip install -r /neural-compressor/test/torch/requirements.txt
 pip install deepspeed@git+https://github.com/HabanaAI/DeepSpeed.git@main --no-deps
 pip install msgpack hjson ninja  # deepspeed dependency
