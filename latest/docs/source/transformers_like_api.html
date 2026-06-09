@@ -137,7 +137,7 @@
 </section>
 <section id="usage-for-cpu">
 <h2>Usage For CPU<a class="headerlink" href="#usage-for-cpu" title="Link to this heading"></a></h2>
-<p>Our motivation is to improve CPU support for weight only quantization. We have extended the <code class="docutils literal notranslate"><span class="pre">from_pretrained</span></code> function so that <code class="docutils literal notranslate"><span class="pre">quantization_config</span></code> can accept <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/neural_compressor/transformers/utils/quantization_config.py#L243"><code class="docutils literal notranslate"><span class="pre">RtnConfig</span></code></a>, <a class="reference external" href="https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L394"><code class="docutils literal notranslate"><span class="pre">AwqConfig</span></code></a>, <a class="reference external" href="https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L464"><code class="docutils literal notranslate"><span class="pre">TeqConfig</span></code></a>, <a class="reference external" href="https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L298"><code class="docutils literal notranslate"><span class="pre">GPTQConfig</span></code></a>, <a class="reference external" href="https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L527"><code class="docutils literal notranslate"><span class="pre">AutoroundConfig</span></code></a> to implements conversion on the CPU.</p>
+<p>Our motivation is to improve CPU support for weight only quantization. We have extended the <code class="docutils literal notranslate"><span class="pre">from_pretrained</span></code> function so that <code class="docutils literal notranslate"><span class="pre">quantization_config</span></code> can accept <a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/transformers/utils/quantization_config.py#L243"><code class="docutils literal notranslate"><span class="pre">RtnConfig</span></code></a>, <a class="reference external" href="https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L394"><code class="docutils literal notranslate"><span class="pre">AwqConfig</span></code></a>, <a class="reference external" href="https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L464"><code class="docutils literal notranslate"><span class="pre">TeqConfig</span></code></a>, <a class="reference external" href="https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L298"><code class="docutils literal notranslate"><span class="pre">GPTQConfig</span></code></a>, <a class="reference external" href="https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L527"><code class="docutils literal notranslate"><span class="pre">AutoroundConfig</span></code></a> to implements conversion on the CPU.</p>
 <section id="usage-examples-for-cpu-device">
 <h3>Usage examples for CPU device<a class="headerlink" href="#usage-examples-for-cpu-device" title="Link to this heading"></a></h3>
 <p>quantization and inference with <code class="docutils literal notranslate"><span class="pre">RtnConfig</span></code>, <code class="docutils literal notranslate"><span class="pre">AwqConfig</span></code>, <code class="docutils literal notranslate"><span class="pre">TeqConfig</span></code>, <code class="docutils literal notranslate"><span class="pre">GPTQConfig</span></code>, <code class="docutils literal notranslate"><span class="pre">AutoRoundConfig</span></code> on CPU device.</p>
@@ -312,7 +312,7 @@
 </pre></div>
 </div>
 <ol class="simple">
-<li><p>You can directly use <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation/run_generation_gpu_woq.py">example script</a></p></li>
+<li><p>You can directly use <a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation/run_generation_gpu_woq.py">example script</a></p></li>
 </ol>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>run_generation_gpu_woq.py<span class="w"> </span>--woq<span class="w"> </span>--benchmark<span class="w"> </span>--model<span class="w"> </span>save_dir
 </pre></div>
@@ -330,7 +330,7 @@
 </section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
-<p>Users can also refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation">examples</a> on how to quantize a model with transformers-like api.</p>
+<p>Users can also refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation">examples</a> on how to quantize a model with transformers-like api.</p>
 </section>
 </section>
 
@@ -348,7 +348,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f0f3ada5f40> 
+   <jinja2.runtime.BlockReference object at 0x7f7c0c7ee420> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

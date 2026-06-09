@@ -27,7 +27,7 @@ If you are new to GitHub, view the pull request [How To](https://help.github.com
 Before sending your pull requests, follow the information below:
 
 - Changes are consistent with the [coding conventions](./coding_style.html).
-- Add unit tests in [Unit Tests](https://github.com/intel/neural-compressor/tree/master/test) to cover the code you would like to contribute.
+- Add unit tests in [Unit Tests](https://github.com/intel/neural-compressor/tree/main/test) to cover the code you would like to contribute.
 - Intel® Neural Compressor has adopted the [Developer Certificate of Origin](https://en.wikipedia.org/wiki/Developer_Certificate_of_Origin), you must agree to the terms of Developer Certificate of Origin by signing off each of your commits with `-s`, e.g. `git commit -s -m 'This is my commit message'`.
 
 ## Pull Request Template
