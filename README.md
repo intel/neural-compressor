@@ -6,7 +6,7 @@ Intel® Neural Compressor
 
 [![python](https://img.shields.io/badge/python-3.11%2B-blue)](https://github.com/intel/neural-compressor)
 [![version](https://img.shields.io/badge/release-3.8-green)](https://github.com/intel/neural-compressor/releases)
-[![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/master/LICENSE)
+[![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/main/LICENSE)
 [![coverage](https://img.shields.io/badge/coverage-85%25-green)](https://github.com/intel/neural-compressor)
 [![Downloads](https://static.pepy.tech/personalized-badge/neural-compressor?period=total&units=international_system&left_color=grey&right_color=green&left_text=downloads)](https://pepy.tech/project/neural-compressor)
 
@@ -196,7 +196,7 @@ model = load(
 * Blog on SqueezeBits: [[Intel Gaudi] #4. FP8 Quantization](https://blog.squeezebits.com/intel-gaudi-4-fp8-quantization--40269) (Jan 2025)
 
 > **Note**:
-> View [Full Publication List](https://github.com/intel/neural-compressor/blob/master/docs/source/publication_list.md).
+> View [Full Publication List](https://github.com/intel/neural-compressor/blob/main/docs/source/publication_list.md).
 
 ## Additional Content
 
