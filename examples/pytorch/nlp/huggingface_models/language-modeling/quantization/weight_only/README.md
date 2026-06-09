@@ -122,4 +122,4 @@ SRAM_SLICER_SHARED_MME_INPUT_EXPANSION_ENABLED=false ENABLE_EXPERIMENTAL_FLAGS=1
     --output_dir saved_results
 ```
 
-For more information about parameter usage, please refer to [PT_WeightOnlyQuant.md](https://github.com/intel/neural-compressor/blob/main/docs/source/3x/PT_WeightOnlyQuant.md)
+For more information about parameter usage, please refer to [PT_WeightOnlyQuant.md](https://github.com/intel/neural-compressor/blob/main/docs/source/PT_WeightOnlyQuant.md)
