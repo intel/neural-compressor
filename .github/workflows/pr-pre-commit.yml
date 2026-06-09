@@ -5,7 +5,7 @@ name: Fix Code Style on PR
 
 on:
   pull_request:
-    branches: [master_next, master]
+    branches: [main]
     types: [opened, reopened, ready_for_review, synchronize]
 
 # If there is a new commit, the previous jobs will be canceled

@@ -46,7 +46,7 @@ def update_source_url(version, folder_name, index_file):
 
     base_url = 'class="reference external" href="https://github.com/intel/neural-compressor/blob/{}/'
     repo_url = base_url.format("v" + version)
-    target = base_url.format("master")
+    target = base_url.format("main")
     with open(index_file, "r") as f:
         index_buf = f.read()
         index_buf = index_buf.replace(repo_url, target)
