@@ -48,23 +48,9 @@ def classify_image(model, image, top_k=1):
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "int8"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=int8"]
 )
-@pytest.mark.CI_test_if(
-    [
-        "dynamic=True",
-        "const_vars=False",
-        "inplace=True",
-        "save_as_preset=False",
-        "model_dtype=float32",
-        "quantization_dtype=int8",
-    ],
-    [
-        "dynamic=False",
-        "const_vars=True",
-        "inplace=False",
-        "save_as_preset=True",
-        "model_dtype=bfloat16",
-        "quantization_dtype=fp8_e4m3",
-    ],
+@pytest.mark.smoke_test_if(
+    "quantization_dtype=int8-model_dtype=float32-save_as_preset=False-inplace=True-const_vars=False-dynamic=True",
+    "quantization_dtype=fp8_e4m3-model_dtype=bfloat16-save_as_preset=True-inplace=False-const_vars=True-dynamic=False",
 )
 def test_image_classification(
     dynamic, const_vars, inplace, save_as_preset, model_dtype, quantization_dtype, colva_beach_sq, random_image

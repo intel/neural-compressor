@@ -57,21 +57,9 @@ def random_string():
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "fp8_e5m2"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=fp8_e5m2"]
 )
-@pytest.mark.CI_test_if(
-    [
-        "dynamic=True",
-        "const_vars=False",
-        "save_as_preset=False",
-        "model_dtype=float32",
-        "quantization_dtype=fp8_e5m2",
-    ],
-    [
-        "dynamic=False",
-        "const_vars=True",
-        "save_as_preset=True",
-        "model_dtype=bfloat16",
-        "quantization_dtype=fp8_e4m3",
-    ],
+@pytest.mark.smoke_test_if(
+    "quantization_dtype=fp8_e5m2-model_dtype=float32-save_as_preset=False-const_vars=False-dynamic=True",
+    "quantization_dtype=fp8_e4m3-model_dtype=bfloat16-save_as_preset=True-const_vars=True-dynamic=False",
 )
 def test_text_prompt(dynamic, const_vars, save_as_preset, model_dtype, quantization_dtype, random_string):
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_270m", model_dtype)
@@ -117,21 +105,9 @@ def test_text_prompt(dynamic, const_vars, save_as_preset, model_dtype, quantizat
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "fp8_e5m2"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=fp8_e5m2"]
 )
-@pytest.mark.CI_test_if(
-    [
-        "dynamic=True",
-        "const_vars=True",
-        "save_as_preset=True",
-        "model_dtype=bfloat16",
-        "quantization_dtype=fp8_e4m3",
-    ],
-    [
-        "dynamic=False",
-        "const_vars=False",
-        "save_as_preset=False",
-        "model_dtype=float32",
-        "quantization_dtype=fp8_e5m2",
-    ],
+@pytest.mark.smoke_test_if(
+    "quantization_dtype=fp8_e4m3-model_dtype=bfloat16-save_as_preset=True-const_vars=True-dynamic=True",
+    "quantization_dtype=fp8_e5m2-model_dtype=float32-save_as_preset=False-const_vars=False-dynamic=False",
 )
 def test_image_recognition(dynamic, const_vars, save_as_preset, model_dtype, quantization_dtype, colva_beach_sq):
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_4b-v1", model_dtype)
@@ -191,9 +167,7 @@ def test_image_recognition(dynamic, const_vars, save_as_preset, model_dtype, qua
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "fp8_e5m2"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=fp8_e5m2"]
 )
-@pytest.mark.CI_test_if(
-    "const_vars=False", "save_as_preset=True", "model_dtype=bfloat16", "quantization_dtype=fp8_e4m3"
-)
+@pytest.mark.smoke_test_if("quantization_dtype=fp8_e4m3-model_dtype=bfloat16-save_as_preset=True-const_vars=False")
 def test_static_quantization_with_incomplete_calibration(
     const_vars, save_as_preset, model_dtype, quantization_dtype, random_string, colva_beach_sq
 ):

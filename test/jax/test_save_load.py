@@ -16,7 +16,7 @@ from jax import numpy as jnp
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
 
 # Run all test in this module in CI
-pytestmark = pytest.mark.CI_test
+pytestmark = pytest.mark.smoke_test
 
 
 @keras.saving.register_keras_serializable()

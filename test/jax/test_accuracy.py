@@ -43,7 +43,7 @@ def _read_value(var_or_array, is_const):
     _dtype_pairs,
     ids=[f"weight_dtype={w}-activation_dtype={a}" for w, a in _dtype_pairs],
 )
-@pytest.mark.CI_test
+@pytest.mark.smoke_test
 def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model_dtype, weight_dtype, activation_dtype):
     """Test accuracy on a simple linear model."""
 
