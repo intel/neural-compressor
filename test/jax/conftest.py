@@ -33,5 +33,5 @@ def pytest_collection_modifyitems(items):
             test_parameters = item.nodeid[item.nodeid.rfind("[") + 1 : -1]
 
             for parameter_set_to_be_marked in marker_smoke_test_if.args:
-                if parameter_set_to_be_marked == test_parameters:
+                if parameter_set_to_be_marked in test_parameters:
                     item.add_marker(pytest.mark.smoke_test)
