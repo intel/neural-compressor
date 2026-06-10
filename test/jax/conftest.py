@@ -31,8 +31,7 @@ def pytest_collection_modifyitems(items):
         marker_smoke_test_if = item.get_closest_marker("smoke_test_if")
         if marker_smoke_test_if is not None:
             test_parameters = item.nodeid[item.nodeid.rfind("[") + 1 : -1]
-            parameter_sets_to_be_marked = marker_smoke_test_if.args
 
-            for set in parameter_sets_to_be_marked:
-                if set == test_parameters:
+            for parameter_set_to_be_marked in marker_smoke_test_if.args:
+                if parameter_set_to_be_marked == test_parameters:
                     item.add_marker(pytest.mark.smoke_test)
