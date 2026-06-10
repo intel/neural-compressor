@@ -1,2 +1,1 @@
-neural-compressor-jax
 tensorflow
