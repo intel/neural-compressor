@@ -15,7 +15,7 @@ from jax import numpy as jnp
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
 
-# Run all test in this module in CI
+# Mark all tests in this file as smoke tests
 pytestmark = pytest.mark.smoke_test
 
 
