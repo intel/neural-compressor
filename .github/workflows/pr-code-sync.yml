@@ -6,19 +6,19 @@ name: Repo Sync Triggered by PR
 
 on:
   pull_request:
-    branches: [master]
+    branches: [main]
     types: [opened, reopened, ready_for_review, synchronize]
   push:
-    branches: [master]
+    branches: [main]
   schedule:
     - cron: '0 * * * *'
   workflow_dispatch:
 
 env:
   INNERSOURCE_REPO: intel-innersource/frameworks.ai.lpot.neural-compressor
-  INNERSOURCE_BRANCH: master
+  INNERSOURCE_BRANCH: main
   EXTERNAL_REPO: intel/neural-compressor
-  EXTERNAL_BRANCH: master
+  EXTERNAL_BRANCH: main
 
 permissions:
   contents: read
