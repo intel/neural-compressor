@@ -40,6 +40,19 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/diffusion_model/diffusers/flux">link</a></td>
 </tr>
 <tr>
+    <td>Wan2.2-I2V-A14B-Diffusers</td>
+    <td>Image to Video</td>
+    <td>Quantization (MXFP8/FP8)</td>
+    <td><a href="./pytorch/diffusion_model/diffusers/wan">link</a></td>
+</tr>
+<tr>
+    <td>Wan2.2-T2V-A14B-Diffusers</td>
+    <td>Text to Video</td>
+    <td>Quantization (MXFP8/FP8)</td>
+    <td><a href="./pytorch/diffusion_model/diffusers/wan">link</a></td>
+</tr>
+
+<tr>
     <td>Llama-4-Scout-17B-16E-Instruct</td>
     <td>Multimodal Modeling</td>
     <td>Quantization (MXFP4)</td>
