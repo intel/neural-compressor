@@ -104,7 +104,7 @@ if [[ "$TASK_NAME" == *"ruler"* ]]; then
     max_length=${MODEL_MAX_POS}
     max_gen_toks=128
     SEQ_LENGTHS="${MODEL_MAX_POS}"
-    TASK_NAME="niah_multiquery"
+    TASK_NAME="niah_multiquery,ruler_qa_squad"
     BATCH_SIZE=32
 fi
 
