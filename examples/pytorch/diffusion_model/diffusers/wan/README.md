@@ -13,6 +13,7 @@ This example provides a unified Wan entry for quantization and evaluation, with 
 
 # install all runtime dependencies (including evaluation package VBench)
 pip install -r requirements.txt
+pip install VBench --no-deps
 ```
 
 ## 2. Prepare Model

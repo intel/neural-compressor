@@ -1,5 +1,4 @@
 # Core runtime
-numpy
 torch
 torchvision
 diffusers
@@ -13,9 +12,30 @@ neural-compressor-pt
 auto-round
 
 # Utilities used by example scripts
-pillow
 einops
-requests
 
 # Evaluation package (dataset/eval helpers)
-VBench
+Pillow
+numpy<2.0.0
+matplotlib
+timm>=0.9,<=1.0.12
+wheel
+cython
+tensorboard
+scipy
+opencv-python
+scikit-learn
+scikit-image
+openai-clip
+decord
+requests
+pyyaml
+pyiqa
+lvis
+fairscale>=0.4.4
+fvcore
+easydict
+urllib3
+boto3
+omegaconf
+pycocoevalcap
