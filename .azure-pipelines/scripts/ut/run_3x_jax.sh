@@ -30,7 +30,7 @@ mkdir -p ${LOG_DIR}
 ut_log_name=${LOG_DIR}/ut_3x_jax.log
 
 # test for jax ut
-pytest --cov="${inc_path}" -vs --disable-warnings --html=report_jax.html --self-contained-html ./jax 2>&1 | tee -a ${ut_log_name}
+pytest --cov="${inc_path}" -vs --disable-warnings --html=report_jax.html --self-contained-html -m smoke_test ./jax 2>&1 | tee -a ${ut_log_name}
 
 cp report_jax.html ${LOG_DIR}/report.html
 
