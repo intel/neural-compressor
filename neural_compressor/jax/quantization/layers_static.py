@@ -1385,7 +1385,6 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         self._tracker.unlock()
         self.inputs_qdq.post_quantization_cleanup()
         self.kernel_qdq.post_quantization_cleanup()
-        self._is_quantized = True
         self._tracker.lock()
 
     def call(self, inputs, reverse=False):
