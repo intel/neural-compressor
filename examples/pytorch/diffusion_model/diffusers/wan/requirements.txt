@@ -39,3 +39,5 @@ urllib3
 boto3
 omegaconf
 pycocoevalcap
+imageio-ffmpeg
+gdown==4.7.3

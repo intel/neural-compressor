@@ -68,6 +68,11 @@ bash run_quant.sh \
 
 ## Inference + Evaluation
 
+When `--accuracy` is enabled, `run_benchmark.sh` runs VBench evaluation scripts from a local VBench repo.
+
+- Default VBench path is `$(dirname run_benchmark.sh)/VBench`.
+- If your VBench repo is elsewhere, pass `--vbench_dir=/path/to/VBench`.
+
 ### t2v bf16
 
 ```bash

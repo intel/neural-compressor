@@ -1,15 +1,17 @@
 #!/bin/bash
 set -x
 
+SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
+
 function main {
   init_params "$@"
   run_benchmark
 }
 
 function ensure_vbench_repo {
-  if [ ! -d "VBench" ]; then
+  if [ ! -d "${vbench_dir}" ]; then
     echo "VBench directory not found. Start cloning https://github.com/Vchitect/VBench.git ..."
-    git clone https://github.com/Vchitect/VBench.git
+    git clone https://github.com/Vchitect/VBench.git "${vbench_dir}"
     if [ $? -ne 0 ]; then
       echo "Error: failed to clone VBench."
       exit 1
@@ -165,6 +167,14 @@ function init_params {
         accuracy=true
         shift
       ;;
+      --vbench_dir=*)
+        vbench_dir="${1#*=}"
+        shift
+      ;;
+      --vbench_dir)
+        vbench_dir="$2"
+        shift 2
+      ;;
       *)
         echo "Error: No such parameter: $1"
         exit 1
@@ -180,6 +190,7 @@ function run_benchmark {
   output_video_path=${output_video_path:="./tmp_video"}
   accuracy=${accuracy:=false}
   disable_mxfp8_inplace_qdq=${disable_mxfp8_inplace_qdq:=false}
+  vbench_dir=${vbench_dir:="${SCRIPT_DIR}/VBench"}
 
   if [[ ! "${output_video_path}" = /* ]]; then
     output_video_path=$(realpath -s "$(pwd)/${output_video_path}")
@@ -325,7 +336,7 @@ function run_benchmark {
   if [ "${accuracy}" = "true" ]; then
     if [ "${task}" = "t2v" ]; then
       echo "Start VBench evaluation for t2v..."
-      pushd VBench
+      pushd "${vbench_dir}"
       python evaluate.py \
         --dimension "subject_consistency motion_smoothness aesthetic_quality imaging_quality overall_consistency" \
         --videos_path "${output_video_path}" \
@@ -333,7 +344,7 @@ function run_benchmark {
       popd
     elif [ "${task}" = "i2v" ]; then
       echo "Start VBench evaluation for i2v..."
-      pushd VBench
+      pushd "${vbench_dir}"
       python evaluate_i2v.py \
         --dimension "i2v_background i2v_subject subject_consistency background_consistency motion_smoothness" \
         --videos_path "${output_video_path}" \
