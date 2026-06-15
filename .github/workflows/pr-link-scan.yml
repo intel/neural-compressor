@@ -5,7 +5,7 @@ name: Check hyperlinks and relative path validity
 
 on:
   pull_request:
-    branches: ["master", "master_next"]
+    branches: ["main"]
     types: [opened, reopened, ready_for_review, synchronize]
 
 # If there is a new commit, the previous jobs will be canceled
