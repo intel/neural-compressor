@@ -51,7 +51,7 @@ SAFETENSORS_FAST_GPU=1 CUDA_VISIBLE_DEVICES=0,1 vllm serve <model> \
 ```
 
 If model basename is exactly `DeepSeek-V4-Flash` or `DeepSeek-V4-Pro` (without extra suffix),
-`run_evalscope.sh` will also add:
+`run_evalscope.sh` will also add (automatically):
 
 ```bash
 --enable-expert-parallel --moe-backend deep_gemm_mega_moe

@@ -16,15 +16,31 @@ TENSOR_PARALLEL_SIZE=2
 SAFETENSORS_FAST_GPU="1"
 TRUST_REMOTE_CODE="true"
 NO_ENABLE_FLASHINFER_AUTOTUNE="true"
-SKIP_SERVE="false"
+SKIP_SERVE="${SKIP_SERVE:-false}"
+VLLM_PID=""
+LOG_TAIL_PID=""
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 cd "${SCRIPT_DIR}"
 
 cleanup() {
+  if [[ -n "${LOG_TAIL_PID}" ]] && kill -0 "${LOG_TAIL_PID}" 2>/dev/null; then
+    kill "${LOG_TAIL_PID}" 2>/dev/null || true
+  fi
+
   if [[ "${SKIP_SERVE}" == "true" ]]; then
     return
   fi
+
+  if [[ -n "${VLLM_PID}" ]] && kill -0 "${VLLM_PID}" 2>/dev/null; then
+    CHILDREN=$(pgrep -P "${VLLM_PID}" || true)
+    if [[ -n "${CHILDREN}" ]]; then
+      kill -9 ${CHILDREN} 2>/dev/null || true
+    fi
+    kill -9 "${VLLM_PID}" 2>/dev/null || true
+    return
+  fi
+
   # Kill the process listening on the specified port to free GPU.
   VLLM_PIDS=$(ps aux | grep -- "vllm serve" | grep -- "--port[ =]${PORT}" | grep -v grep | awk '{print $2}')
   if [[ -n "${VLLM_PIDS}" ]]; then
@@ -40,6 +56,13 @@ cleanup() {
 
 trap cleanup EXIT
 
+stop_log_tail() {
+  if [[ -n "${LOG_TAIL_PID}" ]] && kill -0 "${LOG_TAIL_PID}" 2>/dev/null; then
+    kill "${LOG_TAIL_PID}" 2>/dev/null || true
+    LOG_TAIL_PID=""
+  fi
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --port)
@@ -49,6 +72,8 @@ while [[ $# -gt 0 ]]; do
     --temp)
       TEMPERATURE="$2"; shift 2 ;;
     --skip_serve)
+      SKIP_SERVE="true"; shift 1 ;;
+    --skip-serve)
       SKIP_SERVE="true"; shift 1 ;;
     --tp)
       TENSOR_PARALLEL_SIZE="$2"; shift 2 ;;
@@ -60,6 +85,8 @@ while [[ $# -gt 0 ]]; do
       echo "Unknown option: $1"; exit 1 ;;
   esac
 done
+
+SKIP_SERVE="$(echo "${SKIP_SERVE}" | tr '[:upper:]' '[:lower:]')"
 
 API_URL="http://127.0.0.1:${PORT}/v1"
 
@@ -91,15 +118,40 @@ if [[ "${SKIP_SERVE}" != "true" ]]; then
   VLLM_CMD+=("${EXTRA_ARGS[@]}")
 
   SAFETENSORS_FAST_GPU="${SAFETENSORS_FAST_GPU}" "${VLLM_CMD[@]}" >/tmp/vllm_${PORT}.log 2>&1 &
+  VLLM_PID=$!
   echo "vLLM launched. Log: /tmp/vllm_${PORT}.log"
+  echo "vLLM PID: ${VLLM_PID}"
+  echo "=== vLLM startup log (will stop after API wait ends) ==="
+  tail -n +1 -f "/tmp/vllm_${PORT}.log" &
+  LOG_TAIL_PID=$!
 fi
 
 # Wait until the API is ready
 echo "Waiting for API at ${API_URL} ..."
-until curl -sf "${API_URL}/models" -o /dev/null; do
+for _ in $(seq 1 90); do
+  if curl -sf "${API_URL}/models" -o /dev/null; then
+    break
+  fi
+  if [[ "${SKIP_SERVE}" != "true" ]] && [[ -n "${VLLM_PID}" ]] && ! kill -0 "${VLLM_PID}" 2>/dev/null; then
+    stop_log_tail
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] vLLM exited before API became ready."
+    echo "----- Last 80 lines of /tmp/vllm_${PORT}.log -----"
+    tail -n 80 "/tmp/vllm_${PORT}.log" || true
+    exit 1
+  fi
   echo "[$(date '+%Y-%m-%d %H:%M:%S')] Port ${PORT} not ready, retrying in 20s..."
   sleep 20
 done
+
+stop_log_tail
+
+if ! curl -sf "${API_URL}/models" -o /dev/null; then
+  echo "[$(date '+%Y-%m-%d %H:%M:%S')] Timeout waiting for API at ${API_URL}."
+  echo "----- Last 80 lines of /tmp/vllm_${PORT}.log -----"
+  tail -n 80 "/tmp/vllm_${PORT}.log" || true
+  exit 1
+fi
+
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] API is ready, starting evaluation."
 
 MODEL_NORMALIZED="${MODEL%/}"
