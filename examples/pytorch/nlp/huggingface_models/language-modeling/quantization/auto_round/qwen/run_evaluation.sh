@@ -114,7 +114,7 @@ if [[ "$TASK_NAME" == *"ruler"* ]] || [[ "$TASK_NAME" == *"niah_multiquery"* ]];
         TASK_NAME="niah_multiquery"
     fi
     max_length=${MODEL_MAX_POS}
-    SEQ_LENGTHS="${MODEL_MAX_POS}"
+    SEQ_LENGTHS=${MODEL_MAX_POS}
     BATCH_SIZE=32
 fi
 
