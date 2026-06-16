@@ -212,6 +212,21 @@ run_standard_eval() {
 # Function to start vLLM server
 start_vllm_server() {
     echo "Starting vLLM server on port ${SERVER_PORT}..."
+
+    # Detect vLLM version for backward-compatible rope scaling
+    # vLLM >= 0.19 removed --rope-scaling; use --hf-overrides instead
+    VLLM_VERSION=$(python -c "import vllm; print(vllm.__version__)" 2>/dev/null || echo "0.0.0")
+    VLLM_MAJOR_MINOR=$(echo "$VLLM_VERSION" | awk -F. '{printf "%d%02d", $1, $2}')
+    ROPE_SCALING_JSON='{"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}'
+    if [ "$VLLM_MAJOR_MINOR" -ge 19 ] 2>/dev/null; then
+        ROPE_FLAG="--hf-overrides"
+        ROPE_VALUE="{\"rope_scaling\":${ROPE_SCALING_JSON},\"max_position_embeddings\":131072}"
+    else
+        ROPE_FLAG="--rope-scaling"
+        ROPE_VALUE="${ROPE_SCALING_JSON}"
+    fi
+    echo "vLLM version: ${VLLM_VERSION}, using: ${ROPE_FLAG} '${ROPE_VALUE}'"
+
     vllm serve ${MODEL_PATH} \
         --port ${SERVER_PORT} \
         --tensor-parallel-size ${TP_SIZE} \
