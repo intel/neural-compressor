@@ -19,6 +19,8 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+moe_mxfp8_attn_layer_config = {"self_attn": "MXFP8", "mlp.gate": {"bits": 16}}
+dense_mxfp8_attn_layer_config = {"self_attn": "MXFP8",}
 
 topologies_config = {
     "mxfp8": {
@@ -30,6 +32,7 @@ topologies_config = {
         "scheme": "MXFP4_RCEIL",
         "fp_layers": "lm_head,mlp.gate",
         "iters": 200,
+        "layer_config": moe_mxfp8_attn_layer_config,
     },
     "nvfp4": {
         "scheme": "NVFP4",
@@ -59,6 +62,7 @@ dense_topologies_config = {
         "scheme": "MXFP4",
         "fp_layers": "lm_head",
         "iters": 200,
+        "layer_config": dense_mxfp8_attn_layer_config,
     },
     "mxfp4_fp8kv": {
         "scheme": "MXFP4",
@@ -111,12 +115,14 @@ def quant_model(args):
     fp32_model, tokenizer = get_model_and_tokenizer(args.model)
     # if export_format is llm_compressor, scheme with RCEIL is not supported. 
     scheme = config["scheme"] if args.export_format == "auto_round" else config["scheme"].replace("_RCEIL", "")
+    layer_config = config.get("layer_config", None)
     quant_config = AutoRoundConfig(
         tokenizer=tokenizer,
         scheme=scheme,
         enable_torch_compile=True,
         iters=iters,
         ignore_layers=config["fp_layers"],
+        layer_config=layer_config,
         export_format=args.export_format,
         disable_opt_rtn=True,
         low_gpu_mem_usage=True,
