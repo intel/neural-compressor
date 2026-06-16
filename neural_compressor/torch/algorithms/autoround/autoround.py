@@ -242,7 +242,8 @@ class AutoRoundQuantizer(Quantizer):
                 model.autoround_config = rounder.layer_config
 
         self.accelerator.empty_cache()
-        dump_model_op_stats(rounder.layer_config)
+        if not bool(getattr(self, "model_free", False)):
+            dump_model_op_stats(rounder.layer_config)
 
         reloading = self.__dict__.get("reloading", True)
         if self.export_format in ["auto_round", "llm_compressor"] and reloading:
