@@ -57,13 +57,26 @@ bash vbench2_beta_i2v/download_data.sh
 
 ## Quantization
 
+### t2v
+
 ```bash
 # topology supports wan_mxfp8 or wan_fp8
 bash run_quant.sh \
   --topology=wan_mxfp8 \
   --input_model=/path/to/Wan2.2-T2V-A14B-Diffusers \
   --task=t2v \
-  --output_model=wan_mxfp8_model
+  --output_model=wan_mxfp8_model_t2v
+```
+
+### i2v
+
+```bash
+# topology supports wan_mxfp8 or wan_fp8
+bash run_quant.sh \
+  --topology=wan_mxfp8 \
+  --input_model=/path/to/Wan2.2-I2V-A14B-Diffusers \
+  --task=i2v \
+  --output_model=wan_mxfp8_model_i2v
 ```
 
 ## Inference + Evaluation
@@ -92,11 +105,10 @@ bash run_benchmark.sh \
 # topology supports wan_mxfp8 or wan_fp8
 bash run_benchmark.sh \
   --topology=wan_mxfp8 \
-  --input_model=/path/to/Wan2.2-T2V-A14B-Diffusers \
-  --quantized_model=wan_mxfp8_model \
+  --input_model=wan_mxfp8_model_t2v \
   --task=t2v \
   --dimension=subject_consistency,overall_consistency \
-  --prompt_folder=/path/to/VBench/prompts/prompts_per_dimension/ \
+  --prompt_folder=./VBench/prompts/prompts_per_dimension/ \
   --output_video_path=wan_t2v_mxfp8_video \
   --accuracy
 ```
@@ -121,12 +133,11 @@ bash run_benchmark.sh \
 # topology supports wan_mxfp8 or wan_fp8
 bash run_benchmark.sh \
   --topology=wan_mxfp8 \
-  --input_model=/path/to/Wan2.2-I2V-A14B-Diffusers \
-  --quantized_model=wan_mxfp8_model \
+  --input_model=wan_mxfp8_model_i2v \
   --task=i2v \
   --dimension=i2v_background,i2v_subject \
-  --image_folder=/path/to/VBench/vbench2_beta_i2v/data/crop/16-9 \
-  --info_json=/path/to/VBench/vbench2_beta_i2v/vbench2_i2v_full_info.json \
+  --image_folder=./VBench/vbench2_beta_i2v/data/crop/16-9 \
+  --info_json=./VBench/vbench2_beta_i2v/vbench2_i2v_full_info.json \
   --output_video_path=wan_i2v_mxfp8_video \
   --accuracy
 ```

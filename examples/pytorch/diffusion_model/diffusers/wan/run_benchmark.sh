@@ -87,14 +87,6 @@ function init_params {
         task="$2"
         shift 2
       ;;
-      --quantized_model=*)
-        tuned_checkpoint="${1#*=}"
-        shift
-      ;;
-      --quantized_model)
-        tuned_checkpoint="$2"
-        shift 2
-      ;;
       --output_video_path=*)
         output_video_path="${1#*=}"
         shift
@@ -186,7 +178,6 @@ function init_params {
 function run_benchmark {
   task=${task:="t2v"}
   limit=${limit:=-1}
-  tuned_checkpoint=${tuned_checkpoint:="./tmp_autoround"}
   output_video_path=${output_video_path:="./tmp_video"}
   accuracy=${accuracy:=false}
   disable_mxfp8_inplace_qdq=${disable_mxfp8_inplace_qdq:=false}
@@ -240,7 +231,6 @@ function run_benchmark {
       --model "${input_model}"
       --task "${task}"
       --scheme "${scheme}"
-      --output_dir "${tuned_checkpoint}"
       --output_video_path "${output_video_path}"
       --limit "${limit}"
       --inference

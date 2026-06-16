@@ -158,20 +158,6 @@ def apply_activation_qdq(pipe, scheme, runtime_args):
                 m.forward = partial(act_qdq_forward, m)
 
 
-def load_quantized_transformers(pipe, output_dir):
-    for module_name in ["transformer", "transformer_2"]:
-        q_path = os.path.join(output_dir, module_name)
-        if not os.path.isdir(q_path):
-            raise ValueError(f"Quantized path does not exist: {q_path}")
-        print(f"Loading quantized {module_name} from {q_path}")
-        setattr(pipe, module_name, WanTransformer3DModel.from_pretrained(q_path, torch_dtype=torch.bfloat16))
-
-    # Quantized modules are replaced after pipeline construction; refresh offload hooks
-    # so newly attached modules follow the same device movement policy.
-    if hasattr(pipe, "enable_model_cpu_offload"):
-        pipe.enable_model_cpu_offload()
-
-
 def build_t2v_inputs(args):
     prompt_folder = args.prompt_folder
 
@@ -314,7 +300,6 @@ def main():
 
     if args.inference:
         if args.scheme in ["FP8", "MXFP8"]:
-            load_quantized_transformers(pipe, args.output_dir)
             apply_activation_qdq(pipe, args.scheme, args)
         run_inference(args, pipe)
 
