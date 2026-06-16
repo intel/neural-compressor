@@ -38,7 +38,7 @@ topologies_config = {
     },
     "mxfp4_fp8kv": {
         "scheme": "MXFP4_RCEIL",
-        "fp_layers": "lm_head,mlp.gate,self_attn",
+        "fp_layers": "lm_head,mlp.gate",
         "iters": 0,
         "static_kv_dtype": "fp8",
     },
@@ -57,12 +57,12 @@ dense_topologies_config = {
     },
     "mxfp4": {
         "scheme": "MXFP4",
-        "fp_layers": "lm_head,self_attn",
+        "fp_layers": "lm_head",
         "iters": 200,
     },
     "mxfp4_fp8kv": {
         "scheme": "MXFP4",
-        "fp_layers": "lm_head,self_attn",
+        "fp_layers": "lm_head",
         "iters": 0,
         "static_kv_dtype": "fp8",
     },
