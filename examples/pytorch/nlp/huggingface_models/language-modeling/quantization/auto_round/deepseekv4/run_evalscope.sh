@@ -109,6 +109,9 @@ if [[ "${SKIP_SERVE}" != "true" ]]; then
     --attention_config.use_fp4_indexer_cache=True
     --port "${PORT}"
   )
+  if [[ "${MODEL_NAME}" == "DeepSeek-V4-Pro" ]]; then
+    VLLM_CMD+=(--max-model-len 1048576)
+  fi
   if [[ "${TRUST_REMOTE_CODE}" == "true" ]]; then
     VLLM_CMD+=(--trust-remote-code)
   fi
@@ -168,7 +171,7 @@ echo "" | tee -a "$OUTPUT_FILE"
   
 
 echo "" | tee -a "$OUTPUT_FILE"
-echo "=== [1/3] aime26 (n=10) ===" | tee -a "$OUTPUT_FILE"
+echo "=== [1/4] aime26 (n=10) ===" | tee -a "$OUTPUT_FILE"
 evalscope eval \
   --model "$MODEL" \
   --eval-type openai_api \
@@ -179,7 +182,7 @@ evalscope eval \
   --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
 echo "" | tee -a "$OUTPUT_FILE"
 
-echo "=== [2/3] gpqa_diamond (n=5) ===" | tee -a "$OUTPUT_FILE"
+echo "=== [2/4] gpqa_diamond (n=5) ===" | tee -a "$OUTPUT_FILE"
 evalscope eval \
   --model "$MODEL" \
   --eval-type openai_api \
@@ -189,7 +192,7 @@ evalscope eval \
   --eval-batch-size 10  --timeout 3000 \
   --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
 
-echo "=== [3/3] piqa hellaswag gsm8k mmlu_pro math_500 mmlu ===" | tee -a "$OUTPUT_FILE"
+echo "=== [3/4] piqa hellaswag gsm8k mmlu_pro math_500 mmlu ===" | tee -a "$OUTPUT_FILE"
 evalscope eval \
   --model "$MODEL" \
   --eval-type openai_api \
@@ -197,6 +200,24 @@ evalscope eval \
   --datasets piqa hellaswag gsm8k mmlu_pro math_500 mmlu \
   --eval-batch-size 10 --timeout 3000 \
   --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
+
+echo "=== [4/4] ruler_qa_squad (lm_eval, 1M) ===" | tee -a "$OUTPUT_FILE"
+if [[ "${MODEL_NAME}" == "DeepSeek-V4-Pro" ]]; then
+  LMEVAL_OUTPUT_DIR="${LOG_DIR}/lm_eval_ruler_1M_qa"
+  mkdir -p "${LMEVAL_OUTPUT_DIR}"
+  LMEVAL_METADATA=$(printf '{"max_seq_lengths":[1000000],"pretrained":"%s/","use_fast":false}' "${MODEL_NORMALIZED}")
+  lm_eval \
+    --model local-completions \
+    --tasks ruler_qa_squad \
+    --model_args "model=${MODEL_NORMALIZED},base_url=${API_URL}/completions,num_concurrent=1,max_retries=3,max_length=1048576" \
+    --gen_kwargs "temperature=${TEMPERATURE},do_sample=False,max_tokens=128" \
+    --metadata "${LMEVAL_METADATA}" \
+    --batch_size 1 \
+    --log_samples \
+    --output_path "${LMEVAL_OUTPUT_DIR}" 2>&1 | tee -a "$OUTPUT_FILE"
+else
+  echo "Skip ruler_qa_squad: only DeepSeek-V4-Pro is supported for this test." | tee -a "$OUTPUT_FILE"
+fi
 
 
 echo "" | tee -a "$OUTPUT_FILE"
