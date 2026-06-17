@@ -23,7 +23,7 @@ wheel
 cython
 tensorboard
 scipy
-opencv-python
+opencv-python-headless
 scikit-learn
 scikit-image
 openai-clip
@@ -41,4 +41,4 @@ omegaconf
 pycocoevalcap
 imageio-ffmpeg
 gdown==4.7.3
-
+dreamsim

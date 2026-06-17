@@ -215,6 +215,8 @@ function run_benchmark {
     output_video_path=$(realpath -s "$(pwd)/${output_video_path}")
   fi
 
+  eval_results_path="${output_video_path}_eval_results"
+
   if [ "${topology}" = "wan_bf16" ]; then
     scheme="BF16"
   elif [ "${topology}" = "wan_fp8" ]; then
@@ -247,6 +249,7 @@ function run_benchmark {
   fi
 
   mkdir -p "${output_video_path}"
+  mkdir -p "${eval_results_path}"
 
   if [ -n "${gpu_ids}" ]; then
     gpu_list="${gpu_ids}"
@@ -295,7 +298,7 @@ function run_benchmark {
       eval "${run_cmd}"
     else
       num_shards=${#gpu_array[@]}
-      s2v_shard_root="${output_video_path}/.manifest_shards"
+      s2v_shard_root="${eval_results_path}/.manifest_shards"
       rm -rf "${s2v_shard_root}"
 
       python3 split_s2v_manifest.py \
@@ -311,7 +314,7 @@ function run_benchmark {
           echo "Skip empty shard_${shard_id} on GPU ${gpu_id}"
           continue
         fi
-        log_file="${output_video_path}/s2v.gpu${gpu_id}.log"
+        log_file="${eval_results_path}/s2v.gpu${gpu_id}.log"
         run_cmd="$(build_s2v_cmd "${shard_manifest_path}")"
         CUDA_VISIBLE_DEVICES="${gpu_id}" bash -lc "${run_cmd}" > "${log_file}" 2>&1 &
         program_pid+=("$!")
@@ -331,7 +334,7 @@ function run_benchmark {
     normalized_dimensions="${dimension//,/ }"
     read -r -a dimension_list <<< "${normalized_dimensions}"
 
-    shard_tmp_root="${output_video_path}/.prompt_shards"
+    shard_tmp_root="${eval_results_path}/.prompt_shards"
 
     function build_benchmark_cmd {
       local cur_prompt_folder="$2"
@@ -411,7 +414,7 @@ function run_benchmark {
           if [ -z "${log_suffix}" ]; then
             log_suffix="all"
           fi
-          log_file="${output_video_path}/${log_suffix}.gpu${gpu_id}.log"
+          log_file="${eval_results_path}/${log_suffix}.gpu${gpu_id}.log"
           shard_prompt_folder=""
           shard_info_json=""
 
@@ -438,30 +441,44 @@ function run_benchmark {
     if [ "${task}" = "t2v" ]; then
       echo "Start VBench evaluation for t2v..."
       pushd "${vbench_dir}"
-      python evaluate.py \
-        --dimension "subject_consistency motion_smoothness aesthetic_quality imaging_quality overall_consistency" \
-        --videos_path "${output_video_path}" \
-        --mode=vbench_standard
+        eval_dimension_list=("${dimension_list[@]}")
+        for extra_dimension in motion_smoothness aesthetic_quality imaging_quality; do
+          if [[ ! " ${eval_dimension_list[*]} " =~ " ${extra_dimension} " ]]; then
+            eval_dimension_list+=("${extra_dimension}")
+          fi
+        done
+        python evaluate.py \
+          --dimension "${eval_dimension_list[@]}" \
+          --videos_path "${output_video_path}" \
+            --output_path "${eval_results_path}/vbench_t2v" \
+          --mode=vbench_standard
       popd
     elif [ "${task}" = "i2v" ]; then
       echo "Start VBench evaluation for i2v..."
       pushd "${vbench_dir}"
-      python evaluate_i2v.py \
-        --dimension "i2v_background i2v_subject subject_consistency background_consistency motion_smoothness" \
-        --videos_path "${output_video_path}" \
-        --ratio "16-9" \
-        --mode=vbench_standard
+        eval_dimension_list=("${dimension_list[@]}")
+        for extra_dimension in subject_consistency background_consistency motion_smoothness; do
+          if [[ ! " ${eval_dimension_list[*]} " =~ " ${extra_dimension} " ]]; then
+            eval_dimension_list+=("${extra_dimension}")
+          fi
+        done
+        python evaluate_i2v.py \
+          --dimension "${eval_dimension_list[@]}" \
+          --videos_path "${output_video_path}" \
+            --output_path "${eval_results_path}/vbench_i2v" \
+          --ratio "16-9" \
+          --mode=vbench_standard
       popd
     elif [ "${task}" = "s2v" ]; then
       echo "Start s2v evaluation..."
       s2v_eval_script="${script_dir}/evaluate_manifest_no_gt.py"
-      s2v_eval_manifest="${output_video_path}/s2v_manifest_with_generate_video.json"
+      s2v_eval_manifest="${eval_results_path}/s2v_manifest_with_generate_video.json"
       if [ ! -f "${s2v_eval_script}" ]; then
         echo "Error: s2v evaluation script not found: ${s2v_eval_script}"
         exit 1
       fi
       if [ -z "${s2v_eval_output}" ]; then
-        s2v_eval_output="${output_video_path}/evaluation_no_gt_metrics_s2v.json"
+        s2v_eval_output="${eval_results_path}/evaluation_no_gt_metrics_s2v.json"
       fi
 
       eval_cmd=(
