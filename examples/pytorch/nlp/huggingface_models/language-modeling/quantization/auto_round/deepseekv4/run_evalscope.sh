@@ -109,7 +109,7 @@ if [[ "${SKIP_SERVE}" != "true" ]]; then
     --attention_config.use_fp4_indexer_cache=True
     --port "${PORT}"
   )
-  if [[ "${MODEL_NAME}" == "DeepSeek-V4-Pro" ]]; then
+  if [[ "${MODEL_NAME}" == *"DeepSeek-V4-Pro"* ]]; then
     VLLM_CMD+=(--max-model-len 1048576)
   fi
   if [[ "${TRUST_REMOTE_CODE}" == "true" ]]; then
@@ -202,7 +202,7 @@ evalscope eval \
   --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
 
 echo "=== [4/4] ruler_qa_squad (lm_eval, 1M) ===" | tee -a "$OUTPUT_FILE"
-if [[ "${MODEL_NAME}" == "DeepSeek-V4-Pro" ]]; then
+if [[ "${MODEL_NAME}" == *"DeepSeek-V4-Pro"* ]]; then
   LMEVAL_OUTPUT_DIR="${LOG_DIR}/lm_eval_ruler_1M_qa"
   mkdir -p "${LMEVAL_OUTPUT_DIR}"
   LMEVAL_METADATA=$(printf '{"max_seq_lengths":[1000000],"pretrained":"%s/","use_fast":false}' "${MODEL_NORMALIZED}")

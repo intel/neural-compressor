@@ -17,6 +17,17 @@ model = prepare(model, config)
 model = convert(model)
 ```
 
+## Requirements
+
+Install dependencies before running quantization or evaluation:
+
+```bash
+uv pip install -U pip
+uv pip install -U "git+https://github.com/intel/auto-round.git@main"
+uv pip install -U evalscope vllm lm_eval transformers datasets compressed-tensors
+bash <(curl -fsSL https://raw.githubusercontent.com/vllm-project/vllm/main/tools/install_deepgemm.sh)
+```
+
 ## Quick Start
 
 ```bash
