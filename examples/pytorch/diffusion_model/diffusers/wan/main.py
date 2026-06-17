@@ -84,12 +84,14 @@ def build_pipeline(args):
     if args.task == "t2v":
         vae = AutoencoderKLWan.from_pretrained(args.model, subfolder="vae", torch_dtype=torch.float32)
         pipe = WanPipeline.from_pretrained(args.model, vae=vae, torch_dtype=torch.bfloat16)
-        pipe.enable_model_cpu_offload()
+        if not args.quantize:
+            pipe.enable_model_cpu_offload()
         return pipe
 
     if args.task == "i2v":
         pipe = WanImageToVideoPipeline.from_pretrained(args.model, torch_dtype=torch.bfloat16)
-        pipe.enable_model_cpu_offload()
+        if not args.quantize:
+            pipe.enable_model_cpu_offload()
         return pipe
 
     raise ValueError(f"Unsupported task: {args.task}. Supported tasks are: i2v, t2v")

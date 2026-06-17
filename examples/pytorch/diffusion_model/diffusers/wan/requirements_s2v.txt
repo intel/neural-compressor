@@ -1,0 +1,41 @@
+# Core runtime for wan_s2v.py
+numpy
+torch
+torchvision
+transformers
+accelerate
+huggingface_hub
+safetensors
+
+# Quantization stack used by s2v activation QDQ
+neural-compressor-pt
+auto-round
+
+# Utilities
+pillow
+einops
+requests
+
+# S2V evaluation metrics (evaluate_manifest_no_gt.py)
+opencv-python-headless
+scipy
+
+# Wan2.2 s2v runtime dependencies
+openai-whisper
+HyperPyYAML
+onnxruntime
+inflect
+wetext
+omegaconf
+conformer
+hydra-core
+lightning
+rich
+gdown
+matplotlib
+wget
+pyarrow
+pyworld
+librosa
+decord
+modelscope
