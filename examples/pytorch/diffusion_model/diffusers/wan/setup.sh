@@ -47,6 +47,7 @@ fi
 pip install --no-cache-dir -r "$req_file"
 
 if [[ "$task" == "t2v" || "$task" == "i2v" ]]; then
+  pip install opencv-python-headless==4.10.0.84
   pip install --no-cache-dir VBench --no-deps
 fi
 
