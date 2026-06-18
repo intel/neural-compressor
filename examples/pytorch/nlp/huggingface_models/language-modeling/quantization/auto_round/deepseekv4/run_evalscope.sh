@@ -3,7 +3,7 @@
 set -euo pipefail
 
 # Usage:
-#   bash run_evalscope.sh --model MODEL_PATH [--port PORT] [--temp TEMPERATURE]
+#   bash run_evalscope.sh --model MODEL_PATH [--port PORT] [--temp TEMPERATURE] [--tasks TASK1,TASK2]
 #
 # This script can start vLLM serve and then run evalscope automatically.
 
@@ -16,6 +16,7 @@ TENSOR_PARALLEL_SIZE=2
 SAFETENSORS_FAST_GPU="1"
 TRUST_REMOTE_CODE="true"
 NO_ENABLE_FLASHINFER_AUTOTUNE="true"
+TASKS=""
 SKIP_SERVE="${SKIP_SERVE:-false}"
 VLLM_PID=""
 LOG_TAIL_PID=""
@@ -63,6 +64,30 @@ stop_log_tail() {
   fi
 }
 
+trim_task_name() {
+  local task_name="$1"
+  task_name="${task_name#${task_name%%[![:space:]]*}}"
+  task_name="${task_name%${task_name##*[![:space:]]}}"
+  echo "${task_name}"
+}
+
+task_in_list() {
+  local target_task="$1"
+  shift
+  local task_name
+  for task_name in "$@"; do
+    if [[ "${task_name}" == "${target_task}" ]]; then
+      return 0
+    fi
+  done
+  return 1
+}
+
+print_section_header() {
+  echo "=== [${STEP_INDEX}/${TOTAL_STEPS}] $1 ===" | tee -a "$OUTPUT_FILE"
+  STEP_INDEX=$((STEP_INDEX + 1))
+}
+
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --port)
@@ -71,6 +96,8 @@ while [[ $# -gt 0 ]]; do
       MODEL="$2"; shift 2 ;;
     --temp)
       TEMPERATURE="$2"; shift 2 ;;
+    --tasks)
+      TASKS="$2"; shift 2 ;;
     --skip_serve)
       SKIP_SERVE="true"; shift 1 ;;
     --skip-serve)
@@ -156,67 +183,150 @@ if ! curl -sf "${API_URL}/models" -o /dev/null; then
 fi
 
 echo "[$(date '+%Y-%m-%d %H:%M:%S')] API is ready, starting evaluation."
-
 MODEL_NORMALIZED="${MODEL%/}"
 MODEL_NAME="${MODEL_NORMALIZED##*/}"
 LOG_DIR="logs/${MODEL_NAME}"
 mkdir -p "$LOG_DIR"
 OUTPUT_FILE="${LOG_DIR}/eval_results_$(date +%Y%m%d_%H%M%S)_port${PORT}_temp${TEMPERATURE}.log"
 
+DEFAULT_STANDARD_TASKS=(piqa hellaswag gsm8k mmlu_pro math_500 mmlu)
+SUPPORTED_TASKS=(aime26 gpqa_diamond ruler_qa_squad "${DEFAULT_STANDARD_TASKS[@]}")
+SELECTED_STANDARD_TASKS=()
+RUN_AIME26="true"
+RUN_GPQA_DIAMOND="true"
+RUN_STANDARD_TASKS="true"
+RUN_RULER_QA_SQUAD="true"
+
+if [[ -n "${TASKS}" ]]; then
+  RUN_AIME26="false"
+  RUN_GPQA_DIAMOND="false"
+  RUN_STANDARD_TASKS="false"
+  RUN_RULER_QA_SQUAD="false"
+
+  IFS=',' read -r -a REQUESTED_TASKS <<< "${TASKS}"
+  for raw_task in "${REQUESTED_TASKS[@]}"; do
+    task_name="$(trim_task_name "${raw_task}")"
+    if [[ -z "${task_name}" ]]; then
+      continue
+    fi
+    if ! task_in_list "${task_name}" "${SUPPORTED_TASKS[@]}"; then
+      echo "Unsupported task: ${task_name}"
+      echo "Supported tasks: ${SUPPORTED_TASKS[*]}"
+      exit 1
+    fi
+
+    case "${task_name}" in
+      aime26)
+        RUN_AIME26="true"
+        ;;
+      gpqa_diamond)
+        RUN_GPQA_DIAMOND="true"
+        ;;
+      ruler_qa_squad)
+        RUN_RULER_QA_SQUAD="true"
+        ;;
+      *)
+        if ! task_in_list "${task_name}" "${SELECTED_STANDARD_TASKS[@]}"; then
+          SELECTED_STANDARD_TASKS+=("${task_name}")
+          RUN_STANDARD_TASKS="true"
+        fi
+        ;;
+    esac
+  done
+
+  if [[ "${RUN_AIME26}" != "true" ]] && [[ "${RUN_GPQA_DIAMOND}" != "true" ]] \
+    && [[ "${RUN_STANDARD_TASKS}" != "true" ]] && [[ "${RUN_RULER_QA_SQUAD}" != "true" ]]; then
+    echo "No valid tasks selected from --tasks '${TASKS}'."
+    exit 1
+  fi
+else
+  SELECTED_STANDARD_TASKS=("${DEFAULT_STANDARD_TASKS[@]}")
+fi
+
+TOTAL_STEPS=0
+if [[ "${RUN_AIME26}" == "true" ]]; then
+  TOTAL_STEPS=$((TOTAL_STEPS + 1))
+fi
+if [[ "${RUN_GPQA_DIAMOND}" == "true" ]]; then
+  TOTAL_STEPS=$((TOTAL_STEPS + 1))
+fi
+if [[ "${RUN_STANDARD_TASKS}" == "true" ]]; then
+  TOTAL_STEPS=$((TOTAL_STEPS + 1))
+fi
+if [[ "${RUN_RULER_QA_SQUAD}" == "true" ]]; then
+  TOTAL_STEPS=$((TOTAL_STEPS + 1))
+fi
+STEP_INDEX=1
+
 echo "=== Evaluation started at $(date) ===" | tee "$OUTPUT_FILE"
 echo "Model: $MODEL" | tee -a "$OUTPUT_FILE"
 echo "API URL: $API_URL" | tee -a "$OUTPUT_FILE"
 echo "Temperature: $TEMPERATURE" | tee -a "$OUTPUT_FILE"
+if [[ -n "${TASKS}" ]]; then
+  echo "Tasks: ${TASKS}" | tee -a "$OUTPUT_FILE"
+else
+  echo "Tasks: all default tasks" | tee -a "$OUTPUT_FILE"
+fi
 echo "" | tee -a "$OUTPUT_FILE"
   
 
-echo "" | tee -a "$OUTPUT_FILE"
-echo "=== [1/4] aime26 (n=10) ===" | tee -a "$OUTPUT_FILE"
-evalscope eval \
-  --model "$MODEL" \
-  --eval-type openai_api \
-  --api-key EMPTY \
-  --datasets aime26 \
-  --generation-config "{\"temperature\": ${TEMPERATURE}, \"n\": 10}" \
-  --eval-batch-size 10  --timeout 3000 \
-  --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
-echo "" | tee -a "$OUTPUT_FILE"
+if [[ "${RUN_AIME26}" == "true" ]]; then
+  echo "" | tee -a "$OUTPUT_FILE"
+  print_section_header "aime26 (n=10)"
+  evalscope eval \
+    --model "$MODEL" \
+    --eval-type openai_api \
+    --api-key EMPTY \
+    --datasets aime26 \
+    --generation-config "{\"temperature\": ${TEMPERATURE}, \"n\": 10}" \
+    --eval-batch-size 10 --timeout 3000 \
+    --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
+fi
 
-echo "=== [2/4] gpqa_diamond (n=5) ===" | tee -a "$OUTPUT_FILE"
-evalscope eval \
-  --model "$MODEL" \
-  --eval-type openai_api \
-  --api-key EMPTY \
-  --datasets gpqa_diamond \
-  --generation-config "{\"temperature\": ${TEMPERATURE}, \"n\": 5}" \
-  --eval-batch-size 10  --timeout 3000 \
-  --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
+if [[ "${RUN_GPQA_DIAMOND}" == "true" ]]; then
+  echo "" | tee -a "$OUTPUT_FILE"
+  print_section_header "gpqa_diamond (n=5)"
+  evalscope eval \
+    --model "$MODEL" \
+    --eval-type openai_api \
+    --api-key EMPTY \
+    --datasets gpqa_diamond \
+    --generation-config "{\"temperature\": ${TEMPERATURE}, \"n\": 5}" \
+    --eval-batch-size 10 --timeout 3000 \
+    --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
+fi
 
-echo "=== [3/4] piqa hellaswag gsm8k mmlu_pro math_500 mmlu ===" | tee -a "$OUTPUT_FILE"
-evalscope eval \
-  --model "$MODEL" \
-  --eval-type openai_api \
-  --api-key EMPTY \
-  --datasets piqa hellaswag gsm8k mmlu_pro math_500 mmlu \
-  --eval-batch-size 10 --timeout 3000 \
-  --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
+if [[ "${RUN_STANDARD_TASKS}" == "true" ]]; then
+  echo "" | tee -a "$OUTPUT_FILE"
+  print_section_header "${SELECTED_STANDARD_TASKS[*]}"
+  evalscope eval \
+    --model "$MODEL" \
+    --eval-type openai_api \
+    --api-key EMPTY \
+    --datasets "${SELECTED_STANDARD_TASKS[@]}" \
+    --eval-batch-size 10 --timeout 3000 \
+    --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
+fi
 
-echo "=== [4/4] ruler_qa_squad (lm_eval, 1M) ===" | tee -a "$OUTPUT_FILE"
-if [[ "${MODEL_NAME}" == *"DeepSeek-V4-Pro"* ]]; then
-  LMEVAL_OUTPUT_DIR="${LOG_DIR}/lm_eval_ruler_1M_qa"
-  mkdir -p "${LMEVAL_OUTPUT_DIR}"
-  LMEVAL_METADATA=$(printf '{"max_seq_lengths":[1000000],"pretrained":"%s/","use_fast":false}' "${MODEL_NORMALIZED}")
-  lm_eval \
-    --model local-completions \
-    --tasks ruler_qa_squad \
-    --model_args "model=${MODEL_NORMALIZED},base_url=${API_URL}/completions,num_concurrent=1,max_retries=3,max_length=1048576" \
-    --gen_kwargs "temperature=${TEMPERATURE},do_sample=False,max_tokens=128" \
-    --metadata "${LMEVAL_METADATA}" \
-    --batch_size 1 \
-    --log_samples \
-    --output_path "${LMEVAL_OUTPUT_DIR}" 2>&1 | tee -a "$OUTPUT_FILE"
-else
-  echo "Skip ruler_qa_squad: only DeepSeek-V4-Pro is supported for this test." | tee -a "$OUTPUT_FILE"
+if [[ "${RUN_RULER_QA_SQUAD}" == "true" ]]; then
+  echo "" | tee -a "$OUTPUT_FILE"
+  print_section_header "ruler_qa_squad (lm_eval, 1M)"
+  if [[ "${MODEL_NAME}" == *"DeepSeek-V4-Pro"* ]]; then
+    LMEVAL_OUTPUT_DIR="${LOG_DIR}/lm_eval_ruler_1M_qa"
+    mkdir -p "${LMEVAL_OUTPUT_DIR}"
+    LMEVAL_METADATA=$(printf '{"max_seq_lengths":[1000000],"pretrained":"%s/","use_fast":false}' "${MODEL_NORMALIZED}")
+    lm_eval \
+      --model local-completions \
+      --tasks ruler_qa_squad \
+      --model_args "model=${MODEL_NORMALIZED},base_url=${API_URL}/completions,num_concurrent=1,max_retries=3,max_length=1048576" \
+      --gen_kwargs "temperature=${TEMPERATURE},do_sample=False,max_tokens=128" \
+      --metadata "${LMEVAL_METADATA}" \
+      --batch_size 1 \
+      --log_samples \
+      --output_path "${LMEVAL_OUTPUT_DIR}" 2>&1 | tee -a "$OUTPUT_FILE"
+  else
+    echo "Skip ruler_qa_squad: only DeepSeek-V4-Pro is supported for this test." | tee -a "$OUTPUT_FILE"
+  fi
 fi
 
 

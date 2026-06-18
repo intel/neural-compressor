@@ -24,8 +24,10 @@ Install dependencies before running quantization or evaluation:
 ```bash
 uv pip install -U pip
 uv pip install -U "git+https://github.com/intel/auto-round.git@main"
-uv pip install -U evalscope vllm lm_eval transformers datasets compressed-tensors
+uv pip install -U evalscope lm_eval transformers datasets
+uv pip install compressed-tensors --no-deps
 bash <(curl -fsSL https://raw.githubusercontent.com/vllm-project/vllm/main/tools/install_deepgemm.sh)
+VLLM_USE_PRECOMPILED=1 pip install git+https://github.com/xin3he/vllm-fork.git@support_deepseekv4_mxfp
 ```
 
 ## Quick Start
@@ -45,6 +47,7 @@ CUDA_VISIBLE_DEVICES=0,1 bash run_evalscope.sh \
   --model /workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP4-Mixed \
   --tp 2 \
   --port 8009 \
+  --tasks piqa,hellaswag,gsm8k,mmlu_pro,math_500,mmlu,aime26,gpqa_diamond,ruler_qa_squad
   --temp 1.0
 ```
 
