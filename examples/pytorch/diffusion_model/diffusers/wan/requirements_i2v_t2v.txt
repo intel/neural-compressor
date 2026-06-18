@@ -23,7 +23,6 @@ wheel
 cython
 tensorboard
 scipy
-opencv-python-headless
 scikit-learn
 scikit-image
 openai-clip
