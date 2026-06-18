@@ -1,5 +1,5 @@
 deprecated>=1.2.13
-jax==0.10.0
+jax>=0.10.0
 keras>=3.14.1
 keras-hub>=0.29.1
 numpy
