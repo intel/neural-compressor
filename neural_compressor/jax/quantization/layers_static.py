@@ -156,7 +156,17 @@ class MinMaxObserver(keras.layers.Layer):
 class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies static quantize-dequantize to activations."""
 
-    def __init__(self, name, activation_dtype, dtype="float32", asymmetric=False, const_scale=False, fixed_range=None):
+    def __init__(
+        self,
+        name,
+        activation_dtype,
+        dtype="float32",
+        asymmetric=False,
+        const_scale=False,
+        fixed_range=None,
+        q_enable=True,
+        dq_enable=True,
+    ):
         """Initialize the static QDQ helper layer.
 
         Args:
@@ -167,19 +177,24 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             const_scale (bool): Whether to use constant scales.
             fixed_range (Optional[Tuple[float, float]]): If provided, use this (min, max) range
                 instead of collecting calibration data via observers.
+            q_enable (bool): Whether to apply quantization. Default True.
+            dq_enable (bool): Whether to apply dequantization. Default True.
 
         Returns:
             None: Initializes the layer instance.
         """
+        assert q_enable or dq_enable, "At least one of q_enable or dq_enable must be True"
         super().__init__(name=name, dtype=dtype)
         self.activation_dtype = activation_dtype
         self._is_asymmetric = asymmetric
+        self._q_enable = q_enable
+        self._dq_enable = dq_enable
         self.supports_masking = True
         self._is_quantized = None
         self.const_scale = const_scale
         self.fixed_range = fixed_range
         if fixed_range is not None:
-            self.call = self.call_passthrough
+            self.call = self._passthrough
         if const_scale:
             self._const_variables = ["a_scale"]
             if asymmetric:
@@ -270,7 +285,8 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
 
         self._tracker.unlock()
         if self._is_quantized:
-            self.call = self.call_asymmetric if self._is_asymmetric else self.call_symmetric
+            self._setup_quantized_ops()
+            self.call = self.call_quantized
 
             model_is_during_load = self.a_scale == 0.0
             if not model_is_during_load:
@@ -281,7 +297,7 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
                     self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
                     setattr(self, name, value)
         else:
-            self.call = self.call_passthrough
+            self.call = self._passthrough
             attrs_to_remove = [self.a_scale]
             if self._is_asymmetric:
                 attrs_to_remove.append(self.a_zero_point)
@@ -312,56 +328,50 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         x = self.input_observer(inputs, mask=mask)
         return x
 
-    def call_passthrough(self, inputs, mask=None):
-        """Pass inputs through without observation.
+    def _passthrough(self, x, *args, **kwargs):
+        """No-op passthrough. Used for disabled quantize/dequantize steps and as call_passthrough.
 
         Args:
-            inputs (jnp.ndarray): Input tensor.
-            mask (Optional[jnp.ndarray]): Optional mask tensor.
+            x (jnp.ndarray): Input tensor.
+            *args: Ignored positional params (e.g. scale, zero_point).
+            **kwargs: Ignored keyword params (e.g. mask).
 
         Returns:
-            jnp.ndarray: Unmodified inputs.
+            jnp.ndarray: Unmodified input.
         """
-        return inputs
-
-    def call_symmetric(self, inputs, mask=None):
-        """Apply symmetric quantize-dequantize to inputs.
-
-        Args:
-            inputs (jnp.ndarray): Input tensor.
-            mask (Optional[jnp.ndarray]): Optional mask tensor.
-
-        Returns:
-            jnp.ndarray: Quantized-dequantized tensor.
-        """
-
-        if self.const_scale:
-            a_scale = self.a_scale
-        else:
-            a_scale = self.a_scale.value
-
-        x = self.aquantfun(inputs, a_scale)
-        x = self.adequantfun(x, a_scale)
         return x
 
-    def call_asymmetric(self, inputs, mask=None):
-        """Apply asymmetric quantize-dequantize to inputs.
+    def _setup_quantized_ops(self):
+        """Assign take_scale, quantize, and dequantize methods for the quantized call.
+
+        Returns:
+            None: Sets self.take_scale, self.quantize, self.dequantize.
+        """
+        if self._is_asymmetric and self.const_scale:
+            self.take_scale = lambda: (self.a_scale, self.a_zero_point)
+        elif self._is_asymmetric:
+            self.take_scale = lambda: (self.a_scale.value, self.a_zero_point.value)
+        elif self.const_scale:
+            self.take_scale = lambda: (self.a_scale,)
+        else:
+            self.take_scale = lambda: (self.a_scale.value,)
+
+        self.quantize = self.aquantfun if self._q_enable else self._passthrough
+        self.dequantize = self.adequantfun if self._dq_enable else self._passthrough
+
+    def call_quantized(self, inputs, mask=None):
+        """Apply quantization pipeline to inputs.
 
         Args:
             inputs (jnp.ndarray): Input tensor.
             mask (Optional[jnp.ndarray]): Optional mask tensor.
 
         Returns:
-            jnp.ndarray: Quantized-dequantized tensor.
+            jnp.ndarray: Processed tensor.
         """
-        if self.const_scale:
-            a_scale = self.a_scale
-            a_zero_point = self.a_zero_point
-        else:
-            a_scale = self.a_scale.value
-            a_zero_point = self.a_zero_point.value
-        x = self.aquantfun(inputs, a_scale, a_zero_point)
-        x = self.adequantfun(x, a_scale, a_zero_point)
+        params = self.take_scale()
+        x = self.quantize(inputs, *params)
+        x = self.dequantize(x, *params)
         return x
 
 

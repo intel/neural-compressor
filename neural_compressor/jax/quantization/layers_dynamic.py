@@ -68,23 +68,30 @@ def register_dynamic_quantized_layer(clso):
 class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies dynamic quantize-dequantize to activations."""
 
-    def __init__(self, name, activation_dtype, dtype="float32", asymmetric=False, fixed_range=None):
+    def __init__(
+        self, name, activation_dtype, dtype="float32", asymmetric=False, fixed_range=None, q_enable=True, dq_enable=True
+    ):
         """Initialize the dynamic QDQ helper layer.
 
         Args:
             name (str): Layer name.
             activation_dtype (jnp.dtype): Activation dtype used for quantization.
-            dtype (str): dtype for the layer - see keras.layers.Layer API for details.
+            dtype (str | keras.DTypePolicy): dtype for the layer - see keras.layers.Layer API for details.
             asymmetric (bool): Whether to use asymmetric quantization.
             fixed_range (Optional[Tuple[float, float]]): If provided, use this (min, max) range
                 instead of computing min/max dynamically per batch.
+            q_enable (bool): Whether to apply quantization. Default True.
+            dq_enable (bool): Whether to apply dequantization. Default True.
 
         Returns:
             None: Initializes the layer instance.
         """
+        assert q_enable or dq_enable, "At least one of q_enable or dq_enable must be True"
         super().__init__(name=name, dtype=dtype)
         self.activation_dtype = activation_dtype
         self._is_asymmetric = asymmetric
+        self._q_enable = q_enable
+        self._dq_enable = dq_enable
         self.supports_masking = True
         self.fixed_range = fixed_range
 
@@ -100,6 +107,8 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         self._tracker.unlock()
         self.aquantfun = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_asymmetric)
         self.adequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_asymmetric)
+        self.quantize = self.aquantfun if self._q_enable else self._passthrough
+        self.dequantize = self.adequantfun if self._dq_enable else self._passthrough
         if self.fixed_range is not None:
             fixed_min_max = ops.array(self.fixed_range)
             a_scale, a_zero_point = get_q_params(
@@ -108,51 +117,54 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             self._fixed_a_scale = a_scale
             if self._is_asymmetric:
                 self._fixed_a_zero_point = a_zero_point
-            self.call = self.call_fixed_asymmetric if self._is_asymmetric else self.call_fixed_symmetric
+                self.take_scale = lambda inputs, mask=None: (self._fixed_a_scale, self._fixed_a_zero_point)
+            else:
+                self.take_scale = lambda inputs, mask=None: (self._fixed_a_scale,)
+        elif self._is_asymmetric:
+            self.take_scale = self._take_scale_dynamic_asymmetric
+        else:
+            self.take_scale = self._take_scale_dynamic_symmetric
+        self.call = self.call_quantized
         self._tracker.lock()
 
-    def call_symmetric(self, inputs, a_scale):
-        """Apply symmetric quantize-dequantize with given scale.
-
-        Args:
-            inputs (jnp.ndarray): Input tensor.
-            a_scale (jnp.ndarray): Quantization scale.
+    def post_quantization_cleanup(self):
+        """Finalize dynamic quantization with no extra cleanup.
 
         Returns:
-            jnp.ndarray: Quantized-dequantized tensor.
+            None: Keeps the layer ready for inference.
         """
-        x = self.aquantfun(inputs, a_scale)
-        x = self.adequantfun(x, a_scale)
-        return x
-
-    def call_asymmetric(self, inputs, a_scale, a_zero_point):
-        """Apply asymmetric quantize-dequantize with given scale and zero point.
-
-        Args:
-            inputs (jnp.ndarray): Input tensor.
-            a_scale (jnp.ndarray): Quantization scale.
-            a_zero_point (jnp.ndarray): Quantization zero point.
-
-        Returns:
-            jnp.ndarray: Quantized-dequantized tensor.
-        """
-        x = self.aquantfun(inputs, a_scale, a_zero_point)
-        x = self.adequantfun(x, a_scale, a_zero_point)
-        return x
+        pass
 
     def call(self, inputs, mask=None):
-        """Apply dynamic activation quantize-dequantize.
+        """Default call before add_variables is invoked.
+
+        Should not be reached after setup.
+        """
+        raise RuntimeError("DynamicQDQLayer.call: add_variables() must be called before use.")
+
+    def _passthrough(self, x, *args, **kwargs):
+        """No-op passthrough. Used when quantize or dequantize is disabled.
+
+        Args:
+            x (jnp.ndarray): Input tensor.
+            *args: Ignored positional params (e.g. scale, zero_point).
+            **kwargs: Ignored keyword params.
+
+        Returns:
+            jnp.ndarray: Unmodified input.
+        """
+        return x
+
+    def _compute_batch_min_max(self, inputs, mask=None):
+        """Compute batch min/max from inputs, respecting mask.
 
         Args:
             inputs (jnp.ndarray): Input tensor.
             mask (Optional[jnp.ndarray]): Optional mask tensor.
 
         Returns:
-            jnp.ndarray: Tensor with quantize-dequantize applied.
+            jnp.ndarray: Tensor of (min, max) values.
         """
-        if any([dim == 0 for dim in inputs.shape]):
-            # Skip quantization for zero-size inputs
-            return inputs
         if mask is not None:
             # Expand mask to match input dimensions if needed
             if len(mask.shape) < len(inputs.shape):
@@ -166,48 +178,52 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         else:
             batch_min = keras.ops.min(inputs)
             batch_max = keras.ops.max(inputs)
+        return keras.ops.array((batch_min, batch_max))
 
-        batch_min_max = keras.ops.array((batch_min, batch_max))
+    def _take_scale_dynamic_symmetric(self, inputs, mask=None):
+        """Compute symmetric scale dynamically from batch min/max.
 
-        if self._is_asymmetric:
-            a_scale, a_zero_point = get_q_params(
-                batch_min_max, self.activation_dtype, self.compute_dtype, asymmetric=True
-            )
-            return self.call_asymmetric(inputs, a_scale, a_zero_point)
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            Tuple[jnp.ndarray]: Tuple containing (a_scale,).
+        """
+        batch_min_max = self._compute_batch_min_max(inputs, mask)
         a_scale, _ = get_q_params(batch_min_max, self.activation_dtype, self.compute_dtype, asymmetric=False)
-        return self.call_symmetric(inputs, a_scale)
+        return (a_scale,)
 
-    def call_fixed_symmetric(self, inputs, mask=None):
-        """Apply symmetric quantization using a pre-computed fixed scale.
-
-        Args:
-            inputs (jnp.ndarray): Input tensor.
-            mask (Optional[jnp.ndarray]): Optional mask tensor.
-
-        Returns:
-            jnp.ndarray: Quantized-dequantized tensor.
-        """
-        return self.call_symmetric(inputs, self._fixed_a_scale)
-
-    def call_fixed_asymmetric(self, inputs, mask=None):
-        """Apply asymmetric quantization using a pre-computed fixed scale.
+    def _take_scale_dynamic_asymmetric(self, inputs, mask=None):
+        """Compute asymmetric scale and zero point dynamically from batch min/max.
 
         Args:
             inputs (jnp.ndarray): Input tensor.
             mask (Optional[jnp.ndarray]): Optional mask tensor.
 
         Returns:
-            jnp.ndarray: Quantized-dequantized tensor.
+            Tuple[jnp.ndarray, jnp.ndarray]: Tuple containing (a_scale, a_zero_point).
         """
-        return self.call_asymmetric(inputs, self._fixed_a_scale, self._fixed_a_zero_point)
+        batch_min_max = self._compute_batch_min_max(inputs, mask)
+        a_scale, a_zero_point = get_q_params(batch_min_max, self.activation_dtype, self.compute_dtype, asymmetric=True)
+        return (a_scale, a_zero_point)
 
-    def post_quantization_cleanup(self):
-        """Finalize dynamic quantization with no extra cleanup.
+    def call_quantized(self, inputs, mask=None):
+        """Apply quantization pipeline to inputs.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
 
         Returns:
-            None: Keeps the layer ready for inference.
+            jnp.ndarray: Processed tensor.
         """
-        pass
+        if any([dim == 0 for dim in inputs.shape]):
+            return inputs
+        params = self.take_scale(inputs, mask)
+        x = self.quantize(inputs, *params)
+        x = self.dequantize(x, *params)
+        return x
 
 
 class QDynamicDenseMixin(SaveableLayerMixin):
