@@ -86,7 +86,12 @@ class VersionManager:
         """
         config["_versions"] = {}
         for package in cls._MODULES:
-            config["_versions"][package] = importlib_metadata.version(package)
+            try:
+                config["_versions"][package] = importlib_metadata.version(package)
+            except importlib_metadata.PackageNotFoundError:
+                # If neural_compressor_jax is not found, try neural_compressor
+                if package == "neural_compressor_jax":
+                    config["_versions"][package] = importlib_metadata.version("neural_compressor")
 
     @classmethod
     def check_versions_mismatch(cls, config):
@@ -105,7 +110,13 @@ class VersionManager:
             )
             return
         for package, version_in_config in versions.items():
-            current_version = importlib_metadata.version(package)
+            try:
+                current_version = importlib_metadata.version(package)
+            except importlib_metadata.PackageNotFoundError:
+                # If neural_compressor_jax is not found, try neural_compressor
+                if package == "neural_compressor_jax":
+                    current_version = importlib_metadata.version("neural_compressor")
+
             if version_in_config != current_version:
                 logger.warning(
                     f"{package}: version mismatch. Saved model: {version_in_config}, current version: {current_version}. "
