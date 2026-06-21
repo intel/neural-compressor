@@ -10,3 +10,6 @@ cd ..
 # Uninstall flash_attn to avoid conflicts
 pip uninstall flash_attn -y
 pip install lm_eval["ruler"]
+# QDQ plugin
+git clone https://github.com/yiliu30/vllm-qdq-plugin.git
+uv pip install vllm-qdq-plugin/ -v
