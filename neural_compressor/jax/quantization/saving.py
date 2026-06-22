@@ -75,6 +75,18 @@ class VersionManager:
     _MODULES = ["neural_compressor_jax", "keras", "keras_hub"]
 
     @classmethod
+    def get_installed_inc_package_name(cls):
+        possible_names = ["neural_compressor", "neural_compressor_jax"]
+        for name in possible_names:
+            try:
+                importlib_metadata.version(name)
+                return name
+            except importlib_metadata.PackageNotFoundError:
+                continue
+
+        raise ModuleNotFoundError(f"Package of given name not found. Tried: {possible_names}")
+
+    @classmethod
     def add_versions(cls, config):
         """Insert package versions into the serialized config.
 
@@ -86,12 +98,12 @@ class VersionManager:
         """
         config["_versions"] = {}
         for package in cls._MODULES:
-            try:
+            if "neural_compressor" in package:
+                config["_versions"][package] = importlib_metadata.version(
+                    VersionManager.get_installed_inc_package_name()
+                )
+            else:
                 config["_versions"][package] = importlib_metadata.version(package)
-            except importlib_metadata.PackageNotFoundError:
-                # If neural_compressor_jax is not found, try neural_compressor
-                if package == "neural_compressor_jax":
-                    config["_versions"][package] = importlib_metadata.version("neural_compressor")
 
     @classmethod
     def check_versions_mismatch(cls, config):
@@ -110,12 +122,10 @@ class VersionManager:
             )
             return
         for package, version_in_config in versions.items():
-            try:
+            if "neural_compressor" in package:
+                current_version = importlib_metadata.version(VersionManager.get_installed_inc_package_name())
+            else:
                 current_version = importlib_metadata.version(package)
-            except importlib_metadata.PackageNotFoundError:
-                # If neural_compressor_jax is not found, try neural_compressor
-                if package == "neural_compressor_jax":
-                    current_version = importlib_metadata.version("neural_compressor")
 
             if version_in_config != current_version:
                 logger.warning(
