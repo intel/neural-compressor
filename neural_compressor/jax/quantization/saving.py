@@ -92,6 +92,8 @@ class VersionManager:
                 # If neural_compressor_jax is not found, try neural_compressor
                 if package == "neural_compressor_jax":
                     config["_versions"][package] = importlib_metadata.version("neural_compressor")
+                else:
+                    raise
 
     @classmethod
     def check_versions_mismatch(cls, config):
@@ -116,6 +118,8 @@ class VersionManager:
                 # If neural_compressor_jax is not found, try neural_compressor
                 if package == "neural_compressor_jax":
                     current_version = importlib_metadata.version("neural_compressor")
+                else:
+                    raise
 
             if version_in_config != current_version:
                 logger.warning(
