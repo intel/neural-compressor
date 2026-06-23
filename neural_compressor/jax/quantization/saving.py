@@ -72,15 +72,14 @@ def quant_config_from_json_object(json_obj: dict) -> BaseConfig:
 class VersionManager:
     """Handle version metadata for serialized quantized models."""
 
-    _MODULES = ["neural_compressor_jax", "keras", "keras_hub"]
+    _MODULES = ["neural_compressor", "keras", "keras_hub"]
 
     @classmethod
-    def get_installed_inc_package_name(cls):
+    def get_installed_neural_compressor_version(cls):
         possible_names = ["neural_compressor", "neural_compressor_jax"]
         for name in possible_names:
             try:
-                importlib_metadata.version(name)
-                return name
+                return importlib_metadata.version(name)
             except importlib_metadata.PackageNotFoundError:
                 continue
 
@@ -99,9 +98,7 @@ class VersionManager:
         config["_versions"] = {}
         for package in cls._MODULES:
             if "neural_compressor" in package:
-                config["_versions"][package] = importlib_metadata.version(
-                    VersionManager.get_installed_inc_package_name()
-                )
+                config["_versions"][package] = VersionManager.get_installed_neural_compressor_version()
             else:
                 config["_versions"][package] = importlib_metadata.version(package)
 
@@ -123,7 +120,7 @@ class VersionManager:
             return
         for package, version_in_config in versions.items():
             if "neural_compressor" in package:
-                current_version = importlib_metadata.version(VersionManager.get_installed_inc_package_name())
+                current_version = VersionManager.get_installed_neural_compressor_version()
             else:
                 current_version = importlib_metadata.version(package)
 
