@@ -15,6 +15,9 @@ from jax import numpy as jnp
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
 
+# Mark all tests in this file as smoke tests
+pytestmark = pytest.mark.smoke_test
+
 
 @keras.saving.register_keras_serializable()
 class SimpleModel(keras.Model):

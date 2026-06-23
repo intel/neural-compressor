@@ -27,7 +27,7 @@ Transformers-like API provides a seamless user experience of model compressions 
 
 ## Usage For CPU 
 
-Our motivation is to improve CPU support for weight only quantization. We have extended the `from_pretrained` function so that `quantization_config` can accept [`RtnConfig`](https://github.com/intel/neural-compressor/blob/master/neural_compressor/transformers/utils/quantization_config.py#L243), [`AwqConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L394), [`TeqConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L464), [`GPTQConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L298), [`AutoroundConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L527) to implements conversion on the CPU.
+Our motivation is to improve CPU support for weight only quantization. We have extended the `from_pretrained` function so that `quantization_config` can accept [`RtnConfig`](https://github.com/intel/neural-compressor/blob/main/neural_compressor/transformers/utils/quantization_config.py#L243), [`AwqConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L394), [`TeqConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L464), [`GPTQConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L298), [`AutoroundConfig`](https://github.com/intel/neural-compressor/blob/72398b69334d90cdd7664ac12a025cd36695b55c/neural_compressor/transformers/utils/quantization_config.py#L527) to implements conversion on the CPU.
 
 ### Usage examples for CPU device
 quantization and inference with `RtnConfig`, `AwqConfig`, `TeqConfig`, `GPTQConfig`, `AutoRoundConfig` on CPU device.
@@ -200,7 +200,7 @@ gen_text = tokenizer.batch_decode(gen_ids, skip_special_tokens=True)
 print(gen_text)
 ```
 
-5. You can directly use [example script](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation/run_generation_gpu_woq.py)
+5. You can directly use [example script](https://github.com/intel/neural-compressor/blob/main/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation/run_generation_gpu_woq.py)
 ```bash
 python run_generation_gpu_woq.py --woq --benchmark --model save_dir
 ```
@@ -213,4 +213,4 @@ python run_generation_gpu_woq.py --woq --benchmark --model save_dir
 
 ## Examples
 
-Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/master/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation) on how to quantize a model with transformers-like api.
+Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/main/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/transformers/weight_only/text-generation) on how to quantize a model with transformers-like api.
