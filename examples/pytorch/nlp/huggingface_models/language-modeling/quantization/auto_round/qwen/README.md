@@ -3,14 +3,8 @@ This example provides an end-to-end workflow to quantize Qwen models to MXFP4/MX
 ## Requirement
 ```bash
 uv pip install neural-compressor-pt
-# auto-round
 uv pip install auto-round
-# vLLM
-git clone -b fused-moe-ar --single-branch --quiet https://github.com/yiliu30/vllm-fork.git && cd vllm-fork
-VLLM_USE_PRECOMPILED=1 uv pip install --editable . -vvv
-# other requirements
-uv pip install -r requirements.txt
-uv pip uninstall flash_attn
+bash setup.sh
 ```
 
 ### Quantize Model
@@ -74,12 +68,10 @@ Usage:
 bash run_evaluation.sh -m [model_path] -s [mxfp4|mxfp8] -t [task_name] -tp [tensor_parallel_size] -b [batch_size]
 ```
 ```bash
-bash run_evaluation.sh -s mxfp8 -t piqa,hellaswag,mmlu -tp 4 -b 512 -m /path/to/qwen_mxfp8
-bash run_evaluation.sh -s mxfp8 -t gsm8k -tp 4 -b 256 -m /path/to/qwen_mxfp8
+bash run_evaluation.sh -s mxfp8 -t piqa,hellaswag,mmlu,gsm8k -tp 4 -b 256 -m /path/to/qwen_mxfp8
 
 ```
 - MXFP4
 ```bash
-bash run_evaluation.sh -s mxfp4 -t piqa,hellaswag,mmlu -tp 4 -b 512 -m /path/to/qwen_mxfp4
-bash run_evaluation.sh -s mxfp4 -t gsm8k -tp 4 -b 256 -m /path/to/qwen_mxfp4
+bash run_evaluation.sh -s mxfp4 -t piqa,hellaswag,mmlu,gsm8k -tp 4 -b 256 -m /path/to/qwen_mxfp4
 ```
