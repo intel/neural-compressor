@@ -82,6 +82,7 @@ def quant_model(args):
         iters=iters,
         ignore_layers=config["fp_layers"],
         export_format=args.export_format,
+        device_map="auto",
         output_dir=output_dir,
         low_gpu_mem_usage=True,
         static_kv_dtype=static_kv_dtype,
