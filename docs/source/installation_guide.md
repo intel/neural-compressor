@@ -47,6 +47,7 @@ pip install neural-compressor
 # Framework extension API + corresponding framework dependency
 pip install neural-compressor[pt]
 pip install neural-compressor[tf]
+pip install neural-compressor[jax]
 ```
 ```Shell
 # Framework extension API + PyTorch dependency
@@ -114,12 +115,13 @@ INC_JAX_ONLY=1 pip install .
   <tr align="center">
     <th>Version</th>
     <td class="tg-7zrl">
-    <a href=https://github.com/tensorflow/tensorflow/releases/tag/v2.19.0>2.19.0</a><br></td>
+    <a href=https://github.com/tensorflow/tensorflow/releases/tag/v2.19.0>2.19</a><br></td>
     <td class="tg-7zrl">
-    <a href=https://github.com/pytorch/pytorch/releases/tag/v2.10.0>2.10.0</a><br>
-    <a href=https://github.com/pytorch/pytorch/releases/tag/v2.9.1>2.9.1</a><br></td>
+    <a href=https://github.com/pytorch/pytorch/releases/tag/v2.12.0>2.12</a><br>
+    <a href=https://github.com/pytorch/pytorch/releases/tag/v2.11.0>2.11</a><br>
+    <a href=https://github.com/pytorch/pytorch/releases/tag/v2.10.0>2.10</a><br></td>
     <td class="tg-7zrl">
-    <a href=https://github.com/jax-ml/jax/releases/tag/jax-v0.9.1>0.9</a><br></td>
+    <a href=https://github.com/jax-ml/jax/releases/tag/jax-v0.10.2>0.10</a><br></td>
   </tr>
 </tbody>
 </table>
