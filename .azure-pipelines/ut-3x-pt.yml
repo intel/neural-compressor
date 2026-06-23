@@ -21,7 +21,7 @@ pr:
       - .azure-pipelines/scripts/ut/run_3x_pt.sh
       - .azure-pipelines/scripts/ut/coverage.3x_pt
 
-pool: ICX-16C
+pool: INTEL-CPU
 
 variables:
   IMAGE_NAME: "neural-compressor"
