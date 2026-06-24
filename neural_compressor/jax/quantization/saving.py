@@ -72,7 +72,18 @@ def quant_config_from_json_object(json_obj: dict) -> BaseConfig:
 class VersionManager:
     """Handle version metadata for serialized quantized models."""
 
-    _MODULES = ["neural_compressor_jax", "keras", "keras_hub"]
+    _MODULES = ["neural_compressor", "keras", "keras_hub"]
+
+    @classmethod
+    def get_installed_neural_compressor_version(cls):
+        possible_names = ["neural_compressor", "neural_compressor_jax"]
+        for name in possible_names:
+            try:
+                return importlib_metadata.version(name)
+            except importlib_metadata.PackageNotFoundError:
+                continue
+
+        raise ModuleNotFoundError(f"Package of given name not found. Tried: {possible_names}")
 
     @classmethod
     def add_versions(cls, config):
@@ -86,7 +97,10 @@ class VersionManager:
         """
         config["_versions"] = {}
         for package in cls._MODULES:
-            config["_versions"][package] = importlib_metadata.version(package)
+            if "neural_compressor" in package:
+                config["_versions"][package] = VersionManager.get_installed_neural_compressor_version()
+            else:
+                config["_versions"][package] = importlib_metadata.version(package)
 
     @classmethod
     def check_versions_mismatch(cls, config):
@@ -105,7 +119,11 @@ class VersionManager:
             )
             return
         for package, version_in_config in versions.items():
-            current_version = importlib_metadata.version(package)
+            if "neural_compressor" in package:
+                current_version = VersionManager.get_installed_neural_compressor_version()
+            else:
+                current_version = importlib_metadata.version(package)
+
             if version_in_config != current_version:
                 logger.warning(
                     f"{package}: version mismatch. Saved model: {version_in_config}, current version: {current_version}. "

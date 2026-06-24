@@ -196,7 +196,7 @@ class TestAutoRoundHPU:
     def test_autoround_with_quantize_API(self):
         fp32_model = copy.deepcopy(self.tiny_llama_model)
 
-        quant_config = AutoRoundConfig(scheme="W4A16", seqlen=10, iters=1, use_sym=False, amp=False, scale_dtype="fp32")
+        quant_config = AutoRoundConfig(scheme="W4A16", seqlen=10, iters=1, use_sym=True, amp=False, scale_dtype="fp32")
         logger.info(f"Test AutoRound with config {quant_config}")
 
         # quantize API
