@@ -93,9 +93,7 @@ def test_text_prompt(dynamic, const_vars, save_as_preset, model_dtype, quantizat
             keras.saving.save_model(gemma_q, save_path)
             gemma_q_loaded = keras.saving.load_model(save_path)
 
-    answer = gemma_q_loaded.generate(
-        "Question: What is the capital city of United Kingdom?\n", max_length=50, strip_prompt=False
-    )
+    answer = gemma_q_loaded.generate("Answer what is the capital city of England.", max_length=20, strip_prompt=True)
     print("Gemma answer: ", {answer})
     assert "London" in answer
 
