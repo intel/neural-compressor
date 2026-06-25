@@ -158,6 +158,8 @@ class AutoRoundQuantizer(Quantizer):
         Returns:
             A prepared model.
         """
+        if isinstance(model, str) and bool(getattr(self, "model_free", False)):
+            return model
         prepare_model = InputCaptureModule(model)
         return prepare_model
 
@@ -171,20 +173,26 @@ class AutoRoundQuantizer(Quantizer):
             The quantized model.
         """
         pipe = kwargs.pop("pipeline", None)
-        tokenizer = getattr(model.orig_model, "tokenizer", None)
-        if tokenizer is not None:
-            delattr(model.orig_model, "tokenizer")
-        elif pipe is None:
-            tokenizer = "Placeholder"
-            self.dataset = CapturedDataloader(model.args_list, model.kwargs_list)
-        # Retrieve processor/image_processor/template from model if they were attached there
-        # (moved from quant_config to model to avoid duplicating large objects in per-layer configs)
-        for _attr in ("processor", "image_processor", "template"):
-            _val = getattr(model.orig_model, _attr, None)
-            if _val is not None:
-                setattr(self, _attr, _val)
-                delattr(model.orig_model, _attr)
-        model = model.orig_model
+        is_model_reference = isinstance(model, str)
+        if is_model_reference:
+            tokenizer = getattr(self, "tokenizer", None)
+            if tokenizer is None and pipe is None:
+                tokenizer = "Placeholder"
+        else:
+            tokenizer = getattr(model.orig_model, "tokenizer", None)
+            if tokenizer is not None:
+                delattr(model.orig_model, "tokenizer")
+            elif pipe is None:
+                tokenizer = "Placeholder"
+                self.dataset = CapturedDataloader(model.args_list, model.kwargs_list)
+            # Retrieve processor/image_processor/template from model if they were attached there
+            # (moved from quant_config to model to avoid duplicating large objects in per-layer configs)
+            for _attr in ("processor", "image_processor", "template"):
+                _val = getattr(model.orig_model, _attr, None)
+                if _val is not None:
+                    setattr(self, _attr, _val)
+                    delattr(model.orig_model, _attr)
+            model = model.orig_model
         if pipe is not None:
             model = pipe
         # Remove AutoRound specific args before passing to AutoRound constructor
@@ -221,7 +229,8 @@ class AutoRoundQuantizer(Quantizer):
 
         if self._is_w4afp8():
             model, weight_config = rounder.quantize()
-            model.autoround_config = weight_config
+            if hasattr(model, "__dict__"):
+                model.autoround_config = weight_config
             return rounder.save_quantized(output_dir=self.output_dir, inplace=True)
         else:  # pragma: no cover
             _, quantized_model_path = rounder.quantize_and_save(
@@ -229,10 +238,12 @@ class AutoRoundQuantizer(Quantizer):
             )
             self.output_dir = quantized_model_path
             model = rounder.model
-            model.autoround_config = rounder.layer_config
+            if hasattr(model, "__dict__"):
+                model.autoround_config = rounder.layer_config
 
         self.accelerator.empty_cache()
-        dump_model_op_stats(rounder.layer_config)
+        if not bool(getattr(self, "model_free", False)):
+            dump_model_op_stats(rounder.layer_config)
 
         reloading = self.__dict__.get("reloading", True)
         if self.export_format in ["auto_round", "llm_compressor"] and reloading:
@@ -248,7 +259,9 @@ class AutoRoundQuantizer(Quantizer):
             except Exception as e:
                 logger.error(f"Error reloading model: {e}")
 
-        setattr(model, "name_or_path", self.output_dir)  # model is saved in a subfolder of output_dir based on scheme
+        if hasattr(model, "__dict__"):
+            # model is saved in a subfolder of output_dir based on scheme
+            setattr(model, "name_or_path", self.output_dir)
         return model
 
 

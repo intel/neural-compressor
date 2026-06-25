@@ -560,12 +560,12 @@ def teq_quantize_entry(
 ###################### AUTOROUND Algo Entry ##################################
 @register_algo(name=AUTOROUND)
 def autoround_quantize_entry(
-    model: torch.nn.Module,
+    model,
     configs_mapping: Dict[Tuple[str, callable], AutoRoundConfig],
     mode: Mode = Mode.QUANTIZE,
     *args,
     **kwargs,
-) -> torch.nn.Module:
+):
     """The main entry to apply AutoRound quantization.
 
     Args:
@@ -630,8 +630,10 @@ def autoround_quantize_entry(
     kwargs.pop("example_inputs")
     quantizer = get_quantizer(model, quantizer_cls=AutoRoundQuantizer, quant_config=quant_config, **params_dict)
     model = quantizer.execute(model=model, mode=mode, *args, **kwargs)
-    model.qconfig = configs_mapping
-    model.save = MethodType(save, model)
+    if hasattr(model, "__dict__"):
+        model.qconfig = configs_mapping
+        if isinstance(model, torch.nn.Module):
+            model.save = MethodType(save, model)
     postprocess_model(model, mode, quantizer)
     return model
 
