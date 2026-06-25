@@ -169,7 +169,7 @@ def quantize_noise_model(model, args):
             if module.__class__.__name__ == "Linear":
                 layer_config[name] = {"bits": 8, "data_type": "fp", "group_size": 0, "sym": True}
     else:
-        kwargs["scheme"] = {
+        scheme = {
             "bits": 8,
             "group_size": 32,
             "data_type": "mx_fp",
@@ -182,6 +182,7 @@ def quantize_noise_model(model, args):
         layer_config=layer_config,
         export_format="fake",
         output_dir=args.output_dir,
+        scheme=scheme,
     )
 
     logging.info("Prepare + convert S2V noise model (%s)", args.scheme)
