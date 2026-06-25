@@ -1,0 +1,234 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DeepSeek V4 AutoRound (INC prepare/convert) &mdash; Intel® Neural Compressor 3.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">DeepSeek V4 AutoRound (INC prepare/convert)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../../../_sources/docs/source/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/deepseekv4/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="deepseek-v4-autoround-inc-prepare-convert">
+<h1>DeepSeek V4 AutoRound (INC prepare/convert)<a class="headerlink" href="#deepseek-v4-autoround-inc-prepare-convert" title="Link to this heading"></a></h1>
+<p>This example demonstrates model-free quantization through INC API:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoRoundConfig</span><span class="p">,</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">(</span>
+    <span class="n">model_free</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">scheme</span><span class="o">=</span><span class="s2">&quot;MXFP4&quot;</span><span class="p">,</span>
+    <span class="n">ignore_layers</span><span class="o">=</span><span class="s2">&quot;compressor,indexer.weights_proj&quot;</span><span class="p">,</span>
+    <span class="n">export_format</span><span class="o">=</span><span class="s2">&quot;llm_compressor&quot;</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/output&quot;</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="s2">&quot;/path/or/hf_model_name&quot;</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p>Install dependencies before running quantization or evaluation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>pip
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span><span class="s2">&quot;git+https://github.com/intel/auto-round.git@main&quot;</span>
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>evalscope<span class="w"> </span>lm_eval<span class="w"> </span>transformers<span class="w"> </span>datasets
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>compressed-tensors<span class="w"> </span>--no-deps
+bash<span class="w"> </span>&lt;<span class="o">(</span>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/vllm-project/vllm/main/tools/install_deepgemm.sh<span class="o">)</span>
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>setuptools_rust<span class="w"> </span>setuptools_scm
+<span class="nv">VLLM_USE_PRECOMPILED</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/xin3he/vllm-fork.git@support_deepseekv4_mxfp<span class="w"> </span>--no-build-isolation
+</pre></div>
+</div>
+</section>
+<section id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/deepseekv4
+bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dtype<span class="o">=</span>mxfp4_mixed<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>/workspace/models/deepseek-ai/DeepSeek-V4-Flash<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_model<span class="o">=</span>/workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP4-Mixed
+</pre></div>
+</div>
+<p>Then run serving + evaluation in one command:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1<span class="w"> </span>bash<span class="w"> </span>run_evalscope.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model<span class="w"> </span>/workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP4-Mixed<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tp<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--port<span class="w"> </span><span class="m">8009</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tasks<span class="w"> </span>piqa,hellaswag,gsm8k,mmlu_pro,math_500,mmlu,aime26,gpqa_diamond,ruler_qa_squad
+<span class="w">  </span>--temp<span class="w"> </span><span class="m">1</span>.0
+</pre></div>
+</div>
+<p>Equivalent vLLM defaults inside <code class="docutils literal notranslate"><span class="pre">run_evalscope.sh</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SAFETENSORS_FAST_GPU</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1<span class="w"> </span>vllm<span class="w"> </span>serve<span class="w"> </span>&lt;model&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--trust-remote-code<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--kv-cache-dtype<span class="w"> </span>fp8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--block-size<span class="w"> </span><span class="m">256</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tensor-parallel-size<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--attention_config.use_fp4_indexer_cache<span class="o">=</span>True<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--port<span class="w"> </span><span class="m">8009</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--no-enable-flashinfer-autotune
+</pre></div>
+</div>
+<p>If model basename is exactly <code class="docutils literal notranslate"><span class="pre">DeepSeek-V4-Flash</span></code> or <code class="docutils literal notranslate"><span class="pre">DeepSeek-V4-Pro</span></code> (without extra suffix),
+<code class="docutils literal notranslate"><span class="pre">run_evalscope.sh</span></code> will also add (automatically):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>--enable-expert-parallel<span class="w"> </span>--moe-backend<span class="w"> </span>deep_gemm_mega_moe
+</pre></div>
+</div>
+<p>Mixed preset example:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dtype<span class="o">=</span>mxfp4_mixed<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>/workspace/models/deepseek-ai/DeepSeek-V4-Flash<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_model<span class="o">=</span>/workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP8
+</pre></div>
+</div>
+</section>
+<section id="cli-arguments">
+<h2>CLI Arguments<a class="headerlink" href="#cli-arguments" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--dtype</span></code>: quantization preset.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">mxfp4</span></code>: <code class="docutils literal notranslate"><span class="pre">scheme=MXFP4</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mxfp4_mixed</span></code>: <code class="docutils literal notranslate"><span class="pre">scheme=MXFP8</span></code> + <code class="docutils literal notranslate"><span class="pre">layer_config={&quot;ffn.experts&quot;:</span> <span class="pre">{&quot;bits&quot;:</span> <span class="pre">4,</span> <span class="pre">&quot;data_type&quot;:</span> <span class="pre">&quot;mx_fp&quot;}}</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mxfp8</span></code>: <code class="docutils literal notranslate"><span class="pre">scheme=MXFP8</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">w4a16</span></code>: <code class="docutils literal notranslate"><span class="pre">scheme=W4A16</span></code> + <code class="docutils literal notranslate"><span class="pre">layer_config={&quot;wo_a&quot;:</span> <span class="pre">{&quot;bits&quot;:</span> <span class="pre">16}}</span></code></p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--input_model</span></code>: HF model name or local model path.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--output_model</span></code>: output directory.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--format</span></code>: <code class="docutils literal notranslate"><span class="pre">auto_round</span></code> or <code class="docutils literal notranslate"><span class="pre">llm_compressor</span></code> (default: <code class="docutils literal notranslate"><span class="pre">llm_compressor</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--ignore_layers</span></code>: comma-separated layer patterns (default: <code class="docutils literal notranslate"><span class="pre">compressor,indexer.weights_proj</span></code>).</p></li>
+</ul>
+<p><code class="docutils literal notranslate"><span class="pre">run_evalscope.sh</span></code> arguments:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--model</span></code>: model path for vLLM and evalscope.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--port</span></code>: vLLM API port (default: <code class="docutils literal notranslate"><span class="pre">8009</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--temp</span></code>: generation temperature used by evalscope (default: <code class="docutils literal notranslate"><span class="pre">0</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--skip_serve</span></code>: skip starting vLLM (use existing endpoint on the same <code class="docutils literal notranslate"><span class="pre">--port</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--tp</span></code>: tensor parallel size for vLLM (default: <code class="docutils literal notranslate"><span class="pre">2</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--kv-cache-dtype</span></code>: kv cache dtype for vLLM (default: <code class="docutils literal notranslate"><span class="pre">fp8</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--block-size</span></code>: vLLM block size (default: <code class="docutils literal notranslate"><span class="pre">256</span></code>).</p></li>
+</ul>
+</section>
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>This flow is enabled only when:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">config</span></code> is <code class="docutils literal notranslate"><span class="pre">AutoRoundConfig</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">config.model_free=True</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model</span></code> passed to <code class="docutils literal notranslate"><span class="pre">prepare/convert</span></code> is a <code class="docutils literal notranslate"><span class="pre">str</span></code> (model path or model name)</p></li>
+</ul>
+</li>
+<li><p>The example uses <code class="docutils literal notranslate"><span class="pre">reloading=False</span></code> by default and saves quantized artifacts to <code class="docutils literal notranslate"><span class="pre">--output_model</span></code>.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fe0498e05f0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

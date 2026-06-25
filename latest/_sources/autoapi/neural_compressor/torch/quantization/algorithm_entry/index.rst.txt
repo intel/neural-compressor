@@ -151,7 +151,7 @@ Module Contents
    :rtype: torch.nn.Module
 
 
-.. py:function:: autoround_quantize_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.AutoRoundConfig], mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, *args, **kwargs) -> torch.nn.Module
+.. py:function:: autoround_quantize_entry(model, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.AutoRoundConfig], mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, *args, **kwargs)
 
    The main entry to apply AutoRound quantization.
 
