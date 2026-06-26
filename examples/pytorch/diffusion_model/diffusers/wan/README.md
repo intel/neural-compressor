@@ -10,10 +10,14 @@ You can also use the helper script to install task-specific dependencies:
 
 ```bash
 # t2v / i2v setup (installs requirements_i2v_t2v.txt and VBench by default)
+python3.12 -m venv .venv
+source .venv/bin/activate
 bash setup.sh --task t2v
 bash setup.sh --task i2v
 
 # s2v setup (installs requirements_s2v.txt, skips VBench by default)
+python3.12 -m venv .venv-s2v
+source .venv-s2v/bin/activate
 bash setup.sh --task s2v
 ```
 

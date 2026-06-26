@@ -34,11 +34,9 @@ if [[ -z "$task" ]]; then
   exit 1
 fi
 
-pip install uv
 uv pip install -U pip setuptools
 
 if [[ "$task" == "s2v" ]]; then
-  uv pip install -U numba librosa
   req_file="${SCRIPT_DIR}/requirements_s2v.txt"
 elif [[ "$task" == "t2v" || "$task" == "i2v" ]]; then
   req_file="${SCRIPT_DIR}/requirements_i2v_t2v.txt"
@@ -48,11 +46,26 @@ else
   exit 1
 fi
 
-pip install --no-cache-dir -r "$req_file"
-pip install opencv-python-headless==4.10.0.84
+if [[ "$task" == "s2v" ]]; then
+  uv pip install --no-cache-dir \
+    torch \
+    torchvision \
+    transformers \
+    accelerate \
+    huggingface_hub \
+    safetensors
+  # flash-attn needs torch available at build time.
+  uv pip install --no-cache-dir --no-build-isolation flash-attn==2.8.3.post1
+  uv pip install --no-cache-dir neural-compressor-pt auto-round
+  uv pip install --no-cache-dir -r "$req_file"
+else
+  uv pip install --no-cache-dir -r "$req_file"
+fi
+
+uv pip install --no-cache-dir  opencv-python-headless==4.10.0.84
 
 if [[ "$task" == "t2v" || "$task" == "i2v" ]]; then
-  pip install --no-cache-dir VBench --no-deps
+  uv pip install --no-cache-dir VBench --no-deps
 fi
 
 echo "Setup completed for task: $task"
