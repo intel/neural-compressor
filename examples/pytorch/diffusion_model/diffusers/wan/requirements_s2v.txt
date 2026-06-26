@@ -1,4 +1,4 @@
-# Quantization stack used by s2v activation QDQ
+# Quantization stack
 neural-compressor-pt
 auto-round
 
@@ -11,25 +11,20 @@ requests
 scipy
 
 # Wan 2.2 dependencies
-torch>=2.4.0
-torchvision>=0.19.0
+# torch/torchvision/transformers/accelerate/huggingface_hub/safetensors
+# are installed in setup.sh for s2v to enforce install order.
 torchaudio
 #opencv-python>=4.9.0.80
 diffusers>=0.31.0
-transformers>=4.49.0,<=4.51.3
 tokenizers>=0.20.3
-accelerate>=1.1.1
 tqdm
 imageio[ffmpeg]
 easydict
 ftfy
 dashscope
 imageio-ffmpeg
-#flash_attn
 numpy>=1.23.5,<2
 peft
-huggingface_hub
-safetensors
 
 
 # Wan2.2 s2v runtime dependencies

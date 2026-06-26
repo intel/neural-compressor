@@ -56,7 +56,6 @@ if [[ "$task" == "s2v" ]]; then
     safetensors
   # flash-attn needs torch available at build time.
   uv pip install --no-cache-dir --no-build-isolation flash-attn==2.8.3.post1
-  uv pip install --no-cache-dir neural-compressor-pt auto-round
   uv pip install --no-cache-dir -r "$req_file"
 else
   uv pip install --no-cache-dir -r "$req_file"
