@@ -48,11 +48,11 @@ else
   exit 1
 fi
 
-uv pip install --no-cache-dir --no-build-isolation -r "$req_file"
+pip install --no-cache-dir -r "$req_file"
+pip install opencv-python-headless==4.10.0.84
 
 if [[ "$task" == "t2v" || "$task" == "i2v" ]]; then
-  uv pip install opencv-python-headless==4.10.0.84
-  uv pip install --no-cache-dir VBench --no-deps
+  pip install --no-cache-dir VBench --no-deps
 fi
 
 echo "Setup completed for task: $task"
