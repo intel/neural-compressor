@@ -1614,6 +1614,29 @@ class _Unpickler:  # pragma: no cover
 
     def find_class(self, module, name):
         # Subclasses may override this.
+        # Security: Block dangerous modules and functions to prevent RCE via deserialization (CWE-502)
+        DANGEROUS_MODULES = {
+            'os', 'subprocess', 'sys', 'socket', 'urllib', 'requests',
+            'tempfile', 'shutil', 'glob', 'importlib', '__main__',
+            'builtins', '__builtins__', 'code', 'codeop',
+        }
+        DANGEROUS_NAMES = {
+            'eval', 'exec', 'compile', 'open', '__import__',
+            'breakpoint', 'input', 'help', 'dir',
+        }
+
+        # Check for dangerous modules
+        if module in DANGEROUS_MODULES:
+            raise UnpicklingError(
+                f"Unpickling forbidden module '{module}'"
+            )
+
+        # Check for dangerous names in any module
+        if name in DANGEROUS_NAMES:
+            raise UnpicklingError(
+                f"Unpickling forbidden function '{module}.{name}'"
+            )
+
         sys.audit("pickle.find_class", module, name)
         if self.proto < 3 and self.fix_imports:
             if (module, name) in _compat_pickle.NAME_MAPPING:
