@@ -34,7 +34,11 @@ if [[ -z "$task" ]]; then
   exit 1
 fi
 
+pip install uv
+uv pip install -U pip setuptools
+
 if [[ "$task" == "s2v" ]]; then
+  uv pip install -U numba librosa
   req_file="${SCRIPT_DIR}/requirements_s2v.txt"
 elif [[ "$task" == "t2v" || "$task" == "i2v" ]]; then
   req_file="${SCRIPT_DIR}/requirements_i2v_t2v.txt"
@@ -44,11 +48,11 @@ else
   exit 1
 fi
 
-pip install --no-cache-dir -r "$req_file"
+uv pip install --no-cache-dir --no-build-isolation -r "$req_file"
 
 if [[ "$task" == "t2v" || "$task" == "i2v" ]]; then
-  pip install opencv-python-headless==4.10.0.84
-  pip install --no-cache-dir VBench --no-deps
+  uv pip install opencv-python-headless==4.10.0.84
+  uv pip install --no-cache-dir VBench --no-deps
 fi
 
 echo "Setup completed for task: $task"
