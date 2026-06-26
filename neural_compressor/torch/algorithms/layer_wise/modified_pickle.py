@@ -1617,6 +1617,8 @@ class _Unpickler:  # pragma: no cover
         # Security: Block dangerous modules and functions to prevent RCE via deserialization (CWE-502)
         DANGEROUS_MODULES = {
             "os",
+            "posix",
+            "nt",
             "subprocess",
             "sys",
             "socket",
@@ -1637,6 +1639,8 @@ class _Unpickler:  # pragma: no cover
             "exec",
             "compile",
             "open",
+            "system",
+            "popen",
             "__import__",
             "breakpoint",
             "input",
