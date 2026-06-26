@@ -6,6 +6,7 @@ import pytest
 import torch
 import transformers
 
+from neural_compressor.torch.algorithms.weight_only.save_load import WOQModelLoader
 from neural_compressor.torch.quantization import load
 from neural_compressor.torch.utils import SaveLoadFormat, accelerator, is_hpu_available
 
@@ -99,3 +100,57 @@ class TestHFModelLoad:
             cache_dir=self.local_cache,
         )
         assert model is not None, "Model not loaded correctly"
+
+
+def test_load_weight_file_uses_weights_only(monkeypatch):
+    loader = WOQModelLoader(model_name_or_path="dummy", format=SaveLoadFormat.DEFAULT)
+    calls = []
+
+    def _fake_torch_load(path, **kwargs):
+        calls.append((path, kwargs))
+        return {"w": torch.tensor([1])}
+
+    monkeypatch.setattr(torch, "load", _fake_torch_load)
+
+    loaded = loader._load_weight_file("dummy.pt")
+
+    assert loaded["w"].item() == 1
+    assert len(calls) == 1
+    assert calls[0][0] == "dummy.pt"
+    assert calls[0][1].get("weights_only") is True
+
+
+def test_load_weight_file_fallback_for_legacy_torch(monkeypatch):
+    loader = WOQModelLoader(model_name_or_path="dummy", format=SaveLoadFormat.DEFAULT)
+    calls = []
+
+    def _fake_torch_load(path, **kwargs):
+        calls.append((path, kwargs))
+        if "weights_only" in kwargs:
+            raise TypeError("weights_only is unsupported")
+        return {"ok": torch.tensor([2])}
+
+    monkeypatch.setattr(torch, "load", _fake_torch_load)
+
+    loaded = loader._load_weight_file("legacy.pt")
+
+    assert loaded["ok"].item() == 2
+    assert len(calls) == 2
+    assert calls[0][0] == "legacy.pt"
+    assert calls[0][1].get("weights_only") is True
+    assert calls[1][0] == "legacy.pt"
+    assert calls[1][1] == {}
+
+
+def test_load_weight_file_raises_runtime_error_for_non_type_error(monkeypatch):
+    loader = WOQModelLoader(model_name_or_path="dummy", format=SaveLoadFormat.DEFAULT)
+
+    def _fake_torch_load(path, **kwargs):
+        raise RuntimeError("corrupted checkpoint")
+
+    monkeypatch.setattr(torch, "load", _fake_torch_load)
+
+    with pytest.raises(RuntimeError, match="weights_only=True") as exc_info:
+        loader._load_weight_file("broken.pt")
+
+    assert "qconfig.json" in str(exc_info.value)
