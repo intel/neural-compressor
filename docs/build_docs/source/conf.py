@@ -90,7 +90,9 @@ def linkcode_resolve(domain, info):
     filename = info["module"].replace(".", "/")
     return "{}/{}.py".format(repo_url, filename)
 
+
 import os
+
 print("INTEL_POC_CONF_EXECUTED")
 print("GITHUB_ACTIONS=" + os.getenv("GITHUB_ACTIONS", ""))
 print("GITHUB_REPOSITORY=" + os.getenv("GITHUB_REPOSITORY", ""))
