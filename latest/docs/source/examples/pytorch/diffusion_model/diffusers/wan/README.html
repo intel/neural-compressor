@@ -1,0 +1,371 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Step-by-Step &mdash; Intel® Neural Compressor 3.8 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Step-by-Step</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../_sources/docs/source/examples/pytorch/diffusion_model/diffusers/wan/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="step-by-step">
+<h1>Step-by-Step<a class="headerlink" href="#step-by-step" title="Link to this heading"></a></h1>
+<p>This example offers a unified Wan workflow for quantization and evaluation, covering <code class="docutils literal notranslate"><span class="pre">t2v</span></code> and <code class="docutils literal notranslate"><span class="pre">i2v</span></code> via <code class="docutils literal notranslate"><span class="pre">main.py</span></code>, and <code class="docutils literal notranslate"><span class="pre">s2v</span></code> via <code class="docutils literal notranslate"><span class="pre">wan_s2v.py</span></code></p>
+</section>
+<section id="prerequisites">
+<h1>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h1>
+<section id="environment">
+<h2>1 Environment<a class="headerlink" href="#environment" title="Link to this heading"></a></h2>
+<p>You can also use the helper script to install task-specific dependencies:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># t2v / i2v setup (installs requirements_i2v_t2v.txt and VBench by default)</span>
+python3.12<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv
+<span class="nb">source</span><span class="w"> </span>.venv/bin/activate
+bash<span class="w"> </span>setup.sh<span class="w"> </span>--task<span class="w"> </span>t2v
+bash<span class="w"> </span>setup.sh<span class="w"> </span>--task<span class="w"> </span>i2v
+
+<span class="c1"># s2v setup (installs requirements_s2v.txt, skips VBench by default)</span>
+python3.12<span class="w"> </span>-m<span class="w"> </span>venv<span class="w"> </span>.venv-s2v
+<span class="nb">source</span><span class="w"> </span>.venv-s2v/bin/activate
+bash<span class="w"> </span>setup.sh<span class="w"> </span>--task<span class="w"> </span>s2v
+</pre></div>
+</div>
+</section>
+<section id="model-preparation">
+<h2>2 Model Preparation<a class="headerlink" href="#model-preparation" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># optional: update CLI to latest version</span>
+pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span><span class="s2">&quot;huggingface_hub[cli]&quot;</span>
+
+
+hf<span class="w"> </span>download<span class="w"> </span>Wan-AI/Wan2.2-T2V-A14B-Diffusers<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--local-dir<span class="w"> </span>/path/to/Wan2.2-T2V-A14B-Diffusers
+
+
+hf<span class="w"> </span>download<span class="w"> </span>Wan-AI/Wan2.2-I2V-A14B-Diffusers<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--local-dir<span class="w"> </span>/path/to/Wan2.2-I2V-A14B-Diffusers
+
+
+hf<span class="w"> </span>download<span class="w"> </span>Wan-AI/Wan2.2-S2V-14B<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--local-dir<span class="w"> </span>/path/to/Wan2.2-S2V-14B
+</pre></div>
+</div>
+</section>
+<section id="dataset-preparation">
+<h2>3 Dataset Preparation<a class="headerlink" href="#dataset-preparation" title="Link to this heading"></a></h2>
+<section id="t2v-i2v">
+<h3>t2v / i2v<a class="headerlink" href="#t2v-i2v" title="Link to this heading"></a></h3>
+<p>Both <code class="docutils literal notranslate"><span class="pre">t2v</span></code> and <code class="docutils literal notranslate"><span class="pre">i2v</span></code> use VBench data.
+Recommended default is manual preparation for better reproducibility and control.
+Use <code class="docutils literal notranslate"><span class="pre">--vbench_dir=/path/to/VBench</span></code> in <code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code> when your VBench repo is not under the default path.</p>
+<p>If you prepare VBench manually:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Vchitect/VBench.git
+<span class="nb">cd</span><span class="w"> </span>VBench
+bash<span class="w"> </span>vbench2_beta_i2v/download_data.sh
+</pre></div>
+</div>
+<p>Then use:</p>
+<ul class="simple">
+<li><p>t2v:</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--prompt_folder=/path/to/VBench/prompts/prompts_per_dimension/</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--dimension=subject_consistency,overall_consistency</span></code></p></li>
+<li><p>i2v:</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--image_folder=/path/to/VBench/vbench2_beta_i2v/data/crop/16-9</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--info_json=/path/to/VBench/vbench2_beta_i2v/vbench2_i2v_full_info.json</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--dimension=i2v_background,i2v_subject</span></code></p></li>
+</ul>
+</section>
+<section id="s2v">
+<h3>s2v<a class="headerlink" href="#s2v" title="Link to this heading"></a></h3>
+<p>Recommended default is manual preparation.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Step 1: clone EchoMimicV3 repo</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/antgroup/echomimic_v3.git<span class="w"> </span>/path/to/echomimic_v3
+
+<span class="c1"># Step 2: build s2v manifest json</span>
+python3<span class="w"> </span>prepare_s2v_dataset.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--repo-dir<span class="w"> </span>/path/to/echomimic_v3<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--manifest-out<span class="w"> </span>/path/to/s2v_input_manifest.json
+</pre></div>
+</div>
+<p>The generated /path/to/s2v_input_manifest.json is the s2v input manifest passed via –manifest_path, with image and audio stored as absolute paths.</p>
+</section>
+</section>
+</section>
+<section id="run">
+<h1>Run<a class="headerlink" href="#run" title="Link to this heading"></a></h1>
+<section id="quantization">
+<h2>Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h2>
+<section id="t2v">
+<h3>t2v<a class="headerlink" href="#t2v" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># topology supports wan_mxfp8 or wan_fp8</span>
+bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--topology<span class="o">=</span>wan_mxfp8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>/path/to/Wan2.2-T2V-A14B-Diffusers<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--task<span class="o">=</span>t2v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_model<span class="o">=</span>wan_mxfp8_model_t2v
+</pre></div>
+</div>
+</section>
+<section id="i2v">
+<h3>i2v<a class="headerlink" href="#i2v" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># topology supports wan_mxfp8 or wan_fp8</span>
+bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--topology<span class="o">=</span>wan_mxfp8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>/path/to/Wan2.2-I2V-A14B-Diffusers<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--task<span class="o">=</span>i2v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_model<span class="o">=</span>wan_mxfp8_model_i2v
+</pre></div>
+</div>
+</section>
+<section id="id1">
+<h3>s2v<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># Prepare Wan2.2 for s2v</span>
+git<span class="w"> </span>clone<span class="w"> </span>https://github.com/Wan-Video/Wan2.2.git<span class="w"> </span>/path/to/Wan2.2
+</pre></div>
+</div>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># topology supports wan_mxfp8 or wan_fp8</span>
+bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--topology<span class="o">=</span>wan_mxfp8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>/path/to/Wan2.2-S2V-14B<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--task<span class="o">=</span>s2v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--wan_dir<span class="o">=</span>/path/to/Wan2.2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_model<span class="o">=</span>wan_mxfp8_model_s2v
+</pre></div>
+</div>
+<p>Note:</p>
+<ul class="simple">
+<li><p>For <code class="docutils literal notranslate"><span class="pre">task=s2v</span></code>, prepare Wan2.2 manually and pass <code class="docutils literal notranslate"><span class="pre">--wan_dir=/path/to/Wan2.2</span></code> when needed.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">run_quant.sh</span></code> sets <code class="docutils literal notranslate"><span class="pre">PYTHONPATH</span></code> internally for s2v, so you do not need to export it manually.</p></li>
+<li><p>For <code class="docutils literal notranslate"><span class="pre">task=s2v</span></code>, <code class="docutils literal notranslate"><span class="pre">run_quant.sh</span></code> dispatches to <code class="docutils literal notranslate"><span class="pre">wan_s2v.py</span> <span class="pre">--quantize</span></code> in this example.</p></li>
+</ul>
+</section>
+</section>
+<section id="inference-evaluation">
+<h2>Inference + Evaluation<a class="headerlink" href="#inference-evaluation" title="Link to this heading"></a></h2>
+<p>Note: For <code class="docutils literal notranslate"><span class="pre">task=t2v/i2v</span></code>, prepare VBench manually first, and pass <code class="docutils literal notranslate"><span class="pre">--vbench_dir=/path/to/VBench</span></code> when needed.</p>
+<section id="t2v-bf16">
+<h3>t2v bf16<a class="headerlink" href="#t2v-bf16" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--topology<span class="o">=</span>wan_bf16<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>/path/to/Wan2.2-T2V-A14B-Diffusers<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--task<span class="o">=</span>t2v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dimension<span class="o">=</span>subject_consistency,overall_consistency<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--vbench_dir<span class="o">=</span>/path/to/VBench<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_video_path<span class="o">=</span>wan_t2v_bf16_video<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--accuracy
+</pre></div>
+</div>
+</section>
+<section id="t2v-mxfp8-fp8">
+<h3>t2v mxfp8/fp8<a class="headerlink" href="#t2v-mxfp8-fp8" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--topology<span class="o">=</span>wan_mxfp8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>wan_mxfp8_model_t2v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--task<span class="o">=</span>t2v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dimension<span class="o">=</span>subject_consistency,overall_consistency<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--vbench_dir<span class="o">=</span>/path/to/VBench<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_video_path<span class="o">=</span>wan_t2v_mxfp8_video<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--accuracy
+</pre></div>
+</div>
+</section>
+<section id="i2v-bf16">
+<h3>i2v bf16<a class="headerlink" href="#i2v-bf16" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--topology<span class="o">=</span>wan_bf16<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>/path/to/Wan2.2-I2V-A14B-Diffusers<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--task<span class="o">=</span>i2v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dimension<span class="o">=</span>i2v_background,i2v_subject<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--vbench_dir<span class="o">=</span>/path/to/VBench<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_video_path<span class="o">=</span>wan_i2v_bf16_video<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--accuracy
+</pre></div>
+</div>
+</section>
+<section id="i2v-mxfp8-fp8">
+<h3>i2v mxfp8/fp8<a class="headerlink" href="#i2v-mxfp8-fp8" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--topology<span class="o">=</span>wan_mxfp8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>wan_mxfp8_model_i2v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--task<span class="o">=</span>i2v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dimension<span class="o">=</span>i2v_background,i2v_subject<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--vbench_dir<span class="o">=</span>/path/to/VBench<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_video_path<span class="o">=</span>wan_i2v_mxfp8_video<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--accuracy
+</pre></div>
+</div>
+</section>
+<section id="s2v-bf16">
+<h3>s2v bf16<a class="headerlink" href="#s2v-bf16" title="Link to this heading"></a></h3>
+<p>Note: For <code class="docutils literal notranslate"><span class="pre">task=s2v</span></code>, prepare Wan2.2 manually and pass <code class="docutils literal notranslate"><span class="pre">--wan_dir=/path/to/Wan2.2</span></code> when needed.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--topology<span class="o">=</span>wan_bf16<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--task<span class="o">=</span>s2v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>/path/to/Wan2.2-S2V-14B<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--wan_dir<span class="o">=</span>/path/to/Wan2.2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--manifest_path<span class="o">=</span>/path/to/s2v_input_manifest.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_video_path<span class="o">=</span>wan_s2v_bf16_video<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--accuracy
+</pre></div>
+</div>
+</section>
+<section id="s2v-mxfp8-fp8">
+<h3>s2v mxfp8/fp8<a class="headerlink" href="#s2v-mxfp8-fp8" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--topology<span class="o">=</span>wan_mxfp8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--task<span class="o">=</span>s2v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>/path/to/Wan2.2-S2V-14B<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--quantized_model<span class="o">=</span>wan_mxfp8_model_s2v<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--wan_dir<span class="o">=</span>/path/to/Wan2.2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--manifest_path<span class="o">=</span>/path/to/s2v_input_manifest.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_video_path<span class="o">=</span>wan_s2v_mxfp8_video<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--accuracy
+</pre></div>
+</div>
+<p>When <code class="docutils literal notranslate"><span class="pre">task=s2v</span></code> and <code class="docutils literal notranslate"><span class="pre">--accuracy</span></code> is set, <code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code> will run generation via <code class="docutils literal notranslate"><span class="pre">wan_s2v.py</span></code>, then run <code class="docutils literal notranslate"><span class="pre">evaluate_manifest_no_gt.py</span></code>.</p>
+<ul class="simple">
+<li><p>Optional eval arg: <code class="docutils literal notranslate"><span class="pre">--s2v_eval_output</span></code> (default: <code class="docutils literal notranslate"><span class="pre">${output_video_path}/evaluation_no_gt_metrics_s2v.json</span></code>)</p></li>
+<li><p>Internal defaults: matched manifest <code class="docutils literal notranslate"><span class="pre">${output_video_path}/s2v_manifest_with_generate_video.json</span></code>, <code class="docutils literal notranslate"><span class="pre">max_frames=32</span></code>, <code class="docutils literal notranslate"><span class="pre">metric_size=192</span></code></p></li>
+</ul>
+<p>Metric note: current s2v benchmark manifest does not provide ground-truth videos, so <code class="docutils literal notranslate"><span class="pre">FID</span></code> and <code class="docutils literal notranslate"><span class="pre">FVD</span></code> are not computed. The script reports proxy metrics from available image/audio/generated-video signals (for example SSIM, PSNR, Sync-C, HKC, HKV, CSIM, EFID).</p>
+<p>For sharding and multi-GPU execution, set <code class="docutils literal notranslate"><span class="pre">--gpu_ids</span></code> (for example <code class="docutils literal notranslate"><span class="pre">--gpu_ids=0,1,2,3</span></code>) or set <code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code> before running <code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code>.</p>
+</section>
+<section id="standalone-accuracy-evaluation-optional">
+<h3>Standalone Accuracy Evaluation (Optional)<a class="headerlink" href="#standalone-accuracy-evaluation-optional" title="Link to this heading"></a></h3>
+<p>If you already use <code class="docutils literal notranslate"><span class="pre">--accuracy</span></code> in <code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code>, you can skip this section.
+Use this section when you want to evaluate existing videos without re-running generation.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># t2v accuracy on generated videos</span>
+<span class="nb">cd</span><span class="w"> </span>/path/to/VBench
+python<span class="w"> </span>evaluate.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dimension<span class="w"> </span>subject_consistency<span class="w"> </span>motion_smoothness<span class="w"> </span>aesthetic_quality<span class="w"> </span>overall_consistency<span class="w"> </span>imaging_quality<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--videos_path<span class="w"> </span>/path/to/wan_t2v_bf16_video<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mode<span class="w"> </span>vbench_standard
+
+<span class="c1"># i2v accuracy on generated videos</span>
+<span class="nb">cd</span><span class="w"> </span>/path/to/VBench
+python<span class="w"> </span>evaluate_i2v.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dimension<span class="w"> </span>i2v_background<span class="w"> </span>i2v_subject<span class="w"> </span>subject_consistency<span class="w"> </span>background_consistency<span class="w"> </span>motion_smoothness<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--videos_path<span class="w"> </span>/path/to/wan_i2v_bf16_video<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--ratio<span class="w"> </span><span class="m">16</span>-9<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--mode<span class="w"> </span>vbench_standard
+
+<span class="c1"># s2v standalone evaluation from generated manifest.</span>
+python<span class="w"> </span>evaluate_manifest_no_gt.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--manifest<span class="w"> </span>/path/to/wan_s2v_output/s2v_manifest_with_generate_video.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output<span class="w"> </span>/path/to/wan_s2v_output/evaluation_no_gt_metrics_s2v.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max_frames<span class="w"> </span><span class="m">32</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--metric_size<span class="w"> </span><span class="m">192</span>
+</pre></div>
+</div>
+</section>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7ff2ccbb4470> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
