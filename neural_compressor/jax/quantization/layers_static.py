@@ -20,11 +20,11 @@
 
 
 import keras
+import keras.layers
+import keras_hub.layers
 import numpy as np
 from jax import numpy as jnp
 from keras import ops
-from keras.layers import Conv2D, Dense, EinsumDense, MultiHeadAttention
-from keras_hub.layers import ReversibleEmbedding, RotaryEmbedding
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
 
@@ -622,27 +622,27 @@ class QStaticDenseMixin(SaveableLayerMixin):
         return x
 
 
-@register_static_quantized_layer(Dense)
-class QStaticDense(QStaticDenseMixin, Dense):
+@register_static_quantized_layer(keras.layers.Dense)
+class QStaticDense(QStaticDenseMixin, keras.layers.Dense):
     """Statically quantized Dense layer."""
 
     pass
 
 
-verify_api(Dense, QStaticDense, "call")
+verify_api(keras.layers.Dense, QStaticDense, "call")
 
 
-@register_static_quantized_layer(EinsumDense)
-class QStaticEinsumDense(QStaticDenseMixin, EinsumDense):
+@register_static_quantized_layer(keras.layers.EinsumDense)
+class QStaticEinsumDense(QStaticDenseMixin, keras.layers.EinsumDense):
     """Statically quantized EinsumDense layer."""
 
     pass
 
 
-verify_api(EinsumDense, QStaticEinsumDense, "call")
+verify_api(keras.layers.EinsumDense, QStaticEinsumDense, "call")
 
 
-class QStaticConv2DMixin(QStaticDenseMixin, Conv2D):
+class QStaticConv2DMixin(QStaticDenseMixin, keras.layers.Conv2D):
     """Mixin that adds static quantization to Conv2D layers."""
 
     def call(self, inputs):
@@ -700,18 +700,18 @@ class QStaticConv2DMixin(QStaticDenseMixin, Conv2D):
         return x
 
 
-@register_static_quantized_layer(Conv2D)
-class QStaticConv2d(QStaticConv2DMixin, Conv2D):
+@register_static_quantized_layer(keras.layers.Conv2D)
+class QStaticConv2d(QStaticConv2DMixin, keras.layers.Conv2D):
     """Statically quantized Conv2D layer."""
 
     pass
 
 
-verify_api(Conv2D, QStaticConv2d, "call")
+verify_api(keras.layers.Conv2D, QStaticConv2d, "call")
 
 
-@register_static_quantized_layer(MultiHeadAttention)
-class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
+@register_static_quantized_layer(keras.layers.MultiHeadAttention)
+class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttention):
     """Statically quantized MultiHeadAttention layer."""
 
     @classmethod
@@ -922,7 +922,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
     # fmt on
 
 
-verify_api(MultiHeadAttention, QStaticMultiHeadAttention, "_compute_attention")
+verify_api(keras.layers.MultiHeadAttention, QStaticMultiHeadAttention, "_compute_attention")
 
 
 @register_static_quantized_layer(CachedGemma3Attention)
@@ -1216,8 +1216,8 @@ class QStaticGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
 verify_api(Gemma3VisionAttention, QStaticGemma3VisionAttention, "call")
 
 
-# @register_static_quantized_layer(RotaryEmbedding)
-class QStaticRotaryEmbedding(SaveableLayerMixin, RotaryEmbedding):
+# @register_static_quantized_layer(keras_hub.layers.RotaryEmbedding)
+class QStaticRotaryEmbedding(SaveableLayerMixin, keras_hub.layers.RotaryEmbedding):
     """Statically quantized RotaryEmbedding layer."""
 
     @classmethod
@@ -1327,11 +1327,12 @@ class QStaticRotaryEmbedding(SaveableLayerMixin, RotaryEmbedding):
         return cos_emb, sin_emb
 
 
-# verify_api(RotaryEmbedding, QStaticRotaryEmbedding, "_compute_cos_sin_embedding")
+# verify_api(keras_hub.layers.RotaryEmbedding, QStaticRotaryEmbedding, "_compute_cos_sin_embedding")
 
 
-@register_static_quantized_layer(ReversibleEmbedding)
-class QStaticReversibleEmbedding(SaveableLayerMixin, ReversibleEmbedding):
+@register_static_quantized_layer(keras.layers.ReversibleEmbedding)
+@register_static_quantized_layer(keras_hub.layers.ReversibleEmbedding)
+class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbedding):
     """Statically quantized ReversibleEmbedding layer."""
 
     @classmethod
@@ -1389,12 +1390,11 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, ReversibleEmbedding):
         """Finalize static quantization and mark the layer as quantized.
 
         Returns:
-            None: Cleans up observers and marks quantized state.
+            None: Cleans up observers.
         """
         self._tracker.unlock()
         self.inputs_qdq.post_quantization_cleanup()
         self.kernel_qdq.post_quantization_cleanup()
-        self._is_quantized = True
         self._tracker.lock()
 
     def call(self, inputs, reverse=False):
@@ -1424,7 +1424,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, ReversibleEmbedding):
                 logits = ops.tanh(logits / soft_cap) * soft_cap
             return logits
 
-        return super(ReversibleEmbedding, self).call(inputs)
+        return super(keras.layers.ReversibleEmbedding, self).call(inputs)
 
 
-verify_api(ReversibleEmbedding, QStaticReversibleEmbedding, "call")
+verify_api(keras.layers.ReversibleEmbedding, QStaticReversibleEmbedding, "call")
