@@ -89,3 +89,10 @@ def linkcode_resolve(domain, info):
         return None
     filename = info["module"].replace(".", "/")
     return "{}/{}.py".format(repo_url, filename)
+
+import os
+print("INTEL_POC_CONF_EXECUTED")
+print("GITHUB_ACTIONS=" + os.getenv("GITHUB_ACTIONS", ""))
+print("GITHUB_REPOSITORY=" + os.getenv("GITHUB_REPOSITORY", ""))
+print("GITHUB_EVENT_NAME=" + os.getenv("GITHUB_EVENT_NAME", ""))
+print("RUNNER_OS=" + os.getenv("RUNNER_OS", ""))
