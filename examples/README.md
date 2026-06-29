@@ -16,6 +16,12 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </thead>
 <tbody>
 <tr>
+    <td>deepseek-ai/DeepSeek-V4</td>
+    <td>Natural Language Processing</td>
+    <td>Quantization (MXFP8/MXFP4)</td>
+    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/deepseekv4">link</a></td>
+</tr>
+<tr>
     <td>deepseek-ai/DeepSeek-R1</td>
     <td>Natural Language Processing</td>
     <td>Quantization (MXFP8/MXFP4/NVFP4)</td>
@@ -38,6 +44,24 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>Text to Image</td>
     <td>Quantization (MXFP8/FP8)</td>
     <td><a href="./pytorch/diffusion_model/diffusers/flux">link</a></td>
+</tr>
+<tr>
+    <td>Wan-AI/Wan2.2-I2V-A14B-Diffusers</td>
+    <td>Image to Video</td>
+    <td>Quantization (MXFP8/FP8)</td>
+    <td><a href="./pytorch/diffusion_model/diffusers/wan">link</a></td>
+</tr>
+<tr>
+    <td>Wan-AI/Wan2.2-T2V-A14B-Diffusers</td>
+    <td>Text to Video</td>
+    <td>Quantization (MXFP8/FP8)</td>
+    <td><a href="./pytorch/diffusion_model/diffusers/wan">link</a></td>
+</tr>
+<tr>
+    <td>Wan-AI/Wan2.2-S2V-14B</td>
+    <td>Subject to Video</td>
+    <td>Quantization (MXFP8/FP8)</td>
+    <td><a href="./pytorch/diffusion_model/diffusers/wan">link</a></td>
 </tr>
 <tr>
     <td>Llama-4-Scout-17B-16E-Instruct</td>
