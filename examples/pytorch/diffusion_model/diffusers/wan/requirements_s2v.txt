@@ -1,0 +1,48 @@
+# Quantization stack
+neural-compressor-pt
+auto-round
+
+# Utilities
+pillow
+einops
+requests
+
+# S2V evaluation metrics (evaluate_manifest_no_gt.py)
+scipy
+
+# Wan 2.2 dependencies
+# torch/torchvision/transformers/accelerate/huggingface_hub/safetensors
+# are installed in setup.sh for s2v to enforce install order.
+torchaudio
+#opencv-python>=4.9.0.80
+diffusers>=0.31.0
+tokenizers>=0.20.3
+tqdm
+imageio[ffmpeg]
+easydict
+ftfy
+dashscope
+imageio-ffmpeg
+numpy>=1.23.5,<2
+peft
+
+
+# Wan2.2 s2v runtime dependencies
+openai-whisper
+HyperPyYAML
+onnxruntime
+inflect
+wetext
+omegaconf
+conformer
+hydra-core
+lightning
+rich
+gdown
+matplotlib
+wget
+pyarrow
+pyworld
+librosa
+decord
+modelscope
