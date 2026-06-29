@@ -292,15 +292,11 @@ class WOQModelLoader:
         """
         try:
             return torch.load(weight_file_path, weights_only=True)
-        except TypeError:
-            # Backward compatibility for old PyTorch versions that do not support
-            # the `weights_only` argument.
-            logger.warning(
-                "Current PyTorch does not support `weights_only` in torch.load. "
-                "Falling back to legacy loading behavior for %s.",
-                weight_file_path,
-            )
-            return torch.load(weight_file_path)
+        except TypeError as exc:
+            raise RuntimeError(
+                "`weights_only` in torch.load requires torch>=2.0. "
+                "If your torch version is lower, please use an older Neural Compressor version."
+            ) from exc
         except Exception as exc:
             raise RuntimeError(
                 "Failed to load quantized weights with `weights_only=True`. "

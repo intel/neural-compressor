@@ -120,7 +120,7 @@ def test_load_weight_file_uses_weights_only(monkeypatch):
     assert calls[0][1].get("weights_only") is True
 
 
-def test_load_weight_file_fallback_for_legacy_torch(monkeypatch):
+def test_load_weight_file_raises_runtime_error_for_legacy_torch(monkeypatch):
     loader = WOQModelLoader(model_name_or_path="dummy", format=SaveLoadFormat.DEFAULT)
     calls = []
 
@@ -128,18 +128,15 @@ def test_load_weight_file_fallback_for_legacy_torch(monkeypatch):
         calls.append((path, kwargs))
         if "weights_only" in kwargs:
             raise TypeError("weights_only is unsupported")
-        return {"ok": torch.tensor([2])}
 
     monkeypatch.setattr(torch, "load", _fake_torch_load)
 
-    loaded = loader._load_weight_file("legacy.pt")
+    with pytest.raises(RuntimeError, match="requires torch>=2.0"):
+        loader._load_weight_file("legacy.pt")
 
-    assert loaded["ok"].item() == 2
-    assert len(calls) == 2
+    assert len(calls) == 1
     assert calls[0][0] == "legacy.pt"
     assert calls[0][1].get("weights_only") is True
-    assert calls[1][0] == "legacy.pt"
-    assert calls[1][1] == {}
 
 
 def test_load_weight_file_raises_runtime_error_for_non_type_error(monkeypatch):
