@@ -238,7 +238,11 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     def call_dq(self, inputs, mask=None):
         """DQ-side of split QDQ: dequantize using scale from prior call_q.
 
-        Uses the scale params stored by the most recent call_q invocation.
+        Uses the scale params stored by the most recent ``call_q`` invocation.
+
+        Note:
+            ``call_q`` must be called first, as it computes and stores
+            the scale parameters (``_last_params``) required by this method.
 
         Args:
             inputs (jnp.ndarray): Input tensor.

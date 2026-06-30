@@ -370,6 +370,10 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     def _call_dq_quantized(self, inputs, mask=None):
         """Dequantize-only using pre-computed scale (inference path).
 
+        Note:
+            ``call_q`` must be called first, as it performs calibration
+            and computes the scale required by this method.
+
         Args:
             inputs (jnp.ndarray): Input tensor.
             mask (Optional[jnp.ndarray]): Optional mask tensor.
