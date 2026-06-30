@@ -48,7 +48,7 @@ Module Contents
    :rtype: Callable
 
 
-.. py:class:: DynamicQDQLayer(name, activation_dtype, dtype='float32', asymmetric=False, fixed_range=None, q_enable=True, dq_enable=True)
+.. py:class:: DynamicQDQLayer(name, activation_dtype, dtype='float32', asymmetric=False, fixed_range=None)
 
 
 
