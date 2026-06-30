@@ -43,9 +43,11 @@ args = parser.parse_args()
 
 def get_user_model():
     torchscript = False
+    # Note: return_dict=False works with transformers 4.x because the
+    # @can_return_tuple decorator allows internal attribute access (e.g. .last_hidden_state)
+    # while converting the final output to a tuple for torch.export compatibility.
     user_model = AutoModelForCausalLM.from_pretrained(
         args.model,
-        # torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
         trust_remote_code=args.trust_remote_code,
         revision=args.revision,
         use_cache=False,  # avoid potential cache issues when loading the same model with different configs
