@@ -111,9 +111,33 @@ class W8A8PT2EQuantizer(Quantizer):
         hp_rewriter.transformation(model, half_precision_node_set, torch.float16)
         hp_rewriter.transformation(model, half_precision_node_set, torch.bfloat16)
 
+    # Structural op types whose outputs should never be activation-quantized.
+    # These produce constant masks, position IDs, or other integer-sequence
+    # tensors where per_tensor quantization is nonsensical and destroys
+    # accuracy. torchao (torch >= 2.11) places observers on aten.ones and
+    # aten.cumsum outputs that the built-in torch.ao.quantization path
+    # (torch < 2.11) does not.
+    _STRUCTURAL_OPS = {
+        torch.ops.aten.ones.default,
+        torch.ops.aten.cumsum.default,
+    }
+
     @staticmethod
     def _skip_observers_for_non_float_tensors(model: GraphModule) -> GraphModule:
-        """Bypass observers that land on integer/bool tensors in exported LLM graphs."""
+        """Remove observers placed on non-floating-point or structural-op tensors.
+
+        This handles two classes of misplaced observers:
+
+        1. Integer/bool tensors: exported graphs may contain int/bool tensors
+           (e.g. from torch.where) that should never carry activation observers.
+        2. Structural op outputs: torchao's X86InductorQuantizer (torch >= 2.11)
+           annotates aten.ones.default (causal attention mask, all 1.0) and
+           aten.cumsum.default (position IDs, 0...seq_len) for per_tensor
+           quantization.  With calibration on short texts these observers
+           produce scales like 1/255 that clip fp32 values to [-0.5, 0.5],
+           destroying the downstream attention computation and dropping LLM
+           accuracy from ~40% to ~8%.
+        """
         graph = model.graph
         modified = False
         for node in list(graph.nodes):
@@ -122,10 +146,16 @@ class W8A8PT2EQuantizer(Quantizer):
             if not node.args:
                 continue
             input_node = node.args[0]
-            if not hasattr(input_node, "meta"):
-                continue
-            value = input_node.meta.get("val", None)
-            if not isinstance(value, torch.Tensor) or torch.is_floating_point(value):
+            skip = False
+            # Check the tensor value (when available from fake-tensor propagation)
+            if hasattr(input_node, "meta"):
+                value = input_node.meta.get("val", None)
+                if isinstance(value, torch.Tensor) and not torch.is_floating_point(value):
+                    skip = True
+            # Check for structural op outputs
+            if input_node.op == "call_function" and input_node.target in W8A8PT2EQuantizer._STRUCTURAL_OPS:
+                skip = True
+            if not skip:
                 continue
             node.replace_all_uses_with(input_node)
             graph.erase_node(node)
