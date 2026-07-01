@@ -63,7 +63,10 @@ def _layer_matches_filter(
     def _matches(pattern: str) -> bool:
         if pattern == class_name:
             return True
-        return re.search(pattern, layer_id) is not None
+        try:
+            return re.search(pattern, layer_id) is not None
+        except re.error as e:
+            raise ValueError(f"Invalid regex pattern {pattern!r} in include/exclude filter.") from e
 
     if include is not None:
         if not any(_matches(p) for p in include):
@@ -213,15 +216,21 @@ class DynamicQuantConfig(BaseConfig):
         Returns:
             List[Tuple[str, str]]: List of (layer path, layer class name) pairs.
         """
+
+        from neural_compressor.jax.quantization.layers_dynamic import dynamic_quant_mapping
+
+        supported = {layer_class.__name__ for layer_class in dynamic_quant_mapping.keys()}
+
         white_list = self.white_list
         if white_list is None:
-            white_list = []
+            white_list = set()
         elif white_list == DEFAULT_WHITE_LIST:
-            from neural_compressor.jax.quantization.layers_dynamic import dynamic_quant_mapping
+            white_list = supported
+        else:
+            white_list = {element if isinstance(element, str) else element.__name__ for element in white_list}
+            white_list = white_list & supported
 
-            white_list = [layer_class.__name__ for layer_class in dynamic_quant_mapping.keys()]
         filter_result = []
-
         for layer in model._flatten_layers(recursive=True):
             if layer.__class__.__name__ in white_list:
                 layer_id = layer.path if layer.path else layer.name
@@ -420,15 +429,20 @@ class StaticQuantConfig(BaseConfig):
         Returns:
             List[Tuple[str, str]]: List of (layer path, layer class name) pairs.
         """
+        from neural_compressor.jax.quantization.layers_static import static_quant_mapping
+
+        supported = {layer_class.__name__ for layer_class in static_quant_mapping.keys()}
+
         white_list = self.white_list
         if white_list is None:
-            white_list = []
+            white_list = set()
         elif white_list == DEFAULT_WHITE_LIST:
-            from neural_compressor.jax.quantization.layers_static import static_quant_mapping
+            white_list = supported
+        else:
+            white_list = {element if isinstance(element, str) else element.__name__ for element in white_list}
+            white_list = white_list & supported
 
-            white_list = [layer_class.__name__ for layer_class in static_quant_mapping.keys()]
         filter_result = []
-
         for layer in model._flatten_layers(recursive=True):
             if layer.__class__.__name__ in white_list:
                 layer_id = layer.path if layer.path else layer.name
