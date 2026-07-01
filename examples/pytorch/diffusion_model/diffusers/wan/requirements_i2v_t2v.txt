@@ -1,0 +1,43 @@
+# Core runtime
+torch
+torchvision
+diffusers
+transformers
+accelerate
+huggingface_hub
+safetensors
+
+# Quantization stack
+neural-compressor-pt
+auto-round
+
+# Utilities used by example scripts
+einops
+
+# Evaluation package (dataset/eval helpers)
+Pillow
+numpy<2.0.0
+matplotlib
+timm>=0.9,<=1.0.12
+wheel
+cython
+tensorboard
+scipy
+scikit-learn
+scikit-image
+openai-clip
+decord
+requests
+pyyaml
+pyiqa
+lvis
+fairscale>=0.4.4
+fvcore
+easydict
+urllib3
+boto3
+omegaconf
+pycocoevalcap
+imageio-ffmpeg
+gdown==4.7.3
+dreamsim

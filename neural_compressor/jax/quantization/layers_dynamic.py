@@ -20,11 +20,11 @@
 
 
 import keras
+import keras.layers
+import keras_hub.layers
 import numpy as np
 from jax import numpy as jnp
 from keras import ops
-from keras.layers import Conv2D, Dense, EinsumDense, MultiHeadAttention
-from keras_hub.layers import ReversibleEmbedding
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
 
@@ -68,9 +68,7 @@ def register_dynamic_quantized_layer(clso):
 class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies dynamic quantize-dequantize to activations."""
 
-    def __init__(
-        self, name, activation_dtype, dtype="float32", asymmetric=False, fixed_range=None, q_enable=True, dq_enable=True
-    ):
+    def __init__(self, name, activation_dtype, dtype="float32", asymmetric=False, fixed_range=None):
         """Initialize the dynamic QDQ helper layer.
 
         Args:
@@ -80,18 +78,13 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             asymmetric (bool): Whether to use asymmetric quantization.
             fixed_range (Optional[Tuple[float, float]]): If provided, use this (min, max) range
                 instead of computing min/max dynamically per batch.
-            q_enable (bool): Whether to apply quantization. Default True.
-            dq_enable (bool): Whether to apply dequantization. Default True.
 
         Returns:
             None: Initializes the layer instance.
         """
-        assert q_enable or dq_enable, "At least one of q_enable or dq_enable must be True"
         super().__init__(name=name, dtype=dtype)
         self.activation_dtype = activation_dtype
         self._is_asymmetric = asymmetric
-        self._q_enable = q_enable
-        self._dq_enable = dq_enable
         self.supports_masking = True
         self.fixed_range = fixed_range
 
@@ -105,10 +98,8 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             None: Initializes quantization functions.
         """
         self._tracker.unlock()
-        self.aquantfun = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_asymmetric)
-        self.adequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_asymmetric)
-        self.quantize = self.aquantfun if self._q_enable else self._passthrough
-        self.dequantize = self.adequantfun if self._dq_enable else self._passthrough
+        self.quantize = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_asymmetric)
+        self.dequantize = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_asymmetric)
         if self.fixed_range is not None:
             fixed_min_max = ops.array(self.fixed_range)
             a_scale, a_zero_point = get_q_params(
@@ -224,6 +215,45 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         x = self.quantize(inputs, *params)
         x = self.dequantize(x, *params)
         return x
+
+    def call_q(self, inputs, mask=None):
+        """Q-side of split QDQ: compute scale and quantize.
+
+        Computes scale from inputs (or uses fixed scale), quantizes,
+        and stores the scale params for a subsequent call_dq.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            jnp.ndarray: Quantized tensor.
+        """
+        if any([dim == 0 for dim in inputs.shape]):
+            return inputs
+        params = self.take_scale(inputs, mask)
+        self._last_params = params
+        return self.quantize(inputs, *params)
+
+    def call_dq(self, inputs, mask=None):
+        """DQ-side of split QDQ: dequantize using scale from prior call_q.
+
+        Uses the scale params stored by the most recent ``call_q`` invocation.
+
+        Note:
+            ``call_q`` must be called first, as it computes and stores
+            the scale parameters (``_last_params``) required by this method.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            jnp.ndarray: Dequantized tensor.
+        """
+        if any([dim == 0 for dim in inputs.shape]):
+            return inputs
+        return self.dequantize(inputs, *self._last_params)
 
 
 class QDynamicDenseMixin(SaveableLayerMixin):
@@ -351,8 +381,8 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         return x
 
 
-@register_dynamic_quantized_layer(Dense)
-class QDynamicDense(QDynamicDenseMixin, Dense):
+@register_dynamic_quantized_layer(keras.layers.Dense)
+class QDynamicDense(QDynamicDenseMixin, keras.layers.Dense):
     """Dynamically quantized Dense layer."""
 
     # kernel shape is defined as: kernel_shape = (input_shape[-1], self.units)
@@ -360,11 +390,11 @@ class QDynamicDense(QDynamicDenseMixin, Dense):
     w_quant_axis = -1
 
 
-verify_api(Dense, QDynamicDense, "call")
+verify_api(keras.layers.Dense, QDynamicDense, "call")
 
 
-@register_dynamic_quantized_layer(EinsumDense)
-class QDynamicEinsumDense(QDynamicDenseMixin, EinsumDense):
+@register_dynamic_quantized_layer(keras.layers.EinsumDense)
+class QDynamicEinsumDense(QDynamicDenseMixin, keras.layers.EinsumDense):
     """Dynamically quantized EinsumDense layer."""
 
     @property
@@ -407,10 +437,10 @@ class QDynamicEinsumDense(QDynamicDenseMixin, EinsumDense):
         return None
 
 
-verify_api(EinsumDense, QDynamicEinsumDense, "call")
+verify_api(keras.layers.EinsumDense, QDynamicEinsumDense, "call")
 
 
-class QDynamicConv2DMixin(QDynamicDenseMixin, Conv2D):
+class QDynamicConv2DMixin(QDynamicDenseMixin, keras.layers.Conv2D):
     """Mixin that adds dynamic quantization to Conv2D layers."""
 
     def call(self, inputs):
@@ -428,8 +458,8 @@ class QDynamicConv2DMixin(QDynamicDenseMixin, Conv2D):
         return x
 
 
-@register_dynamic_quantized_layer(Conv2D)
-class QDynamicConv2D(QDynamicConv2DMixin, Conv2D):
+@register_dynamic_quantized_layer(keras.layers.Conv2D)
+class QDynamicConv2D(QDynamicConv2DMixin, keras.layers.Conv2D):
     """Dynamically quantized Conv2D layer."""
 
     # kernel shape is defined as: kernel_shape = self.kernel_size + (input_channel // self.groups, self.filters,)
@@ -437,11 +467,11 @@ class QDynamicConv2D(QDynamicConv2DMixin, Conv2D):
     w_quant_axis = -1
 
 
-verify_api(Conv2D, QDynamicConv2D, "call")
+verify_api(keras.layers.Conv2D, QDynamicConv2D, "call")
 
 
-@register_dynamic_quantized_layer(MultiHeadAttention)
-class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
+@register_dynamic_quantized_layer(keras.layers.MultiHeadAttention)
+class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttention):
     """Dynamically quantized MultiHeadAttention layer."""
 
     @classmethod
@@ -595,7 +625,7 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, MultiHeadAttention):
     # fmt on
 
 
-verify_api(MultiHeadAttention, QDynamicMultiHeadAttention, "_compute_attention")
+verify_api(keras.layers.MultiHeadAttention, QDynamicMultiHeadAttention, "_compute_attention")
 
 
 @register_dynamic_quantized_layer(CachedGemma3Attention)
@@ -817,8 +847,9 @@ class QDynamicGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
 verify_api(Gemma3VisionAttention, QDynamicGemma3VisionAttention, "call")
 
 
-@register_dynamic_quantized_layer(ReversibleEmbedding)
-class QDynamicReversibleEmbedding(SaveableLayerMixin, ReversibleEmbedding):
+@register_dynamic_quantized_layer(keras_hub.layers.ReversibleEmbedding)
+@register_dynamic_quantized_layer(keras.layers.ReversibleEmbedding)
+class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbedding):
     """Dynamically quantized ReversibleEmbedding layer."""
 
     @classmethod
@@ -889,7 +920,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, ReversibleEmbedding):
                 logits = ops.tanh(logits / soft_cap) * soft_cap
             return logits
 
-        return super(ReversibleEmbedding, self).call(inputs)
+        return super(keras.layers.ReversibleEmbedding, self).call(inputs)
 
 
-verify_api(ReversibleEmbedding, QDynamicReversibleEmbedding, "call")
+verify_api(keras.layers.ReversibleEmbedding, QDynamicReversibleEmbedding, "call")
