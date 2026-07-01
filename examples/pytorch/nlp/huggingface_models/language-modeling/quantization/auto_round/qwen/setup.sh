@@ -67,7 +67,7 @@ done
 
 if [[ "$DEVICE" == "xpu" ]]; then
     # support quant only on xpu for now
-    uv pip install torch==2.11.0 torchvision==0.26.0 --index-url https://download.pytorch.org/whl/xpu
+    uv pip install torch==2.12.0 torchvision==0.27.0 --index-url https://download.pytorch.org/whl/xpu
     uv pip install -r requirements.txt --extra-index-url https://download.pytorch.org/whl/xpu
 elif [[ "$DEVICE" == "gpu" ]]; then
     uv pip install -r requirements.txt
