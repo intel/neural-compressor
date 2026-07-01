@@ -877,6 +877,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
         attention_mask=None,
         training=None,
         return_attention_scores=False,
+        use_causal_mask=False,
     ):
         """Applies Dot-product attention with query, key, value tensors.
 
@@ -894,9 +895,15 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
             training: Python boolean indicating whether the layer should behave
                 in training mode (adding dropout) or in inference mode (doing
                 nothing).
+            use_causal_mask: Boolean. When True and `attention_mask` is None,
+                routes through the backend's native causal kernel via
+                `dot_product_attention(is_causal=True)`. This skips
+                materializing an explicit [T, S] mask tensor and enables
+                torch's causal-only flash kernel.
 
         Returns:
-          Tuple[jnp.ndarray, Optional[jnp.ndarray]]: Attention outputs and attention scores.
+          attention_output: Multi-headed outputs of attention computation.
+          attention_scores: Multi-headed attention weights.
         """
         # Check for flash attention constraints
         if self._flash_attention and return_attention_scores:
@@ -914,6 +921,23 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
         )
 
         if use_dot_product_attention:
+            if use_causal_mask and attention_mask is None:
+                # Skip materializing the [T, S] mask and let the backend
+                # use its native causal kernel.
+                query = self.q_qdq(query)
+                key = self.k_qdq(key)
+                value = self.v_qdq(value)
+                attention_output = ops.dot_product_attention(
+                    query=query,
+                    key=key,
+                    value=value,
+                    bias=None,
+                    mask=None,
+                    scale=self._inverse_sqrt_key_dim,
+                    is_causal=True,
+                    flash_attention=self._flash_attention,
+                )
+                return attention_output, None
             if attention_mask is not None:
                 # Ensure attention_mask has the correct shape for broadcasting
                 # Expected shape: [batch_size, num_heads, query_seq_len,
@@ -938,13 +962,26 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
                 bias=None,
                 mask=attention_mask,
                 scale=self._inverse_sqrt_key_dim,
-                is_causal=False,
+                is_causal=use_causal_mask,
                 flash_attention=self._flash_attention,
             )
             return attention_output, None
 
         # Default behavior without flash attention, with explicit attention
-        # scores
+        # scores. We skipped the fused is_causal kernel above, so build the
+        # causal mask here. `call` drops attention_mask when causal is the
+        # only mask source, expecting that kernel to run, and this path never
+        # sees the is_causal flag otherwise. When an explicit mask is also
+        # present, combine the two so neither constraint is lost.
+        if use_causal_mask:
+            causal_mask = self._compute_causal_mask(query, value)
+            attention_mask = (
+                causal_mask
+                if attention_mask is None
+                else ops.logical_and(
+                    ops.cast(attention_mask, "bool"), causal_mask
+                )
+            )
         query = ops.multiply(
             query, ops.cast(self._inverse_sqrt_key_dim, query.dtype)
         )
@@ -975,7 +1012,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
             self._combine_equation, final_attn_scores, value
         )
         return attention_output, attention_scores
-    # fmt on
+    # fmt: on
 
 
 verify_api(keras.layers.MultiHeadAttention, QStaticMultiHeadAttention, "_compute_attention")
