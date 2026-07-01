@@ -3,11 +3,11 @@ pandas==2.2.2
 clip==0.2.0
 image-reward==1.5
 torchmetrics==1.8.2
-transformers==4.57.3
+transformers==5.3.0
 sentencepiece
 safetensors==0.8.0rc0
 tabulate==0.10.0
 protobuf
-torch==2.10.0
+torch==2.12.1
 torchvision==0.25.0
 torchao==0.16.0

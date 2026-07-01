@@ -1,4 +1,4 @@
-transformers==4.57.6
+transformers==5.3.0
 torch
 sentencepiece
 neural-compressor
