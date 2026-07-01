@@ -51,7 +51,7 @@ def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model
     model_dtype_jnp = jnp.dtype(model_dtype)
     model = keras.Sequential(
         [
-            keras.Input(shape=(8,)),
+            keras.Input(shape=(9,)),
             keras.layers.Dense(4, activation="linear", use_bias=False, dtype=model_dtype_jnp),
             keras.layers.Dense(1, activation="linear", use_bias=False, dtype=model_dtype_jnp),
         ]
@@ -69,10 +69,10 @@ def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model
         all_weights.append(weights)
 
     # Prepare inputs and calibration set
-    test_input = jnp.array([1.0, 2.0, 2.0, 0.0, -1.0, -3.0, 0.5, float(jnp.finfo("float8_e5m2").max + 100)]).reshape(
-        1, 8
-    )
-    calib_tensor = jnp.arange(1, 9).reshape((1, 8))
+    test_input = jnp.array(
+        [1.0, 2.0, 2.0, 0.0, -1.0, -3.0, 0.5, 0.5, float(jnp.finfo("float8_e5m2").max + 100)]
+    ).reshape(1, 9)
+    calib_tensor = jnp.arange(1, 10).reshape((1, 9))
 
     def calib_function(model):
         _ = model(calib_tensor)
