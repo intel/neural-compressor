@@ -73,7 +73,8 @@ def compute_expected_qdq_dense_output(
             a_scale = np.array(np.max(np.abs(input_samples)) / a_dtype_max, dtype=model_dtype)
             a_zero_point = None
 
-        w_scale = np.array(np.max(np.abs(layer_weights)) / w_dtype_max, dtype=model_dtype)
+        w_scale = np.array(np.max(np.abs(layer_weights), axis=0, keepdims=True) / w_dtype_max, dtype=model_dtype)
+        w_scale = w_scale.reshape(w_scale.shape[1])
 
         all_a_scales.append(a_scale)
         all_w_scales.append(w_scale)
