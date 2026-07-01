@@ -106,7 +106,7 @@ def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model
         model_dtype=model_dtype,
     )
 
-    # Run quantization
+    # Run inference
     quantized_output = jax.jit(q_model)(test_input)
 
     # Compare results with expectations

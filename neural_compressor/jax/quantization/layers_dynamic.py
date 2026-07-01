@@ -297,7 +297,9 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         """
         self._tracker.unlock()
         self.input_qdq.add_variables()
-        w_scale, _ = get_q_params(self._kernel.value, self.weight_dtype, self.compute_dtype, asymmetric=False)
+        w_scale, _ = get_q_params(
+            self._kernel.value, self.weight_dtype, self.compute_dtype, asymmetric=False, axis=self.w_quant_axis
+        )
         self.w_scale = self.add_weight(
             name="w_scale",
             shape=w_scale.shape,
@@ -333,7 +335,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         self._trainable_variables.remove(self._kernel)
         del self._kernel
 
-        model_is_during_load = self.w_scale == 0.0
+        model_is_during_load = jnp.all(self.w_scale == 0.0)
         if not model_is_during_load:
             # convert variables to attributes (const) if needed
             for name in self._const_variables:
@@ -383,7 +385,9 @@ class QDynamicDenseMixin(SaveableLayerMixin):
 class QDynamicDense(QDynamicDenseMixin, keras.layers.Dense):
     """Dynamically quantized Dense layer."""
 
-    pass
+    # kernel shape is defined as: kernel_shape = (input_shape[-1], self.units)
+    # so the output axis (units) is the last axis
+    w_quant_axis = -1
 
 
 verify_api(keras.layers.Dense, QDynamicDense, "call")
@@ -393,7 +397,44 @@ verify_api(keras.layers.Dense, QDynamicDense, "call")
 class QDynamicEinsumDense(QDynamicDenseMixin, keras.layers.EinsumDense):
     """Dynamically quantized EinsumDense layer."""
 
-    pass
+    @property
+    def w_quant_axis(self):
+        """Determine per-channel quantization axis from the einsum equation.
+
+        Parses the equation to find kernel axes whose subscript letters appear
+        in the kernel spec but not in the input spec. These are pure output-channel
+        dimensions and are suitable for per-channel weight quantization.
+
+        For example, given equation ``"btd,df->btf"``:
+        - input subscripts: ``{b, t, d}``
+        - kernel spec: ``"df"`` → ``d`` contracts with input, ``f`` is output-only
+        - returns ``1`` (position of ``f`` in the kernel spec)
+
+        Returns:
+            Optional[int]: Index of the output-channel axis in the kernel, or
+                ``None`` if no unambiguous output-only axis exists (falls back
+                to per-tensor quantization).
+        """
+        equation = self.equation
+        # Parse "input_spec,kernel_spec->output_spec"
+        input_spec, rest = equation.split(",")
+        kernel_spec, _ = rest.split("->")
+
+        # Collect alphabetic input subscripts; skip ellipsis dots
+        input_chars = {c for c in input_spec if c.isalpha()}
+
+        # Kernel axes absent from the input spec are output-channel axes
+        output_only_axes = [i for i, c in enumerate(kernel_spec) if c.isalpha() and c not in input_chars]
+
+        if len(output_only_axes) == 1:
+            return output_only_axes[0]
+        if len(output_only_axes) > 1:
+            logger.debug(
+                f"EinsumDense layer '{self.name}' has multiple output-channel axes {output_only_axes} "
+                f"in equation '{equation}'. Per-channel weight quantization requires a single axis; "
+                "falling back to per-tensor quantization."
+            )
+        return None
 
 
 verify_api(keras.layers.EinsumDense, QDynamicEinsumDense, "call")
@@ -421,7 +462,9 @@ class QDynamicConv2DMixin(QDynamicDenseMixin, keras.layers.Conv2D):
 class QDynamicConv2D(QDynamicConv2DMixin, keras.layers.Conv2D):
     """Dynamically quantized Conv2D layer."""
 
-    pass
+    # kernel shape is defined as: kernel_shape = self.kernel_size + (input_channel // self.groups, self.filters,)
+    # so the output axis (called filters here) is the last axis
+    w_quant_axis = -1
 
 
 verify_api(keras.layers.Conv2D, QDynamicConv2D, "call")
