@@ -18,9 +18,6 @@ from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig
 from neural_compressor.jax.quantization.config import _layer_matches_filter
 
 
-# --------------------------------------------------------------------------- #
-# _layer_matches_filter
-# --------------------------------------------------------------------------- #
 class TestLayerMatchesFilter:
     """Direct unit tests for the low-level filter predicate."""
 
@@ -94,9 +91,6 @@ class TestLayerMatchesFilter:
             _layer_matches_filter("net/first", "Dense", None, ["([unclosed"])
 
 
-# --------------------------------------------------------------------------- #
-# get_model_info filtering
-# --------------------------------------------------------------------------- #
 def _ids(model_info):
     return [layer_id for layer_id, _ in model_info]
 
@@ -155,9 +149,6 @@ class TestGetModelInfoFiltering:
         assert info == [], "An include pattern matching no layer must yield an empty model_info"
 
 
-# --------------------------------------------------------------------------- #
-# Serialization round-trips
-# --------------------------------------------------------------------------- #
 @pytest.mark.parametrize("config_cls", [DynamicQuantConfig, StaticQuantConfig], ids=["dynamic_quant", "static_quant"])
 class TestConfigSerialization:
     """to_dict / from_dict / from_json_string round-trips with filter attributes."""

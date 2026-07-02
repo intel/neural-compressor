@@ -40,9 +40,6 @@ def _layer_by_name(model, name):
     raise AssertionError(f"Layer {name!r} not found")
 
 
-# --------------------------------------------------------------------------- #
-# Config composition
-# --------------------------------------------------------------------------- #
 class TestComposition:
     def test_static_plus_dynamic_creates_composable(self):
         static = StaticQuantConfig(include=["first"])
@@ -74,9 +71,6 @@ class TestComposition:
         assert second_cfgs[0].name == "dynamic_quant", "On conflict the later (dynamic) config must win"
 
 
-# --------------------------------------------------------------------------- #
-# Quantization behavior
-# --------------------------------------------------------------------------- #
 class TestComposableQuantization:
     def test_layers_use_expected_quant_classes(self, model, calibration_data):
         composed = StaticQuantConfig(include=["first"]) + DynamicQuantConfig(include=["second"])
@@ -139,9 +133,6 @@ class TestComposableQuantization:
         assert bool(jnp.all(jnp.isfinite(output))), "Mixed-dtype quantized model output must be finite"
 
 
-# --------------------------------------------------------------------------- #
-# Multi-config composition with overlapping include/exclude rules
-# --------------------------------------------------------------------------- #
 def _three_way_config():
     """Compose ``static + dynamic + static`` with deliberately overlapping rules.
 
