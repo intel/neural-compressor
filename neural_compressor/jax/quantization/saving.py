@@ -522,6 +522,9 @@ def prepare_deserialized_quantized_model(
     # Also respects include/exclude filters from config
     qmodel = model
     for layer in qmodel._flatten_layers():
+        # Resolve overlapping sub-configs with last-match-wins, consistent with
+        # `_build_configs_mapping_composable` used during quantization.
+        selected = None
         for cfg in config_list:
             if cfg.name == STATIC_QUANT and layer.__class__ in static_quant_mapping:
                 layers_mapping = static_quant_mapping
@@ -539,13 +542,18 @@ def prepare_deserialized_quantized_model(
                 if not _layer_matches_filter(layer_id, class_name, include, exclude):
                     continue
 
-            weight_dtype = dtype_mapping[cfg.weight_dtype]
-            activation_dtype = dtype_mapping[cfg.activation_dtype]
-            additional_params = (weight_dtype, activation_dtype, cfg.const_scale, cfg.const_weight)
-            layers_mapping[layer.__class__].prepare(layer, *additional_params)
-            layer.add_variables()
-            layer.post_quantization_cleanup()
-            break
+            selected = (layers_mapping, cfg)
+
+        if selected is None:
+            continue
+
+        layers_mapping, cfg = selected
+        weight_dtype = dtype_mapping[cfg.weight_dtype]
+        activation_dtype = dtype_mapping[cfg.activation_dtype]
+        additional_params = (weight_dtype, activation_dtype, cfg.const_scale, cfg.const_weight)
+        layers_mapping[layer.__class__].prepare(layer, *additional_params)
+        layer.add_variables()
+        layer.post_quantization_cleanup()
 
     if isinstance(qmodel, Backbone):
         qmodel = KerasQuantizedModelBackboneWrapper(qmodel, quant_config)
