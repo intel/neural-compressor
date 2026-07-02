@@ -160,14 +160,6 @@ Typically, preparing several dozen samples is sufficient for calibration.</p>
 performance improvements from quantization will be visible on Intel® Xeon® processors
 (with AMX-FP8 extension) with JAX version greater than <a class="reference external" href="https://github.com/jax-ml/jax/releases/tag/jax-v0.9.0">v0.9</a>
 (see the full <a class="reference external" href="https://github.com/jax-ml/jax/releases">JAX releases</a> page).</p>
-<p>To enable performance improvements from quantization, certain JAX/XLA features must be enabled by setting the following environment variable:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">XLA_FLAGS</span><span class="o">=</span><span class="s2">&quot;\</span>
-<span class="s2">    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \</span>
-<span class="s2">    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \</span>
-<span class="s2">    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter&quot;</span>
-</pre></div>
-</div>
-<p>Without this flag, quantized model operates in fake quantization mode, where tensors are rounded to the specified FP8 format but computations are still performed in 32-bit floating-point format.</p>
 </section>
 </section>
 
@@ -185,7 +177,7 @@ performance improvements from quantization will be visible on Intel® Xeon® pro
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f18b189ba10> 
+   <jinja2.runtime.BlockReference object at 0x7f71294632c0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

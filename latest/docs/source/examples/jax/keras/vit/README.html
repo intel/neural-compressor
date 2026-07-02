@@ -93,14 +93,6 @@
 <section id="create-environment">
 <h1>1. Create Environment<a class="headerlink" href="#create-environment" title="Link to this heading"></a></h1>
 <p>It is worth conducting experiments in a separate environment. For example, you can use the conda environment from <a class="reference external" href="https://github.com/conda-forge/miniforge">conda-forge</a>. The binary for your environment could be found here: <a class="reference external" href="https://github.com/conda-forge/miniforge/releases/latest">miniforge</a></p>
-<p>To see performance improvements from quantization, you have to enable some JAX/XLA features by setting an environment variable:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">XLA_FLAGS</span><span class="o">=</span><span class="s2">&quot;\</span>
-<span class="s2">    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \</span>
-<span class="s2">    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \</span>
-<span class="s2">    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter&quot;</span>
-</pre></div>
-</div>
-<p>Without this flag, quantized model works in fake quantization mode (rounding tensors to a given fp8 format but later making calculations in 32-bit floating point format).</p>
 </section>
 <section id="install-modules">
 <h1>2. Install modules<a class="headerlink" href="#install-modules" title="Link to this heading"></a></h1>
@@ -215,19 +207,11 @@ Predictions<span class="w"> </span><span class="k">for</span><span class="w"> </
 <h1>5. Save and load quantized model<a class="headerlink" href="#save-and-load-quantized-model" title="Link to this heading"></a></h1>
 <p>Calibration costs time, so we can calibrate once on representative data sets and later reuse it many times. To achieve it saving model functionality is supported.
 You can run <a class="reference external" href="prepare_static.py">prepare_static.py</a> script:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">XLA_FLAGS</span><span class="o">=</span><span class="s2">&quot;\</span>
-<span class="s2">    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \</span>
-<span class="s2">    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \</span>
-<span class="s2">    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter&quot;</span>
-python<span class="w"> </span>prepare_static.py<span class="w"> </span>-m<span class="w"> </span>/path/to/original/model.keras<span class="w"> </span>-q<span class="w"> </span>/path/to/quantized/model.keras<span class="w"> </span>-p<span class="w"> </span>fp8_e4m3
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>prepare_static.py<span class="w"> </span>-m<span class="w"> </span>/path/to/original/model.keras<span class="w"> </span>-q<span class="w"> </span>/path/to/quantized/model.keras<span class="w"> </span>-p<span class="w"> </span>fp8_e4m3
 </pre></div>
 </div>
 <p>or, if default parameters work for you, just:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">XLA_FLAGS</span><span class="o">=</span><span class="s2">&quot;\</span>
-<span class="s2">    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \</span>
-<span class="s2">    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \</span>
-<span class="s2">    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter&quot;</span>
-python<span class="w"> </span>prepare_static.py
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>prepare_static.py
 </pre></div>
 </div>
 <p>After this step we have saved model stored in the /path/to/quantized/model.keras file. You can load and use it with <a class="reference external" href="use_static.py">use_static.py</a></p>
@@ -292,7 +276,7 @@ and then use print_model() function in your script. To see how it works just unc
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f18b15ae3c0> 
+   <jinja2.runtime.BlockReference object at 0x7f712ad31fd0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
