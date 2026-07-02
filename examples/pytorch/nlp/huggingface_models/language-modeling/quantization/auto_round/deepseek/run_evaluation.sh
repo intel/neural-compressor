@@ -329,7 +329,7 @@ run_ruler_eval() {
 if [[ "$TASK_NAME" == *"longbench"* ]]; then
     echo "Running LongBench v2 evaluation..."
     run_longbench_eval
-elif [[ "$TASK_NAME" == *"niah"* ]]; then
+elif [[ "$TASK_NAME" == *"ruler"* ]] || [[ "$TASK_NAME" == *"niah_multiquery"* ]]; then
     echo "Running RULER evaluation..."
     run_ruler_eval
 else
