@@ -16,6 +16,9 @@ from jax import numpy as jnp
 from neural_compressor.common.base_config import ComposableConfig
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
 
+# Mark all tests in this file as smoke tests
+pytestmark = pytest.mark.smoke_test
+
 
 @pytest.mark.parametrize(
     "weight_dtype, activation_dtype, const_scale, const_weight",

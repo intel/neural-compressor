@@ -177,7 +177,7 @@ def load(output_dir="./saved_results", model=None):
   </tr>
   <tr>
     <td class="tg-9wq8" rowspan="3">Static Quantization</td>
-    <td class="tg-9wq8" rowspan="3"><a href=https://pytorch.org/docs/master/quantization.html#post-training-static-quantization>Post-traning Static Quantization</a></td>
+    <td class="tg-9wq8" rowspan="3"><a href=https://pytorch.org/docs/main/quantization.html#post-training-static-quantization>Post-traning Static Quantization</a></td>
     <td class="tg-9wq8">intel-extension-for-pytorch (INT8)</td>
     <td class="tg-9wq8">&#10004</td>
     <td class="tg-9wq8"><a href="PT_StaticQuant.md">link</a></td>
@@ -193,7 +193,7 @@ def load(output_dir="./saved_results", model=None):
   </tr>
   <tr>
     <td class="tg-9wq8">Dynamic Quantization</td>
-    <td class="tg-9wq8"><a href=https://pytorch.org/docs/master/quantization.html#post-training-dynamic-quantization>Post-traning Dynamic Quantization</a></td>
+    <td class="tg-9wq8"><a href=https://pytorch.org/docs/main/quantization.html#post-training-dynamic-quantization>Post-traning Dynamic Quantization</a></td>
     <td class="tg-9wq8">TorchDynamo</td>
     <td class="tg-9wq8">&#10004</td>
     <td class="tg-9wq8"><a href="PT_DynamicQuant.md">link</a></td>
@@ -215,7 +215,7 @@ Deep Learning</a></td>
   </tr>
   <tr>
     <td class="tg-9wq8">Quantization Aware Training</td>
-    <td class="tg-9wq8"><a href=https://pytorch.org/docs/master/quantization.html#quantization-aware-training-for-static-quantization>Quantization Aware Training</a></td>
+    <td class="tg-9wq8"><a href=https://pytorch.org/docs/main/quantization.html#quantization-aware-training-for-static-quantization>Quantization Aware Training</a></td>
     <td class="tg-9wq8">PyTorch eager mode</td>
     <td class="tg-9wq8">&#10004</td>
     <td class="tg-9wq8"><a href="PT_QAT.md">link</a></td>

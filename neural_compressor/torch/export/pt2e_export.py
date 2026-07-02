@@ -56,34 +56,52 @@ def export_model_for_pt2e_quant(
     exported_model = None
     try:
         with torch.no_grad():
-            # Note 1: `capture_pre_autograd_graph` is also a short-term API, it will be
-            # updated to use the official `torch.export` API when that is ready.
             cur_version = get_torch_version()
-            if cur_version >= TORCH_VERSION_2_8_0:
-                export_func = torch.export.export
-                export_func = partial(export_func, strict=True)
-            elif cur_version >= TORCH_VERSION_2_7_0:
-                export_func = torch.export.export_for_training
-            else:
-                export_func = torch._export.capture_pre_autograd_graph
-            if cur_version <= TORCH_VERSION_2_2_2:  # pragma: no cover
-                logger.warning(
-                    (
+            if cur_version < TORCH_VERSION_2_7_0:
+                # Older PyTorch: use capture_pre_autograd_graph
+                if cur_version <= TORCH_VERSION_2_2_2:
+                    logger.warning(
                         "`dynamic_shapes` is not supported in the current version(%s) of PyTorch,"
                         "If you want to use `dynamic_shapes` to export model, "
-                        "please upgrade to 2.3.0 or later."
-                    ),
-                    cur_version,
-                )
-                exported_model = export_func(model, args=example_inputs)
+                        "please upgrade to 2.3.0 or later.",
+                        cur_version,
+                    )
+                    exported_model = torch._export.capture_pre_autograd_graph(model, args=example_inputs)
+                else:
+                    exported_model = torch._export.capture_pre_autograd_graph(
+                        model, args=example_inputs, dynamic_shapes=dynamic_shapes
+                    )
+                exported_model._exported = True
+                logger.info("Exported the model to Aten IR successfully.")
             else:
-                exported_model = export_func(  # pylint: disable=E1123
-                    model, args=example_inputs, dynamic_shapes=dynamic_shapes
-                )
-            if cur_version >= TORCH_VERSION_2_7_0:
-                exported_model = exported_model.module()
-            exported_model._exported = True
-            logger.info("Exported the model to Aten IR successfully.")
+                # PyTorch >= 2.7.0: use torch.export API
+                strict_kwargs = {"strict": True} if cur_version >= TORCH_VERSION_2_8_0 else {}
+                for attempt, strict in enumerate([strict_kwargs, {} if strict_kwargs else None]):
+                    if attempt > 0 and not strict_kwargs:
+                        break  # only one attempt if strict wasn't applicable
+                    kwargs = strict if attempt == 0 else {}
+                    try:
+                        if cur_version >= TORCH_VERSION_2_8_0:
+                            ep = torch.export.export(
+                                model, args=example_inputs, dynamic_shapes=dynamic_shapes, **kwargs
+                            )
+                        else:
+                            ep = torch.export.export_for_training(
+                                model, args=example_inputs, dynamic_shapes=dynamic_shapes
+                            )
+                        exported_model = ep.module()
+                        exported_model._exported = True
+                        mode = "strict" if kwargs.get("strict") else "non-strict"
+                        logger.info(f"Exported the model to Aten IR successfully ({mode}).")
+                        break
+                    except Exception as inner_e:
+                        if attempt == 0 and strict_kwargs:
+                            logger.warning(
+                                f"Export with {kwargs or 'current settings'} failed, "
+                                f"retrying with strict=False. Error: {inner_e}"
+                            )
+                            continue
+                        raise  # re-raise on last attempt
     except Exception as e:
         logger.error(f"Failed to export the model: {e}")
 
@@ -107,9 +125,14 @@ def export(
         Optional[GraphModule]: The exported model for quantization.
     """
     if not is_ipex_imported():
-        model = export_model_for_pt2e_quant(model, example_inputs, dynamic_shapes)
-        model.dynamic_shapes = dynamic_shapes
-        return model
+        exported_model = export_model_for_pt2e_quant(model, example_inputs, dynamic_shapes)
+        if exported_model is None:
+            raise RuntimeError(
+                "Failed to export the model for quantization. "
+                "Check the logs above for details on the export failure."
+            )
+        exported_model.dynamic_shapes = dynamic_shapes
+        return exported_model
     else:
         # TODO, add `export` for ipex
         pass

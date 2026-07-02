@@ -74,7 +74,7 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         Args:
             name (str): Layer name.
             activation_dtype (jnp.dtype): Activation dtype used for quantization.
-            dtype (str): dtype for the layer - see keras.layers.Layer API for details.
+            dtype (str | keras.DTypePolicy): dtype for the layer - see keras.layers.Layer API for details.
             asymmetric (bool): Whether to use asymmetric quantization.
             fixed_range (Optional[Tuple[float, float]]): If provided, use this (min, max) range
                 instead of computing min/max dynamically per batch.
@@ -98,8 +98,8 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             None: Initializes quantization functions.
         """
         self._tracker.unlock()
-        self.aquantfun = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_asymmetric)
-        self.adequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_asymmetric)
+        self.quantize = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_asymmetric)
+        self.dequantize = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_asymmetric)
         if self.fixed_range is not None:
             fixed_min_max = ops.array(self.fixed_range)
             a_scale, a_zero_point = get_q_params(
@@ -108,51 +108,54 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             self._fixed_a_scale = a_scale
             if self._is_asymmetric:
                 self._fixed_a_zero_point = a_zero_point
-            self.call = self.call_fixed_asymmetric if self._is_asymmetric else self.call_fixed_symmetric
+                self.take_scale = lambda inputs, mask=None: (self._fixed_a_scale, self._fixed_a_zero_point)
+            else:
+                self.take_scale = lambda inputs, mask=None: (self._fixed_a_scale,)
+        elif self._is_asymmetric:
+            self.take_scale = self._take_scale_dynamic_asymmetric
+        else:
+            self.take_scale = self._take_scale_dynamic_symmetric
+        self.call = self.call_quantized
         self._tracker.lock()
 
-    def call_symmetric(self, inputs, a_scale):
-        """Apply symmetric quantize-dequantize with given scale.
-
-        Args:
-            inputs (jnp.ndarray): Input tensor.
-            a_scale (jnp.ndarray): Quantization scale.
+    def post_quantization_cleanup(self):
+        """Finalize dynamic quantization with no extra cleanup.
 
         Returns:
-            jnp.ndarray: Quantized-dequantized tensor.
+            None: Keeps the layer ready for inference.
         """
-        x = self.aquantfun(inputs, a_scale)
-        x = self.adequantfun(x, a_scale)
-        return x
-
-    def call_asymmetric(self, inputs, a_scale, a_zero_point):
-        """Apply asymmetric quantize-dequantize with given scale and zero point.
-
-        Args:
-            inputs (jnp.ndarray): Input tensor.
-            a_scale (jnp.ndarray): Quantization scale.
-            a_zero_point (jnp.ndarray): Quantization zero point.
-
-        Returns:
-            jnp.ndarray: Quantized-dequantized tensor.
-        """
-        x = self.aquantfun(inputs, a_scale, a_zero_point)
-        x = self.adequantfun(x, a_scale, a_zero_point)
-        return x
+        pass
 
     def call(self, inputs, mask=None):
-        """Apply dynamic activation quantize-dequantize.
+        """Default call before add_variables is invoked.
+
+        Should not be reached after setup.
+        """
+        raise RuntimeError("DynamicQDQLayer.call: add_variables() must be called before use.")
+
+    def _passthrough(self, x, *args, **kwargs):
+        """No-op passthrough. Used when quantize or dequantize is disabled.
+
+        Args:
+            x (jnp.ndarray): Input tensor.
+            *args: Ignored positional params (e.g. scale, zero_point).
+            **kwargs: Ignored keyword params.
+
+        Returns:
+            jnp.ndarray: Unmodified input.
+        """
+        return x
+
+    def _compute_batch_min_max(self, inputs, mask=None):
+        """Compute batch min/max from inputs, respecting mask.
 
         Args:
             inputs (jnp.ndarray): Input tensor.
             mask (Optional[jnp.ndarray]): Optional mask tensor.
 
         Returns:
-            jnp.ndarray: Tensor with quantize-dequantize applied.
+            jnp.ndarray: Tensor of (min, max) values.
         """
-        if any([dim == 0 for dim in inputs.shape]):
-            # Skip quantization for zero-size inputs
-            return inputs
         if mask is not None:
             # Expand mask to match input dimensions if needed
             if len(mask.shape) < len(inputs.shape):
@@ -166,48 +169,91 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         else:
             batch_min = keras.ops.min(inputs)
             batch_max = keras.ops.max(inputs)
+        return keras.ops.array((batch_min, batch_max))
 
-        batch_min_max = keras.ops.array((batch_min, batch_max))
+    def _take_scale_dynamic_symmetric(self, inputs, mask=None):
+        """Compute symmetric scale dynamically from batch min/max.
 
-        if self._is_asymmetric:
-            a_scale, a_zero_point = get_q_params(
-                batch_min_max, self.activation_dtype, self.compute_dtype, asymmetric=True
-            )
-            return self.call_asymmetric(inputs, a_scale, a_zero_point)
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            Tuple[jnp.ndarray]: Tuple containing (a_scale,).
+        """
+        batch_min_max = self._compute_batch_min_max(inputs, mask)
         a_scale, _ = get_q_params(batch_min_max, self.activation_dtype, self.compute_dtype, asymmetric=False)
-        return self.call_symmetric(inputs, a_scale)
+        return (a_scale,)
 
-    def call_fixed_symmetric(self, inputs, mask=None):
-        """Apply symmetric quantization using a pre-computed fixed scale.
-
-        Args:
-            inputs (jnp.ndarray): Input tensor.
-            mask (Optional[jnp.ndarray]): Optional mask tensor.
-
-        Returns:
-            jnp.ndarray: Quantized-dequantized tensor.
-        """
-        return self.call_symmetric(inputs, self._fixed_a_scale)
-
-    def call_fixed_asymmetric(self, inputs, mask=None):
-        """Apply asymmetric quantization using a pre-computed fixed scale.
+    def _take_scale_dynamic_asymmetric(self, inputs, mask=None):
+        """Compute asymmetric scale and zero point dynamically from batch min/max.
 
         Args:
             inputs (jnp.ndarray): Input tensor.
             mask (Optional[jnp.ndarray]): Optional mask tensor.
 
         Returns:
-            jnp.ndarray: Quantized-dequantized tensor.
+            Tuple[jnp.ndarray, jnp.ndarray]: Tuple containing (a_scale, a_zero_point).
         """
-        return self.call_asymmetric(inputs, self._fixed_a_scale, self._fixed_a_zero_point)
+        batch_min_max = self._compute_batch_min_max(inputs, mask)
+        a_scale, a_zero_point = get_q_params(batch_min_max, self.activation_dtype, self.compute_dtype, asymmetric=True)
+        return (a_scale, a_zero_point)
 
-    def post_quantization_cleanup(self):
-        """Finalize dynamic quantization with no extra cleanup.
+    def call_quantized(self, inputs, mask=None):
+        """Apply quantization pipeline to inputs.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
 
         Returns:
-            None: Keeps the layer ready for inference.
+            jnp.ndarray: Processed tensor.
         """
-        pass
+        if any([dim == 0 for dim in inputs.shape]):
+            return inputs
+        params = self.take_scale(inputs, mask)
+        x = self.quantize(inputs, *params)
+        x = self.dequantize(x, *params)
+        return x
+
+    def call_q(self, inputs, mask=None):
+        """Q-side of split QDQ: compute scale and quantize.
+
+        Computes scale from inputs (or uses fixed scale), quantizes,
+        and stores the scale params for a subsequent call_dq.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            jnp.ndarray: Quantized tensor.
+        """
+        if any([dim == 0 for dim in inputs.shape]):
+            return inputs
+        params = self.take_scale(inputs, mask)
+        self._last_params = params
+        return self.quantize(inputs, *params)
+
+    def call_dq(self, inputs, mask=None):
+        """DQ-side of split QDQ: dequantize using scale from prior call_q.
+
+        Uses the scale params stored by the most recent ``call_q`` invocation.
+
+        Note:
+            ``call_q`` must be called first, as it computes and stores
+            the scale parameters (``_last_params``) required by this method.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            mask (Optional[jnp.ndarray]): Optional mask tensor.
+
+        Returns:
+            jnp.ndarray: Dequantized tensor.
+        """
+        if any([dim == 0 for dim in inputs.shape]):
+            return inputs
+        return self.dequantize(inputs, *self._last_params)
 
 
 class QDynamicDenseMixin(SaveableLayerMixin):
@@ -435,6 +481,7 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
         attention_mask=None,
         training=None,
         return_attention_scores=False,
+        use_causal_mask=False,
     ):
         """Applies Dot-product attention with query, key, value tensors.
 
@@ -452,9 +499,15 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
             training: Python boolean indicating whether the layer should behave
                 in training mode (adding dropout) or in inference mode (doing
                 nothing).
+            use_causal_mask: Boolean. When True and `attention_mask` is None,
+                routes through the backend's native causal kernel via
+                `dot_product_attention(is_causal=True)`. This skips
+                materializing an explicit [T, S] mask tensor and enables
+                torch's causal-only flash kernel.
 
         Returns:
-          Tuple[jnp.ndarray, Optional[jnp.ndarray]]: Attention outputs and attention scores.
+          attention_output: Multi-headed outputs of attention computation.
+          attention_scores: Multi-headed attention weights.
         """
         # Check for flash attention constraints
         if self._flash_attention and return_attention_scores:
@@ -472,6 +525,23 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
         )
 
         if use_dot_product_attention:
+            if use_causal_mask and attention_mask is None:
+                # Skip materializing the [T, S] mask and let the backend
+                # use its native causal kernel.
+                query = self.qdq(query)
+                key = self.qdq(key)
+                value = self.qdq(value)
+                attention_output = ops.dot_product_attention(
+                    query=query,
+                    key=key,
+                    value=value,
+                    bias=None,
+                    mask=None,
+                    scale=self._inverse_sqrt_key_dim,
+                    is_causal=True,
+                    flash_attention=self._flash_attention,
+                )
+                return attention_output, None
             if attention_mask is not None:
                 # Ensure attention_mask has the correct shape for broadcasting
                 # Expected shape: [batch_size, num_heads, query_seq_len,
@@ -496,13 +566,26 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
                 bias=None,
                 mask=attention_mask,
                 scale=self._inverse_sqrt_key_dim,
-                is_causal=False,
+                is_causal=use_causal_mask,
                 flash_attention=self._flash_attention,
             )
             return attention_output, None
 
         # Default behavior without flash attention, with explicit attention
-        # scores
+        # scores. We skipped the fused is_causal kernel above, so build the
+        # causal mask here. `call` drops attention_mask when causal is the
+        # only mask source, expecting that kernel to run, and this path never
+        # sees the is_causal flag otherwise. When an explicit mask is also
+        # present, combine the two so neither constraint is lost.
+        if use_causal_mask:
+            causal_mask = self._compute_causal_mask(query, value)
+            attention_mask = (
+                causal_mask
+                if attention_mask is None
+                else ops.logical_and(
+                    ops.cast(attention_mask, "bool"), causal_mask
+                )
+            )
         query = ops.multiply(
             query, ops.cast(self._inverse_sqrt_key_dim, query.dtype)
         )
@@ -533,7 +616,7 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
             self._combine_equation, final_attn_scores, value
         )
         return attention_output, attention_scores
-    # fmt on
+    # fmt: on
 
 
 verify_api(keras.layers.MultiHeadAttention, QDynamicMultiHeadAttention, "_compute_attention")
@@ -579,6 +662,7 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         """
         pass
 
+    # fmt: off
     def _compute_attention(
         self,
         q,
@@ -604,7 +688,9 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         if self.query_head_dim_normalize:
             query_normalization = 1 / np.sqrt(self.head_dim)
         else:
-            query_normalization = 1 / np.sqrt(self.hidden_dim // self.num_query_heads)
+            query_normalization = 1 / np.sqrt(
+                self.hidden_dim // self.num_query_heads
+            )
 
         if self.use_sliding_window_attention and attention_mask is not None:
             attention_mask = self._mask_sliding_window(
@@ -613,9 +699,24 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             )
 
         if self._use_fused_attention_op():
-            logger.warning(
-                "Flash attention is not supported in dynamic quantization yet. "
-                "Falling back to standard attention computation."
+            if attention_mask is not None:
+                attention_mask = ops.expand_dims(attention_mask, axis=1)
+                attention_mask = ops.cast(attention_mask, dtype="bool")
+            # Only pass soft cap if needed as not all keras versions support.
+            if self.logit_soft_cap:
+                kwargs = {"attn_logits_soft_cap": self.logit_soft_cap}
+            else:
+                kwargs = {}
+            q = self.qdq(q)
+            k = self.qdq(k)
+            v = self.qdq(v)
+            return ops.dot_product_attention(
+                query=q,
+                key=k,
+                value=v,
+                mask=attention_mask,
+                scale=query_normalization,
+                **kwargs,
             )
 
         q *= ops.cast(query_normalization, dtype=q.dtype)
@@ -636,21 +737,30 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         k = self.qdq(k)
         attention_logits = ops.einsum("btkgh,bskh->bkgts", q, k)
         if self.logit_soft_cap is not None:
-            attention_logits = ops.divide(attention_logits, self.logit_soft_cap)
-            attention_logits = ops.multiply(ops.tanh(attention_logits), self.logit_soft_cap)
+            attention_logits = ops.divide(
+                attention_logits, self.logit_soft_cap
+            )
+            attention_logits = ops.multiply(
+                ops.tanh(attention_logits), self.logit_soft_cap
+            )
 
         if attention_mask is not None:
             attention_mask = attention_mask[:, None, None, :, :]
 
+        # orig_dtype = attention_logits.dtype
         attention_softmax = self.softmax(attention_logits, mask=attention_mask)
+        # attention_softmax = ops.cast(attention_softmax, orig_dtype)
 
         if self.dropout:
-            attention_softmax = self.dropout_layer(attention_softmax, training=training)
+            attention_softmax = self.dropout_layer(
+                attention_softmax, training=training
+            )
 
         attention_softmax = self.qdq(attention_softmax)
         v = self.qdq(v)
         results = ops.einsum("bkgts,bskh->btkgh", attention_softmax, v)
         return ops.reshape(results, (b, q_len, self.num_query_heads, h))
+    # fmt: on
 
 
 verify_api(CachedGemma3Attention, QDynamicCachedGemma3Attention, "_compute_attention")

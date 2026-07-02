@@ -33,6 +33,25 @@ from neural_compressor.torch.utils.utility import WHITE_MODULE_LIST, algos_mappi
 FRAMEWORK_NAME = "torch"
 
 
+class _AutoRoundModelReference:
+    """A lightweight container for model-free AutoRound prepare/convert flow."""
+
+    def __init__(self, model_reference: str, quant_config: BaseConfig, example_inputs: Any = None):
+        self.model_reference = model_reference
+        self.quant_config = quant_config
+        self.example_inputs = example_inputs
+        self.is_prepared = True
+
+
+def _is_autoround_model_free_string_case(model: Any, quant_config: BaseConfig) -> bool:
+    """Return True when model-free AutoRound is called with a string model reference."""
+    return (
+        isinstance(quant_config, AutoRoundConfig)
+        and bool(getattr(quant_config, "model_free", False))
+        and isinstance(model, str)
+    )
+
+
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
     """Check whether to apply this algorithm according to configs_mapping.
 
@@ -89,12 +108,16 @@ def preprocess_quant_config(model, quant_config, mode="prepare", example_inputs=
                 )
         model_info = quant_config.get_model_info(model, example_inputs)
     elif isinstance(quant_config, AutoRoundConfig):
-        for _attr in ("tokenizer", "processor", "image_processor", "template"):
-            _backup = getattr(quant_config, _attr, None)
-            if _backup is not None:
-                setattr(model, _attr, _backup)
-                delattr(quant_config, _attr)
-        model_info = quant_config.get_model_info(model=model)
+        if _is_autoround_model_free_string_case(model, quant_config):
+            # Keep optional large objects on config when model is a string reference.
+            model_info = quant_config.get_model_info(model=None)
+        else:
+            for _attr in ("tokenizer", "processor", "image_processor", "template"):
+                _backup = getattr(quant_config, _attr, None)
+                if _backup is not None:
+                    setattr(model, _attr, _backup)
+                    delattr(quant_config, _attr)
+            model_info = quant_config.get_model_info(model=model)
     else:
         model_info = quant_config.get_model_info(model=model)
 
@@ -172,6 +195,9 @@ def prepare(
     Returns:
         prepared and calibrated module.
     """
+    if _is_autoround_model_free_string_case(model, quant_config):
+        return _AutoRoundModelReference(model_reference=model, quant_config=quant_config, example_inputs=example_inputs)
+
     prepared_model = model if inplace else copy.deepcopy(model)
     prepared_model, configs_mapping = preprocess_quant_config(
         prepared_model, quant_config, mode="prepare", example_inputs=example_inputs
@@ -240,6 +266,13 @@ def convert(
     Returns:
         The quantized model.
     """
+    if isinstance(model, _AutoRoundModelReference):
+        if quant_config is None:
+            quant_config = model.quant_config
+        else:
+            logger.warning("quant_config will be ignored since the model has been prepared.")
+        model = model.model_reference
+
     q_model = model if inplace else copy.deepcopy(model)
 
     assert (
@@ -287,7 +320,8 @@ def convert(
                 mode=Mode.CONVERT,
                 **kwargs,
             )
-    setattr(q_model, "is_quantized", True)
+    if hasattr(q_model, "__dict__"):
+        setattr(q_model, "is_quantized", True)
     return q_model
 
 

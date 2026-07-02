@@ -9,9 +9,9 @@ Legal Information
 
 Intel® Neural Compressor is licensed under [Apache License Version 2.0](http://www.apache.org/licenses/LICENSE-2.0). This software includes components that have separate copyright notices and licensing terms. Your use of the source code for these components is subject to the terms and conditions of the following licenses.
 
-* [Third Party Programs](https://github.com/intel/neural-compressor/blob/master/third-party-programs.txt)
+* [Third Party Programs](https://github.com/intel/neural-compressor/blob/main/third-party-programs.txt)
 
-See the accompanying [license](https://github.com/intel/neural-compressor/tree/master/LICENSE) file for full license text and copyright notices.
+See the accompanying [license](https://github.com/intel/neural-compressor/tree/main/LICENSE) file for full license text and copyright notices.
 
 ## Citation
 
