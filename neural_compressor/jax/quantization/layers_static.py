@@ -1447,12 +1447,12 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         """Convert a ReversibleEmbedding instance for static quantization.
 
         Args:
-            orig (ReversibleEmbedding): Original layer instance.
+            orig (keras.layers.ReversibleEmbedding): Original layer instance.
             weight_dtype (jnp.dtype): Dtype for quantized weights.
             activation_dtype (jnp.dtype): Dtype for quantized activations.
 
         Returns:
-            ReversibleEmbedding: Updated layer instance.
+            keras.layers.ReversibleEmbedding: Updated layer instance.
         """
         orig._tracker.unlock()
         orig.__class__ = cls

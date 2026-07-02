@@ -13,14 +13,21 @@
 # limitations under the License.
 """Intel Neural Compressor JAX quantization base API."""
 
+from collections import OrderedDict
 from typing import Callable, Dict, Tuple
 
 import keras
+from keras_hub.src.models.causal_lm import CausalLM
 
 from neural_compressor.common import logger
-from neural_compressor.common.base_config import BaseConfig
-from neural_compressor.common.utils import Mode, log_process
+from neural_compressor.common.base_config import BaseConfig, ComposableConfig
+from neural_compressor.common.utils import STATIC_QUANT, Mode, log_process
+from neural_compressor.jax.quantization.saving import (
+    WRAPPER_MAPPING,
+    KerasQuantizedModelBackboneWrapper,
+)
 from neural_compressor.jax.utils import algos_mapping, check_backend
+from neural_compressor.jax.utils.utility import causal_lm_make_replace_generate_function
 
 from .clone_model import clone_model
 
@@ -38,6 +45,30 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
     return any(config.name == algo_name for config in configs_mapping.values())
 
 
+def _build_configs_mapping_composable(model, quant_config: ComposableConfig) -> OrderedDict:
+    """Build a unified configs_mapping from a ComposableConfig.
+
+    Calls each sub-config's to_config_mapping() individually and merges results.
+    Resolves conflicts by last-config-wins.
+
+    Args:
+        model: Keras model to quantize.
+        quant_config: ComposableConfig containing multiple sub-configs.
+
+    Returns:
+        OrderedDict mapping (op_name, op_type) to config.
+    """
+    configs_mapping = OrderedDict()
+    for sub_config in quant_config.config_list:
+        sub_model_info = sub_config.get_model_info(model)
+        sub_mapping = sub_config.to_config_mapping(model_info=sub_model_info)
+        for key in sub_mapping:
+            if key in configs_mapping:
+                logger.debug(f"Layer {key} quant config override from {configs_mapping[key]} to {sub_mapping[key]}")
+        configs_mapping.update(sub_mapping)
+    return configs_mapping
+
+
 # fmt: off
 @log_process(mode=Mode.QUANTIZE)
 def quantize_model(
@@ -50,7 +81,8 @@ def quantize_model(
 
     Args:
         model (keras.Model): FP32 Keras model to be quantized.
-        quant_config (BaseConfig): Quantization configuration.
+        quant_config (BaseConfig): Quantization configuration. Can be a single config
+            or a ComposableConfig (created via config1 + config2).
         calib_function (Callable, optional): Function used for model calibration, required for static quantization.
         inplace (bool): When True, the original model is modified in-place and should not be used afterward. False creates a copy of original model
 
@@ -62,10 +94,33 @@ def quantize_model(
     if not inplace:
         model = clone_model(model)
 
-    model_info = quant_config.get_model_info(model)
-    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
-    for algo_name, algo_func in algos_mapping.items():
+    # Build configs_mapping - handle ComposableConfig by calling sub-configs individually
+    if isinstance(quant_config, ComposableConfig):
+        configs_mapping = _build_configs_mapping_composable(model, quant_config)
+    else:
+        model_info = quant_config.get_model_info(model)
+        configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+
+    # Pre-quantization setup for CausalLM models
+    if isinstance(model, CausalLM):
+        causal_lm_make_replace_generate_function(model)
+
+    # Execute algorithms - static first to ensure calibration runs on original FP32/BF16 model
+    algo_order = sorted(algos_mapping.keys(), key=lambda name: (0 if name == STATIC_QUANT else 1))
+    for algo_name in algo_order:
+        algo_func = algos_mapping[algo_name]
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
             model = algo_func(model, configs_mapping, quant_config, calib_function)
-    return model
+
+    # Post-quantization: revert CausalLM generate function
+    if isinstance(model, CausalLM):
+        causal_lm_make_replace_generate_function(model, revert=True)
+
+    if hasattr(model, "backbone"):
+        model._tracker.unlock()
+        model.backbone = KerasQuantizedModelBackboneWrapper(model.backbone, quant_config)
+        model._tracker.lock()
+
+    wrapper_cls = WRAPPER_MAPPING[model.__class__]
+    return wrapper_cls(model, quant_config)
