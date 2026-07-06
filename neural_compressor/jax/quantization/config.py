@@ -20,15 +20,18 @@ from __future__ import annotations
 
 import json
 import re
+from collections import OrderedDict
 from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
 
 import jax.numpy as jnp
 import keras
 
+from neural_compressor.common import logger
 from neural_compressor.common.base_config import (
     DEFAULT_WHITE_LIST,
     OP_NAME_OR_MODULE_TYPE,
     BaseConfig,
+    ComposableConfig,
     config_registry,
     register_config,
     register_supported_configs_for_fwk,
@@ -77,6 +80,28 @@ def _layer_matches_filter(
     return True
 
 
+def _resolve_include_patterns(white_list):
+    """Translate a ``white_list`` into include patterns for ``get_model_info``.
+
+    - ``DEFAULT_WHITE_LIST`` (``"*"``) -> ``None`` (target every supported layer).
+    - ``EMPTY_WHITE_LIST`` (``None``) -> ``[]`` (target no layer).
+    - a list -> class objects become their ``__name__``; strings pass through and
+      are matched against both the layer class name and the layer path (regex).
+    """
+    if white_list == DEFAULT_WHITE_LIST:
+        return None
+    if white_list is None:
+        return []
+    return [entry if isinstance(entry, str) else entry.__name__ for entry in white_list]
+
+
+def _serialize_white_list(white_list):
+    """Convert a ``white_list`` into a JSON-serializable form (class -> name)."""
+    if white_list == DEFAULT_WHITE_LIST or white_list is None:
+        return white_list
+    return [entry if isinstance(entry, str) else entry.__name__ for entry in white_list]
+
+
 class OperatorConfig(NamedTuple):
     """Configuration pairing a quantization config with supported operators."""
 
@@ -110,6 +135,19 @@ class DynamicQuantConfig(BaseConfig):
 
     name = DYNAMIC_QUANT
 
+    def __add__(self, other: BaseConfig) -> BaseConfig:
+        """Combine with another config, producing a ``ComposableQuantConfig``.
+
+        Same-type configs merge their local configs (base behavior); different
+        types compose so each sub-config keeps its own ``white_list`` / ``exclude``
+        selection and its overridden ``to_config_mapping``.
+        """
+        if isinstance(other, type(self)):
+            for op_name, config in other.local_config.items():
+                self.set_local(op_name, config)
+            return self
+        return ComposableQuantConfig(configs=[self, other])
+
     def __init__(
         self,
         weight_dtype: str = "fp8_e4m3",
@@ -117,7 +155,6 @@ class DynamicQuantConfig(BaseConfig):
         const_scale: bool = False,
         const_weight: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        include: Optional[List[str]] = None,
         exclude: Optional[List[str]] = None,
     ):
         """Init Dynamic quantization config.
@@ -127,9 +164,10 @@ class DynamicQuantConfig(BaseConfig):
             activation_dtype (str): Data type for activations, default is "fp8_e4m3".
             const_scale (bool): Whether to use a constant scale factor for quantization.
             const_weight (bool): Whether to use constant quantized weights.
-            white_list (list): A list of supported operators of this algorithm.
-            include (Optional[List[str]]): List of layer class names or path patterns to include.
-                When set, only matching layers are quantized. Supports regular expression patterns.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): Layers to quantize. Each entry
+                is a layer class (e.g. ``keras.layers.Dense``), a class name, or a path regex.
+                Only matching supported layers are quantized. Defaults to ``"*"`` (all supported
+                layers).
             exclude (Optional[List[str]]): List of layer class names or path patterns to exclude.
                 Matching layers are skipped. Supports regular expression patterns.
 
@@ -148,19 +186,8 @@ class DynamicQuantConfig(BaseConfig):
         self.activation_dtype = activation_dtype
         self.const_scale = const_scale
         self.const_weight = const_weight
-        self._include = include
         self._exclude = exclude
         self._post_init()
-
-    @property
-    def include(self):
-        """Get the include filter list."""
-        return self._include
-
-    @include.setter
-    def include(self, value):
-        """Set the include filter list."""
-        self._include = value
 
     @property
     def exclude(self):
@@ -172,11 +199,40 @@ class DynamicQuantConfig(BaseConfig):
         """Set the exclude filter list."""
         self._exclude = value
 
+    def to_config_mapping(self, config_list=None, model_info=None):
+        """Map model ops to configs using the base local/global machinery.
+
+        This reuses ``global_config`` and the op-type / op-name local configs the
+        base ``_post_init`` builds from ``white_list``. Only the matching step is
+        tweaked for Keras:
+
+        * op-name patterns are matched against the hierarchical layer path with
+          ``re.search`` instead of the base's anchored ``re.match``;
+        * a string entry also matches a layer by its class name, so ``"Dense"``
+          targets every Dense layer without needing the class object.
+        """
+        config_mapping = OrderedDict()
+        if config_list is None:
+            config_list = [self]
+        for config in config_list:
+            global_config = config.global_config
+            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
+            for op_name, op_type in model_info:
+                if global_config is not None:
+                    config_mapping[(op_name, op_type)] = global_config
+                if op_type in op_type_config_dict:
+                    config_mapping[(op_name, op_type)] = op_type_config_dict[op_type]
+                for op_name_pattern, pattern_config in op_name_config_dict.items():
+                    if op_name_pattern == op_type or re.search(op_name_pattern, op_name):
+                        config_mapping[(op_name, op_type)] = pattern_config
+        return config_mapping
+
     def to_dict(self):
-        """Convert the config to a dictionary including include/exclude."""
-        result = super().to_dict()
-        if self._include is not None:
-            result["include"] = self._include
+        """Serialize params plus the white_list / exclude selection filters."""
+        result = self.get_params_dict()
+        white_list = _serialize_white_list(self._white_list)
+        if white_list != DEFAULT_WHITE_LIST and white_list is not None:
+            result["white_list"] = white_list
         if self._exclude is not None:
             result["exclude"] = self._exclude
         return result
@@ -184,7 +240,7 @@ class DynamicQuantConfig(BaseConfig):
     def get_params_dict(self):
         """Get parameters dict, excluding internal and filter attributes."""
         result = dict()
-        excluded = {"_global_config", "_local_config", "_white_list", "_include", "_exclude", "_is_initialized"}
+        excluded = {"_global_config", "_local_config", "_white_list", "_exclude", "_is_initialized"}
         for param, value in self.__dict__.items():
             if param not in excluded:
                 result[param] = value
@@ -208,7 +264,11 @@ class DynamicQuantConfig(BaseConfig):
         cls.supported_configs = supported_configs
 
     def get_model_info(self, model) -> List[Tuple[str, str]]:
-        """Get concrete node names for supported operators.
+        """Return all supported ops, minus any matched by ``exclude``.
+
+        White-list selection is applied later by ``to_config_mapping`` through the
+        base local/global configs. ``exclude`` is a JAX-side deny filter applied
+        here so excluded layers never reach the mapping.
 
         Args:
             model (keras.Model): Keras model to inspect.
@@ -221,24 +281,17 @@ class DynamicQuantConfig(BaseConfig):
 
         supported = {layer_class.__name__ for layer_class in dynamic_quant_mapping.keys()}
 
-        white_list = self.white_list
-        if white_list is None:
-            white_list = set()
-        elif white_list == DEFAULT_WHITE_LIST:
-            white_list = supported
-        else:
-            white_list = {element if isinstance(element, str) else element.__name__ for element in white_list}
-            white_list = white_list & supported
-
         filter_result = []
         for layer in model._flatten_layers(recursive=True):
-            if layer.__class__.__name__ in white_list:
-                layer_id = layer.path if layer.path else layer.name
-                if not _layer_matches_filter(layer_id, layer.__class__.__name__, self.include, self.exclude):
-                    continue
-                pair = (layer_id, layer.__class__.__name__)
-                if pair not in filter_result:
-                    filter_result.append(pair)
+            class_name = layer.__class__.__name__
+            if class_name not in supported:
+                continue
+            layer_id = layer.path if layer.path else layer.name
+            if not _layer_matches_filter(layer_id, class_name, None, self.exclude):
+                continue
+            pair = (layer_id, class_name)
+            if pair not in filter_result:
+                filter_result.append(pair)
 
         return filter_result
 
@@ -282,7 +335,6 @@ class DynamicQuantConfig(BaseConfig):
         const_scale = config_dict.get("const_scale", False)
         const_weight = config_dict.get("const_weight", False)
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
-        include = config_dict.get("include", None)
         exclude = config_dict.get("exclude", None)
         return cls(
             weight_dtype=weight_dtype,
@@ -290,7 +342,6 @@ class DynamicQuantConfig(BaseConfig):
             const_scale=const_scale,
             const_weight=const_weight,
             white_list=white_list,
-            include=include,
             exclude=exclude,
         )
 
@@ -322,6 +373,19 @@ class StaticQuantConfig(BaseConfig):
 
     name = STATIC_QUANT
 
+    def __add__(self, other: BaseConfig) -> BaseConfig:
+        """Combine with another config, producing a ``ComposableQuantConfig``.
+
+        Same-type configs merge their local configs (base behavior); different
+        types compose so each sub-config keeps its own ``white_list`` / ``exclude``
+        selection and its overridden ``to_config_mapping``.
+        """
+        if isinstance(other, type(self)):
+            for op_name, config in other.local_config.items():
+                self.set_local(op_name, config)
+            return self
+        return ComposableQuantConfig(configs=[self, other])
+
     def __init__(
         self,
         weight_dtype: str = "fp8_e4m3",
@@ -329,7 +393,6 @@ class StaticQuantConfig(BaseConfig):
         const_scale: bool = False,
         const_weight: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        include: Optional[List[str]] = None,
         exclude: Optional[List[str]] = None,
     ):
         """Init Static quantization config.
@@ -339,9 +402,10 @@ class StaticQuantConfig(BaseConfig):
             activation_dtype (str): Data type for activations, default is "fp8_e4m3".
             const_scale (bool): Whether to use a constant scale factor for quantization.
             const_weight (bool): Whether to use constant quantized weights.
-            white_list (list): A list of supported operators of this algorithm.
-            include (Optional[List[str]]): List of layer class names or path patterns to include.
-                When set, only matching layers are quantized. Supports regular expression patterns.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): Layers to quantize. Each entry
+                is a layer class (e.g. ``keras.layers.Dense``), a class name, or a path regex.
+                Only matching supported layers are quantized. Defaults to ``"*"`` (all supported
+                layers).
             exclude (Optional[List[str]]): List of layer class names or path patterns to exclude.
                 Matching layers are skipped. Supports regular expression patterns.
 
@@ -361,19 +425,8 @@ class StaticQuantConfig(BaseConfig):
         self.activation_dtype = activation_dtype
         self.const_scale = const_scale
         self.const_weight = const_weight
-        self._include = include
         self._exclude = exclude
         self._post_init()
-
-    @property
-    def include(self):
-        """Get the include filter list."""
-        return self._include
-
-    @include.setter
-    def include(self, value):
-        """Set the include filter list."""
-        self._include = value
 
     @property
     def exclude(self):
@@ -385,11 +438,40 @@ class StaticQuantConfig(BaseConfig):
         """Set the exclude filter list."""
         self._exclude = value
 
+    def to_config_mapping(self, config_list=None, model_info=None):
+        """Map model ops to configs using the base local/global machinery.
+
+        This reuses ``global_config`` and the op-type / op-name local configs the
+        base ``_post_init`` builds from ``white_list``. Only the matching step is
+        tweaked for Keras:
+
+        * op-name patterns are matched against the hierarchical layer path with
+          ``re.search`` instead of the base's anchored ``re.match``;
+        * a string entry also matches a layer by its class name, so ``"Dense"``
+          targets every Dense layer without needing the class object.
+        """
+        config_mapping = OrderedDict()
+        if config_list is None:
+            config_list = [self]
+        for config in config_list:
+            global_config = config.global_config
+            op_type_config_dict, op_name_config_dict = config._get_op_name_op_type_config()
+            for op_name, op_type in model_info:
+                if global_config is not None:
+                    config_mapping[(op_name, op_type)] = global_config
+                if op_type in op_type_config_dict:
+                    config_mapping[(op_name, op_type)] = op_type_config_dict[op_type]
+                for op_name_pattern, pattern_config in op_name_config_dict.items():
+                    if op_name_pattern == op_type or re.search(op_name_pattern, op_name):
+                        config_mapping[(op_name, op_type)] = pattern_config
+        return config_mapping
+
     def to_dict(self):
-        """Convert the config to a dictionary including include/exclude."""
-        result = super().to_dict()
-        if self._include is not None:
-            result["include"] = self._include
+        """Serialize params plus the white_list / exclude selection filters."""
+        result = self.get_params_dict()
+        white_list = _serialize_white_list(self._white_list)
+        if white_list != DEFAULT_WHITE_LIST and white_list is not None:
+            result["white_list"] = white_list
         if self._exclude is not None:
             result["exclude"] = self._exclude
         return result
@@ -397,7 +479,7 @@ class StaticQuantConfig(BaseConfig):
     def get_params_dict(self):
         """Get parameters dict, excluding internal and filter attributes."""
         result = dict()
-        excluded = {"_global_config", "_local_config", "_white_list", "_include", "_exclude", "_is_initialized"}
+        excluded = {"_global_config", "_local_config", "_white_list", "_exclude", "_is_initialized"}
         for param, value in self.__dict__.items():
             if param not in excluded:
                 result[param] = value
@@ -421,7 +503,11 @@ class StaticQuantConfig(BaseConfig):
         cls.supported_configs = supported_configs
 
     def get_model_info(self, model) -> List[Tuple[str, str]]:
-        """Get concrete node names for supported operators.
+        """Return all supported ops, minus any matched by ``exclude``.
+
+        White-list selection is applied later by ``to_config_mapping`` through the
+        base local/global configs. ``exclude`` is a JAX-side deny filter applied
+        here so excluded layers never reach the mapping.
 
         Args:
             model (keras.Model): Keras model to inspect.
@@ -433,24 +519,17 @@ class StaticQuantConfig(BaseConfig):
 
         supported = {layer_class.__name__ for layer_class in static_quant_mapping.keys()}
 
-        white_list = self.white_list
-        if white_list is None:
-            white_list = set()
-        elif white_list == DEFAULT_WHITE_LIST:
-            white_list = supported
-        else:
-            white_list = {element if isinstance(element, str) else element.__name__ for element in white_list}
-            white_list = white_list & supported
-
         filter_result = []
         for layer in model._flatten_layers(recursive=True):
-            if layer.__class__.__name__ in white_list:
-                layer_id = layer.path if layer.path else layer.name
-                if not _layer_matches_filter(layer_id, layer.__class__.__name__, self.include, self.exclude):
-                    continue
-                pair = (layer_id, layer.__class__.__name__)
-                if pair not in filter_result:
-                    filter_result.append(pair)
+            class_name = layer.__class__.__name__
+            if class_name not in supported:
+                continue
+            layer_id = layer.path if layer.path else layer.name
+            if not _layer_matches_filter(layer_id, class_name, None, self.exclude):
+                continue
+            pair = (layer_id, class_name)
+            if pair not in filter_result:
+                filter_result.append(pair)
 
         return filter_result
 
@@ -494,7 +573,6 @@ class StaticQuantConfig(BaseConfig):
         const_scale = config_dict.get("const_scale", False)
         const_weight = config_dict.get("const_weight", False)
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
-        include = config_dict.get("include", None)
         exclude = config_dict.get("exclude", None)
         return cls(
             weight_dtype=weight_dtype,
@@ -502,9 +580,39 @@ class StaticQuantConfig(BaseConfig):
             const_scale=const_scale,
             const_weight=const_weight,
             white_list=white_list,
-            include=include,
             exclude=exclude,
         )
+
+
+class ComposableQuantConfig(ComposableConfig):
+    """JAX composable config that reuses each sub-config's ``to_config_mapping``.
+
+    The base :class:`ComposableConfig` keys ``model_info`` by config *name*, which
+    collides when the same config type appears more than once (e.g. static +
+    dynamic + static) and it ignores the per-config ``global_config``. This
+    subclass keeps each sub-config's ``model_info`` positionally aligned and
+    delegates op selection to the sub-config's own (JAX-tweaked)
+    ``to_config_mapping``, then merges results with last-config-wins on overlap.
+    """
+
+    def get_model_info(self, model, *args, **kwargs) -> List[List[Tuple[str, str]]]:
+        """Return each sub-config's model info, aligned with ``config_list``.
+
+        A list (not a name-keyed dict) is used so repeated config types keep their
+        own candidate ops instead of overwriting each other.
+        """
+        return [sub_config.get_model_info(model, *args, **kwargs) for sub_config in self.config_list]
+
+    def to_config_mapping(self, config_list=None, model_info=None) -> OrderedDict:
+        """Merge each sub-config's mapping, with later configs overriding earlier ones."""
+        config_mapping = OrderedDict()
+        for sub_config, sub_model_info in zip(self.config_list, model_info):
+            sub_mapping = sub_config.to_config_mapping(model_info=sub_model_info)
+            for key, cfg in sub_mapping.items():
+                if key in config_mapping:
+                    logger.debug(f"Layer {key} quant config override from {config_mapping[key]} to {cfg}")
+                config_mapping[key] = cfg
+        return config_mapping
 
 
 register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)

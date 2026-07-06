@@ -32,6 +32,7 @@ from neural_compressor.jax.quantization.config import (
     FRAMEWORK_NAME,
     BaseConfig,
     _layer_matches_filter,
+    _resolve_include_patterns,
 )
 from neural_compressor.jax.utils.utility import check_backend, dtype_mapping
 
@@ -536,8 +537,8 @@ def prepare_deserialized_quantized_model(
         config_list = [quant_config]
 
     # For deserialization, directly check layer class against layers_mapping
-    # (bypasses white_list which may not cover all quantized layer types)
-    # Also respects include/exclude filters from config
+    # (bypasses white_list class gating for layer types) while still respecting
+    # the white_list / exclude selection filters from the config.
     qmodel = model
     for layer in qmodel._flatten_layers():
         # Resolve overlapping sub-configs with last-match-wins, consistent with
@@ -551,13 +552,13 @@ def prepare_deserialized_quantized_model(
             else:
                 continue
 
-            # Check include/exclude filters if set on the config
-            include = cfg.include
+            # Apply the same white_list / exclude selection used during quantization.
+            include_patterns = _resolve_include_patterns(cfg.white_list)
             exclude = cfg.exclude
-            if include is not None or exclude is not None:
+            if include_patterns is not None or exclude is not None:
                 layer_id = layer.path or layer.name
                 class_name = layer.__class__.__name__
-                if not _layer_matches_filter(layer_id, class_name, include, exclude):
+                if not _layer_matches_filter(layer_id, class_name, include_patterns, exclude):
                     continue
 
             selected = (layers_mapping, cfg)

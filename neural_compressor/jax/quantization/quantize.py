@@ -13,14 +13,13 @@
 # limitations under the License.
 """Intel Neural Compressor JAX quantization base API."""
 
-from collections import OrderedDict
 from typing import Callable, Dict, Tuple
 
 import keras
 from keras_hub.src.models.causal_lm import CausalLM
 
 from neural_compressor.common import logger
-from neural_compressor.common.base_config import BaseConfig, ComposableConfig
+from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import STATIC_QUANT, Mode, log_process
 from neural_compressor.jax.quantization.saving import (
     WRAPPER_MAPPING,
@@ -43,30 +42,6 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
         bool: True if any config matches the algorithm name.
     """
     return any(config.name == algo_name for config in configs_mapping.values())
-
-
-def _build_configs_mapping_composable(model, quant_config: ComposableConfig) -> OrderedDict:
-    """Build a unified configs_mapping from a ComposableConfig.
-
-    Calls each sub-config's to_config_mapping() individually and merges results.
-    Resolves conflicts by last-config-wins.
-
-    Args:
-        model: Keras model to quantize.
-        quant_config: ComposableConfig containing multiple sub-configs.
-
-    Returns:
-        OrderedDict mapping (op_name, op_type) to config.
-    """
-    configs_mapping = OrderedDict()
-    for sub_config in quant_config.config_list:
-        sub_model_info = sub_config.get_model_info(model)
-        sub_mapping = sub_config.to_config_mapping(model_info=sub_model_info)
-        for key in sub_mapping:
-            if key in configs_mapping:
-                logger.debug(f"Layer {key} quant config override from {configs_mapping[key]} to {sub_mapping[key]}")
-        configs_mapping.update(sub_mapping)
-    return configs_mapping
 
 
 # fmt: off
@@ -94,12 +69,10 @@ def quantize_model(
     if not inplace:
         model = clone_model(model)
 
-    # Build configs_mapping - handle ComposableConfig by calling sub-configs individually
-    if isinstance(quant_config, ComposableConfig):
-        configs_mapping = _build_configs_mapping_composable(model, quant_config)
-    else:
-        model_info = quant_config.get_model_info(model)
-        configs_mapping = quant_config.to_config_mapping(model_info=model_info)
+    # Build configs_mapping via the common path. ComposableQuantConfig overrides
+    # get_model_info / to_config_mapping to compose its sub-configs.
+    model_info = quant_config.get_model_info(model)
+    configs_mapping = quant_config.to_config_mapping(model_info=model_info)
 
     # Pre-quantization setup for CausalLM models
     if isinstance(model, CausalLM):
