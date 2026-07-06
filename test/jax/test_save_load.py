@@ -212,8 +212,8 @@ def _find_layer(model, name):
 def _quantize_composable(model, calibration_data):
     """Quantize the shared model with a static + dynamic ComposableConfig."""
     # Static quant on 'first', dynamic quant on 'second'.
-    config = StaticQuantConfig(weight_dtype="int8", activation_dtype="int8", include=["first"]) + DynamicQuantConfig(
-        weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", include=["second"]
+    config = StaticQuantConfig(weight_dtype="int8", activation_dtype="int8", white_list=["first"]) + DynamicQuantConfig(
+        weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", white_list=["second"]
     )
 
     def calib_fn(m):
@@ -229,10 +229,10 @@ def _quantize_three_way_composable(model, calibration_data):
     ``first`` -> static, ``second`` -> dynamic, ``third`` -> static.
     """
     config = (
-        StaticQuantConfig(weight_dtype="int8", activation_dtype="int8", include=["first", "second"])
-        + DynamicQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", include=["second", "third"])
+        StaticQuantConfig(weight_dtype="int8", activation_dtype="int8", white_list=["first", "second"])
+        + DynamicQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", white_list=["second", "third"])
         + StaticQuantConfig(
-            weight_dtype="int8", activation_dtype="int8", include=["Dense"], exclude=["first", "second"]
+            weight_dtype="int8", activation_dtype="int8", white_list=["Dense"], exclude=["first", "second"]
         )
     )
 
@@ -275,10 +275,10 @@ class TestComposableConfigSaveLoad:
         static_cfg, dynamic_cfg = loaded_config.config_list
         assert static_cfg.name == "static_quant", "First sub-config must be the static one"
         assert static_cfg.weight_dtype == "int8", "Static sub-config weight_dtype must be preserved"
-        assert static_cfg.include == ["first"], "Static sub-config include filter must be preserved"
+        assert static_cfg.white_list == ["first"], "Static sub-config white_list filter must be preserved"
         assert dynamic_cfg.name == "dynamic_quant", "Second sub-config must be the dynamic one"
         assert dynamic_cfg.weight_dtype == "fp8_e4m3", "Dynamic sub-config weight_dtype must be preserved"
-        assert dynamic_cfg.include == ["second"], "Dynamic sub-config include filter must be preserved"
+        assert dynamic_cfg.white_list == ["second"], "Dynamic sub-config white_list filter must be preserved"
 
     def test_composable_layer_classes_after_load(self, model, calibration_data):
         # Regression for the per-layer deserialization fallback: each layer must
@@ -335,9 +335,9 @@ class TestComplexComposableConfigSaveLoad:
             "dynamic_quant",
             "static_quant",
         ], "Sub-config order (static, dynamic, static) must be preserved"
-        assert static_a.include == ["first", "second"], "First static sub-config include must be preserved"
-        assert dynamic.include == ["second", "third"], "Dynamic sub-config include must be preserved"
-        assert static_b.include == ["Dense"], "Second static sub-config include must be preserved"
+        assert static_a.white_list == ["first", "second"], "First static sub-config white_list must be preserved"
+        assert dynamic.white_list == ["second", "third"], "Dynamic sub-config white_list must be preserved"
+        assert static_b.white_list == ["Dense"], "Second static sub-config white_list must be preserved"
         assert static_b.exclude == ["first", "second"], "Second static sub-config exclude must be preserved"
 
     def test_layer_classes_after_load(self, model, calibration_data):

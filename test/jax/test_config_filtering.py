@@ -95,12 +95,25 @@ def _ids(model_info):
     return [layer_id for layer_id, _ in model_info]
 
 
+def _selected_ids(cfg, model):
+    """Return the layer paths a config actually selects.
+
+    Selection is driven by ``white_list`` through the base local/global config
+    machinery, so it is observed on ``to_config_mapping`` (``get_model_info``
+    only lists the candidate ops minus ``exclude``).
+    """
+    mapping = cfg.to_config_mapping(model_info=cfg.get_model_info(model))
+    return [op_name for (op_name, _op_type) in mapping]
+
+
 @pytest.mark.parametrize("config_cls", [DynamicQuantConfig, StaticQuantConfig], ids=["dynamic_quant", "static_quant"])
 class TestGetModelInfoFiltering:
-    """Filtering behavior of ``get_model_info`` for both quant config types.
+    """White_list / exclude selection for both quant config types.
 
     The shared ``model`` fixture provides a model with three named Dense
     layers (``first``/``second``/``third``) plus an unsupported ``norm`` layer.
+    Selection is resolved by the base local/global machinery in
+    ``to_config_mapping``; ``exclude`` is applied by ``get_model_info``.
     """
 
     def test_no_filter_returns_all_dense(self, config_cls, model):
@@ -108,7 +121,7 @@ class TestGetModelInfoFiltering:
         assert {cls_name for _, cls_name in info} == {
             "Dense"
         }, "Only Dense layers are quantizable, so all entries must be Dense"
-        assert len(info) == 3, "The model has three Dense layers"
+        assert len(_selected_ids(config_cls(), model)) == 3, "Default white_list must select all three Dense layers"
 
     def test_unsupported_layer_type_absent(self, config_cls, model):
         info = config_cls().get_model_info(model)
@@ -117,36 +130,32 @@ class TestGetModelInfoFiltering:
         ), "Unsupported LayerNormalization must never appear in model_info"
 
     def test_include_by_class_name(self, config_cls, model):
-        info = config_cls(include=["Dense"]).get_model_info(model)
-        assert len(info) == 3, "Including by class name 'Dense' must match all three Dense layers"
+        ids = _selected_ids(config_cls(white_list=["Dense"]), model)
+        assert len(ids) == 3, "White_list by class name 'Dense' must select all three Dense layers"
 
     def test_include_by_path_regex_subset(self, config_cls, model):
-        info = config_cls(include=["first"]).get_model_info(model)
-        ids = _ids(info)
-        assert len(ids) == 1, "Only the 'first' layer must match the include pattern"
+        ids = _selected_ids(config_cls(white_list=["first"]), model)
+        assert len(ids) == 1, "Only the 'first' layer must match the white_list pattern"
         assert all("first" in i for i in ids), "The single match must be the 'first' layer"
 
     def test_include_multiple_patterns(self, config_cls, model):
-        info = config_cls(include=["first", "third"]).get_model_info(model)
-        ids = _ids(info)
+        ids = _selected_ids(config_cls(white_list=["first", "third"]), model)
         assert len(ids) == 2, "'first' and 'third' must match, giving two layers"
-        assert all("second" not in i for i in ids), "'second' must not be included"
+        assert all("second" not in i for i in ids), "'second' must not be selected"
 
     def test_exclude_by_path_regex(self, config_cls, model):
-        info = config_cls(exclude=["second"]).get_model_info(model)
-        ids = _ids(info)
+        ids = _selected_ids(config_cls(exclude=["second"]), model)
         assert len(ids) == 2, "Excluding 'second' must leave two layers"
         assert all("second" not in i for i in ids), "'second' must be excluded"
 
     def test_include_and_exclude_combined(self, config_cls, model):
-        info = config_cls(include=["Dense"], exclude=["second"]).get_model_info(model)
-        ids = _ids(info)
-        assert len(ids) == 2, "Include all Dense then exclude 'second' must leave two layers"
-        assert all("second" not in i for i in ids), "'second' must be excluded despite matching include"
+        ids = _selected_ids(config_cls(white_list=["Dense"], exclude=["second"]), model)
+        assert len(ids) == 2, "White_list all Dense then exclude 'second' must leave two layers"
+        assert all("second" not in i for i in ids), "'second' must be excluded despite matching white_list"
 
     def test_include_no_match_returns_empty(self, config_cls, model):
-        info = config_cls(include=["EinsumDense"]).get_model_info(model)
-        assert info == [], "An include pattern matching no layer must yield an empty model_info"
+        ids = _selected_ids(config_cls(white_list=["EinsumDense"]), model)
+        assert ids == [], "A white_list pattern matching no supported layer must select nothing"
 
 
 @pytest.mark.parametrize("config_cls", [DynamicQuantConfig, StaticQuantConfig], ids=["dynamic_quant", "static_quant"])
@@ -154,20 +163,19 @@ class TestConfigSerialization:
     """to_dict / from_dict / from_json_string round-trips with filter attributes."""
 
     def test_to_dict_includes_filters(self, config_cls):
-        cfg = config_cls(include=["Dense"], exclude=[".*skip.*"])
+        cfg = config_cls(white_list=["Dense"], exclude=[".*skip.*"])
         d = cfg.to_dict()
-        assert d["include"] == ["Dense"], "to_dict must serialize the include filter"
+        assert d["white_list"] == ["Dense"], "to_dict must serialize the white_list filter"
         assert d["exclude"] == [".*skip.*"], "to_dict must serialize the exclude filter"
 
     def test_to_dict_omits_absent_filters(self, config_cls):
         d = config_cls().to_dict()
-        assert "include" not in d, "Unset include must be omitted from to_dict"
+        assert "white_list" not in d, "Default white_list ('*') must be omitted from to_dict"
         assert "exclude" not in d, "Unset exclude must be omitted from to_dict"
 
     def test_get_params_dict_excludes_internals(self, config_cls):
-        params = config_cls(include=["Dense"], exclude=[".*skip.*"]).get_params_dict()
+        params = config_cls(white_list=["Dense"], exclude=[".*skip.*"]).get_params_dict()
         for internal in (
-            "_include",
             "_exclude",
             "_global_config",
             "_local_config",
@@ -182,25 +190,25 @@ class TestConfigSerialization:
         cfg = config_cls(
             weight_dtype="int8",
             activation_dtype="int8",
-            include=["Dense"],
+            white_list=["Dense"],
             exclude=[".*skip.*"],
         )
         restored = config_cls.from_dict(cfg.to_dict())
-        assert restored.include == ["Dense"], "include must survive a to_dict/from_dict round-trip"
+        assert restored.white_list == ["Dense"], "white_list must survive a to_dict/from_dict round-trip"
         assert restored.exclude == [".*skip.*"], "exclude must survive a to_dict/from_dict round-trip"
         assert restored.weight_dtype == "int8", "weight_dtype must survive the round-trip"
         assert restored.activation_dtype == "int8", "activation_dtype must survive the round-trip"
 
     def test_from_json_string_round_trip(self, config_cls):
-        cfg = config_cls(include=["Dense"])
+        cfg = config_cls(white_list=["Dense"])
         restored = config_cls.from_json_string(cfg.to_json_string())
-        assert restored.include == ["Dense"], "include must survive a JSON round-trip"
+        assert restored.white_list == ["Dense"], "white_list must survive a JSON round-trip"
         assert restored.exclude is None, "Unset exclude must remain None after a JSON round-trip"
 
     def test_round_trip_without_filters(self, config_cls):
         # Regression: reconstructing a config with no filters must not raise and
-        # must leave include/exclude as None.
+        # must leave white_list at its default and exclude as None.
         restored = config_cls.from_dict(config_cls().to_dict())
         assert isinstance(restored, config_cls), "Round-trip must return the same config type"
-        assert restored.include is None, "Unset include must remain None after the round-trip"
+        assert restored.white_list == "*", "Default white_list must remain '*' after the round-trip"
         assert restored.exclude is None, "Unset exclude must remain None after the round-trip"

@@ -42,8 +42,8 @@ def _layer_by_name(model, name):
 
 class TestComposition:
     def test_static_plus_dynamic_creates_composable(self):
-        static = StaticQuantConfig(include=["first"])
-        dynamic = DynamicQuantConfig(include=["second"])
+        static = StaticQuantConfig(white_list=["first"])
+        dynamic = DynamicQuantConfig(white_list=["second"])
         composed = static + dynamic
         assert isinstance(
             composed, ComposableConfig
@@ -53,7 +53,7 @@ class TestComposition:
         assert composed.config_list[1] is dynamic, "Second sub-config must be the dynamic one (right operand)"
 
     def test_build_configs_mapping_assigns_expected_schemes(self, model):
-        composed = StaticQuantConfig(include=["first"]) + DynamicQuantConfig(include=["second"])
+        composed = StaticQuantConfig(white_list=["first"]) + DynamicQuantConfig(white_list=["second"])
         mapping = _build_configs_mapping_composable(model, composed)
 
         static_ids = [op for (op, _), cfg in mapping.items() if cfg.name == "static_quant"]
@@ -64,7 +64,7 @@ class TestComposition:
 
     def test_build_configs_mapping_last_config_wins_on_conflict(self, model):
         # Both sub-configs target the same layer; the later one must win.
-        composed = StaticQuantConfig(include=["second"]) + DynamicQuantConfig(include=["second"])
+        composed = StaticQuantConfig(white_list=["second"]) + DynamicQuantConfig(white_list=["second"])
         mapping = _build_configs_mapping_composable(model, composed)
         second_cfgs = [cfg for (op, _), cfg in mapping.items() if "second" in op]
         assert len(second_cfgs) == 1, "'second' must have exactly one resolved config"
@@ -73,7 +73,7 @@ class TestComposition:
 
 class TestComposableQuantization:
     def test_layers_use_expected_quant_classes(self, model, calibration_data):
-        composed = StaticQuantConfig(include=["first"]) + DynamicQuantConfig(include=["second"])
+        composed = StaticQuantConfig(white_list=["first"]) + DynamicQuantConfig(white_list=["second"])
         q_model = quantize_model(model, composed, calib_function=_calib_fn(calibration_data), inplace=True)
 
         assert type(_layer_by_name(q_model, "first")).__name__ == "QStaticDense", "'first' must be statically quantized"
@@ -86,7 +86,7 @@ class TestComposableQuantization:
         ), "'third' was untargeted and must stay an unquantized Dense"
 
     def test_output_is_finite(self, model, calibration_data, test_data):
-        composed = StaticQuantConfig(include=["first"]) + DynamicQuantConfig(include=["second"])
+        composed = StaticQuantConfig(white_list=["first"]) + DynamicQuantConfig(white_list=["second"])
         q_model = quantize_model(model, composed, calib_function=_calib_fn(calibration_data), inplace=True)
         output = q_model(test_data)
         assert output.shape == (test_data.shape[0], 2), "Quantized model must preserve the output shape"
@@ -105,10 +105,10 @@ class TestComposableQuantization:
         # Sum order is dynamic-then-static on purpose: static must still run
         # first regardless of composition order. Both runs start from the same
         # FP32 model (inplace=False clones it) so their weights are identical.
-        composed = DynamicQuantConfig(include=["first"]) + StaticQuantConfig(include=["second"])
+        composed = DynamicQuantConfig(white_list=["first"]) + StaticQuantConfig(white_list=["second"])
         q_composed = quantize_model(model, composed, calib_function=calib, inplace=False)
 
-        static_only = StaticQuantConfig(include=["second"])
+        static_only = StaticQuantConfig(white_list=["second"])
         q_static = quantize_model(model, static_only, calib_function=calib, inplace=False)
 
         composed_scale = _read_scale(_layer_by_name(q_composed, "second"))
@@ -119,8 +119,8 @@ class TestComposableQuantization:
 
     def test_per_layer_dtypes_are_honored(self, model, calibration_data, test_data):
         composed = StaticQuantConfig(
-            weight_dtype="int8", activation_dtype="int8", include=["first"]
-        ) + DynamicQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", include=["second"])
+            weight_dtype="int8", activation_dtype="int8", white_list=["first"]
+        ) + DynamicQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", white_list=["second"])
         q_model = quantize_model(model, composed, calib_function=_calib_fn(calibration_data), inplace=True)
 
         assert (
@@ -143,11 +143,11 @@ def _three_way_config():
     * ``second`` -> ``static_a`` and ``dynamic`` match       -> dynamic (later)
     * ``third``  -> ``dynamic`` and ``static_b`` match       -> static  (later)
     """
-    static_a = StaticQuantConfig(weight_dtype="int8", activation_dtype="int8", include=["first", "second"])
-    dynamic = DynamicQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", include=["second", "third"])
-    # include everything but exclude the layers claimed earlier -> resolves to 'third'.
+    static_a = StaticQuantConfig(weight_dtype="int8", activation_dtype="int8", white_list=["first", "second"])
+    dynamic = DynamicQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", white_list=["second", "third"])
+    # white_list everything (Dense) but exclude the layers claimed earlier -> resolves to 'third'.
     static_b = StaticQuantConfig(
-        weight_dtype="int8", activation_dtype="int8", include=["Dense"], exclude=["first", "second"]
+        weight_dtype="int8", activation_dtype="int8", white_list=["Dense"], exclude=["first", "second"]
     )
     return static_a + dynamic + static_b
 
