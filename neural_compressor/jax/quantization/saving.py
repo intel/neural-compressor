@@ -31,8 +31,6 @@ from neural_compressor.common.utils import DYNAMIC_QUANT, STATIC_QUANT
 from neural_compressor.jax.quantization.config import (
     FRAMEWORK_NAME,
     BaseConfig,
-    _layer_matches_filter,
-    _resolve_include_patterns,
 )
 from neural_compressor.jax.utils.utility import check_backend, dtype_mapping
 
@@ -542,7 +540,7 @@ def prepare_deserialized_quantized_model(
     qmodel = model
     for layer in qmodel._flatten_layers():
         # Resolve overlapping sub-configs with last-match-wins, consistent with
-        # `_build_configs_mapping_composable` used during quantization.
+        # the composed ``to_config_mapping`` used during quantization.
         selected = None
         for cfg in config_list:
             if cfg.name == STATIC_QUANT and layer.__class__ in static_quant_mapping:
@@ -553,13 +551,10 @@ def prepare_deserialized_quantized_model(
                 continue
 
             # Apply the same white_list / exclude selection used during quantization.
-            include_patterns = _resolve_include_patterns(cfg.white_list)
-            exclude = cfg.exclude
-            if include_patterns is not None or exclude is not None:
-                layer_id = layer.path or layer.name
-                class_name = layer.__class__.__name__
-                if not _layer_matches_filter(layer_id, class_name, include_patterns, exclude):
-                    continue
+            layer_id = layer.path or layer.name
+            class_name = layer.__class__.__name__
+            if not cfg._layer_matches_filters(layer_id, class_name):
+                continue
 
             selected = (layers_mapping, cfg)
 
