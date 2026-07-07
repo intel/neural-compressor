@@ -15,7 +15,12 @@ from jax import numpy as jnp
 
 from neural_compressor.common.base_config import ComposableConfig
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
-from neural_compressor.jax.quantization.quantize import _build_configs_mapping_composable
+
+
+def _build_mapping(model, config):
+    """Build the (op_name, op_type) -> config mapping via the public quantize path."""
+    model_info = config.get_model_info(model)
+    return config.to_config_mapping(model_info=model_info)
 
 
 def _calib_fn(calibration_data):
@@ -52,9 +57,9 @@ class TestComposition:
         assert composed.config_list[0] is static, "First sub-config must be the static one (left operand)"
         assert composed.config_list[1] is dynamic, "Second sub-config must be the dynamic one (right operand)"
 
-    def test_build_configs_mapping_assigns_expected_schemes(self, model):
+    def test_config_mapping_assigns_expected_schemes(self, model):
         composed = StaticQuantConfig(white_list=["first"]) + DynamicQuantConfig(white_list=["second"])
-        mapping = _build_configs_mapping_composable(model, composed)
+        mapping = _build_mapping(model, composed)
 
         static_ids = [op for (op, _), cfg in mapping.items() if cfg.name == "static_quant"]
         dynamic_ids = [op for (op, _), cfg in mapping.items() if cfg.name == "dynamic_quant"]
@@ -62,10 +67,10 @@ class TestComposition:
         assert any("second" in op for op in dynamic_ids), "'second' must be assigned the dynamic config"
         assert all("third" not in op for (op, _) in mapping), "'third' is unmatched and must be absent from the mapping"
 
-    def test_build_configs_mapping_last_config_wins_on_conflict(self, model):
+    def test_config_mapping_last_config_wins_on_conflict(self, model):
         # Both sub-configs target the same layer; the later one must win.
         composed = StaticQuantConfig(white_list=["second"]) + DynamicQuantConfig(white_list=["second"])
-        mapping = _build_configs_mapping_composable(model, composed)
+        mapping = _build_mapping(model, composed)
         second_cfgs = [cfg for (op, _), cfg in mapping.items() if "second" in op]
         assert len(second_cfgs) == 1, "'second' must have exactly one resolved config"
         assert second_cfgs[0].name == "dynamic_quant", "On conflict the later (dynamic) config must win"
@@ -137,7 +142,7 @@ def _three_way_config():
     """Compose ``static + dynamic + static`` with deliberately overlapping rules.
 
     Per-layer resolution follows the "last matching sub-config wins" rule of
-    ``_build_configs_mapping_composable``:
+    the composed ``to_config_mapping``:
 
     * ``first``  -> only ``static_a`` matches                -> static
     * ``second`` -> ``static_a`` and ``dynamic`` match       -> dynamic (later)
@@ -153,7 +158,7 @@ def _three_way_config():
 
 
 class TestThreeWayComposition:
-    """``static + dynamic + static`` with overlapping include/exclude rules."""
+    """``static + dynamic + static`` with overlapping white_list/exclude rules."""
 
     def test_composition_preserves_three_configs_in_order(self):
         composed = _three_way_config()
@@ -166,7 +171,7 @@ class TestThreeWayComposition:
         ], "Sub-config order must match the composition order (static, dynamic, static)"
 
     def test_overlapping_rules_resolve_last_match_wins(self, model):
-        mapping = _build_configs_mapping_composable(model, _three_way_config())
+        mapping = _build_mapping(model, _three_way_config())
         resolved = {op.split("/")[-1]: cfg.name for (op, _), cfg in mapping.items()}
         assert resolved == {
             "first": "static_quant",

@@ -300,7 +300,7 @@ class TestComposableConfigSaveLoad:
 
 class TestComplexComposableConfigSaveLoad:
     """Save/load for a three-way ``static + dynamic + static`` ComposableConfig
-    with overlapping include/exclude rules."""
+    with overlapping white_list/exclude rules."""
 
     def test_output_is_preserved(self, model, calibration_data, test_data):
         q_model = _quantize_three_way_composable(model, calibration_data)

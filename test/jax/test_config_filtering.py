@@ -1,12 +1,12 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Unit tests for quantization config include/exclude filtering and serialization.
+"""Unit tests for quantization config white_list/exclude filtering and serialization.
 
 These tests exercise the config layer of the composable-quantization feature and
 run fast (no actual quantization / calibration):
 
-- ``_layer_matches_filter`` predicate (class-name exact match + path regex).
-- ``include`` / ``exclude`` handling inside ``get_model_info`` for the Dynamic
+- the ``_layer_matches_filters`` config method (class-name exact match + path regex).
+- ``white_list`` / ``exclude`` handling inside ``get_model_info`` for the Dynamic
   and Static quant configs.
 - config serialization round-trips (``to_dict`` / ``from_dict`` /
   ``from_json_string``) including the new filter attributes.
@@ -15,80 +15,84 @@ run fast (no actual quantization / calibration):
 import pytest
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig
-from neural_compressor.jax.quantization.config import _layer_matches_filter
 
 
-class TestLayerMatchesFilter:
-    """Direct unit tests for the low-level filter predicate."""
+@pytest.mark.parametrize("config_cls", [DynamicQuantConfig, StaticQuantConfig], ids=["dynamic_quant", "static_quant"])
+class TestLayerMatchesFilters:
+    """Direct unit tests for the config-level ``_layer_matches_filters`` predicate."""
 
-    def test_no_filters_includes_everything(self):
-        assert _layer_matches_filter("net/first", "Dense", None, None) is True, "No filters must include every layer"
-
-    def test_include_class_name_exact_match(self):
+    def test_no_filters_matches_everything(self, config_cls):
         assert (
-            _layer_matches_filter("net/first", "Dense", ["Dense"], None) is True
-        ), "Include matching the class name must keep the layer"
+            config_cls()._layer_matches_filters("net/first", "Dense") is True
+        ), "Default white_list with no exclude must match every layer"
 
-    def test_include_class_name_no_match(self):
+    def test_white_list_class_name_exact_match(self, config_cls):
         assert (
-            _layer_matches_filter("net/first", "Dense", ["EinsumDense"], None) is False
-        ), "Include with no matching pattern must drop the layer"
+            config_cls(white_list=["Dense"])._layer_matches_filters("net/first", "Dense") is True
+        ), "White_list matching the class name must keep the layer"
 
-    def test_include_path_regex_match(self):
+    def test_white_list_class_name_no_match(self, config_cls):
         assert (
-            _layer_matches_filter("net/encoder/first", "Dense", ["encoder/.*"], None) is True
-        ), "Include regex matching the path must keep the layer"
+            config_cls(white_list=["EinsumDense"])._layer_matches_filters("net/first", "Dense") is False
+        ), "White_list with no matching pattern must drop the layer"
 
-    def test_include_path_regex_no_match(self):
+    def test_white_list_path_regex_match(self, config_cls):
         assert (
-            _layer_matches_filter("net/decoder/first", "Dense", ["encoder/.*"], None) is False
-        ), "Include regex not matching the path must drop the layer"
+            config_cls(white_list=["encoder/.*"])._layer_matches_filters("net/encoder/first", "Dense") is True
+        ), "White_list regex matching the path must keep the layer"
 
-    def test_include_multiple_patterns_any_match(self):
+    def test_white_list_path_regex_no_match(self, config_cls):
         assert (
-            _layer_matches_filter("net/third", "Dense", ["first", "third"], None) is True
-        ), "Layer matching any include pattern must be kept"
+            config_cls(white_list=["encoder/.*"])._layer_matches_filters("net/decoder/first", "Dense") is False
+        ), "White_list regex not matching the path must drop the layer"
 
-    def test_exclude_class_name(self):
+    def test_white_list_multiple_patterns_any_match(self, config_cls):
         assert (
-            _layer_matches_filter("net/first", "Dense", None, ["Dense"]) is False
+            config_cls(white_list=["first", "third"])._layer_matches_filters("net/third", "Dense") is True
+        ), "Layer matching any white_list pattern must be kept"
+
+    def test_exclude_class_name(self, config_cls):
+        assert (
+            config_cls(exclude=["Dense"])._layer_matches_filters("net/first", "Dense") is False
         ), "Exclude matching the class name must drop the layer"
 
-    def test_exclude_path_regex(self):
+    def test_exclude_path_regex(self, config_cls):
         assert (
-            _layer_matches_filter("net/second", "Dense", None, ["second"]) is False
+            config_cls(exclude=["second"])._layer_matches_filters("net/second", "Dense") is False
         ), "Exclude regex matching the path must drop the layer"
 
-    def test_exclude_no_match_keeps_layer(self):
+    def test_exclude_no_match_keeps_layer(self, config_cls):
         assert (
-            _layer_matches_filter("net/first", "Dense", None, ["second"]) is True
+            config_cls(exclude=["second"])._layer_matches_filters("net/first", "Dense") is True
         ), "Exclude that does not match must keep the layer"
 
-    def test_exclude_takes_precedence_over_include(self):
-        # Layer matches both include and exclude -> excluded.
+    def test_exclude_takes_precedence_over_white_list(self, config_cls):
+        # Layer matches both white_list and exclude -> excluded.
         assert (
-            _layer_matches_filter("net/second", "Dense", ["first", "second"], ["second"]) is False
-        ), "Exclude must win when a layer matches both include and exclude"
+            config_cls(white_list=["first", "second"], exclude=["second"])._layer_matches_filters("net/second", "Dense")
+            is False
+        ), "Exclude must win when a layer matches both white_list and exclude"
 
-    def test_include_and_exclude_both_pass(self):
+    def test_white_list_and_exclude_both_pass(self, config_cls):
         assert (
-            _layer_matches_filter("net/first", "Dense", ["first", "second"], ["second"]) is True
-        ), "Layer that matches include but not exclude must be kept"
+            config_cls(white_list=["first", "second"], exclude=["second"])._layer_matches_filters("net/first", "Dense")
+            is True
+        ), "Layer that matches white_list but not exclude must be kept"
 
-    def test_class_name_equality_bypasses_regex(self):
+    def test_class_name_equality_bypasses_regex(self, config_cls):
         # 'Dense' equals the class name, so it matches even though the layer id
         # does not contain the substring 'Dense'.
         assert (
-            _layer_matches_filter("net/foo", "Dense", ["Dense"], None) is True
+            config_cls(white_list=["Dense"])._layer_matches_filters("net/foo", "Dense") is True
         ), "Exact class-name equality must match even if the path lacks the substring"
 
-    def test_invalid_include_regex_raises_value_error(self):
+    def test_invalid_white_list_regex_raises_value_error(self, config_cls):
         with pytest.raises(ValueError):
-            _layer_matches_filter("net/first", "Dense", ["([unclosed"], None)
+            config_cls(white_list=["([unclosed"])._layer_matches_filters("net/first", "Dense")
 
-    def test_invalid_exclude_regex_raises_value_error(self):
+    def test_invalid_exclude_regex_raises_value_error(self, config_cls):
         with pytest.raises(ValueError):
-            _layer_matches_filter("net/first", "Dense", None, ["([unclosed"])
+            config_cls(exclude=["([unclosed"])._layer_matches_filters("net/first", "Dense")
 
 
 def _ids(model_info):
@@ -98,9 +102,8 @@ def _ids(model_info):
 def _selected_ids(cfg, model):
     """Return the layer paths a config actually selects.
 
-    Selection is driven by ``white_list`` through the base local/global config
-    machinery, so it is observed on ``to_config_mapping`` (``get_model_info``
-    only lists the candidate ops minus ``exclude``).
+    Selection is driven by ``white_list`` / ``exclude`` and is observed on the
+    final ``to_config_mapping``.
     """
     mapping = cfg.to_config_mapping(model_info=cfg.get_model_info(model))
     return [op_name for (op_name, _op_type) in mapping]
@@ -112,8 +115,8 @@ class TestGetModelInfoFiltering:
 
     The shared ``model`` fixture provides a model with three named Dense
     layers (``first``/``second``/``third``) plus an unsupported ``norm`` layer.
-    Selection is resolved by the base local/global machinery in
-    ``to_config_mapping``; ``exclude`` is applied by ``get_model_info``.
+    Selection is resolved through ``white_list`` / ``exclude`` and observed on
+    ``to_config_mapping``.
     """
 
     def test_no_filter_returns_all_dense(self, config_cls, model):
@@ -129,16 +132,16 @@ class TestGetModelInfoFiltering:
             cls_name != "LayerNormalization" for _, cls_name in info
         ), "Unsupported LayerNormalization must never appear in model_info"
 
-    def test_include_by_class_name(self, config_cls, model):
+    def test_white_list_by_class_name(self, config_cls, model):
         ids = _selected_ids(config_cls(white_list=["Dense"]), model)
         assert len(ids) == 3, "White_list by class name 'Dense' must select all three Dense layers"
 
-    def test_include_by_path_regex_subset(self, config_cls, model):
+    def test_white_list_by_path_regex_subset(self, config_cls, model):
         ids = _selected_ids(config_cls(white_list=["first"]), model)
         assert len(ids) == 1, "Only the 'first' layer must match the white_list pattern"
         assert all("first" in i for i in ids), "The single match must be the 'first' layer"
 
-    def test_include_multiple_patterns(self, config_cls, model):
+    def test_white_list_multiple_patterns(self, config_cls, model):
         ids = _selected_ids(config_cls(white_list=["first", "third"]), model)
         assert len(ids) == 2, "'first' and 'third' must match, giving two layers"
         assert all("second" not in i for i in ids), "'second' must not be selected"
@@ -148,12 +151,12 @@ class TestGetModelInfoFiltering:
         assert len(ids) == 2, "Excluding 'second' must leave two layers"
         assert all("second" not in i for i in ids), "'second' must be excluded"
 
-    def test_include_and_exclude_combined(self, config_cls, model):
+    def test_white_list_and_exclude_combined(self, config_cls, model):
         ids = _selected_ids(config_cls(white_list=["Dense"], exclude=["second"]), model)
         assert len(ids) == 2, "White_list all Dense then exclude 'second' must leave two layers"
         assert all("second" not in i for i in ids), "'second' must be excluded despite matching white_list"
 
-    def test_include_no_match_returns_empty(self, config_cls, model):
+    def test_white_list_no_match_returns_empty(self, config_cls, model):
         ids = _selected_ids(config_cls(white_list=["EinsumDense"]), model)
         assert ids == [], "A white_list pattern matching no supported layer must select nothing"
 
