@@ -44,8 +44,8 @@ steps:
           git clone ${{ parameters.repo }} ${BUILD_SOURCESDIRECTORY}
           git config --global --add safe.directory ${BUILD_SOURCESDIRECTORY}
           cd ${BUILD_SOURCESDIRECTORY}
-          git checkout master
-        displayName: "Checkout out master"
+          git checkout main
+        displayName: "Checkout out main"
 
   - ${{ if eq(parameters.imageSource, 'build') }}:
       - script: |

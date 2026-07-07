@@ -8,16 +8,6 @@ This document describes quantization of Keras ViT models using Neural Compressor
 ## 1. Create Environment
 It is worth conducting experiments in a separate environment. For example, you can use the conda environment from [conda-forge](https://github.com/conda-forge/miniforge). The binary for your environment could be found here: [miniforge](https://github.com/conda-forge/miniforge/releases/latest)  
 
-To see performance improvements from quantization, you have to enable some JAX/XLA features by setting an environment variable:
-```bash
-export XLA_FLAGS="\
-    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \
-    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \
-    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter"
-```
-Without this flag, quantized model works in fake quantization mode (rounding tensors to a given fp8 format but later making calculations in 32-bit floating point format).
-
-
 ## 2. Install modules
 
 Install requirements:
@@ -135,18 +125,10 @@ Predictions for sample 0:
 Calibration costs time, so we can calibrate once on representative data sets and later reuse it many times. To achieve it saving model functionality is supported.
 You can run [prepare_static.py](prepare_static.py) script:
 ```bash
-export XLA_FLAGS="\
-    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \
-    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \
-    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter"
 python prepare_static.py -m /path/to/original/model.keras -q /path/to/quantized/model.keras -p fp8_e4m3
 ```
 or, if default parameters work for you, just:
 ```bash
-export XLA_FLAGS="\
-    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \
-    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \
-    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter"
 python prepare_static.py
 ```
 

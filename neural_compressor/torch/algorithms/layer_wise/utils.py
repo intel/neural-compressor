@@ -344,29 +344,21 @@ def clean_module_weight(module):
         for n, m in submodule._buffers.items():
             old_value = getattr(submodule, n)
             with torch.no_grad():
-                submodule._buffers[n] = torch.zeros(old_value.shape, device="meta")
+                submodule._buffers[n] = torch.empty_like(old_value, device="meta")
 
     for n, m in submodule.named_parameters():
         is_buffer = n in submodule._buffers
         old_value = getattr(submodule, n)
         with torch.no_grad():
             if is_buffer:
-                submodule._buffers[n] = torch.zeros(old_value.shape, device="meta")
+                submodule._buffers[n] = torch.empty_like(old_value, device="meta")
             else:
-                param_cls = type(submodule._parameters[n])
-                kwargs = submodule._parameters[n].__dict__
-                if is_hpu_available():
-                    from habana_frameworks.torch.core import weight_sharing
-
-                    if param_cls == weight_sharing.HabanaParameterWrapper:
-                        try:
-                            kwargs.pop("change_device_placement")
-                        except KeyError:
-                            pass
-
-                new_value = torch.zeros(old_value.shape, device="meta")
-                new_value = param_cls(new_value, requires_grad=old_value.requires_grad, **kwargs).to("meta")
-                submodule._parameters[n] = new_value
+                old_param = submodule._parameters[n]
+                new_tensor = torch.empty_like(old_value, device="meta")
+                new_param = torch.nn.Parameter(new_tensor, requires_grad=old_param.requires_grad)
+                if hasattr(old_param, "__dict__") and hasattr(new_param, "__dict__"):
+                    new_param.__dict__.update(old_param.__dict__)
+                submodule._parameters[n] = new_param
     # gc.collect()
 
 

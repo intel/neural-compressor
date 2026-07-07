@@ -35,7 +35,7 @@ detect_cuda_version() {
 }
 
 DEVICE="${DEVICE:-gpu}"
-FORMAT="${FORMAT:-AR}"
+FORMAT="${FORMAT:-LLMC}"
 TASKS="${TASKS:-hellaswag,piqa,mmlu,gsm8k}"
 BENCH_TOOL="${BENCH_TOOL:-lm_eval}"
 

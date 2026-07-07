@@ -1,10 +1,16 @@
 import copy
+import io
+import os
+import pickle as python_pickle
 import shutil
+import sys
+import types
 
 import pytest
 import torch
 import transformers
 
+from neural_compressor.torch.algorithms.layer_wise import modified_pickle
 from neural_compressor.torch.quantization import (
     RTNConfig,
     convert,
@@ -16,6 +22,42 @@ from neural_compressor.torch.quantization import (
 from neural_compressor.torch.utils import accelerator, is_hpu_available
 
 device = accelerator.name()
+
+
+def test_modified_pickle_blocks_native_system_calls():
+    class MaliciousPayload:
+        def __reduce__(self):
+            return (os.system, ("echo blocked",))
+
+    payload = python_pickle.dumps(MaliciousPayload())
+
+    with pytest.raises(modified_pickle.UnpicklingError, match="forbidden"):
+        modified_pickle._Unpickler(io.BytesIO(payload)).load()
+
+
+def test_modified_pickle_blocks_dangerous_names(monkeypatch):
+    module_name = "nc_test_pickle_guard"
+    test_module = types.ModuleType(module_name)
+    exec(
+        "def eval(value):\n    return value\n",
+        test_module.__dict__,
+    )
+    monkeypatch.setitem(sys.modules, module_name, test_module)
+
+    class MaliciousPayload:
+        def __reduce__(self):
+            return (test_module.eval, ("payload",))
+
+    payload = python_pickle.dumps(MaliciousPayload())
+
+    with pytest.raises(modified_pickle.UnpicklingError, match="forbidden"):
+        modified_pickle._Unpickler(io.BytesIO(payload)).load()
+
+
+def test_modified_pickle_allows_safe_payload():
+    payload = python_pickle.dumps({"value": [1, 2, 3]})
+
+    assert modified_pickle._Unpickler(io.BytesIO(payload)).load() == {"value": [1, 2, 3]}
 
 
 class ModelConv1d(torch.nn.Module):

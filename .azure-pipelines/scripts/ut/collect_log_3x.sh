@@ -24,7 +24,7 @@ cd ${BUILD_SOURCESDIRECTORY}
 cp -r ${BUILD_SOURCESDIRECTORY}/.azure-pipelines .azure-pipelines-pr
 git config --global --add safe.directory ${BUILD_SOURCESDIRECTORY}
 git fetch
-git checkout master
+git checkout main
 rm -rf build dist *egg-info
 binary_index="${1%_fp8}"
 echo y | pip uninstall neural_compressor_${binary_index}
