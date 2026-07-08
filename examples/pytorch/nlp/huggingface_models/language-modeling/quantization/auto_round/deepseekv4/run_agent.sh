@@ -104,6 +104,14 @@ setup_swebp() {
         git clone --depth 1 https://github.com/scaleapi/SWE-bench_Pro-os.git "${swebp_dir}"
     [[ -x "${SWEBP_VENV}/bin/vllm" ]] || \
         die "swebp venv not ready — run: bash setup_agent.sh swebp"
+    # Ensure swebench.py is patched for jefzda Docker images
+    local patch_file="${BENCHMARK_DIR}/patches/swebench_pro_image.patch"
+    local swebench_py="${BENCHMARK_DIR}/SWE-bench_Pro-os/mini-swe-agent/src/minisweagent/run/extra/swebench.py"
+    if ! grep -q 'dockerhub_tag' "${swebench_py}" 2>/dev/null; then
+        [[ -f "${patch_file}" ]] || die "Patch file not found: ${patch_file}"
+        git -C "${BENCHMARK_DIR}/SWE-bench_Pro-os/mini-swe-agent" apply "${patch_file}" \
+            && echo "[setup_swebp] swebench.py patched OK"
+    fi
 }
 
 setup_swe_verified() {
@@ -152,21 +160,12 @@ ENVEOF
 start_vllm_server() {
     [[ -z "${MODEL_PATH}" ]] && return
     local vllm_bin
-    case "${TASK}" in
-        swebp)        vllm_bin="${SWEBP_VENV}/bin/vllm" ;;
-        swe-verified) vllm_bin="${SWE_VENV}/bin/vllm" ;;
-        mcp-atlas)    vllm_bin="${MCP_VENV}/bin/vllm" ;;
-    esac
-    local venv_bin
-    case "${TASK}" in
-        swebp)        venv_bin="${SWEBP_VENV}/bin" ;;
-        swe-verified) venv_bin="${SWE_VENV}/bin" ;;
-        mcp-atlas)    venv_bin="${MCP_VENV}/bin" ;;
-    esac
+    vllm_bin=$(command -v vllm 2>/dev/null || echo "")
+    [[ -z "${vllm_bin}" ]] && die "vllm not found in PATH — activate a venv or pass full path"
     echo "=== Starting vLLM (${MODEL_PATH##*/}, port=${PORT}) ==="
     local log="${LOG_DIR}/vllm_${RUN_TAG}.log"
     VLLM_ENGINE_READY_TIMEOUT_S="${VLLM_ENGINE_READY_TIMEOUT_S:-1800}" \
-    PATH="${venv_bin}:${PATH}" nohup "${vllm_bin}" serve "${MODEL_PATH}" \
+    nohup "${vllm_bin}" serve "${MODEL_PATH}" \
         --port              "${PORT}" \
         --max-model-len     "${MAX_MODEL_LEN}" \
         --served-model-name "${SERVED_MODEL_NAME}" \
@@ -204,63 +203,49 @@ run_swebp() {
     local inst_csv="${swebp_dir}/instances_${RUN_TAG}.csv"
     local eval_out="${swebp_dir}/eval_output_${RUN_TAG}"
     local py3="${SWEBP_VENV}/bin/python3"
-    local cfg_base="${AGENT_DIR}/config/swebp_vllm.yaml"
-    local cfg_run="${AGENT_DIR}/config/swebp_vllm_run.yaml"
 
     echo "=== SWE-bench Pro | model=${mid} workers=${WORKERS} step_limit=${STEP_LIMIT} ==="
     echo "    out=${out_dir}"
 
-    [[ -f "${cfg_base}" ]] || die "Missing ${cfg_base} — run: bash setup_agent.sh swebp"
-    [[ -f "${AGENT_DIR}/run_swebp.py" ]] || die "Missing run_swebp.py — run: bash setup_agent.sh swebp"
-
-    # Generate runtime config: override model, api_base, step_limit
-    _SWV_BASE="${cfg_base}" \
-    _SWV_OUT="${cfg_run}" \
-    _SWV_SERVED="${SERVED_MODEL_NAME}" \
-    _SWV_PORT="${PORT}" \
-    _SWV_STEP="${STEP_LIMIT}" \
-    "${py3}" -c '
-import yaml, os
-cfg = yaml.safe_load(open(os.environ["_SWV_BASE"]))
-cfg["agent"]["step_limit"] = int(os.environ["_SWV_STEP"])
-cfg["model"] = {
-    "model_name": "openai/" + os.environ["_SWV_SERVED"],
-    "cost_tracking": "ignore_errors",
-    "model_kwargs": {
-        "api_base": "http://localhost:" + os.environ["_SWV_PORT"] + "/v1",
-        "api_key": "dummy",
-        "drop_params": True,
-        "temperature": 0.0,
-    }
-}
-os.makedirs(os.path.dirname(os.environ["_SWV_OUT"]), exist_ok=True)
-open(os.environ["_SWV_OUT"], "w").write(yaml.dump(cfg, allow_unicode=True))
-print("Config:", os.environ["_SWV_OUT"])
-'
-
-    # Instance file selection
-    local inst_file
-    case "${INSTANCES_KEY}" in
-        full)   inst_file="${AGENT_DIR}/data/swebench_pro_instances.json" ;;
-        10test) inst_file="${AGENT_DIR}/data/swebp_10instances.json" ;;
-        *)
-            [[ -f "${INSTANCES_KEY}" ]] || die "Instance file not found: ${INSTANCES_KEY}"
-            inst_file="${INSTANCES_KEY}"
-            ;;
-    esac
-
+    # --instances 10test → --slice 0:10; otherwise honour --slice
     local slice_opt=()
-    [[ -n "${SLICE_ARG}" ]] && slice_opt=(--slice "${SLICE_ARG}")
+    if   [[ "${INSTANCES_KEY}" == "10test" ]]; then slice_opt=(--slice "0:10")
+    elif [[ -n "${SLICE_ARG}" ]];              then slice_opt=(--slice "${SLICE_ARG}")
+    fi
 
     local redo_opt=()
-    [[ "${REDO_FLAG}" == "--redo-existing" ]] && redo_opt=(--redo)
+    [[ -n "${REDO_FLAG}" ]] && redo_opt=(--redo-existing)
+
+    # v1 -c only takes a single config file — generate runtime YAML with overrides
+    local cfg_run="${out_dir}/swebp_run.yaml"
+    mkdir -p "${out_dir}"
+    "${py3}" -c "
+import yaml
+from minisweagent.config import builtin_config_dir
+cfg = yaml.safe_load((builtin_config_dir / 'extra' / 'swebench.yaml').read_text())
+cfg['agent']['step_limit'] = ${STEP_LIMIT}
+cfg['model'] = {
+    'model_name': '${SERVED_MODEL_NAME}',
+    'cost_tracking': 'ignore_errors',
+    'model_kwargs': {
+        'api_base': 'http://localhost:${PORT}/v1',
+        'api_key': 'dummy',
+        'drop_params': True,
+        'temperature': 0.0,
+    },
+}
+open('${cfg_run}', 'w').write(yaml.dump(cfg, allow_unicode=True))
+print('Runtime config:', '${cfg_run}')
+"
 
     cd "${AGENT_DIR}"
-    "${py3}" run_swebp.py \
-        --instances "${inst_file}" \
-        --config    "${cfg_run}" \
-        --output    "${out_dir}" \
-        --workers   "${WORKERS}" \
+    "${SWEBP_VENV}/bin/mini-extra" swebench \
+        --subset  ScaleAI/SWE-bench_Pro \
+        --split   test \
+        -m        "${SERVED_MODEL_NAME}" \
+        --workers "${WORKERS}" \
+        --output  "${out_dir}" \
+        -c        "${cfg_run}" \
         "${slice_opt[@]}" \
         "${redo_opt[@]}"
 
@@ -268,26 +253,32 @@ print("Config:", os.environ["_SWV_OUT"])
     local n; n=$("${py3}" -c "import json; print(len(json.load(open('${out_dir}/preds.json'))))")
     echo "Generated ${n} patches -> ${out_dir}/preds.json"
 
-    # Convert preds.json → patches format using convert_preds.py
+    # Convert preds.json → patches.json for swe_bench_pro_eval.py
     echo "=== Convert patches ==="
-    cd "${swebp_dir}"
-    "${py3}" convert_preds.py \
-        --preds  "${out_dir}/preds.json" \
-        --output "${patches}" \
-        --prefix "${mid}_step${STEP_LIMIT}"
-
-    # Prepare instance CSV from local JSON
-    echo "=== Prepare instance CSV ==="
-    SLICE_ARG="${SLICE_ARG}" \
     "${py3}" -c "
-import json, os, pandas as pd
-d = json.load(open('${inst_file}'))
-sl = os.environ.get('SLICE_ARG', '')
+import json
+preds = json.load(open('${out_dir}/preds.json'))
+patches = [
+    {'instance_id': v['instance_id'], 'patch': v.get('model_patch', ''), 'prefix': '${mid}_step${STEP_LIMIT}'}
+    for v in preds.values()
+]
+json.dump(patches, open('${patches}', 'w'), indent=2)
+print(f'Wrote {len(patches)} patches -> ${patches}')
+"
+
+    # Prepare instance CSV from HuggingFace dataset
+    echo "=== Prepare instance CSV ==="
+    "${py3}" -c "
+import pandas as pd
+from datasets import load_dataset
+ds = load_dataset('ScaleAI/SWE-bench_Pro', split='test')
+data = list(ds)
+sl = '${SLICE_ARG}' if '${INSTANCES_KEY}' != '10test' else '0:10'
 if sl:
     parts = [int(x) if x else None for x in sl.split(':')]
-    d = d[slice(*parts)]
-pd.DataFrame(d).to_csv('${inst_csv}', index=False)
-print(f'CSV: {len(d)} rows -> ${inst_csv}')
+    data = data[slice(*parts)]
+pd.DataFrame(data).to_csv('${inst_csv}', index=False)
+print(f'CSV: {len(data)} rows -> ${inst_csv}')
 "
 
     echo "=== Evaluate (local Docker) ==="

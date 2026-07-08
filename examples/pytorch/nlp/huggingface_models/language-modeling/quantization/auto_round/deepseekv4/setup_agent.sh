@@ -42,159 +42,18 @@ setup_swebp() {
         echo "  submodule already initialised"
     fi
 
-    echo "=== [swebp] Write run_swebp.py ==="
-    mkdir -p "${AGENT_DIR}/data" "${AGENT_DIR}/config"
-    cat > "${AGENT_DIR}/run_swebp.py" << 'PYEOF'
-#!/usr/bin/env python3
-"""Run mini-swe-agent on SWE-bench Pro instances."""
-import json, concurrent.futures, time, argparse
-from pathlib import Path
-import yaml
-from minisweagent.run.extra.swebench import process_instance
-from minisweagent.run.extra.utils.batch_progress import RunBatchProgressManager
-from rich.live import Live
+    echo "=== [swebp] Patch swebench.py for SWE-bench Pro Docker images ==="
+    local patch_file="${BENCHMARK_DIR}/patches/swebench_pro_image.patch"
+    if grep -q 'dockerhub_tag' "${AGENT_DIR}/src/minisweagent/run/extra/swebench.py" 2>/dev/null; then
+        echo "  already patched"
+    elif [[ -f "${patch_file}" ]]; then
+        git -C "${AGENT_DIR}" apply "${patch_file}" && echo "  Patched OK"
+    else
+        die "Patch file not found: ${patch_file} — place patches/swebench_pro_image.patch in BENCHMARK_DIR"
+    fi
 
-BASE_DIR       = Path(__file__).parent
-INSTANCES_FILE = BASE_DIR / "data" / "swebench_pro_instances.json"
-DEFAULT_CONFIG = BASE_DIR / "config" / "swebp_vllm.yaml"
-DEFAULT_OUTPUT = BASE_DIR / "results" / "swebp_vllm"
+    mkdir -p "${AGENT_DIR}/results"
 
-def main():
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--instances", default=str(INSTANCES_FILE))
-    parser.add_argument("--config",    default=str(DEFAULT_CONFIG))
-    parser.add_argument("--output",    default=str(DEFAULT_OUTPUT))
-    parser.add_argument("--workers",   type=int, default=2)
-    parser.add_argument("--slice",     default="")
-    parser.add_argument("--redo",      action="store_true")
-    args = parser.parse_args()
-
-    with open(args.instances) as f:
-        instances = json.load(f)
-
-    # inject docker image name (SWE-bench Pro uses jefzda registry)
-    for inst in instances:
-        inst["image_name"] = f"jefzda/sweap-images:{inst['dockerhub_tag']}"
-
-    if args.slice:
-        parts = [int(x) if x else None for x in args.slice.split(":")]
-        instances = instances[slice(*parts)]
-
-    with open(args.config) as f:
-        config = yaml.safe_load(f)
-
-    output_path = Path(args.output)
-    output_path.mkdir(parents=True, exist_ok=True)
-
-    if not args.redo and (output_path / "preds.json").exists():
-        done = set(json.loads((output_path / "preds.json").read_text()).keys())
-        instances = [i for i in instances if i["instance_id"] not in done]
-
-    if not instances:
-        print("All instances already completed. Use --redo to re-run.")
-        return
-
-    print(f"Running {len(instances)} instances with {args.workers} workers...")
-    print(f"Output: {output_path}")
-
-    progress = RunBatchProgressManager(
-        len(instances),
-        output_path / f"exit_statuses_{int(time.time())}.yaml"
-    )
-    with Live(progress.render_group, refresh_per_second=4):
-        with concurrent.futures.ThreadPoolExecutor(max_workers=args.workers) as ex:
-            futures = {
-                ex.submit(process_instance, inst, output_path, config, progress): inst["instance_id"]
-                for inst in instances
-            }
-            for future in concurrent.futures.as_completed(futures):
-                iid = futures[future]
-                try:
-                    future.result()
-                except Exception as e:
-                    print(f"\n[ERROR] {iid}: {e}")
-
-    print(f"\nDone. Predictions saved to {output_path / 'preds.json'}")
-
-if __name__ == "__main__":
-    main()
-PYEOF
-
-    echo "=== [swebp] Write config/swebp_vllm.yaml ==="
-    cat > "${AGENT_DIR}/config/swebp_vllm.yaml" << 'YAMEOF'
-# SWE-bench Pro base config (model/api_base/step_limit overridden at runtime)
-agent:
-  system_template: |
-    You are a helpful assistant that can interact multiple times with a computer shell to solve programming tasks.
-    Your response must contain exactly ONE bash code block with ONE command (or commands connected with && or ||).
-
-    Include a THOUGHT section before your command where you explain your reasoning process.
-    Format your response as shown in <format_example>.
-
-    <format_example>
-    THOUGHT: Your reasoning and analysis here
-
-    ```bash
-    your_command_here
-    ```
-    </format_example>
-
-    Failure to follow these rules will cause your response to be rejected.
-  instance_template: |
-    <pr_description>
-    Consider the following PR description:
-    {{task}}
-    </pr_description>
-
-    <instructions>
-    Your task is to make changes to non-test files in /app to fix the issue described above.
-    Recommended workflow: explore → reproduce → fix → verify.
-    When done, submit with:
-    ```bash
-    echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && git add -A && git diff --cached
-    ```
-    </instructions>
-  action_observation_template: |
-    <returncode>{{output.returncode}}</returncode>
-    {% if output.output | length < 10000 -%}
-    <output>
-    {{ output.output -}}
-    </output>
-    {%- else -%}
-    <warning>Output too long. Use head/tail/grep to reduce.</warning>
-    {%- set elided_chars = output.output | length - 10000 -%}
-    <output_head>{{ output.output[:5000] }}</output_head>
-    <elided_chars>{{ elided_chars }} characters elided</elided_chars>
-    <output_tail>{{ output.output[-5000:] }}</output_tail>
-    {%- endif -%}
-  format_error_template: |
-    Please provide EXACTLY ONE action in triple backticks, found {{actions|length}} actions.
-  step_limit: 100
-  cost_limit: 0.0
-
-environment:
-  cwd: /app
-  timeout: 120
-  env:
-    PAGER: cat
-    MANPAGER: cat
-    LESS: -R
-    PIP_PROGRESS_BAR: 'off'
-    TQDM_DISABLE: '1'
-  environment_class: docker
-
-model:
-  model_name: openai/gpt-3.5-turbo
-  model_kwargs:
-    api_base: http://localhost:8888/v1
-    api_key: dummy
-    drop_params: true
-    temperature: 0.0
-  cost_tracking: ignore_errors
-YAMEOF
-
-    echo "=== [swebp] Download instance data from HuggingFace ==="
-    # 先装好venv再下载，否则datasets还没有
     echo "=== [swebp] Create venv at ${SWEBP_VENV} (Python 3.10) ==="
     [[ -f "${SWEBP_VENV}/bin/python" ]] || \
         "${UV}" venv "${SWEBP_VENV}" --python 3.10
@@ -203,27 +62,6 @@ YAMEOF
     "${UV}" pip install --python "${SWEBP_VENV}" \
         -e "${AGENT_DIR}" \
         vllm swebench sb-cli "swe-rex>=1.4.0"
-
-    echo "=== [swebp] Download instance data from HuggingFace ==="
-    local full_json="${AGENT_DIR}/data/swebench_pro_instances.json"
-    local mini_json="${AGENT_DIR}/data/swebp_10instances.json"
-    if [[ ! -f "${full_json}" ]]; then
-        "${SWEBP_VENV}/bin/python3" -c "
-import json
-from datasets import load_dataset
-print('Downloading ScaleAI/SWE-bench_Pro ...')
-ds = load_dataset('ScaleAI/SWE-bench_Pro', split='test')
-data = [dict(r) for r in ds]
-with open('${full_json}', 'w') as f:
-    json.dump(data, f, indent=2)
-print(f'Wrote {len(data)} instances -> ${full_json}')
-with open('${mini_json}', 'w') as f:
-    json.dump(data[:10], f, indent=2)
-print(f'Wrote 10 instances  -> ${mini_json}')
-"
-    else
-        echo "  instance data already present"
-    fi
 
     echo "=== [swebp] Done — vllm: $("${SWEBP_VENV}/bin/vllm" --version) ==="
 }

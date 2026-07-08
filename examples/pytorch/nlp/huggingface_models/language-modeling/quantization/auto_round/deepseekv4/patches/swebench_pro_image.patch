@@ -1,0 +1,23 @@
+diff --git a/src/minisweagent/run/extra/swebench.py b/src/minisweagent/run/extra/swebench.py
+index b252fed..981a6c9 100644
+--- a/src/minisweagent/run/extra/swebench.py
++++ b/src/minisweagent/run/extra/swebench.py
+@@ -70,10 +70,14 @@ def get_swebench_docker_image_name(instance: dict) -> str:
+     """Get the image name for a SWEBench instance."""
+     image_name = instance.get("image_name", None)
+     if image_name is None:
+-        # Docker doesn't allow double underscore, so we replace them with a magic token
+-        iid = instance["instance_id"]
+-        id_docker_compatible = iid.replace("__", "_1776_")
+-        image_name = f"docker.io/swebench/sweb.eval.x86_64.{id_docker_compatible}:latest".lower()
++        # SWE-bench Pro: use jefzda/sweap-images via dockerhub_tag
++        if "dockerhub_tag" in instance:
++            image_name = f"jefzda/sweap-images:{instance['dockerhub_tag']}"
++        else:
++            # Docker doesn't allow double underscore, so we replace them with a magic token
++            iid = instance["instance_id"]
++            id_docker_compatible = iid.replace("__", "_1776_")
++            image_name = f"docker.io/swebench/sweb.eval.x86_64.{id_docker_compatible}:latest".lower()
+     return image_name
+ 
+ 
