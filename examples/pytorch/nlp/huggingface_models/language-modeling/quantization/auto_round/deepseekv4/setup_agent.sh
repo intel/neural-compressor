@@ -116,6 +116,28 @@ setup_mcp() {
         echo "  agent-environment:latest already present"
     fi
 
+    echo "=== [mcp-atlas] Kill stale harness and sandbox ==="
+    # Kill any harness on port 3001 (regardless of which dir it came from)
+    local h_pid
+    h_pid=$(lsof -ti:3001 2>/dev/null || true)
+    if [[ -n "${h_pid}" ]]; then
+        echo "  Killing harness PID=${h_pid}"
+        kill ${h_pid} 2>/dev/null || true
+        sleep 1
+    else
+        echo "  No harness running on port 3001"
+    fi
+
+    # Stop all MCP sandbox containers
+    local s_pids
+    s_pids=$(docker ps -q --filter ancestor=agent-environment:latest 2>/dev/null || true)
+    if [[ -n "${s_pids}" ]]; then
+        echo "  Stopping sandbox container(s): ${s_pids}"
+        docker stop ${s_pids} 2>/dev/null || true
+    else
+        echo "  No sandbox containers running"
+    fi
+
     echo "=== [mcp-atlas] Done — vllm: $("${MCP_VENV}/bin/vllm" --version) ==="
 }
 

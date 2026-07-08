@@ -1,112 +1,205 @@
-# DeepSeek V4 AutoRound (INC prepare/convert)
+# Benchmark Runner
 
-This example demonstrates model-free quantization through INC API:
+Two scripts for running SWE-bench Pro, SWE-bench Verified, and MCP-Atlas benchmarks against a local vLLM inference server.
 
-```python
-from neural_compressor.torch.quantization import AutoRoundConfig, prepare, convert
-
-config = AutoRoundConfig(
-    model_free=True,
-    scheme="MXFP4",
-    ignore_layers="compressor,indexer.weights_proj",
-    export_format="llm_compressor",
-    output_dir="/path/to/output",
-)
-model = "/path/or/hf_model_name"
-model = prepare(model, config)
-model = convert(model)
 ```
+setup_agent.sh   — one-time environment setup (clone repos, create venvs, pull Docker image)
+run_agent.sh     — benchmark runner
+```
+
+---
 
 ## Requirements
 
-Install dependencies before running quantization or evaluation:
+- Python 3.10 (via `uv`)
+- [`uv`](https://github.com/astral-sh/uv) — `pip install uv` or `curl -LsSf https://astral.sh/uv/install.sh | sh`
+- Node.js + npm (for MCP-Atlas harness)
+- Docker (for MCP-Atlas sandbox and SWE-bench Pro evaluation)
+- [vLLM](https://github.com/vllm-project/vllm) (installed automatically into each venv)
+- HuggingFace access to `ScaleAI/SWE-bench_Pro` and `ScaleAI/MCP-Atlas`
 
-```bash
-uv pip install -U pip
-uv pip install -U "git+https://github.com/intel/auto-round.git@main"
-uv pip install -U evalscope lm_eval transformers datasets
-uv pip install compressed-tensors --no-deps
-bash <(curl -fsSL https://raw.githubusercontent.com/vllm-project/vllm/main/tools/install_deepgemm.sh)
-uv pip install setuptools_rust setuptools_scm
-VLLM_USE_PRECOMPILED=1 uv pip install git+https://github.com/xin3he/vllm-fork.git@support_deepseekv4_mxfp --no-build-isolation
+### SWE-bench Verified only
+
+- `sb-cli` token (`SWEBENCH_API_KEY` env var) for remote submission
+
+---
+
+## Directory layout
+
+After setup, `BENCHMARK_DIR` will contain:
+
+```
+BENCHMARK_DIR/
+├── setup_agent.sh
+├── run_agent.sh
+├── patches/
+│   └── swebench_pro_image.patch   # Docker image fix for SWE-bench Pro
+├── SWE-bench_Pro-os/              # cloned by setup (swebp)
+│   └── mini-swe-agent/            # git submodule — v1 agent
+├── mini-swe-agent/                # cloned by setup (swe-verified)
+├── mcp-atlas/                     # cloned by setup (mcp-atlas)
+├── .venv-swebp/                   # Python venv for swebp
+├── .venv-swe/                     # Python venv for swe-verified
+├── .venv-mcp/                     # Python venv for mcp-atlas
+└── logs/
 ```
 
-## Quick Start
+---
+
+## Setup
+
+Run once per benchmark task (or `all` to set up everything):
 
 ```bash
-cd examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/deepseekv4
-bash run_quant.sh \
-  --dtype=mxfp4_mixed \
-  --input_model=/workspace/models/deepseek-ai/DeepSeek-V4-Flash \
-  --output_model=/workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP4-Mixed
+cd /path/to/BENCHMARK_DIR
+BENCHMARK_DIR=$PWD bash setup_agent.sh [swebp|swe-verified|mcp-atlas|all]
 ```
 
-Then run serving + evaluation in one command:
+`BENCHMARK_DIR` defaults to `$PWD` if not set.
+
+### SWE-bench Pro patch
+
+Before running setup, place the Docker image patch at:
+
+```
+BENCHMARK_DIR/patches/swebench_pro_image.patch
+```
+
+This patch redirects the evaluator to use the correct Docker images for SWE-bench Pro instances.
+
+---
+
+## Running benchmarks
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 bash run_evalscope.sh \
-  --model /workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP4-Mixed \
-  --tp 2 \
-  --port 8009 \
-  --tasks piqa,hellaswag,gsm8k,mmlu_pro,math_500,mmlu,aime26,gpqa_diamond,ruler_qa_squad
-  --temp 1.0
+cd /path/to/BENCHMARK_DIR
+bash run_agent.sh --task TASK [OPTIONS]
 ```
 
-Equivalent vLLM defaults inside `run_evalscope.sh`:
+### Common options
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--task TASK` | `swebp` | `swebp` \| `swe-verified` \| `mcp-atlas` |
+| `--port N` | `8888` | vLLM API port |
+| `--model PATH` | — | Model path; launches vLLM automatically when set |
+| `--max-model-len N` | `262144` | vLLM `max_model_len` |
+| `--served-name NAME` | `gpt-3.5-turbo` | vLLM `served-model-name` |
+| `--tag NAME` | timestamp | Label for output directory and logs |
+| `--skip-serve` | — | Skip vLLM launch and readiness wait |
+
+### SWE-bench Pro (`--task swebp`)
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--num-tasks N` | all | Limit to first N instances |
+| `--slice S:E` | — | Exact slice, e.g. `0:20` |
+| `--workers N` | `2` | Parallel agent workers |
+| `--step-limit N` | `250` | Max steps per instance |
+| `--redo` | — | Re-run already-completed instances |
+
+Outputs written to `SWE-bench_Pro-os/mini-swe-agent/results/run_<TAG>/`.
+
+Local Docker evaluation runs automatically after the agent finishes.
+
+### SWE-bench Verified (`--task swe-verified`)
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--num-tasks N` | all | Limit to first N instances |
+| `--slice S:E` | — | Exact slice |
+| `--workers N` | `2` | Parallel agent workers |
+| `--step-limit N` | `250` | Max steps per instance |
+
+Requires `SWEBENCH_API_KEY` env var for remote submission via `sb-cli`.
+
+Outputs written to `mini-swe-agent/results/swe_verified_<TAG>/`.
+
+### MCP-Atlas (`--task mcp-atlas`)
+
+| Option | Default | Description |
+|--------|---------|-------------|
+| `--num-tasks N` | all 500 | Limit to first N tasks |
+| `--workers N` | `5` | Parallel eval concurrency |
+| `--sandbox-port P` | `1984` | MCP sandbox Docker port |
+| `--harness-port P` | `3001` | Agent harness port |
+| `--skip-sandbox` | — | Skip Docker sandbox startup |
+
+Outputs written to `mcp-atlas/outputs/run_<TAG>/`.
+
+The script starts the MCP sandbox Docker container and Node.js agent harness automatically. Any stale harness process pointing to a different directory is replaced.
+
+---
+
+## Examples
+
+### Smoke test — SWE-bench Pro (10 instances, vLLM on port 8888)
 
 ```bash
-SAFETENSORS_FAST_GPU=1 CUDA_VISIBLE_DEVICES=0,1 vllm serve <model> \
-  --trust-remote-code \
-  --kv-cache-dtype fp8 \
-  --block-size 256 \
-  --tensor-parallel-size 2 \
-  --attention_config.use_fp4_indexer_cache=True \
-  --port 8009 \
-  --no-enable-flashinfer-autotune
+CUDA_VISIBLE_DEVICES=0 bash run_agent.sh \
+    --task swebp \
+    --model /path/to/model \
+    --port 8888 \
+    --num-tasks 10 \
+    --workers 2 \
+    --step-limit 100 \
+    --tag smoke_swebp
 ```
 
-If model basename is exactly `DeepSeek-V4-Flash` or `DeepSeek-V4-Pro` (without extra suffix),
-`run_evalscope.sh` will also add (automatically):
+### Full run — SWE-bench Verified (vLLM already running)
 
 ```bash
---enable-expert-parallel --moe-backend deep_gemm_mega_moe
+SWEBENCH_API_KEY=<your_key> \
+CUDA_VISIBLE_DEVICES=1 bash run_agent.sh \
+    --task swe-verified \
+    --port 8881 \
+    --skip-serve \
+    --workers 4 \
+    --tag run_verified_01
 ```
 
-Mixed preset example:
+### Smoke test — MCP-Atlas
 
 ```bash
-bash run_quant.sh \
-  --dtype=mxfp4_mixed \
-  --input_model=/workspace/models/deepseek-ai/DeepSeek-V4-Flash \
-  --output_model=/workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP8
+CUDA_VISIBLE_DEVICES=0 bash run_agent.sh \
+    --task mcp-atlas \
+    --model /path/to/model \
+    --port 8882 \
+    --num-tasks 10 \
+    --workers 5 \
+    --tag smoke_mcp
 ```
 
-## CLI Arguments
+If vLLM is already running and the sandbox/harness are up:
 
-- `--dtype`: quantization preset.
-  - `mxfp4`: `scheme=MXFP4`
-  - `mxfp4_mixed`: `scheme=MXFP8` + `layer_config={"ffn.experts": {"bits": 4, "data_type": "mx_fp"}}`
-  - `mxfp8`: `scheme=MXFP8`
-  - `w4a16`: `scheme=W4A16` + `layer_config={"wo_a": {"bits": 16}}`
-- `--input_model`: HF model name or local model path.
-- `--output_model`: output directory.
-- `--format`: `auto_round` or `llm_compressor` (default: `llm_compressor`).
-- `--ignore_layers`: comma-separated layer patterns (default: `compressor,indexer.weights_proj`).
+```bash
+bash run_agent.sh \
+    --task mcp-atlas \
+    --port 8882 \
+    --skip-serve \
+    --skip-sandbox \
+    --num-tasks 10 \
+    --workers 5 \
+    --tag smoke_mcp2
+```
 
-`run_evalscope.sh` arguments:
+---
 
-- `--model`: model path for vLLM and evalscope.
-- `--port`: vLLM API port (default: `8009`).
-- `--temp`: generation temperature used by evalscope (default: `0`).
-- `--skip_serve`: skip starting vLLM (use existing endpoint on the same `--port`).
-- `--tp`: tensor parallel size for vLLM (default: `2`).
-- `--kv-cache-dtype`: kv cache dtype for vLLM (default: `fp8`).
-- `--block-size`: vLLM block size (default: `256`).
+## Environment variables
+
+| Variable | Used by | Description |
+|----------|---------|-------------|
+| `BENCHMARK_DIR` | both scripts | Root directory (defaults to `$PWD`) |
+| `SWEBENCH_API_KEY` | swe-verified | API key for `sb-cli submit` |
+| `CUDA_VISIBLE_DEVICES` | run_agent.sh | GPU selection for vLLM |
+| `GPU_MEM_UTIL` | run_agent.sh | vLLM `gpu-memory-utilization` (default `0.7`) |
+| `VLLM_ENGINE_READY_TIMEOUT_S` | run_agent.sh | vLLM startup timeout in seconds (default `1800`) |
+| `VLLM_WAIT_RETRIES` | run_agent.sh | Health-check retries before giving up (default `180`) |
+
+---
 
 ## Notes
 
-- This flow is enabled only when:
-  - `config` is `AutoRoundConfig`
-  - `config.model_free=True`
-  - `model` passed to `prepare/convert` is a `str` (model path or model name)
-- The example uses `reloading=False` by default and saves quantized artifacts to `--output_model`.
+- **Multiple tasks simultaneously**: use different ports and `CUDA_VISIBLE_DEVICES` for each task.
+- **Resuming a run**: pass `--redo` (swebp) or re-run with the same `--tag`; already-completed instances are skipped.
+- **vLLM served model name**: the default `gpt-3.5-turbo` works with all three tasks without extra config. Change with `--served-name`.
