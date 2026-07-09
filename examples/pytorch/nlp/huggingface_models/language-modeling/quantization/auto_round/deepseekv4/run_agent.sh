@@ -1,16 +1,30 @@
 #!/bin/bash
 set -euo pipefail
 
-# Usage: bash run_agent_v2.sh --task [swebp|swe-verified|mcp-atlas] [OPTIONS]
+# Usage: bash run_agent.sh --task [swebp|swe-verified|mcp-atlas] [OPTIONS]
 #
 # Common:
 #   --task TASK           swebp | swe-verified | mcp-atlas     (default: swebp)
 #   --port N              vLLM API port                         (default: 8888)
 #   --model PATH          Model path; starts vLLM when provided
-#   --max-model-len N     vLLM max_model_len                    (default: 32768)
+#   --max-model-len N     vLLM max_model_len                    (default: 262144)
 #   --served-name NAME    vLLM served-model-name                (default: gpt-3.5-turbo)
 #   --tag NAME            Run label for outputs / logs          (default: timestamp)
-#   --skip-serve          Skip vLLM readiness check
+#   --skip-serve          Skip vLLM launch and readiness wait
+#
+# vLLM serving (env vars, set before calling the script):
+#   KV_CACHE_DTYPE        kv-cache-dtype                        (default: fp8)
+#   BLOCK_SIZE            block-size                            (default: 256)
+#   TENSOR_PARALLEL_SIZE  tensor-parallel-size                  (default: 1)
+#   GPU_MEM_UTIL          gpu-memory-utilization                (default: 0.9)
+#
+# Example vLLM command (equivalent to what --model triggers internally):
+#   SAFETENSORS_FAST_GPU=1 CUDA_VISIBLE_DEVICES=0,1 \
+#   TENSOR_PARALLEL_SIZE=2 bash run_agent.sh --task swebp \
+#     --model /path/to/DeepSeek-V4-Flash-MXFP4 --port 8888 ...
+#
+# Note: if model basename is exactly DeepSeek-V4-Flash or DeepSeek-V4-Pro,
+#   --enable-expert-parallel --moe-backend deep_gemm_mega_moe are added automatically.
 #
 # SWE-bench Pro (--task swebp):
 #   --num-tasks N         Limit to first N tasks
@@ -54,6 +68,11 @@ RUN_TAG="$(date +%Y%m%d_%H%M%S)"
 SKIP_SERVE=false
 SKIP_SANDBOX=false
 
+# vLLM serving options
+KV_CACHE_DTYPE="${KV_CACHE_DTYPE:-fp8}"
+BLOCK_SIZE="${BLOCK_SIZE:-256}"
+TENSOR_PARALLEL_SIZE="${TENSOR_PARALLEL_SIZE:-1}"
+
 # Fixed derived paths
 # swebp: version pinned by SWE-bench_Pro-os submodule
 AGENT_DIR="${BENCHMARK_DIR}/SWE-bench_Pro-os/mini-swe-agent"
@@ -62,11 +81,6 @@ AGENT_DIR_VERIFIED="${BENCHMARK_DIR}/mini-swe-agent"
 MCP_DIR="${BENCHMARK_DIR}/mcp-atlas"
 LOG_DIR="${BENCHMARK_DIR}/logs"
 mkdir -p "${LOG_DIR}"
-
-# Venvs live at BENCHMARK_DIR level
-SWEBP_VENV="${BENCHMARK_DIR}/.venv-swebp"
-SWE_VENV="${BENCHMARK_DIR}/.venv-swe"
-MCP_VENV="${BENCHMARK_DIR}/.venv-mcp"
 
 VLLM_PID=""
 HARNESS_PID=""
@@ -100,43 +114,23 @@ model_id() {
 # =============================================================================
 setup_swebp() {
     local swebp_dir="${BENCHMARK_DIR}/SWE-bench_Pro-os"
-    [[ -d "${swebp_dir}/.git" ]] || \
-        git clone --depth 1 https://github.com/scaleapi/SWE-bench_Pro-os.git "${swebp_dir}"
-    [[ -x "${SWEBP_VENV}/bin/vllm" ]] || \
-        die "swebp venv not ready — run: bash setup_agent.sh swebp"
+    [[ -d "${swebp_dir}" ]] || die "SWE-bench_Pro-os not found — run: bash setup_agent.sh swebp"
     # Ensure swebench.py is patched for jefzda Docker images
     local patch_file="${BENCHMARK_DIR}/patches/swebench_pro_image.patch"
-    local swebench_py="${BENCHMARK_DIR}/SWE-bench_Pro-os/mini-swe-agent/src/minisweagent/run/extra/swebench.py"
+    local swebench_py="${AGENT_DIR}/src/minisweagent/run/extra/swebench.py"
     if ! grep -q 'dockerhub_tag' "${swebench_py}" 2>/dev/null; then
         [[ -f "${patch_file}" ]] || die "Patch file not found: ${patch_file}"
-        git -C "${BENCHMARK_DIR}/SWE-bench_Pro-os/mini-swe-agent" apply "${patch_file}" \
+        git -C "${AGENT_DIR}" apply "${patch_file}" \
             && echo "[setup_swebp] swebench.py patched OK"
     fi
 }
 
 setup_swe_verified() {
-    [[ -d "${AGENT_DIR_VERIFIED}/.git" ]] || \
-        git clone --depth 1 https://github.com/SWE-agent/mini-swe-agent.git "${AGENT_DIR_VERIFIED}"
-    [[ -x "${SWE_VENV}/bin/vllm" ]] || \
-        die "swe-verified venv not ready — run: bash setup_agent.sh swe-verified"
+    [[ -d "${AGENT_DIR_VERIFIED}" ]] || die "mini-swe-agent not found — run: bash setup_agent.sh swe-verified"
 }
 
 setup_mcp() {
-    echo "=== Setup: MCP-Atlas ==="
-    if [[ ! -d "${MCP_DIR}/.git" ]]; then
-        git clone --depth 1 https://github.com/scaleapi/mcp-atlas.git "${MCP_DIR}"
-    fi
-    [[ -x "${MCP_VENV}/bin/vllm" ]] || \
-        die "mcp-atlas venv not ready — run: bash setup_agent.sh mcp-atlas"
-    if [[ ! -d "${MCP_DIR}/services/agent-harness/node_modules" ]]; then
-        export NVM_DIR="${HOME}/.nvm"
-        [[ -s "${NVM_DIR}/nvm.sh" ]] && source "${NVM_DIR}/nvm.sh"
-        npm install --prefix "${MCP_DIR}/services/agent-harness" --silent
-    fi
-    if ! docker image inspect agent-environment:latest &>/dev/null; then
-        docker pull ghcr.io/scaleapi/mcp-atlas:1.2.5
-        docker tag  ghcr.io/scaleapi/mcp-atlas:1.2.5 agent-environment:latest
-    fi
+    [[ -d "${MCP_DIR}" ]] || die "mcp-atlas not found — run: bash setup_agent.sh mcp-atlas"
     if [[ ! -f "${MCP_DIR}/.env" ]]; then
         cp "${MCP_DIR}/env.template" "${MCP_DIR}/.env"
         cat >> "${MCP_DIR}/.env" << ENVEOF
@@ -158,14 +152,34 @@ start_vllm_server() {
     [[ -z "${vllm_bin}" ]] && die "vllm not found in PATH — activate a venv or pass full path"
     echo "=== Starting vLLM (${MODEL_PATH##*/}, port=${PORT}) ==="
     local log="${LOG_DIR}/vllm_${RUN_TAG}.log"
+
+    local model_name="${MODEL_PATH%/}"; model_name="${model_name##*/}"
+    local extra_args=()
+    # Base DeepSeek-V4 models need expert-parallel and mega-moe backend
+    if [[ "${model_name}" == "DeepSeek-V4-Flash" || "${model_name}" == "DeepSeek-V4-Pro" ]]; then
+        extra_args+=(--enable-expert-parallel --moe-backend deep_gemm_mega_moe)
+    fi
+    # DeepSeek-V4-Pro has a very large context window
+    if [[ "${model_name}" == *"DeepSeek-V4-Pro"* ]]; then
+        MAX_MODEL_LEN=1048576
+    fi
+
+    SAFETENSORS_FAST_GPU=1 \
     VLLM_ENGINE_READY_TIMEOUT_S="${VLLM_ENGINE_READY_TIMEOUT_S:-1800}" \
     nohup "${vllm_bin}" serve "${MODEL_PATH}" \
-        --port              "${PORT}" \
-        --max-model-len     "${MAX_MODEL_LEN}" \
-        --served-model-name "${SERVED_MODEL_NAME}" \
-        --gpu-memory-utilization "${GPU_MEM_UTIL:-0.7}" \
+        --port                    "${PORT}" \
+        --served-model-name       "${SERVED_MODEL_NAME}" \
+        --max-model-len           "${MAX_MODEL_LEN}" \
+        --kv-cache-dtype          "${KV_CACHE_DTYPE}" \
+        --block-size              "${BLOCK_SIZE}" \
+        --tensor-parallel-size    "${TENSOR_PARALLEL_SIZE}" \
+        --gpu-memory-utilization  "${GPU_MEM_UTIL:-0.9}" \
+        --attention_config.use_fp4_indexer_cache=True \
+        --trust-remote-code \
+        --no-enable-flashinfer-autotune \
         --enable-auto-tool-choice \
-        --tool-call-parser  hermes \
+        --tool-call-parser        hermes \
+        "${extra_args[@]}" \
         > "${log}" 2>&1 &
     VLLM_PID=$!
     echo "vLLM PID=${VLLM_PID}  log=${log}"
@@ -196,7 +210,7 @@ run_swebp() {
     local patches="${swebp_dir}/patches_${RUN_TAG}.json"
     local inst_csv="${swebp_dir}/instances_${RUN_TAG}.csv"
     local eval_out="${swebp_dir}/eval_output_${RUN_TAG}"
-    local py3="${SWEBP_VENV}/bin/python3"
+    local py3="python3"
 
     echo "=== SWE-bench Pro | model=${mid} workers=${WORKERS} step_limit=${STEP_LIMIT} ==="
     echo "    out=${out_dir}"
@@ -232,7 +246,7 @@ print('Runtime config:', '${cfg_run}')
 "
 
     cd "${AGENT_DIR}"
-    "${SWEBP_VENV}/bin/mini-extra" swebench \
+    mini-extra swebench \
         --subset  ScaleAI/SWE-bench_Pro \
         --split   test \
         -m        "${SERVED_MODEL_NAME}" \
@@ -311,7 +325,7 @@ run_swe_verified() {
     fi
 
     cd "${AGENT_DIR_VERIFIED}"
-    "${SWE_VENV}/bin/mini-extra" swebench \
+    mini-extra swebench \
         -m "${SERVED_MODEL_NAME}" \
         --subset  verified \
         --split   test \
@@ -327,7 +341,7 @@ run_swe_verified() {
     # preds.jsonl may be in out_dir, or mini-extra may write preds.json — handle both
     if [[ ! -f "${preds_jsonl}" ]] && [[ -f "${out_dir}/preds.json" ]]; then
         echo "[INFO] Converting preds.json → preds.jsonl for swebench evaluator"
-        "${SWE_VENV}/bin/python3" -c "
+        python3 -c "
 import json, sys
 preds = json.load(open('${out_dir}/preds.json'))
 with open('${preds_jsonl}', 'w') as f:
@@ -345,16 +359,15 @@ print(f'Wrote {len(preds)} predictions to ${preds_jsonl}')
         echo "Tasks run : ${n}"
         echo "Preds     : ${preds_jsonl}"
 
-        local sb="${SWE_VENV}/bin/sb-cli"
-        if [[ -f "${sb}" ]] && [[ -n "${SWEBENCH_API_KEY:-}" ]]; then
+        if command -v sb-cli &>/dev/null && [[ -n "${SWEBENCH_API_KEY:-}" ]]; then
             echo "=== Submitting to SWE-bench cloud (sb-cli) ==="
-            "${sb}" submit swe-bench_verified test \
+            sb-cli submit swe-bench_verified test \
                 --predictions_path "${preds_jsonl}" \
                 --run_id "${RUN_TAG}"
         else
             echo ""
             echo "[INFO] Set SWEBENCH_API_KEY to auto-submit via sb-cli:"
-            echo "  ${SWE_VENV}/bin/sb-cli submit swe-bench_verified test \\"
+            echo "  sb-cli submit swe-bench_verified test \\"
             echo "    --predictions_path ${preds_jsonl} \\"
             echo "    --run_id ${RUN_TAG}"
         fi
@@ -370,8 +383,9 @@ run_mcp() {
     local scored_dir="${out_dir}/scored"
     local gt_csv="${MCP_DIR}/outputs/groundtruth.csv"
     local harness_log="${out_dir}/harness.log"
-    local mcp_python="${MCP_VENV}/bin/python"
-    [[ -x "${mcp_python}" ]] || die "MCP venv not found at ${MCP_VENV} — run: bash setup_agent.sh mcp-atlas"
+
+    local sandbox_wait_retries=18   # 18 × 10s = 3 min max
+    local harness_wait_retries=12   # 12 × 5s  = 1 min max
 
     mkdir -p "${out_dir}"
     echo "=== MCP-Atlas | model=${mid} workers=${WORKERS} ==="
@@ -385,12 +399,12 @@ run_mcp() {
         docker run -d --rm --name "mcp-sandbox-${RUN_TAG}" \
             -p "${SANDBOX_PORT}:1984" --env-file "${MCP_DIR}/.env" \
             agent-environment:latest
-        for i in $(seq 1 18); do
+        for i in $(seq 1 ${sandbox_wait_retries}); do
             local online
             online=$(curl -sf "http://localhost:${SANDBOX_PORT}/enabled-servers" 2>/dev/null \
                 | python3 -c "import json,sys; print(json.load(sys.stdin)['online'])" 2>/dev/null || echo 0)
             [[ "${online}" -gt 0 ]] && { echo "Sandbox ready: ${online} servers online"; break; }
-            echo "  [${i}/18] waiting for sandbox..."; sleep 10
+            echo "  [${i}/${sandbox_wait_retries}] waiting for sandbox..."; sleep 10
         done
     fi
 
@@ -423,10 +437,10 @@ run_mcp() {
             MCP_SANDBOX_URL="http://localhost:${SANDBOX_PORT}" \
             nohup npm run dev --prefix services/agent-harness > "${harness_log}" 2>&1 &
         HARNESS_PID=$!
-        for i in $(seq 1 12); do
+        for i in $(seq 1 ${harness_wait_retries}); do
             curl -sf "http://localhost:${HARNESS_PORT}/health" -o /dev/null 2>/dev/null \
                 && { echo "Harness ready (PID=${HARNESS_PID})"; break; }
-            echo "  [${i}/12] waiting for harness..."; sleep 5
+            echo "  [${i}/${harness_wait_retries}] waiting for harness..."; sleep 5
         done
     fi
     curl -sf "http://localhost:${HARNESS_PORT}/health" -o /dev/null \
@@ -438,7 +452,7 @@ run_mcp() {
     [[ -n "${NUM_TASKS}" ]] && num_opt=(--num-tasks "${NUM_TASKS}")
 
     HARNESS_URL="http://localhost:${HARNESS_PORT}" \
-        "${mcp_python}" run_eval.py \
+        python run_eval.py \
         --model       "${mid}" \
         --output      "${eval_csv}" \
         --concurrency "${WORKERS}" \
@@ -448,7 +462,7 @@ run_mcp() {
 
     if [[ ! -f "${gt_csv}" ]]; then
         echo "Exporting ground truth from HuggingFace..."
-        "${mcp_python}" -c "
+        python -c "
 from datasets import load_dataset; import pandas as pd, os
 os.makedirs('$(dirname "${gt_csv}")', exist_ok=True)
 ds = load_dataset('ScaleAI/MCP-Atlas', split='train')
@@ -461,14 +475,14 @@ print(f'Ground truth: {len(ds)} tasks -> ${gt_csv}')
     EVAL_LLM_BASE_URL="http://localhost:${PORT}" \
     EVAL_LLM_API_KEY="EMPTY" \
     EVAL_LLM_MODEL="${mid}" \
-        "${mcp_python}" "${MCP_DIR}/services/scoring/score_claims.py" \
+        python "${MCP_DIR}/services/scoring/score_claims.py" \
         --groundtruth-file "${gt_csv}" \
         --model-file       "${eval_csv}" \
         --model-name       "${mid}" \
         --output-dir       "${scored_dir}"
 
     echo ""
-    "${mcp_python}" -c "
+    python -c "
 import json, glob, sys
 files = sorted(glob.glob('${scored_dir}/coverage_stats_*.json'))
 if not files: print('[no stats found]'); sys.exit(0)

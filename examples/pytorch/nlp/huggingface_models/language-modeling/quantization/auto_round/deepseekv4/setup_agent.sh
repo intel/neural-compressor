@@ -1,22 +1,13 @@
 #!/bin/bash
 # Usage: BENCHMARK_DIR=<path> bash setup_agent.sh [swebp|swe-verified|mcp-atlas|all]
 #
-# Venvs are created at BENCHMARK_DIR level:
-#   .venv-swebp   — SWE-bench Pro
-#   .venv-swe     — SWE-bench Verified
-#   .venv-mcp     — MCP-Atlas
-#
+# Run from within an already-activated Python environment (conda/venv).
 # BENCHMARK_DIR defaults to $PWD
 
 set -euo pipefail
 
 BENCHMARK_DIR="${BENCHMARK_DIR:-$PWD}"
-UV=$(command -v uv 2>/dev/null || echo "${HOME}/.local/bin/uv")
-TASK="${1:-all}"
-
-SWEBP_VENV="${BENCHMARK_DIR}/.venv-swebp"
-SWE_VENV="${BENCHMARK_DIR}/.venv-swe"
-MCP_VENV="${BENCHMARK_DIR}/.venv-mcp"
+TASK="${1:?Usage: bash setup_agent.sh [swebp|swe-verified|mcp-atlas]}"
 
 AGENT_DIR="${BENCHMARK_DIR}/SWE-bench_Pro-os/mini-swe-agent"   # submodule
 AGENT_DIR_VERIFIED="${BENCHMARK_DIR}/mini-swe-agent"
@@ -54,16 +45,13 @@ setup_swebp() {
 
     mkdir -p "${AGENT_DIR}/results"
 
-    echo "=== [swebp] Create venv at ${SWEBP_VENV} (Python 3.10) ==="
-    [[ -f "${SWEBP_VENV}/bin/python" ]] || \
-        "${UV}" venv "${SWEBP_VENV}" --python 3.10
-
     echo "=== [swebp] Install packages ==="
-    "${UV}" pip install --python "${SWEBP_VENV}" \
-        -e "${AGENT_DIR}" \
-        vllm swebench sb-cli "swe-rex>=1.4.0"
+    pip install -e "${AGENT_DIR}" swebench sb-cli "swe-rex>=1.4.0"
+    VLLM_USE_PRECOMPILED=1 pip install \
+        git+https://github.com/xin3he/vllm-fork.git@support_deepseekv4_mxfp \
+        --no-build-isolation
 
-    echo "=== [swebp] Done — vllm: $("${SWEBP_VENV}/bin/vllm" --version) ==="
+    echo "=== [swebp] Done — vllm: $(vllm --version) ==="
 }
 
 setup_swe_verified() {
@@ -74,16 +62,13 @@ setup_swe_verified() {
         echo "  already cloned"
     fi
 
-    echo "=== [swe-verified] Create venv at ${SWE_VENV} (Python 3.10) ==="
-    [[ -f "${SWE_VENV}/bin/python" ]] || \
-        "${UV}" venv "${SWE_VENV}" --python 3.10
-
     echo "=== [swe-verified] Install packages ==="
-    "${UV}" pip install --python "${SWE_VENV}" \
-        -e "${AGENT_DIR_VERIFIED}" \
-        vllm sb-cli "datasets>=3.0.0"
+    pip install -e "${AGENT_DIR_VERIFIED}" sb-cli "datasets>=3.0.0"
+    VLLM_USE_PRECOMPILED=1 pip install \
+        git+https://github.com/xin3he/vllm-fork.git@support_deepseekv4_mxfp \
+        --no-build-isolation
 
-    echo "=== [swe-verified] Done — vllm: $("${SWE_VENV}/bin/vllm" --version) ==="
+    echo "=== [swe-verified] Done — vllm: $(vllm --version) ==="
 }
 
 setup_mcp() {
@@ -94,14 +79,11 @@ setup_mcp() {
         echo "  already cloned"
     fi
 
-    echo "=== [mcp-atlas] Create venv at ${MCP_VENV} (Python 3.10) ==="
-    [[ -f "${MCP_VENV}/bin/python" ]] || \
-        "${UV}" venv "${MCP_VENV}" --python 3.10
-
     echo "=== [mcp-atlas] Install packages ==="
-    "${UV}" pip install --python "${MCP_VENV}" \
-        -r "${MCP_DIR}/requirements.txt" \
-        vllm
+    pip install -r "${MCP_DIR}/requirements.txt"
+    VLLM_USE_PRECOMPILED=1 pip install \
+        git+https://github.com/xin3he/vllm-fork.git@support_deepseekv4_mxfp \
+        --no-build-isolation
 
     echo "=== [mcp-atlas] npm install ==="
     export NVM_DIR="${HOME}/.nvm"
@@ -138,7 +120,7 @@ setup_mcp() {
         echo "  No sandbox containers running"
     fi
 
-    echo "=== [mcp-atlas] Done — vllm: $("${MCP_VENV}/bin/vllm" --version) ==="
+    echo "=== [mcp-atlas] Done — vllm: $(vllm --version) ==="
 }
 
 # =============================================================================
@@ -147,10 +129,11 @@ case "${TASK}" in
     swe-verified) setup_swe_verified ;;
     mcp-atlas)    setup_mcp ;;
     all)
-        setup_swebp
-        setup_swe_verified
-        setup_mcp
-        ;;
+        echo "[ERROR] Run setup per task in separate environments:"
+        echo "  bash setup_agent.sh swebp"
+        echo "  bash setup_agent.sh swe-verified"
+        echo "  bash setup_agent.sh mcp-atlas"
+        exit 1 ;;
     *)
         echo "Usage: $0 [swebp|swe-verified|mcp-atlas|all]"
         exit 1
