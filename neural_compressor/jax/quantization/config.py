@@ -59,7 +59,7 @@ class OperatorConfig(NamedTuple):
 class JaxBaseConfig(BaseConfig):
     """Shared base for JAX quant configs.
 
-    Provides the common ``white_list`` / ``exclude`` selection, serialization and
+    Provides the common ``white_list`` / ``exclude_list`` selection, serialization and
     op-mapping behavior shared by :class:`DynamicQuantConfig` and
     :class:`StaticQuantConfig`. Subclasses supply their ``name``, supported
     configs, tuning set, ``from_dict`` and the quantizable layer mapping.
@@ -80,7 +80,7 @@ class JaxBaseConfig(BaseConfig):
         const_scale: bool = False,
         const_weight: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
-        exclude: Optional[List[str]] = None,
+        exclude_list: Optional[List[str]] = None,
     ):
         """Init quantization config.
 
@@ -93,7 +93,7 @@ class JaxBaseConfig(BaseConfig):
                 is a layer class (e.g. ``keras.layers.Dense``), a class name, or a path regex.
                 Only matching supported layers are quantized. Defaults to ``"*"`` (all supported
                 layers).
-            exclude (Optional[List[str]]): List of layer class names or path patterns to exclude.
+            exclude_list (Optional[List[str]]): List of layer class names or path patterns to exclude.
                 Matching layers are skipped. Supports regular expression patterns.
 
         Returns:
@@ -111,14 +111,14 @@ class JaxBaseConfig(BaseConfig):
         self.activation_dtype = activation_dtype
         self.const_scale = const_scale
         self.const_weight = const_weight
-        self._exclude = exclude
+        self._exclude_list = exclude_list
         self._post_init()
 
-    def __add__(self, other: BaseConfig) -> BaseConfig:
+    def __add__(self, other: JaxBaseConfig) -> JaxBaseConfig:
         """Combine with another config, producing a ``JaxComposableConfig``.
 
         Same-type configs merge their local configs (base behavior); different
-        types compose so each sub-config keeps its own ``white_list`` / ``exclude``
+        types compose so each sub-config keeps its own ``white_list`` / ``exclude_list``
         selection and its overridden ``to_config_mapping``.
         """
         if isinstance(other, type(self)):
@@ -128,20 +128,20 @@ class JaxBaseConfig(BaseConfig):
         return JaxComposableConfig(configs=[self, other])
 
     @property
-    def exclude(self):
+    def exclude_list(self):
         """Get the exclude filter list."""
-        return self._exclude
+        return self._exclude_list
 
-    @exclude.setter
-    def exclude(self, value):
+    @exclude_list.setter
+    def exclude_list(self, value):
         """Set the exclude filter list."""
-        self._exclude = value
+        self._exclude_list = value
 
     def _layer_matches_filters(self, layer_id: str, class_name: str) -> bool:
-        """Return True if a layer passes this config's ``white_list`` / ``exclude`` filters.
+        """Return True if a layer passes this config's ``white_list`` / ``exclude_list`` filters.
 
         ``white_list`` selects candidate layers (``"*"`` selects every supported
-        layer, ``None`` selects none); ``exclude`` removes any matches. Each entry
+        layer, ``None`` selects none); ``exclude_list`` removes any matches. Each entry
         is a layer class (matched by its ``__name__``), a class name (exact match),
         or a path regex.
 
@@ -153,7 +153,7 @@ class JaxBaseConfig(BaseConfig):
             True if the layer should be quantized by this config.
 
         Raises:
-            ValueError: If a ``white_list`` / ``exclude`` entry is an invalid regex.
+            ValueError: If a ``white_list`` / ``exclude_list`` entry is an invalid regex.
         """
 
         def _matches(pattern) -> bool:
@@ -163,12 +163,20 @@ class JaxBaseConfig(BaseConfig):
             try:
                 return re.search(pattern, layer_id) is not None
             except re.error as e:
-                raise ValueError(f"Invalid regex pattern {pattern!r} in white_list/exclude filter.") from e
+                raise ValueError(f"Invalid regex pattern {pattern!r} in white_list/exclude_list filter.") from e
 
         white_list = self._white_list
-        if white_list != DEFAULT_WHITE_LIST and (white_list is None or not any(_matches(p) for p in white_list)):
-            return False
-        if self._exclude is not None and any(_matches(p) for p in self._exclude):
+
+        # not a default white_list -> check the layer against the white_list patterns
+        if white_list != DEFAULT_WHITE_LIST:
+            # white_list explicitly set to None -> no layers should be selected
+            if white_list is None:
+                return False
+            # none of the white_list patterns match the layer -> not selected
+            if not any(_matches(p) for p in white_list):
+                return False
+        # exclude_list is defined -> check the layer against the exclude_list patterns
+        if self._exclude_list is not None and any(_matches(p) for p in self._exclude_list):
             return False
         return True
 
@@ -201,19 +209,19 @@ class JaxBaseConfig(BaseConfig):
         return config_mapping
 
     def to_dict(self):
-        """Serialize params plus the white_list / exclude selection filters."""
+        """Serialize params plus the white_list / exclude_list selection filters."""
         result = self.get_params_dict()
         white_list = _serialize_white_list(self._white_list)
         if white_list != DEFAULT_WHITE_LIST and white_list is not None:
             result["white_list"] = white_list
-        if self._exclude is not None:
-            result["exclude"] = self._exclude
+        if self._exclude_list is not None:
+            result["exclude_list"] = self._exclude_list
         return result
 
     def get_params_dict(self):
         """Get parameters dict, excluding internal and filter attributes."""
         result = dict()
-        excluded = {"_global_config", "_local_config", "_white_list", "_exclude", "_is_initialized"}
+        excluded = {"_global_config", "_local_config", "_white_list", "_exclude_list", "_is_initialized"}
         for param, value in self.__dict__.items():
             if param not in excluded:
                 result[param] = value
@@ -226,7 +234,7 @@ class JaxBaseConfig(BaseConfig):
     def get_model_info(self, model) -> List[Tuple[str, str]]:
         """Return the model's quantizable ops selected by this config's filters.
 
-        Applies the config's ``white_list`` / ``exclude`` selection so only the
+        Applies the config's ``white_list`` / ``exclude_list`` selection so only the
         layers this config will quantize are returned.
 
         Args:
@@ -333,14 +341,14 @@ class DynamicQuantConfig(JaxBaseConfig):
         const_scale = config_dict.get("const_scale", False)
         const_weight = config_dict.get("const_weight", False)
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
-        exclude = config_dict.get("exclude", None)
+        exclude_list = config_dict.get("exclude_list", None)
         return cls(
             weight_dtype=weight_dtype,
             activation_dtype=activation_dtype,
             const_scale=const_scale,
             const_weight=const_weight,
             white_list=white_list,
-            exclude=exclude,
+            exclude_list=exclude_list,
         )
 
 
@@ -413,26 +421,32 @@ class StaticQuantConfig(JaxBaseConfig):
         const_scale = config_dict.get("const_scale", False)
         const_weight = config_dict.get("const_weight", False)
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
-        exclude = config_dict.get("exclude", None)
+        exclude_list = config_dict.get("exclude_list", None)
         return cls(
             weight_dtype=weight_dtype,
             activation_dtype=activation_dtype,
             const_scale=const_scale,
             const_weight=const_weight,
             white_list=white_list,
-            exclude=exclude,
+            exclude_list=exclude_list,
         )
 
 
-class JaxComposableConfig(ComposableConfig):
-    """JAX composable config that reuses each sub-config's ``to_config_mapping``.
+class JaxComposableConfig(ComposableConfig, JaxBaseConfig):
+    """JAX composable config that is both a ``ComposableConfig`` and a ``JaxBaseConfig``.
 
-    The base :class:`ComposableConfig` keys ``model_info`` by config *name*, which
-    collides when the same config type appears more than once (e.g. static +
-    dynamic + static) and it ignores the per-config ``global_config``. This
-    subclass keeps each sub-config's ``model_info`` positionally aligned and
-    delegates op selection to the sub-config's own (JAX-tweaked)
-    ``to_config_mapping``, then merges results with last-config-wins on overlap.
+    Composing behavior (``__init__``, ``__add__``, serialization and the tuning
+    stubs) is inherited from the common :class:`ComposableConfig`, while
+    :class:`JaxBaseConfig` is also a base so every JAX config shares one ancestor.
+    Base order matters: keeping ``ComposableConfig`` first ensures its composable
+    ``__init__`` / ``__add__`` win over ``JaxBaseConfig``'s single-config versions.
+
+    Only op selection is JAX-specific. Unlike the common composable -- which keys
+    ``model_info`` by config *name* and so collides when the same config type
+    appears more than once (e.g. static + dynamic + static) -- this subclass keeps
+    each sub-config's ``model_info`` positionally aligned and delegates op selection
+    to the sub-config's own (JAX-tweaked) ``to_config_mapping``, merging results
+    with last-config-wins on overlap.
     """
 
     def get_model_info(self, model, *args, **kwargs) -> List[List[Tuple[str, str]]]:

@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 # -*- coding: utf-8 -*-
-"""Tests for ComposableConfig quantization.
+"""Tests for JaxComposableConfig quantization.
 
 These tests validate that composing a ``StaticQuantConfig`` with a
 ``DynamicQuantConfig`` (each targeting a different subset of layers) produces a
@@ -13,8 +13,8 @@ conftest.py) supply a model with named Dense layers ``first``/``second``/``third
 
 from jax import numpy as jnp
 
-from neural_compressor.common.base_config import ComposableConfig
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
+from neural_compressor.jax.quantization.config import JaxComposableConfig
 
 
 def _build_mapping(model, config):
@@ -51,8 +51,8 @@ class TestComposition:
         dynamic = DynamicQuantConfig(white_list=["second"])
         composed = static + dynamic
         assert isinstance(
-            composed, ComposableConfig
-        ), "Adding two different config types must produce a ComposableConfig"
+            composed, JaxComposableConfig
+        ), "Adding two different config types must produce a JaxComposableConfig"
         assert len(composed.config_list) == 2, "Composable must hold both sub-configs"
         assert composed.config_list[0] is static, "First sub-config must be the static one (left operand)"
         assert composed.config_list[1] is dynamic, "Second sub-config must be the dynamic one (right operand)"
@@ -152,17 +152,17 @@ def _three_way_config():
     dynamic = DynamicQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", white_list=["second", "third"])
     # white_list everything (Dense) but exclude the layers claimed earlier -> resolves to 'third'.
     static_b = StaticQuantConfig(
-        weight_dtype="int8", activation_dtype="int8", white_list=["Dense"], exclude=["first", "second"]
+        weight_dtype="int8", activation_dtype="int8", white_list=["Dense"], exclude_list=["first", "second"]
     )
     return static_a + dynamic + static_b
 
 
 class TestThreeWayComposition:
-    """``static + dynamic + static`` with overlapping white_list/exclude rules."""
+    """``static + dynamic + static`` with overlapping white_list/exclude_list rules."""
 
     def test_composition_preserves_three_configs_in_order(self):
         composed = _three_way_config()
-        assert isinstance(composed, ComposableConfig), "Chaining three configs must yield a ComposableConfig"
+        assert isinstance(composed, JaxComposableConfig), "Chaining three configs must yield a JaxComposableConfig"
         assert len(composed.config_list) == 3, "All three sub-configs must be retained"
         assert [cfg.name for cfg in composed.config_list] == [
             "static_quant",

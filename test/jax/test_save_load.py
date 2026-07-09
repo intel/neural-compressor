@@ -13,8 +13,8 @@ import keras
 import pytest
 from jax import numpy as jnp
 
-from neural_compressor.common.base_config import ComposableConfig
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
+from neural_compressor.jax.quantization.config import JaxComposableConfig
 
 # Mark all tests in this file as smoke tests
 pytestmark = pytest.mark.smoke_test
@@ -210,7 +210,7 @@ def _find_layer(model, name):
 
 
 def _quantize_composable(model, calibration_data):
-    """Quantize the shared model with a static + dynamic ComposableConfig."""
+    """Quantize the shared model with a static + dynamic JaxComposableConfig."""
     # Static quant on 'first', dynamic quant on 'second'.
     config = StaticQuantConfig(weight_dtype="int8", activation_dtype="int8", white_list=["first"]) + DynamicQuantConfig(
         weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", white_list=["second"]
@@ -232,7 +232,7 @@ def _quantize_three_way_composable(model, calibration_data):
         StaticQuantConfig(weight_dtype="int8", activation_dtype="int8", white_list=["first", "second"])
         + DynamicQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", white_list=["second", "third"])
         + StaticQuantConfig(
-            weight_dtype="int8", activation_dtype="int8", white_list=["Dense"], exclude=["first", "second"]
+            weight_dtype="int8", activation_dtype="int8", white_list=["Dense"], exclude_list=["first", "second"]
         )
     )
 
@@ -242,8 +242,8 @@ def _quantize_three_way_composable(model, calibration_data):
     return quantize_model(model, config, calib_function=calib_fn)
 
 
-class TestComposableConfigSaveLoad:
-    """Test save/load for a ComposableConfig (static + dynamic sub-configs)."""
+class TestJaxComposableConfigSaveLoad:
+    """Test save/load for a JaxComposableConfig (static + dynamic sub-configs)."""
 
     def test_composable_quant_save_load_preserves_output(self, model, calibration_data, test_data):
         q_model = _quantize_composable(model, calibration_data)
@@ -269,7 +269,7 @@ class TestComposableConfigSaveLoad:
 
         assert hasattr(loaded_model, "_quant_config"), "Loaded model missing _quant_config"
         loaded_config = loaded_model._quant_config
-        assert isinstance(loaded_config, ComposableConfig), "Loaded config must remain a ComposableConfig"
+        assert isinstance(loaded_config, JaxComposableConfig), "Loaded config must remain a JaxComposableConfig"
         assert len(loaded_config.config_list) == 2, "Both sub-configs must survive save/load"
 
         static_cfg, dynamic_cfg = loaded_config.config_list
@@ -298,9 +298,9 @@ class TestComposableConfigSaveLoad:
         ), "'second' must reload as a dynamic layer"
 
 
-class TestComplexComposableConfigSaveLoad:
-    """Save/load for a three-way ``static + dynamic + static`` ComposableConfig
-    with overlapping white_list/exclude rules."""
+class TestComplexJaxComposableConfigSaveLoad:
+    """Save/load for a three-way ``static + dynamic + static`` JaxComposableConfig
+    with overlapping white_list/exclude_list rules."""
 
     def test_output_is_preserved(self, model, calibration_data, test_data):
         q_model = _quantize_three_way_composable(model, calibration_data)
@@ -326,7 +326,7 @@ class TestComplexComposableConfigSaveLoad:
 
         assert hasattr(loaded_model, "_quant_config"), "Loaded model missing _quant_config"
         loaded_config = loaded_model._quant_config
-        assert isinstance(loaded_config, ComposableConfig), "Loaded config must remain a ComposableConfig"
+        assert isinstance(loaded_config, JaxComposableConfig), "Loaded config must remain a JaxComposableConfig"
         assert len(loaded_config.config_list) == 3, "All three sub-configs must survive save/load"
 
         static_a, dynamic, static_b = loaded_config.config_list
@@ -338,7 +338,7 @@ class TestComplexComposableConfigSaveLoad:
         assert static_a.white_list == ["first", "second"], "First static sub-config white_list must be preserved"
         assert dynamic.white_list == ["second", "third"], "Dynamic sub-config white_list must be preserved"
         assert static_b.white_list == ["Dense"], "Second static sub-config white_list must be preserved"
-        assert static_b.exclude == ["first", "second"], "Second static sub-config exclude must be preserved"
+        assert static_b.exclude_list == ["first", "second"], "Second static sub-config exclude_list must be preserved"
 
     def test_layer_classes_after_load(self, model, calibration_data):
         q_model = _quantize_three_way_composable(model, calibration_data)

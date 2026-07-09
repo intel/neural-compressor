@@ -57,7 +57,7 @@ def quantize_model(
     Args:
         model (keras.Model): FP32 Keras model to be quantized.
         quant_config (BaseConfig): Quantization configuration. Can be a single config
-            or a ComposableConfig (created via config1 + config2).
+            or a JaxComposableConfig (created via config1 + config2).
         calib_function (Callable, optional): Function used for model calibration, required for static quantization.
         inplace (bool): When True, the original model is modified in-place and should not be used afterward. False creates a copy of original model
 
