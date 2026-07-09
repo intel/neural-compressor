@@ -12,6 +12,7 @@ run fast (no actual quantization / calibration):
   ``from_json_string``) including the new filter attributes.
 """
 
+import keras
 import pytest
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig
@@ -35,6 +36,17 @@ class TestLayerMatchesFilters:
         assert (
             config_cls(white_list=["EinsumDense"])._layer_matches_filters("net/first", "Dense") is False
         ), "White_list with no matching pattern must drop the layer"
+
+    def test_white_list_class_object_match(self, config_cls):
+        # A layer class object (callable) is matched by its ``__name__``.
+        assert (
+            config_cls(white_list=[keras.layers.Dense])._layer_matches_filters("net/foo", "Dense") is True
+        ), "White_list holding the layer class object must match by its __name__"
+
+    def test_white_list_class_object_no_match(self, config_cls):
+        assert (
+            config_cls(white_list=[keras.layers.EinsumDense])._layer_matches_filters("net/first", "Dense") is False
+        ), "White_list class object for a different class must drop the layer"
 
     def test_white_list_path_regex_match(self, config_cls):
         assert (
@@ -136,6 +148,11 @@ class TestGetModelInfoFiltering:
         ids = _selected_ids(config_cls(white_list=["Dense"]), model)
         assert len(ids) == 3, "White_list by class name 'Dense' must select all three Dense layers"
 
+    def test_white_list_by_class_object(self, config_cls, model):
+        # Passing the layer class object (callable) selects the same layers as its name.
+        ids = _selected_ids(config_cls(white_list=[keras.layers.Dense]), model)
+        assert len(ids) == 3, "White_list by class object keras.layers.Dense must select all three Dense layers"
+
     def test_white_list_by_path_regex_subset(self, config_cls, model):
         ids = _selected_ids(config_cls(white_list=["first"]), model)
         assert len(ids) == 1, "Only the 'first' layer must match the white_list pattern"
@@ -170,6 +187,14 @@ class TestConfigSerialization:
         d = cfg.to_dict()
         assert d["white_list"] == ["Dense"], "to_dict must serialize the white_list filter"
         assert d["exclude"] == [".*skip.*"], "to_dict must serialize the exclude filter"
+
+    def test_to_dict_serializes_class_object_to_name(self, config_cls):
+        # Class objects in the white_list are serialized to their class name so
+        # the config remains JSON-serializable and round-trips as a string.
+        cfg = config_cls(white_list=[keras.layers.Dense])
+        restored = config_cls.from_dict(cfg.to_dict())
+        assert cfg.to_dict()["white_list"] == ["Dense"], "Class object must serialize to its __name__"
+        assert restored.white_list == ["Dense"], "Class-object white_list must round-trip as its class name"
 
     def test_to_dict_omits_absent_filters(self, config_cls):
         d = config_cls().to_dict()
