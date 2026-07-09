@@ -33,7 +33,7 @@ def static_quantize(
     model: keras.Model,
     configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]] = None,
     quant_config: Optional[BaseConfig] = None,
-    calib_function: Optional[Callable] = None,
+    calib_function: Callable = None,
 ) -> keras.Model:
     """Quantize model using Static quantization algorithm.
 
@@ -47,6 +47,10 @@ def static_quantize(
     Returns:
         keras.Model: The model with quantized layers.
     """
+
+    if calib_function is None:
+        raise ValueError("Calibration function must be provided for static quantization.")
+
     # Build set of layer paths that this algorithm should process
     layer_configs = {op_path: cfg for (op_path, _op_type), cfg in configs_mapping.items() if cfg.name == STATIC_QUANT}
 
