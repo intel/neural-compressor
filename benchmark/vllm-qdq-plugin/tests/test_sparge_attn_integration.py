@@ -36,8 +36,8 @@ def _real_structured_qkv(B, N, H, D, device, dtype):
     # Per-token soft assignment to topics, smoothed along the sequence.
     qa = torch.randn(B, N, H, 8, device=device, generator=g, dtype=torch.float32)
     ka = torch.randn(B, N, H, 8, device=device, generator=g, dtype=torch.float32)
-    qa = torch.cumsum(qa, dim=1) / (N ** 0.5)  # temporal smoothing -> structure
-    ka = torch.cumsum(ka, dim=1) / (N ** 0.5)
+    qa = torch.cumsum(qa, dim=1) / (N**0.5)  # temporal smoothing -> structure
+    ka = torch.cumsum(ka, dim=1) / (N**0.5)
     q = torch.einsum("bnht,htd->bnhd", qa.softmax(-1), topics)
     k = torch.einsum("bnht,htd->bnhd", ka.softmax(-1), topics)
     v = torch.randn(B, N, H, D, device=device, generator=g, dtype=torch.float32)
@@ -63,23 +63,24 @@ def main() -> int:
     device = "cuda"
     dtype = torch.bfloat16
     B, N, H, D = 2, 1024, 16, 128
-    sm_scale = 1.0 / (D ** 0.5)
+    sm_scale = 1.0 / (D**0.5)
 
     failures = []
 
     # --- Check 1: numeric accuracy at topk=1.0 (dense) on real-structured input ---
     q, k, v = _real_structured_qkv(B, N, H, D, device, dtype)
-    impl = SpargeAttnImpl(
-        num_heads=H, head_size=D, softmax_scale=sm_scale, causal=False
-    )
+    impl = SpargeAttnImpl(num_heads=H, head_size=D, softmax_scale=sm_scale, causal=False)
     impl._mode = "topk"
     impl._topk = 1.0
 
     out_sparge = impl.forward_cuda(q, k, v)  # NHD in, NHD out
     # Reference SDPA in [B,H,N,D].
     ref = F.scaled_dot_product_attention(
-        q.transpose(1, 2), k.transpose(1, 2), v.transpose(1, 2),
-        scale=sm_scale, is_causal=False,
+        q.transpose(1, 2),
+        k.transpose(1, 2),
+        v.transpose(1, 2),
+        scale=sm_scale,
+        is_causal=False,
     ).transpose(1, 2)
     cos = _cos(out_sparge, ref)
     ok1 = cos >= 0.999

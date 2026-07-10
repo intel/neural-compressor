@@ -8,9 +8,7 @@ from vllm_qdq_plugin.sage3_attn.routing.route_table import RouteTable, _parse_ra
 
 
 def _write_route(data: dict) -> str:
-    f = tempfile.NamedTemporaryFile(
-        "w", suffix=".json", delete=False, encoding="utf-8"
-    )
+    f = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8")
     json.dump(data, f)
     f.close()
     return f.name
@@ -135,9 +133,7 @@ class RouteTableLoadTests(unittest.TestCase):
 
     def test_integer_range_spec_is_coerced(self) -> None:
         # JSON numbers for layers/steps should be accepted as single values.
-        path = _write_route(
-            {"rules": [{"layers": 7, "steps": 0, "config": "mxfp4"}]}
-        )
+        path = _write_route({"rules": [{"layers": 7, "steps": 0, "config": "mxfp4"}]})
         try:
             table = RouteTable.from_json_file(path)
             self.assertEqual(table.resolve(7, 0), "mxfp4")

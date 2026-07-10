@@ -1,5 +1,4 @@
-"""
-sage3 — Composable SageAttention3 Triton implementation.
+"""Sage3 — Composable SageAttention3 Triton implementation.
 
 Refactored from the monolithic sageattention3_standalone.py into focused modules
 with a composable QuantConfig + zero-dispatch kernel architecture.

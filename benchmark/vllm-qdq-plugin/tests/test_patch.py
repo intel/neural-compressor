@@ -4,7 +4,6 @@ import unittest
 from unittest import mock
 
 import torch
-
 from vllm_qdq_plugin.patch import _patch_moe_marlin_gemm
 
 
@@ -66,12 +65,8 @@ class PatchMoeMarlinGemmTests(unittest.TestCase):
                 ops,
                 scalar_types,
                 mxfp4_qdq,
-                lambda *args, **kwargs: (_ for _ in ()).throw(
-                    AssertionError("unexpected MXFP8 QDQ")
-                ),
-                lambda op_name, shape, dtype: trace_calls.append(
-                    (op_name, shape, dtype)
-                ),
+                lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected MXFP8 QDQ")),
+                lambda op_name, shape, dtype: trace_calls.append((op_name, shape, dtype)),
             )
             input_tensor = torch.zeros((2, 64), dtype=torch.float16)
             output = _call_moe_marlin_gemm(
@@ -108,9 +103,7 @@ class PatchMoeMarlinGemmTests(unittest.TestCase):
                 ops,
                 scalar_types,
                 lambda x, group_size=32: qdq_calls.append(group_size) or (x + 1),
-                lambda *args, **kwargs: (_ for _ in ()).throw(
-                    AssertionError("unexpected MXFP8 QDQ")
-                ),
+                lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected MXFP8 QDQ")),
                 lambda *args, **kwargs: None,
             )
             input_tensor = torch.zeros((1, 2, 64), dtype=torch.float16)

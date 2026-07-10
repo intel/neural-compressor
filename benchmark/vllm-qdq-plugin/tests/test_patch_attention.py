@@ -6,16 +6,13 @@ import unittest
 from unittest import mock
 
 import torch
-
 from vllm_qdq_plugin.sage3_attn.impl import Sage3TritonImpl
 from vllm_qdq_plugin.sage3_attn.routing import patch_attention as P
 from vllm_qdq_plugin.sage3_attn.routing.route_table import RouteTable
 
 
 def _write_route(data: dict) -> str:
-    f = tempfile.NamedTemporaryFile(
-        "w", suffix=".json", delete=False, encoding="utf-8"
-    )
+    f = tempfile.NamedTemporaryFile("w", suffix=".json", delete=False, encoding="utf-8")
     json.dump(data, f)
     f.close()
     return f.name
@@ -88,9 +85,7 @@ class RoutedDispatchTests(unittest.TestCase):
         self.assertEqual(self._run(_make_module(role="cross")), ORIG_SENTINEL)
 
     def test_non_sage_impl_falls_through(self) -> None:
-        module = types.SimpleNamespace(
-            role="self", layer_idx=0, attention=object()
-        )
+        module = types.SimpleNamespace(role="self", layer_idx=0, attention=object())
         self.assertEqual(self._run(module), ORIG_SENTINEL)
 
     def test_sdpa_token_calls_forward_sdpa(self) -> None:
@@ -121,18 +116,14 @@ class RoutedDispatchTests(unittest.TestCase):
 
     def test_no_forward_context_treats_step_as_none(self) -> None:
         impl = _make_impl()
-        with mock.patch.object(
-            P, "is_forward_context_available", return_value=False
-        ):
+        with mock.patch.object(P, "is_forward_context_available", return_value=False):
             self._run(_make_module(layer_idx=25, impl=impl))
         _, kwargs = impl.forward_cuda.call_args
         self.assertEqual(kwargs.get("config_override"), "mxfp8_s1")
 
     def test_none_route_falls_through_to_original(self) -> None:
         # No default + no matching rule -> resolve() returns None -> original.
-        P._TABLE = RouteTable.from_json_file(
-            _write_route({"rules": [{"layers": "20-39", "config": "mxfp4"}]})
-        )
+        P._TABLE = RouteTable.from_json_file(_write_route({"rules": [{"layers": "20-39", "config": "mxfp4"}]}))
         avail, ctx = self._with_step(0)
         impl = _make_impl()
         with avail, ctx:
@@ -158,9 +149,7 @@ class InstallTests(unittest.TestCase):
         P._installed, P._ORIG, P._TABLE = self._saved_globals
 
     def test_install_patches_method_and_is_idempotent(self) -> None:
-        path = _write_route(
-            {"default": "mxfp4", "rules": [{"steps": "0-3", "config": "sdpa"}]}
-        )
+        path = _write_route({"default": "mxfp4", "rules": [{"steps": "0-3", "config": "sdpa"}]})
         try:
             original = self.Attention._run_local_attention
             P.install(path)
@@ -185,9 +174,7 @@ class InstallTests(unittest.TestCase):
                 P.install(path)
             # Failed install must not leave the method patched.
             self.assertFalse(P._installed)
-            self.assertIs(
-                self.Attention._run_local_attention, self._saved_method
-            )
+            self.assertIs(self.Attention._run_local_attention, self._saved_method)
         finally:
             os.unlink(path)
 

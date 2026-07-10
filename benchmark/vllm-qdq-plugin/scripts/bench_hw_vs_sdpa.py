@@ -1,8 +1,9 @@
 """Benchmark: SAGE3 HW kernels vs BF16 SDPA on [1, 40, 75600, 128]."""
 
+import json
 import os
 import sys
-import json
+
 import torch
 import torch.nn.functional as F
 
@@ -20,6 +21,7 @@ ITERS = 10
 DEVICE = "cuda"
 DTYPE = torch.bfloat16
 
+
 def bench(fn, warmup=WARMUP, iters=ITERS):
     """Returns mean latency in ms."""
     for _ in range(warmup):
@@ -34,9 +36,11 @@ def bench(fn, warmup=WARMUP, iters=ITERS):
     torch.cuda.synchronize()
     return start.elapsed_time(end) / iters
 
+
 def compute_attn_flops(B, H, N, D):
     """FLOPs for standard attention: 2*B*H*N*N*D (QK) + 2*B*H*N*N*D (PV) = 4*B*H*N^2*D."""
     return 4 * B * H * N * N * D
+
 
 def main():
     print(f"Shape: [{B}, {H}, {N}, {D}] | dtype: {DTYPE} | warmup: {WARMUP} | iters: {ITERS}")
@@ -90,11 +94,18 @@ def main():
 
     # Save raw results
     out_path = os.path.join(REPO_ROOT, "bench_hw_vs_sdpa_results.json")
-    meta = {"shape": [B, H, N, D], "dtype": str(DTYPE), "warmup": WARMUP, "iters": ITERS,
-            "device": torch.cuda.get_device_name(), "total_flops": total_flops}
+    meta = {
+        "shape": [B, H, N, D],
+        "dtype": str(DTYPE),
+        "warmup": WARMUP,
+        "iters": ITERS,
+        "device": torch.cuda.get_device_name(),
+        "total_flops": total_flops,
+    }
     with open(out_path, "w") as f:
         json.dump({"meta": meta, "results": results}, f, indent=2)
     print(f"\nRaw results saved to: {out_path}")
+
 
 if __name__ == "__main__":
     main()

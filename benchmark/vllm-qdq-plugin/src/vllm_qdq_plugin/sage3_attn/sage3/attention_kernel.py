@@ -1,39 +1,56 @@
-"""
-Tiled online attention Triton kernel with zero-dispatch P-quantization.
+"""Tiled online attention Triton kernel with zero-dispatch P-quantization.
 
 The kernel accepts P_QUANT_FN as a tl.constexpr parameter — Triton inlines
 the function at compile time. Each unique P-quant function produces a
 separately compiled kernel with no dispatch overhead.
 """
 
+from typing import Optional
+
 import torch
 import triton
 import triton.language as tl
-from typing import Optional
 
 
 @triton.jit
 def tiled_online_attention_kernel(
     # Input pointers
-    Q_ptr, K_ptr, V_ptr,
+    Q_ptr,
+    K_ptr,
+    V_ptr,
     Delta_s_ptr,  # Optional delta_s correction
     Out_ptr,
-
     # Tensor strides
-    stride_q_b, stride_q_h, stride_q_n, stride_q_d,
-    stride_k_b, stride_k_h, stride_k_n, stride_k_d,
-    stride_v_b, stride_v_h, stride_v_n, stride_v_d,
-    stride_delta_b, stride_delta_h, stride_delta_g, stride_delta_n,
-    stride_o_b, stride_o_h, stride_o_n, stride_o_d,
-
+    stride_q_b,
+    stride_q_h,
+    stride_q_n,
+    stride_q_d,
+    stride_k_b,
+    stride_k_h,
+    stride_k_n,
+    stride_k_d,
+    stride_v_b,
+    stride_v_h,
+    stride_v_n,
+    stride_v_d,
+    stride_delta_b,
+    stride_delta_h,
+    stride_delta_g,
+    stride_delta_n,
+    stride_o_b,
+    stride_o_h,
+    stride_o_n,
+    stride_o_d,
     # Dimensions
-    B, H, N, D, num_groups,
-
+    B,
+    H,
+    N,
+    D,
+    num_groups,
     # Parameters
     sm_scale,
     is_causal: tl.constexpr,
     has_delta_s: tl.constexpr,
-
     # Zero-dispatch P-quantization function
     P_QUANT_FN: tl.constexpr,
     QK_DOT_DTYPE: tl.constexpr,
@@ -41,14 +58,12 @@ def tiled_online_attention_kernel(
     PV_DOT_DTYPE: tl.constexpr,
     PV_DOT_OUT_DTYPE: tl.constexpr,
     SOFTMAX_DTYPE: tl.constexpr,
-
     # Block sizes
     BLOCK_M: tl.constexpr,
     BLOCK_N: tl.constexpr,
     HEAD_DIM: tl.constexpr,
 ):
-    """
-    Tiled online attention kernel with all SageAttention3 features.
+    """Tiled online attention kernel with all SageAttention3 features.
 
     Processes one query tile at a time, iterating through all key/value tiles
     using the online softmax algorithm. P-quantization is performed by the
@@ -73,17 +88,15 @@ def tiled_online_attention_kernel(
     offs_d = tl.arange(0, HEAD_DIM)
 
     # Load query tile
-    q_ptrs = (Q_ptr +
-              pid_b * stride_q_b +
-              pid_h * stride_q_h +
-              offs_m[:, None] * stride_q_n +
-              offs_d[None, :] * stride_q_d)
+    q_ptrs = (
+        Q_ptr + pid_b * stride_q_b + pid_h * stride_q_h + offs_m[:, None] * stride_q_n + offs_d[None, :] * stride_q_d
+    )
 
     q_mask = (offs_m[:, None] < N) & (offs_d[None, :] < D)
     q_tile = tl.load(q_ptrs, mask=q_mask, other=0.0).to(tl.float32).to(QK_DOT_DTYPE)
 
     # Initialize running statistics for online softmax
-    running_max = tl.full([BLOCK_M], float('-inf'), dtype=SOFTMAX_DTYPE)
+    running_max = tl.full([BLOCK_M], float("-inf"), dtype=SOFTMAX_DTYPE)
     running_sum = tl.zeros([BLOCK_M], dtype=SOFTMAX_DTYPE)
     output_tile = tl.zeros([BLOCK_M, HEAD_DIM], dtype=PV_DOT_DTYPE)
 
@@ -101,21 +114,25 @@ def tiled_online_attention_kernel(
             offs_n = k_start + tl.arange(0, BLOCK_N)
 
             # Load key tile
-            k_ptrs = (K_ptr +
-                      pid_b * stride_k_b +
-                      pid_h * stride_k_h +
-                      offs_n[None, :] * stride_k_n +
-                      offs_d[:, None] * stride_k_d)
+            k_ptrs = (
+                K_ptr
+                + pid_b * stride_k_b
+                + pid_h * stride_k_h
+                + offs_n[None, :] * stride_k_n
+                + offs_d[:, None] * stride_k_d
+            )
 
             k_mask = (offs_n[None, :] < N) & (offs_d[:, None] < D)
             k_tile = tl.load(k_ptrs, mask=k_mask, other=0.0).to(tl.float32).to(QK_DOT_DTYPE)
 
             # Load value tile
-            v_ptrs = (V_ptr +
-                      pid_b * stride_v_b +
-                      pid_h * stride_v_h +
-                      offs_n[:, None] * stride_v_n +
-                      offs_d[None, :] * stride_v_d)
+            v_ptrs = (
+                V_ptr
+                + pid_b * stride_v_b
+                + pid_h * stride_v_h
+                + offs_n[:, None] * stride_v_n
+                + offs_d[None, :] * stride_v_d
+            )
 
             v_mask = (offs_n[:, None] < N) & (offs_d[None, :] < D)
             v_tile = tl.load(v_ptrs, mask=v_mask, other=0.0).to(tl.float32).to(PV_DOT_DTYPE)
@@ -131,11 +148,13 @@ def tiled_online_attention_kernel(
                 group_id = (q_start) // GROUP_SIZE if num_groups > 1 else 0
                 group_id = tl.minimum(group_id, num_groups - 1)
 
-                ds_ptrs = (Delta_s_ptr +
-                           pid_b * stride_delta_b +
-                           pid_h * stride_delta_h +
-                           group_id * stride_delta_g +
-                           offs_n * stride_delta_n)
+                ds_ptrs = (
+                    Delta_s_ptr
+                    + pid_b * stride_delta_b
+                    + pid_h * stride_delta_h
+                    + group_id * stride_delta_g
+                    + offs_n * stride_delta_n
+                )
 
                 ds_mask = offs_n < N
                 ds_tile = tl.load(ds_ptrs, mask=ds_mask, other=0.0).to(SOFTMAX_DTYPE)
@@ -146,7 +165,7 @@ def tiled_online_attention_kernel(
 
             # Apply sm_scale AFTER adding delta_s
             qk_tile = (qk_tile * sm_scale).to(SOFTMAX_DTYPE)
-            neg_inf = tl.full([BLOCK_M, BLOCK_N], float('-inf'), dtype=SOFTMAX_DTYPE)
+            neg_inf = tl.full([BLOCK_M, BLOCK_N], float("-inf"), dtype=SOFTMAX_DTYPE)
 
             # Apply causal mask
             if is_causal:
@@ -194,11 +213,9 @@ def tiled_online_attention_kernel(
     output_tile = output_tile / (running_sum.to(PV_DOT_DTYPE)[:, None])
 
     # Store output
-    out_ptrs = (Out_ptr +
-                pid_b * stride_o_b +
-                pid_h * stride_o_h +
-                offs_m[:, None] * stride_o_n +
-                offs_d[None, :] * stride_o_d)
+    out_ptrs = (
+        Out_ptr + pid_b * stride_o_b + pid_h * stride_o_h + offs_m[:, None] * stride_o_n + offs_d[None, :] * stride_o_d
+    )
 
     out_mask = (offs_m[:, None] < N) & (offs_d[None, :] < D)
     # tl.store auto-casts the accumulator tile to the output tensor's dtype.
@@ -208,6 +225,7 @@ def tiled_online_attention_kernel(
 # ============================================================================
 # Kernel launcher
 # ============================================================================
+
 
 def launch_attention(
     q: torch.Tensor,
@@ -224,8 +242,7 @@ def launch_attention(
     softmax_dtype=tl.float32,
     num_warps=8,
 ) -> torch.Tensor:
-    """
-    Launch the tiled online attention kernel.
+    """Launch the tiled online attention kernel.
 
     Args:
         q: Query tensor [B, H, N, D]
@@ -271,19 +288,42 @@ def launch_attention(
     pv_dot_out_dtype = tl.float32 if pv_dot_dtype is tl.bfloat16 else pv_dot_dtype
 
     tiled_online_attention_kernel[grid](
-        q, k, v, delta_s, output,
+        q,
+        k,
+        v,
+        delta_s,
+        output,
         # Q strides
-        q.stride(0), q.stride(1), q.stride(2), q.stride(3),
+        q.stride(0),
+        q.stride(1),
+        q.stride(2),
+        q.stride(3),
         # K strides
-        k.stride(0), k.stride(1), k.stride(2), k.stride(3),
+        k.stride(0),
+        k.stride(1),
+        k.stride(2),
+        k.stride(3),
         # V strides
-        v.stride(0), v.stride(1), v.stride(2), v.stride(3),
+        v.stride(0),
+        v.stride(1),
+        v.stride(2),
+        v.stride(3),
         # Delta_s strides
-        delta_s.stride(0), delta_s.stride(1), delta_s.stride(2), delta_s.stride(3),
+        delta_s.stride(0),
+        delta_s.stride(1),
+        delta_s.stride(2),
+        delta_s.stride(3),
         # Output strides
-        output.stride(0), output.stride(1), output.stride(2), output.stride(3),
+        output.stride(0),
+        output.stride(1),
+        output.stride(2),
+        output.stride(3),
         # Dimensions
-        B, H, N, D, num_groups,
+        B,
+        H,
+        N,
+        D,
+        num_groups,
         # Parameters
         sm_scale,
         is_causal,

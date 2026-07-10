@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""
-MXFP4 input activation quant-dequant (QDQ).
+"""MXFP4 input activation quant-dequant (QDQ).
 
 This implementation is adapted from vLLM's MXFP4 reference test helper
 (`tests/quantization/reference_mxfp4.py`) but kept self-contained so the
@@ -22,14 +21,10 @@ FLOAT4_EXP_BIAS = 1
 FLOAT4_MANTISSA_BITS = 1
 
 FLOAT16_VAL_TO_ADD = 1 << (FLOAT16_MANTISSA_BITS - FLOAT4_MANTISSA_BITS - 1)
-FLOAT16_SIGN_EXPONENT_MASK = (
-    (1 << (FLOAT16_EXP_BITS + 1)) - 1
-) << FLOAT16_MANTISSA_BITS
+FLOAT16_SIGN_EXPONENT_MASK = ((1 << (FLOAT16_EXP_BITS + 1)) - 1) << FLOAT16_MANTISSA_BITS
 
 BFLOAT16_VAL_TO_ADD = 1 << (BFLOAT16_MANTISSA_BITS - FLOAT4_MANTISSA_BITS - 1)
-BFLOAT16_SIGN_EXPONENT_MASK = (
-    (1 << (BFLOAT16_EXP_BITS + 1)) - 1
-) << BFLOAT16_MANTISSA_BITS
+BFLOAT16_SIGN_EXPONENT_MASK = ((1 << (BFLOAT16_EXP_BITS + 1)) - 1) << BFLOAT16_MANTISSA_BITS
 
 
 def _fp_to_fp4_simulate(
@@ -73,24 +68,16 @@ def _fp_to_fp4_simulate(
 
     new_exp_tie = (exp > (half_exp_bias - 2)) * (exp + (mantissa_last == 1))
 
-    new_exp = (
-        round_away * new_exp_away + round_close * new_exp_close + tie * new_exp_tie
-    )
+    new_exp = round_away * new_exp_away + round_close * new_exp_close + tie * new_exp_tie
     new_mantissa = round_away * new_mantissa_away + round_close * new_mantissa_close
     new_mantissa = new_mantissa + (new_exp > (2 + half_exp_bias)) * (new_mantissa == 0)
 
-    new_exp = (new_exp >= (half_exp_bias - 2)) * torch.clamp(
-        new_exp, half_exp_bias - 2, half_exp_bias + 2
-    )
+    new_exp = (new_exp >= (half_exp_bias - 2)) * torch.clamp(new_exp, half_exp_bias - 2, half_exp_bias + 2)
 
     sign = sign.to(torch.int32)
     new_mantissa = new_mantissa.to(torch.int32)
 
-    qdq_val = (
-        (sign << 15)
-        + (new_exp << half_mantissa_bits)
-        + (new_mantissa << (half_mantissa_bits - 1))
-    )
+    qdq_val = (sign << 15) + (new_exp << half_mantissa_bits) + (new_mantissa << (half_mantissa_bits - 1))
     qdq_val = qdq_val.to(torch.uint16)
     return qdq_val.view(float_type)
 
@@ -106,12 +93,11 @@ def mxfp4_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
         Tensor same shape and dtype as x, with MXFP4 quantization noise applied.
     """
     orig_dtype = x.dtype
-    assert x.dim() == 2, (
-        f"mxfp4_qdq only supports 2D tensors for now, but got {x.dim()}D"
-    )
-    assert orig_dtype in (torch.float16, torch.bfloat16), (
-        f"mxfp4_qdq only supports fp16/bf16 tensors, but got {orig_dtype}"
-    )
+    assert x.dim() == 2, f"mxfp4_qdq only supports 2D tensors for now, but got {x.dim()}D"
+    assert orig_dtype in (
+        torch.float16,
+        torch.bfloat16,
+    ), f"mxfp4_qdq only supports fp16/bf16 tensors, but got {orig_dtype}"
     m, k = x.shape
 
     # Pad k to multiple of group_size
@@ -139,9 +125,7 @@ def mxfp4_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
     block_max_uint = torch.bitwise_and(block_max + val_to_add, sign_exponent_mask)
     block_max = block_max_uint.to(torch.uint16).view(orig_dtype)
 
-    scale_exp = (
-        FLOAT8_E8M0_MAX_EXP + torch.floor(torch.log2(block_max)).to(torch.int32) - 2
-    )
+    scale_exp = FLOAT8_E8M0_MAX_EXP + torch.floor(torch.log2(block_max)).to(torch.int32) - 2
     scale_exp = torch.clamp(scale_exp, 0, 2 * FLOAT8_E8M0_MAX_EXP)
     scale = (2.0 ** (scale_exp - FLOAT8_E8M0_MAX_EXP)).to(orig_dtype)
 

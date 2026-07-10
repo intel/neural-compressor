@@ -8,7 +8,6 @@ every call site (dense, MoE gate+up, MoE down) gets QDQ automatically.
 import sys
 
 import torch
-
 from vllm.logger import init_logger
 
 from . import envs
@@ -48,21 +47,13 @@ def _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq):
         is_zp_float: bool = False,
     ) -> torch.Tensor:
         # MXFP4 QDQ — extend with elif for other dtypes
-        if (
-            b_q_type == scalar_types.float4_e2m1f
-            and a.dim() == 2
-            and a.dtype in (torch.float16, torch.bfloat16)
-        ):
+        if b_q_type == scalar_types.float4_e2m1f and a.dim() == 2 and a.dtype in (torch.float16, torch.bfloat16):
             trace_qdq("marlin_gemm", a.shape, a.dtype)
             a = mxfp4_qdq(a, group_size=32)
             # logger.debug(
             #     "Applied MXFP4 QDQ to marlin_gemm as b_q_type is float4_e2m1f"
             # )
-        elif (
-            b_q_type == scalar_types.float8_e4m3fn
-            and a.dim() == 2
-            and a.dtype in (torch.float16, torch.bfloat16)
-        ):
+        elif b_q_type == scalar_types.float8_e4m3fn and a.dim() == 2 and a.dtype in (torch.float16, torch.bfloat16):
             trace_qdq("marlin_gemm", a.shape, a.dtype)
             a = mxfp8_qdq(a, group_size=32)
             # logger.debug(
@@ -212,11 +203,7 @@ def _patch_mla_kv_b_proj_dtype():
     def _patched(self, *args, **kwargs):
         kv_b_proj = self.kv_b_proj
         real_weight = getattr(kv_b_proj, "weight", None)
-        if (
-            real_weight is not None
-            and not real_weight.dtype.is_floating_point
-            and hasattr(kv_b_proj, "params_dtype")
-        ):
+        if real_weight is not None and not real_weight.dtype.is_floating_point and hasattr(kv_b_proj, "params_dtype"):
             compute_dtype = kv_b_proj.params_dtype
             orig_forward = kv_b_proj.forward
 
@@ -235,8 +222,7 @@ def _patch_mla_kv_b_proj_dtype():
 
     MLACommonImpl._compute_prefill_context = _patched
     logger.warning(
-        "QDQ patch applied: MLACommonImpl._compute_prefill_context "
-        "(packed-weight dtype fix for MXFP4/NVFP4)"
+        "QDQ patch applied: MLACommonImpl._compute_prefill_context " "(packed-weight dtype fix for MXFP4/NVFP4)"
     )
 
 

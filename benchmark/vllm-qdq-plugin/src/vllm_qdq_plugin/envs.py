@@ -29,8 +29,7 @@ def env_with_choices(
     choices: list[str] | Callable[[], list[str]],
     case_sensitive: bool = True,
 ) -> Callable[[], str | None]:
-    """
-    Create a lambda that validates environment variable against allowed choices
+    """Create a lambda that validates environment variable against allowed choices.
 
     Args:
         env_name: Name of the environment variable
@@ -58,10 +57,7 @@ def env_with_choices(
             check_choices = actual_choices
 
         if check_value not in check_choices:
-            raise ValueError(
-                f"Invalid value '{value}' for {env_name}. "
-                f"Valid options: {actual_choices}."
-            )
+            raise ValueError(f"Invalid value '{value}' for {env_name}. " f"Valid options: {actual_choices}.")
 
         if not case_sensitive:
             for choice in actual_choices:

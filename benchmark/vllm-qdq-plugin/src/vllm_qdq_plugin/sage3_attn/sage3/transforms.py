@@ -7,10 +7,11 @@ Each transform has the signature:
 Transforms are composable via the pre_transforms list on AttentionConfig.
 """
 
-import torch
-import torch.nn.functional as F
 from dataclasses import dataclass, field
 from typing import Callable, Optional, Tuple
+
+import torch
+import torch.nn.functional as F
 
 # Type alias for transform functions
 TransformFn = Callable[
@@ -21,12 +22,12 @@ TransformFn = Callable[
 
 @dataclass
 class TransformContext:
-    """
-    Typed context passed between transforms and to the kernel launcher.
+    """Typed context passed between transforms and to the kernel launcher.
 
     Carries metadata produced by transforms that downstream stages need
     (e.g., delta_s from smoothing, v_mean from V-smoothing).
     """
+
     delta_s: Optional[torch.Tensor] = None
     v_mean: Optional[torch.Tensor] = None
 
@@ -34,6 +35,7 @@ class TransformContext:
 # ============================================================================
 # QK Smoothing
 # ============================================================================
+
 
 def _pad_128(x: torch.Tensor) -> torch.Tensor:
     """Pad tensor's sequence dimension to a multiple of 128."""
@@ -50,8 +52,7 @@ def qk_smoothing(
     v: torch.Tensor,
     ctx: TransformContext,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, TransformContext]:
-    """
-    Apply QK smoothing to reduce quantization outliers.
+    """Apply QK smoothing to reduce quantization outliers.
 
     1. K centering: k_centered = k - mean(k, dim=sequence)
     2. Q per-block smoothing: subtract per-128-token-group mean
@@ -88,9 +89,7 @@ def qk_smoothing(
     k_smoothed = k_padded[:, :, :N, :]
 
     # Step 4: Compute delta_s = q_means @ k^T
-    ctx.delta_s = torch.matmul(
-        q_means, k_smoothed.transpose(-2, -1)
-    ).to(torch.float32).contiguous()
+    ctx.delta_s = torch.matmul(q_means, k_smoothed.transpose(-2, -1)).to(torch.float32).contiguous()
 
     return q_smoothed, k_smoothed, v, ctx
 
@@ -99,14 +98,14 @@ def qk_smoothing(
 # V Smoothing
 # ============================================================================
 
+
 def v_smoothing(
     q: torch.Tensor,
     k: torch.Tensor,
     v: torch.Tensor,
     ctx: TransformContext,
 ) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor, TransformContext]:
-    """
-    Subtract V's mean to reduce outlier impact before quantization.
+    """Subtract V's mean to reduce outlier impact before quantization.
 
     The correction (output += v_mean) is applied post-kernel in api.py,
     reading ctx.v_mean. This works because sum(softmax_weights) = 1:

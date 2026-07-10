@@ -1,5 +1,4 @@
-"""
-Layer-adaptive and step-adaptive attention routing.
+"""Layer-adaptive and step-adaptive attention routing.
 
 Routes each transformer layer and/or denoising step to a different
 attention configuration based on call counting. Designed for
@@ -26,8 +25,7 @@ from typing import Callable, Optional, Set
 
 
 class LayerAdaptiveAttention:
-    """
-    Routes each transformer layer to one of two attention functions
+    """Routes each transformer layer to one of two attention functions
     based on call_count % num_layers.
 
     Supports two modes:
@@ -95,8 +93,7 @@ class LayerAdaptiveAttention:
 
 
 class StepLayerAdaptiveAttention:
-    """
-    Combined step-level and layer-level routing.
+    """Combined step-level and layer-level routing.
 
     Three-tier step routing:
     - critical_steps → sdpa_fn (full precision)

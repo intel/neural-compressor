@@ -10,9 +10,7 @@ import sys
 
 import torch
 import torch.nn.functional as F
-
 from vllm.logger import init_logger
-
 from vllm_omni.diffusion.attention.backends.abstract import (
     AttentionImpl,
     AttentionMetadata,

@@ -11,7 +11,7 @@ scheme is fully described by an AttentionConfig that composes:
 
 from dataclasses import dataclass, field
 from enum import IntEnum
-from typing import Callable, Optional, Tuple, TYPE_CHECKING
+from typing import TYPE_CHECKING, Callable, Optional, Tuple
 
 import triton
 
@@ -25,31 +25,34 @@ from .quant_primitives import (
     round_to_e8m0_torch,
 )
 
-
 # ============================================================================
 # Enums
 # ============================================================================
 
+
 class DataFormat(IntEnum):
     """Data quantization format."""
-    E2M1 = 0    # FP4 (±{0, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6})
-    E4M3 = 1    # FP8 ([-448, 448])
-    E5M2 = 2    # FP8 alternate
-    INT8 = 3    # 8-bit integer
-    INT4 = 4    # 4-bit integer
+
+    E2M1 = 0  # FP4 (±{0, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6})
+    E4M3 = 1  # FP8 ([-448, 448])
+    E5M2 = 2  # FP8 alternate
+    INT8 = 3  # 8-bit integer
+    INT4 = 4  # 4-bit integer
 
 
 class ScaleFormat(IntEnum):
     """Scale rounding format."""
-    E4M3 = 0    # NVFP4 style (3-bit mantissa)
-    E8M0 = 1    # MXFP4/MXFP8 style (power-of-2 shared exponent)
-    NONE = 2    # No scale rounding (INT schemes, standalone FP8)
+
+    E4M3 = 0  # NVFP4 style (3-bit mantissa)
+    E8M0 = 1  # MXFP4/MXFP8 style (power-of-2 shared exponent)
+    NONE = 2  # No scale rounding (INT schemes, standalone FP8)
 
 
 class RoundingMode(IntEnum):
     """Rounding mode for scale and/or data quantization."""
+
     STOCHASTIC = 0
-    RNE = 1          # Round-to-nearest-even
+    RNE = 1  # Round-to-nearest-even
     CEIL = 2
     FLOOR = 3
 
@@ -74,54 +77,53 @@ _DATA_FN_BY_FORMAT = {
 # QuantConfig — per-stage quantization configuration
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class QuantConfig:
-    """
-    Configuration for one quantization stage (QK or PV).
+    """Configuration for one quantization stage (QK or PV).
 
     Carries both the abstract format description (enums) and the concrete
     callable implementations needed by host-side quantization (quantize.py).
     """
+
     name: str
     data_format: DataFormat
     scale_format: ScaleFormat
     rounding_mode: RoundingMode = RoundingMode.STOCHASTIC
     block_size: int = 16
-    scale_levels: int = 2       # 1 = single-level, 2 = two-level
-    fp_max: float = 6.0         # Max representable value for the data format
+    scale_levels: int = 2  # 1 = single-level, 2 = two-level
+    fp_max: float = 6.0  # Max representable value for the data format
 
     # Torch callables for host-side quantization (used by quantize.py)
-    round_scale_torch: Optional[Callable] = None   # e.g., round_to_e4m3_torch
-    quant_data_torch: Optional[Callable] = None     # e.g., apply_e2m1_quantization_torch; None → E2M1 default
+    round_scale_torch: Optional[Callable] = None  # e.g., round_to_e4m3_torch
+    quant_data_torch: Optional[Callable] = None  # e.g., apply_e2m1_quantization_torch; None → E2M1 default
 
 
 # ============================================================================
 # AttentionConfig — full attention configuration
 # ============================================================================
 
+
 @dataclass(frozen=True)
 class AttentionConfig:
-    """
-    Composes QK quant, PV quant, P-quant kernel, and pre-transforms.
+    """Composes QK quant, PV quant, P-quant kernel, and pre-transforms.
 
     This is the single object that fully describes an attention quantization scheme.
     Frozen to prevent accidental mutation of shared configs in the global registry.
     """
+
     name: str
-    qk_quant: QuantConfig               # Host-side Q/K quantization config
-    pv_quant: QuantConfig               # Host-side V quantization config
-    p_quant_fn: triton.JITFunction      # @triton.jit function for in-kernel P quantization
+    qk_quant: QuantConfig  # Host-side Q/K quantization config
+    pv_quant: QuantConfig  # Host-side V quantization config
+    p_quant_fn: triton.JITFunction  # @triton.jit function for in-kernel P quantization
     pre_transforms: Tuple["TransformFn", ...] = field(default_factory=tuple)
 
     def validate(self):
         """Validate config consistency at registration time."""
         # Required fields
-        assert self.qk_quant.round_scale_torch is not None, \
-            f"{self.name}: qk_quant missing round_scale_torch"
-        assert self.pv_quant.round_scale_torch is not None, \
-            f"{self.name}: pv_quant missing round_scale_torch"
-        assert self.p_quant_fn is not None, \
-            f"{self.name}: missing p_quant_fn"
+        assert self.qk_quant.round_scale_torch is not None, f"{self.name}: qk_quant missing round_scale_torch"
+        assert self.pv_quant.round_scale_torch is not None, f"{self.name}: pv_quant missing round_scale_torch"
+        assert self.p_quant_fn is not None, f"{self.name}: missing p_quant_fn"
 
         # Validate enum/callable consistency for QK
         expected_scale_fn = _SCALE_FN_BY_FORMAT.get(self.qk_quant.scale_format)
@@ -153,9 +155,9 @@ ATTENTION_CONFIGS: dict[str, AttentionConfig] = {}
 
 def _register_builtin_configs():
     """Register all built-in attention configurations."""
-    from .p_quant_registry import P_QUANT_REGISTRY
     # Ensure P-quant kernels are registered (import triggers @register_p_quant)
     from . import p_quant_kernels as _  # noqa: F401
+    from .p_quant_registry import P_QUANT_REGISTRY
     from .transforms import qk_smoothing, v_smoothing
 
     # ── NVFP4: Two-level, E4M3 scales, block_size=16 ──
@@ -265,8 +267,8 @@ def _register_builtin_configs():
     # ── Mixed precision: FP8-QK / FP4-PV ──
     ATTENTION_CONFIGS["mixed_fp8qk_fp4pv"] = AttentionConfig(
         name="mixed_fp8qk_fp4pv",
-        qk_quant=mxfp8_s1_quant,       # FP8 for Q, K
-        pv_quant=mxfp4_s1_quant,       # FP4 for V
+        qk_quant=mxfp8_s1_quant,  # FP8 for Q, K
+        pv_quant=mxfp4_s1_quant,  # FP4 for V
         p_quant_fn=P_QUANT_REGISTRY["mxfp4_s1"],  # FP4 P-quant
         pre_transforms=(qk_smoothing,),
     )
@@ -274,8 +276,8 @@ def _register_builtin_configs():
     # ── Mixed precision: FP4-QK / FP8-PV ──
     ATTENTION_CONFIGS["mixed_fp4qk_fp8pv"] = AttentionConfig(
         name="mixed_fp4qk_fp8pv",
-        qk_quant=mxfp4_s1_quant,       # FP4 for Q, K
-        pv_quant=mxfp8_s1_quant,       # FP8 for V
+        qk_quant=mxfp4_s1_quant,  # FP4 for Q, K
+        pv_quant=mxfp8_s1_quant,  # FP8 for V
         p_quant_fn=P_QUANT_REGISTRY["mxfp8_s1"],  # FP8 P-quant
         pre_transforms=(qk_smoothing,),
     )

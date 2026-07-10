@@ -1,13 +1,13 @@
-"""
-Host-side K/V quantization: fake-quantize Q, K, V tensors before feeding to the attention kernel.
+"""Host-side K/V quantization: fake-quantize Q, K, V tensors before feeding to the attention kernel.
 
 Q/K are blocked along D (head_dim), V is blocked along N (seq_len).
 The block size, fp_max, and rounding functions come from QuantConfig.
 """
 
+from typing import Tuple
+
 import torch
 import torch.nn.functional as F
-from typing import Tuple
 
 from .quant_config import QuantConfig
 from .quant_primitives import apply_e2m1_quantization_torch
@@ -19,8 +19,7 @@ SCALE_EPSILON = 1e-8
 
 
 def quantize_qk(x: torch.Tensor, config: QuantConfig) -> Tuple[torch.Tensor, torch.Tensor]:
-    """
-    Per-block microscaling quantization for Q or K tensors.
+    """Per-block microscaling quantization for Q or K tensors.
 
     Blocks are formed along the D (head_dim) dimension.
 
@@ -42,7 +41,7 @@ def quantize_qk(x: torch.Tensor, config: QuantConfig) -> Tuple[torch.Tensor, tor
     # Handle dimensions not divisible by block_size
     if D % block_size != 0:
         pad_size = block_size - (D % block_size)
-        x_padded = F.pad(x, (0, pad_size), mode='constant', value=0)
+        x_padded = F.pad(x, (0, pad_size), mode="constant", value=0)
         D_padded = D + pad_size
     else:
         x_padded = x
@@ -82,8 +81,7 @@ def quantize_qk(x: torch.Tensor, config: QuantConfig) -> Tuple[torch.Tensor, tor
 
 
 def quantize_v(x: torch.Tensor, config: QuantConfig) -> Tuple[torch.Tensor, torch.Tensor]:
-    """
-    Per-block microscaling quantization for V tensor.
+    """Per-block microscaling quantization for V tensor.
 
     Unlike Q/K which block along D (head_dim), V is quantized with blocks
     along N (seq_len).
@@ -101,7 +99,7 @@ def quantize_v(x: torch.Tensor, config: QuantConfig) -> Tuple[torch.Tensor, torc
     # Pad N to multiple of block_size
     if N % block_size != 0:
         pad_size = block_size - (N % block_size)
-        x_padded = F.pad(x, (0, 0, 0, pad_size), mode='constant', value=0)
+        x_padded = F.pad(x, (0, 0, 0, pad_size), mode="constant", value=0)
         N_padded = N + pad_size
     else:
         x_padded = x

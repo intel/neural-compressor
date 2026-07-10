@@ -11,18 +11,16 @@ Wraps the prebuilt ``spas_sage_attn`` block-sparse CUDA kernels with:
 import torch
 import torch.nn.functional as F
 
-from vllm.logger import init_logger
-
-from vllm_omni.diffusion.attention.backends.abstract import (
-    AttentionImpl,
-    AttentionMetadata,
-)
-
 # Imported lazily (this module is only imported when SpargeAttn is selected), so a
 # missing/unbuilt spas_sage_attn surfaces a clear ImportError only at that point.
 from spas_sage_attn import (
     spas_sage2_attn_meansim_cuda,
     spas_sage2_attn_meansim_topk_cuda,
+)
+from vllm.logger import init_logger
+from vllm_omni.diffusion.attention.backends.abstract import (
+    AttentionImpl,
+    AttentionMetadata,
 )
 
 from .. import envs
@@ -108,9 +106,7 @@ class SpargeAttnImpl(AttentionImpl):
         q = query.transpose(1, 2)
         k = key.transpose(1, 2)
         v = value.transpose(1, 2)
-        out = F.scaled_dot_product_attention(
-            q, k, v, scale=self.softmax_scale, is_causal=False
-        )
+        out = F.scaled_dot_product_attention(q, k, v, scale=self.softmax_scale, is_causal=False)
         return out.transpose(1, 2)  # back to NHD
 
     @torch.compiler.disable()
@@ -122,8 +118,7 @@ class SpargeAttnImpl(AttentionImpl):
     ) -> torch.Tensor:
         """Forward using the SpargeAttn kernel."""
         logger.warning_once(
-            "SpargeAttnImpl: SpargeAttn kernel active (mode=%s, topk=%s, "
-            "cdfthreshd=%s) — q shape %s",
+            "SpargeAttnImpl: SpargeAttn kernel active (mode=%s, topk=%s, " "cdfthreshd=%s) — q shape %s",
             self._mode,
             self._topk,
             self._cdfthreshd,

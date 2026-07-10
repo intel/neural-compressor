@@ -65,8 +65,7 @@ def _coerce_range_spec(value, field: str, rule_idx: int) -> str:
     if isinstance(value, str):
         return value
     raise ValueError(
-        f"route rule {rule_idx}: {field!r} must be a range string "
-        f"(e.g. '0-7,9'), got {type(value).__name__}"
+        f"route rule {rule_idx}: {field!r} must be a range string " f"(e.g. '0-7,9'), got {type(value).__name__}"
     )
 
 
@@ -101,52 +100,33 @@ class RouteTable:
             data = json.load(f)
 
         if not isinstance(data, dict):
-            raise ValueError(
-                f"route file {path!r} must contain a JSON object, "
-                f"got {type(data).__name__}"
-            )
+            raise ValueError(f"route file {path!r} must contain a JSON object, " f"got {type(data).__name__}")
 
         allowed = _allowed_configs()
 
         default = data.get("default")
         if default is not None and default not in allowed:
             raise ValueError(
-                f"route file {path!r}: default config {default!r} not in "
-                f"allowed configs {sorted(allowed)}"
+                f"route file {path!r}: default config {default!r} not in " f"allowed configs {sorted(allowed)}"
             )
 
         raw_rules = data.get("rules", [])
         if not isinstance(raw_rules, list):
-            raise ValueError(
-                f"route file {path!r}: 'rules' must be a list, "
-                f"got {type(raw_rules).__name__}"
-            )
+            raise ValueError(f"route file {path!r}: 'rules' must be a list, " f"got {type(raw_rules).__name__}")
 
         rules: list[_Rule] = []
         for i, raw in enumerate(raw_rules):
             if not isinstance(raw, dict):
-                raise ValueError(
-                    f"route file {path!r}: rule {i} must be an object, "
-                    f"got {type(raw).__name__}"
-                )
+                raise ValueError(f"route file {path!r}: rule {i} must be an object, " f"got {type(raw).__name__}")
             config = raw.get("config")
             if config is None:
                 raise ValueError(f"route file {path!r}: rule {i} missing 'config'")
             if config not in allowed:
                 raise ValueError(
-                    f"route file {path!r}: rule {i} config {config!r} not in "
-                    f"allowed configs {sorted(allowed)}"
+                    f"route file {path!r}: rule {i} config {config!r} not in " f"allowed configs {sorted(allowed)}"
                 )
-            layers = (
-                _parse_ranges(_coerce_range_spec(raw["layers"], "layers", i))
-                if "layers" in raw
-                else None
-            )
-            steps = (
-                _parse_ranges(_coerce_range_spec(raw["steps"], "steps", i))
-                if "steps" in raw
-                else None
-            )
+            layers = _parse_ranges(_coerce_range_spec(raw["layers"], "layers", i)) if "layers" in raw else None
+            steps = _parse_ranges(_coerce_range_spec(raw["steps"], "steps", i)) if "steps" in raw else None
             rules.append(_Rule(layers, steps, config))
 
         return cls(default, rules)

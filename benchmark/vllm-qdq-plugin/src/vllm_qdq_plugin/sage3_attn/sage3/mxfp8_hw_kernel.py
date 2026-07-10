@@ -14,10 +14,11 @@ The kernel computes:
 where Q, K, V are in MXFP8 format (E4M3 data + E8M0 block scales).
 """
 
+import time
+
 import torch
 import triton
 import triton.language as tl
-import time
 
 from .triton_utils import compute_p_scale_inv
 
@@ -36,8 +37,7 @@ def fp8e8m0_to_float32(scale_uint8: torch.Tensor) -> torch.Tensor:
 
 
 def quantize_to_mxfp8(x: torch.Tensor, group_size: int = 32) -> tuple:
-    """
-    Quantize a float16/float32 tensor to MXFP8 E4M3 with E8M0 block scales.
+    """Quantize a float16/float32 tensor to MXFP8 E4M3 with E8M0 block scales.
     Groups along the last dimension with group_size=32.
 
     Returns:
@@ -75,7 +75,7 @@ def dequantize_mxfp8(x_fp8: torch.Tensor, scales: torch.Tensor, group_size: int 
     x_f32 = x_fp8.to(torch.float32)
     scale_f32 = fp8e8m0_to_float32(scales)
     scale_expanded = scale_f32.repeat_interleave(group_size, dim=-1)
-    scale_expanded = scale_expanded[..., :x_f32.shape[-1]]
+    scale_expanded = scale_expanded[..., : x_f32.shape[-1]]
     return x_f32 * scale_expanded
 
 
@@ -86,16 +86,30 @@ def dequantize_mxfp8(x_fp8: torch.Tensor, scales: torch.Tensor, group_size: int 
 
 @triton.jit
 def _mxfp8_attn_fwd_inner(
-    acc, l_i, m_i, q, q_scale,  #
-    K_ptr, K_scale_ptr, V_ptr, V_scale_ptr,  #
+    acc,
+    l_i,
+    m_i,
+    q,
+    q_scale,  #
+    K_ptr,
+    K_scale_ptr,
+    V_ptr,
+    V_scale_ptr,  #
     Delta_s_ptr,  #
-    stride_kn, stride_kk,  #
-    stride_ks_n, stride_ks_k,  #
-    stride_vn, stride_vk,  #
-    stride_vs_d, stride_vs_n,  #
-    stride_delta_g, stride_delta_n,  #
-    start_m, qk_scale,  #
-    offs_m, offs_n,  #
+    stride_kn,
+    stride_kk,  #
+    stride_ks_n,
+    stride_ks_k,  #
+    stride_vn,
+    stride_vk,  #
+    stride_vs_d,
+    stride_vs_n,  #
+    stride_delta_g,
+    stride_delta_n,  #
+    start_m,
+    qk_scale,  #
+    offs_m,
+    offs_n,  #
     N_CTX: tl.constexpr,  #
     BLOCK_M: tl.constexpr,  #
     HEAD_DIM: tl.constexpr,  #
@@ -167,7 +181,10 @@ def _mxfp8_attn_fwd_inner(
         p_amax = tl.max(p_reshaped, 2)  # [BLOCK_M, BLOCK_N // 32]
         FP8_E4M3_MAX: tl.constexpr = 448.0
         p_e8m0, inv_scale_expanded = compute_p_scale_inv(
-            p_amax, FP8_E4M3_MAX, BLOCK_M, BLOCK_N,
+            p_amax,
+            FP8_E4M3_MAX,
+            BLOCK_M,
+            BLOCK_N,
         )
         p_scaled = tl.minimum(p * inv_scale_expanded, FP8_E4M3_MAX)
         p_fp8 = p_scaled.to(tl.float8e4nv)
@@ -179,7 +196,9 @@ def _mxfp8_attn_fwd_inner(
 
         # Load V scale [HEAD_DIM, BLOCK_N // 32]
         # V_scale layout: [HEAD_DIM, N_CTX // 32], we load [HEAD_DIM, BLOCK_N//32]
-        vs_ptrs = V_scale_ptr + offs_head_full[:, None] * stride_vs_d + (start_n // 32 + offs_scale_n[None, :]) * stride_vs_n
+        vs_ptrs = (
+            V_scale_ptr + offs_head_full[:, None] * stride_vs_d + (start_n // 32 + offs_scale_n[None, :]) * stride_vs_n
+        )
         v_scale = tl.load(vs_ptrs)  # [HEAD_DIM, BLOCK_N // 32]
 
         # dot_scaled: lhs=p_fp8 [BLOCK_M, BLOCK_N], rhs=v [BLOCK_N, HEAD_DIM]
@@ -193,19 +212,50 @@ def _mxfp8_attn_fwd_inner(
 
 @triton.jit
 def _mxfp8_attn_fwd(
-    Q, K, V, Out,  #
-    Q_scale, K_scale, V_scale,  #
+    Q,
+    K,
+    V,
+    Out,  #
+    Q_scale,
+    K_scale,
+    V_scale,  #
     Delta_s,  #
     sm_scale,  #
-    stride_qz, stride_qh, stride_qm, stride_qk,  #
-    stride_kz, stride_kh, stride_kn, stride_kk,  #
-    stride_vz, stride_vh, stride_vn, stride_vk,  #
-    stride_oz, stride_oh, stride_om, stride_ok,  #
-    stride_qsz, stride_qsh, stride_qsm, stride_qsk,  #
-    stride_ksz, stride_ksh, stride_ksn, stride_ksk,  #
-    stride_vsz, stride_vsh, stride_vsd, stride_vsn,  #
-    stride_dsz, stride_dsh, stride_dsg, stride_dsn,  #
-    Z, H, N_CTX,  #
+    stride_qz,
+    stride_qh,
+    stride_qm,
+    stride_qk,  #
+    stride_kz,
+    stride_kh,
+    stride_kn,
+    stride_kk,  #
+    stride_vz,
+    stride_vh,
+    stride_vn,
+    stride_vk,  #
+    stride_oz,
+    stride_oh,
+    stride_om,
+    stride_ok,  #
+    stride_qsz,
+    stride_qsh,
+    stride_qsm,
+    stride_qsk,  #
+    stride_ksz,
+    stride_ksh,
+    stride_ksn,
+    stride_ksk,  #
+    stride_vsz,
+    stride_vsh,
+    stride_vsd,
+    stride_vsn,  #
+    stride_dsz,
+    stride_dsh,
+    stride_dsg,
+    stride_dsn,  #
+    Z,
+    H,
+    N_CTX,  #
     HEAD_DIM: tl.constexpr,  #
     BLOCK_M: tl.constexpr,  #
     BLOCK_N: tl.constexpr,  #
@@ -260,33 +310,67 @@ def _mxfp8_attn_fwd(
     # Run attention inner loop
     if STAGE & 1:
         acc, l_i, m_i = _mxfp8_attn_fwd_inner(
-            acc, l_i, m_i, q, q_scale,
-            K_ptr, K_scale_ptr, V_ptr, V_scale_ptr,
+            acc,
+            l_i,
+            m_i,
+            q,
+            q_scale,
+            K_ptr,
+            K_scale_ptr,
+            V_ptr,
+            V_scale_ptr,
             Delta_s_ptr,
-            stride_kn, stride_kk,
-            stride_ksn, stride_ksk,
-            stride_vn, stride_vk,
-            stride_vsd, stride_vsn,
-            stride_dsg, stride_dsn,
-            start_m, qk_scale,
-            offs_m, offs_n,
-            N_CTX, BLOCK_M, HEAD_DIM, BLOCK_N,
+            stride_kn,
+            stride_kk,
+            stride_ksn,
+            stride_ksk,
+            stride_vn,
+            stride_vk,
+            stride_vsd,
+            stride_vsn,
+            stride_dsg,
+            stride_dsn,
+            start_m,
+            qk_scale,
+            offs_m,
+            offs_n,
+            N_CTX,
+            BLOCK_M,
+            HEAD_DIM,
+            BLOCK_N,
             4 - STAGE,
             HAS_DELTA_S,
         )
     if STAGE & 2:
         acc, l_i, m_i = _mxfp8_attn_fwd_inner(
-            acc, l_i, m_i, q, q_scale,
-            K_ptr, K_scale_ptr, V_ptr, V_scale_ptr,
+            acc,
+            l_i,
+            m_i,
+            q,
+            q_scale,
+            K_ptr,
+            K_scale_ptr,
+            V_ptr,
+            V_scale_ptr,
             Delta_s_ptr,
-            stride_kn, stride_kk,
-            stride_ksn, stride_ksk,
-            stride_vn, stride_vk,
-            stride_vsd, stride_vsn,
-            stride_dsg, stride_dsn,
-            start_m, qk_scale,
-            offs_m, offs_n,
-            N_CTX, BLOCK_M, HEAD_DIM, BLOCK_N,
+            stride_kn,
+            stride_kk,
+            stride_ksn,
+            stride_ksk,
+            stride_vn,
+            stride_vk,
+            stride_vsd,
+            stride_vsn,
+            stride_dsg,
+            stride_dsn,
+            start_m,
+            qk_scale,
+            offs_m,
+            offs_n,
+            N_CTX,
+            BLOCK_M,
+            HEAD_DIM,
+            BLOCK_N,
             2,
             HAS_DELTA_S,
         )
@@ -315,8 +399,7 @@ def mxfp8_flash_attention(
     sm_scale: float = None,
     delta_s: torch.Tensor = None,
 ) -> torch.Tensor:
-    """
-    MXFP8 (E4M3) Flash Attention forward pass with E8M0 block scales.
+    """MXFP8 (E4M3) Flash Attention forward pass with E8M0 block scales.
 
     Args:
         q: [B, H, M, D] float8_e4m3fn — queries
@@ -336,7 +419,7 @@ def mxfp8_flash_attention(
     N = k.shape[2]
 
     if sm_scale is None:
-        sm_scale = 1.0 / (D ** 0.5)
+        sm_scale = 1.0 / (D**0.5)
 
     BLOCK_M = 128
     BLOCK_N = 64
@@ -357,28 +440,59 @@ def mxfp8_flash_attention(
     grid = (triton.cdiv(M, BLOCK_M), B * H)
 
     _mxfp8_attn_fwd[grid](
-        q, k, v, output,
-        q_scale, k_scale, v_scale,
+        q,
+        k,
+        v,
+        output,
+        q_scale,
+        k_scale,
+        v_scale,
         delta_s,
         sm_scale,
         # Q strides
-        q.stride(0), q.stride(1), q.stride(2), q.stride(3),
+        q.stride(0),
+        q.stride(1),
+        q.stride(2),
+        q.stride(3),
         # K strides
-        k.stride(0), k.stride(1), k.stride(2), k.stride(3),
+        k.stride(0),
+        k.stride(1),
+        k.stride(2),
+        k.stride(3),
         # V strides
-        v.stride(0), v.stride(1), v.stride(2), v.stride(3),
+        v.stride(0),
+        v.stride(1),
+        v.stride(2),
+        v.stride(3),
         # O strides
-        output.stride(0), output.stride(1), output.stride(2), output.stride(3),
+        output.stride(0),
+        output.stride(1),
+        output.stride(2),
+        output.stride(3),
         # Q_scale strides
-        q_scale.stride(0), q_scale.stride(1), q_scale.stride(2), q_scale.stride(3),
+        q_scale.stride(0),
+        q_scale.stride(1),
+        q_scale.stride(2),
+        q_scale.stride(3),
         # K_scale strides
-        k_scale.stride(0), k_scale.stride(1), k_scale.stride(2), k_scale.stride(3),
+        k_scale.stride(0),
+        k_scale.stride(1),
+        k_scale.stride(2),
+        k_scale.stride(3),
         # V_scale strides [B, H, D, N//32]
-        v_scale.stride(0), v_scale.stride(1), v_scale.stride(2), v_scale.stride(3),
+        v_scale.stride(0),
+        v_scale.stride(1),
+        v_scale.stride(2),
+        v_scale.stride(3),
         # Delta_s strides [B, H, num_groups, N]
-        delta_s.stride(0), delta_s.stride(1), delta_s.stride(2), delta_s.stride(3),
+        delta_s.stride(0),
+        delta_s.stride(1),
+        delta_s.stride(2),
+        delta_s.stride(3),
         # Dimensions
-        B, H, N,
+        B,
+        H,
+        N,
         # Compile-time constants
         HEAD_DIM=D,
         BLOCK_M=BLOCK_M,
@@ -440,35 +554,31 @@ def test_mxfp8_flash_attention():
         q_deq = dequantize_mxfp8(q_fp8, q_scale).float()
         k_deq = dequantize_mxfp8(k_fp8, k_scale).float()
         # For V, dequantize in the transposed domain then permute back
-        v_deq_t = dequantize_mxfp8(v_fp8_transposed.reshape(-1, N),
-                                     v_scale_flat).reshape(B, H, D, N)
+        v_deq_t = dequantize_mxfp8(v_fp8_transposed.reshape(-1, N), v_scale_flat).reshape(B, H, D, N)
         v_deq = v_deq_t.permute(0, 1, 3, 2).contiguous().float()
 
         # Reference: torch SDPA
-        sm_scale = 1.0 / (D ** 0.5)
-        ref = torch.nn.functional.scaled_dot_product_attention(
-            q_deq, k_deq, v_deq, is_causal=causal, scale=sm_scale
-        )
+        sm_scale = 1.0 / (D**0.5)
+        ref = torch.nn.functional.scaled_dot_product_attention(q_deq, k_deq, v_deq, is_causal=causal, scale=sm_scale)
 
         # Our kernel
-        out = mxfp8_flash_attention(q_fp8, k_fp8, v_fp8, q_scale, k_scale, v_scale,
-                                     causal=causal, sm_scale=sm_scale)
+        out = mxfp8_flash_attention(q_fp8, k_fp8, v_fp8, q_scale, k_scale, v_scale, causal=causal, sm_scale=sm_scale)
 
         # Compare
         max_diff = (ref - out).abs().max().item()
         mean_diff = (ref - out).abs().mean().item()
-        cos_sim = torch.nn.functional.cosine_similarity(
-            ref.flatten().unsqueeze(0), out.flatten().unsqueeze(0)
-        ).item()
+        cos_sim = torch.nn.functional.cosine_similarity(ref.flatten().unsqueeze(0), out.flatten().unsqueeze(0)).item()
 
         # Causal has higher max_diff due to fp8 quantization noise on sparse rows
         threshold = 0.7 if causal else 0.15
         status = "PASS" if max_diff < threshold else "FAIL"
-        print(f"  [{status}] B={B}, H={H}, N={N}, D={D}, causal={causal}: "
-              f"max_diff={max_diff:.4f}, mean_diff={mean_diff:.6f}, cos_sim={cos_sim:.6f}")
+        print(
+            f"  [{status}] B={B}, H={H}, N={N}, D={D}, causal={causal}: "
+            f"max_diff={max_diff:.4f}, mean_diff={mean_diff:.6f}, cos_sim={cos_sim:.6f}"
+        )
 
         if status == "FAIL":
-            print(f"    WARNING: Large difference detected!")
+            print("    WARNING: Large difference detected!")
 
     print()
 
@@ -492,7 +602,6 @@ def benchmark_mxfp8_flash_attention():
         (2, 32, 4096, 128),
         (1, 32, 8192, 128),
         (1, 40, 64 * 1024, 128),
-        
     ]
 
     for B, H, N, D in configs:
@@ -509,20 +618,18 @@ def benchmark_mxfp8_flash_attention():
         v_scale = v_scale_flat.reshape(B, H, D, N // 32)
         v_fp8 = v_fp8_transposed.permute(0, 1, 3, 2).contiguous()
 
-        sm_scale = 1.0 / (D ** 0.5)
+        sm_scale = 1.0 / (D**0.5)
 
         # Warmup
         for _ in range(5):
-            out = mxfp8_flash_attention(q_fp8, k_fp8, v_fp8, q_scale, k_scale, v_scale,
-                                         causal=False, sm_scale=sm_scale)
+            out = mxfp8_flash_attention(q_fp8, k_fp8, v_fp8, q_scale, k_scale, v_scale, causal=False, sm_scale=sm_scale)
         torch.cuda.synchronize()
 
         # Benchmark
         num_iters = 20
         start = time.perf_counter()
         for _ in range(num_iters):
-            out = mxfp8_flash_attention(q_fp8, k_fp8, v_fp8, q_scale, k_scale, v_scale,
-                                         causal=False, sm_scale=sm_scale)
+            out = mxfp8_flash_attention(q_fp8, k_fp8, v_fp8, q_scale, k_scale, v_scale, causal=False, sm_scale=sm_scale)
         torch.cuda.synchronize()
         elapsed = (time.perf_counter() - start) / num_iters
 

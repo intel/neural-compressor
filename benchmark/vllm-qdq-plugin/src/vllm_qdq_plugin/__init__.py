@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""vLLM QDQ Plugin — out-of-tree activation quant-dequant simulation.
+"""VLLM QDQ Plugin — out-of-tree activation quant-dequant simulation.
 
 Registered as a vllm.general_plugins entry point. Activated by VLLM_QDQ=1.
 Also provides sage3 Triton attention backend for vllm-omni (VLLM_SAGE3_TRITON=1).
@@ -35,14 +35,10 @@ def register_omni_sage3_triton():
             DiffusionAttentionBackendEnum.SAGE_ATTN,
             "vllm_qdq_plugin.sage3_attn.backend.Sage3TritonBackend",
         )
-        logger.warning(
-            "vllm-qdq-plugin: registered sage3 Triton backend as SAGE_ATTN "
-            "(VLLM_SAGE3_TRITON=1)"
-        )
+        logger.warning("vllm-qdq-plugin: registered sage3 Triton backend as SAGE_ATTN " "(VLLM_SAGE3_TRITON=1)")
     except ImportError as e:
         logger.warning(
-            "vllm-qdq-plugin: cannot register sage3 backend — "
-            "vllm_omni not available (%s)",
+            "vllm-qdq-plugin: cannot register sage3 backend — " "vllm_omni not available (%s)",
             e,
         )
 
@@ -58,14 +54,10 @@ def register_omni_sage3_cute():
             DiffusionAttentionBackendEnum.SAGE_ATTN,
             "vllm_qdq_plugin.sage3_attn.backend.Sage3CuteBackend",
         )
-        logger.warning(
-            "vllm-qdq-plugin: registered sage3 cute backend as SAGE_ATTN "
-            "(VLLM_SAGE3_CUTE=1)"
-        )
+        logger.warning("vllm-qdq-plugin: registered sage3 cute backend as SAGE_ATTN " "(VLLM_SAGE3_CUTE=1)")
     except ImportError as e:
         logger.warning(
-            "vllm-qdq-plugin: cannot register sage3 cute backend — "
-            "vllm_omni not available (%s)",
+            "vllm-qdq-plugin: cannot register sage3 cute backend — " "vllm_omni not available (%s)",
             e,
         )
 
@@ -95,14 +87,10 @@ def register_omni_sparge_attn():
             DiffusionAttentionBackendEnum.SAGE_ATTN,
             "vllm_qdq_plugin.sparge_attn.backend.SpargeAttnBackend",
         )
-        logger.warning(
-            "vllm-qdq-plugin: registered SpargeAttn backend as SAGE_ATTN "
-            "(VLLM_SPARGE_ATTN=1)"
-        )
+        logger.warning("vllm-qdq-plugin: registered SpargeAttn backend as SAGE_ATTN " "(VLLM_SPARGE_ATTN=1)")
     except ImportError as e:
         logger.warning(
-            "vllm-qdq-plugin: cannot register SpargeAttn backend — "
-            "vllm_omni not available (%s)",
+            "vllm-qdq-plugin: cannot register SpargeAttn backend — " "vllm_omni not available (%s)",
             e,
         )
 
@@ -121,8 +109,7 @@ def _maybe_install_route(route_file: str):
         patch_attention.install(route_file)
     except Exception as e:
         logger.warning(
-            "vllm-qdq-plugin: failed to install sage3 attention routing "
-            "from %s (%s) — continuing without routing",
+            "vllm-qdq-plugin: failed to install sage3 attention routing " "from %s (%s) — continuing without routing",
             route_file,
             e,
         )
@@ -145,20 +132,14 @@ def register_omni():
 
     if envs.VLLM_SPARGE_ATTN:
         register_omni_sparge_attn()
-        logger.warning_once(
-            "vllm-qdq-plugin: registered SpargeAttn backend for vllm-omni"
-        )
+        logger.warning_once("vllm-qdq-plugin: registered SpargeAttn backend for vllm-omni")
     elif envs.VLLM_SAGE3_TRITON:
         register_omni_sage3_triton()
-        logger.warning_once(
-            "vllm-qdq-plugin: registered sage3 Triton backend for vllm-omni"
-        )
+        logger.warning_once("vllm-qdq-plugin: registered sage3 Triton backend for vllm-omni")
         _maybe_install_route(envs.SAGE3_ROUTE_FILE)
     elif envs.VLLM_SAGE3_CUTE:
         register_omni_sage3_cute()
-        logger.warning_once(
-            "vllm-qdq-plugin: registered sage3 cute backend for vllm-omni"
-        )
+        logger.warning_once("vllm-qdq-plugin: registered sage3 cute backend for vllm-omni")
     else:
         logger.warning_once(
             "vllm-qdq-plugin: no sage3 backend registered for vllm-omni — set VLLM_SAGE3_TRITON=1 or VLLM_SAGE3_CUTE=1 to enable"

@@ -1,6 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""
-MXFP8 input activation quant-dequant (QDQ).
+"""MXFP8 input activation quant-dequant (QDQ).
 
 Implements the MX specification for MXFP8: E4M3 data format (float8_e4m3fn,
 bias=7, max=448) with per-group E8M0 (power-of-2) scales of group_size elements.
@@ -50,10 +49,7 @@ def _quantize_to_e4m3fn_no_fp8_dtype(x: torch.Tensor) -> torch.Tensor:
     ax = torch.clamp(ax, 0.0, FLOAT8_E4M3FN_MAX)
 
     # Subnormal region: values are multiples of 2^-9 in [0, 7*2^-9].
-    sub_q = (
-        _round_half_to_even(ax / FLOAT8_E4M3_SUBNORMAL_STEP)
-        * FLOAT8_E4M3_SUBNORMAL_STEP
-    )
+    sub_q = _round_half_to_even(ax / FLOAT8_E4M3_SUBNORMAL_STEP) * FLOAT8_E4M3_SUBNORMAL_STEP
     sub_q = torch.clamp(sub_q, 0.0, 7.0 * FLOAT8_E4M3_SUBNORMAL_STEP)
 
     # Normal region: step is 2^(e-3), where e=floor(log2(|x|)) in [-6, 8].
@@ -87,12 +83,11 @@ def mxfp8_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
         Tensor same shape and dtype as x, with MXFP8 E4M3 quantization noise applied.
     """
     orig_dtype = x.dtype
-    assert x.dim() == 2, (
-        f"mxfp8_qdq only supports 2D tensors for now, but got {x.dim()}D"
-    )
-    assert orig_dtype in (torch.float16, torch.bfloat16), (
-        f"mxfp8_qdq only supports fp16/bf16 tensors, but got {orig_dtype}"
-    )
+    assert x.dim() == 2, f"mxfp8_qdq only supports 2D tensors for now, but got {x.dim()}D"
+    assert orig_dtype in (
+        torch.float16,
+        torch.bfloat16,
+    ), f"mxfp8_qdq only supports fp16/bf16 tensors, but got {orig_dtype}"
     m, k = x.shape
 
     # Pad k to multiple of group_size
@@ -109,9 +104,7 @@ def mxfp8_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
     block_max_f32 = block_max_f32.clamp(min=torch.finfo(torch.float32).tiny)
 
     scale_exp = (
-        FLOAT8_E8M0_MAX_EXP
-        + torch.floor(torch.log2(block_max_f32)).to(torch.int32)
-        - FLOAT8_E4M3_MAX_UNBIASED_EXP
+        FLOAT8_E8M0_MAX_EXP + torch.floor(torch.log2(block_max_f32)).to(torch.int32) - FLOAT8_E4M3_MAX_UNBIASED_EXP
     )
     scale_exp = torch.clamp(scale_exp, 0, 2 * FLOAT8_E8M0_MAX_EXP)
     scale = 2.0 ** (scale_exp - FLOAT8_E8M0_MAX_EXP)

@@ -1,5 +1,4 @@
-"""
-Entry points for the sage3 standalone attention implementation.
+"""Entry points for the sage3 standalone attention implementation.
 
 Provides both backward-compatible API (sageattn3_torch_triton_standalone)
 and the new config-based API (sageattn3_standalone).
@@ -8,15 +7,16 @@ and the new config-based API (sageattn3_standalone).
 import math
 import os
 import warnings
+from typing import Optional, Union
+
 import torch
 import torch.nn.functional as F
-from typing import Optional, Union
 import triton.language as tl
 
-from .quant_config import AttentionConfig, ATTENTION_CONFIGS
-from .transforms import TransformContext, qk_smoothing
-from .quantize import quantize_qk, quantize_v
 from .attention_kernel import launch_attention
+from .quant_config import ATTENTION_CONFIGS, AttentionConfig
+from .quantize import quantize_qk, quantize_v
+from .transforms import TransformContext, qk_smoothing
 
 # ── Constants ──
 
@@ -37,9 +37,10 @@ ACC_DTYPE_MAP = {
 
 # ── Lazy environment variable helpers ──
 
-def _get_env_bool(name: str, default: str = '0') -> bool:
+
+def _get_env_bool(name: str, default: str = "0") -> bool:
     """Read a boolean env var at call time (not import time)."""
-    return os.getenv(name, default).lower() in ('1', 'true')
+    return os.getenv(name, default).lower() in ("1", "true")
 
 
 def _get_env_str(name: str, default: str) -> str:
@@ -49,10 +50,13 @@ def _get_env_str(name: str, default: str) -> str:
 
 def debug_print(*args, **kwargs):
     """Debug print that respects SAGE3_DEBUG setting."""
-    if _get_env_bool('SAGE3_DEBUG'):
+    if _get_env_bool("SAGE3_DEBUG"):
         print("[SAGE3]", *args, **kwargs)
 
+
 import functools
+
+
 @functools.lru_cache(maxsize=None)
 def print_once(*args, **kwargs):
     """Print a message only the first time it's encountered."""
@@ -67,13 +71,7 @@ def _validate_runtime_config(
     acc_dtype: str,
 ) -> None:
     """Reject known-unrunnable runtime combinations with an actionable error."""
-    if (
-        config.name == "nvfp4"
-        and d == 128
-        and tile_size_q == 128
-        and tile_size_k == 128
-        and acc_dtype == "fp32"
-    ):
+    if config.name == "nvfp4" and d == 128 and tile_size_q == 128 and tile_size_k == 128 and acc_dtype == "fp32":
         raise RuntimeError(
             "sage3_refactored NVFP4 with head_dim=128 and 128x128 tiles exceeds "
             "the Triton shared-memory limit in the default fp32 accumulator mode. "
@@ -82,9 +80,11 @@ def _validate_runtime_config(
             "--acc_dtype bf16_both_dot)."
         )
 
+
 # ============================================================================
 # Core implementation (shared by both APIs)
 # ============================================================================
+
 
 def _run_attention(
     q: torch.Tensor,
@@ -100,8 +100,7 @@ def _run_attention(
     debug: bool = False,
     acc_dtype: str = "fp32",
 ) -> torch.Tensor:
-    """
-    Core attention implementation.
+    """Core attention implementation.
 
     1. Run pre_transforms pipeline
     2. Quantize Q/K and V
@@ -114,10 +113,11 @@ def _run_attention(
     # ── Hardware MXFP8 early dispatch (uses tl.dot_scaled, no host-side quant) ──
     if config.name == "mxfp8_hw":
         from .mxfp8_hw_kernel import mxfp8_flash_attention, quantize_to_mxfp8
+
         print_once(f"[SAGE3 TRACE] mxfp8_hw kernel dispatched: Q={q.shape}, K={k.shape}, V={v.shape}, D={D}")
 
         # Apply QK smoothing for delta_s correction (reduces quant error from outliers)
-        disable_per_block_mean = _get_env_bool('SAGE3_DISABLE_PER_BLOCK_MEAN')
+        disable_per_block_mean = _get_env_bool("SAGE3_DISABLE_PER_BLOCK_MEAN")
         delta_s = None
         if per_block_mean and not disable_per_block_mean:
             ctx = TransformContext()
@@ -147,9 +147,14 @@ def _run_attention(
         v_fp8 = v_fp8_t.permute(0, 1, 3, 2).contiguous()  # [B,H,N,D]
 
         output = mxfp8_flash_attention(
-            q_fp8, k_fp8, v_fp8,
-            q_scale, k_scale, v_scale,
-            causal=is_causal, sm_scale=sm_scale,
+            q_fp8,
+            k_fp8,
+            v_fp8,
+            q_scale,
+            k_scale,
+            v_scale,
+            causal=is_causal,
+            sm_scale=sm_scale,
             delta_s=delta_s,
         )
 
@@ -160,10 +165,11 @@ def _run_attention(
     # ── Hardware MXFP4 early dispatch (uses tl.dot_scaled e2m1) ──
     if config.name == "mxfp4_hw":
         from .mxfp4_hw_kernel import mxfp4_flash_attention, quantize_to_mxfp4
+
         print_once(f"[SAGE3 TRACE] mxfp4_hw kernel dispatched: Q={q.shape}, K={k.shape}, V={v.shape}, D={D}")
 
         # Apply QK smoothing for delta_s correction (reduces FP4 quant error ~5×)
-        disable_per_block_mean = _get_env_bool('SAGE3_DISABLE_PER_BLOCK_MEAN')
+        disable_per_block_mean = _get_env_bool("SAGE3_DISABLE_PER_BLOCK_MEAN")
         delta_s = None
         if per_block_mean and not disable_per_block_mean:
             ctx = TransformContext()
@@ -195,9 +201,14 @@ def _run_attention(
         v_scale = v_scale_flat.reshape(B, H, D, N // 32)  # [B,H,D,N//32]
 
         output = mxfp4_flash_attention(
-            q_packed, k_packed, v_packed,
-            q_scale, k_scale, v_scale,
-            causal=is_causal, sm_scale=sm_scale,
+            q_packed,
+            k_packed,
+            v_packed,
+            q_scale,
+            k_scale,
+            v_scale,
+            causal=is_causal,
+            sm_scale=sm_scale,
             delta_s=delta_s,
         )
 
@@ -209,10 +220,13 @@ def _run_attention(
     if config.name == "mixed_mxfp8qk_mxfp4pv_hw":
         from .mixed_mxfp8qk_mxfp4pv_hw_kernel import (
             mixed_mxfp8qk_mxfp4pv_flash_attention,
-            quantize_to_mxfp8,
             quantize_to_mxfp4,
+            quantize_to_mxfp8,
         )
-        print_once(f"[SAGE3 TRACE] mixed_mxfp8qk_mxfp4pv_hw kernel dispatched: Q={q.shape}, K={k.shape}, V={v.shape}, D={D}")
+
+        print_once(
+            f"[SAGE3 TRACE] mixed_mxfp8qk_mxfp4pv_hw kernel dispatched: Q={q.shape}, K={k.shape}, V={v.shape}, D={D}"
+        )
 
         # Pad sequence to BLOCK_M=128
         if N % 128 != 0:
@@ -237,9 +251,14 @@ def _run_attention(
         v_scale = v_scale_flat.reshape(B, H, D, N // 32)  # [B,H,D,N//32]
 
         output = mixed_mxfp8qk_mxfp4pv_flash_attention(
-            q_fp8, k_fp8, v_packed,
-            q_scale, k_scale, v_scale,
-            causal=is_causal, sm_scale=sm_scale,
+            q_fp8,
+            k_fp8,
+            v_packed,
+            q_scale,
+            k_scale,
+            v_scale,
+            causal=is_causal,
+            sm_scale=sm_scale,
         )
 
         if output.size(2) != original_seq_len:
@@ -253,7 +272,10 @@ def _run_attention(
             quantize_to_mxfp4,
             quantize_to_mxfp8,
         )
-        print_once(f"[SAGE3 TRACE] mixed_mxfp4qk_mxfp8pv_hw kernel dispatched: Q={q.shape}, K={k.shape}, V={v.shape}, D={D}")
+
+        print_once(
+            f"[SAGE3 TRACE] mixed_mxfp4qk_mxfp8pv_hw kernel dispatched: Q={q.shape}, K={k.shape}, V={v.shape}, D={D}"
+        )
 
         # Pad sequence to BLOCK_M=128
         if N % 128 != 0:
@@ -281,9 +303,14 @@ def _run_attention(
         v_fp8 = v_fp8_transposed.permute(0, 1, 3, 2).contiguous()  # [B,H,N,D]
 
         output = mixed_mxfp4qk_mxfp8pv_flash_attention(
-            q_packed, k_packed, v_fp8,
-            q_scale, k_scale, v_scale,
-            causal=is_causal, sm_scale=sm_scale,
+            q_packed,
+            k_packed,
+            v_fp8,
+            q_scale,
+            k_scale,
+            v_scale,
+            causal=is_causal,
+            sm_scale=sm_scale,
         )
 
         if output.size(2) != original_seq_len:
@@ -306,10 +333,7 @@ def _run_attention(
         sm_scale = 1.0 / math.sqrt(D)
 
     if acc_dtype not in ACC_DTYPE_MAP:
-        raise ValueError(
-            f"Unknown acc_dtype '{acc_dtype}'. "
-            f"Available: {list(ACC_DTYPE_MAP.keys())}"
-        )
+        raise ValueError(f"Unknown acc_dtype '{acc_dtype}'. " f"Available: {list(ACC_DTYPE_MAP.keys())}")
 
     _validate_runtime_config(config, D, tile_size_q, tile_size_k, acc_dtype)
 
@@ -323,7 +347,7 @@ def _run_attention(
     # Step 1: Pre-transforms pipeline
     ctx = TransformContext()
 
-    disable_per_block_mean = _get_env_bool('SAGE3_DISABLE_PER_BLOCK_MEAN')
+    disable_per_block_mean = _get_env_bool("SAGE3_DISABLE_PER_BLOCK_MEAN")
 
     for transform in config.pre_transforms:
         # per_block_mean=False only skips QK smoothing, not other transforms
@@ -337,7 +361,7 @@ def _run_attention(
             debug_print(f"Applied transform, delta_s: {ctx.delta_s is not None}")
 
     print_once(f"config: {config}")
-    
+
     # Step 2: Quantize Q/K and V
     q_quant, _ = quantize_qk(q, config.qk_quant)
     k_quant, _ = quantize_qk(k, config.qk_quant)
@@ -348,7 +372,9 @@ def _run_attention(
         debug_print(f"Launching kernel (p_quant_fn={config.p_quant_fn})")
     num_warps = int(os.environ.get("num_warps", 8))
     output = launch_attention(
-        q_quant, k_quant, v_quant,
+        q_quant,
+        k_quant,
+        v_quant,
         delta_s=ctx.delta_s,
         sm_scale=sm_scale,
         is_causal=is_causal,
@@ -381,15 +407,14 @@ def _run_attention(
         output = output.to(q.dtype)
 
     if return_lse:
-        raise NotImplementedError(
-            "return_lse is not yet supported by the sage3 composable implementation"
-        )
+        raise NotImplementedError("return_lse is not yet supported by the sage3 composable implementation")
     return output
 
 
 # ============================================================================
 # Backward-compatible entry point
 # ============================================================================
+
 
 @torch.inference_mode()
 def sageattn3_torch_triton_standalone(
@@ -407,8 +432,7 @@ def sageattn3_torch_triton_standalone(
     quant_format: str = "mxfp4",
     acc_dtype: str = "fp32",
 ):
-    """
-    SageAttention3 Triton implementation — backward-compatible API.
+    """SageAttention3 Triton implementation — backward-compatible API.
 
     Same signature as the original monolith's sageattn3_torch_triton_standalone.
 
@@ -429,14 +453,14 @@ def sageattn3_torch_triton_standalone(
         raise ValueError("Only HND tensor layout is supported")
 
     if quant_format not in ATTENTION_CONFIGS:
-        raise ValueError(
-            f"Unknown quant_format '{quant_format}'. "
-            f"Available: {list(ATTENTION_CONFIGS.keys())}"
-        )
+        raise ValueError(f"Unknown quant_format '{quant_format}'. " f"Available: {list(ATTENTION_CONFIGS.keys())}")
 
     config = ATTENTION_CONFIGS[quant_format]
     return _run_attention(
-        q, k, v, config,
+        q,
+        k,
+        v,
+        config,
         is_causal=is_causal,
         sm_scale=sm_scale,
         per_block_mean=per_block_mean,
@@ -451,6 +475,7 @@ def sageattn3_torch_triton_standalone(
 # ============================================================================
 # New config-based entry point
 # ============================================================================
+
 
 @torch.inference_mode()
 def sageattn3_standalone(
@@ -467,21 +492,20 @@ def sageattn3_standalone(
     debug: bool = False,
     acc_dtype: str = "fp32",
 ):
-    """
-    SageAttention3 Triton implementation — new config-based API.
+    """SageAttention3 Triton implementation — new config-based API.
 
     Accepts either a config name string or an AttentionConfig object.
     """
     if isinstance(config, str):
         if config not in ATTENTION_CONFIGS:
-            raise ValueError(
-                f"Unknown config '{config}'. "
-                f"Available: {list(ATTENTION_CONFIGS.keys())}"
-            )
+            raise ValueError(f"Unknown config '{config}'. " f"Available: {list(ATTENTION_CONFIGS.keys())}")
         config = ATTENTION_CONFIGS[config]
 
     return _run_attention(
-        q, k, v, config,
+        q,
+        k,
+        v,
+        config,
         is_causal=is_causal,
         sm_scale=sm_scale,
         per_block_mean=per_block_mean,
@@ -497,6 +521,7 @@ def sageattn3_standalone(
 # SDPA-Compatible Wrapper
 # ============================================================================
 
+
 def scaled_dot_product_attention(
     query: torch.Tensor,
     key: torch.Tensor,
@@ -507,8 +532,7 @@ def scaled_dot_product_attention(
     scale: Optional[float] = None,
     **kwargs,
 ) -> torch.Tensor:
-    """
-    SDPA-compatible wrapper for SageAttention3 Triton implementation.
+    """SDPA-compatible wrapper for SageAttention3 Triton implementation.
 
     Limitations vs torch.nn.functional.scaled_dot_product_attention:
     - Q, K, V must have identical shapes [B, H, N, D] (no cross-attention)
@@ -522,13 +546,15 @@ def scaled_dot_product_attention(
     if dropout_p > 0.0:
         warnings.warn(
             f"SageAttention3 doesn't support dropout_p={dropout_p}, ignoring",
-            UserWarning, stacklevel=2,
+            UserWarning,
+            stacklevel=2,
         )
 
     if attn_mask is not None:
         warnings.warn(
             "SageAttention3 doesn't support arbitrary attention masks, ignoring",
-            UserWarning, stacklevel=2,
+            UserWarning,
+            stacklevel=2,
         )
 
     B, H, N, D = query.shape
@@ -544,16 +570,13 @@ def scaled_dot_product_attention(
             "SageAttention3 requires identical Q/K/V shapes (no cross-attention or KV caching)."
         )
 
-    use_per_block_mean = not _get_env_bool('SAGE3_DISABLE_PER_BLOCK_MEAN')
-    quant_format = kwargs.pop('quant_format', _get_env_str('SAGE3_QUANT_FORMAT', 'nvfp4'))
-    acc_dtype = kwargs.pop('acc_dtype', _get_env_str('SAGE3_ACC_DTYPE', 'fp32'))
-    debug = _get_env_bool('SAGE3_DEBUG')
+    use_per_block_mean = not _get_env_bool("SAGE3_DISABLE_PER_BLOCK_MEAN")
+    quant_format = kwargs.pop("quant_format", _get_env_str("SAGE3_QUANT_FORMAT", "nvfp4"))
+    acc_dtype = kwargs.pop("acc_dtype", _get_env_str("SAGE3_ACC_DTYPE", "fp32"))
+    debug = _get_env_bool("SAGE3_DEBUG")
 
     if quant_format not in ATTENTION_CONFIGS:
-        raise ValueError(
-            f"Unknown quant_format '{quant_format}'. "
-            f"Available: {list(ATTENTION_CONFIGS.keys())}"
-        )
+        raise ValueError(f"Unknown quant_format '{quant_format}'. " f"Available: {list(ATTENTION_CONFIGS.keys())}")
 
     output = sageattn3_torch_triton_standalone(
         q=query,

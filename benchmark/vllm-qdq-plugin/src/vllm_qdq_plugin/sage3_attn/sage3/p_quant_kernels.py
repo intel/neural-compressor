@@ -1,5 +1,4 @@
-"""
-P-quantization Triton kernels for in-kernel attention probability quantization.
+"""P-quantization Triton kernels for in-kernel attention probability quantization.
 
 Each kernel self-registers via @register_p_quant and composes shared primitives
 from quant_primitives.py, reducing the per-scheme boilerplate to the unique logic:
@@ -22,22 +21,21 @@ from .p_quant_registry import register_p_quant
 from .quant_primitives import (
     apply_e2m1_quantization_triton,
     apply_e4m3_quantization_triton,
-    round_to_e4m3_triton,
-    round_to_e8m0_triton,
-    compute_block_max,
     build_microscale_tensor_4,
     build_microscale_tensor_8,
+    compute_block_max,
+    round_to_e4m3_triton,
+    round_to_e8m0_triton,
 )
-
 
 # ============================================================================
 # NVFP4: Two-level, E4M3 scales, block_size=16
 # ============================================================================
 
+
 @register_p_quant("nvfp4")
 def p_quant_nvfp4(p_tile, BLOCK_N: tl.constexpr):
-    """
-    Two-level P quantization with fixed COMBINED_MAX + per-16-col-block microscaling.
+    """Two-level P quantization with fixed COMBINED_MAX + per-16-col-block microscaling.
 
     Matches the CUTE kernel's fused softmax behavior exactly:
     CUTE computes: P = exp(score*scale - max_scaled) * COMBINED_MAX, where COMBINED_MAX
@@ -103,10 +101,10 @@ def p_quant_nvfp4(p_tile, BLOCK_N: tl.constexpr):
 # MXFP4: Two-level, E8M0 scales, block_size=32
 # ============================================================================
 
+
 @register_p_quant("mxfp4")
 def p_quant_mxfp4(p_tile, BLOCK_N: tl.constexpr):
-    """
-    Two-level P quantization with MXFP4 microscaling (block_size=32, E8M0 scales).
+    """Two-level P quantization with MXFP4 microscaling (block_size=32, E8M0 scales).
 
     Uses the same fixed COMBINED_MAX pattern as nvfp4 (see p_quant_nvfp4 docstring).
     This is an INDEPENDENT DESIGN CHOICE — no CUTE MXFP4 kernel exists in this repo
@@ -154,10 +152,10 @@ def p_quant_mxfp4(p_tile, BLOCK_N: tl.constexpr):
 # MXFP4_S1: Single-level, E8M0 scales, block_size=32
 # ============================================================================
 
+
 @register_p_quant("mxfp4_s1")
 def p_quant_mxfp4_s1(p_tile, BLOCK_N: tl.constexpr):
-    """
-    Single-level P quantization with per-block E8M0 ceil microscaling (MXFP4).
+    """Single-level P quantization with per-block E8M0 ceil microscaling (MXFP4).
 
     No global FP32 per-row scale — only per-block E8M0 microscaling.
     This avoids the information loss from two-level global→local factorization.
@@ -194,10 +192,10 @@ def p_quant_mxfp4_s1(p_tile, BLOCK_N: tl.constexpr):
 # MXFP4_S1_E4M3: Single-level, E4M3 scales, E2M1 data, block_size=32
 # ============================================================================
 
+
 @register_p_quant("mxfp4_s1_e4m3")
 def p_quant_mxfp4_s1_e4m3(p_tile, BLOCK_N: tl.constexpr):
-    """
-    Single-level P quantization with E4M3 scales (not E8M0) and block_size=32.
+    """Single-level P quantization with E4M3 scales (not E8M0) and block_size=32.
 
     Like mxfp4_s1 but with finer-grained E4M3 microscales instead of E8M0
     power-of-2 ceil. This isolates the scale format contribution to P-quant error.
@@ -234,10 +232,10 @@ def p_quant_mxfp4_s1_e4m3(p_tile, BLOCK_N: tl.constexpr):
 # MXFP8_S1: Single-level, E8M0 scales, FP8 data, block_size=32
 # ============================================================================
 
+
 @register_p_quant("mxfp8_s1")
 def p_quant_mxfp8_s1(p_tile, BLOCK_N: tl.constexpr):
-    """
-    Single-level P quantization with per-block E8M0 ceil microscaling (MXFP8).
+    """Single-level P quantization with per-block E8M0 ceil microscaling (MXFP8).
 
     Like MXFP4_S1 but uses E4M3 data quantization (fp_max=448) instead of
     E2M1 (fp_max=6). No global FP32 per-row scale.

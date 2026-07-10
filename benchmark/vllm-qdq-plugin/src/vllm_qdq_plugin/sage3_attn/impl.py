@@ -7,11 +7,10 @@ Imports the sage3 standalone kernel and wraps it with:
 """
 
 import os
+
 import torch
 import torch.nn.functional as F
-
 from vllm.logger import init_logger
-
 from vllm_omni.diffusion.attention.backends.abstract import (
     AttentionImpl,
     AttentionMetadata,
@@ -83,9 +82,7 @@ class Sage3TritonImpl(AttentionImpl):
         q = query.transpose(1, 2)
         k = key.transpose(1, 2)
         v = value.transpose(1, 2)
-        out = F.scaled_dot_product_attention(
-            q, k, v, scale=self.softmax_scale, is_causal=False
-        )
+        out = F.scaled_dot_product_attention(q, k, v, scale=self.softmax_scale, is_causal=False)
         return out.transpose(1, 2)  # back to NHD
 
     @torch.compiler.disable()
@@ -112,16 +109,19 @@ class Sage3TritonImpl(AttentionImpl):
             max_dumps = int(os.environ.get("SAGE3_DUMP_MAX", "1"))
             if self._dump_count < max_dumps:
                 path = os.path.join(dump_dir, f"self_attn_input_{self._dump_count}.pt")
-                torch.save({
-                    "q": q.cpu(),
-                    "k": k.cpu(),
-                    "v": v.cpu(),
-                    "sm_scale": self.softmax_scale,
-                    "is_causal": self.causal,
-                    "config": cfg,
-                    "acc_dtype": self._acc_dtype,
-                    "q_shape": list(q.shape),  # [B, H, N, D]
-                }, path)
+                torch.save(
+                    {
+                        "q": q.cpu(),
+                        "k": k.cpu(),
+                        "v": v.cpu(),
+                        "sm_scale": self.softmax_scale,
+                        "is_causal": self.causal,
+                        "config": cfg,
+                        "acc_dtype": self._acc_dtype,
+                        "q_shape": list(q.shape),  # [B, H, N, D]
+                    },
+                    path,
+                )
                 logger.info("Dumped self-attention inputs to %s", path)
                 self._dump_count += 1
 

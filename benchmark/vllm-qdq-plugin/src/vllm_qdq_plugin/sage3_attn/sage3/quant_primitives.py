@@ -13,10 +13,10 @@ import triton.language as tl
 
 FP4_MAX = 6.0
 FP8_MAX = 448.0
-MICROSCALE_BLOCK_SIZE_16 = 16   # NVFP4 block size
-MICROSCALE_BLOCK_SIZE_32 = 32   # MXFP4/MXFP8 block size
+MICROSCALE_BLOCK_SIZE_16 = 16  # NVFP4 block size
+MICROSCALE_BLOCK_SIZE_32 = 32  # MXFP4/MXFP8 block size
 COMBINED_MAX = FP8_MAX * FP4_MAX  # 2688
-E8M0_MIN = 5.877471754111686e-39   # 2**-127, smallest positive E8M0 value
+E8M0_MIN = 5.877471754111686e-39  # 2**-127, smallest positive E8M0 value
 
 # NVFP4 E2M1 representable values: ±{0, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6}
 NVFP4_E2M1_VALUES = [-6, -4, -3, -2, -1.5, -1, -0.75, -0.5, 0, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6]
@@ -25,10 +25,10 @@ NVFP4_E2M1_VALUES = [-6, -4, -3, -2, -1.5, -1, -0.75, -0.5, 0, 0.5, 0.75, 1, 1.5
 # E2M1 (FP4) quantization
 # ============================================================================
 
+
 @triton.jit
 def apply_e2m1_quantization_triton(x):
-    """
-    Apply E2M1 quantization in Triton.
+    """Apply E2M1 quantization in Triton.
 
     Representable values: ±{0, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6}
     """
@@ -36,37 +36,70 @@ def apply_e2m1_quantization_triton(x):
     sign = tl.where(x >= 0.0, 1.0, -1.0)
 
     # Find nearest FP4 E2M1 level
-    quantized_abs = tl.where(x_abs < 0.25, 0.0,
-                    tl.where(x_abs < 0.625, 0.5,    # (0.5 + 0.75) / 2 = 0.625
-                    tl.where(x_abs < 0.875, 0.75,   # (0.75 + 1.0) / 2 = 0.875
-                    tl.where(x_abs < 1.25, 1.0,     # (1.0 + 1.5) / 2 = 1.25
-                    tl.where(x_abs < 1.75, 1.5,     # (1.5 + 2.0) / 2 = 1.75
-                    tl.where(x_abs < 2.5, 2.0,      # (2.0 + 3.0) / 2 = 2.5
-                    tl.where(x_abs < 3.5, 3.0,      # (3.0 + 4.0) / 2 = 3.5
-                    tl.where(x_abs < 5.0, 4.0,      # (4.0 + 6.0) / 2 = 5.0
-                                          6.0))))))))
+    quantized_abs = tl.where(
+        x_abs < 0.25,
+        0.0,
+        tl.where(
+            x_abs < 0.625,
+            0.5,  # (0.5 + 0.75) / 2 = 0.625
+            tl.where(
+                x_abs < 0.875,
+                0.75,  # (0.75 + 1.0) / 2 = 0.875
+                tl.where(
+                    x_abs < 1.25,
+                    1.0,  # (1.0 + 1.5) / 2 = 1.25
+                    tl.where(
+                        x_abs < 1.75,
+                        1.5,  # (1.5 + 2.0) / 2 = 1.75
+                        tl.where(
+                            x_abs < 2.5,
+                            2.0,  # (2.0 + 3.0) / 2 = 2.5
+                            tl.where(
+                                x_abs < 3.5,
+                                3.0,  # (3.0 + 4.0) / 2 = 3.5
+                                tl.where(x_abs < 5.0, 4.0, 6.0),  # (4.0 + 6.0) / 2 = 5.0
+                            ),
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    )
 
     return quantized_abs * sign
 
 
 def apply_e2m1_quantization_torch(x):
-    """
-    Apply E2M1 quantization in PyTorch.
+    """Apply E2M1 quantization in PyTorch.
 
     Representable values: ±{0, 0.5, 0.75, 1, 1.5, 2, 3, 4, 6}
     """
     x_abs = torch.abs(x)
     sign = torch.where(x >= 0.0, 1.0, -1.0)
 
-    quantized_abs = torch.where(x_abs < 0.25, 0.0,
-                    torch.where(x_abs < 0.625, 0.5,
-                    torch.where(x_abs < 0.875, 0.75,
-                    torch.where(x_abs < 1.25, 1.0,
-                    torch.where(x_abs < 1.75, 1.5,
-                    torch.where(x_abs < 2.5, 2.0,
-                    torch.where(x_abs < 3.5, 3.0,
-                    torch.where(x_abs < 5.0, 4.0,
-                                  6.0))))))))
+    quantized_abs = torch.where(
+        x_abs < 0.25,
+        0.0,
+        torch.where(
+            x_abs < 0.625,
+            0.5,
+            torch.where(
+                x_abs < 0.875,
+                0.75,
+                torch.where(
+                    x_abs < 1.25,
+                    1.0,
+                    torch.where(
+                        x_abs < 1.75,
+                        1.5,
+                        torch.where(
+                            x_abs < 2.5, 2.0, torch.where(x_abs < 3.5, 3.0, torch.where(x_abs < 5.0, 4.0, 6.0))
+                        ),
+                    ),
+                ),
+            ),
+        ),
+    )
 
     return quantized_abs * sign
 
@@ -75,10 +108,10 @@ def apply_e2m1_quantization_torch(x):
 # E4M3 (FP8) quantization
 # ============================================================================
 
+
 @triton.jit
 def apply_e4m3_quantization_triton(x):
-    """
-    Apply E4M3 quantization in Triton via FP32 -> FP8E4M3 -> FP32 round-trip.
+    """Apply E4M3 quantization in Triton via FP32 -> FP8E4M3 -> FP32 round-trip.
 
     FP8 E4M3 representable range: [-448, 448] with 3-bit mantissa precision.
     """
@@ -87,8 +120,7 @@ def apply_e4m3_quantization_triton(x):
 
 
 def apply_e4m3_quantization_torch(x):
-    """
-    Apply E4M3 quantization in PyTorch via FP32 -> FP8E4M3 -> FP32 round-trip.
+    """Apply E4M3 quantization in PyTorch via FP32 -> FP8E4M3 -> FP32 round-trip.
 
     FP8 E4M3 representable range: [-448, 448] with 3-bit mantissa precision.
     """
@@ -99,10 +131,10 @@ def apply_e4m3_quantization_torch(x):
 # Scale rounding functions
 # ============================================================================
 
+
 @triton.jit
 def round_to_e4m3_triton(scale):
-    """
-    Round scale to E4M3 precision via FP32 -> E4M3 -> FP32 cast round-trip.
+    """Round scale to E4M3 precision via FP32 -> E4M3 -> FP32 cast round-trip.
 
     This truncates the mantissa to 3 bits, matching the real CUDA kernel's behavior:
         reinterpret_cast<__nv_fp8_e4m3&>(SFValueFP8) = __nv_fp8_e4m3(SFValue);
@@ -113,8 +145,7 @@ def round_to_e4m3_triton(scale):
 
 
 def round_to_e4m3_torch(scales):
-    """
-    Round scales to E4M3 precision via FP32 -> E4M3 -> FP32 cast round-trip.
+    """Round scales to E4M3 precision via FP32 -> E4M3 -> FP32 cast round-trip.
 
     This truncates the mantissa to 3 bits, matching the real CUDA kernel's behavior.
     """
@@ -123,8 +154,7 @@ def round_to_e4m3_torch(scales):
 
 @triton.jit
 def round_to_e8m0_triton(scale):
-    """
-    Round scale to E8M0 precision (power-of-2 only).
+    """Round scale to E8M0 precision (power-of-2 only).
 
     E8M0: 8 exponent bits, 0 mantissa bits. Represents values as 2^(e - 127).
     Uses ceil per OCP MX spec.
@@ -138,8 +168,7 @@ def round_to_e8m0_triton(scale):
 
 
 def round_to_e8m0_torch(scales):
-    """
-    Round scales to E8M0 precision (power-of-2 only).
+    """Round scales to E8M0 precision (power-of-2 only).
 
     E8M0: 8 exponent bits, 0 mantissa bits. Represents values as 2^(e - 127).
     Uses ceil per OCP MX spec.
@@ -157,10 +186,10 @@ def round_to_e8m0_torch(scales):
 # These deduplicate the block masking / microscaling boilerplate that was
 # copy-pasted 4-8 times in each P-quant kernel.
 
+
 @triton.jit
 def compute_block_max(tile, col_indices, block_start: tl.constexpr, block_end: tl.constexpr):
-    """
-    Compute per-row max of abs values for a single column block.
+    """Compute per-row max of abs values for a single column block.
 
     Args:
         tile: [BLOCK_M, BLOCK_N] tensor
@@ -178,8 +207,7 @@ def compute_block_max(tile, col_indices, block_start: tl.constexpr, block_end: t
 
 @triton.jit
 def build_microscale_tensor_4(s0, s1, s2, s3, block_ids):
-    """
-    Build [M, N] microscale tensor from 4 per-row scale vectors.
+    """Build [M, N] microscale tensor from 4 per-row scale vectors.
 
     Used by MXFP4/MXFP8 schemes with block_size=32 (128/32 = 4 blocks).
 
@@ -190,18 +218,16 @@ def build_microscale_tensor_4(s0, s1, s2, s3, block_ids):
     Returns:
         [BLOCK_M, BLOCK_N] microscale tensor
     """
-    return (
-        tl.where(block_ids[None, :] == 0, s0[:, None],
-        tl.where(block_ids[None, :] == 1, s1[:, None],
-        tl.where(block_ids[None, :] == 2, s2[:, None],
-                                           s3[:, None])))
+    return tl.where(
+        block_ids[None, :] == 0,
+        s0[:, None],
+        tl.where(block_ids[None, :] == 1, s1[:, None], tl.where(block_ids[None, :] == 2, s2[:, None], s3[:, None])),
     )
 
 
 @triton.jit
 def build_microscale_tensor_8(s0, s1, s2, s3, s4, s5, s6, s7, block_ids):
-    """
-    Build [M, N] microscale tensor from 8 per-row scale vectors.
+    """Build [M, N] microscale tensor from 8 per-row scale vectors.
 
     Used by NVFP4 scheme with block_size=16 (128/16 = 8 blocks).
 
@@ -212,13 +238,28 @@ def build_microscale_tensor_8(s0, s1, s2, s3, s4, s5, s6, s7, block_ids):
     Returns:
         [BLOCK_M, BLOCK_N] microscale tensor
     """
-    return (
-        tl.where(block_ids[None, :] == 0, s0[:, None],
-        tl.where(block_ids[None, :] == 1, s1[:, None],
-        tl.where(block_ids[None, :] == 2, s2[:, None],
-        tl.where(block_ids[None, :] == 3, s3[:, None],
-        tl.where(block_ids[None, :] == 4, s4[:, None],
-        tl.where(block_ids[None, :] == 5, s5[:, None],
-        tl.where(block_ids[None, :] == 6, s6[:, None],
-                                           s7[:, None])))))))
+    return tl.where(
+        block_ids[None, :] == 0,
+        s0[:, None],
+        tl.where(
+            block_ids[None, :] == 1,
+            s1[:, None],
+            tl.where(
+                block_ids[None, :] == 2,
+                s2[:, None],
+                tl.where(
+                    block_ids[None, :] == 3,
+                    s3[:, None],
+                    tl.where(
+                        block_ids[None, :] == 4,
+                        s4[:, None],
+                        tl.where(
+                            block_ids[None, :] == 5,
+                            s5[:, None],
+                            tl.where(block_ids[None, :] == 6, s6[:, None], s7[:, None]),
+                        ),
+                    ),
+                ),
+            ),
+        ),
     )

@@ -1,5 +1,8 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Optional trace logging for QDQ calls. Enable with VLLM_QDQ_TRACE=1."""
+"""Optional trace logging for QDQ calls.
+
+Enable with VLLM_QDQ_TRACE=1.
+"""
 
 from . import envs
 

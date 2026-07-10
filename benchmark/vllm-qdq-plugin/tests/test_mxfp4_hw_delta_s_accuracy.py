@@ -1,13 +1,14 @@
-"""
-Kernel-level accuracy test for MXFP4 HW attention with delta_s correction.
+"""Kernel-level accuracy test for MXFP4 HW attention with delta_s correction.
 
 Verifies that QK smoothing + delta_s significantly reduces quantization error
 compared to raw MXFP4 quantization, especially for tensors with large DC offsets.
 """
 
-import torch
 import math
 import sys
+
+import torch
+
 sys.path.insert(0, "/home/yiliu7/workspace/vllm-qdq-plugin/src")
 
 from vllm_qdq_plugin.sage3_attn.sage3.mxfp4_hw_kernel import (
@@ -23,7 +24,7 @@ def reference_attention(q, k, v, sm_scale, causal=False):
     if causal:
         M, N = scores.shape[-2], scores.shape[-1]
         mask = torch.triu(torch.ones(M, N, device=scores.device, dtype=torch.bool), diagonal=1)
-        scores.masked_fill_(mask, float('-inf'))
+        scores.masked_fill_(mask, float("-inf"))
     p = torch.softmax(scores, dim=-1)
     return torch.matmul(p, v)
 
@@ -62,14 +63,19 @@ def run_mxfp4_hw(q, k, v, sm_scale, causal=False, use_delta_s=False):
     v_scale = v_scale_flat.reshape(B, H, D, N_pad // 32)
 
     output = mxfp4_flash_attention(
-        q_packed, k_packed, v_packed,
-        q_scale, k_scale, v_scale,
-        causal=causal, sm_scale=sm_scale,
+        q_packed,
+        k_packed,
+        v_packed,
+        q_scale,
+        k_scale,
+        v_scale,
+        causal=causal,
+        sm_scale=sm_scale,
         delta_s=delta_s,
     )
 
     # Trim padding
-    return output[:, :, :q.shape[2] if N % 128 == 0 else N, :]
+    return output[:, :, : q.shape[2] if N % 128 == 0 else N, :]
 
 
 def relative_error(out, ref):
@@ -98,9 +104,9 @@ def test_basic_correctness():
 
     torch.manual_seed(42)
     B, H, N, D = 1, 4, 256, 128
-    q = torch.randn(B, H, N, D, device='cuda', dtype=torch.float32)
-    k = torch.randn(B, H, N, D, device='cuda', dtype=torch.float32)
-    v = torch.randn(B, H, N, D, device='cuda', dtype=torch.float32)
+    q = torch.randn(B, H, N, D, device="cuda", dtype=torch.float32)
+    k = torch.randn(B, H, N, D, device="cuda", dtype=torch.float32)
+    v = torch.randn(B, H, N, D, device="cuda", dtype=torch.float32)
     sm_scale = 1.0 / math.sqrt(D)
 
     ref = reference_attention(q, k, v, sm_scale)
@@ -133,16 +139,16 @@ def test_high_dc_offset():
     sm_scale = 1.0 / math.sqrt(D)
 
     # Create K with large DC offset: mean >> std (ratio ~6x as seen in Wan2.2)
-    k_mean = torch.randn(1, H, 1, D, device='cuda') * 5.0  # large per-dim bias
-    k_residual = torch.randn(B, H, N, D, device='cuda') * 0.8
+    k_mean = torch.randn(1, H, 1, D, device="cuda") * 5.0  # large per-dim bias
+    k_residual = torch.randn(B, H, N, D, device="cuda") * 0.8
     k = k_mean + k_residual  # DC/AC ~ 5/0.8 = 6.25
 
     # Create Q with per-block bias (~1.8x as seen in Wan2.2)
-    q_bias = torch.randn(B, H, 1, D, device='cuda') * 2.0
-    q_residual = torch.randn(B, H, N, D, device='cuda') * 1.1
+    q_bias = torch.randn(B, H, 1, D, device="cuda") * 2.0
+    q_residual = torch.randn(B, H, N, D, device="cuda") * 1.1
     q = q_bias + q_residual
 
-    v = torch.randn(B, H, N, D, device='cuda', dtype=torch.float32)
+    v = torch.randn(B, H, N, D, device="cuda", dtype=torch.float32)
 
     # Verify DC offset magnitude
     k_dc_ac = k_mean.abs().mean() / k_residual.std()
@@ -183,10 +189,10 @@ def test_causal_with_delta_s():
     sm_scale = 1.0 / math.sqrt(D)
 
     # High DC offset
-    k_mean = torch.randn(1, H, 1, D, device='cuda') * 4.0
-    k = k_mean + torch.randn(B, H, N, D, device='cuda') * 0.7
-    q = torch.randn(B, H, N, D, device='cuda') * 2.0 + 1.5
-    v = torch.randn(B, H, N, D, device='cuda')
+    k_mean = torch.randn(1, H, 1, D, device="cuda") * 4.0
+    k = k_mean + torch.randn(B, H, N, D, device="cuda") * 0.7
+    q = torch.randn(B, H, N, D, device="cuda") * 2.0 + 1.5
+    v = torch.randn(B, H, N, D, device="cuda")
 
     ref = reference_attention(q, k, v, sm_scale, causal=True)
     out_ds = run_mxfp4_hw(q, k, v, sm_scale, causal=True, use_delta_s=True)
@@ -213,10 +219,10 @@ def test_varying_seq_lengths():
 
     for N in [128, 256, 384, 512, 1024]:
         B, H = 1, 2
-        k_mean = torch.randn(1, H, 1, D, device='cuda') * 5.0
-        k = k_mean + torch.randn(B, H, N, D, device='cuda') * 0.8
-        q = torch.randn(B, H, N, D, device='cuda') + 2.0
-        v = torch.randn(B, H, N, D, device='cuda')
+        k_mean = torch.randn(1, H, 1, D, device="cuda") * 5.0
+        k = k_mean + torch.randn(B, H, N, D, device="cuda") * 0.8
+        q = torch.randn(B, H, N, D, device="cuda") + 2.0
+        v = torch.randn(B, H, N, D, device="cuda")
 
         ref = reference_attention(q, k, v, sm_scale)
         out_ds = run_mxfp4_hw(q, k, v, sm_scale, use_delta_s=True)
@@ -244,18 +250,18 @@ def test_delta_s_is_zero_for_centered_data():
     sm_scale = 1.0 / math.sqrt(D)
 
     # Create zero-mean data
-    q = torch.randn(B, H, N, D, device='cuda')
+    q = torch.randn(B, H, N, D, device="cuda")
     q = q - q.mean(dim=2, keepdim=True)
-    k = torch.randn(B, H, N, D, device='cuda')
+    k = torch.randn(B, H, N, D, device="cuda")
     k = k - k.mean(dim=2, keepdim=True)
-    v = torch.randn(B, H, N, D, device='cuda')
+    v = torch.randn(B, H, N, D, device="cuda")
 
     out_no_ds = run_mxfp4_hw(q, k, v, sm_scale, use_delta_s=False)
     out_ds = run_mxfp4_hw(q, k, v, sm_scale, use_delta_s=True)
 
     diff = relative_error(out_ds, out_no_ds).item()
     print(f"  Difference between with/without delta_s: {diff:.6f}")
-    print(f"  (Expected: small, since data is already centered)")
+    print("  (Expected: small, since data is already centered)")
 
     # Outputs should be very similar for centered data
     assert diff < 0.3, f"delta_s changed output too much for centered data: {diff}"

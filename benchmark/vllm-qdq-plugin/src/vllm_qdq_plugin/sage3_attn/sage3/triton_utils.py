@@ -1,6 +1,4 @@
-"""
-Shared Triton JIT helpers for MXFP hardware attention kernels.
-"""
+"""Shared Triton JIT helpers for MXFP hardware attention kernels."""
 
 import triton
 import triton.language as tl

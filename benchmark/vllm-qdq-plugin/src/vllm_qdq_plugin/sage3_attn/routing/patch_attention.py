@@ -12,10 +12,8 @@ on any unexpected condition the wrapper falls through to the original method, so
 behavior is unchanged when routing does not apply.
 """
 
-from vllm.logger import init_logger
-
 import torch
-
+from vllm.logger import init_logger
 from vllm_omni.diffusion.attention.layer import Attention
 from vllm_omni.diffusion.forward_context import (
     get_forward_context,
@@ -69,11 +67,7 @@ def _dispatch(self, query, key, value, attn_metadata):
         return _ORIG(self, query, key, value, attn_metadata)
 
     # 3. Per-request denoising step (None outside a Wan-style denoise loop).
-    step = (
-        get_forward_context().denoise_step_idx
-        if is_forward_context_available()
-        else None
-    )
+    step = get_forward_context().denoise_step_idx if is_forward_context_available() else None
 
     # 4. Resolve a route; None means "leave the impl's own config alone".
     route = _TABLE.resolve(self.layer_idx, step)
@@ -92,7 +86,10 @@ def _dispatch(self, query, key, value, attn_metadata):
 
 
 def install(route_file: str) -> None:
-    """Install the routing wrapper from a JSON route file. Idempotent."""
+    """Install the routing wrapper from a JSON route file.
+
+    Idempotent.
+    """
     global _installed, _ORIG, _TABLE, _DEBUG
 
     if _installed:
@@ -107,8 +104,7 @@ def install(route_file: str) -> None:
     _installed = True
 
     logger.warning_once(
-        "sage3 per-(layer, step) attention routing installed from %s "
-        "(default=%s, %d rule(s), debug=%s)",
+        "sage3 per-(layer, step) attention routing installed from %s " "(default=%s, %d rule(s), debug=%s)",
         route_file,
         _TABLE.default,
         len(_TABLE.rules),

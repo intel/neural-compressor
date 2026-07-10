@@ -113,14 +113,27 @@ def quantize_to_mxfp4(x: torch.Tensor, group_size: int = 32) -> tuple:
 
 @triton.jit
 def _mixed_attn_fwd_inner(
-    acc, l_i, m_i, q, q_scale,  #
-    K_ptr, K_scale_ptr, V_ptr, V_scale_ptr,  #
-    stride_kn, stride_kk,  #
-    stride_ks_n, stride_ks_k,  #
-    stride_vn, stride_vk,  #
-    stride_vs_d, stride_vs_n,  #
-    start_m, qk_scale,  #
-    offs_m, offs_n,  #
+    acc,
+    l_i,
+    m_i,
+    q,
+    q_scale,  #
+    K_ptr,
+    K_scale_ptr,
+    V_ptr,
+    V_scale_ptr,  #
+    stride_kn,
+    stride_kk,  #
+    stride_ks_n,
+    stride_ks_k,  #
+    stride_vn,
+    stride_vk,  #
+    stride_vs_d,
+    stride_vs_n,  #
+    start_m,
+    qk_scale,  #
+    offs_m,
+    offs_n,  #
     N_CTX: tl.constexpr,  #
     BLOCK_M: tl.constexpr,  #
     HEAD_DIM: tl.constexpr,  #
@@ -193,7 +206,10 @@ def _mixed_attn_fwd_inner(
 
         FP8_E4M3_MAX: tl.constexpr = 448.0
         p_e8m0, inv_scale_expanded = compute_p_scale_inv(
-            p_amax, FP8_E4M3_MAX, BLOCK_M, BLOCK_N,
+            p_amax,
+            FP8_E4M3_MAX,
+            BLOCK_M,
+            BLOCK_N,
         )
         p_scaled = tl.minimum(p * inv_scale_expanded, FP8_E4M3_MAX)
         p_fp8 = p_scaled.to(tl.float8e4nv)
@@ -208,7 +224,9 @@ def _mixed_attn_fwd_inner(
         v = tl.load(v_ptrs)  # [BLOCK_N, HEAD_DIM]
 
         # Load V scale [HEAD_DIM, BLOCK_N // 32]
-        vs_ptrs = V_scale_ptr + offs_head_full[:, None] * stride_vs_d + (start_n // 32 + offs_scale_n[None, :]) * stride_vs_n
+        vs_ptrs = (
+            V_scale_ptr + offs_head_full[:, None] * stride_vs_d + (start_n // 32 + offs_scale_n[None, :]) * stride_vs_n
+        )
         v_scale = tl.load(vs_ptrs)  # [HEAD_DIM, BLOCK_N // 32]
 
         # P @ V via dot_scaled e4m3
@@ -221,17 +239,45 @@ def _mixed_attn_fwd_inner(
 
 @triton.jit
 def _mixed_attn_fwd(
-    Q, K, V, Out,  #
-    Q_scale, K_scale, V_scale,  #
+    Q,
+    K,
+    V,
+    Out,  #
+    Q_scale,
+    K_scale,
+    V_scale,  #
     sm_scale,  #
-    stride_qz, stride_qh, stride_qm, stride_qk,  #
-    stride_kz, stride_kh, stride_kn, stride_kk,  #
-    stride_vz, stride_vh, stride_vn, stride_vk,  #
-    stride_oz, stride_oh, stride_om, stride_ok,  #
-    stride_qsz, stride_qsh, stride_qsm, stride_qsk,  #
-    stride_ksz, stride_ksh, stride_ksn, stride_ksk,  #
-    stride_vsz, stride_vsh, stride_vsd, stride_vsn,  #
-    Z, H, N_CTX,  #
+    stride_qz,
+    stride_qh,
+    stride_qm,
+    stride_qk,  #
+    stride_kz,
+    stride_kh,
+    stride_kn,
+    stride_kk,  #
+    stride_vz,
+    stride_vh,
+    stride_vn,
+    stride_vk,  #
+    stride_oz,
+    stride_oh,
+    stride_om,
+    stride_ok,  #
+    stride_qsz,
+    stride_qsh,
+    stride_qsm,
+    stride_qsk,  #
+    stride_ksz,
+    stride_ksh,
+    stride_ksn,
+    stride_ksk,  #
+    stride_vsz,
+    stride_vsh,
+    stride_vsd,
+    stride_vsn,  #
+    Z,
+    H,
+    N_CTX,  #
     HEAD_DIM: tl.constexpr,  #
     BLOCK_M: tl.constexpr,  #
     BLOCK_N: tl.constexpr,  #
@@ -284,28 +330,60 @@ def _mixed_attn_fwd(
     # Run attention inner loop
     if STAGE & 1:
         acc, l_i, m_i = _mixed_attn_fwd_inner(
-            acc, l_i, m_i, q, q_scale,
-            K_ptr, K_scale_ptr, V_ptr, V_scale_ptr,
-            stride_kn, stride_kk,
-            stride_ksn, stride_ksk,
-            stride_vn, stride_vk,
-            stride_vsd, stride_vsn,
-            start_m, qk_scale,
-            offs_m, offs_n,
-            N_CTX, BLOCK_M, HEAD_DIM, BLOCK_N,
+            acc,
+            l_i,
+            m_i,
+            q,
+            q_scale,
+            K_ptr,
+            K_scale_ptr,
+            V_ptr,
+            V_scale_ptr,
+            stride_kn,
+            stride_kk,
+            stride_ksn,
+            stride_ksk,
+            stride_vn,
+            stride_vk,
+            stride_vsd,
+            stride_vsn,
+            start_m,
+            qk_scale,
+            offs_m,
+            offs_n,
+            N_CTX,
+            BLOCK_M,
+            HEAD_DIM,
+            BLOCK_N,
             4 - STAGE,
         )
     if STAGE & 2:
         acc, l_i, m_i = _mixed_attn_fwd_inner(
-            acc, l_i, m_i, q, q_scale,
-            K_ptr, K_scale_ptr, V_ptr, V_scale_ptr,
-            stride_kn, stride_kk,
-            stride_ksn, stride_ksk,
-            stride_vn, stride_vk,
-            stride_vsd, stride_vsn,
-            start_m, qk_scale,
-            offs_m, offs_n,
-            N_CTX, BLOCK_M, HEAD_DIM, BLOCK_N,
+            acc,
+            l_i,
+            m_i,
+            q,
+            q_scale,
+            K_ptr,
+            K_scale_ptr,
+            V_ptr,
+            V_scale_ptr,
+            stride_kn,
+            stride_kk,
+            stride_ksn,
+            stride_ksk,
+            stride_vn,
+            stride_vk,
+            stride_vsd,
+            stride_vsn,
+            start_m,
+            qk_scale,
+            offs_m,
+            offs_n,
+            N_CTX,
+            BLOCK_M,
+            HEAD_DIM,
+            BLOCK_N,
             2,
         )
 
@@ -354,7 +432,7 @@ def mixed_mxfp4qk_mxfp8pv_flash_attention(
     N = k_packed.shape[2]
 
     if sm_scale is None:
-        sm_scale = 1.0 / (D ** 0.5)
+        sm_scale = 1.0 / (D**0.5)
 
     BLOCK_M = 128
     BLOCK_N = 64
@@ -370,25 +448,53 @@ def mixed_mxfp4qk_mxfp8pv_flash_attention(
     grid = (triton.cdiv(M, BLOCK_M), B * H)
 
     _mixed_attn_fwd[grid](
-        q_packed, k_packed, v, output,
-        q_scale, k_scale, v_scale,
+        q_packed,
+        k_packed,
+        v,
+        output,
+        q_scale,
+        k_scale,
+        v_scale,
         sm_scale,
         # Q strides [B, H, M, D//2]
-        q_packed.stride(0), q_packed.stride(1), q_packed.stride(2), q_packed.stride(3),
+        q_packed.stride(0),
+        q_packed.stride(1),
+        q_packed.stride(2),
+        q_packed.stride(3),
         # K strides [B, H, N, D//2]
-        k_packed.stride(0), k_packed.stride(1), k_packed.stride(2), k_packed.stride(3),
+        k_packed.stride(0),
+        k_packed.stride(1),
+        k_packed.stride(2),
+        k_packed.stride(3),
         # V strides [B, H, N, D]
-        v.stride(0), v.stride(1), v.stride(2), v.stride(3),
+        v.stride(0),
+        v.stride(1),
+        v.stride(2),
+        v.stride(3),
         # O strides
-        output.stride(0), output.stride(1), output.stride(2), output.stride(3),
+        output.stride(0),
+        output.stride(1),
+        output.stride(2),
+        output.stride(3),
         # Q_scale strides [B, H, M, D//32]
-        q_scale.stride(0), q_scale.stride(1), q_scale.stride(2), q_scale.stride(3),
+        q_scale.stride(0),
+        q_scale.stride(1),
+        q_scale.stride(2),
+        q_scale.stride(3),
         # K_scale strides [B, H, N, D//32]
-        k_scale.stride(0), k_scale.stride(1), k_scale.stride(2), k_scale.stride(3),
+        k_scale.stride(0),
+        k_scale.stride(1),
+        k_scale.stride(2),
+        k_scale.stride(3),
         # V_scale strides [B, H, D, N//32]
-        v_scale.stride(0), v_scale.stride(1), v_scale.stride(2), v_scale.stride(3),
+        v_scale.stride(0),
+        v_scale.stride(1),
+        v_scale.stride(2),
+        v_scale.stride(3),
         # Dimensions
-        B, H, N,
+        B,
+        H,
+        N,
         # Compile-time constants
         HEAD_DIM=D,
         BLOCK_M=BLOCK_M,
