@@ -19,8 +19,8 @@ import keras
 from keras_hub.src.models.causal_lm import CausalLM
 
 from neural_compressor.common import logger
-from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import STATIC_QUANT, Mode, log_process
+from neural_compressor.jax.quantization.config import JaxBaseConfig
 from neural_compressor.jax.quantization.saving import (
     WRAPPER_MAPPING,
     KerasQuantizedModelBackboneWrapper,
@@ -31,11 +31,11 @@ from neural_compressor.jax.utils.utility import causal_lm_make_replace_generate_
 from .clone_model import clone_model
 
 
-def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
+def need_apply(configs_mapping: Dict[Tuple[str, callable], JaxBaseConfig], algo_name):
     """Determine whether a quantization algorithm should be applied.
 
     Args:
-        configs_mapping (Dict[Tuple[str, callable], BaseConfig]): Mapping of layer identifiers to configs.
+        configs_mapping (Dict[Tuple[str, callable], JaxBaseConfig]): Mapping of layer identifiers to configs.
         algo_name (str): Algorithm name to check.
 
     Returns:
@@ -48,7 +48,7 @@ def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_nam
 @log_process(mode=Mode.QUANTIZE)
 def quantize_model(
     model: keras.Model,
-    quant_config: BaseConfig,
+    quant_config: JaxBaseConfig,
     calib_function: Callable = None,
     inplace: bool = True
 ):
@@ -56,7 +56,7 @@ def quantize_model(
 
     Args:
         model (keras.Model): FP32 Keras model to be quantized.
-        quant_config (BaseConfig): Quantization configuration. Can be a single config
+        quant_config (JaxBaseConfig): Quantization configuration. Can be a single config
             or a JaxComposableConfig (created via config1 + config2).
         calib_function (Callable, optional): Function used for model calibration, required for static quantization.
         inplace (bool): When True, the original model is modified in-place and should not be used afterward. False creates a copy of original model

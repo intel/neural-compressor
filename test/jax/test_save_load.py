@@ -13,8 +13,7 @@ import keras
 import pytest
 from jax import numpy as jnp
 
-from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
-from neural_compressor.jax.quantization.config import JaxComposableConfig
+from neural_compressor.jax import DynamicQuantConfig, JaxComposableConfig, StaticQuantConfig, quantize_model
 
 # Mark all tests in this file as smoke tests
 pytestmark = pytest.mark.smoke_test
