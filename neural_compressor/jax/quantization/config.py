@@ -52,7 +52,7 @@ def _serialize_white_list(white_list):
 class OperatorConfig(NamedTuple):
     """Configuration pairing a quantization config with supported operators."""
 
-    config: BaseConfig
+    config: JaxBaseConfig
     operators: List[str]
 
 
@@ -137,6 +137,44 @@ class JaxBaseConfig(BaseConfig):
         """Set the exclude filter list."""
         self._exclude_list = value
 
+    @staticmethod
+    def _compile_filter_patterns(patterns):
+        """Pre-compile ``white_list`` / ``exclude_list`` entries into reusable matchers.
+
+        Each entry may be a layer class (matched by its ``__name__``), a class name
+        (exact match), or a path regex. Returns a list of ``(name, compiled_regex)``
+        pairs so the regex is compiled once instead of on every layer check.
+
+        Raises:
+            ValueError: If an entry is an invalid regex pattern.
+        """
+        compiled = []
+        for pattern in patterns:
+            name = pattern if isinstance(pattern, str) else pattern.__name__
+            try:
+                compiled.append((name, re.compile(name)))
+            except re.error as e:
+                raise ValueError(f"Invalid regex pattern {name!r} in white_list/exclude_list filter.") from e
+        return compiled
+
+    @property
+    def compiled_white_list(self):
+        """Get the compiled white list patterns."""
+        compiled = getattr(self, "_compiled_white_list", None)
+        if compiled is None or compiled[0] is not self._white_list:
+            compiled = (self._white_list, self._compile_filter_patterns(self._white_list))
+            self._compiled_white_list = compiled
+        return compiled[1]
+
+    @property
+    def compiled_exclude_list(self):
+        """Get the compiled exclude list patterns."""
+        compiled = getattr(self, "_compiled_exclude_list", None)
+        if compiled is None or compiled[0] is not self._exclude_list:
+            compiled = (self._exclude_list, self._compile_filter_patterns(self._exclude_list))
+            self._compiled_exclude_list = compiled
+        return compiled[1]
+
     def _layer_matches_filters(self, layer_id: str, class_name: str) -> bool:
         """Return True if a layer passes this config's ``white_list`` / ``exclude_list`` filters.
 
@@ -146,7 +184,7 @@ class JaxBaseConfig(BaseConfig):
         or a path regex.
 
         Args:
-            layer_id: Layer path or name identifier.
+            layer_id: Layer path or name identifier (e.g. "model/block_0/dense" - layer path, "dense_1" - layer name).
             class_name: Layer class name (e.g. "Dense").
 
         Returns:
@@ -156,14 +194,8 @@ class JaxBaseConfig(BaseConfig):
             ValueError: If a ``white_list`` / ``exclude_list`` entry is an invalid regex.
         """
 
-        def _matches(pattern) -> bool:
-            pattern = pattern if isinstance(pattern, str) else pattern.__name__
-            if pattern == class_name:
-                return True
-            try:
-                return re.search(pattern, layer_id) is not None
-            except re.error as e:
-                raise ValueError(f"Invalid regex pattern {pattern!r} in white_list/exclude_list filter.") from e
+        def _matches(compiled_patterns) -> bool:
+            return any(name == class_name or regex.search(layer_id) is not None for name, regex in compiled_patterns)
 
         white_list = self._white_list
 
@@ -173,10 +205,10 @@ class JaxBaseConfig(BaseConfig):
             if white_list is None:
                 return False
             # none of the white_list patterns match the layer -> not selected
-            if not any(_matches(p) for p in white_list):
+            if not _matches(self.compiled_white_list):
                 return False
         # exclude_list is defined -> check the layer against the exclude_list patterns
-        if self._exclude_list is not None and any(_matches(p) for p in self._exclude_list):
+        if self._exclude_list is not None and _matches(self.compiled_exclude_list):
             return False
         return True
 
@@ -221,7 +253,15 @@ class JaxBaseConfig(BaseConfig):
     def get_params_dict(self):
         """Get parameters dict, excluding internal and filter attributes."""
         result = dict()
-        excluded = {"_global_config", "_local_config", "_white_list", "_exclude_list", "_is_initialized"}
+        excluded = {
+            "_global_config",
+            "_local_config",
+            "_white_list",
+            "_exclude_list",
+            "_is_initialized",
+            "_compiled_white_list",
+            "_compiled_exclude_list",
+        }
         for param, value in self.__dict__.items():
             if param not in excluded:
                 result[param] = value
