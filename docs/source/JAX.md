@@ -73,14 +73,3 @@ Although Intel® Neural Compressor can run on any platform supporting 8-bit floa
 performance improvements from quantization will be visible on Intel® Xeon® processors
 (with AMX-FP8 extension) with JAX version greater than [v0.9](https://github.com/jax-ml/jax/releases/tag/jax-v0.9.0)
 (see the full [JAX releases](https://github.com/jax-ml/jax/releases) page).
-
-To enable performance improvements from quantization, certain JAX/XLA features must be enabled by setting the following environment variable:
-
-```bash
-export XLA_FLAGS="\
-    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \
-    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \
-    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter"
-```
-
-Without this flag, quantized model operates in fake quantization mode, where tensors are rounded to the specified FP8 format but computations are still performed in 32-bit floating-point format.

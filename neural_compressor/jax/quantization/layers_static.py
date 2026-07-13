@@ -919,6 +919,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
         attention_mask=None,
         training=None,
         return_attention_scores=False,
+        use_causal_mask=False,
     ):
         """Applies Dot-product attention with query, key, value tensors.
 
@@ -936,9 +937,15 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
             training: Python boolean indicating whether the layer should behave
                 in training mode (adding dropout) or in inference mode (doing
                 nothing).
+            use_causal_mask: Boolean. When True and `attention_mask` is None,
+                routes through the backend's native causal kernel via
+                `dot_product_attention(is_causal=True)`. This skips
+                materializing an explicit [T, S] mask tensor and enables
+                torch's causal-only flash kernel.
 
         Returns:
-          Tuple[jnp.ndarray, Optional[jnp.ndarray]]: Attention outputs and attention scores.
+          attention_output: Multi-headed outputs of attention computation.
+          attention_scores: Multi-headed attention weights.
         """
         # Check for flash attention constraints
         if self._flash_attention and return_attention_scores:
@@ -956,6 +963,23 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
         )
 
         if use_dot_product_attention:
+            if use_causal_mask and attention_mask is None:
+                # Skip materializing the [T, S] mask and let the backend
+                # use its native causal kernel.
+                query = self.q_qdq(query)
+                key = self.k_qdq(key)
+                value = self.v_qdq(value)
+                attention_output = ops.dot_product_attention(
+                    query=query,
+                    key=key,
+                    value=value,
+                    bias=None,
+                    mask=None,
+                    scale=self._inverse_sqrt_key_dim,
+                    is_causal=True,
+                    flash_attention=self._flash_attention,
+                )
+                return attention_output, None
             if attention_mask is not None:
                 # Ensure attention_mask has the correct shape for broadcasting
                 # Expected shape: [batch_size, num_heads, query_seq_len,
@@ -980,13 +1004,26 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
                 bias=None,
                 mask=attention_mask,
                 scale=self._inverse_sqrt_key_dim,
-                is_causal=False,
+                is_causal=use_causal_mask,
                 flash_attention=self._flash_attention,
             )
             return attention_output, None
 
         # Default behavior without flash attention, with explicit attention
-        # scores
+        # scores. We skipped the fused is_causal kernel above, so build the
+        # causal mask here. `call` drops attention_mask when causal is the
+        # only mask source, expecting that kernel to run, and this path never
+        # sees the is_causal flag otherwise. When an explicit mask is also
+        # present, combine the two so neither constraint is lost.
+        if use_causal_mask:
+            causal_mask = self._compute_causal_mask(query, value)
+            attention_mask = (
+                causal_mask
+                if attention_mask is None
+                else ops.logical_and(
+                    ops.cast(attention_mask, "bool"), causal_mask
+                )
+            )
         query = ops.multiply(
             query, ops.cast(self._inverse_sqrt_key_dim, query.dtype)
         )
@@ -1017,7 +1054,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
             self._combine_equation, final_attn_scores, value
         )
         return attention_output, attention_scores
-    # fmt on
+    # fmt: on
 
 
 verify_api(keras.layers.MultiHeadAttention, QStaticMultiHeadAttention, "_compute_attention")
@@ -1044,7 +1081,7 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         orig.q_qdq = StaticQDQLayer("q_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
         orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
         orig.attention_softmax_qdq = StaticQDQLayer(
-            "attention_softmax_qdq", activation_dtype, orig.dtype_policy, False, const_scale
+            "attention_softmax_qdq", activation_dtype, orig.dtype_policy, False, const_scale, fixed_range=(0.0, 1.0)
         )
         orig.v_qdq = StaticQDQLayer("v_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
         orig._is_quantized = None
@@ -1098,6 +1135,7 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         self._is_quantized = True
         self._tracker.lock()
 
+    # fmt: off
     def _compute_attention(
         self,
         q,
@@ -1107,23 +1145,12 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         training=False,
         cache_update_index=0,
     ):
-        """Compute attention with static activation quantization.
-
-        Args:
-            q (jnp.ndarray): Query tensor.
-            k (jnp.ndarray): Key tensor.
-            v (jnp.ndarray): Value tensor.
-            attention_mask (Optional[jnp.ndarray]): Optional attention mask.
-            training (bool): Training mode flag.
-            cache_update_index (int): Cache update index for generation.
-
-        Returns:
-            jnp.ndarray: Attention output tensor.
-        """
         if self.query_head_dim_normalize:
             query_normalization = 1 / np.sqrt(self.head_dim)
         else:
-            query_normalization = 1 / np.sqrt(self.hidden_dim // self.num_query_heads)
+            query_normalization = 1 / np.sqrt(
+                self.hidden_dim // self.num_query_heads
+            )
 
         if self.use_sliding_window_attention and attention_mask is not None:
             attention_mask = self._mask_sliding_window(
@@ -1132,9 +1159,24 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             )
 
         if self._use_fused_attention_op():
-            logger.warning(
-                "Flash attention is not supported in static quantization yet. "
-                "Falling back to standard attention computation."
+            if attention_mask is not None:
+                attention_mask = ops.expand_dims(attention_mask, axis=1)
+                attention_mask = ops.cast(attention_mask, dtype="bool")
+            # Only pass soft cap if needed as not all keras versions support.
+            if self.logit_soft_cap:
+                kwargs = {"attn_logits_soft_cap": self.logit_soft_cap}
+            else:
+                kwargs = {}
+            q = self.q_qdq(q)
+            k = self.k_qdq(k)
+            v = self.v_qdq(v)
+            return ops.dot_product_attention(
+                query=q,
+                key=k,
+                value=v,
+                mask=attention_mask,
+                scale=query_normalization,
+                **kwargs,
             )
 
         q *= ops.cast(query_normalization, dtype=q.dtype)
@@ -1155,21 +1197,30 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         k = self.k_qdq(k)
         attention_logits = ops.einsum("btkgh,bskh->bkgts", q, k)
         if self.logit_soft_cap is not None:
-            attention_logits = ops.divide(attention_logits, self.logit_soft_cap)
-            attention_logits = ops.multiply(ops.tanh(attention_logits), self.logit_soft_cap)
+            attention_logits = ops.divide(
+                attention_logits, self.logit_soft_cap
+            )
+            attention_logits = ops.multiply(
+                ops.tanh(attention_logits), self.logit_soft_cap
+            )
 
         if attention_mask is not None:
             attention_mask = attention_mask[:, None, None, :, :]
 
+        # orig_dtype = attention_logits.dtype
         attention_softmax = self.softmax(attention_logits, mask=attention_mask)
+        # attention_softmax = ops.cast(attention_softmax, orig_dtype)
 
         if self.dropout:
-            attention_softmax = self.dropout_layer(attention_softmax, training=training)
+            attention_softmax = self.dropout_layer(
+                attention_softmax, training=training
+            )
 
         attention_softmax = self.attention_softmax_qdq(attention_softmax)
         v = self.v_qdq(v)
         results = ops.einsum("bkgts,bskh->btkgh", attention_softmax, v)
         return ops.reshape(results, (b, q_len, self.num_query_heads, h))
+    # fmt: on
 
 
 verify_api(CachedGemma3Attention, QStaticCachedGemma3Attention, "_compute_attention")

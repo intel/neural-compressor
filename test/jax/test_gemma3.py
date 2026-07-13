@@ -58,7 +58,7 @@ def random_string():
     "quantization_dtype", ["fp8_e4m3", "fp8_e5m2"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=fp8_e5m2"]
 )
 @pytest.mark.smoke_test_if(
-    "quantization_dtype=fp8_e5m2-model_dtype=float32-save_as_preset=False-const_vars=False-dynamic=True",
+    "quantization_dtype=fp8_e4m3-model_dtype=float32-save_as_preset=False-const_vars=False-dynamic=True",
     "quantization_dtype=fp8_e4m3-model_dtype=bfloat16-save_as_preset=True-const_vars=True-dynamic=False",
 )
 def test_text_prompt(dynamic, const_vars, save_as_preset, model_dtype, quantization_dtype, random_string):
