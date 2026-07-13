@@ -84,7 +84,7 @@ def quantize_model(
         algo_func = algos_mapping[algo_name]
         if need_apply(configs_mapping, algo_name):
             logger.info(f"Start to apply {algo_name} on the model.")
-            model = algo_func(model, configs_mapping, quant_config, calib_function)
+            model = algo_func(model, configs_mapping, calib_function)
 
     # Post-quantization: revert CausalLM generate function
     if isinstance(model, CausalLM):

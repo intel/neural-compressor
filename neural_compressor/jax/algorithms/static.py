@@ -14,12 +14,12 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Callable, Optional, OrderedDict, Union
+from typing import Callable, Optional, OrderedDict, Union
 
 import keras
 
-from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import STATIC_QUANT
+from neural_compressor.jax.quantization.config import JaxBaseConfig
 from neural_compressor.jax.quantization.layers_static import static_quant_mapping
 from neural_compressor.jax.utils import register_algo
 from neural_compressor.jax.utils.utility import (
@@ -31,8 +31,7 @@ from neural_compressor.jax.utils.utility import (
 @register_algo(name=STATIC_QUANT)
 def static_quantize(
     model: keras.Model,
-    configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]] = None,
-    quant_config: Optional[BaseConfig] = None,
+    configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, JaxBaseConfig]]] = None,
     calib_function: Callable = None,
 ) -> keras.Model:
     """Quantize model using Static quantization algorithm.

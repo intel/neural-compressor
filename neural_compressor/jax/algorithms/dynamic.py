@@ -14,22 +14,21 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-from typing import Any, Callable, Dict, List, Optional, OrderedDict, Tuple, Union
+from typing import Any, Optional, OrderedDict, Union
 
 import keras
 
-from neural_compressor.common.base_config import BaseConfig
 from neural_compressor.common.utils import DYNAMIC_QUANT
+from neural_compressor.jax.quantization.config import JaxBaseConfig
 from neural_compressor.jax.quantization.layers_dynamic import dynamic_quant_mapping
 from neural_compressor.jax.utils import register_algo
-from neural_compressor.jax.utils.utility import dtype_mapping, iterate_over_layers
+from neural_compressor.jax.utils.utility import dtype_mapping
 
 
 @register_algo(name=DYNAMIC_QUANT)
 def dynamic_quantize(
     model: keras.Model,
-    configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]] = None,
-    quant_config: Optional[BaseConfig] = None,
+    configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, JaxBaseConfig]]] = None,
     *args: Any,
     **kwargs: Any
 ) -> Any:
