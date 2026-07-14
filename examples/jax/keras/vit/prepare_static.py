@@ -10,13 +10,15 @@ import tensorflow as tf
 
 from neural_compressor.jax import quantize_model, StaticQuantConfig
 
+from keras_hub.models import ViTImageClassifier
+
 parser = argparse.ArgumentParser("Quantize and save ViT model")
 parser.add_argument(
     "-p",
     "--precision",
     default="fp8_e4m3",
     type=str,
-    choices=["fp8_e4m3", "fp8_e5m2"],
+    choices=["fp8_e4m3", "fp8_e5m2", "int8"],
     help="precision for the model",
 )
 parser.add_argument(
@@ -36,8 +38,13 @@ parser.add_argument(
 args = parser.parse_args()
 print("Arguments:", *vars(args).items(), sep="\n")
 
-print("\nLoad original model from:", args.model_path)
-vit_model = keras.models.load_model(args.model_path)
+if args.model_path.endswith(".keras"):
+    print(f"\nLoading Keras model from: {args.model_path} using keras.models.load_model() API...")
+    vit_model = keras.models.load_model(args.model_path)
+else:
+    print(f"\nLoading Keras model from: {args.model_path} using from_preset() API...")
+    vit_model = ViTImageClassifier.from_preset(args.model_path)
+
 vit_model.summary()
 
 
@@ -61,5 +68,9 @@ print("Start quantization")
 vit_model = quantize_model(vit_model, config, calib_function)
 vit_model.summary()
 
-print("Save quantized model to:", args.quantized_path)
-keras.models.save_model(vit_model, args.quantized_path)
+if args.quantized_path.endswith(".keras"):
+    print(f"\nSaving quantized Keras model to: {args.quantized_path} using keras.models.save_model() API...")
+    keras.models.save_model(vit_model, args.quantized_path)
+else:
+    print(f"\nSaving quantized Keras model to: {args.quantized_path} using to_preset() API...")
+    vit_model.save_to_preset(args.quantized_path)

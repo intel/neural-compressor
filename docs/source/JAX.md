@@ -66,6 +66,7 @@ Examples of how to quantize a model and use a pre-quantized model can be found b
 - [ViT](../../examples/jax/keras/vit/README.md)
 - [Simple model – quantization](../../examples/jax/keras/helloworld/example_static.py)
 - [Simple model – save and load](../../examples/jax/keras/helloworld/example_saving.py)
+- [Simple model - composable configs](../../examples/jax/keras/helloworld/example_composable_configs.py)
 
 ## Backend and Device
 
