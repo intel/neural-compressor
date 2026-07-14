@@ -259,7 +259,8 @@ def cli_evaluate(args) -> None:
                 eval_logger.info(f"Logging to Weights and Biases failed due to {e}")
 
         if args.output_path:
-            output_path_file.open("w", encoding="utf-8").write(dumped)
+            with output_path_file.open("w", encoding="utf-8") as f:
+                f.write(dumped)
 
             if args.log_samples:
                 for task_name, config in results["configs"].items():
