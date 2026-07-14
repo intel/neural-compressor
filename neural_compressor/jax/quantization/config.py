@@ -114,17 +114,8 @@ class JaxBaseConfig(BaseConfig):
         self._exclude_list = exclude_list
         self._post_init()
 
-    def __add__(self, other: JaxBaseConfig) -> JaxBaseConfig:
-        """Combine with another config, producing a ``JaxComposableConfig``.
-
-        Same-type configs merge their local configs (base behavior); different
-        types compose so each sub-config keeps its own ``white_list`` / ``exclude_list``
-        selection and its overridden ``to_config_mapping``.
-        """
-        if isinstance(other, type(self)):
-            for op_name, config in other.local_config.items():
-                self.set_local(op_name, config)
-            return self
+    def __add__(self, other: JaxBaseConfig) -> JaxComposableConfig:
+        """Combine with another config, producing a ``JaxComposableConfig``."""
         return JaxComposableConfig(configs=[self, other])
 
     @property
