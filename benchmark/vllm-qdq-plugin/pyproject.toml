@@ -1,0 +1,16 @@
+[project]
+name = "vllm-qdq-plugin"
+version = "0.1.0"
+description = "Out-of-tree QDQ (quant-dequant) simulation plugin for vLLM"
+requires-python = ">=3.10"
+dependencies = ["torch"]
+
+[project.entry-points."vllm.general_plugins"]
+qdq = "vllm_qdq_plugin:register"
+
+[project.entry-points."vllm_omni.general_plugins"]
+sage3_attn = "vllm_qdq_plugin:register_omni"
+
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
