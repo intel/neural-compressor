@@ -95,7 +95,7 @@ repos:
           )$
 
   - repo: https://github.com/psf/black-pre-commit-mirror
-    rev: 26.3.1
+    rev: 26.5.1
     hooks:
       - id: black
         files: (.*\.py)$
@@ -112,7 +112,7 @@ repos:
       - id: blacken-docs
         args: [--line-length=120, --skip-errors]
         additional_dependencies:
-          - black==26.3.1
+          - black==26.5.1
         exclude: |
           (?x)^(
               examples/.+|
@@ -138,7 +138,7 @@ repos:
           )$
 
   - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.15.9
+    rev: v0.15.20
     hooks:
       - id: ruff
         args: [--fix, --exit-non-zero-on-fix, --no-cache]
