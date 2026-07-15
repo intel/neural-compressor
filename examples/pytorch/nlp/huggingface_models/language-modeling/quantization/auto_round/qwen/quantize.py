@@ -125,6 +125,7 @@ def quant_model(args):
         output_dir=output_dir,
         device_map=args.device_map,
         reloading=False,
+        dataset="HuggingFaceH4/ultrachat_200k",
     )
 
     # quantizer execute
