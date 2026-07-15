@@ -15,8 +15,10 @@ Classes
 .. autoapisummary::
 
    neural_compressor.jax.quantization.config.OperatorConfig
+   neural_compressor.jax.quantization.config.JaxBaseConfig
    neural_compressor.jax.quantization.config.DynamicQuantConfig
    neural_compressor.jax.quantization.config.StaticQuantConfig
+   neural_compressor.jax.quantization.config.JaxComposableConfig
 
 
 Functions
@@ -39,7 +41,19 @@ Module Contents
    Configuration pairing a quantization config with supported operators.
 
 
-.. py:class:: DynamicQuantConfig(weight_dtype: str = 'fp8_e4m3', activation_dtype: str = 'fp8_e4m3', const_scale: bool = False, const_weight: bool = False, white_list: Optional[List[neural_compressor.common.base_config.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+.. py:class:: JaxBaseConfig(weight_dtype: str = 'fp8_e4m3', activation_dtype: str = 'fp8_e4m3', const_scale: bool = False, const_weight: bool = False, white_list: Optional[List[neural_compressor.common.base_config.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, exclude_list: Optional[List[str]] = None)
+
+
+
+   Shared base for JAX quant configs.
+
+   Provides the common ``white_list`` / ``exclude_list`` selection, serialization and
+   op-mapping behavior shared by :class:`DynamicQuantConfig` and
+   :class:`StaticQuantConfig`. Subclasses supply their ``name``, supported
+   configs, tuning set, ``from_dict`` and the quantizable layer mapping.
+
+
+.. py:class:: DynamicQuantConfig(weight_dtype: str = 'fp8_e4m3', activation_dtype: str = 'fp8_e4m3', const_scale: bool = False, const_weight: bool = False, white_list: Optional[List[neural_compressor.common.base_config.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, exclude_list: Optional[List[str]] = None)
 
 
 
@@ -57,7 +71,7 @@ Module Contents
        - "fp8_e5m2": 5 exponent bits, 2 mantissa bits
 
 
-.. py:class:: StaticQuantConfig(weight_dtype: str = 'fp8_e4m3', activation_dtype: str = 'fp8_e4m3', const_scale: bool = False, const_weight: bool = False, white_list: Optional[List[neural_compressor.common.base_config.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST)
+.. py:class:: StaticQuantConfig(weight_dtype: str = 'fp8_e4m3', activation_dtype: str = 'fp8_e4m3', const_scale: bool = False, const_weight: bool = False, white_list: Optional[List[neural_compressor.common.base_config.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, exclude_list: Optional[List[str]] = None)
 
 
 
@@ -74,6 +88,26 @@ Module Contents
    FP8 formats available:
        - "fp8_e4m3": 4 exponent bits, 3 mantissa bits (default for "fp8")
        - "fp8_e5m2": 5 exponent bits, 2 mantissa bits
+
+
+.. py:class:: JaxComposableConfig(configs: List[BaseConfig])
+
+
+
+   JAX composable config that is both a ``ComposableConfig`` and a ``JaxBaseConfig``.
+
+   Composing behavior (``__init__``, ``__add__``, serialization and the tuning
+   stubs) is inherited from the common :class:`ComposableConfig`, while
+   :class:`JaxBaseConfig` is also a base so every JAX config shares one ancestor.
+   Base order matters: keeping ``ComposableConfig`` first ensures its composable
+   ``__init__`` / ``__add__`` win over ``JaxBaseConfig``'s single-config versions.
+
+   Only op selection is JAX-specific. Unlike the common composable -- which keys
+   ``model_info`` by config *name* and so collides when the same config type
+   appears more than once (e.g. static + dynamic + static) -- this subclass keeps
+   each sub-config's ``model_info`` positionally aligned and delegates op selection
+   to the sub-config's own (JAX-tweaked) ``to_config_mapping``, merging results
+   with last-config-wins on overlap.
 
 
 .. py:function:: get_all_registered_configs() -> Dict[str, neural_compressor.common.base_config.BaseConfig]

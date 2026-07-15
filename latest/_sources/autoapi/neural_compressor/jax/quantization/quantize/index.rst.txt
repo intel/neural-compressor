@@ -21,12 +21,12 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: need_apply(configs_mapping: Dict[Tuple[str, callable], neural_compressor.common.base_config.BaseConfig], algo_name)
+.. py:function:: need_apply(configs_mapping: Dict[Tuple[str, callable], neural_compressor.jax.quantization.config.JaxBaseConfig], algo_name)
 
    Determine whether a quantization algorithm should be applied.
 
    :param configs_mapping: Mapping of layer identifiers to configs.
-   :type configs_mapping: Dict[Tuple[str, callable], BaseConfig]
+   :type configs_mapping: Dict[Tuple[str, callable], JaxBaseConfig]
    :param algo_name: Algorithm name to check.
    :type algo_name: str
 
@@ -34,14 +34,15 @@ Module Contents
    :rtype: bool
 
 
-.. py:function:: quantize_model(model: keras.Model, quant_config: neural_compressor.common.base_config.BaseConfig, calib_function: Callable = None, inplace: bool = True)
+.. py:function:: quantize_model(model: keras.Model, quant_config: neural_compressor.jax.quantization.config.JaxBaseConfig, calib_function: Callable = None, inplace: bool = True)
 
    Return a quantized Keras model according to the given configuration.
 
    :param model: FP32 Keras model to be quantized.
    :type model: keras.Model
-   :param quant_config: Quantization configuration.
-   :type quant_config: BaseConfig
+   :param quant_config: Quantization configuration. Can be a single config
+                        or a JaxComposableConfig (created via config1 + config2).
+   :type quant_config: JaxBaseConfig
    :param calib_function: Function used for model calibration, required for static quantization.
    :type calib_function: Callable, optional
    :param inplace: When True, the original model is modified in-place and should not be used afterward. False creates a copy of original model

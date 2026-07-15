@@ -20,7 +20,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: static_quantize(model: keras.Model, configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, neural_compressor.common.base_config.BaseConfig]]] = None, quant_config: Optional[neural_compressor.common.base_config.BaseConfig] = None, calib_function: Optional[Callable] = None) -> keras.Model
+.. py:function:: static_quantize(model: keras.Model, configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, neural_compressor.jax.quantization.config.JaxBaseConfig]]] = None, calib_function: Callable = None) -> keras.Model
 
    Quantize model using Static quantization algorithm.
 
@@ -34,7 +34,7 @@ Module Contents
    :param calib_function: Calibration function used to collect activation statistics.
    :type calib_function: Optional[Callable]
 
-   :returns: The quantized model wrapped for inference.
+   :returns: The model with quantized layers.
    :rtype: keras.Model
 
 

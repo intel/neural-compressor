@@ -20,7 +20,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:function:: dynamic_quantize(model: keras.Model, configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, neural_compressor.common.base_config.BaseConfig]]] = None, quant_config: Optional[neural_compressor.common.base_config.BaseConfig] = None, *args: Any, **kwargs: Any) -> Any
+.. py:function:: dynamic_quantize(model: keras.Model, configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, neural_compressor.jax.quantization.config.JaxBaseConfig]]] = None, *args: Any, **kwargs: Any) -> Any
 
    Quantize model using Dynamic quantization algorithm.
 
@@ -36,7 +36,7 @@ Module Contents
    :param \*\*kwargs: Additional keyword arguments (unused).
    :type \*\*kwargs: Any
 
-   :returns: The quantized model wrapped for inference.
+   :returns: The model with quantized layers.
    :rtype: keras.Model
 
 
