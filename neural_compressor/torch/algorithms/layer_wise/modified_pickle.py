@@ -62,6 +62,18 @@ except ImportError:
     _HAVE_PICKLE_BUFFER = False
 
 
+SAFE_GLOBALS = {
+    ("collections", "OrderedDict"),
+    ("torch._tensor", "_rebuild_from_type_v2"),
+    ("torch._utils", "_rebuild_meta_tensor_no_storage"),
+    ("torch._utils", "_rebuild_parameter"),
+    ("torch._utils", "_rebuild_qtensor"),
+    ("torch._utils", "_rebuild_sparse_tensor"),
+    ("torch._utils", "_rebuild_tensor"),
+    ("torch._utils", "_rebuild_tensor_v2"),
+}
+
+
 # Shortcut for use in isinstance testing
 bytes_types = (bytes, bytearray)
 
@@ -1614,54 +1626,16 @@ class _Unpickler:  # pragma: no cover
 
     def find_class(self, module, name):
         # Subclasses may override this.
-        # Security: Block dangerous modules and functions to prevent RCE via deserialization (CWE-502)
-        DANGEROUS_MODULES = {
-            "os",
-            "posix",
-            "nt",
-            "subprocess",
-            "sys",
-            "socket",
-            "urllib",
-            "requests",
-            "tempfile",
-            "shutil",
-            "glob",
-            "importlib",
-            "__main__",
-            "builtins",
-            "__builtins__",
-            "code",
-            "codeop",
-        }
-        DANGEROUS_NAMES = {
-            "eval",
-            "exec",
-            "compile",
-            "open",
-            "system",
-            "popen",
-            "__import__",
-            "breakpoint",
-            "input",
-            "help",
-            "dir",
-        }
-
-        # Check for dangerous modules
-        if module in DANGEROUS_MODULES:
-            raise UnpicklingError(f"Unpickling forbidden module '{module}'")
-
-        # Check for dangerous names in any module
-        if name in DANGEROUS_NAMES:
-            raise UnpicklingError(f"Unpickling forbidden function '{module}.{name}'")
-
-        sys.audit("pickle.find_class", module, name)
         if self.proto < 3 and self.fix_imports:
             if (module, name) in _compat_pickle.NAME_MAPPING:
                 module, name = _compat_pickle.NAME_MAPPING[(module, name)]
             elif module in _compat_pickle.IMPORT_MAPPING:
                 module = _compat_pickle.IMPORT_MAPPING[module]
+
+        if (module, name) not in SAFE_GLOBALS:
+            raise UnpicklingError(f"Unpickling forbidden global '{module}.{name}'")
+
+        sys.audit("pickle.find_class", module, name)
         __import__(module, level=0)
         if self.proto >= 4:
             return _getattribute(sys.modules[module], name)[0]
