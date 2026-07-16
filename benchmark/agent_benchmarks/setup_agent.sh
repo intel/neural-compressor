@@ -46,8 +46,8 @@ setup_swebp() {
     mkdir -p "${AGENT_DIR}/results"
 
     echo "=== [swebp] Install packages ==="
-    pip install -e "${AGENT_DIR}" swebench sb-cli "swe-rex>=1.4.0"
-    VLLM_USE_PRECOMPILED=1 pip install \
+    uv pip install "${AGENT_DIR}" swebench sb-cli "swe-rex>=1.4.0"
+    VLLM_USE_PRECOMPILED=1 uv pip install \
         git+https://github.com/xin3he/vllm-fork.git@support_deepseekv4_mxfp \
         --no-build-isolation
 
@@ -63,8 +63,8 @@ setup_swe_verified() {
     fi
 
     echo "=== [swe-verified] Install packages ==="
-    pip install -e "${AGENT_DIR_VERIFIED}" sb-cli "datasets>=3.0.0"
-    VLLM_USE_PRECOMPILED=1 pip install \
+    uv pip install "${AGENT_DIR_VERIFIED}" sb-cli "datasets>=3.0.0"
+    VLLM_USE_PRECOMPILED=1 uv pip install \
         git+https://github.com/xin3he/vllm-fork.git@support_deepseekv4_mxfp \
         --no-build-isolation
 
@@ -80,8 +80,8 @@ setup_mcp() {
     fi
 
     echo "=== [mcp-atlas] Install packages ==="
-    pip install -r "${MCP_DIR}/requirements.txt"
-    VLLM_USE_PRECOMPILED=1 pip install \
+    uv pip install -r "${MCP_DIR}/requirements.txt"
+    VLLM_USE_PRECOMPILED=1 uv pip install \
         git+https://github.com/xin3he/vllm-fork.git@support_deepseekv4_mxfp \
         --no-build-isolation
 

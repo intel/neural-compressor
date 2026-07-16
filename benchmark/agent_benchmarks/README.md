@@ -156,7 +156,6 @@ bash run_agent.sh \
     --port      8888 \
     --num-tasks 10 \
     --workers   2 \
-    --step-limit 100 \
     --tag       smoke_swebp
 ```
 
