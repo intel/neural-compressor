@@ -48,7 +48,7 @@ setup_swebp() {
     echo "=== [swebp] Install packages ==="
     uv pip install "${AGENT_DIR}" swebench sb-cli "swe-rex>=1.4.0"
     uv pip install -U pip setuptools_rust setuptools_scm
-    uv pip install torch
+    uv pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cu130
     VLLM_USE_PRECOMPILED=1 uv pip install \
         git+https://github.com/xin3he/vllm.git@support_deepseekv4_mxfp \
         --no-build-isolation
