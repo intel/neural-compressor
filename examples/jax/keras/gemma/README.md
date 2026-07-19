@@ -9,7 +9,12 @@ This document describes quantization of Keras Gemma models using Neural Compress
 It is worth conducting experiments in a separate environment. For example, you can use the conda environment from [conda-forge](https://github.com/conda-forge/miniforge). The binary for your environment could be found here: [miniforge](https://github.com/conda-forge/miniforge/releases/latest)  
 
 ## 2. Install modules
-Install Neural Compressor from the source code:
+
+After the Neural Compressor v3.8 release you can install required binaries:
+```bash
+pip install -r requirements.txt
+```
+Alternatively, you can always install Neural Compressor from the source code:
 ```bash
 pushd ../../../..  # go to the root directory of the Neural Compressor source code
 INC_JAX_ONLY=1 pip install .
