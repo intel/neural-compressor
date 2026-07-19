@@ -17,4 +17,10 @@
 from neural_compressor.jax.algorithms.dynamic import dynamic_quantize
 from neural_compressor.jax.algorithms.static import static_quantize
 from .quantize import quantize_model
-from .config import DynamicQuantConfig, StaticQuantConfig, get_default_dynamic_config, get_default_static_config
+from .config import (
+    DynamicQuantConfig,
+    StaticQuantConfig,
+    JaxComposableConfig,
+    get_default_dynamic_config,
+    get_default_static_config,
+)
