@@ -47,7 +47,7 @@ pip install neural-compressor
 # Framework extension API + corresponding framework dependency
 pip install neural-compressor[pt]
 pip install neural-compressor[tf]
-pip install neural-compressor[jax] # JAX support is available since v3.8
+pip install neural-compressor[jax]
 ```
 ```Shell
 # Framework extension API + PyTorch dependency
@@ -58,7 +58,7 @@ pip install neural-compressor-pt
 pip install neural-compressor-tf
 ```
 ```Shell
-# Framework extension API + JAX dependency, available since v3.8
+# Framework extension API + JAX dependency, available since v3.9
 pip install neural-compressor-jax
 ```
 

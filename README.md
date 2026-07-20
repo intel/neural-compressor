@@ -49,7 +49,7 @@ Intel Neural Compressor supports PyTorch with CPU, GPU and HPU. Please install t
 pip install neural-compressor-pt
 # Framework extension API + TensorFlow dependency
 pip install neural-compressor-tf
-# Framework extension API + JAX dependency, available since v3.8
+# Framework extension API + JAX dependency
 pip install neural-compressor-jax
 ```    
 **Note**: Further installation methods can be found under [Installation Guide](./docs/source/installation_guide.md). check out our [FAQ](./docs/source/faq.md) for more details.

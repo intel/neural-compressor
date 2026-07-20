@@ -10,7 +10,7 @@ It is worth conducting experiments in a separate environment. For example, you c
 
 ## 2. Install modules
 
-After the Neural Compressor v3.8 release you can install required binaries:
+Since Neural Compressor v3.9, you can install the required binaries from PyPI:
 ```bash
 pip install -r requirements.txt
 ```
