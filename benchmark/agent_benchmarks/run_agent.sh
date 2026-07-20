@@ -160,12 +160,18 @@ start_vllm_server() {
     model_name="${model_name##*/}"
     local normalized_model_name="${model_name//_/-}"
     local scheme_upper="${SCHEME^^}"
+    local tool_call_parser="hermes"
+
+    if [[ "${normalized_model_name}" == *"DeepSeek-V4-Flash"* || "${normalized_model_name}" == *"DeepSeek-V4-Pro"* ]]; then
+        tool_call_parser="deepseek_v4"
+    fi
+
     local common_args=(
         --port "${PORT}"
         --served-model-name "${SERVED_MODEL_NAME}"
         --trust-remote-code
         --enable-auto-tool-choice
-        --tool-call-parser hermes
+        --tool-call-parser "${tool_call_parser}"
     )
 
     echo "=== Starting vLLM (${model_name}, scheme=${scheme_upper}, port=${PORT}) ==="
@@ -181,16 +187,6 @@ start_vllm_server() {
             --gpu-memory-utilization 0.90
         )
 
-        if [[ -n "${CUDA_VISIBLE_DEVICES:-}" ]]; then
-            echo "[INFO] Using user-provided CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}"
-            serve_env+=("CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}")
-        elif [[ "${normalized_model_name}" == *"DeepSeek-V4-Pro"* ]]; then
-            echo "[INFO] CUDA_VISIBLE_DEVICES not set; defaulting to 0,1,2,3,4,5,6,7 for DeepSeek-V4-Pro"
-            serve_env+=("CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7")
-        else
-            echo "[INFO] CUDA_VISIBLE_DEVICES not set; defaulting to 0,1 for DeepSeek-V4-Flash"
-            serve_env+=("CUDA_VISIBLE_DEVICES=0,1")
-        fi
 
         case "${scheme_upper}" in
             FP8)

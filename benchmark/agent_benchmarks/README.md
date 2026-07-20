@@ -123,7 +123,8 @@ All `vllm serve` launches from `run_agent.sh` add:
 
 - `--trust-remote-code`
 - `--enable-auto-tool-choice`
-- `--tool-call-parser hermes`
+- `--tool-call-parser deepseek_v4` for `DeepSeek-V4-Flash` and `DeepSeek-V4-Pro`
+- `--tool-call-parser hermes` for all other models
 
 ### SWE-bench Pro (`--task swebp`)
 
@@ -212,7 +213,7 @@ MODEL_NAME=DeepSeek-V4-Flash bash setup_agent.sh mcp-atlas
 
 bash run_agent.sh \
     --task      mcp-atlas \
-    --model     /path/to/DeepSeek-V4-Flash \
+    --model     /path/to/DeepSeek-V4-Flash-MXFP4 \
     --scheme    MXFP4 \
     --port      8888 \
     --num-tasks 10 \
