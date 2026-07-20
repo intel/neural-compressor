@@ -1,19 +1,53 @@
 #!/bin/bash
-# Usage: BENCHMARK_DIR=<path> bash setup_agent.sh [swebp|swe-verified|mcp-atlas|all]
+# Usage: BENCHMARK_DIR=<path> MODEL_NAME=<name> bash setup_agent.sh [swebp|swe-verified|mcp-atlas|all] [model_name]
 #
 # Run from within an already-activated Python environment (conda/venv).
 # BENCHMARK_DIR defaults to $PWD
+# MODEL_NAME may also be passed as the second positional argument.
 
 set -euo pipefail
 
 BENCHMARK_DIR="${BENCHMARK_DIR:-$PWD}"
 TASK="${1:?Usage: bash setup_agent.sh [swebp|swe-verified|mcp-atlas]}"
+MODEL_NAME="${MODEL_NAME:-${2:-}}"
 
 AGENT_DIR="${BENCHMARK_DIR}/SWE-bench_Pro-os/mini-swe-agent"   # submodule
 AGENT_DIR_VERIFIED="${BENCHMARK_DIR}/mini-swe-agent"
 MCP_DIR="${BENCHMARK_DIR}/mcp-atlas"
 
 die() { echo "[ERROR] $*" >&2; exit 1; }
+
+is_deepseek_v4_model() {
+    [[ "${MODEL_NAME}" == *DeepSeek-V4* ]]
+}
+
+install_deepseek_v4_prereqs() {
+    uv pip install torch torchvision torchaudio --index-url https://download.pytorch.org/whl/cu130
+    uv pip install -U pip setuptools_rust setuptools_scm
+}
+
+align_cuda_toolchain() {
+    uv pip install -U         nvidia-cuda-nvcc==13.2.86         nvidia-nvvm==13.2.86         nvidia-cuda-runtime==13.2.86         nvidia-cuda-crt==13.2.86         nvidia-cuda-cccl==13.2.86
+}
+
+install_vllm() {
+    if is_deepseek_v4_model; then
+        echo "=== [vllm] Installing DeepSeek-V4-specific stack for MODEL_NAME=${MODEL_NAME} ==="
+        install_deepseek_v4_prereqs
+        align_cuda_toolchain
+        VLLM_USE_PRECOMPILED=1 uv pip install \
+            git+https://github.com/xin3he/vllm.git@support_deepseekv4_mxfp \
+            --no-build-isolation
+        align_cuda_toolchain
+    else
+        if [[ -n "${MODEL_NAME}" ]]; then
+            echo "=== [vllm] Installing generic stack for MODEL_NAME=${MODEL_NAME} ==="
+        else
+            echo "=== [vllm] Installing generic stack (MODEL_NAME not set) ==="
+        fi
+        uv pip install -U torch torchvision torchaudio vllm
+    fi
+}
 
 # =============================================================================
 setup_swebp() {
@@ -47,11 +81,7 @@ setup_swebp() {
 
     echo "=== [swebp] Install packages ==="
     uv pip install "${AGENT_DIR}" swebench sb-cli "swe-rex>=1.4.0"
-    uv pip install -U pip setuptools_rust setuptools_scm
-    uv pip install torch==2.11.0 torchvision==0.26.0 torchaudio==2.11.0 --index-url https://download.pytorch.org/whl/cu130
-    VLLM_USE_PRECOMPILED=1 uv pip install \
-        git+https://github.com/xin3he/vllm.git@support_deepseekv4_mxfp \
-        --no-build-isolation
+    install_vllm
 
     echo "=== [swebp] Done — vllm: $(vllm --version) ==="
 }
@@ -66,9 +96,7 @@ setup_swe_verified() {
 
     echo "=== [swe-verified] Install packages ==="
     uv pip install "${AGENT_DIR_VERIFIED}" sb-cli "datasets>=3.0.0"
-    VLLM_USE_PRECOMPILED=1 uv pip install \
-        git+https://github.com/xin3he/vllm.git@support_deepseekv4_mxfp \
-        --no-build-isolation
+    install_vllm
 
     echo "=== [swe-verified] Done — vllm: $(vllm --version) ==="
 }
@@ -83,9 +111,7 @@ setup_mcp() {
 
     echo "=== [mcp-atlas] Install packages ==="
     uv pip install -r "${MCP_DIR}/requirements.txt"
-    VLLM_USE_PRECOMPILED=1 uv pip install \
-        git+https://github.com/xin3he/vllm.git@support_deepseekv4_mxfp \
-        --no-build-isolation
+    install_vllm
 
     echo "=== [mcp-atlas] npm install ==="
     export NVM_DIR="${HOME}/.nvm"

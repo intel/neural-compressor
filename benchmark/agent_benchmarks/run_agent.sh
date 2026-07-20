@@ -7,6 +7,7 @@ set -euo pipefail
 #   --task TASK           swebp | swe-verified | mcp-atlas     (default: swebp)
 #   --port N              vLLM API port                         (default: 8888)
 #   --model PATH          Model path; starts vLLM when provided
+#   --scheme NAME         vLLM serving scheme                    (default: FP8)
 #   --max-model-len N     vLLM max_model_len                    (default: 262144)
 #   --served-name NAME    vLLM served-model-name                (default: gpt-3.5-turbo)
 #   --tag NAME            Run label for outputs / logs          (default: timestamp)
@@ -23,8 +24,8 @@ set -euo pipefail
 #   TENSOR_PARALLEL_SIZE=2 bash run_agent.sh --task swebp \
 #     --model /path/to/DeepSeek-V4-Flash-MXFP4 --port 8888 ...
 #
-# Note: if model basename is exactly DeepSeek-V4-Flash or DeepSeek-V4-Pro,
-#   --enable-expert-parallel --moe-backend deep_gemm_mega_moe are added automatically.
+# Note: DeepSeek-V4-Flash uses 2 GPUs and DeepSeek-V4-Pro uses 8 GPUs.
+#   The selected --scheme chooses the specialised serve arguments for those models.
 #
 # SWE-bench Pro (--task swebp):
 #   --num-tasks N         Limit to first N tasks
@@ -55,6 +56,7 @@ BENCHMARK_DIR="${BENCHMARK_DIR:-$PWD}"
 TASK="swebp"
 PORT=8888
 MODEL_PATH=""
+SCHEME="${SCHEME:-FP8}"
 MAX_MODEL_LEN=262144
 SERVED_MODEL_NAME="gpt-3.5-turbo"
 WORKERS=2
@@ -96,6 +98,7 @@ usage() {
 die() { echo "[ERROR] $*" >&2; exit 1; }
 
 cleanup() {
+
     [[ -n "${HARNESS_PID}" ]] && kill "${HARNESS_PID}" 2>/dev/null || true
     [[ -n "${VLLM_PID}" ]]   && kill "${VLLM_PID}"   2>/dev/null || true
     local z
@@ -147,40 +150,87 @@ ENVEOF
 start_vllm_server() {
     [[ -z "${MODEL_PATH}" ]] && return
     [[ "${SKIP_SERVE}" == true ]] && return
+
     local vllm_bin
     vllm_bin=$(command -v vllm 2>/dev/null || echo "")
     [[ -z "${vllm_bin}" ]] && die "vllm not found in PATH — activate a venv or pass full path"
-    echo "=== Starting vLLM (${MODEL_PATH##*/}, port=${PORT}) ==="
+
     local log="${LOG_DIR}/vllm_${RUN_TAG}.log"
+    local model_name="${MODEL_PATH%/}"
+    model_name="${model_name##*/}"
+    local normalized_model_name="${model_name//_/-}"
+    local scheme_upper="${SCHEME^^}"
+    local common_args=(
+        --port "${PORT}"
+        --served-model-name "${SERVED_MODEL_NAME}"
+        --trust-remote-code
+        --enable-auto-tool-choice
+        --tool-call-parser hermes
+    )
 
-    local model_name="${MODEL_PATH%/}"; model_name="${model_name##*/}"
-    local extra_args=()
-    # Base DeepSeek-V4 models need expert-parallel and mega-moe backend
-    if [[ "${model_name}" == "DeepSeek-V4-Flash" || "${model_name}" == "DeepSeek-V4-Pro" ]]; then
-        extra_args+=(--enable-expert-parallel --moe-backend deep_gemm_mega_moe)
-    fi
-    # DeepSeek-V4-Pro has a very large context window
-    if [[ "${model_name}" == *"DeepSeek-V4-Pro"* ]]; then
-        MAX_MODEL_LEN=1048576
+    echo "=== Starting vLLM (${model_name}, scheme=${scheme_upper}, port=${PORT}) ==="
+
+    if [[ "${normalized_model_name}" == *"DeepSeek-V4-Flash"* || "${normalized_model_name}" == *"DeepSeek-V4-Pro"* ]]; then
+        local serve_env=()
+        local serve_args=(
+            --kv-cache-dtype fp8
+            --block-size 256
+            --tensor-parallel-size 2
+            --attention_config.use_fp4_indexer_cache=True
+            --max-model-len 1048576
+            --gpu-memory-utilization 0.90
+        )
+
+        if [[ -n "${CUDA_VISIBLE_DEVICES:-}" ]]; then
+            echo "[INFO] Using user-provided CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}"
+            serve_env+=("CUDA_VISIBLE_DEVICES=${CUDA_VISIBLE_DEVICES}")
+        elif [[ "${normalized_model_name}" == *"DeepSeek-V4-Pro"* ]]; then
+            echo "[INFO] CUDA_VISIBLE_DEVICES not set; defaulting to 0,1,2,3,4,5,6,7 for DeepSeek-V4-Pro"
+            serve_env+=("CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7")
+        else
+            echo "[INFO] CUDA_VISIBLE_DEVICES not set; defaulting to 0,1 for DeepSeek-V4-Flash"
+            serve_env+=("CUDA_VISIBLE_DEVICES=0,1")
+        fi
+
+        case "${scheme_upper}" in
+            FP8)
+                echo "=== Using DeepSeek-V4 ${scheme_upper} serve profile ==="
+                serve_env+=(SAFETENSORS_FAST_GPU=1)
+                serve_args+=(--moe-backend deep_gemm_mega_moe --enable-expert-parallel)
+                ;;
+            MXFP4)
+                echo "=== Using DeepSeek-V4 ${scheme_upper} serve profile ==="
+                serve_env+=(SAFETENSORS_FAST_GPU=1)
+                serve_args+=(--moe-backend cutlass)
+                ;;
+            *)
+                die "Unsupported --scheme for DeepSeek-V4 models: ${SCHEME} (expected FP8 or MXFP4)"
+                ;;
+        esac
+
+        nohup env \
+            VLLM_ENGINE_READY_TIMEOUT_S="${VLLM_ENGINE_READY_TIMEOUT_S:-1800}" \
+            "${serve_env[@]}" \
+            "${vllm_bin}" serve "${MODEL_PATH}" \
+            "${common_args[@]}" \
+            "${serve_args[@]}" \
+            > "${log}" 2>&1 &
+    else
+        nohup env \
+            SAFETENSORS_FAST_GPU=1 \
+            VLLM_ENGINE_READY_TIMEOUT_S="${VLLM_ENGINE_READY_TIMEOUT_S:-1800}" \
+            "${vllm_bin}" serve "${MODEL_PATH}" \
+            "${common_args[@]}" \
+            --max-model-len "${MAX_MODEL_LEN}" \
+            --kv-cache-dtype "${KV_CACHE_DTYPE}" \
+            --block-size "${BLOCK_SIZE}" \
+            --tensor-parallel-size "${TENSOR_PARALLEL_SIZE}" \
+            --gpu-memory-utilization "${GPU_MEM_UTIL:-0.9}" \
+            --attention_config.use_fp4_indexer_cache=True \
+            --no-enable-flashinfer-autotune \
+            > "${log}" 2>&1 &
     fi
 
-    SAFETENSORS_FAST_GPU=1 \
-    VLLM_ENGINE_READY_TIMEOUT_S="${VLLM_ENGINE_READY_TIMEOUT_S:-1800}" \
-    nohup "${vllm_bin}" serve "${MODEL_PATH}" \
-        --port                    "${PORT}" \
-        --served-model-name       "${SERVED_MODEL_NAME}" \
-        --max-model-len           "${MAX_MODEL_LEN}" \
-        --kv-cache-dtype          "${KV_CACHE_DTYPE}" \
-        --block-size              "${BLOCK_SIZE}" \
-        --tensor-parallel-size    "${TENSOR_PARALLEL_SIZE}" \
-        --gpu-memory-utilization  "${GPU_MEM_UTIL:-0.9}" \
-        --attention_config.use_fp4_indexer_cache=True \
-        --trust-remote-code \
-        --no-enable-flashinfer-autotune \
-        --enable-auto-tool-choice \
-        --tool-call-parser        hermes \
-        "${extra_args[@]}" \
-        > "${log}" 2>&1 &
     VLLM_PID=$!
     echo "vLLM PID=${VLLM_PID}  log=${log}"
 }
@@ -502,6 +552,7 @@ while [[ $# -gt 0 ]]; do
         --task)          TASK="$2";              shift 2 ;;
         --port)          PORT="$2";              shift 2 ;;
         --model)         MODEL_PATH="$2";        shift 2 ;;
+        --scheme)        SCHEME="$2";            shift 2 ;;
         --max-model-len) MAX_MODEL_LEN="$2";     shift 2 ;;
         --served-name)   SERVED_MODEL_NAME="$2"; shift 2 ;;
         --slice)         SLICE_ARG="$2";         shift 2 ;;
@@ -536,7 +587,7 @@ echo "================================================================"
 echo " Benchmark : ${TASK}"
 echo " Tag       : ${RUN_TAG}"
 echo " vLLM port : ${PORT}"
-[[ -n "${MODEL_PATH}" ]] && echo " Model     : ${MODEL_PATH##*/}  (max_len=${MAX_MODEL_LEN})"
+[[ -n "${MODEL_PATH}" ]] && echo " Model     : ${MODEL_PATH##*/}  (scheme=${SCHEME}, max_len=${MAX_MODEL_LEN})"
 echo " Started   : $(date)"
 echo "================================================================"
 echo ""

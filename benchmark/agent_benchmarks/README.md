@@ -16,12 +16,15 @@ run_agent.sh     — benchmark runner
 - Docker (for MCP-Atlas sandbox and SWE-bench Pro local evaluation)
 - vLLM (installed by `setup_agent.sh`)
 
-Install vLLM (DeepSeek-V4 compatible fork):
-```bash
-VLLM_USE_PRECOMPILED=1 pip install \
-    git+https://github.com/xin3he/vllm-fork.git@support_deepseekv4_mxfp \
-    --no-build-isolation
-```
+`setup_agent.sh` installs vLLM in one of two modes:
+
+- `MODEL_NAME` contains `DeepSeek-V4`
+  - installs the DeepSeek-V4-compatible vLLM fork
+  - aligns the CUDA toolchain before and after install
+  - keeps the environment on the validated CUDA 13.2.86 toolchain
+- otherwise
+  - installs generic `vllm`, `torch`, `torchaudio`, and `torchvision`
+  - does not pin those package versions
 
 SWE-bench Verified also requires:
 - `SWEBENCH_API_KEY` env var for remote submission via `sb-cli`
@@ -56,9 +59,15 @@ Run **once per task** inside the activated environment for that task:
 
 ```bash
 cd /path/to/agent_benchmarks
-bash setup_agent.sh swebp          # SWE-bench Pro
-bash setup_agent.sh swe-verified   # SWE-bench Verified
-bash setup_agent.sh mcp-atlas      # MCP-Atlas
+MODEL_NAME=DeepSeek-V4-Flash bash setup_agent.sh swebp
+MODEL_NAME=DeepSeek-V4-Flash bash setup_agent.sh swe-verified
+MODEL_NAME=DeepSeek-V4-Flash bash setup_agent.sh mcp-atlas
+```
+
+`MODEL_NAME` can also be passed as the second positional argument:
+
+```bash
+bash setup_agent.sh swebp DeepSeek-V4-Flash
 ```
 
 > **Note for `swebp`**: place the Docker image patch at `patches/swebench_pro_image.patch` before running setup.
@@ -79,6 +88,7 @@ bash run_agent.sh --task TASK [OPTIONS]
 | `--task TASK` | `swebp` | `swebp` \| `swe-verified` \| `mcp-atlas` |
 | `--port N` | `8888` | vLLM API port |
 | `--model PATH` | — | Model path; launches vLLM automatically when set |
+| `--scheme NAME` | `FP8` | vLLM serving scheme; used by DeepSeek-V4 model presets |
 | `--max-model-len N` | `262144` | vLLM `max_model_len` |
 | `--served-name NAME` | `gpt-3.5-turbo` | vLLM `served-model-name` |
 | `--tag NAME` | timestamp | Label for output directory and logs |
@@ -97,8 +107,23 @@ Set before calling the script:
 | `VLLM_ENGINE_READY_TIMEOUT_S` | `1800` | vLLM startup timeout (seconds) |
 | `VLLM_WAIT_RETRIES` | `180` | Health-check retries (× 10s each) |
 
-> If the model directory basename is exactly `DeepSeek-V4-Flash` or `DeepSeek-V4-Pro`,
-> `--enable-expert-parallel --moe-backend deep_gemm_mega_moe` are added automatically.
+### DeepSeek-V4 serving presets
+
+For model paths whose basename contains `DeepSeek-V4-Flash` or `DeepSeek-V4-Pro`:
+
+- `--scheme FP8`
+  - adds `SAFETENSORS_FAST_GPU=1`
+  - adds `--moe-backend deep_gemm_mega_moe`
+  - adds `--enable-expert-parallel`
+- `--scheme MXFP4`
+  - adds `SAFETENSORS_FAST_GPU=1`
+  - adds `--moe-backend cutlass`
+
+All `vllm serve` launches from `run_agent.sh` add:
+
+- `--trust-remote-code`
+- `--enable-auto-tool-choice`
+- `--tool-call-parser hermes`
 
 ### SWE-bench Pro (`--task swebp`)
 
@@ -146,50 +171,61 @@ Any stale harness process pointing to a different directory or vLLM port is repl
 
 ## Examples
 
-### SWE-bench Pro — smoke test (10 instances, TP=2)
+### SWE-bench Pro — DeepSeek-V4-Flash FP8 smoke test
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 TENSOR_PARALLEL_SIZE=2 \
+cd /path/to/agent_benchmarks
+MODEL_NAME=DeepSeek-V4-Flash bash setup_agent.sh swebp
+
 bash run_agent.sh \
-    --task      swebp \
-    --model     /path/to/model \
-    --port      8888 \
-    --num-tasks 10 \
-    --workers   2 \
-    --tag       smoke_swebp
+    --task       swebp \
+    --model      /path/to/DeepSeek-V4-Flash \
+    --scheme     FP8 \
+    --port       8888 \
+    --num-tasks  10 \
+    --workers    2 \
+    --tag        smoke_swebp
 ```
 
-### SWE-bench Verified — full run (vLLM already running)
+### SWE-bench Verified — DeepSeek-V4-Flash MXFP4 smoke test
 
 ```bash
-SWEBENCH_API_KEY=<your_key> \
+cd /path/to/agent_benchmarks
+MODEL_NAME=DeepSeek-V4-Flash bash setup_agent.sh swe-verified
+
+export SWEBENCH_API_KEY=<your_key>
 bash run_agent.sh \
-    --task    swe-verified \
-    --port    8888 \
-    --skip-serve \
-    --workers 4 \
-    --tag     run_verified_01
+    --task       swe-verified \
+    --model      /path/to/DeepSeek-V4-Flash \
+    --scheme     MXFP4 \
+    --port       8888 \
+    --num-tasks  10 \
+    --workers    2 \
+    --tag        smoke_verified
 ```
 
-### MCP-Atlas — smoke test
+### MCP-Atlas — DeepSeek-V4-Flash MXFP4 smoke test
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 TENSOR_PARALLEL_SIZE=2 \
+cd /path/to/agent_benchmarks
+MODEL_NAME=DeepSeek-V4-Flash bash setup_agent.sh mcp-atlas
+
 bash run_agent.sh \
     --task      mcp-atlas \
-    --model     /path/to/model \
-    --port      8889 \
+    --model     /path/to/DeepSeek-V4-Flash \
+    --scheme    MXFP4 \
+    --port      8888 \
     --num-tasks 10 \
     --workers   5 \
     --tag       smoke_mcp
 ```
 
-If vLLM, sandbox, and harness are already running:
+If vLLM, sandbox, and harness are already running on the default port `8888`:
 
 ```bash
 bash run_agent.sh \
     --task         mcp-atlas \
-    --port         8889 \
+    --port         8888 \
     --skip-serve \
     --skip-sandbox \
     --num-tasks    10 \
