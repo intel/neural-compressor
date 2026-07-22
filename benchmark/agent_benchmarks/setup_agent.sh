@@ -62,7 +62,7 @@ setup_swebp() {
 
     echo "=== [swebp] Init mini-swe-agent submodule ==="
     if [[ ! -f "${AGENT_DIR}/pyproject.toml" ]]; then
-        git -C "${swebp_dir}" submodule update --init --depth 1 mini-swe-agent
+        git -C "${swebp_dir}" submodule update --init --recursive --depth 1 mini-swe-agent
     else
         echo "  submodule already initialised"
     fi
@@ -75,6 +75,16 @@ setup_swebp() {
         git -C "${AGENT_DIR}" apply "${patch_file}" && echo "  Patched OK"
     else
         die "Patch file not found: ${patch_file} — place patches/swebench_pro_image.patch in BENCHMARK_DIR"
+    fi
+
+    echo "=== [swebp] Patch per-instance cleanup (container + image) ==="
+    local cleanup_patch="${BENCHMARK_DIR}/patches/swebench_pro_per_instance_cleanup.patch"
+    if grep -q 'remove_image_on_cleanup' "${AGENT_DIR}/src/minisweagent/environments/docker.py" 2>/dev/null; then
+        echo "  already patched"
+    elif [[ -f "${cleanup_patch}" ]]; then
+        git -C "${AGENT_DIR}" apply "${cleanup_patch}" && echo "  Patched OK"
+    else
+        die "Patch file not found: ${cleanup_patch} — place patches/swebench_pro_per_instance_cleanup.patch in BENCHMARK_DIR"
     fi
 
     mkdir -p "${AGENT_DIR}/results"
@@ -92,6 +102,16 @@ setup_swe_verified() {
         git clone --depth 1 https://github.com/SWE-agent/mini-swe-agent.git "${AGENT_DIR_VERIFIED}"
     else
         echo "  already cloned"
+    fi
+
+    echo "=== [swe-verified] Patch per-instance cleanup (container + image) ==="
+    local cleanup_patch_verified="${BENCHMARK_DIR}/patches/swebench_verified_per_instance_cleanup.patch"
+    if grep -q 'remove_image_on_cleanup' "${AGENT_DIR_VERIFIED}/src/minisweagent/environments/docker.py" 2>/dev/null; then
+        echo "  already patched"
+    elif [[ -f "${cleanup_patch_verified}" ]]; then
+        git -C "${AGENT_DIR_VERIFIED}" apply "${cleanup_patch_verified}" && echo "  Patched OK"
+    else
+        die "Patch file not found: ${cleanup_patch_verified} — place patches/swebench_verified_per_instance_cleanup.patch in BENCHMARK_DIR"
     fi
 
     echo "=== [swe-verified] Install packages ==="

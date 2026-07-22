@@ -38,7 +38,9 @@ BENCHMARK_DIR/
 ├── setup_agent.sh
 ├── run_agent.sh
 ├── patches/
-│   └── swebench_pro_image.patch   # required before setup swebp
+│   ├── swebench_pro_image.patch
+│   ├── swebench_pro_per_instance_cleanup.patch
+│   └── swebench_verified_per_instance_cleanup.patch
 ├── SWE-bench_Pro-os/              # cloned by setup (swebp)
 │   └── mini-swe-agent/            # git submodule — v1 agent
 ├── mini-swe-agent/                # cloned by setup (swe-verified)
@@ -70,7 +72,10 @@ MODEL_NAME=DeepSeek-V4-Flash bash setup_agent.sh mcp-atlas
 bash setup_agent.sh swebp DeepSeek-V4-Flash
 ```
 
-> **Note for `swebp`**: place the Docker image patch at `patches/swebench_pro_image.patch` before running setup.
+> **Notes for setup patches**:
+> - `swebp` requires `patches/swebench_pro_image.patch` and `patches/swebench_pro_per_instance_cleanup.patch`.
+> - `swe-verified` requires `patches/swebench_verified_per_instance_cleanup.patch`.
+> - For `swebp`, patches are applied only after `git clone` + `git submodule update --init --recursive` complete.
 
 ---
 

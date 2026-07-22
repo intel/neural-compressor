@@ -86,6 +86,7 @@ mkdir -p "${LOG_DIR}"
 
 VLLM_PID=""
 HARNESS_PID=""
+MCP_SANDBOX_CONTAINER=""
 
 # =============================================================================
 # Helpers
@@ -97,10 +98,34 @@ usage() {
 
 die() { echo "[ERROR] $*" >&2; exit 1; }
 
+stop_vllm() {
+    [[ -z "${VLLM_PID}" ]] && return
+
+    if kill -0 "${VLLM_PID}" 2>/dev/null; then
+        echo "Stopping vLLM (PID=${VLLM_PID})"
+        kill "${VLLM_PID}" 2>/dev/null || true
+        pkill -TERM -P "${VLLM_PID}" 2>/dev/null || true
+
+        for _ in $(seq 1 10); do
+            kill -0 "${VLLM_PID}" 2>/dev/null || break
+            sleep 1
+        done
+
+        if kill -0 "${VLLM_PID}" 2>/dev/null; then
+            echo "Force killing vLLM (PID=${VLLM_PID})"
+            kill -9 "${VLLM_PID}" 2>/dev/null || true
+            pkill -KILL -P "${VLLM_PID}" 2>/dev/null || true
+        fi
+    fi
+
+    VLLM_PID=""
+}
+
 cleanup() {
 
     [[ -n "${HARNESS_PID}" ]] && kill "${HARNESS_PID}" 2>/dev/null || true
-    [[ -n "${VLLM_PID}" ]]   && kill "${VLLM_PID}"   2>/dev/null || true
+    stop_vllm
+    [[ -n "${MCP_SANDBOX_CONTAINER}" ]] && docker stop "${MCP_SANDBOX_CONTAINER}" 2>/dev/null || true
     local z
     z=$(docker ps -a --filter name=minisweagent --filter status=created -q 2>/dev/null || true)
     [[ -n "${z}" ]] && docker rm -f ${z} 2>/dev/null || true
@@ -228,7 +253,7 @@ start_vllm_server() {
     fi
 
     VLLM_PID=$!
-    echo "vLLM PID=${VLLM_PID}  log=${log}"
+    echo "vLLM PID=${VLLM_PID}  log=${log} (will be stopped on exit)"
 }
 
 wait_for_server() {
@@ -442,7 +467,8 @@ run_mcp() {
     elif curl -sf "http://localhost:${SANDBOX_PORT}/enabled-servers" -o /dev/null 2>/dev/null; then
         echo "Sandbox already running"
     else
-        docker run -d --rm --name "mcp-sandbox-${RUN_TAG}" \
+        MCP_SANDBOX_CONTAINER="mcp-sandbox-${RUN_TAG}"
+        docker run -d --rm --name "${MCP_SANDBOX_CONTAINER}" \
             -p "${SANDBOX_PORT}:1984" --env-file "${MCP_DIR}/.env" \
             agent-environment:latest
         for i in $(seq 1 ${sandbox_wait_retries}); do
