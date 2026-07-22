@@ -335,13 +335,77 @@ print('Runtime config:', '${cfg_run}')
     echo "=== Convert patches ==="
     "${py3}" -c "
 import json
+import re
+
 preds = json.load(open('${out_dir}/preds.json'))
-patches = [
-    {'instance_id': v['instance_id'], 'patch': v.get('model_patch', ''), 'prefix': '${mid}_step${STEP_LIMIT}'}
-    for v in preds.values()
-]
+
+ERR_PAT = re.compile(r'(?i)(traceback|exception|calledprocesserror|no space left on device|not a git repository|docker:|error response from daemon)')
+
+
+def unwrap_fence(text: str) -> str:
+    text = (text or '').strip()
+    if text.startswith('```') and text.endswith('```'):
+        lines = text.splitlines()
+        if len(lines) >= 2:
+            # Drop first/last fence lines, keep only body.
+            text = '\n'.join(lines[1:-1]).strip()
+    return text
+
+
+def normalize_patch(text: str) -> str:
+    text = unwrap_fence(text)
+    if not text or ERR_PAT.search(text):
+        return ''
+
+    if '*** Begin Patch' in text and '*** End Patch' in text:
+        return ''
+
+    # Keep only the actual diff body if the model added explanations around it.
+    git_idx = text.find('diff --git ')
+    if git_idx >= 0:
+        text = text[git_idx:].lstrip()
+        return text if ('--- a/' in text and '+++ b/' in text) else ''
+
+    m = re.search(r'(?m)^--- [^\n]+\n\+\+\+ [^\n]+', text)
+    if m and '@@' in text[m.start():]:
+        return text[m.start():].lstrip()
+
+    return ''
+
+
+def pick_patch(record: dict) -> str:
+    candidates = [
+        record.get('model_patch'),
+        record.get('patch'),
+        record.get('prediction'),
+        record.get('completion'),
+        record.get('response'),
+        record.get('output'),
+    ]
+    for cand in candidates:
+        if isinstance(cand, str):
+            norm = normalize_patch(cand)
+            if norm:
+                return norm
+    return ''
+
+items = preds.items() if isinstance(preds, dict) else enumerate(preds)
+patches = []
+empty_or_invalid = 0
+for key, rec in items:
+    if not isinstance(rec, dict):
+        rec = {'model_patch': str(rec)}
+    iid = rec.get('instance_id') or (key if isinstance(key, str) else None)
+    if not iid:
+        continue
+    patch = pick_patch(rec)
+    if not patch:
+        empty_or_invalid += 1
+    patches.append({'instance_id': iid, 'patch': patch, 'prefix': '${mid}_step${STEP_LIMIT}'})
+
 json.dump(patches, open('${patches}', 'w'), indent=2)
 print(f'Wrote {len(patches)} patches -> ${patches}')
+print(f'Invalid/empty patch entries filtered: {empty_or_invalid}')
 "
 
     # Prepare instance CSV from HuggingFace dataset
