@@ -313,7 +313,7 @@ run_ruler_eval() {
     echo "Running Ruler evaluation against vLLM server..."
     lm_eval \
         --model local-completions \
-        --model_args "model=$MODEL_PATH,base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=1,max_retries=50,timeout=500,tokenized_requests=False,max_gen_toks=${max_gen_toks}" \
+        --model_args "model=$MODEL_PATH,base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=1,max_retries=50,timeout=500,tokenized_requests=False,max_gen_toks=${max_gen_toks},max_length=${max_length}" \
         --tasks $TASK_NAME \
         --metadata="{\"max_seq_lengths\":[${SEQ_LENGTHS}],\"tokenizer\":\"${MODEL_PATH}\"}" \
         --gen_kwargs "max_gen_toks=${max_gen_toks}" \
@@ -329,7 +329,7 @@ run_ruler_eval() {
 if [[ "$TASK_NAME" == *"longbench"* ]]; then
     echo "Running LongBench v2 evaluation..."
     run_longbench_eval
-elif [[ "$TASK_NAME" == *"niah"* ]]; then
+elif [[ "$TASK_NAME" == *"ruler"* ]] || [[ "$TASK_NAME" == *"niah_multiquery"* ]]; then
     echo "Running RULER evaluation..."
     run_ruler_eval
 else
