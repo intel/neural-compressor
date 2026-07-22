@@ -260,14 +260,20 @@ wait_for_server() {
     [[ "${SKIP_SERVE}" == true ]] && return
     local api="http://127.0.0.1:${PORT}/v1"
     local max_wait="${VLLM_WAIT_RETRIES:-180}"
+    local vllm_log="${LOG_DIR}/vllm_${RUN_TAG}.log"
     echo "Waiting for vLLM at ${api} (up to $((max_wait * 10))s) ..."
     for i in $(seq 1 "${max_wait}"); do
         curl -sf "${api}/models" -o /dev/null && break
+        if [[ -n "${VLLM_PID}" ]] && ! kill -0 "${VLLM_PID}" 2>/dev/null; then
+            echo "[ERROR] vLLM exited before becoming ready; last log lines:" >&2
+            [[ -f "${vllm_log}" ]] && tail -n 40 "${vllm_log}" >&2 || true
+            die "vLLM exited before becoming ready; see ${vllm_log}"
+        fi
         echo "  [${i}/${max_wait}] not ready, retrying in 10s..."
         sleep 10
     done
     curl -sf "http://127.0.0.1:${PORT}/v1/models" -o /dev/null \
-        || die "vLLM not reachable at port ${PORT}"
+        || die "vLLM not reachable at port ${PORT}; see ${vllm_log}"
     echo "vLLM ready. Model: $(model_id)"
 }
 
