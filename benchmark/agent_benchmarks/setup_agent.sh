@@ -7,15 +7,13 @@
 
 set -euo pipefail
 
-BENCHMARK_DIR="${BENCHMARK_DIR:-$PWD}"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+source "${SCRIPT_DIR}/lib/common.sh"
+
 TASK="${1:?Usage: bash setup_agent.sh [swebp|swe-verified|mcp-atlas]}"
 MODEL_NAME="${MODEL_NAME:-${2:-}}"
 
-AGENT_DIR="${BENCHMARK_DIR}/SWE-bench_Pro-os/mini-swe-agent"   # submodule
-AGENT_DIR_VERIFIED="${BENCHMARK_DIR}/mini-swe-agent"
-MCP_DIR="${BENCHMARK_DIR}/mcp-atlas"
-
-die() { echo "[ERROR] $*" >&2; exit 1; }
+init_benchmark_paths
 
 is_deepseek_v4_model() {
     [[ "${MODEL_NAME}" == *DeepSeek-V4* ]]
@@ -47,6 +45,29 @@ install_vllm() {
         fi
         uv pip install -U torch torchvision torchaudio vllm
     fi
+}
+
+verify_cutlass_runtime() {
+    python - <<"PYCUT"
+import sys
+try:
+    import cutlass.cute.nvgpu.common as c
+    if not hasattr(c, "normalize_field_to_ir_name"):
+        raise RuntimeError("cutlass symbol normalize_field_to_ir_name missing")
+    print("[cutlass] runtime check OK")
+except Exception as e:
+    print(f"[cutlass] runtime check FAILED: {e}")
+    sys.exit(1)
+PYCUT
+}
+
+repair_cutlass_runtime() {
+    echo "=== [mcp-atlas] Repairing CUTLASS runtime ==="
+    pip install --no-cache-dir --force-reinstall \
+        nvidia-cutlass-dsl==4.5.2 \
+        nvidia-cutlass-dsl-libs-base==4.5.2 \
+        nvidia-cutlass-dsl-libs-cu13==4.5.2
+    pip install --no-cache-dir numpy==2.3.5
 }
 
 # =============================================================================
@@ -132,6 +153,11 @@ setup_mcp() {
     echo "=== [mcp-atlas] Install packages ==="
     uv pip install -r "${MCP_DIR}/requirements.txt"
     install_vllm
+
+    if ! verify_cutlass_runtime; then
+        repair_cutlass_runtime
+        verify_cutlass_runtime
+    fi
 
     echo "=== [mcp-atlas] npm install ==="
     export NVM_DIR="${HOME}/.nvm"
