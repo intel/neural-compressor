@@ -260,7 +260,15 @@ class QDynamicDenseMixin(SaveableLayerMixin):
     """Mixin that adds dynamic quantization to dense-like layers."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_channel",
+    ):
         """Convert a dense-like layer instance for dynamic quantization.
 
         Args:
@@ -269,6 +277,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): Whether to use constant weight.
+            w_quant_granularity (str): Whether to use per_channel or per_tensor quantization for weights
 
         Returns:
             keras.layers.Layer: The updated layer instance.
@@ -278,6 +287,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         orig.weight_dtype = weight_dtype
         orig.const_scale = const_scale
         orig.const_weight = const_weight
+        orig.w_quant_granularity = w_quant_granularity
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.input_qdq = DynamicQDQLayer("input_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
         if const_scale:
@@ -298,7 +308,11 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         self._tracker.unlock()
         self.input_qdq.add_variables()
         w_scale, _ = get_q_params(
-            self._kernel.value, self.weight_dtype, self.compute_dtype, asymmetric=False, axis=self.w_quant_axis
+            self._kernel.value,
+            self.weight_dtype,
+            self.compute_dtype,
+            asymmetric=False,
+            axis=self.w_quant_axis if self.w_quant_granularity == "per_channel" else None,
         )
         self.w_scale = self.add_weight(
             name="w_scale",
@@ -475,7 +489,15 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
     """Dynamically quantized MultiHeadAttention layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_channel",
+    ):
         """Convert a MultiHeadAttention instance for dynamic quantization.
 
         Args:
@@ -484,6 +506,7 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): ignored, included for API consistency.
             const_weight (bool): ignored, included for API consistency.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             keras.layers.MultiHeadAttention: Updated layer instance.
@@ -670,7 +693,15 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
     """Dynamically quantized CachedGemma3Attention layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_channel",
+    ):
         """Convert a CachedGemma3Attention instance for dynamic quantization.
 
         Args:
@@ -679,6 +710,7 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): ignored, included for API consistency.
             const_weight (bool): ignored, included for API consistency.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             CachedGemma3Attention: Updated layer instance.
@@ -814,7 +846,15 @@ class QDynamicGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
     """Dynamically quantized Gemma3VisionAttention layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_channel",
+    ):
         """Convert a Gemma3VisionAttention instance for dynamic quantization.
 
         Args:
@@ -823,6 +863,7 @@ class QDynamicGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): ignored, included for API consistency.
             const_weight (bool): ignored, included for API consistency.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             Gemma3VisionAttention: Updated layer instance.
@@ -917,7 +958,15 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
     """Dynamically quantized ReversibleEmbedding layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_channel",
+    ):
         """Convert a ReversibleEmbedding instance for dynamic quantization.
 
         Args:
@@ -926,6 +975,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): ignored, included for API consistency.
             const_weight (bool): ignored, included for API consistency.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             ReversibleEmbedding: Updated layer instance.
