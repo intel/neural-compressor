@@ -74,7 +74,7 @@ class JaxBaseConfig(BaseConfig):
         activation_dtype: str = "fp8_e4m3",
         const_scale: bool = False,
         const_weight: bool = False,
-        weight_scale_granularity: str = "per_channel",
+        weight_scale_granularity: str = "per_tensor",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         exclude_list: Optional[List[str]] = None,
     ):
