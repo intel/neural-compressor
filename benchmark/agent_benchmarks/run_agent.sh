@@ -42,6 +42,8 @@ source "${SCRIPT_DIR}/lib/common.sh"
 #   --slice S:E           Exact slice (alternative to --num-tasks)
 #   --workers N           Parallel agent workers                (default: 2)
 #   --step-limit N        Max steps per instance                (default: 250)
+#   --eval-workers N      Parallel local harness workers         (default: workers)
+#   --skip-eval           Generate predictions only; skip local evaluation
 #
 # MCP-Atlas (--task mcp-atlas):
 #   --num-tasks N         Limit to first N tasks                (default: all 500)
@@ -62,6 +64,7 @@ SCHEME="${SCHEME:-FP8}"
 MAX_MODEL_LEN=262144
 SERVED_MODEL_NAME="gpt-3.5-turbo"
 WORKERS=2
+EVAL_WORKERS=""
 STEP_LIMIT=250
 NUM_TASKS=""
 SLICE_ARG=""
@@ -70,6 +73,7 @@ SANDBOX_PORT=1984
 HARNESS_PORT=3001
 RUN_TAG="$(date +%Y%m%d_%H%M%S)"
 SKIP_SERVE=false
+SKIP_EVAL=false
 SKIP_SANDBOX=false
 SKIP_HEALTH_CHECK=false
 
@@ -163,6 +167,10 @@ setup_swebp() {
 
 setup_swe_verified() {
     [[ -d "${AGENT_DIR_VERIFIED}" ]] || die "mini-swe-agent not found — run: bash setup_agent.sh swe-verified"
+    if [[ "${SKIP_EVAL}" != true ]]; then
+        python -c "import swebench.harness.run_evaluation" 2>/dev/null \
+            || die "swebench harness not found — install it in this env: python -m pip install swebench"
+    fi
 }
 
 setup_mcp() {
@@ -210,7 +218,7 @@ start_vllm_server() {
             --tensor-parallel-size 2
             --attention_config.use_fp4_indexer_cache=True
             --max-model-len 1048576
-            --gpu-memory-utilization 0.90
+            --gpu-memory-utilization "${GPU_MEM_UTIL:-0.9}"
         )
 
 
@@ -305,10 +313,30 @@ run_swebp() {
     local cfg_run="${out_dir}/swebp_run.yaml"
     mkdir -p "${out_dir}"
     "${py3}" -c "
+import os
 import yaml
 from minisweagent.config import builtin_config_dir
 cfg = yaml.safe_load((builtin_config_dir / 'extra' / 'swebench.yaml').read_text())
 cfg['agent']['step_limit'] = ${STEP_LIMIT}
+cfg.setdefault('run', {})['env_startup_command'] = (
+    'git clone https://github.com/{{ repo }}.git . && '
+    '{{ before_repo_set_cmd }}'
+)
+submit_cmd = 'cd /testbed && echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && git diff -- . \':(exclude)test/**\' \':(exclude)tests/**\''
+submit_note = '''
+
+    Before submitting, run cd /testbed && git diff --name-only.
+    If any changed file is under test/ or tests/, revert those test changes.
+    Submit only source-code changes. Do not modify tests.
+'''
+cfg['agent']['instance_template'] = cfg['agent']['instance_template'].replace(
+    'echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && git add -A && git diff --cached',
+    submit_cmd,
+)
+cfg['agent']['instance_template'] = cfg['agent']['instance_template'].replace(
+    '    ## Submission\n',
+    submit_note + '\n    ## Submission\n',
+)
 cfg['model'] = {
     'model_name': '${SERVED_MODEL_NAME}',
     'cost_tracking': 'ignore_errors',
@@ -317,6 +345,7 @@ cfg['model'] = {
         'api_key': 'dummy',
         'drop_params': True,
         'temperature': 0.0,
+        'max_tokens': int(os.getenv('AGENT_MAX_TOKENS', '8192')),
     },
 }
 open('${cfg_run}', 'w').write(yaml.dump(cfg, allow_unicode=True))
@@ -381,6 +410,33 @@ def normalize_patch(text: str) -> str:
     return ''
 
 
+def touched_files(patch: str) -> list[str]:
+    files = []
+    for match in re.finditer(r'(?m)^diff --git a/(.*?) b/(.*?)$', patch):
+        files.append(match.group(2))
+    if files:
+        return files
+    for match in re.finditer(r'(?m)^\+\+\+ b/(.*?)$', patch):
+        files.append(match.group(1))
+    return files
+
+
+def is_test_file(path: str) -> bool:
+    parts = path.split('/')
+    name = parts[-1]
+    return (
+        parts[0] in {'test', 'tests'}
+        or any(part in {'test', 'tests'} for part in parts[:-1])
+        or name.startswith('test_')
+        or name.endswith('_test.py')
+        or name.endswith('.test.js')
+        or name.endswith('.spec.js')
+        or name.endswith('.test.ts')
+        or name.endswith('.spec.ts')
+        or name.endswith('_test.go')
+    )
+
+
 def pick_patch(record: dict) -> str:
     candidates = [
         record.get('model_patch'),
@@ -400,6 +456,7 @@ def pick_patch(record: dict) -> str:
 items = preds.items() if isinstance(preds, dict) else enumerate(preds)
 patches = []
 empty_or_invalid = 0
+test_file_patches = 0
 for key, rec in items:
     if not isinstance(rec, dict):
         rec = {'model_patch': str(rec)}
@@ -407,6 +464,9 @@ for key, rec in items:
     if not iid:
         continue
     patch = pick_patch(rec)
+    if patch and any(is_test_file(path) for path in touched_files(patch)):
+        test_file_patches += 1
+        patch = ''
     if not patch:
         empty_or_invalid += 1
     patches.append({'instance_id': iid, 'patch': patch, 'prefix': '${mid}_step${STEP_LIMIT}'})
@@ -414,6 +474,7 @@ for key, rec in items:
 json.dump(patches, open('${patches}', 'w'), indent=2)
 print(f'Wrote {len(patches)} patches -> ${patches}')
 print(f'Invalid/empty patch entries filtered: {empty_or_invalid}')
+print(f'Patches touching test files filtered: {test_file_patches}')
 "
 
     # Prepare instance CSV from HuggingFace dataset
@@ -516,17 +577,62 @@ print(f'Wrote {len(preds)} predictions to ${preds_jsonl}')
         echo "Tasks run : ${n}"
         echo "Preds     : ${preds_jsonl}"
 
-        if command -v sb-cli &>/dev/null && [[ -n "${SWEBENCH_API_KEY:-}" ]]; then
-            echo "=== Submitting to SWE-bench cloud (sb-cli) ==="
-            sb-cli submit swe-bench_verified test \
-                --predictions_path "${preds_jsonl}" \
-                --run_id "${RUN_TAG}"
+        if [[ "${SKIP_EVAL}" == true ]]; then
+            echo "[INFO] Skipping local SWE-bench evaluation (--skip-eval)."
+            return
+        fi
+
+        local eval_workers="${EVAL_WORKERS:-${WORKERS}}"
+        local eval_run_id="${RUN_TAG}"
+        local report_path="${BENCHMARK_DIR}/${SERVED_MODEL_NAME}.${eval_run_id}.json"
+        local -a instance_ids=()
+        mapfile -t instance_ids < <(python3 - "${preds_jsonl}" <<PY
+import json
+import sys
+with open(sys.argv[1]) as f:
+    for line in f:
+        line = line.strip()
+        if not line:
+            continue
+        print(json.loads(line)["instance_id"])
+PY
+)
+
+        [[ ${#instance_ids[@]} -gt 0 ]] || die "No instance IDs found in ${preds_jsonl}"
+
+        echo "=== Evaluating SWE-bench Verified locally (swebench harness) ==="
+        echo "Eval workers : ${eval_workers}"
+        echo "Run ID       : ${eval_run_id}"
+        echo "Report      : ${report_path}"
+
+        (cd "${BENCHMARK_DIR}" && python -m swebench.harness.run_evaluation \
+            --dataset_name princeton-nlp/SWE-bench_Verified \
+            --split test \
+            --predictions_path "${preds_jsonl}" \
+            --instance_ids "${instance_ids[@]}" \
+            --max_workers "${eval_workers}" \
+            --run_id "${eval_run_id}")
+
+        if [[ -f "${report_path}" ]]; then
+            python3 - "${report_path}" <<PY
+import json
+import sys
+report_path = sys.argv[1]
+with open(report_path) as f:
+    report = json.load(f)
+submitted = report.get("submitted_instances", 0)
+resolved = report.get("resolved_instances", 0)
+completed = report.get("completed_instances", 0)
+unresolved = report.get("unresolved_instances", 0)
+errors = report.get("error_instances", 0)
+accuracy = (resolved / submitted * 100) if submitted else 0.0
+print(f"Local accuracy : {resolved}/{submitted} = {accuracy:.1f}%")
+print(f"Completed      : {completed}")
+print(f"Unresolved     : {unresolved}")
+print(f"Errors         : {errors}")
+PY
         else
-            echo ""
-            echo "[INFO] Set SWEBENCH_API_KEY to auto-submit via sb-cli:"
-            echo "  sb-cli submit swe-bench_verified test \\"
-            echo "    --predictions_path ${preds_jsonl} \\"
-            echo "    --run_id ${RUN_TAG}"
+            echo "[WARNING] Local harness report not found at ${report_path}"
         fi
     else
         echo "[WARNING] No predictions found at ${preds_jsonl}"
@@ -669,6 +775,7 @@ while [[ $# -gt 0 ]]; do
         --served-name)   SERVED_MODEL_NAME="$2"; shift 2 ;;
         --slice)         SLICE_ARG="$2";         shift 2 ;;
         --workers)       WORKERS="$2";           shift 2 ;;
+        --eval-workers)  EVAL_WORKERS="$2";      shift 2 ;;
         --step-limit)    STEP_LIMIT="$2";        shift 2 ;;
         --redo)          REDO_FLAG="--redo";     shift ;;
         --num-tasks)     NUM_TASKS="$2";         shift 2 ;;
@@ -677,6 +784,7 @@ while [[ $# -gt 0 ]]; do
         --harness-port)  HARNESS_PORT="$2";      shift 2 ;;
         --tag)           RUN_TAG="$2";           shift 2 ;;
         --skip-serve)    SKIP_SERVE=true;        shift ;;
+        --skip-eval)     SKIP_EVAL=true;         shift ;;
         --skip-sandbox)  SKIP_SANDBOX=true;      shift ;;
         --skip-health-check) SKIP_HEALTH_CHECK=true; shift ;;
         --help|-h)       usage ;;

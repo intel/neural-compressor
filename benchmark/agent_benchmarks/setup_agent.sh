@@ -136,7 +136,7 @@ setup_swe_verified() {
     fi
 
     echo "=== [swe-verified] Install packages ==="
-    uv pip install "${AGENT_DIR_VERIFIED}" sb-cli "datasets>=3.0.0"
+    uv pip install "${AGENT_DIR_VERIFIED}" swebench "datasets>=3.0.0"
     install_vllm
 
     echo "=== [swe-verified] Done — vllm: $(vllm --version) ==="

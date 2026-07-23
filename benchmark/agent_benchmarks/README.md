@@ -26,8 +26,8 @@ run_agent.sh     — benchmark runner
   - installs generic `vllm`, `torch`, `torchaudio`, and `torchvision`
   - does not pin those package versions
 
-SWE-bench Verified also requires:
-- `SWEBENCH_API_KEY` env var for remote submission via `sb-cli`
+SWE-bench Verified uses the official local SWE-bench harness, installed by `setup_agent.sh`.
+The hosted `sb-cli` evaluator is not used by this runner.
 
 ---
 
@@ -139,6 +139,7 @@ All `vllm serve` launches from `run_agent.sh` add:
 | `--slice S:E` | — | Exact slice, e.g. `0:20` |
 | `--workers N` | `2` | Parallel agent workers |
 | `--step-limit N` | `250` | Max steps per instance |
+| `AGENT_MAX_TOKENS` | `8192` | Max completion tokens per model request |
 | `--redo` | — | Re-run already-completed instances |
 
 Outputs: `SWE-bench_Pro-os/mini-swe-agent/results/run_<TAG>/`
@@ -152,11 +153,25 @@ Local Docker evaluation runs automatically after the agent finishes.
 | `--num-tasks N` | all | Limit to first N instances |
 | `--slice S:E` | — | Exact slice |
 | `--workers N` | `2` | Parallel agent workers |
+| `--eval-workers N` | `--workers` | Parallel local SWE-bench harness workers |
 | `--step-limit N` | `250` | Max steps per instance |
+| `--skip-eval` | — | Generate predictions only; skip local evaluation |
 
-Requires `SWEBENCH_API_KEY` for remote submission via `sb-cli`.
+After predictions are generated, `run_agent.sh` evaluates them locally with:
 
-Outputs: `mini-swe-agent/results/swe_verified_<TAG>/`
+```bash
+python -m swebench.harness.run_evaluation \
+    --dataset_name princeton-nlp/SWE-bench_Verified \
+    --split test \
+    --predictions_path <preds.jsonl> \
+    --instance_ids <generated instance ids> \
+    --max_workers <eval workers> \
+    --run_id <tag>
+```
+
+Outputs:
+- Predictions: `mini-swe-agent/results/swe_verified_<TAG>/preds.jsonl`
+- Local evaluation report: `<served-model-name>.<TAG>.json` in `BENCHMARK_DIR`
 
 ### MCP-Atlas (`--task mcp-atlas`)
 
@@ -199,15 +214,15 @@ bash run_agent.sh \
 cd /path/to/agent_benchmarks
 MODEL_NAME=DeepSeek-V4-Flash bash setup_agent.sh swe-verified
 
-export SWEBENCH_API_KEY=<your_key>
 bash run_agent.sh \
-    --task       swe-verified \
-    --model      /path/to/DeepSeek-V4-Flash \
-    --scheme     MXFP4 \
-    --port       8888 \
-    --num-tasks  10 \
-    --workers    2 \
-    --tag        smoke_verified
+    --task        swe-verified \
+    --model       /path/to/DeepSeek-V4-Flash \
+    --scheme      MXFP4 \
+    --port        8888 \
+    --num-tasks   10 \
+    --workers     2 \
+    --eval-workers 4 \
+    --tag         smoke_verified
 ```
 
 ### MCP-Atlas — DeepSeek-V4-Flash MXFP4 smoke test
@@ -218,7 +233,7 @@ MODEL_NAME=DeepSeek-V4-Flash bash setup_agent.sh mcp-atlas
 
 bash run_agent.sh \
     --task      mcp-atlas \
-    --model     /path/to/DeepSeek-V4-Flash-MXFP4 \
+    --model     /storage/models/deepseek-ai/DeepSeek-V4-Flash \
     --scheme    MXFP4 \
     --port      8888 \
     --num-tasks 10 \
