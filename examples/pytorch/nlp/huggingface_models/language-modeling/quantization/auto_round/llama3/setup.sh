@@ -98,7 +98,7 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         cd ..
     fi
     if [[ "$BENCH_TOOL" == "lm_eval" ]]; then
-        uv pip install lm-eval==0.4.10
+        uv pip install lm-eval==0.4.12
         uv pip install lm-eval[api]
         if [[ "$TASKS" == *"longbench"* ]]; then
             uv pip install "long-bench-eval @ git+https://github.com/yiliu30/long-bench-eval"
