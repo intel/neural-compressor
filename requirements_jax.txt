@@ -1,7 +1,7 @@
 deprecated>=1.2.13
-jax>=0.8.3
-keras>=3.13.2  
-keras-hub>=0.26.0
+jax>=0.10.0
+keras>=3.14.1
+keras-hub>=0.29.1
 numpy
 opencv-python-headless
 Pillow

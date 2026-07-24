@@ -8,19 +8,13 @@ This document describes quantization of Keras Gemma models using Neural Compress
 ## 1. Create Environment
 It is worth conducting experiments in a separate environment. For example, you can use the conda environment from [conda-forge](https://github.com/conda-forge/miniforge). The binary for your environment could be found here: [miniforge](https://github.com/conda-forge/miniforge/releases/latest)  
 
-To see performance improvements from quantization, you have to enable some JAX/XLA features by setting an environment variable:
-```bash
-export XLA_FLAGS="\
-    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \
-    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \
-    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter"
-```
-Without this flag, quantized model works in fake quantization mode (rounding tensors to a given fp8 format but later making calculations in 32-bit floating point format).  
-
-
-
 ## 2. Install modules
-Install Neural Compressor from the source code:
+
+Since Neural Compressor v3.9, you can install the required binaries from PyPI:
+```bash
+pip install -r requirements.txt
+```
+Alternatively, you can always install Neural Compressor from the source code:
 ```bash
 pushd ../../../..  # go to the root directory of the Neural Compressor source code
 INC_JAX_ONLY=1 pip install .
@@ -78,18 +72,10 @@ Berlin is a vibrant, diverse, and historically rich city with a unique blend of 
 Calibration costs time, so we can calibrate once on representative data sets and later reuse it many times. To achieve it saving model functionality is supported.
 You can run [prepare_static.py](prepare_static.py) script:
 ```bash
-export XLA_FLAGS="\
-    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \
-    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \
-    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter"
 python prepare_static.py -m /path_to_your_gemma_model/gemma3_instruct_270m -q /path_to_store_your_quantized_model/gemma3_instruct_270m -p fp8_e4m3
 ```
 or, if default parameters works for you, just:
 ```bash
-export XLA_FLAGS="\
-    --xla_cpu_experimental_onednn_custom_call=true --xla_cpu_use_onednn=false \
-    --xla_cpu_experimental_ynn_fusion_type=invalid --xla_cpu_use_xnnpack=false \
-    --xla_backend_extra_options=xla_cpu_disable_new_fusion_emitter"
 python prepare_static.py
 ```
 

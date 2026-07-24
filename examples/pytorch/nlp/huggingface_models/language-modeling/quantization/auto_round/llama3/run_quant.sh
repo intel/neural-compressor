@@ -5,7 +5,7 @@
 # Parse command line arguments
 KV_CACHE_DTYPE="auto"
 STATIC_ATTENTION_DTYPE="auto"
-EXPORT_FORMAT="auto_round"
+EXPORT_FORMAT="llm_compressor"
 while [[ $# -gt 0 ]]; do
     case $1 in
         --topology=*)

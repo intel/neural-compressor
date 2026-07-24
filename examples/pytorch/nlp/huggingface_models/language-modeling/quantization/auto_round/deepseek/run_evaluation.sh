@@ -99,12 +99,19 @@ if [[ "$TASK_NAME" == *"longbench"* ]]; then
 fi
 
 # update max_length based on the task
-if [[ "$TASK_NAME" == *"ruler"* ]]; then
-    MODEL_MAX_POS=${RULER_MAX_POS:-131072}
-    max_length=${MODEL_MAX_POS}
+if [[ "$TASK_NAME" == *"ruler"* ]] || [[ "$TASK_NAME" == *"niah_multiquery"* ]]; then
     max_gen_toks=128
-    SEQ_LENGTHS="${MODEL_MAX_POS}"
-    TASK_NAME="niah_multiquery"
+    MODEL_MAX_POS=${RULER_MAX_POS:-131072}
+    if [[ "$TASK_NAME" == *"ruler_qa_squad"* ]]; then
+        # if input task is ruler_qa_squad
+        MODEL_MAX_POS=$((131072 - max_gen_toks))
+        TASK_NAME="ruler_qa_squad"
+    else
+        # if input task is ruler or niah_multiquery
+        TASK_NAME="niah_multiquery"
+    fi
+    max_length=${MODEL_MAX_POS}
+    SEQ_LENGTHS=${MODEL_MAX_POS}
     BATCH_SIZE=32
 fi
 
@@ -205,6 +212,21 @@ run_standard_eval() {
 # Function to start vLLM server
 start_vllm_server() {
     echo "Starting vLLM server on port ${SERVER_PORT}..."
+
+    # Detect vLLM version for backward-compatible rope scaling
+    # vLLM >= 0.19 removed --rope-scaling; use --hf-overrides instead
+    VLLM_VERSION=$(python -c "import vllm; print(vllm.__version__)" 2>/dev/null || echo "0.0.0")
+    VLLM_MAJOR_MINOR=$(echo "$VLLM_VERSION" | awk -F. '{printf "%d%02d", $1, $2}')
+    ROPE_SCALING_JSON='{"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}'
+    if [ "$VLLM_MAJOR_MINOR" -ge 19 ] 2>/dev/null; then
+        ROPE_FLAG="--hf-overrides"
+        ROPE_VALUE="{\"rope_scaling\":${ROPE_SCALING_JSON},\"max_position_embeddings\":131072}"
+    else
+        ROPE_FLAG="--rope-scaling"
+        ROPE_VALUE="${ROPE_SCALING_JSON}"
+    fi
+    echo "vLLM version: ${VLLM_VERSION}, using: ${ROPE_FLAG} '${ROPE_VALUE}'"
+
     vllm serve ${MODEL_PATH} \
         --port ${SERVER_PORT} \
         --tensor-parallel-size ${TP_SIZE} \
@@ -212,7 +234,6 @@ start_vllm_server() {
         --gpu-memory-utilization 0.8 \
         --dtype bfloat16 \
         --kv-cache-dtype ${KV_CACHE_DTYPE} \
-        --disable-log-requests \
         > ${OUTPUT_DIR}/vllm_server.log 2>&1 &
     
     VLLM_PID=$!
@@ -292,7 +313,7 @@ run_ruler_eval() {
     echo "Running Ruler evaluation against vLLM server..."
     lm_eval \
         --model local-completions \
-        --model_args "model=$MODEL_PATH,base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=1,max_retries=50,timeout=500,tokenized_requests=False,max_gen_toks=${max_gen_toks}" \
+        --model_args "model=$MODEL_PATH,base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=1,max_retries=50,timeout=500,tokenized_requests=False,max_gen_toks=${max_gen_toks},max_length=${max_length}" \
         --tasks $TASK_NAME \
         --metadata="{\"max_seq_lengths\":[${SEQ_LENGTHS}],\"tokenizer\":\"${MODEL_PATH}\"}" \
         --gen_kwargs "max_gen_toks=${max_gen_toks}" \
@@ -308,7 +329,7 @@ run_ruler_eval() {
 if [[ "$TASK_NAME" == *"longbench"* ]]; then
     echo "Running LongBench v2 evaluation..."
     run_longbench_eval
-elif [[ "$TASK_NAME" == *"niah"* ]]; then
+elif [[ "$TASK_NAME" == *"ruler"* ]] || [[ "$TASK_NAME" == *"niah_multiquery"* ]]; then
     echo "Running RULER evaluation..."
     run_ruler_eval
 else

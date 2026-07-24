@@ -16,6 +16,10 @@ from neural_compressor.torch.quantization import (
     prepare,
     quantize,
 )
+from neural_compressor.torch.quantization.quantize import (
+    _AutoRoundModelReference,
+    _is_autoround_model_free_string_case,
+)
 from neural_compressor.torch.utils import logger
 
 torch.backends.__allow_nonbracketed_mutation_flag = True
@@ -638,3 +642,82 @@ class TestAutoRoundCPU:
             assert (
                 getattr(attn, "q_scale", None) is not None
             ), f"Missing q_scale in attention for scheme={scheme}, static_attention_dtype={static_attention_dtype}"
+
+    def test_is_autoround_model_free_string_case_true(self):
+        """Test detection when model is string and config has model_free=True."""
+        config = AutoRoundConfig(model_free=True, scheme="MXFP4")
+        model = "/path/to/model"
+        assert _is_autoround_model_free_string_case(model, config) is True
+
+    def test_is_autoround_model_free_string_case_false_not_string(self):
+        """Test detection returns False when model is not a string."""
+        config = AutoRoundConfig(model_free=True, scheme="MXFP4")
+        model = torch.nn.Linear(10, 10)
+        assert _is_autoround_model_free_string_case(model, config) is False
+
+    def test_is_autoround_model_free_string_case_false_no_flag(self):
+        """Test detection returns False when model_free is not set."""
+        config = AutoRoundConfig(scheme="MXFP4")
+        model = "/path/to/model"
+        assert _is_autoround_model_free_string_case(model, config) is False
+
+    def test_is_autoround_model_free_string_case_false_model_free_false(self):
+        """Test detection returns False when model_free is explicitly False."""
+        config = AutoRoundConfig(model_free=False, scheme="MXFP4")
+        model = "/path/to/model"
+        assert _is_autoround_model_free_string_case(model, config) is False
+
+    def test_autoround_model_reference_creation(self):
+        """Test _AutoRoundModelReference wrapper creation."""
+        model_ref = "/path/to/deepseek-v4"
+        config = AutoRoundConfig(model_free=True, scheme="MXFP4")
+        example_inputs = {"input_ids": torch.ones(1, 10, dtype=torch.long)}
+
+        ref = _AutoRoundModelReference(model_reference=model_ref, quant_config=config, example_inputs=example_inputs)
+
+        assert ref.model_reference == model_ref
+        assert ref.quant_config is config
+        assert ref.example_inputs == example_inputs
+        assert ref.is_prepared is True
+
+    def test_prepare_with_string_model_and_model_free_returns_reference(self):
+        """Test that prepare() returns _AutoRoundModelReference when called with string model and model_free=True."""
+        model = "/path/to/model"
+        config = AutoRoundConfig(
+            model_free=True,
+            scheme="MXFP4",
+            ignore_layers="compressor",
+            output_dir="/tmp/test_output",
+        )
+
+        result = prepare(model, config)
+
+        assert isinstance(result, _AutoRoundModelReference)
+        assert result.model_reference == model
+        assert result.quant_config is config
+
+    def test_model_free_with_string_model(self):
+        """Test that prepare() preserves all config attributes in _AutoRoundModelReference."""
+        model = "facebook/opt-125m"
+        layer_config = {"fc2": {"bits": 4, "data_type": "mx_fp"}}
+        config = AutoRoundConfig(
+            model_free=True,
+            scheme="MXFP8",
+            ignore_layers="self_attn",
+            layer_config=layer_config,
+            export_format="llm_compressor",
+            output_dir="/tmp/quantized_model",
+        )
+
+        result = prepare(model, config)
+
+        assert isinstance(result, _AutoRoundModelReference)
+        assert result.quant_config.scheme == "MXFP8"
+        assert result.quant_config.ignore_layers == "self_attn"
+        assert result.quant_config.layer_config == layer_config
+        assert result.quant_config.export_format == "llm_compressor"
+
+        result = convert(result)
+        assert not hasattr(result.model.decoder.layers[0].self_attn.k_proj, "quantization_scheme"), "Ignored layers were not preserved during conversion."
+        assert result.model.decoder.layers[0].fc1.quantization_scheme.format.value == 'mxfp8-quantized', "Model conversion did not preserve the quantization scheme format."
+        assert result.model.decoder.layers[0].fc2.quantization_scheme.format.value == 'mxfp4-pack-quantized', "Model conversion did not preserve the quantization scheme format for layer_config."

@@ -33,24 +33,25 @@ def _read_value(var_or_array, is_const):
     return var_or_array if is_const else var_or_array.value
 
 
+@pytest.mark.parametrize("dynamic", [False, True], ids=["dynamic=False", "dynamic=True"])
+@pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
+@pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
+@pytest.mark.parametrize("inplace", [False, True], ids=["inplace=False", "inplace=True"])
+@pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
 @pytest.mark.parametrize(
     "weight_dtype,activation_dtype",
     _dtype_pairs,
     ids=[f"weight_dtype={w}-activation_dtype={a}" for w, a in _dtype_pairs],
 )
-@pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
-@pytest.mark.parametrize("dynamic", [False, True], ids=["dynamic=False", "dynamic=True"])
-@pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
-@pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
-@pytest.mark.parametrize("inplace", [False, True], ids=["inplace=False", "inplace=True"])
-def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, model_dtype, dynamic, c_scale, c_weight, inplace):
+@pytest.mark.smoke_test
+def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model_dtype, weight_dtype, activation_dtype):
     """Test accuracy on a simple linear model."""
 
     # Build model
     model_dtype_jnp = jnp.dtype(model_dtype)
     model = keras.Sequential(
         [
-            keras.Input(shape=(8,)),
+            keras.Input(shape=(9,)),
             keras.layers.Dense(4, activation="linear", use_bias=False, dtype=model_dtype_jnp),
             keras.layers.Dense(1, activation="linear", use_bias=False, dtype=model_dtype_jnp),
         ]
@@ -68,10 +69,10 @@ def test_simple_linear_model_accuracy(weight_dtype, activation_dtype, model_dtyp
         all_weights.append(weights)
 
     # Prepare inputs and calibration set
-    test_input = jnp.array([1.0, 2.0, 2.0, 0.0, -1.0, -3.0, 0.5, float(jnp.finfo("float8_e5m2").max + 100)]).reshape(
-        1, 8
-    )
-    calib_tensor = jnp.arange(1, 9).reshape((1, 8))
+    test_input = jnp.array(
+        [1.0, 2.0, 2.0, 0.0, -1.0, -3.0, 0.5, 0.5, float(jnp.finfo("float8_e5m2").max + 100)]
+    ).reshape(1, 9)
+    calib_tensor = jnp.arange(1, 10).reshape((1, 9))
 
     def calib_function(model):
         _ = model(calib_tensor)

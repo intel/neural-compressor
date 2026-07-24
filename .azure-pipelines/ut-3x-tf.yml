@@ -5,7 +5,7 @@ pr:
   drafts: false
   branches:
     include:
-      - master
+      - main
   paths:
     include:
       - neural_compressor/common
@@ -18,7 +18,7 @@ pr:
       - .azure-pipelines/template/docker-template.yml
       - .azure-pipelines/scripts/ut/coverage.3x_tf
 
-pool: ICX-16C
+pool: INTEL-CPU
 
 variables:
   IMAGE_NAME: "neural-compressor"

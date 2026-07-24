@@ -257,7 +257,7 @@ class WOQModelLoader:
                 bin_index_file = os.path.join(shard_dir, "model_bin_index.json")
                 self.loaded_state_dict = load_model_from_shards_with_safetensors(shard_dir, bin_index_file)
         else:
-            self.loaded_state_dict = torch.load(qmodel_weight_file_path)
+            self.loaded_state_dict = self._load_weight_file(qmodel_weight_file_path)
 
         self.loaded_state_dict_keys = list(set(self.loaded_state_dict.keys()))
 
@@ -283,6 +283,26 @@ class WOQModelLoader:
 
         model.eval()
         return model
+
+    def _load_weight_file(self, weight_file_path):
+        """Load weight file with safe defaults.
+
+        `weights_only=True` avoids unpickling arbitrary Python objects when loading
+        quantized checkpoints.
+        """
+        try:
+            return torch.load(weight_file_path, weights_only=True)
+        except TypeError as exc:
+            raise RuntimeError(
+                "`weights_only` in torch.load requires torch>=2.0. "
+                "If your torch version is lower, please use an older Neural Compressor version."
+            ) from exc
+        except Exception as exc:
+            raise RuntimeError(
+                "Failed to load quantized weights with `weights_only=True`. "
+                "Please ensure the checkpoint only contains tensor weights and "
+                f"quantization config is saved in `{QCONFIG_NAME}`."
+            ) from exc
 
     def _is_w4a8_model_from_auto_round(self):
         if self.quantization_config.get("data_type", None) == "fp8_to_int_sym":

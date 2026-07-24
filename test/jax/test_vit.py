@@ -41,11 +41,20 @@ def classify_image(model, image, top_k=1):
 
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
+@pytest.mark.parametrize("const_vars", [False, True], ids=["const_vars=False", "const_vars=True"])
+@pytest.mark.parametrize("inplace", [False, True], ids=["inplace=False", "inplace=True"])
+@pytest.mark.parametrize("save_as_preset", [False, True], ids=["save_as_preset=False", "save_as_preset=True"])
 @pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "int8"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=int8"]
 )
-def test_image_classification(dynamic, model_dtype, quantization_dtype, colva_beach_sq, random_image):
+@pytest.mark.smoke_test_if(
+    "quantization_dtype=int8-model_dtype=float32-save_as_preset=False-inplace=True-const_vars=False-dynamic=True",
+    "quantization_dtype=fp8_e4m3-model_dtype=bfloat16-save_as_preset=True-inplace=False-const_vars=True-dynamic=False",
+)
+def test_image_classification(
+    dynamic, const_vars, inplace, save_as_preset, model_dtype, quantization_dtype, colva_beach_sq, random_image
+):
     vit = load_model_from_preset(ViTImageClassifier, "vit_base_patch16_224_imagenet", model_dtype)
 
     expected_labels = classify_image(vit, colva_beach_sq)
@@ -54,18 +63,30 @@ def test_image_classification(dynamic, model_dtype, quantization_dtype, colva_be
         _ = model.predict(random_image)
 
     if dynamic:
-        config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
-        vit_q = quantize_model(vit, config, None)
+        config = DynamicQuantConfig(
+            weight_dtype=quantization_dtype,
+            activation_dtype=quantization_dtype,
+            const_scale=const_vars,
+            const_weight=const_vars,
+        )
+        vit_q = quantize_model(vit, config, inplace=inplace)
     else:
         config = StaticQuantConfig(
-            weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, const_scale=True, const_weight=True
+            weight_dtype=quantization_dtype,
+            activation_dtype=quantization_dtype,
+            const_scale=const_vars,
+            const_weight=const_vars,
         )
-        vit_q = quantize_model(vit, config, calib_fn, inplace=False)
+        vit_q = quantize_model(vit, config, calib_fn, inplace=inplace)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "vit_quantized.keras")
-        vit_q.save_to_preset(save_path)
-        vit_q_loaded = ViTImageClassifier.from_preset(save_path, dtype=model_dtype)
+        if save_as_preset:
+            vit_q.save_to_preset(save_path)
+            vit_q_loaded = ViTImageClassifier.from_preset(save_path, dtype=model_dtype)
+        else:
+            keras.saving.save_model(vit_q, save_path)
+            vit_q_loaded = keras.saving.load_model(save_path)
 
     actual_labels = classify_image(vit_q_loaded, colva_beach_sq)
     assert (
