@@ -52,15 +52,15 @@ def random_string():
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
 @pytest.mark.parametrize("const_vars", [False, True], ids=["const_vars=False", "const_vars=True"])
+@pytest.mark.parametrize("model_dtype", ["float32"], ids=["model_dtype=float32"])
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "fp8_e5m2"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=fp8_e5m2"]
 )
 @pytest.mark.smoke_test_if(
-    "quantization_dtype=fp8_e4m3-const_vars=False-dynamic=True",
-    "quantization_dtype=fp8_e4m3-const_vars=True-dynamic=False",
+    "quantization_dtype=fp8_e4m3-model_dtype=float32-const_vars=False-dynamic=True",
+    "quantization_dtype=fp8_e4m3-model_dtype=float32-const_vars=True-dynamic=False",
 )
-def test_text_prompt(dynamic, const_vars, quantization_dtype, random_string):
-    model_dtype = "float32"
+def test_text_prompt(dynamic, const_vars, model_dtype, quantization_dtype, random_string):
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_270m", model_dtype)
 
     def calib_fn(model):
@@ -95,15 +95,16 @@ def test_text_prompt(dynamic, const_vars, quantization_dtype, random_string):
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
 @pytest.mark.parametrize("const_vars", [False, True], ids=["const_vars=False", "const_vars=True"])
+@pytest.mark.parametrize("model_dtype", ["bfloat16"], ids=["model_dtype=bfloat16"])
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "fp8_e5m2"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=fp8_e5m2"]
 )
 @pytest.mark.smoke_test_if(
-    "quantization_dtype=fp8_e4m3-const_vars=True-dynamic=True",
-    "quantization_dtype=fp8_e5m2-const_vars=False-dynamic=False",
+    "quantization_dtype=fp8_e4m3-model_dtype=bfloat16-const_vars=True-dynamic=True",
+    "quantization_dtype=fp8_e5m2-model_dtype=bfloat16-const_vars=False-dynamic=False",
 )
-def test_image_recognition(dynamic, const_vars, quantization_dtype, colva_beach_sq):
-    gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_4b-v1", "bfloat16")
+def test_image_recognition(dynamic, const_vars, model_dtype, quantization_dtype, colva_beach_sq):
+    gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_4b-v1", model_dtype)
 
     def calib_fn(model):
         _ = model.generate(
