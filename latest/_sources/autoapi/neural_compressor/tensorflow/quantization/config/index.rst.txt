@@ -52,8 +52,6 @@ Module Contents
 
 
    .. py:attribute:: white_list
-      :value: '*'
-
 
       Get the white list of operator names or types.
 
