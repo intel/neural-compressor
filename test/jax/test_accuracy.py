@@ -82,6 +82,7 @@ def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model
         config = DynamicQuantConfig(
             weight_dtype=weight_dtype,
             activation_dtype=activation_dtype,
+            weight_scale_granularity="per_channel",
             const_scale=c_scale,
             const_weight=c_weight,
         )
@@ -90,6 +91,7 @@ def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model
         config = StaticQuantConfig(
             weight_dtype=weight_dtype,
             activation_dtype=activation_dtype,
+            weight_scale_granularity="per_channel",
             const_scale=c_scale,
             const_weight=c_weight,
         )
