@@ -78,10 +78,10 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         CUDA_VERSION=$(detect_cuda_version)
         echo "Detected system CUDA version: $CUDA_VERSION"
         if [[ "$CUDA_VERSION" == "12."* ]]; then
-            uv pip install vllm==0.22.0 --extra-index-url https://wheels.vllm.ai/0.22.0/cu129 --extra-index-url https://download.pytorch.org/whl/cu129 --index-strategy unsafe-best-match
+            uv pip install vllm==0.25.1 --extra-index-url https://wheels.vllm.ai/0.22.0/cu129 --extra-index-url https://download.pytorch.org/whl/cu129 --index-strategy unsafe-best-match
             uv pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu129 --index-strategy unsafe-best-match
         elif [[ "$CUDA_VERSION" == "13."* ]]; then
-            uv pip install vllm==0.22.0
+            uv pip install vllm==0.25.1
         else
             echo "Unsupported CUDA version: $CUDA_VERSION. Supported versions are 12.x and 13.x."
             exit 1
@@ -98,7 +98,7 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         cd ..
     fi
     if [[ "$BENCH_TOOL" == "lm_eval" ]]; then
-        uv pip install lm-eval==0.4.10
+        uv pip install lm-eval==0.4.12
         uv pip install lm-eval[api]
         if [[ "$TASKS" == *"longbench"* ]]; then
             uv pip install "long-bench-eval @ git+https://github.com/yiliu30/long-bench-eval"
