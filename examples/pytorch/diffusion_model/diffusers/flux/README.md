@@ -36,7 +36,7 @@ bash run_quant.sh --topology=flux_mxfp8 --input_model=FLUX.1-dev --output_model=
 
 
 ## Evaluation
-Requires transformers==4.57.6 for evaluation. You can install it with `pip install transformers==4.57.6`.
+Requires transformers==4.57.6 for final score calculation, which will be automatically installed in the `run_benchmark.sh` script.
 
 ### BF16:
 
