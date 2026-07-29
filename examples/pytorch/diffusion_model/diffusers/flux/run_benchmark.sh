@@ -43,6 +43,9 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
+    # Requires transformers==4.57.6 for evaluation.
+    uv pip install transformers==4.57.6
+    
     dataset_location=${dataset_location:="captions_source.tsv"}
     limit=${limit:=-1}
     output_image_path=${output_image_path:="./tmp_imgs"}
