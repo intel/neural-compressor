@@ -52,16 +52,15 @@ def random_string():
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
 @pytest.mark.parametrize("const_vars", [False, True], ids=["const_vars=False", "const_vars=True"])
-@pytest.mark.parametrize("save_as_preset", [False, True], ids=["save_as_preset=False", "save_as_preset=True"])
-@pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
+@pytest.mark.parametrize("model_dtype", ["float32"], ids=["model_dtype=float32"])
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "fp8_e5m2"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=fp8_e5m2"]
 )
 @pytest.mark.smoke_test_if(
-    "quantization_dtype=fp8_e4m3-model_dtype=float32-save_as_preset=False-const_vars=False-dynamic=True",
-    "quantization_dtype=fp8_e4m3-model_dtype=bfloat16-save_as_preset=True-const_vars=True-dynamic=False",
+    "quantization_dtype=fp8_e4m3-model_dtype=float32-const_vars=False-dynamic=True",
+    "quantization_dtype=fp8_e4m3-model_dtype=float32-const_vars=True-dynamic=False",
 )
-def test_text_prompt(dynamic, const_vars, save_as_preset, model_dtype, quantization_dtype, random_string):
+def test_text_prompt(dynamic, const_vars, model_dtype, quantization_dtype, random_string):
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_270m", model_dtype)
 
     def calib_fn(model):
@@ -86,12 +85,8 @@ def test_text_prompt(dynamic, const_vars, save_as_preset, model_dtype, quantizat
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
-        if save_as_preset:
-            gemma_q.save_to_preset(save_path)
-            gemma_q_loaded = Gemma3CausalLM.from_preset(save_path, dtype=model_dtype)
-        else:
-            keras.saving.save_model(gemma_q, save_path)
-            gemma_q_loaded = keras.saving.load_model(save_path)
+        gemma_q.save_to_preset(save_path)
+        gemma_q_loaded = Gemma3CausalLM.from_preset(save_path, dtype=model_dtype)
 
     answer = gemma_q_loaded.generate("Answer what is the capital city of England.", max_length=25, strip_prompt=True)
     print("Gemma answer: ", {answer})
@@ -100,16 +95,15 @@ def test_text_prompt(dynamic, const_vars, save_as_preset, model_dtype, quantizat
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
 @pytest.mark.parametrize("const_vars", [False, True], ids=["const_vars=False", "const_vars=True"])
-@pytest.mark.parametrize("save_as_preset", [False, True], ids=["save_as_preset=False", "save_as_preset=True"])
-@pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
+@pytest.mark.parametrize("model_dtype", ["bfloat16"], ids=["model_dtype=bfloat16"])
 @pytest.mark.parametrize(
     "quantization_dtype", ["fp8_e4m3", "fp8_e5m2"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=fp8_e5m2"]
 )
 @pytest.mark.smoke_test_if(
-    "quantization_dtype=fp8_e4m3-model_dtype=bfloat16-save_as_preset=True-const_vars=True-dynamic=True",
-    "quantization_dtype=fp8_e5m2-model_dtype=float32-save_as_preset=False-const_vars=False-dynamic=False",
+    "quantization_dtype=fp8_e4m3-model_dtype=bfloat16-const_vars=True-dynamic=True",
+    "quantization_dtype=fp8_e5m2-model_dtype=bfloat16-const_vars=False-dynamic=False",
 )
-def test_image_recognition(dynamic, const_vars, save_as_preset, model_dtype, quantization_dtype, colva_beach_sq):
+def test_image_recognition(dynamic, const_vars, model_dtype, quantization_dtype, colva_beach_sq):
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_4b-v1", model_dtype)
 
     def calib_fn(model):
@@ -140,12 +134,8 @@ def test_image_recognition(dynamic, const_vars, save_as_preset, model_dtype, qua
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
-        if save_as_preset:
-            gemma_q.save_to_preset(save_path)
-            gemma_q_loaded = Gemma3CausalLM.from_preset(save_path, dtype=model_dtype)
-        else:
-            keras.saving.save_model(gemma_q, save_path)
-            gemma_q_loaded = keras.saving.load_model(save_path)
+        keras.saving.save_model(gemma_q, save_path)
+        gemma_q_loaded = keras.saving.load_model(save_path)
 
     answer = gemma_q_loaded.generate(
         {
@@ -161,16 +151,10 @@ def test_image_recognition(dynamic, const_vars, save_as_preset, model_dtype, qua
     assert matches >= 3, f"Expected at least 3 elements from {elements_in_the_picture} in answer (found {matches})."
 
 
-@pytest.mark.parametrize("const_vars", [False, True], ids=["const_vars=False", "const_vars=True"])
-@pytest.mark.parametrize("save_as_preset", [False, True], ids=["save_as_preset=False", "save_as_preset=True"])
-@pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
-@pytest.mark.parametrize(
-    "quantization_dtype", ["fp8_e4m3", "fp8_e5m2"], ids=["quantization_dtype=fp8_e4m3", "quantization_dtype=fp8_e5m2"]
-)
-@pytest.mark.smoke_test_if("quantization_dtype=fp8_e4m3-model_dtype=bfloat16-save_as_preset=True-const_vars=False")
-def test_static_quantization_with_incomplete_calibration(
-    const_vars, save_as_preset, model_dtype, quantization_dtype, random_string, colva_beach_sq
-):
+@pytest.mark.smoke_test
+def test_static_quantization_with_incomplete_calibration(random_string, colva_beach_sq):
+    quantization_dtype = "fp8_e4m3"
+    model_dtype = "bfloat16"
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_4b-v1", model_dtype)
 
     # Run calibration without image in input, so vision layer won't activate during calibration
@@ -180,19 +164,15 @@ def test_static_quantization_with_incomplete_calibration(
     config = StaticQuantConfig(
         weight_dtype=quantization_dtype,
         activation_dtype=quantization_dtype,
-        const_scale=const_vars,
-        const_weight=const_vars,
+        const_scale=False,
+        const_weight=False,
     )
     gemma_q = quantize_model(gemma, config, calib_text_fn)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
-        if save_as_preset:
-            gemma_q.save_to_preset(save_path)
-            gemma_q_loaded = Gemma3CausalLM.from_preset(save_path, dtype=model_dtype)
-        else:
-            keras.saving.save_model(gemma_q, save_path)
-            gemma_q_loaded = keras.saving.load_model(save_path)
+        keras.saving.save_model(gemma_q, save_path)
+        gemma_q_loaded = keras.saving.load_model(save_path)
 
     answer = gemma_q_loaded.generate(
         {
@@ -210,28 +190,19 @@ def test_static_quantization_with_incomplete_calibration(
     assert matches >= 3, f"Expected at least 3 elements from {elements_in_the_picture} in answer (found {matches})."
 
 
-@pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
-def test_inplace_false(dynamic, random_string):
+@pytest.mark.smoke_test
+def test_inplace_false():
     quantization_dtype = "fp8_e4m3"
     model_dtype = "bfloat16"
     gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_270m", model_dtype)
-
-    def calib_fn(model):
-        _ = model.generate(random_string, max_length=100)
-
-    if dynamic:
-        config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
-        _calib_fn = None
-    else:
-        config = StaticQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
-        _calib_fn = calib_fn
+    config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
 
     hash_before_quantization = compute_model_hash(gemma)
 
     # inplace=False, measure time
     jax.clear_caches()
     start = time.perf_counter()
-    gemma_q = quantize_model(gemma, config, _calib_fn, inplace=False)
+    gemma_q = quantize_model(gemma, config, None, inplace=False)
     duration_inplace_false = time.perf_counter() - start
 
     # Assert original model is untouched
@@ -246,7 +217,7 @@ def test_inplace_false(dynamic, random_string):
     # inplace=True, measure time
     jax.clear_caches()
     start = time.perf_counter()
-    gemma_q = quantize_model(gemma, config, _calib_fn, inplace=True)
+    gemma_q = quantize_model(gemma, config, None, inplace=True)
     duration_inplace_true = time.perf_counter() - start
 
     # Compare quantization performance

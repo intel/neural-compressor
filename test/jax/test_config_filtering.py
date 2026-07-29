@@ -17,6 +17,9 @@ import pytest
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig
 
+# Mark all tests in this file as smoke tests
+pytestmark = pytest.mark.smoke_test
+
 
 @pytest.mark.parametrize("config_cls", [DynamicQuantConfig, StaticQuantConfig], ids=["dynamic_quant", "static_quant"])
 class TestLayerMatchesFilters:

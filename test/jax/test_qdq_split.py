@@ -25,6 +25,9 @@ from jax import numpy as jnp
 from neural_compressor.jax.quantization.layers_dynamic import DynamicQDQLayer
 from neural_compressor.jax.quantization.layers_static import StaticQDQLayer
 
+# Mark all tests in this file as smoke tests
+pytestmark = pytest.mark.smoke_test
+
 _fp8_dtypes = ["float8_e4m3fn", "float8_e5m2"]
 _int_dtypes = ["int8"]
 _all_dtypes = _fp8_dtypes + _int_dtypes
