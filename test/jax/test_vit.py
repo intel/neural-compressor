@@ -66,6 +66,7 @@ def test_image_classification(
         config = DynamicQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
+            weight_scale_granularity="per_tensor",
             const_scale=const_vars,
             const_weight=const_vars,
         )
@@ -74,6 +75,7 @@ def test_image_classification(
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
+            weight_scale_granularity="per_channel",
             const_scale=const_vars,
             const_weight=const_vars,
         )

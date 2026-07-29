@@ -70,7 +70,7 @@ def test_text_prompt(dynamic, const_vars, model_dtype, quantization_dtype, rando
         config = DynamicQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
-            weight_scale_granularity="per_tensor",
+            weight_scale_granularity="per_channel",
             const_scale=const_vars,
             const_weight=const_vars,
         )
@@ -79,7 +79,7 @@ def test_text_prompt(dynamic, const_vars, model_dtype, quantization_dtype, rando
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
-            weight_scale_granularity="per_tensor",
+            weight_scale_granularity="per_channel",
             const_scale=const_vars,
             const_weight=const_vars,
         )
@@ -121,6 +121,7 @@ def test_image_recognition(dynamic, const_vars, model_dtype, quantization_dtype,
         config = DynamicQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
+            weight_scale_granularity="per_tensor",
             const_scale=const_vars,
             const_weight=const_vars,
         )
@@ -129,6 +130,7 @@ def test_image_recognition(dynamic, const_vars, model_dtype, quantization_dtype,
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
+            weight_scale_granularity="per_tensor",
             const_scale=const_vars,
             const_weight=const_vars,
         )
