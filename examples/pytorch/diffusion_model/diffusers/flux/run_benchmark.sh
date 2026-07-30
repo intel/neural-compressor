@@ -70,7 +70,7 @@ function run_benchmark {
 
             python3 main.py \
                 --model ${input_model} \
-                --quantized_model_path ${tuned_checkpoint} \
+                --quantized_model_path "${tuned_checkpoint}/transformer" \
                 --output_image_path ${output_image_path} \
 		        --eval_dataset "subset_$i.tsv" \
                 ${extra_cmd} &
@@ -81,7 +81,7 @@ function run_benchmark {
     else
         python3 main.py \
             --model ${input_model} \
-            --quantized_model_path ${tuned_checkpoint} \
+            --quantized_model_path "${tuned_checkpoint}/transformer" \
             --output_image_path ${output_image_path} \
 		    --eval_dataset ${dataset_location} \
 			--limit ${limit} \
