@@ -267,7 +267,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         activation_dtype,
         const_scale=False,
         const_weight=False,
-        w_quant_granularity="per_channel",
+        w_quant_granularity="per_tensor",
     ):
         """Convert a dense-like layer instance for dynamic quantization.
 
@@ -399,9 +399,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
 class QDynamicDense(QDynamicDenseMixin, keras.layers.Dense):
     """Dynamically quantized Dense layer."""
 
-    # kernel shape is defined as: kernel_shape = (input_shape[-1], self.units)
-    # so the output axis (units) is the last axis
-    w_quant_axis = -1
+    w_quant_axis = 0
 
 
 verify_api(keras.layers.Dense, QDynamicDense, "call")
@@ -413,42 +411,8 @@ class QDynamicEinsumDense(QDynamicDenseMixin, keras.layers.EinsumDense):
 
     @property
     def w_quant_axis(self):
-        """Determine per-channel quantization axis from the einsum equation.
-
-        Parses the equation to find kernel axes whose subscript letters appear
-        in the kernel spec but not in the input spec. These are pure output-channel
-        dimensions and are suitable for per-channel weight quantization.
-
-        For example, given equation ``"btd,df->btf"``:
-        - input subscripts: ``{b, t, d}``
-        - kernel spec: ``"df"`` → ``d`` contracts with input, ``f`` is output-only
-        - returns ``1`` (position of ``f`` in the kernel spec)
-
-        Returns:
-            Optional[int]: Index of the output-channel axis in the kernel, or
-                ``None`` if no unambiguous output-only axis exists (falls back
-                to per-tensor quantization).
-        """
-        equation = self.equation
-        # Parse "input_spec,kernel_spec->output_spec"
-        input_spec, rest = equation.split(",")
-        kernel_spec, _ = rest.split("->")
-
-        # Collect alphabetic input subscripts; skip ellipsis dots
-        input_chars = {c for c in input_spec if c.isalpha()}
-
-        # Kernel axes absent from the input spec are output-channel axes
-        output_only_axes = [i for i, c in enumerate(kernel_spec) if c.isalpha() and c not in input_chars]
-
-        if len(output_only_axes) == 1:
-            return output_only_axes[0]
-        if len(output_only_axes) > 1:
-            logger.debug(
-                f"EinsumDense layer '{self.name}' has multiple output-channel axes {output_only_axes} "
-                f"in equation '{equation}'. Per-channel weight quantization requires a single axis; "
-                "falling back to per-tensor quantization."
-            )
-        return None
+        self._set_quantization_info()
+        return self._kernel_reduced_axes
 
 
 verify_api(keras.layers.EinsumDense, QDynamicEinsumDense, "call")
@@ -476,9 +440,9 @@ class QDynamicConv2DMixin(QDynamicDenseMixin, keras.layers.Conv2D):
 class QDynamicConv2D(QDynamicConv2DMixin, keras.layers.Conv2D):
     """Dynamically quantized Conv2D layer."""
 
-    # kernel shape is defined as: kernel_shape = self.kernel_size + (input_channel // self.groups, self.filters,)
-    # so the output axis (called filters here) is the last axis
-    w_quant_axis = -1
+    @property
+    def w_quant_axis(self):
+        return tuple(i for i in range(self.kernel.ndim) if i != -1)
 
 
 verify_api(keras.layers.Conv2D, QDynamicConv2D, "call")
@@ -496,7 +460,7 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
         activation_dtype,
         const_scale=False,
         const_weight=False,
-        w_quant_granularity="per_channel",
+        w_quant_granularity="per_tensor",
     ):
         """Convert a MultiHeadAttention instance for dynamic quantization.
 
@@ -700,7 +664,7 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         activation_dtype,
         const_scale=False,
         const_weight=False,
-        w_quant_granularity="per_channel",
+        w_quant_granularity="per_tensor",
     ):
         """Convert a CachedGemma3Attention instance for dynamic quantization.
 
@@ -853,7 +817,7 @@ class QDynamicGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
         activation_dtype,
         const_scale=False,
         const_weight=False,
-        w_quant_granularity="per_channel",
+        w_quant_granularity="per_tensor",
     ):
         """Convert a Gemma3VisionAttention instance for dynamic quantization.
 
@@ -965,7 +929,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         activation_dtype,
         const_scale=False,
         const_weight=False,
-        w_quant_granularity="per_channel",
+        w_quant_granularity="per_tensor",
     ):
         """Convert a ReversibleEmbedding instance for dynamic quantization.
 
