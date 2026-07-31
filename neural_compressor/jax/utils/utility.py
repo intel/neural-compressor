@@ -243,19 +243,9 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
             # For empty tensor, return scale as 1.0
             return jnp.array(1.0, dtype=compute_dtype)
         dtype_max = jnp.finfo(dtype).max.astype(orig_weight.dtype).astype(orig_weight.dtype)
-        if axis is None:
-            # Per tensor scale
-            op_axis = None
-            scale_shape = (1,)
-        else:
-            # Per channel scales
-            along_axis = axis if axis >= 0 else orig_weight.ndim + axis
-            op_axis = tuple(i for i in range(orig_weight.ndim) if i != along_axis)
-            scale_shape = (orig_weight.shape[along_axis],)
-
-        max_val = jnp.max(jnp.abs(orig_weight), axis=op_axis, keepdims=True)
+        max_val = jnp.max(jnp.abs(orig_weight), axis=axis, keepdims=True)
         max_val = jnp.where(max_val == 0, jnp.array(1.0, dtype=max_val.dtype), max_val)
-        return (max_val / dtype_max).reshape(scale_shape).astype(compute_dtype)
+        return (max_val / dtype_max).astype(compute_dtype)
 
     @partial(jax.lax.composite, name="inc.get_scale_int")
     def integer_get_scale(orig_weight):
@@ -271,19 +261,9 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
             # For empty tensor, return scale as 1.0
             return jnp.array(1.0, dtype=compute_dtype)
         dtype_max = jnp.array(jnp.iinfo(dtype).max).astype(orig_weight.dtype)
-        if axis is None:
-            # Per tensor scale
-            op_axis = None
-            scale_shape = (1,)
-        else:
-            # Per channel scales
-            along_axis = axis if axis >= 0 else orig_weight.ndim + axis
-            op_axis = tuple(i for i in range(orig_weight.ndim) if i != along_axis)
-            scale_shape = (orig_weight.shape[along_axis],)
-
-        max_val = jnp.max(jnp.abs(orig_weight), axis=op_axis, keepdims=True)
+        max_val = jnp.max(jnp.abs(orig_weight), axis=axis, keepdims=True)
         max_val = jnp.where(max_val == 0, jnp.array(1.0, dtype=max_val.dtype), max_val)
-        return (max_val / dtype_max).reshape(scale_shape).astype(compute_dtype)
+        return (max_val / dtype_max).astype(compute_dtype)
 
     if jnp.issubdtype(dtype, jnp.floating):
         return float_get_scale(orig_weight)
@@ -301,7 +281,7 @@ def get_q_params(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.flo
         dtype (jnp.dtype): Target quantized dtype.
         compute_dtype (jnp.dtype): dtype for scale computation.
         asymmetric (bool): Whether to compute asymmetric quantization parameters.
-        axis (int | None): If None compute scale per tensor, if int compute scales per channel along specified axis
+        axis (int | tuple | None): If None compute scale per tensor, if int or tuple of ints compute scales per channel along specified axis
 
     Returns:
         Tuple[jnp.ndarray, Optional[jnp.ndarray]]: Scale and zero-point. Zero-point is `None` for floating-point
@@ -324,21 +304,11 @@ def get_q_params(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.flo
 
         dtype_min = jnp.array(jnp.iinfo(dtype).min).astype(compute_dtype)
         dtype_max = jnp.array(jnp.iinfo(dtype).max).astype(compute_dtype)
-        if axis is None:
-            # Per tensor scale
-            op_axis = None
-            scale_shape = (1,)
-        else:
-            # Per channel scales
-            along_axis = axis if axis >= 0 else orig_weight.ndim + axis
-            op_axis = tuple(i for i in range(orig_weight.ndim) if i != along_axis)
-            scale_shape = (orig_weight.shape[along_axis],)
-
-        orig_min = jnp.min(orig_weight, axis=op_axis, keepdims=True).astype(compute_dtype)
-        orig_max = jnp.max(orig_weight, axis=op_axis, keepdims=True).astype(compute_dtype)
+        orig_min = jnp.min(orig_weight, axis=axis, keepdims=True).astype(compute_dtype)
+        orig_max = jnp.max(orig_weight, axis=axis, keepdims=True).astype(compute_dtype)
         scale = (orig_max - orig_min) / (dtype_max - dtype_min)
         zero_point = jnp.round(dtype_min - orig_min / scale)
-        return scale.reshape(scale_shape).astype(compute_dtype), zero_point.reshape(scale_shape).astype(jnp.int32)
+        return scale.astype(compute_dtype), zero_point.astype(jnp.int32)
 
     if jnp.issubdtype(dtype, jnp.floating):
         return get_scale(orig_weight, dtype, compute_dtype, axis), None

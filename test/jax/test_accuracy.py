@@ -57,7 +57,7 @@ def test_simple_linear_model_accuracy(
         [
             keras.Input(shape=(9,)),
             keras.layers.Dense(4, activation="linear", use_bias=False, dtype=model_dtype_jnp),
-            keras.layers.Dense(1, activation="linear", use_bias=False, dtype=model_dtype_jnp),
+            keras.layers.Dense(2, activation="linear", use_bias=False, dtype=model_dtype_jnp),
         ]
     )
 
