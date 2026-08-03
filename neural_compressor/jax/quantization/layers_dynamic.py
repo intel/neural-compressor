@@ -442,7 +442,10 @@ class QDynamicConv2D(QDynamicConv2DMixin, keras.layers.Conv2D):
 
     @property
     def w_quant_axis(self):
-        return tuple(i for i in range(self.kernel.ndim) if i != self.kernel.ndim - 1)
+        if hasattr(self, "_kernel_quant"):
+            return tuple(i for i in range(self.kernel.ndim) if i != self.kernel.ndim - 1)
+        else:
+            return tuple(i for i in range(self._kernel.ndim) if i != self._kernel.ndim - 1)
 
 
 verify_api(keras.layers.Conv2D, QDynamicConv2D, "call")

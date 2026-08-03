@@ -103,7 +103,10 @@ def test_image_classification(
 
 
 @pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
-def test_inplace_false(dynamic, random_image):
+@pytest.mark.parametrize(
+    "granularity", ["per_tensor", "per_channel"], ids=["granularity=per_tensor", "granularity=per_channel"]
+)
+def test_inplace_false(dynamic, granularity, random_image):
     quantization_dtype = "fp8_e4m3"
     model_dtype = "bfloat16"
 
@@ -112,10 +115,14 @@ def test_inplace_false(dynamic, random_image):
 
     vit = load_model_from_preset(ViTImageClassifier, "vit_base_patch16_224_imagenet", model_dtype)
     if dynamic:
-        config = DynamicQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
+        config = DynamicQuantConfig(
+            weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, weight_scale_granularity=granularity
+        )
         _calib_fn = None
     else:
-        config = StaticQuantConfig(weight_dtype=quantization_dtype, activation_dtype=quantization_dtype)
+        config = StaticQuantConfig(
+            weight_dtype=quantization_dtype, activation_dtype=quantization_dtype, weight_scale_granularity=granularity
+        )
         _calib_fn = calib_fn
 
     hash_before_quantization = compute_model_hash(vit)

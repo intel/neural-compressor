@@ -778,8 +778,6 @@ class QStaticConv2DMixin(QStaticDenseMixin, keras.layers.Conv2D):
 class QStaticConv2d(QStaticConv2DMixin, keras.layers.Conv2D):
     """Statically quantized Conv2D layer."""
 
-    # kernel shape is defined as: kernel_shape = self.kernel_size + (input_channel // self.groups, self.filters,)
-    # so the output axis (called filters here) is the last axis
     @property
     def w_quant_axis(self):
         return tuple(i for i in range(self.kernel.ndim) if i != self.kernel.ndim - 1)
