@@ -66,12 +66,7 @@ class JaxBaseConfig(BaseConfig):
     """
 
     supported_configs: List[OperatorConfig] = []
-    params_list = [
-        "weight_dtype",
-        "activation_dtype",
-        "const_scale",
-        "const_weight",
-    ]
+    params_list = ["weight_dtype", "activation_dtype", "const_scale", "const_weight", "weight_scale_granularity"]
 
     def __init__(
         self,
@@ -79,6 +74,7 @@ class JaxBaseConfig(BaseConfig):
         activation_dtype: str = "fp8_e4m3",
         const_scale: bool = False,
         const_weight: bool = False,
+        weight_scale_granularity: str = "per_tensor",
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         exclude_list: Optional[List[str]] = None,
     ):
@@ -89,6 +85,7 @@ class JaxBaseConfig(BaseConfig):
             activation_dtype (str): Data type for activations, default is "fp8_e4m3".
             const_scale (bool): Whether to use a constant scale factor for quantization.
             const_weight (bool): Whether to use constant quantized weights.
+            weight_scale_granularity (str): Whether to use per_channel or per_tensor quantization for weights
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): Layers to quantize. Each entry
                 is a layer class (e.g. ``keras.layers.Dense``), a class name, or a path regex.
                 Only matching supported layers are quantized. Defaults to ``"*"`` (all supported
@@ -111,6 +108,7 @@ class JaxBaseConfig(BaseConfig):
         self.activation_dtype = activation_dtype
         self.const_scale = const_scale
         self.const_weight = const_weight
+        self.weight_scale_granularity = weight_scale_granularity
         self._exclude_list = exclude_list
         self._post_init()
 
@@ -371,6 +369,7 @@ class DynamicQuantConfig(JaxBaseConfig):
         activation_dtype = config_dict.get("activation_dtype", "fp8_e4m3")
         const_scale = config_dict.get("const_scale", False)
         const_weight = config_dict.get("const_weight", False)
+        weight_scale_granularity = config_dict.get("weight_scale_granularity", "per_tensor")
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
         exclude_list = config_dict.get("exclude_list", None)
         return cls(
@@ -378,6 +377,7 @@ class DynamicQuantConfig(JaxBaseConfig):
             activation_dtype=activation_dtype,
             const_scale=const_scale,
             const_weight=const_weight,
+            weight_scale_granularity=weight_scale_granularity,
             white_list=white_list,
             exclude_list=exclude_list,
         )
@@ -451,6 +451,7 @@ class StaticQuantConfig(JaxBaseConfig):
         activation_dtype = config_dict.get("activation_dtype", "fp8_e5m2")
         const_scale = config_dict.get("const_scale", False)
         const_weight = config_dict.get("const_weight", False)
+        weight_scale_granularity = config_dict.get("weight_scale_granularity", "per_tensor")
         white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
         exclude_list = config_dict.get("exclude_list", None)
         return cls(
@@ -458,6 +459,7 @@ class StaticQuantConfig(JaxBaseConfig):
             activation_dtype=activation_dtype,
             const_scale=const_scale,
             const_weight=const_weight,
+            weight_scale_granularity=weight_scale_granularity,
             white_list=white_list,
             exclude_list=exclude_list,
         )

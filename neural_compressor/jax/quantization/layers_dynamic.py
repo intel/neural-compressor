@@ -260,7 +260,15 @@ class QDynamicDenseMixin(SaveableLayerMixin):
     """Mixin that adds dynamic quantization to dense-like layers."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_tensor",
+    ):
         """Convert a dense-like layer instance for dynamic quantization.
 
         Args:
@@ -269,6 +277,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): Whether to use constant weight.
+            w_quant_granularity (str): Whether to use per_channel or per_tensor quantization for weights
 
         Returns:
             keras.layers.Layer: The updated layer instance.
@@ -278,6 +287,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         orig.weight_dtype = weight_dtype
         orig.const_scale = const_scale
         orig.const_weight = const_weight
+        orig.w_quant_granularity = w_quant_granularity
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.input_qdq = DynamicQDQLayer("input_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
         if const_scale:
@@ -297,7 +307,13 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         """
         self._tracker.unlock()
         self.input_qdq.add_variables()
-        w_scale, _ = get_q_params(self._kernel.value, self.weight_dtype, self.compute_dtype, asymmetric=False)
+        w_scale, _ = get_q_params(
+            self._kernel.value,
+            self.weight_dtype,
+            self.compute_dtype,
+            asymmetric=False,
+            axis=self.w_quant_axis if self.w_quant_granularity == "per_channel" else None,
+        )
         self.w_scale = self.add_weight(
             name="w_scale",
             shape=w_scale.shape,
@@ -333,7 +349,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         self._trainable_variables.remove(self._kernel)
         del self._kernel
 
-        model_is_during_load = self.w_scale == 0.0
+        model_is_during_load = jnp.all(self.w_scale == 0.0)
         if not model_is_during_load:
             # convert variables to attributes (const) if needed
             for name in self._const_variables:
@@ -383,7 +399,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
 class QDynamicDense(QDynamicDenseMixin, keras.layers.Dense):
     """Dynamically quantized Dense layer."""
 
-    pass
+    w_quant_axis = 0
 
 
 verify_api(keras.layers.Dense, QDynamicDense, "call")
@@ -393,7 +409,10 @@ verify_api(keras.layers.Dense, QDynamicDense, "call")
 class QDynamicEinsumDense(QDynamicDenseMixin, keras.layers.EinsumDense):
     """Dynamically quantized EinsumDense layer."""
 
-    pass
+    @property
+    def w_quant_axis(self):
+        self._set_quantization_info()
+        return self._kernel_reduced_axes
 
 
 verify_api(keras.layers.EinsumDense, QDynamicEinsumDense, "call")
@@ -421,7 +440,12 @@ class QDynamicConv2DMixin(QDynamicDenseMixin, keras.layers.Conv2D):
 class QDynamicConv2D(QDynamicConv2DMixin, keras.layers.Conv2D):
     """Dynamically quantized Conv2D layer."""
 
-    pass
+    @property
+    def w_quant_axis(self):
+        if hasattr(self, "_kernel_quant"):
+            return tuple(i for i in range(self.kernel.ndim) if i != self.kernel.ndim - 1)
+        else:
+            return tuple(i for i in range(self._kernel.ndim) if i != self._kernel.ndim - 1)
 
 
 verify_api(keras.layers.Conv2D, QDynamicConv2D, "call")
@@ -432,7 +456,15 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
     """Dynamically quantized MultiHeadAttention layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_tensor",
+    ):
         """Convert a MultiHeadAttention instance for dynamic quantization.
 
         Args:
@@ -441,6 +473,7 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): ignored, included for API consistency.
             const_weight (bool): ignored, included for API consistency.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             keras.layers.MultiHeadAttention: Updated layer instance.
@@ -627,7 +660,15 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
     """Dynamically quantized CachedGemma3Attention layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_tensor",
+    ):
         """Convert a CachedGemma3Attention instance for dynamic quantization.
 
         Args:
@@ -636,6 +677,7 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): ignored, included for API consistency.
             const_weight (bool): ignored, included for API consistency.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             CachedGemma3Attention: Updated layer instance.
@@ -771,7 +813,15 @@ class QDynamicGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
     """Dynamically quantized Gemma3VisionAttention layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_tensor",
+    ):
         """Convert a Gemma3VisionAttention instance for dynamic quantization.
 
         Args:
@@ -780,6 +830,7 @@ class QDynamicGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): ignored, included for API consistency.
             const_weight (bool): ignored, included for API consistency.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             Gemma3VisionAttention: Updated layer instance.
@@ -874,7 +925,15 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
     """Dynamically quantized ReversibleEmbedding layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_tensor",
+    ):
         """Convert a ReversibleEmbedding instance for dynamic quantization.
 
         Args:
@@ -883,6 +942,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): ignored, included for API consistency.
             const_weight (bool): ignored, included for API consistency.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             ReversibleEmbedding: Updated layer instance.
