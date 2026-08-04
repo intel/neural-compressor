@@ -43,6 +43,7 @@ function init_params {
 
 # run_benchmark
 function run_benchmark {
+
     dataset_location=${dataset_location:="captions_source.tsv"}
     limit=${limit:=-1}
     output_image_path=${output_image_path:="./tmp_imgs"}
@@ -69,7 +70,7 @@ function run_benchmark {
 
             python3 main.py \
                 --model ${input_model} \
-                --quantized_model_path ${tuned_checkpoint} \
+                --quantized_model_path "${tuned_checkpoint}/transformer" \
                 --output_image_path ${output_image_path} \
 		        --eval_dataset "subset_$i.tsv" \
                 ${extra_cmd} &
@@ -80,7 +81,7 @@ function run_benchmark {
     else
         python3 main.py \
             --model ${input_model} \
-            --quantized_model_path ${tuned_checkpoint} \
+            --quantized_model_path "${tuned_checkpoint}/transformer" \
             --output_image_path ${output_image_path} \
 		    --eval_dataset ${dataset_location} \
 			--limit ${limit} \
@@ -88,7 +89,7 @@ function run_benchmark {
     fi
 
 	echo "Start calculating final score..."
-
+    uv pip install transformers==4.57.6
     python3 main.py --output_image_path ${output_image_path} --accuracy --eval_dataset ${dataset_location}
 }
 
