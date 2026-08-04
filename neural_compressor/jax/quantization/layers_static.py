@@ -440,9 +440,9 @@ class QStaticDenseMixin(SaveableLayerMixin):
         orig,
         weight_dtype,
         activation_dtype,
-        const_scale=False,
-        const_weight=False,
-        w_quant_granularity="per_tensor",
+        const_scale,
+        const_weight,
+        w_quant_granularity,
     ):
         """Convert a dense-like layer instance for static quantization.
 
@@ -796,9 +796,9 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
         orig,
         weight_dtype,
         activation_dtype,
-        const_scale=False,
-        const_weight=False,
-        w_quant_granularity="per_tensor",
+        const_scale,
+        const_weight,
+        w_quant_granularity,
     ):
         """Convert a MultiHeadAttention instance for static quantization.
 
@@ -1057,9 +1057,9 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         orig,
         weight_dtype,
         activation_dtype,
-        const_scale=False,
-        const_weight=False,
-        w_quant_granularity="per_tensor",
+        const_scale,
+        const_weight,
+        w_quant_granularity,
     ):
         """Convert a CachedGemma3Attention instance for static quantization.
 
@@ -1234,9 +1234,9 @@ class QStaticGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
         orig,
         weight_dtype,
         activation_dtype,
-        const_scale=False,
-        const_weight=False,
-        w_quant_granularity="per_tensor",
+        const_scale,
+        const_weight,
+        w_quant_granularity,
     ):
         """Convert a Gemma3VisionAttention instance for static quantization.
 
@@ -1382,9 +1382,9 @@ class QStaticRotaryEmbedding(SaveableLayerMixin, keras_hub.layers.RotaryEmbeddin
         orig,
         weight_dtype,
         activation_dtype,
-        const_scale=False,
-        const_weight=False,
-        w_quant_granularity="per_tensor",
+        const_scale,
+        const_weight,
+        w_quant_granularity,
     ):
         """Convert a RotaryEmbedding instance for static quantization.
 
@@ -1506,9 +1506,9 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         orig,
         weight_dtype,
         activation_dtype,
-        const_scale=False,
-        const_weight=False,
-        w_quant_granularity="per_tensor",
+        const_scale,
+        const_weight,
+        w_quant_granularity,
     ):
         """Convert a ReversibleEmbedding instance for static quantization.
 
