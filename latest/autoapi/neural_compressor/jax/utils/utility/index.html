@@ -109,7 +109,7 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_dequantize_fun" title="neural_compressor.jax.utils.utility.get_dequantize_fun"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_dequantize_fun</span></code></a>([dtype, asymmetric])</p></td>
 <td><p>Create a dequantization function for the specified dtype.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_scale" title="neural_compressor.jax.utils.utility.get_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_scale</span></code></a>(orig_weight[, dtype, compute_dtype])</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_scale" title="neural_compressor.jax.utils.utility.get_scale"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_scale</span></code></a>(orig_weight[, dtype, compute_dtype, axis])</p></td>
 <td><p>Compute the quantization scale for a weight tensor.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.get_q_params" title="neural_compressor.jax.utils.utility.get_q_params"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_q_params</span></code></a>(orig_weight[, dtype, compute_dtype, ...])</p></td>
@@ -222,7 +222,7 @@ def example_algo(model: tf.keras.Model, quant_config: StaticQuantConfig) -&gt; t
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.get_scale">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orig_weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ml_dtypes.float8_e4m3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">jnp.float32</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.get_scale" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_scale</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orig_weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ml_dtypes.float8_e4m3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">jnp.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.get_scale" title="Link to this definition"></a></dt>
 <dd><p>Compute the quantization scale for a weight tensor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -243,7 +243,7 @@ def example_algo(model: tf.keras.Model, quant_config: StaticQuantConfig) -&gt; t
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.get_q_params">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_q_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orig_weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ml_dtypes.float8_e4m3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">jnp.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">asymmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.get_q_params" title="Link to this definition"></a></dt>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">get_q_params</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orig_weight</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">ml_dtypes.float8_e4m3</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">compute_dtype</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">jnp.float32</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">asymmetric</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axis</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.get_q_params" title="Link to this definition"></a></dt>
 <dd><p>Compute quantization scale and zero-point for a weight tensor.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
@@ -252,6 +252,7 @@ def example_algo(model: tf.keras.Model, quant_config: StaticQuantConfig) -&gt; t
 <li><p><strong>dtype</strong> (<em>jnp.dtype</em>) – Target quantized dtype.</p></li>
 <li><p><strong>compute_dtype</strong> (<em>jnp.dtype</em>) – dtype for scale computation.</p></li>
 <li><p><strong>asymmetric</strong> (<em>bool</em>) – Whether to compute asymmetric quantization parameters.</p></li>
+<li><p><strong>axis</strong> (<em>int</em><em> | </em><em>tuple</em><em> | </em><em>None</em>) – If None compute scale per tensor, if int or tuple of ints compute scales per channel along specified axis</p></li>
 </ul>
 </dd>
 <dt class="field-even">Returns<span class="colon">:</span></dt>
@@ -366,7 +367,7 @@ dtypes or symmetric quantization.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7fb4b4830aa0> 
+   <jinja2.runtime.BlockReference object at 0x7f555a4ad340> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

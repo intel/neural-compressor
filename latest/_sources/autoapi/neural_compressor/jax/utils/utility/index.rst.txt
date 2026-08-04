@@ -87,7 +87,7 @@ Module Contents
    :rtype: Callable
 
 
-.. py:function:: get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32)
+.. py:function:: get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32, axis=None)
 
    Compute the quantization scale for a weight tensor.
 
@@ -102,7 +102,7 @@ Module Contents
    :rtype: jnp.ndarray
 
 
-.. py:function:: get_q_params(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32, asymmetric=False)
+.. py:function:: get_q_params(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float32, asymmetric=False, axis=None)
 
    Compute quantization scale and zero-point for a weight tensor.
 
@@ -114,6 +114,8 @@ Module Contents
    :type compute_dtype: jnp.dtype
    :param asymmetric: Whether to compute asymmetric quantization parameters.
    :type asymmetric: bool
+   :param axis: If None compute scale per tensor, if int or tuple of ints compute scales per channel along specified axis
+   :type axis: int | tuple | None
 
    :returns: Scale and zero-point. Zero-point is `None` for floating-point
              dtypes or symmetric quantization.
