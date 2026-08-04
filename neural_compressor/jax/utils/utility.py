@@ -244,7 +244,6 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
             return jnp.array(1.0, dtype=compute_dtype)
         dtype_max = jnp.finfo(dtype).max.astype(orig_weight.dtype).astype(orig_weight.dtype)
         max_val = jnp.max(jnp.abs(orig_weight), axis=axis, keepdims=True)
-        max_val = jnp.where(max_val == 0, jnp.array(1.0, dtype=max_val.dtype), max_val)
         return (max_val / dtype_max).astype(compute_dtype)
 
     @partial(jax.lax.composite, name="inc.get_scale_int")
@@ -262,7 +261,6 @@ def get_scale(orig_weight, dtype=ml_dtypes.float8_e4m3, compute_dtype=jnp.float3
             return jnp.array(1.0, dtype=compute_dtype)
         dtype_max = jnp.array(jnp.iinfo(dtype).max).astype(orig_weight.dtype)
         max_val = jnp.max(jnp.abs(orig_weight), axis=axis, keepdims=True)
-        max_val = jnp.where(max_val == 0, jnp.array(1.0, dtype=max_val.dtype), max_val)
         return (max_val / dtype_max).astype(compute_dtype)
 
     if jnp.issubdtype(dtype, jnp.floating):
