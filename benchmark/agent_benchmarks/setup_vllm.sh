@@ -5,8 +5,6 @@ set -euo pipefail
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
-# shellcheck source=versions.env
-source "${SCRIPT_DIR}/versions.env"
 
 usage() {
     printf '%s\n' \
@@ -28,21 +26,18 @@ usage() {
 }
 
 install_standard_vllm() {
-    log "Installing standard vLLM ${VLLM_VERSION}"
-    uv pip install "vllm==${VLLM_VERSION}"
+    log "Installing standard vLLM 0.26.0 from PyPI"
+    uv pip install "vllm==0.26.0"
 }
 
 install_deepseek_v4_vllm() {
-    local vllm_source
-    vllm_source="git+${DEEPSEEK_V4_VLLM_REPOSITORY}@${DEEPSEEK_V4_VLLM_COMMIT}"
-
     log "Installing pinned DeepSeek-V4 vLLM stack"
     uv pip install -U pip setuptools_rust setuptools_scm
+    uv pip install -U evalscope lm_eval[api] lm-eval["ruler"] transformers datasets
+    uv pip install git+https://github.com/intel/auto-round.git@main
     uv pip install compressed-tensors --no-deps
     bash <(curl -fsSL https://raw.githubusercontent.com/vllm-project/vllm/main/tools/install_deepgemm.sh)
-    VLLM_USE_PRECOMPILED=1 uv pip install \
-        "${vllm_source}" \
-        --no-build-isolation
+    VLLM_USE_PRECOMPILED=1 uv pip install git+https://github.com/xin3he/vllm.git@support_deepseekv4_mxfp --no-build-isolation
 }
 
 MODEL=""

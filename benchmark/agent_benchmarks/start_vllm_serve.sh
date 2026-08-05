@@ -13,11 +13,12 @@ Start a foreground vLLM server. Extra arguments are passed directly to
 Generic defaults:
   --port 8888
   --served-model-name gpt-3.5-turbo
+  --tensor-parallel-size inferred from CUDA_VISIBLE_DEVICES (defaults to 1)
   --max-model-len 262144 --trust-remote-code --enable-auto-tool-choice
   --tool-call-parser hermes (unless supplied through VLLM_OPTIONS)
 
 DeepSeek-V4 models additionally use:
-  max model length 1048576, tensor parallel 2, FP8 KV cache, block size 256,
+  max model length 1048576, FP8 KV cache, block size 256,
   deepseek_v4 tool parser, FP4 indexer cache, and disabled FlashInfer
   autotuning. Names containing "mxfp4" use the CUTLASS MoE backend; other
   DeepSeek-V4 names use deep_gemm_mega_moe and expert parallelism.
@@ -54,6 +55,8 @@ has_option() {
   return 1
 }
 
+AVAILABLE_GPUS=$(echo "${CUDA_VISIBLE_DEVICES:-}" | awk -F',' '{print NF}')
+
 ARGS=(
   serve "${MODEL}"
   --served-model-name gpt-3.5-turbo
@@ -64,6 +67,9 @@ ARGS=(
 if ! has_option --port "$@"; then
   ARGS+=(--port 8888)
 fi
+if ! has_option --tensor-parallel-size "$@"; then
+  ARGS+=(--tensor-parallel-size "${AVAILABLE_GPUS}")
+fi
 
 MODEL_LOWER="${MODEL,,}"
 
@@ -72,7 +78,6 @@ if [[ "${MODEL_LOWER}" == *deepseek-v4* || "${MODEL_LOWER}" == *deepseek_v4* ]];
   ARGS+=(
     --kv-cache-dtype fp8
     --block-size 256
-    --tensor-parallel-size "${TENSOR_PARALLEL_SIZE:-2}"
     --gpu-memory-utilization "${GPU_MEM_UTIL:-0.9}"
     --tool-call-parser deepseek_v4
     --attention_config.use_fp4_indexer_cache=True
