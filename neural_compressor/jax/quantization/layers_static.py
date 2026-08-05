@@ -435,7 +435,15 @@ class QStaticDenseMixin(SaveableLayerMixin):
     """Mixin that adds static quantization to dense-like layers."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_tensor",
+    ):
         """Convert a dense-like layer instance for static quantization.
 
         Args:
@@ -444,6 +452,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): Whether to use constant weight.
+            w_quant_granularity (str): Whether to use per_channel or per_tensor quantization for weights
 
         Returns:
             keras.layers.Layer: The updated layer instance.
@@ -454,6 +463,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
         orig.activation_dtype = activation_dtype
         orig.const_scale = const_scale
         orig.const_weight = const_weight
+        orig.w_quant_granularity = w_quant_granularity
         orig._is_quantized = None
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.kernel_shape = orig.kernel.shape
@@ -502,10 +512,17 @@ class QStaticDenseMixin(SaveableLayerMixin):
             autocast=False,
             dtype=self.compute_dtype,
         )
+        w_scale, _ = get_q_params(
+            self.kernel,
+            self.weight_dtype,
+            self.compute_dtype,
+            asymmetric=False,
+            axis=self.w_quant_axis if self.w_quant_granularity == "per_channel" else None,
+        )
         self.w_scale = self.add_weight(
             name="w_scale",
-            shape=(1,),
-            initializer="zeros",
+            shape=w_scale.shape,
+            initializer=keras.initializers.Constant(w_scale),
             trainable=False,
             autocast=False,
             dtype=self.compute_dtype,
@@ -550,8 +567,6 @@ class QStaticDenseMixin(SaveableLayerMixin):
         if self._is_int8:
             self.a_zero_point.assign(a_zero_point)
 
-        w_scale, _ = get_q_params(self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=False)
-        self.w_scale.assign(w_scale)
         _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value)
         self._kernel_quant.assign(_kernel_quant)
         self._is_quantized = True
@@ -682,7 +697,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
 class QStaticDense(QStaticDenseMixin, keras.layers.Dense):
     """Statically quantized Dense layer."""
 
-    pass
+    w_quant_axis = 0
 
 
 verify_api(keras.layers.Dense, QStaticDense, "call")
@@ -692,7 +707,10 @@ verify_api(keras.layers.Dense, QStaticDense, "call")
 class QStaticEinsumDense(QStaticDenseMixin, keras.layers.EinsumDense):
     """Statically quantized EinsumDense layer."""
 
-    pass
+    @property
+    def w_quant_axis(self):
+        self._set_quantization_info()
+        return self._kernel_reduced_axes
 
 
 verify_api(keras.layers.EinsumDense, QStaticEinsumDense, "call")
@@ -760,7 +778,9 @@ class QStaticConv2DMixin(QStaticDenseMixin, keras.layers.Conv2D):
 class QStaticConv2d(QStaticConv2DMixin, keras.layers.Conv2D):
     """Statically quantized Conv2D layer."""
 
-    pass
+    @property
+    def w_quant_axis(self):
+        return tuple(i for i in range(self.kernel.ndim) if i != self.kernel.ndim - 1)
 
 
 verify_api(keras.layers.Conv2D, QStaticConv2d, "call")
@@ -771,7 +791,15 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
     """Statically quantized MultiHeadAttention layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_tensor",
+    ):
         """Convert a MultiHeadAttention instance for static quantization.
 
         Args:
@@ -780,6 +808,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): ignored, included for API consistency.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             keras.layers.MultiHeadAttention: Updated layer instance.
@@ -1023,13 +1052,24 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
     """Statically quantized CachedGemma3Attention layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_tensor",
+    ):
         """Convert a CachedGemma3Attention instance for static quantization.
 
         Args:
             orig (CachedGemma3Attention): Original layer instance.
             weight_dtype (jnp.dtype): Dtype for quantized weights.
             activation_dtype (jnp.dtype): Dtype for quantized activations.
+            const_scale (bool): Whether to use constant scales.
+            const_weight (bool): ignored, included for API consistency.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             CachedGemma3Attention: Updated layer instance.
@@ -1189,7 +1229,15 @@ class QStaticGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
     """Statically quantized Gemma3VisionAttention layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_tensor",
+    ):
         """Convert a Gemma3VisionAttention instance for static quantization.
 
         Args:
@@ -1198,6 +1246,7 @@ class QStaticGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): ignored, included for API consistency.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             Gemma3VisionAttention: Updated layer instance.
@@ -1328,7 +1377,15 @@ class QStaticRotaryEmbedding(SaveableLayerMixin, keras_hub.layers.RotaryEmbeddin
     """Statically quantized RotaryEmbedding layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_tensor",
+    ):
         """Convert a RotaryEmbedding instance for static quantization.
 
         Args:
@@ -1337,6 +1394,7 @@ class QStaticRotaryEmbedding(SaveableLayerMixin, keras_hub.layers.RotaryEmbeddin
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): ignored, included for API consistency.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             RotaryEmbedding: Updated layer instance.
@@ -1443,13 +1501,24 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
     """Statically quantized ReversibleEmbedding layer."""
 
     @classmethod
-    def prepare(cls, orig, weight_dtype, activation_dtype, const_scale=False, const_weight=False):
+    def prepare(
+        cls,
+        orig,
+        weight_dtype,
+        activation_dtype,
+        const_scale=False,
+        const_weight=False,
+        w_quant_granularity="per_tensor",
+    ):
         """Convert a ReversibleEmbedding instance for static quantization.
 
         Args:
             orig (keras.layers.ReversibleEmbedding): Original layer instance.
             weight_dtype (jnp.dtype): Dtype for quantized weights.
             activation_dtype (jnp.dtype): Dtype for quantized activations.
+            const_scale (bool): Whether to use constant scales.
+            const_weight (bool): Whether to use constant weight.
+            w_quant_granularity (str): ignored, included for API consistency.
 
         Returns:
             keras.layers.ReversibleEmbedding: Updated layer instance.

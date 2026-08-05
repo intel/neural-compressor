@@ -63,7 +63,12 @@ def static_quantize(
         weight_dtype = dtype_mapping[config.weight_dtype]
         activation_dtype = dtype_mapping[config.activation_dtype]
         static_quant_mapping[layer.__class__].prepare(
-            layer, weight_dtype, activation_dtype, config.const_scale, config.const_weight
+            layer,
+            weight_dtype,
+            activation_dtype,
+            config.const_scale,
+            config.const_weight,
+            config.weight_scale_granularity,
         )
         layer.add_observers()
 
