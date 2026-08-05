@@ -1,16 +1,32 @@
+diff --git a/src/minisweagent/config/benchmarks/swebench.yaml b/src/minisweagent/config/benchmarks/swebench.yaml
+index 106decd..d50e393 100644
+--- a/src/minisweagent/config/benchmarks/swebench.yaml
++++ b/src/minisweagent/config/benchmarks/swebench.yaml
+@@ -115,6 +115,7 @@ agent:
+ environment:
+   cwd: "/testbed"
+   timeout: 60
++  pull_timeout: 600
+   interpreter: ["bash", "-c"]
+   env:
+     PAGER: cat
 diff --git a/src/minisweagent/environments/docker.py b/src/minisweagent/environments/docker.py
-index 42e65e3..e087108 100644
+index 42e65e3..2dbafef 100644
 --- a/src/minisweagent/environments/docker.py
 +++ b/src/minisweagent/environments/docker.py
-@@ -34,6 +34,8 @@ class DockerEnvironmentConfig(BaseModel):
+@@ -33,8 +33,10 @@ class DockerEnvironmentConfig(BaseModel):
+     """
      container_timeout: str = "2h"
      """Max duration to keep container running. Uses the same format as the sleep command."""
-     pull_timeout: int = 120
+-    pull_timeout: int = 120
+-    """Timeout in seconds for pulling images."""
++    pull_timeout: int = 600
++    """Timeout in seconds for pulling images and starting containers."""
 +    remove_image_on_cleanup: bool = False
 +    """Whether to remove the docker image after each instance cleanup."""
-     """Timeout in seconds for pulling images."""
      interpreter: list[str] = ["bash", "-lc"]
      """Interpreter to use to execute commands. Default is ["bash", "-lc"].
+     The actual command will be appended as argument to this. Override this to e.g., modify shell flags
 @@ -151,10 +153,27 @@ class DockerEnvironment:
              )
  

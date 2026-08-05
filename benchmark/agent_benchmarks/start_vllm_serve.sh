@@ -2,37 +2,30 @@
 
 set -euo pipefail
 
+readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/common.sh
+source "${SCRIPT_DIR}/lib/common.sh"
+
 usage() {
-    cat <<'EOF'
+  cat <<'EOF'
 Usage:
   bash start_vllm_serve.sh MODEL [VLLM_OPTIONS...]
 
-Start a foreground vLLM server. Extra arguments are passed directly to
-`vllm serve` and can override the defaults below.
+Start vLLM in the background. Extra options are passed to `vllm serve`.
 
-Generic defaults:
-  --port 8888
-  --served-model-name gpt-3.5-turbo
-  --tensor-parallel-size inferred from CUDA_VISIBLE_DEVICES (defaults to 1)
-  --max-model-len 262144 --trust-remote-code --enable-auto-tool-choice
-  --tool-call-parser hermes (unless supplied through VLLM_OPTIONS)
+Defaults:
+  port=8888, served-name=gpt-3.5-turbo, max-model-len=262144
+  tensor parallel size=CUDA_VISIBLE_DEVICES count, tool parser=hermes
+  Qwen3.6: tool=qwen3_coder, reasoning=qwen3
+  DeepSeek-V4: model-specific FP8/MoE defaults
 
-DeepSeek-V4 models additionally use:
-  max model length 1048576, FP8 KV cache, block size 256,
-  deepseek_v4 tool parser, FP4 indexer cache, and disabled FlashInfer
-  autotuning. Names containing "mxfp4" use the CUTLASS MoE backend; other
-  DeepSeek-V4 names use deep_gemm_mega_moe and expert parallelism.
-
-Examples:
-  CUDA_VISIBLE_DEVICES=0 bash start_vllm_serve.sh /path/to/Qwen3-8B \
-      --tensor-parallel-size 1 --tool-call-parser hermes \
-      --enable-auto-tool-choice
-  CUDA_VISIBLE_DEVICES=0,1 bash start_vllm_serve.sh /path/to/DeepSeek-V4-Flash
+Logs and PID files are written under ./logs. Override with VLLM_LOG_DIR,
+VLLM_LOG_FILE, or VLLM_PID_FILE. See README.md for model-specific details.
 EOF
 }
 
 if [[ $# -eq 0 ]]; then
-    usage >&2
+  usage >&2
   exit 2
 fi
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
@@ -44,16 +37,23 @@ MODEL="$1"
 shift
 
 has_option() {
-  local NAME="$1"
-  local OPTION
+  local name="$1" option
   shift
-  for OPTION in "$@"; do
-    if [[ "${OPTION}" == "${NAME}" || "${OPTION}" == "${NAME}="* ]]; then
-      return 0
-    fi
+  for option in "$@"; do
+    [[ "${option}" == "${name}" || "${option}" == "${name}="* ]] && return 0
   done
   return 1
 }
+
+add_default_option() {
+  local name="$1" value="$2"
+  shift 2
+  has_option "${name}" "$@" || ARGS+=("${name}" "${value}")
+}
+
+require_command vllm
+require_command setsid
+init_benchmark_paths
 
 AVAILABLE_GPUS=$(echo "${CUDA_VISIBLE_DEVICES:-}" | awk -F',' '{print NF}')
 
@@ -64,29 +64,26 @@ ARGS=(
   --enable-auto-tool-choice
 )
 
-if ! has_option --port "$@"; then
-  ARGS+=(--port 8888)
-fi
-if ! has_option --tensor-parallel-size "$@"; then
-  ARGS+=(--tensor-parallel-size "${AVAILABLE_GPUS}")
-fi
+add_default_option --port 8888 "$@"
+add_default_option --tensor-parallel-size "${AVAILABLE_GPUS}" "$@"
 
 MODEL_LOWER="${MODEL,,}"
+MAX_MODEL_LEN_DEFAULT="${MAX_MODEL_LEN:-262144}"
 
-if [[ "${MODEL_LOWER}" == *deepseek-v4* || "${MODEL_LOWER}" == *deepseek_v4* ]]; then
+if [[ "${MODEL_LOWER}" == *qwen3.6* ]]; then
+  add_default_option --tool-call-parser qwen3_coder "$@"
+  add_default_option --reasoning-parser qwen3 "$@"
+elif is_deepseek_v4_model "${MODEL}"; then
   export SAFETENSORS_FAST_GPU=1
+  MAX_MODEL_LEN_DEFAULT=1048576
   ARGS+=(
     --kv-cache-dtype fp8
     --block-size 256
     --gpu-memory-utilization "${GPU_MEM_UTIL:-0.9}"
-    --tool-call-parser deepseek_v4
     --attention_config.use_fp4_indexer_cache=True
     --no-enable-flashinfer-autotune
   )
-
-  if ! has_option --max-model-len "$@"; then
-    ARGS+=(--max-model-len 1048576)
-  fi
+  add_default_option --tool-call-parser deepseek_v4 "$@"
 
   if [[ "${MODEL_LOWER}" == *mxfp4* ]]; then
     ARGS+=(--moe-backend cutlass)
@@ -94,15 +91,10 @@ if [[ "${MODEL_LOWER}" == *deepseek-v4* || "${MODEL_LOWER}" == *deepseek_v4* ]];
     ARGS+=(--moe-backend deep_gemm_mega_moe --enable-expert-parallel)
   fi
 else
-  if ! has_option --max-model-len "$@"; then
-    ARGS+=(--max-model-len "${MAX_MODEL_LEN:-262144}")
-  fi
-
-  if ! has_option --tool-call-parser "$@"; then
-    ARGS+=(--tool-call-parser hermes)
-  fi
+  add_default_option --tool-call-parser hermes "$@"
 fi
 
+add_default_option --max-model-len "${MAX_MODEL_LEN_DEFAULT}" "$@"
 ARGS+=("$@")
 
 printf '[vLLM] CUDA_VISIBLE_DEVICES=%s\n' "${CUDA_VISIBLE_DEVICES:-<not set>}"
@@ -110,5 +102,42 @@ printf '[vLLM] Command:'
 printf ' %q' vllm "${ARGS[@]}"
 printf '\n'
 
-VLLM_ENGINE_READY_TIMEOUT_S="${VLLM_ENGINE_READY_TIMEOUT_S:-1800}" \
-  exec vllm "${ARGS[@]}"
+LOG_DIR="${VLLM_LOG_DIR:-${LOG_DIR}}"
+mkdir -p -- "${LOG_DIR}"
+
+MODEL_NAME="${MODEL%/}"
+MODEL_NAME="${MODEL_NAME##*/}"
+MODEL_NAME="${MODEL_NAME//[^[:alnum:]._-]/_}"
+TIMESTAMP="$(date -u +%Y%m%dT%H%M%SZ)"
+LOG_FILE="${VLLM_LOG_FILE:-${LOG_DIR}/vllm_${MODEL_NAME}_${TIMESTAMP}.log}"
+LOG_PID_FILE="${LOG_FILE}.pid"
+mkdir -p -- "$(dirname -- "${LOG_FILE}")"
+
+EFFECTIVE_PORT=8888
+for ((i = 0; i < ${#ARGS[@]}; i++)); do
+  if [[ "${ARGS[i]}" == --port && $((i + 1)) -lt ${#ARGS[@]} ]]; then
+    EFFECTIVE_PORT="${ARGS[i + 1]}"
+  elif [[ "${ARGS[i]}" == --port=* ]]; then
+    EFFECTIVE_PORT="${ARGS[i]#--port=}"
+  fi
+done
+PID_FILE="${VLLM_PID_FILE:-${LOG_DIR}/vllm_${EFFECTIVE_PORT}.pid}"
+mkdir -p -- "$(dirname -- "${PID_FILE}")"
+
+if [[ -f "${PID_FILE}" ]]; then
+  read -r OLD_PID <"${PID_FILE}" || true
+  if [[ "${OLD_PID}" =~ ^[1-9][0-9]*$ ]] && kill -0 "${OLD_PID}" 2>/dev/null; then
+    die "vLLM is already running for port ${EFFECTIVE_PORT} (PID=${OLD_PID})"
+  fi
+  rm -f -- "${PID_FILE}"
+fi
+
+nohup setsid env VLLM_ENGINE_READY_TIMEOUT_S="${VLLM_ENGINE_READY_TIMEOUT_S:-1800}" \
+  vllm "${ARGS[@]}" >"${LOG_FILE}" 2>&1 </dev/null &
+VLLM_PID=$!
+printf '%s\n' "${VLLM_PID}" >"${PID_FILE}"
+printf '%s\n' "${VLLM_PID}" >"${LOG_PID_FILE}"
+
+printf '[vLLM] Started in background (PID=%s)\n' "${VLLM_PID}"
+printf '[vLLM] Log: %s\n' "${LOG_FILE}"
+printf '[vLLM] PID file: %s\n' "${PID_FILE}"

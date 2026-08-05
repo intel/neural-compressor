@@ -17,10 +17,15 @@ require_file() {
     [[ -f "$1" ]] || die "Required file not found: $1"
 }
 
+is_deepseek_v4_model() {
+    local model="${1,,}"
+    [[ "${model}" == *deepseek-v4* || "${model}" == *deepseek_v4* ]]
+}
+
 validate_port() {
     local port="$1"
     [[ "${port}" =~ ^[0-9]+$ ]] || die "Port must be an integer: ${port}"
-    ((port >= 1 && port <= 65535)) || die "Port must be between 1 and 65535: ${port}"
+    ((10#${port} >= 1 && 10#${port} <= 65535)) || die "Port must be between 1 and 65535: ${port}"
 }
 
 init_benchmark_paths() {
@@ -70,13 +75,14 @@ vllm_curl() {
 
 wait_for_vllm() {
     local timeout="${1:-300}"
+    [[ "${timeout}" =~ ^[1-9][0-9]*$ ]] || die "vLLM wait timeout must be a positive integer: ${timeout}"
     local deadline=$((SECONDS + timeout))
     require_command curl
     init_vllm_endpoint
 
     log "Waiting up to ${timeout}s for ${VLLM_ORIGIN}/health"
     while ((SECONDS < deadline)); do
-        if vllm_curl "${VLLM_ORIGIN}/health" >/dev/null 2>&1; then
+        if vllm_curl "${VLLM_ORIGIN}/health" --connect-timeout 2 --max-time 5 >/dev/null 2>&1; then
             log "vLLM is ready"
             return 0
         fi
@@ -88,7 +94,7 @@ wait_for_vllm() {
 discover_vllm_model() {
     local requested_model="${1:-}"
     local python_executable="${PYTHON_EXECUTABLE:-python}"
-    local response
+    local response served_models
     require_command curl
     require_command "${python_executable}"
     init_vllm_endpoint
@@ -96,22 +102,48 @@ discover_vllm_model() {
     response="$(vllm_curl "${OPENAI_BASE_URL}/models")" || \
         die "Unable to query vLLM models from ${OPENAI_BASE_URL}/models"
 
-    VLLM_SERVED_MODELS="$(${python_executable} -c '
+    served_models="$(${python_executable} -c '
 import json, sys
 payload = json.load(sys.stdin)
 models = [item.get("id", "") for item in payload.get("data", [])]
 print("\n".join(model for model in models if model))
 ' <<<"${response}")" || die "Invalid response from ${OPENAI_BASE_URL}/models"
-    [[ -n "${VLLM_SERVED_MODELS}" ]] || die "vLLM returned no served models"
+    [[ -n "${served_models}" ]] || die "vLLM returned no served models"
 
     if [[ -n "${requested_model}" ]]; then
-        grep -Fxq -- "${requested_model}" <<<"${VLLM_SERVED_MODELS}" || \
-            die "Requested model '${requested_model}' is not served. Available: $(tr '\n' ' ' <<<"${VLLM_SERVED_MODELS}")"
-        VLLM_SERVED_MODEL="${requested_model}"
+        grep -Fxq -- "${requested_model}" <<<"${served_models}" || \
+            die "Requested model '${requested_model}' is not served. Available: $(tr '\n' ' ' <<<"${served_models}")"
+        printf '%s\n' "${requested_model}"
     else
-        VLLM_SERVED_MODEL="${VLLM_SERVED_MODELS%%$'\n'*}"
+        printf '%s\n' "${served_models%%$'\n'*}"
     fi
-    printf '%s\n' "${VLLM_SERVED_MODEL}"
+}
+
+stop_vllm_from_pid_file() {
+    local pid_file="$1" pid command_line
+    [[ -f "${pid_file}" ]] || { warn "vLLM PID file not found: ${pid_file}"; return; }
+
+    read -r pid <"${pid_file}" || true
+    if [[ ! "${pid}" =~ ^[1-9][0-9]*$ ]] || ! kill -0 "${pid}" 2>/dev/null; then
+        warn "Removing stale vLLM PID file: ${pid_file}"
+        rm -f -- "${pid_file}"
+        return
+    fi
+
+    command_line="$(tr '\0' ' ' <"/proc/${pid}/cmdline" 2>/dev/null || true)"
+    [[ "${command_line}" == *vllm* ]] || { warn "PID ${pid} is not vLLM: ${command_line}"; return; }
+
+    log "Stopping vLLM (PID=${pid})"
+    kill -TERM -- "-${pid}" 2>/dev/null || kill -TERM "${pid}" 2>/dev/null || true
+    for _ in {1..30}; do
+        kill -0 "${pid}" 2>/dev/null || break
+        sleep 1
+    done
+    if kill -0 "${pid}" 2>/dev/null; then
+        warn "Force killing vLLM (PID=${pid})"
+        kill -KILL -- "-${pid}" 2>/dev/null || kill -KILL "${pid}" 2>/dev/null || true
+    fi
+    rm -f -- "${pid_file}"
 }
 
 sanitize_run_tag() {
@@ -119,14 +151,4 @@ sanitize_run_tag() {
     tag="${tag//[^[:alnum:]._-]/_}"
     [[ -n "${tag}" ]] || die "Run tag is empty after sanitization"
     printf '%s\n' "${tag}"
-}
-
-create_run_dir() {
-    local task="$1"
-    local tag="${2:-$(date -u +%Y%m%dT%H%M%SZ)}"
-    init_benchmark_paths
-    tag="$(sanitize_run_tag "${tag}")"
-    RUN_DIR="${OUTPUT_DIR}/${task}/${tag}"
-    mkdir -p -- "${RUN_DIR}"
-    printf '%s\n' "${RUN_DIR}"
 }

@@ -23,7 +23,12 @@ pinned DeepSeek-V4 vLLM fork and installs DeepGEMM. All other names select the p
 CUDA_VISIBLE_DEVICES=0 bash start_vllm_serve.sh MODEL [VLLM_OPTIONS...]
 ```
 
-The server runs in the foreground. Arguments after `MODEL` are passed directly to `vllm serve`. 
+The command returns after starting the server with `nohup` in a detached
+background process group. Arguments after `MODEL` are passed directly to
+`vllm serve`. Output is retained under `logs/vllm_<MODEL>_<TIMESTAMP>.log`, with
+the process ID saved next to it and in `logs/vllm_<PORT>.pid`. Set `VLLM_LOG_DIR`
+to use another log directory, `VLLM_LOG_FILE` to specify an exact log path, or
+`VLLM_PID_FILE` to override the active-server PID file.
 
 Common settings:
 
@@ -34,15 +39,24 @@ Common settings:
 
 For example:
 
-`--tool-call-parser` must match the model's tool-call format so vLLM can return structured `tool_calls`. 
+`--tool-call-parser` must match the model's tool-call format so vLLM can return structured `tool_calls`.
 A wrong parser may cause `RepeatedFormatError`.
-The default is `hermes`; Qwen3.5/Qwen3.6 requires `qwen3_xml`:
+The default is `hermes`. When the model name or path contains `Qwen3.6`, the
+script automatically adds `--tool-call-parser qwen3_coder` and
+`--reasoning-parser qwen3` unless those options were explicitly supplied:
 
 ```bash
 CUDA_VISIBLE_DEVICES=0 bash start_vllm_serve.sh \
     Qwen3/Qwen3.6-27B \
-    --tool-call-parser qwen3_xml
+    --tensor-parallel-size 1 \
+    --tool-call-parser qwen3_coder \
+    --reasoning-parser qwen3
 ```
+
+The script prints the generated log and PID-file paths. To follow the server
+output, run `tail -f` on the printed log path. A subsequent
+`run_swe_verified.sh` run stops the server recorded in the matching
+port-specific PID file when the benchmark exits.
 
 
 ## SWE-Verified
@@ -70,6 +84,9 @@ bash run_swe_verified.sh \
   --step-limit 250 \
   --tag qwen36_27b_full
 ```
+
+`run_swe_verified.sh` stops the vLLM process recorded in the port-specific PID
+file when it exits, whether the benchmark succeeds or fails.
 | Option | Default | Description |
 | --- | --- | --- |
 | `--host HOST` | `127.0.0.1` | vLLM host |
@@ -80,6 +97,7 @@ bash run_swe_verified.sh \
 | `--workers N` | `2` | Parallel mini-SWE-agent workers |
 | `--eval-workers N` | agent workers | Parallel local harness workers |
 | `--step-limit N` | `250` | Maximum model calls per instance |
+| `--pull-timeout N` | `600` | Docker image pull/start timeout in seconds |
 | `--tag TAG` | UTC timestamp | Output and log label |
 | `--skip-eval` | disabled | Generate predictions without local evaluation |
 

@@ -23,6 +23,7 @@ Options:
 	--workers N          Parallel agent workers (default: 2)
 	--eval-workers N     Parallel evaluation workers (default: --workers)
 	--step-limit N       Maximum model calls per instance (default: 250)
+	--pull-timeout N     Docker image pull/start timeout in seconds (default: 600)
 	--tag TAG            Run tag (default: UTC timestamp)
 	--skip-eval          Generate predictions without local evaluation
 	-h, --help           Show this help message
@@ -31,8 +32,14 @@ Environment:
 	VLLM_API_KEY         API key sent to vLLM (default: EMPTY)
 	VLLM_NO_PROXY        Hosts that bypass HTTP proxies (default: vLLM host)
 	VLLM_WAIT_TIMEOUT    Readiness timeout in seconds (default: 300)
+	VLLM_PID_FILE        vLLM PID file (default: logs/vllm_<PORT>.pid)
 	OPENAI_BASE_URL      Override the OpenAI-compatible API base URL
 EOF
+}
+
+stop_vllm() {
+	local pid_file="${VLLM_PID_FILE:-${LOG_DIR}/vllm_${VLLM_PORT}.pid}"
+	stop_vllm_from_pid_file "${pid_file}"
 }
 
 require_positive_integer() {
@@ -44,6 +51,7 @@ require_positive_integer() {
 WORKERS=2
 EVAL_WORKERS=""
 STEP_LIMIT=250
+PULL_TIMEOUT=600
 NUM_TASKS=""
 SLICE_ARG=""
 SERVED_MODEL_NAME=""
@@ -92,6 +100,11 @@ while [[ $# -gt 0 ]]; do
 			STEP_LIMIT="$2"
 			shift 2
 			;;
+		--pull-timeout)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			PULL_TIMEOUT="$2"
+			shift 2
+			;;
 		--tag)
 			[[ $# -ge 2 ]] || die "$1 requires a value"
 			RUN_TAG="$2"
@@ -115,6 +128,7 @@ done
 	die "--num-tasks and --slice cannot be used together"
 require_positive_integer "--workers" "${WORKERS}"
 require_positive_integer "--step-limit" "${STEP_LIMIT}"
+require_positive_integer "--pull-timeout" "${PULL_TIMEOUT}"
 [[ -z "${EVAL_WORKERS}" ]] || require_positive_integer "--eval-workers" "${EVAL_WORKERS}"
 [[ -z "${NUM_TASKS}" ]] || require_positive_integer "--num-tasks" "${NUM_TASKS}"
 [[ -z "${SLICE_ARG}" || "${SLICE_ARG}" =~ ^[0-9]*:[0-9]*$ ]] || \
@@ -122,6 +136,7 @@ require_positive_integer "--step-limit" "${STEP_LIMIT}"
 
 init_benchmark_paths
 init_vllm_endpoint
+trap stop_vllm EXIT
 RUN_TAG="$(sanitize_run_tag "${RUN_TAG}")"
 readonly OUT_DIR="${AGENT_DIR_VERIFIED}/results/swe_verified_${RUN_TAG}"
 readonly PREDS_JSON="${OUT_DIR}/preds.json"
@@ -166,6 +181,7 @@ log "Running SWE-bench Verified with model ${SERVED_MODEL_NAME}"
 		--config "model.model_kwargs.base_url=${OPENAI_BASE_URL}" \
 		--config "model.model_kwargs.api_key=${VLLM_API_KEY}" \
 		--config "agent.step_limit=${STEP_LIMIT}" \
+		--config "environment.pull_timeout=${PULL_TIMEOUT}" \
 		"${SLICE_OPTIONS[@]}"
 )
 

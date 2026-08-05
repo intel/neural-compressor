@@ -47,12 +47,13 @@ else
 fi
 
 require_file "${PATCH_FILE}"
-if grep -q 'remove_image_on_cleanup' \
-		"${AGENT_DIR_VERIFIED}/src/minisweagent/environments/docker.py"; then
+if git -C "${AGENT_DIR_VERIFIED}" apply --reverse --check "${PATCH_FILE}" 2>/dev/null; then
 	log "Per-instance Docker cleanup patch is already applied"
-else
+elif git -C "${AGENT_DIR_VERIFIED}" apply --check "${PATCH_FILE}" 2>/dev/null; then
 	log "Applying per-instance Docker cleanup patch"
 	git -C "${AGENT_DIR_VERIFIED}" apply "${PATCH_FILE}"
+else
+	die "Cleanup patch does not match the mini-SWE-agent checkout: ${PATCH_FILE}"
 fi
 
 log "Installing mini-SWE-agent for inference and SWE-bench for local evaluation"
