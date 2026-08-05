@@ -64,6 +64,7 @@ def dynamic_quantize(
             config.const_scale,
             config.const_weight,
             config.weight_scale_granularity,
+            dot_product_attention_enable=config.dot_product_attention_enable,
         )
         layer.add_variables()
         layer.post_quantization_cleanup()

@@ -443,6 +443,8 @@ class QStaticDenseMixin(SaveableLayerMixin):
         const_scale,
         const_weight,
         w_quant_granularity,
+        *,
+        dot_product_attention_enable=False,
     ):
         """Convert a dense-like layer instance for static quantization.
 
@@ -453,6 +455,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): Whether to use constant weight.
             w_quant_granularity (str): Whether to use per_channel or per_tensor quantization for weights
+            dot_product_attention_enable (bool): ignored, included for API consistency.
 
         Returns:
             keras.layers.Layer: The updated layer instance.
@@ -799,6 +802,8 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
         const_scale,
         const_weight,
         w_quant_granularity,
+        *,
+        dot_product_attention_enable=False,
     ):
         """Convert a MultiHeadAttention instance for static quantization.
 
@@ -809,12 +814,15 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): ignored, included for API consistency.
             w_quant_granularity (str): ignored, included for API consistency.
+            dot_product_attention_enable (bool): Whether attention may route through the fused
+                dot-product-attention op; when False the fallback einsum path is always used.
 
         Returns:
             keras.layers.MultiHeadAttention: Updated layer instance.
         """
         orig._tracker.unlock()
         orig.__class__ = cls
+        orig.dot_product_attention_enable = dot_product_attention_enable
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.q_qdq = StaticQDQLayer("q_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
         # f_qdq is used for quantize/dequantize of query tensor on fallback path (without using dot_product_attention)
@@ -943,7 +951,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
             )
 
         # Determine whether to use dot-product attention
-        use_dot_product_attention = not (
+        use_dot_product_attention = self.dot_product_attention_enable and not (
             self._dropout > 0.0
             or return_attention_scores
             or (len(query.shape) != 4)
@@ -1060,6 +1068,8 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         const_scale,
         const_weight,
         w_quant_granularity,
+        *,
+        dot_product_attention_enable=False,
     ):
         """Convert a CachedGemma3Attention instance for static quantization.
 
@@ -1070,12 +1080,15 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): ignored, included for API consistency.
             w_quant_granularity (str): ignored, included for API consistency.
+            dot_product_attention_enable (bool): Whether attention may route through the fused
+                dot-product-attention op; when False the fallback einsum path is always used.
 
         Returns:
             CachedGemma3Attention: Updated layer instance.
         """
         orig._tracker.unlock()
         orig.__class__ = cls
+        orig.dot_product_attention_enable = dot_product_attention_enable
         orig.q_qdq = StaticQDQLayer("q_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
         orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
         orig.attention_softmax_qdq = StaticQDQLayer(
@@ -1133,6 +1146,15 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         self._is_quantized = True
         self._tracker.lock()
 
+    def _use_fused_attention_op(self):
+        import jax
+
+        devices = jax.devices()
+        if all(d.platform == "cpu" for d in devices):
+            return True
+        else:
+            return super()._use_fused_attention_op()
+
     # fmt: off
     def _compute_attention(
         self,
@@ -1156,7 +1178,7 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
                 cache_update_index=cache_update_index,
             )
 
-        if self._use_fused_attention_op():
+        if self.dot_product_attention_enable and self._use_fused_attention_op():
             if attention_mask is not None:
                 attention_mask = ops.expand_dims(attention_mask, axis=1)
                 attention_mask = ops.cast(attention_mask, dtype="bool")
@@ -1237,6 +1259,8 @@ class QStaticGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
         const_scale,
         const_weight,
         w_quant_granularity,
+        *,
+        dot_product_attention_enable=False,
     ):
         """Convert a Gemma3VisionAttention instance for static quantization.
 
@@ -1247,6 +1271,7 @@ class QStaticGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): ignored, included for API consistency.
             w_quant_granularity (str): ignored, included for API consistency.
+            dot_product_attention_enable (bool): ignored, included for API consistency.
 
         Returns:
             Gemma3VisionAttention: Updated layer instance.
@@ -1385,6 +1410,8 @@ class QStaticRotaryEmbedding(SaveableLayerMixin, keras_hub.layers.RotaryEmbeddin
         const_scale,
         const_weight,
         w_quant_granularity,
+        *,
+        dot_product_attention_enable=False,
     ):
         """Convert a RotaryEmbedding instance for static quantization.
 
@@ -1395,6 +1422,7 @@ class QStaticRotaryEmbedding(SaveableLayerMixin, keras_hub.layers.RotaryEmbeddin
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): ignored, included for API consistency.
             w_quant_granularity (str): ignored, included for API consistency.
+            dot_product_attention_enable (bool): ignored, included for API consistency.
 
         Returns:
             RotaryEmbedding: Updated layer instance.
@@ -1509,6 +1537,8 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         const_scale,
         const_weight,
         w_quant_granularity,
+        *,
+        dot_product_attention_enable=False,
     ):
         """Convert a ReversibleEmbedding instance for static quantization.
 
@@ -1519,6 +1549,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): Whether to use constant weight.
             w_quant_granularity (str): ignored, included for API consistency.
+            dot_product_attention_enable (bool): ignored, included for API consistency.
 
         Returns:
             keras.layers.ReversibleEmbedding: Updated layer instance.
