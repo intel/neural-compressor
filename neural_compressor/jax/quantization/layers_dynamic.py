@@ -265,9 +265,9 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         orig,
         weight_dtype,
         activation_dtype,
-        const_scale=False,
-        const_weight=False,
-        w_quant_granularity="per_tensor",
+        const_scale,
+        const_weight,
+        w_quant_granularity,
     ):
         """Convert a dense-like layer instance for dynamic quantization.
 
@@ -461,9 +461,9 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
         orig,
         weight_dtype,
         activation_dtype,
-        const_scale=False,
-        const_weight=False,
-        w_quant_granularity="per_tensor",
+        const_scale,
+        const_weight,
+        w_quant_granularity,
     ):
         """Convert a MultiHeadAttention instance for dynamic quantization.
 
@@ -665,9 +665,9 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         orig,
         weight_dtype,
         activation_dtype,
-        const_scale=False,
-        const_weight=False,
-        w_quant_granularity="per_tensor",
+        const_scale,
+        const_weight,
+        w_quant_granularity,
     ):
         """Convert a CachedGemma3Attention instance for dynamic quantization.
 
@@ -818,9 +818,9 @@ class QDynamicGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
         orig,
         weight_dtype,
         activation_dtype,
-        const_scale=False,
-        const_weight=False,
-        w_quant_granularity="per_tensor",
+        const_scale,
+        const_weight,
+        w_quant_granularity,
     ):
         """Convert a Gemma3VisionAttention instance for dynamic quantization.
 
@@ -930,9 +930,9 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         orig,
         weight_dtype,
         activation_dtype,
-        const_scale=False,
-        const_weight=False,
-        w_quant_granularity="per_tensor",
+        const_scale,
+        const_weight,
+        w_quant_granularity,
     ):
         """Convert a ReversibleEmbedding instance for dynamic quantization.
 
