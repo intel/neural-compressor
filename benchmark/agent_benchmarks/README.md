@@ -107,3 +107,123 @@ Outputs:
 - Harness predictions: `mini-swe-agent/results/swe_verified_<TAG>/preds.jsonl`
 - Local evaluation report: `<SERVED_MODEL_NAME>.<TAG>.json`
 - Log: `logs/swe_verified_<TAG>.log`
+
+
+## SWE-bench Pro
+
+### SWE-bench Pro environment setup
+
+```bash
+bash setup_swebenchpro.sh
+```
+
+The setup script clones the pinned `scaleapi/SWE-bench_Pro-os` repository and
+its mini-SWE-agent submodule, applies support for the benchmark's Docker Hub
+images and per-instance cleanup, and installs the generation and local Docker
+evaluation dependencies.
+
+### Run SWE-bench Pro
+
+```bash
+bash run_swebenchpro.sh \
+  --port 8888 \
+  --workers 2 \
+  --eval-workers 2 \
+  --step-limit 250 \
+  --tag qwen36_27b_pro
+```
+
+The runner connects to an existing vLLM server and stops the process recorded
+in the matching port-specific PID file when it exits.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--host HOST` | `127.0.0.1` | vLLM host |
+| `--port PORT` | `8888` | vLLM port |
+| `--served-name NAME` | discovered | Model ID exposed by vLLM |
+| `--num-tasks N` | all | Run the first N instances |
+| `--slice START:END` | all | Run an explicit slice; cannot be combined with `--num-tasks` |
+| `--workers N` | `2` | Parallel mini-SWE-agent workers |
+| `--eval-workers N` | agent workers | Parallel local evaluator workers |
+| `--step-limit N` | `250` | Maximum model calls per instance |
+| `--pull-timeout N` | `600` | Docker image pull/start timeout in seconds |
+| `--tag TAG` | UTC timestamp | Output and log label |
+| `--redo` | disabled | Re-run existing generation and evaluation results |
+| `--skip-eval` | disabled | Generate patches without local evaluation |
+| `--block-network` | disabled | Disable network access in evaluation containers |
+| `--keep-images` | disabled | Keep benchmark Docker images after the run |
+
+Outputs are grouped under
+`SWE-bench_Pro-os/mini-swe-agent/results/swebench_pro_<TAG>/`, including
+`preds.json`, normalized `patches.json`, the selected instance CSV, evaluation
+artifacts, and `evaluation/eval_results.json`. The combined run log is written
+to `logs/swebench_pro_<TAG>.log`.
+
+
+## MCP-Atlas
+
+### MCP-Atlas environment setup
+
+Use a separate Python environment from vLLM and the SWE benchmarks when
+possible, then run:
+
+```bash
+bash setup_mcp_atlas.sh
+```
+
+The setup script clones a pinned MCP-Atlas revision, creates `mcp-atlas/.env`
+from the upstream template, installs Python and TypeScript dependencies, builds
+the agent harness, and pulls the pinned `ghcr.io/scaleapi/mcp-atlas:1.2.7`
+sandbox image. MCP-Atlas requires Node.js 20 or newer; when the system Node.js
+is older, setup downloads a pinned workspace-local Node.js 20 runtime under
+`.tools/`. The 20 no-key MCP servers work without additional credentials.
+Add optional server credentials to `mcp-atlas/.env` to enable key-gated
+servers.
+
+### Run MCP-Atlas
+
+With vLLM already serving the model:
+
+```bash
+bash run_mcp_atlas.sh \
+  --port 8888 \
+  --workers 5 \
+  --num-tasks 5 \
+  --skip-health-check \
+  --tag qwen36_27b_mcp_smoke
+```
+
+For a full run, omit `--num-tasks`. By default the runner starts and owns the
+MCP sandbox and TypeScript harness, evaluates the model, then uses the same
+served model as the LLM judge. Use `--skip-score` to generate responses only.
+The runner stops services it started and the vLLM process recorded in the
+matching port-specific PID file when it exits. It also removes the MCP sandbox
+image after the run to release disk space; pass `--keep-image` to retain it for
+the next run.
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--host HOST` | `127.0.0.1` | vLLM host |
+| `--port PORT` | `8888` | vLLM port |
+| `--served-name NAME` | discovered | Model ID exposed by vLLM |
+| `--sandbox-port PORT` | `1984` | Host port for the MCP sandbox |
+| `--harness-port PORT` | `3001` | Host port for the agent harness |
+| `--workers N` | `5` | Parallel benchmark tasks |
+| `--score-workers N` | `10` | Parallel judge requests |
+| `--num-tasks N` | all 500 | Run the first N tasks |
+| `--timeout N` | `1800` | Per-task timeout in seconds |
+| `--max-turns N` | harness default | Maximum agent turns |
+| `--max-tool-calls N` | harness default | Maximum tool calls per task |
+| `--tool-output-cap N` | uncapped | Maximum characters per tool result |
+| `--context-window-management compact` | disabled | Compact older turns |
+| `--extra-llm-params JSON` | none | Extra completion parameters |
+| `--judge-model NAME` | served model | LLM-as-judge model |
+| `--skip-health-check` | disabled | Skip one real test call per enabled server |
+| `--skip-score` | disabled | Generate responses without scoring |
+| `--reuse-sandbox` | disabled | Reuse a sandbox already on the selected port |
+| `--reuse-harness` | disabled | Reuse a harness already on the selected port |
+| `--keep-image` | disabled | Keep the sandbox image after the run |
+
+Outputs are grouped under `mcp-atlas/outputs/run_<TAG>/`: `outputs.csv`,
+`run_config.json`, the harness log, and the `scored/` reports. The combined run
+log is written to `logs/mcp_atlas_<TAG>.log`.
