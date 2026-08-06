@@ -17,9 +17,9 @@ def pro_config(args):
     config["agent"]["step_limit"] = args.step_limit
     config.setdefault("environment", {})["pull_timeout"] = args.pull_timeout
     config["environment"]["timeout"] = args.command_timeout
-    config.setdefault("run", {})["env_startup_command"] = (
-        "git clone https://github.com/{{ repo }}.git . && {{ before_repo_set_cmd }}"
-    )
+    config.setdefault("run", {})[
+        "env_startup_command"
+    ] = "git clone https://github.com/{{ repo }}.git . && {{ before_repo_set_cmd }}"
     old = "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && git add -A && git diff --cached"
     new = (
         "cd /testbed && echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && "
@@ -59,7 +59,7 @@ def normalize_patch(text):
         text = text[index:].lstrip()
         return text if "--- a/" in text and "+++ b/" in text else ""
     match = re.search(r"(?m)^--- [^\n]+\n\+\+\+ [^\n]+", text)
-    return text[match.start():].lstrip() if match and "@@" in text[match.start():] else ""
+    return text[match.start() :].lstrip() if match and "@@" in text[match.start() :] else ""
 
 
 def normalize_pro(args):
@@ -73,8 +73,11 @@ def normalize_pro(args):
         if not instance_id:
             continue
         patch = next(
-            (patch for field in ("model_patch", "patch", "prediction", "completion", "response", "output")
-             if isinstance(record.get(field), str) and (patch := normalize_patch(record[field]))),
+            (
+                patch
+                for field in ("model_patch", "patch", "prediction", "completion", "response", "output")
+                if isinstance(record.get(field), str) and (patch := normalize_patch(record[field]))
+            ),
             "",
         )
         files = re.findall(r"(?m)^diff --git a/.*? b/(.*?)$", patch) or re.findall(r"(?m)^\+\+\+ b/(.*?)$", patch)
