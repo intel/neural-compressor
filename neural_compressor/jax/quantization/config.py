@@ -229,16 +229,6 @@ class JaxBaseConfig(BaseConfig):
                         config_mapping[(op_name, op_type)] = pattern_config
         return config_mapping
 
-    def to_dict(self):
-        """Serialize params plus the white_list / exclude_list selection filters."""
-        result = self.get_params_dict()
-        white_list = _serialize_white_list(self._white_list)
-        if white_list != DEFAULT_WHITE_LIST and white_list is not None:
-            result["white_list"] = white_list
-        if self._exclude_list is not None:
-            result["exclude_list"] = self._exclude_list
-        return result
-
     def get_params_dict(self):
         """Get parameters dict, excluding internal and filter attributes."""
         result = dict()
@@ -288,6 +278,48 @@ class JaxBaseConfig(BaseConfig):
 
         return filter_result
 
+    def to_dict(self):
+        """Serialize params plus the white_list / exclude_list selection filters."""
+        result = self.get_params_dict()
+        white_list = _serialize_white_list(self._white_list)
+        if white_list != DEFAULT_WHITE_LIST and white_list is not None:
+            result["white_list"] = white_list
+        if self._exclude_list is not None:
+            result["exclude_list"] = self._exclude_list
+        return {
+            "quantization_type": self.name,
+            "config": result,
+        }
+
+    @classmethod
+    def from_dict(cls, config_dict: Dict) -> Self:
+        """Create a config from a dictionary.
+
+        Args:
+            config_dict (Dict): Configuration fields.
+
+        Returns:
+            Self: Parsed configuration instance of the calling class.
+        """
+
+        quant_type = config_dict.get("quantization_type")
+
+        if quant_type == "composable":
+            sub_configs = config_dict.get("configs")
+            if sub_configs is None:
+                raise ValueError("Composable quant config must include a non-empty 'configs' list.")
+            sub_configs = [JaxBaseConfig.from_dict(cfg) for cfg in sub_configs]
+            return JaxComposableConfig(sub_configs)
+
+        config_dict = config_dict.get("config", {})
+
+        configs = config_registry.get_cls_configs()[FRAMEWORK_NAME]
+        if quant_type not in configs:
+            raise ValueError(f"Unknown config class: {quant_type}. Must be one of: {' or '.join(configs.keys())}.")
+
+        config_class = configs[quant_type]
+        return config_class(**config_dict)
+
     @classmethod
     def from_json_string(cls, json_string: str) -> Self:
         """Create a config from a JSON string.
@@ -302,24 +334,18 @@ class JaxBaseConfig(BaseConfig):
         return cls.from_dict(cfg)
 
     @classmethod
-    def from_dict(cls, config_dict: Dict) -> Self:
-        """Create a config from a dictionary.
+    def from_json_file(cls, filename):
+        """Load config from a JSON file.
 
         Args:
-            config_dict (Dict): Configuration fields.
+            filename (str): The path to the JSON file.
 
         Returns:
-            Self: Parsed configuration instance of the calling class.
+            The loaded config.
         """
-        return cls(
-            weight_dtype=config_dict.get("weight_dtype", "fp8_e4m3"),
-            activation_dtype=config_dict.get("activation_dtype", "fp8_e4m3"),
-            const_scale=config_dict.get("const_scale", False),
-            const_weight=config_dict.get("const_weight", False),
-            weight_scale_granularity=config_dict.get("weight_scale_granularity", "per_tensor"),
-            white_list=config_dict.get("white_list", DEFAULT_WHITE_LIST),
-            exclude_list=config_dict.get("exclude_list", None),
-        )
+        with open(filename, "r", encoding="utf-8") as file:
+            config_dict = json.load(file)
+        return cls.from_dict(config_dict)
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=DYNAMIC_QUANT)
@@ -466,6 +492,12 @@ class JaxComposableConfig(ComposableConfig, JaxBaseConfig):
                     logger.debug(f"Layer {key} quant config override from {config_mapping[key]} to {cfg}")
                 config_mapping[key] = cfg
         return config_mapping
+
+    def to_dict(self):
+        return {
+            "quantization_type": "composable",
+            "configs": [cfg.to_dict() for cfg in self.config_list],
+        }
 
 
 register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)

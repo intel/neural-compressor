@@ -26,69 +26,12 @@ from keras_hub.src.models.backbone import Backbone
 from keras_hub.src.utils.preset_utils import get_preset_saver
 
 from neural_compressor.common import logger
-from neural_compressor.common.base_config import config_registry
 from neural_compressor.common.utils import DYNAMIC_QUANT, STATIC_QUANT
 from neural_compressor.jax.quantization.config import (
-    FRAMEWORK_NAME,
     JaxBaseConfig,
     JaxComposableConfig,
 )
 from neural_compressor.jax.utils.utility import check_backend, dtype_mapping
-
-
-def quant_config_to_json_object(quant_config: JaxBaseConfig) -> dict:
-    """Serialize a quant config to a JSON-compatible dict with class name.
-
-    Args:
-        quant_config (JaxBaseConfig): The quantization config object to serialize.
-
-    Returns:
-        dict: For a JaxComposableConfig, a dict with keys 'quantization_type'
-            (set to 'composable') and 'configs' (a list of serialized
-            sub-config dicts). For any other config, a dict with keys
-            'quantization_type' (the config name) and 'config' (its
-            serialized dict from ``to_dict``).
-    """
-    if isinstance(quant_config, JaxComposableConfig):
-        return {
-            "quantization_type": "composable",
-            "configs": [quant_config_to_json_object(cfg) for cfg in quant_config.config_list],
-        }
-    return {
-        "quantization_type": quant_config.name,
-        "config": quant_config.to_dict(),
-    }
-
-
-def quant_config_from_json_object(json_obj: dict) -> JaxBaseConfig:
-    """Deserialize a quant config from a JSON-compatible dict with class name.
-
-    Args:
-        json_obj (dict): A dict with 'quantization_type' and 'config' keys.
-
-    Returns:
-        JaxBaseConfig: The instantiated quantization config object.
-
-    Raises:
-        ValueError: If the class name is unknown.
-    """
-    quant_type = json_obj.get("quantization_type")
-
-    if quant_type == "composable":
-        sub_configs = json_obj.get("configs")
-        if sub_configs is None:
-            raise ValueError("Composable quant config must include a non-empty 'configs' list.")
-        sub_configs = [quant_config_from_json_object(cfg) for cfg in sub_configs]
-        return JaxComposableConfig(sub_configs)
-
-    config_dict = json_obj.get("config", {})
-
-    configs = config_registry.get_cls_configs()[FRAMEWORK_NAME]
-    if quant_type not in configs:
-        raise ValueError(f"Unknown config class: {quant_type}. Must be one of: {' or '.join(configs.keys())}.")
-
-    config_class = configs[quant_type]
-    return config_class.from_dict(config_dict)
 
 
 class VersionManager:
@@ -300,7 +243,7 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
             dict: Serialized configuration for the wrapper.
         """
         config = super().get_config()
-        config["_quant_config"] = quant_config_to_json_object(self._quant_config)
+        config["_quant_config"] = self._quant_config.to_json_string()
         config["_wrapped_model"] = keras.saving.serialize_keras_object(self._wrapped_model)
         return config
 
@@ -328,7 +271,7 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
         """
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
         quant_config_json = config.get("_quant_config")
-        quant_config = quant_config_from_json_object(quant_config_json)
+        quant_config = JaxBaseConfig.from_json_string(quant_config_json)
         qmodel = prepare_deserialized_quantized_model(model, quant_config)
         return qmodel
 
@@ -417,7 +360,7 @@ class KerasQuantizedModelWrapperMixin:
         """
         config = super().get_config()
         VersionManager.add_versions(config)
-        config["_quant_config"] = quant_config_to_json_object(self._quant_config)
+        config["_quant_config"] = self._quant_config.to_json_string()
         # Save backbone without wrapper for load/save_model <-> preset api compatibility
         backbone_wrapper = None
         if hasattr(self, "backbone"):
@@ -454,7 +397,7 @@ class KerasQuantizedModelWrapperMixin:
         VersionManager.check_versions_mismatch(config)
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
         quant_config_json = config.get("_quant_config")
-        quant_config = quant_config_from_json_object(quant_config_json)
+        quant_config = JaxBaseConfig.from_json_string(quant_config_json)
         qmodel = prepare_deserialized_quantized_model(model, quant_config)
 
         return qmodel
