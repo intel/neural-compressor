@@ -4,7 +4,6 @@
 from typing import TYPE_CHECKING
 
 import torch
-
 from vllm.model_executor.layers.quantization.inc.inc_linear import INCLinearMethod
 from vllm.model_executor.layers.quantization.inc.schemes.inc_scheme import INCScheme
 

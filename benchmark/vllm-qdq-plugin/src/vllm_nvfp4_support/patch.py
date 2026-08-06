@@ -22,9 +22,7 @@ def apply_patches() -> None:
     from vllm.model_executor.layers.quantization.inc.schemes import factory
 
     INCConfig.SUPPORTED_DTYPES = set(INCConfig.SUPPORTED_DTYPES) | {"nv_fp"}
-    INCConfig.SUPPORTED_FORMATS = set(INCConfig.SUPPORTED_FORMATS) | {
-        "auto_round:llm_compressor"
-    }
+    INCConfig.SUPPORTED_FORMATS = set(INCConfig.SUPPORTED_FORMATS) | {"auto_round:llm_compressor"}
 
     original_resolve_scheme = factory.resolve_scheme
 

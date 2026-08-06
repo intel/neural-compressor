@@ -2,7 +2,6 @@
 # SPDX-FileCopyrightText: Copyright contributors to the vLLM project
 
 import torch
-
 import vllm.model_executor.layers.fused_moe.modular_kernel as mk
 from vllm.logger import init_logger
 from vllm.model_executor.layers.fused_moe import (
@@ -48,9 +47,7 @@ class INCNvfp4MoEMethod(FusedMoEMethodBase):
             weight_key=kNvfp4Static,
             activation_key=kNvfp4Dynamic,
         )
-        self.use_global_sf = is_global_sf_supported_for_nvfp4_backend(
-            self.nvfp4_backend
-        )
+        self.use_global_sf = is_global_sf_supported_for_nvfp4_backend(self.nvfp4_backend)
 
     def create_weights(
         self,
@@ -62,10 +59,7 @@ class INCNvfp4MoEMethod(FusedMoEMethodBase):
         **extra_weight_attrs,
     ) -> None:
         if hidden_size % self.group_size != 0:
-            raise ValueError(
-                "AutoRound NVFP4 MoE requires hidden_size to be a multiple "
-                f"of {self.group_size}."
-            )
+            raise ValueError("AutoRound NVFP4 MoE requires hidden_size to be a multiple " f"of {self.group_size}.")
         if intermediate_size_per_partition % self.group_size != 0:
             raise ValueError(
                 "AutoRound NVFP4 MoE requires the intermediate size per "
@@ -139,9 +133,7 @@ class INCNvfp4MoEMethod(FusedMoEMethodBase):
         layer.register_parameter("w13_weight_global_scale", w13_weight_global_scale)
         set_weight_attrs(w13_weight_global_scale, tensor_attrs)
 
-        w2_weight_global_scale = torch.nn.Parameter(
-            torch.empty(num_experts, dtype=torch.float32), requires_grad=False
-        )
+        w2_weight_global_scale = torch.nn.Parameter(torch.empty(num_experts, dtype=torch.float32), requires_grad=False)
         layer.register_parameter("w2_weight_global_scale", w2_weight_global_scale)
         set_weight_attrs(w2_weight_global_scale, tensor_attrs)
 
@@ -152,20 +144,14 @@ class INCNvfp4MoEMethod(FusedMoEMethodBase):
         layer.register_parameter("w13_input_global_scale", w13_input_global_scale)
         set_weight_attrs(w13_input_global_scale, tensor_attrs)
 
-        w2_input_global_scale = torch.nn.Parameter(
-            torch.empty(num_experts, dtype=torch.float32), requires_grad=False
-        )
+        w2_input_global_scale = torch.nn.Parameter(torch.empty(num_experts, dtype=torch.float32), requires_grad=False)
         layer.register_parameter("w2_input_global_scale", w2_input_global_scale)
         set_weight_attrs(w2_input_global_scale, tensor_attrs)
 
     def process_weights_after_loading(self, layer: RoutedExperts) -> None:
-        layer.w13_weight = torch.nn.Parameter(
-            layer.w13_weight_packed.data, requires_grad=False
-        )
+        layer.w13_weight = torch.nn.Parameter(layer.w13_weight_packed.data, requires_grad=False)
         del layer.w13_weight_packed
-        layer.w2_weight = torch.nn.Parameter(
-            layer.w2_weight_packed.data, requires_grad=False
-        )
+        layer.w2_weight = torch.nn.Parameter(layer.w2_weight_packed.data, requires_grad=False)
         del layer.w2_weight_packed
 
         if self.moe.is_act_and_mul and not torch.allclose(
@@ -173,8 +159,7 @@ class INCNvfp4MoEMethod(FusedMoEMethodBase):
             layer.w13_weight_global_scale[:, 1],
         ):
             logger.warning_once(
-                "AutoRound NVFP4 requires matching gate/up weight global "
-                "scales. Accuracy may be affected."
+                "AutoRound NVFP4 requires matching gate/up weight global " "scales. Accuracy may be affected."
             )
         w13_weight_global_scale = layer.w13_weight_global_scale[:, 0].contiguous()
 
@@ -227,8 +212,7 @@ class INCNvfp4MoEMethod(FusedMoEMethodBase):
         routing_tables: tuple[torch.Tensor, torch.Tensor, torch.Tensor] | None = None,
     ) -> mk.FusedMoEPrepareAndFinalizeModular | None:
         raise ValueError(
-            f"{self.__class__.__name__} uses modular kernel initialization. "
-            "This function should not be called."
+            f"{self.__class__.__name__} uses modular kernel initialization. " "This function should not be called."
         )
 
     def get_fused_moe_quant_config(self, layer: torch.nn.Module) -> FusedMoEQuantConfig:

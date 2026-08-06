@@ -5,14 +5,13 @@ from typing import TYPE_CHECKING, Any
 
 import torch
 from torch.nn.parameter import Parameter
-
 from vllm.logger import init_logger
 from vllm.model_executor.kernels.linear import init_nvfp4_linear_kernel
 from vllm.model_executor.layers.fusion.quant_activation import (
     expose_input_quant_key,
 )
-from vllm.model_executor.layers.quantization.inc.schemes.inc_scheme import INCLinearScheme
 from vllm.model_executor.layers.quantization.inc.inc_linear import INCLinearMethod
+from vllm.model_executor.layers.quantization.inc.schemes.inc_scheme import INCLinearScheme
 from vllm.model_executor.parameter import (
     GroupQuantScaleParameter,
     ModelWeightParameter,
@@ -53,10 +52,7 @@ class INCNvfp4LinearMethod(INCLinearScheme):
     ) -> None:
         del input_size, output_size
         if input_size_per_partition % self.group_size != 0:
-            raise ValueError(
-                "NVFP4 requires the input size per partition to be "
-                f"a multiple of {self.group_size}."
-            )
+            raise ValueError("NVFP4 requires the input size per partition to be " f"a multiple of {self.group_size}.")
 
         output_size_per_partition = sum(output_partition_sizes)
         weight_loader = extra_weight_attrs.get("weight_loader")
@@ -106,10 +102,7 @@ class INCNvfp4LinearMethod(INCLinearScheme):
         expose_input_quant_key(layer, self.kernel)
 
     def process_weights_after_loading(self, layer: torch.nn.Module) -> None:
-        if (
-            torch.unique(layer.input_global_scale).numel() != 1
-            or torch.unique(layer.weight_global_scale).numel() != 1
-        ):
+        if torch.unique(layer.input_global_scale).numel() != 1 or torch.unique(layer.weight_global_scale).numel() != 1:
             logger.warning_once(
                 "In AutoRound NVFP4 linear, global scales differ across fused "
                 "parallel layers. This may reduce accuracy; consider using a "
@@ -120,19 +113,13 @@ class INCNvfp4LinearMethod(INCLinearScheme):
         del layer.weight_packed
         input_global_scale_inv = layer.input_global_scale.max().to(torch.float32)
         weight_global_scale_inv = layer.weight_global_scale.max().to(torch.float32)
-        layer.input_global_scale = Parameter(
-            1.0 / input_global_scale_inv, requires_grad=False
-        )
-        layer.weight_global_scale = Parameter(
-            1.0 / weight_global_scale_inv, requires_grad=False
-        )
+        layer.input_global_scale = Parameter(1.0 / input_global_scale_inv, requires_grad=False)
+        layer.weight_global_scale = Parameter(1.0 / weight_global_scale_inv, requires_grad=False)
         layer.alpha = Parameter(
             layer.input_global_scale * layer.weight_global_scale,
             requires_grad=False,
         )
-        layer.input_global_scale_inv = Parameter(
-            input_global_scale_inv, requires_grad=False
-        )
+        layer.input_global_scale_inv = Parameter(input_global_scale_inv, requires_grad=False)
 
         self.kernel.process_weights_after_loading(layer)
 
