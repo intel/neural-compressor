@@ -133,20 +133,21 @@ bash run_swebenchpro.sh \
   --tag qwen36_27b_pro
 ```
 
-The runner connects to an existing vLLM server and stops the process recorded
-in the matching port-specific PID file when it exits.
+The runner connects to an existing shared vLLM server and leaves it running
+when the benchmark exits.
 
 | Option | Default | Description |
 | --- | --- | --- |
 | `--host HOST` | `127.0.0.1` | vLLM host |
 | `--port PORT` | `8888` | vLLM port |
 | `--served-name NAME` | discovered | Model ID exposed by vLLM |
-| `--num-tasks N` | all | Run the first N instances |
+| `--num-tasks N` | all 731 | Run the first N instances |
 | `--slice START:END` | all | Run an explicit slice; cannot be combined with `--num-tasks` |
 | `--workers N` | `2` | Parallel mini-SWE-agent workers |
 | `--eval-workers N` | agent workers | Parallel local evaluator workers |
 | `--step-limit N` | `250` | Maximum model calls per instance |
-| `--pull-timeout N` | `600` | Docker image pull/start timeout in seconds |
+| `--pull-timeout N` | `1800` | Docker image pull/start timeout in seconds |
+| `--command-timeout N` | `600` | In-container command timeout in seconds |
 | `--tag TAG` | UTC timestamp | Output and log label |
 | `--redo` | disabled | Re-run existing generation and evaluation results |
 | `--skip-eval` | disabled | Generate patches without local evaluation |
@@ -188,42 +189,30 @@ With vLLM already serving the model:
 bash run_mcp_atlas.sh \
   --port 8888 \
   --workers 5 \
-  --num-tasks 5 \
-  --skip-health-check \
-  --tag qwen36_27b_mcp_smoke
+  --tag qwen36_27b_mcp_full
 ```
 
-For a full run, omit `--num-tasks`. By default the runner starts and owns the
-MCP sandbox and TypeScript harness, evaluates the model, then uses the same
-served model as the LLM judge. Use `--skip-score` to generate responses only.
-The runner stops services it started and the vLLM process recorded in the
-matching port-specific PID file when it exits. It also removes the MCP sandbox
-image after the run to release disk space; pass `--keep-image` to retain it for
-the next run.
+This runs all 500 tasks. By default the runner starts and owns the MCP sandbox
+and TypeScript harness, evaluates the model, then uses the same served model as
+the LLM judge. Use `--skip-score` to generate responses only.
+The runner stops the MCP services it started but leaves the shared vLLM server
+running. It also removes the MCP sandbox image after the run to release disk
+space; pass `--keep-image` to retain it for the next run. Host proxy variables
+are forwarded to the sandbox because its MCP servers may install packages when
+they start. The sandbox and harness use fixed host ports `1984` and `3001`.
 
 | Option | Default | Description |
 | --- | --- | --- |
 | `--host HOST` | `127.0.0.1` | vLLM host |
 | `--port PORT` | `8888` | vLLM port |
-| `--served-name NAME` | discovered | Model ID exposed by vLLM |
-| `--sandbox-port PORT` | `1984` | Host port for the MCP sandbox |
-| `--harness-port PORT` | `3001` | Host port for the agent harness |
 | `--workers N` | `5` | Parallel benchmark tasks |
 | `--score-workers N` | `10` | Parallel judge requests |
 | `--num-tasks N` | all 500 | Run the first N tasks |
 | `--timeout N` | `1800` | Per-task timeout in seconds |
-| `--max-turns N` | harness default | Maximum agent turns |
-| `--max-tool-calls N` | harness default | Maximum tool calls per task |
-| `--tool-output-cap N` | uncapped | Maximum characters per tool result |
-| `--context-window-management compact` | disabled | Compact older turns |
-| `--extra-llm-params JSON` | none | Extra completion parameters |
-| `--judge-model NAME` | served model | LLM-as-judge model |
 | `--skip-health-check` | disabled | Skip one real test call per enabled server |
 | `--skip-score` | disabled | Generate responses without scoring |
-| `--reuse-sandbox` | disabled | Reuse a sandbox already on the selected port |
-| `--reuse-harness` | disabled | Reuse a harness already on the selected port |
 | `--keep-image` | disabled | Keep the sandbox image after the run |
 
 Outputs are grouped under `mcp-atlas/outputs/run_<TAG>/`: `outputs.csv`,
-`run_config.json`, the harness log, and the `scored/` reports. The combined run
-log is written to `logs/mcp_atlas_<TAG>.log`.
+`run_config.json`, `harness.log`, `sandbox.log`, and the `scored/` reports. The
+combined run log is written to `logs/mcp_atlas_<TAG>.log`.

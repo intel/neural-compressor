@@ -186,35 +186,16 @@ log "Running SWE-bench Verified with model ${SERVED_MODEL_NAME}"
 )
 
 require_file "${PREDS_JSON}"
-python - "${PREDS_JSON}" "${PREDS_JSONL}" <<'PY'
-import json
-import sys
-
-source, destination = sys.argv[1:]
-with open(source) as file:
-		predictions = json.load(file)
-with open(destination, "w") as file:
-		for instance_id, prediction in predictions.items():
-				record = prediction if isinstance(prediction, dict) else {"model_patch": prediction}
-				record.setdefault("instance_id", instance_id)
-				file.write(json.dumps(record) + "\n")
-print(f"Wrote {len(predictions)} predictions to {destination}")
-PY
+python "${SCRIPT_DIR}/lib/benchmark_data.py" verified-jsonl \
+	--source "${PREDS_JSON}" --output "${PREDS_JSONL}"
 
 if [[ "${SKIP_EVAL}" == true ]]; then
 	log "Skipping local SWE-bench evaluation"
 	exit 0
 fi
 
-mapfile -t INSTANCE_IDS < <(python - "${PREDS_JSONL}" <<'PY'
-import json
-import sys
-
-with open(sys.argv[1]) as file:
-		for line in file:
-				if line.strip():
-						print(json.loads(line)["instance_id"])
-PY
+mapfile -t INSTANCE_IDS < <(
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" verified-ids --source "${PREDS_JSONL}"
 )
 [[ ${#INSTANCE_IDS[@]} -gt 0 ]] || die "No predictions found in ${PREDS_JSONL}"
 
@@ -231,23 +212,7 @@ log "Evaluating ${#INSTANCE_IDS[@]} predictions with ${EVAL_WORKERS} workers"
 )
 
 if [[ -f "${REPORT_FILE}" ]]; then
-	python - "${REPORT_FILE}" <<'PY'
-import json
-import sys
-
-with open(sys.argv[1]) as file:
-	report = json.load(file)
-submitted = report.get("submitted_instances", 0)
-resolved = report.get("resolved_instances", 0)
-completed = report.get("completed_instances", 0)
-unresolved = report.get("unresolved_instances", 0)
-errors = report.get("error_instances", 0)
-accuracy = resolved / submitted * 100 if submitted else 0.0
-print(f"Local accuracy : {resolved}/{submitted} = {accuracy:.1f}%")
-print(f"Completed      : {completed}")
-print(f"Unresolved     : {unresolved}")
-print(f"Errors         : {errors}")
-PY
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" verified-report --report "${REPORT_FILE}"
 else
 	warn "Local harness report not found: ${REPORT_FILE}"
 fi
