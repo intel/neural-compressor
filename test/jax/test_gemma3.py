@@ -23,11 +23,16 @@ import time
 
 import jax
 import keras
+import numpy as np
 import pytest
 from jax_test_utility import compute_model_hash, load_image, load_model_from_preset
 from keras_hub.models import Gemma3CausalLM
+from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
+from neural_compressor.jax.quantization import layers_static
+from neural_compressor.jax.quantization.layers_static import QStaticCachedGemma3Attention
+from neural_compressor.jax.utils.utility import dtype_mapping
 
 
 @pytest.fixture
@@ -84,6 +89,54 @@ def test_text_prompt(dynamic, const_vars, model_dtype, quantization_dtype, rando
             const_weight=const_vars,
         )
         gemma_q = quantize_model(gemma, config, calib_fn, inplace=False)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
+        gemma_q.save_to_preset(save_path)
+        gemma_q_loaded = Gemma3CausalLM.from_preset(save_path, dtype=model_dtype)
+
+    answer = gemma_q_loaded.generate("Answer what is the capital city of England.", max_length=25, strip_prompt=True)
+    print("Gemma answer: ", {answer})
+    assert "London" in answer
+
+
+@pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
+@pytest.mark.parametrize("model_dtype", ["float32"], ids=["model_dtype=float32"])
+@pytest.mark.smoke_test_if(
+    "model_dtype=float32-dynamic=True",
+    "model_dtype=float32-dynamic=False",
+)
+def test_text_prompt_dot_product_attention(dynamic, model_dtype, quantization_dtype, random_string):
+    """Validate the fused dot-product-attention path (dot_product_attention_enable=True)."""
+    gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_270m", model_dtype)
+
+    def calib_fn(model):
+        _ = model.generate(random_string, max_length=100)
+
+    if dynamic:
+        config = DynamicQuantConfig(
+            weight_dtype=quantization_dtype,
+            activation_dtype=quantization_dtype,
+            weight_scale_granularity="per_channel",
+            dot_product_attention_enable=True,
+        )
+        gemma_q = quantize_model(gemma, config)
+    else:
+        config = StaticQuantConfig(
+            weight_dtype=quantization_dtype,
+            activation_dtype=quantization_dtype,
+            weight_scale_granularity="per_channel",
+            dot_product_attention_enable=True,
+        )
+        gemma_q = quantize_model(gemma, config, calib_fn, inplace=False)
+
+    assert config.dot_product_attention_enable is True
+    # The flag must be propagated onto the converted attention layers.
+    attention_layers = [
+        layer for layer in gemma_q._flatten_layers(recursive=True) if hasattr(layer, "dot_product_attention_enable")
+    ]
+    assert attention_layers, "No quantized attention layer exposed dot_product_attention_enable"
+    assert all(layer.dot_product_attention_enable is True for layer in attention_layers)
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
@@ -228,3 +281,64 @@ def test_inplace_false():
     duration_difference = duration_inplace_false - duration_inplace_true
     performance_hit = (duration_difference / duration_inplace_true) * 100
     print(f"performance hit: {performance_hit:.2f}%")
+
+
+@pytest.mark.smoke_test
+def test_cached_gemma3_attention_fused_matches_fallback(monkeypatch):
+    """The fused dot-product-attention path matches the einsum fallback.
+
+    The static layer's QDQ helpers are left in passthrough (uncalibrated) mode, so
+    both paths run in full precision and only the math path differs. A spy confirms
+    the fused op is used for one path and not the other, guarding against silently
+    falling back on both runs.
+    """
+    head_dim, num_query_heads, num_key_value_heads, hidden_dim = 4, 2, 1, 8
+    q_dtype = dtype_mapping["fp8_e4m3"]
+
+    layer = CachedGemma3Attention(
+        head_dim=head_dim,
+        num_query_heads=num_query_heads,
+        num_key_value_heads=num_key_value_heads,
+    )
+    layer.build((None, None, hidden_dim))
+    q_layer = QStaticCachedGemma3Attention.prepare(
+        layer,
+        q_dtype,
+        q_dtype,
+        False,
+        False,
+        "per_tensor",
+        dot_product_attention_enable=True,
+    )
+    q_layer.add_observers()
+    q_layer.add_variables()
+
+    real_dot_product_attention = layers_static.ops.dot_product_attention
+    calls = {"n": 0}
+
+    def spy(*args, **kwargs):
+        calls["n"] += 1
+        return real_dot_product_attention(*args, **kwargs)
+
+    monkeypatch.setattr(layers_static.ops, "dot_product_attention", spy)
+
+    rng = np.random.default_rng(0)
+    q = keras.ops.convert_to_tensor(rng.standard_normal((1, 3, num_query_heads, head_dim)).astype("float32"))
+    k = keras.ops.convert_to_tensor(rng.standard_normal((1, 3, num_key_value_heads, head_dim)).astype("float32"))
+    v = keras.ops.convert_to_tensor(rng.standard_normal((1, 3, num_key_value_heads, head_dim)).astype("float32"))
+    attention_mask = keras.ops.ones((1, 3, 3))
+
+    q_layer.dot_product_attention_enable = True
+    fused = q_layer._compute_attention(q, k, v, attention_mask)
+    assert calls["n"] == 1, "Fused path did not call ops.dot_product_attention"
+
+    q_layer.dot_product_attention_enable = False
+    fallback = q_layer._compute_attention(q, k, v, attention_mask)
+    assert calls["n"] == 1, "Fallback path unexpectedly called ops.dot_product_attention"
+
+    np.testing.assert_allclose(
+        keras.ops.convert_to_numpy(fused),
+        keras.ops.convert_to_numpy(fallback),
+        rtol=1e-3,
+        atol=1e-3,
+    )
