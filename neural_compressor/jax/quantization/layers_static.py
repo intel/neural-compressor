@@ -1155,6 +1155,7 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         if self._all_devices_cpu:
             return True
         return super()._use_fused_attention_op()
+
     # fmt: off
     def _compute_attention(
         self,
