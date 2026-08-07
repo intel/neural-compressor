@@ -243,7 +243,7 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
             dict: Serialized configuration for the wrapper.
         """
         config = super().get_config()
-        config["_quant_config"] = self._quant_config.to_json_string()
+        config["_quant_config"] = self._quant_config.to_dict()
         config["_wrapped_model"] = keras.saving.serialize_keras_object(self._wrapped_model)
         return config
 
@@ -271,7 +271,7 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
         """
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
         quant_config_json = config.get("_quant_config")
-        quant_config = JaxBaseConfig.from_json_string(quant_config_json)
+        quant_config = JaxBaseConfig.from_dict(quant_config_json)
         qmodel = prepare_deserialized_quantized_model(model, quant_config)
         return qmodel
 
@@ -360,7 +360,7 @@ class KerasQuantizedModelWrapperMixin:
         """
         config = super().get_config()
         VersionManager.add_versions(config)
-        config["_quant_config"] = self._quant_config.to_json_string()
+        config["_quant_config"] = self._quant_config.to_dict()
         # Save backbone without wrapper for load/save_model <-> preset api compatibility
         backbone_wrapper = None
         if hasattr(self, "backbone"):
@@ -397,7 +397,7 @@ class KerasQuantizedModelWrapperMixin:
         VersionManager.check_versions_mismatch(config)
         model = keras.saving.deserialize_keras_object(config["_wrapped_model"])
         quant_config_json = config.get("_quant_config")
-        quant_config = JaxBaseConfig.from_json_string(quant_config_json)
+        quant_config = JaxBaseConfig.from_dict(quant_config_json)
         qmodel = prepare_deserialized_quantized_model(model, quant_config)
 
         return qmodel
