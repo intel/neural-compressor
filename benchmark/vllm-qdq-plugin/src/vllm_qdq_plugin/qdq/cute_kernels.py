@@ -8,8 +8,8 @@ import cutlass
 import cutlass.cute as cute
 import torch
 from cutlass._mlir.dialects import llvm
-from cutlass.cutlass_dsl import T
 from cutlass.cute.runtime import from_dlpack
+from cutlass.cutlass_dsl import T
 
 GROUP_SIZE = 32
 WARPS_PER_BLOCK = 4

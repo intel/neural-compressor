@@ -3,7 +3,6 @@ import unittest
 from unittest import mock
 
 import torch
-
 from vllm_qdq_plugin.qdq.mxfp4 import _mxfp4_qdq_reference, mxfp4_qdq
 from vllm_qdq_plugin.qdq.mxfp8 import _mxfp8_qdq_reference, mxfp8_qdq
 
