@@ -2,7 +2,7 @@ diffusers==0.38.0
 pandas==2.2.2
 clip==0.2.0
 torchmetrics==1.8.2
-transformers==5.5.0
+transformers==5.14.1
 sentencepiece
 safetensors==0.8.0rc0
 tabulate==0.10.0

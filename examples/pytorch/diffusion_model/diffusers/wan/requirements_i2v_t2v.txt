@@ -39,5 +39,5 @@ boto3
 omegaconf
 pycocoevalcap
 imageio-ffmpeg
-gdown==4.7.3
+gdown==5.2.2
 dreamsim
