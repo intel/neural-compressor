@@ -33,14 +33,8 @@ Environment:
 	VLLM_API_KEY         API key sent to vLLM (default: EMPTY)
 	VLLM_NO_PROXY        Hosts that bypass HTTP proxies (default: vLLM host)
 	VLLM_WAIT_TIMEOUT    Readiness timeout in seconds (default: 300)
-	VLLM_PID_FILE        vLLM PID file (default: logs/vllm_<PORT>.pid)
 	OPENAI_BASE_URL      Override the OpenAI-compatible API base URL
 EOF
-}
-
-stop_vllm() {
-	local pid_file="${VLLM_PID_FILE:-${LOG_DIR}/vllm_${VLLM_PORT}.pid}"
-	stop_vllm_from_pid_file "${pid_file}"
 }
 
 require_positive_integer() {
@@ -142,7 +136,6 @@ require_positive_integer "--pull-timeout" "${PULL_TIMEOUT}"
 
 init_benchmark_paths
 init_vllm_endpoint
-trap stop_vllm EXIT
 RUN_TAG="$(sanitize_run_tag "${RUN_TAG}")"
 readonly OUT_DIR="${AGENT_DIR_VERIFIED}/results/swe_verified_${RUN_TAG}"
 readonly PREDS_JSON="${OUT_DIR}/preds.json"

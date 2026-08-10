@@ -10,8 +10,10 @@ usage() {
   cat <<'EOF'
 Usage:
   bash start_vllm_serve.sh MODEL [VLLM_OPTIONS...]
+  bash start_vllm_serve.sh --stop [--port PORT]
 
 Start vLLM in the background. Extra options are passed to `vllm serve`.
+Use --stop to stop the server for a port (default: 8888).
 
 Defaults:
   port=8888, served-name=gpt-3.5-turbo, max-model-len=262144
@@ -30,6 +32,34 @@ if [[ $# -eq 0 ]]; then
 fi
 if [[ "$1" == "-h" || "$1" == "--help" ]]; then
   usage
+  exit 0
+fi
+
+if [[ "$1" == "--stop" ]]; then
+  shift
+  STOP_PORT=8888
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --port)
+        [[ $# -ge 2 ]] || die "$1 requires a value"
+        STOP_PORT="$2"
+        shift 2
+        ;;
+      -h | --help)
+        usage
+        exit 0
+        ;;
+      *)
+        die "Unknown stop argument: $1"
+        ;;
+    esac
+  done
+
+  validate_port "${STOP_PORT}"
+  init_benchmark_paths
+  LOG_DIR="${VLLM_LOG_DIR:-${LOG_DIR}}"
+  PID_FILE="${VLLM_PID_FILE:-${LOG_DIR}/vllm_${STOP_PORT}.pid}"
+  stop_vllm_from_pid_file "${PID_FILE}"
   exit 0
 fi
 

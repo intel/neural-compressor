@@ -54,10 +54,18 @@ CUDA_VISIBLE_DEVICES=0 bash start_vllm_serve.sh \
 ```
 
 The script prints the generated log and PID-file paths. To follow the server
-output, run `tail -f` on the printed log path. A subsequent
-`run_swe_verified.sh` run stops the server recorded in the matching
-port-specific PID file when the benchmark exits.
+output, run `tail -f` on the printed log path. Benchmark runners leave the
+shared vLLM server running whether they succeed or fail.
 
+Stop the server explicitly when it is no longer needed:
+
+```bash
+bash start_vllm_serve.sh --stop --port 8888
+```
+
+The stop command uses `logs/vllm_<PORT>.pid` by default. Set the same
+`VLLM_LOG_DIR` used to start the server, or set `VLLM_PID_FILE` to the exact PID
+file, when using a custom location.
 
 ## SWE-Verified
 
@@ -85,8 +93,9 @@ bash run_swe_verified.sh \
   --tag qwen36_27b_full
 ```
 
-`run_swe_verified.sh` stops the vLLM process recorded in the port-specific PID
-file when it exits, whether the benchmark succeeds or fails.
+The runner connects to the existing shared vLLM server and leaves it running
+when the benchmark exits, whether the benchmark succeeds or fails.
+
 | Option | Default | Description |
 | --- | --- | --- |
 | `--host HOST` | `127.0.0.1` | vLLM host |
