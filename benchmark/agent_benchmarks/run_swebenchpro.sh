@@ -25,11 +25,12 @@ Options:
 	--step-limit N       Maximum model calls per instance (default: 250)
 	--pull-timeout N     Docker image pull/start timeout in seconds (default: 1800)
 	--command-timeout N  In-container command timeout in seconds (default: 600)
+	--batch-size N       Instances per generation/evaluation batch (default: 25)
 	--tag TAG            Run tag (default: UTC timestamp)
 	--redo               Re-run existing generation and evaluation results
 	--skip-eval          Generate patches without local evaluation
 	--block-network      Disable container networking during local evaluation
-	--keep-images        Keep SWE-bench Pro Docker images after the run
+	--keep-images        Keep SWE-bench Pro Docker images after each batch
 	-h, --help           Show this help message
 
 Environment:
@@ -42,8 +43,10 @@ EOF
 }
 
 remove_swebench_pro_images() {
-	[[ "${KEEP_IMAGES}" == false && -f "${IMAGE_LIST}" ]] || return
-	mapfile -t images < <(sort -u "${IMAGE_LIST}" | grep -E '^jefzda/sweap-images:' || true)
+	local image_list="${CURRENT_IMAGE_LIST}"
+	CURRENT_IMAGE_LIST=""
+	[[ "${KEEP_IMAGES}" == false && -n "${image_list}" && -f "${image_list}" ]] || return
+	mapfile -t images < <(sort -u "${image_list}" | grep -E '^jefzda/sweap-images:' || true)
 	[[ ${#images[@]} -gt 0 ]] || return
 	log "Removing ${#images[@]} SWE-bench Pro images"
 	docker image rm -f "${images[@]}" >/dev/null 2>&1 || \
@@ -65,6 +68,7 @@ EVAL_WORKERS=""
 STEP_LIMIT=250
 PULL_TIMEOUT=1800
 COMMAND_TIMEOUT=600
+BATCH_SIZE=25
 NUM_TASKS=""
 SLICE_ARG=""
 SERVED_MODEL_NAME=""
@@ -73,6 +77,7 @@ REDO=false
 SKIP_EVAL=false
 BLOCK_NETWORK=false
 KEEP_IMAGES=false
+CURRENT_IMAGE_LIST=""
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
@@ -126,6 +131,11 @@ while [[ $# -gt 0 ]]; do
 			COMMAND_TIMEOUT="$2"
 			shift 2
 			;;
+		--batch-size)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			BATCH_SIZE="$2"
+			shift 2
+			;;
 		--tag)
 			[[ $# -ge 2 ]] || die "$1 requires a value"
 			RUN_TAG="$2"
@@ -163,6 +173,7 @@ require_positive_integer "--workers" "${WORKERS}"
 require_positive_integer "--step-limit" "${STEP_LIMIT}"
 require_positive_integer "--pull-timeout" "${PULL_TIMEOUT}"
 require_positive_integer "--command-timeout" "${COMMAND_TIMEOUT}"
+require_positive_integer "--batch-size" "${BATCH_SIZE}"
 [[ -z "${EVAL_WORKERS}" ]] || require_positive_integer "--eval-workers" "${EVAL_WORKERS}"
 [[ -z "${NUM_TASKS}" ]] || require_positive_integer "--num-tasks" "${NUM_TASKS}"
 [[ -z "${SLICE_ARG}" || "${SLICE_ARG}" =~ ^[0-9]*:[0-9]*$ ]] || \
@@ -173,11 +184,14 @@ init_vllm_endpoint
 RUN_TAG="$(sanitize_run_tag "${RUN_TAG}")"
 readonly SWEBENCH_PRO_DIR="${BENCHMARK_DIR}/SWE-bench_Pro-os"
 readonly OUT_DIR="${AGENT_DIR}/results/swebench_pro_${RUN_TAG}"
+readonly BATCH_ROOT="${OUT_DIR}/batches"
+readonly BATCH_LIST="${OUT_DIR}/batch_list.txt"
 readonly PREDS_JSON="${OUT_DIR}/preds.json"
 readonly PATCHES_JSON="${OUT_DIR}/patches.json"
 readonly INSTANCES_CSV="${OUT_DIR}/instances.csv"
 readonly IMAGE_LIST="${OUT_DIR}/images.txt"
 readonly EVAL_OUT="${OUT_DIR}/evaluation"
+readonly REPORT_FILE="${EVAL_OUT}/eval_results.json"
 readonly RUNTIME_CONFIG="${OUT_DIR}/swebench_pro.yaml"
 readonly LOG_FILE="${LOG_DIR}/swebench_pro_${RUN_TAG}.log"
 
@@ -187,7 +201,8 @@ require_file "${AGENT_DIR}/src/minisweagent/run/extra/swebench.py"
 require_command mini-extra
 require_command python
 require_command docker
-mkdir -p "${OUT_DIR}" "${LOG_DIR}"
+mkdir -p "${BATCH_ROOT}" "${LOG_DIR}"
+: >"${BATCH_LIST}"
 exec > >(tee -a "${LOG_FILE}") 2>&1
 trap cleanup EXIT
 
@@ -203,12 +218,11 @@ SERVED_MODEL_NAME="$(discover_vllm_model "${SERVED_MODEL_NAME}")"
 EVAL_WORKERS="${EVAL_WORKERS:-${WORKERS}}"
 readonly EVAL_PREFIX="$(sanitize_run_tag "${SERVED_MODEL_NAME}_step${STEP_LIMIT}_${RUN_TAG}")"
 
-SLICE_SPEC="${SLICE_ARG}"
-[[ -n "${SLICE_SPEC}" || -z "${NUM_TASKS}" ]] || SLICE_SPEC="0:${NUM_TASKS}"
-SLICE_OPTIONS=()
-[[ -z "${SLICE_SPEC}" ]] || SLICE_OPTIONS=(--slice "${SLICE_SPEC}")
 REDO_OPTIONS=()
 [[ "${REDO}" == false ]] || REDO_OPTIONS=(--redo-existing)
+batch_plan="$(plan_batch_slices 731 "${NUM_TASKS}" "${SLICE_ARG}" "${BATCH_SIZE}")"
+mapfile -t BATCH_SLICES <<<"${batch_plan}"
+[[ ${#BATCH_SLICES[@]} -gt 0 ]] || die "No SWE-bench Pro batches were selected"
 
 python "${SCRIPT_DIR}/lib/benchmark_data.py" pro-config \
 	--output "${RUNTIME_CONFIG}" --model "${SERVED_MODEL_NAME}" \
@@ -216,54 +230,74 @@ python "${SCRIPT_DIR}/lib/benchmark_data.py" pro-config \
 	--step-limit "${STEP_LIMIT}" --pull-timeout "${PULL_TIMEOUT}" \
 	--command-timeout "${COMMAND_TIMEOUT}"
 
-log "Running SWE-bench Pro with model ${SERVED_MODEL_NAME}"
-(
-	cd "${AGENT_DIR}"
-	mini-extra swebench \
-		--subset ScaleAI/SWE-bench_Pro \
-		--split test \
-		--model "${SERVED_MODEL_NAME}" \
-		--workers "${WORKERS}" \
-		--output "${OUT_DIR}" \
-		--config "${RUNTIME_CONFIG}" \
-		"${SLICE_OPTIONS[@]}" \
-		"${REDO_OPTIONS[@]}"
-)
-
-require_file "${PREDS_JSON}"
-python "${SCRIPT_DIR}/lib/benchmark_data.py" normalize-pro \
-	--source "${PREDS_JSON}" --output "${PATCHES_JSON}" --prefix "${EVAL_PREFIX}"
-python "${SCRIPT_DIR}/lib/benchmark_data.py" select-pro \
-	--csv "${INSTANCES_CSV}" --images "${IMAGE_LIST}" --slice "${SLICE_SPEC}"
-
-if [[ "${SKIP_EVAL}" == true ]]; then
-	log "Skipping local SWE-bench Pro evaluation"
-	log "Patches: ${PATCHES_JSON}"
-	log "Log: ${LOG_FILE}"
-	exit 0
-fi
-
 EVAL_OPTIONS=(--use_local_docker)
 [[ "${REDO}" == false ]] || EVAL_OPTIONS+=(--redo)
 [[ "${BLOCK_NETWORK}" == false ]] || EVAL_OPTIONS+=(--block_network)
 
-log "Evaluating patches with ${EVAL_WORKERS} workers"
-(
-	cd "${SWEBENCH_PRO_DIR}"
-	python swe_bench_pro_eval.py \
-		--raw_sample_path "${INSTANCES_CSV}" \
-		--patch_path "${PATCHES_JSON}" \
-		--output_dir "${EVAL_OUT}" \
-		--scripts_dir run_scripts \
-		--dockerhub_username jefzda \
-		--num_workers "${EVAL_WORKERS}" \
-		"${EVAL_OPTIONS[@]}"
-)
+for batch_slice in "${BATCH_SLICES[@]}"; do
+	IFS=: read -r batch_start batch_end <<<"${batch_slice}"
+	printf -v batch_name 'batch_%06d_%06d' "${batch_start}" "${batch_end}"
+	batch_dir="${BATCH_ROOT}/${batch_name}"
+	batch_preds="${batch_dir}/preds.json"
+	batch_patches="${batch_dir}/patches.json"
+	batch_instances="${batch_dir}/instances.csv"
+	batch_eval="${batch_dir}/evaluation"
+	CURRENT_IMAGE_LIST="${batch_dir}/images.txt"
+	mkdir -p "${batch_dir}"
+	printf '%s\n' "${batch_dir}" >>"${BATCH_LIST}"
 
-readonly REPORT_FILE="${EVAL_OUT}/eval_results.json"
-require_file "${REPORT_FILE}"
-python "${SCRIPT_DIR}/lib/benchmark_data.py" pro-report --report "${REPORT_FILE}"
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" select-pro \
+		--csv "${batch_instances}" --images "${CURRENT_IMAGE_LIST}" --slice "${batch_slice}"
+
+	log "Generating SWE-bench Pro batch ${batch_slice} with model ${SERVED_MODEL_NAME}"
+	(
+		cd "${AGENT_DIR}"
+		mini-extra swebench \
+			--subset ScaleAI/SWE-bench_Pro \
+			--split test \
+			--model "${SERVED_MODEL_NAME}" \
+			--workers "${WORKERS}" \
+			--output "${batch_dir}" \
+			--config "${RUNTIME_CONFIG}" \
+			--slice "${batch_slice}" \
+			"${REDO_OPTIONS[@]}"
+	)
+
+	require_file "${batch_preds}"
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" normalize-pro \
+		--source "${batch_preds}" --output "${batch_patches}" --prefix "${EVAL_PREFIX}"
+
+	if [[ "${SKIP_EVAL}" == false ]]; then
+		rm -f -- "${batch_eval}/eval_results.json"
+		log "Evaluating SWE-bench Pro batch ${batch_slice} with ${EVAL_WORKERS} workers"
+		(
+			cd "${SWEBENCH_PRO_DIR}"
+			python swe_bench_pro_eval.py \
+				--raw_sample_path "${batch_instances}" \
+				--patch_path "${batch_patches}" \
+				--output_dir "${batch_eval}" \
+				--scripts_dir run_scripts \
+				--dockerhub_username jefzda \
+				--num_workers "${EVAL_WORKERS}" \
+				"${EVAL_OPTIONS[@]}"
+		)
+		require_file "${batch_eval}/eval_results.json"
+	else
+		rm -f -- "${batch_eval}/eval_results.json"
+		log "Skipping local evaluation for SWE-bench Pro batch ${batch_slice}"
+	fi
+
+	remove_swebench_pro_images
+done
+
+python "${SCRIPT_DIR}/lib/benchmark_data.py" merge-pro \
+	--batch-list "${BATCH_LIST}" --predictions "${PREDS_JSON}" \
+	--patches "${PATCHES_JSON}" --instances "${INSTANCES_CSV}" \
+	--images "${IMAGE_LIST}" --report "${REPORT_FILE}"
 
 log "Patches: ${PATCHES_JSON}"
-log "Report: ${REPORT_FILE}"
+if [[ -f "${REPORT_FILE}" ]]; then
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" pro-report --report "${REPORT_FILE}"
+	log "Report: ${REPORT_FILE}"
+fi
 log "Log: ${LOG_FILE}"

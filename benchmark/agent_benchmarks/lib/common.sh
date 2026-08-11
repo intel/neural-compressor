@@ -152,3 +152,35 @@ sanitize_run_tag() {
     [[ -n "${tag}" ]] || die "Run tag is empty after sanitization"
     printf '%s\n' "${tag}"
 }
+
+plan_batch_slices() {
+    local total="$1"
+    local num_tasks="$2"
+    local slice_spec="$3"
+    local batch_size="$4"
+    local start=0
+    local end="${total}"
+    local batch_end
+
+    if [[ -n "${slice_spec}" ]]; then
+        IFS=: read -r start end <<<"${slice_spec}"
+        start="${start:-0}"
+        end="${end:-${total}}"
+    elif [[ -n "${num_tasks}" ]]; then
+        end="${num_tasks}"
+    fi
+
+    start=$((10#${start}))
+    end=$((10#${end}))
+    batch_size=$((10#${batch_size}))
+    ((start < total)) || die "Slice starts beyond the ${total}-instance dataset: ${start}"
+    ((end > total)) && end="${total}"
+    ((start < end)) || die "Dataset selection is empty: ${start}:${end}"
+
+    while ((start < end)); do
+        batch_end=$((start + batch_size))
+        ((batch_end > end)) && batch_end="${end}"
+        printf '%s:%s\n' "${start}" "${batch_end}"
+        start="${batch_end}"
+    done
+}

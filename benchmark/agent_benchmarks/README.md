@@ -78,7 +78,7 @@ bash setup_swe_verified.sh
 The setup script:
 
 1. Clones mini-SWE-agent v2.4.6 into `mini-swe-agent/`.
-2. Applies `patches/swebench_verified_per_instance_cleanup.patch` so each instance removes its Docker container and image during cleanup.
+2. Applies `patches/swebench_verified_per_instance_cleanup.patch` so each instance reliably removes its Docker container during cleanup.
 3. Installs mini-SWE-agent to generate predictions and the official SWE-bench harness to evaluate those predictions locally. It also installs datasets for loading SWE-bench Verified.
 
 
@@ -89,12 +89,20 @@ bash run_swe_verified.sh \
   --port 8888 \
   --workers 2 \
   --eval-workers 2 \
+  --batch-size 25 \
   --step-limit 250 \
   --tag qwen36_27b_full
 ```
 
 The runner connects to the existing shared vLLM server and leaves it running
-when the benchmark exits, whether the benchmark succeeds or fails.
+when the benchmark exits, whether the benchmark succeeds or fails. It processes
+the selected instances in batches. Each batch is generated and evaluated before
+its Docker images are removed, so evaluation reuses the images pulled during
+generation while disk usage remains bounded. The final batch automatically
+contains any remaining instances when the selection is not divisible by the
+batch size. Set the batch size to the full selection size to recover the
+previous single-batch behavior. With `--skip-eval`, images are removed after
+generation unless `--keep-images` is also specified.
 
 | Option | Default | Description |
 | --- | --- | --- |
@@ -103,17 +111,20 @@ when the benchmark exits, whether the benchmark succeeds or fails.
 | `--served-name NAME` | discovered | Model ID exposed by vLLM |
 | `--num-tasks N` | all | Run the first N instances |
 | `--slice START:END` | all | Run an explicit slice; cannot be combined with `--num-tasks` |
-| `--workers N` | `2` | Parallel mini-SWE-agent workers |
-| `--eval-workers N` | agent workers | Parallel local harness workers |
+| `--workers N` | `4` | Parallel mini-SWE-agent workers |
+| `--eval-workers N` | `8` | Parallel local harness workers |
 | `--step-limit N` | `250` | Maximum model calls per instance |
 | `--pull-timeout N` | `600` | Docker image pull/start timeout in seconds |
+| `--batch-size N` | `25` | Instances to generate and evaluate before removing their images |
 | `--tag TAG` | UTC timestamp | Output and log label |
-| `--redo` | disabled | Re-run existing generation results |
+| `--redo` | disabled | Re-run existing generation and evaluation results |
 | `--skip-eval` | disabled | Generate predictions without local evaluation |
+| `--keep-images` | disabled | Keep benchmark Docker images after each batch |
 
 Outputs:
 
 - mini-SWE-agent results: `mini-swe-agent/results/swe_verified_<TAG>/`
+- Per-batch artifacts: `mini-swe-agent/results/swe_verified_<TAG>/batches/`
 - Harness predictions: `mini-swe-agent/results/swe_verified_<TAG>/preds.jsonl`
 - Local evaluation report: `<SERVED_MODEL_NAME>.<TAG>.json`
 - Log: `logs/swe_verified_<TAG>.log`
@@ -129,7 +140,7 @@ bash setup_swebenchpro.sh
 
 The setup script clones the pinned `scaleapi/SWE-bench_Pro-os` repository and
 its mini-SWE-agent submodule, applies support for the benchmark's Docker Hub
-images and per-instance cleanup, and installs the generation and local Docker
+images and reliable container cleanup, and installs the generation and local Docker
 evaluation dependencies.
 
 ### Run SWE-bench Pro
@@ -139,12 +150,15 @@ bash run_swebenchpro.sh \
   --port 8888 \
   --workers 2 \
   --eval-workers 2 \
+  --batch-size 25 \
   --step-limit 250 \
   --tag qwen36_27b_pro
 ```
 
 The runner connects to an existing shared vLLM server and leaves it running
-when the benchmark exits.
+when the benchmark exits. As with SWE-bench Verified, each batch is generated,
+evaluated, and then cleaned before the next batch starts. The last batch
+automatically handles a non-divisible remainder.
 
 | Option | Default | Description |
 | --- | --- | --- |
@@ -158,17 +172,19 @@ when the benchmark exits.
 | `--step-limit N` | `250` | Maximum model calls per instance |
 | `--pull-timeout N` | `1800` | Docker image pull/start timeout in seconds |
 | `--command-timeout N` | `600` | In-container command timeout in seconds |
+| `--batch-size N` | `25` | Instances to generate and evaluate before removing their images |
 | `--tag TAG` | UTC timestamp | Output and log label |
 | `--redo` | disabled | Re-run existing generation and evaluation results |
 | `--skip-eval` | disabled | Generate patches without local evaluation |
 | `--block-network` | disabled | Disable network access in evaluation containers |
-| `--keep-images` | disabled | Keep benchmark Docker images after the run |
+| `--keep-images` | disabled | Keep benchmark Docker images after each batch |
 
 Outputs are grouped under
 `SWE-bench_Pro-os/mini-swe-agent/results/swebench_pro_<TAG>/`, including
 `preds.json`, normalized `patches.json`, the selected instance CSV, evaluation
-artifacts, and `evaluation/eval_results.json`. The combined run log is written
-to `logs/swebench_pro_<TAG>.log`.
+artifacts, and `evaluation/eval_results.json`. Per-batch artifacts are retained
+under `batches/`, while the top-level files contain the merged results. The
+combined run log is written to `logs/swebench_pro_<TAG>.log`.
 
 
 ## MCP-Atlas

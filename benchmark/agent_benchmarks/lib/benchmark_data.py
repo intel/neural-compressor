@@ -2,6 +2,7 @@
 """Small data-conversion helpers used by the benchmark shell runners."""
 
 import argparse
+import csv
 import glob
 import json
 import os
@@ -48,18 +49,20 @@ def normalize_patch(text):
     text = (text or "").strip()
     if text.startswith("```") and text.endswith("```"):
         text = "\n".join(text.splitlines()[1:-1]).strip()
-    errors = re.compile(
-        r"(?i)(traceback|exception|calledprocesserror|no space left on device|"
-        r"not a git repository|error response from daemon)"
-    )
-    if not text or "*** Begin Patch" in text or errors.search(text):
+    if not text or "*** Begin Patch" in text:
         return ""
-    index = text.find("diff --git ")
-    if index >= 0:
-        text = text[index:].lstrip()
-        return text if "--- a/" in text and "+++ b/" in text else ""
-    match = re.search(r"(?m)^--- [^\n]+\n\+\+\+ [^\n]+", text)
-    return text[match.start() :].lstrip() if match and "@@" in text[match.start() :] else ""
+
+    git_header = re.search(r"(?m)^diff --git ", text)
+    if git_header:
+        patch = text[git_header.start() :].lstrip()
+        file_header = re.search(r"(?m)^--- (?:a/|/dev/null)\S*\n\+\+\+ (?:b/|/dev/null)\S*", patch)
+        return patch if file_header and re.search(r"(?m)^@@ ", patch[file_header.end() :]) else ""
+
+    file_header = re.search(r"(?m)^--- \S+\n\+\+\+ \S+", text)
+    if not file_header:
+        return ""
+    patch = text[file_header.start() :].lstrip()
+    return patch if re.search(r"(?m)^@@ ", text[file_header.end() :]) else ""
 
 
 def normalize_pro(args):
@@ -113,6 +116,120 @@ def select_pro(args):
     Path(args.images).write_text("\n".join(images) + ("\n" if images else ""))
     print(f"Wrote {len(instances)} instances to {args.csv}")
     print(f"Tracked {len(images)} Docker images in {args.images}")
+
+
+def select_verified(args: argparse.Namespace) -> None:
+    from datasets import load_dataset
+
+    instances = list(load_dataset("princeton-nlp/SWE-bench_Verified", split="test"))
+    bounds = [int(value) if value else None for value in args.slice.split(":")]
+    instances = instances[slice(*bounds)]
+    if not instances:
+        raise RuntimeError(f"Dataset slice selected no instances: {args.slice}")
+    images = [
+        "docker.io/swebench/sweb.eval.x86_64."
+        + item["instance_id"].replace("__", "_1776_").lower()
+        + ":latest"
+        for item in instances
+    ]
+    Path(args.images).write_text("\n".join(images) + "\n")
+    print(f"Tracked {len(images)} Docker images in {args.images}")
+
+
+def read_batch_dirs(path: str) -> list[Path]:
+    batch_dirs = [Path(line) for line in Path(path).read_text().splitlines() if line.strip()]
+    if not batch_dirs:
+        raise RuntimeError(f"Batch list is empty: {path}")
+    return batch_dirs
+
+
+def merge_prediction_files(paths: list[Path]) -> dict | list:
+    merged = None
+    for path in paths:
+        payload = json.loads(path.read_text())
+        if merged is None:
+            merged = {} if isinstance(payload, dict) else []
+        if isinstance(merged, dict) and isinstance(payload, dict):
+            merged.update(payload)
+        elif isinstance(merged, list) and isinstance(payload, list):
+            merged.extend(payload)
+        else:
+            raise TypeError(f"Incompatible prediction format in {path}")
+    return merged if merged is not None else {}
+
+
+def merge_verified(args: argparse.Namespace) -> None:
+    batch_dirs = read_batch_dirs(args.batch_list)
+    predictions = merge_prediction_files([path / "preds.json" for path in batch_dirs])
+    Path(args.predictions).write_text(json.dumps(predictions, indent=2))
+
+    records = predictions.items() if isinstance(predictions, dict) else enumerate(predictions)
+    with Path(args.jsonl).open("w") as output:
+        for instance_id, prediction in records:
+            record = prediction if isinstance(prediction, dict) else {"model_patch": prediction}
+            record.setdefault("instance_id", instance_id)
+            output.write(json.dumps(record) + "\n")
+
+    report_paths = [path / "report.json" for path in batch_dirs if (path / "report.json").is_file()]
+    if report_paths:
+        report = {}
+        for path in report_paths:
+            payload = json.loads(path.read_text())
+            for key, value in payload.items():
+                if key == "schema_version":
+                    report[key] = max(report.get(key, value), value)
+                elif isinstance(value, list):
+                    report.setdefault(key, []).extend(value)
+                elif isinstance(value, int) and not isinstance(value, bool):
+                    report[key] = report.get(key, 0) + value
+                else:
+                    report[key] = value
+        Path(args.report).write_text(json.dumps(report, indent=2))
+    else:
+        Path(args.report).unlink(missing_ok=True)
+    print(f"Merged {len(batch_dirs)} SWE-bench Verified batches")
+
+
+def merge_csv_files(paths: list[Path], output: str) -> None:
+    header = None
+    with Path(output).open("w", newline="") as destination:
+        writer = csv.writer(destination)
+        for path in paths:
+            with path.open(newline="") as source:
+                reader = csv.reader(source)
+                current_header = next(reader)
+                if header is None:
+                    header = current_header
+                    writer.writerow(header)
+                elif current_header != header:
+                    raise RuntimeError(f"CSV header mismatch in {path}")
+                writer.writerows(reader)
+
+
+def merge_pro(args: argparse.Namespace) -> None:
+    batch_dirs = read_batch_dirs(args.batch_list)
+    predictions = merge_prediction_files([path / "preds.json" for path in batch_dirs])
+    Path(args.predictions).write_text(json.dumps(predictions, indent=2))
+
+    patches = []
+    images = set()
+    reports = {}
+    for path in batch_dirs:
+        patches.extend(json.loads((path / "patches.json").read_text()))
+        images.update(line for line in (path / "images.txt").read_text().splitlines() if line)
+        report_path = path / "evaluation" / "eval_results.json"
+        if report_path.is_file():
+            reports.update(json.loads(report_path.read_text()))
+
+    Path(args.patches).write_text(json.dumps(patches, indent=2))
+    Path(args.images).write_text("\n".join(sorted(images)) + ("\n" if images else ""))
+    merge_csv_files([path / "instances.csv" for path in batch_dirs], args.instances)
+    if reports:
+        Path(args.report).parent.mkdir(parents=True, exist_ok=True)
+        Path(args.report).write_text(json.dumps(reports, indent=2))
+    else:
+        Path(args.report).unlink(missing_ok=True)
+    print(f"Merged {len(batch_dirs)} SWE-bench Pro batches")
 
 
 def pro_report(args):
@@ -190,6 +307,21 @@ def build_parser():
     command.add_argument("--images", required=True)
     command.add_argument("--slice", default="")
     command.set_defaults(func=select_pro)
+
+    command = commands.add_parser("select-verified")
+    command.add_argument("--images", required=True)
+    command.add_argument("--slice", required=True)
+    command.set_defaults(func=select_verified)
+
+    command = commands.add_parser("merge-verified")
+    for name in ("batch-list", "predictions", "jsonl", "report"):
+        command.add_argument(f"--{name}", required=True)
+    command.set_defaults(func=merge_verified)
+
+    command = commands.add_parser("merge-pro")
+    for name in ("batch-list", "predictions", "patches", "instances", "images", "report"):
+        command.add_argument(f"--{name}", required=True)
+    command.set_defaults(func=merge_pro)
 
     for name, func in (("pro-report", pro_report), ("verified-report", verified_report)):
         command = commands.add_parser(name)

@@ -1,19 +1,17 @@
 diff --git a/src/minisweagent/environments/docker.py b/src/minisweagent/environments/docker.py
-index ffe83f2..e11cdbc 100644
+index ffe83f2..bc6ddca 100644
 --- a/src/minisweagent/environments/docker.py
 +++ b/src/minisweagent/environments/docker.py
-@@ -30,6 +30,10 @@ class DockerEnvironmentConfig:
+@@ -30,6 +30,8 @@ class DockerEnvironmentConfig:
      container_timeout: str = "2h"
      """Max duration to keep container running. Uses the same format as the sleep command."""
      pull_timeout: int = 120
-+    remove_image_on_cleanup: bool = False
-+    """Whether to remove the docker image after each instance cleanup."""
 +    shell_entrypoint: bool = False
 +    """Run the keepalive sleep through /bin/sh to bypass incompatible image entrypoints."""
      """Timeout in seconds for pulling images."""
 
 
-@@ -58,10 +62,11 @@ class DockerEnvironment:
+@@ -58,10 +60,11 @@ class DockerEnvironment:
              "-w",
              self.config.cwd,
              *self.config.run_args,
@@ -28,7 +26,7 @@ index ffe83f2..e11cdbc 100644
          self.logger.debug(f"Starting container with command: {shlex.join(cmd)}")
          result = subprocess.run(
              cmd,
-@@ -98,10 +103,27 @@ class DockerEnvironment:
+@@ -98,10 +101,19 @@ class DockerEnvironment:
          return {"output": result.stdout, "returncode": result.returncode}
 
      def cleanup(self):
@@ -36,7 +34,7 @@ index ffe83f2..e11cdbc 100644
 -        if getattr(self, "container_id", None) is not None:  # if init fails early, container_id might not be set
 -            cmd = f"(timeout 60 {self.config.executable} stop {self.container_id} || {self.config.executable} rm -f {self.container_id}) >/dev/null 2>&1 &"
 -            subprocess.Popen(cmd, shell=True)
-+        """Stop and remove the Docker container and optionally remove the image."""
++        """Stop and remove the Docker container."""
 +        if getattr(self, "container_id", None) is None:
 +            return
 +
@@ -49,14 +47,6 @@ index ffe83f2..e11cdbc 100644
 +            check=False,
 +            timeout=60,
 +        )
-+        if self.config.remove_image_on_cleanup:
-+            subprocess.run(
-+                [self.config.executable, "rmi", "-f", self.config.image],
-+                stdout=subprocess.DEVNULL,
-+                stderr=subprocess.DEVNULL,
-+                check=False,
-+                timeout=self.config.pull_timeout,
-+            )
 
      def __del__(self):
          """Cleanup container when object is destroyed."""
@@ -83,17 +73,16 @@ index b252fed..22ae6db 100644
      return image_name
 
 
-@@ -83,6 +87,9 @@ def get_sb_environment(config: dict, instance: dict) -> Environment:
+@@ -83,6 +87,8 @@ def get_sb_environment(config: dict, instance: dict) -> Environment:
      image_name = get_swebench_docker_image_name(instance)
      if env_config["environment_class"] == "docker":
          env_config["image"] = image_name
 +        if "dockerhub_tag" in instance:
 +            env_config["shell_entrypoint"] = True
-+        env_config.setdefault("remove_image_on_cleanup", True)
      elif env_config["environment_class"] == "singularity":
          env_config["image"] = "docker://" + image_name
      env = get_environment(env_config)
-@@ -138,7 +145,10 @@ def process_instance(
+@@ -138,7 +144,10 @@ def process_instance(
      progress_manager.update_instance_status(instance_id, "Pulling/starting docker")
 
      agent = None
@@ -104,7 +93,7 @@ index b252fed..22ae6db 100644
 
      try:
          env = get_sb_environment(config, instance)
-@@ -150,11 +160,17 @@ def process_instance(
+@@ -150,11 +159,17 @@ def process_instance(
              **config.get("agent", {}),
          )
          exit_status, result = agent.run(task)
