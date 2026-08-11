@@ -127,9 +127,7 @@ def select_verified(args: argparse.Namespace) -> None:
     if not instances:
         raise RuntimeError(f"Dataset slice selected no instances: {args.slice}")
     images = [
-        "docker.io/swebench/sweb.eval.x86_64."
-        + item["instance_id"].replace("__", "_1776_").lower()
-        + ":latest"
+        "docker.io/swebench/sweb.eval.x86_64." + item["instance_id"].replace("__", "_1776_").lower() + ":latest"
         for item in instances
     ]
     Path(args.images).write_text("\n".join(images) + "\n")
