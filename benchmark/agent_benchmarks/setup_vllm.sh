@@ -15,7 +15,7 @@ usage() {
         '' \
         'Install vLLM into the current uv/Conda/Docker environment. The environment' \
         'must already provide Python and support `uv pip install`. A model containing' \
-        '"deepseek-v4" or "deepseek_v4" selects the pinned DeepSeek-V4 build;' \
+        '"deepseek-v4" or "deepseek_v4" selects the DeepSeek-V4-compatible fork;' \
         'otherwise the pinned standard PyPI release is installed.' \
         '' \
         'Options:' \
@@ -35,13 +35,9 @@ install_standard_vllm() {
 install_deepseek_v4_vllm() {
     log "Installing DeepSeek-V4 vLLM stack"
     uv pip install -U pip setuptools_rust setuptools_scm
-    uv pip install -U evalscope "lm_eval[api]" "lm-eval[ruler]" transformers datasets
-    uv pip install git+https://github.com/intel/auto-round.git@main
     uv pip install compressed-tensors --no-deps
-    pip install git+https://github.com/deepseek-ai/DeepGEMM.git@891d57b4db1071624b5c8fa0d1e51cb317fa709f \
-        --no-build-isolation
-    VLLM_USE_PRECOMPILED=1 uv pip install \
-        "git+${DEEPSEEK_V4_VLLM_REPOSITORY}@${DEEPSEEK_V4_VLLM_COMMIT}" \
+    bash <(curl -fsSL https://raw.githubusercontent.com/vllm-project/vllm/main/tools/install_deepgemm.sh)
+    VLLM_USE_PRECOMPILED=1 uv pip install git+https://github.com/xin3he/vllm.git@support_deepseekv4_mxfp \
         --no-build-isolation
 }
 

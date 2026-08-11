@@ -15,7 +15,13 @@ bash setup_vllm.sh --model /path/to/DeepSeek-V4
 ```
 
 A model name or path containing `deepseek-v4` selects the
-pinned DeepSeek-V4 vLLM fork and installs DeepGEMM. All other names select the pinned standard vLLM release now.
+`support_deepseekv4_mxfp` branch of the DeepSeek-V4-compatible vLLM fork and
+installs DeepGEMM with the upstream vLLM installer. All other names select the
+pinned standard vLLM release.
+
+Values in `versions.env` are defaults. Set the corresponding environment
+variable before running a setup or benchmark script to override a version,
+commit, or image for that invocation.
 
 ## Start the vLLM server
 
