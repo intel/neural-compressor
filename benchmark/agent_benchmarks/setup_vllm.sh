@@ -35,6 +35,7 @@ install_standard_vllm() {
 install_deepseek_v4_vllm() {
     log "Installing DeepSeek-V4 vLLM stack"
     uv pip install -U pip setuptools_rust setuptools_scm
+    uv pip install git+https://github.com/intel/auto-round.git@main
     uv pip install compressed-tensors --no-deps
     VLLM_USE_PRECOMPILED=1 uv pip install git+https://github.com/xin3he/vllm.git@support_deepseekv4_mxfp \
         --no-build-isolation
