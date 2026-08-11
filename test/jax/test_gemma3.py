@@ -70,6 +70,7 @@ def test_text_prompt(dynamic, const_vars, model_dtype, quantization_dtype, rando
         config = DynamicQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
+            weight_scale_granularity="per_channel",
             const_scale=const_vars,
             const_weight=const_vars,
         )
@@ -78,6 +79,7 @@ def test_text_prompt(dynamic, const_vars, model_dtype, quantization_dtype, rando
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
+            weight_scale_granularity="per_channel",
             const_scale=const_vars,
             const_weight=const_vars,
         )
@@ -88,7 +90,7 @@ def test_text_prompt(dynamic, const_vars, model_dtype, quantization_dtype, rando
         gemma_q.save_to_preset(save_path)
         gemma_q_loaded = Gemma3CausalLM.from_preset(save_path, dtype=model_dtype)
 
-    answer = gemma_q_loaded.generate("Answer what is the capital city of England.", max_length=20, strip_prompt=True)
+    answer = gemma_q_loaded.generate("Answer what is the capital city of England.", max_length=25, strip_prompt=True)
     print("Gemma answer: ", {answer})
     assert "London" in answer
 
@@ -119,6 +121,7 @@ def test_image_recognition(dynamic, const_vars, model_dtype, quantization_dtype,
         config = DynamicQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
+            weight_scale_granularity="per_tensor",
             const_scale=const_vars,
             const_weight=const_vars,
         )
@@ -127,6 +130,7 @@ def test_image_recognition(dynamic, const_vars, model_dtype, quantization_dtype,
         config = StaticQuantConfig(
             weight_dtype=quantization_dtype,
             activation_dtype=quantization_dtype,
+            weight_scale_granularity="per_tensor",
             const_scale=const_vars,
             const_weight=const_vars,
         )
