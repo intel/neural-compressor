@@ -94,7 +94,7 @@ while [[ $# -gt 0 ]]; do
 		--num-tasks)
 			[[ $# -ge 2 ]] || die "$1 requires a value"
 			NUM_TASKS="$2"
-			shift
+			shift 2
 			;;
 		--slice)
 			[[ $# -ge 2 ]] || die "$1 requires a value"

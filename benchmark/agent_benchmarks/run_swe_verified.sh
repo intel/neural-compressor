@@ -25,6 +25,7 @@ Options:
 	--step-limit N       Maximum model calls per instance (default: 250)
 	--pull-timeout N     Docker image pull/start timeout in seconds (default: 600)
 	--tag TAG            Run tag (default: UTC timestamp)
+	--redo               Re-run existing generation results
 	--skip-eval          Generate predictions without local evaluation
 	-h, --help           Show this help message
 
@@ -56,6 +57,7 @@ NUM_TASKS=""
 SLICE_ARG=""
 SERVED_MODEL_NAME=""
 RUN_TAG="$(date -u +%Y%m%dT%H%M%SZ)"
+REDO=false
 SKIP_EVAL=false
 
 while [[ $# -gt 0 ]]; do
@@ -109,6 +111,10 @@ while [[ $# -gt 0 ]]; do
 			[[ $# -ge 2 ]] || die "$1 requires a value"
 			RUN_TAG="$2"
 			shift 2
+			;;
+		--redo)
+			REDO=true
+			shift
 			;;
 		--skip-eval)
 			SKIP_EVAL=true
@@ -167,6 +173,8 @@ if [[ -n "${SLICE_ARG}" ]]; then
 elif [[ -n "${NUM_TASKS}" ]]; then
 	SLICE_OPTIONS=(--slice "0:${NUM_TASKS}")
 fi
+REDO_OPTIONS=()
+[[ "${REDO}" == false ]] || REDO_OPTIONS=(--redo-existing)
 
 log "Running SWE-bench Verified with model ${SERVED_MODEL_NAME}"
 (
@@ -182,7 +190,8 @@ log "Running SWE-bench Verified with model ${SERVED_MODEL_NAME}"
 		--config "model.model_kwargs.api_key=${VLLM_API_KEY}" \
 		--config "agent.step_limit=${STEP_LIMIT}" \
 		--config "environment.pull_timeout=${PULL_TIMEOUT}" \
-		"${SLICE_OPTIONS[@]}"
+		"${SLICE_OPTIONS[@]}" \
+		"${REDO_OPTIONS[@]}"
 )
 
 require_file "${PREDS_JSON}"

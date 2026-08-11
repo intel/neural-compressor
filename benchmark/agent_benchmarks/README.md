@@ -99,6 +99,7 @@ file when it exits, whether the benchmark succeeds or fails.
 | `--step-limit N` | `250` | Maximum model calls per instance |
 | `--pull-timeout N` | `600` | Docker image pull/start timeout in seconds |
 | `--tag TAG` | UTC timestamp | Output and log label |
+| `--redo` | disabled | Re-run existing generation results |
 | `--skip-eval` | disabled | Generate predictions without local evaluation |
 
 Outputs:
