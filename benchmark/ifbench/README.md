@@ -83,6 +83,44 @@ Results land in `<clone>/eval/`:
 
 ---
 
+## How configuration takes effect / precedence
+
+`configs/env.template` is **not read directly** by the code. It is only a source
+the driver copies into the clone as `.env`. The Python side
+(`config.py` → `BenchmarkSettings`) reads **`.env`**, via
+`SettingsConfigDict(env_file=".env", ...)` — resolved relative to the working
+directory, which the driver sets to the clone (`cd "$CLONE_DIR"`) before running.
+
+The chain is:
+
+```
+configs/env.template
+      │  run_ifbench.sh copies it (only if the clone has no .env yet)
+      ▼
+$CLONE_DIR/.env  ──(+ API_BASE/API_KEY/MODEL overrides injected by the driver)
+      │  pydantic-settings loads it (keys are case-insensitive)
+      ▼
+config.py: BenchmarkSettings  ──▶  evaluate_model.py CLI defaults
+```
+
+**Precedence, lowest to highest:**
+
+1. `config.py` `Field(default=...)` — fallback when a key is absent from `.env`.
+2. `.env` (i.e. `env.template` values + injected `API_BASE`/`API_KEY`/`MODEL`).
+3. Command-line flags forwarded after `run_ifbench.sh` (e.g. `--num-repeats 8`).
+
+So `NUM_REPEATS=2` in `.env` overrides the `config.py` default; passing
+`--num-repeats 8` overrides `.env` in turn.
+
+**Notes:**
+
+- The template is copied **only if the clone has no `.env`**. To pick up an
+  updated template, delete the clone's `.env` (or edit it directly).
+- Only keys declared as fields on `BenchmarkSettings` are consumed; other keys in
+  `.env` are ignored by pydantic.
+
+---
+
 ## `evaluate_model.py`
 
 A single command that **generates responses from the `.env` model and scores
