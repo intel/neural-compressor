@@ -16,8 +16,19 @@ def pro_config(args):
 
     config = yaml.safe_load((builtin_config_dir / "extra" / "swebench.yaml").read_text())
     config["agent"]["step_limit"] = args.step_limit
-    config.setdefault("environment", {})["pull_timeout"] = args.pull_timeout
-    config["environment"]["timeout"] = args.command_timeout
+    environment = config.setdefault("environment", {})
+    environment["pull_timeout"] = args.pull_timeout
+    environment["timeout"] = args.command_timeout
+    environment["forward_env"] = [
+        "HTTP_PROXY",
+        "HTTPS_PROXY",
+        "ALL_PROXY",
+        "NO_PROXY",
+        "http_proxy",
+        "https_proxy",
+        "all_proxy",
+        "no_proxy",
+    ]
     config.setdefault("run", {})[
         "env_startup_command"
     ] = "git clone https://github.com/{{ repo }}.git . && {{ before_repo_set_cmd }}"

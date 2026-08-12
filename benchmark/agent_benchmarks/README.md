@@ -110,6 +110,23 @@ batch size. Set the batch size to the full selection size to recover the
 previous single-batch behavior. With `--skip-eval`, images are removed after
 generation unless `--keep-images` is also specified.
 
+To resume an interrupted run, use the same `--tag` and the same selection and
+batch parameters without `--redo`. Existing instances in each batch are
+skipped, while missing instances run again:
+
+```bash
+bash run_swe_verified.sh \
+  --port 8888 \
+  --num-tasks 100 \
+  --batch-size 25 \
+  --tag qwen36_27b_full
+```
+
+Use `--redo` only when all selected instances should run again. It passes
+`--redo-existing` to mini-SWE-agent and also uses fresh evaluation run IDs, so
+existing generation and evaluation results do not cause instances to be
+skipped.
+
 | Option | Default | Description |
 | --- | --- | --- |
 | `--host HOST` | `127.0.0.1` | vLLM host |
@@ -164,7 +181,16 @@ bash run_swebenchpro.sh \
 The runner connects to an existing shared vLLM server and leaves it running
 when the benchmark exits. As with SWE-bench Verified, each batch is generated,
 evaluated, and then cleaned before the next batch starts. The last batch
-automatically handles a non-divisible remainder.
+automatically handles a non-divisible remainder. Host proxy variables
+(`HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY`, and lowercase variants)
+are forwarded to generation containers so repository cloning and dependency
+installation can use the same network path as the host.
+
+Resume an interrupted run by reusing the same `--tag`, selection, and batch
+parameters without `--redo`. Existing instances are skipped and incomplete
+instances continue. Passing `--redo` instead forces mini-SWE-agent to regenerate
+existing instances and tells the local evaluator to replace existing evaluation
+results.
 
 | Option | Default | Description |
 | --- | --- | --- |
