@@ -3,6 +3,7 @@
 set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+readonly ORIGINAL_ARGS=("$@")
 # shellcheck source=lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
 
@@ -38,6 +39,7 @@ Options:
 	--retry-errors       Retry error cases; reuse valid patches and regenerate invalid submissions
 	--retry-empty-patches
 	                     Regenerate and evaluate cases previously reported with empty patches
+	--retry-attempts N   Retry errors and empty patches for at most N rounds (default: 1)
 	--skip-eval          Generate predictions without local evaluation
 	--keep-images        Keep benchmark Docker images after each evaluation chunk
 	-h, --help           Show this help message
@@ -113,6 +115,8 @@ SKIP_EVAL=false
 KEEP_IMAGES=false
 RETRY_ERRORS=false
 RETRY_EMPTY_PATCHES=false
+RETRY_ATTEMPTS=1
+RETRY_ATTEMPTS_SPECIFIED=false
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
@@ -195,6 +199,12 @@ while [[ $# -gt 0 ]]; do
 			RETRY_EMPTY_PATCHES=true
 			shift
 			;;
+		--retry-attempts)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			RETRY_ATTEMPTS="$2"
+			RETRY_ATTEMPTS_SPECIFIED=true
+			shift 2
+			;;
 		--skip-eval)
 			SKIP_EVAL=true
 			shift
@@ -213,6 +223,11 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+if [[ "${RETRY_ATTEMPTS_SPECIFIED}" == true ]]; then
+	RETRY_ERRORS=true
+	RETRY_EMPTY_PATCHES=true
+fi
+
 [[ -z "${NUM_TASKS}" || -z "${SLICE_ARG}" ]] || \
 	die "--num-tasks and --slice cannot be used together"
 if [[ "${SKIP_EVAL}" == true && ("${RETRY_ERRORS}" == true || "${RETRY_EMPTY_PATCHES}" == true) ]]; then
@@ -228,6 +243,7 @@ require_positive_integer "--eval-chunk-size" "${EVAL_CHUNK_SIZE}"
 require_positive_integer "--poll-interval" "${POLL_INTERVAL}"
 require_positive_integer "--health-interval" "${HEALTH_INTERVAL}"
 require_positive_integer "--health-failures" "${HEALTH_FAILURES}"
+require_positive_integer "--retry-attempts" "${RETRY_ATTEMPTS}"
 [[ -z "${EVAL_WORKERS}" ]] || require_positive_integer "--eval-workers" "${EVAL_WORKERS}"
 [[ -z "${NUM_TASKS}" ]] || require_positive_integer "--num-tasks" "${NUM_TASKS}"
 [[ -z "${SLICE_ARG}" || "${SLICE_ARG}" =~ ^[0-9]*:[0-9]*$ ]] || \
@@ -265,6 +281,30 @@ else
 	: >>"${CLAIMED_FILE}"
 	: >>"${EVAL_REPORT_LIST}"
 fi
+
+retry_remaining_count() {
+	local retry_options=()
+	[[ "${RETRY_ERRORS}" == false ]] || retry_options+=(--retry-errors)
+	[[ "${RETRY_EMPTY_PATCHES}" == false ]] || retry_options+=(--retry-empty-patches)
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" verified-retry-count \
+		--report "${REPORT_FILE}" "${retry_options[@]}"
+}
+
+if [[ "${SWE_VERIFIED_RETRY_LOOP_CHILD:-0}" != 1 &&
+	("${RETRY_ERRORS}" == true || "${RETRY_EMPTY_PATCHES}" == true) &&
+	"${RETRY_ATTEMPTS}" -gt 1 ]]; then
+	for ((retry_attempt = 1; retry_attempt <= RETRY_ATTEMPTS; retry_attempt++)); do
+		remaining="$(retry_remaining_count)"
+		if [[ "${remaining}" -eq 0 ]]; then
+			log "Retry categories are empty; stopping before attempt ${retry_attempt}/${RETRY_ATTEMPTS}"
+			exit 0
+		fi
+		log "Starting retry attempt ${retry_attempt}/${RETRY_ATTEMPTS} for ${remaining} instances"
+		SWE_VERIFIED_RETRY_LOOP_CHILD=1 bash "$0" "${ORIGINAL_ARGS[@]}"
+	done
+	exit 0
+fi
+
 mkdir -p "${LOG_DIR}"
 exec > >(tee -a "${LOG_FILE}") 2>&1
 

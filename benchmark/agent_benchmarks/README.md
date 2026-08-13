@@ -130,7 +130,9 @@ removed from `generation/preds.json` and generated again. Add
 state is changed, the runner saves `report.json`, `generation/preds.json`,
 `claimed_ids.txt`, `eval_report_list.txt`, and a retry plan under
 `retries/retry_<TIMESTAMP>_<PID>/`. New chunk reports override the old
-classification for the same instance in the aggregate report.
+classification for the same instance in the aggregate report. Set
+`--retry-attempts N` to enable both retry modes and run up to N retry rounds.
+The runner stops early when both categories are empty.
 
 | Option | Default | Description |
 | --- | --- | --- |
@@ -150,6 +152,7 @@ classification for the same instance in the aggregate report.
 | `--tag TAG` | UTC timestamp | Output and log label |
 | `--retry-errors` | disabled | Re-evaluate valid error patches and regenerate invalid error submissions |
 | `--retry-empty-patches` | disabled | Regenerate and evaluate previously empty patches |
+| `--retry-attempts N` | `1` | Enable error and empty-patch retries for up to N rounds; stop early when both are empty |
 | `--skip-eval` | disabled | Generate predictions without local evaluation |
 | `--keep-images` | disabled | Keep benchmark Docker images after each evaluation chunk |
 
