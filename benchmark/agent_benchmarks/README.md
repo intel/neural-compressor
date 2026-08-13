@@ -123,6 +123,15 @@ bash run_swe_verified.sh \
 To re-run a selection from scratch, use a new `--tag` instead of reusing an
 existing one.
 
+Use `--retry-errors` with the same tag to retry cases in `error_ids`. Existing
+valid patches are evaluated again without regeneration; invalid submissions are
+removed from `generation/preds.json` and generated again. Add
+`--retry-empty-patches` to regenerate cases in `empty_patch_ids`. Before retry
+state is changed, the runner saves `report.json`, `generation/preds.json`,
+`claimed_ids.txt`, `eval_report_list.txt`, and a retry plan under
+`retries/retry_<TIMESTAMP>_<PID>/`. New chunk reports override the old
+classification for the same instance in the aggregate report.
+
 | Option | Default | Description |
 | --- | --- | --- |
 | `--host HOST` | `127.0.0.1` | vLLM host |
@@ -139,6 +148,8 @@ existing one.
 | `--health-interval N` | `30` | Seconds between vLLM health checks |
 | `--health-failures N` | `3` | Consecutive failed health checks before stopping the run |
 | `--tag TAG` | UTC timestamp | Output and log label |
+| `--retry-errors` | disabled | Re-evaluate valid error patches and regenerate invalid error submissions |
+| `--retry-empty-patches` | disabled | Regenerate and evaluate previously empty patches |
 | `--skip-eval` | disabled | Generate predictions without local evaluation |
 | `--keep-images` | disabled | Keep benchmark Docker images after each evaluation chunk |
 
@@ -258,7 +269,10 @@ bash run_mcp_atlas.sh \
 
 This runs all 500 tasks. By default the runner starts and owns the MCP sandbox
 and TypeScript harness, evaluates the model, then uses the same served model as
-the LLM judge. Use `--skip-score` to generate responses only.
+the LLM judge. Older large tool results are compacted before later model calls
+to keep long trajectories within the model context window. Tool output remains
+uncapped to match the public runner's default evaluation configuration. Use
+`--skip-score` to generate responses only.
 The runner stops the MCP services it started but leaves the shared vLLM server
 running. It also removes the MCP sandbox image after the run to release disk
 space; pass `--keep-image` to retain it for the next run. Host proxy variables

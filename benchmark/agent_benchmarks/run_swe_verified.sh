@@ -35,6 +35,9 @@ Options:
 	--health-interval N  Seconds between vLLM health checks (default: 30)
 	--health-failures N  Consecutive failed health checks before stopping (default: 3)
 	--tag TAG            Run tag (default: UTC timestamp)
+	--retry-errors       Retry error cases; reuse valid patches and regenerate invalid submissions
+	--retry-empty-patches
+	                     Regenerate and evaluate cases previously reported with empty patches
 	--skip-eval          Generate predictions without local evaluation
 	--keep-images        Keep benchmark Docker images after each evaluation chunk
 	-h, --help           Show this help message
@@ -105,8 +108,11 @@ NUM_TASKS=""
 SLICE_ARG=""
 SERVED_MODEL_NAME=""
 RUN_TAG="$(date -u +%Y%m%dT%H%M%SZ)"
+TAG_SPECIFIED=false
 SKIP_EVAL=false
 KEEP_IMAGES=false
+RETRY_ERRORS=false
+RETRY_EMPTY_PATCHES=false
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
@@ -178,7 +184,16 @@ while [[ $# -gt 0 ]]; do
 		--tag)
 			[[ $# -ge 2 ]] || die "$1 requires a value"
 			RUN_TAG="$2"
+			TAG_SPECIFIED=true
 			shift 2
+			;;
+		--retry-errors)
+			RETRY_ERRORS=true
+			shift
+			;;
+		--retry-empty-patches)
+			RETRY_EMPTY_PATCHES=true
+			shift
 			;;
 		--skip-eval)
 			SKIP_EVAL=true
@@ -200,6 +215,12 @@ done
 
 [[ -z "${NUM_TASKS}" || -z "${SLICE_ARG}" ]] || \
 	die "--num-tasks and --slice cannot be used together"
+if [[ "${SKIP_EVAL}" == true && ("${RETRY_ERRORS}" == true || "${RETRY_EMPTY_PATCHES}" == true) ]]; then
+	die "Retry options cannot be combined with --skip-eval"
+fi
+if [[ "${TAG_SPECIFIED}" == false && ("${RETRY_ERRORS}" == true || "${RETRY_EMPTY_PATCHES}" == true) ]]; then
+	die "Retry options require the --tag of an existing run"
+fi
 require_positive_integer "--workers" "${WORKERS}"
 require_positive_integer "--step-limit" "${STEP_LIMIT}"
 require_positive_integer "--pull-timeout" "${PULL_TIMEOUT}"
@@ -226,16 +247,37 @@ readonly PREDS_JSON="${OUT_DIR}/preds.json"
 readonly PREDS_JSONL="${OUT_DIR}/preds.jsonl"
 readonly GEN_LOG="${OUT_DIR}/generation.log"
 readonly LOG_FILE="${LOG_DIR}/swe_verified_${RUN_TAG}.log"
+readonly REPORT_FILE="${OUT_DIR}/report.json"
 
 [[ -d "${AGENT_DIR_VERIFIED}/.git" ]] || \
 	die "mini-SWE-agent is not set up; run: bash setup_swe_verified.sh"
 require_command mini-extra
 require_command python
 require_command docker
-mkdir -p "${GEN_DIR}" "${EVAL_ROOT}" "${LOG_DIR}"
-: >>"${CLAIMED_FILE}"
-: >>"${EVAL_REPORT_LIST}"
+
+if [[ "${RETRY_ERRORS}" == true || "${RETRY_EMPTY_PATCHES}" == true ]]; then
+	require_file "${REPORT_FILE}"
+	require_file "${GEN_DIR}/preds.json"
+	require_file "${CLAIMED_FILE}"
+	require_file "${EVAL_REPORT_LIST}"
+else
+	mkdir -p "${GEN_DIR}" "${EVAL_ROOT}"
+	: >>"${CLAIMED_FILE}"
+	: >>"${EVAL_REPORT_LIST}"
+fi
+mkdir -p "${LOG_DIR}"
 exec > >(tee -a "${LOG_FILE}") 2>&1
+
+if [[ "${RETRY_ERRORS}" == true || "${RETRY_EMPTY_PATCHES}" == true ]]; then
+	retry_dir="${OUT_DIR}/retries/retry_$(date -u +%Y%m%dT%H%M%SZ)_$$"
+	retry_options=()
+	[[ "${RETRY_ERRORS}" == false ]] || retry_options+=(--retry-errors)
+	[[ "${RETRY_EMPTY_PATCHES}" == false ]] || retry_options+=(--retry-empty-patches)
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" prepare-verified-retry \
+		--report "${REPORT_FILE}" --preds "${GEN_DIR}/preds.json" \
+		--claimed "${CLAIMED_FILE}" --eval-report-list "${EVAL_REPORT_LIST}" \
+		--backup-dir "${retry_dir}" "${retry_options[@]}"
+fi
 
 if [[ "${SKIP_EVAL}" == false ]]; then
 	python -c 'import swebench.harness.run_evaluation' 2>/dev/null || \
@@ -245,8 +287,6 @@ fi
 wait_for_vllm "${VLLM_WAIT_TIMEOUT:-300}"
 SERVED_MODEL_NAME="$(discover_vllm_model "${SERVED_MODEL_NAME}")"
 EVAL_WORKERS="${EVAL_WORKERS:-${WORKERS}}"
-readonly REPORT_FILE="${OUT_DIR}/report.json"
-
 full_slice_plan="$(plan_batch_slices 500 "${NUM_TASKS}" "${SLICE_ARG}" 500)"
 mapfile -t FULL_SLICE_LINES <<<"${full_slice_plan}"
 [[ ${#FULL_SLICE_LINES[@]} -eq 1 ]] || die "Unexpected slice plan for SWE-bench Verified selection"

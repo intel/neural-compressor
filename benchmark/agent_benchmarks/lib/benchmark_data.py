@@ -7,6 +7,7 @@ import glob
 import json
 import os
 import re
+import shutil
 import time
 from pathlib import Path
 
@@ -249,18 +250,32 @@ def merge_prediction_files(paths: list[Path]) -> dict | list:
 
 
 def merge_report_payloads(report_paths: list[Path]) -> dict:
-    report = {}
+    id_keys = (
+        "completed_ids",
+        "incomplete_ids",
+        "empty_patch_ids",
+        "resolved_ids",
+        "unresolved_ids",
+        "error_ids",
+    )
+    submitted_ids = set()
+    ids_by_key = {key: set() for key in id_keys}
+    schema_version = 0
     for path in report_paths:
         payload = json.loads(path.read_text())
-        for key, value in payload.items():
-            if key == "schema_version":
-                report[key] = max(report.get(key, value), value)
-            elif isinstance(value, list):
-                report[key] = list(dict.fromkeys([*report.get(key, []), *value]))
-            elif isinstance(value, int) and not isinstance(value, bool):
-                report[key] = report.get(key, 0) + value
-            else:
-                report[key] = value
+        affected_ids = set(payload.get("submitted_ids", []))
+        if not affected_ids:
+            affected_ids = set().union(*(payload.get(key, []) for key in id_keys))
+        submitted_ids.update(affected_ids)
+        for ids in ids_by_key.values():
+            ids.difference_update(affected_ids)
+        for key in id_keys:
+            ids_by_key[key].update(payload.get(key, []))
+        schema_version = max(schema_version, payload.get("schema_version", 0))
+
+    submitted_ids.update(set().union(*ids_by_key.values()))
+    report = {"submitted_ids": sorted(submitted_ids)}
+    report.update({key: sorted(ids) for key, ids in ids_by_key.items()})
     for count_key, ids_key in (
         ("submitted_instances", "submitted_ids"),
         ("completed_instances", "completed_ids"),
@@ -269,10 +284,9 @@ def merge_report_payloads(report_paths: list[Path]) -> dict:
         ("unresolved_instances", "unresolved_ids"),
         ("error_instances", "error_ids"),
     ):
-        if ids_key in report:
-            report[count_key] = len(report[ids_key])
-    if "completed_ids" in report or "incomplete_ids" in report:
-        report["total_instances"] = len(set(report.get("completed_ids", [])) | set(report.get("incomplete_ids", [])))
+        report[count_key] = len(report[ids_key])
+    report["total_instances"] = len(set(report["completed_ids"]) | set(report["incomplete_ids"]))
+    report["schema_version"] = schema_version
     submitted = report.get("submitted_instances", 0)
     resolved = report.get("resolved_instances", 0)
     report["accuracy"] = resolved / submitted if submitted else 0.0
@@ -313,6 +327,69 @@ def pending_predictions(args: argparse.Namespace) -> None:
     for instance_id in predictions:
         if instance_id not in claimed:
             print(instance_id)
+
+
+def prediction_patch(record) -> str:
+    if not isinstance(record, dict):
+        return str(record)
+    return next(
+        (
+            record[field]
+            for field in ("model_patch", "patch", "prediction", "completion", "response", "output")
+            if isinstance(record.get(field), str)
+        ),
+        "",
+    )
+
+
+def prepare_verified_retry(args: argparse.Namespace) -> None:
+    report_path = Path(args.report)
+    preds_path = Path(args.preds)
+    claimed_path = Path(args.claimed)
+    eval_report_list_path = Path(args.eval_report_list)
+    report = json.loads(report_path.read_text())
+    predictions = read_json_retry(preds_path)
+
+    error_ids = set(report.get("error_ids", [])) if args.retry_errors else set()
+    empty_ids = set(report.get("empty_patch_ids", [])) if args.retry_empty_patches else set()
+    direct_eval_ids = sorted(
+        instance_id
+        for instance_id in error_ids
+        if instance_id in predictions and normalize_patch(prediction_patch(predictions[instance_id]))
+    )
+    regenerate_ids = sorted((error_ids - set(direct_eval_ids)) | empty_ids)
+    retry_ids = set(direct_eval_ids) | set(regenerate_ids)
+
+    backup_dir = Path(args.backup_dir)
+    backup_dir.mkdir(parents=True, exist_ok=False)
+    for path in (report_path, preds_path, claimed_path, eval_report_list_path):
+        if path.is_file():
+            shutil.copy2(path, backup_dir / path.name)
+    eval_report_list_path.write_text(str((backup_dir / report_path.name).resolve()) + "\n")
+
+    for instance_id in regenerate_ids:
+        predictions.pop(instance_id, None)
+    preds_path.write_text(json.dumps(predictions, indent=2) + "\n")
+
+    claimed_ids = [line.strip() for line in claimed_path.read_text().splitlines() if line.strip()]
+    remaining_claimed_ids = [instance_id for instance_id in claimed_ids if instance_id not in retry_ids]
+    claimed_path.write_text("\n".join(remaining_claimed_ids) + ("\n" if remaining_claimed_ids else ""))
+
+    plan = {
+        "retry_errors": args.retry_errors,
+        "retry_empty_patches": args.retry_empty_patches,
+        "direct_eval_ids": direct_eval_ids,
+        "regenerate_ids": regenerate_ids,
+        "retry_ids": sorted(retry_ids),
+    }
+    (backup_dir / "retry_plan.json").write_text(json.dumps(plan, indent=2) + "\n")
+    print(f"Retry backup: {backup_dir}")
+    print(f"Retry existing patches: {len(direct_eval_ids)}")
+    print(f"Regenerate predictions: {len(regenerate_ids)}")
+    for instance_id in direct_eval_ids:
+        print(f"  EVAL       {instance_id}")
+    for instance_id in regenerate_ids:
+        print(f"  REGENERATE {instance_id}")
 
 
 def merge_eval_reports(args: argparse.Namespace) -> None:
@@ -423,7 +500,9 @@ def verified_jsonl(args):
             if selected_ids is not None and instance_id not in selected_ids:
                 continue
             record = prediction if isinstance(prediction, dict) else {"model_patch": prediction}
+            record = dict(record)
             record.setdefault("instance_id", instance_id)
+            record["model_patch"] = normalize_patch(prediction_patch(record))
             output.write(json.dumps(record) + "\n")
     count = len(predictions) if selected_ids is None else len(selected_ids)
     print(f"Wrote {count} predictions to {args.output}")
@@ -531,6 +610,13 @@ def build_parser():
     command.add_argument("--preds", required=True)
     command.add_argument("--claimed", required=True)
     command.set_defaults(func=pending_predictions)
+
+    command = commands.add_parser("prepare-verified-retry")
+    for name in ("report", "preds", "claimed", "eval-report-list", "backup-dir"):
+        command.add_argument(f"--{name}", required=True)
+    command.add_argument("--retry-errors", action="store_true")
+    command.add_argument("--retry-empty-patches", action="store_true")
+    command.set_defaults(func=prepare_verified_retry)
 
     command = commands.add_parser("merge-eval-reports")
     command.add_argument("--batch-list", required=True)
