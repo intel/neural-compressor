@@ -17,11 +17,6 @@ require_file() {
     [[ -f "$1" ]] || die "Required file not found: $1"
 }
 
-is_deepseek_v4_model() {
-    local model="${1,,}"
-    [[ "${model}" == *deepseek-v4* || "${model}" == *deepseek_v4* ]]
-}
-
 validate_port() {
     local port="$1"
     [[ "${port}" =~ ^[0-9]+$ ]] || die "Port must be an integer: ${port}"

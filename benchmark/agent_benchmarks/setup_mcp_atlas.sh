@@ -32,6 +32,8 @@ init_benchmark_paths
 
 readonly REPOSITORY="https://github.com/scaleapi/mcp-atlas.git"
 readonly NODE_RUNTIME_DIR="${BENCHMARK_DIR}/.tools/node-v${MCP_ATLAS_NODE_VERSION}"
+readonly JUDGE_TIMEOUT_PATCH="${BENCHMARK_DIR}/patches/mcp_atlas_judge_timeout.patch"
+readonly HEALTH_CHECK_PATCH="${BENCHMARK_DIR}/patches/mcp_atlas_enabled_health_check.patch"
 
 node_major=0
 if command -v node >/dev/null 2>&1; then
@@ -74,6 +76,26 @@ else
 	[[ "${current_commit}" == "${MCP_ATLAS_COMMIT}" ]] || \
 		die "Existing MCP-Atlas checkout is not ${MCP_ATLAS_COMMIT}: ${MCP_DIR}"
 	log "Using existing MCP-Atlas checkout at ${MCP_ATLAS_COMMIT}"
+fi
+
+require_file "${JUDGE_TIMEOUT_PATCH}"
+if git -C "${MCP_DIR}" apply --reverse --check "${JUDGE_TIMEOUT_PATCH}" 2>/dev/null; then
+	log "Configurable MCP-Atlas judge timeout patch is already applied"
+elif git -C "${MCP_DIR}" apply --check "${JUDGE_TIMEOUT_PATCH}" 2>/dev/null; then
+	log "Applying configurable MCP-Atlas judge timeout patch"
+	git -C "${MCP_DIR}" apply "${JUDGE_TIMEOUT_PATCH}"
+else
+	die "Judge timeout patch does not match the MCP-Atlas checkout: ${JUDGE_TIMEOUT_PATCH}"
+fi
+
+require_file "${HEALTH_CHECK_PATCH}"
+if git -C "${MCP_DIR}" apply --reverse --check "${HEALTH_CHECK_PATCH}" 2>/dev/null; then
+	log "Enabled-server health check patch is already applied"
+elif git -C "${MCP_DIR}" apply --check "${HEALTH_CHECK_PATCH}" 2>/dev/null; then
+	log "Applying enabled-server health check patch"
+	git -C "${MCP_DIR}" apply "${HEALTH_CHECK_PATCH}"
+else
+	die "Health check patch does not match the MCP-Atlas checkout: ${HEALTH_CHECK_PATCH}"
 fi
 
 if [[ ! -f "${MCP_DIR}/.env" ]]; then

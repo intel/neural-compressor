@@ -14,21 +14,29 @@ Usage:
 Run mini-SWE-agent on SWE-bench Verified using an already-running vLLM server,
 then evaluate the generated predictions with the local SWE-bench harness.
 
+Generation runs as a single continuous process across the whole selection so
+the vLLM server always has work queued. Finished instances are evaluated in
+chunks as they become available, overlapping the CPU/Docker-bound evaluation
+with the next instances being generated on the GPU instead of alternating
+between the two phases.
+
 Options:
 	--host HOST          vLLM host (default: 127.0.0.1)
 	--port PORT          vLLM port (default: 8888)
 	--served-name NAME   Served model ID (default: discover from /v1/models)
 	--num-tasks N        Run the first N instances
 	--slice START:END    Run an explicit dataset slice
-	--workers N          Parallel agent workers (default: 4)
+	--workers N          Parallel agent workers (default: 16)
 	--eval-workers N     Parallel evaluation workers (default: 8)
 	--step-limit N       Maximum model calls per instance (default: 250)
 	--pull-timeout N     Docker image pull/start timeout in seconds (default: 600)
-	--batch-size N       Instances per generation/evaluation batch (default: 25)
+	--eval-chunk-size N  Finished instances gathered before dispatching an evaluation chunk (default: 24)
+	--poll-interval N    Seconds between checks for newly finished instances (default: 60)
+	--health-interval N  Seconds between vLLM health checks (default: 30)
+	--health-failures N  Consecutive failed health checks before stopping (default: 3)
 	--tag TAG            Run tag (default: UTC timestamp)
-	--redo               Re-run existing generation and evaluation results
 	--skip-eval          Generate predictions without local evaluation
-	--keep-images        Keep benchmark Docker images after each batch
+	--keep-images        Keep benchmark Docker images after each evaluation chunk
 	-h, --help           Show this help message
 
 Environment:
@@ -39,19 +47,44 @@ Environment:
 EOF
 }
 
-remove_verified_images() {
-	local image_list="${CURRENT_IMAGE_LIST}"
-	CURRENT_IMAGE_LIST=""
-	[[ "${KEEP_IMAGES}" == false && -n "${image_list}" && -f "${image_list}" ]] || return
-	mapfile -t images < <(sort -u "${image_list}" | grep -E '^docker.io/swebench/sweb\.eval\.' || true)
+verified_image_name() {
+	local instance_id="$1"
+	local id="${instance_id//__/_1776_}"
+	id="${id,,}"
+	printf 'docker.io/swebench/sweb.eval.x86_64.%s:latest' "${id}"
+}
+
+remove_chunk_images() {
+	local ids_file="$1"
+	[[ "${KEEP_IMAGES}" == false && -s "${ids_file}" ]] || return
+	local images=() instance_id
+	while IFS= read -r instance_id; do
+		[[ -n "${instance_id}" ]] || continue
+		images+=("$(verified_image_name "${instance_id}")")
+	done <"${ids_file}"
 	[[ ${#images[@]} -gt 0 ]] || return
 	log "Removing ${#images[@]} SWE-bench Verified images"
 	docker image rm -f "${images[@]}" >/dev/null 2>&1 || \
 		warn "Some SWE-bench Verified images could not be removed"
 }
 
+readonly RUNNER_PID=$$
+GEN_PID=""
+EVAL_PID=""
+MONITOR_PID=""
+
 cleanup() {
-	remove_verified_images
+	local pid
+	for pid in "${MONITOR_PID}" "${EVAL_PID}" "${GEN_PID}"; do
+		[[ -n "${pid}" ]] || continue
+		kill -0 "${pid}" 2>/dev/null || continue
+		kill -TERM "${pid}" 2>/dev/null || true
+	done
+}
+
+termination_requested() {
+	warn "SWE-bench Verified run was interrupted"
+	exit 1
 }
 
 require_positive_integer() {
@@ -60,19 +93,20 @@ require_positive_integer() {
 	[[ "${value}" =~ ^[1-9][0-9]*$ ]] || die "${name} must be a positive integer: ${value}"
 }
 
-WORKERS=4
+WORKERS=16
 EVAL_WORKERS=8
 STEP_LIMIT=250
 PULL_TIMEOUT=600
-BATCH_SIZE=25
+EVAL_CHUNK_SIZE=24
+POLL_INTERVAL=60
+HEALTH_INTERVAL=30
+HEALTH_FAILURES=3
 NUM_TASKS=""
 SLICE_ARG=""
 SERVED_MODEL_NAME=""
 RUN_TAG="$(date -u +%Y%m%dT%H%M%SZ)"
-REDO=false
 SKIP_EVAL=false
 KEEP_IMAGES=false
-CURRENT_IMAGE_LIST=""
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
@@ -121,19 +155,30 @@ while [[ $# -gt 0 ]]; do
 			PULL_TIMEOUT="$2"
 			shift 2
 			;;
-		--batch-size)
+		--eval-chunk-size)
 			[[ $# -ge 2 ]] || die "$1 requires a value"
-			BATCH_SIZE="$2"
+			EVAL_CHUNK_SIZE="$2"
+			shift 2
+			;;
+		--poll-interval)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			POLL_INTERVAL="$2"
+			shift 2
+			;;
+		--health-interval)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			HEALTH_INTERVAL="$2"
+			shift 2
+			;;
+		--health-failures)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			HEALTH_FAILURES="$2"
 			shift 2
 			;;
 		--tag)
 			[[ $# -ge 2 ]] || die "$1 requires a value"
 			RUN_TAG="$2"
 			shift 2
-			;;
-		--redo)
-			REDO=true
-			shift
 			;;
 		--skip-eval)
 			SKIP_EVAL=true
@@ -158,7 +203,10 @@ done
 require_positive_integer "--workers" "${WORKERS}"
 require_positive_integer "--step-limit" "${STEP_LIMIT}"
 require_positive_integer "--pull-timeout" "${PULL_TIMEOUT}"
-require_positive_integer "--batch-size" "${BATCH_SIZE}"
+require_positive_integer "--eval-chunk-size" "${EVAL_CHUNK_SIZE}"
+require_positive_integer "--poll-interval" "${POLL_INTERVAL}"
+require_positive_integer "--health-interval" "${HEALTH_INTERVAL}"
+require_positive_integer "--health-failures" "${HEALTH_FAILURES}"
 [[ -z "${EVAL_WORKERS}" ]] || require_positive_integer "--eval-workers" "${EVAL_WORKERS}"
 [[ -z "${NUM_TASKS}" ]] || require_positive_integer "--num-tasks" "${NUM_TASKS}"
 [[ -z "${SLICE_ARG}" || "${SLICE_ARG}" =~ ^[0-9]*:[0-9]*$ ]] || \
@@ -167,12 +215,16 @@ require_positive_integer "--batch-size" "${BATCH_SIZE}"
 init_benchmark_paths
 init_vllm_endpoint
 trap cleanup EXIT
+trap termination_requested INT TERM
 RUN_TAG="$(sanitize_run_tag "${RUN_TAG}")"
 readonly OUT_DIR="${AGENT_DIR_VERIFIED}/results/swe_verified_${RUN_TAG}"
-readonly BATCH_ROOT="${OUT_DIR}/batches"
-readonly BATCH_LIST="${OUT_DIR}/batch_list.txt"
+readonly GEN_DIR="${OUT_DIR}/generation"
+readonly EVAL_ROOT="${OUT_DIR}/eval_chunks"
+readonly CLAIMED_FILE="${OUT_DIR}/claimed_ids.txt"
+readonly EVAL_REPORT_LIST="${OUT_DIR}/eval_report_list.txt"
 readonly PREDS_JSON="${OUT_DIR}/preds.json"
 readonly PREDS_JSONL="${OUT_DIR}/preds.jsonl"
+readonly GEN_LOG="${OUT_DIR}/generation.log"
 readonly LOG_FILE="${LOG_DIR}/swe_verified_${RUN_TAG}.log"
 
 [[ -d "${AGENT_DIR_VERIFIED}/.git" ]] || \
@@ -180,8 +232,9 @@ readonly LOG_FILE="${LOG_DIR}/swe_verified_${RUN_TAG}.log"
 require_command mini-extra
 require_command python
 require_command docker
-mkdir -p "${BATCH_ROOT}" "${LOG_DIR}"
-: >"${BATCH_LIST}"
+mkdir -p "${GEN_DIR}" "${EVAL_ROOT}" "${LOG_DIR}"
+: >>"${CLAIMED_FILE}"
+: >>"${EVAL_REPORT_LIST}"
 exec > >(tee -a "${LOG_FILE}") 2>&1
 
 if [[ "${SKIP_EVAL}" == false ]]; then
@@ -192,87 +245,164 @@ fi
 wait_for_vllm "${VLLM_WAIT_TIMEOUT:-300}"
 SERVED_MODEL_NAME="$(discover_vllm_model "${SERVED_MODEL_NAME}")"
 EVAL_WORKERS="${EVAL_WORKERS:-${WORKERS}}"
-readonly REPORT_FILE="${BENCHMARK_DIR}/${SERVED_MODEL_NAME}.${RUN_TAG}.json"
+readonly REPORT_FILE="${OUT_DIR}/report.json"
 
-REDO_OPTIONS=()
-[[ "${REDO}" == false ]] || REDO_OPTIONS=(--redo-existing)
-batch_plan="$(plan_batch_slices 500 "${NUM_TASKS}" "${SLICE_ARG}" "${BATCH_SIZE}")"
-mapfile -t BATCH_SLICES <<<"${batch_plan}"
-[[ ${#BATCH_SLICES[@]} -gt 0 ]] || die "No SWE-bench Verified batches were selected"
+full_slice_plan="$(plan_batch_slices 500 "${NUM_TASKS}" "${SLICE_ARG}" 500)"
+mapfile -t FULL_SLICE_LINES <<<"${full_slice_plan}"
+[[ ${#FULL_SLICE_LINES[@]} -eq 1 ]] || die "Unexpected slice plan for SWE-bench Verified selection"
+readonly FULL_SLICE="${FULL_SLICE_LINES[0]}"
 
-for batch_slice in "${BATCH_SLICES[@]}"; do
-	IFS=: read -r batch_start batch_end <<<"${batch_slice}"
-	printf -v batch_name 'batch_%06d_%06d' "${batch_start}" "${batch_end}"
-	batch_dir="${BATCH_ROOT}/${batch_name}"
-	batch_preds_json="${batch_dir}/preds.json"
-	batch_preds_jsonl="${batch_dir}/preds.jsonl"
-	batch_report="${batch_dir}/report.json"
-	batch_run_id="${RUN_TAG}_${batch_name}"
-	[[ "${REDO}" == false ]] || batch_run_id+="_redo_$(date -u +%Y%m%dT%H%M%SZ)_$$"
-	harness_report="${BENCHMARK_DIR}/${SERVED_MODEL_NAME}.${batch_run_id}.json"
-	CURRENT_IMAGE_LIST="${batch_dir}/images.txt"
-	mkdir -p "${batch_dir}"
-	printf '%s\n' "${batch_dir}" >>"${BATCH_LIST}"
+log "Generating SWE-bench Verified selection ${FULL_SLICE} with model ${SERVED_MODEL_NAME}"
+(
+	cd "${AGENT_DIR_VERIFIED}"
+	exec env MSWEA_COST_TRACKING=ignore_errors mini-extra swebench \
+		--model "${SERVED_MODEL_NAME}" \
+		--subset verified \
+		--split test \
+		--workers "${WORKERS}" \
+		--output "${GEN_DIR}" \
+		--config swebench.yaml \
+		--config "model.model_kwargs.base_url=${OPENAI_BASE_URL}" \
+		--config "model.model_kwargs.api_key=${VLLM_API_KEY}" \
+		--config "agent.step_limit=${STEP_LIMIT}" \
+		--config "environment.pull_timeout=${PULL_TIMEOUT}" \
+		--slice "${FULL_SLICE}"
+) >"${GEN_LOG}" 2>&1 &
+GEN_PID=$!
+log "Generation console progress: tail -f ${GEN_LOG}"
+log "mini-SWE-agent execution log: tail -f ${GEN_DIR}/minisweagent.log"
 
-	python "${SCRIPT_DIR}/lib/benchmark_data.py" select-verified \
-		--images "${CURRENT_IMAGE_LIST}" --slice "${batch_slice}"
+monitor_vllm() {
+	local failures=0
+	while true; do
+		sleep "${HEALTH_INTERVAL}"
+		if vllm_curl "${VLLM_ORIGIN}/health" --connect-timeout 2 --max-time 5 >/dev/null 2>&1; then
+			failures=0
+			continue
+		fi
 
-	log "Generating SWE-bench Verified batch ${batch_slice} with model ${SERVED_MODEL_NAME}"
-	(
-		cd "${AGENT_DIR_VERIFIED}"
-		MSWEA_COST_TRACKING=ignore_errors mini-extra swebench \
-			--model "${SERVED_MODEL_NAME}" \
-			--subset verified \
-			--split test \
-			--workers "${WORKERS}" \
-			--output "${batch_dir}" \
-			--config swebench.yaml \
-			--config "model.model_kwargs.base_url=${OPENAI_BASE_URL}" \
-			--config "model.model_kwargs.api_key=${VLLM_API_KEY}" \
-			--config "agent.step_limit=${STEP_LIMIT}" \
-			--config "environment.pull_timeout=${PULL_TIMEOUT}" \
-			--slice "${batch_slice}" \
-			"${REDO_OPTIONS[@]}"
-	)
+		failures=$((failures + 1))
+		warn "vLLM health check failed (${failures}/${HEALTH_FAILURES}): ${VLLM_ORIGIN}/health"
+		if ((failures >= HEALTH_FAILURES)); then
+			warn "vLLM is unavailable; stopping SWE-bench Verified"
+			kill -TERM "${GEN_PID}" 2>/dev/null || true
+			kill -TERM "${RUNNER_PID}" 2>/dev/null || true
+			return
+		fi
+	done
+}
 
-	require_file "${batch_preds_json}"
-	python "${SCRIPT_DIR}/lib/benchmark_data.py" verified-jsonl \
-		--source "${batch_preds_json}" --output "${batch_preds_jsonl}"
+stop_vllm_monitor() {
+	[[ -n "${MONITOR_PID}" ]] || return
+	kill -TERM "${MONITOR_PID}" 2>/dev/null || true
+	wait "${MONITOR_PID}" 2>/dev/null || true
+	MONITOR_PID=""
+}
+
+monitor_vllm &
+MONITOR_PID=$!
+
+# Evaluates one chunk of newly finished instance IDs (given as $2..) and marks
+# them claimed. Runs while generation continues for the remaining instances.
+process_pending_chunk() {
+	local chunk_dir="$1"
+	shift
+	local chunk_ids_file="${chunk_dir}/ids.txt"
+	mkdir -p "${chunk_dir}"
+	printf '%s\n' "$@" >"${chunk_ids_file}"
 
 	if [[ "${SKIP_EVAL}" == false ]]; then
-		rm -f -- "${batch_report}" "${harness_report}"
-		mapfile -t INSTANCE_IDS < <(
-			python "${SCRIPT_DIR}/lib/benchmark_data.py" verified-ids --source "${batch_preds_jsonl}"
-		)
-		[[ ${#INSTANCE_IDS[@]} -gt 0 ]] || die "No predictions found in ${batch_preds_jsonl}"
+		local chunk_preds_jsonl="${chunk_dir}/preds.jsonl"
+		local chunk_report="${chunk_dir}/report.json"
+		local run_id
+		run_id="${RUN_TAG}_$(basename "${chunk_dir}")_$$"
+		local harness_report="${BENCHMARK_DIR}/${SERVED_MODEL_NAME}.${run_id}.json"
 
-		log "Evaluating SWE-bench Verified batch ${batch_slice} with ${EVAL_WORKERS} workers"
+		python "${SCRIPT_DIR}/lib/benchmark_data.py" verified-jsonl \
+			--source "${GEN_DIR}/preds.json" --output "${chunk_preds_jsonl}" \
+			--ids "${chunk_ids_file}"
+
+		log "Evaluating $# SWE-bench Verified instances with ${EVAL_WORKERS} workers"
+		rm -f -- "${harness_report}"
 		(
 			cd "${BENCHMARK_DIR}"
-			python -m swebench.harness.run_evaluation \
+			exec python -m swebench.harness.run_evaluation \
 				--dataset_name princeton-nlp/SWE-bench_Verified \
 				--split test \
-				--predictions_path "${batch_preds_jsonl}" \
-				--instance_ids "${INSTANCE_IDS[@]}" \
+				--predictions_path "${chunk_preds_jsonl}" \
+				--instance_ids "$@" \
 				--max_workers "${EVAL_WORKERS}" \
-				--run_id "${batch_run_id}"
-		)
+				--run_id "${run_id}"
+		) &
+		EVAL_PID=$!
+		wait "${EVAL_PID}"
+		EVAL_PID=""
 		if [[ -f "${harness_report}" ]]; then
-			mv -- "${harness_report}" "${batch_report}"
+			mv -- "${harness_report}" "${chunk_report}"
+			printf '%s\n' "${chunk_report}" >>"${EVAL_REPORT_LIST}"
+			python "${SCRIPT_DIR}/lib/benchmark_data.py" merge-eval-reports \
+				--batch-list "${EVAL_REPORT_LIST}" --report "${REPORT_FILE}"
 		else
 			warn "Local harness report not found: ${harness_report}"
 		fi
-	else
-		rm -f -- "${batch_report}"
-		log "Skipping local evaluation for SWE-bench Verified batch ${batch_slice}"
 	fi
 
-	remove_verified_images
+	remove_chunk_images "${chunk_ids_file}"
+	cat "${chunk_ids_file}" >>"${CLAIMED_FILE}"
+}
+
+gen_running() {
+	kill -0 "${GEN_PID}" 2>/dev/null
+}
+
+pending_instance_ids() {
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" pending-verified \
+		--preds "${GEN_DIR}/preds.json" --claimed "${CLAIMED_FILE}"
+}
+
+chunk_counter=0
+for existing_chunk in "${EVAL_ROOT}"/chunk_*; do
+	[[ -d "${existing_chunk}" ]] || continue
+	existing_index="${existing_chunk##*/chunk_}"
+	[[ "${existing_index}" =~ ^[0-9]+$ ]] || continue
+	if ((10#${existing_index} >= chunk_counter)); then
+		chunk_counter=$((10#${existing_index} + 1))
+	fi
+done
+while true; do
+	mapfile -t PENDING_IDS < <(pending_instance_ids)
+	if gen_running; then
+		if [[ ${#PENDING_IDS[@]} -lt ${EVAL_CHUNK_SIZE} ]]; then
+			sleep "${POLL_INTERVAL}"
+			continue
+		fi
+	else
+		stop_vllm_monitor
+		if [[ ${#PENDING_IDS[@]} -eq 0 ]]; then
+			break
+		fi
+	fi
+
+	chunk_size=${EVAL_CHUNK_SIZE}
+	[[ ${#PENDING_IDS[@]} -lt ${chunk_size} ]] && chunk_size=${#PENDING_IDS[@]}
+	printf -v chunk_name 'chunk_%06d' "${chunk_counter}"
+	chunk_counter=$((chunk_counter + 1))
+	process_pending_chunk "${EVAL_ROOT}/${chunk_name}" "${PENDING_IDS[@]:0:${chunk_size}}"
 done
 
-python "${SCRIPT_DIR}/lib/benchmark_data.py" merge-verified \
-	--batch-list "${BATCH_LIST}" --predictions "${PREDS_JSON}" \
-	--jsonl "${PREDS_JSONL}" --report "${REPORT_FILE}"
+GEN_EXIT=0
+wait "${GEN_PID}" || GEN_EXIT=$?
+GEN_PID=""
+stop_vllm_monitor
+require_file "${GEN_DIR}/preds.json"
+cp -- "${GEN_DIR}/preds.json" "${PREDS_JSON}"
+python "${SCRIPT_DIR}/lib/benchmark_data.py" verified-jsonl \
+	--source "${PREDS_JSON}" --output "${PREDS_JSONL}"
+
+if [[ "${SKIP_EVAL}" == false ]]; then
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" merge-eval-reports \
+		--batch-list "${EVAL_REPORT_LIST}" --report "${REPORT_FILE}"
+fi
 
 log "Predictions: ${PREDS_JSONL}"
 if [[ -f "${REPORT_FILE}" ]]; then
@@ -280,3 +410,5 @@ if [[ -f "${REPORT_FILE}" ]]; then
 	log "Report: ${REPORT_FILE}"
 fi
 log "Log: ${LOG_FILE}"
+
+[[ "${GEN_EXIT}" -eq 0 ]] || die "mini-SWE-agent generation failed (exit ${GEN_EXIT}); see ${GEN_LOG}"

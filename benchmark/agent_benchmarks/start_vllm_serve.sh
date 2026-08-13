@@ -19,7 +19,6 @@ Defaults:
   port=8888, served-name=gpt-3.5-turbo, max-model-len=262144
   tensor parallel size=CUDA_VISIBLE_DEVICES count, tool parser=hermes
   Qwen3.6: tool=qwen3_coder, reasoning=qwen3
-  DeepSeek-V4: model-specific FP8/MoE defaults
 
 Logs and PID files are written under ./logs. Override with VLLM_LOG_DIR,
 VLLM_LOG_FILE, or VLLM_PID_FILE. See README.md for model-specific details.
@@ -103,23 +102,6 @@ MAX_MODEL_LEN_DEFAULT="${MAX_MODEL_LEN:-262144}"
 if [[ "${MODEL_LOWER}" == *qwen3.6* ]]; then
   add_default_option --tool-call-parser qwen3_coder "$@"
   add_default_option --reasoning-parser qwen3 "$@"
-elif is_deepseek_v4_model "${MODEL}"; then
-  export SAFETENSORS_FAST_GPU=1
-  MAX_MODEL_LEN_DEFAULT=1048576
-  ARGS+=(
-    --kv-cache-dtype fp8
-    --block-size 256
-    --gpu-memory-utilization "${GPU_MEM_UTIL:-0.9}"
-    --attention_config.use_fp4_indexer_cache=True
-    --no-enable-flashinfer-autotune
-  )
-  add_default_option --tool-call-parser deepseek_v4 "$@"
-
-  if [[ "${MODEL_LOWER}" == *mxfp4* ]]; then
-    ARGS+=(--moe-backend cutlass)
-  else
-    ARGS+=(--moe-backend deep_gemm_mega_moe --enable-expert-parallel)
-  fi
 else
   add_default_option --tool-call-parser hermes "$@"
 fi

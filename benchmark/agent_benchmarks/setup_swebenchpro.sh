@@ -15,8 +15,8 @@ Usage:
 
 Clone the pinned SWE-bench Pro repository and mini-SWE-agent submodule, apply
 Docker image/cleanup support, and install generation and local-evaluation
-dependencies into the current uv/Conda/Docker environment. The environment
-must already provide Python and support `uv pip install`.
+dependencies into the currently activated environment using uv. The
+environment must already provide Python and support `uv pip install`.
 EOF
 }
 
