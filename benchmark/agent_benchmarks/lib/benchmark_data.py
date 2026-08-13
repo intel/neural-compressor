@@ -8,8 +8,11 @@ import json
 import os
 import re
 import shutil
+import sys
 import time
 from pathlib import Path
+
+csv.field_size_limit(sys.maxsize)
 
 
 def read_json_retry(path, attempts=50, delay=0.1):
