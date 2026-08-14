@@ -360,7 +360,7 @@ monitor_vllm() {
 	local failures=0
 	while true; do
 		sleep "${HEALTH_INTERVAL}"
-		if vllm_curl "${VLLM_ORIGIN}/health" --connect-timeout 2 --max-time 5 >/dev/null 2>&1; then
+		if vllm_curl "${VLLM_ORIGIN}/health" --connect-timeout 5 --max-time 30 >/dev/null 2>&1; then
 			failures=0
 			continue
 		fi
