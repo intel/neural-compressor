@@ -300,7 +300,11 @@ if [[ "${SWE_VERIFIED_RETRY_LOOP_CHILD:-0}" != 1 &&
 			exit 0
 		fi
 		log "Starting retry attempt ${retry_attempt}/${RETRY_ATTEMPTS} for ${remaining} instances"
-		SWE_VERIFIED_RETRY_LOOP_CHILD=1 bash "$0" "${ORIGINAL_ARGS[@]}"
+		attempt_status=0
+		SWE_VERIFIED_RETRY_LOOP_CHILD=1 bash "$0" "${ORIGINAL_ARGS[@]}" || attempt_status=$?
+		if [[ "${attempt_status}" -ne 0 ]]; then
+			warn "Retry attempt ${retry_attempt}/${RETRY_ATTEMPTS} exited with status ${attempt_status}; continuing"
+		fi
 	done
 	exit 0
 fi
