@@ -113,6 +113,15 @@ def test_text_prompt_dot_product_attention(dynamic, model_dtype, quantization_dt
     def calib_fn(model):
         _ = model.generate(random_string, max_length=100)
 
+    def check_dot_product_attention_enable(model, expected_value):
+        attention_layers = [
+            layer for layer in model._flatten_layers(recursive=True) if hasattr(layer, "dot_product_attention_enable")
+        ]
+        assert attention_layers, "No quantized attention layer exposed dot_product_attention_enable"
+        assert all(
+            layer.dot_product_attention_enable is expected_value for layer in attention_layers
+        ), f"Expected dot_product_attention_enable={expected_value} for all attention layers"
+
     if dynamic:
         config = DynamicQuantConfig(
             weight_dtype=quantization_dtype,
@@ -131,17 +140,14 @@ def test_text_prompt_dot_product_attention(dynamic, model_dtype, quantization_dt
         gemma_q = quantize_model(gemma, config, calib_fn, inplace=False)
 
     assert config.dot_product_attention_enable is True
-    # The flag must be propagated onto the converted attention layers.
-    attention_layers = [
-        layer for layer in gemma_q._flatten_layers(recursive=True) if hasattr(layer, "dot_product_attention_enable")
-    ]
-    assert attention_layers, "No quantized attention layer exposed dot_product_attention_enable"
-    assert all(layer.dot_product_attention_enable is True for layer in attention_layers)
+    check_dot_product_attention_enable(gemma_q, True)
 
     with tempfile.TemporaryDirectory() as tmpdir:
-        save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
+        save_path = os.path.join(tmpdir, "gemma3_quantized_keras")
         gemma_q.save_to_preset(save_path)
         gemma_q_loaded = Gemma3CausalLM.from_preset(save_path, dtype=model_dtype)
+
+    check_dot_product_attention_enable(gemma_q_loaded, True)
 
     answer = gemma_q_loaded.generate("Answer what is the capital city of England.", max_length=25, strip_prompt=True)
     print("Gemma answer: ", {answer})
