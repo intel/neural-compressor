@@ -268,8 +268,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         const_scale,
         const_weight,
         w_quant_granularity,
-        *,
-        dot_product_attention_enable=False,
+        dot_product_attention_enable,
     ):
         """Convert a dense-like layer instance for dynamic quantization.
 
@@ -467,8 +466,7 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
         const_scale,
         const_weight,
         w_quant_granularity,
-        *,
-        dot_product_attention_enable=False,
+        dot_product_attention_enable,
     ):
         """Convert a MultiHeadAttention instance for dynamic quantization.
 
@@ -676,8 +674,7 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         const_scale,
         const_weight,
         w_quant_granularity,
-        *,
-        dot_product_attention_enable=False,
+        dot_product_attention_enable,
     ):
         """Convert a CachedGemma3Attention instance for dynamic quantization.
 
@@ -718,14 +715,12 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         pass
 
     def _use_fused_attention_op(self):
-        if not hasattr(self, "_all_devices_cpu"):
-            import jax
+        import jax
 
-            self._all_devices_cpu = all(d.platform == "cpu" for d in jax.devices())
-
-        if self._all_devices_cpu:
+        if all(d.platform == "cpu" for d in jax.devices()):
             return True
-        return super()._use_fused_attention_op()
+        else:
+            return super()._use_fused_attention_op()
 
     # fmt: off
     def _compute_attention(
@@ -844,8 +839,7 @@ class QDynamicGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
         const_scale,
         const_weight,
         w_quant_granularity,
-        *,
-        dot_product_attention_enable=False,
+        dot_product_attention_enable,
     ):
         """Convert a Gemma3VisionAttention instance for dynamic quantization.
 
@@ -959,8 +953,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         const_scale,
         const_weight,
         w_quant_granularity,
-        *,
-        dot_product_attention_enable=False,
+        dot_product_attention_enable,
     ):
         """Convert a ReversibleEmbedding instance for dynamic quantization.
 

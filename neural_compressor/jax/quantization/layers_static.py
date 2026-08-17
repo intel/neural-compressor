@@ -443,8 +443,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
         const_scale,
         const_weight,
         w_quant_granularity,
-        *,
-        dot_product_attention_enable=False,
+        dot_product_attention_enable,
     ):
         """Convert a dense-like layer instance for static quantization.
 
@@ -802,8 +801,7 @@ class QStaticMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAttent
         const_scale,
         const_weight,
         w_quant_granularity,
-        *,
-        dot_product_attention_enable=False,
+        dot_product_attention_enable,
     ):
         """Convert a MultiHeadAttention instance for static quantization.
 
@@ -1068,8 +1066,7 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         const_scale,
         const_weight,
         w_quant_granularity,
-        *,
-        dot_product_attention_enable=False,
+        dot_product_attention_enable,
     ):
         """Convert a CachedGemma3Attention instance for static quantization.
 
@@ -1147,14 +1144,12 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         self._tracker.lock()
 
     def _use_fused_attention_op(self):
-        if not hasattr(self, "_all_devices_cpu"):
-            import jax
+        import jax
 
-            self._all_devices_cpu = all(d.platform == "cpu" for d in jax.devices())
-
-        if self._all_devices_cpu:
+        if all(d.platform == "cpu" for d in jax.devices()):
             return True
-        return super()._use_fused_attention_op()
+        else:
+            return super()._use_fused_attention_op()
 
     # fmt: off
     def _compute_attention(
@@ -1260,8 +1255,7 @@ class QStaticGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
         const_scale,
         const_weight,
         w_quant_granularity,
-        *,
-        dot_product_attention_enable=False,
+        dot_product_attention_enable,
     ):
         """Convert a Gemma3VisionAttention instance for static quantization.
 
@@ -1411,8 +1405,7 @@ class QStaticRotaryEmbedding(SaveableLayerMixin, keras_hub.layers.RotaryEmbeddin
         const_scale,
         const_weight,
         w_quant_granularity,
-        *,
-        dot_product_attention_enable=False,
+        dot_product_attention_enable,
     ):
         """Convert a RotaryEmbedding instance for static quantization.
 
@@ -1538,8 +1531,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         const_scale,
         const_weight,
         w_quant_granularity,
-        *,
-        dot_product_attention_enable=False,
+        dot_product_attention_enable,
     ):
         """Convert a ReversibleEmbedding instance for static quantization.
 

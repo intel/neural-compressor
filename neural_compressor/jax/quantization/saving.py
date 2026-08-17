@@ -574,10 +574,9 @@ def prepare_deserialized_quantized_model(
             cfg.const_scale,
             cfg.const_weight,
             cfg.weight_scale_granularity,
+            cfg.dot_product_attention_enable,
         )
-        layers_mapping[layer.__class__].prepare(
-            layer, *additional_params, dot_product_attention_enable=cfg.dot_product_attention_enable
-        )
+        layers_mapping[layer.__class__].prepare(layer, *additional_params)
         layer.add_variables()
         layer.post_quantization_cleanup()
 
