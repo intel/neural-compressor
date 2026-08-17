@@ -714,14 +714,6 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         """
         pass
 
-    def _use_fused_attention_op(self):
-        import jax
-
-        if all(d.platform == "cpu" for d in jax.devices()):
-            return True
-        else:
-            return super()._use_fused_attention_op()
-
     # fmt: off
     def _compute_attention(
         self,
