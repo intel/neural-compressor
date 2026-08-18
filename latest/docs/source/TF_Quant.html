@@ -107,7 +107,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
 
 <span class="c1"># Original code</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">resnet50</span><span class="o">.</span><span class="n">ResNet50</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="s2">&quot;imagenet&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">resnet50</span><span class="o">.</span><span class="n">ResNet50</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="s2">"imagenet"</span><span class="p">)</span>
 <span class="n">val_dataset</span> <span class="o">=</span> <span class="o">...</span>
 <span class="n">val_dataloader</span> <span class="o">=</span> <span class="n">MyDataloader</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">)</span>
 
@@ -120,7 +120,7 @@
     <span class="n">quant_config</span><span class="o">=</span><span class="n">quant_config</span><span class="p">,</span>
     <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">qmodel</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./output&quot;</span><span class="p">)</span>
+<span class="n">qmodel</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"./output"</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -130,7 +130,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># main.py</span>
 
 <span class="c1"># Original code</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">resnet50</span><span class="o">.</span><span class="n">ResNet50</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="s2">&quot;imagenet&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">keras</span><span class="o">.</span><span class="n">applications</span><span class="o">.</span><span class="n">resnet50</span><span class="o">.</span><span class="n">ResNet50</span><span class="p">(</span><span class="n">weights</span><span class="o">=</span><span class="s2">"imagenet"</span><span class="p">)</span>
 <span class="n">val_dataset</span> <span class="o">=</span> <span class="o">...</span>
 <span class="n">val_dataloader</span> <span class="o">=</span> <span class="n">MyDataloader</span><span class="p">(</span><span class="n">dataset</span><span class="o">=</span><span class="n">val_dataset</span><span class="p">)</span>
 
@@ -144,7 +144,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.common.base_tuning</span><span class="w"> </span><span class="kn">import</span> <span class="n">TuningConfig</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.tensorflow</span><span class="w"> </span><span class="kn">import</span> <span class="n">autotune</span>
 
-<span class="c1"># it&#39;s also supported to define custom_tune_config as:</span>
+<span class="c1"># it's also supported to define custom_tune_config as:</span>
 <span class="c1"># TuningConfig(StaticQuantConfig(weight_sym=[True, False], act_sym=[True, False]))</span>
 <span class="n">custom_tune_config</span> <span class="o">=</span> <span class="n">TuningConfig</span><span class="p">(</span>
     <span class="n">config_set</span><span class="o">=</span><span class="p">[</span>
@@ -158,7 +158,7 @@
     <span class="n">eval_fn</span><span class="o">=</span><span class="n">eval_acc_fn</span><span class="p">,</span>
     <span class="n">calib_dataloader</span><span class="o">=</span><span class="n">val_dataloader</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">best_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;./output&quot;</span><span class="p">)</span>
+<span class="n">best_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"./output"</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -169,19 +169,19 @@
 <li><p>Example of setting <code class="docutils literal notranslate"><span class="pre">local</span></code> from a dict</p></li>
 </ol>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">quant_config</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;static_quant&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;weight_dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;weight_sym&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-            <span class="s2">&quot;weight_granularity&quot;</span><span class="p">:</span> <span class="s2">&quot;per_tensor&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;act_dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;int8&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;act_sym&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
-            <span class="s2">&quot;act_granularity&quot;</span><span class="p">:</span> <span class="s2">&quot;per_tensor&quot;</span><span class="p">,</span>
+    <span class="s2">"static_quant"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"global"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"weight_dtype"</span><span class="p">:</span> <span class="s2">"int8"</span><span class="p">,</span>
+            <span class="s2">"weight_sym"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">"weight_granularity"</span><span class="p">:</span> <span class="s2">"per_tensor"</span><span class="p">,</span>
+            <span class="s2">"act_dtype"</span><span class="p">:</span> <span class="s2">"int8"</span><span class="p">,</span>
+            <span class="s2">"act_sym"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+            <span class="s2">"act_granularity"</span><span class="p">:</span> <span class="s2">"per_tensor"</span><span class="p">,</span>
         <span class="p">},</span>
-        <span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;conv1&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;weight_dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
-                <span class="s2">&quot;act_dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
+        <span class="s2">"local"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"conv1"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"weight_dtype"</span><span class="p">:</span> <span class="s2">"fp32"</span><span class="p">,</span>
+                <span class="s2">"act_dtype"</span><span class="p">:</span> <span class="s2">"fp32"</span><span class="p">,</span>
             <span class="p">}</span>
         <span class="p">},</span>
     <span class="p">}</span>
@@ -194,10 +194,10 @@
 </ol>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">quant_config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">()</span>
 <span class="n">conv2d_config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span>
-    <span class="n">weight_dtype</span><span class="o">=</span><span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
-    <span class="n">act_dtype</span><span class="o">=</span><span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
+    <span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"fp32"</span><span class="p">,</span>
+    <span class="n">act_dtype</span><span class="o">=</span><span class="s2">"fp32"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">&quot;conv1&quot;</span><span class="p">,</span> <span class="n">conv2d_config</span><span class="p">)</span>
+<span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">"conv1"</span><span class="p">,</span> <span class="n">conv2d_config</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -222,7 +222,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b5532300> 
+   <jinja2.runtime.BlockReference object at 0x7efda3995ee0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

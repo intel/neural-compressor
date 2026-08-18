@@ -695,16 +695,16 @@
 <li><p>Example of setting <code class="docutils literal notranslate"><span class="pre">local</span></code> from a dict</p></li>
 </ol>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">quant_config</span> <span class="o">=</span> <span class="p">{</span>
-    <span class="s2">&quot;rtn&quot;</span><span class="p">:</span> <span class="p">{</span>
-        <span class="s2">&quot;global&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;bits&quot;</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
-            <span class="s2">&quot;group_size&quot;</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
-            <span class="s2">&quot;use_sym&quot;</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
+    <span class="s2">"rtn"</span><span class="p">:</span> <span class="p">{</span>
+        <span class="s2">"global"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"dtype"</span><span class="p">:</span> <span class="s2">"int"</span><span class="p">,</span>
+            <span class="s2">"bits"</span><span class="p">:</span> <span class="mi">4</span><span class="p">,</span>
+            <span class="s2">"group_size"</span><span class="p">:</span> <span class="o">-</span><span class="mi">1</span><span class="p">,</span>
+            <span class="s2">"use_sym"</span><span class="p">:</span> <span class="kc">True</span><span class="p">,</span>
         <span class="p">},</span>
-        <span class="s2">&quot;local&quot;</span><span class="p">:</span> <span class="p">{</span>
-            <span class="s2">&quot;lm_head&quot;</span><span class="p">:</span> <span class="p">{</span>
-                <span class="s2">&quot;dtype&quot;</span><span class="p">:</span> <span class="s2">&quot;fp32&quot;</span><span class="p">,</span>
+        <span class="s2">"local"</span><span class="p">:</span> <span class="p">{</span>
+            <span class="s2">"lm_head"</span><span class="p">:</span> <span class="p">{</span>
+                <span class="s2">"dtype"</span><span class="p">:</span> <span class="s2">"fp32"</span><span class="p">,</span>
             <span class="p">},</span>
         <span class="p">},</span>
     <span class="p">}</span>
@@ -715,26 +715,26 @@
 <li><p>Example of using <code class="docutils literal notranslate"><span class="pre">set_local</span></code></p></li>
 </ol>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">quant_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">()</span>
-<span class="n">lm_head_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;fp32&quot;</span><span class="p">)</span>
-<span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">&quot;lm_head&quot;</span><span class="p">,</span> <span class="n">lm_head_config</span><span class="p">)</span>
+<span class="n">lm_head_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">"fp32"</span><span class="p">)</span>
+<span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">"lm_head"</span><span class="p">,</span> <span class="n">lm_head_config</span><span class="p">)</span>
 </pre></div>
 </div>
 <ol class="simple">
 <li><p>Example of using <code class="docutils literal notranslate"><span class="pre">layer_config</span></code> for AutoRound</p></li>
 </ol>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># layer_config = {</span>
-<span class="c1">#      &quot;layer1&quot;: {</span>
-<span class="c1">#          &quot;data_type&quot;: &quot;int&quot;,</span>
-<span class="c1">#          &quot;bits&quot;: 3,</span>
-<span class="c1">#          &quot;group_size&quot;: 128,</span>
-<span class="c1">#          &quot;sym&quot;: True,</span>
+<span class="c1">#      "layer1": {</span>
+<span class="c1">#          "data_type": "int",</span>
+<span class="c1">#          "bits": 3,</span>
+<span class="c1">#          "group_size": 128,</span>
+<span class="c1">#          "sym": True,</span>
 <span class="c1">#      },</span>
-<span class="c1">#      &quot;layer2&quot;: {</span>
-<span class="c1">#          &quot;W8A16&quot;</span>
+<span class="c1">#      "layer2": {</span>
+<span class="c1">#          "W8A16"</span>
 <span class="c1">#       }</span>
 <span class="c1"># }</span>
-<span class="c1"># Use the AutoRound specific &#39;layer_config&#39; instead of the &#39;set_local&#39; API.</span>
-<span class="n">layer_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">&quot;lm_head&quot;</span><span class="p">:</span> <span class="p">{</span><span class="s2">&quot;data_type&quot;</span><span class="p">:</span> <span class="s2">&quot;int&quot;</span><span class="p">}}</span>
+<span class="c1"># Use the AutoRound specific 'layer_config' instead of the 'set_local' API.</span>
+<span class="n">layer_config</span> <span class="o">=</span> <span class="p">{</span><span class="s2">"lm_head"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"data_type"</span><span class="p">:</span> <span class="s2">"int"</span><span class="p">}}</span>
 <span class="n">quant_config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">(</span><span class="n">layer_config</span><span class="o">=</span><span class="n">layer_config</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -750,14 +750,14 @@
 <span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
 <span class="c1"># save</span>
-<span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">&quot;saved_results&quot;</span><span class="p">)</span>
+<span class="n">model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="s2">"saved_results"</span><span class="p">)</span>
 
 <span class="c1"># load</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">load</span>
 
 <span class="n">orig_model</span> <span class="o">=</span> <span class="n">YOURMODEL</span><span class="p">()</span>
 <span class="n">loaded_model</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span>
-    <span class="s2">&quot;saved_results&quot;</span><span class="p">,</span> <span class="n">original_model</span><span class="o">=</span><span class="n">orig_model</span>
+    <span class="s2">"saved_results"</span><span class="p">,</span> <span class="n">original_model</span><span class="o">=</span><span class="n">orig_model</span>
 <span class="p">)</span>  <span class="c1"># Please note that the original_model parameter passes the original model.</span>
 </pre></div>
 </div>
@@ -772,7 +772,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">RTNConfig</span><span class="p">,</span> <span class="n">convert</span><span class="p">,</span> <span class="n">prepare</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch</span><span class="w"> </span><span class="kn">import</span> <span class="n">load_empty_model</span>
 
-<span class="n">model_state_dict_path</span> <span class="o">=</span> <span class="s2">&quot;/path/to/model/state/dict&quot;</span>
+<span class="n">model_state_dict_path</span> <span class="o">=</span> <span class="s2">"/path/to/model/state/dict"</span>
 <span class="n">float_model</span> <span class="o">=</span> <span class="n">load_empty_model</span><span class="p">(</span><span class="n">model_state_dict_path</span><span class="p">)</span>
 <span class="n">quant_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">use_layer_wise</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 <span class="n">prepared_model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">float_model</span><span class="p">,</span> <span class="n">quant_config</span><span class="p">)</span>
@@ -814,7 +814,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b54e63c0> 
+   <jinja2.runtime.BlockReference object at 0x7efda39793a0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

@@ -179,7 +179,7 @@ which could fallback converted ops to FP32, if set in config, to get better accu
     <span class="k">return</span> <span class="n">acc</span>
 
 <span class="c1"># modules might be fallback to fp32 to get better accuracy</span>
-<span class="n">custom_tune_config</span> <span class="o">=</span> <span class="n">TuningConfig</span><span class="p">(</span><span class="n">config_set</span><span class="o">=</span><span class="p">[</span><span class="n">MixedPrecisionConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;bf16&quot;</span><span class="p">,</span> <span class="s2">&quot;fp32&quot;</span><span class="p">])],</span> <span class="n">max_trials</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">custom_tune_config</span> <span class="o">=</span> <span class="n">TuningConfig</span><span class="p">(</span><span class="n">config_set</span><span class="o">=</span><span class="p">[</span><span class="n">MixedPrecisionConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="p">[</span><span class="s2">"bf16"</span><span class="p">,</span> <span class="s2">"fp32"</span><span class="p">])],</span> <span class="n">max_trials</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">best_model</span> <span class="o">=</span> <span class="n">autotune</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">build_torch_model</span><span class="p">(),</span> <span class="n">tune_config</span><span class="o">=</span><span class="n">custom_tune_config</span><span class="p">,</span> <span class="n">eval_fn</span><span class="o">=</span><span class="n">eval_acc_fn</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -193,7 +193,7 @@ which could fallback converted ops to FP32, if set in config, to get better accu
     <span class="k">return</span> <span class="n">acc</span>
 
 <span class="c1"># modules might be fallback to fp32 to get better accuracy</span>
-<span class="n">custom_tune_config</span> <span class="o">=</span> <span class="n">TuningConfig</span><span class="p">(</span><span class="n">config_set</span><span class="o">=</span><span class="p">[</span><span class="n">MixedPrecisionConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;fp16&quot;</span><span class="p">,</span> <span class="s2">&quot;fp32&quot;</span><span class="p">])],</span> <span class="n">max_trials</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
+<span class="n">custom_tune_config</span> <span class="o">=</span> <span class="n">TuningConfig</span><span class="p">(</span><span class="n">config_set</span><span class="o">=</span><span class="p">[</span><span class="n">MixedPrecisionConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="p">[</span><span class="s2">"fp16"</span><span class="p">,</span> <span class="s2">"fp32"</span><span class="p">])],</span> <span class="n">max_trials</span><span class="o">=</span><span class="mi">3</span><span class="p">)</span>
 <span class="n">best_model</span> <span class="o">=</span> <span class="n">autotune</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">build_torch_model</span><span class="p">(),</span> <span class="n">tune_config</span><span class="o">=</span><span class="n">custom_tune_config</span><span class="p">,</span> <span class="n">eval_fn</span><span class="o">=</span><span class="n">eval_acc_fn</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -218,7 +218,7 @@ which could fallback converted ops to FP32, if set in config, to get better accu
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b1747c20> 
+   <jinja2.runtime.BlockReference object at 0x7efda3b60a40> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

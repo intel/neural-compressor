@@ -117,17 +117,17 @@
 <ol class="simple">
 <li><p>Load the original model:</p></li>
 </ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">gemma_lm</span> <span class="o">=</span> <span class="n">Gemma3CausalLM</span><span class="o">.</span><span class="n">from_preset</span><span class="p">(</span><span class="s2">&quot;model_name or path_to_the_model&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">gemma_lm</span> <span class="o">=</span> <span class="n">Gemma3CausalLM</span><span class="o">.</span><span class="n">from_preset</span><span class="p">(</span><span class="s2">"model_name or path_to_the_model"</span><span class="p">)</span>
 </pre></div>
 </div>
 <ol class="simple">
 <li><p>Calibrate the model using a dataset similar to the one that will be used later. In our example - we use just one prompt. We can choose which floating point format will be used in quantized model.</p></li>
 </ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">&quot;fp8_e4m3&quot;</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">&quot;fp8_e4m3&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">calib_function</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">({</span><span class="s2">&quot;prompts&quot;</span><span class="p">:</span> <span class="s2">&quot;Describe the city of Moscow&quot;</span><span class="p">},</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">({</span><span class="s2">"prompts"</span><span class="p">:</span> <span class="s2">"Describe the city of Moscow"</span><span class="p">},</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 
 
 <span class="n">gemma_lm</span> <span class="o">=</span> <span class="n">quantize_model</span><span class="p">(</span><span class="n">gemma_lm</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_function</span><span class="p">)</span>
@@ -136,21 +136,21 @@
 <ol class="simple">
 <li><p>Use quantized model</p></li>
 </ol>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">gemma_lm</span><span class="o">.</span><span class="n">generate</span><span class="p">({</span><span class="s2">&quot;prompts&quot;</span><span class="p">:</span> <span class="s2">&quot;Describe the city of Berlin?&quot;</span><span class="p">},</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Output after quantization:</span><span class="se">\n</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">output</span> <span class="o">=</span> <span class="n">gemma_lm</span><span class="o">.</span><span class="n">generate</span><span class="p">({</span><span class="s2">"prompts"</span><span class="p">:</span> <span class="s2">"Describe the city of Berlin?"</span><span class="p">},</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Output after quantization:</span><span class="se">\n</span><span class="s2">"</span><span class="p">,</span> <span class="n">output</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>You can simply run this by running prepared <a class="reference external" href="quantization.py">quantization.py</a> example.
 When we run example, we can notice different answers of both models for the same prompt, but both should be reasonable. For example:<br />Original gemma3_instruct_270m model:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Describe the city of Berlin?
 
-Berlin is a vibrant and diverse city with a rich history, a thriving arts scene, and a strong sense of community. It&#39;s a place where you can find a wide variety of experiences, from exploring historical landmarks to enjoying the vibrant nightlife. Berlin is known for its iconic landmarks like the Brandenburg Gate, the Reichstag, and the Wall. The city is also known for its diverse cultural scene, with museums, theaters, and music venues. Berlin is a
+Berlin is a vibrant and diverse city with a rich history, a thriving arts scene, and a strong sense of community. It's a place where you can find a wide variety of experiences, from exploring historical landmarks to enjoying the vibrant nightlife. Berlin is known for its iconic landmarks like the Brandenburg Gate, the Reichstag, and the Wall. The city is also known for its diverse cultural scene, with museums, theaters, and music venues. Berlin is a
 </pre></div>
 </div>
 <p>Quantized gemma3_instruct_270m model:</p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span>Describe the city of Berlin?
 
-Berlin is a vibrant, diverse, and historically rich city with a unique blend of cultures and traditions. It&#39;s a place where history is palpable, art, and music, and the very alive. The city&#39;s architecture is stunning, with a mix of modern and a unique blend of styles. The streets are lined with charming, bustling with people, and the atmosphere. The food is a delight, with a variety of cuisines, from the most delicious and
+Berlin is a vibrant, diverse, and historically rich city with a unique blend of cultures and traditions. It's a place where history is palpable, art, and music, and the very alive. The city's architecture is stunning, with a mix of modern and a unique blend of styles. The streets are lined with charming, bustling with people, and the atmosphere. The food is a delight, with a variety of cuisines, from the most delicious and
 </pre></div>
 </div>
 </section>
@@ -168,8 +168,8 @@ You can run <a class="reference external" href="prepare_static.py">prepare_stati
 <p>After this step, the saved model is stored in the <code class="docutils literal notranslate"><span class="pre">/path_to_store_your_quantized_model/gemma3_instruct_270m</span></code> file. You can load and use it with <a class="reference external" href="use_static.py">use_static.py</a></p>
 <div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">keras_hub.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gemma3CausalLM</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">neural_compressor.jax.quantization</span>
-<span class="n">gemma_lm</span> <span class="o">=</span> <span class="n">Gemma3CausalLM</span><span class="o">.</span><span class="n">from_preset</span><span class="p">(</span><span class="s2">&quot;/path_to_store_your_quantized_model/gemma3_instruct_270m&quot;</span><span class="p">)</span>
-<span class="n">output</span> <span class="o">=</span> <span class="n">gemma_lm</span><span class="o">.</span><span class="n">generate</span><span class="p">({</span><span class="s2">&quot;prompts&quot;</span><span class="p">:</span> <span class="s2">&quot;Describe the city of Berlin?&quot;</span><span class="p">},</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
+<span class="n">gemma_lm</span> <span class="o">=</span> <span class="n">Gemma3CausalLM</span><span class="o">.</span><span class="n">from_preset</span><span class="p">(</span><span class="s2">"/path_to_store_your_quantized_model/gemma3_instruct_270m"</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">gemma_lm</span><span class="o">.</span><span class="n">generate</span><span class="p">({</span><span class="s2">"prompts"</span><span class="p">:</span> <span class="s2">"Describe the city of Berlin?"</span><span class="p">},</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>You can notice that even script does not directly use neural_compressor function, but requires importing neural_compressor.jax.quantization to load quantized model.</p>
@@ -227,7 +227,7 @@ and then use print_model() function in your script. To see how it works just unc
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b549ade0> 
+   <jinja2.runtime.BlockReference object at 0x7efda39b0290> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

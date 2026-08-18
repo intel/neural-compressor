@@ -119,8 +119,8 @@ model = M().eval()
 
 # user code run
 with torch.no_grad():
-<span class="w"> </span>   model.to(&quot;hpu&quot;)
-<span class="w"> </span>   output = model(torch.randn(1, 10).to(&quot;hpu&quot;))
+<span class="w"> </span>   model.to("hpu")
+<span class="w"> </span>   output = model(torch.randn(1, 10).to("hpu"))
 <span class="w"> </span>   print(output)
 
 <span class="gi">+ if config.measure:</span>
@@ -154,14 +154,14 @@ class M(torch.nn.Module):
 <span class="w"> </span>       x2 = self.fc2(x1)
 <span class="w"> </span>       return x2
 
-model = M().to(&quot;hpu&quot;)
+model = M().to("hpu")
 
 <span class="gi">+ config = FP8Config.from_json_file(args.quant_config) # args.quant_config is the path of json file</span>
 <span class="gi">+ model = prepare(model, config)</span>
 
 # user code run to do calibration
 with torch.no_grad():
-<span class="w"> </span>   output = model(torch.randn(1, 10).to(&quot;hpu&quot;))
+<span class="w"> </span>   output = model(torch.randn(1, 10).to("hpu"))
 <span class="w"> </span>   print(output)
 
 <span class="gi">+ finalize_calibration(model)</span>
@@ -169,7 +169,7 @@ with torch.no_grad():
 
 # user code to run benchmark for quantized model
 with torch.no_grad():
-<span class="w"> </span>   output = model(torch.randn(1, 10).to(&quot;hpu&quot;))
+<span class="w"> </span>   output = model(torch.randn(1, 10).to("hpu"))
 <span class="w"> </span>   print(output)
 </pre></div>
 </div>
@@ -194,7 +194,7 @@ with torch.no_grad():
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b572a1b0> 
+   <jinja2.runtime.BlockReference object at 0x7efda3937770> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

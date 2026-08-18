@@ -207,24 +207,24 @@ In this case we calibrate and quantize the model, and use our calibration datalo
 
     <span class="n">quant_config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">()</span>
     <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">input_tensor_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;input_tensor&#39;</span><span class="p">]</span>
-    <span class="n">model</span><span class="o">.</span><span class="n">output_tensor_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">&#39;model/Transformer/strided_slice_19&#39;</span><span class="p">]</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">input_tensor_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'input_tensor'</span><span class="p">]</span>
+    <span class="n">model</span><span class="o">.</span><span class="n">output_tensor_names</span> <span class="o">=</span> <span class="p">[</span><span class="s1">'model/Transformer/strided_slice_19'</span><span class="p">]</span>
     <span class="n">q_model</span> <span class="o">=</span> <span class="n">quantize_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_config</span><span class="p">,</span> <span class="n">calib_dataloader</span><span class="p">)</span>
     <span class="k">try</span><span class="p">:</span>
         <span class="n">q_model</span><span class="o">.</span><span class="n">save</span><span class="p">(</span><span class="n">FLAGS</span><span class="o">.</span><span class="n">output_model</span><span class="p">)</span>
     <span class="k">except</span> <span class="ne">Exception</span> <span class="k">as</span> <span class="n">e</span><span class="p">:</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Failed to save model due to </span><span class="si">{}</span><span class="s2">&quot;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)))</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Failed to save model due to </span><span class="si">{}</span><span class="s2">"</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="nb">str</span><span class="p">(</span><span class="n">e</span><span class="p">)))</span>
 </pre></div>
 </div>
 </section>
 <section id="id1">
 <h3>Benchmark<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">if</span> <span class="n">FLAGS</span><span class="o">.</span><span class="n">benchmark</span><span class="p">:</span>
-        <span class="k">assert</span> <span class="n">FLAGS</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;performance&#39;</span> <span class="ow">or</span> <span class="n">FLAGS</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;accuracy&#39;</span><span class="p">,</span> \
-        <span class="s2">&quot;Benchmark only supports performance or accuracy mode.&quot;</span>
+        <span class="k">assert</span> <span class="n">FLAGS</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">'performance'</span> <span class="ow">or</span> <span class="n">FLAGS</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">'accuracy'</span><span class="p">,</span> \
+        <span class="s2">"Benchmark only supports performance or accuracy mode."</span>
         <span class="n">acc</span> <span class="o">=</span> <span class="n">eval_func</span><span class="p">(</span><span class="n">graph</span><span class="p">)</span>
-        <span class="k">if</span> <span class="n">FLAGS</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">&#39;accuracy&#39;</span><span class="p">:</span>
-            <span class="nb">print</span><span class="p">(</span><span class="s1">&#39;Accuracy is </span><span class="si">{:.3f}</span><span class="s1">&#39;</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">acc</span><span class="p">))</span>
+        <span class="k">if</span> <span class="n">FLAGS</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s1">'accuracy'</span><span class="p">:</span>
+            <span class="nb">print</span><span class="p">(</span><span class="s1">'Accuracy is </span><span class="si">{:.3f}</span><span class="s1">'</span><span class="o">.</span><span class="n">format</span><span class="p">(</span><span class="n">acc</span><span class="p">))</span>
 </pre></div>
 </div>
 </section>
@@ -245,7 +245,7 @@ In this case we calibrate and quantize the model, and use our calibration datalo
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b579dfd0> 
+   <jinja2.runtime.BlockReference object at 0x7efda39bc4a0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

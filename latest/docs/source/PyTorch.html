@@ -118,7 +118,7 @@
     <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
     <span class="n">example_inputs</span><span class="p">:</span> <span class="n">Any</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Prepare the model for calibration.</span>
+<span class="w">    </span><span class="sd">"""Prepare the model for calibration.</span>
 
 <span class="sd">    Insert observers into the model so that it can monitor the input and output tensors during calibration.</span>
 
@@ -130,7 +130,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        prepared and calibrated module.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 </pre></div>
 </div>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">convert</span><span class="p">(</span>
@@ -138,7 +138,7 @@
     <span class="n">quant_config</span><span class="p">:</span> <span class="n">BaseConfig</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Convert the prepared model to a quantized model.</span>
+<span class="w">    </span><span class="sd">"""Convert the prepared model to a quantized model.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        model (torch.nn.Module): the prepared model</span>
@@ -147,7 +147,7 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The quantized model.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 </pre></div>
 </div>
 </section>
@@ -162,7 +162,7 @@
     <span class="n">run_args</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="n">example_inputs</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
 <span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The main entry of auto-tune.</span>
+<span class="w">    </span><span class="sd">"""The main entry of auto-tune.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        model (torch.nn.Module): _description_</span>
@@ -175,31 +175,31 @@
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The quantized model.</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 </pre></div>
 </div>
 </section>
 <section id="load-api">
 <h3>Load API<a class="headerlink" href="#load-api" title="Link to this heading"></a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">neural_compressor.torch</span></code> links the save function to the quantized model. If <code class="docutils literal notranslate"><span class="pre">model.save</span></code> already exists, Neural Compressor renames the previous function to <code class="docutils literal notranslate"><span class="pre">model.orig_save</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./saved_results&quot;</span><span class="p">):</span>
-<span class="sd">&quot;&quot;&quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">save</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">output_dir</span><span class="o">=</span><span class="s2">"./saved_results"</span><span class="p">):</span>
+<span class="sd">"""</span>
 <span class="sd">    Args:</span>
 <span class="sd">        self (torch.nn.Module): the quantized model.</span>
 <span class="sd">        output_dir (str, optional): path to save the quantized model </span>
-<span class="sd">&quot;&quot;&quot;</span>
+<span class="sd">"""</span>
 </pre></div>
 </div>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./saved_results&quot;</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The main entry of load for all algorithms.</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">load</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">"./saved_results"</span><span class="p">,</span> <span class="n">model</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
+<span class="w">    </span><span class="sd">"""The main entry of load for all algorithms.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        output_dir (str, optional): path to quantized model folder. Defaults to &quot;./saved_results&quot;.</span>
+<span class="sd">        output_dir (str, optional): path to quantized model folder. Defaults to "./saved_results".</span>
 <span class="sd">        model (torch.nn.Module, optional): original model, suggest to use empty tensor.</span>
 
 <span class="sd">    Returns:</span>
 <span class="sd">        The quantized model</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 </pre></div>
 </div>
 </section>
@@ -332,20 +332,20 @@ Deep Learning</a></td>
 <div><p>Neural Compressor extends a <code class="docutils literal notranslate"><span class="pre">set_local</span></code> method based on the global configuration object to set custom configuration.</p>
 </div></blockquote>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">set_local</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">operator_name_or_list</span><span class="p">:</span> <span class="n">Union</span><span class="p">[</span><span class="n">List</span><span class="p">,</span> <span class="nb">str</span><span class="p">,</span> <span class="n">Callable</span><span class="p">],</span> <span class="n">config</span><span class="p">:</span> <span class="n">BaseConfig</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">BaseConfig</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Set custom configuration based on the global configuration object.</span>
+<span class="w">    </span><span class="sd">"""Set custom configuration based on the global configuration object.</span>
 
 <span class="sd">    Args:</span>
 <span class="sd">        operator_name_or_list (Union[List, str, Callable]): specific operator</span>
 <span class="sd">        config (BaseConfig): specific configuration</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 </pre></div>
 </div>
 <blockquote>
 <div><p>Demo:</p>
 </div></blockquote>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">quant_config</span> <span class="o">=</span> <span class="n">RTNConfig</span><span class="p">()</span>  <span class="c1"># Initialize global configuration with default bits=4</span>
-<span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">&quot;.*mlp.*&quot;</span><span class="p">,</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">bits</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span>  <span class="c1"># For layers with &quot;mlp&quot; in their names, set bits=8</span>
-<span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">&quot;Conv1d&quot;</span><span class="p">,</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">&quot;fp32&quot;</span><span class="p">))</span>  <span class="c1"># For Conv1d layers, do not quantize them.</span>
+<span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">".*mlp.*"</span><span class="p">,</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">bits</span><span class="o">=</span><span class="mi">8</span><span class="p">))</span>  <span class="c1"># For layers with "mlp" in their names, set bits=8</span>
+<span class="n">quant_config</span><span class="o">.</span><span class="n">set_local</span><span class="p">(</span><span class="s2">"Conv1d"</span><span class="p">,</span> <span class="n">RTNConfig</span><span class="p">(</span><span class="n">dtype</span><span class="o">=</span><span class="s2">"fp32"</span><span class="p">))</span>  <span class="c1"># For Conv1d layers, do not quantize them.</span>
 </pre></div>
 </div>
 </li>
@@ -381,7 +381,7 @@ Deep Learning</a></td>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b549b110> 
+   <jinja2.runtime.BlockReference object at 0x7efda3994dd0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

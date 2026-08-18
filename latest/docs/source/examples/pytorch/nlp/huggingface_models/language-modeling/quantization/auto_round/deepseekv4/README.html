@@ -94,12 +94,12 @@
 
 <span class="n">config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">(</span>
     <span class="n">model_free</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
-    <span class="n">scheme</span><span class="o">=</span><span class="s2">&quot;MXFP4&quot;</span><span class="p">,</span>
-    <span class="n">ignore_layers</span><span class="o">=</span><span class="s2">&quot;compressor,indexer.weights_proj&quot;</span><span class="p">,</span>
-    <span class="n">export_format</span><span class="o">=</span><span class="s2">&quot;llm_compressor&quot;</span><span class="p">,</span>
-    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;/path/to/output&quot;</span><span class="p">,</span>
+    <span class="n">scheme</span><span class="o">=</span><span class="s2">"MXFP4"</span><span class="p">,</span>
+    <span class="n">ignore_layers</span><span class="o">=</span><span class="s2">"compressor,indexer.weights_proj"</span><span class="p">,</span>
+    <span class="n">export_format</span><span class="o">=</span><span class="s2">"llm_compressor"</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s2">"/path/to/output"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">model</span> <span class="o">=</span> <span class="s2">&quot;/path/or/hf_model_name&quot;</span>
+<span class="n">model</span> <span class="o">=</span> <span class="s2">"/path/or/hf_model_name"</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 </pre></div>
@@ -108,7 +108,7 @@
 <h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
 <p>Install dependencies before running quantization or evaluation:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>pip
-uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span><span class="s2">&quot;git+https://github.com/intel/auto-round.git@main&quot;</span>
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span><span class="s2">"git+https://github.com/intel/auto-round.git@main"</span>
 uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>evalscope<span class="w"> </span>lm_eval<span class="w"> </span>transformers<span class="w"> </span>datasets
 uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>compressed-tensors<span class="w"> </span>--no-deps
 bash<span class="w"> </span>&lt;<span class="o">(</span>curl<span class="w"> </span>-fsSL<span class="w"> </span>https://raw.githubusercontent.com/vllm-project/vllm/main/tools/install_deepgemm.sh<span class="o">)</span>
@@ -215,7 +215,7 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se"
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b56b1610> 
+   <jinja2.runtime.BlockReference object at 0x7efda3b06930> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

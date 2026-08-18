@@ -238,8 +238,8 @@
     <span class="n">quant_scheme</span><span class="p">:</span> <span class="nb">str</span> <span class="o">|</span> <span class="kc">None</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
         <span class="n">default</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
         <span class="n">metadata</span><span class="o">=</span><span class="p">{</span>
-            <span class="s2">&quot;help&quot;</span><span class="p">:</span> <span class="s2">&quot;Specify the quantization format for PTQ/QAT. If specified, PTQ/QAT will be enabled.&quot;</span><span class="p">,</span>
-            <span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;MXFP8&quot;</span><span class="p">,</span> <span class="s2">&quot;MXFP4&quot;</span><span class="p">],</span>
+            <span class="s2">"help"</span><span class="p">:</span> <span class="s2">"Specify the quantization format for PTQ/QAT. If specified, PTQ/QAT will be enabled."</span><span class="p">,</span>
+            <span class="s2">"choices"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"MXFP8"</span><span class="p">,</span> <span class="s2">"MXFP4"</span><span class="p">],</span>
         <span class="p">},</span>
     <span class="p">)</span>
 </pre></div>
@@ -249,14 +249,14 @@
     <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization.quantize</span><span class="w"> </span><span class="kn">import</span> <span class="n">prepare_qat</span>
 
     <span class="n">model</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
-    <span class="k">if</span> <span class="n">quant_args</span><span class="o">.</span><span class="n">quant_scheme</span> <span class="o">==</span> <span class="s2">&quot;MXFP8&quot;</span><span class="p">:</span>
+    <span class="k">if</span> <span class="n">quant_args</span><span class="o">.</span><span class="n">quant_scheme</span> <span class="o">==</span> <span class="s2">"MXFP8"</span><span class="p">:</span>
         <span class="c1"># Default MXFP8 scheme</span>
         <span class="n">prepare_qat</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
-    <span class="k">if</span> <span class="n">quant_args</span><span class="o">.</span><span class="n">quant_scheme</span> <span class="o">==</span> <span class="s2">&quot;MXFP4&quot;</span><span class="p">:</span>
-        <span class="n">mappings</span> <span class="o">=</span> <span class="p">{</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">:</span> <span class="s2">&quot;MXFP4&quot;</span><span class="p">}</span>
+    <span class="k">if</span> <span class="n">quant_args</span><span class="o">.</span><span class="n">quant_scheme</span> <span class="o">==</span> <span class="s2">"MXFP4"</span><span class="p">:</span>
+        <span class="n">mappings</span> <span class="o">=</span> <span class="p">{</span><span class="n">torch</span><span class="o">.</span><span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">:</span> <span class="s2">"MXFP4"</span><span class="p">}</span>
         <span class="n">prepare_qat</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">mappings</span><span class="p">)</span>
 
-    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Finish model preparation for QAT.&quot;</span><span class="p">)</span>
+    <span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Finish model preparation for QAT."</span><span class="p">)</span>
 </pre></div>
 </div>
 <section id="example-qat-with-mxfp4">
@@ -316,10 +316,10 @@
 <h3>1. <code class="docutils literal notranslate"><span class="pre">prepare_qat</span></code> and Module Replacement<a class="headerlink" href="#prepare-qat-and-module-replacement" title="Link to this heading"></a></h3>
 <p>The QAT preparation uses utility functions in <code class="docutils literal notranslate"><span class="pre">neural_compressor/torch/algorithms/qat/quant_utils.py</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">replace_with_quant_linear</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_cfg</span><span class="o">=</span><span class="kc">None</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Recursively replace modules with quantized modules.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Recursively replace modules with quantized modules."""</span>
     <span class="k">for</span> <span class="n">name</span><span class="p">,</span> <span class="n">child</span> <span class="ow">in</span> <span class="n">model</span><span class="o">.</span><span class="n">named_children</span><span class="p">():</span>
         <span class="k">if</span> <span class="nb">isinstance</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">nn</span><span class="o">.</span><span class="n">Linear</span><span class="p">):</span>
-            <span class="k">if</span> <span class="s2">&quot;lm_head&quot;</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
+            <span class="k">if</span> <span class="s2">"lm_head"</span> <span class="ow">in</span> <span class="n">name</span><span class="p">:</span>
                 <span class="k">continue</span>
             <span class="c1"># Replace on the parent</span>
             <span class="n">quantized</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">child</span><span class="p">,</span> <span class="n">quant_cfg</span><span class="p">,</span> <span class="n">QuantLinear</span><span class="p">)</span>
@@ -337,7 +337,7 @@
 <h3>2. <code class="docutils literal notranslate"><span class="pre">QuantLinear</span></code><a class="headerlink" href="#quantlinear" title="Link to this heading"></a></h3>
 <p>Defined in <code class="docutils literal notranslate"><span class="pre">neural_compressor/torch/algorithms/qat/quant_linear.py</span></code>:</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">QuantLinear</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Quantized version of nn.Linear.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Quantized version of nn.Linear."""</span>
 
     <span class="k">def</span><span class="w"> </span><span class="nf">forward</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="nb">input</span><span class="p">:</span> <span class="n">torch</span><span class="o">.</span><span class="n">Tensor</span><span class="p">):</span>
         <span class="n">qw</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">weight_quantizer</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">weight</span><span class="p">)</span>
@@ -387,7 +387,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">TensorQuantizer</span><span class="p">(</span><span class="n">nn</span><span class="o">.</span><span class="n">Module</span><span class="p">):</span>
     <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span>
         <span class="bp">self</span><span class="p">,</span>
-        <span class="n">data_type</span><span class="o">=</span><span class="s2">&quot;mx_fp8&quot;</span><span class="p">,</span>
+        <span class="n">data_type</span><span class="o">=</span><span class="s2">"mx_fp8"</span><span class="p">,</span>
         <span class="n">bits</span><span class="o">=</span><span class="mi">8</span><span class="p">,</span>
         <span class="n">block_size</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
         <span class="n">sym</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
@@ -398,7 +398,7 @@
         <span class="n">device</span><span class="o">=</span><span class="kc">None</span><span class="p">,</span>
     <span class="p">):</span>
         <span class="o">...</span>
-        <span class="k">assert</span> <span class="n">get_quant_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">&quot;The quantization function is imported from AutoRound, please install it.&quot;</span>
+        <span class="k">assert</span> <span class="n">get_quant_func</span> <span class="ow">is</span> <span class="ow">not</span> <span class="kc">None</span><span class="p">,</span> <span class="s2">"The quantization function is imported from AutoRound, please install it."</span>
 
         <span class="bp">self</span><span class="o">.</span><span class="n">quant_func</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">data_type</span> <span class="o">=</span> <span class="n">get_quant_func</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">data_type</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">num_bits</span><span class="p">,</span> <span class="bp">self</span><span class="o">.</span><span class="n">sym</span><span class="p">)</span>
         <span class="o">...</span>
@@ -434,7 +434,7 @@
         <span class="o">...</span>
         <span class="k">if</span> <span class="p">(</span><span class="ow">not</span> <span class="bp">self</span><span class="o">.</span><span class="n">is_in_train</span><span class="p">)</span> <span class="ow">and</span> <span class="bp">self</span><span class="o">.</span><span class="n">args</span><span class="o">.</span><span class="n">should_save</span><span class="p">:</span>
             <span class="n">out_dir</span> <span class="o">=</span> <span class="n">args</span><span class="p">[</span><span class="mi">0</span><span class="p">]</span>
-            <span class="bp">self</span><span class="o">.</span><span class="n">_update_config_json_dtype</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_original_dtype</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">&quot;.&quot;</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
+            <span class="bp">self</span><span class="o">.</span><span class="n">_update_config_json_dtype</span><span class="p">(</span><span class="n">out_dir</span><span class="p">,</span> <span class="nb">str</span><span class="p">(</span><span class="bp">self</span><span class="o">.</span><span class="n">_original_dtype</span><span class="p">)</span><span class="o">.</span><span class="n">split</span><span class="p">(</span><span class="s2">"."</span><span class="p">)[</span><span class="mi">1</span><span class="p">])</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -457,7 +457,7 @@
 </ol>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">ModelArguments</span><span class="p">:</span>
-    <span class="n">model_name_or_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">&quot;meta-llama/Llama-3.1-8B&quot;</span><span class="p">)</span>
+    <span class="n">model_name_or_path</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span><span class="n">default</span><span class="o">=</span><span class="s2">"meta-llama/Llama-3.1-8B"</span><span class="p">)</span>
 </pre></div>
 </div>
 <ol class="simple">
@@ -475,8 +475,8 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nd">@dataclass</span>
 <span class="k">class</span><span class="w"> </span><span class="nc">DataArguments</span><span class="p">:</span>
     <span class="n">dataset</span><span class="p">:</span> <span class="nb">str</span> <span class="o">=</span> <span class="n">field</span><span class="p">(</span>
-        <span class="n">default</span><span class="o">=</span><span class="s2">&quot;Daring-Anteater&quot;</span><span class="p">,</span>
-        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">&quot;choices&quot;</span><span class="p">:</span> <span class="p">[</span><span class="s2">&quot;Daring-Anteater&quot;</span><span class="p">,</span> <span class="s2">&quot;cnn_dailymail&quot;</span><span class="p">]},</span>
+        <span class="n">default</span><span class="o">=</span><span class="s2">"Daring-Anteater"</span><span class="p">,</span>
+        <span class="n">metadata</span><span class="o">=</span><span class="p">{</span><span class="s2">"choices"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"Daring-Anteater"</span><span class="p">,</span> <span class="s2">"cnn_dailymail"</span><span class="p">]},</span>
     <span class="p">)</span>
     <span class="n">train_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>  <span class="c1"># 0 = default / automatic</span>
     <span class="n">eval_size</span><span class="p">:</span> <span class="nb">int</span> <span class="o">=</span> <span class="mi">0</span>
@@ -496,10 +496,10 @@
 <section id="detecting-quantization-format">
 <h3>Detecting Quantization Format<a class="headerlink" href="#detecting-quantization-format" title="Link to this heading"></a></h3>
 <p><code class="docutils literal notranslate"><span class="pre">get_quantization_format</span></code> inspects layers to determine the applied MX format:</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">weight_quantizer</span><span class="o">.</span><span class="n">num_bits</span> <span class="o">==</span> <span class="mi">8</span> <span class="ow">and</span> <span class="n">weight_quantizer</span><span class="o">.</span><span class="n">data_type</span> <span class="o">==</span> <span class="s2">&quot;mx_fp8&quot;</span><span class="p">:</span>
-    <span class="k">return</span> <span class="s2">&quot;MXFP8&quot;</span>
-<span class="k">if</span> <span class="n">weight_quantizer</span><span class="o">.</span><span class="n">num_bits</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span> <span class="n">weight_quantizer</span><span class="o">.</span><span class="n">data_type</span> <span class="o">==</span> <span class="s2">&quot;mx_fp4&quot;</span><span class="p">:</span>
-    <span class="k">return</span> <span class="s2">&quot;MXFP4&quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">if</span> <span class="n">weight_quantizer</span><span class="o">.</span><span class="n">num_bits</span> <span class="o">==</span> <span class="mi">8</span> <span class="ow">and</span> <span class="n">weight_quantizer</span><span class="o">.</span><span class="n">data_type</span> <span class="o">==</span> <span class="s2">"mx_fp8"</span><span class="p">:</span>
+    <span class="k">return</span> <span class="s2">"MXFP8"</span>
+<span class="k">if</span> <span class="n">weight_quantizer</span><span class="o">.</span><span class="n">num_bits</span> <span class="o">==</span> <span class="mi">4</span> <span class="ow">and</span> <span class="n">weight_quantizer</span><span class="o">.</span><span class="n">data_type</span> <span class="o">==</span> <span class="s2">"mx_fp4"</span><span class="p">:</span>
+    <span class="k">return</span> <span class="s2">"MXFP4"</span>
 </pre></div>
 </div>
 </section>
@@ -595,7 +595,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b54e4ad0> 
+   <jinja2.runtime.BlockReference object at 0x7efda3b1d820> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

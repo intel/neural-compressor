@@ -139,7 +139,7 @@ $$</p>
     <span class="n">zp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span> <span class="o">-</span> <span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">x</span><span class="p">))</span> <span class="o">/</span> <span class="n">scale</span><span class="p">)</span>
     <span class="n">q_x</span> <span class="o">=</span> <span class="n">x</span> <span class="o">/</span> <span class="n">scale</span> <span class="o">+</span> <span class="n">zp</span>
     <span class="n">q_x</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span><span class="p">)</span><span class="o">.</span><span class="n">round_</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;scale = </span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">, zp = </span><span class="si">{</span><span class="n">zp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scale = </span><span class="si">{</span><span class="n">scale</span><span class="si">}</span><span class="s2">, zp = </span><span class="si">{</span><span class="n">zp</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">q_x</span><span class="p">,</span> <span class="n">scale</span><span class="p">,</span> <span class="n">zp</span>
 </pre></div>
 </div>
@@ -185,7 +185,7 @@ tensor<span class="o">([[</span><span class="m">0</span>.6848,<span class="w"> <
     <span class="n">zp</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">round</span><span class="p">(</span><span class="mi">0</span> <span class="o">-</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">min</span><span class="p">(</span><span class="n">dim</span><span class="o">=-</span><span class="mi">1</span><span class="p">,</span> <span class="n">keepdim</span><span class="o">=</span><span class="kc">True</span><span class="p">)[</span><span class="mi">0</span><span class="p">]</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">scales</span><span class="p">))</span>
     <span class="n">q_x</span> <span class="o">=</span> <span class="n">x_tmp</span><span class="o">.</span><span class="n">divide</span><span class="p">(</span><span class="n">scales</span><span class="p">)</span> <span class="o">+</span> <span class="n">zp</span>
     <span class="n">q_x</span><span class="o">.</span><span class="n">clamp_</span><span class="p">(</span><span class="n">q_min</span><span class="p">,</span> <span class="n">q_max</span><span class="p">)</span><span class="o">.</span><span class="n">round_</span><span class="p">()</span>
-    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;scales = </span><span class="si">{</span><span class="n">scales</span><span class="si">}</span><span class="s2">, </span><span class="se">\n</span><span class="s2"> zp = </span><span class="si">{</span><span class="n">zp</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+    <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"scales = </span><span class="si">{</span><span class="n">scales</span><span class="si">}</span><span class="s2">, </span><span class="se">\n</span><span class="s2"> zp = </span><span class="si">{</span><span class="n">zp</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
     <span class="k">return</span> <span class="n">q_x</span><span class="p">,</span> <span class="n">scales</span><span class="p">,</span> <span class="n">zp</span>
 
 
@@ -254,8 +254,8 @@ tensor<span class="o">([[</span><span class="m">0</span>.6883,<span class="w"> <
 <p>Quantize weight and activation, matmul(quantize(X), quantize(Y))</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>&gt;&gt;&gt;W_q,<span class="w"> </span><span class="nv">W_scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>quantize_per_tensor_absmax<span class="o">(</span>W<span class="o">)</span>
 &gt;&gt;&gt;X_q,<span class="w"> </span><span class="nv">X_scale</span><span class="w"> </span><span class="o">=</span><span class="w"> </span>quantize_per_tensor_absmax<span class="o">(</span>X<span class="o">)</span>
-&gt;&gt;&gt;print<span class="o">(</span>f<span class="s1">&#39;{W_q}\n{W_scale.item()}&#39;</span><span class="o">)</span>
-&gt;&gt;&gt;print<span class="o">(</span>f<span class="s1">&#39;{X_q}\n{X_scale.item()}&#39;</span><span class="o">)</span>
+&gt;&gt;&gt;print<span class="o">(</span>f<span class="s1">'{W_q}\n{W_scale.item()}'</span><span class="o">)</span>
+&gt;&gt;&gt;print<span class="o">(</span>f<span class="s1">'{X_q}\n{X_scale.item()}'</span><span class="o">)</span>
 tensor<span class="o">([[</span><span class="w"> </span><span class="m">13</span>.,<span class="w"> </span><span class="m">127</span>.,<span class="w"> </span><span class="m">101</span>.<span class="o">]</span>,
 <span class="w">        </span><span class="o">[</span><span class="w"> </span><span class="m">64</span>.,<span class="w">  </span><span class="m">84</span>.,<span class="w"> </span><span class="m">120</span>.<span class="o">]])</span>
 <span class="m">0</span>.0059755356051027775
@@ -380,7 +380,7 @@ In block-wise auto-tuning, layers within one block (e.g an OPTDecoderLayer) woul
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b5918b60> 
+   <jinja2.runtime.BlockReference object at 0x7efda39a4bc0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

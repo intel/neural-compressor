@@ -133,17 +133,17 @@
 <ul class="simple">
 <li><p>Recommend</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">long_string</span> <span class="o">=</span> <span class="s2">&quot;&quot;&quot;This is fine if your use case can accept</span>
-<span class="s2">    extraneous leading spaces.&quot;&quot;&quot;</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">long_string</span> <span class="o">=</span> <span class="s2">"""This is fine if your use case can accept</span>
+<span class="s2">    extraneous leading spaces."""</span>
 
-<span class="n">long_string</span> <span class="o">=</span> <span class="s2">&quot;And this is fine if you cannot accept</span><span class="se">\n</span><span class="s2">&quot;</span> <span class="s2">&quot;extraneous leading spaces.&quot;</span>
+<span class="n">long_string</span> <span class="o">=</span> <span class="s2">"And this is fine if you cannot accept</span><span class="se">\n</span><span class="s2">"</span> <span class="s2">"extraneous leading spaces."</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>Not recommend</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;This is fine if your use case can accept&quot;</span><span class="p">)</span>
-<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;extraneous leading spaces.&quot;</span><span class="p">)</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"This is fine if your use case can accept"</span><span class="p">)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"extraneous leading spaces."</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -154,19 +154,19 @@
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.common</span><span class="w"> </span><span class="kn">import</span> <span class="n">logger</span>
 
-<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Current TensorFlow Version is: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>  <span class="c1"># Use a pattern-string (with %-placeholders)</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Current TensorFlow Version is: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="p">)</span>  <span class="c1"># Use a pattern-string (with %-placeholders)</span>
 
-<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Current $PAGER is: </span><span class="si">%s</span><span class="s2">&quot;</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;PAGER&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">))</span>  <span class="c1"># Better readability</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Current $PAGER is: </span><span class="si">%s</span><span class="s2">"</span><span class="p">,</span> <span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"PAGER"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">))</span>  <span class="c1"># Better readability</span>
 
 <span class="c1"># Handle long string</span>
 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-    <span class="s2">&quot;All tuning options for the current strategy have been tried. </span><span class="se">\n</span><span class="s2">&quot;</span>
-    <span class="s2">&quot;If the quantized model does not seem to work well, it might be worth considering other strategies.&quot;</span>
+    <span class="s2">"All tuning options for the current strategy have been tried. </span><span class="se">\n</span><span class="s2">"</span>
+    <span class="s2">"If the quantized model does not seem to work well, it might be worth considering other strategies."</span>
 <span class="p">)</span>
 
 <span class="n">logger</span><span class="o">.</span><span class="n">warning</span><span class="p">(</span>
-    <span class="s2">&quot;This is a long string, this is a long string,&quot;</span>
-    <span class="s2">&quot;override the user config&#39;s smooth quant alpha into the best alpha(</span><span class="si">%.4f</span><span class="s2">) found in pre-strategy.&quot;</span><span class="p">,</span>
+    <span class="s2">"This is a long string, this is a long string,"</span>
+    <span class="s2">"override the user config's smooth quant alpha into the best alpha(</span><span class="si">%.4f</span><span class="s2">) found in pre-strategy."</span><span class="p">,</span>
     <span class="mf">0.65421</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
@@ -174,10 +174,10 @@
 <ul class="simple">
 <li><p>Not recommend</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Current TensorFlow Version is: </span><span class="si">{</span><span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>  <span class="c1"># Use f-string</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Current TensorFlow Version is: </span><span class="si">{</span><span class="n">tf</span><span class="o">.</span><span class="n">__version__</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>  <span class="c1"># Use f-string</span>
 
-<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">&quot;Current $PAGER is:&quot;</span><span class="p">)</span>  <span class="c1"># One sentence in two lines</span>
-<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">&quot;PAGER&quot;</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">&quot;&quot;</span><span class="p">))</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="s2">"Current $PAGER is:"</span><span class="p">)</span>  <span class="c1"># One sentence in two lines</span>
+<span class="n">logger</span><span class="o">.</span><span class="n">info</span><span class="p">(</span><span class="n">os</span><span class="o">.</span><span class="n">getenv</span><span class="p">(</span><span class="s2">"PAGER"</span><span class="p">,</span> <span class="n">default</span><span class="o">=</span><span class="s2">""</span><span class="p">))</span>
 </pre></div>
 </div>
 </section>
@@ -201,7 +201,7 @@
 <ul class="simple">
 <li><p>Not recommend</p></li>
 </ul>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">xx_func</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]]:</span> <span class="c1"># Can&#39;t improve the readability</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">xx_func</span><span class="p">(</span><span class="bp">cls</span><span class="p">)</span> <span class="o">-&gt;</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">OrderedDict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="n">Dict</span><span class="p">[</span><span class="nb">str</span><span class="p">,</span> <span class="nb">object</span><span class="p">]]]:</span> <span class="c1"># Can't improve the readability</span>
 </pre></div>
 </div>
 <ul class="simple">
@@ -219,28 +219,28 @@
 <li><p>Recommend</p></li>
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CheeseShopAddress</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;The address of a cheese shop.</span>
+<span class="w">    </span><span class="sd">"""The address of a cheese shop.</span>
 
 <span class="sd">    ...</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">OutOfCheeseError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;No more cheese is available.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""No more cheese is available."""</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>Not recommend</p></li>
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">CheeseShopAddress</span><span class="p">:</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Class that describes the address of a cheese shop.</span>
+<span class="w">    </span><span class="sd">"""Class that describes the address of a cheese shop.</span>
 
 <span class="sd">    ...</span>
-<span class="sd">    &quot;&quot;&quot;</span>
+<span class="sd">    """</span>
 
 
 <span class="k">class</span><span class="w"> </span><span class="nc">OutOfCheeseError</span><span class="p">(</span><span class="ne">Exception</span><span class="p">):</span>
-<span class="w">    </span><span class="sd">&quot;&quot;&quot;Raised when no more cheese is available.&quot;&quot;&quot;</span>
+<span class="w">    </span><span class="sd">"""Raised when no more cheese is available."""</span>
 </pre></div>
 </div>
 </section>
@@ -268,11 +268,11 @@
 <h3>Public and Internal Interfaces<a class="headerlink" href="#public-and-internal-interfaces" title="Link to this heading"></a></h3>
 <p>Use <code class="docutils literal notranslate"><span class="pre">__all__</span></code> to help the developer and user know the supported interface and components.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">__all__</span> <span class="o">=</span> <span class="p">[</span>
-    <span class="s2">&quot;options&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;register_config&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;get_all_config_set_from_config_registry&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;BaseConfig&quot;</span><span class="p">,</span>
-    <span class="s2">&quot;ComposableConfig&quot;</span><span class="p">,</span>
+    <span class="s2">"options"</span><span class="p">,</span>
+    <span class="s2">"register_config"</span><span class="p">,</span>
+    <span class="s2">"get_all_config_set_from_config_registry"</span><span class="p">,</span>
+    <span class="s2">"BaseConfig"</span><span class="p">,</span>
+    <span class="s2">"ComposableConfig"</span><span class="p">,</span>
 <span class="p">]</span>
 </pre></div>
 </div>
@@ -351,7 +351,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b557cd70> 
+   <jinja2.runtime.BlockReference object at 0x7efda39a0980> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

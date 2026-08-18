@@ -193,20 +193,20 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
 
 <span class="n">fp32_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
-    <span class="s2">&quot;facebook/opt-125m&quot;</span><span class="p">,</span>
-    <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="s2">"facebook/opt-125m"</span><span class="p">,</span>
+    <span class="n">device_map</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;facebook/opt-125m&quot;</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
-<span class="n">output_dir</span> <span class="o">=</span> <span class="s2">&quot;./saved_inc&quot;</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">"facebook/opt-125m"</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">output_dir</span> <span class="o">=</span> <span class="s2">"./saved_inc"</span>
 
 <span class="c1"># quantization configuration</span>
 <span class="c1"># `iters=0` means RTN (fast, no optimization); use default `iters=200` if accuracy is poor</span>
 <span class="n">quant_config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">(</span>
     <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">,</span>  <span class="c1"># Tokenizer for processing calibration data</span>
     <span class="n">iters</span><span class="o">=</span><span class="mi">0</span><span class="p">,</span>  <span class="c1"># Number of optimization iterations (default: 200)</span>
-    <span class="n">scheme</span><span class="o">=</span><span class="s2">&quot;MXFP4&quot;</span><span class="p">,</span>  <span class="c1"># MX quantization scheme: &quot;MXFP4&quot;, &quot;MXFP8&quot;</span>
-    <span class="n">export_format</span><span class="o">=</span><span class="s2">&quot;auto_round&quot;</span><span class="p">,</span>  <span class="c1"># Export format for the quantized model</span>
-    <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>  <span class="c1"># Directory to save the quantized model (default: &quot;tmp_auto_round&quot;)</span>
+    <span class="n">scheme</span><span class="o">=</span><span class="s2">"MXFP4"</span><span class="p">,</span>  <span class="c1"># MX quantization scheme: "MXFP4", "MXFP8"</span>
+    <span class="n">export_format</span><span class="o">=</span><span class="s2">"auto_round"</span><span class="p">,</span>  <span class="c1"># Export format for the quantized model</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="n">output_dir</span><span class="p">,</span>  <span class="c1"># Directory to save the quantized model (default: "tmp_auto_round")</span>
 <span class="p">)</span>
 
 <span class="c1"># quantize the model and save to output_dir</span>
@@ -214,11 +214,11 @@
 <span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
 <span class="c1"># loading</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">torch_dtype</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span> <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">output_dir</span><span class="p">,</span> <span class="n">torch_dtype</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span> <span class="n">device_map</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">)</span>
 
 <span class="c1"># inference</span>
-<span class="n">text</span> <span class="o">=</span> <span class="s2">&quot;There is a girl who likes adventure,&quot;</span>
-<span class="n">inputs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
+<span class="n">text</span> <span class="o">=</span> <span class="s2">"There is a girl who likes adventure,"</span>
+<span class="n">inputs</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">text</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">"pt"</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">device</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">tokenizer</span><span class="o">.</span><span class="n">decode</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="o">**</span><span class="n">inputs</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">10</span><span class="p">)[</span><span class="mi">0</span><span class="p">]))</span>
 </pre></div>
 </div>
@@ -263,10 +263,10 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AutoTokenizer</span>
 
 <span class="n">fp32_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
-    <span class="s2">&quot;meta-llama/Llama-3.1-8B-Instruct&quot;</span><span class="p">,</span>
-    <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;auto&quot;</span><span class="p">,</span>
+    <span class="s2">"meta-llama/Llama-3.1-8B-Instruct"</span><span class="p">,</span>
+    <span class="n">device_map</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span>
 <span class="p">)</span>
-<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;meta-llama/Llama-3.1-8B-Instruct&quot;</span><span class="p">)</span>
+<span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">"meta-llama/Llama-3.1-8B-Instruct"</span><span class="p">)</span>
 
 
 <span class="c1"># Define evaluation function</span>
@@ -283,13 +283,13 @@
     <span class="n">seqlen</span><span class="o">=</span><span class="mi">2048</span><span class="p">,</span>
     <span class="n">iters</span><span class="o">=</span><span class="mi">200</span><span class="p">,</span>
     <span class="n">target_bits</span><span class="o">=</span><span class="p">[</span><span class="mf">7.2</span><span class="p">,</span> <span class="mf">7.5</span><span class="p">,</span> <span class="mf">7.8</span><span class="p">],</span>  <span class="c1"># Try multiple target bits</span>
-    <span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s2">&quot;MXFP4&quot;</span><span class="p">,</span> <span class="s2">&quot;MXFP8&quot;</span><span class="p">],</span>
+    <span class="n">options</span><span class="o">=</span><span class="p">[</span><span class="s2">"MXFP4"</span><span class="p">,</span> <span class="s2">"MXFP8"</span><span class="p">],</span>
     <span class="n">shared_layers</span><span class="o">=</span><span class="p">[</span>
-        <span class="p">[</span><span class="s2">&quot;k_proj&quot;</span><span class="p">,</span> <span class="s2">&quot;v_proj&quot;</span><span class="p">,</span> <span class="s2">&quot;q_proj&quot;</span><span class="p">],</span>
-        <span class="p">[</span><span class="s2">&quot;gate_proj&quot;</span><span class="p">,</span> <span class="s2">&quot;up_proj&quot;</span><span class="p">],</span>
+        <span class="p">[</span><span class="s2">"k_proj"</span><span class="p">,</span> <span class="s2">"v_proj"</span><span class="p">,</span> <span class="s2">"q_proj"</span><span class="p">],</span>
+        <span class="p">[</span><span class="s2">"gate_proj"</span><span class="p">,</span> <span class="s2">"up_proj"</span><span class="p">],</span>
     <span class="p">],</span>
-    <span class="n">export_format</span><span class="o">=</span><span class="s2">&quot;auto_round&quot;</span><span class="p">,</span>
-    <span class="n">output_dir</span><span class="o">=</span><span class="s2">&quot;./llama3.1-8B-MXFP4-MXFP8&quot;</span><span class="p">,</span>
+    <span class="n">export_format</span><span class="o">=</span><span class="s2">"auto_round"</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s2">"./llama3.1-8B-MXFP4-MXFP8"</span><span class="p">,</span>
 <span class="p">)</span>
 
 <span class="c1"># AutoTune to find the best configuration</span>
@@ -414,7 +414,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b1713350> 
+   <jinja2.runtime.BlockReference object at 0x7efda3aa0ce0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

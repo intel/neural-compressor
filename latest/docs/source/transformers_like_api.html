@@ -144,7 +144,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># RTN</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">RtnConfig</span>
 
-<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">&quot;MODEL_NAME_OR_PATH&quot;</span>
+<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">"MODEL_NAME_OR_PATH"</span>
 <span class="n">woq_config</span> <span class="o">=</span> <span class="n">RtnConfig</span><span class="p">(</span><span class="n">bits</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
     <span class="n">model_name_or_path</span><span class="p">,</span>
@@ -154,7 +154,7 @@
 <span class="c1"># AWQ</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AwqConfig</span>
 
-<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">&quot;MODEL_NAME_OR_PATH&quot;</span>
+<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">"MODEL_NAME_OR_PATH"</span>
 <span class="n">woq_config</span> <span class="o">=</span> <span class="n">AwqConfig</span><span class="p">(</span><span class="n">bits</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
     <span class="n">model_name_or_path</span><span class="p">,</span>
@@ -165,7 +165,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoTokenizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">TeqConfig</span>
 
-<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">&quot;MODEL_NAME_OR_PATH&quot;</span>
+<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">"MODEL_NAME_OR_PATH"</span>
 <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
 <span class="n">woq_config</span> <span class="o">=</span> <span class="n">TeqConfig</span><span class="p">(</span><span class="n">bits</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
@@ -177,7 +177,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoTokenizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">GPTQConfig</span>
 
-<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">&quot;MODEL_NAME_OR_PATH&quot;</span>
+<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">"MODEL_NAME_OR_PATH"</span>
 <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
 <span class="n">woq_config</span> <span class="o">=</span> <span class="n">GPTQConfig</span><span class="p">(</span><span class="n">bits</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">)</span>
 <span class="n">woq_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
@@ -189,7 +189,7 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoTokenizer</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">AutoRoundConfig</span>
 
-<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">&quot;MODEL_NAME_OR_PATH&quot;</span>
+<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">"MODEL_NAME_OR_PATH"</span>
 <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
 <span class="n">woq_config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">(</span><span class="n">bits</span><span class="o">=</span><span class="mi">4</span><span class="p">,</span> <span class="n">tokenizer</span><span class="o">=</span><span class="n">tokenizer</span><span class="p">)</span>
 <span class="n">woq_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
@@ -200,10 +200,10 @@
 <span class="c1"># inference</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoTokenizer</span>
 
-<span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;Once upon a time, a little girl&quot;</span>
+<span class="n">prompt</span> <span class="o">=</span> <span class="s2">"Once upon a time, a little girl"</span>
 <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
 
-<span class="n">input_ids</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">)[</span><span class="s2">&quot;input_ids&quot;</span><span class="p">]</span>
+<span class="n">input_ids</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">"pt"</span><span class="p">)[</span><span class="s2">"input_ids"</span><span class="p">]</span>
 <span class="n">generate_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">do_sample</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">num_beams</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="n">gen_ids</span> <span class="o">=</span> <span class="n">q_model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="o">**</span><span class="n">generate_kwargs</span><span class="p">)</span>
 <span class="n">gen_text</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">batch_decode</span><span class="p">(</span><span class="n">gen_ids</span><span class="p">,</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -214,7 +214,7 @@
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># quant</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">RtnConfig</span>
 
-<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">&quot;MODEL_NAME_OR_PATH&quot;</span>
+<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">"MODEL_NAME_OR_PATH"</span>
 <span class="n">woq_config</span> <span class="o">=</span> <span class="n">RtnConfig</span><span class="p">(</span><span class="n">bits</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
     <span class="n">model_name_or_path</span><span class="p">,</span>
@@ -222,7 +222,7 @@
 <span class="p">)</span>
 
 <span class="c1"># save quant model</span>
-<span class="n">saved_dir</span> <span class="o">=</span> <span class="s2">&quot;SAVE_DIR&quot;</span>
+<span class="n">saved_dir</span> <span class="o">=</span> <span class="s2">"SAVE_DIR"</span>
 <span class="n">q_model</span><span class="o">.</span><span class="n">save_pretrained</span><span class="p">(</span><span class="n">saved_dir</span><span class="p">)</span>
 
 <span class="c1"># load quant model</span>
@@ -249,17 +249,17 @@
 <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoTokenizer</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
 
-<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">&quot;Qwen/Qwen-7B-Chat&quot;</span>  <span class="c1"># MODEL_NAME_OR_PATH</span>
-<span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;Once upon a time, a little girl&quot;</span>
-<span class="n">input_ids</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">)[</span><span class="s2">&quot;input_ids&quot;</span><span class="p">]</span>
+<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">"Qwen/Qwen-7B-Chat"</span>  <span class="c1"># MODEL_NAME_OR_PATH</span>
+<span class="n">prompt</span> <span class="o">=</span> <span class="s2">"Once upon a time, a little girl"</span>
+<span class="n">input_ids</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">"pt"</span><span class="p">)[</span><span class="s2">"input_ids"</span><span class="p">]</span>
 <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">,</span> <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;xpu&quot;</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">,</span> <span class="n">device_map</span><span class="o">=</span><span class="s2">"xpu"</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="c1"># optimize the model with ipex, it will improve performance.</span>
-<span class="n">quantization_config</span> <span class="o">=</span> <span class="n">q_model</span><span class="o">.</span><span class="n">quantization_config</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">q_model</span><span class="p">,</span> <span class="s2">&quot;quantization_config&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+<span class="n">quantization_config</span> <span class="o">=</span> <span class="n">q_model</span><span class="o">.</span><span class="n">quantization_config</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">q_model</span><span class="p">,</span> <span class="s2">"quantization_config"</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">ipex</span><span class="o">.</span><span class="n">optimize_transformers</span><span class="p">(</span>
-    <span class="n">q_model</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span> <span class="n">quantization_config</span><span class="o">=</span><span class="n">quantizaiton_config</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;xpu&quot;</span>
+    <span class="n">q_model</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span> <span class="n">quantization_config</span><span class="o">=</span><span class="n">quantizaiton_config</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">"xpu"</span>
 <span class="p">)</span>
 
 <span class="n">output</span> <span class="o">=</span> <span class="n">q_model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">max_new_tokens</span><span class="o">=</span><span class="mi">100</span><span class="p">,</span> <span class="n">do_sample</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -277,34 +277,34 @@
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoModelForCausalLM</span><span class="p">,</span> <span class="n">RtnConfig</span>
 
-<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">&quot;MODEL_NAME_OR_PATH&quot;</span>
+<span class="n">model_name_or_path</span> <span class="o">=</span> <span class="s2">"MODEL_NAME_OR_PATH"</span>
 <span class="n">woq_config</span> <span class="o">=</span> <span class="n">RtnConfig</span><span class="p">(</span><span class="n">bits</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="n">q_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span>
-    <span class="n">model_name_or_path</span><span class="p">,</span> <span class="n">quantization_config</span><span class="o">=</span><span class="n">woq_config</span><span class="p">,</span> <span class="n">device_map</span><span class="o">=</span><span class="s2">&quot;xpu&quot;</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="err">，</span>
+    <span class="n">model_name_or_path</span><span class="p">,</span> <span class="n">quantization_config</span><span class="o">=</span><span class="n">woq_config</span><span class="p">,</span> <span class="n">device_map</span><span class="o">=</span><span class="s2">"xpu"</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="err">，</span>
 <span class="p">)</span>
 
 <span class="c1"># Please note, saving model should be executed before ipex.optimize_transformers function is called.</span>
-<span class="n">q_model</span><span class="o">.</span><span class="n">save_pretrained</span><span class="p">(</span><span class="s2">&quot;saved_dir&quot;</span><span class="p">)</span>
+<span class="n">q_model</span><span class="o">.</span><span class="n">save_pretrained</span><span class="p">(</span><span class="s2">"saved_dir"</span><span class="p">)</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>Second step: Load model and inference(In order to reduce memory usage, you may need to end the quantize process and rerun the script to load the model.)</p></li>
 </ul>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="c1"># Load model</span>
-<span class="n">loaded_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">&quot;saved_dir&quot;</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
+<span class="n">loaded_model</span> <span class="o">=</span> <span class="n">AutoModelForCausalLM</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="s2">"saved_dir"</span><span class="p">,</span> <span class="n">trust_remote_code</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
 
 <span class="c1"># Before executed the loaded model, you can call ipex.optimize_transformers function.</span>
-<span class="n">quantization_config</span> <span class="o">=</span> <span class="n">q_model</span><span class="o">.</span><span class="n">quantization_config</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">q_model</span><span class="p">,</span> <span class="s2">&quot;quantization_config&quot;</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
+<span class="n">quantization_config</span> <span class="o">=</span> <span class="n">q_model</span><span class="o">.</span><span class="n">quantization_config</span> <span class="k">if</span> <span class="nb">hasattr</span><span class="p">(</span><span class="n">q_model</span><span class="p">,</span> <span class="s2">"quantization_config"</span><span class="p">)</span> <span class="k">else</span> <span class="kc">None</span>
 <span class="n">loaded_model</span> <span class="o">=</span> <span class="n">ipex</span><span class="o">.</span><span class="n">optimize_transformers</span><span class="p">(</span>
-    <span class="n">loaded_model</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span> <span class="n">quantization_config</span><span class="o">=</span><span class="n">quantization_config</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">&quot;xpu&quot;</span>
+    <span class="n">loaded_model</span><span class="p">,</span> <span class="n">inplace</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span> <span class="n">dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">float16</span><span class="p">,</span> <span class="n">quantization_config</span><span class="o">=</span><span class="n">quantization_config</span><span class="p">,</span> <span class="n">device</span><span class="o">=</span><span class="s2">"xpu"</span>
 <span class="p">)</span>
 
 <span class="c1"># inference</span>
 <span class="kn">from</span><span class="w"> </span><span class="nn">transformers</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoTokenizer</span>
 
-<span class="n">prompt</span> <span class="o">=</span> <span class="s2">&quot;Once upon a time, a little girl&quot;</span>
+<span class="n">prompt</span> <span class="o">=</span> <span class="s2">"Once upon a time, a little girl"</span>
 <span class="n">tokenizer</span> <span class="o">=</span> <span class="n">AutoTokenizer</span><span class="o">.</span><span class="n">from_pretrained</span><span class="p">(</span><span class="n">model_name_or_path</span><span class="p">)</span>
-<span class="n">input_ids</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">&quot;pt&quot;</span><span class="p">)[</span><span class="s2">&quot;input_ids&quot;</span><span class="p">]</span>
+<span class="n">input_ids</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="p">(</span><span class="n">prompt</span><span class="p">,</span> <span class="n">return_tensors</span><span class="o">=</span><span class="s2">"pt"</span><span class="p">)[</span><span class="s2">"input_ids"</span><span class="p">]</span>
 <span class="n">generate_kwargs</span> <span class="o">=</span> <span class="nb">dict</span><span class="p">(</span><span class="n">do_sample</span><span class="o">=</span><span class="kc">False</span><span class="p">,</span> <span class="n">temperature</span><span class="o">=</span><span class="mf">0.9</span><span class="p">,</span> <span class="n">num_beams</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
 <span class="n">gen_ids</span> <span class="o">=</span> <span class="n">loaded_model</span><span class="o">.</span><span class="n">generate</span><span class="p">(</span><span class="n">input_ids</span><span class="p">,</span> <span class="o">**</span><span class="n">generate_kwargs</span><span class="p">)</span>
 <span class="n">gen_text</span> <span class="o">=</span> <span class="n">tokenizer</span><span class="o">.</span><span class="n">batch_decode</span><span class="p">(</span><span class="n">gen_ids</span><span class="p">,</span> <span class="n">skip_special_tokens</span><span class="o">=</span><span class="kc">True</span><span class="p">)</span>
@@ -348,7 +348,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b1a5ac60> 
+   <jinja2.runtime.BlockReference object at 0x7efda3b06930> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

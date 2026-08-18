@@ -165,12 +165,12 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
         <span class="n">cur_len</span> <span class="o">=</span> <span class="nb">len</span><span class="p">(</span><span class="n">data</span><span class="p">)</span><span class="o">-</span><span class="mi">1</span>
         <span class="n">input_ids_padding</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">ones</span><span class="p">((</span><span class="bp">self</span><span class="o">.</span><span class="n">batch_size</span><span class="p">,</span> <span class="mi">1</span><span class="p">),</span> <span class="n">dtype</span><span class="o">=</span><span class="n">tf</span><span class="o">.</span><span class="n">int32</span><span class="p">)</span> <span class="o">*</span> <span class="p">(</span><span class="n">pad_token_id</span> <span class="ow">or</span> <span class="mi">0</span><span class="p">)</span>
         <span class="n">generated</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">concat</span><span class="p">([</span><span class="n">input_ids</span><span class="p">,</span> <span class="n">input_ids_padding</span><span class="p">],</span> <span class="n">axis</span><span class="o">=-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="n">model_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">&#39;attention_mask&#39;</span><span class="p">:</span> <span class="n">prepare_attention_mask_for_generation</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)}</span>
-        <span class="k">if</span> <span class="n">model_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">&quot;past_key_values&quot;</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
+        <span class="n">model_kwargs</span> <span class="o">=</span> <span class="p">{</span><span class="s1">'attention_mask'</span><span class="p">:</span> <span class="n">prepare_attention_mask_for_generation</span><span class="p">(</span><span class="n">input_ids</span><span class="p">)}</span>
+        <span class="k">if</span> <span class="n">model_kwargs</span><span class="o">.</span><span class="n">get</span><span class="p">(</span><span class="s2">"past_key_values"</span><span class="p">)</span> <span class="ow">is</span> <span class="kc">None</span><span class="p">:</span>
             <span class="n">input_ids</span> <span class="o">=</span> <span class="n">generated</span><span class="p">[:,</span> <span class="p">:</span><span class="n">cur_len</span><span class="p">]</span>
         <span class="k">else</span><span class="p">:</span>
             <span class="n">input_ids</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">generated</span><span class="p">[:,</span> <span class="n">cur_len</span> <span class="o">-</span> <span class="mi">1</span><span class="p">],</span> <span class="o">-</span><span class="mi">1</span><span class="p">)</span>
-        <span class="k">return</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">&#39;attention_mask&#39;</span><span class="p">],</span> <span class="n">input_ids</span>
+        <span class="k">return</span> <span class="n">model_kwargs</span><span class="p">[</span><span class="s1">'attention_mask'</span><span class="p">],</span> <span class="n">input_ids</span>
     
     <span class="k">def</span><span class="w"> </span><span class="fm">__iter__</span><span class="p">(</span><span class="bp">self</span><span class="p">):</span>
         <span class="n">labels</span> <span class="o">=</span> <span class="kc">None</span>
@@ -188,16 +188,16 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 <p>After prepare step is done, we add the code for quantization tuning to generate quantized model.</p>
 <p>Firstly, let’s load a INC inner class model from the path of gpt-j-6B saved_model.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor</span><span class="w"> </span><span class="kn">import</span> <span class="n">Model</span>
-    <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">run_args</span><span class="o">.</span><span class="n">input_model</span><span class="p">,</span> <span class="n">modelType</span><span class="o">=</span><span class="s1">&#39;llm_saved_model&#39;</span><span class="p">)</span>
+    <span class="n">model</span> <span class="o">=</span> <span class="n">Model</span><span class="p">(</span><span class="n">run_args</span><span class="o">.</span><span class="n">input_model</span><span class="p">,</span> <span class="n">modelType</span><span class="o">=</span><span class="s1">'llm_saved_model'</span><span class="p">)</span>
 </pre></div>
 </div>
 <section id="tune">
 <h4>Tune<a class="headerlink" href="#tune" title="Link to this heading"></a></h4>
 <p>To apply quantization, the function that maps names from AutoTrackable variables to graph nodes must be defined to match names of nodes in different format.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">def</span><span class="w"> </span><span class="nf">weight_name_mapping</span><span class="p">(</span><span class="n">name</span><span class="p">):</span>
-<span class="w">        </span><span class="sd">&quot;&quot;&quot;The function that maps name from AutoTrackable variables to graph nodes&quot;&quot;&quot;</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;tfgptj_for_causal_lm&#39;</span><span class="p">,</span> <span class="s1">&#39;StatefulPartitionedCall&#39;</span><span class="p">)</span>
-        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">&#39;kernel:0&#39;</span><span class="p">,</span> <span class="s1">&#39;Tensordot/ReadVariableOp&#39;</span><span class="p">)</span>
+<span class="w">        </span><span class="sd">"""The function that maps name from AutoTrackable variables to graph nodes"""</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'tfgptj_for_causal_lm'</span><span class="p">,</span> <span class="s1">'StatefulPartitionedCall'</span><span class="p">)</span>
+        <span class="n">name</span> <span class="o">=</span> <span class="n">name</span><span class="o">.</span><span class="n">replace</span><span class="p">(</span><span class="s1">'kernel:0'</span><span class="p">,</span> <span class="s1">'Tensordot/ReadVariableOp'</span><span class="p">)</span>
         <span class="k">return</span> <span class="n">name</span>
 </pre></div>
 </div>
@@ -207,7 +207,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
     <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.tensorflow.utils</span><span class="w"> </span><span class="kn">import</span> <span class="n">BaseDataLoader</span>
 
     <span class="n">calib_dataloader</span> <span class="o">=</span> <span class="n">MyDataloader</span><span class="p">(</span><span class="n">mydata</span><span class="p">,</span> <span class="n">batch_size</span><span class="o">=</span><span class="n">run_args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>  
-    <span class="n">quant_config</span> <span class="o">=</span> <span class="p">[</span><span class="n">SmoothQuantConfig</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.52705</span><span class="p">),</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">act_dtype</span><span class="o">=</span><span class="s2">&quot;int8&quot;</span><span class="p">,</span> <span class="n">weight_dtype</span><span class="o">=</span><span class="s2">&quot;int8&quot;</span><span class="p">)]</span>
+    <span class="n">quant_config</span> <span class="o">=</span> <span class="p">[</span><span class="n">SmoothQuantConfig</span><span class="p">(</span><span class="n">alpha</span><span class="o">=</span><span class="mf">0.52705</span><span class="p">),</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">act_dtype</span><span class="o">=</span><span class="s2">"int8"</span><span class="p">,</span> <span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"int8"</span><span class="p">)]</span>
     <span class="n">tune_config</span> <span class="o">=</span> <span class="n">TuningConfig</span><span class="p">(</span><span class="n">config_set</span><span class="o">=</span><span class="n">quant_config</span><span class="p">,</span> <span class="n">max_trials</span><span class="o">=</span><span class="mi">1</span><span class="p">)</span>
     <span class="n">model</span><span class="o">.</span><span class="n">weight_name_mapping</span> <span class="o">=</span> <span class="n">weight_name_mapping</span>
     <span class="n">q_model</span> <span class="o">=</span> <span class="n">autotune</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> 
@@ -220,12 +220,12 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 </section>
 <section id="id1">
 <h4>Benchmark<a class="headerlink" href="#id1" title="Link to this heading"></a></h4>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">if</span> <span class="n">run_args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;performance&quot;</span><span class="p">:</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span>    <span class="k">if</span> <span class="n">run_args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"performance"</span><span class="p">:</span>
         <span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-    <span class="k">elif</span> <span class="n">run_args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">&quot;accuracy&quot;</span><span class="p">:</span>
+    <span class="k">elif</span> <span class="n">run_args</span><span class="o">.</span><span class="n">mode</span> <span class="o">==</span> <span class="s2">"accuracy"</span><span class="p">:</span>
         <span class="n">acc_result</span> <span class="o">=</span> <span class="n">evaluate</span><span class="p">(</span><span class="n">model</span><span class="o">.</span><span class="n">model</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Batch size = </span><span class="si">%d</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">run_args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>
-        <span class="nb">print</span><span class="p">(</span><span class="s2">&quot;Accuracy: </span><span class="si">%.5f</span><span class="s2">&quot;</span> <span class="o">%</span> <span class="n">acc_result</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Batch size = </span><span class="si">%d</span><span class="s2">"</span> <span class="o">%</span> <span class="n">run_args</span><span class="o">.</span><span class="n">batch_size</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="s2">"Accuracy: </span><span class="si">%.5f</span><span class="s2">"</span> <span class="o">%</span> <span class="n">acc_result</span><span class="p">)</span>
 </pre></div>
 </div>
 <p>The Intel® Neural Compressor quantization.fit() function will return a best quantized model under time constraint.</p>
@@ -248,7 +248,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b579dfa0> 
+   <jinja2.runtime.BlockReference object at 0x7efda39be780> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

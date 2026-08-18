@@ -111,14 +111,14 @@
 <h2>GPT-J-6b<a class="headerlink" href="#gpt-j-6b" title="Link to this heading"></a></h2>
 <section id="quantization">
 <h3>Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># &quot;--sq&quot; is used to enable smooth quant</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># "--sq" is used to enable smooth quant</span>
 python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--model<span class="w"> </span>EleutherAI/gpt-j-6B<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--sq<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--alpha<span class="w"> </span><span class="m">1</span>.0<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--ipex<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">"saved_results"</span>
 </pre></div>
 </div>
 <p><strong>Notes</strong>: Smooth quantization here is based on torch.jit. Without past key value in example_inputs, the quantized model cannot be used for text-generation.</p>
@@ -128,14 +128,14 @@ python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span
 <h2>OPT-125m<a class="headerlink" href="#opt-125m" title="Link to this heading"></a></h2>
 <section id="id1">
 <h3>Quantization<a class="headerlink" href="#id1" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># &quot;--sq&quot; is used to enable smooth quant</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># "--sq" is used to enable smooth quant</span>
 python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--model<span class="w"> </span>facebook/opt-125m<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--sq<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--alpha<span class="w"> </span><span class="m">0</span>.5<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--ipex<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">"saved_results"</span>
 </pre></div>
 </div>
 </section>
@@ -147,14 +147,14 @@ python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span
 </div></blockquote>
 <section id="id2">
 <h3>Quantization<a class="headerlink" href="#id2" title="Link to this heading"></a></h3>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># &quot;--sq&quot; is used to enable smooth quant</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># "--sq" is used to enable smooth quant</span>
 python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--model<span class="w"> </span>meta-llama/Llama-2-7b-hf<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--quantize<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--sq<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--alpha<span class="w"> </span><span class="m">0</span>.8<span class="w"> </span><span class="se">\</span>
 <span class="w">    </span>--ipex<span class="w"> </span><span class="se">\</span>
-<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">&quot;saved_results&quot;</span>
+<span class="w">    </span>--output_dir<span class="w"> </span><span class="s2">"saved_results"</span>
 </pre></div>
 </div>
 </section>
@@ -175,7 +175,7 @@ python<span class="w"> </span>run_clm_no_trainer.py<span class="w"> </span><span
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b1a5ba40> 
+   <jinja2.runtime.BlockReference object at 0x7efda3b045c0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

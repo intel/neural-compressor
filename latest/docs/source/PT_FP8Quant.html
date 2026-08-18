@@ -536,10 +536,10 @@ vllm-hpu-extension                0.1
 ## Validation
 $ VLLM_SKIP_WARMUP=true python3 examples/offline_inference.py
 ......
-Prompt: &#39;Hello, my name is&#39;, Generated text: &#39; Kelly and I have a job to do.\nI need someone to come over&#39;
-Prompt: &#39;The president of the United States is&#39;, Generated text: &#39; facing a sharp criticism of his handling of the coronavirus pandemic, including&#39;
-Prompt: &#39;The capital of France is&#39;, Generated text: &#39; the capital of the Socialist Party of France (SPF), with its state-&#39;
-Prompt: &#39;The future of AI is&#39;, Generated text: &quot; in what&#39;s coming, not what&#39;s coming.\nI don&#39;t know what&quot;
+Prompt: 'Hello, my name is', Generated text: ' Kelly and I have a job to do.\nI need someone to come over'
+Prompt: 'The president of the United States is', Generated text: ' facing a sharp criticism of his handling of the coronavirus pandemic, including'
+Prompt: 'The capital of France is', Generated text: ' the capital of the Socialist Party of France (SPF), with its state-'
+Prompt: 'The future of AI is', Generated text: " in what's coming, not what's coming.\nI don't know what"
 </pre></div>
 </div>
 </section>
@@ -583,7 +583,7 @@ python3 -m vllm.entrypoints.openai.api_server \
 </section>
 <section id="start-client-to-test">
 <h3>Start client to test<a class="headerlink" href="#start-client-to-test" title="Link to this heading"></a></h3>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl --noproxy &quot;*&quot; http://localhost:8080/v1/completions -H &quot;Content-Type: application/json&quot; -d &#39;{&quot;model&quot;: &quot;meta-llama/Llama-3.1-8B-Instruct&quot;, &quot;prompt&quot;: &quot;San Francisco is a&quot;, &quot;max_tokens&quot;: 100}&#39;
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span>$ curl --noproxy "*" http://localhost:8080/v1/completions -H "Content-Type: application/json" -d '{"model": "meta-llama/Llama-3.1-8B-Instruct", "prompt": "San Francisco is a", "max_tokens": 100}'
 </pre></div>
 </div>
 </section>
@@ -643,7 +643,7 @@ HPUAttentionImpl() -&gt; self.k_cache() / self.v_cache()</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b556b980> 
+   <jinja2.runtime.BlockReference object at 0x7efda3c36480> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

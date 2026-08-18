@@ -114,9 +114,9 @@ pip<span class="w"> </span>install<span class="w"> </span>tensorflow
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">keras_hub.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">ViTImageClassifier</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">keras</span>
 
-<span class="n">model</span> <span class="o">=</span> <span class="n">ViTImageClassifier</span><span class="o">.</span><span class="n">from_preset</span><span class="p">(</span><span class="s2">&quot;vit_base_patch16_224_imagenet&quot;</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">ViTImageClassifier</span><span class="o">.</span><span class="n">from_preset</span><span class="p">(</span><span class="s2">"vit_base_patch16_224_imagenet"</span><span class="p">)</span>
 
-<span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">&quot;/path/to/saved/model.keras&quot;</span><span class="p">)</span>
+<span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="s2">"/path/to/saved/model.keras"</span><span class="p">)</span>
 </pre></div>
 </div>
 </section>
@@ -128,7 +128,7 @@ pip<span class="w"> </span>install<span class="w"> </span>tensorflow
 </ol>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">keras</span>
 
-<span class="n">vit_orig</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="s2">&quot;/path/to/original/model.keras&quot;</span><span class="p">)</span>
+<span class="n">vit_orig</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="s2">"/path/to/original/model.keras"</span><span class="p">)</span>
 </pre></div>
 </div>
 <ol class="simple">
@@ -144,12 +144,12 @@ pip<span class="w"> </span>install<span class="w"> </span>tensorflow
     <span class="k">return</span> <span class="n">tf</span><span class="o">.</span><span class="n">cast</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">tf</span><span class="o">.</span><span class="n">uint8</span><span class="p">)</span>
 
 
-<span class="n">img</span> <span class="o">=</span> <span class="n">load_image</span><span class="p">(</span><span class="s2">&quot;./colva_beach_sq.jpg&quot;</span><span class="p">)</span>
+<span class="n">img</span> <span class="o">=</span> <span class="n">load_image</span><span class="p">(</span><span class="s2">"./colva_beach_sq.jpg"</span><span class="p">)</span>
 <span class="n">img</span> <span class="o">=</span> <span class="n">tf</span><span class="o">.</span><span class="n">expand_dims</span><span class="p">(</span><span class="n">img</span><span class="p">,</span> <span class="n">axis</span><span class="o">=</span><span class="mi">0</span><span class="p">)</span>
 
 <span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.jax.quantization.config</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span>
 
-<span class="n">config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">&quot;fp8_e4m3&quot;</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">&quot;fp8_e4m3&quot;</span><span class="p">)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">)</span>
 
 
 <span class="k">def</span><span class="w"> </span><span class="nf">calib_function</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
@@ -172,13 +172,13 @@ pip<span class="w"> </span>install<span class="w"> </span>tensorflow
 <span class="k">def</span><span class="w"> </span><span class="nf">print_predictions</span><span class="p">(</span><span class="n">preds</span><span class="p">):</span>
     <span class="n">preds</span> <span class="o">=</span> <span class="n">decode_predictions</span><span class="p">(</span><span class="n">preds</span><span class="p">,</span> <span class="n">top</span><span class="o">=</span><span class="mi">4</span><span class="p">)</span>
     <span class="k">for</span> <span class="n">i</span><span class="p">,</span> <span class="n">sample_preds</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">preds</span><span class="p">):</span>
-        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;Predictions for sample </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:&quot;</span><span class="p">)</span>
+        <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Predictions for sample </span><span class="si">{</span><span class="n">i</span><span class="si">}</span><span class="s2">:"</span><span class="p">)</span>
         <span class="k">for</span> <span class="n">k</span><span class="p">,</span> <span class="n">pred</span> <span class="ow">in</span> <span class="nb">enumerate</span><span class="p">(</span><span class="n">sample_preds</span><span class="p">):</span>
             <span class="n">_</span><span class="p">,</span> <span class="n">class_name</span><span class="p">,</span> <span class="n">score</span> <span class="o">=</span> <span class="n">pred</span>
-            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">&quot;    top-</span><span class="si">{</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: class=</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">, score=</span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">&quot;</span><span class="p">)</span>
+            <span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"    top-</span><span class="si">{</span><span class="n">k</span><span class="o">+</span><span class="mi">1</span><span class="si">}</span><span class="s2">: class=</span><span class="si">{</span><span class="n">class_name</span><span class="si">}</span><span class="s2">, score=</span><span class="si">{</span><span class="n">score</span><span class="si">:</span><span class="s2">.4f</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
 
 
-<span class="nb">print</span><span class="p">(</span><span class="s2">&quot;</span><span class="se">\n</span><span class="s2">Output after quantization:&quot;</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="s2">"</span><span class="se">\n</span><span class="s2">Output after quantization:"</span><span class="p">)</span>
 <span class="n">print_predictions</span><span class="p">(</span><span class="n">output</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -217,7 +217,7 @@ You can run <a class="reference external" href="prepare_static.py">prepare_stati
 <p>After this step we have saved model stored in the /path/to/quantized/model.keras file. You can load and use it with <a class="reference external" href="use_static.py">use_static.py</a></p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">neural_compressor.jax.quantization</span>
 
-<span class="n">vit_quantized</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="s2">&quot;/path/to/quantized/model.keras&quot;</span><span class="p">)</span>
+<span class="n">vit_quantized</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="s2">"/path/to/quantized/model.keras"</span><span class="p">)</span>
 <span class="n">output</span> <span class="o">=</span> <span class="n">vit_quantized</span><span class="o">.</span><span class="n">predict</span><span class="p">(</span><span class="n">img</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -276,7 +276,7 @@ and then use print_model() function in your script. To see how it works just unc
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b549a4e0> 
+   <jinja2.runtime.BlockReference object at 0x7efda39b08f0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

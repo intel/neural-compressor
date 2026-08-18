@@ -164,15 +164,15 @@ support AMD CPU, ARM CPU, and NVidia GPU with limited testing.</p></li>
 <span class="kn">import</span><span class="w"> </span><span class="nn">torchvision.models</span><span class="w"> </span><span class="k">as</span><span class="w"> </span><span class="nn">models</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">models</span><span class="o">.</span><span class="n">resnet18</span><span class="p">()</span>
-<span class="n">qconfig</span> <span class="o">=</span> <span class="n">FP8Config</span><span class="p">(</span><span class="n">fp8_config</span><span class="o">=</span><span class="s2">&quot;E4M3&quot;</span><span class="p">)</span>
+<span class="n">qconfig</span> <span class="o">=</span> <span class="n">FP8Config</span><span class="p">(</span><span class="n">fp8_config</span><span class="o">=</span><span class="s2">"E4M3"</span><span class="p">)</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">qconfig</span><span class="p">)</span>
 
 <span class="c1"># Customer defined calibration. Below is a dummy calibration</span>
-<span class="n">model</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;hpu&quot;</span><span class="p">))</span>
+<span class="n">model</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">"hpu"</span><span class="p">))</span>
 
 <span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
 
-<span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;hpu&quot;</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">&quot;cpu&quot;</span><span class="p">)</span>
+<span class="n">output</span> <span class="o">=</span> <span class="n">model</span><span class="p">(</span><span class="n">torch</span><span class="o">.</span><span class="n">randn</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">3</span><span class="p">,</span> <span class="mi">224</span><span class="p">,</span> <span class="mi">224</span><span class="p">)</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">"hpu"</span><span class="p">))</span><span class="o">.</span><span class="n">to</span><span class="p">(</span><span class="s2">"cpu"</span><span class="p">)</span>
 <span class="nb">print</span><span class="p">(</span><span class="n">output</span><span class="o">.</span><span class="n">shape</span><span class="p">)</span>
 </pre></div>
 </div>
@@ -180,11 +180,11 @@ support AMD CPU, ARM CPU, and NVidia GPU with limited testing.</p></li>
 <p><strong>Following example code demonstrates weight-only large language model loading</strong> on Intel Gaudi2 AI Accelerator.</p>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">load</span>
 
-<span class="n">model_name</span> <span class="o">=</span> <span class="s2">&quot;TheBloke/Llama-2-7B-GPTQ&quot;</span>
+<span class="n">model_name</span> <span class="o">=</span> <span class="s2">"TheBloke/Llama-2-7B-GPTQ"</span>
 <span class="n">model</span> <span class="o">=</span> <span class="n">load</span><span class="p">(</span>
     <span class="n">model_name_or_path</span><span class="o">=</span><span class="n">model_name</span><span class="p">,</span>
-    <span class="nb">format</span><span class="o">=</span><span class="s2">&quot;huggingface&quot;</span><span class="p">,</span>
-    <span class="n">device</span><span class="o">=</span><span class="s2">&quot;hpu&quot;</span><span class="p">,</span>
+    <span class="nb">format</span><span class="o">=</span><span class="s2">"huggingface"</span><span class="p">,</span>
+    <span class="n">device</span><span class="o">=</span><span class="s2">"hpu"</span><span class="p">,</span>
     <span class="n">torch_dtype</span><span class="o">=</span><span class="n">torch</span><span class="o">.</span><span class="n">bfloat16</span><span class="p">,</span>
 <span class="p">)</span>
 </pre></div>
@@ -317,7 +317,7 @@ View <a class="reference external" href="https://github.com/intel/neural-compres
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f77b54e4890> 
+   <jinja2.runtime.BlockReference object at 0x7efda3995550> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
