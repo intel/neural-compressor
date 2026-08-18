@@ -23,11 +23,16 @@ import time
 
 import jax
 import keras
+import numpy as np
 import pytest
 from jax_test_utility import compute_model_hash, load_image, load_model_from_preset
 from keras_hub.models import Gemma3CausalLM
+from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
+from neural_compressor.jax.quantization import layers_static
+from neural_compressor.jax.quantization.layers_static import QStaticCachedGemma3Attention
+from neural_compressor.jax.utils.utility import dtype_mapping
 
 
 @pytest.fixture
@@ -89,6 +94,60 @@ def test_text_prompt(dynamic, const_vars, model_dtype, quantization_dtype, rando
         save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
         gemma_q.save_to_preset(save_path)
         gemma_q_loaded = Gemma3CausalLM.from_preset(save_path, dtype=model_dtype)
+
+    answer = gemma_q_loaded.generate("Answer what is the capital city of England.", max_length=25, strip_prompt=True)
+    print("Gemma answer: ", {answer})
+    assert "London" in answer
+
+
+@pytest.mark.parametrize("dynamic", [True, False], ids=["dynamic=True", "dynamic=False"])
+@pytest.mark.parametrize("model_dtype", ["float32"], ids=["model_dtype=float32"])
+@pytest.mark.smoke_test_if(
+    "model_dtype=float32-dynamic=True",
+    "model_dtype=float32-dynamic=False",
+)
+def test_text_prompt_dot_product_attention(dynamic, model_dtype, quantization_dtype, random_string):
+    """Validate the fused dot-product-attention path (dot_product_attention_enable=True)."""
+    gemma = load_model_from_preset(Gemma3CausalLM, "gemma3_instruct_270m", model_dtype)
+
+    def calib_fn(model):
+        _ = model.generate(random_string, max_length=100)
+
+    def check_dot_product_attention_enable(model, expected_value):
+        attention_layers = [
+            layer for layer in model._flatten_layers(recursive=True) if hasattr(layer, "dot_product_attention_enable")
+        ]
+        assert attention_layers, "No quantized attention layer exposed dot_product_attention_enable"
+        assert all(
+            layer.dot_product_attention_enable is expected_value for layer in attention_layers
+        ), f"Expected dot_product_attention_enable={expected_value} for all attention layers"
+
+    if dynamic:
+        config = DynamicQuantConfig(
+            weight_dtype=quantization_dtype,
+            activation_dtype=quantization_dtype,
+            weight_scale_granularity="per_channel",
+            dot_product_attention_enable=True,
+        )
+        gemma_q = quantize_model(gemma, config)
+    else:
+        config = StaticQuantConfig(
+            weight_dtype=quantization_dtype,
+            activation_dtype=quantization_dtype,
+            weight_scale_granularity="per_channel",
+            dot_product_attention_enable=True,
+        )
+        gemma_q = quantize_model(gemma, config, calib_fn, inplace=False)
+
+    assert config.dot_product_attention_enable is True
+    check_dot_product_attention_enable(gemma_q, True)
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        save_path = os.path.join(tmpdir, "gemma3_quantized_keras")
+        gemma_q.save_to_preset(save_path)
+        gemma_q_loaded = Gemma3CausalLM.from_preset(save_path, dtype=model_dtype)
+
+    check_dot_product_attention_enable(gemma_q_loaded, True)
 
     answer = gemma_q_loaded.generate("Answer what is the capital city of England.", max_length=25, strip_prompt=True)
     print("Gemma answer: ", {answer})
