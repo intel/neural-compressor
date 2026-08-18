@@ -233,7 +233,14 @@ start_vllm_server() {
         ROPE_FLAG="--rope-scaling"
         ROPE_VALUE="${ROPE_SCALING_JSON}"
     fi
-    echo "vLLM version: ${VLLM_VERSION}, using: ${ROPE_FLAG} '${ROPE_VALUE}'"
+
+    # Skip rope scaling for Qwen3-235B-A22B* models
+    ROPE_ARGS=("${ROPE_FLAG}" "${ROPE_VALUE}")
+    if [[ "$MODEL_NAME" == *"Qwen3-235B-A22B"* ]]; then
+        ROPE_ARGS=()
+        echo "Skipping rope scaling for model: ${MODEL_NAME}"
+    fi
+    echo "vLLM version: ${VLLM_VERSION}, using: ${ROPE_ARGS[*]}"
 
     vllm serve ${MODEL_PATH} \
         --port ${SERVER_PORT} \
@@ -242,7 +249,7 @@ start_vllm_server() {
         --gpu-memory-utilization 0.8 \
         --dtype bfloat16 \
         --kv-cache-dtype ${KV_CACHE_DTYPE} \
-        ${ROPE_FLAG} "${ROPE_VALUE}" \
+        "${ROPE_ARGS[@]}" \
         ${EXTRA_ARGS} \
         > ${OUTPUT_DIR}/vllm_server.log 2>&1 &
     
