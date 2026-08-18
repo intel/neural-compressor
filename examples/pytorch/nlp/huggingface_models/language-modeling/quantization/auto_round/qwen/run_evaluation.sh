@@ -204,6 +204,8 @@ export VLLM_QDQ=1
 export VLLM_MXFP4_USE_MARLIN=1
 # A100 need to close torch compile
 # export TORCH_COMPILE_DISABLE=1
+# B200 special env
+export NLTK_ALLOW_PROXIED_URLOPEN=1
 
 # Function to run standard lm-eval tasks
 run_standard_eval() {
