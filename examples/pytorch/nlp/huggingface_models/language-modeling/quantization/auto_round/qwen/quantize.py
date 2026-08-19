@@ -108,17 +108,15 @@ def quant_model(args):
     if (static_kv_dtype == "fp8" or args.static_attention_dtype == "fp8") and iters > 0:
         logger.warning("When using static kv dtype or static attn dtype as fp8, setting iters to 0.")
         iters = 0
-    fp32_model, tokenizer = get_model_and_tokenizer(args.model)
+    fp32_model = args.model
     # if export_format is llm_compressor, scheme with RCEIL is not supported. 
     scheme = config["scheme"] if args.export_format == "auto_round" else config["scheme"].replace("_RCEIL", "")
     quant_config = AutoRoundConfig(
-        tokenizer=tokenizer,
+        model_free=True,
         scheme=scheme,
         enable_torch_compile=True,
-        iters=iters,
         ignore_layers=config["fp_layers"],
         export_format=args.export_format,
-        disable_opt_rtn=True,
         low_gpu_mem_usage=True,
         static_kv_dtype=static_kv_dtype,
         static_attention_dtype=args.static_attention_dtype,
@@ -129,7 +127,7 @@ def quant_model(args):
 
     # quantizer execute
     model = prepare(model=fp32_model, quant_config=quant_config)
-    inc_model = convert(model)
+    _ = convert(model)
     logger.info(f"Quantized model saved to {output_dir}")
 
 
