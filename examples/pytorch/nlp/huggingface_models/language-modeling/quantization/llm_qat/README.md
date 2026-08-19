@@ -10,6 +10,7 @@ Install the requirements for the example:
 pip install -r requirements.txt
 ```
 
+
 ## Getting Started
 
 In QAT, a model quantized using `prepare_qat()` can be directly fine-tuned with the original training pipeline. During QAT, the scaling factors inside quantizers are frozen and the model weights are fine-tuned.
