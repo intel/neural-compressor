@@ -1,9 +1,9 @@
-auto-round==0.8.0
-neural-compressor-pt==3.6
-transformers==4.53.0
+auto-round
+neural-compressor-pt
+transformers
 datasets
 sentencepiece>=0.2.0
 tensorboardX
 peft
-accelerate >= 0.12.0
-lm-eval==0.4.9.1
+accelerate>=0.12.0
+lm-eval
