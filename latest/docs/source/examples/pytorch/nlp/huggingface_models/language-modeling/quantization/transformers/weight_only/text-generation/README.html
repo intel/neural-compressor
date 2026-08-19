@@ -100,7 +100,7 @@ We provide the inference benchmarking script <code class="docutils literal notra
 <h3>Create Environment​<a class="headerlink" href="#create-environment" title="Link to this heading"></a></h3>
 <p>python version requests equal or higher than 3.9 due to <a class="reference external" href="https://github.com/EleutherAI/lm-evaluation-harness/tree/master">text evaluation library</a> limitation, the dependent packages are listed in requirements, we recommend create environment as the following steps.</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span><span class="nv">oneccl_bind_pt</span><span class="o">==</span><span class="m">2</span>.4.0<span class="w"> </span>--index-url<span class="w"> </span>https://pytorch-extension.intel.com/release-whl/stable/cpu/us/
-pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements_cpu_woq.txt
+pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements_cpu_woq.txt<span class="w"> </span>--extra-index-url<span class="w"> </span>https://download.pytorch.org/whl/cpu
 </pre></div>
 </div>
 </section>
@@ -300,7 +300,7 @@ python<span class="w"> </span>run_generation_gpu_woq.py<span class="w"> </span><
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f5028c271a0> 
+   <jinja2.runtime.BlockReference object at 0x7f8bb76d2a50> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
