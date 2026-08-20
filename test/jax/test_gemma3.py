@@ -100,7 +100,7 @@ def test_text_prompt(dynamic, const_vars, model_dtype, quantization_dtype, rando
     answer = gemma_q_loaded.generate(prompt, max_length=25, strip_prompt=True)
     print(f"Gemma answer for prompt '{prompt}': {answer}")
     if "London" not in answer:
-        warnings.warn(f"Expected 'London' in answer, but got: '{answer}'", UserWarning)
+        warnings.warn(f"Expected 'London' in answer, but got: '{answer}'")
         prompt = "2 + 2 ="
         print("Wrong answer, trying simpler prompt:")
         answer = gemma_q_loaded.generate(prompt, max_length=20, strip_prompt=True)
