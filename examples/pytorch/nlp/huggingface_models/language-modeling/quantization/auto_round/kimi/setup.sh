@@ -8,35 +8,9 @@ usage() {
     echo "  --bench_tool benchmarking tool to use (lm_eval or aisbench)"
 }
 
-detect_cuda_version() {
-    local cuda_version=""
-    local candidate_version=""
-
-    if command -v nvidia-smi >/dev/null 2>&1; then
-        candidate_version=$(nvidia-smi 2>/dev/null | sed -n 's/.*CUDA Version: \([^ ]*\).*/\1/p' | head -n 1)
-        if [[ "$candidate_version" =~ ^[0-9.]+$ ]]; then
-            cuda_version="$candidate_version"
-        fi
-    fi
-
-    if [[ -z "$cuda_version" ]] && command -v nvcc >/dev/null 2>&1; then
-        candidate_version=$(nvcc --version | awk '/release/ {print $6}' | sed 's/^V//; s/,//')
-        if [[ "$candidate_version" =~ ^[0-9.]+$ ]]; then
-            cuda_version="$candidate_version"
-        fi
-    fi
-
-    if [[ -z "$cuda_version" ]]; then
-        echo "Unable to detect CUDA version from nvidia-smi or nvcc." >&2
-        exit 1
-    fi
-
-    echo "$cuda_version"
-}
-
 DEVICE="${DEVICE:-gpu}"
 FORMAT="${FORMAT:-LLMC}"
-TASKS="${TASKS:-hellaswag,piqa,mmlu,gsm8k}"
+TASKS="${TASKS:-hellaswag,piqa,mmlu,gsm8k,ruler}"
 BENCH_TOOL="${BENCH_TOOL:-lm_eval}"
 
 while [[ $# -gt 0 ]]; do
@@ -75,19 +49,7 @@ elif [[ "$DEVICE" == "gpu" ]]; then
     uv pip install packaging --upgrade
     uv pip install -U "huggingface_hub[cli]"
     if [[ "$FORMAT" == "LLMC" ]]; then
-        CUDA_VERSION=$(detect_cuda_version)
-        echo "Detected system CUDA version: $CUDA_VERSION"
-        if [[ "$CUDA_VERSION" == "12."* ]]; then
-            uv pip install vllm==0.19.1 --extra-index-url https://wheels.vllm.ai/0.19.1/cu129 --extra-index-url https://download.pytorch.org/whl/cu129 --index-strategy unsafe-best-match
-            uv pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu129 --index-strategy unsafe-best-match
-        elif [[ "$CUDA_VERSION" == "13."* ]]; then
-            uv pip install vllm==0.19.1 --extra-index-url https://wheels.vllm.ai/0.19.1/cu130 --extra-index-url https://download.pytorch.org/whl/cu130 --index-strategy unsafe-best-match
-            uv pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu130 --index-strategy unsafe-best-match
-        else
-            echo "Unsupported CUDA version: $CUDA_VERSION. Supported versions are 12.x and 13.x."
-            exit 1
-        fi
-
+        uv pip install vllm==0.27.1
         uv pip install ray
         git clone https://github.com/yiliu30/vllm-qdq-plugin.git
         uv pip install vllm-qdq-plugin/ -v
