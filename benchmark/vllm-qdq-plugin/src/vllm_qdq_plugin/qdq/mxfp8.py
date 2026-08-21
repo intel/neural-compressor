@@ -7,6 +7,8 @@ bias=7, max=448) with per-group E8M0 (power-of-2) scales of group_size elements.
 
 import torch
 
+from .. import envs
+
 FLOAT8_E8M0_MAX_EXP = 127
 
 # float8_e4m3fn (OCP standard) parameters:
@@ -66,7 +68,7 @@ def _quantize_to_e4m3fn_no_fp8_dtype(x: torch.Tensor) -> torch.Tensor:
     return q * sign
 
 
-def mxfp8_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
+def _mxfp8_qdq_reference(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
     """Quantize-dequantize input to MXFP8 (E4M3 + E8M0 scales).
 
     Simulates MX MXFP8-E4M3 quantization:
@@ -116,3 +118,12 @@ def mxfp8_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
     x_fp8 = _quantize_to_e4m3fn_no_fp8_dtype(x_scaled)
     x_fp8 = (x_fp8 * scale[..., None]).to(orig_dtype)
     return x_fp8.reshape(m, -1)[:, :k]
+
+
+def mxfp8_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
+    """Quantize-dequantize input to MXFP8 (E4M3 + E8M0 scales)."""
+    if envs.VLLM_QDQ_CUTE:
+        from .cute import mxfp8_qdq_cute
+
+        return mxfp8_qdq_cute(x, group_size)
+    return _mxfp8_qdq_reference(x, group_size)

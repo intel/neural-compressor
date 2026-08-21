@@ -15,9 +15,11 @@ The plugin registers as a `vllm.general_plugins` entry point, which vLLM loads a
 ```bash
 pip install git+https://github.com/yiliu30/vllm-qdq-plugin.git
 
-# Or for development:
-git clone https://github.com/yiliu30/vllm-qdq-plugin.git
-pip install -e vllm-qdq-plugin/
+# Or install from the neural-compressor repository root for development:
+pip install -e benchmark/vllm-qdq-plugin/
+
+# When already inside benchmark/vllm-qdq-plugin:
+pip install -e .
 ```
 
 ## Usage
@@ -32,6 +34,9 @@ VLLM_QDQ=1 vllm serve /path/to/model --tensor-parallel-size 2
 # Enable trace logging (prints shape/dtype for each QDQ call)
 VLLM_QDQ=1 VLLM_QDQ_TRACE=1 vllm serve /path/to/model
 
+# Request the CuTe QDQ backend on SM80+ GPUs
+VLLM_QDQ=1 VLLM_QDQ_CUTE=1 vllm serve /path/to/model
+
 # Force MXFP4 QDQ on Marlin MoE when dtype-based detection is not enough
 VLLM_QDQ=1 VLLM_MARLIN_MOE_QDQ_MODE=FORCE_MXFP4 vllm serve /path/to/model
 ```
@@ -42,6 +47,7 @@ VLLM_QDQ=1 VLLM_MARLIN_MOE_QDQ_MODE=FORCE_MXFP4 vllm serve /path/to/model
 |---|---|---|
 | `VLLM_QDQ` | `0` | Set to `1` to enable QDQ |
 | `VLLM_QDQ_TRACE` | `0` | Set to `1` to print trace lines (up to 200) |
+| `VLLM_QDQ_CUTE` | `0` | Enable fused CuTe MXFP4/MXFP8 QDQ kernels. Requires CUDA, SM80+, NVIDIA CUTLASS DSL, contiguous input, group size 32, and `K` divisible by 32. Unsupported inputs fall back to the reference implementation. |
 | `VLLM_MARLIN_MOE_QDQ_MODE` | `0` | Set to `FORCE_MXFP4` to apply MXFP4 QDQ in `moe_wna16_marlin_gemm` when dtype-based routing is not sufficient. Matching is case-insensitive. |
 
 ## Support Status
@@ -58,6 +64,30 @@ For MXFP4, the QDQ simulates:
 2. **Dequantize**: Multiply back by the scale to restore the original dtype
 
 This introduces the same quantization noise that a "real" MXFP4 GEMM would produce on the input side, while keeping the actual computation in bf16 via Marlin's weight-only dequant kernel.
+
+### CuTe QDQ Validation
+
+The optional CuTe backend checks CUDA capability at runtime and only accepts SM80 or newer GPUs. Verify the installed CuTe DSL first, then compare the CuTe and reference paths:
+
+```bash
+CUDA_VISIBLE_DEVICES=<idle-gpu> python scripts/verify_cute_dsl.py
+CUDA_VISIBLE_DEVICES=<idle-gpu> python scripts/bench_qdq_cute.py --shape 1024 4096
+```
+
+The benchmark reports exact output equality, maximum absolute error, latency, and speedup for MXFP4 and MXFP8. On an NVIDIA A100 with a `[1024, 4096]` bf16 input, 20 warmup iterations, and 100 measured iterations, the fused kernels produced exact reference output and measured:
+
+| Format | Reference | CuTe | Speedup |
+|---|---:|---:|---:|
+| MXFP4 | 1.437 ms | 0.088 ms | 16.32x |
+| MXFP8 | 0.859 ms | 0.087 ms | 9.83x |
+
+The first call includes CuTe JIT compilation. The table measures warmed-up steady-state execution.
+
+### CUDA Graphs
+
+The fused QDQ kernels support CUDA Graph capture and replay, including the graph path used by vLLM. Each `(format, dtype, shape, device)` specialization must execute once in eager mode before capture so CuTe JIT compilation stays outside the graph. vLLM's normal warmup satisfies this requirement. A cache miss during capture raises an actionable error instead of attempting an unsafe JIT compilation.
+
+Compiled specializations are cached per CUDA device. Kernel launches use PyTorch's current CUDA stream, so capture records the QDQ kernel in the same graph as the following Marlin operation.
 
 ## Adding New Dtypes
 
