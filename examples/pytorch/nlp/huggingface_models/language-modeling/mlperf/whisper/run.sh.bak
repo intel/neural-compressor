@@ -1,0 +1,18 @@
+#!/bin/bash
+
+export VLLM_USE_V1=1
+# export VLLM_LOGGING_LEVEL="DEBUG"
+# export VLLM_ENABLE_V1_MULTIPROCESSING=0
+# export VLLM_ATTENTION_BACKEND="FLASH_ATTN_VLLM_V1"
+export VLLM_ALLOW_LONG_MAX_MODEL_LEN=1
+export VLLM_WORKER_MULTIPROC_METHOD=spawn
+export ONEAPI_DEVICE_SELECTOR=level_zero:2
+export EXTRA_ARGS="--accuracy"
+python main.py \
+      --dataset_dir /data \
+      --model_path /model/whisper-large-v3 \
+      --manifest /data/dev-all-repack.json \
+      --scenario Offline \
+      --log_dir ${PWD}/logs \
+      --num_workers 1 \
+      ${EXTRA_ARGS}
