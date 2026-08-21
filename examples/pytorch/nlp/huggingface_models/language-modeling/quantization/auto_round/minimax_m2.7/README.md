@@ -42,7 +42,7 @@ uv pip install vllm
 ```bash
 cd examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/minimax_m2.7
 bash run_quant.sh \
-  --dtype=mxfp8_moe_fp4 \
+  --dtype=mxfp4_mixed \
   --input_model=MiniMaxAI/MiniMax-M2.7 \
   --output_model=~/models/minimax-m2.7-mxfp
 ```
@@ -79,7 +79,7 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 vllm serve ~/models/minimax-m2.7-mxfp \
 ### `run_quant.sh`
 
 - `--dtype`: quantization preset.
-  - `mxfp8_moe_fp4`: `scheme=MXFP8` globally + `block_sparse_moe` layers use `scheme=MXFP4`
+  - `mxfp4_mixed`: `scheme=MXFP8` globally + `block_sparse_moe` layers use `scheme=MXFP4`
   - `mxfp8`: `scheme=MXFP8` globally
   - `mxfp4`: `scheme=MXFP4` globally
 - `--input_model`: HF model name or local model path.

@@ -23,7 +23,7 @@ logging.basicConfig(level=logging.INFO)
 
 _PRESET_CONFIG = {
     # MXFP8 globally, with MoE experts downgraded to MXFP4.
-    "mxfp8_moe_fp4": {
+    "mxfp4_mixed": {
         "scheme": "MXFP8",
         "layer_config": {"block_sparse_moe": {"scheme": "MXFP4"}},
     },
@@ -67,7 +67,7 @@ def main() -> None:
         type=str,
         required=True,
         choices=sorted(_PRESET_CONFIG.keys()),
-        help="Quantization preset. e.g. mxfp8_moe_fp4",
+        help="Quantization preset. e.g. mxfp4_mixed",
     )
     parser.add_argument(
         "--input_model",
