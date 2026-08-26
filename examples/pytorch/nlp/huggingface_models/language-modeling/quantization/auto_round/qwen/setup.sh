@@ -5,7 +5,7 @@ usage() {
     echo "  --device    target device for quantization (gpu or xpu)"
     echo "  --format    quantization format (AR for auto_round, LLMC for llm_compressor)"
     echo "  --task      comma-separated list of evaluation tasks (e.g. gsm8k,hellaswag)"
-    echo "  --bench_tool benchmarking tool to use (lm_eval or aisbench)"
+    echo "  --bench_tool benchmarking tool to use (lm_eval, )"
 }
 
 detect_cuda_version() {
@@ -75,18 +75,7 @@ elif [[ "$DEVICE" == "gpu" ]]; then
     uv pip install packaging --upgrade
     uv pip install -U "huggingface_hub[cli]"
     if [[ "$FORMAT" == "LLMC" ]]; then
-        CUDA_VERSION=$(detect_cuda_version)
-        echo "Detected system CUDA version: $CUDA_VERSION"
-        if [[ "$CUDA_VERSION" == "12."* ]]; then
-            uv pip install vllm==0.25.1 --extra-index-url https://wheels.vllm.ai/0.22.0/cu129 --extra-index-url https://download.pytorch.org/whl/cu129 --index-strategy unsafe-best-match
-            uv pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu129 --index-strategy unsafe-best-match
-        elif [[ "$CUDA_VERSION" == "13."* ]]; then
-            uv pip install vllm==0.25.1
-        else
-            echo "Unsupported CUDA version: $CUDA_VERSION. Supported versions are 12.x and 13.x."
-            exit 1
-        fi
-
+        uv pip install vllm==0.25.1
         uv pip install ray
         git clone https://github.com/yiliu30/vllm-qdq-plugin.git
         uv pip install vllm-qdq-plugin/ -v
@@ -104,6 +93,10 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         if [[ "$TASKS" == *"longbench"* ]]; then
             uv pip install "long-bench-eval @ git+https://github.com/yiliu30/long-bench-eval"
         fi
+    elif [[ "$BENCH_TOOL" == "evalscope" ]]; then
+        echo "Installing evalscope..."
+        uv pip install evalscope==1.11.0
+
     elif [[ "$BENCH_TOOL" == "aisbench" ]]; then
         echo "Installing aisbench..."
     fi
