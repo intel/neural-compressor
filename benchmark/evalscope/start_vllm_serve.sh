@@ -47,6 +47,28 @@ if [[ "${MODEL}" == *"DeepSeek-V4-"* ]] && [[ "${SCHEME}" == "fp8" ]]; then
   EXTRA_ARGS+=(--enable-expert-parallel)
   EXTRA_ARGS+=(--moe-backend deep_gemm_mega_moe)
 fi
+# Only for Qwen3
+if [[ "${MODEL}" == *"Qwen3-"* ]]; then
+    export VLLM_USE_DEEP_GEMM=0
+    if [[ "$SCHEME" == "mxfp4" ]]; then
+        export VLLM_AR_MXFP4_MODULAR_MOE=1
+        export VLLM_MXFP4_PRE_UNPACK_TO_FP8=1
+        export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=0
+        export VLLM_ENABLE_STATIC_MOE=0
+        export VLLM_ENABLE_AR_EXT=1
+    elif [[ "$SCHEME" == "mxfp8" ]]; then
+        export VLLM_AR_MXFP4_MODULAR_MOE=0
+        export VLLM_MXFP4_PRE_UNPACK_TO_FP8=0
+        export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=0
+        export VLLM_ENABLE_STATIC_MOE=0
+        export VLLM_ENABLE_AR_EXT=1
+    elif [[ "$SCHEME" == "bf16" ]]; then
+        echo "Running original model."
+    else
+        echo "Error: Invalid quantization scheme (-s)."
+        exit 1
+    fi
+fi
 
 VLLM_CMD=(
   vllm serve "${MODEL}"
