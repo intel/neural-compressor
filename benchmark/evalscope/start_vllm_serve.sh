@@ -42,8 +42,8 @@ while [[ $# -gt 0 ]]; do
 done
 
 EXTRA_ARGS=()
-# Only for base DeepSeek-V4-Flash/Pro model names without quantized suffixes.
-if [[ "${MODEL}" == *"DeepSeek-V4-"* ]] && [[ "${SCHEME}" == "bf16" ]]; then
+# Only for base DeepSeek-V4-Flash/Pro model
+if [[ "${MODEL}" == *"DeepSeek-V4-"* ]] && [[ "${SCHEME}" == "fp8" ]]; then
   EXTRA_ARGS+=(--enable-expert-parallel)
   EXTRA_ARGS+=(--moe-backend deep_gemm_mega_moe)
 fi
