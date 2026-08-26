@@ -5,7 +5,7 @@ usage() {
     echo "  --device    target device for quantization (gpu or xpu)"
     echo "  --format    quantization format (AR for auto_round, LLMC for llm_compressor)"
     echo "  --task      comma-separated list of evaluation tasks (e.g. gsm8k,hellaswag)"
-    echo "  --bench_tool benchmarking tool to use (lm_eval, )"
+    echo "  --bench_tool benchmarking tool to use (lm_eval, aisbench, evalscope)"
 }
 
 detect_cuda_version() {
