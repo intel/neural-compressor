@@ -10,7 +10,7 @@ set -euo pipefail
 # This script is normally invoked by run_evalscope.sh, but can also be run standalone.
 
 PORT=8009
-MODEL=/workspace/models/deepseek-ai/DeepSeek-V4-Flash
+MODEL=""
 SCHEME="mxfp4"
 KV_CACHE_DTYPE="fp8"
 BLOCK_SIZE=256
