@@ -761,13 +761,21 @@ class HFLM(TemplateLM):
                 # get the HF hub name via accessor on model
                 model_name = self.model.name_or_path
 
-            # chatglm2 tokenizer doesn't support loading from local.
+            # chatglm2 tokenizer doesn't support loading from local and requires trust_remote_code.
             if (
                 hasattr(self.model, "config")
                 and hasattr(self.model.config, "auto_map")
                 and "chatglm2" in self.model.config.auto_map["AutoConfig"]
             ):
-                self.tokenizer = transformers.AutoTokenizer.from_pretrained("THUDM/chatglm2-6b", trust_remote_code=True)
+                if not trust_remote_code:
+                    eval_logger.warning(
+                        "The chatglm2 tokenizer (THUDM/chatglm2-6b) requires `trust_remote_code=True` "
+                        "to load its custom tokenizer implementation. Loading may fail with the current "
+                        "`trust_remote_code=False` setting."
+                    )
+                self.tokenizer = transformers.AutoTokenizer.from_pretrained(
+                    "THUDM/chatglm2-6b", trust_remote_code=trust_remote_code
+                )
             else:
                 self.tokenizer = transformers.AutoTokenizer.from_pretrained(
                     model_name,
