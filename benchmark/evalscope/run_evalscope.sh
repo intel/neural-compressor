@@ -16,7 +16,7 @@ TENSOR_PARALLEL_SIZE=2
 OUTPUT_FILE=""
 TASKS=""
 SKIP_SERVE="${SKIP_SERVE:-false}"
-STOP_SERVE="${STOP_SERVE:-false}"
+STOP_SERVE="${STOP_SERVE:-true}"
 VLLM_PID=""
 LOG_TAIL_PID=""
 
@@ -67,9 +67,9 @@ while [[ $# -gt 0 ]]; do
     --tasks)
       TASKS="$2"; shift 2 ;;
     --skip-serve)
-      SKIP_SERVE="true"; shift 1 ;;
+      SKIP_SERVE="$2"; shift 2 ;;
     --stop-serve)
-      STOP_SERVE="true"; shift 1 ;;
+      STOP_SERVE="$2"; shift 2 ;;
     --tp)
       TENSOR_PARALLEL_SIZE="$2"; shift 2 ;;
     --kv-cache-dtype)
