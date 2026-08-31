@@ -60,7 +60,7 @@ def inference_worker(eval_file, pipe, image_save_dir):
         "generator": None,
     }
  
-    dataloader, _, _ = get_diffusion_dataloader(eval_file, nsamples=args.limit, bs=1)
+    dataloader, _ = get_diffusion_dataloader(eval_file, nsamples=args.limit, bs=1)
     for image_ids, prompts in dataloader:
 
         new_ids = []

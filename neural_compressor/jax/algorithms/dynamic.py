@@ -58,7 +58,13 @@ def dynamic_quantize(
         weight_dtype = dtype_mapping[config.weight_dtype]
         activation_dtype = dtype_mapping[config.activation_dtype]
         dynamic_quant_mapping[layer.__class__].prepare(
-            layer, weight_dtype, activation_dtype, config.const_scale, config.const_weight
+            layer,
+            weight_dtype,
+            activation_dtype,
+            config.const_scale,
+            config.const_weight,
+            config.weight_scale_granularity,
+            config.dot_product_attention_enable,
         )
         layer.add_variables()
         layer.post_quantization_cleanup()

@@ -8,10 +8,10 @@ This example quantizes and validates the accuracy of Flux.
 
 ```shell
 pip install -r requirements.txt
-# Use `INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@master` for the latest updates before neural-compressor v3.6 release
-pip install neural-compressor-pt==3.7
-# Use `pip install git+https://github.com/intel/auto-round.git@main` for the latest updates before auto-round v0.8.0 release
-pip install auto-round==0.9.3
+# Use `INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@master` for the latest updates
+pip install neural-compressor-pt
+# Use `pip install git+https://github.com/intel/auto-round.git@main` for the latest updates
+pip install auto-round
 ```
 
 ## 2. Prepare Model
@@ -36,6 +36,7 @@ bash run_quant.sh --topology=flux_mxfp8 --input_model=FLUX.1-dev --output_model=
 
 
 ## Evaluation
+Requires transformers==4.57.6 for final score calculation, which will be automatically installed in the `run_benchmark.sh` script.
 
 ### BF16:
 

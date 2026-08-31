@@ -568,7 +568,14 @@ def prepare_deserialized_quantized_model(
         layers_mapping, cfg = selected
         weight_dtype = dtype_mapping[cfg.weight_dtype]
         activation_dtype = dtype_mapping[cfg.activation_dtype]
-        additional_params = (weight_dtype, activation_dtype, cfg.const_scale, cfg.const_weight)
+        additional_params = (
+            weight_dtype,
+            activation_dtype,
+            cfg.const_scale,
+            cfg.const_weight,
+            cfg.weight_scale_granularity,
+            cfg.dot_product_attention_enable,
+        )
         layers_mapping[layer.__class__].prepare(layer, *additional_params)
         layer.add_variables()
         layer.post_quantization_cleanup()

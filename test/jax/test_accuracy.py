@@ -34,8 +34,10 @@ def _read_value(var_or_array, is_const):
 
 
 @pytest.mark.parametrize("dynamic", [False, True], ids=["dynamic=False", "dynamic=True"])
-@pytest.mark.parametrize("c_scale", [False, True], ids=["c_scale=False", "c_scale=True"])
-@pytest.mark.parametrize("c_weight", [False, True], ids=["c_weight=False", "c_weight=True"])
+@pytest.mark.parametrize("const_vars", [False, True], ids=["const_vars=False", "const_vars=True"])
+@pytest.mark.parametrize(
+    "weight_scale_granularity", ["per_tensor", "per_channel"], ids=["granularity=per_tensor", "granularity=per_channel"]
+)
 @pytest.mark.parametrize("inplace", [False, True], ids=["inplace=False", "inplace=True"])
 @pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"], ids=["model_dtype=float32", "model_dtype=bfloat16"])
 @pytest.mark.parametrize(
@@ -44,7 +46,9 @@ def _read_value(var_or_array, is_const):
     ids=[f"weight_dtype={w}-activation_dtype={a}" for w, a in _dtype_pairs],
 )
 @pytest.mark.smoke_test
-def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model_dtype, weight_dtype, activation_dtype):
+def test_simple_linear_model_accuracy(
+    dynamic, const_vars, weight_scale_granularity, inplace, model_dtype, weight_dtype, activation_dtype
+):
     """Test accuracy on a simple linear model."""
 
     # Build model
@@ -53,7 +57,7 @@ def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model
         [
             keras.Input(shape=(9,)),
             keras.layers.Dense(4, activation="linear", use_bias=False, dtype=model_dtype_jnp),
-            keras.layers.Dense(1, activation="linear", use_bias=False, dtype=model_dtype_jnp),
+            keras.layers.Dense(2, activation="linear", use_bias=False, dtype=model_dtype_jnp),
         ]
     )
 
@@ -82,16 +86,18 @@ def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model
         config = DynamicQuantConfig(
             weight_dtype=weight_dtype,
             activation_dtype=activation_dtype,
-            const_scale=c_scale,
-            const_weight=c_weight,
+            weight_scale_granularity=weight_scale_granularity,
+            const_scale=const_vars,
+            const_weight=const_vars,
         )
         q_model = quantize_model(model, config, inplace=inplace)
     else:
         config = StaticQuantConfig(
             weight_dtype=weight_dtype,
             activation_dtype=activation_dtype,
-            const_scale=c_scale,
-            const_weight=c_weight,
+            weight_scale_granularity=weight_scale_granularity,
+            const_scale=const_vars,
+            const_weight=const_vars,
         )
         q_model = quantize_model(model, config, calib_function, inplace=inplace)
 
@@ -102,11 +108,12 @@ def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model
         all_weights,
         dtype_mapping[weight_dtype],
         dtype_mapping[activation_dtype],
-        dynamic=dynamic,
-        model_dtype=model_dtype,
+        dynamic,
+        model_dtype,
+        weight_scale_granularity,
     )
 
-    # Run quantization
+    # Run inference
     quantized_output = jax.jit(q_model)(test_input)
 
     # Compare results with expectations
@@ -115,14 +122,14 @@ def test_simple_linear_model_accuracy(dynamic, c_scale, c_weight, inplace, model
     ), f"Quantized output mismatch: expected {expected_output}, got {quantized_output}"
 
     for i, (q_layer, exp_w_scale) in enumerate(zip(q_model.layers, expected_weight_scales)):
-        w_scale_val = _read_value(q_layer.w_scale, c_scale)
+        w_scale_val = _read_value(q_layer.w_scale, const_vars)
         assert jnp.allclose(
             jnp.array(w_scale_val), jnp.array(exp_w_scale), rtol=1e-5
         ), f"Weight scale mismatch at layer {i}: expected {exp_w_scale}, got {w_scale_val}"
 
     if not dynamic:
         for i, (q_layer, exp_a_scale) in enumerate(zip(q_model.layers, expected_activation_scales)):
-            a_scale_val = _read_value(q_layer.a_scale, c_scale)
+            a_scale_val = _read_value(q_layer.a_scale, const_vars)
             assert jnp.allclose(
                 jnp.array(a_scale_val), jnp.array(exp_a_scale), rtol=1e-5
             ), f"Activation scale mismatch at layer {i}: expected {exp_a_scale}, got {a_scale_val}"
