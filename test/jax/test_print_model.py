@@ -95,7 +95,9 @@ print_model(gemma_q)
 
 
 class LayerRepresentation:
-    def __init__(self, class_name, name=None, val_a_zero_point=False, val_a_scale=False, val_w_scale=False, layer_ref=None):
+    def __init__(
+        self, class_name, name=None, val_a_zero_point=False, val_a_scale=False, val_w_scale=False, layer_ref=None
+    ):
         self.class_name = class_name
         self.name = name
         self.val_a_zero_point = val_a_zero_point
@@ -130,8 +132,10 @@ class LayerRepresentation:
         i_beg = dsc.find("a_zero_point")
         i_end = dsc.find("]", i_beg)
         a_zero_point = dsc[i_beg : i_end + 1]
-        
-        assert a_zero_point.startswith(f"a_zero_point{'(attr)' if const_vars else ''}=["), f"a_zero_point is missing or incorrect: {a_zero_point}"
+
+        assert a_zero_point.startswith(
+            f"a_zero_point{'(attr)' if const_vars else ''}=["
+        ), f"a_zero_point is missing or incorrect: {a_zero_point}"
         values = a_zero_point[a_zero_point.find("[") + 1 : -1].split()
         assert len(values) > 0
         if self.layer_ref:
@@ -144,7 +148,9 @@ class LayerRepresentation:
         i_end = dsc.find("]", i_beg)
         a_scale = dsc[i_beg : i_end + 1]
 
-        assert a_scale.startswith(f"a_scale{'(attr)' if const_vars else ''}=["), f"a_scale is missing or incorrect: {a_scale}"
+        assert a_scale.startswith(
+            f"a_scale{'(attr)' if const_vars else ''}=["
+        ), f"a_scale is missing or incorrect: {a_scale}"
         values = a_scale[a_scale.find("[") + 1 : -1].split()
         assert len(values) > 0
         if self.layer_ref:
@@ -157,7 +163,9 @@ class LayerRepresentation:
         i_end = dsc.find("]", i_beg)
         w_scale = dsc[i_beg : i_end + 1]
 
-        assert w_scale.startswith(f"w_scale{'(attr)' if const_vars else ''}=[") , f"w_scale is missing or incorrect: {w_scale}"
+        assert w_scale.startswith(
+            f"w_scale{'(attr)' if const_vars else ''}=["
+        ), f"w_scale is missing or incorrect: {w_scale}"
         values = w_scale[w_scale.find("[") + 1 : -1].split()
         assert len(values) > 0
         if self.layer_ref:
