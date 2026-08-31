@@ -46,6 +46,7 @@ def _build_sequential_model(dynamic, const_vars):
 
         return quantize_model(model, config, calib_fn)
 
+
 def _build_gemma_model(dynamic):
     model_path = os.environ.get("MODELS_PATH", "/tf_dataset/jax") + "/gemma3_instruct_270m"
     gemma = Gemma3CausalLM.from_preset(model_path, dtype="bfloat16")
@@ -66,13 +67,16 @@ def _build_gemma_model(dynamic):
 
     return quantize_model(gemma, config, _calib_fn)
 
+
 def print_sequential_model_fn(dynamic, const_vars):
     model = _build_sequential_model(dynamic, const_vars)
     print_model(model)
 
+
 def print_gemma_model_fn(dynamic):
     model = _build_gemma_model(dynamic)
     print_model(model)
+
 
 class LayerRepresentation:
     def __init__(
@@ -260,11 +264,7 @@ def test_print_gemma(dynamic):
         for l in layer._layers:
             yield from _traverse_layers(l)
 
-    cmd = (
-        "import runpy\n"
-        f"mod = runpy.run_path({__file__!r})\n"
-        f"mod['print_gemma_model_fn']({dynamic})\n"
-    )
+    cmd = "import runpy\n" f"mod = runpy.run_path({__file__!r})\n" f"mod['print_gemma_model_fn']({dynamic})\n"
     process = subprocess.run([sys.executable, "-c", cmd], capture_output=True)
     descriptions = _layer_descriptions(process.stderr)
     gemma_layers = _traverse_layers(_build_gemma_model(dynamic))
