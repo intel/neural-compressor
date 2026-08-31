@@ -1,6 +1,9 @@
-import inspect
 import os
+
+os.environ["LOGLEVEL"] = "DEBUG"
+
 import subprocess
+import sys
 
 import jax.numpy as jnp
 import keras
@@ -8,6 +11,7 @@ import pytest
 from keras_hub.models import Gemma3CausalLM
 
 from neural_compressor.jax import DynamicQuantConfig, StaticQuantConfig, quantize_model
+from neural_compressor.jax.utils.utility import print_model
 
 
 def _build_sequential_model(dynamic, const_vars):
@@ -42,8 +46,7 @@ def _build_sequential_model(dynamic, const_vars):
 
         return quantize_model(model, config, calib_fn)
 
-
-def build_gemma_model(dynamic):
+def _build_gemma_model(dynamic):
     model_path = os.environ.get("MODELS_PATH", "/tf_dataset/jax") + "/gemma3_instruct_270m"
     gemma = Gemma3CausalLM.from_preset(model_path, dtype="bfloat16")
 
@@ -63,36 +66,13 @@ def build_gemma_model(dynamic):
 
     return quantize_model(gemma, config, _calib_fn)
 
+def print_sequential_model_fn(dynamic, const_vars):
+    model = _build_sequential_model(dynamic, const_vars)
+    print_model(model)
 
-def print_sequential_model_cmd(dynamic, const_vars):
-    return f"""import os
-os.environ["LOGLEVEL"] = "DEBUG"
-import jax.numpy as jnp
-import keras
-from neural_compressor.jax import quantize_model, StaticQuantConfig, DynamicQuantConfig
-from neural_compressor.jax.utils.utility import print_model
-
-{inspect.getsource(_build_sequential_model)}
-model = _build_sequential_model({dynamic}, {const_vars})
-print_model(model)
-"""
-
-
-def print_gemma_model_cmd(dynamic):
-    return f"""import os
-os.environ["LOGLEVEL"] = "DEBUG"
-import jax.numpy as jnp
-import keras
-from keras_hub.models import Gemma3CausalLM
-
-from neural_compressor.jax import quantize_model, StaticQuantConfig, DynamicQuantConfig
-from neural_compressor.jax.utils.utility import print_model
-
-{inspect.getsource(build_gemma_model)}
-gemma_q = build_gemma_model({dynamic})
-print_model(gemma_q)
-"""
-
+def print_gemma_model_fn(dynamic):
+    model = _build_gemma_model(dynamic)
+    print_model(model)
 
 class LayerRepresentation:
     def __init__(
@@ -166,7 +146,7 @@ class LayerRepresentation:
         assert w_scale.startswith(
             f"w_scale{'(attr)' if const_vars else ''}=["
         ), f"w_scale is missing or incorrect: {w_scale}"
-        values = w_scale[w_scale.find("[") + 1 : -1].split()
+        values = w_scale[w_scale.rfind("[") + 1 : -1].split()
         assert len(values) > 0
         if self.layer_ref:
             values = jnp.array([float(v) for v in values])
@@ -257,7 +237,12 @@ def _expected_sequential_layers(dynamic, const_vars):
 @pytest.mark.parametrize("const_vars", [False, True], ids=["const_vars=False", "const_vars=True"])
 @pytest.mark.smoke_test_if("const_vars=False-dynamic=False", "const_vars=True-dynamic=True")
 def test_print_sequential_model(dynamic, const_vars):
-    process = subprocess.run(["python", "-c", print_sequential_model_cmd(dynamic, const_vars)], capture_output=True)
+    cmd = (
+        "import runpy\n"
+        f"mod = runpy.run_path({__file__!r})\n"
+        f"mod['print_sequential_model_fn']({dynamic}, {const_vars})\n"
+    )
+    process = subprocess.run([sys.executable, "-c", cmd], capture_output=True)
     descriptions = _layer_descriptions(process.stderr)
 
     for layer in _expected_sequential_layers(dynamic, const_vars):
@@ -275,9 +260,14 @@ def test_print_gemma(dynamic):
         for l in layer._layers:
             yield from _traverse_layers(l)
 
-    process = subprocess.run(["python", "-c", print_gemma_model_cmd(dynamic)], capture_output=True)
+    cmd = (
+        "import runpy\n"
+        f"mod = runpy.run_path({__file__!r})\n"
+        f"mod['print_gemma_model_fn']({dynamic})\n"
+    )
+    process = subprocess.run([sys.executable, "-c", cmd], capture_output=True)
     descriptions = _layer_descriptions(process.stderr)
-    gemma_layers = _traverse_layers(build_gemma_model(dynamic))
+    gemma_layers = _traverse_layers(_build_gemma_model(dynamic))
 
     for layer in gemma_layers:
         LayerRepresentation(
