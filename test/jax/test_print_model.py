@@ -23,16 +23,16 @@ def _build_sequential_model(dynamic, const_vars):
     )
     if dynamic:
         config = DynamicQuantConfig(
-            weight_dtype="fp8_e4m3",
-            activation_dtype="fp8_e4m3",
+            weight_dtype="int8",
+            activation_dtype="int8",
             const_scale=const_vars,
             const_weight=const_vars,
         )
         return quantize_model(model, config)
     else:
         config = StaticQuantConfig(
-            weight_dtype="fp8_e4m3",
-            activation_dtype="fp8_e4m3",
+            weight_dtype="int8",
+            activation_dtype="int8",
             const_scale=const_vars,
             const_weight=const_vars,
         )
@@ -95,9 +95,10 @@ print_model(gemma_q)
 
 
 class LayerRepresentation:
-    def __init__(self, class_name, name=None, val_a_scale=False, val_w_scale=False, layer_ref=None):
+    def __init__(self, class_name, name=None, val_a_zero_point=False, val_a_scale=False, val_w_scale=False, layer_ref=None):
         self.class_name = class_name
         self.name = name
+        self.val_a_zero_point = val_a_zero_point
         self.val_a_scale = val_a_scale
         self.val_w_scale = val_w_scale
         self.layer_ref = layer_ref
@@ -107,6 +108,9 @@ class LayerRepresentation:
 
         if self.name is not None:
             self._validate_name(dsc)
+
+        if self.val_a_zero_point:
+            self._validate_a_zero_point(dsc, const_vars)
 
         if self.val_a_scale:
             self._validate_a_scale(dsc, const_vars)
@@ -122,12 +126,25 @@ class LayerRepresentation:
         name = dsc.split()[1]
         assert self.name == name
 
+    def _validate_a_zero_point(self, dsc, const_vars):
+        i_beg = dsc.find("a_zero_point")
+        i_end = dsc.find("]", i_beg)
+        a_zero_point = dsc[i_beg : i_end + 1]
+        
+        assert a_zero_point.startswith(f"a_zero_point{'(attr)' if const_vars else ''}=["), f"a_zero_point is missing or incorrect: {a_zero_point}"
+        values = a_zero_point[a_zero_point.find("[") + 1 : -1].split()
+        assert len(values) > 0
+        if self.layer_ref:
+            values = jnp.array([float(v) for v in values])
+            ref = self.layer_ref.a_zero_point if const_vars else self.layer_ref.a_zero_point.value
+            jnp.allclose(values, ref, atol=1e-5)
+
     def _validate_a_scale(self, dsc, const_vars):
         i_beg = dsc.find("a_scale")
         i_end = dsc.find("]", i_beg)
         a_scale = dsc[i_beg : i_end + 1]
 
-        assert a_scale.startswith(f"a_scale{'(attr)' if const_vars else ''}=[")
+        assert a_scale.startswith(f"a_scale{'(attr)' if const_vars else ''}=["), f"a_scale is missing or incorrect: {a_scale}"
         values = a_scale[a_scale.find("[") + 1 : -1].split()
         assert len(values) > 0
         if self.layer_ref:
@@ -140,7 +157,7 @@ class LayerRepresentation:
         i_end = dsc.find("]", i_beg)
         w_scale = dsc[i_beg : i_end + 1]
 
-        assert w_scale.startswith(f"w_scale{'(attr)' if const_vars else ''}=[")
+        assert w_scale.startswith(f"w_scale{'(attr)' if const_vars else ''}=[") , f"w_scale is missing or incorrect: {w_scale}"
         values = w_scale[w_scale.find("[") + 1 : -1].split()
         assert len(values) > 0
         if self.layer_ref:
@@ -204,6 +221,7 @@ def _expected_sequential_layers(dynamic, const_vars):
             LayerRepresentation(
                 class_name="QStaticDense",
                 name=".dense",
+                val_a_zero_point=True,
                 val_a_scale=True,
                 val_w_scale=True,
                 layer_ref=model._flatten_layers()[2],
@@ -211,6 +229,7 @@ def _expected_sequential_layers(dynamic, const_vars):
             LayerRepresentation(
                 class_name="QStaticDense",
                 name=".dense_1",
+                val_a_zero_point=True,
                 val_a_scale=True,
                 val_w_scale=True,
                 layer_ref=model._flatten_layers()[3],
@@ -218,6 +237,7 @@ def _expected_sequential_layers(dynamic, const_vars):
             LayerRepresentation(
                 class_name="QStaticEinsumDense",
                 name=".einsum_dense",
+                val_a_zero_point=True,
                 val_a_scale=True,
                 val_w_scale=True,
                 layer_ref=model._flatten_layers()[4],
@@ -255,6 +275,7 @@ def test_print_gemma(dynamic):
         LayerRepresentation(
             class_name=layer.__class__.__name__,
             name=None,
+            val_a_zero_point=hasattr(layer, "a_zero_point"),
             val_a_scale=hasattr(layer, "a_scale"),
             val_w_scale=hasattr(layer, "w_scale"),
             layer_ref=layer,
