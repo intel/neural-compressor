@@ -77,7 +77,6 @@ VLLM_CMD=(
   --tensor-parallel-size "${TENSOR_PARALLEL_SIZE}"
   --attention_config.use_fp4_indexer_cache=True
   --port "${PORT}"
-  --served-model-name "local_test"
   --max-model-len "${MAX_MODEL_LEN}"
   --max-num-seqs "${MAX_NUM_SEQS}"
   --max-num-batched-tokens "${MAX_NUM_BATCHED_TOKENS}"

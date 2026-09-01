@@ -153,14 +153,13 @@ run_evalscope() {
   echo "API URL: $API_URL" | tee -a "$OUTPUT_FILE"
   echo "Temperature: $TEMPERATURE" | tee -a "$OUTPUT_FILE"
   echo "Selected tasks: ${SELECTED_TASKS[*]}" | tee -a "$OUTPUT_FILE"
-  echo -e "\n" | tee -a "$OUTPUT_FILE"
 
   local task
   for task in "${SELECTED_TASKS[@]}"; do
     echo "" | tee -a "$OUTPUT_FILE"
     print_section_header "${task}"
     evalscope eval \
-      --model "local_test" \
+      --model "$MODEL" \
       --eval-type openai_api \
       --api-key EMPTY \
       --timeout 36000 \
