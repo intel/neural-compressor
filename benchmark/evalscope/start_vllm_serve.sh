@@ -12,7 +12,7 @@ set -euo pipefail
 PORT=8009
 MODEL=""
 SCHEME="mxfp4"
-KV_CACHE_DTYPE="fp8"
+KV_CACHE_DTYPE="auto"
 BLOCK_SIZE=256
 TENSOR_PARALLEL_SIZE=2
 MAX_MODEL_LEN=102400
@@ -43,9 +43,12 @@ done
 
 EXTRA_ARGS=()
 # Only for base DeepSeek-V4-Flash/Pro model
-if [[ "${MODEL}" == *"DeepSeek-V4-"* ]] && [[ "${SCHEME}" == "fp8" ]]; then
-  EXTRA_ARGS+=(--enable-expert-parallel)
-  EXTRA_ARGS+=(--moe-backend deep_gemm_mega_moe)
+if [[ "${MODEL}" == *"DeepSeek-V4-"* ]]; then
+  KV_CACHE_DTYPE="fp8"
+  if [[ "${SCHEME}" == "fp8" ]]; then
+    EXTRA_ARGS+=(--enable-expert-parallel)
+    EXTRA_ARGS+=(--moe-backend deep_gemm_mega_moe)
+  fi
 fi
 # Only for Qwen3
 if [[ "${MODEL}" == *"Qwen3-"* ]]; then
