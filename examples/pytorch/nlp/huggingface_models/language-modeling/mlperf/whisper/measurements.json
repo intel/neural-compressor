@@ -1,0 +1,8 @@
+{
+    "starting_weights_filename": "https://huggingface.co/openai/whisper-large-v3/tree/main",
+    "weight_transformations": "Yes",
+    "weight_data_types": "INT8",
+    "input_data_types": "FP32",
+    "retraining": "No",
+    "weight_transformations": "Weight quantization from BF16 to INT8 using AutoRoundMLLM."
+}
