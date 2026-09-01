@@ -14,12 +14,12 @@ if [[ $1 = *"3x_pt"* ]]; then
         uv pip uninstall neural_compressor_3x_pt
     elif [[ $1 = *"xpu"* ]]; then
         echo -e "\n Install torch XPU ... "
-        uv pip install torch==2.11.0 torchvision --index-url https://download.pytorch.org/whl/xpu
-        uv pip install torch==2.11.0 auto-round-lib # mapping torch and auto-round version
+        uv pip install torch==2.13.0 torchvision --index-url https://download.pytorch.org/whl/xpu
+        uv pip install torch==2.13.0 auto-round-lib # mapping torch and auto-round version
     else
         echo -e "\n Install torch CPU ... "
-        uv pip install torch==2.11.0 torchvision --index-url https://download.pytorch.org/whl/cpu
-        uv pip install torch==2.11.0 auto-round-lib # mapping torch and auto-round version
+        uv pip install torch==2.13.0 torchvision --index-url https://download.pytorch.org/whl/cpu
+        uv pip install torch==2.13.0 auto-round-lib # mapping torch and auto-round version
     fi
     python setup.py pt bdist_wheel
     uv pip install --no-deps dist/neural_compressor*.whl --force-reinstall
