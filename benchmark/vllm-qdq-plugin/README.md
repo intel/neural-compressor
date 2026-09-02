@@ -89,7 +89,19 @@ The following measurements are internal test observations from one local environ
 
 ##### vLLM Throughput
 
-Model: `/data4/xinhe/qwen3.6-moe`; GPU: CUDA device 2; workload: 200 random prompts, 512 input tokens and 128 output tokens per prompt.
+Model example: (Qwen3.6-35B-A3B MXFP4); GPU: 1x A100; workload: 200 random prompts, 512 input tokens and 128 output tokens per prompt.
+
+Reproduce (set your own model path):
+
+```bash
+MODEL_PATH=/path/to/your/model
+CUDA_VISIBLE_DEVICES=2 VLLM_QDQ=1 VLLM_QDQ_CUTE=1 vllm bench throughput \
+  --model "$MODEL_PATH" \
+  --dataset-name random \
+  --num-prompts 200 \
+  --random-input-len 512 \
+  --random-output-len 128
+```
 
 | QDQ backend | Requests/s | Total tokens/s | Output tokens/s | Prompt tokens | Output tokens |
 | --- | ---: | ---: | ---: | ---: | ---: |
@@ -98,7 +110,17 @@ Model: `/data4/xinhe/qwen3.6-moe`; GPU: CUDA device 2; workload: 200 random prom
 
 ##### GSM8K Evaluation
 
-Model: `/data4/xinhe/qwen3.6-moe`; task: GSM8K v3, 5-shot; `lm_eval` with the vLLM backend, automatic batch size, tensor parallel size 1, data parallel size 1, maximum model length 8192, and expert parallelism enabled.
+Model example: (Qwen3.6-35B-A3B MXFP4); task: GSM8K v3, 5-shot; `lm_eval` with the vLLM backend, automatic batch size, tensor parallel size 1, data parallel size 1, maximum model length 8192, and expert parallelism enabled.
+
+Reproduce (set your own model path):
+
+```bash
+MODEL_PATH=/path/to/your/model
+CUDA_VISIBLE_DEVICES=1 VLLM_QDQ=1 VLLM_QDQ_CUTE=1 lm_eval --model vllm \
+  --model_args pretrained="$MODEL_PATH",tensor_parallel_size=1,data_parallel_size=1,max_model_len=8192,enable_expert_parallel=True,trust_remote_code=True \
+  --tasks gsm8k \
+  --batch_size auto
+```
 
 | QDQ backend | GPU | Flexible-extract exact match | Stderr | Strict-match exact match | Stderr |
 | --- | ---: | ---: | ---: | ---: | ---: |
