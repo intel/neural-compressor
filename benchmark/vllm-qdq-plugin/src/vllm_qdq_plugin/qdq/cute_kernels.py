@@ -160,14 +160,14 @@ def launch_mxfp8_qdq(
 
 def _get_compiled_kernel(format_name: str, dtype: torch.dtype, element_count: int, device: torch.device):
     device_index = device.index if device.index is not None else torch.cuda.current_device()
-    key = (format_name, dtype, element_count, device_index)
+    key = (format_name, dtype, device_index)
     compiled = _COMPILED_KERNELS.get(key)
     if compiled is not None:
         return compiled
 
     if torch.cuda.is_current_stream_capturing():
         raise RuntimeError(
-            "CuTe QDQ kernel is not prepared for this format, dtype, shape, and device. "
+            "CuTe QDQ kernel is not prepared for this format, dtype, and device. "
             "Run one eager QDQ warmup before vLLM starts CUDA Graph capture."
         )
 

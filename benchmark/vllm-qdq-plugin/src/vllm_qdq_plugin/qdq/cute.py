@@ -13,6 +13,30 @@ import torch
 _FALLBACK_WARNING_EMITTED = False
 
 
+@torch.library.custom_op("vllm_qdq_plugin::mxfp4_qdq_cute", mutates_args=())
+def _mxfp4_qdq_cute_op(x: torch.Tensor) -> torch.Tensor:
+    from .cute_kernels import run_cute_qdq
+
+    return run_cute_qdq(x, "MXFP4")
+
+
+@_mxfp4_qdq_cute_op.register_fake
+def _mxfp4_qdq_cute_fake(x: torch.Tensor) -> torch.Tensor:
+    return torch.empty_like(x)
+
+
+@torch.library.custom_op("vllm_qdq_plugin::mxfp8_qdq_cute", mutates_args=())
+def _mxfp8_qdq_cute_op(x: torch.Tensor) -> torch.Tensor:
+    from .cute_kernels import run_cute_qdq
+
+    return run_cute_qdq(x, "MXFP8")
+
+
+@_mxfp8_qdq_cute_op.register_fake
+def _mxfp8_qdq_cute_fake(x: torch.Tensor) -> torch.Tensor:
+    return torch.empty_like(x)
+
+
 def cute_qdq_status(x: torch.Tensor) -> tuple[bool, str]:
     """Return whether this tensor can execute a CuTe QDQ kernel."""
     if not x.is_cuda:
@@ -47,11 +71,15 @@ def _reference_fallback(x: torch.Tensor, group_size: int, format_name: str, reas
 
 
 def _run_cute_or_fallback(x: torch.Tensor, group_size: int, format_name: str) -> torch.Tensor:
+    op = _mxfp4_qdq_cute_op if format_name == "MXFP4" else _mxfp8_qdq_cute_op
+    if torch.compiler.is_compiling():
+        if group_size != 32:
+            raise ValueError(f"CuTe QDQ requires group_size=32, got {group_size}")
+        return op(x)
+
     available, capability_reason = cute_qdq_status(x)
     if available and group_size == 32 and x.is_contiguous() and x.shape[-1] % group_size == 0:
-        from .cute_kernels import run_cute_qdq
-
-        return run_cute_qdq(x, format_name)
+        return op(x)
     if not available:
         reason = capability_reason
     elif group_size != 32:

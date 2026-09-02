@@ -8,12 +8,45 @@ from vllm_qdq_plugin.qdq.mxfp8 import _mxfp8_qdq_reference, mxfp8_qdq
 
 
 class CuteQDQTests(unittest.TestCase):
-    def test_capture_cache_miss_does_not_attempt_jit(self) -> None:
-        from vllm_qdq_plugin.qdq.cute_kernels import _get_compiled_kernel
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_cute_ops_support_dynamo_fullgraph_capture(self) -> None:
+        if torch.cuda.get_device_capability() < (8, 0):
+            self.skipTest("CuTe QDQ requires SM80 or newer")
 
-        with mock.patch("torch.cuda.is_current_stream_capturing", return_value=True):
+        with mock.patch.dict(os.environ, {"VLLM_QDQ_CUTE": "1"}, clear=False):
+            for reference, qdq in (
+                (_mxfp4_qdq_reference, mxfp4_qdq),
+                (_mxfp8_qdq_reference, mxfp8_qdq),
+            ):
+                x = torch.randn(3, 32, device="cuda", dtype=torch.bfloat16)
+                qdq(x)
+                compiled = torch.compile(qdq, backend="eager", fullgraph=True)
+                self.assertTrue(torch.equal(compiled(x), reference(x)))
+
+    def test_capture_cache_miss_does_not_attempt_jit(self) -> None:
+        from vllm_qdq_plugin.qdq.cute_kernels import _COMPILED_KERNELS, _get_compiled_kernel
+
+        with mock.patch.dict(_COMPILED_KERNELS, {}, clear=True), mock.patch(
+            "torch.cuda.is_current_stream_capturing", return_value=True
+        ):
             with self.assertRaisesRegex(RuntimeError, "Run one eager QDQ warmup"):
                 _get_compiled_kernel("MXFP4", torch.bfloat16, 123456, torch.device("cuda", 0))
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_cute_kernel_compilation_is_reused_across_shapes(self) -> None:
+        if torch.cuda.get_device_capability() < (8, 0):
+            self.skipTest("CuTe QDQ requires SM80 or newer")
+
+        from vllm_qdq_plugin.qdq.cute_kernels import _COMPILED_KERNELS
+
+        with mock.patch.dict(os.environ, {"VLLM_QDQ_CUTE": "1"}, clear=False), mock.patch.dict(
+            _COMPILED_KERNELS, {}, clear=True
+        ):
+            first = torch.randn(1, 2048, device="cuda", dtype=torch.bfloat16)
+            second = torch.randn(200, 2048, device="cuda", dtype=torch.bfloat16)
+            self.assertTrue(torch.equal(mxfp4_qdq(first), _mxfp4_qdq_reference(first)))
+            self.assertTrue(torch.equal(mxfp4_qdq(second), _mxfp4_qdq_reference(second)))
+            self.assertEqual(len(_COMPILED_KERNELS), 1)
 
     def test_cpu_input_uses_exact_reference_fallback(self) -> None:
         x = torch.randn(3, 37, dtype=torch.bfloat16)

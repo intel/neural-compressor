@@ -83,11 +83,43 @@ The benchmark reports exact output equality, maximum absolute error, latency, an
 
 The first call includes CuTe JIT compilation. The table measures warmed-up steady-state execution.
 
+#### Internal Test Results
+
+The following measurements are internal test observations from one local environment. They are included only to aid development and reproducibility. They are not released benchmark results, independently verified results, official model evaluations, performance guarantees, or claims about results in other hardware and software environments.
+
+##### vLLM Throughput
+
+Model: `/data4/xinhe/qwen3.6-moe`; GPU: CUDA device 2; workload: 200 random prompts, 512 input tokens and 128 output tokens per prompt.
+
+| QDQ backend | Requests/s | Total tokens/s | Output tokens/s | Prompt tokens | Output tokens |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Reference (`VLLM_QDQ_CUTE=0`) | 7.46 | 4,773.13 | 954.63 | 102,400 | 25,600 |
+| CuTe (`VLLM_QDQ_CUTE=1`) | 16.76 | 10,723.57 | 2,144.71 | 102,400 | 25,600 |
+
+##### GSM8K Evaluation
+
+Model: `/data4/xinhe/qwen3.6-moe`; task: GSM8K v3, 5-shot; `lm_eval` with the vLLM backend, automatic batch size, tensor parallel size 1, data parallel size 1, maximum model length 8192, and expert parallelism enabled.
+
+| QDQ backend | GPU | Flexible-extract exact match | Stderr | Strict-match exact match | Stderr |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Reference (`VLLM_QDQ_CUTE=0`) | 1 | 0.7589 | 0.0118 | 0.7392 | 0.0121 |
+| CuTe (`VLLM_QDQ_CUTE=1`) | 2 | 0.7635 | 0.0117 | 0.7407 | 0.0121 |
+
+The GSM8K runs used different GPU devices and may also be affected by nondeterminism, runtime state, and dependency versions. The small score differences are within the reported uncertainty and should not be interpreted as evidence that either backend improves model accuracy. Reproduce the measurements under a controlled environment before drawing conclusions or publishing comparisons.
+
 ### CUDA Graphs
 
 The fused QDQ kernels support CUDA Graph capture and replay, including the graph path used by vLLM. Each `(format, dtype, shape, device)` specialization must execute once in eager mode before capture so CuTe JIT compilation stays outside the graph. vLLM's normal warmup satisfies this requirement. A cache miss during capture raises an actionable error instead of attempting an unsafe JIT compilation.
 
 Compiled specializations are cached per CUDA device. Kernel launches use PyTorch's current CUDA stream, so capture records the QDQ kernel in the same graph as the following Marlin operation.
+
+The CuTe launchers are registered as `torch.library.custom_op` operators with FakeTensor implementations. This keeps Python capability checks and the CUTLASS runtime outside `torch.compile(fullgraph=True)` while allowing vLLM AOT compilation to retain QDQ as an opaque graph node.
+
+After updating the plugin, reinstall it in the same virtual environment that runs vLLM:
+
+```bash
+uv pip install -e /path/to/neural-compressor/benchmark/vllm-qdq-plugin
+```
 
 ## Adding New Dtypes
 
