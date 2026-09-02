@@ -244,3 +244,12 @@ def apply_patches():
         "QDQ patches applied: %s (MXFP4, MXFP8)",
         ", ".join(name for name, _, _ in patches),
     )
+    try:
+        # Print whether the CuTe backend is requested via environment variable.
+        if envs.VLLM_QDQ_CUTE:
+            logger.warning("CUTE QDQ backend requested: VLLM_QDQ_CUTE=1 (will probe availability at runtime)")
+        else:
+            logger.info("CUTE QDQ backend not requested: VLLM_QDQ_CUTE=0")
+    except Exception:
+        # Be defensive: envs may raise in exotic contexts; avoid crashing EngineCore startup.
+        logger.debug("Failed to read VLLM_QDQ_CUTE environment flag for CUTE logging")

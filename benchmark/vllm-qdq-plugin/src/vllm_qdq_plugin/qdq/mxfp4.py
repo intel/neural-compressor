@@ -8,6 +8,8 @@ plugin does not depend on vLLM internals.
 
 import torch
 
+from .. import envs
+
 BFLOAT16_EXP_BIAS = 127
 BFLOAT16_MANTISSA_BITS = 7
 BFLOAT16_EXP_BITS = 8
@@ -82,7 +84,7 @@ def _fp_to_fp4_simulate(
     return qdq_val.view(float_type)
 
 
-def mxfp4_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
+def _mxfp4_qdq_reference(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
     """Quantize-dequantize input to MXFP4 (E2M1 + E8M0 scales).
 
     Args:
@@ -138,3 +140,12 @@ def mxfp4_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
     )
     x_fp4 = x_fp4 * scale[..., None]
     return x_fp4.reshape(m, -1)[:, :k].to(orig_dtype)
+
+
+def mxfp4_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
+    """Quantize-dequantize input to MXFP4 (E2M1 + E8M0 scales)."""
+    if envs.VLLM_QDQ_CUTE:
+        from .cute import mxfp4_qdq_cute
+
+        return mxfp4_qdq_cute(x, group_size)
+    return _mxfp4_qdq_reference(x, group_size)
