@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 import re
 from collections import OrderedDict
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Callable, Dict, List, NamedTuple, Optional, Self, Tuple, Union
 
 import jax.numpy as jnp
 import keras
@@ -66,7 +66,14 @@ class JaxBaseConfig(BaseConfig):
     """
 
     supported_configs: List[OperatorConfig] = []
-    params_list = ["weight_dtype", "activation_dtype", "const_scale", "const_weight", "weight_scale_granularity"]
+    params_list = [
+        "weight_dtype",
+        "activation_dtype",
+        "const_scale",
+        "const_weight",
+        "weight_scale_granularity",
+        "dot_product_attention_enable",
+    ]
 
     def __init__(
         self,
@@ -75,6 +82,7 @@ class JaxBaseConfig(BaseConfig):
         const_scale: bool = False,
         const_weight: bool = False,
         weight_scale_granularity: str = "per_tensor",
+        dot_product_attention_enable: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         exclude_list: Optional[List[str]] = None,
     ):
@@ -86,6 +94,9 @@ class JaxBaseConfig(BaseConfig):
             const_scale (bool): Whether to use a constant scale factor for quantization.
             const_weight (bool): Whether to use constant quantized weights.
             weight_scale_granularity (str): Whether to use per_channel or per_tensor quantization for weights
+            dot_product_attention_enable (bool): Whether quantized attention layers may use
+                the fused dot-product-attention path; when False the fallback einsum path is always
+                used. Read by static/dynamic MultiHeadAttention and CachedGemma3Attention.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): Layers to quantize. Each entry
                 is a layer class (e.g. ``keras.layers.Dense``), a class name, or a path regex.
                 Only matching supported layers are quantized. Defaults to ``"*"`` (all supported
@@ -109,6 +120,7 @@ class JaxBaseConfig(BaseConfig):
         self.const_scale = const_scale
         self.const_weight = const_weight
         self.weight_scale_granularity = weight_scale_granularity
+        self.dot_product_attention_enable = dot_product_attention_enable
         self._exclude_list = exclude_list
         self._post_init()
 
@@ -289,17 +301,29 @@ class JaxBaseConfig(BaseConfig):
         return filter_result
 
     @classmethod
-    def from_json_string(cls, json_string: str) -> "JaxBaseConfig":
+    def from_json_string(cls, json_string: str) -> Self:
         """Create a config from a JSON string.
 
         Args:
             json_string (str): JSON string describing the config.
 
         Returns:
-            JaxBaseConfig: Parsed configuration instance.
+            Self: Parsed configuration instance of the calling class.
         """
         cfg = json.loads(json_string)
         return cls.from_dict(cfg)
+
+    @classmethod
+    def from_dict(cls, config_dict: Dict) -> Self:
+        """Create a config from a dictionary.
+
+        Args:
+            config_dict (Dict): Configuration fields.
+
+        Returns:
+            Self: Parsed configuration instance of the calling class.
+        """
+        return cls(**config_dict)
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=DYNAMIC_QUANT)
@@ -355,33 +379,6 @@ class DynamicQuantConfig(JaxBaseConfig):
             activation_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
         )
 
-    @classmethod
-    def from_dict(cls, config_dict: Dict) -> "DynamicQuantConfig":
-        """Create a DynamicQuantConfig from a dictionary.
-
-        Args:
-            config_dict (Dict): Configuration fields.
-
-        Returns:
-            DynamicQuantConfig: Parsed configuration instance.
-        """
-        weight_dtype = config_dict.get("weight_dtype", "fp8_e4m3")
-        activation_dtype = config_dict.get("activation_dtype", "fp8_e4m3")
-        const_scale = config_dict.get("const_scale", False)
-        const_weight = config_dict.get("const_weight", False)
-        weight_scale_granularity = config_dict.get("weight_scale_granularity", "per_tensor")
-        white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
-        exclude_list = config_dict.get("exclude_list", None)
-        return cls(
-            weight_dtype=weight_dtype,
-            activation_dtype=activation_dtype,
-            const_scale=const_scale,
-            const_weight=const_weight,
-            weight_scale_granularity=weight_scale_granularity,
-            white_list=white_list,
-            exclude_list=exclude_list,
-        )
-
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=STATIC_QUANT)
 class StaticQuantConfig(JaxBaseConfig):
@@ -435,33 +432,6 @@ class StaticQuantConfig(JaxBaseConfig):
         return StaticQuantConfig(
             weight_dtype=["fp8_e4m3", "fp8_e5m2", "int8"],
             activation_dtype=["fp8_e4m3", "fp8_e5m2", "int8"],
-        )
-
-    @classmethod
-    def from_dict(cls, config_dict: Dict) -> "StaticQuantConfig":
-        """Create a StaticQuantConfig from a dictionary.
-
-        Args:
-            config_dict (Dict): Configuration fields.
-
-        Returns:
-            StaticQuantConfig: Parsed configuration instance.
-        """
-        weight_dtype = config_dict.get("weight_dtype", "fp8_e5m2")
-        activation_dtype = config_dict.get("activation_dtype", "fp8_e5m2")
-        const_scale = config_dict.get("const_scale", False)
-        const_weight = config_dict.get("const_weight", False)
-        weight_scale_granularity = config_dict.get("weight_scale_granularity", "per_tensor")
-        white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
-        exclude_list = config_dict.get("exclude_list", None)
-        return cls(
-            weight_dtype=weight_dtype,
-            activation_dtype=activation_dtype,
-            const_scale=const_scale,
-            const_weight=const_weight,
-            weight_scale_granularity=weight_scale_granularity,
-            white_list=white_list,
-            exclude_list=exclude_list,
         )
 
 

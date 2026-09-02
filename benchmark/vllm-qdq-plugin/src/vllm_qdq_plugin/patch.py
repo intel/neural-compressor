@@ -46,19 +46,12 @@ def _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq):
         use_fp32_reduce: bool = False,
         is_zp_float: bool = False,
     ) -> torch.Tensor:
-        # MXFP4 QDQ — extend with elif for other dtypes
         if b_q_type == scalar_types.float4_e2m1f and a.dim() == 2 and a.dtype in (torch.float16, torch.bfloat16):
             trace_qdq("marlin_gemm", a.shape, a.dtype)
             a = mxfp4_qdq(a, group_size=32)
-            # logger.debug(
-            #     "Applied MXFP4 QDQ to marlin_gemm as b_q_type is float4_e2m1f"
-            # )
         elif b_q_type == scalar_types.float8_e4m3fn and a.dim() == 2 and a.dtype in (torch.float16, torch.bfloat16):
             trace_qdq("marlin_gemm", a.shape, a.dtype)
             a = mxfp8_qdq(a, group_size=32)
-            # logger.debug(
-            #     "Applied MXFP8 QDQ to marlin_gemm as b_q_type is float8_e4m3fn"
-            # )
 
         return _orig(
             a,
@@ -127,14 +120,9 @@ def _patch_moe_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq):
         thread_n: int = -1,
         blocks_per_sm: int = -1,
     ) -> torch.Tensor:
-        # For the DSV4 W4A4 emulation, we do Q-DQ on the activation regardless of b_q_type, since the kernel will internally treat it as MXFP4.
         if input.dim() == 2 and envs.VLLM_MARLIN_MOE_QDQ_MODE == "FORCE_MXFP4":
             trace_qdq("moe_wna16_marlin_gemm", input.shape, input.dtype)
             input = mxfp4_qdq(input, group_size=32)
-            # logger.debug(
-            #     "Applied MXFP4 QDQ to moe_wna16_marlin_gemm due to FORCE_MXFP4 mode"
-            # )
-        # MXFP4 QDQ — extend with elif for other dtypes
         elif b_q_type == scalar_types.float4_e2m1f and input.dim() == 2:
             trace_qdq("moe_wna16_marlin_gemm", input.shape, input.dtype)
             input = mxfp4_qdq(input, group_size=32)
