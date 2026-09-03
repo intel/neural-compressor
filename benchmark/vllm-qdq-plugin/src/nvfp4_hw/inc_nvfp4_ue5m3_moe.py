@@ -1,4 +1,4 @@
-"""AutoRound NVFP4_E5M3 MoE execution backed by xkernels."""
+"""AutoRound NVFP4_E5M3 MoE execution with a fused Triton kernel."""
 
 from __future__ import annotations
 
@@ -101,7 +101,7 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
     ) -> torch.Tensor:
         del shared_experts, shared_experts_input
         if x.dtype != torch.bfloat16:
-            raise TypeError(f"NVFP4_E5M3 xkernels require bfloat16 activations, got {x.dtype}")
+            raise TypeError(f"NVFP4_E5M3 MoE requires bfloat16 activations, got {x.dtype}")
         if layer.apply_router_weight_on_input:
             raise NotImplementedError("NVFP4_E5M3 does not support apply_router_weight_on_input")
 

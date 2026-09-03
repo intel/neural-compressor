@@ -1,13 +1,14 @@
-"""AutoRound NVFP4_E5M3 dense linear execution backed by xkernels."""
+"""AutoRound NVFP4_E5M3 dense linear with CuTe weight conversion."""
 
 from typing import TYPE_CHECKING, Any
 
 import torch
 from torch.nn.parameter import Parameter
+from vllm.config import get_current_vllm_config_or_none
 from vllm.model_executor.layers.quantization.inc.schemes.inc_scheme import INCLinearScheme
+from vllm.model_executor.layers.utils import dispatch_unquantized_gemm
 from vllm.model_executor.parameter import GroupQuantScaleParameter, ModelWeightParameter
-
-from .xkernels_ops import mxfp4_ue5m3_bf16_gemm
+from vllm_qdq_plugin import envs
 
 if TYPE_CHECKING:
     from vllm.model_executor.layers.quantization.inc.config_parser import INCLayerConfig
@@ -22,7 +23,10 @@ class INCNvfp4UE5M3LinearMethod(INCLinearScheme):
                 "NVFP4_E5M3 linear requires scalar group_size 16 or 32, " f"got {layer_config.group_size!r}"
             )
         self.group_size = layer_config.group_size
-        self._prepared_weight = None
+        self.weight_dequant_mode = envs.VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE
+        config = get_current_vllm_config_or_none()
+        linear_backend = config.kernel_config.linear_backend if config is not None else "auto"
+        self._gemm_impl = dispatch_unquantized_gemm(linear_backend)
 
     @classmethod
     def get_min_capability(cls) -> int:
@@ -76,15 +80,21 @@ class INCNvfp4UE5M3LinearMethod(INCLinearScheme):
         layer.register_parameter("weight_scale", weight_scale)
 
     def process_weights_after_loading(self, layer: torch.nn.Module) -> None:
-        from xkernels import prepare_mxfp4_ue5m3_weight
+        if self.weight_dequant_mode == "PER_CALL":
+            layer.weight_packed = Parameter(layer.weight_packed.contiguous(), requires_grad=False)
+            layer.weight_scale = Parameter(layer.weight_scale.contiguous(), requires_grad=False)
+            return
 
-        layer.weight = Parameter(layer.weight_packed.data, requires_grad=False)
-        del layer.weight_packed
-        self._prepared_weight = prepare_mxfp4_ue5m3_weight(
-            layer.weight.contiguous(),
+        from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import nvfp4_e5m3_weight_dequant_cute
+
+        weight = nvfp4_e5m3_weight_dequant_cute(
+            layer.weight_packed.contiguous(),
             layer.weight_scale.contiguous(),
             self.group_size,
         )
+        layer.weight = Parameter(weight, requires_grad=False)
+        del layer.weight_packed
+        del layer.weight_scale
 
     def apply_weights(
         self,
@@ -94,12 +104,20 @@ class INCNvfp4UE5M3LinearMethod(INCLinearScheme):
     ) -> torch.Tensor:
         from vllm_qdq_plugin.qdq.nvfp4_e5m3 import nvfp4_e5m3_qdq
 
-        if self._prepared_weight is None:
-            raise RuntimeError("NVFP4_E5M3 linear weights have not been prepared")
         if x.dtype != torch.bfloat16:
-            raise TypeError(f"NVFP4_E5M3 xkernels require bfloat16 activations, got {x.dtype}")
+            raise TypeError(f"NVFP4_E5M3 dense linear requires bfloat16 activations, got {x.dtype}")
+        if self.weight_dequant_mode == "ONCE" and not hasattr(layer, "weight"):
+            raise RuntimeError("NVFP4_E5M3 dense weight has not been dequantized")
+        if self.weight_dequant_mode == "PER_CALL" and not hasattr(layer, "weight_packed"):
+            raise RuntimeError("NVFP4_E5M3 packed dense weight is unavailable")
 
         flat_x = x.reshape(-1, x.shape[-1]).contiguous()
         quantized_x = nvfp4_e5m3_qdq(flat_x, self.group_size)
-        output = mxfp4_ue5m3_bf16_gemm(quantized_x, self._prepared_weight, bias)
+        if self.weight_dequant_mode == "PER_CALL":
+            from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import nvfp4_e5m3_weight_dequant_cute
+
+            weight = nvfp4_e5m3_weight_dequant_cute(layer.weight_packed, layer.weight_scale, self.group_size)
+        else:
+            weight = layer.weight
+        output = self._gemm_impl(layer, quantized_x, weight, bias)
         return output.reshape(*x.shape[:-1], layer.output_size_per_partition)

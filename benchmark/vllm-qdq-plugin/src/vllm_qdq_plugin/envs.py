@@ -73,6 +73,12 @@ environment_variables: dict[str, Callable[[], Any]] = {
     "VLLM_QDQ_TRACE": lambda: _env_flag("VLLM_QDQ_TRACE"),
     "VLLM_QDQ": lambda: _env_flag("VLLM_QDQ"),
     "VLLM_QDQ_CUTE": lambda: _env_flag("VLLM_QDQ_CUTE"),
+    "VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE": env_with_choices(
+        "VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE",
+        default="ONCE",
+        choices=["ONCE", "PER_CALL"],
+        case_sensitive=False,
+    ),
     "VLLM_MARLIN_MOE_QDQ_MODE": env_with_choices(
         "VLLM_MARLIN_MOE_QDQ_MODE",
         default="0",

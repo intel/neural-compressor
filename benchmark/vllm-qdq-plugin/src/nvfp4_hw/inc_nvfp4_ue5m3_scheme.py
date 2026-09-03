@@ -13,7 +13,7 @@ from vllm.model_executor.layers.quantization.inc.inc_linear import INCLinearMeth
 
 
 class INCNvfp4UE5M3Scheme(INCScheme):
-    """Select the xkernels linear and MoE implementations for NVFP4_E5M3."""
+    """Select the CuTe dense and fused MoE implementations for NVFP4_E5M3."""
 
     @staticmethod
     def can_handle(layer_config: "INCLayerConfig") -> bool:
