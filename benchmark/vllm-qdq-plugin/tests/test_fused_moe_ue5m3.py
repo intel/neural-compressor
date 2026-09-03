@@ -1,7 +1,7 @@
 import pytest
 import torch
 import torch.nn.functional as F
-from nvfp4_hw.fused_moe_ue5m3 import fused_moe_ue5m3
+from nvfp4_hw.fused_moe_ue5m3 import _select_moe_config, fused_moe_ue5m3
 from vllm.model_executor.layers.fused_moe.activation import ApplyMoEActivationConfig, MoEActivation
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import nvfp4_e5m3_qdq
 
@@ -84,6 +84,14 @@ def test_fused_moe_matches_reference(group_size: int):
         expected.float()
     )
     assert relative_l2_error < 0.01
+
+
+@pytest.mark.parametrize("num_tokens, expected_block_m", [(1, 16), (64, 32), (256, 64), (1024, 128)])
+def test_moe_config_scales_with_batch(num_tokens: int, expected_block_m: int):
+    w13 = torch.empty(256, 1024, 1024, dtype=torch.uint8)
+    w2 = torch.empty(256, 2048, 256, dtype=torch.uint8)
+    config = _select_moe_config(w13, w2, top_k=8, num_tokens=num_tokens)
+    assert config["BLOCK_SIZE_M"] == expected_block_m
 
 
 def test_fused_moe_supports_dynamo_fullgraph_capture():

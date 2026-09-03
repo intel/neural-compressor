@@ -1,8 +1,11 @@
 """Batched NVFP4_E5M3 MoE execution using vLLM token alignment."""
 
+from typing import Any
+
 import torch
 from vllm.model_executor.layers.fused_moe import apply_moe_activation
 from vllm.model_executor.layers.fused_moe.activation import ApplyMoEActivationConfig, MoEActivation
+from vllm.model_executor.layers.fused_moe.fused_moe import try_get_optimal_moe_config
 from vllm.model_executor.layers.fused_moe.moe_align_block_size import moe_align_block_size
 from vllm.model_executor.layers.quantization.utils.nvfp4_emulation_utils import _e2m1_inline
 from vllm.triton_utils import tl, triton
@@ -130,12 +133,13 @@ def _invoke_fused_moe_ue5m3(
     top_k: int,
     group_size: int,
     mul_routed_weight: bool,
+    config: dict[str, Any],
 ) -> None:
     n = weight.shape[1]
     k = activations.shape[1]
-    block_m = 16
-    block_n = 64
-    block_k = 64
+    block_m = config["BLOCK_SIZE_M"]
+    block_n = config["BLOCK_SIZE_N"]
+    block_k = config["BLOCK_SIZE_K"]
     em = sorted_token_ids.shape[0]
     if activations.shape[0] < block_m:
         em = min(em, activations.shape[0] * top_k * block_m)
@@ -166,13 +170,43 @@ def _invoke_fused_moe_ue5m3(
         BLOCK_SIZE_M=block_m,
         BLOCK_SIZE_N=block_n,
         BLOCK_SIZE_K=block_k,
-        GROUP_SIZE_M=8,
+        GROUP_SIZE_M=config["GROUP_SIZE_M"],
         MUL_ROUTED_WEIGHT=mul_routed_weight,
         TOP_K=top_k,
         GROUP_SIZE=group_size,
-        num_warps=4,
-        num_stages=3,
+        num_warps=config["num_warps"],
+        num_stages=config["num_stages"],
     )
+
+
+@torch.compiler.assume_constant_result
+def _select_moe_config(
+    w13: torch.Tensor,
+    w2: torch.Tensor,
+    top_k: int,
+    num_tokens: int,
+) -> dict[str, Any]:
+    num_experts = w13.shape[0]
+    hidden_size = w13.shape[2] * 2
+    intermediate_size = w2.shape[2] * 2
+    config = try_get_optimal_moe_config(
+        (num_experts, w13.shape[1], hidden_size),
+        (num_experts, hidden_size, intermediate_size),
+        top_k,
+        None,
+        num_tokens,
+    )
+    required = ("BLOCK_SIZE_M", "BLOCK_SIZE_N", "BLOCK_SIZE_K", "GROUP_SIZE_M", "num_warps", "num_stages")
+    if any(key not in config for key in required):
+        return {
+            "BLOCK_SIZE_M": 16,
+            "BLOCK_SIZE_N": 64,
+            "BLOCK_SIZE_K": 64,
+            "GROUP_SIZE_M": 1,
+            "num_warps": 4,
+            "num_stages": 3,
+        }
+    return config
 
 
 def fused_moe_ue5m3(
@@ -193,10 +227,11 @@ def fused_moe_ue5m3(
 
     num_tokens, hidden_size = x.shape
     top_k = topk_ids.shape[1]
+    config = _select_moe_config(w13, w2, top_k, num_tokens)
     global_num_experts = expert_map.numel() if expert_map is not None else w13.shape[0]
     sorted_token_ids, expert_ids, num_tokens_post_padded = moe_align_block_size(
         topk_ids,
-        16,
+        config["BLOCK_SIZE_M"],
         global_num_experts,
         expert_map,
         ignore_invalid_experts=True,
@@ -216,6 +251,7 @@ def fused_moe_ue5m3(
         top_k,
         group_size,
         False,
+        config,
     )
     activated = torch.empty((num_assignments, w13.shape[1] // 2), dtype=x.dtype, device=x.device)
     apply_moe_activation(activation, activated, gate_up, activation_config=activation_config)
@@ -233,5 +269,6 @@ def fused_moe_ue5m3(
         1,
         group_size,
         True,
+        config,
     )
     return expert_output.view(num_tokens, top_k, hidden_size).sum(dim=1)
