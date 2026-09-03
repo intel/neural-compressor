@@ -1,12 +1,47 @@
 """NVFP4 E2M1 with UE5M3 scale activation quant-dequant."""
 
 import torch
+from vllm.utils.torch_utils import direct_register_custom_op
+
+
+def _fp32_to_ue5m3_impl(x: torch.Tensor) -> torch.Tensor:
+    from xkernels import fp32_to_ue5m3
+
+    return fp32_to_ue5m3(x)
+
+
+def _fp32_to_ue5m3_fake(x: torch.Tensor) -> torch.Tensor:
+    return torch.empty_like(x, dtype=torch.uint8)
+
+
+direct_register_custom_op(
+    op_name="nvfp4_fp32_to_ue5m3",
+    op_func=_fp32_to_ue5m3_impl,
+    mutates_args=[],
+    fake_impl=_fp32_to_ue5m3_fake,
+)
+
+
+def _ue5m3_to_fp32_impl(x: torch.Tensor) -> torch.Tensor:
+    from xkernels import ue5m3_to_fp32
+
+    return ue5m3_to_fp32(x)
+
+
+def _ue5m3_to_fp32_fake(x: torch.Tensor) -> torch.Tensor:
+    return torch.empty_like(x, dtype=torch.float32)
+
+
+direct_register_custom_op(
+    op_name="nvfp4_ue5m3_to_fp32",
+    op_func=_ue5m3_to_fp32_impl,
+    mutates_args=[],
+    fake_impl=_ue5m3_to_fp32_fake,
+)
 
 
 def nvfp4_e5m3_qdq(x: torch.Tensor, group_size: int = 16) -> torch.Tensor:
     """Quantize-dequantize BF16/FP16 activations using E2M1 and UE5M3 scales."""
-    from xkernels import fp32_to_ue5m3, ue5m3_to_fp32
-
     if x.dim() != 2:
         raise ValueError(f"nvfp4_e5m3_qdq expects a 2D tensor, got {x.dim()}D")
     if x.dtype not in (torch.bfloat16, torch.float16):
@@ -21,7 +56,7 @@ def nvfp4_e5m3_qdq(x: torch.Tensor, group_size: int = 16) -> torch.Tensor:
         x = torch.nn.functional.pad(x, (0, pad))
     groups = x.reshape(rows, -1, group_size)
     scales = groups.float().abs().amax(dim=-1).div_(6.0)
-    scales = ue5m3_to_fp32(fp32_to_ue5m3(scales))
+    scales = torch.ops.vllm.nvfp4_ue5m3_to_fp32(torch.ops.vllm.nvfp4_fp32_to_ue5m3(scales))
     normalized = torch.where(
         scales.unsqueeze(-1) == 0,
         torch.zeros_like(groups, dtype=torch.float32),

@@ -18,7 +18,6 @@ def main() -> None:
         model=args.model,
         trust_remote_code=True,
         dtype="bfloat16",
-        enforce_eager=True,
         max_model_len=2048,
         gpu_memory_utilization=0.9,
     )

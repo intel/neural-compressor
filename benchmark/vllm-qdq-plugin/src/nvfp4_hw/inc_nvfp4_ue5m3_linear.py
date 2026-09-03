@@ -7,6 +7,8 @@ from torch.nn.parameter import Parameter
 from vllm.model_executor.layers.quantization.inc.schemes.inc_scheme import INCLinearScheme
 from vllm.model_executor.parameter import GroupQuantScaleParameter, ModelWeightParameter
 
+from .xkernels_ops import mxfp4_ue5m3_bf16_gemm
+
 if TYPE_CHECKING:
     from vllm.model_executor.layers.quantization.inc.config_parser import INCLayerConfig
 
@@ -90,8 +92,6 @@ class INCNvfp4UE5M3LinearMethod(INCLinearScheme):
         x: torch.Tensor,
         bias: torch.Tensor | None = None,
     ) -> torch.Tensor:
-        from xkernels import mxfp4_ue5m3_bf16_gemm
-
         from vllm_qdq_plugin.qdq.nvfp4_e5m3 import nvfp4_e5m3_qdq
 
         if self._prepared_weight is None:
