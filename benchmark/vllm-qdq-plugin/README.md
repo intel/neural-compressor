@@ -22,6 +22,13 @@ pip install -e benchmark/vllm-qdq-plugin/
 pip install -e .
 ```
 
+For the local NVFP4_E5M3 implementation, install the sibling `xkernels` package
+in the same Python environment:
+
+```bash
+uv pip install git+https://github.com/yiliu30/xkernels.git
+```
+
 ## Usage
 
 ```bash
@@ -56,6 +63,72 @@ VLLM_QDQ=1 VLLM_MARLIN_MOE_QDQ_MODE=FORCE_MXFP4 vllm serve /path/to/model
 |---|---|---|---|
 | **MXFP4** (E2M1 + E8M0 scales) | `marlin_gemm` | ✅ Supported | Dense quantized linear (MXFP4 via Marlin) |
 | **MXFP4** (E2M1 + E8M0 scales) | `moe_wna16_marlin_gemm` | ✅ Supported | MoE quantized linear (MXFP4 via Marlin) |
+| **NVFP4_E5M3** (E2M1 + UE5M3 scales) | dense linear | ✅ Supported | AutoRound `nvfp4_v2`, group size 16/32, BF16 activations, xkernels Marlin |
+| **NVFP4_E5M3** (E2M1 + UE5M3 scales) | fused MoE | ✅ Supported | AutoRound `nvfp4_v2`, group size 16/32, BF16 activations, xkernels Marlin |
+
+## NVFP4_E5M3 Support
+
+AutoRound checkpoints can use `data_type: nvfp4_v2` globally or override selected
+layers such as `mlp.experts` in `extra_config`. The plugin accepts both
+`auto_round:llm_compressor` and
+`auto_round:llm_compressor_nvfp4_e5m3` packing formats. It preserves the
+checkpoint's raw `uint8` E2M1 payload and UE5M3 block scales and delegates weight
+preparation and BF16 GEMM to `xkernels`; it does not duplicate scale decoding or
+Marlin kernels.
+
+Run the local mixed model with:
+
+```bash
+source ~/auto-round-main/.venv/bin/activate
+CUDA_VISIBLE_DEVICES=0 vllm serve /data4/xinhe/qwen3.6-moe-nvfp4+ \
+  --dtype bfloat16 --trust-remote-code --enforce-eager
+
+# Or run the spawn-safe one-prompt verification:
+CUDA_VISIBLE_DEVICES=0 python scripts/test_nvfp4_ue5m3_model.py \
+  /data4/xinhe/qwen3.6-moe-nvfp4+
+```
+
+### Change Summary
+
+| File | Purpose |
+| --- | --- |
+| `src/nvfp4_hw/patch.py` | Register the NVFP4_E5M3 packing format, preserve per-layer `extra_config.data_type`, and route `nvfp4_v2` layers without changing vLLM. |
+| `src/nvfp4_hw/inc_nvfp4_ue5m3_scheme.py` | Select the NVFP4_E5M3 dense linear or fused MoE implementation. |
+| `src/nvfp4_hw/inc_nvfp4_ue5m3_linear.py` | Load TP-aware dense packed weights, prepare them with xkernels, apply activation QDQ, and restore arbitrary leading output dimensions. |
+| `src/nvfp4_hw/inc_nvfp4_ue5m3_moe.py` | Load raw packed expert tensors, prepare them with xkernels, and perform top-k MoE routing, activation, and weighted reduction. |
+| `src/vllm_qdq_plugin/qdq/nvfp4_e5m3.py` | Apply E2M1 activation QDQ with groupwise UE5M3 scales before both expert GEMMs. |
+| `tests/test_nvfp4_ue5m3.py` | Verify that mixed model configuration routes only `nvfp4_v2` experts to the new scheme. |
+| `scripts/test_nvfp4_ue5m3_model.py` | Reproducibly load a local model and run one prompt under vLLM's spawn worker mode. |
+| `pyproject.toml` | Declare the xkernels runtime dependency. |
+| `../../xkernels/pyproject.toml` | Quote the dotted setuptools package-data key so xkernels can be installed into the requested virtual environment. |
+
+Current limitations: the xkernels path is correctness-oriented and processes
+selected MoE experts separately. Dense linear and fused MoE require BF16
+activations; MoE does not support `apply_router_weight_on_input` or EPLB. Run it
+with eager execution; the dynamic per-expert path is not intended for CUDA Graph
+capture.
+
+Validation performed in `~/auto-round-main/.venv`:
+
+- Target checkpoint tensors were confirmed as `uint8 [N, K/2]` weights and
+  `uint8 [N, K/16]` UE5M3 scales.
+- Configuration routing tests: `3 passed`.
+- xkernels UE5M3 Marlin tests on one NVIDIA A100: `11 passed`.
+- Synthetic dense linear output, including 3-D input and bias, matched an
+  explicit E2M1/UE5M3 reference within the Marlin BF16 tolerance.
+- Synthetic two-expert top-k MoE output matched an explicit xkernels reference
+  exactly.
+- vLLM loaded the updated, globally quantized NVFP4_E5M3 model's 26 checkpoint
+  shards on one A100, used approximately 38.17 GiB for model weights, and
+  completed the prompt in
+  `scripts/test_nvfp4_ue5m3_model.py`.
+
+xkernels performs standards-compliant round-to-nearest UE5M3 conversion. A
+comparison with AutoRound's Python `float_to_e5m3_frexp` reference found one
+mantissa-carry boundary difference in 56 sampled activation scales: 3.8958 was
+encoded as 4.0 by xkernels and 3.75 by the Python reference. This implementation
+uses the requested xkernels conversion. Stored checkpoint scales are decoded
+from their existing bytes and are unaffected by this dynamic encoding edge.
 
 ### How QDQ Works
 

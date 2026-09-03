@@ -3,7 +3,7 @@ name = "vllm-qdq-plugin"
 version = "0.1.0"
 description = "Out-of-tree QDQ (quant-dequant) simulation plugin for vLLM"
 requires-python = ">=3.10"
-dependencies = ["torch"]
+dependencies = ["torch", "xkernels"]
 
 [project.entry-points."vllm.general_plugins"]
 qdq = "vllm_qdq_plugin:register"
