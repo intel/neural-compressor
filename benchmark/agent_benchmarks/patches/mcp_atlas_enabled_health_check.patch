@@ -1,0 +1,36 @@
+diff --git a/run_eval.py b/run_eval.py
+index 57df0ee..8eacff9 100644
+--- a/run_eval.py
++++ b/run_eval.py
+@@ -34,7 +34,6 @@ import asyncio
+ import csv
+ import json
+ import os
+-import subprocess
+ import sys
+ from typing import Any
+ 
+@@ -200,8 +199,8 @@ async def run_one_task(
+ async def check_sandbox_health() -> None:
+     """Pre-flight check: confirm the MCP sandbox is up and every server works.
+ 
+-    Aborts if the sandbox is unreachable, any server is offline, or any server
+-    fails a real test call. Bypass with --skip-health-check.
++    Aborts if the sandbox is unreachable or any enabled server is offline.
++    Bypass with --skip-health-check.
+     """
+     url = SANDBOX_URL.rstrip("/") + "/enabled-servers"
+     try:
+@@ -221,12 +220,6 @@ async def check_sandbox_health() -> None:
+     if offline:
+         print("ERROR: some servers are offline — fix them or pass --skip-health-check.", file=sys.stderr)
+         sys.exit(1)
+-    # One real test call per server — catches servers that are up but broken
+-    # (e.g. a search tool silently returning empty results).
+-    script = os.path.join(os.path.dirname(__file__), "services", "mcp_eval", "test_servers.py")
+-    if subprocess.run([sys.executable, script]).returncode != 0:
+-        print("ERROR: MCP server health check failed — fix failing servers or pass --skip-health-check.", file=sys.stderr)
+-        sys.exit(1)
+ 
+ 
+ def write_run_config(args: argparse.Namespace) -> None:

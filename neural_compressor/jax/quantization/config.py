@@ -66,7 +66,14 @@ class JaxBaseConfig(BaseConfig):
     """
 
     supported_configs: List[OperatorConfig] = []
-    params_list = ["weight_dtype", "activation_dtype", "const_scale", "const_weight", "weight_scale_granularity"]
+    params_list = [
+        "weight_dtype",
+        "activation_dtype",
+        "const_scale",
+        "const_weight",
+        "weight_scale_granularity",
+        "dot_product_attention_enable",
+    ]
 
     def __init__(
         self,
@@ -75,6 +82,7 @@ class JaxBaseConfig(BaseConfig):
         const_scale: bool = False,
         const_weight: bool = False,
         weight_scale_granularity: str = "per_tensor",
+        dot_product_attention_enable: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         exclude_list: Optional[List[str]] = None,
     ):
@@ -86,6 +94,9 @@ class JaxBaseConfig(BaseConfig):
             const_scale (bool): Whether to use a constant scale factor for quantization.
             const_weight (bool): Whether to use constant quantized weights.
             weight_scale_granularity (str): Whether to use per_channel or per_tensor quantization for weights
+            dot_product_attention_enable (bool): Whether quantized attention layers may use
+                the fused dot-product-attention path; when False the fallback einsum path is always
+                used. Read by static/dynamic MultiHeadAttention and CachedGemma3Attention.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): Layers to quantize. Each entry
                 is a layer class (e.g. ``keras.layers.Dense``), a class name, or a path regex.
                 Only matching supported layers are quantized. Defaults to ``"*"`` (all supported
@@ -109,6 +120,7 @@ class JaxBaseConfig(BaseConfig):
         self.const_scale = const_scale
         self.const_weight = const_weight
         self.weight_scale_granularity = weight_scale_granularity
+        self.dot_product_attention_enable = dot_product_attention_enable
         self._exclude_list = exclude_list
         self._post_init()
 
