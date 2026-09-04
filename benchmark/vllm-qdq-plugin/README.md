@@ -188,6 +188,8 @@ CUDA_VISIBLE_DEVICES=2 VLLM_QDQ=1 VLLM_QDQ_CUTE=1 vllm bench throughput \
 | Reference (`VLLM_QDQ_CUTE=0`) | 7.46 | 4,773.13 | 954.63 | 102,400 | 25,600 |
 | CuTe (`VLLM_QDQ_CUTE=1`) | 16.76 | 10,723.57 | 2,144.71 | 102,400 | 25,600 |
 
+The table above uses the MXFP4 checkpoint stated in the heading and is not a baseline for NVFP4_E5M3 weight dequantization. For an NVFP4_E5M3 checkpoint on one A100, the same workload measured 7.70 requests/s in `ONCE` mode and 7.44 requests/s in `PER_CALL` mode. Model loading used 22.40 GiB and 20.53 GiB respectively. `ONCE` therefore improved throughput by about 3.5% at the cost of 1.87 GiB more persistent model memory in this run. Both modes share the fused MoE path, which dominates this MoE model; `ONCE` only avoids repeated dense-weight dequantization and still dispatches BF16 GEMMs rather than a packed NVFP4 GEMM.
+
 ##### GSM8K Evaluation
 
 Model example: (Qwen3.6-35B-A3B MXFP4); task: GSM8K v3, 5-shot; `lm_eval` with the vLLM backend, automatic batch size, tensor parallel size 1, data parallel size 1, maximum model length 8192, and expert parallelism enabled.

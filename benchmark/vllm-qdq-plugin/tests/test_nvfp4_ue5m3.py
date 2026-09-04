@@ -3,12 +3,14 @@ import unittest
 from unittest import mock
 
 import torch
+from nvfp4_hw import patch as nvfp4_patch
 from nvfp4_hw.inc_nvfp4_ue5m3_linear import INCNvfp4UE5M3LinearMethod
 from nvfp4_hw.inc_nvfp4_ue5m3_scheme import INCNvfp4UE5M3Scheme
 from nvfp4_hw.patch import apply_patches
 from vllm.model_executor.layers.quantization.inc.inc import INCConfig
 from vllm.model_executor.layers.quantization.inc.inc_linear import INCLinearMethod
 from vllm.model_executor.layers.quantization.inc.schemes import factory
+from vllm.model_executor.parameter import GroupQuantScaleParameter, ModelWeightParameter
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import _nvfp4_e5m3_qdq_reference, nvfp4_e5m3_qdq
 from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import nvfp4_e5m3_weight_dequant_cute
 
@@ -60,8 +62,22 @@ class Nvfp4UE5M3ConfigTests(unittest.TestCase):
     @staticmethod
     def _make_dense_layer() -> torch.nn.Module:
         layer = torch.nn.Module()
-        layer.weight_packed = torch.nn.Parameter(torch.zeros((4, 8), dtype=torch.uint8), requires_grad=False)
-        layer.weight_scale = torch.nn.Parameter(torch.zeros((4, 1), dtype=torch.uint8), requires_grad=False)
+        with (
+            mock.patch("vllm.model_executor.parameter.get_tensor_model_parallel_rank", return_value=0),
+            mock.patch("vllm.model_executor.parameter.get_tensor_model_parallel_world_size", return_value=1),
+        ):
+            layer.weight_packed = ModelWeightParameter(
+                data=torch.zeros((4, 8), dtype=torch.uint8),
+                input_dim=1,
+                output_dim=0,
+                weight_loader=None,
+            )
+            layer.weight_scale = GroupQuantScaleParameter(
+                data=torch.zeros((4, 1), dtype=torch.uint8),
+                input_dim=1,
+                output_dim=0,
+                weight_loader=None,
+            )
         layer.output_size_per_partition = 4
         return layer
 
@@ -104,6 +120,8 @@ class Nvfp4UE5M3ConfigTests(unittest.TestCase):
         self.assertTrue(hasattr(layer, "weight_packed"))
         self.assertTrue(hasattr(layer, "weight_scale"))
         self.assertFalse(hasattr(layer, "weight"))
+        self.assertIs(type(layer.weight_packed), torch.nn.Parameter)
+        self.assertIs(type(layer.weight_scale), torch.nn.Parameter)
 
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
     def test_cute_weight_dequant_matches_reference(self) -> None:
@@ -150,6 +168,24 @@ class Nvfp4UE5M3ConfigTests(unittest.TestCase):
         self.assertIsInstance(scheme, INCNvfp4UE5M3Scheme)
         self.assertIsInstance(method, INCLinearMethod)
         self.assertEqual(method.scheme.__class__.__name__, "INCNvfp4UE5M3LinearMethod")
+
+    def test_weight_dequant_mode_is_a_vllm_compile_factor(self) -> None:
+        from vllm import envs as vllm_envs
+
+        nvfp4_patch._register_compile_factors()
+        with mock.patch.dict(
+            "os.environ",
+            {"VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE": "ONCE"},
+        ):
+            once = vllm_envs.compile_factors()["VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE"]
+        with mock.patch.dict(
+            "os.environ",
+            {"VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE": "PER_CALL"},
+        ):
+            per_call = vllm_envs.compile_factors()["VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE"]
+
+        self.assertEqual(once, "ONCE")
+        self.assertEqual(per_call, "PER_CALL")
 
     def test_extra_config_data_type_selects_ue5m3_scheme(self) -> None:
         apply_patches()

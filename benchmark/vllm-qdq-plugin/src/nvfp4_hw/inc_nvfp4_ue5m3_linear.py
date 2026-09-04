@@ -81,8 +81,8 @@ class INCNvfp4UE5M3LinearMethod(INCLinearScheme):
 
     def process_weights_after_loading(self, layer: torch.nn.Module) -> None:
         if self.weight_dequant_mode == "PER_CALL":
-            layer.weight_packed = Parameter(layer.weight_packed.contiguous(), requires_grad=False)
-            layer.weight_scale = Parameter(layer.weight_scale.contiguous(), requires_grad=False)
+            layer.weight_packed = Parameter(layer.weight_packed.detach().contiguous(), requires_grad=False)
+            layer.weight_scale = Parameter(layer.weight_scale.detach().contiguous(), requires_grad=False)
             return
 
         from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import nvfp4_e5m3_weight_dequant_cute

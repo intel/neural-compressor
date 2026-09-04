@@ -13,8 +13,16 @@ def _decode_weight(packed: torch.Tensor, scale_bits: torch.Tensor, group_size: i
     low_value = values[(low & 0x07).long()] * torch.where(low & 0x08 != 0, -1.0, 1.0)
     high_value = values[(high & 0x07).long()] * torch.where(high & 0x08 != 0, -1.0, 1.0)
     unpacked = torch.stack((low_value, high_value), dim=-1).flatten(-2)
-    scales = torch.ops.vllm.nvfp4_ue5m3_to_fp32(scale_bits).repeat_interleave(group_size, dim=-1)
+    scales = _decode_ue5m3(scale_bits).repeat_interleave(group_size, dim=-1)
     return unpacked * scales
+
+
+def _decode_ue5m3(scale_bits: torch.Tensor) -> torch.Tensor:
+    exponent = scale_bits.to(torch.int32) >> 3
+    mantissa = scale_bits.to(torch.int32) & 0x7
+    subnormal = mantissa.float() * 2.0**-17
+    normal = torch.ldexp(1.0 + mantissa.float() * 0.125, exponent - 15)
+    return torch.where(exponent == 0, subnormal, normal)
 
 
 def _reference(
@@ -57,11 +65,19 @@ def test_fused_moe_matches_reference(group_size: int):
         0, 256, (num_experts, intermediate_size * 2, hidden_size // 2), device=device, dtype=torch.uint8
     )
     w2 = torch.randint(0, 256, (num_experts, hidden_size, intermediate_size // 2), device=device, dtype=torch.uint8)
-    w13_scale = torch.ops.vllm.nvfp4_fp32_to_ue5m3(
-        torch.rand(num_experts, intermediate_size * 2, hidden_size // group_size, device=device)
+    w13_scale = torch.randint(
+        0x40,
+        0x79,
+        (num_experts, intermediate_size * 2, hidden_size // group_size),
+        device=device,
+        dtype=torch.uint8,
     )
-    w2_scale = torch.ops.vllm.nvfp4_fp32_to_ue5m3(
-        torch.rand(num_experts, hidden_size, intermediate_size // group_size, device=device)
+    w2_scale = torch.randint(
+        0x40,
+        0x79,
+        (num_experts, hidden_size, intermediate_size // group_size),
+        device=device,
+        dtype=torch.uint8,
     )
     topk_ids = torch.tensor([[0, 1], [2, 3], [1, 3], [0, 2], [3, 1]], device=device, dtype=torch.int32)
     topk_weights = torch.softmax(torch.randn(num_tokens, top_k, device=device), dim=-1)
@@ -102,8 +118,8 @@ def test_fused_moe_supports_dynamo_fullgraph_capture():
     x = torch.randn(2, 64, device=device, dtype=torch.bfloat16)
     w13 = torch.randint(0, 256, (2, 128, 32), device=device, dtype=torch.uint8)
     w2 = torch.randint(0, 256, (2, 64, 32), device=device, dtype=torch.uint8)
-    w13_scale = torch.ops.vllm.nvfp4_fp32_to_ue5m3(torch.rand(2, 128, 4, device=device))
-    w2_scale = torch.ops.vllm.nvfp4_fp32_to_ue5m3(torch.rand(2, 64, 4, device=device))
+    w13_scale = torch.randint(0x40, 0x79, (2, 128, 4), device=device, dtype=torch.uint8)
+    w2_scale = torch.randint(0x40, 0x79, (2, 64, 4), device=device, dtype=torch.uint8)
     topk_ids = torch.tensor([[0, 1], [1, 0]], device=device, dtype=torch.int32)
     topk_weights = torch.full((2, 2), 0.5, device=device)
     activation_config = ApplyMoEActivationConfig()
@@ -135,8 +151,8 @@ def test_fused_moe_supports_cuda_graph_capture():
     x = torch.randn(2, 64, device=device, dtype=torch.bfloat16)
     w13 = torch.randint(0, 256, (2, 128, 32), device=device, dtype=torch.uint8)
     w2 = torch.randint(0, 256, (2, 64, 32), device=device, dtype=torch.uint8)
-    w13_scale = torch.ops.vllm.nvfp4_fp32_to_ue5m3(torch.rand(2, 128, 4, device=device))
-    w2_scale = torch.ops.vllm.nvfp4_fp32_to_ue5m3(torch.rand(2, 64, 4, device=device))
+    w13_scale = torch.randint(0x40, 0x79, (2, 128, 4), device=device, dtype=torch.uint8)
+    w2_scale = torch.randint(0x40, 0x79, (2, 64, 4), device=device, dtype=torch.uint8)
     topk_ids = torch.tensor([[0, 1], [1, 0]], device=device, dtype=torch.int32)
     topk_weights = torch.full((2, 2), 0.5, device=device)
 
