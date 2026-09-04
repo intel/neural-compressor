@@ -268,6 +268,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         const_scale,
         const_weight,
         w_quant_granularity,
+        dot_product_attention_enable,
     ):
         """Convert a dense-like layer instance for dynamic quantization.
 
@@ -278,6 +279,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): Whether to use constant weight.
             w_quant_granularity (str): Whether to use per_channel or per_tensor quantization for weights
+            dot_product_attention_enable (bool): ignored, included for API consistency.
 
         Returns:
             keras.layers.Layer: The updated layer instance.
@@ -464,6 +466,7 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
         const_scale,
         const_weight,
         w_quant_granularity,
+        dot_product_attention_enable,
     ):
         """Convert a MultiHeadAttention instance for dynamic quantization.
 
@@ -474,12 +477,15 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
             const_scale (bool): ignored, included for API consistency.
             const_weight (bool): ignored, included for API consistency.
             w_quant_granularity (str): ignored, included for API consistency.
+            dot_product_attention_enable (bool): Whether attention may route through the fused
+                dot-product-attention op; when False the fallback einsum path is always used.
 
         Returns:
             keras.layers.MultiHeadAttention: Updated layer instance.
         """
         orig._tracker.unlock()
         orig.__class__ = cls
+        orig.dot_product_attention_enable = dot_product_attention_enable
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
         orig.qdq = DynamicQDQLayer("qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
         orig.a_qdq = DynamicQDQLayer(
@@ -551,7 +557,7 @@ class QDynamicMultiHeadAttention(SaveableLayerMixin, keras.layers.MultiHeadAtten
             )
 
         # Determine whether to use dot-product attention
-        use_dot_product_attention = not (
+        use_dot_product_attention = self.dot_product_attention_enable and not (
             self._dropout > 0.0
             or return_attention_scores
             or (len(query.shape) != 4)
@@ -668,6 +674,7 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         const_scale,
         const_weight,
         w_quant_granularity,
+        dot_product_attention_enable,
     ):
         """Convert a CachedGemma3Attention instance for dynamic quantization.
 
@@ -678,12 +685,15 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             const_scale (bool): ignored, included for API consistency.
             const_weight (bool): ignored, included for API consistency.
             w_quant_granularity (str): ignored, included for API consistency.
+            dot_product_attention_enable (bool): Whether attention may route through the fused
+                dot-product-attention op; when False the fallback einsum path is always used.
 
         Returns:
             CachedGemma3Attention: Updated layer instance.
         """
         orig._tracker.unlock()
         orig.__class__ = cls
+        orig.dot_product_attention_enable = dot_product_attention_enable
         orig.qdq = DynamicQDQLayer("qdq", activation_dtype, orig.dtype_policy, False)
         orig._tracker.lock()
         return orig
@@ -740,7 +750,7 @@ class QDynamicCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
                 cache_update_index=cache_update_index,
             )
 
-        if self._use_fused_attention_op():
+        if self.dot_product_attention_enable and self._use_fused_attention_op():
             if attention_mask is not None:
                 attention_mask = ops.expand_dims(attention_mask, axis=1)
                 attention_mask = ops.cast(attention_mask, dtype="bool")
@@ -821,6 +831,7 @@ class QDynamicGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
         const_scale,
         const_weight,
         w_quant_granularity,
+        dot_product_attention_enable,
     ):
         """Convert a Gemma3VisionAttention instance for dynamic quantization.
 
@@ -831,6 +842,7 @@ class QDynamicGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
             const_scale (bool): ignored, included for API consistency.
             const_weight (bool): ignored, included for API consistency.
             w_quant_granularity (str): ignored, included for API consistency.
+            dot_product_attention_enable (bool): ignored, included for API consistency.
 
         Returns:
             Gemma3VisionAttention: Updated layer instance.
@@ -933,6 +945,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         const_scale,
         const_weight,
         w_quant_granularity,
+        dot_product_attention_enable,
     ):
         """Convert a ReversibleEmbedding instance for dynamic quantization.
 
@@ -943,6 +956,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
             const_scale (bool): ignored, included for API consistency.
             const_weight (bool): ignored, included for API consistency.
             w_quant_granularity (str): ignored, included for API consistency.
+            dot_product_attention_enable (bool): ignored, included for API consistency.
 
         Returns:
             ReversibleEmbedding: Updated layer instance.

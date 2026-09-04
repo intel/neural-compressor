@@ -72,6 +72,7 @@ def env_with_choices(
 environment_variables: dict[str, Callable[[], Any]] = {
     "VLLM_QDQ_TRACE": lambda: _env_flag("VLLM_QDQ_TRACE"),
     "VLLM_QDQ": lambda: _env_flag("VLLM_QDQ"),
+    "VLLM_QDQ_CUTE": lambda: _env_flag("VLLM_QDQ_CUTE"),
     "VLLM_MARLIN_MOE_QDQ_MODE": env_with_choices(
         "VLLM_MARLIN_MOE_QDQ_MODE",
         default="0",
