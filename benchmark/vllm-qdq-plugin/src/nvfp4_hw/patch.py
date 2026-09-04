@@ -14,15 +14,6 @@ logger = init_logger(__name__)
 _PATCHED = False
 
 
-def _register_compile_factors() -> None:
-    from vllm import envs as vllm_envs
-    from vllm_qdq_plugin import envs as qdq_envs
-
-    vllm_envs.environment_variables["VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE"] = (
-        lambda: qdq_envs.VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE
-    )
-
-
 def _layer_data_type(config: Any, layer_name: str, default: str) -> str:
     matches = [
         (key, value)
@@ -38,7 +29,6 @@ def _layer_data_type(config: Any, layer_name: str, default: str) -> str:
 def apply_patches() -> None:
     """Register NVFP4 metadata and scheme support in the current vLLM process."""
     global _PATCHED
-    _register_compile_factors()
     if _PATCHED:
         return
 

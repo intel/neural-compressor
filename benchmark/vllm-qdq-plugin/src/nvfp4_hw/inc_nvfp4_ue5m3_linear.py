@@ -1,14 +1,16 @@
-"""AutoRound NVFP4_E5M3 dense linear with CuTe weight conversion."""
+"""AutoRound NVFP4_E5M3 dense linear using vLLM FP4 Marlin."""
 
 from typing import TYPE_CHECKING, Any
 
 import torch
 from torch.nn.parameter import Parameter
-from vllm.config import get_current_vllm_config_or_none
 from vllm.model_executor.layers.quantization.inc.schemes.inc_scheme import INCLinearScheme
-from vllm.model_executor.layers.utils import dispatch_unquantized_gemm
+from vllm.model_executor.layers.quantization.utils.marlin_utils_fp4 import (
+    apply_fp4_marlin_linear,
+    prepare_fp4_layer_for_marlin,
+)
 from vllm.model_executor.parameter import GroupQuantScaleParameter, ModelWeightParameter
-from vllm_qdq_plugin import envs
+from vllm_qdq_plugin.qdq.nvfp4_e5m3 import decode_ue5m3
 
 if TYPE_CHECKING:
     from vllm.model_executor.layers.quantization.inc.config_parser import INCLayerConfig
@@ -18,15 +20,9 @@ class INCNvfp4UE5M3LinearMethod(INCLinearScheme):
     """W4A4 linear using packed E2M1 weights and raw UE5M3 scales."""
 
     def __init__(self, layer_config: "INCLayerConfig") -> None:
-        if not isinstance(layer_config.group_size, int) or layer_config.group_size not in (16, 32):
-            raise ValueError(
-                "NVFP4_E5M3 linear requires scalar group_size 16 or 32, " f"got {layer_config.group_size!r}"
-            )
+        if layer_config.group_size != 16:
+            raise ValueError(f"NVFP4_E5M3 Marlin linear requires group_size 16, got {layer_config.group_size!r}")
         self.group_size = layer_config.group_size
-        self.weight_dequant_mode = envs.VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE
-        config = get_current_vllm_config_or_none()
-        linear_backend = config.kernel_config.linear_backend if config is not None else "auto"
-        self._gemm_impl = dispatch_unquantized_gemm(linear_backend)
 
     @classmethod
     def get_min_capability(cls) -> int:
@@ -80,21 +76,17 @@ class INCNvfp4UE5M3LinearMethod(INCLinearScheme):
         layer.register_parameter("weight_scale", weight_scale)
 
     def process_weights_after_loading(self, layer: torch.nn.Module) -> None:
-        if self.weight_dequant_mode == "PER_CALL":
-            layer.weight_packed = Parameter(layer.weight_packed.detach().contiguous(), requires_grad=False)
-            layer.weight_scale = Parameter(layer.weight_scale.detach().contiguous(), requires_grad=False)
-            return
-
-        from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import nvfp4_e5m3_weight_dequant_cute
-
-        weight = nvfp4_e5m3_weight_dequant_cute(
-            layer.weight_packed.contiguous(),
-            layer.weight_scale.contiguous(),
-            self.group_size,
-        )
-        layer.weight = Parameter(weight, requires_grad=False)
+        layer.weight = Parameter(layer.weight_packed.detach().contiguous(), requires_grad=False)
         del layer.weight_packed
-        del layer.weight_scale
+        layer.weight_scale = Parameter(
+            decode_ue5m3(layer.weight_scale).to(layer.params_dtype),
+            requires_grad=False,
+        )
+        layer.weight_global_scale = Parameter(
+            torch.ones((), dtype=torch.float32, device=layer.weight.device),
+            requires_grad=False,
+        )
+        prepare_fp4_layer_for_marlin(layer)
 
     def apply_weights(
         self,
@@ -106,18 +98,19 @@ class INCNvfp4UE5M3LinearMethod(INCLinearScheme):
 
         if x.dtype != torch.bfloat16:
             raise TypeError(f"NVFP4_E5M3 dense linear requires bfloat16 activations, got {x.dtype}")
-        if self.weight_dequant_mode == "ONCE" and not hasattr(layer, "weight"):
-            raise RuntimeError("NVFP4_E5M3 dense weight has not been dequantized")
-        if self.weight_dequant_mode == "PER_CALL" and not hasattr(layer, "weight_packed"):
-            raise RuntimeError("NVFP4_E5M3 packed dense weight is unavailable")
+        if not hasattr(layer, "workspace"):
+            raise RuntimeError("NVFP4_E5M3 dense weight has not been prepared for Marlin")
 
         flat_x = x.reshape(-1, x.shape[-1]).contiguous()
         quantized_x = nvfp4_e5m3_qdq(flat_x, self.group_size)
-        if self.weight_dequant_mode == "PER_CALL":
-            from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import nvfp4_e5m3_weight_dequant_cute
-
-            weight = nvfp4_e5m3_weight_dequant_cute(layer.weight_packed, layer.weight_scale, self.group_size)
-        else:
-            weight = layer.weight
-        output = self._gemm_impl(layer, quantized_x, weight, bias)
+        output = apply_fp4_marlin_linear(
+            input=quantized_x,
+            weight=layer.weight,
+            weight_scale=layer.weight_scale,
+            weight_global_scale=layer.weight_global_scale,
+            workspace=layer.workspace,
+            size_n=layer.output_size_per_partition,
+            size_k=layer.input_size_per_partition,
+            bias=bias,
+        )
         return output.reshape(*x.shape[:-1], layer.output_size_per_partition)

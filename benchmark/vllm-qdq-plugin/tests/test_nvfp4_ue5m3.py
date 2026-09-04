@@ -3,7 +3,6 @@ import unittest
 from unittest import mock
 
 import torch
-from nvfp4_hw import patch as nvfp4_patch
 from nvfp4_hw.inc_nvfp4_ue5m3_linear import INCNvfp4UE5M3LinearMethod
 from nvfp4_hw.inc_nvfp4_ue5m3_scheme import INCNvfp4UE5M3Scheme
 from nvfp4_hw.patch import apply_patches
@@ -11,21 +10,16 @@ from vllm.model_executor.layers.quantization.inc.inc import INCConfig
 from vllm.model_executor.layers.quantization.inc.inc_linear import INCLinearMethod
 from vllm.model_executor.layers.quantization.inc.schemes import factory
 from vllm.model_executor.parameter import GroupQuantScaleParameter, ModelWeightParameter
-from vllm_qdq_plugin.qdq.nvfp4_e5m3 import _nvfp4_e5m3_qdq_reference, nvfp4_e5m3_qdq
+from vllm_qdq_plugin.qdq.nvfp4_e5m3 import (
+    _nvfp4_e5m3_qdq_reference,
+    decode_ue5m3,
+    nvfp4_e5m3_qdq,
+)
 from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import nvfp4_e5m3_weight_dequant_cute
 
 
 class _FusedMoE:
     pass
-
-
-def _decode_ue5m3(scales: torch.Tensor) -> torch.Tensor:
-    value = scales.to(torch.int32)
-    exponent = value >> 3
-    mantissa = value & 0x7
-    subnormal = mantissa.float() * 2.0**-17
-    normal = torch.ldexp(1.0 + mantissa.float() * 0.125, exponent - 15)
-    return torch.where(exponent == 0, subnormal, normal)
 
 
 def _decode_e2m1(value: torch.Tensor) -> torch.Tensor:
@@ -46,82 +40,60 @@ def _dequantize_weight_reference(
     low = _decode_e2m1(packed & 0xF)
     high = _decode_e2m1((packed >> 4) & 0xF)
     values = torch.stack((low, high), dim=-1).reshape(packed.shape[0], -1)
-    decoded_scales = _decode_ue5m3(scales).repeat_interleave(group_size, dim=1)
+    decoded_scales = decode_ue5m3(scales).repeat_interleave(group_size, dim=1)
     return (values * decoded_scales).to(torch.bfloat16)
 
 
 class Nvfp4UE5M3ConfigTests(unittest.TestCase):
     @staticmethod
-    def _make_linear_method(mode: str) -> INCNvfp4UE5M3LinearMethod:
+    def _make_linear_method() -> INCNvfp4UE5M3LinearMethod:
         method = object.__new__(INCNvfp4UE5M3LinearMethod)
         method.group_size = 16
-        method.weight_dequant_mode = mode
-        method._gemm_impl = lambda layer, x, weight, bias: torch.nn.functional.linear(x, weight, bias)
         return method
 
     @staticmethod
-    def _make_dense_layer() -> torch.nn.Module:
+    def _make_dense_layer(device: torch.device) -> torch.nn.Module:
         layer = torch.nn.Module()
         with (
             mock.patch("vllm.model_executor.parameter.get_tensor_model_parallel_rank", return_value=0),
             mock.patch("vllm.model_executor.parameter.get_tensor_model_parallel_world_size", return_value=1),
         ):
             layer.weight_packed = ModelWeightParameter(
-                data=torch.zeros((4, 8), dtype=torch.uint8),
+                data=torch.randint(0, 256, (64, 32), device=device, dtype=torch.uint8),
                 input_dim=1,
                 output_dim=0,
                 weight_loader=None,
             )
             layer.weight_scale = GroupQuantScaleParameter(
-                data=torch.zeros((4, 1), dtype=torch.uint8),
+                data=torch.randint(0x40, 0x79, (64, 4), device=device, dtype=torch.uint8),
                 input_dim=1,
                 output_dim=0,
                 weight_loader=None,
             )
-        layer.output_size_per_partition = 4
+        layer.input_size_per_partition = 64
+        layer.output_size_per_partition = 64
+        layer.params_dtype = torch.bfloat16
         return layer
 
-    def test_once_mode_retains_only_dequantized_weight(self) -> None:
-        method = self._make_linear_method("ONCE")
-        layer = self._make_dense_layer()
-        weight = torch.ones((4, 16), dtype=torch.bfloat16)
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_marlin_dense_matches_dequantized_reference(self) -> None:
+        torch.manual_seed(1)
+        method = self._make_linear_method()
+        layer = self._make_dense_layer(torch.device("cuda"))
+        packed = layer.weight_packed.detach().clone()
+        scales = layer.weight_scale.detach().clone()
+        x = torch.randn(5, 64, device="cuda", dtype=torch.bfloat16)
+        expected = torch.nn.functional.linear(
+            nvfp4_e5m3_qdq(x, 16),
+            _dequantize_weight_reference(packed, scales, 16),
+        )
 
-        with mock.patch(
-            "vllm_qdq_plugin.qdq.nvfp4_e5m3_cute.nvfp4_e5m3_weight_dequant_cute",
-            return_value=weight,
-        ) as dequant:
-            method.process_weights_after_loading(layer)
-
-        dequant.assert_called_once()
-        self.assertTrue(torch.equal(layer.weight, weight))
-        self.assertEqual(layer.weight.dtype, torch.bfloat16)
-        self.assertEqual(layer.weight.data_ptr(), weight.data_ptr())
-        self.assertFalse(hasattr(layer, "weight_packed"))
-        self.assertFalse(hasattr(layer, "weight_scale"))
-
-    def test_per_call_mode_dequantizes_each_forward(self) -> None:
-        method = self._make_linear_method("PER_CALL")
-        layer = self._make_dense_layer()
         method.process_weights_after_loading(layer)
-        x = torch.ones((2, 16), dtype=torch.bfloat16)
-        weight = torch.ones((4, 16), dtype=torch.bfloat16)
+        actual = method.apply_weights(layer, x)
 
-        with (
-            mock.patch("vllm_qdq_plugin.qdq.nvfp4_e5m3.nvfp4_e5m3_qdq", side_effect=lambda value, _: value),
-            mock.patch(
-                "vllm_qdq_plugin.qdq.nvfp4_e5m3_cute.nvfp4_e5m3_weight_dequant_cute",
-                return_value=weight,
-            ) as dequant,
-        ):
-            method.apply_weights(layer, x)
-            method.apply_weights(layer, x)
-
-        self.assertEqual(dequant.call_count, 2)
-        self.assertTrue(hasattr(layer, "weight_packed"))
-        self.assertTrue(hasattr(layer, "weight_scale"))
-        self.assertFalse(hasattr(layer, "weight"))
-        self.assertIs(type(layer.weight_packed), torch.nn.Parameter)
-        self.assertIs(type(layer.weight_scale), torch.nn.Parameter)
+        self.assertEqual(layer.weight.dtype, torch.int32)
+        self.assertFalse(hasattr(layer, "weight_packed"))
+        torch.testing.assert_close(actual, expected, rtol=0.02, atol=0.25)
 
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
     def test_cute_weight_dequant_matches_reference(self) -> None:
@@ -168,24 +140,6 @@ class Nvfp4UE5M3ConfigTests(unittest.TestCase):
         self.assertIsInstance(scheme, INCNvfp4UE5M3Scheme)
         self.assertIsInstance(method, INCLinearMethod)
         self.assertEqual(method.scheme.__class__.__name__, "INCNvfp4UE5M3LinearMethod")
-
-    def test_weight_dequant_mode_is_a_vllm_compile_factor(self) -> None:
-        from vllm import envs as vllm_envs
-
-        nvfp4_patch._register_compile_factors()
-        with mock.patch.dict(
-            "os.environ",
-            {"VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE": "ONCE"},
-        ):
-            once = vllm_envs.compile_factors()["VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE"]
-        with mock.patch.dict(
-            "os.environ",
-            {"VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE": "PER_CALL"},
-        ):
-            per_call = vllm_envs.compile_factors()["VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE"]
-
-        self.assertEqual(once, "ONCE")
-        self.assertEqual(per_call, "PER_CALL")
 
     def test_extra_config_data_type_selects_ue5m3_scheme(self) -> None:
         apply_patches()

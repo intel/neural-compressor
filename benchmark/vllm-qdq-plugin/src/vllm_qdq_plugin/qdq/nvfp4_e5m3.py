@@ -3,6 +3,19 @@
 import torch
 
 
+def decode_ue5m3(scale_bits: torch.Tensor) -> torch.Tensor:
+    """Decode unsigned E5M3 bit patterns into float32 values."""
+    if scale_bits.dtype != torch.uint8:
+        raise TypeError(f"decode_ue5m3 expects uint8 scale bits, got {scale_bits.dtype}")
+
+    bits = scale_bits.to(torch.int32)
+    exponent = bits >> 3
+    mantissa = bits & 0x7
+    subnormal = mantissa.float() * 2.0**-17
+    normal = torch.ldexp(1.0 + mantissa.float() * 0.125, exponent - 15)
+    return torch.where(exponent == 0, subnormal, normal)
+
+
 def _quantize_ue5m3_scale_reference(value: torch.Tensor) -> torch.Tensor:
     bits = value.contiguous().view(torch.int32)
     fp32_exponent = torch.bitwise_and(torch.bitwise_right_shift(bits, 23), 0xFF)

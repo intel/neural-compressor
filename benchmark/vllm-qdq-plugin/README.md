@@ -40,8 +40,6 @@ VLLM_QDQ=1 VLLM_QDQ_CUTE=1 vllm serve /path/to/model
 # Force MXFP4 QDQ on Marlin MoE when dtype-based detection is not enough
 VLLM_QDQ=1 VLLM_MARLIN_MOE_QDQ_MODE=FORCE_MXFP4 vllm serve /path/to/model
 
-# Keep NVFP4_E5M3 dense weights packed and dequantize them for every linear call
-VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE=PER_CALL vllm serve /path/to/model
 ```
 
 ### Environment Variables
@@ -51,7 +49,6 @@ VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE=PER_CALL vllm serve /path/to/model
 | `VLLM_QDQ` | `0` | Set to `1` to enable QDQ |
 | `VLLM_QDQ_TRACE` | `0` | Set to `1` to print trace lines (up to 200) |
 | `VLLM_QDQ_CUTE` | `0` | Enable fused CuTe MXFP4/MXFP8 QDQ kernels. Requires CUDA, SM80+, NVIDIA CUTLASS DSL, contiguous input, group size 32, and `K` divisible by 32. Unsupported inputs fall back to the reference implementation. |
-| `VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE` | `ONCE` | `ONCE` dequantizes dense weights to persistent BF16 tensors after loading for lower latency. `PER_CALL` retains only packed E2M1 weights and UE5M3 scales, then creates a temporary BF16 weight for every linear call to reduce persistent model memory. Matching is case-insensitive. |
 | `VLLM_MARLIN_MOE_QDQ_MODE` | `0` | Set to `FORCE_MXFP4` to apply MXFP4 QDQ in `moe_wna16_marlin_gemm` when dtype-based routing is not sufficient. Matching is case-insensitive. |
 
 ## Support Status
@@ -60,8 +57,8 @@ VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE=PER_CALL vllm serve /path/to/model
 |---|---|---|---|
 | **MXFP4** (E2M1 + E8M0 scales) | `marlin_gemm` | ✅ Supported | Dense quantized linear (MXFP4 via Marlin) |
 | **MXFP4** (E2M1 + E8M0 scales) | `moe_wna16_marlin_gemm` | ✅ Supported | MoE quantized linear (MXFP4 via Marlin) |
-| **NVFP4_E5M3** (E2M1 + UE5M3 scales) | dense linear | ✅ Supported | AutoRound `nvfp4_v2`, CuTe weight dequant, vLLM BF16 GEMM |
-| **NVFP4_E5M3** (E2M1 + UE5M3 scales) | fused MoE | ✅ Supported | AutoRound `nvfp4_v2`, group size 16/32, BF16 activations, batched Triton experts |
+| **NVFP4_E5M3** (E2M1 + UE5M3 scales) | dense linear | ✅ Supported | AutoRound `nvfp4_v2`, group size 16, vLLM FP4 Marlin |
+| **NVFP4_E5M3** (E2M1 + UE5M3 scales) | fused MoE | ✅ Supported | AutoRound `nvfp4_v2`, group size 16, vLLM FP4 Marlin experts |
 
 ## NVFP4_E5M3 Support
 
@@ -69,14 +66,11 @@ AutoRound checkpoints can use `data_type: nvfp4_v2` globally or override selecte
 layers such as `mlp.experts` in `extra_config`. The plugin accepts both
 `auto_round:llm_compressor` and
 `auto_round:llm_compressor_nvfp4_e5m3` packing formats. It preserves the
-checkpoint's raw `uint8` E2M1 payload and UE5M3 block scales. By default, dense
-linear uses CuTe DSL once after loading to dequantize each rank-local weight shard to
-BF16, then uses vLLM's unquantized GEMM dispatcher. For models that cannot fit with
-persistent BF16 dense weights, set `VLLM_NVFP4_E5M3_WEIGHT_DEQUANT_MODE=PER_CALL` to
-retain the packed tensors and dequantize a temporary BF16 weight before each GEMM.
-This trades substantial dequantization latency and memory bandwidth for lower
-persistent model memory. MoE uses vLLM token alignment and a batched Triton expert
-kernel that decodes packed weights and UE5M3 scales in flight.
+checkpoint's raw `uint8` E2M1 payload and UE5M3 block scales. Dense and MoE layers
+decode the raw UE5M3 scale bytes once during loading, then reuse vLLM's FP4 Marlin
+weight repacking, scale processing, workspace management, GEMMs, expert routing,
+and top-k reduction. Activations retain the checkpoint's UE5M3 + E2M1 QDQ semantics
+before dense GEMMs and before both MoE expert GEMMs. This path requires group size 16.
 
 Run the local mixed model with:
 
@@ -188,7 +182,7 @@ CUDA_VISIBLE_DEVICES=2 VLLM_QDQ=1 VLLM_QDQ_CUTE=1 vllm bench throughput \
 | Reference (`VLLM_QDQ_CUTE=0`) | 7.46 | 4,773.13 | 954.63 | 102,400 | 25,600 |
 | CuTe (`VLLM_QDQ_CUTE=1`) | 16.76 | 10,723.57 | 2,144.71 | 102,400 | 25,600 |
 
-The table above uses the MXFP4 checkpoint stated in the heading and is not a baseline for NVFP4_E5M3 weight dequantization. For an NVFP4_E5M3 checkpoint on one A100, the same workload measured 7.70 requests/s in `ONCE` mode and 7.44 requests/s in `PER_CALL` mode. Model loading used 22.40 GiB and 20.53 GiB respectively. `ONCE` therefore improved throughput by about 3.5% at the cost of 1.87 GiB more persistent model memory in this run. Both modes share the fused MoE path, which dominates this MoE model; `ONCE` only avoids repeated dense-weight dequantization and still dispatches BF16 GEMMs rather than a packed NVFP4 GEMM.
+The table above uses the MXFP4 checkpoint stated in the heading and is not a baseline for NVFP4_E5M3. The previous NVFP4_E5M3 `ONCE` and `PER_CALL` measurements used BF16 weight dequantization and do not represent the packed Marlin implementation.
 
 ##### GSM8K Evaluation
 

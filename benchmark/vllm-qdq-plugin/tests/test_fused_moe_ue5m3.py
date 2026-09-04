@@ -2,6 +2,7 @@ import pytest
 import torch
 import torch.nn.functional as F
 from nvfp4_hw.fused_moe_ue5m3 import _select_moe_config, fused_moe_ue5m3
+from nvfp4_hw.inc_nvfp4_ue5m3_moe import INCNvfp4UE5M3MoEMethod
 from vllm.model_executor.layers.fused_moe.activation import ApplyMoEActivationConfig, MoEActivation
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import nvfp4_e5m3_qdq
 
@@ -95,6 +96,67 @@ def test_fused_moe_matches_reference(group_size: int):
         group_size,
     )
     expected = _reference(x, w13, w2, w13_scale, w2_scale, topk_weights, topk_ids, group_size)
+    assert F.cosine_similarity(actual.float().flatten(), expected.float().flatten(), dim=0) > 0.9999
+    relative_l2_error = torch.linalg.vector_norm(actual.float() - expected.float()) / torch.linalg.vector_norm(
+        expected.float()
+    )
+    assert relative_l2_error < 0.01
+
+
+def test_marlin_moe_matches_reference():
+    if not torch.cuda.is_available():
+        pytest.skip("CUDA is required")
+
+    torch.manual_seed(1)
+    device = torch.device("cuda")
+    num_experts, num_tokens, top_k = 4, 5, 2
+    hidden_size, intermediate_size = 128, 64
+    x = torch.randn(num_tokens, hidden_size, device=device, dtype=torch.bfloat16)
+    w13 = torch.randint(
+        0, 256, (num_experts, intermediate_size * 2, hidden_size // 2), device=device, dtype=torch.uint8
+    )
+    w2 = torch.randint(0, 256, (num_experts, hidden_size, intermediate_size // 2), device=device, dtype=torch.uint8)
+    w13_scale = torch.randint(
+        0x40, 0x79, (num_experts, intermediate_size * 2, hidden_size // 16), device=device, dtype=torch.uint8
+    )
+    w2_scale = torch.randint(
+        0x40, 0x79, (num_experts, hidden_size, intermediate_size // 16), device=device, dtype=torch.uint8
+    )
+    topk_ids = torch.tensor([[0, 1], [2, 3], [1, 3], [0, 2], [3, 1]], device=device, dtype=torch.int32)
+    topk_weights = torch.softmax(torch.randn(num_tokens, top_k, device=device), dim=-1)
+    expected = _reference(x, w13, w2, w13_scale, w2_scale, topk_weights, topk_ids, 16)
+
+    layer = torch.nn.Module()
+    layer.num_experts = num_experts
+    layer.hidden_size = hidden_size
+    layer.intermediate_size_per_partition = intermediate_size
+    layer.params_dtype = torch.bfloat16
+    layer.w13_weight_packed = torch.nn.Parameter(w13, requires_grad=False)
+    layer.w2_weight_packed = torch.nn.Parameter(w2, requires_grad=False)
+    layer.w13_weight_scale = torch.nn.Parameter(w13_scale, requires_grad=False)
+    layer.w2_weight_scale = torch.nn.Parameter(w2_scale, requires_grad=False)
+    layer.activation = MoEActivation.SILU
+    layer.apply_router_weight_on_input = False
+    layer.global_num_experts = num_experts
+    layer.expert_map = None
+
+    method = object.__new__(INCNvfp4UE5M3MoEMethod)
+    method.group_size = 16
+    method.moe = type(
+        "MoeConfig",
+        (),
+        {
+            "is_act_and_mul": True,
+            "swiglu_limit": None,
+            "swiglu_alpha": None,
+            "swiglu_beta": None,
+            "activation_situ_beta": None,
+            "activation_situ_linear_beta": None,
+        },
+    )()
+    method.process_weights_after_loading(layer)
+    actual = method.apply(layer, x, topk_weights, topk_ids, None, None)
+
     assert F.cosine_similarity(actual.float().flatten(), expected.float().flatten(), dim=0) > 0.9999
     relative_l2_error = torch.linalg.vector_norm(actual.float() - expected.float()) / torch.linalg.vector_norm(
         expected.float()
