@@ -125,12 +125,6 @@
 <h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
 <table class="autosummary longtable docutils align-default">
 <tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.quant_config_to_json_object" title="neural_compressor.jax.quantization.saving.quant_config_to_json_object"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_config_to_json_object</span></code></a>(→ dict)</p></td>
-<td><p>Serialize a quant config to a JSON-compatible dict with class name.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.quant_config_from_json_object" title="neural_compressor.jax.quantization.saving.quant_config_from_json_object"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quant_config_from_json_object</span></code></a>(...)</p></td>
-<td><p>Deserialize a quant config from a JSON-compatible dict with class name.</p></td>
-</tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.saving.prepare_deserialized_quantized_model" title="neural_compressor.jax.quantization.saving.prepare_deserialized_quantized_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_deserialized_quantized_model</span></code></a>(...)</p></td>
 <td><p>Transform a loaded quantized model.</p></td>
 </tr>
@@ -139,50 +133,6 @@
 </section>
 <section id="module-contents">
 <h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.quant_config_to_json_object">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">quant_config_to_json_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config/index.html#neural_compressor.jax.quantization.config.JaxBaseConfig" title="neural_compressor.jax.quantization.config.JaxBaseConfig"><span class="pre">neural_compressor.jax.quantization.config.JaxBaseConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.quant_config_to_json_object" title="Link to this definition"></a></dt>
-<dd><p>Serialize a quant config to a JSON-compatible dict with class name.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>quant_config</strong> (<a class="reference internal" href="../config/index.html#neural_compressor.jax.quantization.config.JaxBaseConfig" title="neural_compressor.jax.quantization.config.JaxBaseConfig"><em>JaxBaseConfig</em></a>) – The quantization config object to serialize.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p><dl class="simple">
-<dt>For a JaxComposableConfig, a dict with keys ‘quantization_type’</dt><dd><p>(set to ‘composable’) and ‘configs’ (a list of serialized
-sub-config dicts). For any other config, a dict with keys
-‘quantization_type’ (the config name) and ‘config’ (its
-serialized dict from <code class="docutils literal notranslate"><span class="pre">to_dict</span></code>).</p>
-</dd>
-</dl>
-</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>dict</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.quant_config_from_json_object">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">quant_config_from_json_object</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">json_obj</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="../config/index.html#neural_compressor.jax.quantization.config.JaxBaseConfig" title="neural_compressor.jax.quantization.config.JaxBaseConfig"><span class="pre">neural_compressor.jax.quantization.config.JaxBaseConfig</span></a></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.quant_config_from_json_object" title="Link to this definition"></a></dt>
-<dd><p>Deserialize a quant config from a JSON-compatible dict with class name.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><p><strong>json_obj</strong> (<em>dict</em>) – A dict with ‘quantization_type’ and ‘config’ keys.</p>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>The instantiated quantization config object.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p><a class="reference internal" href="../config/index.html#neural_compressor.jax.quantization.config.JaxBaseConfig" title="neural_compressor.jax.quantization.config.JaxBaseConfig">JaxBaseConfig</a></p>
-</dd>
-<dt class="field-even">Raises<span class="colon">:</span></dt>
-<dd class="field-even"><p><strong>ValueError</strong> – If the class name is unknown.</p>
-</dd>
-</dl>
-</dd></dl>
-
 <dl class="py class">
 <dt class="sig sig-object py" id="neural_compressor.jax.quantization.saving.VersionManager">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.saving.</span></span><span class="sig-name descname"><span class="pre">VersionManager</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/quantization/saving.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.saving.VersionManager" title="Link to this definition"></a></dt>
@@ -267,7 +217,7 @@ serialized dict from <code class="docutils literal notranslate"><span class="pre
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f8eead3ccb0> 
+   <jinja2.runtime.BlockReference object at 0x7feb890fd700> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
