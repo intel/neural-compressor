@@ -12,8 +12,9 @@ usage() {
 Usage:
 	bash run_swe_verified.sh [OPTIONS]
 
-Run mini-SWE-agent on SWE-bench Verified using an already-running vLLM server,
-then evaluate the generated predictions with the local SWE-bench harness.
+Run mini-SWE-agent on SWE-bench Verified or Verified Mini using an
+already-running vLLM server, then evaluate the generated predictions with the
+local SWE-bench harness.
 
 Generation runs as a single continuous process across the whole selection so
 the vLLM server always has work queued. Finished instances are evaluated in
@@ -22,6 +23,7 @@ with the next instances being generated on the GPU instead of alternating
 between the two phases.
 
 Options:
+	--dataset NAME       Dataset: verified or verified-mini (default: verified)
 	--host HOST          vLLM host (default: 127.0.0.1)
 	--port PORT          vLLM port (default: 8888)
 	--served-name NAME   Served model ID (default: discover from /v1/models)
@@ -68,9 +70,9 @@ remove_chunk_images() {
 		images+=("$(verified_image_name "${instance_id}")")
 	done <"${ids_file}"
 	[[ ${#images[@]} -gt 0 ]] || return
-	log "Removing ${#images[@]} SWE-bench Verified images"
+	log "Removing ${#images[@]} ${BENCHMARK_LABEL} images"
 	docker image rm -f "${images[@]}" >/dev/null 2>&1 || \
-		warn "Some SWE-bench Verified images could not be removed"
+		warn "Some ${BENCHMARK_LABEL} images could not be removed"
 }
 
 readonly RUNNER_PID=$$
@@ -88,7 +90,7 @@ cleanup() {
 }
 
 termination_requested() {
-	warn "SWE-bench Verified run was interrupted"
+	warn "${BENCHMARK_LABEL:-SWE-bench Verified} run was interrupted"
 	exit 1
 }
 
@@ -117,9 +119,15 @@ RETRY_ERRORS=false
 RETRY_EMPTY_PATCHES=false
 RETRY_ATTEMPTS=1
 RETRY_ATTEMPTS_SPECIFIED=false
+DATASET="verified"
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
+		--dataset)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			DATASET="$2"
+			shift 2
+			;;
 		--host)
 			[[ $# -ge 2 ]] || die "$1 requires a value"
 			VLLM_HOST="$2"
@@ -249,12 +257,37 @@ require_positive_integer "--retry-attempts" "${RETRY_ATTEMPTS}"
 [[ -z "${SLICE_ARG}" || "${SLICE_ARG}" =~ ^[0-9]*:[0-9]*$ ]] || \
 	die "--slice must use START:END format: ${SLICE_ARG}"
 
+case "${DATASET}" in
+	verified | swe_bench_verified)
+		readonly BENCHMARK_LABEL="SWE-bench Verified"
+		readonly BENCHMARK_TOTAL=500
+		readonly GENERATION_DATASET="verified"
+		readonly EVALUATION_DATASET="princeton-nlp/SWE-bench_Verified"
+		readonly OUTPUT_PREFIX="swe_verified"
+		;;
+	verified-mini | swe_bench_verified_mini)
+		readonly BENCHMARK_LABEL="SWE-bench Verified Mini"
+		readonly BENCHMARK_TOTAL=50
+		# This is the Hugging Face mirror of EvalScope's
+		# evalscope/swe-bench-verified-mini ModelScope dataset. mini-SWE-agent
+		# loads custom datasets through Hugging Face datasets.load_dataset().
+		readonly GENERATION_DATASET="MariusHobbhahn/swe-bench-verified-mini"
+		# Every Mini instance belongs to the official Verified dataset, so using
+		# the canonical source keeps the SWE-bench harness fully compatible.
+		readonly EVALUATION_DATASET="princeton-nlp/SWE-bench_Verified"
+		readonly OUTPUT_PREFIX="swe_verified_mini"
+		;;
+	*)
+		die "Unsupported --dataset '${DATASET}'; expected verified or verified-mini"
+		;;
+esac
+
 init_benchmark_paths
 init_vllm_endpoint
 trap cleanup EXIT
 trap termination_requested INT TERM
 RUN_TAG="$(sanitize_run_tag "${RUN_TAG}")"
-readonly OUT_DIR="${AGENT_DIR_VERIFIED}/results/swe_verified_${RUN_TAG}"
+readonly OUT_DIR="${AGENT_DIR_VERIFIED}/results/${OUTPUT_PREFIX}_${RUN_TAG}"
 readonly GEN_DIR="${OUT_DIR}/generation"
 readonly EVAL_ROOT="${OUT_DIR}/eval_chunks"
 readonly CLAIMED_FILE="${OUT_DIR}/claimed_ids.txt"
@@ -262,7 +295,7 @@ readonly EVAL_REPORT_LIST="${OUT_DIR}/eval_report_list.txt"
 readonly PREDS_JSON="${OUT_DIR}/preds.json"
 readonly PREDS_JSONL="${OUT_DIR}/preds.jsonl"
 readonly GEN_LOG="${OUT_DIR}/generation.log"
-readonly LOG_FILE="${LOG_DIR}/swe_verified_${RUN_TAG}.log"
+readonly LOG_FILE="${LOG_DIR}/${OUTPUT_PREFIX}_${RUN_TAG}.log"
 readonly REPORT_FILE="${OUT_DIR}/report.json"
 
 [[ -d "${AGENT_DIR_VERIFIED}/.git" ]] || \
@@ -331,17 +364,17 @@ fi
 wait_for_vllm "${VLLM_WAIT_TIMEOUT:-300}"
 SERVED_MODEL_NAME="$(discover_vllm_model "${SERVED_MODEL_NAME}")"
 EVAL_WORKERS="${EVAL_WORKERS:-${WORKERS}}"
-full_slice_plan="$(plan_batch_slices 500 "${NUM_TASKS}" "${SLICE_ARG}" 500)"
+full_slice_plan="$(plan_batch_slices "${BENCHMARK_TOTAL}" "${NUM_TASKS}" "${SLICE_ARG}" "${BENCHMARK_TOTAL}")"
 mapfile -t FULL_SLICE_LINES <<<"${full_slice_plan}"
-[[ ${#FULL_SLICE_LINES[@]} -eq 1 ]] || die "Unexpected slice plan for SWE-bench Verified selection"
+[[ ${#FULL_SLICE_LINES[@]} -eq 1 ]] || die "Unexpected slice plan for ${BENCHMARK_LABEL} selection"
 readonly FULL_SLICE="${FULL_SLICE_LINES[0]}"
 
-log "Generating SWE-bench Verified selection ${FULL_SLICE} with model ${SERVED_MODEL_NAME}"
+log "Generating ${BENCHMARK_LABEL} selection ${FULL_SLICE} with model ${SERVED_MODEL_NAME}"
 (
 	cd "${AGENT_DIR_VERIFIED}"
 	exec env MSWEA_COST_TRACKING=ignore_errors mini-extra swebench \
 		--model "${SERVED_MODEL_NAME}" \
-		--subset verified \
+		--subset "${GENERATION_DATASET}" \
 		--split test \
 		--workers "${WORKERS}" \
 		--output "${GEN_DIR}" \
@@ -368,7 +401,7 @@ monitor_vllm() {
 		failures=$((failures + 1))
 		warn "vLLM health check failed (${failures}/${HEALTH_FAILURES}): ${VLLM_ORIGIN}/health"
 		if ((failures >= HEALTH_FAILURES)); then
-			warn "vLLM is unavailable; stopping SWE-bench Verified"
+			warn "vLLM is unavailable; stopping ${BENCHMARK_LABEL}"
 			kill -TERM "${GEN_PID}" 2>/dev/null || true
 			kill -TERM "${RUNNER_PID}" 2>/dev/null || true
 			return
@@ -406,12 +439,12 @@ process_pending_chunk() {
 			--source "${GEN_DIR}/preds.json" --output "${chunk_preds_jsonl}" \
 			--ids "${chunk_ids_file}"
 
-		log "Evaluating $# SWE-bench Verified instances with ${EVAL_WORKERS} workers"
+		log "Evaluating $# ${BENCHMARK_LABEL} instances with ${EVAL_WORKERS} workers"
 		rm -f -- "${harness_report}"
 		(
 			cd "${BENCHMARK_DIR}"
 			exec python -m swebench.harness.run_evaluation \
-				--dataset_name princeton-nlp/SWE-bench_Verified \
+				--dataset_name "${EVALUATION_DATASET}" \
 				--split test \
 				--predictions_path "${chunk_preds_jsonl}" \
 				--instance_ids "$@" \
