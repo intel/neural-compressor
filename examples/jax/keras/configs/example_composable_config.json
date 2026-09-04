@@ -1,0 +1,53 @@
+{
+    "quantization_type": "composable",
+    "configs": [
+        {
+            "quantization_type": "static_quant",
+            "config": {
+                "weight_dtype": "int8",
+                "activation_dtype": "int8",
+                "const_scale": false,
+                "const_weight": false,
+                "weight_scale_granularity": "per_tensor",
+                "dot_product_attention_enable": false,
+                "white_list": [
+                    "dense1",
+                    "dense2"
+                ]
+            }
+        },
+        {
+            "quantization_type": "dynamic_quant",
+            "config": {
+                "weight_dtype": "fp8_e4m3",
+                "activation_dtype": "fp8_e4m3",
+                "const_scale": false,
+                "const_weight": false,
+                "weight_scale_granularity": "per_tensor",
+                "dot_product_attention_enable": false,
+                "white_list": [
+                    "dense2",
+                    "dense3"
+                ]
+            }
+        },
+        {
+            "quantization_type": "static_quant",
+            "config": {
+                "weight_dtype": "int8",
+                "activation_dtype": "int8",
+                "const_scale": false,
+                "const_weight": false,
+                "weight_scale_granularity": "per_tensor",
+                "dot_product_attention_enable": false,
+                "white_list": [
+                    "Dense"
+                ],
+                "exclude_list": [
+                    "dense1",
+                    "dense2"
+                ]
+            }
+        }
+    ]
+}
