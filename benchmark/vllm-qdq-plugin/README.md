@@ -123,7 +123,7 @@ UE5M3 activation scales use bit-level round-to-nearest-even conversion. Stored c
 
 ### Performance and Accuracy
 
-All results in this section are internal observations from one local environment. They are included for development and reproducibility only; they are not official benchmark results, independently verified results, performance guarantees, or claims about other hardware or software environments.
+> **Disclaimer:** All accuracy and performance data in this section are internal observations from one local environment and are included only to demonstrate the plugin's behavior. They are not official published results, independently verified benchmarks, performance guarantees, or claims about results on other hardware or software environments.
 
 #### CuTe QDQ Microbenchmark
 
