@@ -66,7 +66,7 @@ if args.quant_config_file:
     print(f"\nLoading quantization configuration from: {args.quant_config_file}")
     config = JaxBaseConfig.from_json_file(args.quant_config_file)
 else:
-    print("\nUsing default composable quantization configuration")
+    print("\nPreparing composable quantization configuration")
     # Define quantization configurations.
     # We can mix static and dynamic quantization, different dtypes and other options.
     # * ``first``  -> only ``static1`` matches                -> static

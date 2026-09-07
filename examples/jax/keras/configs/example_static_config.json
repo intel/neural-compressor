@@ -3,7 +3,7 @@
     "config": {
         "weight_dtype": "fp8_e4m3",
         "activation_dtype": "fp8_e4m3",
-        "const_scale": false,
+        "const_scale": true,
         "const_weight": false,
         "weight_scale_granularity": "per_tensor",
         "dot_product_attention_enable": false

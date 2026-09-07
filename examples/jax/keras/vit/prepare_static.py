@@ -72,5 +72,5 @@ if args.quantized_path.endswith(".keras"):
     print(f"\nSaving quantized Keras model to: {args.quantized_path} using keras.models.save_model() API...")
     keras.models.save_model(vit_model, args.quantized_path)
 else:
-    print(f"\nSaving quantized Keras model to: {args.quantized_path} using to_preset() API...")
+    print(f"\nSaving quantized Keras model to: {args.quantized_path} using save_to_preset() API...")
     vit_model.save_to_preset(args.quantized_path)

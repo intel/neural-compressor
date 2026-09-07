@@ -3,6 +3,9 @@ JAX
 
 - [Introduction](#introduction)
 - [Quantization API](#quantization-api)
+- [Quantization configs](#quantization-configs)
+    - [White list and exclude list](#white-list-and-exclude-list)
+    - [Composable configs](#composable-configs)
 - [Post-Training Static Quantization](#post-training-static-quantization)
 - [Examples](#examples)
 - [Backend and Device](#backend-and-device)
@@ -33,7 +36,7 @@ but it can potentially be used on other platforms as well.
 ```python
 def quantize_model(
     model: keras.Model,
-    quant_config: BaseConfig,
+    quant_config: JaxBaseConfig,
     calib_function: Callable = None,
     inplace: bool = True
 ):
@@ -63,7 +66,7 @@ Quantization configurations can also be saved as json and loaded via *JaxBaseCon
 from neural_compressor.jax import StaticQuantConfig, JaxBaseConfig
 quant_config = StaticQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3")
 quant_config.to_json_file("path/to/quant_config.json")
-loaded_quant_cofnig = JaxBaseConfig.from_json_file("path/to/quant_config.json")
+loaded_quant_config = JaxBaseConfig.from_json_file("path/to/quant_config.json")
 ```
 
 ### White list and exclude list
@@ -103,7 +106,7 @@ static2 = StaticQuantConfig(
 # It's also possible to construct the composed config via JaxComposableConfig(static1, dynamic, static2)
 config = static1 + dynamic + static2
 ```
-***NOTE*** 
+***NOTE***
 The order in which the configs are provided matters - multiple configs that apply for the same layer are resolved in a last-wins manner, as explained above.
 
 Config examples can be found under [configs](../../examples/jax/keras/configs/) directory.
@@ -123,9 +126,8 @@ Examples of how to quantize a model and use a pre-quantized model can be found b
 - [Gemma3](../../examples/jax/keras/gemma/README.md)
 - [ViT](../../examples/jax/keras/vit/README.md)
 - [Simple model – quantization](../../examples/jax/keras/helloworld/example.py)
-- [Simple model - quantization with composable config](../../examples/jax/keras/helloworld/example_composable_config.py)
+- [Simple model – composable configs](../../examples/jax/keras/helloworld/example_composable_configs.py)
 - [Simple model – save and load](../../examples/jax/keras/helloworld/example_saving.py)
-- [Simple model - composable configs](../../examples/jax/keras/helloworld/example_composable_configs.py)
 
 ## Backend and Device
 
