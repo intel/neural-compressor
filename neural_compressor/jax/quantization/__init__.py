@@ -20,6 +20,7 @@ from .quantize import quantize_model
 from .config import (
     DynamicQuantConfig,
     StaticQuantConfig,
+    JaxBaseConfig,
     JaxComposableConfig,
     get_default_dynamic_config,
     get_default_static_config,

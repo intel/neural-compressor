@@ -192,21 +192,21 @@ class TestConfigSerialization:
     def test_to_dict_includes_filters(self, config_cls):
         cfg = config_cls(white_list=["Dense"], exclude_list=[".*skip.*"])
         d = cfg.to_dict()
-        assert d["white_list"] == ["Dense"], "to_dict must serialize the white_list filter"
-        assert d["exclude_list"] == [".*skip.*"], "to_dict must serialize the exclude_list filter"
+        assert d["config"]["white_list"] == ["Dense"], "to_dict must serialize the white_list filter"
+        assert d["config"]["exclude_list"] == [".*skip.*"], "to_dict must serialize the exclude_list filter"
 
     def test_to_dict_serializes_class_object_to_name(self, config_cls):
         # Class objects in the white_list are serialized to their class name so
         # the config remains JSON-serializable and round-trips as a string.
         cfg = config_cls(white_list=[keras.layers.Dense])
         restored = config_cls.from_dict(cfg.to_dict())
-        assert cfg.to_dict()["white_list"] == ["Dense"], "Class object must serialize to its __name__"
+        assert cfg.to_dict()["config"]["white_list"] == ["Dense"], "Class object must serialize to its __name__"
         assert restored.white_list == ["Dense"], "Class-object white_list must round-trip as its class name"
 
     def test_to_dict_omits_absent_filters(self, config_cls):
         d = config_cls().to_dict()
-        assert "white_list" not in d, "Default white_list ('*') must be omitted from to_dict"
-        assert "exclude_list" not in d, "Unset exclude_list must be omitted from to_dict"
+        assert "white_list" not in d["config"], "Default white_list ('*') must be omitted from to_dict"
+        assert "exclude_list" not in d["config"], "Unset exclude_list must be omitted from to_dict"
 
     def test_get_params_dict_excludes_internals(self, config_cls):
         params = config_cls(white_list=["Dense"], exclude_list=[".*skip.*"]).get_params_dict()
