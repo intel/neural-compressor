@@ -15,6 +15,11 @@ from . import envs
 logger = init_logger(__name__)
 
 
+def _is_mxfp4_marlin_weight(b_q_type, global_scale, scalar_types) -> bool:
+    """Distinguish MXFP4 from NVFP4, which shares the E2M1 weight type."""
+    return b_q_type == scalar_types.float4_e2m1f and global_scale is None
+
+
 def _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq):
     """Patch ops.marlin_gemm with QDQ wrapper.
 
@@ -46,7 +51,15 @@ def _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq):
         use_fp32_reduce: bool = False,
         is_zp_float: bool = False,
     ) -> torch.Tensor:
-        if b_q_type == scalar_types.float4_e2m1f and a.dim() == 2 and a.dtype in (torch.float16, torch.bfloat16):
+        if (
+            _is_mxfp4_marlin_weight(b_q_type, global_scale, scalar_types)
+            and a.dim() == 2
+            and a.dtype
+            in (
+                torch.float16,
+                torch.bfloat16,
+            )
+        ):
             trace_qdq("marlin_gemm", a.shape, a.dtype)
             a = mxfp4_qdq(a, group_size=32)
         elif b_q_type == scalar_types.float8_e4m3fn and a.dim() == 2 and a.dtype in (torch.float16, torch.bfloat16):
@@ -123,7 +136,7 @@ def _patch_moe_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq):
         if input.dim() == 2 and envs.VLLM_MARLIN_MOE_QDQ_MODE == "FORCE_MXFP4":
             trace_qdq("moe_wna16_marlin_gemm", input.shape, input.dtype)
             input = mxfp4_qdq(input, group_size=32)
-        elif b_q_type == scalar_types.float4_e2m1f and input.dim() == 2:
+        elif _is_mxfp4_marlin_weight(b_q_type, global_scale, scalar_types) and input.dim() == 2:
             trace_qdq("moe_wna16_marlin_gemm", input.shape, input.dtype)
             input = mxfp4_qdq(input, group_size=32)
         elif b_q_type == scalar_types.float8_e4m3fn and input.dim() == 2:
