@@ -31,6 +31,9 @@ try:
 except ImportError:
     auto_round_installed = False
 
+if auto_round_installed:
+    from neural_compressor.torch.algorithms.autoround.autoround import _build_autoround_init_kwargs
+
 try:
     import compressed_tensors
 
@@ -51,6 +54,34 @@ def run_fn(model, dataloader):
             model(**data)
         else:
             model(data)
+
+
+@pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
+def test_build_autoround_init_kwargs_uses_new_algorithm_config():
+    """Map INC configuration to AutoRound's algorithm-config API when available."""
+    try:
+        from auto_round.algorithms.quantization.sign_round.config import SignRoundConfig
+    except ImportError:
+        pytest.skip("Installed AutoRound uses the legacy flat parameter API")
+
+    config = AutoRoundConfig(
+        dtype="int4",
+        use_sym=False,
+        act_dtype="int8",
+        iters=1,
+        sampler="rand",
+        truncation=True,
+    )
+    init_kwargs = _build_autoround_init_kwargs(config, keys_to_pop=[])
+
+    assert isinstance(init_kwargs["alg_configs"], SignRoundConfig)
+    assert init_kwargs["alg_configs"].data_type == "int4"
+    assert init_kwargs["alg_configs"].sym is False
+    assert init_kwargs["alg_configs"].act_data_type == "int8"
+    assert init_kwargs["alg_configs"].iters == 1
+    assert "iters" not in init_kwargs
+    assert "sampler" not in init_kwargs
+    assert "truncation" not in init_kwargs
 
 
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")

@@ -49,6 +49,54 @@ from neural_compressor.torch.algorithms.weight_only.utility import CapturedDatal
 from neural_compressor.torch.utils import get_accelerator, logger
 
 
+def _build_autoround_init_kwargs(config, keys_to_pop):
+    """Build constructor arguments compatible with installed AutoRound APIs."""
+    init_kwargs = {key: value for key, value in config.__dict__.items() if key not in keys_to_pop}
+    try:
+        from auto_round.algorithms.quantization.sign_round.config import SignRoundConfig
+    except ImportError:
+        return init_kwargs
+
+    sign_round_keys = (
+        "iters",
+        "lr",
+        "minmax_lr",
+        "lr_scheduler",
+        "nblocks",
+        "enable_minmax_tuning",
+        "enable_norm_bias_tuning",
+        "gradient_accumulate_steps",
+        "not_use_best_mse",
+        "dynamic_max_gap",
+        "enable_quanted_input",
+        "enable_adam",
+    )
+    sign_round_kwargs = {key: init_kwargs.pop(key) for key in sign_round_keys if key in init_kwargs}
+    for inc_key, autoround_key in (("dtype", "data_type"), ("use_sym", "sym"), ("act_dtype", "act_data_type")):
+        value = init_kwargs.pop(inc_key, None)
+        if value is not None:
+            sign_round_kwargs[autoround_key] = value
+    for key in (
+        "bits",
+        "group_size",
+        "act_bits",
+        "act_group_size",
+        "act_sym",
+        "act_dynamic",
+        "super_bits",
+        "super_group_size",
+    ):
+        value = init_kwargs.pop(key, None)
+        if value is not None:
+            sign_round_kwargs[key] = value
+
+    # These legacy INC settings have no equivalent in the new AutoRound entry point.
+    for key in ("enable_full_range", "sampler", "truncation", "use_layer_wise"):
+        init_kwargs.pop(key, None)
+    init_kwargs["alg_configs"] = SignRoundConfig(**sign_round_kwargs)
+    return init_kwargs
+
+
 class AutoRoundQuantizer(Quantizer):
     """AutoRound Quantizer."""
 
@@ -224,7 +272,7 @@ class AutoRoundQuantizer(Quantizer):
         rounder = AutoRound(
             model,
             tokenizer=tokenizer,
-            **{k: v for k, v in self.__dict__.items() if k not in keys_to_pop},
+            **_build_autoround_init_kwargs(self, keys_to_pop),
         )
 
         if self._is_w4afp8():
