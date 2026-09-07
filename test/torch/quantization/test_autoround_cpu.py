@@ -80,6 +80,7 @@ def test_build_autoround_init_kwargs_uses_new_algorithm_config():
     assert init_kwargs["alg_configs"].act_data_type == "int8"
     assert init_kwargs["alg_configs"].iters == 1
     assert "iters" not in init_kwargs
+    assert "non_tunable_params" not in init_kwargs
     assert "sampler" not in init_kwargs
     assert "truncation" not in init_kwargs
 

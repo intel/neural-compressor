@@ -91,7 +91,7 @@ def _build_autoround_init_kwargs(config, keys_to_pop):
             sign_round_kwargs[key] = value
 
     # These legacy INC settings have no equivalent in the new AutoRound entry point.
-    for key in ("enable_full_range", "sampler", "truncation", "use_layer_wise"):
+    for key in ("enable_full_range", "non_tunable_params", "sampler", "truncation", "use_layer_wise"):
         init_kwargs.pop(key, None)
     init_kwargs["alg_configs"] = SignRoundConfig(**sign_round_kwargs)
     return init_kwargs
