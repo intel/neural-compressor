@@ -1,7 +1,6 @@
 """NVFP4 E2M1 with UE5M3 scale activation quant-dequant."""
 
 import torch
-
 from vllm_qdq_plugin import envs
 
 
