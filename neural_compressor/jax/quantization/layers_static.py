@@ -40,6 +40,32 @@ from neural_compressor.jax.utils.utility import (
 static_quant_mapping = {}
 
 
+def _normalize_axis_for_composite(axis):
+    """Convert axis value to a hashable form for JAX composite attributes.
+
+    Args:
+        axis (int | Sequence[int] | np.ndarray | None): Axis specification.
+
+    Returns:
+        int | tuple[int, ...] | None: Hashable axis value.
+    """
+    if axis is None:
+        return None
+    if isinstance(axis, (int, np.integer)):
+        return int(axis)
+    if isinstance(axis, tuple):
+        return tuple(int(a) for a in axis)
+    if isinstance(axis, list):
+        return tuple(int(a) for a in axis)
+    if hasattr(axis, "tolist"):
+        axis = axis.tolist()
+        if isinstance(axis, list):
+            return tuple(int(a) for a in axis)
+        if isinstance(axis, (int, np.integer)):
+            return int(axis)
+    return axis
+
+
 def register_static_quantized_layer(clso):
     """Register quantized layer class for an original layer class.
 
@@ -468,6 +494,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
         orig.w_quant_granularity = w_quant_granularity
         orig._is_quantized = None
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
+        orig.kernel_ndim = orig._kernel.ndim
         orig.kernel_shape = orig.kernel.shape
         if const_scale:
             orig._const_variables = ["a_scale", "w_scale"]
@@ -569,7 +596,12 @@ class QStaticDenseMixin(SaveableLayerMixin):
         if self._is_int8:
             self.a_zero_point.assign(a_zero_point)
 
-        _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value)
+        axis = _normalize_axis_for_composite(self.w_quant_axis) if self.w_quant_granularity == "per_channel" else None
+        logger.debug(
+            f"layer={self.__class__.__name__}, kernel[ndim={self.kernel.ndim}, shape={self.kernel.shape}], "
+            f"scale_shape={self.w_scale.shape} quant_axis={axis}"
+        )
+        _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value, axis=axis)
         self._kernel_quant.assign(_kernel_quant)
         self._is_quantized = True
         self._tracker.lock()
@@ -635,7 +667,8 @@ class QStaticDenseMixin(SaveableLayerMixin):
                 w_scale = self.w_scale
             else:
                 w_scale = self.w_scale.value
-            _kernel_quant = self.wdequantfun(_kernel_quant, w_scale)
+            axis = _normalize_axis_for_composite(self.w_quant_axis) if self.w_quant_granularity == "per_channel" else None
+            _kernel_quant = self.wdequantfun(_kernel_quant, w_scale, axis=axis)
             return _kernel_quant
         ret = super().kernel
         return ret.value
@@ -782,7 +815,15 @@ class QStaticConv2d(QStaticConv2DMixin, keras.layers.Conv2D):
 
     @property
     def w_quant_axis(self):
-        return tuple(i for i in range(self.kernel.ndim) if i != self.kernel.ndim - 1)
+        kernel_ndim = getattr(self, "kernel_ndim", None)
+        if kernel_ndim is None:
+            if hasattr(self, "_kernel"):
+                kernel_ndim = self._kernel.ndim
+            elif hasattr(self, "_kernel_quant"):
+                kernel_ndim = getattr(self._kernel_quant, "ndim", len(self._kernel_quant.shape))
+            else:
+                raise RuntimeError("Unable to infer Conv2D kernel ndim for quantization axis.")
+        return tuple(i for i in range(kernel_ndim) if i != kernel_ndim - 1)
 
 
 verify_api(keras.layers.Conv2D, QStaticConv2d, "call")
