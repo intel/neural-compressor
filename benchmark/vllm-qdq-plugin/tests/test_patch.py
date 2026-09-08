@@ -4,10 +4,10 @@ import unittest
 from unittest import mock
 
 import torch
-from vllm_qdq_plugin.patch import _patch_moe_marlin_gemm
+from vllm_qdq_plugin.patch import _patch_marlin_gemm, _patch_moe_marlin_gemm
 
 
-def _call_moe_marlin_gemm(fn, input_tensor: torch.Tensor, b_q_type: object):
+def _call_marlin_gemm(fn, input_tensor: torch.Tensor, b_q_type: object, global_scale: torch.Tensor | None = None):
     return fn(
         input_tensor,
         None,
@@ -15,7 +15,32 @@ def _call_moe_marlin_gemm(fn, input_tensor: torch.Tensor, b_q_type: object):
         None,
         torch.empty(1),
         None,
+        global_scale,
         None,
+        None,
+        None,
+        torch.empty(1),
+        b_q_type,
+        1,
+        1,
+        input_tensor.shape[-1],
+    )
+
+
+def _call_moe_marlin_gemm(
+    fn,
+    input_tensor: torch.Tensor,
+    b_q_type: object,
+    global_scale: torch.Tensor | None = None,
+):
+    return fn(
+        input_tensor,
+        None,
+        torch.empty(1),
+        None,
+        torch.empty(1),
+        None,
+        global_scale,
         None,
         None,
         None,
@@ -39,6 +64,78 @@ def _call_moe_marlin_gemm(fn, input_tensor: torch.Tensor, b_q_type: object):
 
 
 class PatchMoeMarlinGemmTests(unittest.TestCase):
+    def test_nvfp4_dense_global_scale_skips_mxfp4_qdq(self) -> None:
+        scalar_types = types.SimpleNamespace(
+            float4_e2m1f=object(),
+            float8_e4m3fn=object(),
+        )
+        qdq_calls: list[int] = []
+
+        def orig(*args, **kwargs):
+            return args[0]
+
+        ops = types.SimpleNamespace(marlin_gemm=orig)
+        _patch_marlin_gemm(
+            ops,
+            scalar_types,
+            lambda x, group_size=32: qdq_calls.append(group_size) or (x + 1),
+            lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected MXFP8 QDQ")),
+            lambda *args, **kwargs: None,
+        )
+        input_tensor = torch.zeros((2, 64), dtype=torch.bfloat16)
+        output = _call_marlin_gemm(
+            ops.marlin_gemm,
+            input_tensor,
+            scalar_types.float4_e2m1f,
+            global_scale=torch.ones(1),
+        )
+
+        self.assertEqual(qdq_calls, [])
+        self.assertTrue(torch.equal(output, input_tensor))
+        mxfp4_output = _call_marlin_gemm(
+            ops.marlin_gemm,
+            input_tensor,
+            scalar_types.float4_e2m1f,
+        )
+        self.assertEqual(qdq_calls, [32])
+        self.assertTrue(torch.equal(mxfp4_output, input_tensor + 1))
+
+    def test_nvfp4_moe_global_scale_skips_mxfp4_qdq(self) -> None:
+        scalar_types = types.SimpleNamespace(
+            float4_e2m1f=object(),
+            float8_e4m3fn=object(),
+        )
+        qdq_calls: list[int] = []
+
+        def orig(*args, **kwargs):
+            return args[0]
+
+        ops = types.SimpleNamespace(moe_wna16_marlin_gemm=orig)
+        _patch_moe_marlin_gemm(
+            ops,
+            scalar_types,
+            lambda x, group_size=32: qdq_calls.append(group_size) or (x + 1),
+            lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected MXFP8 QDQ")),
+            lambda *args, **kwargs: None,
+        )
+        input_tensor = torch.zeros((2, 64), dtype=torch.bfloat16)
+        output = _call_moe_marlin_gemm(
+            ops.moe_wna16_marlin_gemm,
+            input_tensor,
+            scalar_types.float4_e2m1f,
+            global_scale=torch.ones(1),
+        )
+
+        self.assertEqual(qdq_calls, [])
+        self.assertTrue(torch.equal(output, input_tensor))
+        mxfp4_output = _call_moe_marlin_gemm(
+            ops.moe_wna16_marlin_gemm,
+            input_tensor,
+            scalar_types.float4_e2m1f,
+        )
+        self.assertEqual(qdq_calls, [32])
+        self.assertTrue(torch.equal(mxfp4_output, input_tensor + 1))
+
     def test_force_mxfp4_mode_applies_qdq_case_insensitively(self) -> None:
         scalar_types = types.SimpleNamespace(
             float4_e2m1f=object(),
