@@ -25,6 +25,12 @@ pip install -e benchmark/vllm-qdq-plugin/
 pip install -e .
 ```
 
+NVIDIA CUTLASS DSL is optional. Install it only when using the CuTe backend (VLLM_QDQ_CUTE=1):
+
+```bash
+pip install 'nvidia-cutlass-dsl>=4.6.0'
+```
+
 Enable QDQ for a script, a vLLM server, or a local evaluation. CuTe is the recommended backend on supported NVIDIA GPUs:
 
 ```bash
@@ -55,7 +61,7 @@ The plugin registers as a `vllm.general_plugins` entry point. vLLM loads it in a
 | --- | --- | --- |
 | `VLLM_QDQ` | `0` | Set to `1` to enable QDQ. |
 | `VLLM_QDQ_TRACE` | `0` | Set to `1` to print up to 200 QDQ shape and dtype trace lines. |
-| `VLLM_QDQ_CUTE` | automatic | CuTe is selected automatically for MXFP4, MXFP8, and NVFP4_E5M3 when the input is on an NVIDIA CUDA GPU with SM80+, NVIDIA CUTLASS DSL is installed, and the format-specific shape requirements are met. Set to `0` to force the reference implementation or `1` to explicitly request CuTe. An unavailable or unsupported CuTe path warns with the reason before using the slower reference implementation. |
+| `VLLM_QDQ_CUTE` | automatic | CuTe is selected automatically for MXFP4, MXFP8, and NVFP4_E5M3 when the input is on an NVIDIA CUDA GPU with SM80+, NVIDIA CUTLASS DSL is installed, and the format-specific shape requirements are met. In automatic mode, a missing CUTLASS DSL installation warns with an install command before falling back to the reference implementation. Set to `0` to force the reference implementation or `1` to explicitly require CuTe; an explicit request raises an error when CUTLASS DSL is missing. Other unsupported CuTe conditions warn before using the slower reference implementation. |
 | `VLLM_MARLIN_MOE_QDQ_MODE` | `0` | Set to `FORCE_MXFP4` to apply MXFP4 QDQ in `moe_wna16_marlin_gemm` when dtype-based routing is not sufficient. Matching is case-insensitive. |
 
 For diagnostics, add `VLLM_QDQ_TRACE=1` to print up to 200 QDQ shape and dtype trace lines. To force MXFP4 QDQ for Marlin MoE when dtype detection is insufficient, add `VLLM_MARLIN_MOE_QDQ_MODE=FORCE_MXFP4`.
@@ -82,7 +88,7 @@ runtime selection, commands, limitations, validation results, and source layout.
 
 #### CuTe QDQ Microbenchmark
 
-The CuTe backend is selected automatically on NVIDIA CUDA devices with SM80 or newer when NVIDIA CUTLASS DSL is installed. MXFP4/MXFP8 additionally require contiguous input, group size 32, and a `K` dimension divisible by 32. When a requirement is not met, the plugin warns with the reason and uses the slower reference implementation. Set `VLLM_QDQ_CUTE=0` to force reference QDQ without a warning. NVFP4-specific requirements are documented in the [NVFP4 implementation guide](src/nvfp4_hw/README.md).
+The CuTe backend is selected automatically on NVIDIA CUDA devices with SM80 or newer when NVIDIA CUTLASS DSL is installed. If the GPU requirements are met but CUTLASS DSL is missing, automatic mode warns with the installation command and uses the slower reference implementation. Setting `VLLM_QDQ_CUTE=1` makes the dependency mandatory and raises an error when it is missing. MXFP4/MXFP8 additionally require contiguous input, group size 32, and a `K` dimension divisible by 32. When another requirement is not met, the plugin warns with the reason and uses the reference implementation. Set `VLLM_QDQ_CUTE=0` to force reference QDQ without a warning. NVFP4-specific requirements are documented in the [NVFP4 implementation guide](src/nvfp4_hw/README.md).
 
 ```bash
 CUDA_VISIBLE_DEVICES=<idle-gpu> python scripts/verify_cute_dsl.py

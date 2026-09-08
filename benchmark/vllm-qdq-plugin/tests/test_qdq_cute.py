@@ -9,6 +9,32 @@ from vllm_qdq_plugin.qdq.nvfp4_e5m3 import _nvfp4_e5m3_qdq_reference, nvfp4_e5m3
 
 
 class CuteQDQTests(unittest.TestCase):
+    def test_missing_cutlass_dsl_warns_in_auto_mode_on_supported_gpu(self) -> None:
+        x = mock.Mock(is_cuda=True, device=torch.device("cuda", 0))
+        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
+            torch.version, "cuda", "12.8"
+        ), mock.patch("torch.cuda.get_device_capability", return_value=(8, 0)), mock.patch(
+            "importlib.util.find_spec", return_value=None
+        ):
+            from vllm_qdq_plugin.qdq.cute import cute_qdq_status, warn_reference_fallback
+
+            available, reason = cute_qdq_status(x)
+            self.assertFalse(available)
+            with self.assertWarnsRegex(RuntimeWarning, "pip install.*nvidia-cutlass-dsl"):
+                warn_reference_fallback("TEST_MXFP4", reason)
+
+    def test_missing_cutlass_dsl_errors_when_explicitly_requested(self) -> None:
+        x = mock.Mock(is_cuda=True, device=torch.device("cuda", 0))
+        with mock.patch.dict(os.environ, {"VLLM_QDQ_CUTE": "1"}, clear=True), mock.patch.object(
+            torch.version, "cuda", "12.8"
+        ), mock.patch("torch.cuda.get_device_capability", return_value=(8, 0)), mock.patch(
+            "importlib.util.find_spec", return_value=None
+        ):
+            from vllm_qdq_plugin.qdq.cute import cute_qdq_status
+
+            with self.assertRaisesRegex(RuntimeError, "pip install.*nvidia-cutlass-dsl"):
+                cute_qdq_status(x)
+
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
     def test_cute_ops_support_dynamo_fullgraph_capture(self) -> None:
         if torch.cuda.get_device_capability() < (8, 0):

@@ -9,8 +9,10 @@ import importlib.util
 import warnings
 
 import torch
+from vllm_qdq_plugin import envs
 
 _FALLBACK_WARNINGS_EMITTED: set[tuple[str, str]] = set()
+_CUTLASS_DSL_INSTALL_HINT = "install it with `pip install 'nvidia-cutlass-dsl>=4.6.0'`"
 
 
 @torch.library.custom_op("vllm_qdq_plugin::mxfp4_qdq_cute", mutates_args=())
@@ -46,7 +48,10 @@ def cute_qdq_status(x: torch.Tensor) -> tuple[bool, str]:
     if torch.cuda.get_device_capability(x.device) < (8, 0):
         return False, "CuTe QDQ requires SM80 or newer"
     if importlib.util.find_spec("cutlass") is None:
-        return False, "NVIDIA CUTLASS DSL is not installed"
+        reason = f"NVIDIA CUTLASS DSL is not installed; {_CUTLASS_DSL_INSTALL_HINT}"
+        if envs.is_set("VLLM_QDQ_CUTE") and envs.VLLM_QDQ_CUTE:
+            raise RuntimeError(f"VLLM_QDQ_CUTE=1 requires NVIDIA CUTLASS DSL; {_CUTLASS_DSL_INSTALL_HINT}")
+        return False, reason
     return True, "CuTe DSL is available"
 
 
