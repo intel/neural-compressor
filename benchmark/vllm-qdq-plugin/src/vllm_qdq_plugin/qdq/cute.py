@@ -12,6 +12,7 @@ import torch
 from vllm_qdq_plugin import envs
 
 _FALLBACK_WARNINGS_EMITTED: set[tuple[str, str]] = set()
+_LAYOUT_WARNINGS_EMITTED: set[tuple[str, tuple[int, ...], tuple[int, ...]]] = set()
 _CUTLASS_DSL_INSTALL_HINT = "install it with `pip install 'nvidia-cutlass-dsl>=4.6.0'`"
 
 
@@ -68,6 +69,20 @@ def warn_reference_fallback(format_name: str, reason: str) -> None:
         _FALLBACK_WARNINGS_EMITTED.add(warning_key)
 
 
+def _make_contiguous_for_cute(x: torch.Tensor, format_name: str) -> torch.Tensor:
+    warning_key = (format_name, tuple(x.shape), tuple(x.stride()))
+    if warning_key not in _LAYOUT_WARNINGS_EMITTED:
+        warnings.warn(
+            f"CuTe QDQ received a non-contiguous {format_name} input: shape={tuple(x.shape)}, "
+            f"stride={tuple(x.stride())}, dtype={x.dtype}, device={x.device}, "
+            f"storage_offset={x.storage_offset()}. Materializing a contiguous copy so the CuTe kernel can run.",
+            RuntimeWarning,
+            stacklevel=3,
+        )
+        _LAYOUT_WARNINGS_EMITTED.add(warning_key)
+    return x.contiguous()
+
+
 def _reference_fallback(x: torch.Tensor, group_size: int, format_name: str, reason: str | None = None) -> torch.Tensor:
     available, capability_reason = cute_qdq_status(x)
     status = reason or ("unsupported input" if available else capability_reason)
@@ -91,14 +106,14 @@ def _run_cute_or_fallback(x: torch.Tensor, group_size: int, format_name: str) ->
         return op(x)
 
     available, capability_reason = cute_qdq_status(x)
-    if available and group_size == 32 and x.is_contiguous() and x.shape[-1] % group_size == 0:
+    if available and group_size == 32 and x.shape[-1] % group_size == 0:
+        if not x.is_contiguous():
+            x = _make_contiguous_for_cute(x, format_name)
         return op(x)
     if not available:
         reason = capability_reason
     elif group_size != 32:
         reason = f"group_size={group_size} is unsupported"
-    elif not x.is_contiguous():
-        reason = "input is not contiguous"
     else:
         reason = f"K={x.shape[-1]} is not divisible by 32"
     return _reference_fallback(x, group_size, format_name, reason)

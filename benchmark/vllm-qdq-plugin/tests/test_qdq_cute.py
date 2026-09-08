@@ -85,6 +85,20 @@ class CuteQDQTests(unittest.TestCase):
         self.assertTrue(torch.equal(actual_mxfp4, _mxfp4_qdq_reference(x)))
         self.assertTrue(torch.equal(actual_mxfp8, _mxfp8_qdq_reference(x)))
 
+    def test_non_contiguous_input_is_materialized_for_cute(self) -> None:
+        from vllm_qdq_plugin.qdq import cute
+
+        x = torch.randn(32, 3, dtype=torch.bfloat16).t()
+        self.assertFalse(x.is_contiguous())
+        with mock.patch.object(cute, "cute_qdq_status", return_value=(True, "CuTe DSL is available")), mock.patch.object(
+            cute, "_mxfp8_qdq_cute_op", side_effect=lambda value: value
+        ) as cute_op, self.assertWarnsRegex(RuntimeWarning, r"shape=.*stride=.*Materializing a contiguous copy"):
+            actual = cute.mxfp8_qdq_cute(x)
+
+        cute_input = cute_op.call_args.args[0]
+        self.assertTrue(cute_input.is_contiguous())
+        self.assertTrue(torch.equal(actual, x))
+
     def test_nvfp4_defaults_to_auto_reference_fallback(self) -> None:
         x = torch.randn(3, 32, dtype=torch.bfloat16)
         with mock.patch.dict(os.environ, {}, clear=True):
