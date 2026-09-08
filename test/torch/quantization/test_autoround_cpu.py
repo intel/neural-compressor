@@ -32,7 +32,10 @@ except ImportError:
     auto_round_installed = False
 
 if auto_round_installed:
-    from neural_compressor.torch.algorithms.autoround.autoround import _build_autoround_init_kwargs
+    from neural_compressor.torch.algorithms.autoround.autoround import (
+        AutoRoundQuantizer,
+        _build_autoround_init_kwargs,
+    )
 
 try:
     import compressed_tensors
@@ -83,6 +86,35 @@ def test_build_autoround_init_kwargs_uses_new_algorithm_config():
     assert "non_tunable_params" not in init_kwargs
     assert "sampler" not in init_kwargs
     assert "truncation" not in init_kwargs
+
+
+@pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
+def test_build_autoround_init_kwargs_handles_entry_renamed_params():
+    """Move parameters renamed by the INC algorithm entry into alg_configs."""
+    try:
+        from auto_round.algorithms.quantization.sign_round.config import SignRoundConfig
+    except ImportError:
+        pytest.skip("Installed AutoRound uses the legacy flat parameter API")
+
+    quantizer = AutoRoundQuantizer(
+        bits=4,
+        data_type="int",
+        sym=False,
+        act_data_type="int",
+        act_bits=8,
+        iters=0,
+    )
+    init_kwargs = _build_autoround_init_kwargs(quantizer, keys_to_pop=[])
+
+    assert isinstance(init_kwargs["alg_configs"], SignRoundConfig)
+    assert init_kwargs["alg_configs"].bits == 4
+    assert init_kwargs["alg_configs"].data_type == "int"
+    assert init_kwargs["alg_configs"].sym is False
+    assert init_kwargs["alg_configs"].act_data_type == "int"
+    assert "bits" not in init_kwargs
+    assert "data_type" not in init_kwargs
+    assert "sym" not in init_kwargs
+    assert "act_data_type" not in init_kwargs
 
 
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
@@ -236,7 +268,7 @@ class TestAutoRoundCPU:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True)
         model = Qwen2VLForConditionalGeneration.from_pretrained(model_name, trust_remote_code=True, device_map="cpu")
-        dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen, nsamples = get_mllm_dataloader(
+        dataloader, template, truncation, batch_size, seqlen, nsamples = get_mllm_dataloader(
             template=None,
             model=model,
             tokenizer=tokenizer,
@@ -251,19 +283,18 @@ class TestAutoRoundCPU:
             truncation=False,
             seed=42,
             nsamples=1,
-            gradient_accumulate_steps=1,
             quant_nontext_module=True,
         )
         quant_config = AutoRoundConfig(
             bits=4,
             group_size=128,
             nsamples=1,
-            batch_size=batch_size,
+            batch_size=4,
             iters=1,
             seqlen=seqlen,
             quant_nontext_module=True,
             truncation=truncation,
-            gradient_accumulate_steps=gradient_accumulate_steps,
+            gradient_accumulate_steps=1,
             device_map="cpu",
             tokenizer=tokenizer,
             processor=processor,

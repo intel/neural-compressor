@@ -14,6 +14,7 @@
 """AutoRound quantization."""
 
 import copy
+import inspect
 import json
 import time
 from functools import lru_cache
@@ -73,7 +74,7 @@ def _build_autoround_init_kwargs(config, keys_to_pop):
     )
     sign_round_kwargs = {key: init_kwargs.pop(key) for key in sign_round_keys if key in init_kwargs}
     for inc_key, autoround_key in (("dtype", "data_type"), ("use_sym", "sym"), ("act_dtype", "act_data_type")):
-        value = init_kwargs.pop(inc_key, None)
+        value = init_kwargs.pop(inc_key, init_kwargs.pop(autoround_key, None))
         if value is not None:
             sign_round_kwargs[autoround_key] = value
     for key in (
@@ -350,7 +351,6 @@ def get_mllm_dataloader(
     truncation=None,
     seed=42,
     nsamples=128,
-    gradient_accumulate_steps=1,
     quant_nontext_module=False,
 ):
     """Generate a DataLoader for calibration using specified parameters.
@@ -371,7 +371,6 @@ def get_mllm_dataloader(
         truncation (bool, optional): Whether to truncate sequences during tokenization.
         seed (int, optional): The random seed for reproducibility. Defaults to 42.
         nsamples (int, optional): The total number of samples to include. Defaults to 128.
-        gradient_accumulate_steps (int, optional): The number of gradient accumulation steps. Defaults to 1.
         quant_nontext_module (bool, optional): Whether to quantize non-text modules. Defaults to False.
 
     Returns:
@@ -393,7 +392,6 @@ def get_mllm_dataloader(
         dataset = "liuhaotian/llava_conv_58k"
         seqlen = 512 if seqlen is None else seqlen
         truncation = False
-        gradient_accumulate_steps = batch_size * gradient_accumulate_steps
         batch_size = 1
         seed = 42  # The seed is fixed to 42 in transformers
     seqlen = 2048 if seqlen is None else seqlen  # set text only calibration default args
@@ -404,7 +402,7 @@ def get_mllm_dataloader(
         nsamples = (nsamples // batch_size + 1) * batch_size
         logger.warning(f"'nsamples' is not divisible by 'batch_size', will adjusted to {nsamples}")
 
-    dataloader, batch_size, seqlen, gradient_accumulate_steps = get_mllm_dataloader(
+    dataloader_kwargs = dict(
         template=template,
         processor=processor,
         model=model,
@@ -417,10 +415,17 @@ def get_mllm_dataloader(
         seed=seed,
         truncation=truncation,
         nsamples=nsamples,
-        gradient_accumulate_steps=gradient_accumulate_steps,
         quant_nontext_module=quant_nontext_module,
     )
-    return dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen, nsamples
+    if "gradient_accumulate_steps" in inspect.signature(get_mllm_dataloader).parameters:
+        dataloader_kwargs["gradient_accumulate_steps"] = 1
+
+    dataloader_result = get_mllm_dataloader(**dataloader_kwargs)
+    if len(dataloader_result) == 4:
+        dataloader, batch_size, seqlen, _ = dataloader_result
+    else:
+        dataloader, batch_size, seqlen = dataloader_result
+    return dataloader, template, truncation, batch_size, seqlen, nsamples
 
 
 def dump_model_op_stats(layer_config):
