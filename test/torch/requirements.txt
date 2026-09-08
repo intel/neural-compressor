@@ -1,5 +1,5 @@
 accelerate
-auto-round @ git+https://github.com/intel/auto-round.git@main
+auto-round
 auto-round-lib
 compressed-tensors >= 0.15.0
 datasets

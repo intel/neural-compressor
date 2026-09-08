@@ -1,0 +1,7 @@
+{
+  "default": "mxfp4",
+  "rules": [
+    {"steps": "0-7", "config": "sdpa"},
+    {"layers": "0", "config": "sdpa"}
+  ]
+}

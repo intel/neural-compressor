@@ -57,6 +57,10 @@ pip install neural-compressor-pt
 # Framework extension API + TensorFlow dependency
 pip install neural-compressor-tf
 ```
+```Shell
+# Framework extension API + JAX dependency, available since v3.9
+pip install neural-compressor-jax
+```
 
 ### Install from Source
 The latest code on main branch may not be stable. Please switch to the latest release tag for better stability. Feel free to open an [issue](https://github.com/intel/neural-compressor/issues) if you encounter an error.  
