@@ -1,4 +1,4 @@
-Keras Hello World model quantization
+Keras simple model quantization
 
 ============
 
@@ -19,19 +19,7 @@ popd
 
 ## 3. Model
 
-No external model download is required for this example. A tiny `DummyModel` composed of two `Dense` layers is defined directly in the example scripts:
-
-```python
-class DummyModel(keras.Model):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.dense1 = keras.layers.Dense(10, activation="linear")
-        self.dense2 = keras.layers.Dense(1, activation="linear")
-
-    def call(self, inputs):
-        x = self.dense1(inputs)
-        return self.dense2(x)
-```
+No external model download is required for this example. A tiny `DummyModel` composed of `Dense` layers is defined directly in the example scripts.
 
 ## 4. Quantize model
 
@@ -49,36 +37,33 @@ from neural_compressor.jax import quantize_model, StaticQuantConfig
 
 config = StaticQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3")
 
-
 def calib_function(model):
-    model(jnp.zeros((1, 32)))
-    model(15 * jnp.ones((1, 32)))
-
+    key = jax.random.PRNGKey(1)
+    input = 10 * jax.random.normal(key, (1, 32))
+    model(input)
 
 q_model = quantize_model(model, config, calib_function)
 ```
 
 3. Use the quantized model
 ```python
-quantized_output = q_model(data)
+quantized_output = q_model(input)
 print(f"Quantized model output: {quantized_output}")
 ```
 
-You can simply run this by running the prepared [example.py](example.py) or [example_static.py](example_static.py) scripts:
+You can simply run one of the prepared scripts:
 ```bash
-python example.py
-```
-`example.py` accepts an optional `--quant_config_file` argument pointing to a JSON quantization configuration file, such as those found under the [../configs](../configs) directory:
-```bash
-python example.py --quant_config_file ../configs/example_static_config.json
+python ../helloworld.py
+# or
+python simple_config.py
 ```
 
 ## 5. Save and load quantized model
 
 Calibration costs time, so we can calibrate once on representative data sets and later reuse it many times. To achieve it saving model functionality is supported.
-You can run the [example_saving.py](example_saving.py) script:
+You can run the [model_saving.py](model_saving.py) script:
 ```bash
-python example_saving.py
+python model_saving.py
 ```
 
 The script quantizes the model, saves it to `./qmodel.keras`, then loads it back and verifies that the outputs of the freshly quantized model and the reloaded one match:
@@ -87,7 +72,7 @@ The script quantizes the model, saves it to `./qmodel.keras`, then loads it back
 keras.models.save_model(q_model, "./qmodel.keras")
 loaded_model = keras.models.load_model("./qmodel.keras")
 
-loaded_output = loaded_model(data)
+loaded_output = loaded_model(input)
 match = jnp.allclose(quantized_output, loaded_output)
 print(f"Results match: {match}")
 ```
@@ -96,29 +81,70 @@ Note that the model class is registered with `@register_keras_serializable` so t
 
 ## 6. Composable configurations
 
-Neural Compressor allows composing several quantization configurations together, so that different parts of the model (matched via `white_list`/`exclude_list`) can use different quantization modes (static/dynamic) and dtypes. This is demonstrated in [example_composable_configs.py](example_composable_configs.py):
+Neural Compressor allows composing several quantization configurations together, so that different parts of the model (matched via `white_list`/`exclude_list`) can use different quantization modes (static/dynamic) and dtypes. This is demonstrated in [composable_config.py](composable_config.py):
 
 ```python
-static1 = StaticQuantConfig(weight_dtype="int8", activation_dtype="int8", white_list=["dense1", "dense2"])
-dynamic = DynamicQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", white_list=["dense2", "dense3"])
-static2 = StaticQuantConfig(
-    weight_dtype="int8", activation_dtype="int8", white_list=["Dense"], exclude_list=["dense1", "dense2"]
+config1 = StaticQuantConfig(
+    weight_dtype="fp8_e4m3",
+    activation_dtype="fp8_e4m3",
+    white_list=["dense.*"],
+    exclude_list=["dense3"],
+)
+config2 = DynamicQuantConfig(
+    weight_dtype="fp8_e5m2",
+    activation_dtype="fp8_e5m2",
+    white_list=["dense3", "dense4"],
 )
 
-# The order of the configs matters, as the last matching config will be used for each layer.
-config = static1 + dynamic + static2
+# Dynamic quantization will be applied to dense3 and dense4,
+# while static quantization will be used for the remaining matching layers.
+composable_config = config1 + config2
 ```
 
 Run it with:
 ```bash
-python example_composable_configs.py
-```
-or with a composed configuration loaded from a JSON file, such as [../configs](../configs):
-```bash
-python example_composable_configs.py --quant_config_file ../configs/example_composable_config.json
+python composable_config.py
 ```
 
-## 7. Some debug
+## 7. Configuration as json file
+
+Instead of constructing the quantization configuration directly in Python, you can store it in a JSON file and load it at runtime. This is demonstrated in [external_config.py](external_config.py), which reads the configuration with:
+
+```python
+config = JaxBaseConfig.from_json_file(args.quant_config_file)
+```
+
+The example configurations are available in the local [configs](configs) directory:
+
+- [configs/static_config.json](configs/static_config.json) for static quantization
+- [configs/dynamic_config.json](configs/dynamic_config.json) for dynamic quantization
+- [configs/composable_config.json](configs/composable_config.json) for a composed multi-rule setup
+
+For example, a static quantization configuration looks like this:
+
+```json
+{
+    "quantization_type": "static_quant",
+    "config": {
+        "weight_dtype": "fp8_e4m3",
+        "activation_dtype": "fp8_e4m3",
+        "const_scale": true,
+        "const_weight": false,
+        "weight_scale_granularity": "per_tensor",
+        "dot_product_attention_enable": false
+    }
+}
+```
+
+Run the example by passing the JSON file path on the command line:
+
+```bash
+python external_config.py --quant_config_file configs/static_config.json
+```
+
+You can swap in `configs/dynamic_config.json` or `configs/composable_config.json` to try other quantization modes. Note that when the JSON describes only dynamic quantization, the calibration function defined in the script is not used.
+
+## 8. Some debug
 
 If you are interested how your model looks like after quantization, all the example scripts already print the flattened layer list before and after quantization:
 
