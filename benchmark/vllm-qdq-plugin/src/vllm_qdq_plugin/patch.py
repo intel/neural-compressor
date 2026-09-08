@@ -258,11 +258,12 @@ def apply_patches():
         ", ".join(name for name, _, _ in patches),
     )
     try:
-        # Print whether the CuTe backend is requested via environment variable.
-        if envs.VLLM_QDQ_CUTE:
+        if not envs.is_set("VLLM_QDQ_CUTE"):
+            logger.warning("CUTE QDQ backend defaults to automatic capability detection")
+        elif envs.VLLM_QDQ_CUTE:
             logger.warning("CUTE QDQ backend requested: VLLM_QDQ_CUTE=1 (will probe availability at runtime)")
         else:
-            logger.info("CUTE QDQ backend not requested: VLLM_QDQ_CUTE=0")
+            logger.info("CUTE QDQ backend disabled: VLLM_QDQ_CUTE=0 (using reference QDQ)")
     except Exception:
         # Be defensive: envs may raise in exotic contexts; avoid crashing EngineCore startup.
         logger.debug("Failed to read VLLM_QDQ_CUTE environment flag for CUTE logging")

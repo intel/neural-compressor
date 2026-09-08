@@ -7,7 +7,7 @@ Out-of-tree [vLLM](https://github.com/vllm-project/vllm) plugins for activation 
 - [Quick Start](#quick-start)
 - [QDQ Plugin](#qdq-plugin)
   - [Supported Formats](#supported-formats)
-  - [NVFP4_E5M3](#format-and-runtime-behavior)
+  - [NVFP4](#nvfp4)
   - [Performance and Accuracy](#performance-and-accuracy)
   - [Implementation Notes](#implementation-notes)
 - [Sage3 Triton Attention](#sage3-triton-attention)
@@ -55,7 +55,7 @@ The plugin registers as a `vllm.general_plugins` entry point. vLLM loads it in a
 | --- | --- | --- |
 | `VLLM_QDQ` | `0` | Set to `1` to enable QDQ. |
 | `VLLM_QDQ_TRACE` | `0` | Set to `1` to print up to 200 QDQ shape and dtype trace lines. |
-| `VLLM_QDQ_CUTE` | `0` | Enable fused CuTe MXFP4/MXFP8 QDQ kernels. Requires CUDA, SM80+, NVIDIA CUTLASS DSL, contiguous input, group size 32, and `K` divisible by 32. Unsupported inputs fall back to the reference implementation. |
+| `VLLM_QDQ_CUTE` | automatic | CuTe is selected automatically for MXFP4, MXFP8, and NVFP4_E5M3 when the input is on an NVIDIA CUDA GPU with SM80+, NVIDIA CUTLASS DSL is installed, and the format-specific shape requirements are met. Set to `0` to force the reference implementation or `1` to explicitly request CuTe. An unavailable or unsupported CuTe path warns with the reason before using the slower reference implementation. |
 | `VLLM_MARLIN_MOE_QDQ_MODE` | `0` | Set to `FORCE_MXFP4` to apply MXFP4 QDQ in `moe_wna16_marlin_gemm` when dtype-based routing is not sufficient. Matching is case-insensitive. |
 
 For diagnostics, add `VLLM_QDQ_TRACE=1` to print up to 200 QDQ shape and dtype trace lines. To force MXFP4 QDQ for Marlin MoE when dtype detection is insufficient, add `VLLM_MARLIN_MOE_QDQ_MODE=FORCE_MXFP4`.
@@ -69,57 +69,12 @@ For diagnostics, add `VLLM_QDQ_TRACE=1` to print up to 200 QDQ shape and dtype t
 | **NVFP4_E5M3** (E2M1 + UE5M3 scales) | dense linear | ✅ Supported | AutoRound `nvfp4_v2`, group size 16, vLLM FP4 Marlin |
 | **NVFP4_E5M3** (E2M1 + UE5M3 scales) | fused MoE | ✅ Supported | AutoRound `nvfp4_v2`, group size 16, vLLM FP4 Marlin experts |
 
-### NVFP4_E5M3
+### NVFP4
 
-#### Format and Runtime Behavior
-
-AutoRound checkpoints can use `data_type: nvfp4_v2` globally or override selected
-layers such as `mlp.experts` in `extra_config`. The plugin accepts both
-`auto_round:llm_compressor` and
-`auto_round:llm_compressor_nvfp4_e5m3` packing formats. It preserves the
-checkpoint's raw `uint8` E2M1 payload and UE5M3 block scales. Dense and MoE layers
-decode the raw UE5M3 scale bytes once during loading, then reuse vLLM's FP4 Marlin
-weight repacking, scale processing, workspace management, GEMMs, expert routing,
-and top-k reduction. Activations retain the checkpoint's UE5M3 + E2M1 QDQ semantics
-before dense GEMMs and before both MoE expert GEMMs. This path requires group size 16.
-
-#### Local Model Commands
-
-```bash
-source /path/to/venv/bin/activate
-MODEL_PATH=/path/to/nvfp4_e5m3_model
-CUDA_VISIBLE_DEVICES=<idle-gpu> vllm serve "$MODEL_PATH" \
-  --dtype bfloat16 --trust-remote-code
-
-# Or run the spawn-safe one-prompt verification:
-CUDA_VISIBLE_DEVICES=<idle-gpu> python scripts/test_nvfp4_ue5m3_model.py \
-  "$MODEL_PATH"
-
-# Run with the default vLLM TorchDynamo/AOT and CUDA Graph configuration:
-CUDA_VISIBLE_DEVICES=<idle-gpu> VLLM_QDQ=1 VLLM_QDQ_CUTE=1 vllm bench throughput \
-  --model "$MODEL_PATH" \
-  --dataset-name random --num-prompts 200 \
-  --random-input-len 512 --random-output-len 128
-```
-
-#### Limitations
-
-- Dense linear and fused MoE require BF16 activations.
-- MoE does not support `apply_router_weight_on_input` or EPLB.
-- The fused path supports vLLM TorchDynamo/AOT compilation and CUDA Graph capture.
-
-#### Validation Status
-
-Validation was performed in a local virtual environment:
-
-- Target checkpoint tensors were confirmed as `uint8 [N, K/2]` weights and `uint8 [N, K/16]` UE5M3 scales.
-- Configuration routing tests: `3 passed`.
-- CuTe activation QDQ and weight dequantization have pure-Torch parity references and fake-aware custom-op boundaries for `torch.compile`.
-- The batched Triton MoE matched the former per-expert reference for group size 16 and 32 with cosine similarity above 0.9999 and relative L2 error below 1%.
-- On one A100 with the target 256-expert, hidden-size 2048, intermediate-size 512, top-k 8 shape, warmed MoE latency improved from 22.404 ms to 1.068 ms at `M=1` (20.97x) and from 255.390 ms to 2.471 ms at `M=64` (103.37x).
-- CuTe parity, fullgraph, CUDA Graph, and real-model validation for the new dense path are pending an idle GPU.
-
-UE5M3 activation scales use bit-level round-to-nearest-even conversion. Stored checkpoint scales are decoded directly from their existing bytes.
+The plugin supports both vLLM-native NVFP4 checkpoints and AutoRound
+NVFP4_E5M3 (`nvfp4_v2`) checkpoints for dense and MoE layers. See the
+[NVFP4 implementation guide](src/nvfp4_hw/README.md) for format details,
+runtime selection, commands, limitations, validation results, and source layout.
 
 ### Performance and Accuracy
 
@@ -127,7 +82,7 @@ UE5M3 activation scales use bit-level round-to-nearest-even conversion. Stored c
 
 #### CuTe QDQ Microbenchmark
 
-The optional CuTe backend accepts CUDA devices with SM80 or newer. It requires CUDA, NVIDIA CUTLASS DSL, contiguous input, group size 32, and a `K` dimension divisible by 32. Unsupported inputs use the reference implementation.
+The CuTe backend is selected automatically on NVIDIA CUDA devices with SM80 or newer when NVIDIA CUTLASS DSL is installed. MXFP4/MXFP8 additionally require contiguous input, group size 32, and a `K` dimension divisible by 32. When a requirement is not met, the plugin warns with the reason and uses the slower reference implementation. Set `VLLM_QDQ_CUTE=0` to force reference QDQ without a warning. NVFP4-specific requirements are documented in the [NVFP4 implementation guide](src/nvfp4_hw/README.md).
 
 ```bash
 CUDA_VISIBLE_DEVICES=<idle-gpu> python scripts/verify_cute_dsl.py
@@ -160,72 +115,7 @@ CUDA_VISIBLE_DEVICES=<idle-gpu> VLLM_QDQ=1 VLLM_QDQ_CUTE=1 vllm bench throughput
 | Reference (`VLLM_QDQ_CUTE=0`) | 7.46 | 4,773.13 | 954.63 | 102,400 | 25,600 |
 | CuTe (`VLLM_QDQ_CUTE=1`) | 16.76 | 10,723.57 | 2,144.71 | 102,400 | 25,600 |
 
-#### GSM8K: MXFP4 vs NVFP4_E5M3
-
-Model: Qwen3.6-35B-A3B. Task: GSM8K v3, 5-shot. The runs use the vLLM backend, automatic batch size, chat template enabled, thinking disabled, tensor parallel size 1, data parallel size 1, maximum model length 8192, and expert parallelism enabled. Quantized runs use the CuTe QDQ backend.
-
-| Format | Evaluated checkpoint | Flexible exact match | Strict exact match | Prompts/s | Input tokens/s | Output tokens/s | Elapsed |
-| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
-| BF16 baseline | Original BF16 model | 0.8863 +/- 0.0087 | 0.8772 +/- 0.0090 | / | / | / | / |
-| MXFP4 | AutoRound MXFP4 checkpoint | 0.8666 +/- 0.0094 | 0.8499 +/- 0.0098 | 9.71 | 10,346.38 | 1,511.55 | 2m 15s |
-| NVFP4_E5M3 | AutoRound NVFP4_E5M3 checkpoint | 0.8726 +/- 0.0092 | 0.8560 +/- 0.0097 | 9.22 | 9,824.72 | 1,459.98 | 2m 23s |
-
-| Comparison | Flexible exact match | Strict exact match | Prompts/s | Input tokens/s | Output tokens/s |
-| --- | ---: | ---: | ---: | ---: | ---: |
-| MXFP4 vs BF16 | -1.97 pp | -2.73 pp | N/A | N/A | N/A |
-| NVFP4_E5M3 vs BF16 | -1.37 pp | -2.12 pp | N/A | N/A | N/A |
-| NVFP4_E5M3 vs MXFP4 | **+0.60 pp** | **+0.60 pp** | -5.0% | -5.0% | -3.4% |
-
-NVFP4_E5M3 recovers 0.60 percentage points on both accuracy metrics relative to MXFP4 in this run. MXFP4 is about 5% faster for prompt and input-token throughput. The BF16 run has no retained timing data and is included only as an accuracy baseline. GPU differences, nondeterminism, runtime state, and dependency versions can affect these measurements.
-
-##### Reproduce Quantization and Evaluation
-
-Use the same commands for MXFP4 and NVFP4_E5M3; change only `SCHEME`.
-
-```bash
-MODEL_PATH=/path/to/Qwen3.6-35B-A3B/
-SCHEME=nvfp4_e5m3  # Use mxfp4 for MXFP4.
-auto-round "$MODEL_PATH" \
-  --format auto_round \
-  --scheme "$SCHEME" \
-  --output_dir "/path/to/output/qwen3.6-moe-${SCHEME}" \
-  --ignore_layers shared_expert_gate \
-  --model_free
-```
-
-```bash
-SCHEME=nvfp4_e5m3  # Use the same SCHEME value as quantization.
-MODEL_PATH=/path/to/output/qwen3.6-moe-${SCHEME}
-VLLM_QDQ=1 VLLM_QDQ_CUTE=1 CUDA_VISIBLE_DEVICES=<idle-gpu> \
-  lm_eval --model vllm \
-  --model_args pretrained="$MODEL_PATH",tensor_parallel_size=1,data_parallel_size=1,max_model_len=8192,enable_expert_parallel=True,trust_remote_code=True,enable_thinking=False \
-  --tasks gsm8k \
-  --batch_size auto \
-  --apply_chat_template
-```
-
-For the BF16 baseline, point `MODEL_PATH` to the original checkpoint and omit `VLLM_QDQ=1 VLLM_QDQ_CUTE=1`.
-
 ### Implementation Notes
-
-#### NVFP4_E5M3 Components
-
-| File | Purpose |
-| --- | --- |
-| `src/nvfp4_hw/patch.py` | Register the NVFP4_E5M3 packing format, preserve per-layer `extra_config.data_type`, and route `nvfp4_v2` layers without changing vLLM. |
-| `src/nvfp4_hw/inc_nvfp4_ue5m3_scheme.py` | Select the NVFP4_E5M3 dense linear or fused MoE implementation. |
-| `src/nvfp4_hw/inc_nvfp4_ue5m3_linear.py` | Load TP-aware packed weights, dequantize them to BF16 with CuTe, apply activation QDQ, and dispatch vLLM's selected BF16 GEMM. |
-| `src/nvfp4_hw/inc_nvfp4_ue5m3_moe.py` | Load raw packed expert tensors and dispatch top-k MoE execution to the batched kernel. |
-| `src/nvfp4_hw/fused_moe_ue5m3.py` | Align routed tokens and run gate/up and down projections as two batched Triton expert launches with in-kernel E2M1 and UE5M3 decoding. |
-| `src/vllm_qdq_plugin/qdq/nvfp4_e5m3.py` | Apply E2M1 activation QDQ with groupwise UE5M3 scales, using CuTe on supported CUDA tensors and a pure-Torch correctness reference otherwise. |
-| `src/vllm_qdq_plugin/qdq/nvfp4_e5m3_cute.py` | Register fake-aware CuTe activation-QDQ and weight-dequant custom ops for TorchDynamo. |
-| `src/vllm_qdq_plugin/qdq/cute_kernels.py` | Implement NVFP4_E5M3 activation QDQ and packed-weight dequantization in CuTe DSL. |
-| `tests/test_nvfp4_ue5m3.py` | Verify global and mixed `nvfp4_v2` routing and NVFP4 QDQ fullgraph compilation. |
-| `tests/test_fused_moe_ue5m3.py` | Verify fused MoE parity for group size 16/32, Dynamo fullgraph capture, and CUDA Graph replay. |
-| `scripts/test_nvfp4_ue5m3_model.py` | Reproducibly load a local model and run one prompt under vLLM's spawn worker mode. |
-| `pyproject.toml` | Declare the NVIDIA CUTLASS DSL runtime dependency. |
-
-The previous native NVFP4/Marlin path was replaced. Dense GEMM runs on dequantized BF16 weights through vLLM's unquantized dispatcher.
 
 #### MXFP4 QDQ Semantics
 
