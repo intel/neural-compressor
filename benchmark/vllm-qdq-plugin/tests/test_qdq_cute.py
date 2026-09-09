@@ -11,11 +11,9 @@ from vllm_qdq_plugin.qdq.nvfp4_e5m3 import _nvfp4_e5m3_qdq_reference, nvfp4_e5m3
 class CuteQDQTests(unittest.TestCase):
     def test_missing_cutlass_dsl_warns_in_auto_mode_on_supported_gpu(self) -> None:
         x = mock.Mock(is_cuda=True, device=torch.device("cuda", 0))
-        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
-            torch.version, "cuda", "12.8"
-        ), mock.patch("torch.cuda.get_device_capability", return_value=(8, 0)), mock.patch(
-            "importlib.util.find_spec", return_value=None
-        ):
+        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(torch.version, "cuda", "12.8"), mock.patch(
+            "torch.cuda.get_device_capability", return_value=(8, 0)
+        ), mock.patch("importlib.util.find_spec", return_value=None):
             from vllm_qdq_plugin.qdq.cute import cute_qdq_status, warn_reference_fallback
 
             available, reason = cute_qdq_status(x)
@@ -90,9 +88,11 @@ class CuteQDQTests(unittest.TestCase):
 
         x = torch.randn(32, 3, dtype=torch.bfloat16).t()
         self.assertFalse(x.is_contiguous())
-        with mock.patch.object(cute, "cute_qdq_status", return_value=(True, "CuTe DSL is available")), mock.patch.object(
-            cute, "_mxfp8_qdq_cute_op", side_effect=lambda value: value
-        ) as cute_op, mock.patch("builtins.print") as print_mock:
+        with mock.patch.object(
+            cute, "cute_qdq_status", return_value=(True, "CuTe DSL is available")
+        ), mock.patch.object(cute, "_mxfp8_qdq_cute_op", side_effect=lambda value: value) as cute_op, mock.patch(
+            "builtins.print"
+        ) as print_mock:
             actual = cute.mxfp8_qdq_cute(x)
 
         cute_input = cute_op.call_args.args[0]
