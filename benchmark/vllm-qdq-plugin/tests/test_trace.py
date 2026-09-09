@@ -2,7 +2,6 @@ import unittest
 from unittest import mock
 
 import torch
-
 from vllm_qdq_plugin import trace
 from vllm_qdq_plugin.qdq.mxfp8 import mxfp8_qdq
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import nvfp4_e5m3_qdq
