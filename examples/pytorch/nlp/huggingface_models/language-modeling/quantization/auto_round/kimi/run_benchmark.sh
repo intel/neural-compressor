@@ -66,11 +66,12 @@ echo "  Tensor Parallel Size: $TENSOR_PARALLEL_SIZE"
 echo "  CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
 
 export VLLM_QDQ=1
+export VLLM_MXFP4_USE_MARLIN=1
 
 CMD="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",tensor_parallel_size=$TENSOR_PARALLEL_SIZE,data_parallel_size=1,max_model_len=$MAX_MODEL_LEN,trust_remote_code=True --tasks $TASKS --batch_size $BATCH_SIZE"
 
 echo "Executing command:"
-echo "VLLM_QDQ=1 $CMD"
+echo "VLLM_QDQ=1 VLLM_MXFP4_USE_MARLIN=1 $CMD"
 
 lm_eval --model vllm \
 	--model_args pretrained="$MODEL_PATH",tensor_parallel_size=$TENSOR_PARALLEL_SIZE,data_parallel_size=1,max_model_len=$MAX_MODEL_LEN,trust_remote_code=True \
