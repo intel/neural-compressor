@@ -12,7 +12,6 @@ import torch
 from vllm_qdq_plugin import envs
 
 _FALLBACK_WARNINGS_EMITTED: set[tuple[str, str]] = set()
-_LAYOUT_WARNINGS_EMITTED: set[tuple[str, tuple[int, ...], tuple[int, ...]]] = set()
 _CUTLASS_DSL_INSTALL_HINT = "install it with `pip install 'nvidia-cutlass-dsl>=4.6.0'`"
 
 
@@ -70,16 +69,12 @@ def warn_reference_fallback(format_name: str, reason: str) -> None:
 
 
 def _make_contiguous_for_cute(x: torch.Tensor, format_name: str) -> torch.Tensor:
-    warning_key = (format_name, tuple(x.shape), tuple(x.stride()))
-    if warning_key not in _LAYOUT_WARNINGS_EMITTED:
-        warnings.warn(
-            f"CuTe QDQ received a non-contiguous {format_name} input: shape={tuple(x.shape)}, "
-            f"stride={tuple(x.stride())}, dtype={x.dtype}, device={x.device}, "
-            f"storage_offset={x.storage_offset()}. Materializing a contiguous copy so the CuTe kernel can run.",
-            RuntimeWarning,
-            stacklevel=3,
+    if envs.VLLM_QDQ_TRACE:
+        print(
+            f"[QDQ] backend=CuTe format={format_name} action=contiguous-copy "
+            f"shape={tuple(x.shape)} stride={tuple(x.stride())} dtype={x.dtype} "
+            f"device={x.device} storage_offset={x.storage_offset()}"
         )
-        _LAYOUT_WARNINGS_EMITTED.add(warning_key)
     return x.contiguous()
 
 

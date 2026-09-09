@@ -92,12 +92,26 @@ class CuteQDQTests(unittest.TestCase):
         self.assertFalse(x.is_contiguous())
         with mock.patch.object(cute, "cute_qdq_status", return_value=(True, "CuTe DSL is available")), mock.patch.object(
             cute, "_mxfp8_qdq_cute_op", side_effect=lambda value: value
-        ) as cute_op, self.assertWarnsRegex(RuntimeWarning, r"shape=.*stride=.*Materializing a contiguous copy"):
+        ) as cute_op, mock.patch("builtins.print") as print_mock:
             actual = cute.mxfp8_qdq_cute(x)
 
         cute_input = cute_op.call_args.args[0]
         self.assertTrue(cute_input.is_contiguous())
         self.assertTrue(torch.equal(actual, x))
+        print_mock.assert_not_called()
+
+    def test_non_contiguous_input_layout_is_reported_when_tracing(self) -> None:
+        from vllm_qdq_plugin.qdq import cute
+
+        x = torch.randn(32, 3, dtype=torch.bfloat16).t()
+        with mock.patch.object(cute.envs, "VLLM_QDQ_TRACE", True), mock.patch("builtins.print") as print_mock:
+            actual = cute._make_contiguous_for_cute(x, "MXFP8")
+
+        self.assertTrue(actual.is_contiguous())
+        message = print_mock.call_args.args[0]
+        self.assertIn("action=contiguous-copy", message)
+        self.assertIn("shape=(3, 32)", message)
+        self.assertIn("stride=(1, 3)", message)
 
     def test_nvfp4_defaults_to_auto_reference_fallback(self) -> None:
         x = torch.randn(3, 32, dtype=torch.bfloat16)
