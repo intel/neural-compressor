@@ -75,6 +75,10 @@ def nvfp4_e5m3_qdq(x: torch.Tensor, group_size: int = 16) -> torch.Tensor:
     if group_size not in (16, 32):
         raise ValueError(f"nvfp4_e5m3_qdq requires group_size 16 or 32, got {group_size}")
     if not envs.VLLM_QDQ_CUTE:
+        if not torch.compiler.is_compiling():
+            from vllm_qdq_plugin.trace import log_qdq_once
+
+            log_qdq_once("NVFP4_E5M3", x.dtype, use_cute=False)
         return _nvfp4_e5m3_qdq_reference(x, group_size)
     if torch.compiler.is_compiling() and x.is_cuda:
         from .nvfp4_e5m3_cute import nvfp4_e5m3_qdq_cute
@@ -85,11 +89,16 @@ def nvfp4_e5m3_qdq(x: torch.Tensor, group_size: int = 16) -> torch.Tensor:
     available, reason = cute_qdq_status(x)
     if available and x.is_contiguous() and x.shape[1] % group_size == 0:
         from .nvfp4_e5m3_cute import nvfp4_e5m3_qdq_cute
+        from vllm_qdq_plugin.trace import log_qdq_once
 
+        log_qdq_once("NVFP4_E5M3", x.dtype, use_cute=True)
         return nvfp4_e5m3_qdq_cute(x, group_size)
     if available and not x.is_contiguous():
         reason = "input is not contiguous"
     elif available:
         reason = f"K={x.shape[1]} is not divisible by group_size={group_size}"
+    from vllm_qdq_plugin.trace import log_qdq_once
+
+    log_qdq_once("NVFP4_E5M3", x.dtype, use_cute=False)
     warn_reference_fallback("NVFP4_E5M3", reason)
     return _nvfp4_e5m3_qdq_reference(x, group_size)

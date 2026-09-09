@@ -4,9 +4,22 @@
 Enable with VLLM_QDQ_TRACE=1.
 """
 
+from vllm.logger import init_logger
+
 from . import envs
 
+logger = init_logger(__name__)
+
 _call_count = 0
+_logged_formats: set[str] = set()
+
+
+def log_qdq_once(format_name: str, dtype, *, use_cute: bool) -> None:
+    """Log the selected QDQ backend once per format in each process."""
+    if format_name in _logged_formats:
+        return
+    _logged_formats.add(format_name)
+    logger.info("QDQ runtime: format=%s dtype=%s cute=%s", format_name, dtype, use_cute)
 
 
 def trace_qdq(op_name: str, shape, dtype):

@@ -9,6 +9,29 @@ from vllm_qdq_plugin.qdq.nvfp4_e5m3 import _nvfp4_e5m3_qdq_reference, nvfp4_e5m3
 
 
 class CuteQDQTests(unittest.TestCase):
+    def test_runtime_log_is_emitted_once_per_format(self) -> None:
+        from vllm_qdq_plugin import trace
+
+        with mock.patch.object(trace.logger, "info") as info, mock.patch.object(trace, "_logged_formats", set()):
+            trace.log_qdq_once("MXFP8", torch.bfloat16, use_cute=True)
+            trace.log_qdq_once("MXFP8", torch.float16, use_cute=False)
+            trace.log_qdq_once("NVFP4_E5M3", torch.float16, use_cute=False)
+
+        self.assertEqual(info.call_count, 2)
+        info.assert_any_call("QDQ runtime: format=%s dtype=%s cute=%s", "MXFP8", torch.bfloat16, True)
+        info.assert_any_call("QDQ runtime: format=%s dtype=%s cute=%s", "NVFP4_E5M3", torch.float16, False)
+
+    def test_reference_paths_log_backend(self) -> None:
+        x = torch.randn(3, 32, dtype=torch.bfloat16)
+        with mock.patch.dict(os.environ, {"VLLM_QDQ_CUTE": "0"}, clear=False), mock.patch(
+            "vllm_qdq_plugin.trace.log_qdq_once"
+        ) as log_once:
+            mxfp8_qdq(x)
+            nvfp4_e5m3_qdq(x, 16)
+
+        log_once.assert_any_call("MXFP8", torch.bfloat16, use_cute=False)
+        log_once.assert_any_call("NVFP4_E5M3", torch.bfloat16, use_cute=False)
+
     def test_missing_cutlass_dsl_warns_in_auto_mode_on_supported_gpu(self) -> None:
         x = mock.Mock(is_cuda=True, device=torch.device("cuda", 0))
         with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(torch.version, "cuda", "12.8"), mock.patch(

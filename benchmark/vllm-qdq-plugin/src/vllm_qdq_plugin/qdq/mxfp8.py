@@ -126,4 +126,8 @@ def mxfp8_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
         from .cute import mxfp8_qdq_cute
 
         return mxfp8_qdq_cute(x, group_size)
+    if not torch.compiler.is_compiling():
+        from ..trace import log_qdq_once
+
+        log_qdq_once("MXFP8", x.dtype, use_cute=False)
     return _mxfp8_qdq_reference(x, group_size)

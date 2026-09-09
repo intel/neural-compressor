@@ -100,10 +100,13 @@ def _run_cute_or_fallback(x: torch.Tensor, group_size: int, format_name: str) ->
             raise ValueError(f"CuTe QDQ requires group_size=32, got {group_size}")
         return op(x)
 
+    from ..trace import log_qdq_once
+
     available, capability_reason = cute_qdq_status(x)
     if available and group_size == 32 and x.shape[-1] % group_size == 0:
         if not x.is_contiguous():
             x = _make_contiguous_for_cute(x, format_name)
+        log_qdq_once(format_name, x.dtype, use_cute=True)
         return op(x)
     if not available:
         reason = capability_reason
@@ -111,6 +114,7 @@ def _run_cute_or_fallback(x: torch.Tensor, group_size: int, format_name: str) ->
         reason = f"group_size={group_size} is unsupported"
     else:
         reason = f"K={x.shape[-1]} is not divisible by 32"
+    log_qdq_once(format_name, x.dtype, use_cute=False)
     return _reference_fallback(x, group_size, format_name, reason)
 
 
