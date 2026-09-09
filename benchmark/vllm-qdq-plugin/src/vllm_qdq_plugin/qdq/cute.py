@@ -10,6 +10,7 @@ import warnings
 
 import torch
 from vllm_qdq_plugin import envs
+from vllm_qdq_plugin.trace import trace_qdq
 
 _FALLBACK_WARNINGS_EMITTED: set[tuple[str, str]] = set()
 _CUTLASS_DSL_INSTALL_HINT = "install it with `pip install 'nvidia-cutlass-dsl>=4.6.0'`"
@@ -78,10 +79,17 @@ def _make_contiguous_for_cute(x: torch.Tensor, format_name: str) -> torch.Tensor
     return x.contiguous()
 
 
-def _reference_fallback(x: torch.Tensor, group_size: int, format_name: str, reason: str | None = None) -> torch.Tensor:
+def _reference_fallback(
+    x: torch.Tensor,
+    group_size: int,
+    format_name: str,
+    trace_op_name: str,
+    reason: str | None = None,
+) -> torch.Tensor:
     available, capability_reason = cute_qdq_status(x)
     status = reason or ("unsupported input" if available else capability_reason)
     warn_reference_fallback(format_name, status)
+    trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name=format_name)
 
     if format_name == "MXFP4":
         from .mxfp4 import _mxfp4_qdq_reference
@@ -93,17 +101,19 @@ def _reference_fallback(x: torch.Tensor, group_size: int, format_name: str, reas
     return _mxfp8_qdq_reference(x, group_size)
 
 
-def _run_cute_or_fallback(x: torch.Tensor, group_size: int, format_name: str) -> torch.Tensor:
+def _run_cute_or_fallback(x: torch.Tensor, group_size: int, format_name: str, trace_op_name: str) -> torch.Tensor:
     op = _mxfp4_qdq_cute_op if format_name == "MXFP4" else _mxfp8_qdq_cute_op
     if torch.compiler.is_compiling():
         if group_size != 32:
             raise ValueError(f"CuTe QDQ requires group_size=32, got {group_size}")
+        trace_qdq(trace_op_name, x.shape, x.dtype, backend="CuTe", format_name=format_name)
         return op(x)
 
     available, capability_reason = cute_qdq_status(x)
     if available and group_size == 32 and x.shape[-1] % group_size == 0:
         if not x.is_contiguous():
             x = _make_contiguous_for_cute(x, format_name)
+        trace_qdq(trace_op_name, x.shape, x.dtype, backend="CuTe", format_name=format_name)
         return op(x)
     if not available:
         reason = capability_reason
@@ -111,14 +121,24 @@ def _run_cute_or_fallback(x: torch.Tensor, group_size: int, format_name: str) ->
         reason = f"group_size={group_size} is unsupported"
     else:
         reason = f"K={x.shape[-1]} is not divisible by 32"
-    return _reference_fallback(x, group_size, format_name, reason)
+    return _reference_fallback(x, group_size, format_name, trace_op_name, reason)
 
 
-def mxfp4_qdq_cute(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
+def mxfp4_qdq_cute(
+    x: torch.Tensor,
+    group_size: int = 32,
+    *,
+    trace_op_name: str = "mxfp4_qdq",
+) -> torch.Tensor:
     """Run the MXFP4 CuTe backend, or the validated reference fallback."""
-    return _run_cute_or_fallback(x, group_size, "MXFP4")
+    return _run_cute_or_fallback(x, group_size, "MXFP4", trace_op_name)
 
 
-def mxfp8_qdq_cute(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
+def mxfp8_qdq_cute(
+    x: torch.Tensor,
+    group_size: int = 32,
+    *,
+    trace_op_name: str = "mxfp8_qdq",
+) -> torch.Tensor:
     """Run the MXFP8 CuTe backend, or the validated reference fallback."""
-    return _run_cute_or_fallback(x, group_size, "MXFP8")
+    return _run_cute_or_fallback(x, group_size, "MXFP8", trace_op_name)

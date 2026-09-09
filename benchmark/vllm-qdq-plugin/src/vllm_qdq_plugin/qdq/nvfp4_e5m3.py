@@ -2,6 +2,7 @@
 
 import torch
 from vllm_qdq_plugin import envs
+from vllm_qdq_plugin.trace import trace_qdq
 
 
 def decode_ue5m3(scale_bits: torch.Tensor) -> torch.Tensor:
@@ -66,7 +67,12 @@ def _nvfp4_e5m3_qdq_reference(x: torch.Tensor, group_size: int = 16) -> torch.Te
     return (quantized * scales.unsqueeze(-1)).reshape(rows, -1)[:, :width].to(original_dtype)
 
 
-def nvfp4_e5m3_qdq(x: torch.Tensor, group_size: int = 16) -> torch.Tensor:
+def nvfp4_e5m3_qdq(
+    x: torch.Tensor,
+    group_size: int = 16,
+    *,
+    trace_op_name: str = "nvfp4_e5m3_qdq",
+) -> torch.Tensor:
     """Quantize-dequantize BF16/FP16 activations using E2M1 and UE5M3 scales."""
     if x.dim() != 2:
         raise ValueError(f"nvfp4_e5m3_qdq expects a 2D tensor, got {x.dim()}D")
@@ -75,10 +81,12 @@ def nvfp4_e5m3_qdq(x: torch.Tensor, group_size: int = 16) -> torch.Tensor:
     if group_size not in (16, 32):
         raise ValueError(f"nvfp4_e5m3_qdq requires group_size 16 or 32, got {group_size}")
     if not envs.VLLM_QDQ_CUTE:
+        trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name="NVFP4_E5M3")
         return _nvfp4_e5m3_qdq_reference(x, group_size)
     if torch.compiler.is_compiling() and x.is_cuda:
         from .nvfp4_e5m3_cute import nvfp4_e5m3_qdq_cute
 
+        trace_qdq(trace_op_name, x.shape, x.dtype, backend="CuTe", format_name="NVFP4_E5M3")
         return nvfp4_e5m3_qdq_cute(x, group_size)
     from .cute import cute_qdq_status, warn_reference_fallback
 
@@ -86,10 +94,12 @@ def nvfp4_e5m3_qdq(x: torch.Tensor, group_size: int = 16) -> torch.Tensor:
     if available and x.is_contiguous() and x.shape[1] % group_size == 0:
         from .nvfp4_e5m3_cute import nvfp4_e5m3_qdq_cute
 
+        trace_qdq(trace_op_name, x.shape, x.dtype, backend="CuTe", format_name="NVFP4_E5M3")
         return nvfp4_e5m3_qdq_cute(x, group_size)
     if available and not x.is_contiguous():
         reason = "input is not contiguous"
     elif available:
         reason = f"K={x.shape[1]} is not divisible by group_size={group_size}"
     warn_reference_fallback("NVFP4_E5M3", reason)
+    trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name="NVFP4_E5M3")
     return _nvfp4_e5m3_qdq_reference(x, group_size)
