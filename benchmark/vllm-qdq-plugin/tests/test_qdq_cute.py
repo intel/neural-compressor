@@ -11,11 +11,9 @@ from vllm_qdq_plugin.qdq.nvfp4_e5m3 import _nvfp4_e5m3_qdq_reference, nvfp4_e5m3
 class CuteQDQTests(unittest.TestCase):
     def test_missing_cutlass_dsl_warns_in_auto_mode_on_supported_gpu(self) -> None:
         x = mock.Mock(is_cuda=True, device=torch.device("cuda", 0))
-        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(
-            torch.version, "cuda", "12.8"
-        ), mock.patch("torch.cuda.get_device_capability", return_value=(8, 0)), mock.patch(
-            "importlib.util.find_spec", return_value=None
-        ):
+        with mock.patch.dict(os.environ, {}, clear=True), mock.patch.object(torch.version, "cuda", "12.8"), mock.patch(
+            "torch.cuda.get_device_capability", return_value=(8, 0)
+        ), mock.patch("importlib.util.find_spec", return_value=None):
             from vllm_qdq_plugin.qdq.cute import cute_qdq_status, warn_reference_fallback
 
             available, reason = cute_qdq_status(x)
@@ -84,6 +82,36 @@ class CuteQDQTests(unittest.TestCase):
 
         self.assertTrue(torch.equal(actual_mxfp4, _mxfp4_qdq_reference(x)))
         self.assertTrue(torch.equal(actual_mxfp8, _mxfp8_qdq_reference(x)))
+
+    def test_non_contiguous_input_is_materialized_for_cute(self) -> None:
+        from vllm_qdq_plugin.qdq import cute
+
+        x = torch.randn(32, 3, dtype=torch.bfloat16).t()
+        self.assertFalse(x.is_contiguous())
+        with mock.patch.object(
+            cute, "cute_qdq_status", return_value=(True, "CuTe DSL is available")
+        ), mock.patch.object(cute, "_mxfp8_qdq_cute_op", side_effect=lambda value: value) as cute_op, mock.patch(
+            "builtins.print"
+        ) as print_mock:
+            actual = cute.mxfp8_qdq_cute(x)
+
+        cute_input = cute_op.call_args.args[0]
+        self.assertTrue(cute_input.is_contiguous())
+        self.assertTrue(torch.equal(actual, x))
+        print_mock.assert_not_called()
+
+    def test_non_contiguous_input_layout_is_reported_when_tracing(self) -> None:
+        from vllm_qdq_plugin.qdq import cute
+
+        x = torch.randn(32, 3, dtype=torch.bfloat16).t()
+        with mock.patch.object(cute.envs, "VLLM_QDQ_TRACE", True), mock.patch("builtins.print") as print_mock:
+            actual = cute._make_contiguous_for_cute(x, "MXFP8")
+
+        self.assertTrue(actual.is_contiguous())
+        message = print_mock.call_args.args[0]
+        self.assertIn("action=contiguous-copy", message)
+        self.assertIn("shape=(3, 32)", message)
+        self.assertIn("stride=(1, 3)", message)
 
     def test_nvfp4_defaults_to_auto_reference_fallback(self) -> None:
         x = torch.randn(3, 32, dtype=torch.bfloat16)

@@ -68,6 +68,16 @@ def warn_reference_fallback(format_name: str, reason: str) -> None:
         _FALLBACK_WARNINGS_EMITTED.add(warning_key)
 
 
+def _make_contiguous_for_cute(x: torch.Tensor, format_name: str) -> torch.Tensor:
+    if envs.VLLM_QDQ_TRACE:
+        print(
+            f"[QDQ] backend=CuTe format={format_name} action=contiguous-copy "
+            f"shape={tuple(x.shape)} stride={tuple(x.stride())} dtype={x.dtype} "
+            f"device={x.device} storage_offset={x.storage_offset()}"
+        )
+    return x.contiguous()
+
+
 def _reference_fallback(x: torch.Tensor, group_size: int, format_name: str, reason: str | None = None) -> torch.Tensor:
     available, capability_reason = cute_qdq_status(x)
     status = reason or ("unsupported input" if available else capability_reason)
@@ -91,14 +101,14 @@ def _run_cute_or_fallback(x: torch.Tensor, group_size: int, format_name: str) ->
         return op(x)
 
     available, capability_reason = cute_qdq_status(x)
-    if available and group_size == 32 and x.is_contiguous() and x.shape[-1] % group_size == 0:
+    if available and group_size == 32 and x.shape[-1] % group_size == 0:
+        if not x.is_contiguous():
+            x = _make_contiguous_for_cute(x, format_name)
         return op(x)
     if not available:
         reason = capability_reason
     elif group_size != 32:
         reason = f"group_size={group_size} is unsupported"
-    elif not x.is_contiguous():
-        reason = "input is not contiguous"
     else:
         reason = f"K={x.shape[-1]} is not divisible by 32"
     return _reference_fallback(x, group_size, format_name, reason)
