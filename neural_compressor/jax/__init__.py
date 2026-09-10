@@ -14,4 +14,10 @@
 """Intel Neural Compressor JAX API."""
 
 from neural_compressor.jax.utils import register_algo
-from neural_compressor.jax.quantization import quantize_model, StaticQuantConfig, DynamicQuantConfig
+from neural_compressor.jax.quantization import (
+    quantize_model,
+    StaticQuantConfig,
+    DynamicQuantConfig,
+    JaxBaseConfig,
+    JaxComposableConfig,
+)
