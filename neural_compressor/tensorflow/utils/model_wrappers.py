@@ -19,12 +19,14 @@
 import copy
 import datetime
 import importlib
+import inspect
 import json
 import os
 import shutil
 import sys
 import tempfile
 import time
+import zipfile
 from abc import abstractmethod
 
 import numpy as np
@@ -36,6 +38,137 @@ from neural_compressor.tensorflow.utils.utility import version1_gte_version2, ve
 
 tensor_to_node = lambda s: list(set([x.split(":")[0] for x in s]))
 
+UNSAFE_KERAS_DESERIALIZATION_ENV = "NEURAL_COMPRESSOR_ALLOW_UNSAFE_KERAS_DESERIALIZATION"
+
+
+class UnsafeKerasModelError(ValueError):
+    """Raised when a Keras model file may execute arbitrary code while being deserialized."""
+
+
+def _allow_unsafe_keras_deserialization():
+    """Check whether the user explicitly allowed unsafe Keras deserialization."""
+    return os.environ.get(UNSAFE_KERAS_DESERIALIZATION_ENV, "0").lower() in ("1", "true", "yes")
+
+
+def _contains_arbitrary_python(config):
+    """Recursively look for serialized Python code (lambda bytecode) in a Keras model config."""
+    if isinstance(config, dict):
+        if config.get("class_name", None) == "__lambda__":
+            # a Python lambda serialized as marshalled bytecode by Keras 3
+            return True
+        if config.get("class_name", None) == "Lambda":
+            layer_config = config.get("config", {})
+            if isinstance(layer_config, dict):
+                function = layer_config.get("function", None)
+                # a lambda is serialized as marshalled bytecode by Keras 2, a plain string refers
+                # to a registered/named function which is not deserialized into new Python code
+                if layer_config.get("function_type", None) == "lambda" or isinstance(function, (list, tuple)):
+                    return True
+        return any(_contains_arbitrary_python(value) for value in config.values())
+    if isinstance(config, (list, tuple)):
+        return any(_contains_arbitrary_python(value) for value in config)
+    return False
+
+
+def _get_keras_model_config(model_path):
+    """Get the serialized config of a Keras model file without deserializing the model.
+
+    Args:
+        model_path (string): path of a keras model file (.keras or .h5).
+
+    Returns:
+        dict or None: the serialized model config, None if it can't be found.
+    """
+    if zipfile.is_zipfile(model_path):
+        with zipfile.ZipFile(model_path, "r") as zip_file:
+            if "config.json" not in zip_file.namelist():  # pragma: no cover
+                return None
+            with zip_file.open("config.json") as config_file:
+                return json.load(config_file)
+
+    import h5py
+
+    with h5py.File(model_path, "r") as h5_file:
+        model_config = h5_file.attrs.get("model_config", None)
+        if model_config is None:  # pragma: no cover
+            return None
+        if isinstance(model_config, bytes):  # pragma: no cover
+            model_config = model_config.decode("utf-8")
+        return json.loads(model_config)
+
+
+def _check_keras_model_safety(model_path):
+    """Refuse to load a Keras model file which would execute arbitrary Python code.
+
+    The legacy Keras (Keras 2) loaders deserialize `Lambda` layers from marshalled CPython
+    bytecode without any `safe_mode` gate, which allows a malicious model file to run
+    arbitrary code. Such files are rejected here unless the user explicitly opts in by
+    setting the NEURAL_COMPRESSOR_ALLOW_UNSAFE_KERAS_DESERIALIZATION environment variable.
+
+    Args:
+        model_path (string): path of a keras model file (.keras or .h5).
+
+    Raises:
+        UnsafeKerasModelError: if the model file contains serialized Python code.
+    """
+    if _allow_unsafe_keras_deserialization():  # pragma: no cover
+        logger.warning(
+            "Unsafe Keras deserialization is enabled by %s, arbitrary code contained " "in %s may be executed.",
+            UNSAFE_KERAS_DESERIALIZATION_ENV,
+            model_path,
+        )
+        return
+
+    try:
+        model_config = _get_keras_model_config(model_path)
+    except Exception as e:  # pragma: no cover
+        raise UnsafeKerasModelError(
+            "Failed to inspect the Keras model file {} for unsafe content: {}. "
+            "Loading is refused, set {}=1 to load it anyway if it comes from a trusted source.".format(
+                model_path, e, UNSAFE_KERAS_DESERIALIZATION_ENV
+            )
+        )
+
+    if _contains_arbitrary_python(model_config):
+        raise UnsafeKerasModelError(
+            "Refused to load the Keras model file {} because it contains a `Lambda` layer "
+            "storing arbitrary Python code, which would be executed while deserializing the model. "
+            "Only load such a model if it comes from a trusted source, by setting the "
+            "{} environment variable to 1.".format(model_path, UNSAFE_KERAS_DESERIALIZATION_ENV)
+        )
+
+
+def load_keras_model(model, **kwargs):
+    """Load a Keras model in a safer way than `tf.keras.models.load_model`.
+
+    `safe_mode=True` is requested when the installed Keras supports it and, since the legacy
+    Keras 2 loaders ignore it, the model file is also inspected beforehand.
+
+    Args:
+        model (string or tf.keras.Model): model path or model object.
+
+    Returns:
+        tf.keras.Model: the loaded keras model object.
+    """
+    if isinstance(model, str):
+        model_path = os.path.abspath(os.path.expanduser(model))
+        if os.path.isfile(model_path) and (model_path.endswith(".h5") or model_path.endswith(".keras")):
+            logger.warning_once(
+                "Loading a Keras model file deserializes its content, "
+                "please make sure it comes from a trusted source."
+            )
+            _check_keras_model_safety(model_path)
+
+    try:
+        supports_safe_mode = "safe_mode" in inspect.signature(tf.keras.models.load_model).parameters
+    except (TypeError, ValueError):  # pragma: no cover
+        supports_safe_mode = False
+
+    if supports_safe_mode:
+        kwargs.setdefault("safe_mode", not _allow_unsafe_keras_deserialization())
+
+    return tf.keras.models.load_model(model, **kwargs)
+
 
 def get_tf_model_type(model):
     """The interface of getting type of tensorflow models."""
@@ -43,6 +176,10 @@ def get_tf_model_type(model):
         os.environ["CUDA_DEVICE_ORDER"] = "PCI_BUS_ID"
         os.environ["CUDA_VISIBLE_DEVICES"] = "-1"
         model_type = get_model_type(model)
+    except UnsafeKerasModelError:
+        os.environ.pop("CUDA_DEVICE_ORDER", None)
+        os.environ.pop("CUDA_VISIBLE_DEVICES", None)
+        raise
     except:  # pragma: no cover
         os.environ.pop("CUDA_DEVICE_ORDER")
         os.environ.pop("CUDA_VISIBLE_DEVICES")
@@ -75,10 +212,12 @@ def get_model_type(model):
             if version1_lt_version2(tf.version.VERSION, "2.10.0"):  # pragma: no cover
                 logger.warning("keras model running on tensorflow 2.10.0 and" " lower not support intel ITEX.")
             try:
-                model = tf.keras.models.load_model(model)
+                model = load_keras_model(model)
                 if isinstance(model, tf.keras.Model) and hasattr(model, "to_json"):
                     return "keras"
                 return "saved_model"  # pragma: no cover
+            except UnsafeKerasModelError:
+                raise
             except:
                 pass
     if isinstance(model, tf.keras.Model) and hasattr(model, "to_json"):
@@ -533,7 +672,7 @@ def try_loading_keras(model, input_tensor_names, output_tensor_names):  # pragma
     """
     temp_dir = tempfile.mkdtemp()
     if not isinstance(model, tf.keras.Model):
-        model = tf.keras.models.load_model(model)
+        model = load_keras_model(model)
     keras_format = _check_keras_format(model, temp_dir)
 
     if keras_format == "saved_model_v2":
@@ -1095,7 +1234,7 @@ class TensorflowSavedModelModel(TensorflowBaseModel):
         import tensorflow as tf
 
         names = []
-        for index, layer in enumerate(tf.keras.models.load_model(self._model).layers):
+        for index, layer in enumerate(load_keras_model(self._model).layers):
             if len(layer.weights):
                 names.append(index)
         return names
@@ -1422,7 +1561,7 @@ class KerasModel(BaseModel):
         self.component = None
         self._model = model
         if not isinstance(model, tf.keras.Model):
-            self._model_object = tf.keras.models.load_model(self._model)
+            self._model_object = load_keras_model(self._model)
         else:
             self._model_object = self._model
         self._q_config = None
