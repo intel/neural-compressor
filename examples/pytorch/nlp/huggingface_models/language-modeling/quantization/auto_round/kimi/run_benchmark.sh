@@ -9,6 +9,7 @@ TASKS="gsm8k,mmlu,piqa,hellaswag"
 BATCH_SIZE="auto"
 MAX_MODEL_LEN=8192
 KV_CACHE_DTYPE="auto"
+ATTN_DTYPE="auto"
 
 usage() {
 	echo "Usage: bash run_benchmark.sh --model_path=<path_to_quantized_model>"
@@ -33,6 +34,9 @@ for arg in "$@"; do
 		--static_kv_dtype=*)
 			KV_CACHE_DTYPE="${arg#*=}"
 			;;
+		--static_attention_dtype=*)
+			ATTN_DTYPE="${arg#*=}"
+			;;
 		-h|--help)
 			usage
 			;;
@@ -42,6 +46,22 @@ for arg in "$@"; do
 			;;
 	esac
 done
+
+# for fp8 kv cache
+if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
+    export VLLM_ATTENTION_BACKEND="FLASHINFER"
+    echo "Using FP8 for KV cache"
+fi
+
+# for fp8 attention cache
+if [[ "$ATTN_DTYPE" == "fp8" ]]; then
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+    export VLLM_ATTENTION_BACKEND="FLASHINFER"
+    KV_CACHE_DTYPE="fp8"
+    echo "Using FP8 Attention"
+fi
+
 
 if [[ -z "$MODEL_PATH" ]]; then
 	echo "Error: --model_path is required"

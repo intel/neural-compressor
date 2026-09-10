@@ -38,12 +38,18 @@ def build_config(args: argparse.Namespace) -> AutoRoundConfig:
 
 	preset = _PRESET_CONFIG[dtype_key]
 	ignore_layers = args.ignore_layers or preset["ignore_layers"]
+	model_free = False if any(
+		dtype for dtype in (args.static_kv_dtype, args.static_attention_dtype)
+	) else True
 
 	return AutoRoundConfig(
-		model_free=True,
+		model_free=model_free,
+		iters=0,
 		scheme=preset["scheme"],
 		ignore_layers=ignore_layers,
 		layer_config=preset["layer_config"],
+		static_kv_dtype=args.static_kv_dtype,
+		static_attention_dtype=args.static_attention_dtype,
 		export_format=args.format,
 		output_dir=args.output_model,
 		reloading=False,
@@ -83,6 +89,18 @@ def main() -> None:
 		default="llm_compressor",
 		choices=["auto_round", "llm_compressor"],
 		help="Export format.",
+	)
+	parser.add_argument(
+		"--static_kv_dtype",
+		type=str,
+		default=None,
+		help="Static KV cache data type.",
+	)
+	parser.add_argument(
+		"--static_attention_dtype",
+		type=str,
+		default=None,
+		help="Static attention data type.",
 	)
 	args = parser.parse_args()
 

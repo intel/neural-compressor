@@ -8,6 +8,8 @@ INPUT_MODEL="moonshotai/Kimi-K2.6"
 OUTPUT_MODEL=""
 FORMAT="llm_compressor"
 IGNORE_LAYERS="shared_experts,self_attn,mlp.gate_proj,mlp.up_proj,mlp.down_proj"
+KV_CACHE_DTYPE=""
+STATIC_ATTENTION_DTYPE=""
 
 usage() {
 	echo "Usage: bash run_quant.sh --dtype=<mxfp4> --input_model=<path_or_name> --output_model=<output_dir>"
@@ -32,6 +34,12 @@ for arg in "$@"; do
 		--ignore_layers=*)
 			IGNORE_LAYERS="${arg#*=}"
 			;;
+		--static_kv_dtype=*)
+			KV_CACHE_DTYPE="${arg#*=}"
+			;;
+		--static_attention_dtype=*)
+			STATIC_ATTENTION_DTYPE="${arg#*=}"
+			;;
 		-h|--help)
 			usage
 			;;
@@ -52,4 +60,7 @@ python quantize.py \
 	--input_model "$INPUT_MODEL" \
 	--output_model "$OUTPUT_MODEL" \
 	--format "$FORMAT" \
-	--ignore_layers "$IGNORE_LAYERS"
+	--ignore_layers "$IGNORE_LAYERS" \
+	--static_kv_dtype "$KV_CACHE_DTYPE" \
+	--static_attention_dtype "$STATIC_ATTENTION_DTYPE"
+	
