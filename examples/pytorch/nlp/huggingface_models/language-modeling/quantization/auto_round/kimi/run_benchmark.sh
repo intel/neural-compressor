@@ -8,10 +8,11 @@ MODEL_PATH=""
 TASKS="gsm8k,mmlu,piqa,hellaswag"
 BATCH_SIZE="auto"
 MAX_MODEL_LEN=8192
+KV_CACHE_DTYPE="auto"
 
 usage() {
 	echo "Usage: bash run_benchmark.sh --model_path=<path_to_quantized_model>"
-	echo "Optional: --tasks=<task1,task2> --batch_size=<auto|int> --max_model_len=<int>"
+	echo "Optional: --tasks=<task1,task2> --batch_size=<auto|int> --max_model_len=<int> --static_kv_dtype=<auto|fp8>"
 	exit 1
 }
 
@@ -28,6 +29,9 @@ for arg in "$@"; do
 			;;
 		--max_model_len=*)
 			MAX_MODEL_LEN="${arg#*=}"
+			;;
+		--static_kv_dtype=*)
+			KV_CACHE_DTYPE="${arg#*=}"
 			;;
 		-h|--help)
 			usage
@@ -62,19 +66,20 @@ echo "  Model Path: $MODEL_PATH"
 echo "  Tasks: $TASKS"
 echo "  Batch Size: $BATCH_SIZE"
 echo "  Max Model Length: $MAX_MODEL_LEN"
+echo "  KV Cache Dtype: $KV_CACHE_DTYPE"
 echo "  Tensor Parallel Size: $TENSOR_PARALLEL_SIZE"
 echo "  CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
 
 export VLLM_QDQ=1
 export VLLM_MXFP4_USE_MARLIN=1
 
-CMD="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",tensor_parallel_size=$TENSOR_PARALLEL_SIZE,data_parallel_size=1,max_model_len=$MAX_MODEL_LEN,trust_remote_code=True --tasks $TASKS --batch_size $BATCH_SIZE"
+CMD="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",tensor_parallel_size=$TENSOR_PARALLEL_SIZE,data_parallel_size=1,max_model_len=$MAX_MODEL_LEN,kv_cache_dtype=$KV_CACHE_DTYPE,trust_remote_code=True --tasks $TASKS --batch_size $BATCH_SIZE"
 
 echo "Executing command:"
 echo "VLLM_QDQ=1 VLLM_MXFP4_USE_MARLIN=1 $CMD"
 
 lm_eval --model vllm \
-	--model_args pretrained="$MODEL_PATH",tensor_parallel_size=$TENSOR_PARALLEL_SIZE,data_parallel_size=1,max_model_len=$MAX_MODEL_LEN,trust_remote_code=True \
+	--model_args pretrained="$MODEL_PATH",tensor_parallel_size=$TENSOR_PARALLEL_SIZE,data_parallel_size=1,max_model_len=$MAX_MODEL_LEN,kv_cache_dtype=$KV_CACHE_DTYPE,trust_remote_code=True \
 	--tasks "$TASKS" \
 	--batch_size "$BATCH_SIZE"
 
