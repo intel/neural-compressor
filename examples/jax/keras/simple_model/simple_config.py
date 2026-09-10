@@ -51,8 +51,8 @@ def main():
     static_config = StaticQuantConfig(
         weight_dtype="fp8_e4m3",
         activation_dtype="fp8_e4m3",
-        const_scale=True,
-        const_weight=True,
+        const_scale=False,
+        const_weight=False,
         weight_scale_granularity="per_tensor",
         dot_product_attention_enable=False
     )
@@ -84,8 +84,8 @@ def main():
     dynamic_config = DynamicQuantConfig(
         weight_dtype="fp8_e4m3",
         activation_dtype="fp8_e4m3",
-        const_scale=True,
-        const_weight=True,
+        const_scale=False,
+        const_weight=False,
         weight_scale_granularity="per_tensor",
         dot_product_attention_enable=False
     )

@@ -82,7 +82,7 @@ def main():
         input = 10 * jax.random.normal(key, (1, 32))
         model(input)
 
-    # Quantize the model. Different QuantConfigs will be applies for different layers
+    # Quantize the model. Different QuantConfigs will be applied for different layers
     print("Quantizing model", '\n')
     q_model = quantize_model(model, composable_config, calib_function, inplace=True)
     

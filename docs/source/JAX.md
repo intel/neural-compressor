@@ -54,63 +54,7 @@ def quantize_model(
     """
 ```
 
-## Quantization configs
-
-The quantization configuration can be defined in the code, for example:
-```python
-from neural_compressor.jax import StaticQuantConfig
-quant_config = StaticQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3")
-```
-Quantization configurations can also be saved as json and loaded via *JaxBaseConfig.from_json_file()*
-```python
-from neural_compressor.jax import StaticQuantConfig, JaxBaseConfig
-quant_config = StaticQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3")
-quant_config.to_json_file("path/to/quant_config.json")
-loaded_quant_config = JaxBaseConfig.from_json_file("path/to/quant_config.json")
-```
-
-### White list and exclude list
-Quantization configs provide a way to include and exclude specific layers and classes via *white_list* and *exclude_list* parameters - the *exclude_list* takes priority over the *white_list*.
-Available formats are:
- - layer path regex
- - layer class name (string)
- - layer class
-See example below:
-```python
-from keras.layers import EinsumDense
-from neural_compressor.jax import StaticQuantConfig
-# path regex - matches paths like "model/encoder_{i}/mha", except "model/encoder_2/mha"
-cfg1 = StaticQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", white_list=[".*mha"], exclude_list=[".*encoder_2.*mha"])
-# class name - matches all Dense layers
-cfg2 = StaticQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", white_list=["Dense"])
-# class - matches all EinsumDense layers
-cfg3 = StaticQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", white_list=["Einsum"])
-```
-
-### Composable configs
-
-It's possible to combine multiple configs to achieve per-layer and per-class configuration, by combining multiple configs into a *JaxComposableConfig*:
-```python
-from neural_compressor.jax import StaticQuantConfig, DynamicQuantConfig
-# * ``first``  -> only ``static1`` matches                -> static
-# * ``second`` -> ``static1`` and ``dynamic`` match       -> dynamic (later)
-# * ``third``  -> ``dynamic`` and ``static2`` match       -> static  (later)
-static1 = StaticQuantConfig(weight_dtype="int8", activation_dtype="int8", white_list=["dense1", "dense2"])
-dynamic = DynamicQuantConfig(weight_dtype="fp8_e4m3", activation_dtype="fp8_e4m3", white_list=["dense2", "dense3"])
-# white_list everything (Dense) but exclude the layers claimed earlier -> resolves to 'third'.
-static2 = StaticQuantConfig(
-    weight_dtype="int8", activation_dtype="int8", white_list=["Dense"], exclude_list=["dense1", "dense2"]
-)
-
-# Compose the configurations into a single configuration
-# It's also possible to construct the composed config via JaxComposableConfig(static1, dynamic, static2)
-config = static1 + dynamic + static2
-```
-***NOTE***
-The order in which the configs are provided matters - multiple configs that apply for the same layer are resolved in a last-wins manner, as explained above.
-
-Config examples can be found under [configs](../../examples/jax/keras/configs/) directory.
-
+Complete usage example: [helloworld.py](../../examples/jax/keras/helloworld.py)
 
 ## Post-Training Static Quantization
 
@@ -121,15 +65,13 @@ Typically, preparing several dozen samples is sufficient for calibration.
 
 ## Examples
 
-Examples of how to quantize a model and use a pre-quantized model can be found below:
+Examples of how to quantize a model and use a pre-quantized model can be found below.
 
-- [Gemma3](../../examples/jax/keras/gemma/README.md)
-- [ViT](../../examples/jax/keras/vit/README.md)
-- [Simple model – quantization](../../examples/jax/keras/helloworld.py)
-- [Simple model – quantization with various configs](../../examples/jax/keras/simple_model/simple_config.py)
-- [Simple model – composable config](../../examples/jax/keras/simple_model/composable_config.py)
-- [Simple model – json config](../../examples/jax/keras/simple_model/external_config.py)
-- [Simple model – save and load](../../examples/jax/keras/helloworld/example_saving.py)
+- Usage examples shown on simple keras model:
+  - [Simple model](../../examples/jax/keras/simple_model/README.md)
+- Examples of quantizing real keras models using INC
+  - [Gemma3](../../examples/jax/keras/gemma/README.md)
+  - [ViT](../../examples/jax/keras/vit/README.md)
 
 ## Backend and Device
 
