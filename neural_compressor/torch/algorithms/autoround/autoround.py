@@ -14,6 +14,7 @@
 """AutoRound quantization."""
 
 import copy
+import inspect
 import json
 import time
 from functools import lru_cache
@@ -47,6 +48,54 @@ from neural_compressor.common.utils import Statistics
 from neural_compressor.torch.algorithms import Quantizer
 from neural_compressor.torch.algorithms.weight_only.utility import CapturedDataloader, InputCaptureModule
 from neural_compressor.torch.utils import get_accelerator, logger
+
+
+def _build_autoround_init_kwargs(config, keys_to_pop):
+    """Build constructor arguments compatible with installed AutoRound APIs."""
+    init_kwargs = {key: value for key, value in config.__dict__.items() if key not in keys_to_pop}
+    try:
+        from auto_round.algorithms.quantization.sign_round.config import SignRoundConfig
+    except ImportError:
+        return init_kwargs
+
+    sign_round_keys = (
+        "iters",
+        "lr",
+        "minmax_lr",
+        "lr_scheduler",
+        "nblocks",
+        "enable_minmax_tuning",
+        "enable_norm_bias_tuning",
+        "gradient_accumulate_steps",
+        "not_use_best_mse",
+        "dynamic_max_gap",
+        "enable_quanted_input",
+        "enable_adam",
+    )
+    sign_round_kwargs = {key: init_kwargs.pop(key) for key in sign_round_keys if key in init_kwargs}
+    for inc_key, autoround_key in (("dtype", "data_type"), ("use_sym", "sym"), ("act_dtype", "act_data_type")):
+        value = init_kwargs.pop(inc_key, init_kwargs.pop(autoround_key, None))
+        if value is not None:
+            sign_round_kwargs[autoround_key] = value
+    for key in (
+        "bits",
+        "group_size",
+        "act_bits",
+        "act_group_size",
+        "act_sym",
+        "act_dynamic",
+        "super_bits",
+        "super_group_size",
+    ):
+        value = init_kwargs.pop(key, None)
+        if value is not None:
+            sign_round_kwargs[key] = value
+
+    # These legacy INC settings have no equivalent in the new AutoRound entry point.
+    for key in ("enable_full_range", "non_tunable_params", "sampler", "truncation", "use_layer_wise"):
+        init_kwargs.pop(key, None)
+    init_kwargs["alg_configs"] = SignRoundConfig(**sign_round_kwargs)
+    return init_kwargs
 
 
 class AutoRoundQuantizer(Quantizer):
@@ -224,7 +273,7 @@ class AutoRoundQuantizer(Quantizer):
         rounder = AutoRound(
             model,
             tokenizer=tokenizer,
-            **{k: v for k, v in self.__dict__.items() if k not in keys_to_pop},
+            **_build_autoround_init_kwargs(self, keys_to_pop),
         )
 
         if self._is_w4afp8():
@@ -302,7 +351,6 @@ def get_mllm_dataloader(
     truncation=None,
     seed=42,
     nsamples=128,
-    gradient_accumulate_steps=1,
     quant_nontext_module=False,
 ):
     """Generate a DataLoader for calibration using specified parameters.
@@ -323,7 +371,6 @@ def get_mllm_dataloader(
         truncation (bool, optional): Whether to truncate sequences during tokenization.
         seed (int, optional): The random seed for reproducibility. Defaults to 42.
         nsamples (int, optional): The total number of samples to include. Defaults to 128.
-        gradient_accumulate_steps (int, optional): The number of gradient accumulation steps. Defaults to 1.
         quant_nontext_module (bool, optional): Whether to quantize non-text modules. Defaults to False.
 
     Returns:
@@ -345,7 +392,6 @@ def get_mllm_dataloader(
         dataset = "liuhaotian/llava_conv_58k"
         seqlen = 512 if seqlen is None else seqlen
         truncation = False
-        gradient_accumulate_steps = batch_size * gradient_accumulate_steps
         batch_size = 1
         seed = 42  # The seed is fixed to 42 in transformers
     seqlen = 2048 if seqlen is None else seqlen  # set text only calibration default args
@@ -356,7 +402,7 @@ def get_mllm_dataloader(
         nsamples = (nsamples // batch_size + 1) * batch_size
         logger.warning(f"'nsamples' is not divisible by 'batch_size', will adjusted to {nsamples}")
 
-    dataloader, batch_size, seqlen, gradient_accumulate_steps = get_mllm_dataloader(
+    dataloader_kwargs = dict(
         template=template,
         processor=processor,
         model=model,
@@ -369,10 +415,17 @@ def get_mllm_dataloader(
         seed=seed,
         truncation=truncation,
         nsamples=nsamples,
-        gradient_accumulate_steps=gradient_accumulate_steps,
         quant_nontext_module=quant_nontext_module,
     )
-    return dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen, nsamples
+    if "gradient_accumulate_steps" in inspect.signature(get_mllm_dataloader).parameters:
+        dataloader_kwargs["gradient_accumulate_steps"] = 1
+
+    dataloader_result = get_mllm_dataloader(**dataloader_kwargs)
+    if len(dataloader_result) == 4:
+        dataloader, batch_size, seqlen, _ = dataloader_result
+    else:
+        dataloader, batch_size, seqlen = dataloader_result
+    return dataloader, template, truncation, batch_size, seqlen, nsamples
 
 
 def dump_model_op_stats(layer_config):
