@@ -45,6 +45,7 @@ def build_config(args: argparse.Namespace) -> AutoRoundConfig:
 	return AutoRoundConfig(
 		model_free=model_free,
 		iters=0,
+		disable_opt_rtn=True,
 		scheme=preset["scheme"],
 		ignore_layers=ignore_layers,
 		layer_config=preset["layer_config"],
