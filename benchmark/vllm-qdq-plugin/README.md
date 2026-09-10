@@ -60,11 +60,18 @@ The plugin registers as a `vllm.general_plugins` entry point. vLLM loads it in a
 | Variable | Default | Description |
 | --- | --- | --- |
 | `VLLM_QDQ` | `0` | Set to `1` to enable QDQ. |
-| `VLLM_QDQ_TRACE` | `0` | Set to `1` to print up to 200 QDQ shape and dtype trace lines. |
+| `VLLM_QDQ_TRACE` | `0` | Set to `1` to print backend, format, operation, shape, and dtype for the first 200 QDQ calls in each process （Eager mode only). |
 | `VLLM_QDQ_CUTE` | automatic | CuTe is selected automatically for MXFP4, MXFP8, and NVFP4_E5M3 when the input is on an NVIDIA CUDA GPU with SM80+, NVIDIA CUTLASS DSL is installed, and the format-specific shape requirements are met. In automatic mode, a missing CUTLASS DSL installation warns with an install command before falling back to the reference implementation. Set to `0` to force the reference implementation or `1` to explicitly require CuTe; an explicit request raises an error when CUTLASS DSL is missing. Other unsupported CuTe conditions warn before using the slower reference implementation. |
 | `VLLM_MARLIN_MOE_QDQ_MODE` | `0` | Set to `FORCE_MXFP4` to apply MXFP4 QDQ in `moe_wna16_marlin_gemm` when dtype-based routing is not sufficient. Matching is case-insensitive. |
 
-For diagnostics, add `VLLM_QDQ_TRACE=1` to print up to 200 QDQ shape and dtype trace lines. To force MXFP4 QDQ for Marlin MoE when dtype detection is insufficient, add `VLLM_MARLIN_MOE_QDQ_MODE=FORCE_MXFP4`.
+For diagnostics, add `VLLM_QDQ_TRACE=1` and start vLLM with `--enforce-eager` so QDQ calls execute eagerly and produce runtime trace output. The 200 limit counts QDQ calls independently in each process; it is not a request or token limit. A trace line looks like `[QDQ] backend=CuTe format=MXFP8 op=marlin_gemm shape=... dtype=...`. A fallback is reported as `backend=Reference`, and formats include `MXFP4`, `MXFP8`, and `NVFP4_E5M3`.
+
+```bash
+VLLM_QDQ=1 VLLM_QDQ_TRACE=1 VLLM_QDQ_CUTE=1 \
+  vllm serve /path/to/model --enforce-eager
+```
+
+To force MXFP4 QDQ for Marlin MoE when dtype detection is insufficient, add `VLLM_MARLIN_MOE_QDQ_MODE=FORCE_MXFP4`.
 
 ### Supported Formats
 

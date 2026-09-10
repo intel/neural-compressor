@@ -8,6 +8,7 @@ bias=7, max=448) with per-group E8M0 (power-of-2) scales of group_size elements.
 import torch
 
 from .. import envs
+from ..trace import trace_qdq
 
 FLOAT8_E8M0_MAX_EXP = 127
 
@@ -120,10 +121,11 @@ def _mxfp8_qdq_reference(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
     return x_fp8.reshape(m, -1)[:, :k]
 
 
-def mxfp8_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
+def mxfp8_qdq(x: torch.Tensor, group_size: int = 32, *, trace_op_name: str = "mxfp8_qdq") -> torch.Tensor:
     """Quantize-dequantize input to MXFP8 (E4M3 + E8M0 scales)."""
     if envs.VLLM_QDQ_CUTE:
         from .cute import mxfp8_qdq_cute
 
-        return mxfp8_qdq_cute(x, group_size)
+        return mxfp8_qdq_cute(x, group_size, trace_op_name=trace_op_name)
+    trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name="MXFP8")
     return _mxfp8_qdq_reference(x, group_size)
