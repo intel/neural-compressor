@@ -10,6 +10,7 @@ FORMAT="llm_compressor"
 IGNORE_LAYERS="shared_experts,self_attn,mlp.gate_proj,mlp.up_proj,mlp.down_proj"
 KV_CACHE_DTYPE=""
 STATIC_ATTENTION_DTYPE=""
+# required transformers==4.57.6 for fp8kv static quant
 
 usage() {
 	echo "Usage: bash run_quant.sh --dtype=<mxfp4> --input_model=<path_or_name> --output_model=<output_dir>"
@@ -55,12 +56,16 @@ done
 [[ -z "$OUTPUT_MODEL" ]] && echo "Error: --output_model is required" && usage
 
 cd "$SCRIPT_DIR"
-python quantize.py \
+QUANTIZE_ARGS=(
 	--dtype "$DTYPE" \
 	--input_model "$INPUT_MODEL" \
 	--output_model "$OUTPUT_MODEL" \
 	--format "$FORMAT" \
-	--ignore_layers "$IGNORE_LAYERS" \
-	--static_kv_dtype "$KV_CACHE_DTYPE" \
-	--static_attention_dtype "$STATIC_ATTENTION_DTYPE"
+	--ignore_layers "$IGNORE_LAYERS"
+)
+
+[[ -n "$KV_CACHE_DTYPE" ]] && QUANTIZE_ARGS+=(--static_kv_dtype "$KV_CACHE_DTYPE")
+[[ -n "$STATIC_ATTENTION_DTYPE" ]] && QUANTIZE_ARGS+=(--static_attention_dtype "$STATIC_ATTENTION_DTYPE")
+
+python quantize.py "${QUANTIZE_ARGS[@]}"
 	

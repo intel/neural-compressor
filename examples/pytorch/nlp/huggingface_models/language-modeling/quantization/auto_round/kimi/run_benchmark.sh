@@ -9,7 +9,7 @@ TASKS="gsm8k,mmlu,piqa,hellaswag"
 BATCH_SIZE="auto"
 MAX_MODEL_LEN=8192
 KV_CACHE_DTYPE="auto"
-ATTN_DTYPE="auto"
+STATIC_ATTENTION_DTYPE="auto"
 
 usage() {
 	echo "Usage: bash run_benchmark.sh --model_path=<path_to_quantized_model>"
@@ -35,7 +35,7 @@ for arg in "$@"; do
 			KV_CACHE_DTYPE="${arg#*=}"
 			;;
 		--static_attention_dtype=*)
-			ATTN_DTYPE="${arg#*=}"
+			STATIC_ATTENTION_DTYPE="${arg#*=}"
 			;;
 		-h|--help)
 			usage
@@ -55,7 +55,7 @@ if [[ "$KV_CACHE_DTYPE" == "fp8" ]]; then
 fi
 
 # for fp8 attention cache
-if [[ "$ATTN_DTYPE" == "fp8" ]]; then
+if [[ "$STATIC_ATTENTION_DTYPE" == "fp8" ]]; then
     export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
     export VLLM_ATTENTION_BACKEND="FLASHINFER"
     KV_CACHE_DTYPE="fp8"
