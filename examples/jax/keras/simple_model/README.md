@@ -1,8 +1,19 @@
 Keras simple model quantization
-
 ============
 
 This document describes quantization of a simple Keras model using Neural Compressor on Intel® Xeon® processors.
+
+- [Create Environment](#1-create-environment)
+- [Install modules](#2-install-modules)
+- [Quantize model](#3-quantize-model)
+- [Save and load quantized model](#4-save-and-load-quantized-model)
+- [Quantization configs](#5-quantization-configs)
+    - [White list and exclude list](#white-list-and-exclude-list)
+    - [Composable configs](#composable-configs)
+- [Configuration examples](#6-configuration-examples)
+    - [Composable config](#composable-config)
+    - [Load configuration from file](#load-configuration-from-file)
+- [Some debug](#7-some-debug)
 
 ## 1. Create Environment
 It is worth conducting experiments in a separate environment. For example, you can use the conda environment from [conda-forge](https://github.com/conda-forge/miniforge). The binary for your environment could be found here: [miniforge](https://github.com/conda-forge/miniforge/releases/latest)
@@ -22,11 +33,7 @@ INC_JAX_ONLY=1 pip install .
 popd
 ```
 
-## 3. Model
-
-No external model download is required for this example. A tiny `DummyModel` composed of `Dense` layers is defined directly in the example scripts.
-
-## 4. Quantize model
+## 3. Quantize model
 
 To quantize the model you have to make 3 steps:
 
@@ -76,7 +83,7 @@ Or different example for static/dynamic quantization comparison
 python simple_config.py
 ```
 
-## 5. Save and load quantized model
+## 4. Save and load quantized model
 
 Calibration costs time, so we can calibrate once on representative data sets and later reuse it many times. To achieve it saving model functionality is supported.
 You can run the [model_saving.py](model_saving.py) script:
@@ -97,7 +104,7 @@ print(f"Results match: {match}")
 
 Note that the model class is registered with `@register_keras_serializable` so that Keras can serialize/deserialize it by name when saving and loading.
 
-## 6. Quantization configs
+## 5. Quantization configs
 
 The quantization configuration can be defined in the code, for example:
 ```python
@@ -153,7 +160,7 @@ static2 = StaticQuantConfig(weight_dtype="int8", activation_dtype="int8", white_
 config = static1 + dynamic + static2
 ```
 
-## 7. Configuration examples
+## 6. Configuration examples
 
 ### Composable config
 
@@ -225,7 +232,7 @@ python external_config.py --quant_config_file configs/static_config.json
 
 You can swap in `configs/dynamic_config.json` or `configs/composable_config.json` to try other quantization modes. Note that when the JSON describes only dynamic quantization, the calibration function defined in the script is not used.
 
-## 8. Some debug
+## 7. Some debug
 
 If you are interested how your model looks like after quantization, all the example scripts already print the flattened layer list before and after quantization:
 
