@@ -46,7 +46,7 @@ def main():
 
     # === Static quantization === #
 
-    # Prepare QuantConfig with all default values being explicitely provided
+    # Prepare QuantConfig with all default values being explicitly provided
     print("=== Static quantization ===")
     static_config = StaticQuantConfig(
         weight_dtype="fp8_e4m3",
@@ -80,7 +80,7 @@ def main():
     # === Dynamic quantization === #
 
     print("=== Dynamic quantization ===")
-    # Prepare QuantConfig with all default values being explicitely provided
+    # Prepare QuantConfig with all default values being explicitly provided
     dynamic_config = DynamicQuantConfig(
         weight_dtype="fp8_e4m3",
         activation_dtype="fp8_e4m3",
