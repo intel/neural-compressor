@@ -53,6 +53,7 @@ elif [[ "$DEVICE" == "gpu" ]]; then
         uv pip install ray
         git clone https://github.com/yiliu30/vllm-qdq-plugin.git
         uv pip install vllm-qdq-plugin/ -v
+        uv pip install flashinfer-python==0.6.18.post1
     else
         # use default setting for AR format, required by fused-moe-ar
         uv pip install torch==2.9.0
