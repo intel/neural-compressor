@@ -9,6 +9,14 @@ neural_compressor.tensorflow.utils.model_wrappers
 
 
 
+Exceptions
+----------
+
+.. autoapisummary::
+
+   neural_compressor.tensorflow.utils.model_wrappers.UnsafeKerasModelError
+
+
 Classes
 -------
 
@@ -28,6 +36,7 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.tensorflow.utils.model_wrappers.load_keras_model
    neural_compressor.tensorflow.utils.model_wrappers.get_tf_model_type
    neural_compressor.tensorflow.utils.model_wrappers.get_model_type
    neural_compressor.tensorflow.utils.model_wrappers.validate_graph_node
@@ -46,6 +55,27 @@ Functions
 
 Module Contents
 ---------------
+
+.. py:exception:: UnsafeKerasModelError
+
+
+
+   Raised when a Keras model file may execute arbitrary code while being deserialized.
+
+
+.. py:function:: load_keras_model(model, **kwargs)
+
+   Load a Keras model in a safer way than `tf.keras.models.load_model`.
+
+   `safe_mode=True` is requested when the installed Keras supports it and, since the legacy
+   Keras 2 loaders ignore it, the model file is also inspected beforehand.
+
+   :param model: model path or model object.
+   :type model: string or tf.keras.Model
+
+   :returns: the loaded keras model object.
+   :rtype: tf.keras.Model
+
 
 .. py:function:: get_tf_model_type(model)
 
