@@ -60,7 +60,7 @@ Module Contents
    :rtype: DataLoader
 
 
-.. py:function:: get_mllm_dataloader(model, tokenizer, template=None, processor=None, image_processor=None, dataset=None, extra_data_dir=None, seqlen=None, batch_size=8, split=None, apply_template=None, truncation=None, seed=42, nsamples=128, gradient_accumulate_steps=1, quant_nontext_module=False)
+.. py:function:: get_mllm_dataloader(model, tokenizer, template=None, processor=None, image_processor=None, dataset=None, extra_data_dir=None, seqlen=None, batch_size=8, split=None, apply_template=None, truncation=None, seed=42, nsamples=128, quant_nontext_module=False)
 
    Generate a DataLoader for calibration using specified parameters.
 
@@ -93,8 +93,6 @@ Module Contents
    :type seed: int, optional
    :param nsamples: The total number of samples to include. Defaults to 128.
    :type nsamples: int, optional
-   :param gradient_accumulate_steps: The number of gradient accumulation steps. Defaults to 1.
-   :type gradient_accumulate_steps: int, optional
    :param quant_nontext_module: Whether to quantize non-text modules. Defaults to False.
    :type quant_nontext_module: bool, optional
 
