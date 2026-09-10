@@ -3,9 +3,6 @@ JAX
 
 - [Introduction](#introduction)
 - [Quantization API](#quantization-api)
-- [Quantization configs](#quantization-configs)
-    - [White list and exclude list](#white-list-and-exclude-list)
-    - [Composable configs](#composable-configs)
 - [Post-Training Static Quantization](#post-training-static-quantization)
 - [Examples](#examples)
 - [Backend and Device](#backend-and-device)
@@ -67,9 +64,9 @@ Typically, preparing several dozen samples is sufficient for calibration.
 
 Examples of how to quantize a model and use a pre-quantized model can be found below.
 
-- Usage examples shown on simple keras model:
+- Usage examples shown on simple Keras model:
   - [Simple model](../../examples/jax/keras/simple_model/README.md)
-- Examples of quantizing real keras models using INC
+- Examples of quantizing real Keras models using Neural Compressor
   - [Gemma3](../../examples/jax/keras/gemma/README.md)
   - [ViT](../../examples/jax/keras/vit/README.md)
 

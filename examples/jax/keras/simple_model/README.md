@@ -153,10 +153,10 @@ static2 = StaticQuantConfig(weight_dtype="int8", activation_dtype="int8", white_
 
 # Compose the configurations into a single configuration
 #
-# This composition results in quantization being applied for layers in following way:
+# This composition results in quantization being applied for layers in order in which configs are constructed:
 # * ``dense1``  -> only ``static1`` matches                -> static
-# * ``dense2`` -> ``static1`` and ``dynamic`` match        -> dynamic (later)
-# * ``dense3``  -> ``dynamic`` and ``static2`` match       -> static  (later)
+# * ``dense2``  -> ``static1`` and ``dynamic`` match       -> dynamic (later wins)
+# * ``dense3``  -> ``dynamic`` and ``static2`` match       -> static  (later wins)
 config = static1 + dynamic + static2
 ```
 
