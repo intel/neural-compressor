@@ -190,18 +190,20 @@ mkdir -p "$LOG_DIR"
 OUTPUT_FILE="${LOG_DIR}/eval_results_$(date +%Y%m%d_%H%M%S)_port${PORT}_temp${TEMPERATURE}.log"
 
 DEFAULT_STANDARD_TASKS=(piqa hellaswag gsm8k mmlu_pro math_500 mmlu)
-SUPPORTED_TASKS=(aime26 gpqa_diamond ruler_qa_squad "${DEFAULT_STANDARD_TASKS[@]}")
+RULER_TASKS=(niah_multiquery ruler_qa_squad)
+SUPPORTED_TASKS=(aime26 gpqa_diamond "${RULER_TASKS[@]}" "${DEFAULT_STANDARD_TASKS[@]}")
 SELECTED_STANDARD_TASKS=()
+SELECTED_RULER_TASKS=()
 RUN_AIME26="true"
 RUN_GPQA_DIAMOND="true"
 RUN_STANDARD_TASKS="true"
-RUN_RULER_QA_SQUAD="true"
+RUN_RULER_TASKS="true"
 
 if [[ -n "${TASKS}" ]]; then
   RUN_AIME26="false"
   RUN_GPQA_DIAMOND="false"
   RUN_STANDARD_TASKS="false"
-  RUN_RULER_QA_SQUAD="false"
+  RUN_RULER_TASKS="false"
 
   IFS=',' read -r -a REQUESTED_TASKS <<< "${TASKS}"
   for raw_task in "${REQUESTED_TASKS[@]}"; do
@@ -222,20 +224,21 @@ if [[ -n "${TASKS}" ]]; then
       gpqa_diamond)
         RUN_GPQA_DIAMOND="true"
         ;;
-      ruler_qa_squad)
-        RUN_RULER_QA_SQUAD="true"
-        ;;
       *)
-        if ! task_in_list "${task_name}" "${SELECTED_STANDARD_TASKS[@]}"; then
+        if task_in_list "${task_name}" "${DEFAULT_STANDARD_TASKS[@]}" && ! task_in_list "${task_name}" "${SELECTED_STANDARD_TASKS[@]}"; then
           SELECTED_STANDARD_TASKS+=("${task_name}")
           RUN_STANDARD_TASKS="true"
+        fi
+        if task_in_list "${task_name}" "${RULER_TASKS[@]}" && ! task_in_list "${task_name}" "${SELECTED_RULER_TASKS[@]}"; then
+          SELECTED_RULER_TASKS+=("${task_name}")
+          RUN_RULER_TASKS="true"
         fi
         ;;
     esac
   done
 
   if [[ "${RUN_AIME26}" != "true" ]] && [[ "${RUN_GPQA_DIAMOND}" != "true" ]] \
-    && [[ "${RUN_STANDARD_TASKS}" != "true" ]] && [[ "${RUN_RULER_QA_SQUAD}" != "true" ]]; then
+    && [[ "${RUN_STANDARD_TASKS}" != "true" ]] && [[ "${RUN_RULER_TASKS}" != "true" ]]; then
     echo "No valid tasks selected from --tasks '${TASKS}'."
     exit 1
   fi
@@ -253,7 +256,7 @@ fi
 if [[ "${RUN_STANDARD_TASKS}" == "true" ]]; then
   TOTAL_STEPS=$((TOTAL_STEPS + 1))
 fi
-if [[ "${RUN_RULER_QA_SQUAD}" == "true" ]]; then
+if [[ "${RUN_RULER_TASKS}" == "true" ]]; then
   TOTAL_STEPS=$((TOTAL_STEPS + 1))
 fi
 STEP_INDEX=1
@@ -308,25 +311,22 @@ if [[ "${RUN_STANDARD_TASKS}" == "true" ]]; then
     --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
 fi
 
-if [[ "${RUN_RULER_QA_SQUAD}" == "true" ]]; then
+if [[ "${RUN_RULER_TASKS}" == "true" ]]; then
   echo "" | tee -a "$OUTPUT_FILE"
-  print_section_header "ruler_qa_squad (lm_eval, 1M)"
-  if [[ "${MODEL_NAME}" == *"DeepSeek-V4-Pro"* ]]; then
-    LMEVAL_OUTPUT_DIR="${LOG_DIR}/lm_eval_ruler_1M_qa"
-    mkdir -p "${LMEVAL_OUTPUT_DIR}"
-    LMEVAL_METADATA=$(printf '{"max_seq_lengths":[1000000],"pretrained":"%s/","use_fast":false}' "${MODEL_NORMALIZED}")
-    lm_eval \
-      --model local-completions \
-      --tasks ruler_qa_squad \
-      --model_args "model=${MODEL_NORMALIZED},base_url=${API_URL}/completions,num_concurrent=1,max_retries=3,max_length=1048576" \
-      --gen_kwargs "temperature=${TEMPERATURE},do_sample=False,max_tokens=128" \
-      --metadata "${LMEVAL_METADATA}" \
-      --batch_size 1 \
-      --log_samples \
-      --output_path "${LMEVAL_OUTPUT_DIR}" 2>&1 | tee -a "$OUTPUT_FILE"
-  else
-    echo "Skip ruler_qa_squad: only DeepSeek-V4-Pro is supported for this test." | tee -a "$OUTPUT_FILE"
-  fi
+  print_section_header "${SELECTED_RULER_TASKS[*]} (lm_eval, 1M)"
+
+  LMEVAL_OUTPUT_DIR="${LOG_DIR}/lm_eval_ruler_1M"
+  mkdir -p "${LMEVAL_OUTPUT_DIR}"
+  LMEVAL_METADATA=$(printf '{"max_seq_lengths":[1000000],"pretrained":"%s/","use_fast":false}' "${MODEL_NORMALIZED}")
+  lm_eval \
+    --model local-completions \
+    --tasks "${SELECTED_RULER_TASKS[@]}" \
+    --model_args "model=${MODEL_NORMALIZED},base_url=${API_URL}/completions,num_concurrent=1,max_retries=3,max_length=1048576" \
+    --gen_kwargs "temperature=${TEMPERATURE},do_sample=False,max_tokens=128" \
+    --metadata "${LMEVAL_METADATA}" \
+    --batch_size 1 \
+    --log_samples \
+    --output_path "${LMEVAL_OUTPUT_DIR}" 2>&1 | tee -a "$OUTPUT_FILE"
 fi
 
 

@@ -129,7 +129,8 @@ def load_layer_wise_quantized_model(path):  # pragma: no cover
 def load_tensor_from_shard(pretrained_model_name_or_path, tensor_name, prefix=None):  # pragma: no cover
     """Load tensor from shard."""
     path = _get_path(pretrained_model_name_or_path)
-    idx_dict = json.load(open(os.path.join(path, "pytorch_model.bin.index.json"), "r"))["weight_map"]
+    with open(os.path.join(path, "pytorch_model.bin.index.json"), "r") as f:
+        idx_dict = json.load(f)["weight_map"]
     if tensor_name not in idx_dict.keys():
         if tensor_name.replace(f"{prefix}.", "") in idx_dict.keys():
             tensor_name = tensor_name.replace(f"{prefix}.", "")
@@ -176,7 +177,8 @@ def load_tensor_from_safetensors_shard(
 ):  # pragma: no cover
     """Load tensor from shard."""
     path = _get_path(pretrained_model_name_or_path)
-    idx_dict = json.load(open(os.path.join(path, "model.safetensors.index.json"), "r"))["weight_map"]
+    with open(os.path.join(path, "model.safetensors.index.json"), "r") as f:
+        idx_dict = json.load(f)["weight_map"]
     if tensor_name not in idx_dict.keys():
         if tensor_name.replace(f"{prefix}.", "") in idx_dict.keys():
             tensor_name = tensor_name.replace(f"{prefix}.", "")

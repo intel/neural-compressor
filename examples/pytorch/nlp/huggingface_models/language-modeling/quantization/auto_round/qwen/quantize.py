@@ -29,7 +29,7 @@ topologies_config = {
     "mxfp4": {
         "scheme": "MXFP4_RCEIL",
         "fp_layers": "lm_head,mlp.gate,self_attn",
-        "iters": 200,
+        "iters": 0,
     },
     "nvfp4": {
         "scheme": "NVFP4",
@@ -58,7 +58,7 @@ dense_topologies_config = {
     "mxfp4": {
         "scheme": "MXFP4",
         "fp_layers": "lm_head,self_attn",
-        "iters": 200,
+        "iters": 0,
     },
     "mxfp4_fp8kv": {
         "scheme": "MXFP4",

@@ -144,7 +144,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </table>
 
 
-# TensorFlow Examples
+# TensorFlow Examples (Deprecated)
 
 ## Quantization
 

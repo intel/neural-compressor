@@ -308,6 +308,11 @@ class CaptureOutputToFile(object):
         os.close(self.orig_stream_dup)
         self.tmp_file.close()
 
+    def __del__(self):
+        """Ensure the file is closed if __exit__ was never called."""
+        if hasattr(self, "tmp_file") and not self.tmp_file.closed:
+            self.tmp_file.close()
+
 
 @singleton
 class TFSlimNetsFactory(object):  # pragma: no cover

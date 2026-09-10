@@ -47,7 +47,7 @@ parser.add_argument("--dataset", type=str, default="coco2014", help="the dataset
 parser.add_argument("--output_dir", "--quantized_model_path", default="./tmp_autoround", type=str, help="the directory to save quantized model")
 parser.add_argument("--eval_dataset", default="captions_source.tsv", type=str, help="eval datasets")
 parser.add_argument("--output_image_path", default="./tmp_imgs", type=str, help="the directory to save quantized model")
-parser.add_argument("--iters", "--iter", default=1000, type=int, help="tuning iters")
+parser.add_argument("--iters", "--iter", default=200, type=int, help="tuning iters")
 parser.add_argument("--limit", default=-1, type=int, help="limit the number of prompts for evaluation")
 
 args = parser.parse_args()
@@ -60,7 +60,7 @@ def inference_worker(eval_file, pipe, image_save_dir):
         "generator": None,
     }
  
-    dataloader, _, _ = get_diffusion_dataloader(eval_file, nsamples=args.limit, bs=1)
+    dataloader, _ = get_diffusion_dataloader(eval_file, nsamples=args.limit, bs=1)
     for image_ids, prompts in dataloader:
 
         new_ids = []
@@ -101,7 +101,7 @@ def tune(device):
         iters=args.iters,
         dataset=args.dataset,
         layer_config=layer_config,
-        num_inference_steps=3,
+        calib_num_inference_steps=8,
         export_format="fake",
         nsamples=128,
         batch_size=1,
