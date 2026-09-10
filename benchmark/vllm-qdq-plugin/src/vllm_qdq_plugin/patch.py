@@ -20,7 +20,7 @@ def _is_mxfp4_marlin_weight(b_q_type, global_scale, scalar_types) -> bool:
     return b_q_type == scalar_types.float4_e2m1f and global_scale is None
 
 
-def _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq):
+def _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq):
     """Patch ops.marlin_gemm with QDQ wrapper.
 
     Returns:
@@ -60,11 +60,9 @@ def _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq):
                 torch.bfloat16,
             )
         ):
-            trace_qdq("marlin_gemm", a.shape, a.dtype)
-            a = mxfp4_qdq(a, group_size=32)
+            a = mxfp4_qdq(a, group_size=32, trace_op_name="marlin_gemm")
         elif b_q_type == scalar_types.float8_e4m3fn and a.dim() == 2 and a.dtype in (torch.float16, torch.bfloat16):
-            trace_qdq("marlin_gemm", a.shape, a.dtype)
-            a = mxfp8_qdq(a, group_size=32)
+            a = mxfp8_qdq(a, group_size=32, trace_op_name="marlin_gemm")
 
         return _orig(
             a,
@@ -92,7 +90,7 @@ def _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq):
     return ("marlin_gemm", _orig, _patched)
 
 
-def _patch_moe_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq):
+def _patch_moe_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq):
     """Patch ops.moe_wna16_marlin_gemm with QDQ wrapper.
 
     Returns:
@@ -134,14 +132,11 @@ def _patch_moe_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq):
         blocks_per_sm: int = -1,
     ) -> torch.Tensor:
         if input.dim() == 2 and envs.VLLM_MARLIN_MOE_QDQ_MODE == "FORCE_MXFP4":
-            trace_qdq("moe_wna16_marlin_gemm", input.shape, input.dtype)
-            input = mxfp4_qdq(input, group_size=32)
+            input = mxfp4_qdq(input, group_size=32, trace_op_name="moe_wna16_marlin_gemm")
         elif _is_mxfp4_marlin_weight(b_q_type, global_scale, scalar_types) and input.dim() == 2:
-            trace_qdq("moe_wna16_marlin_gemm", input.shape, input.dtype)
-            input = mxfp4_qdq(input, group_size=32)
+            input = mxfp4_qdq(input, group_size=32, trace_op_name="moe_wna16_marlin_gemm")
         elif b_q_type == scalar_types.float8_e4m3fn and input.dim() == 2:
-            trace_qdq("moe_wna16_marlin_gemm", input.shape, input.dtype)
-            input = mxfp8_qdq(input, group_size=32)
+            input = mxfp8_qdq(input, group_size=32, trace_op_name="moe_wna16_marlin_gemm")
 
         return _orig(
             input,
@@ -234,13 +229,12 @@ def apply_patches():
 
     from .qdq.mxfp4 import mxfp4_qdq
     from .qdq.mxfp8 import mxfp8_qdq
-    from .trace import trace_qdq
 
     _patch_mla_kv_b_proj_dtype()
 
     patches = [
-        _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq),
-        _patch_moe_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq, trace_qdq),
+        _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq),
+        _patch_moe_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq),
     ]
 
     # Fix up any modules that imported these via

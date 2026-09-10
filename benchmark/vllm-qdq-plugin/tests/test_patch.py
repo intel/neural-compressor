@@ -78,9 +78,8 @@ class PatchMoeMarlinGemmTests(unittest.TestCase):
         _patch_marlin_gemm(
             ops,
             scalar_types,
-            lambda x, group_size=32: qdq_calls.append(group_size) or (x + 1),
+            lambda x, group_size=32, **kwargs: qdq_calls.append(group_size) or (x + 1),
             lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected MXFP8 QDQ")),
-            lambda *args, **kwargs: None,
         )
         input_tensor = torch.zeros((2, 64), dtype=torch.bfloat16)
         output = _call_marlin_gemm(
@@ -114,9 +113,8 @@ class PatchMoeMarlinGemmTests(unittest.TestCase):
         _patch_moe_marlin_gemm(
             ops,
             scalar_types,
-            lambda x, group_size=32: qdq_calls.append(group_size) or (x + 1),
+            lambda x, group_size=32, **kwargs: qdq_calls.append(group_size) or (x + 1),
             lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected MXFP8 QDQ")),
-            lambda *args, **kwargs: None,
         )
         input_tensor = torch.zeros((2, 64), dtype=torch.bfloat16)
         output = _call_moe_marlin_gemm(
@@ -142,15 +140,16 @@ class PatchMoeMarlinGemmTests(unittest.TestCase):
             float8_e4m3fn=object(),
         )
         qdq_calls: list[int] = []
-        trace_calls: list[tuple[str, torch.Size, torch.dtype]] = []
+        trace_op_names: list[str | None] = []
 
         def orig(*args, **kwargs):
             return args[0]
 
         ops = types.SimpleNamespace(moe_wna16_marlin_gemm=orig)
 
-        def mxfp4_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
+        def mxfp4_qdq(x: torch.Tensor, group_size: int = 32, **kwargs) -> torch.Tensor:
             qdq_calls.append(group_size)
+            trace_op_names.append(kwargs.get("trace_op_name"))
             return x + 1
 
         with mock.patch.dict(
@@ -163,7 +162,6 @@ class PatchMoeMarlinGemmTests(unittest.TestCase):
                 scalar_types,
                 mxfp4_qdq,
                 lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected MXFP8 QDQ")),
-                lambda op_name, shape, dtype: trace_calls.append((op_name, shape, dtype)),
             )
             input_tensor = torch.zeros((2, 64), dtype=torch.float16)
             output = _call_moe_marlin_gemm(
@@ -173,10 +171,7 @@ class PatchMoeMarlinGemmTests(unittest.TestCase):
             )
 
         self.assertEqual(qdq_calls, [32])
-        self.assertEqual(
-            trace_calls,
-            [("moe_wna16_marlin_gemm", input_tensor.shape, input_tensor.dtype)],
-        )
+        self.assertEqual(trace_op_names, ["moe_wna16_marlin_gemm"])
         self.assertTrue(torch.equal(output, input_tensor + 1))
 
     def test_force_mxfp4_mode_skips_non_2d_inputs(self) -> None:
@@ -199,9 +194,8 @@ class PatchMoeMarlinGemmTests(unittest.TestCase):
             _patch_moe_marlin_gemm(
                 ops,
                 scalar_types,
-                lambda x, group_size=32: qdq_calls.append(group_size) or (x + 1),
+                lambda x, group_size=32, **kwargs: qdq_calls.append(group_size) or (x + 1),
                 lambda *args, **kwargs: (_ for _ in ()).throw(AssertionError("unexpected MXFP8 QDQ")),
-                lambda *args, **kwargs: None,
             )
             input_tensor = torch.zeros((1, 2, 64), dtype=torch.float16)
             output = _call_moe_marlin_gemm(

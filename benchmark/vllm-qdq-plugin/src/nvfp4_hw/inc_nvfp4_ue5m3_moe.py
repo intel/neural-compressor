@@ -150,9 +150,19 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
                 topk_ids=topk_ids,
                 expert_map=expert_map,
             )
-            output.copy_(nvfp4_e5m3_qdq(output.contiguous(), self.group_size))
+            output.copy_(
+                nvfp4_e5m3_qdq(
+                    output.contiguous(),
+                    self.group_size,
+                    trace_op_name="nvfp4_e5m3_moe_activation",
+                )
+            )
 
-        quantized_x = nvfp4_e5m3_qdq(x.contiguous(), self.group_size)
+        quantized_x = nvfp4_e5m3_qdq(
+            x.contiguous(),
+            self.group_size,
+            trace_op_name="nvfp4_e5m3_moe_input",
+        )
         return fused_marlin_moe(
             hidden_states=quantized_x,
             w1=layer.w13_weight,
