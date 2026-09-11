@@ -3,9 +3,11 @@
 set -euo pipefail
 
 # Usage:
-#   bash run_evalscope.sh --model MODEL_PATH [--port PORT] [--temp TEMPERATURE] [--tasks TASK1,TASK2]
+#   bash run_benchmark.sh --model MODEL_PATH [--port PORT] [--temp TEMPERATURE] [--tasks TASK1,TASK2]
 #
-# This script can start vLLM serve and then run evalscope automatically.
+# This script can start vLLM serve and then run lm_eval (RULER long-context) automatically.
+# For evalscope tasks (aime26, gpqa_diamond, piqa, hellaswag, gsm8k, mmlu_pro, math_500, mmlu),
+# use benchmark/evalscope/run_evalscope.sh instead.
 
 PORT=8009
 MODEL=/workspace/models/deepseek-ai/DeepSeek-V4-Flash
@@ -189,20 +191,12 @@ LOG_DIR="logs/${MODEL_NAME}"
 mkdir -p "$LOG_DIR"
 OUTPUT_FILE="${LOG_DIR}/eval_results_$(date +%Y%m%d_%H%M%S)_port${PORT}_temp${TEMPERATURE}.log"
 
-DEFAULT_STANDARD_TASKS=(piqa hellaswag gsm8k mmlu_pro math_500 mmlu)
 RULER_TASKS=(niah_multiquery ruler_qa_squad)
-SUPPORTED_TASKS=(aime26 gpqa_diamond "${RULER_TASKS[@]}" "${DEFAULT_STANDARD_TASKS[@]}")
-SELECTED_STANDARD_TASKS=()
+SUPPORTED_TASKS=("${RULER_TASKS[@]}")
 SELECTED_RULER_TASKS=()
-RUN_AIME26="true"
-RUN_GPQA_DIAMOND="true"
-RUN_STANDARD_TASKS="true"
 RUN_RULER_TASKS="true"
 
 if [[ -n "${TASKS}" ]]; then
-  RUN_AIME26="false"
-  RUN_GPQA_DIAMOND="false"
-  RUN_STANDARD_TASKS="false"
   RUN_RULER_TASKS="false"
 
   IFS=',' read -r -a REQUESTED_TASKS <<< "${TASKS}"
@@ -217,45 +211,21 @@ if [[ -n "${TASKS}" ]]; then
       exit 1
     fi
 
-    case "${task_name}" in
-      aime26)
-        RUN_AIME26="true"
-        ;;
-      gpqa_diamond)
-        RUN_GPQA_DIAMOND="true"
-        ;;
-      *)
-        if task_in_list "${task_name}" "${DEFAULT_STANDARD_TASKS[@]}" && ! task_in_list "${task_name}" "${SELECTED_STANDARD_TASKS[@]}"; then
-          SELECTED_STANDARD_TASKS+=("${task_name}")
-          RUN_STANDARD_TASKS="true"
-        fi
-        if task_in_list "${task_name}" "${RULER_TASKS[@]}" && ! task_in_list "${task_name}" "${SELECTED_RULER_TASKS[@]}"; then
-          SELECTED_RULER_TASKS+=("${task_name}")
-          RUN_RULER_TASKS="true"
-        fi
-        ;;
-    esac
+    if task_in_list "${task_name}" "${RULER_TASKS[@]}" && ! task_in_list "${task_name}" "${SELECTED_RULER_TASKS[@]}"; then
+      SELECTED_RULER_TASKS+=("${task_name}")
+      RUN_RULER_TASKS="true"
+    fi
   done
 
-  if [[ "${RUN_AIME26}" != "true" ]] && [[ "${RUN_GPQA_DIAMOND}" != "true" ]] \
-    && [[ "${RUN_STANDARD_TASKS}" != "true" ]] && [[ "${RUN_RULER_TASKS}" != "true" ]]; then
+  if [[ "${RUN_RULER_TASKS}" != "true" ]]; then
     echo "No valid tasks selected from --tasks '${TASKS}'."
     exit 1
   fi
 else
-  SELECTED_STANDARD_TASKS=("${DEFAULT_STANDARD_TASKS[@]}")
+  SELECTED_RULER_TASKS=("${RULER_TASKS[@]}")
 fi
 
 TOTAL_STEPS=0
-if [[ "${RUN_AIME26}" == "true" ]]; then
-  TOTAL_STEPS=$((TOTAL_STEPS + 1))
-fi
-if [[ "${RUN_GPQA_DIAMOND}" == "true" ]]; then
-  TOTAL_STEPS=$((TOTAL_STEPS + 1))
-fi
-if [[ "${RUN_STANDARD_TASKS}" == "true" ]]; then
-  TOTAL_STEPS=$((TOTAL_STEPS + 1))
-fi
 if [[ "${RUN_RULER_TASKS}" == "true" ]]; then
   TOTAL_STEPS=$((TOTAL_STEPS + 1))
 fi
@@ -271,45 +241,6 @@ else
   echo "Tasks: all default tasks" | tee -a "$OUTPUT_FILE"
 fi
 echo "" | tee -a "$OUTPUT_FILE"
-  
-
-if [[ "${RUN_AIME26}" == "true" ]]; then
-  echo "" | tee -a "$OUTPUT_FILE"
-  print_section_header "aime26 (n=10)"
-  evalscope eval \
-    --model "$MODEL" \
-    --eval-type openai_api \
-    --api-key EMPTY \
-    --datasets aime26 \
-    --generation-config "{\"temperature\": ${TEMPERATURE}, \"n\": 10}" \
-    --eval-batch-size 10 --timeout 3000 \
-    --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
-fi
-
-if [[ "${RUN_GPQA_DIAMOND}" == "true" ]]; then
-  echo "" | tee -a "$OUTPUT_FILE"
-  print_section_header "gpqa_diamond (n=5)"
-  evalscope eval \
-    --model "$MODEL" \
-    --eval-type openai_api \
-    --api-key EMPTY \
-    --datasets gpqa_diamond \
-    --generation-config "{\"temperature\": ${TEMPERATURE}, \"n\": 5}" \
-    --eval-batch-size 10 --timeout 3000 \
-    --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
-fi
-
-if [[ "${RUN_STANDARD_TASKS}" == "true" ]]; then
-  echo "" | tee -a "$OUTPUT_FILE"
-  print_section_header "${SELECTED_STANDARD_TASKS[*]}"
-  evalscope eval \
-    --model "$MODEL" \
-    --eval-type openai_api \
-    --api-key EMPTY \
-    --datasets "${SELECTED_STANDARD_TASKS[@]}" \
-    --eval-batch-size 10 --timeout 3000 \
-    --api-url "$API_URL" 2>&1 | tee -a "$OUTPUT_FILE"
-fi
 
 if [[ "${RUN_RULER_TASKS}" == "true" ]]; then
   echo "" | tee -a "$OUTPUT_FILE"

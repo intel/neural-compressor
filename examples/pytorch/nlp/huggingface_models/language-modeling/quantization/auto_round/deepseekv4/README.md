@@ -41,18 +41,35 @@ bash run_quant.sh \
   --output_model=/workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP4-Mixed
 ```
 
-Then run serving + evaluation in one command:
+Evaluation is split into two scripts:
+
+- evalscope tasks (`piqa`, `hellaswag`, `gsm8k`, `mmlu_pro`, `math_500`, `mmlu`, `aime26`, `gpqa_diamond`) live in
+  `benchmark/evalscope/run_evalscope.sh`.
+- lm_eval RULER long-context tasks (`niah_multiquery`, `ruler_qa_squad`) live in `run_benchmark.sh`.
+
+Run the evalscope tasks (serving + evaluation in one command):
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 bash run_evalscope.sh \
+CUDA_VISIBLE_DEVICES=0,1 bash ../../../../../../../../benchmark/evalscope/run_evalscope.sh \
   --model /workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP4-Mixed \
   --tp 2 \
   --port 8009 \
-  --tasks piqa,hellaswag,gsm8k,mmlu_pro,math_500,mmlu,aime26,gpqa_diamond,ruler_qa_squad
+  --tasks piqa,hellaswag,gsm8k,mmlu_pro,math_500,mmlu,aime26,gpqa_diamond \
   --temp 1.0
 ```
 
-Equivalent vLLM defaults inside `run_evalscope.sh`:
+Run the lm_eval RULER long-context tasks (serving + evaluation in one command):
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh \
+  --model /workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP4-Mixed \
+  --tp 2 \
+  --port 8009 \
+  --tasks ruler_qa_squad \
+  --temp 1.0
+```
+
+Equivalent vLLM defaults inside both scripts:
 
 ```bash
 SAFETENSORS_FAST_GPU=1 CUDA_VISIBLE_DEVICES=0,1 vllm serve <model> \
@@ -66,7 +83,7 @@ SAFETENSORS_FAST_GPU=1 CUDA_VISIBLE_DEVICES=0,1 vllm serve <model> \
 ```
 
 If model basename is exactly `DeepSeek-V4-Flash` or `DeepSeek-V4-Pro` (without extra suffix),
-`run_evalscope.sh` will also add (automatically):
+both scripts will also add (automatically):
 
 ```bash
 --enable-expert-parallel --moe-backend deep_gemm_mega_moe
@@ -93,11 +110,12 @@ bash run_quant.sh \
 - `--format`: `auto_round` or `llm_compressor` (default: `llm_compressor`).
 - `--ignore_layers`: comma-separated layer patterns (default: `compressor,indexer.weights_proj`).
 
-`run_evalscope.sh` arguments:
+`benchmark/evalscope/run_evalscope.sh` and `run_benchmark.sh` arguments:
 
-- `--model`: model path for vLLM and evalscope.
+- `--model`: model path for vLLM and evaluation.
 - `--port`: vLLM API port (default: `8009`).
-- `--temp`: generation temperature used by evalscope (default: `0`).
+- `--temp`: generation temperature (default: `0`).
+- `--tasks`: comma-separated task list. `run_evalscope.sh` supports the evalscope tasks; `run_benchmark.sh` supports the lm_eval RULER tasks.
 - `--skip_serve`: skip starting vLLM (use existing endpoint on the same `--port`).
 - `--tp`: tensor parallel size for vLLM (default: `2`).
 - `--kv-cache-dtype`: kv cache dtype for vLLM (default: `fp8`).
