@@ -66,7 +66,7 @@ The stop command uses `logs/vllm_<PORT>.pid` by default. Set the same
 `VLLM_LOG_DIR` used to start the server, or set `VLLM_PID_FILE` to the exact PID
 file, when using a custom location.
 
-## SWE-Verified
+## SWE-Verified and SWE-Verified Mini
 
 ### SWE-Verified environment setup
 
@@ -78,7 +78,7 @@ The setup script:
 
 1. Clones mini-SWE-agent v2.4.6 into `mini-swe-agent/`.
 2. Applies `patches/swebench_verified_per_instance_cleanup.patch` so each instance reliably removes its Docker container during cleanup.
-3. Installs mini-SWE-agent to generate predictions and the official SWE-bench harness to evaluate those predictions locally. It also installs datasets for loading SWE-bench Verified.
+3. Installs mini-SWE-agent to generate predictions, the pinned SWE-bench 4.1.0 harness for local evaluation, and datasets for loading SWE-bench Verified and Verified Mini.
 
 
 ### Run SWE-Verified
@@ -89,6 +89,24 @@ bash run_swe_verified.sh \
   --step-limit 250 \
   --tag qwen36_27b_full
 ```
+
+To run the 50-instance
+[SWE-bench Verified Mini](https://evalscope.readthedocs.io/zh-cn/latest/benchmarks/swe_bench_verified_mini.html)
+dataset instead, select it through the same runner:
+
+```bash
+bash run_swe_verified.sh \
+  --dataset verified-mini \
+  --port 8888 \
+  --step-limit 250 \
+  --tag qwen36_27b_mini
+```
+
+Generation loads the original Hugging Face dataset
+`MariusHobbhahn/swe-bench-verified-mini`, which is mirrored by EvalScope as
+`evalscope/swe-bench-verified-mini`. Evaluation uses the canonical Verified
+dataset plus the selected Mini instance IDs, so it remains compatible with the
+official SWE-bench harness and prebuilt images.
 
 The runner connects to the existing shared vLLM server and leaves it running
 when the benchmark exits, whether the benchmark succeeds or fails. Generation
@@ -136,6 +154,7 @@ The runner stops early when both categories are empty.
 
 | Option | Default | Description |
 | --- | --- | --- |
+| `--dataset NAME` | `verified` | Dataset selection: `verified` (500 instances) or `verified-mini` (50 instances) |
 | `--host HOST` | `127.0.0.1` | vLLM host |
 | `--port PORT` | `8888` | vLLM port |
 | `--served-name NAME` | discovered | Model ID exposed by vLLM |
@@ -165,6 +184,9 @@ Outputs:
 - Local evaluation report with resolved counts and accuracy:
   `mini-swe-agent/results/swe_verified_<TAG>/report.json`
 - Log: `logs/swe_verified_<TAG>.log`
+
+For Verified Mini, the same layout uses the `swe_verified_mini_<TAG>` prefix
+for the result directory and log file.
 
 
 ## SWE-bench Pro

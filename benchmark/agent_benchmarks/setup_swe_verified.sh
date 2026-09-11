@@ -57,6 +57,6 @@ else
 fi
 
 log "Installing mini-SWE-agent for inference and SWE-bench for local evaluation"
-uv pip install "${AGENT_DIR_VERIFIED}" swebench "datasets>=3.0.0"
+uv pip install "${AGENT_DIR_VERIFIED}" "swebench==${SWEBENCH_VERSION}" "datasets>=3.0.0"
 
 log "SWE-bench Verified setup complete"
