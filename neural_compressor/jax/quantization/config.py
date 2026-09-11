@@ -21,7 +21,7 @@ from __future__ import annotations
 import json
 import re
 from collections import OrderedDict
-from typing import Callable, Dict, List, NamedTuple, Optional, Tuple, Union
+from typing import Callable, Dict, List, NamedTuple, Optional, Self, Tuple, Union
 
 import jax.numpy as jnp
 import keras
@@ -66,7 +66,14 @@ class JaxBaseConfig(BaseConfig):
     """
 
     supported_configs: List[OperatorConfig] = []
-    params_list = ["weight_dtype", "activation_dtype", "const_scale", "const_weight", "weight_scale_granularity"]
+    params_list = [
+        "weight_dtype",
+        "activation_dtype",
+        "const_scale",
+        "const_weight",
+        "weight_scale_granularity",
+        "dot_product_attention_enable",
+    ]
 
     def __init__(
         self,
@@ -75,6 +82,7 @@ class JaxBaseConfig(BaseConfig):
         const_scale: bool = False,
         const_weight: bool = False,
         weight_scale_granularity: str = "per_tensor",
+        dot_product_attention_enable: bool = False,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         exclude_list: Optional[List[str]] = None,
     ):
@@ -86,6 +94,9 @@ class JaxBaseConfig(BaseConfig):
             const_scale (bool): Whether to use a constant scale factor for quantization.
             const_weight (bool): Whether to use constant quantized weights.
             weight_scale_granularity (str): Whether to use per_channel or per_tensor quantization for weights
+            dot_product_attention_enable (bool): Whether quantized attention layers may use
+                the fused dot-product-attention path; when False the fallback einsum path is always
+                used. Read by static/dynamic MultiHeadAttention and CachedGemma3Attention.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): Layers to quantize. Each entry
                 is a layer class (e.g. ``keras.layers.Dense``), a class name, or a path regex.
                 Only matching supported layers are quantized. Defaults to ``"*"`` (all supported
@@ -109,6 +120,7 @@ class JaxBaseConfig(BaseConfig):
         self.const_scale = const_scale
         self.const_weight = const_weight
         self.weight_scale_granularity = weight_scale_granularity
+        self.dot_product_attention_enable = dot_product_attention_enable
         self._exclude_list = exclude_list
         self._post_init()
 
@@ -229,16 +241,6 @@ class JaxBaseConfig(BaseConfig):
                         config_mapping[(op_name, op_type)] = pattern_config
         return config_mapping
 
-    def to_dict(self):
-        """Serialize params plus the white_list / exclude_list selection filters."""
-        result = self.get_params_dict()
-        white_list = _serialize_white_list(self._white_list)
-        if white_list != DEFAULT_WHITE_LIST and white_list is not None:
-            result["white_list"] = white_list
-        if self._exclude_list is not None:
-            result["exclude_list"] = self._exclude_list
-        return result
-
     def get_params_dict(self):
         """Get parameters dict, excluding internal and filter attributes."""
         result = dict()
@@ -288,18 +290,74 @@ class JaxBaseConfig(BaseConfig):
 
         return filter_result
 
+    def to_dict(self):
+        """Serialize params plus the white_list / exclude_list selection filters."""
+        result = self.get_params_dict()
+        white_list = _serialize_white_list(self._white_list)
+        if white_list != DEFAULT_WHITE_LIST and white_list is not None:
+            result["white_list"] = white_list
+        if self._exclude_list is not None:
+            result["exclude_list"] = self._exclude_list
+        return {
+            "quantization_type": self.name,
+            "config": result,
+        }
+
     @classmethod
-    def from_json_string(cls, json_string: str) -> "JaxBaseConfig":
+    def from_dict(cls, config_dict: Dict) -> Self:
+        """Create a config from a dictionary.
+
+        Args:
+            config_dict (Dict): Configuration fields.
+
+        Returns:
+            Self: Parsed configuration instance of the calling class.
+        """
+
+        quant_type = config_dict.get("quantization_type")
+
+        if quant_type == "composable":
+            sub_configs = config_dict.get("configs")
+            if sub_configs is None:
+                raise ValueError("Composable quant config must include a non-empty 'configs' list.")
+            sub_configs = [JaxBaseConfig.from_dict(cfg) for cfg in sub_configs]
+            return JaxComposableConfig(sub_configs)
+
+        config_dict = config_dict.get("config", {})
+
+        configs = config_registry.get_cls_configs()[FRAMEWORK_NAME]
+        if quant_type not in configs:
+            raise ValueError(f"Unknown config class: {quant_type}. Must be one of: {' or '.join(configs.keys())}.")
+
+        config_class = configs[quant_type]
+        return config_class(**config_dict)
+
+    @classmethod
+    def from_json_string(cls, json_string: str) -> Self:
         """Create a config from a JSON string.
 
         Args:
             json_string (str): JSON string describing the config.
 
         Returns:
-            JaxBaseConfig: Parsed configuration instance.
+            Self: Parsed configuration instance of the calling class.
         """
         cfg = json.loads(json_string)
         return cls.from_dict(cfg)
+
+    @classmethod
+    def from_json_file(cls, filename):
+        """Load config from a JSON file.
+
+        Args:
+            filename (str): The path to the JSON file.
+
+        Returns:
+            The loaded config.
+        """
+        with open(filename, "r", encoding="utf-8") as file:
+            config_dict = json.load(file)
+        return cls.from_dict(config_dict)
 
 
 @register_config(framework_name=FRAMEWORK_NAME, algo_name=DYNAMIC_QUANT)
@@ -353,33 +411,6 @@ class DynamicQuantConfig(JaxBaseConfig):
         return DynamicQuantConfig(
             weight_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
             activation_dtype=["fp8", "fp8_e4m3", "fp8_e5m2", "int8"],
-        )
-
-    @classmethod
-    def from_dict(cls, config_dict: Dict) -> "DynamicQuantConfig":
-        """Create a DynamicQuantConfig from a dictionary.
-
-        Args:
-            config_dict (Dict): Configuration fields.
-
-        Returns:
-            DynamicQuantConfig: Parsed configuration instance.
-        """
-        weight_dtype = config_dict.get("weight_dtype", "fp8_e4m3")
-        activation_dtype = config_dict.get("activation_dtype", "fp8_e4m3")
-        const_scale = config_dict.get("const_scale", False)
-        const_weight = config_dict.get("const_weight", False)
-        weight_scale_granularity = config_dict.get("weight_scale_granularity", "per_tensor")
-        white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
-        exclude_list = config_dict.get("exclude_list", None)
-        return cls(
-            weight_dtype=weight_dtype,
-            activation_dtype=activation_dtype,
-            const_scale=const_scale,
-            const_weight=const_weight,
-            weight_scale_granularity=weight_scale_granularity,
-            white_list=white_list,
-            exclude_list=exclude_list,
         )
 
 
@@ -437,33 +468,6 @@ class StaticQuantConfig(JaxBaseConfig):
             activation_dtype=["fp8_e4m3", "fp8_e5m2", "int8"],
         )
 
-    @classmethod
-    def from_dict(cls, config_dict: Dict) -> "StaticQuantConfig":
-        """Create a StaticQuantConfig from a dictionary.
-
-        Args:
-            config_dict (Dict): Configuration fields.
-
-        Returns:
-            StaticQuantConfig: Parsed configuration instance.
-        """
-        weight_dtype = config_dict.get("weight_dtype", "fp8_e5m2")
-        activation_dtype = config_dict.get("activation_dtype", "fp8_e5m2")
-        const_scale = config_dict.get("const_scale", False)
-        const_weight = config_dict.get("const_weight", False)
-        weight_scale_granularity = config_dict.get("weight_scale_granularity", "per_tensor")
-        white_list = config_dict.get("white_list", DEFAULT_WHITE_LIST)
-        exclude_list = config_dict.get("exclude_list", None)
-        return cls(
-            weight_dtype=weight_dtype,
-            activation_dtype=activation_dtype,
-            const_scale=const_scale,
-            const_weight=const_weight,
-            weight_scale_granularity=weight_scale_granularity,
-            white_list=white_list,
-            exclude_list=exclude_list,
-        )
-
 
 class JaxComposableConfig(ComposableConfig, JaxBaseConfig):
     """JAX composable config that is both a ``ComposableConfig`` and a ``JaxBaseConfig``.
@@ -500,6 +504,12 @@ class JaxComposableConfig(ComposableConfig, JaxBaseConfig):
                     logger.debug(f"Layer {key} quant config override from {config_mapping[key]} to {cfg}")
                 config_mapping[key] = cfg
         return config_mapping
+
+    def to_dict(self):
+        return {
+            "quantization_type": "composable",
+            "configs": [cfg.to_dict() for cfg in self.config_list],
+        }
 
 
 register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)

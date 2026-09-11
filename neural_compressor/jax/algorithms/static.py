@@ -69,6 +69,7 @@ def static_quantize(
             config.const_scale,
             config.const_weight,
             config.weight_scale_granularity,
+            config.dot_product_attention_enable,
         )
         layer.add_observers()
 
