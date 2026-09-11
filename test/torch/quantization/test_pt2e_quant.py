@@ -250,12 +250,13 @@ class TestPT2EQuantization:
         from torch._inductor import config
 
         config.freezing = True
-        opt_model = torch.compile(converted_model)
+        converted_model.model = torch.compile(converted_model.model)
+        opt_model = converted_model
         out = opt_model(
-                input_ids=input_ids,
-                attention_mask=attention_mask,
-                past_key_values=DynamicCache(config=model_config),
-                use_cache=True,
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            past_key_values=DynamicCache(config=model_config),
+            use_cache=True,
         )
         assert out.logits is not None
 
