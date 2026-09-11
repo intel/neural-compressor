@@ -33,14 +33,14 @@ but it can potentially be used on other platforms as well.
 ```python
 def quantize_model(
     model: keras.Model,
-    quant_config: BaseConfig,
+    quant_config: JaxBaseConfig,
     calib_function: Callable = None,
     inplace: bool = True
 ):
     """Return a quantized Keras model according to the given configuration.
 
     Args:
-        model:          FP32 Keras model to be quantized.
+        model:          FP32/BF16 Keras model to be quantized.
         quant_config:   Quantization configuration.
         calib_function: Function used for model calibration, required for static quantization.
         inplace:        When True, the original model is modified in-place and should not be used
@@ -51,21 +51,24 @@ def quantize_model(
     """
 ```
 
+Complete usage example: [helloworld.py](../../examples/jax/keras/helloworld.py)
+
 ## Post-Training Static Quantization
 
 The maximum absolute values of weights and activations are collected offline using a *calibration* dataset.
 This dataset should be representative of the data distribution expected during inference.
-The calibration process runs on the original FP32 model and records tensor distributions for scale calculations.
+The calibration process runs on the original FP32/BF16 model and records tensor distributions for scale calculations.
 Typically, preparing several dozen samples is sufficient for calibration.
 
 ## Examples
 
-Examples of how to quantize a model and use a pre-quantized model can be found below:
+Examples of how to quantize a model and use a pre-quantized model can be found below.
 
-- [Gemma3](../../examples/jax/keras/gemma/README.html)
-- [ViT](../../examples/jax/keras/vit/README.html)
-- [Simple model – quantization](../../examples/jax/keras/helloworld/example_static.py)
-- [Simple model – save and load](../../examples/jax/keras/helloworld/example_saving.py)
+- Usage examples shown on simple Keras model:
+  - [Simple model](../../examples/jax/keras/simple_model/README.html)
+- Examples of quantizing real Keras models using Neural Compressor
+  - [Gemma3](../../examples/jax/keras/gemma/README.html)
+  - [ViT](../../examples/jax/keras/vit/README.html)
 
 ## Backend and Device
 

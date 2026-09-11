@@ -118,14 +118,14 @@ but it can potentially be used on other platforms as well.</p>
 <h2>Quantization API<a class="headerlink" href="#quantization-api" title="Link to this heading"></a></h2>
 <div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">def</span><span class="w"> </span><span class="nf">quantize_model</span><span class="p">(</span>
     <span class="n">model</span><span class="p">:</span> <span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">,</span>
-    <span class="n">quant_config</span><span class="p">:</span> <span class="n">BaseConfig</span><span class="p">,</span>
+    <span class="n">quant_config</span><span class="p">:</span> <span class="n">JaxBaseConfig</span><span class="p">,</span>
     <span class="n">calib_function</span><span class="p">:</span> <span class="n">Callable</span> <span class="o">=</span> <span class="kc">None</span><span class="p">,</span>
     <span class="n">inplace</span><span class="p">:</span> <span class="nb">bool</span> <span class="o">=</span> <span class="kc">True</span>
 <span class="p">):</span>
 <span class="w">    </span><span class="sd">"""Return a quantized Keras model according to the given configuration.</span>
 
 <span class="sd">    Args:</span>
-<span class="sd">        model:          FP32 Keras model to be quantized.</span>
+<span class="sd">        model:          FP32/BF16 Keras model to be quantized.</span>
 <span class="sd">        quant_config:   Quantization configuration.</span>
 <span class="sd">        calib_function: Function used for model calibration, required for static quantization.</span>
 <span class="sd">        inplace:        When True, the original model is modified in-place and should not be used</span>
@@ -136,22 +136,30 @@ but it can potentially be used on other platforms as well.</p>
 <span class="sd">    """</span>
 </pre></div>
 </div>
+<p>Complete usage example: <a class="reference external" href="../../examples/jax/keras/helloworld.py">helloworld.py</a></p>
 </section>
 <section id="post-training-static-quantization">
 <h2>Post-Training Static Quantization<a class="headerlink" href="#post-training-static-quantization" title="Link to this heading"></a></h2>
 <p>The maximum absolute values of weights and activations are collected offline using a <em>calibration</em> dataset.
 This dataset should be representative of the data distribution expected during inference.
-The calibration process runs on the original FP32 model and records tensor distributions for scale calculations.
+The calibration process runs on the original FP32/BF16 model and records tensor distributions for scale calculations.
 Typically, preparing several dozen samples is sufficient for calibration.</p>
 </section>
 <section id="examples">
 <h2>Examples<a class="headerlink" href="#examples" title="Link to this heading"></a></h2>
-<p>Examples of how to quantize a model and use a pre-quantized model can be found below:</p>
+<p>Examples of how to quantize a model and use a pre-quantized model can be found below.</p>
 <ul class="simple">
+<li><p>Usage examples shown on simple Keras model:</p>
+<ul>
+<li><p><a class="reference external" href="../../examples/jax/keras/simple_model/README.html">Simple model</a></p></li>
+</ul>
+</li>
+<li><p>Examples of quantizing real Keras models using Neural Compressor</p>
+<ul>
 <li><p><a class="reference external" href="../../examples/jax/keras/gemma/README.html">Gemma3</a></p></li>
 <li><p><a class="reference external" href="../../examples/jax/keras/vit/README.html">ViT</a></p></li>
-<li><p><a class="reference external" href="../../examples/jax/keras/helloworld/example_static.py">Simple model – quantization</a></p></li>
-<li><p><a class="reference external" href="../../examples/jax/keras/helloworld/example_saving.py">Simple model – save and load</a></p></li>
+</ul>
+</li>
 </ul>
 </section>
 <section id="backend-and-device">
@@ -177,7 +185,7 @@ performance improvements from quantization will be visible on Intel® Xeon® pro
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f7f1b7c2ae0> 
+   <jinja2.runtime.BlockReference object at 0x7f19b7d3f1a0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

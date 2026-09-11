@@ -166,7 +166,7 @@ You can run <a class="reference external" href="prepare_static.py">prepare_stati
 </pre></div>
 </div>
 <p>After this step, the saved model is stored in the <code class="docutils literal notranslate"><span class="pre">/path_to_store_your_quantized_model/gemma3_instruct_270m</span></code> file. You can load and use it with <a class="reference external" href="use_static.py">use_static.py</a></p>
-<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">keras_hub.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gemma3CausalLM</span>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">keras_hub.models</span><span class="w"> </span><span class="kn">import</span> <span class="n">Gemma3CausalLM</span>
 <span class="kn">import</span><span class="w"> </span><span class="nn">neural_compressor.jax.quantization</span>
 <span class="n">gemma_lm</span> <span class="o">=</span> <span class="n">Gemma3CausalLM</span><span class="o">.</span><span class="n">from_preset</span><span class="p">(</span><span class="s2">"/path_to_store_your_quantized_model/gemma3_instruct_270m"</span><span class="p">)</span>
 <span class="n">output</span> <span class="o">=</span> <span class="n">gemma_lm</span><span class="o">.</span><span class="n">generate</span><span class="p">({</span><span class="s2">"prompts"</span><span class="p">:</span> <span class="s2">"Describe the city of Berlin?"</span><span class="p">},</span> <span class="n">max_length</span><span class="o">=</span><span class="mi">100</span><span class="p">)</span>
@@ -227,7 +227,7 @@ and then use print_model() function in your script. To see how it works just unc
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f7f1b5f2f00> 
+   <jinja2.runtime.BlockReference object at 0x7f19b7bd40b0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

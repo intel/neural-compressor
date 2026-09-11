@@ -1,0 +1,367 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Keras simple model quantization &mdash; Intel® Neural Compressor 3.9 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Keras simple model quantization</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/docs/source/examples/jax/keras/simple_model/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="keras-simple-model-quantization">
+<h1>Keras simple model quantization<a class="headerlink" href="#keras-simple-model-quantization" title="Link to this heading"></a></h1>
+<p>This document describes quantization of a simple Keras model using Neural Compressor on Intel® Xeon® processors.</p>
+<ul class="simple">
+<li><p><a class="reference external" href="#1-create-environment">Create Environment</a></p></li>
+<li><p><a class="reference external" href="#2-install-modules">Install modules</a></p></li>
+<li><p><a class="reference external" href="#3-quantize-model">Quantize model</a></p></li>
+<li><p><a class="reference external" href="#4-save-and-load-quantized-model">Save and load quantized model</a></p></li>
+<li><p><a class="reference external" href="#5-quantization-configs">Quantization configs</a></p>
+<ul>
+<li><p><a class="reference external" href="#white-list-and-exclude-list">White list and exclude list</a></p></li>
+<li><p><a class="reference external" href="#composable-configs">Composable configs</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#6-configuration-examples">Configuration examples</a></p>
+<ul>
+<li><p><a class="reference external" href="#composable-config">Composable config</a></p></li>
+<li><p><a class="reference external" href="#load-configuration-from-file">Load configuration from file</a></p></li>
+</ul>
+</li>
+<li><p><a class="reference external" href="#7-some-debug">Some debug</a></p></li>
+</ul>
+<section id="create-environment">
+<h2>1. Create Environment<a class="headerlink" href="#create-environment" title="Link to this heading"></a></h2>
+<p>It is worth conducting experiments in a separate environment. For example, you can use the conda environment from <a class="reference external" href="https://github.com/conda-forge/miniforge">conda-forge</a>. The binary for your environment could be found here: <a class="reference external" href="https://github.com/conda-forge/miniforge/releases/latest">miniforge</a></p>
+</section>
+<section id="install-modules">
+<h2>2. Install modules<a class="headerlink" href="#install-modules" title="Link to this heading"></a></h2>
+<p>You can install Neural Compressor from pypi.org:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>neural_compressor_jax
+</pre></div>
+</div>
+<p>Alternatively you can install it directly from source:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">pushd</span><span class="w"> </span>../../../..<span class="w">  </span><span class="c1"># go to the root directory of the Neural Compressor source code</span>
+<span class="nv">INC_JAX_ONLY</span><span class="o">=</span><span class="m">1</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>.
+<span class="c1"># or with -e option for better debugging</span>
+<span class="c1">#INC_JAX_ONLY=1 pip install -e .</span>
+<span class="nb">popd</span>
+</pre></div>
+</div>
+</section>
+<section id="quantize-model">
+<h2>3. Quantize model<a class="headerlink" href="#quantize-model" title="Link to this heading"></a></h2>
+<p>To quantize the model you have to make 3 steps:</p>
+<ol class="simple">
+<li><p>Create the original model:</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="k">class</span><span class="w"> </span><span class="nc">DummyModel</span><span class="p">(</span><span class="n">keras</span><span class="o">.</span><span class="n">Model</span><span class="p">):</span>
+    <span class="k">def</span><span class="w"> </span><span class="fm">__init__</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">):</span>
+        <span class="nb">super</span><span class="p">()</span><span class="o">.</span><span class="fm">__init__</span><span class="p">(</span><span class="o">*</span><span class="n">args</span><span class="p">,</span> <span class="o">**</span><span class="n">kwargs</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dense1</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">10</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">"linear"</span><span class="p">)</span>
+        <span class="bp">self</span><span class="o">.</span><span class="n">dense2</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">layers</span><span class="o">.</span><span class="n">Dense</span><span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="n">activation</span><span class="o">=</span><span class="s2">"linear"</span><span class="p">)</span>
+
+    <span class="k">def</span><span class="w"> </span><span class="nf">call</span><span class="p">(</span><span class="bp">self</span><span class="p">,</span> <span class="n">inputs</span><span class="p">):</span>
+        <span class="n">x</span> <span class="o">=</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense1</span><span class="p">(</span><span class="n">inputs</span><span class="p">)</span>
+        <span class="k">return</span> <span class="bp">self</span><span class="o">.</span><span class="n">dense2</span><span class="p">(</span><span class="n">x</span><span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">DummyModel</span><span class="p">()</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Calibrate the model using a dataset similar to the one that will be used later. In our example - we use random data. We can choose which floating point format will be used in the quantized model.</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">quantize_model</span><span class="p">,</span> <span class="n">StaticQuantConfig</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">)</span>
+
+<span class="k">def</span><span class="w"> </span><span class="nf">calib_function</span><span class="p">(</span><span class="n">model</span><span class="p">):</span>
+    <span class="n">key</span> <span class="o">=</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">PRNGKey</span><span class="p">(</span><span class="mi">1</span><span class="p">)</span>
+    <span class="nb">input</span> <span class="o">=</span> <span class="mi">10</span> <span class="o">*</span> <span class="n">jax</span><span class="o">.</span><span class="n">random</span><span class="o">.</span><span class="n">normal</span><span class="p">(</span><span class="n">key</span><span class="p">,</span> <span class="p">(</span><span class="mi">1</span><span class="p">,</span> <span class="mi">32</span><span class="p">))</span>
+    <span class="n">model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+
+<span class="n">q_model</span> <span class="o">=</span> <span class="n">quantize_model</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">,</span> <span class="n">calib_function</span><span class="p">)</span>
+</pre></div>
+</div>
+<ol class="simple">
+<li><p>Use the quantized model</p></li>
+</ol>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">quantized_output</span> <span class="o">=</span> <span class="n">q_model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Quantized model output: </span><span class="si">{</span><span class="n">quantized_output</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Working examples are included in this repository. You can run helloworld with this snippet:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>../helloworld.py
+</pre></div>
+</div>
+<p>Or different example for static/dynamic quantization comparison</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>simple_config.py
+</pre></div>
+</div>
+</section>
+<section id="save-and-load-quantized-model">
+<h2>4. Save and load quantized model<a class="headerlink" href="#save-and-load-quantized-model" title="Link to this heading"></a></h2>
+<p>Calibration costs time, so we can calibrate once on representative data sets and later reuse it many times. To achieve it saving model functionality is supported.
+You can run the <a class="reference external" href="model_saving.py">model_saving.py</a> script:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>model_saving.py
+</pre></div>
+</div>
+<p>The script quantizes the model, saves it to <code class="docutils literal notranslate"><span class="pre">./qmodel.keras</span></code>, then loads it back and verifies that the outputs of the freshly quantized model and the reloaded one match:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">save_model</span><span class="p">(</span><span class="n">q_model</span><span class="p">,</span> <span class="s2">"./qmodel.keras"</span><span class="p">)</span>
+<span class="n">loaded_model</span> <span class="o">=</span> <span class="n">keras</span><span class="o">.</span><span class="n">models</span><span class="o">.</span><span class="n">load_model</span><span class="p">(</span><span class="s2">"./qmodel.keras"</span><span class="p">)</span>
+
+<span class="n">loaded_output</span> <span class="o">=</span> <span class="n">loaded_model</span><span class="p">(</span><span class="nb">input</span><span class="p">)</span>
+<span class="n">match</span> <span class="o">=</span> <span class="n">jnp</span><span class="o">.</span><span class="n">allclose</span><span class="p">(</span><span class="n">quantized_output</span><span class="p">,</span> <span class="n">loaded_output</span><span class="p">)</span>
+<span class="nb">print</span><span class="p">(</span><span class="sa">f</span><span class="s2">"Results match: </span><span class="si">{</span><span class="n">match</span><span class="si">}</span><span class="s2">"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Note that the model class is registered with <code class="docutils literal notranslate"><span class="pre">&#64;register_keras_serializable</span></code> so that Keras can serialize/deserialize it by name when saving and loading.</p>
+</section>
+<section id="quantization-configs">
+<h2>5. Quantization configs<a class="headerlink" href="#quantization-configs" title="Link to this heading"></a></h2>
+<p>The quantization configuration can be defined in the code, for example:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span>
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>Quantization configurations can also be saved as json and loaded via <em>JaxBaseConfig.from_json_file()</em></p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span><span class="p">,</span> <span class="n">JaxBaseConfig</span>
+<span class="n">quant_config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">)</span>
+<span class="n">quant_config</span><span class="o">.</span><span class="n">to_json_file</span><span class="p">(</span><span class="s2">"path/to/quant_config.json"</span><span class="p">)</span>
+<span class="n">loaded_quant_config</span> <span class="o">=</span> <span class="n">JaxBaseConfig</span><span class="o">.</span><span class="n">from_json_file</span><span class="p">(</span><span class="s2">"path/to/quant_config.json"</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="white-list-and-exclude-list">
+<h3>White list and exclude list<a class="headerlink" href="#white-list-and-exclude-list" title="Link to this heading"></a></h3>
+<p>Quantization configs provide a way to include and exclude specific layers and classes via <em>white_list</em> and <em>exclude_list</em> parameters - the <em>exclude_list</em> takes priority over the <em>white_list</em>.
+Available formats are:</p>
+<ul class="simple">
+<li><p>layer path regex</p></li>
+<li><p>layer class name (string)</p></li>
+<li><p>layer class
+See example below:</p></li>
+</ul>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">keras.layers</span><span class="w"> </span><span class="kn">import</span> <span class="n">EinsumDense</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span>
+<span class="c1"># path regex - matches paths like "model/encoder_{i}/mha", except "model/encoder_2/mha"</span>
+<span class="n">cfg1</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">white_list</span><span class="o">=</span><span class="p">[</span><span class="s2">".*mha"</span><span class="p">],</span> <span class="n">exclude_list</span><span class="o">=</span><span class="p">[</span><span class="s2">".*encoder_2.*mha"</span><span class="p">])</span>
+<span class="c1"># class name - matches all Dense layers</span>
+<span class="n">cfg2</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">white_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"Dense"</span><span class="p">])</span>
+<span class="c1"># class - matches all EinsumDense layers</span>
+<span class="n">cfg3</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">white_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"Einsum"</span><span class="p">])</span>
+</pre></div>
+</div>
+</section>
+<section id="composable-configs">
+<h3>Composable configs<a class="headerlink" href="#composable-configs" title="Link to this heading"></a></h3>
+<p>It’s possible to combine multiple configs to achieve per-layer and per-class configuration, by combining multiple configs into a <em>JaxComposableConfig</em></p>
+<p><em><strong>NOTE</strong></em>
+The order in which the configs are provided matters - multiple configs that apply for the same layer are resolved in a last-wins manner, as explained below.</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.jax</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span><span class="p">,</span> <span class="n">DynamicQuantConfig</span>
+
+<span class="n">static1</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"int8"</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"int8"</span><span class="p">,</span> <span class="n">white_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"dense1"</span><span class="p">,</span> <span class="s2">"dense2"</span><span class="p">])</span>
+<span class="n">dynamic</span> <span class="o">=</span> <span class="n">DynamicQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="n">white_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"dense2"</span><span class="p">,</span> <span class="s2">"dense3"</span><span class="p">])</span>
+<span class="n">static2</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span><span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"int8"</span><span class="p">,</span> <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"int8"</span><span class="p">,</span> <span class="n">white_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"Dense"</span><span class="p">],</span> <span class="n">exclude_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"dense1"</span><span class="p">,</span> <span class="s2">"dense2"</span><span class="p">])</span>
+
+<span class="c1"># Compose the configurations into a single configuration</span>
+<span class="c1">#</span>
+<span class="c1"># This composition results in quantization being applied for layers in order in which configs are constructed:</span>
+<span class="c1"># * ``dense1``  -&gt; only ``static1`` matches                -&gt; static</span>
+<span class="c1"># * ``dense2``  -&gt; ``static1`` and ``dynamic`` match       -&gt; dynamic (later wins)</span>
+<span class="c1"># * ``dense3``  -&gt; ``dynamic`` and ``static2`` match       -&gt; static  (later wins)</span>
+<span class="n">config</span> <span class="o">=</span> <span class="n">static1</span> <span class="o">+</span> <span class="n">dynamic</span> <span class="o">+</span> <span class="n">static2</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="configuration-examples">
+<h2>6. Configuration examples<a class="headerlink" href="#configuration-examples" title="Link to this heading"></a></h2>
+<section id="composable-config">
+<h3>Composable config<a class="headerlink" href="#composable-config" title="Link to this heading"></a></h3>
+<p>Neural Compressor allows composing several quantization configurations together, so that different parts of the model (matched via <code class="docutils literal notranslate"><span class="pre">white_list</span></code>/<code class="docutils literal notranslate"><span class="pre">exclude_list</span></code>) can use different quantization modes (static/dynamic) and dtypes. This is demonstrated in <a class="reference external" href="composable_config.py">composable_config.py</a>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config1</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">(</span>
+    <span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span>
+    <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"fp8_e4m3"</span><span class="p">,</span>
+    <span class="n">white_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"dense.*"</span><span class="p">],</span>
+    <span class="n">exclude_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"dense3"</span><span class="p">],</span>
+<span class="p">)</span>
+<span class="n">config2</span> <span class="o">=</span> <span class="n">DynamicQuantConfig</span><span class="p">(</span>
+    <span class="n">weight_dtype</span><span class="o">=</span><span class="s2">"fp8_e5m2"</span><span class="p">,</span>
+    <span class="n">activation_dtype</span><span class="o">=</span><span class="s2">"fp8_e5m2"</span><span class="p">,</span>
+    <span class="n">white_list</span><span class="o">=</span><span class="p">[</span><span class="s2">"dense3"</span><span class="p">,</span> <span class="s2">"dense4"</span><span class="p">],</span>
+<span class="p">)</span>
+
+<span class="c1"># Dynamic quantization will be applied to dense3 and dense4,</span>
+<span class="c1"># while static quantization will be used for the remaining dense layers.</span>
+<span class="c1">#</span>
+<span class="c1"># Additionally dense4 is being matched by both static and dynamic config.</span>
+<span class="c1"># Decision which one will be actually used depends on order in which configs are applied (later wins).</span>
+<span class="c1"># In below example config2 is applied after config1 so dense4 will be dynamically quantized.</span>
+<span class="c1"># note: You can see warning about config override with LOGLEVEL=DEBUG</span>
+<span class="n">composable_config</span> <span class="o">=</span> <span class="n">config1</span> <span class="o">+</span> <span class="n">config2</span>
+</pre></div>
+</div>
+<p>Run it with:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>composable_config.py
+</pre></div>
+</div>
+</section>
+<section id="load-configuration-from-file">
+<h3>Load configuration from file<a class="headerlink" href="#load-configuration-from-file" title="Link to this heading"></a></h3>
+<p>Instead of constructing the quantization configuration directly in Python, you can store it in a JSON file and load it at runtime. This is demonstrated in <a class="reference external" href="external_config.py">external_config.py</a>, which reads the configuration with:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="n">config</span> <span class="o">=</span> <span class="n">JaxBaseConfig</span><span class="o">.</span><span class="n">from_json_file</span><span class="p">(</span><span class="n">args</span><span class="o">.</span><span class="n">quant_config_file</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The example configurations are available in the local <a class="reference external" href="configs">configs</a> directory:</p>
+<ul class="simple">
+<li><p><a class="reference external" href="configs/static_config.json">configs/static_config.json</a> for static quantization</p></li>
+<li><p><a class="reference external" href="configs/dynamic_config.json">configs/dynamic_config.json</a> for dynamic quantization</p></li>
+<li><p><a class="reference external" href="configs/composable_config.json">configs/composable_config.json</a> for a composed multi-rule setup</p></li>
+</ul>
+<p>For example, a static quantization configuration looks like this:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"quantization_type"</span><span class="p">:</span><span class="w"> </span><span class="s2">"static_quant"</span><span class="p">,</span>
+<span class="w">    </span><span class="nt">"config"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">        </span><span class="nt">"weight_dtype"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fp8_e4m3"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"activation_dtype"</span><span class="p">:</span><span class="w"> </span><span class="s2">"fp8_e4m3"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"const_scale"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"const_weight"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"weight_scale_granularity"</span><span class="p">:</span><span class="w"> </span><span class="s2">"per_tensor"</span><span class="p">,</span>
+<span class="w">        </span><span class="nt">"dot_product_attention_enable"</span><span class="p">:</span><span class="w"> </span><span class="kc">false</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p>Run the example by passing the JSON file path on the command line:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>external_config.py<span class="w"> </span>--quant_config_file<span class="w"> </span>configs/static_config.json
+</pre></div>
+</div>
+<p>You can swap in <code class="docutils literal notranslate"><span class="pre">configs/dynamic_config.json</span></code> or <code class="docutils literal notranslate"><span class="pre">configs/composable_config.json</span></code> to try other quantization modes. Note that when the JSON describes only dynamic quantization, the calibration function defined in the script is not used.</p>
+</section>
+</section>
+<section id="some-debug">
+<h2>7. Some debug<a class="headerlink" href="#some-debug" title="Link to this heading"></a></h2>
+<p>If you are interested how your model looks like after quantization, all the example scripts already print the flattened layer list before and after quantization:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="nb">print</span><span class="p">(</span><span class="s2">"Quantized model layers:"</span><span class="p">)</span>
+<span class="k">for</span> <span class="n">layer</span> <span class="ow">in</span> <span class="n">q_model</span><span class="o">.</span><span class="n">_flatten_layers</span><span class="p">():</span>
+    <span class="nb">print</span><span class="p">(</span><span class="n">layer</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>For deeper insight (e.g. per-layer scales), you can additionally set the environment variable:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">LOGLEVEL</span><span class="o">=</span>DEBUG
+</pre></div>
+</div>
+<p>and use the <code class="docutils literal notranslate"><span class="pre">print_model()</span></code> utility on the quantized model, as demonstrated in the <a class="reference external" href="../gemma/README.html#6-some-debug">Gemma</a> and <a class="reference external" href="../vit/README.html#6-some-debug">ViT</a> examples.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f19b7c25bb0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
