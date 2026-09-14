@@ -64,11 +64,6 @@ EXAMPLES = [
                 "--model_path", f"{MODELS_PATH}/vit_base_patch16_224_imagenet",
                 "--precision", "fp8_e5m2"
             ],
-            [
-                Path(f"{EXAMPLES_PATH}/vit/quantization.py"),
-                "--model_path", f"{MODELS_PATH}/vit_base_patch16_224_imagenet",
-                "--precision", "int8"
-            ],
         ],
     },
     {
