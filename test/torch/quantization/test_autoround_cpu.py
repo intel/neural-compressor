@@ -18,7 +18,7 @@ from neural_compressor.torch.quantization import (
 )
 from neural_compressor.torch.quantization.quantize import (
     _AutoRoundModelReference,
-    _is_autoround_model_free_string_case,
+    _is_autoround_string_model_reference,
 )
 from neural_compressor.torch.utils import logger
 
@@ -706,29 +706,23 @@ class TestAutoRoundCPU:
                 getattr(attn, "q_scale", None) is not None
             ), f"Missing q_scale in attention for scheme={scheme}, static_attention_dtype={static_attention_dtype}"
 
-    def test_is_autoround_model_free_string_case_true(self):
-        """Test detection when model is string and config has model_free=True."""
+    def test_is_autoround_string_model_reference(self):
+        """Test detection when AutoRound receives a string model reference."""
         config = AutoRoundConfig(model_free=True, scheme="MXFP4")
         model = "/path/to/model"
-        assert _is_autoround_model_free_string_case(model, config) is True
+        assert _is_autoround_string_model_reference(model, config) is True
 
-    def test_is_autoround_model_free_string_case_false_not_string(self):
+    def test_is_autoround_string_model_reference_false_not_string(self):
         """Test detection returns False when model is not a string."""
         config = AutoRoundConfig(model_free=True, scheme="MXFP4")
         model = torch.nn.Linear(10, 10)
-        assert _is_autoround_model_free_string_case(model, config) is False
+        assert _is_autoround_string_model_reference(model, config) is False
 
-    def test_is_autoround_model_free_string_case_false_no_flag(self):
-        """Test detection returns False when model_free is not set."""
-        config = AutoRoundConfig(scheme="MXFP4")
+    def test_is_autoround_string_model_reference_with_model_free_false(self):
+        """Test string references are preserved when static quantization disables model-free mode."""
+        config = AutoRoundConfig(model_free=False, scheme="MXFP4", static_kv_dtype="fp8")
         model = "/path/to/model"
-        assert _is_autoround_model_free_string_case(model, config) is False
-
-    def test_is_autoround_model_free_string_case_false_model_free_false(self):
-        """Test detection returns False when model_free is explicitly False."""
-        config = AutoRoundConfig(model_free=False, scheme="MXFP4")
-        model = "/path/to/model"
-        assert _is_autoround_model_free_string_case(model, config) is False
+        assert _is_autoround_string_model_reference(model, config) is True
 
     def test_autoround_model_reference_creation(self):
         """Test _AutoRoundModelReference wrapper creation."""
@@ -752,6 +746,17 @@ class TestAutoRoundCPU:
             ignore_layers="compressor",
             output_dir="/tmp/test_output",
         )
+
+        result = prepare(model, config)
+
+        assert isinstance(result, _AutoRoundModelReference)
+        assert result.model_reference == model
+        assert result.quant_config is config
+
+    def test_prepare_with_string_model_and_static_kv_returns_reference(self):
+        """Test prepare keeps a model path usable when static KV disables model-free mode."""
+        model = "/path/to/model"
+        config = AutoRoundConfig(model_free=False, scheme="MXFP4", static_kv_dtype="fp8")
 
         result = prepare(model, config)
 
