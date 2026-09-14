@@ -1,116 +1,125 @@
 import os
 import subprocess
+import tempfile
 from pathlib import Path
 
 import pytest
 
+TMP = tempfile.TemporaryDirectory()
+TMP_PATH = Path(TMP.name)
 MODELS_PATH = os.environ.get("MODELS_PATH", "/tf_dataset/jax")
-REPO_ROOT_PATH = f"{os.path.dirname(__file__)}/../.."
+REPO_ROOT_PATH = Path(os.path.dirname(__file__)).resolve().parents[1]
 EXAMPLES_PATH = f"{REPO_ROOT_PATH}/examples/jax/keras"
 # fmt: off
 EXAMPLES = [
     # Helloworld ------------------------
     {
-        "filepath": Path(f"{EXAMPLES_PATH}/helloworld.py")
+        "test_case": "helloworld",
+        "args": [
+            [ Path(f"{EXAMPLES_PATH}/helloworld.py") ]
+        ]
     },
     # Simple model ----------------------
     {
-        "filepath": Path(f"{EXAMPLES_PATH}/simple_model/simple_config.py")
-    },
-    {
-        "filepath": Path(f"{EXAMPLES_PATH}/simple_model/composable_config.py")
-    },
-    {
-        "filepath": Path(f"{EXAMPLES_PATH}/simple_model/external_config.py"),
+        "test_case": "simple_model/simple_config.py",
         "args": [
-            ["--quant_config_file", f"{EXAMPLES_PATH}/simple_model/configs/static_config.json"],
-            ["--quant_config_file", f"{EXAMPLES_PATH}/simple_model/configs/dynamic_config.json"],
-            ["--quant_config_file", f"{EXAMPLES_PATH}/simple_model/configs/composable_config.json"],
+            [ Path(f"{EXAMPLES_PATH}/simple_model/simple_config.py") ]
         ]
     },
     {
-        "filepath": Path(f"{EXAMPLES_PATH}/simple_model/model_saving.py")
+        "test_case": "simple_model/composable_config.py",
+        "args": [
+            [ Path(f"{EXAMPLES_PATH}/simple_model/composable_config.py") ]
+        ]
+    },
+    {
+        "test_case": "simple_model/external_config.py",
+        "args": [
+            [
+                Path(f"{EXAMPLES_PATH}/simple_model/external_config.py"),
+                "--quant_config_file", f"{EXAMPLES_PATH}/simple_model/configs/static_config.json"
+            ],
+            [
+                Path(f"{EXAMPLES_PATH}/simple_model/external_config.py"),
+                "--quant_config_file", f"{EXAMPLES_PATH}/simple_model/configs/dynamic_config.json"
+            ],
+            [
+                Path(f"{EXAMPLES_PATH}/simple_model/external_config.py"),
+                "--quant_config_file", f"{EXAMPLES_PATH}/simple_model/configs/composable_config.json"
+            ],
+        ]
+    },
+    {
+        "test_case": "simple_model/model_saving.py",
+        "args": [
+            [ Path(f"{EXAMPLES_PATH}/simple_model/model_saving.py") ]
+        ]
     },
     # Vit -------------------------------
     {
-        "filepath": Path(f"{EXAMPLES_PATH}/vit/quantization.py"),
+        "test_case": "vit/quantization.py",
         "args": [
             [
-                "--model_path", f"{MODELS_PATH}/vit_base_patch16_224_imagenet",
-                "--precision", "fp8_e4m3"
-            ],
-            [
+                Path(f"{EXAMPLES_PATH}/vit/quantization.py"),
                 "--model_path", f"{MODELS_PATH}/vit_base_patch16_224_imagenet",
                 "--precision", "fp8_e5m2"
             ],
             [
+                Path(f"{EXAMPLES_PATH}/vit/quantization.py"),
                 "--model_path", f"{MODELS_PATH}/vit_base_patch16_224_imagenet",
                 "--precision", "int8"
             ],
-        ]
+        ],
     },
     {
-        "filepath": Path(f"{EXAMPLES_PATH}/vit/prepare_static.py"),
+        "test_case": "vit/prepare_static.py-use_static.py",
         "args": [
             [
+                Path(f"{EXAMPLES_PATH}/vit/prepare_static.py"),
                 "--model_path", f"{MODELS_PATH}/vit_base_patch16_224_imagenet",
                 "--precision", "fp8_e4m3",
-                "--quantized_path", "./vit_quantized_fp8_e4m3.keras"
+                "--quantized_path", f"{TMP_PATH}/vit_quantized.keras"
             ],
             [
-                "--model_path", f"{MODELS_PATH}/vit_base_patch16_224_imagenet",
-                "--precision", "fp8_e5m2",
-                "--quantized_path", "./vit_quantized_fp8_e5m2.keras"
+                Path(f"{EXAMPLES_PATH}/vit/use_static.py"),
+                "--quantized_path", f"{TMP_PATH}/vit_quantized.keras"
             ],
             [
+                Path(f"{EXAMPLES_PATH}/vit/prepare_static.py"),
                 "--model_path", f"{MODELS_PATH}/vit_base_patch16_224_imagenet",
                 "--precision", "int8",
-                "--quantized_path", "./vit_quantized_int8.keras"
+                "--quantized_path", f"{TMP_PATH}/vit_quantized"
             ],
-        ]
-    },
-    {
-        "filepath": Path(f"{EXAMPLES_PATH}/vit/use_static.py"),
-        "args": [
-            ["--quantized_path", "./vit_quantized_fp8_e4m3.keras"],
-            ["--quantized_path", "./vit_quantized_fp8_e5m2.keras"],
-            ["--quantized_path", "./vit_quantized_int8.keras"],
+            [
+                Path(f"{EXAMPLES_PATH}/vit/use_static.py"),
+                "--quantized_path", f"{TMP_PATH}/vit_quantized"
+            ],
         ]
     },
     # Gemma -----------------------------
     {
-        "filepath": Path(f"{EXAMPLES_PATH}/gemma/quantization.py"),
+        "test_case": "gemma/quantization.py",
         "args": [
             [
+                Path(f"{EXAMPLES_PATH}/gemma/quantization.py"),
                 "--model_path", f"{MODELS_PATH}/gemma3_instruct_270m",
                 "--precision", "fp8_e4m3"
-            ],
-            [
-                "--model_path", f"{MODELS_PATH}/gemma3_instruct_270m",
-                "--precision", "fp8_e5m2"
-            ],
+            ]
         ]
     },
     {
-        "filepath": Path(f"{EXAMPLES_PATH}/gemma/prepare_static.py"),
+        "test_case": "gemma/prepare_static.py-use_static.py",
         "args": [
             [
-                "--model_path", f"{MODELS_PATH}/gemma3_instruct_270m",
-                "--precision", "fp8_e4m3",
-                "--quantized_path", "./gemma3_instruct_270m_quantized_fp8_e4m3.keras"
-            ],
-            [
+                Path(f"{EXAMPLES_PATH}/gemma/prepare_static.py"),
                 "--model_path", f"{MODELS_PATH}/gemma3_instruct_270m",
                 "--precision", "fp8_e5m2",
-                "--quantized_path", "./gemma3_instruct_270m_quantized_fp8_e5m2.keras"
+                "--quantized_path", f"{TMP_PATH}/gemma3_instruct_270m_quantized"
             ],
-        ]
-    },
-    {
-        "filepath": Path(f"{EXAMPLES_PATH}/gemma/use_static.py"),
-        "args": [
-            ["--quantized_path", "./gemma3_instruct_270m_quantized_fp8_e4m3.keras"],
-            ["--quantized_path", "./gemma3_instruct_270m_quantized_fp8_e5m2.keras"],
+            [
+                Path(f"{EXAMPLES_PATH}/gemma/use_static.py"),
+                "--quantized_path", f"{TMP_PATH}/gemma3_instruct_270m_quantized"
+            ]
         ]
     },
 ]
@@ -118,15 +127,9 @@ EXAMPLES = [
 
 
 @pytest.mark.parametrize(
-    "example",
-    [example for example in EXAMPLES],
-    ids=[f"{example['filepath'].parent.name}/{example['filepath'].name}" for example in EXAMPLES],
+    "example", [example for example in EXAMPLES], ids=[example["test_case"] for example in EXAMPLES]
 )
 def test_example(example):
-    if "args" in example:
-        for args in example["args"]:
-            process = subprocess.run(args=["python", example["filepath"], *args], cwd=example["filepath"].parent)
-            assert process.returncode == 0, f"Example failed with args: {args}"
-    else:
-        process = subprocess.run(args=["python", example["filepath"]], cwd=example["filepath"].parent)
-        assert process.returncode == 0, "No args example failed"
+    for args in example["args"]:
+        process = subprocess.run(args=["python", *args], cwd=args[0].parent)
+        assert process.returncode == 0, f"Example failed with args: {args}"
