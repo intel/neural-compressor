@@ -7,10 +7,13 @@ DTYPE=""
 INPUT_MODEL=""
 OUTPUT_MODEL=""
 FORMAT="llm_compressor"
+STATIC_KV_DTYPE=""
+STATIC_ATTENTION_DTYPE=""
+# requires transformers==4.57.6 for fp8 kv static quant
 
 usage() {
   echo "Usage: bash run_quant.sh --dtype=<mxfp8_moe_fp4|mxfp8|mxfp4> --input_model=<path_or_name> --output_model=<output_dir>"
-  echo "Optional: --format=<auto_round|llm_compressor>"
+  echo "Optional: --format=<auto_round|llm_compressor> --static_kv_dtype=<fp8> --static_attention_dtype=<fp8>"
   exit 1
 }
 
@@ -28,6 +31,12 @@ for arg in "$@"; do
     --format=*)
       FORMAT="${arg#*=}"
       ;;
+    --static_kv_dtype=*)
+      STATIC_KV_DTYPE="${arg#*=}"
+      ;;
+    --static_attention_dtype=*)
+      STATIC_ATTENTION_DTYPE="${arg#*=}"
+      ;;
     -h|--help)
       usage
       ;;
@@ -43,8 +52,14 @@ done
 [[ -z "$OUTPUT_MODEL" ]] && echo "Error: --output_model is required" && usage
 
 cd "$SCRIPT_DIR"
-python quantize.py \
-  --dtype "$DTYPE" \
-  --input_model "$INPUT_MODEL" \
-  --output_model "$OUTPUT_MODEL" \
+QUANTIZE_ARGS=(
+  --dtype "$DTYPE"
+  --input_model "$INPUT_MODEL"
+  --output_model "$OUTPUT_MODEL"
   --format "$FORMAT"
+)
+
+[[ -n "$STATIC_KV_DTYPE" ]] && QUANTIZE_ARGS+=(--static_kv_dtype "$STATIC_KV_DTYPE")
+[[ -n "$STATIC_ATTENTION_DTYPE" ]] && QUANTIZE_ARGS+=(--static_attention_dtype "$STATIC_ATTENTION_DTYPE")
+
+python quantize.py "${QUANTIZE_ARGS[@]}"

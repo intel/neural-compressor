@@ -48,13 +48,20 @@ def build_config(args: argparse.Namespace) -> AutoRoundConfig:
     if args.disable_preset_layer_config:
         layer_config = None
 
+    # static kv/attention quantization needs the real model, so model-free mode must be disabled.
+    model_free = not any((args.static_kv_dtype, args.static_attention_dtype))
+
     return AutoRoundConfig(
-        model_free=True,
+        model_free=model_free,
+        iters=0,
         scheme=preset["scheme"],
         layer_config=layer_config,
+        static_kv_dtype=args.static_kv_dtype,
+        static_attention_dtype=args.static_attention_dtype,
         export_format=args.format,
         output_dir=args.output_model,
         reloading=False,
+        dataset="HuggingFaceH4/ultrachat_200k",
     )
 
 
@@ -92,6 +99,18 @@ def main() -> None:
         "--disable_preset_layer_config",
         action="store_true",
         help="Disable preset layer_config for the selected dtype.",
+    )
+    parser.add_argument(
+        "--static_kv_dtype",
+        type=str,
+        default=None,
+        help="Static KV cache data type, e.g. fp8.",
+    )
+    parser.add_argument(
+        "--static_attention_dtype",
+        type=str,
+        default=None,
+        help="Static attention data type, e.g. fp8.",
     )
     args = parser.parse_args()
 

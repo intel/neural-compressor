@@ -207,7 +207,7 @@ class AutoRoundQuantizer(Quantizer):
         Returns:
             A prepared model.
         """
-        if isinstance(model, str) and bool(getattr(self, "model_free", False)):
+        if isinstance(model, str) or bool(getattr(self, "model_free", False)):
             return model
         prepare_model = InputCaptureModule(model)
         return prepare_model

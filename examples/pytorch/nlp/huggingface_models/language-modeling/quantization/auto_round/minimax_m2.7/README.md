@@ -47,6 +47,19 @@ bash run_quant.sh \
   --output_model=~/models/minimax-m2.7-mxfp
 ```
 
+To additionally quantize the KV cache / attention to static FP8 (requires `transformers==4.57.6`):
+
+```bash
+bash run_quant.sh \
+  --dtype=mxfp4_mixed \
+  --input_model=MiniMaxAI/MiniMax-M2.7 \
+  --output_model=~/models/minimax-m2.7-mxfp-fp8kv \
+  --static_kv_dtype=fp8 \
+  --static_attention_dtype=fp8
+```
+
+> Note: `--static_kv_dtype` / `--static_attention_dtype` require loading the real model, so `model_free` is automatically disabled when either is set.
+
 ### 2. Serve + Evaluate
 
 ```bash
@@ -55,6 +68,17 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_evalscope.sh \
   --tp 4 \
   --port 8001 \
   --tasks gpqa_diamond,aime25,gsm8k,piqa,hellaswag,live_code_bench
+```
+
+For a model quantized with static FP8 KV cache / attention:
+
+```bash
+CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_evalscope.sh \
+  --model ~/models/minimax-m2.7-mxfp-fp8kv \
+  --tp 4 \
+  --port 8001 \
+  --static_kv_dtype fp8 \
+  --static_attention_dtype fp8
 ```
 
 Equivalent vLLM command used inside `run_evalscope.sh`:
@@ -85,6 +109,8 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 vllm serve ~/models/minimax-m2.7-mxfp \
 - `--input_model`: HF model name or local model path.
 - `--output_model`: output directory.
 - `--format`: `auto_round` or `llm_compressor` (default: `llm_compressor`).
+- `--static_kv_dtype`: static KV cache data type, e.g. `fp8` (default: unset).
+- `--static_attention_dtype`: static attention data type, e.g. `fp8` (default: unset).
 
 ### `run_evalscope.sh`
 
@@ -95,6 +121,8 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 vllm serve ~/models/minimax-m2.7-mxfp \
 - `--max-model-len`: max context length (default: `102400`).
 - `--served-model-name`: served model name alias (default: `minimax-m2.7`).
 - `--tasks`: comma-separated subset of `gpqa_diamond,aime25,gsm8k,piqa,hellaswag,live_code_bench` (default: all).
+- `--static_kv_dtype`: vLLM `kv_cache_dtype`, e.g. `fp8` (default: `auto`).
+- `--static_attention_dtype`: set to `fp8` to enable FP8 attention (implies `kv_cache_dtype=fp8`).
 - `--skip_serve`: skip starting vLLM (use existing endpoint on the same `--port`).
 
 ## Evaluation Generation Config

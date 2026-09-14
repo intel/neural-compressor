@@ -18,6 +18,8 @@ MAX_NUM_SEQS=1024
 MAX_NUM_BATCHED_TOKENS=32768
 SERVED_MODEL_NAME="minimax-m2.7"
 TASKS=""
+KV_CACHE_DTYPE="auto"
+STATIC_ATTENTION_DTYPE="auto"
 SKIP_SERVE="${SKIP_SERVE:-false}"
 VLLM_PID=""
 LOG_TAIL_PID=""
@@ -106,12 +108,31 @@ while [[ $# -gt 0 ]]; do
       MAX_MODEL_LEN="$2"; shift 2 ;;
     --served-model-name)
       SERVED_MODEL_NAME="$2"; shift 2 ;;
+    --static_kv_dtype|--static-kv-dtype)
+      KV_CACHE_DTYPE="$2"; shift 2 ;;
+    --static_attention_dtype|--static-attention-dtype)
+      STATIC_ATTENTION_DTYPE="$2"; shift 2 ;;
     *)
       echo "Unknown option: $1"; exit 1 ;;
   esac
 done
 
 SKIP_SERVE="$(echo "${SKIP_SERVE}" | tr '[:upper:]' '[:lower:]')"
+
+# for fp8 kv cache
+if [[ "${KV_CACHE_DTYPE}" == "fp8" ]]; then
+  export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
+  export VLLM_ATTENTION_BACKEND="FLASHINFER"
+  echo "Using FP8 for KV cache"
+fi
+
+# for fp8 attention cache
+if [[ "${STATIC_ATTENTION_DTYPE}" == "fp8" ]]; then
+  export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+  export VLLM_ATTENTION_BACKEND="FLASHINFER"
+  KV_CACHE_DTYPE="fp8"
+  echo "Using FP8 Attention"
+fi
 
 API_URL="http://127.0.0.1:${PORT}/v1"
 
@@ -130,6 +151,7 @@ if [[ "${SKIP_SERVE}" != "true" ]]; then
     --max-num-seqs "${MAX_NUM_SEQS}"
     --max-num-batched-tokens "${MAX_NUM_BATCHED_TOKENS}"
     --enable-chunked-prefill
+    --kv-cache-dtype "${KV_CACHE_DTYPE}"
     --port "${PORT}"
   )
 
@@ -209,6 +231,7 @@ echo "Model: $MODEL" | tee -a "$OUTPUT_FILE"
 echo "Served model name: ${SERVED_MODEL_NAME}" | tee -a "$OUTPUT_FILE"
 echo "API URL: $API_URL" | tee -a "$OUTPUT_FILE"
 echo "Temperature: $TEMPERATURE / top_p: ${TOP_P}" | tee -a "$OUTPUT_FILE"
+echo "KV cache dtype: ${KV_CACHE_DTYPE}" | tee -a "$OUTPUT_FILE"
 echo "Tasks: ${SELECTED_TASKS[*]}" | tee -a "$OUTPUT_FILE"
 echo "" | tee -a "$OUTPUT_FILE"
 
