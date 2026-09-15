@@ -1,7 +1,6 @@
 """NVFP4 E2M1 activation quant-dequant with FP8 E4M3 block scales."""
 
 import torch
-
 from vllm_qdq_plugin.trace import trace_qdq
 
 _FP4_MAX = 6.0
