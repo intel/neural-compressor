@@ -2,8 +2,10 @@ import pytest
 import torch
 import torch.nn.functional as F
 from vllm.model_executor.layers.fused_moe.activation import ApplyMoEActivationConfig, MoEActivation
+from vllm_qdq_plugin.qdq.nvfp4 import nvfp4_qdq
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import nvfp4_e5m3_qdq
 from vllm_qdq_plugin.quantization.fused_moe_e5m3 import _select_moe_config, fused_moe_ue5m3
+from vllm_qdq_plugin.quantization.inc_nvfp4_moe import INCNvfp4QDQMoEMethod
 from vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_moe import INCNvfp4UE5M3MoEMethod
 
 
@@ -16,6 +18,16 @@ def _decode_weight(packed: torch.Tensor, scale_bits: torch.Tensor, group_size: i
     unpacked = torch.stack((low_value, high_value), dim=-1).flatten(-2)
     scales = _decode_ue5m3(scale_bits).repeat_interleave(group_size, dim=-1)
     return unpacked * scales
+
+
+def _decode_standard_weight(packed: torch.Tensor, scales: torch.Tensor, group_size: int) -> torch.Tensor:
+    values = torch.tensor([0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0], device=packed.device)
+    low = packed & 0x0F
+    high = packed >> 4
+    low_value = values[(low & 0x07).long()] * torch.where(low & 0x08 != 0, -1.0, 1.0)
+    high_value = values[(high & 0x07).long()] * torch.where(high & 0x08 != 0, -1.0, 1.0)
+    unpacked = torch.stack((low_value, high_value), dim=-1).flatten(-2)
+    return unpacked * scales.float().repeat_interleave(group_size, dim=-1)
 
 
 def _decode_ue5m3(scale_bits: torch.Tensor) -> torch.Tensor:
@@ -147,6 +159,85 @@ def test_marlin_moe_matches_reference():
         (),
         {
             "is_act_and_mul": True,
+            "swiglu_limit": None,
+            "swiglu_alpha": None,
+            "swiglu_beta": None,
+            "activation_situ_beta": None,
+            "activation_situ_linear_beta": None,
+        },
+    )()
+    method.process_weights_after_loading(layer)
+    actual = method.apply(layer, x, topk_weights, topk_ids, None, None)
+
+    assert F.cosine_similarity(actual.float().flatten(), expected.float().flatten(), dim=0) > 0.9999
+    relative_l2_error = torch.linalg.vector_norm(actual.float() - expected.float()) / torch.linalg.vector_norm(
+        expected.float()
+    )
+    assert relative_l2_error < 0.01
+
+
+def test_standard_nvfp4_qdq_moe_matches_reference():
+    if not torch.cuda.is_available():
+        pytest.skip("CUDA is required")
+
+    torch.manual_seed(2)
+    device = torch.device("cuda")
+    num_experts, num_tokens, top_k = 4, 5, 2
+    hidden_size, intermediate_size = 128, 64
+    x = torch.randn(num_tokens, hidden_size, device=device, dtype=torch.bfloat16)
+    w13 = torch.randint(
+        0, 256, (num_experts, intermediate_size * 2, hidden_size // 2), device=device, dtype=torch.uint8
+    )
+    w2 = torch.randint(0, 256, (num_experts, hidden_size, intermediate_size // 2), device=device, dtype=torch.uint8)
+    w13_scale = torch.rand(
+        num_experts, intermediate_size * 2, hidden_size // 16, device=device
+    ).to(torch.float8_e4m3fn)
+    w2_scale = torch.rand(num_experts, hidden_size, intermediate_size // 16, device=device).to(torch.float8_e4m3fn)
+    w13_global_scale = torch.full((num_experts, 2), 2.0, device=device)
+    w2_global_scale = torch.full((num_experts,), 2.0, device=device)
+    input_global_scale = torch.full((num_experts, 2), 0.25, device=device)
+    w2_input_global_scale = torch.full((num_experts,), 0.25, device=device)
+    topk_ids = torch.tensor([[0, 1], [2, 3], [1, 3], [0, 2], [3, 1]], device=device, dtype=torch.int32)
+    topk_weights = torch.softmax(torch.randn(num_tokens, top_k, device=device), dim=-1)
+
+    decoded_w13 = _decode_standard_weight(w13, w13_scale, 16).to(x.dtype) / 2.0
+    decoded_w2 = _decode_standard_weight(w2, w2_scale, 16).to(x.dtype) / 2.0
+    quantized_x = nvfp4_qdq(x, input_global_scale[0, 0], 16)
+    expected = torch.zeros_like(x)
+    for expert_id in range(num_experts):
+        token_ids, slots = torch.where(topk_ids == expert_id)
+        gate_up = quantized_x[token_ids] @ decoded_w13[expert_id].T
+        activated = F.silu(gate_up[:, :intermediate_size]) * gate_up[:, intermediate_size:]
+        activated = nvfp4_qdq(activated, w2_input_global_scale[expert_id], 16)
+        expert_output = activated @ decoded_w2[expert_id].T
+        expected.index_add_(0, token_ids, (expert_output * topk_weights[token_ids, slots, None]).to(expected.dtype))
+
+    layer = torch.nn.Module()
+    layer.num_experts = num_experts
+    layer.hidden_size = hidden_size
+    layer.intermediate_size_per_partition = intermediate_size
+    layer.params_dtype = torch.bfloat16
+    layer.w13_weight_packed = torch.nn.Parameter(w13, requires_grad=False)
+    layer.w2_weight_packed = torch.nn.Parameter(w2, requires_grad=False)
+    layer.w13_weight_scale = torch.nn.Parameter(w13_scale, requires_grad=False)
+    layer.w2_weight_scale = torch.nn.Parameter(w2_scale, requires_grad=False)
+    layer.w13_weight_global_scale = torch.nn.Parameter(w13_global_scale, requires_grad=False)
+    layer.w2_weight_global_scale = torch.nn.Parameter(w2_global_scale, requires_grad=False)
+    layer.w13_input_global_scale = torch.nn.Parameter(input_global_scale, requires_grad=False)
+    layer.w2_input_global_scale = torch.nn.Parameter(w2_input_global_scale, requires_grad=False)
+    layer.activation = MoEActivation.SILU
+    layer.apply_router_weight_on_input = False
+    layer.global_num_experts = num_experts
+    layer.expert_map = None
+
+    method = object.__new__(INCNvfp4QDQMoEMethod)
+    method.group_size = 16
+    method.moe = type(
+        "MoeConfig",
+        (),
+        {
+            "is_act_and_mul": True,
+            "w13_num_shards": 2,
             "swiglu_limit": None,
             "swiglu_alpha": None,
             "swiglu_beta": None,

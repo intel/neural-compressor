@@ -12,7 +12,11 @@ def _nvfp4_qdq_reference(
     input_global_scale: torch.Tensor,
     group_size: int = 16,
 ) -> torch.Tensor:
-    """Quantize-dequantize activations using standard NVFP4 semantics."""
+    """Quantize-dequantize activations using the decoded global scale.
+
+    ``input_global_scale`` is the scale used by the QDQ equations. It is not
+    the inverse scale consumed by native NVFP4 kernels.
+    """
     if x.dim() != 2:
         raise ValueError(f"nvfp4_qdq expects a 2D tensor, got {x.dim()}D")
     if x.dtype not in (torch.bfloat16, torch.float16):

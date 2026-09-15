@@ -249,7 +249,7 @@ class Nvfp4QDQTests(unittest.TestCase):
                 weight_loader=None,
             )
         layer.weight_global_scale = torch.nn.Parameter(torch.tensor([2.0], device=device), requires_grad=False)
-        layer.input_global_scale = torch.nn.Parameter(torch.tensor([4.0], device=device), requires_grad=False)
+        layer.input_global_scale = torch.nn.Parameter(torch.tensor([0.25], device=device), requires_grad=False)
         layer.input_size_per_partition = 64
         layer.output_size_per_partition = 64
         layer.params_dtype = torch.bfloat16
@@ -268,6 +268,17 @@ class Nvfp4QDQTests(unittest.TestCase):
 
         self.assertTrue(torch.equal(actual, expected))
 
+    def test_qdq_method_requires_sm80_and_preserves_input_scale(self) -> None:
+        method = object.__new__(INCNvfp4QDQLinearMethod)
+        method.group_size = 16
+        layer = self._make_dense_layer(torch.device("cpu"))
+        stored_input_global_scale = layer.input_global_scale.detach().clone()
+
+        method.process_weights_after_loading(layer)
+
+        self.assertEqual(method.get_min_capability(), 80)
+        torch.testing.assert_close(layer.input_global_scale, stored_input_global_scale.max())
+
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
     def test_marlin_dense_matches_dequantized_reference(self) -> None:
         torch.manual_seed(11)
@@ -283,7 +294,7 @@ class Nvfp4QDQTests(unittest.TestCase):
         values = torch.stack((low, high), dim=-1).reshape(64, 64)
         weight = values * block_scale.repeat_interleave(16, dim=1) / stored_weight_global_scale
         expected = torch.nn.functional.linear(
-            nvfp4_qdq(x, 1.0 / stored_input_global_scale, 16),
+            nvfp4_qdq(x, stored_input_global_scale, 16),
             weight.to(torch.bfloat16),
         )
 
