@@ -13,7 +13,9 @@
 # limitations under the License.
 
 import argparse
+import json
 import logging
+import re
 
 from neural_compressor.torch.quantization import AutoRoundConfig, convert, prepare
 
@@ -31,6 +33,40 @@ _PRESET_CONFIG = {
 }
 
 
+def parse_layer_config(layer_config: str | None) -> dict | None:
+	if not layer_config:
+		return None
+
+	candidate = layer_config.strip()
+	for content in (candidate, candidate.replace("'", '"')):
+		try:
+			parsed = json.loads(content)
+			if not isinstance(parsed, dict):
+				raise ValueError("layer_config must be a JSON object.")
+			return parsed
+		except json.JSONDecodeError:
+			pass
+
+	# Support AutoRound-style shorthand such as: {mlp.experts:{scheme:MXFP4}}
+	normalized = re.sub(r"([{,]\s*)([A-Za-z_][\\w.-]*)(\s*:)", r'\1"\2"\3', candidate)
+	normalized = re.sub(
+		r"(:\s*)([A-Za-z_][\\w.-]*)(\s*[,}])",
+		r'\1"\2"\3',
+		normalized,
+	)
+	try:
+		parsed = json.loads(normalized)
+		if not isinstance(parsed, dict):
+			raise ValueError("layer_config must be an object after normalization.")
+		return parsed
+	except (json.JSONDecodeError, ValueError) as err:
+		raise ValueError(
+			"Invalid --layer_config format. Use JSON like "
+			"'{\"mlp.experts\": {\"scheme\": \"MXFP4\"}}' or AutoRound shorthand "
+			"'{mlp.experts:{scheme:MXFP4}}'."
+		) from err
+
+
 def build_config(args: argparse.Namespace) -> AutoRoundConfig:
 	dtype_key = args.dtype.lower()
 	if dtype_key not in _PRESET_CONFIG:
@@ -38,6 +74,8 @@ def build_config(args: argparse.Namespace) -> AutoRoundConfig:
 
 	preset = _PRESET_CONFIG[dtype_key]
 	ignore_layers = args.ignore_layers or preset["ignore_layers"]
+	layer_config = parse_layer_config(args.layer_config) if args.layer_config else preset["layer_config"]
+	scheme = args.scheme or preset["scheme"]
 	model_free = False if any(
 		dtype for dtype in (args.static_kv_dtype, args.static_attention_dtype)
 	) else True
@@ -46,9 +84,9 @@ def build_config(args: argparse.Namespace) -> AutoRoundConfig:
 		model_free=model_free,
 		iters=0,
 		disable_opt_rtn=True,
-		scheme=preset["scheme"],
+		scheme=scheme,
 		ignore_layers=ignore_layers,
-		layer_config=preset["layer_config"],
+		layer_config=layer_config,
 		static_kv_dtype=args.static_kv_dtype,
 		static_attention_dtype=args.static_attention_dtype,
 		export_format=args.format,
@@ -85,6 +123,21 @@ def main() -> None:
 		help="Comma-separated layer name patterns to skip. If not set, use preset default ignore_layers.",
 	)
 	parser.add_argument(
+		"--scheme",
+		type=str,
+		default=None,
+		help="Override quantization scheme. Example: MXFP4, BF16.",
+	)
+	parser.add_argument(
+		"--layer_config",
+		type=str,
+		default=None,
+		help=(
+			"Layer config JSON or AutoRound shorthand. Example JSON: "
+			"'{\"mlp.experts\": {\"scheme\": \"MXFP4\"}}'."
+		),
+	)
+	parser.add_argument(
 		"--format",
 		type=str,
 		default="llm_compressor",
@@ -115,4 +168,4 @@ def main() -> None:
 
 
 if __name__ == "__main__":
-    main()
+	main()

@@ -8,13 +8,15 @@ INPUT_MODEL="moonshotai/Kimi-K2.6"
 OUTPUT_MODEL=""
 FORMAT="llm_compressor"
 IGNORE_LAYERS="shared_experts,self_attn,mlp.gate_proj,mlp.up_proj,mlp.down_proj"
+SCHEME=""
+LAYER_CONFIG=""
 KV_CACHE_DTYPE=""
 STATIC_ATTENTION_DTYPE=""
 # required transformers==4.57.6 for fp8kv static quant
 
 usage() {
 	echo "Usage: bash run_quant.sh --dtype=<mxfp4> --input_model=<path_or_name> --output_model=<output_dir>"
-	echo "Optional: --format=<auto_round|llm_compressor> --ignore_layers=<comma_separated_patterns>"
+	echo "Optional: --format=<auto_round|llm_compressor> --ignore_layers=<comma_separated_patterns> --scheme=<scheme> --layer_config=<json_or_shorthand>"
 	exit 1
 }
 
@@ -34,6 +36,12 @@ for arg in "$@"; do
 			;;
 		--ignore_layers=*)
 			IGNORE_LAYERS="${arg#*=}"
+			;;
+		--scheme=*)
+			SCHEME="${arg#*=}"
+			;;
+		--layer_config=*)
+			LAYER_CONFIG="${arg#*=}"
 			;;
 		--static_kv_dtype=*)
 			KV_CACHE_DTYPE="${arg#*=}"
@@ -66,6 +74,8 @@ QUANTIZE_ARGS=(
 
 [[ -n "$KV_CACHE_DTYPE" ]] && QUANTIZE_ARGS+=(--static_kv_dtype "$KV_CACHE_DTYPE")
 [[ -n "$STATIC_ATTENTION_DTYPE" ]] && QUANTIZE_ARGS+=(--static_attention_dtype "$STATIC_ATTENTION_DTYPE")
+[[ -n "$SCHEME" ]] && QUANTIZE_ARGS+=(--scheme "$SCHEME")
+[[ -n "$LAYER_CONFIG" ]] && QUANTIZE_ARGS+=(--layer_config "$LAYER_CONFIG")
 
 python quantize.py "${QUANTIZE_ARGS[@]}"
-	
+
