@@ -1,0 +1,213 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stable Diffusion XL MXFP8 &mdash; Intel® Neural Compressor 3.9 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Stable Diffusion XL MXFP8</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../../_sources/docs/source/examples/pytorch/diffusion_model/diffusers/stable_diffusion/mxfp8/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="stable-diffusion-xl-mxfp8">
+<h1>Stable Diffusion XL MXFP8<a class="headerlink" href="#stable-diffusion-xl-mxfp8" title="Link to this heading"></a></h1>
+<p>This example quantizes the UNet in
+<a class="reference external" href="https://huggingface.co/stabilityai/stable-diffusion-xl-base-1.0"><code class="docutils literal notranslate"><span class="pre">stabilityai/stable-diffusion-xl-base-1.0</span></code></a>
+to MXFP8 with AutoRound and evaluates generated images on COCO2014 captions.</p>
+<p>MXFP8 uses a block size of 32 and E8M0 power-of-two scales. The exported directory is a complete Diffusers
+pipeline: the UNet weights are fake-quantized and UNet linear-layer activations are dynamically quantized during
+inference.</p>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<p>Install a CUDA-compatible PyTorch build first, then install the example dependencies, Neural Compressor, and
+AutoRound:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>requirements.txt
+pip<span class="w"> </span>install<span class="w"> </span>neural-compressor-pt
+pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/intel/auto-round.git@main
+</pre></div>
+</div>
+<p>Download the COCO2014 caption file used by MLPerf Stable Diffusion evaluation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>wget<span class="w"> </span>https://github.com/mlcommons/inference/raw/refs/heads/master/text_to_image/coco2014/captions/captions_source.tsv
+</pre></div>
+</div>
+<p>Access to the gated SDXL model on Hugging Face may require authentication.</p>
+</section>
+<section id="quantization">
+<h2>Quantization<a class="headerlink" href="#quantization" title="Link to this heading"></a></h2>
+<p>Run calibration-free pure RTN quantization:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--input_model<span class="o">=</span>stabilityai/stable-diffusion-xl-base-1.0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_model<span class="o">=</span>./saved_results
+</pre></div>
+</div>
+<p>The recipe fixes <code class="docutils literal notranslate"><span class="pre">iters=0</span></code> and <code class="docutils literal notranslate"><span class="pre">disable_opt_rtn=True</span></code>, so it does not require calibration samples or tuning.
+The equivalent Python command is:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>main.py<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>stabilityai/stable-diffusion-xl-base-1.0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_dir<span class="w"> </span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--scheme<span class="w"> </span>MXFP8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--disable_opt_rtn<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantize
+</pre></div>
+</div>
+</section>
+<section id="evaluation">
+<h2>Evaluation<a class="headerlink" href="#evaluation" title="Link to this heading"></a></h2>
+<p>Generate the BF16 baseline on all visible GPUs and calculate CLIP, CLIP-IQA, and ImageReward:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--input_model<span class="o">=</span>stabilityai/stable-diffusion-xl-base-1.0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset_location<span class="o">=</span>captions_source.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_image_path<span class="o">=</span>./tmp_imgs_bf16
+</pre></div>
+</div>
+<p>Evaluate the MXFP8 pipeline:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--input_model<span class="o">=</span>stabilityai/stable-diffusion-xl-base-1.0<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--quantized_model<span class="o">=</span>./saved_results<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset_location<span class="o">=</span>captions_source.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_image_path<span class="o">=</span>./tmp_imgs_mxfp8
+</pre></div>
+</div>
+<p>When multiple GPUs are listed, the script partitions the TSV into balanced subsets. Every sample is assigned
+exactly once, even when the sample count is not divisible by the GPU count. Use <code class="docutils literal notranslate"><span class="pre">--limit=10</span></code> for a short smoke
+test.</p>
+</section>
+<section id="results">
+<h2>Results<a class="headerlink" href="#results" title="Link to this heading"></a></h2>
+<p>The following results were measured on 5,000 COCO2014 validation prompts. Higher is better for every metric.</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Format</th>
+<th style="text-align: right;">CLIP ↑</th>
+<th style="text-align: right;">CLIP-IQA ↑</th>
+<th style="text-align: right;">ImageReward ↑</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>BF16</td>
+<td style="text-align: right;">26.8583</td>
+<td style="text-align: right;">0.929027</td>
+<td style="text-align: right;">0.812544</td>
+</tr>
+<tr>
+<td>MXFP8 (RTN)</td>
+<td style="text-align: right;">26.8491</td>
+<td style="text-align: right;">0.930057</td>
+<td style="text-align: right;">0.814659</td>
+</tr>
+</tbody>
+</table><p>Compared with BF16, MXFP8 retains an average of 100.11% across the three metrics.</p>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7f7a96e54080> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
