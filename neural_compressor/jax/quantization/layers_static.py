@@ -25,6 +25,7 @@ import keras_hub.layers
 import numpy as np
 from jax import numpy as jnp
 from keras import ops
+from keras.src.backend import set_keras_mask
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
 
@@ -620,8 +621,10 @@ class QStaticDenseMixin(SaveableLayerMixin):
                 w_scale = self.w_scale.value
             _kernel_quant = self.wdequantfun(_kernel_quant, w_scale)
             return _kernel_quant
-        ret = super().kernel
-        return ret.value
+        # `super().kernel` may return either the raw `Variable` or, when LoRA is enabled
+        # upstream, a materialized tensor (kernel + LoRA delta). `convert_to_tensor`
+        # normalizes both cases instead of assuming a `Variable` with a `.value` attribute.
+        return ops.convert_to_tensor(super().kernel)
 
     def call(self, inputs, training=None):
         """Run calibration observer before the dense computation.
@@ -1404,33 +1407,48 @@ class QStaticRotaryEmbedding(SaveableLayerMixin, keras_hub.layers.RotaryEmbeddin
         Returns:
             Tuple[jnp.ndarray, jnp.ndarray]: Cosine and sine embeddings.
         """
-        feature_axis = len(inputs.shape) - 1
+        batch_axis = 0
         sequence_axis = 1
+        feature_axis = len(inputs.shape) - 1
 
         rotary_dim = ops.shape(inputs)[feature_axis]
         inverse_freq = self._get_inverse_freq(rotary_dim)
 
         if positions is None:
             positions = self._compute_positions(inputs, start_index)
+            positions = ops.expand_dims(positions, axis=batch_axis)
         else:
             positions = ops.cast(positions, "float32")
+            if len(ops.shape(positions)) == 1:
+                positions = ops.expand_dims(positions, axis=batch_axis)
 
-        positions = positions / ops.cast(self.scaling_factor, "float32")
+        if self.rope_type == "yarn" and self.truncate and self.original_max_position_embeddings is not None:
+            positions = ops.minimum(positions, ops.cast(self.original_max_position_embeddings, "float32"))
+
         positions = self.positions_qdq(positions)
         inverse_freq = self.inverse_freq_qdq(inverse_freq)
-        freq = ops.einsum("i,j->ij", positions, inverse_freq)
+        freq = ops.einsum("bi,j->bij", positions, inverse_freq)
         embedding = ops.stack((freq, freq), axis=-2)
         embedding = ops.reshape(embedding, (*ops.shape(freq)[:-1], ops.shape(freq)[-1] * 2))
 
         # Reshape the embedding to be broadcastable with input shape.
-        if feature_axis < sequence_axis:
-            embedding = ops.transpose(embedding)
         for axis in range(len(inputs.shape)):
-            if axis != sequence_axis and axis != feature_axis:
+            if axis not in (batch_axis, sequence_axis, feature_axis):
                 embedding = ops.expand_dims(embedding, axis)
 
         cos_emb = ops.cast(ops.cos(embedding), self.compute_dtype)
         sin_emb = ops.cast(ops.sin(embedding), self.compute_dtype)
+
+        if self.rope_type == "yarn":
+            # YaRN temperature scaling.
+            factor = ops.add(
+                ops.multiply(
+                    ops.cast(0.1, self.compute_dtype), ops.log(ops.cast(self.scaling_factor, self.compute_dtype))
+                ),
+                ops.cast(1.0, self.compute_dtype),
+            )
+            cos_emb = cos_emb * factor
+            sin_emb = sin_emb * factor
         return cos_emb, sin_emb
 
 
@@ -1531,7 +1549,11 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
                 logits = ops.tanh(logits / soft_cap) * soft_cap
             return logits
 
-        return super(keras.layers.ReversibleEmbedding, self).call(inputs)
+        result = super(keras.layers.ReversibleEmbedding, self).call(inputs)
+        mask = super(keras.layers.ReversibleEmbedding, self).compute_mask(inputs)
+        if mask is not None:
+            set_keras_mask(result, mask)
+        return result
 
 
 verify_api(keras.layers.ReversibleEmbedding, QStaticReversibleEmbedding, "call")
