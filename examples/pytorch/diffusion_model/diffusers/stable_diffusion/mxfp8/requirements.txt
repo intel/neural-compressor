@@ -1,0 +1,11 @@
+accelerate
+clip==0.2.0
+diffusers>=0.38.0
+pandas
+protobuf
+sentencepiece
+safetensors
+tabulate
+torchmetrics
+transformers
+git+https://github.com/zai-org/ImageReward.git@78f8051059b34fef8e0032ccb40561c23a2ddbbb
