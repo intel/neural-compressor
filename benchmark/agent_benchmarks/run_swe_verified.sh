@@ -41,9 +41,9 @@ Options:
 	--retry-errors       Retry error cases; reuse valid patches and regenerate invalid submissions
 	--retry-empty-patches
 	                     Regenerate and evaluate cases previously reported with empty patches
-	--retry-attempts N   Retry errors and empty patches for at most N rounds (default: 1)
+	--retry-attempts N   Retry errors and empty patches until accuracy stops improving or N rounds finish (default: 1)
 	--skip-eval          Generate predictions without local evaluation
-	--keep-images        Keep benchmark Docker images after each evaluation chunk
+	--keep-images        Keep benchmark Docker images after each evaluation chunk (including Verified Mini)
 	-h, --help           Show this help message
 
 Environment:
@@ -315,11 +315,11 @@ else
 	: >>"${EVAL_REPORT_LIST}"
 fi
 
-retry_remaining_count() {
+retry_state() {
 	local retry_options=()
 	[[ "${RETRY_ERRORS}" == false ]] || retry_options+=(--retry-errors)
 	[[ "${RETRY_EMPTY_PATCHES}" == false ]] || retry_options+=(--retry-empty-patches)
-	python "${SCRIPT_DIR}/lib/benchmark_data.py" verified-retry-count \
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" verified-retry-state \
 		--report "${REPORT_FILE}" "${retry_options[@]}"
 }
 
@@ -327,7 +327,7 @@ if [[ "${SWE_VERIFIED_RETRY_LOOP_CHILD:-0}" != 1 &&
 	("${RETRY_ERRORS}" == true || "${RETRY_EMPTY_PATCHES}" == true) &&
 	"${RETRY_ATTEMPTS}" -gt 1 ]]; then
 	for ((retry_attempt = 1; retry_attempt <= RETRY_ATTEMPTS; retry_attempt++)); do
-		remaining="$(retry_remaining_count)"
+		read -r remaining previous_resolved previous_submitted < <(retry_state)
 		if [[ "${remaining}" -eq 0 ]]; then
 			log "Retry categories are empty; stopping before attempt ${retry_attempt}/${RETRY_ATTEMPTS}"
 			exit 0
@@ -338,6 +338,19 @@ if [[ "${SWE_VERIFIED_RETRY_LOOP_CHILD:-0}" != 1 &&
 		if [[ "${attempt_status}" -ne 0 ]]; then
 			warn "Retry attempt ${retry_attempt}/${RETRY_ATTEMPTS} exited with status ${attempt_status}; continuing"
 		fi
+
+		read -r _ current_resolved current_submitted < <(retry_state)
+		accuracy_improved=false
+		if ((current_submitted > 0)); then
+			if ((previous_submitted == 0 || current_resolved * previous_submitted > previous_resolved * current_submitted)); then
+				accuracy_improved=true
+			fi
+		fi
+		if [[ "${accuracy_improved}" == false ]]; then
+			log "Accuracy did not improve (${previous_resolved}/${previous_submitted} -> ${current_resolved}/${current_submitted}); stopping after attempt ${retry_attempt}/${RETRY_ATTEMPTS}"
+			break
+		fi
+		log "Accuracy improved (${previous_resolved}/${previous_submitted} -> ${current_resolved}/${current_submitted})"
 	done
 	exit 0
 fi

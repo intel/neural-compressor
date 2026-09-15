@@ -99,6 +99,7 @@ bash run_swe_verified.sh \
   --dataset verified-mini \
   --port 8888 \
   --step-limit 250 \
+  --keep-images \
   --tag qwen36_27b_mini
 ```
 
@@ -117,7 +118,9 @@ evaluated with the local harness in the background while generation continues
 for the remaining instances, overlapping the CPU/Docker-bound evaluation with
 GPU-bound generation instead of alternating between the two. A chunk's Docker
 images are removed once its instances are evaluated, so evaluation reuses the
-images pulled during generation while disk usage remains bounded. Any
+images pulled during generation while disk usage remains bounded. Pass
+`--keep-images` with either Verified or Verified Mini to retain those images
+for later runs. Any
 remaining instances are drained into a final, possibly smaller chunk once
 generation finishes. With `--skip-eval`, images are removed as each chunk is
 claimed unless `--keep-images` is also specified. An independent watchdog
@@ -150,7 +153,9 @@ state is changed, the runner saves `report.json`, `generation/preds.json`,
 `retries/retry_<TIMESTAMP>_<PID>/`. New chunk reports override the old
 classification for the same instance in the aggregate report. Set
 `--retry-attempts N` to enable both retry modes and run up to N retry rounds.
-The runner stops early when both categories are empty.
+After every round, the runner compares aggregate accuracy with the preceding
+round and stops when accuracy no longer improves. It also stops early when both
+retry categories are empty.
 
 | Option | Default | Description |
 | --- | --- | --- |
@@ -171,9 +176,9 @@ The runner stops early when both categories are empty.
 | `--tag TAG` | UTC timestamp | Output and log label |
 | `--retry-errors` | disabled | Re-evaluate valid error patches and regenerate invalid error submissions |
 | `--retry-empty-patches` | disabled | Regenerate and evaluate previously empty patches |
-| `--retry-attempts N` | `1` | Enable error and empty-patch retries for up to N rounds; stop early when both are empty |
+| `--retry-attempts N` | `1` | Enable error and empty-patch retries for up to N rounds; stop early when accuracy no longer improves or both categories are empty |
 | `--skip-eval` | disabled | Generate predictions without local evaluation |
-| `--keep-images` | disabled | Keep benchmark Docker images after each evaluation chunk |
+| `--keep-images` | disabled | Keep benchmark Docker images after each evaluation chunk, including Verified Mini images |
 
 Outputs:
 
