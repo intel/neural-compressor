@@ -63,13 +63,13 @@ verified_image_name() {
 
 remove_chunk_images() {
 	local ids_file="$1"
-	[[ "${KEEP_IMAGES}" == false && -s "${ids_file}" ]] || return
+	[[ "${KEEP_IMAGES}" == false && -s "${ids_file}" ]] || return 0
 	local images=() instance_id
 	while IFS= read -r instance_id; do
 		[[ -n "${instance_id}" ]] || continue
 		images+=("$(verified_image_name "${instance_id}")")
 	done <"${ids_file}"
-	[[ ${#images[@]} -gt 0 ]] || return
+	[[ ${#images[@]} -gt 0 ]] || return 0
 	log "Removing ${#images[@]} ${BENCHMARK_LABEL} images"
 	docker image rm -f "${images[@]}" >/dev/null 2>&1 || \
 		warn "Some ${BENCHMARK_LABEL} images could not be removed"
