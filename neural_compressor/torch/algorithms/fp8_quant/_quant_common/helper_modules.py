@@ -293,23 +293,29 @@ class PatchedReplicatedLinear(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
 
+    def _format_output(self, output):
+        if not self.return_bias:
+            return output
+        output_bias = self.bias if self.skip_bias_add else None
+        return output, output_bias
+
     def forward_qdq(self, input):
         bias = self.bias if not self.skip_bias_add else None
         output = self.run_linear_qdq(input, bias)
-        output_bias = self.bias if self.skip_bias_add else None
-        return output, output_bias
+        return self._format_output(output)
 
     def forward_quant(self, input):
         bias = self.bias if not self.skip_bias_add else None
         output = self.run_linear_quant(input, bias)
-        output_bias = self.bias if self.skip_bias_add else None
-        return output, output_bias
+        return self._format_output(output)
 
     def forward_measure(self, input):
         measure_input((input,), observer=self._mod_extra_config.inputs)
-        output, output_bias = self.orig_mod(input)
+        orig_output = self.orig_mod(input)
+        # when return_bias is True return output and bias else only output
+        output = orig_output[0] if isinstance(orig_output, tuple) else orig_output
         measure_output((output,), self._mod_extra_config.outputs)
-        return output, output_bias
+        return orig_output
 
 
 class PatchedLinearAllReduce(PatchedLinearBase):
@@ -653,6 +659,20 @@ class PatchedEmbeddingBag(PatchedModuleBase):
 # measure and quant of the weights is done per expert using PatchedMoeMatmul
 # therefore it is configured: ModuleInfo.should_measure_and_quant = False
 class PatchedMixtralMoE(PatchedModuleBase):
+    # PatchedModuleBase copies properties from the original module class.
+    # Override this one locally because some upstream FusedMoE variants
+    # expose it as a getter-only property while the patched wrapper needs
+    # to preserve the resolved value on the patched instance.
+    @property
+    def is_internal_router(self):
+        if hasattr(self, "_is_internal_router"):
+            return self._is_internal_router
+        return getattr(self.orig_mod, "is_internal_router", False)
+
+    @is_internal_router.setter
+    def is_internal_router(self, value):
+        self._is_internal_router = value
+
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         # remove the MoE weights that are quanted by PatchedMoeMatmul
@@ -663,6 +683,7 @@ class PatchedMixtralMoE(PatchedModuleBase):
         setattr(self, "w13_weight", None)
         setattr(self, "w2_weight", None)
         self.forward = self.forward_orig
+        self.is_internal_router = mod.is_internal_router
 
     # copied from https://github.com/HabanaAI/vllm-fork/blob/93b8bad8478451349d0c76b3116d3ad863a3b48e/vllm/model_executor/layers/fused_moe/layer.py#L1429
     def maybe_all_reduce_tensor_model_parallel(
@@ -693,14 +714,15 @@ class PatchedMoeMatmul(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
         self.weight = torch.nn.Parameter(self.weight.squeeze(), requires_grad=False)
+        self.bias = torch.nn.Parameter(self.bias.squeeze(), requires_grad=False) if hasattr(self, "bias") else None
         if (self.quantization_mode == QuantMode.MEASURE) or (self.quantization_mode == QuantMode.SHAPE):
             measure_input((torch.tensor(0),), observer=self._mod_extra_config.inputs)
 
     def forward_qdq(self, input, *args, **kwargs):
-        return self.run_linear_qdq(input, None)
+        return self.run_linear_qdq(input, self.bias)
 
     def forward_quant(self, input, *args, **kwargs):
-        return self.run_linear_quant(input, None)
+        return self.run_linear_quant(input, self.bias)
 
     def forward_measure(self, input, *args, **kwargs):
         measure_input((input,), observer=self._mod_extra_config.inputs)
@@ -914,6 +936,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         self.experts_min = self.orig_mod.experts_min if hasattr(self.orig_mod, "experts_min") else 0
         self.experts_max = self.orig_mod.experts_max if hasattr(self.orig_mod, "experts_max") else 7
         self.experts_used = self.local_num_experts if hasattr(self.orig_mod, "local_num_experts") else self.num_experts
+        self.has_bias = getattr(self.orig_mod, "bias", False)
         if self.quantization_mode in [QuantMode.QUANTIZE, QuantMode.LOAD]:
 
             self.quant_input = self._mod_extra_config.inputs[0]
@@ -923,17 +946,25 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
                 [mod_extra_config.scale.inputs[x] for x in range(1, self.experts_used + 1)],
                 self.scale_format,
             )
+            op_type = OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS_BIAS if self.has_bias else OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS
             self.dynamic_moe_op = get_quantized_func_wrapper(
-                OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS, scale_format=self.scale_format, is_dynamic=self.is_dynamic_quantization
+                op_type, scale_format=self.scale_format, is_dynamic=self.is_dynamic_quantization
             )
             if self.is_dynamic_quantization:
                 self.forward = self.forward_dynamic_quant
         self.dispatch_fn = self._get_dispatch_func()
 
-    def _get_extra_kwargs(self, tokens_num: int):
+    def _get_extra_kwargs(self, tokens_num: int, activation: str="silu"):
         kwargs = {}
         if hasattr(self.orig_mod, "_get_extra_kwargs"):
             kwargs = self.orig_mod._get_extra_kwargs(tokens_num)
+        if self.has_bias:
+            w12_bias_lst = [self.w13_list[i].bias for i in range(self.experts_used)]
+            w3_bias_lst = [self.w2_list[i].bias for i in range(self.experts_used)]
+            kwargs["w12_bias"] = w12_bias_lst
+            kwargs["w3_bias"] = w3_bias_lst
+        else:
+            kwargs["activation"] = activation
         return kwargs
 
     # For vLLM Data Parallel https://github.com/vllm-project/vllm-gaudi/pull/684
@@ -960,7 +991,7 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         qinput = self.quant_input(hidden_states)
         qinput = self.dispatch_fn(qinput)
         tokens_num, hidden_dim = qinput.shape
-        extra_kwargs = self._get_extra_kwargs(tokens_num)
+        extra_kwargs = self._get_extra_kwargs(tokens_num, activation=activation)
         output = self.dynamic_moe_op(
             hidden_states=qinput,
             expert_routing_table=expert_routing_table,
@@ -972,7 +1003,6 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
             d_scale_hidden_states=self.scale_input,
             d_scale_intermediate_hidden_states=self.scale_intermediate,
             permuted_weights=False,
-            activation=activation,
             experts_min=self.experts_min,
             experts_max=self.experts_max,
             **extra_kwargs,
@@ -1019,18 +1049,35 @@ class PatchedVllmMixtureOfExpertsOp(PatchedModuleBase):
         w1_list = [self.w13_list[i].weight.squeeze() for i in experts_range]
         w2_list = [self.w2_list[i].weight.squeeze() for i in experts_range]
         measure_input((hidden_states,), observer=self._mod_extra_config.inputs)
-        output, intermidiate_amax = torch.ops.hpu.mixture_of_experts.fp8_measurement_fused_weights(
-            hidden_states=hidden_states,
-            expert_routing_table=expert_routing_table,
-            router_weights=router_weights,
-            w12=w1_list,
-            w3=w2_list,
-            permuted_weights=permuted_weights,
-            activation=activation,
-            experts_min=self.experts_min,
-            experts_max=self.experts_max,
-            measurement_mode=True,
-        )
+        if not self.has_bias:
+            output, intermidiate_amax = torch.ops.hpu.mixture_of_experts.fp8_measurement_fused_weights(
+                hidden_states=hidden_states,
+                expert_routing_table=expert_routing_table,
+                router_weights=router_weights,
+                w12=w1_list,
+                w3=w2_list,
+                permuted_weights=permuted_weights,
+                activation=activation,
+                experts_min=self.experts_min,
+                experts_max=self.experts_max,
+                measurement_mode=True,
+            )
+        else:
+            w12_bias_lst = [self.w13_list[i].bias for i in experts_range]
+            w3_bias_lst = [self.w2_list[i].bias for i in experts_range]
+            output, intermidiate_amax = torch.ops.hpu.mixture_of_experts.measurement_bias_fused_weights(
+                hidden_states=hidden_states,
+                expert_routing_table=expert_routing_table,
+                router_weights=router_weights,
+                w12=w1_list,
+                w3=w2_list,
+                w12_bias=w12_bias_lst,
+                w3_bias=w3_bias_lst,
+                permuted_weights=permuted_weights,
+                experts_min=self.experts_min,
+                experts_max=self.experts_max,
+                measure_per_token=False
+            )
         output_measure_list = [output]
         for i in range(self.num_experts):
             output_measure_list.append(intermidiate_amax[i])

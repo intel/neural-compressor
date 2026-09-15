@@ -187,6 +187,19 @@ class QuantizedHpuDynamicMoeFusedWeights(QuantizedHpuFuncWrapperBase):
     def get_dynamic_quantized_func(self):
         return torch.ops.hpu.mixture_of_experts.fp8_fused_weights_dynamic
 
+class QuantizedHpuDynamicMoeFusedWeightsBias(QuantizedHpuFuncWrapperBase):
+    def get_default_quantized_func(self):
+        return torch.ops.hpu.mixture_of_experts.bias_fp8_fused_weights
+
+    def get_scalar_quantized_func(self):
+        return torch.ops.hpu.mixture_of_experts.bias_fp8_fused_weights_scalars
+
+    def get_dynamic_scalar_quantized_func(self):
+        raise NotImplementedError("Dynamic scalar quantized function is not implemented for bias_fp8_fused_weights.")
+
+    def get_dynamic_quantized_func(self):
+        raise NotImplementedError("Dynamic quantized function is not implemented for bias_fp8_fused_weights.")
+
 
 class QuantizedHPUQuant(QuantizedHpuFuncWrapperBase):
 
@@ -246,6 +259,7 @@ _OP_TYPE_HPU_QUANTIZED_WRAPPER_CLASSES = {OP_TYPE.LINEAR_GEMM: QuantizedHpuMatmu
                                           OP_TYPE.CAST_FROM_FP8: QuantizedHPUCastFromFP8,
                                           OP_TYPE.DYNAMIC_MOE: QuantizedHpuDynamicMoe,
                                           OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS: QuantizedHpuDynamicMoeFusedWeights,
+                                          OP_TYPE.DYNAMIC_MOE_FUSED_WEIGHTS_BIAS: QuantizedHpuDynamicMoeFusedWeightsBias,
                                           OP_TYPE.QUANT: QuantizedHPUQuant,
                                           OP_TYPE.DEQUANT: QuantizedHPUDeQuant,
                                           OP_TYPE.QUANT_PC: QuantizedHPUQuantPC,
