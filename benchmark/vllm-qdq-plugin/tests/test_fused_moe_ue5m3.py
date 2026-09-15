@@ -1,10 +1,10 @@
 import pytest
 import torch
 import torch.nn.functional as F
-from nvfp4_hw.fused_moe_ue5m3 import _select_moe_config, fused_moe_ue5m3
-from nvfp4_hw.inc_nvfp4_ue5m3_moe import INCNvfp4UE5M3MoEMethod
 from vllm.model_executor.layers.fused_moe.activation import ApplyMoEActivationConfig, MoEActivation
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import nvfp4_e5m3_qdq
+from vllm_qdq_plugin.quantization.fused_moe_e5m3 import _select_moe_config, fused_moe_ue5m3
+from vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_moe import INCNvfp4UE5M3MoEMethod
 
 
 def _decode_weight(packed: torch.Tensor, scale_bits: torch.Tensor, group_size: int) -> torch.Tensor:

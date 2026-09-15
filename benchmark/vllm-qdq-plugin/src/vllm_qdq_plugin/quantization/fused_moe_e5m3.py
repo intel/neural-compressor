@@ -238,11 +238,7 @@ def fused_moe_ue5m3(
     )
     num_assignments = num_tokens * top_k
     gate_up = torch.zeros((num_assignments, w13.shape[1]), dtype=x.dtype, device=x.device)
-    quantized_x = nvfp4_e5m3_qdq(
-        x,
-        group_size,
-        trace_op_name="nvfp4_e5m3_moe_input",
-    )
+    quantized_x = nvfp4_e5m3_qdq(x, group_size, trace_op_name="nvfp4_e5m3_moe_input")
     _invoke_fused_moe_ue5m3(
         quantized_x,
         w13,
