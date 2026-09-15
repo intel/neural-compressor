@@ -119,8 +119,7 @@ GPU-bound generation instead of alternating between the two. A chunk's Docker
 images are removed once its instances are evaluated, so evaluation reuses the
 images pulled during generation while disk usage remains bounded. Verified Mini
 retains images by default because its smaller image set is practical to reuse.
-Pass `--keep-images` to retain images explicitly or `--remove-images` to remove
-them after each chunk, including for Verified Mini. Any
+Pass `--keep-images` to retain images explicitly for a full Verified run. Any
 remaining instances are drained into a final, possibly smaller chunk once
 generation finishes. With `--skip-eval`, images are removed as each chunk is
 claimed according to the same image policy. An independent watchdog
@@ -179,7 +178,6 @@ retry categories are empty.
 | `--retry-attempts N` | `1` | Enable error and empty-patch retries for up to N rounds; stop early when accuracy no longer improves or both categories are empty |
 | `--skip-eval` | disabled | Generate predictions without local evaluation |
 | `--keep-images` | enabled for Verified Mini | Keep benchmark Docker images after each evaluation chunk |
-| `--remove-images` | disabled | Remove images after each chunk, overriding the Verified Mini default |
 
 Outputs:
 
