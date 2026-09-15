@@ -16,6 +16,7 @@ WARPS_PER_BLOCK = 4
 THREADS_PER_BLOCK = GROUP_SIZE * WARPS_PER_BLOCK
 
 _COMPILED_KERNELS = {}
+_COMPILED_WEIGHT_DEQUANT_KERNELS = {}
 _COMPILE_LOCK = threading.Lock()
 
 
@@ -56,6 +57,52 @@ def _round_half_to_even_positive(value, *, loc=None, ip=None):
     round_up = (fraction > 0.5).to(cutlass.Int32)
     tie_and_odd = ((fraction == 0.5) & ((floor_value & 1) != 0)).to(cutlass.Int32)
     return (floor_value + round_up + tie_and_odd).to(cutlass.Float32)
+
+
+@cutlass.dsl_user_op
+def _quantize_ue5m3_scale(value, *, loc=None, ip=None):
+    bits = cutlass.Int32(llvm.bitcast(T.i32(), value.ir_value(loc=loc, ip=ip), loc=loc, ip=ip))
+    fp32_exponent = (bits >> 23) & 0xFF
+    fp32_mantissa = bits & 0x7FFFFF
+    ue5m3_exponent = fp32_exponent - 112
+    ue5m3_mantissa = fp32_mantissa >> 20
+    remainder = fp32_mantissa & 0xFFFFF
+    increment = ((remainder > 0x80000) | ((remainder == 0x80000) & ((ue5m3_mantissa & 1) != 0))).to(cutlass.Int32)
+    ue5m3_mantissa = ue5m3_mantissa + increment
+    carry = (ue5m3_mantissa == 8).to(cutlass.Int32)
+    ue5m3_exponent = ue5m3_exponent + carry
+    ue5m3_mantissa = ue5m3_mantissa * (1 - carry)
+    normal = cute.math.exp2(ue5m3_exponent.to(cutlass.Float32) - 15.0) * (
+        1.0 + ue5m3_mantissa.to(cutlass.Float32) * 0.125
+    )
+    subnormal = _round_half_to_even_positive(value * 131072.0) / 131072.0
+    is_subnormal = (value < 2.0**-14).to(cutlass.Float32)
+    quantized = normal * (1.0 - is_subnormal) + subnormal * is_subnormal
+    return cutlass.min(quantized, 114688.0, loc=loc, ip=ip)
+
+
+@cutlass.dsl_user_op
+def _decode_e2m1(nibble, *, loc=None, ip=None):
+    value = nibble.to(cutlass.Int32)
+    sign = (value >> 3) & 1
+    exponent = (value >> 1) & 0x3
+    mantissa = value & 1
+    subnormal = mantissa.to(cutlass.Float32) * 0.5
+    normal = cute.math.exp2(exponent.to(cutlass.Float32) - 1.0) * (1.0 + mantissa.to(cutlass.Float32) * 0.5)
+    is_subnormal = (exponent == 0).to(cutlass.Float32)
+    magnitude = normal * (1.0 - is_subnormal) + subnormal * is_subnormal
+    return magnitude * (1.0 - 2.0 * sign.to(cutlass.Float32))
+
+
+@cutlass.dsl_user_op
+def _decode_ue5m3(scale_bits, *, loc=None, ip=None):
+    value = scale_bits.to(cutlass.Int32)
+    exponent = value >> 3
+    mantissa = value & 0x7
+    subnormal = mantissa.to(cutlass.Float32) * 2.0**-17
+    normal = cute.math.exp2(exponent.to(cutlass.Float32) - 15.0) * (1.0 + mantissa.to(cutlass.Float32) * 0.125)
+    is_subnormal = (exponent == 0).to(cutlass.Float32)
+    return normal * (1.0 - is_subnormal) + subnormal * is_subnormal
 
 
 @cutlass.dsl_user_op
@@ -130,6 +177,66 @@ def mxfp8_qdq_kernel(x: cute.Tensor, output: cute.Tensor, group_count: cutlass.I
         output[index] = (quantized * scale).to(output.element_type)
 
 
+@cute.kernel
+def nvfp4_e5m3_qdq_group16_kernel(x: cute.Tensor, output: cute.Tensor, group_count: cutlass.Int32):
+    thread, _, _ = cute.arch.thread_idx()
+    block, _, _ = cute.arch.block_idx()
+    group = block * 8 + thread // 16
+    lane = thread % 16
+
+    if group < group_count:
+        index = group * 16 + lane
+        value = x[index].to(cutlass.Float32)
+        block_max = cute.arch.warp_reduction_max(_abs_float(value), threads_in_group=16)
+        scale = _quantize_ue5m3_scale(block_max / 6.0)
+        normalized = value / cutlass.max(scale, 2.0**-17)
+        quantized = _round_mxfp4(_abs_float(normalized))
+        sign = 1.0 - 2.0 * (normalized < 0.0).to(cutlass.Float32)
+        output[index] = (quantized * sign * scale).to(output.element_type)
+
+
+@cute.kernel
+def nvfp4_e5m3_qdq_group32_kernel(x: cute.Tensor, output: cute.Tensor, group_count: cutlass.Int32):
+    thread, _, _ = cute.arch.thread_idx()
+    block, _, _ = cute.arch.block_idx()
+    group = block * 4 + thread // 32
+    lane = thread % 32
+
+    if group < group_count:
+        index = group * 32 + lane
+        value = x[index].to(cutlass.Float32)
+        block_max = cute.arch.warp_reduction_max(_abs_float(value), threads_in_group=32)
+        scale = _quantize_ue5m3_scale(block_max / 6.0)
+        normalized = value / cutlass.max(scale, 2.0**-17)
+        quantized = _round_mxfp4(_abs_float(normalized))
+        sign = 1.0 - 2.0 * (normalized < 0.0).to(cutlass.Float32)
+        output[index] = (quantized * sign * scale).to(output.element_type)
+
+
+@cute.kernel
+def nvfp4_e5m3_weight_dequant_kernel(
+    packed: cute.Tensor,
+    scales: cute.Tensor,
+    output: cute.Tensor,
+    packed_count: cutlass.Int32,
+    packed_columns: cutlass.Int32,
+    scales_per_row: cutlass.Int32,
+    packed_per_group: cutlass.Int32,
+):
+    thread, _, _ = cute.arch.thread_idx()
+    block, _, _ = cute.arch.block_idx()
+    packed_index = block * 256 + thread
+
+    if packed_index < packed_count:
+        packed_value = packed[packed_index].to(cutlass.Int32)
+        row = packed_index // packed_columns
+        packed_column = packed_index % packed_columns
+        scale_index = row * scales_per_row + packed_column // packed_per_group
+        scale = _decode_ue5m3(scales[scale_index])
+        output[packed_index * 2] = (_decode_e2m1(packed_value & 0xF) * scale).to(output.element_type)
+        output[packed_index * 2 + 1] = (_decode_e2m1((packed_value >> 4) & 0xF) * scale).to(output.element_type)
+
+
 @cute.jit
 def launch_mxfp4_qdq(
     x: cute.Tensor,
@@ -158,6 +265,60 @@ def launch_mxfp8_qdq(
     )
 
 
+@cute.jit
+def launch_nvfp4_e5m3_qdq_group16(
+    x: cute.Tensor,
+    output: cute.Tensor,
+    group_count: cutlass.Int32,
+    stream: cuda.CUstream,
+):
+    nvfp4_e5m3_qdq_group16_kernel(x, output, group_count).launch(
+        grid=[(group_count + 7) // 8, 1, 1],
+        block=[128, 1, 1],
+        stream=stream,
+    )
+
+
+@cute.jit
+def launch_nvfp4_e5m3_qdq_group32(
+    x: cute.Tensor,
+    output: cute.Tensor,
+    group_count: cutlass.Int32,
+    stream: cuda.CUstream,
+):
+    nvfp4_e5m3_qdq_group32_kernel(x, output, group_count).launch(
+        grid=[(group_count + 3) // 4, 1, 1],
+        block=[128, 1, 1],
+        stream=stream,
+    )
+
+
+@cute.jit
+def launch_nvfp4_e5m3_weight_dequant(
+    packed: cute.Tensor,
+    scales: cute.Tensor,
+    output: cute.Tensor,
+    packed_count: cutlass.Int32,
+    packed_columns: cutlass.Int32,
+    scales_per_row: cutlass.Int32,
+    packed_per_group: cutlass.Int32,
+    stream: cuda.CUstream,
+):
+    nvfp4_e5m3_weight_dequant_kernel(
+        packed,
+        scales,
+        output,
+        packed_count,
+        packed_columns,
+        scales_per_row,
+        packed_per_group,
+    ).launch(
+        grid=[(packed_count + 255) // 256, 1, 1],
+        block=[256, 1, 1],
+        stream=stream,
+    )
+
+
 def _get_compiled_kernel(format_name: str, dtype: torch.dtype, element_count: int, device: torch.device):
     device_index = device.index if device.index is not None else torch.cuda.current_device()
     key = (format_name, dtype, device_index)
@@ -182,7 +343,14 @@ def _get_compiled_kernel(format_name: str, dtype: torch.dtype, element_count: in
             cute_example = from_dlpack(example)
             cute_output = from_dlpack(example_output)
             group_count = element_count // GROUP_SIZE
-            launcher = launch_mxfp4_qdq if format_name == "MXFP4" else launch_mxfp8_qdq
+            if format_name == "MXFP4":
+                launcher = launch_mxfp4_qdq
+            elif format_name == "MXFP8":
+                launcher = launch_mxfp8_qdq
+            elif format_name == "NVFP4_E5M3_G16":
+                launcher = launch_nvfp4_e5m3_qdq_group16
+            else:
+                launcher = launch_nvfp4_e5m3_qdq_group32
             compiled = cute.compile(
                 launcher,
                 cute_example,
@@ -207,3 +375,60 @@ def run_cute_qdq(x: torch.Tensor, format_name: str) -> torch.Tensor:
     stream = cuda.CUstream(torch.cuda.current_stream(x.device).cuda_stream)
     compiled(from_dlpack(flat_x), from_dlpack(output), flat_x.numel() // GROUP_SIZE, stream)
     return output.reshape_as(x)
+
+
+def run_nvfp4_e5m3_qdq(x: torch.Tensor, group_size: int) -> torch.Tensor:
+    """Run fused E2M1/UE5M3 activation QDQ for group size 16 or 32."""
+    flat_x = x.reshape(-1)
+    format_name = f"NVFP4_E5M3_G{group_size}"
+    compiled = _get_compiled_kernel(format_name, x.dtype, flat_x.numel(), x.device)
+    output = torch.empty_like(flat_x)
+    stream = cuda.CUstream(torch.cuda.current_stream(x.device).cuda_stream)
+    compiled(from_dlpack(flat_x), from_dlpack(output), flat_x.numel() // group_size, stream)
+    return output.reshape_as(x)
+
+
+def dequantize_nvfp4_e5m3_weight(
+    packed: torch.Tensor,
+    scales: torch.Tensor,
+    group_size: int,
+) -> torch.Tensor:
+    """Decode packed E2M1 weights and raw UE5M3 scales into a BF16 matrix."""
+    device_index = packed.device.index if packed.device.index is not None else torch.cuda.current_device()
+    key = (packed.shape, scales.shape, group_size, device_index)
+    compiled = _COMPILED_WEIGHT_DEQUANT_KERNELS.get(key)
+    output = torch.empty((packed.shape[0], packed.shape[1] * 2), dtype=torch.bfloat16, device=packed.device)
+    packed_count = packed.numel()
+    packed_columns = packed.shape[1]
+    scales_per_row = scales.shape[1]
+    packed_per_group = group_size // 2
+
+    if compiled is None:
+        with _COMPILE_LOCK:
+            compiled = _COMPILED_WEIGHT_DEQUANT_KERNELS.get(key)
+            if compiled is None:
+                compiled = cute.compile(
+                    launch_nvfp4_e5m3_weight_dequant,
+                    from_dlpack(packed.reshape(-1)),
+                    from_dlpack(scales.reshape(-1)),
+                    from_dlpack(output.reshape(-1)),
+                    packed_count,
+                    packed_columns,
+                    scales_per_row,
+                    packed_per_group,
+                    cuda.CUstream(torch.cuda.current_stream(packed.device).cuda_stream),
+                )
+                _COMPILED_WEIGHT_DEQUANT_KERNELS[key] = compiled
+
+    stream = cuda.CUstream(torch.cuda.current_stream(packed.device).cuda_stream)
+    compiled(
+        from_dlpack(packed.reshape(-1)),
+        from_dlpack(scales.reshape(-1)),
+        from_dlpack(output.reshape(-1)),
+        packed_count,
+        packed_columns,
+        scales_per_row,
+        packed_per_group,
+        stream,
+    )
+    return output

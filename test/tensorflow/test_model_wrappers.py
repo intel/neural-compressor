@@ -2,6 +2,8 @@
 
 import os
 import platform
+import shutil
+import tempfile
 import unittest
 
 import numpy as np
@@ -300,6 +302,63 @@ class TestModelWrappers(unittest.TestCase):
         self.assertEqual(False, _contains_function_with_implements_attr(saved_model_proto))
 
         os.system("rm -rf unzip_center_model")
+
+
+class TestKerasModelSafety(unittest.TestCase):
+    """Test that keras model files containing arbitrary python code are refused."""
+
+    @classmethod
+    def setUpClass(self):
+        self.workspace = tempfile.mkdtemp()
+
+    @classmethod
+    def tearDownClass(self):
+        shutil.rmtree(self.workspace, ignore_errors=True)
+
+    def _build_malicious_model(self):
+        inputs = tf.keras.Input(shape=(4,), name="in")
+        outputs = tf.keras.layers.Lambda(lambda x: x * 2, name="evil")(inputs)
+        return tf.keras.Model(inputs, outputs, name="innocent")
+
+    def test_contains_arbitrary_python(self):
+        from neural_compressor.tensorflow.utils.model_wrappers import _contains_arbitrary_python
+
+        self.assertTrue(
+            _contains_arbitrary_python(
+                {"class_name": "Lambda", "config": {"function": ["bytecode", None, None], "function_type": "lambda"}}
+            )
+        )
+        self.assertTrue(
+            _contains_arbitrary_python(
+                {"class_name": "Lambda", "config": {"function": {"class_name": "__lambda__", "config": {}}}}
+            )
+        )
+        self.assertFalse(
+            _contains_arbitrary_python(
+                {"class_name": "Lambda", "config": {"function": "relu", "function_type": "function"}}
+            )
+        )
+        self.assertFalse(_contains_arbitrary_python({"class_name": "Dense", "config": {"units": 4}}))
+
+    def test_load_malicious_keras_model_is_refused(self):
+        from neural_compressor.tensorflow.utils.model_wrappers import UnsafeKerasModelError, load_keras_model
+
+        for suffix in (".keras", ".h5"):
+            model_path = os.path.join(self.workspace, "malicious" + suffix)
+            self._build_malicious_model().save(model_path)
+            with self.assertRaises(UnsafeKerasModelError):
+                load_keras_model(model_path)
+            with self.assertRaises(UnsafeKerasModelError):
+                Model(model_path)
+
+    def test_load_normal_keras_model(self):
+        from neural_compressor.tensorflow.utils.model_wrappers import load_keras_model
+
+        inputs = tf.keras.Input(shape=(4,), name="in")
+        outputs = tf.keras.layers.Dense(2, name="dense")(inputs)
+        model_path = os.path.join(self.workspace, "normal.keras")
+        tf.keras.Model(inputs, outputs).save(model_path)
+        self.assertTrue(isinstance(load_keras_model(model_path), tf.keras.Model))
 
 
 if __name__ == "__main__":

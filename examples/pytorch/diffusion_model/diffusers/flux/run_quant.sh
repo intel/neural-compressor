@@ -42,7 +42,7 @@ function run_tuning {
     if [ "${topology}" = "flux_fp8" ]; then
         extra_cmd="--scheme FP8 --iters 0 --dataset ${dataset_location} --quantize"
     elif [ "${topology}" = "flux_mxfp8" ]; then
-        extra_cmd="--scheme MXFP8 --iters 1000 --dataset ${dataset_location} --quantize"
+        extra_cmd="--scheme MXFP8 --iters 200 --dataset ${dataset_location} --quantize"
     fi
 
     python3 main.py \

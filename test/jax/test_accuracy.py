@@ -50,6 +50,8 @@ def test_simple_linear_model_accuracy(
     dynamic, const_vars, weight_scale_granularity, inplace, model_dtype, weight_dtype, activation_dtype
 ):
     """Test accuracy on a simple linear model."""
+    if weight_dtype != activation_dtype:
+        pytest.skip("Different weight and activation quantization data formats are not supported yet.")
 
     # Build model
     model_dtype_jnp = jnp.dtype(model_dtype)

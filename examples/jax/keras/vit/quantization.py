@@ -9,6 +9,7 @@ import keras
 import numpy as np
 import tensorflow as tf
 from keras.applications.imagenet_utils import decode_predictions
+from keras_hub.models import ViTImageClassifier
 
 from neural_compressor.jax import quantize_model, StaticQuantConfig
 from neural_compressor.jax.utils.utility import print_model
@@ -19,7 +20,7 @@ parser.add_argument(
     "--precision",
     default="fp8_e4m3",
     type=str,
-    choices=["fp8_e4m3", "fp8_e5m2"],
+    choices=["fp8_e4m3", "fp8_e5m2", "int8"],
     help="precision for the model",
 )
 parser.add_argument(
@@ -32,9 +33,13 @@ parser.add_argument(
 args = parser.parse_args()
 print("Arguments:", *vars(args).items(), sep="\n")
 
+if args.model_path.endswith(".keras"):
+    print(f"\nLoading Keras model from: {args.model_path} using keras.models.load_model() API...")
+    vit_model = keras.models.load_model(args.model_path)
+else:
+    print(f"\nLoading Keras model from: {args.model_path} using from_preset() API...")
+    vit_model = ViTImageClassifier.from_preset(args.model_path)
 
-print("\nLoad original model from:", args.model_path)
-vit_model = keras.models.load_model(args.model_path)
 print_model(vit_model)
 
 
