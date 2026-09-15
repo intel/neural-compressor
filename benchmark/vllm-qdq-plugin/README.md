@@ -79,15 +79,21 @@ To force MXFP4 QDQ for Marlin MoE when dtype detection is insufficient, add `VLL
 | --- | --- | --- | --- |
 | **MXFP4** (E2M1 + E8M0 scales) | `marlin_gemm` | ✅ Supported | Dense quantized linear (MXFP4 via Marlin) |
 | **MXFP4** (E2M1 + E8M0 scales) | `moe_wna16_marlin_gemm` | ✅ Supported | MoE quantized linear (MXFP4 via Marlin) |
+| **NVFP4** (E2M1 + E4M3 scales) | dense linear | ✅ Supported | AutoRound `nv_fp`, group size 16, activation QDQ + FP4 Marlin weights |
+| **NVFP4** (E2M1 + E4M3 scales) | fused MoE | ✅ Supported | AutoRound `nv_fp`, group size 16, activation QDQ + FP4 Marlin experts |
 | **NVFP4_E5M3** (E2M1 + UE5M3 scales) | dense linear | ✅ Supported | AutoRound `nvfp4_v2`, group size 16, vLLM FP4 Marlin |
 | **NVFP4_E5M3** (E2M1 + UE5M3 scales) | fused MoE | ✅ Supported | AutoRound `nvfp4_v2`, group size 16, vLLM FP4 Marlin experts |
 
 ### NVFP4
 
-The plugin supports both vLLM-native NVFP4 checkpoints and AutoRound
-NVFP4_E5M3 (`nvfp4_v2`) checkpoints for dense and MoE layers. See the
-[NVFP4 implementation guide](src/nvfp4_hw/README.md) for format details,
-runtime selection, commands, limitations, validation results, and source layout.
+The QDQ package supports AutoRound standard NVFP4 (`nv_fp`) and NVFP4_E5M3
+(`nvfp4_v2`) checkpoints for dense and MoE layers. These paths use activation
+QDQ followed by vLLM FP4 Marlin weight-only GEMMs; they do not use the native
+NVFP4 hardware kernels. See the
+[NVFP4 QDQ guide](src/vllm_qdq_plugin/quantization/README.md).
+
+The separate [`nvfp4_hw`](src/nvfp4_hw/README.md) package loads standard NVFP4
+checkpoints through vLLM's native hardware kernels when `VLLM_QDQ` is disabled.
 
 ### Performance and Accuracy
 
@@ -95,7 +101,7 @@ runtime selection, commands, limitations, validation results, and source layout.
 
 #### CuTe QDQ Microbenchmark
 
-The CuTe backend is selected automatically on NVIDIA CUDA devices with SM80 or newer when NVIDIA CUTLASS DSL is installed. If the GPU requirements are met but CUTLASS DSL is missing, automatic mode warns with the installation command and uses the slower reference implementation. Setting `VLLM_QDQ_CUTE=1` makes the dependency mandatory and raises an error when it is missing. MXFP4/MXFP8 additionally require group size 32 and a `K` dimension divisible by 32. Non-contiguous inputs are materialized as contiguous tensors before the CuTe kernel runs; set `VLLM_QDQ_TRACE=1` to print their shape, stride, dtype, device, and storage offset. When another requirement is not met, the plugin warns with the reason and uses the reference implementation. Set `VLLM_QDQ_CUTE=0` to force reference QDQ without a warning. NVFP4-specific requirements are documented in the [NVFP4 implementation guide](src/nvfp4_hw/README.md).
+The CuTe backend is selected automatically on NVIDIA CUDA devices with SM80 or newer when NVIDIA CUTLASS DSL is installed. If the GPU requirements are met but CUTLASS DSL is missing, automatic mode warns with the installation command and uses the slower reference implementation. Setting `VLLM_QDQ_CUTE=1` makes the dependency mandatory and raises an error when it is missing. MXFP4/MXFP8 additionally require group size 32 and a `K` dimension divisible by 32. Non-contiguous inputs are materialized as contiguous tensors before the CuTe kernel runs; set `VLLM_QDQ_TRACE=1` to print their shape, stride, dtype, device, and storage offset. When another requirement is not met, the plugin warns with the reason and uses the reference implementation. Set `VLLM_QDQ_CUTE=0` to force reference QDQ without a warning. NVFP4 QDQ requirements are documented in the [NVFP4 QDQ guide](src/vllm_qdq_plugin/quantization/README.md).
 
 ```bash
 CUDA_VISIBLE_DEVICES=<idle-gpu> python scripts/verify_cute_dsl.py

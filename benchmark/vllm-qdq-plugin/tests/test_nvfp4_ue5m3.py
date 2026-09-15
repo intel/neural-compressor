@@ -3,19 +3,24 @@ import unittest
 from unittest import mock
 
 import torch
-from nvfp4_hw.inc_nvfp4_ue5m3_linear import INCNvfp4UE5M3LinearMethod
-from nvfp4_hw.inc_nvfp4_ue5m3_scheme import INCNvfp4UE5M3Scheme
-from nvfp4_hw.patch import apply_patches
+from nvfp4_hw.inc_nvfp4_scheme import INCNvfp4Scheme
+from nvfp4_hw.patch import apply_patches as apply_hw_patches
 from vllm.model_executor.layers.quantization.inc.inc import INCConfig
 from vllm.model_executor.layers.quantization.inc.inc_linear import INCLinearMethod
 from vllm.model_executor.layers.quantization.inc.schemes import factory
 from vllm.model_executor.parameter import GroupQuantScaleParameter, ModelWeightParameter
+from vllm_qdq_plugin.qdq.nvfp4 import nvfp4_qdq
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import (
     _nvfp4_e5m3_qdq_reference,
     decode_ue5m3,
     nvfp4_e5m3_qdq,
 )
 from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import nvfp4_e5m3_weight_dequant_cute
+from vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_linear import INCNvfp4UE5M3LinearMethod
+from vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_scheme import INCNvfp4UE5M3Scheme
+from vllm_qdq_plugin.quantization.inc_nvfp4_linear import INCNvfp4QDQLinearMethod
+from vllm_qdq_plugin.quantization.inc_nvfp4_scheme import INCNvfp4QDQScheme
+from vllm_qdq_plugin.quantization.patch import apply_patches
 
 
 class _FusedMoE:
@@ -141,6 +146,45 @@ class Nvfp4UE5M3ConfigTests(unittest.TestCase):
         self.assertIsInstance(method, INCLinearMethod)
         self.assertEqual(method.scheme.__class__.__name__, "INCNvfp4UE5M3LinearMethod")
 
+    def test_global_nvfp4_config_selects_linear_method(self) -> None:
+        with mock.patch.object(INCConfig, "_vllm_qdq_nvfp4_enabled", False, create=True):
+            apply_hw_patches()
+            config = INCConfig.from_config(
+                {
+                    "bits": 4,
+                    "group_size": 16,
+                    "sym": True,
+                    "data_type": "nv_fp",
+                    "packing_format": "auto_round:llm_compressor",
+                }
+            )
+
+            layer_config = config.config_parser.resolve(object(), "model.layers.0.self_attn.q_proj")
+            scheme = factory.resolve_scheme(layer_config)
+
+            self.assertEqual(layer_config.data_type, "nv_fp")
+            self.assertEqual(layer_config.group_size, 16)
+            self.assertIsInstance(scheme, INCNvfp4Scheme)
+
+    def test_global_nvfp4_qdq_config_selects_marlin_method(self) -> None:
+        apply_patches(enable_nvfp4_qdq=True)
+        config = INCConfig.from_config(
+            {
+                "bits": 4,
+                "group_size": 16,
+                "sym": True,
+                "data_type": "nv_fp",
+                "packing_format": "auto_round:llm_compressor",
+            }
+        )
+
+        layer_config = config.config_parser.resolve(object(), "model.layers.0.self_attn.q_proj")
+        scheme = factory.resolve_scheme(layer_config)
+        method = scheme.get_linear_method(config, object(), "model.layers.0.self_attn.q_proj", layer_config)
+
+        self.assertIsInstance(scheme, INCNvfp4QDQScheme)
+        self.assertEqual(method.scheme.__class__.__name__, "INCNvfp4QDQLinearMethod")
+
     def test_extra_config_data_type_selects_ue5m3_scheme(self) -> None:
         apply_patches()
         config = INCConfig.from_config(
@@ -182,3 +226,82 @@ class Nvfp4UE5M3ConfigTests(unittest.TestCase):
         layer_config = config.config_parser.resolve(object(), "model.layers.0.self_attn.q_proj")
 
         self.assertEqual(layer_config.data_type, "mx_fp")
+
+
+class Nvfp4QDQTests(unittest.TestCase):
+    @staticmethod
+    def _make_dense_layer(device: torch.device) -> torch.nn.Module:
+        layer = torch.nn.Module()
+        with (
+            mock.patch("vllm.model_executor.parameter.get_tensor_model_parallel_rank", return_value=0),
+            mock.patch("vllm.model_executor.parameter.get_tensor_model_parallel_world_size", return_value=1),
+        ):
+            layer.weight_packed = ModelWeightParameter(
+                data=torch.randint(0, 256, (64, 32), device=device, dtype=torch.uint8),
+                input_dim=1,
+                output_dim=0,
+                weight_loader=None,
+            )
+            layer.weight_scale = GroupQuantScaleParameter(
+                data=torch.rand(64, 4, device=device).to(torch.float8_e4m3fn),
+                input_dim=1,
+                output_dim=0,
+                weight_loader=None,
+            )
+        layer.weight_global_scale = torch.nn.Parameter(torch.tensor([2.0], device=device), requires_grad=False)
+        layer.input_global_scale = torch.nn.Parameter(torch.tensor([0.25], device=device), requires_grad=False)
+        layer.input_size_per_partition = 64
+        layer.output_size_per_partition = 64
+        layer.params_dtype = torch.bfloat16
+        return layer
+
+    def test_reference_matches_vllm_nvfp4_emulation(self) -> None:
+        from vllm.model_executor.layers.quantization.utils.nvfp4_emulation_utils import ref_nvfp4_quant
+
+        torch.manual_seed(7)
+        x = torch.randn(3, 64, dtype=torch.bfloat16)
+        input_global_scale = torch.tensor(0.5, dtype=torch.float32)
+
+        fp4, block_scale = ref_nvfp4_quant(x, input_global_scale, block_size=16)
+        expected = (fp4.reshape(3, 4, 16) * (block_scale / input_global_scale).unsqueeze(-1)).reshape_as(x).to(x.dtype)
+        actual = nvfp4_qdq(x, input_global_scale, group_size=16)
+
+        self.assertTrue(torch.equal(actual, expected))
+
+    def test_qdq_method_requires_sm80_and_preserves_input_scale(self) -> None:
+        method = object.__new__(INCNvfp4QDQLinearMethod)
+        method.group_size = 16
+        layer = self._make_dense_layer(torch.device("cpu"))
+        stored_input_global_scale = layer.input_global_scale.detach().clone()
+
+        method.process_weights_after_loading(layer)
+
+        self.assertEqual(method.get_min_capability(), 80)
+        torch.testing.assert_close(layer.input_global_scale, stored_input_global_scale.max())
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_marlin_dense_matches_dequantized_reference(self) -> None:
+        torch.manual_seed(11)
+        layer = self._make_dense_layer(torch.device("cuda"))
+        packed = layer.weight_packed.detach().clone()
+        block_scale = layer.weight_scale.detach().clone().float()
+        stored_weight_global_scale = layer.weight_global_scale.detach().clone()
+        stored_input_global_scale = layer.input_global_scale.detach().clone()
+        x = torch.randn(5, 64, device="cuda", dtype=torch.bfloat16)
+
+        low = _decode_e2m1(packed & 0xF)
+        high = _decode_e2m1((packed >> 4) & 0xF)
+        values = torch.stack((low, high), dim=-1).reshape(64, 64)
+        weight = values * block_scale.repeat_interleave(16, dim=1) / stored_weight_global_scale
+        expected = torch.nn.functional.linear(
+            nvfp4_qdq(x, stored_input_global_scale, 16),
+            weight.to(torch.bfloat16),
+        )
+
+        method = object.__new__(INCNvfp4QDQLinearMethod)
+        method.group_size = 16
+        method.process_weights_after_loading(layer)
+        actual = method.apply_weights(layer, x)
+
+        self.assertEqual(layer.weight.dtype, torch.int32)
+        torch.testing.assert_close(actual, expected, rtol=0.02, atol=0.25)

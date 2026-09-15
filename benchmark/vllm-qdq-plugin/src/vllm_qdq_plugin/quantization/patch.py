@@ -1,4 +1,4 @@
-"""Monkey patches for loading AutoRound NVFP4 checkpoints with vLLM INC."""
+"""Register AutoRound NVFP4 QDQ schemes with vLLM INC."""
 
 from __future__ import annotations
 
@@ -7,7 +7,8 @@ from typing import Any
 
 from vllm.logger import init_logger
 
-from .inc_nvfp4_scheme import INCNvfp4Scheme
+from .inc_nvfp4_e5m3_scheme import INCNvfp4UE5M3Scheme
+from .inc_nvfp4_scheme import INCNvfp4QDQScheme
 
 logger = init_logger(__name__)
 _PATCHED = False
@@ -25,8 +26,8 @@ def _layer_data_type(config: Any, layer_name: str, default: str) -> str:
     return layer_config.get("data_type", default)
 
 
-def apply_patches() -> None:
-    """Register NVFP4 metadata and scheme support in the current vLLM process."""
+def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
+    """Register AutoRound NVFP4 QDQ metadata and scheme routing."""
     global _PATCHED
     if _PATCHED:
         return
@@ -36,15 +37,22 @@ def apply_patches() -> None:
     from vllm.model_executor.layers.quantization.inc.config_parser import INCConfigParser
     from vllm.model_executor.layers.quantization.inc.schemes import factory
 
-    INCConfig.SUPPORTED_DTYPES = set(INCConfig.SUPPORTED_DTYPES) | {"nv_fp"}
-    INCConfig.SUPPORTED_FORMATS = set(INCConfig.SUPPORTED_FORMATS) | {"auto_round:llm_compressor"}
+    supported_dtypes = {"nvfp4_v2"}
+    if enable_nvfp4_qdq:
+        supported_dtypes.add("nv_fp")
+        INCConfig._vllm_qdq_nvfp4_enabled = True
+    INCConfig.SUPPORTED_DTYPES = set(INCConfig.SUPPORTED_DTYPES) | supported_dtypes
+    INCConfig.SUPPORTED_FORMATS = set(INCConfig.SUPPORTED_FORMATS) | {
+        "auto_round:llm_compressor",
+        "auto_round:llm_compressor_nvfp4_e5m3",
+    }
 
     original_resolve_scheme = factory.resolve_scheme
     original_resolve_config = INCConfigParser.resolve
     original_validate_supported_quantization = INCConfig._validate_supported_quantization
 
     def validate_supported_quantization(self: Any) -> None:
-        if self.data_type == "nv_fp" and self.weight_bits == 4:
+        if enable_nvfp4_qdq and self.data_type == "nv_fp" and self.weight_bits == 4:
             if self.packing_format not in INCConfig.SUPPORTED_FORMATS:
                 raise ValueError(f"Unsupported packing_format: {self.packing_format}")
             return
@@ -56,9 +64,10 @@ def apply_patches() -> None:
         return replace(layer_config, data_type=data_type)
 
     def resolve_scheme(layer_config: Any):
-        qdq_owns_nvfp4 = getattr(INCConfig, "_vllm_qdq_nvfp4_enabled", False)
-        if INCNvfp4Scheme.can_handle(layer_config) and not qdq_owns_nvfp4:
-            return INCNvfp4Scheme()
+        if INCNvfp4UE5M3Scheme.can_handle(layer_config):
+            return INCNvfp4UE5M3Scheme()
+        if enable_nvfp4_qdq and INCNvfp4QDQScheme.can_handle(layer_config):
+            return INCNvfp4QDQScheme()
         return original_resolve_scheme(layer_config)
 
     INCConfigParser.resolve = resolve_config
@@ -66,17 +75,15 @@ def apply_patches() -> None:
     factory.resolve_scheme = resolve_scheme
     inc_module.resolve_scheme = resolve_scheme
     _PATCHED = True
-    logger.warning("vLLM NVFP4 hardware patch applied: AutoRound nv_fp scheme registered")
+    formats = "nv_fp and nvfp4_v2" if enable_nvfp4_qdq else "nvfp4_v2"
+    logger.warning("vLLM QDQ patch applied: AutoRound %s schemes registered", formats)
 
 
 def register() -> None:
     """Entry point used by vLLM's general plugin loader."""
     from vllm_qdq_plugin import envs
 
-    if envs.VLLM_QDQ:
-        logger.info("Skipping NVFP4 hardware registration because VLLM_QDQ=1")
-        return
-    apply_patches()
+    apply_patches(enable_nvfp4_qdq=envs.VLLM_QDQ)
 
 
 __all__ = ["apply_patches", "register"]
