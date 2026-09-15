@@ -5,8 +5,8 @@ from vllm.model_executor.layers.fused_moe.activation import ApplyMoEActivationCo
 from vllm_qdq_plugin.qdq.nvfp4 import nvfp4_qdq
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import nvfp4_e5m3_qdq
 from vllm_qdq_plugin.quantization.fused_moe_e5m3 import _select_moe_config, fused_moe_ue5m3
-from vllm_qdq_plugin.quantization.inc_nvfp4_moe import INCNvfp4QDQMoEMethod
 from vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_moe import INCNvfp4UE5M3MoEMethod
+from vllm_qdq_plugin.quantization.inc_nvfp4_moe import INCNvfp4QDQMoEMethod
 
 
 def _decode_weight(packed: torch.Tensor, scale_bits: torch.Tensor, group_size: int) -> torch.Tensor:
@@ -189,9 +189,7 @@ def test_standard_nvfp4_qdq_moe_matches_reference():
         0, 256, (num_experts, intermediate_size * 2, hidden_size // 2), device=device, dtype=torch.uint8
     )
     w2 = torch.randint(0, 256, (num_experts, hidden_size, intermediate_size // 2), device=device, dtype=torch.uint8)
-    w13_scale = torch.rand(
-        num_experts, intermediate_size * 2, hidden_size // 16, device=device
-    ).to(torch.float8_e4m3fn)
+    w13_scale = torch.rand(num_experts, intermediate_size * 2, hidden_size // 16, device=device).to(torch.float8_e4m3fn)
     w2_scale = torch.rand(num_experts, hidden_size, intermediate_size // 16, device=device).to(torch.float8_e4m3fn)
     w13_global_scale = torch.full((num_experts, 2), 2.0, device=device)
     w2_global_scale = torch.full((num_experts,), 2.0, device=device)
