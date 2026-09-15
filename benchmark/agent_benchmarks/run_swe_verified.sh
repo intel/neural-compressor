@@ -398,6 +398,7 @@ log "Generating ${BENCHMARK_LABEL} selection ${FULL_SLICE} with model ${SERVED_M
 		--config swebench.yaml \
 		--config "model.model_kwargs.base_url=${OPENAI_BASE_URL}" \
 		--config "model.model_kwargs.api_key=${VLLM_API_KEY}" \
+		--config "model.model_kwargs.custom_llm_provider=openai" \
 		--config "agent.step_limit=${STEP_LIMIT}" \
 		--config "environment.pull_timeout=${PULL_TIMEOUT}" \
 		--slice "${FULL_SLICE}"
