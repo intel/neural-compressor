@@ -43,7 +43,8 @@ Options:
 	                     Regenerate and evaluate cases previously reported with empty patches
 	--retry-attempts N   Retry errors and empty patches until accuracy stops improving or N rounds finish (default: 1)
 	--skip-eval          Generate predictions without local evaluation
-	--keep-images        Keep benchmark Docker images after each evaluation chunk (including Verified Mini)
+	--keep-images        Keep benchmark Docker images after each chunk (default for Verified Mini)
+	--remove-images      Remove images after each chunk, including with Verified Mini
 	-h, --help           Show this help message
 
 Environment:
@@ -115,6 +116,7 @@ RUN_TAG="$(date -u +%Y%m%dT%H%M%SZ)"
 TAG_SPECIFIED=false
 SKIP_EVAL=false
 KEEP_IMAGES=false
+IMAGE_POLICY_SPECIFIED=false
 RETRY_ERRORS=false
 RETRY_EMPTY_PATCHES=false
 RETRY_ATTEMPTS=1
@@ -219,6 +221,12 @@ while [[ $# -gt 0 ]]; do
 			;;
 		--keep-images)
 			KEEP_IMAGES=true
+			IMAGE_POLICY_SPECIFIED=true
+			shift
+			;;
+		--remove-images)
+			KEEP_IMAGES=false
+			IMAGE_POLICY_SPECIFIED=true
 			shift
 			;;
 		-h | --help)
@@ -281,6 +289,10 @@ case "${DATASET}" in
 		die "Unsupported --dataset '${DATASET}'; expected verified or verified-mini"
 		;;
 esac
+
+if [[ "${IMAGE_POLICY_SPECIFIED}" == false && "${DATASET}" == "verified-mini" ]]; then
+	KEEP_IMAGES=true
+fi
 
 init_benchmark_paths
 init_vllm_endpoint

@@ -99,7 +99,6 @@ bash run_swe_verified.sh \
   --dataset verified-mini \
   --port 8888 \
   --step-limit 250 \
-  --keep-images \
   --tag qwen36_27b_mini
 ```
 
@@ -118,12 +117,13 @@ evaluated with the local harness in the background while generation continues
 for the remaining instances, overlapping the CPU/Docker-bound evaluation with
 GPU-bound generation instead of alternating between the two. A chunk's Docker
 images are removed once its instances are evaluated, so evaluation reuses the
-images pulled during generation while disk usage remains bounded. Pass
-`--keep-images` with either Verified or Verified Mini to retain those images
-for later runs. Any
+images pulled during generation while disk usage remains bounded. Verified Mini
+retains images by default because its smaller image set is practical to reuse.
+Pass `--keep-images` to retain images explicitly or `--remove-images` to remove
+them after each chunk, including for Verified Mini. Any
 remaining instances are drained into a final, possibly smaller chunk once
 generation finishes. With `--skip-eval`, images are removed as each chunk is
-claimed unless `--keep-images` is also specified. An independent watchdog
+claimed according to the same image policy. An independent watchdog
 checks the vLLM health endpoint during generation and stops the run after three
 consecutive failures by default. The aggregate report is refreshed after every
 completed evaluation chunk, so completed results remain available if the run
@@ -178,7 +178,8 @@ retry categories are empty.
 | `--retry-empty-patches` | disabled | Regenerate and evaluate previously empty patches |
 | `--retry-attempts N` | `1` | Enable error and empty-patch retries for up to N rounds; stop early when accuracy no longer improves or both categories are empty |
 | `--skip-eval` | disabled | Generate predictions without local evaluation |
-| `--keep-images` | disabled | Keep benchmark Docker images after each evaluation chunk, including Verified Mini images |
+| `--keep-images` | enabled for Verified Mini | Keep benchmark Docker images after each evaluation chunk |
+| `--remove-images` | disabled | Remove images after each chunk, overriding the Verified Mini default |
 
 Outputs:
 
