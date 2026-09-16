@@ -27,7 +27,7 @@ class INCNvfp4UE5M3Scheme(INCScheme):
         layer_config: "INCLayerConfig",
     ):
         del config, layer, prefix
-        from .inc_nvfp4_ue5m3_linear import INCNvfp4UE5M3LinearMethod
+        from .inc_nvfp4_e5m3_linear import INCNvfp4UE5M3LinearMethod
 
         return INCLinearMethod(INCNvfp4UE5M3LinearMethod(layer_config))
 
@@ -39,6 +39,6 @@ class INCNvfp4UE5M3Scheme(INCScheme):
         layer_config: "INCLayerConfig",
     ):
         del config, prefix
-        from .inc_nvfp4_ue5m3_moe import INCNvfp4UE5M3MoEMethod
+        from .inc_nvfp4_e5m3_moe import INCNvfp4UE5M3MoEMethod
 
         return INCNvfp4UE5M3MoEMethod(layer.moe_config, layer_config.group_size)
