@@ -298,11 +298,8 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         """
         self._tracker.unlock()
         self.input_qdq.add_variables()
-        # `super().kernel` may return either the raw `Variable` or, when LoRA is enabled
-        # upstream, a materialized tensor (kernel + LoRA delta). `convert_to_tensor`
-        # normalizes both cases instead of assuming a `Variable` with a `.value` attribute.
-        base_kernel = ops.convert_to_tensor(super().kernel)
-        w_scale, _ = get_q_params(base_kernel, self.weight_dtype, self.compute_dtype, asymmetric=False)
+        kernel = ops.convert_to_tensor(super().kernel)
+        w_scale, _ = get_q_params(kernel, self.weight_dtype, self.compute_dtype, asymmetric=False)
         self.w_scale = self.add_weight(
             name="w_scale",
             shape=w_scale.shape,
@@ -314,14 +311,14 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
         self._kernel_quant = self.add_weight(
             name="_kernel_quant",
-            shape=base_kernel.shape,
+            shape=kernel.shape,
             initializer="zeros",
             trainable=False,
             dtype=self.weight_dtype,
             autocast=False,
         )
 
-        self._kernel_quant.assign(wquantfun(base_kernel, scale=self.w_scale.value))
+        self._kernel_quant.assign(wquantfun(kernel, scale=self.w_scale.value))
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
