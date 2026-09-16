@@ -31,7 +31,7 @@ def _matmul(a, b):
 
 
 def compute_expected_qdq_dense_output(
-    test_input, calib_data, weights, weight_dtype, activation_dtype, dynamic, model_dtype
+    test_input, calib_data, weights, weight_dtype, activation_dtype, dynamic, model_dtype, granularity
 ):
     """Compute expected output for one or more Dense layers after FP8/int8 quantize-dequantize (QDQ).
 
@@ -73,7 +73,11 @@ def compute_expected_qdq_dense_output(
             a_scale = np.array(np.max(np.abs(input_samples)) / a_dtype_max, dtype=model_dtype)
             a_zero_point = None
 
-        w_scale = np.array(np.max(np.abs(layer_weights)) / w_dtype_max, dtype=model_dtype)
+        if granularity == "per_channel":
+            w_scale = np.array(np.max(np.abs(layer_weights), axis=0, keepdims=True) / w_dtype_max, dtype=model_dtype)
+            w_scale = w_scale.reshape(w_scale.shape[1])
+        else:
+            w_scale = np.array(np.max(np.abs(layer_weights)) / w_dtype_max, dtype=model_dtype)
 
         all_a_scales.append(a_scale)
         all_w_scales.append(w_scale)

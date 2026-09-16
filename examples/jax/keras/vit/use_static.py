@@ -11,6 +11,8 @@ from keras.applications.imagenet_utils import decode_predictions
 
 import neural_compressor.jax.quantization  # Required to load quantized model
 
+from keras_hub.models import ViTImageClassifier
+
 parser = argparse.ArgumentParser("Run statically quantized ViT model")
 parser.add_argument(
     "-q",
@@ -22,8 +24,14 @@ parser.add_argument(
 args = parser.parse_args()
 print("Arguments:", *vars(args).items(), sep="\n")
 
-print("Load quantized model from:", args.quantized_path)
-vit_model = keras.models.load_model(args.quantized_path)
+
+if args.quantized_path.endswith(".keras"):
+    print(f"\nLoading Keras model from: {args.quantized_path} using keras.models.load_model() API...")
+    vit_model = keras.models.load_model(args.quantized_path)
+else:
+    print(f"\nLoading Keras model from: {args.quantized_path} using from_preset() API...")
+    vit_model = ViTImageClassifier.from_preset(args.quantized_path)
+
 vit_model.summary()
 
 print("Generate output using quantized model")

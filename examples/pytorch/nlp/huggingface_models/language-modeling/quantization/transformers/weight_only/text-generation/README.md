@@ -10,9 +10,8 @@ python version requests equal or higher than 3.9 due to [text evaluation library
 
 ```bash
 pip install oneccl_bind_pt==2.4.0 --index-url https://pytorch-extension.intel.com/release-whl/stable/cpu/us/
-pip install -r requirements_cpu_woq.txt
+pip install -r requirements_cpu_woq.txt --extra-index-url https://download.pytorch.org/whl/cpu
 ```
-
 
 ### Run
 #### Performance

@@ -18,5 +18,6 @@ from neural_compressor.jax.quantization import (
     quantize_model,
     StaticQuantConfig,
     DynamicQuantConfig,
+    JaxBaseConfig,
     JaxComposableConfig,
 )

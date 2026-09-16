@@ -9,7 +9,12 @@ This document describes quantization of Keras Gemma models using Neural Compress
 It is worth conducting experiments in a separate environment. For example, you can use the conda environment from [conda-forge](https://github.com/conda-forge/miniforge). The binary for your environment could be found here: [miniforge](https://github.com/conda-forge/miniforge/releases/latest)  
 
 ## 2. Install modules
-Install Neural Compressor from the source code:
+
+Since Neural Compressor v3.9, you can install the required binaries from PyPI:
+```bash
+pip install -r requirements.txt
+```
+Alternatively, you can always install Neural Compressor from the source code:
 ```bash
 pushd ../../../..  # go to the root directory of the Neural Compressor source code
 INC_JAX_ONLY=1 pip install .
@@ -76,7 +81,7 @@ python prepare_static.py
 
 After this step, the saved model is stored in the `/path_to_store_your_quantized_model/gemma3_instruct_270m` file. You can load and use it with [use_static.py](use_static.py)
 
-```
+```python
 from keras_hub.models import Gemma3CausalLM
 import neural_compressor.jax.quantization
 gemma_lm = Gemma3CausalLM.from_preset("/path_to_store_your_quantized_model/gemma3_instruct_270m")

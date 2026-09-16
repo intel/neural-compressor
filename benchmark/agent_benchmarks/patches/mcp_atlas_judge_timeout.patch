@@ -1,0 +1,30 @@
+diff --git a/services/scoring/score_claims.py b/services/scoring/score_claims.py
+index 7733135..91c79b8 100644
+--- a/services/scoring/score_claims.py
++++ b/services/scoring/score_claims.py
+@@ -325,6 +325,9 @@ class AsyncLiteLLMClient:
+             raise ValueError("API key not found. Set EVAL_LLM_API_KEY (or LLM_API_KEY) env var, or pass --api-key.")
+         self.api_keys = all_keys
+         self.logger.info(f"Loaded {len(self.api_keys)} API key(s) — rotating per request")
++        self.timeout_seconds = int(
++            os.getenv("EVAL_LLM_TIMEOUT_MS", os.getenv("LLM_TIMEOUT_MS", "600000"))
++        ) / 1000
+         if not self.base_url:
+             raise ValueError("Base URL not found. Set EVAL_LLM_BASE_URL (or LLM_BASE_URL) env var, or pass --base-url.")
+ 
+@@ -361,9 +364,12 @@ class AsyncLiteLLMClient:
+                 }
+ 
+                 async with aiohttp.ClientSession() as session:
+-                    async with session.post(
+-                        url, headers=headers, json=payload, timeout=aiohttp.ClientTimeout(total=60)
+-                    ) as resp:
++                    async with session.post(
++                        url,
++                        headers=headers,
++                        json=payload,
++                        timeout=aiohttp.ClientTimeout(total=self.timeout_seconds),
++                    ) as resp:
+                         if resp.status != 200:
+                             body = await resp.text()
+                             raise RuntimeError(f"LiteLLM API returned {resp.status}: {body}")

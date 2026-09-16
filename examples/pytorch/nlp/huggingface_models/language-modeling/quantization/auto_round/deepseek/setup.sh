@@ -8,32 +8,6 @@ usage() {
     echo "  --bench_tool benchmarking tool to use (lm_eval or aisbench)"
 }
 
-detect_cuda_version() {
-    local cuda_version=""
-    local candidate_version=""
-
-    if command -v nvidia-smi >/dev/null 2>&1; then
-        candidate_version=$(nvidia-smi 2>/dev/null | sed -n 's/.*CUDA Version: \([^ ]*\).*/\1/p' | head -n 1)
-        if [[ "$candidate_version" =~ ^[0-9.]+$ ]]; then
-            cuda_version="$candidate_version"
-        fi
-    fi
-
-    if [[ -z "$cuda_version" ]] && command -v nvcc >/dev/null 2>&1; then
-        candidate_version=$(nvcc --version | awk '/release/ {print $6}' | sed 's/^V//; s/,//')
-        if [[ "$candidate_version" =~ ^[0-9.]+$ ]]; then
-            cuda_version="$candidate_version"
-        fi
-    fi
-
-    if [[ -z "$cuda_version" ]]; then
-        echo "Unable to detect CUDA version from nvidia-smi or nvcc." >&2
-        exit 1
-    fi
-
-    echo "$cuda_version"
-}
-
 DEVICE="${DEVICE:-gpu}"
 FORMAT="${FORMAT:-AR}"
 TASKS="${TASKS:-hellaswag,piqa,mmlu,gsm8k,ruler}"
@@ -75,17 +49,9 @@ elif [[ "$DEVICE" == "gpu" ]]; then
     uv pip install packaging --upgrade
     uv pip install -U "huggingface_hub[cli]"
     if [[ "$FORMAT" == "LLMC" ]]; then
-        CUDA_VERSION=$(detect_cuda_version)
-        echo "Detected system CUDA version: $CUDA_VERSION"
-        if [[ "$CUDA_VERSION" == "12."* ]]; then
-            uv pip install vllm==0.22.0 --extra-index-url https://wheels.vllm.ai/0.22.0/cu129 --extra-index-url https://download.pytorch.org/whl/cu129 --index-strategy unsafe-best-match
-            uv pip install torch torchvision --extra-index-url https://download.pytorch.org/whl/cu129 --index-strategy unsafe-best-match
-        elif [[ "$CUDA_VERSION" == "13."* ]]; then
-            uv pip install vllm==0.22.0
-        else
-            echo "Unsupported CUDA version: $CUDA_VERSION. Supported versions are 12.x and 13.x."
-            exit 1
-        fi
+        # inference works with vllm-0.26.1rc1.dev451+gb1e12d142
+        uv pip install -U vllm --pre --extra-index-url https://wheels.vllm.ai/nightly/cu130 --extra-index-url https://download.pytorch.org/whl/cu130 --index-strategy unsafe-best-match
+        uv pip install flashinfer-python==0.6.13 --no-deps
 
         uv pip install ray
         git clone https://github.com/yiliu30/vllm-qdq-plugin.git

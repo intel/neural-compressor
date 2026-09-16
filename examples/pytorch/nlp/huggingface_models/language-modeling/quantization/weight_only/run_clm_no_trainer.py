@@ -284,9 +284,6 @@ class Evaluator:
 
 
 def get_user_model(empty_model=False):
-    torchscript = False
-    if args.woq_algo in ["AWQ", "TEQ"]:
-        torchscript = True
     if args.woq_algo == "AutoRound" and is_habana_framework_installed():
         print("Quantizing model with AutoRound on HPU")
         if args.quantize:
@@ -317,7 +314,6 @@ def get_user_model(empty_model=False):
         elif not empty_model:
             user_model = AutoModelForCausalLM.from_pretrained(
                 args.model,
-                torchscript=torchscript,  # torchscript will force `return_dict=False` to avoid jit errors
                 trust_remote_code=args.trust_remote_code,
                 revision=args.revision,
                 torch_dtype=config.torch_dtype if args.use_mmap else torch.float32

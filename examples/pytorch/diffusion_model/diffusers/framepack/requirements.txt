@@ -21,7 +21,6 @@ easydict
 urllib3
 boto3
 omegaconf
-transformers==4.57.1
 pycocoevalcap
 detectron2@git+https://github.com/facebookresearch/detectron2.git
 accelerate

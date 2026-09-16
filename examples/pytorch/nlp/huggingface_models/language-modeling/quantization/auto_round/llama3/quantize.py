@@ -284,6 +284,7 @@ if __name__ == "__main__":
             output_dir=args.export_path,
             device_map=args.device_map,
             layer_config=layer_config if (args.use_recipe or args.quant_lm_head) else None,
+            dataset="HuggingFaceH4/ultrachat_200k",
         )
         if isinstance(args.target_bits, list) and len(args.target_bits) > 1:
             args.tune_tasks = args.tasks if args.tune_tasks is None else args.tune_tasks

@@ -10,11 +10,11 @@ It is worth conducting experiments in a separate environment. For example, you c
 
 ## 2. Install modules
 
-Install requirements:
+Since Neural Compressor v3.9, you can install the required binaries from PyPI:
 ```bash
 pip install -r requirements.txt
 ```
-Install Neural Compressor from the source code:
+Alternatively, you can always install Neural Compressor from the source code:
 ```bash
 pushd ../../../..  # go to the root directory of the Neural Compressor source code
 INC_JAX_ONLY=1 pip install .
