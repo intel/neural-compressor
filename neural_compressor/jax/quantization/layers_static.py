@@ -154,13 +154,7 @@ class MinMaxObserver(keras.layers.Layer):
 
 
 class AbsMaxObserver(keras.layers.Layer):
-    """Observer that tracks the running maximum absolute value for calibration.
-
-    Unlike MinMaxObserver, this observer only records the maximum absolute value
-    seen during calibration. It is used for symmetric quantization schemes (e.g. fp8
-    and symmetric int8) where the minimum value is not required to compute the scale,
-    yielding a small performance gain over tracking both min and max.
-    """
+    """Observer that tracks the running maximum absolute value for calibration."""
 
     def __init__(self, *args, **kwargs):
         """Initialize the absolute-max observer layer.
@@ -222,10 +216,6 @@ class AbsMaxObserver(keras.layers.Layer):
     def get_calibrated_range(self):
         """Return the calibrated maximum absolute value.
 
-        Only the maximum absolute value is needed for the symmetric scale
-        computation in ``get_scale``/``get_q_params`` (which takes ``max(abs(...))``),
-        so a single value is returned rather than a (min, max) range.
-
         Returns:
             jnp.ndarray: Tensor containing the maximum absolute value.
         """
@@ -242,12 +232,6 @@ class AbsMaxObserver(keras.layers.Layer):
 
 def get_activation_observer(activation_dtype, asymmetric, dtype_policy):
     """Select the appropriate activation observer for a quantization scheme.
-
-    MinMaxObserver is required only for asymmetric integer quantization, i.e. when
-    ``integer_get_q_params`` is used to compute the quantization parameters and both
-    the minimum and maximum values are needed. For all other schemes (fp8 and
-    symmetric int8) only the maximum absolute value is required, so the cheaper
-    AbsMaxObserver is used.
 
     Args:
         activation_dtype (jnp.dtype): Activation dtype used for quantization.
