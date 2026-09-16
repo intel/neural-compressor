@@ -219,7 +219,7 @@ class AbsMaxObserver(keras.layers.Layer):
         Returns:
             jnp.ndarray: Tensor containing the maximum absolute value.
         """
-        return ops.array(self.max_abs_val)
+        return ops.array((self.max_abs_val,))
 
     def is_calibrated(self):
         """Check if the observer has valid calibration data.

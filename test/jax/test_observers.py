@@ -48,7 +48,7 @@ def test_abs_max_observer_tracks_max_abs():
 
     calibrated_range = observer.get_calibrated_range()
     # Only the maximum absolute value is returned
-    assert float(calibrated_range) == pytest.approx(5.0)
+    assert float(calibrated_range[0]) == pytest.approx(5.0)
 
 
 def test_abs_max_observer_passthrough():
@@ -67,7 +67,7 @@ def test_abs_max_observer_respects_mask():
     observer(inputs, mask=mask)
     calibrated_range = observer.get_calibrated_range()
     # The masked -9.0 must be ignored, so max abs is 2.0
-    assert float(calibrated_range) == pytest.approx(2.0)
+    assert float(calibrated_range[0]) == pytest.approx(2.0)
 
 
 @pytest.mark.parametrize(
