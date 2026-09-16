@@ -109,7 +109,8 @@ class TestW8A8PT2EQuantizer:
         from torch._inductor import config
 
         config.freezing = True
-        opt_model = torch.compile(converted_model)
+        converted_model.model = torch.compile(converted_model.model)
+        opt_model = converted_model
         out = opt_model(
             input_ids=input_ids,
             attention_mask=attention_mask,
