@@ -81,7 +81,7 @@ python prepare_static.py
 
 After this step, the saved model is stored in the `/path_to_store_your_quantized_model/gemma3_instruct_270m` file. You can load and use it with [use_static.py](use_static.py)
 
-```
+```python
 from keras_hub.models import Gemma3CausalLM
 import neural_compressor.jax.quantization
 gemma_lm = Gemma3CausalLM.from_preset("/path_to_store_your_quantized_model/gemma3_instruct_270m")
