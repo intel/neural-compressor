@@ -69,11 +69,11 @@ Compared with PTQ, QAT offers:
 
 ## Quick Start
 
-This section walks through an end-to-end [example](https://github.com/intel/neural-compressor/tree/main/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm_qat).
+This section walks through an end-to-end [example](https://github.com/intel/neural-compressor/tree/main/examples/pytorch/llm/others/qat).
 
 ### 1. Setup Environment
 
-From the `llm_qat` directory:
+From the `qat` directory:
 
 ```bash
 pip install -r requirements.txt
@@ -340,7 +340,7 @@ def forward(self, inputs: torch.Tensor):
 
 ### 4. QAT-Specific Trainer (`QATTrainer`)
 
-Defined in `examples/.../llm_qat/utils.py`:
+Defined in `examples/.../qat/utils.py`:
 
 ```python
 class QATTrainer(Trainer):
@@ -477,4 +477,4 @@ if weight_quantizer.num_bits == 4 and weight_quantizer.data_type == "mx_fp4":
   [intel/auto-round](https://github.com/intel/auto-round)
 
 - **QAT LLM Example**  
-  [llm_qat example directory](https://github.com/intel/neural-compressor/tree/main/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/llm_qat)
+  [qat example directory](https://github.com/intel/neural-compressor/tree/main/examples/pytorch/llm/others/qat)

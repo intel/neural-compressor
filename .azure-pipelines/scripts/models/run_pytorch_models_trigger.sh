@@ -31,11 +31,11 @@ inc_new_api=true
 benchmark_cmd=""
 # ======== set up config for pytorch models ========
 if [ "${model}" == "opt_125m_woq_gptq_int4" ]; then
-    model_src_dir="nlp/huggingface_models/language-modeling/quantization/weight_only"
+    model_src_dir="llm/others/weight_only"
     inc_new_api=3x_pt
     tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_int4"
 elif [ "${model}" == "opt_125m_woq_gptq_nf4_dq_bnb" ]; then
-    model_src_dir="nlp/huggingface_models/language-modeling/quantization/weight_only"
+    model_src_dir="llm/others/weight_only"
     inc_new_api=3x_pt
     tuning_cmd="bash run_quant.sh --topology=opt_125m_woq_gptq_nf4_dq_bnb"
 fi

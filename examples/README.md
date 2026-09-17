@@ -128,33 +128,19 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>gpt_j</td>
     <td>Natural Language Processing</td>
     <td>Weight-Only Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
+    <td><a href="./pytorch/llm/others/weight_only">link</a></td>
 </tr>
 <tr>
     <td>llama2_7b</td>
     <td>Natural Language Processing</td>
     <td>Weight-Only Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
+    <td><a href="./pytorch/llm/others/weight_only">link</a></td>
 </tr>
 <tr>
-    <td rowspan="2">opt_125m</td>
-    <td rowspan="2">Natural Language Processing</td>
-    <td>Static Quantization (PT2E)</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/pt2e">link</a></td>
-</tr>
-<tr>
+    <td>opt_125m</td>
+    <td>Natural Language Processing</td>
     <td>Weight-Only Quantization</td>
-    <td><a href="./pytorch/nlp/huggingface_models/language-modeling/quantization/weight_only">link</a></td>
-</tr>
-<tr>
-    <td rowspan="2">resnet18</td>
-    <td rowspan="2">Image Recognition</td>
-    <td>Mixed Precision</td>
-    <td><a href="./pytorch/cv/mixed_precision">link</a></td>
-</tr>
-<tr>
-    <td>Static Quantization</td>
-    <td><a href="./pytorch/cv/static_quant">link</a></td>
+    <td><a href="./pytorch/llm/others/weight_only">link</a></td>
 </tr>
 </tbody>
 </table>
