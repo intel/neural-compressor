@@ -30,7 +30,7 @@ def get_world_size():
             _world_size = torch.distributed.get_world_size()
             _world_size_initialized = True
         elif os.getenv('WORLD_SIZE', None) is not None:
-            _world_size = os.getenv('WORLD_SIZE')
+            _world_size = int(os.getenv('WORLD_SIZE'))
             _world_size_initialized = True
     return _world_size
 
@@ -41,7 +41,7 @@ def get_local_rank():
             _local_rank = torch.distributed.get_rank()
             _local_rank_initialized = True
         elif os.getenv('LOCAL_RANK', None) is not None:
-            _local_rank = os.getenv('LOCAL_RANK')
+            _local_rank = int(os.getenv('LOCAL_RANK'))
             _local_rank_initialized = True
     return _local_rank
 
