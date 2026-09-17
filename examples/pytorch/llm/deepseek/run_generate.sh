@@ -103,19 +103,15 @@ export NCCL_NVLS_ENABLE=0
 # export VLLM_DISABLE_PYNCCL=1
 
 # Set environment variables based on quantization type
-# Set environment variables based on quantization type
 if [[ "$QUANT_TYPE_UPPER" == "MXFP4" ]]; then
-    export VLLM_ENABLE_AR_EXT=1
     export VLLM_AR_MXFP4_MODULAR_MOE=1
     export VLLM_MXFP4_PRE_UNPACK_TO_FP8=1
     echo "Using MXFP4 configuration"
 elif [[ "$QUANT_TYPE_UPPER" == "NVFP4" ]]; then
-    export VLLM_ENABLE_AR_EXT=0
     export VLLM_AR_MXFP4_MODULAR_MOE=0
     export VLLM_MXFP4_PRE_UNPACK_TO_FP8=0
     echo "Using NVFP4 configuration"
 else
-    export VLLM_ENABLE_AR_EXT=1
     export VLLM_AR_MXFP4_MODULAR_MOE=0
     export VLLM_MXFP4_PRE_UNPACK_TO_FP8=0
     echo "Using MXFP8 configuration"
@@ -147,7 +143,6 @@ export VLLM_ENABLE_V1_MULTIPROCESSING=0
 echo "Environment variables set:"
 echo "  VLLM_AR_MXFP4_MODULAR_MOE=$VLLM_AR_MXFP4_MODULAR_MOE"
 echo "  VLLM_MXFP4_PRE_UNPACK_TO_FP8=$VLLM_MXFP4_PRE_UNPACK_TO_FP8"
-echo "  VLLM_ENABLE_AR_EXT=$VLLM_ENABLE_AR_EXT"
 echo ""
 
 # Run the model
