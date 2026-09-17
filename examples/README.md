@@ -88,12 +88,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td><a href="./pytorch/diffusion_model/wan">link</a></td>
 </tr>
 <tr>
-    <td>Llama-4-Scout-17B-16E-Instruct</td>
-    <td>Multimodal Modeling</td>
-    <td>Quantization (MXFP4)</td>
-    <td><a href="./pytorch/multimodal/llama4">link</a></td>
-</tr>
-<tr>
     <td rowspan="2">Llama-3.1-8B-Instruct</td>
     <td rowspan="2">Natural Language Processing</td>
     <td>Mixed Precision (MXFP4+MXFP8)</td>

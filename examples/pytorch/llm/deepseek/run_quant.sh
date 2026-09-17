@@ -4,7 +4,7 @@ set -e
 MODEL=""
 TARGET=""
 OUTPUT_DIR=""
-EXPORT_FORMAT="auto_round"
+EXPORT_FORMAT="llm_compressor"
 STATIC_KV_DTYPE="None"
 STATIC_ATTENTION_DTYPE="None"
 
@@ -15,7 +15,7 @@ usage() {
   echo "  -kv datatype for kv cache (auto, fp8)"
   echo "  -attn        Data type for static attention cache (default: None)"
   echo "  --output_dir output directory for quantized model"
-  echo "  -f           quantize model export_format (default: auto_round)"
+  echo "  -f           quantize model export_format (default: llm_compressor)"
   exit 1
 }
 

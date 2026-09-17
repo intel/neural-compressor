@@ -88,7 +88,6 @@ if [[ ! -d "$MODEL_PATH" ]]; then
 fi
 
 # Set common environment variables
-export VLLM_ENABLE_AR_EXT=1
 # A100 need to close torch compile
 # export TORCH_COMPILE_DISABLE=1
 # For https://github.com/yiliu30/vllm-qdq-plugin.git CT format eval

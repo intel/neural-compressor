@@ -126,7 +126,6 @@ if [[ "$ATTN_DTYPE" == "fp8" ]]; then
 fi
 
 # Common environment variables
-export VLLM_ENABLE_AR_EXT=1
 export VLLM_ENABLE_STATIC_MOE=0
 export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=0
 export VLLM_USE_DEEP_GEMM=0
@@ -137,7 +136,6 @@ export VLLM_QDQ=1
 echo "Environment variables set:"
 echo "  VLLM_AR_MXFP4_MODULAR_MOE=$VLLM_AR_MXFP4_MODULAR_MOE"
 echo "  VLLM_MXFP4_PRE_UNPACK_TO_FP8=$VLLM_MXFP4_PRE_UNPACK_TO_FP8"
-echo "  VLLM_ENABLE_AR_EXT=$VLLM_ENABLE_AR_EXT"
 echo ""
 
 
