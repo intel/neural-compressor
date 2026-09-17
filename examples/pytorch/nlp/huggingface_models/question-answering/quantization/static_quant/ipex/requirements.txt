@@ -1,5 +1,0 @@
-accelerate
-datasets>=1.8.0
-transformers>=4.34.1
-tensorboard
-tqdm
