@@ -1,0 +1,280 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>MiniMax-M2.7 AutoRound (INC prepare/convert) &mdash; Intel® Neural Compressor 3.9 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">MiniMax-M2.7 AutoRound (INC prepare/convert)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/docs/source/examples/pytorch/llm/minimax/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="minimax-m2-7-autoround-inc-prepare-convert">
+<h1>MiniMax-M2.7 AutoRound (INC prepare/convert)<a class="headerlink" href="#minimax-m2-7-autoround-inc-prepare-convert" title="Link to this heading"></a></h1>
+<p>This example demonstrates model-free quantization of <a class="reference external" href="https://huggingface.co/MiniMaxAI/MiniMax-M2.7">MiniMaxAI/MiniMax-M2.7</a> via the INC API:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">AutoRoundConfig</span><span class="p">,</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span>
+
+<span class="n">config</span> <span class="o">=</span> <span class="n">AutoRoundConfig</span><span class="p">(</span>
+    <span class="n">model_free</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="n">scheme</span><span class="o">=</span><span class="s2">"MXFP8"</span><span class="p">,</span>
+    <span class="n">layer_config</span><span class="o">=</span><span class="p">{</span><span class="s2">"block_sparse_moe"</span><span class="p">:</span> <span class="p">{</span><span class="s2">"scheme"</span><span class="p">:</span> <span class="s2">"MXFP4"</span><span class="p">}},</span>
+    <span class="n">export_format</span><span class="o">=</span><span class="s2">"llm_compressor"</span><span class="p">,</span>
+    <span class="n">output_dir</span><span class="o">=</span><span class="s2">"/path/to/output"</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="s2">"MiniMaxAI/MiniMax-M2.7"</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">config</span><span class="p">)</span>
+<span class="n">model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">model</span><span class="p">)</span>
+</pre></div>
+</div>
+<section id="requirements">
+<h2>Requirements<a class="headerlink" href="#requirements" title="Link to this heading"></a></h2>
+<p>Install dependencies before running quantization or evaluation:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>setup.sh
+</pre></div>
+</div>
+<p>Or manually:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>pip<span class="w"> </span>setuptools_rust<span class="w"> </span>setuptools_scm
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-U<span class="w"> </span>evalscope<span class="w"> </span>lm_eval<span class="o">[</span>api<span class="o">]</span><span class="w"> </span>transformers<span class="w"> </span>datasets
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>git+https://github.com/intel/auto-round.git@main
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>compressed-tensors<span class="w"> </span>--no-deps
+uv<span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>vllm
+</pre></div>
+</div>
+</section>
+<section id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
+<section id="quantize">
+<h3>1. Quantize<a class="headerlink" href="#quantize" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">cd</span><span class="w"> </span>examples/pytorch/llm/minimax
+bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dtype<span class="o">=</span>mxfp4_mixed<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>MiniMaxAI/MiniMax-M2.7<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_model<span class="o">=</span>~/models/minimax-m2.7-mxfp
+</pre></div>
+</div>
+<p>To additionally quantize the KV cache / attention to static FP8 (requires <code class="docutils literal notranslate"><span class="pre">transformers==4.57.6</span></code>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dtype<span class="o">=</span>mxfp4_mixed<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--input_model<span class="o">=</span>MiniMaxAI/MiniMax-M2.7<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_model<span class="o">=</span>~/models/minimax-m2.7-mxfp-fp8kv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--static_kv_dtype<span class="o">=</span>fp8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--static_attention_dtype<span class="o">=</span>fp8
+</pre></div>
+</div>
+<blockquote>
+<div><p>Note: <code class="docutils literal notranslate"><span class="pre">--static_kv_dtype</span></code> / <code class="docutils literal notranslate"><span class="pre">--static_attention_dtype</span></code> require loading the real model, so <code class="docutils literal notranslate"><span class="pre">model_free</span></code> is automatically disabled when either is set.</p>
+</div></blockquote>
+</section>
+<section id="serve-evaluate">
+<h3>2. Serve + Evaluate<a class="headerlink" href="#serve-evaluate" title="Link to this heading"></a></h3>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">3</span>,4,5,6<span class="w"> </span>bash<span class="w"> </span>run_evalscope.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model<span class="w"> </span>~/models/minimax-m2.7-mxfp<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tp<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--port<span class="w"> </span><span class="m">8001</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tasks<span class="w"> </span>gpqa_diamond,aime25,gsm8k,piqa,hellaswag,live_code_bench
+</pre></div>
+</div>
+<p>For a model quantized with static FP8 KV cache / attention:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">3</span>,4,5,6<span class="w"> </span>bash<span class="w"> </span>run_evalscope.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model<span class="w"> </span>~/models/minimax-m2.7-mxfp-fp8kv<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tp<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--port<span class="w"> </span><span class="m">8001</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--static_kv_dtype<span class="w"> </span>fp8<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--static_attention_dtype<span class="w"> </span>fp8
+</pre></div>
+</div>
+<p>Equivalent vLLM command used inside <code class="docutils literal notranslate"><span class="pre">run_evalscope.sh</span></code>:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">3</span>,4,5,6<span class="w"> </span>vllm<span class="w"> </span>serve<span class="w"> </span>~/models/minimax-m2.7-mxfp<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--trust-remote-code<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tensor-parallel-size<span class="w"> </span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tool-call-parser<span class="w"> </span>minimax_m2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--enable-auto-tool-choice<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--reasoning-parser<span class="w"> </span>minimax_m2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--served-model-name<span class="w"> </span>minimax-m2.7<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max-model-len<span class="w"> </span><span class="m">102400</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max-num-seqs<span class="w"> </span><span class="m">1024</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--max-num-batched-tokens<span class="w"> </span><span class="m">32768</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--enable-chunked-prefill<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--port<span class="w"> </span><span class="m">8001</span>
+</pre></div>
+</div>
+</section>
+</section>
+<section id="cli-arguments">
+<h2>CLI Arguments<a class="headerlink" href="#cli-arguments" title="Link to this heading"></a></h2>
+<section id="run-quant-sh">
+<h3><code class="docutils literal notranslate"><span class="pre">run_quant.sh</span></code><a class="headerlink" href="#run-quant-sh" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--dtype</span></code>: quantization preset.</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">mxfp4_mixed</span></code>: <code class="docutils literal notranslate"><span class="pre">scheme=MXFP8</span></code> globally + <code class="docutils literal notranslate"><span class="pre">block_sparse_moe</span></code> layers use <code class="docutils literal notranslate"><span class="pre">scheme=MXFP4</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mxfp8</span></code>: <code class="docutils literal notranslate"><span class="pre">scheme=MXFP8</span></code> globally</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mxfp4</span></code>: <code class="docutils literal notranslate"><span class="pre">scheme=MXFP4</span></code> globally</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--input_model</span></code>: HF model name or local model path.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--output_model</span></code>: output directory.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--format</span></code>: <code class="docutils literal notranslate"><span class="pre">auto_round</span></code> or <code class="docutils literal notranslate"><span class="pre">llm_compressor</span></code> (default: <code class="docutils literal notranslate"><span class="pre">llm_compressor</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--static_kv_dtype</span></code>: static KV cache data type, e.g. <code class="docutils literal notranslate"><span class="pre">fp8</span></code> (default: unset).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--static_attention_dtype</span></code>: static attention data type, e.g. <code class="docutils literal notranslate"><span class="pre">fp8</span></code> (default: unset).</p></li>
+</ul>
+</section>
+<section id="run-evalscope-sh">
+<h3><code class="docutils literal notranslate"><span class="pre">run_evalscope.sh</span></code><a class="headerlink" href="#run-evalscope-sh" title="Link to this heading"></a></h3>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--model</span></code>: quantized model path for vLLM and evalscope.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--port</span></code>: vLLM API port (default: <code class="docutils literal notranslate"><span class="pre">8001</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--temp</span></code>: generation temperature (default: <code class="docutils literal notranslate"><span class="pre">1.0</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--tp</span></code>: tensor parallel size for vLLM (default: <code class="docutils literal notranslate"><span class="pre">4</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--max-model-len</span></code>: max context length (default: <code class="docutils literal notranslate"><span class="pre">102400</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--served-model-name</span></code>: served model name alias (default: <code class="docutils literal notranslate"><span class="pre">minimax-m2.7</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--tasks</span></code>: comma-separated subset of <code class="docutils literal notranslate"><span class="pre">gpqa_diamond,aime25,gsm8k,piqa,hellaswag,live_code_bench</span></code> (default: all).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--static_kv_dtype</span></code>: vLLM <code class="docutils literal notranslate"><span class="pre">kv_cache_dtype</span></code>, e.g. <code class="docutils literal notranslate"><span class="pre">fp8</span></code> (default: <code class="docutils literal notranslate"><span class="pre">auto</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--static_attention_dtype</span></code>: set to <code class="docutils literal notranslate"><span class="pre">fp8</span></code> to enable FP8 attention (implies <code class="docutils literal notranslate"><span class="pre">kv_cache_dtype=fp8</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--skip_serve</span></code>: skip starting vLLM (use existing endpoint on the same <code class="docutils literal notranslate"><span class="pre">--port</span></code>).</p></li>
+</ul>
+</section>
+</section>
+<section id="evaluation-generation-config">
+<h2>Evaluation Generation Config<a class="headerlink" href="#evaluation-generation-config" title="Link to this heading"></a></h2>
+<p>All tasks use thinking mode with <code class="docutils literal notranslate"><span class="pre">reasoning_effort=max</span></code>:</p>
+<div class="highlight-json notranslate"><div class="highlight"><pre><span></span><span class="p">{</span>
+<span class="w">  </span><span class="nt">"temperature"</span><span class="p">:</span><span class="w"> </span><span class="mf">1.0</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"top_p"</span><span class="p">:</span><span class="w"> </span><span class="mf">0.95</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"n"</span><span class="p">:</span><span class="w"> </span><span class="mi">1</span><span class="p">,</span>
+<span class="w">  </span><span class="nt">"extra_body"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">    </span><span class="nt">"chat_template_kwargs"</span><span class="p">:</span><span class="w"> </span><span class="p">{</span>
+<span class="w">      </span><span class="nt">"enable_thinking"</span><span class="p">:</span><span class="w"> </span><span class="kc">true</span><span class="p">,</span>
+<span class="w">      </span><span class="nt">"reasoning_effort"</span><span class="p">:</span><span class="w"> </span><span class="s2">"max"</span>
+<span class="w">    </span><span class="p">}</span>
+<span class="w">  </span><span class="p">},</span>
+<span class="w">  </span><span class="nt">"max_tokens"</span><span class="p">:</span><span class="w"> </span><span class="mi">64000</span>
+<span class="p">}</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">live_code_bench</span></code> additionally sets <code class="docutils literal notranslate"><span class="pre">subset_list:</span> <span class="pre">[&quot;v6&quot;]</span></code>.</p>
+</section>
+<section id="notes">
+<h2>Notes<a class="headerlink" href="#notes" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p>This flow requires:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">config</span></code> is <code class="docutils literal notranslate"><span class="pre">AutoRoundConfig</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">config.model_free=True</span></code></p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">model</span></code> passed to <code class="docutils literal notranslate"><span class="pre">prepare/convert</span></code> is a <code class="docutils literal notranslate"><span class="pre">str</span></code> (model path or HF model name)</p></li>
+</ul>
+</li>
+<li><p>The example uses <code class="docutils literal notranslate"><span class="pre">reloading=False</span></code> by default and saves quantized artifacts to <code class="docutils literal notranslate"><span class="pre">--output_model</span></code>.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7fed2b90d790> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
