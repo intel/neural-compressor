@@ -66,7 +66,7 @@ The stop command uses `logs/vllm_<PORT>.pid` by default. Set the same
 `VLLM_LOG_DIR` used to start the server, or set `VLLM_PID_FILE` to the exact PID
 file, when using a custom location.
 
-## SWE-Verified
+## SWE-Verified and SWE-Verified Mini
 
 ### SWE-Verified environment setup
 
@@ -78,7 +78,7 @@ The setup script:
 
 1. Clones mini-SWE-agent v2.4.6 into `mini-swe-agent/`.
 2. Applies `patches/swebench_verified_per_instance_cleanup.patch` so each instance reliably removes its Docker container during cleanup.
-3. Installs mini-SWE-agent to generate predictions and the official SWE-bench harness to evaluate those predictions locally. It also installs datasets for loading SWE-bench Verified.
+3. Installs mini-SWE-agent to generate predictions, the pinned SWE-bench 4.1.0 harness for local evaluation, and datasets for loading SWE-bench Verified and Verified Mini.
 
 
 ### Run SWE-Verified
@@ -90,6 +90,24 @@ bash run_swe_verified.sh \
   --tag qwen36_27b_full
 ```
 
+To run the 50-instance
+[SWE-bench Verified Mini](https://evalscope.readthedocs.io/zh-cn/latest/benchmarks/swe_bench_verified_mini.html)
+dataset instead, select it through the same runner:
+
+```bash
+bash run_swe_verified.sh \
+  --dataset verified-mini \
+  --port 8888 \
+  --step-limit 250 \
+  --tag qwen36_27b_mini
+```
+
+Generation loads the original Hugging Face dataset
+`MariusHobbhahn/swe-bench-verified-mini`, which is mirrored by EvalScope as
+`evalscope/swe-bench-verified-mini`. Evaluation uses the canonical Verified
+dataset plus the selected Mini instance IDs, so it remains compatible with the
+official SWE-bench harness and prebuilt images.
+
 The runner connects to the existing shared vLLM server and leaves it running
 when the benchmark exits, whether the benchmark succeeds or fails. Generation
 runs as a single continuous process across the whole selection instead of
@@ -99,10 +117,12 @@ evaluated with the local harness in the background while generation continues
 for the remaining instances, overlapping the CPU/Docker-bound evaluation with
 GPU-bound generation instead of alternating between the two. A chunk's Docker
 images are removed once its instances are evaluated, so evaluation reuses the
-images pulled during generation while disk usage remains bounded. Any
+images pulled during generation while disk usage remains bounded. Verified Mini
+retains images by default because its smaller image set is practical to reuse.
+Pass `--keep-images` to retain images explicitly for a full Verified run. Any
 remaining instances are drained into a final, possibly smaller chunk once
 generation finishes. With `--skip-eval`, images are removed as each chunk is
-claimed unless `--keep-images` is also specified. An independent watchdog
+claimed according to the same image policy. An independent watchdog
 checks the vLLM health endpoint during generation and stops the run after three
 consecutive failures by default. The aggregate report is refreshed after every
 completed evaluation chunk, so completed results remain available if the run
@@ -132,10 +152,13 @@ state is changed, the runner saves `report.json`, `generation/preds.json`,
 `retries/retry_<TIMESTAMP>_<PID>/`. New chunk reports override the old
 classification for the same instance in the aggregate report. Set
 `--retry-attempts N` to enable both retry modes and run up to N retry rounds.
-The runner stops early when both categories are empty.
+After every round, the runner compares aggregate accuracy with the preceding
+round and stops when accuracy no longer improves. It also stops early when both
+retry categories are empty.
 
 | Option | Default | Description |
 | --- | --- | --- |
+| `--dataset NAME` | `verified` | Dataset selection: `verified` (500 instances) or `verified-mini` (50 instances) |
 | `--host HOST` | `127.0.0.1` | vLLM host |
 | `--port PORT` | `8888` | vLLM port |
 | `--served-name NAME` | discovered | Model ID exposed by vLLM |
@@ -152,9 +175,9 @@ The runner stops early when both categories are empty.
 | `--tag TAG` | UTC timestamp | Output and log label |
 | `--retry-errors` | disabled | Re-evaluate valid error patches and regenerate invalid error submissions |
 | `--retry-empty-patches` | disabled | Regenerate and evaluate previously empty patches |
-| `--retry-attempts N` | `1` | Enable error and empty-patch retries for up to N rounds; stop early when both are empty |
+| `--retry-attempts N` | `1` | Enable error and empty-patch retries for up to N rounds; stop early when accuracy no longer improves or both categories are empty |
 | `--skip-eval` | disabled | Generate predictions without local evaluation |
-| `--keep-images` | disabled | Keep benchmark Docker images after each evaluation chunk |
+| `--keep-images` | enabled for Verified Mini | Keep benchmark Docker images after each evaluation chunk |
 
 Outputs:
 
@@ -165,6 +188,9 @@ Outputs:
 - Local evaluation report with resolved counts and accuracy:
   `mini-swe-agent/results/swe_verified_<TAG>/report.json`
 - Log: `logs/swe_verified_<TAG>.log`
+
+For Verified Mini, the same layout uses the `swe_verified_mini_<TAG>` prefix
+for the result directory and log file.
 
 
 ## SWE-bench Pro

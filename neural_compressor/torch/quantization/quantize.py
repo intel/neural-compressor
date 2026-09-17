@@ -34,7 +34,7 @@ FRAMEWORK_NAME = "torch"
 
 
 class _AutoRoundModelReference:
-    """A lightweight container for model-free AutoRound prepare/convert flow."""
+    """A lightweight container for AutoRound string model references."""
 
     def __init__(self, model_reference: str, quant_config: BaseConfig, example_inputs: Any = None):
         self.model_reference = model_reference
@@ -43,13 +43,9 @@ class _AutoRoundModelReference:
         self.is_prepared = True
 
 
-def _is_autoround_model_free_string_case(model: Any, quant_config: BaseConfig) -> bool:
-    """Return True when model-free AutoRound is called with a string model reference."""
-    return (
-        isinstance(quant_config, AutoRoundConfig)
-        and bool(getattr(quant_config, "model_free", False))
-        and isinstance(model, str)
-    )
+def _is_autoround_string_model_reference(model: Any, quant_config: BaseConfig) -> bool:
+    """Return True when AutoRound is called with a string model reference."""
+    return isinstance(quant_config, AutoRoundConfig) and isinstance(model, str)
 
 
 def need_apply(configs_mapping: Dict[Tuple[str, callable], BaseConfig], algo_name):
@@ -108,7 +104,7 @@ def preprocess_quant_config(model, quant_config, mode="prepare", example_inputs=
                 )
         model_info = quant_config.get_model_info(model, example_inputs)
     elif isinstance(quant_config, AutoRoundConfig):
-        if _is_autoround_model_free_string_case(model, quant_config):
+        if _is_autoround_string_model_reference(model, quant_config):
             # Keep optional large objects on config when model is a string reference.
             model_info = quant_config.get_model_info(model=None)
         else:
@@ -195,7 +191,7 @@ def prepare(
     Returns:
         prepared and calibrated module.
     """
-    if _is_autoround_model_free_string_case(model, quant_config):
+    if _is_autoround_string_model_reference(model, quant_config):
         return _AutoRoundModelReference(model_reference=model, quant_config=quant_config, example_inputs=example_inputs)
 
     prepared_model = model if inplace else copy.deepcopy(model)
