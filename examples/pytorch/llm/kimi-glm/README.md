@@ -1,24 +1,34 @@
-# Kimi AutoRound (INC prepare/convert)
+# Kimi / GLM AutoRound (INC prepare/convert)
 
-This example demonstrates model-free quantization and evaluation for Kimi models.
+This example demonstrates model-free quantization and evaluation for Kimi and GLM models.
 
 ## Quantization
 
-The quantization flow is aligned with INC `prepare/convert` model-free API and uses:
+The quantization flow is aligned with INC `prepare/convert` model-free API. The script
+automatically detects the model type from `--input_model` name and applies the appropriate
+quantization config:
 
-- `scheme=MXFP4`
-- `format=llm_compressor`
-- `ignore_layers=shared_experts,self_attn,mlp.gate_proj,mlp.up_proj,mlp.down_proj`
+| Model Type | Detection | Scheme | ignore_layers | layer_config |
+|------------|-----------|--------|---------------|--------------|
+| Kimi | name contains `kimi` | MXFP4 | `shared_experts,self_attn,mlp.gate_proj,mlp.up_proj,mlp.down_proj` | — |
+| GLM | name contains `glm` | BF16 (base) + MXFP4 (experts) | — | `{"mlp.experts": {"scheme": "MXFP4"}}` |
 
 ### Quick Start
 
 ```bash
-cd examples/pytorch/llm/kimi
+cd examples/pytorch/llm/kimi-glm
 
+# Kimi
 bash run_quant.sh \
   --dtype=mxfp4 \
-  --input_model=/workspace/models/moonshotai/Kimi-K2.6 \
+  --input_model=moonshotai/Kimi-K2.6 \
   --output_model=/workspace/models/moonshotai/Kimi-K2.6-MXFP4
+
+# GLM
+bash run_quant.sh \
+  --dtype=mxfp4 \
+  --input_model=zai-org/GLM-5.2 \
+  --output_model=/workspace/models/zai-org/GLM-5.2-MXFP4
 ```
 
 Equivalent Python command:
@@ -26,9 +36,9 @@ Equivalent Python command:
 ```bash
 python quantize.py \
   --dtype mxfp4 \
-  --input_model /workspace/models/moonshotai/Kimi-K2.6 \
+  --input_model moonshotai/Kimi-K2.6 \
   --output_model /workspace/models/moonshotai/Kimi-K2.6-MXFP4 \
-  --ignore_layers shared_experts,self_attn,mlp.gate_proj,mlp.up_proj,mlp.down_proj \
+  --model_type kimi \
   --format llm_compressor
 ```
 

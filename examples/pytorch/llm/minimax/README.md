@@ -40,7 +40,7 @@ uv pip install vllm
 ### 1. Quantize
 
 ```bash
-cd examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/minimax_m2.7
+cd examples/pytorch/llm/minimax
 bash run_quant.sh \
   --dtype=mxfp4_mixed \
   --input_model=MiniMaxAI/MiniMax-M2.7 \

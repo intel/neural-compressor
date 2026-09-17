@@ -37,7 +37,19 @@ Intel® Neural Compressor validated examples with multiple compression technique
     <td>moonshotai/Kimi-K2.6</td>
     <td>Natural Language Processing</td>
     <td>Quantization (MXFP4)</td>
-    <td><a href="./pytorch/llm/kimi">link</a></td>
+    <td><a href="./pytorch/llm/kimi-glm">link</a></td>
+</tr>
+<tr>
+    <td>zai-org/GLM-5.2</td>
+    <td>Natural Language Processing</td>
+    <td>Quantization (MXFP4)</td>
+    <td><a href="./pytorch/llm/kimi-glm">link</a></td>
+</tr>
+<tr>
+    <td>MiniMaxAI/MiniMax-M2.7</td>
+    <td>Natural Language Processing</td>
+    <td>Quantization (MXFP4)</td>
+    <td><a href="./pytorch/llm/minimax">link</a></td>
 </tr>
 <tr>
     <td>Framepack</td>
