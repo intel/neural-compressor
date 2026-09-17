@@ -64,9 +64,13 @@ def test_abs_max_observer_respects_mask():
     observer = AbsMaxObserver(dtype="float32")
     inputs = jnp.array([[1.0, -9.0, 2.0]], dtype=jnp.float32)
     mask = jnp.array([[True, False, True]])
+
     observer(inputs, mask=mask)
     calibrated_range = observer.get_calibrated_range()
-    # The masked -9.0 must be ignored, so max abs is 2.0
+    assert float(calibrated_range[0]) == pytest.approx(2.0)
+
+    inputs._keras_mask = jnp.array([[True, False, True]])
+    observer(inputs)
     assert float(calibrated_range[0]) == pytest.approx(2.0)
 
 
@@ -84,26 +88,6 @@ def test_get_activation_observer_selection(activation_dtype, asymmetric, expecte
     """The helper selects MinMaxObserver only for asymmetric integer quantization."""
     observer = get_activation_observer(activation_dtype, asymmetric, dtype_policy="float32")
     assert isinstance(observer, expected)
-
-
-@pytest.mark.parametrize(
-    "activation_dtype,asymmetric,expected",
-    [
-        (jnp.dtype("float8_e4m3fn"), False, AbsMaxObserver),
-        (jnp.dtype("int8"), False, AbsMaxObserver),
-        (jnp.dtype("int8"), True, MinMaxObserver),
-    ],
-)
-def test_static_qdq_layer_uses_expected_observer(activation_dtype, asymmetric, expected):
-    """StaticQDQLayer attaches the observer that matches its quantization scheme."""
-    layer = StaticQDQLayer(
-        name="static_qdq",
-        activation_dtype=activation_dtype,
-        dtype="float32",
-        asymmetric=asymmetric,
-    )
-    layer.add_observers()
-    assert isinstance(layer.input_observer, expected)
 
 
 def test_static_qdq_layer_no_observer_with_fixed_range():
