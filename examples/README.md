@@ -2,7 +2,7 @@
 
 Intel® Neural Compressor validated examples with multiple compression techniques, including quantization, pruning, knowledge distillation and orchestration.
 
-# PyTorch Examples Quantized with AutoRound
+# PyTorch Examples
 
 ## Quantization
 <table>
@@ -123,9 +123,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </tbody>
 </table>
 
-# PyTorch Examples
-
-## Quantization
+## Weight-only Quantization
 <table>
 <thead>
   <tr>
@@ -156,7 +154,6 @@ Intel® Neural Compressor validated examples with multiple compression technique
 </tr>
 </tbody>
 </table>
-
 
 # TensorFlow Examples (Deprecated)
 
