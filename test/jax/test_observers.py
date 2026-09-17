@@ -22,6 +22,7 @@ quantization, and AbsMaxObserver otherwise (fp8 and symmetric int8).
 
 import pytest
 from jax import numpy as jnp
+from keras.src import backend
 
 from neural_compressor.jax.quantization.layers_static import (
     AbsMaxObserver,
@@ -61,16 +62,24 @@ def test_abs_max_observer_passthrough():
 
 def test_abs_max_observer_respects_mask():
     """AbsMaxObserver ignores masked-out positions."""
-    observer = AbsMaxObserver(dtype="float32")
-    inputs = jnp.array([[1.0, -9.0, 2.0]], dtype=jnp.float32)
-    mask = jnp.array([[True, False, True]])
 
+    def _get_fields():
+        observer = AbsMaxObserver(dtype="float32")
+        inputs = jnp.array([[1.0, -9.0, 2.0]], dtype=jnp.float32)
+        mask = jnp.array([[True, False, True]])
+        return observer, inputs, mask
+
+    observer, inputs, mask = _get_fields()
     observer(inputs, mask=mask)
+
     calibrated_range = observer.get_calibrated_range()
     assert float(calibrated_range[0]) == pytest.approx(2.0)
 
-    inputs._keras_mask = jnp.array([[True, False, True]])
+    observer, inputs, mask = _get_fields()
+    backend.set_keras_mask(inputs, mask)
     observer(inputs)
+
+    calibrated_range = observer.get_calibrated_range()
     assert float(calibrated_range[0]) == pytest.approx(2.0)
 
 
