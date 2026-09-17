@@ -34,7 +34,7 @@ VLLM_USE_PRECOMPILED=1 uv pip install git+https://github.com/xin3he/vllm.git@sup
 ## Quick Start
 
 ```bash
-cd examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/deepseekv4
+cd examples/pytorch_with_autoround/llm/deepseekv4
 bash run_quant.sh \
   --dtype=mxfp4_mixed \
   --input_model=/workspace/models/deepseek-ai/DeepSeek-V4-Flash \

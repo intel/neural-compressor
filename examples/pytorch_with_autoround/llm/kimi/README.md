@@ -13,7 +13,7 @@ The quantization flow is aligned with INC `prepare/convert` model-free API and u
 ### Quick Start
 
 ```bash
-cd examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/kimi
+cd examples/pytorch_with_autoround/llm/kimi
 
 bash run_quant.sh \
   --dtype=mxfp4 \

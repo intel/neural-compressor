@@ -1,6 +1,6 @@
 # Step-by-Step
 
-This example quantizes and validates the accuracy of Flux.
+This example quantizes and validates the accuracy of FramePack.
 
 # Prerequisite
 
@@ -12,11 +12,11 @@ docker exec -it framepack bash
 apt update && apt install zip
 
 git clone https://github.com/intel/neural-compressor.git
-cd neural-compressor/examples/pytorch/diffusion_model/diffusers/framepack
+cd neural-compressor/examples/pytorch_with_autoround/diffusion/framepack
 # Use `INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@main` for the latest updates before neural-compressor v3.7 release
-pip install neural-compressor-pt==3.7
+pip install neural-compressor-pt
 # Use `pip install git+https://github.com/intel/auto-round.git@main` for the latest updates before auto-round v0.9.3 release
-pip install auto-round==0.9.3
+pip install auto-round
 
 bash setup.sh
 

@@ -10,7 +10,7 @@ This example quantizes and validates the accuracy of Llama4.
 docker run -d --gpus all -v ... --shm-size=100g --name llama4 -it nvcr.io/nvidia/pytorch:25.08-py3 /bin/bash
 docker exec -it llama4 bash
 git clone https://github.com/intel/neural-compressor.git
-cd neural-compressor/examples/pytorch/multimodal-modeling/quantization/auto_round/llama4
+cd neural-compressor/examples/pytorch_with_autoround/multimodal/llama4
 # Use `INC_PT_ONLY=1 pip install git+https://github.com/intel/neural-compressor.git@main` for the latest updates before neural-compressor v3.7 release
 pip install neural-compressor-pt==3.7
 # Use `pip install git+https://github.com/intel/auto-round.git@main` for the latest updates before auto-round v0.9.3 release
