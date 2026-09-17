@@ -215,8 +215,8 @@ model = autotune(fp32_model, tuning_config, eval_fn=eval_fn)
 
 ### PyTorch Examples
 
-- **Multimodal Models**: [Llama-4-Scout-17B-16E-Instruct with MXFP4](/examples/pytorch/multimodal-modeling/quantization/auto_round/llama4)
-- **Language Models**: [Llama3 series with MXFP4/MXFP8 and Mix Precision](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3)
+- **Multimodal Models**: [Llama-4-Scout-17B-16E-Instruct with MXFP4](/examples/pytorch/multimodal/llama4)
+- **Language Models**: [Llama3 series with MXFP4/MXFP8 and Mix Precision](/examples/pytorch/llm/llama3)
   - Llama 3.1 8B: MXFP8, MXFP4, and Mix Precision (target_bits=7.8)
   - Llama 3.3 70B: MXFP8, MXFP4, and Mix Precision (target_bits=5.8)
 
@@ -243,7 +243,7 @@ model = autotune(fp32_model, tuning_config, eval_fn=eval_fn)
 - **Solution**: Reduce `iters` or set to 0 for RTN, decrease `nsamples`, enable `enable_torch_compile`
 
 **Issue**: Model loading fails after quantization
-- **Solution**: Refer to [auto_round/llama3/inference](/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/llama3/README.md#inference)
+- **Solution**: Refer to [llm/llama3/inference](/examples/pytorch/llm/llama3/README.md#inference)
 
 
 ## Reference
