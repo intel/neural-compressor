@@ -57,6 +57,7 @@ def build_config(args: argparse.Namespace) -> AutoRoundConfig:
 		export_format=args.format,
 		output_dir=args.output_model,
 		reloading=False,
+		dataset="HuggingFaceH4/ultrachat_200k",
 	)
 
 
