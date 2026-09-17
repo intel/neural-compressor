@@ -4,7 +4,7 @@ Intel® Neural Compressor validated examples with multiple compression technique
 
 # PyTorch Examples
 
-## Quantization
+## Weight-Activation Quantization
 <table>
 <thead>
   <tr>
