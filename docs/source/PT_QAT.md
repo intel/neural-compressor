@@ -69,7 +69,7 @@ Compared with PTQ, QAT offers:
 
 ## Quick Start
 
-This section walks through an end-to-end [example](https://github.com/intel/neural-compressor/tree/main/examples/pytorch/llm/others/qat).
+This section walks through an end-to-end [example](/examples/pytorch/llm/others/qat).
 
 ### 1. Setup Environment
 
@@ -477,4 +477,4 @@ if weight_quantizer.num_bits == 4 and weight_quantizer.data_type == "mx_fp4":
   [intel/auto-round](https://github.com/intel/auto-round)
 
 - **QAT LLM Example**  
-  [qat example directory](https://github.com/intel/neural-compressor/tree/main/examples/pytorch/llm/others/qat)
+  [qat example directory](/examples/pytorch/llm/others/qat)
