@@ -20,24 +20,27 @@ from neural_compressor.torch.quantization import AutoRoundConfig, convert, prepa
 logger = logging.getLogger(__name__)
 logging.basicConfig(level=logging.INFO)
 
-
-_PRESET_CONFIG = {
-	"mxfp4": {
+# Per-model-type presets: scheme, ignore_layers, layer_config
+_MODEL_PRESETS = {
+	"kimi": {
 		"scheme": "MXFP4",
-		"model_name_or_path": "moonshotai/Kimi-K2.6",
 		"ignore_layers": "shared_experts,self_attn,mlp.gate_proj,mlp.up_proj,mlp.down_proj",
 		"layer_config": None,
+	},
+	"glm": {
+		"scheme": "BF16",
+		"ignore_layers": None,
+		"layer_config": {"mlp.experts": {"scheme": "MXFP4"}},
 	},
 }
 
 
 def build_config(args: argparse.Namespace) -> AutoRoundConfig:
-	dtype_key = args.dtype.lower()
-	if dtype_key not in _PRESET_CONFIG:
-		raise ValueError(f"Unsupported dtype: {args.dtype}. Supported: {', '.join(_PRESET_CONFIG.keys())}")
+	model_type = args.model_type.lower()
+	if model_type not in _MODEL_PRESETS:
+		raise ValueError(f"Unsupported model_type: {args.model_type}. Supported: {', '.join(_MODEL_PRESETS.keys())}")
 
-	preset = _PRESET_CONFIG[dtype_key]
-	ignore_layers = args.ignore_layers or preset["ignore_layers"]
+	preset = _MODEL_PRESETS[model_type]
 	model_free = False if any(
 		dtype for dtype in (args.static_kv_dtype, args.static_attention_dtype)
 	) else True
@@ -47,7 +50,7 @@ def build_config(args: argparse.Namespace) -> AutoRoundConfig:
 		iters=0,
 		disable_opt_rtn=True,
 		scheme=preset["scheme"],
-		ignore_layers=ignore_layers,
+		ignore_layers=preset["ignore_layers"],
 		layer_config=preset["layer_config"],
 		static_kv_dtype=args.static_kv_dtype,
 		static_attention_dtype=args.static_attention_dtype,
@@ -58,19 +61,21 @@ def build_config(args: argparse.Namespace) -> AutoRoundConfig:
 
 
 def main() -> None:
-	parser = argparse.ArgumentParser(description="Kimi model-free quantization via INC AutoRound prepare/convert.")
+	parser = argparse.ArgumentParser(
+		description="Kimi/GLM model-free quantization via INC AutoRound prepare/convert.",
+	)
 	parser.add_argument(
 		"--dtype",
 		type=str,
 		required=True,
-		choices=sorted(_PRESET_CONFIG.keys()),
-		help="Quantization preset. e.g. mxfp4",
+		choices=["mxfp4"],
+		help="Quantization dtype. Currently only mxfp4 is supported.",
 	)
 	parser.add_argument(
 		"--input_model",
 		type=str,
-		default="moonshotai/Kimi-K2.6",
-		help="Model name or local path. If not set, use preset default model.",
+		required=True,
+		help="Model name or local path (e.g. moonshotai/Kimi-K2.6, zai-org/GLM-5.2).",
 	)
 	parser.add_argument(
 		"--output_model",
@@ -79,10 +84,11 @@ def main() -> None:
 		help="Output directory for quantized model.",
 	)
 	parser.add_argument(
-		"--ignore_layers",
+		"--model_type",
 		type=str,
-		default=None,
-		help="Comma-separated layer name patterns to skip. If not set, use preset default ignore_layers.",
+		required=True,
+		choices=["kimi", "glm"],
+		help="Model type. Determines quantization config (scheme, ignore_layers, layer_config).",
 	)
 	parser.add_argument(
 		"--format",
@@ -106,13 +112,10 @@ def main() -> None:
 	args = parser.parse_args()
 
 	quant_config = build_config(args)
-
-	preset = _PRESET_CONFIG[args.dtype.lower()]
-	model = args.input_model or preset["model_name_or_path"]
-	model = prepare(model, quant_config)
+	model = prepare(args.input_model, quant_config)
 	_ = convert(model)
 	logger.info("Quantized model saved to %s", args.output_model)
 
 
 if __name__ == "__main__":
-    main()
+	main()
