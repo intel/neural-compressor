@@ -4,48 +4,31 @@ This example demonstrates model-free quantization and evaluation for Kimi and GL
 
 ## Quantization
 
-The quantization flow is aligned with INC `prepare/convert` model-free API and uses:
+The quantization flow is aligned with INC `prepare/convert` model-free API. The script
+automatically detects the model type from `--input_model` name and applies the appropriate
+quantization config:
 
-- `scheme=MXFP4`
-- `format=llm_compressor`
-- `ignore_layers=shared_experts,self_attn,mlp.gate_proj,mlp.up_proj,mlp.down_proj`
-
-For GLM MoE mixed setup, you can keep BF16 globally and quantize experts to MXFP4 via `layer_config`.
+| Model Type | Detection | Scheme | ignore_layers | layer_config |
+|------------|-----------|--------|---------------|--------------|
+| Kimi | name contains `kimi` | MXFP4 | `shared_experts,self_attn,mlp.gate_proj,mlp.up_proj,mlp.down_proj` | — |
+| GLM | name contains `glm` | BF16 (base) + MXFP4 (experts) | — | `{"mlp.experts": {"scheme": "MXFP4"}}` |
 
 ### Quick Start
 
 ```bash
-cd examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/kimi
+cd examples/pytorch/nlp/huggingface_models/language-modeling/quantization/auto_round/kimi-glm
 
+# Kimi
 bash run_quant.sh \
   --dtype=mxfp4 \
-  --input_model=/workspace/models/moonshotai/Kimi-K2.6 \
+  --input_model=moonshotai/Kimi-K2.6 \
   --output_model=/workspace/models/moonshotai/Kimi-K2.6-MXFP4
-```
 
-Equivalent Python command:
-
-```bash
-python quantize.py \
-  --dtype mxfp4 \
-  --input_model /workspace/models/moonshotai/Kimi-K2.6 \
-  --output_model /workspace/models/moonshotai/Kimi-K2.6-MXFP4 \
-  --ignore_layers shared_experts,self_attn,mlp.gate_proj,mlp.up_proj,mlp.down_proj \
-  --format llm_compressor
-```
-
-### GLM Example (same folder)
-
-You can run GLM in the same example with `scheme` override + `layer_config`:
-
-```bash
+# GLM
 bash run_quant.sh \
   --dtype=mxfp4 \
   --input_model=zai-org/GLM-5.2 \
-  --output_model=/workspace/models/zai-org/GLM-5.2-MXFP4 \
-  --format=llm_compressor \
-  --scheme=BF16 \
-  --layer_config='{mlp.experts:{scheme:MXFP4}}'
+  --output_model=/workspace/models/zai-org/GLM-5.2-MXFP4
 ```
 
 Equivalent Python command:
@@ -53,17 +36,11 @@ Equivalent Python command:
 ```bash
 python quantize.py \
   --dtype mxfp4 \
-  --input_model zai-org/GLM-5.2 \
-  --output_model /workspace/models/zai-org/GLM-5.2-MXFP4 \
-  --format llm_compressor \
-  --scheme BF16 \
-  --layer_config '{mlp.experts:{scheme:MXFP4}}'
+  --input_model moonshotai/Kimi-K2.6 \
+  --output_model /workspace/models/moonshotai/Kimi-K2.6-MXFP4 \
+  --model_type kimi \
+  --format llm_compressor
 ```
-
-`--layer_config` accepts both JSON and AutoRound shorthand:
-
-- JSON: `'{"mlp.experts": {"scheme": "MXFP4"}}'`
-- shorthand: `'{mlp.experts:{scheme:MXFP4}}'`
 
 ## Evaluation
 
