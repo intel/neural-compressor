@@ -405,6 +405,21 @@ def verified_retry_count(args: argparse.Namespace) -> None:
     print(len(retry_ids))
 
 
+def verified_retry_state(args: argparse.Namespace) -> None:
+    """Print retryable, resolved, and submitted counts for the retry loop."""
+    report = json.loads(Path(args.report).read_text())
+    retry_ids = set()
+    if args.retry_errors:
+        retry_ids.update(report.get("error_ids", []))
+    if args.retry_empty_patches:
+        retry_ids.update(report.get("empty_patch_ids", []))
+    print(
+        len(retry_ids),
+        report.get("resolved_instances", 0),
+        report.get("submitted_instances", 0),
+    )
+
+
 def merge_eval_reports(args: argparse.Namespace) -> None:
     """Merge evaluation reports produced by successive pipelined evaluation chunks."""
     report_paths = [Path(line) for line in Path(args.batch_list).read_text().splitlines() if line.strip()]
@@ -636,6 +651,12 @@ def build_parser():
     command.add_argument("--retry-errors", action="store_true")
     command.add_argument("--retry-empty-patches", action="store_true")
     command.set_defaults(func=verified_retry_count)
+
+    command = commands.add_parser("verified-retry-state")
+    command.add_argument("--report", required=True)
+    command.add_argument("--retry-errors", action="store_true")
+    command.add_argument("--retry-empty-patches", action="store_true")
+    command.set_defaults(func=verified_retry_state)
 
     command = commands.add_parser("merge-eval-reports")
     command.add_argument("--batch-list", required=True)
