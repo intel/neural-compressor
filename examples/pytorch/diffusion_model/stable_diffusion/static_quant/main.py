@@ -34,7 +34,7 @@ logging.getLogger().setLevel(logging.INFO)
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--model_name_or_path", type=str, default="stabilityai/stable-diffusion-2-1", help="Model path")
+    parser.add_argument("--model_name_or_path", type=str, default="SimianLuo/LCM_Dreamshaper_v7", help="Model path")
     parser.add_argument("--quantized_model_path", type=str, default="quantized_model.pt", help="INT8 model path")
     parser.add_argument("--dataset_path", type=str, default=None, help="COCO2017 dataset path")
     parser.add_argument("--prompt", type=str, default="A big burly grizzly bear is show with grass in the background.", help="input text")

@@ -6,7 +6,6 @@ Stable Diffusion quantization and inference best known configurations with stati
 
 | **Framework** | **Model Repo** |
 |:-------------:|:-------------------------------------------------------------------:|
-|   PyTorch     |       https://huggingface.co/stabilityai/stable-diffusion-2-1       | 
 |   PyTorch     |       https://huggingface.co/SimianLuo/LCM_Dreamshaper_v7           |
 
 # Pre-Requisite
@@ -24,7 +23,7 @@ bash download_dataset.sh
 quantization
 ```shell
 python main.py \
-    --model_name_or_path stabilityai/stable-diffusion-2-1 \
+    --model_name_or_path SimianLuo/LCM_Dreamshaper_v7 \
     --dataset_path=${DATASET_DIR} \
     --quantized_model_path=${INT8_MODEL} \
     --compile_inductor \
@@ -34,7 +33,7 @@ python main.py \
 inference
 ```shell
 python main.py \
-    --model_name_or_path stabilityai/stable-diffusion-2-1 \
+    --model_name_or_path SimianLuo/LCM_Dreamshaper_v7 \
     --dataset_path=${DATASET_DIR} \
     --precision=int8-bf16 \
     --benchmark \
@@ -48,7 +47,6 @@ We have also evaluated FID scores on COCO2017 validation dataset for BF16 model,
 
 | Model                | BF16  | INT8+BF16 |
 |----------------------|-------|-----------|
-| stable-diffusion-2-1 | 27.8630 |  27.8618    |
 | SimianLuo/LCM_Dreamshaper_v7|42.1710| 42.3138|
 
 To evaluated FID score on COCO2017 validation dataset for mixture of BF16 and INT8 model, you can use below command.
