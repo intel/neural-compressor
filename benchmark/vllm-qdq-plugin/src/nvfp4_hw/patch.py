@@ -65,6 +65,10 @@ def apply_patches() -> None:
     INCConfig._validate_supported_quantization = validate_supported_quantization
     factory.resolve_scheme = resolve_scheme
     inc_module.resolve_scheme = resolve_scheme
+
+    from vllm_qdq_plugin.quantization.patch import apply_patches as apply_quantization_patches
+
+    apply_quantization_patches(enable_nvfp4_qdq=False)
     _PATCHED = True
     logger.warning("vLLM NVFP4 hardware patch applied: AutoRound nv_fp scheme registered")
 

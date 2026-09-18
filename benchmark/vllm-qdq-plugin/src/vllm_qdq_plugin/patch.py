@@ -223,7 +223,7 @@ def _patch_mla_kv_b_proj_dtype():
 
 
 def apply_patches():
-    """Patch ops.marlin_gemm and ops.moe_wna16_marlin_gemm with QDQ wrappers."""
+    """Apply QDQ operator wrappers and register quantization schemes."""
     import vllm._custom_ops as ops
     from vllm.scalar_type import scalar_types
 
@@ -246,6 +246,10 @@ def apply_patches():
                     setattr(mod, attr_name, patched)
         except Exception:
             pass
+
+    from .quantization.patch import apply_patches as apply_quantization_patches
+
+    apply_quantization_patches()
 
     logger.warning(
         "QDQ patches applied: %s (MXFP4, MXFP8)",

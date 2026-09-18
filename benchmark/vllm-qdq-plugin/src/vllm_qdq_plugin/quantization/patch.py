@@ -79,11 +79,4 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     logger.warning("vLLM QDQ patch applied: AutoRound %s schemes registered", formats)
 
 
-def register() -> None:
-    """Entry point used by vLLM's general plugin loader."""
-    from vllm_qdq_plugin import envs
-
-    apply_patches(enable_nvfp4_qdq=envs.VLLM_QDQ)
-
-
-__all__ = ["apply_patches", "register"]
+__all__ = ["apply_patches"]

@@ -29,9 +29,10 @@ VLLM_QDQ=1 CUDA_VISIBLE_DEVICES=<idle-gpu> \
   --dtype bfloat16 --trust-remote-code
 ```
 
-The `inc_nvfp4_qdq` entry point registers both QDQ schemes. The separate
-`nvfp4_hw` entry point observes `VLLM_QDQ=1` and does not register its hardware
-scheme, preventing either implementation from taking over the other's model.
+The main `qdq` entry point registers both QDQ schemes when `VLLM_QDQ=1`.
+When QDQ is disabled, the separate `inc_nvfp4` entry point registers the native
+NVFP4 hardware scheme and the NVFP4_E5M3 W4A16 scheme. This keeps ownership
+mutually exclusive without relying on plugin entry-point ordering.
 
 ## Limitations
 
