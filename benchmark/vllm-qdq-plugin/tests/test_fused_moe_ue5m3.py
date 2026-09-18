@@ -1,9 +1,12 @@
+from unittest import mock
+
 import pytest
 import torch
 import torch.nn.functional as F
 from nvfp4_hw.fused_moe_ue5m3 import _select_moe_config, fused_moe_ue5m3
 from nvfp4_hw.inc_nvfp4_ue5m3_moe import INCNvfp4UE5M3MoEMethod
 from vllm.model_executor.layers.fused_moe.activation import ApplyMoEActivationConfig, MoEActivation
+from vllm_qdq_plugin import envs
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import nvfp4_e5m3_qdq
 
 
@@ -50,6 +53,84 @@ def _reference(
         routed_output = (expert_output * topk_weights[token_ids, slots, None]).to(output.dtype)
         output.index_add_(0, token_ids, routed_output)
     return output
+
+
+@pytest.mark.parametrize("enabled", [False, True])
+def test_marlin_moe_activation_qdq_obeys_vllm_qdq(enabled: bool):
+    method = object.__new__(INCNvfp4UE5M3MoEMethod)
+    method.group_size = 16
+    method.moe = type(
+        "MoeConfig",
+        (),
+        {
+            "swiglu_limit": None,
+            "swiglu_alpha": None,
+            "swiglu_beta": None,
+            "activation_situ_beta": None,
+            "activation_situ_linear_beta": None,
+        },
+    )()
+    layer = type(
+        "Layer",
+        (),
+        {
+            "apply_router_weight_on_input": False,
+            "w13_weight": object(),
+            "w2_weight": object(),
+            "w13_weight_scale": object(),
+            "w2_weight_scale": object(),
+            "global_num_experts": 2,
+            "activation": MoEActivation.SILU,
+            "expert_map": None,
+            "w13_weight_scale_2": object(),
+            "w2_weight_scale_2": object(),
+            "workspace": object(),
+        },
+    )()
+    x = torch.zeros((2, 16), dtype=torch.bfloat16)
+    captured = {}
+
+    def fake_fused_marlin_moe(**kwargs):
+        captured["hidden_states"] = kwargs["hidden_states"]
+        activation_output = torch.empty_like(x)
+        kwargs["activation_func"](
+            None,
+            activation_output,
+            torch.zeros_like(x),
+            topk_ids=kwargs["topk_ids"],
+            expert_map=None,
+        )
+        captured["activation_output"] = activation_output
+        return activation_output
+
+    with (
+        mock.patch.object(envs, "VLLM_QDQ", enabled),
+        mock.patch(
+            "nvfp4_hw.inc_nvfp4_ue5m3_moe.nvfp4_e5m3_qdq",
+            side_effect=lambda value, *args, **kwargs: value + 1,
+        ) as qdq,
+        mock.patch(
+            "nvfp4_hw.inc_nvfp4_ue5m3_moe.apply_moe_activation",
+            side_effect=lambda _, output, activation_input, **kwargs: output.copy_(activation_input),
+        ),
+        mock.patch(
+            "nvfp4_hw.inc_nvfp4_ue5m3_moe.fused_marlin_moe",
+            side_effect=fake_fused_marlin_moe,
+        ),
+    ):
+        method.apply(
+            layer,
+            x,
+            torch.ones((2, 1)),
+            torch.zeros((2, 1), dtype=torch.int32),
+            None,
+            None,
+        )
+
+    expected = x + 1 if enabled else x
+    assert qdq.call_count == (2 if enabled else 0)
+    assert torch.equal(captured["hidden_states"], expected)
+    assert torch.equal(captured["activation_output"], expected)
 
 
 @pytest.mark.parametrize("group_size", [16, 32])
@@ -155,7 +236,8 @@ def test_marlin_moe_matches_reference():
         },
     )()
     method.process_weights_after_loading(layer)
-    actual = method.apply(layer, x, topk_weights, topk_ids, None, None)
+    with mock.patch.object(envs, "VLLM_QDQ", True):
+        actual = method.apply(layer, x, topk_weights, topk_ids, None, None)
 
     assert F.cosine_similarity(actual.float().flatten(), expected.float().flatten(), dim=0) > 0.9999
     relative_l2_error = torch.linalg.vector_norm(actual.float() - expected.float()) / torch.linalg.vector_norm(

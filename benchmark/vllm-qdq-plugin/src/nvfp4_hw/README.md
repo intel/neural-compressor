@@ -76,7 +76,9 @@ The checkpoint stores raw `uint8 [N, K/2]` E2M1 payloads and
 bytes during loading, then use vLLM's FP4 Marlin weight repacking, scale
 processing, workspace management, GEMMs, expert routing, and top-k reduction.
 Activations retain UE5M3 + E2M1 QDQ semantics before dense GEMMs and before
-both MoE expert GEMMs. UE5M3 conversion uses bit-level round-to-nearest-even.
+both MoE expert GEMMs when `VLLM_QDQ=1`. With `VLLM_QDQ=0`, the same packed
+weights are loaded but activations remain BF16, providing a W4A16 baseline.
+UE5M3 conversion uses bit-level round-to-nearest-even.
 
 ### QDQ Backend Selection
 

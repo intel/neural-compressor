@@ -59,7 +59,7 @@ The plugin registers as a `vllm.general_plugins` entry point. vLLM loads it in a
 
 | Variable | Default | Description |
 | --- | --- | --- |
-| `VLLM_QDQ` | `0` | Set to `1` to enable QDQ. |
+| `VLLM_QDQ` | `0` | Set to `1` to enable activation QDQ. For NVFP4_E5M3, `0` keeps the quantized weights but runs W4A16; `1` runs W4A4. |
 | `VLLM_QDQ_TRACE` | `0` | Set to `1` to print backend, format, operation, shape, and dtype for the first 200 QDQ calls in each process （Eager mode only). |
 | `VLLM_QDQ_CUTE` | automatic | CuTe is selected automatically for MXFP4, MXFP8, and NVFP4_E5M3 when the input is on an NVIDIA CUDA GPU with SM80+, NVIDIA CUTLASS DSL is installed, and the format-specific shape requirements are met. In automatic mode, a missing CUTLASS DSL installation warns with an install command before falling back to the reference implementation. Set to `0` to force the reference implementation or `1` to explicitly require CuTe; an explicit request raises an error when CUTLASS DSL is missing. Other unsupported CuTe conditions warn before using the slower reference implementation. |
 | `VLLM_MARLIN_MOE_QDQ_MODE` | `0` | Set to `FORCE_MXFP4` to apply MXFP4 QDQ in `moe_wna16_marlin_gemm` when dtype-based routing is not sufficient. Matching is case-insensitive. |

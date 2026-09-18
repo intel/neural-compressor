@@ -10,6 +10,7 @@ from vllm.model_executor.layers.quantization.utils.marlin_utils_fp4 import (
     prepare_fp4_layer_for_marlin,
 )
 from vllm.model_executor.parameter import GroupQuantScaleParameter, ModelWeightParameter
+from vllm_qdq_plugin import envs
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import decode_ue5m3
 
 if TYPE_CHECKING:
@@ -102,7 +103,7 @@ class INCNvfp4UE5M3LinearMethod(INCLinearScheme):
             raise RuntimeError("NVFP4_E5M3 dense weight has not been prepared for Marlin")
 
         flat_x = x.reshape(-1, x.shape[-1]).contiguous()
-        quantized_x = nvfp4_e5m3_qdq(flat_x, self.group_size)
+        quantized_x = nvfp4_e5m3_qdq(flat_x, self.group_size) if envs.VLLM_QDQ else flat_x
         output = apply_fp4_marlin_linear(
             input=quantized_x,
             weight=layer.weight,

@@ -1,4 +1,5 @@
 import json
+import types
 import unittest
 from unittest import mock
 
@@ -10,6 +11,7 @@ from vllm.model_executor.layers.quantization.inc.inc import INCConfig
 from vllm.model_executor.layers.quantization.inc.inc_linear import INCLinearMethod
 from vllm.model_executor.layers.quantization.inc.schemes import factory
 from vllm.model_executor.parameter import GroupQuantScaleParameter, ModelWeightParameter
+from vllm_qdq_plugin import envs
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import (
     _nvfp4_e5m3_qdq_reference,
     decode_ue5m3,
@@ -75,6 +77,36 @@ class Nvfp4UE5M3ConfigTests(unittest.TestCase):
         layer.params_dtype = torch.bfloat16
         return layer
 
+    def test_dense_activation_qdq_obeys_vllm_qdq(self) -> None:
+        method = self._make_linear_method()
+        layer = types.SimpleNamespace(
+            workspace=object(),
+            weight=object(),
+            weight_scale=object(),
+            weight_global_scale=object(),
+            output_size_per_partition=4,
+            input_size_per_partition=4,
+        )
+        x = torch.zeros((2, 4), dtype=torch.bfloat16)
+
+        for enabled in (False, True):
+            qdq_output = x + 1
+            with (
+                mock.patch.object(envs, "VLLM_QDQ", enabled),
+                mock.patch(
+                    "vllm_qdq_plugin.qdq.nvfp4_e5m3.nvfp4_e5m3_qdq",
+                    return_value=qdq_output,
+                ) as qdq,
+                mock.patch(
+                    "nvfp4_hw.inc_nvfp4_ue5m3_linear.apply_fp4_marlin_linear",
+                    side_effect=lambda **kwargs: kwargs["input"],
+                ),
+            ):
+                actual = method.apply_weights(layer, x)
+
+            self.assertEqual(qdq.call_count, int(enabled))
+            self.assertTrue(torch.equal(actual, qdq_output if enabled else x))
+
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
     def test_marlin_dense_matches_dequantized_reference(self) -> None:
         torch.manual_seed(1)
@@ -89,7 +121,8 @@ class Nvfp4UE5M3ConfigTests(unittest.TestCase):
         )
 
         method.process_weights_after_loading(layer)
-        actual = method.apply_weights(layer, x)
+        with mock.patch.object(envs, "VLLM_QDQ", True):
+            actual = method.apply_weights(layer, x)
 
         self.assertEqual(layer.weight.dtype, torch.int32)
         self.assertFalse(hasattr(layer, "weight_packed"))

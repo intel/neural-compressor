@@ -15,6 +15,7 @@ from vllm.model_executor.layers.fused_moe.fused_moe_method_base import FusedMoEM
 from vllm.model_executor.layers.quantization.utils.marlin_utils_fp4 import prepare_nvfp4_moe_layer_for_marlin
 from vllm.model_executor.utils import set_weight_attrs
 from vllm.scalar_type import scalar_types
+from vllm_qdq_plugin import envs
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import decode_ue5m3, nvfp4_e5m3_qdq
 
 
@@ -150,18 +151,24 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
                 topk_ids=topk_ids,
                 expert_map=expert_map,
             )
-            output.copy_(
-                nvfp4_e5m3_qdq(
-                    output.contiguous(),
-                    self.group_size,
-                    trace_op_name="nvfp4_e5m3_moe_activation",
+            if envs.VLLM_QDQ:
+                output.copy_(
+                    nvfp4_e5m3_qdq(
+                        output.contiguous(),
+                        self.group_size,
+                        trace_op_name="nvfp4_e5m3_moe_activation",
+                    )
                 )
-            )
 
-        quantized_x = nvfp4_e5m3_qdq(
-            x.contiguous(),
-            self.group_size,
-            trace_op_name="nvfp4_e5m3_moe_input",
+        contiguous_x = x.contiguous()
+        quantized_x = (
+            nvfp4_e5m3_qdq(
+                contiguous_x,
+                self.group_size,
+                trace_op_name="nvfp4_e5m3_moe_input",
+            )
+            if envs.VLLM_QDQ
+            else contiguous_x
         )
         return fused_marlin_moe(
             hidden_states=quantized_x,
