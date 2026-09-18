@@ -1,4 +1,0 @@
-tensorflow==2.12.1
-transformers
-datasets==2.17
-numpy
