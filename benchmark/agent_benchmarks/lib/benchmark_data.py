@@ -572,6 +572,71 @@ def atlas_report(args):
     print(f"Report        : {files[-1]}")
 
 
+LMMS_TASKS = {
+    "mmmu_val": ("mmmu", "mmmu_acc,none"),
+    "mmmu_pro_vision": ("mmmu-pro", "mmmu_acc,none"),
+    "simplevqa": ("simplevqa", "exact_match,none"),
+    "omnidocbench": ("omnidocbench-1.5", "omnidocbench_overall,none"),
+}
+
+
+def benchmark_report(args: argparse.Namespace) -> None:
+    records = []
+    for result_path in args.terminal_result:
+        path = Path(result_path)
+        payload = json.loads(path.read_text())
+        stats = payload.get("stats", {})
+        evals = stats.get("evals", {})
+        if len(evals) != 1:
+            raise RuntimeError(f"Expected one Terminal-Bench evaluation in {path}")
+        eval_name, evaluation = next(iter(evals.items()))
+        benchmark = "terminal-bench-2.1" if "terminal-bench-2-1" in eval_name else "terminal-bench-2.0"
+        metrics = evaluation.get("metrics", [])
+        metric = metrics[0].get("mean") if metrics else None
+        records.append(
+            {
+                "benchmark": benchmark,
+                "model": eval_name.split("__")[1] if "__" in eval_name else args.model,
+                "primary_metric": metric * 100 if metric is not None else None,
+                "primary_metric_unit": "percent",
+                "num_samples": evaluation.get("n_trials", 0),
+                "failed_samples": evaluation.get("n_errors", 0),
+                "source": str(path),
+            }
+        )
+
+    for result_path in args.lmms_result:
+        path = Path(result_path)
+        payload = json.loads(path.read_text())
+        for task, task_results in payload.get("results", {}).items():
+            if task not in LMMS_TASKS:
+                continue
+            benchmark, metric_name = LMMS_TASKS[task]
+            samples = payload.get("n-samples", {}).get(task, {})
+            value = task_results.get(metric_name)
+            if value is None:
+                raise RuntimeError(f"Missing primary metric {metric_name} in {path}")
+            if task != "omnidocbench":
+                value *= 100
+            records.append(
+                {
+                    "benchmark": benchmark,
+                    "model": args.model,
+                    "primary_metric": value,
+                    "primary_metric_unit": "percent",
+                    "num_samples": samples.get("effective", 0),
+                    "failed_samples": None,
+                    "source": str(path),
+                }
+            )
+
+    report = {"model": args.model, "results": sorted(records, key=lambda item: item["benchmark"])}
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2) + "\n")
+    print(f"Wrote {len(records)} benchmark results to {output}")
+
+
 def build_parser():
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(required=True)
@@ -675,6 +740,13 @@ def build_parser():
     command = commands.add_parser("atlas-report")
     command.add_argument("--directory", required=True)
     command.set_defaults(func=atlas_report)
+
+    command = commands.add_parser("benchmark-report")
+    command.add_argument("--terminal-result", action="append", default=[])
+    command.add_argument("--lmms-result", action="append", default=[])
+    command.add_argument("--model", default="Qwen3.6-35B-A3B")
+    command.add_argument("--output", required=True)
+    command.set_defaults(func=benchmark_report)
     return parser
 
 

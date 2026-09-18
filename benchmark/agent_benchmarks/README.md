@@ -66,6 +66,115 @@ The stop command uses `logs/vllm_<PORT>.pid` by default. Set the same
 `VLLM_LOG_DIR` used to start the server, or set `VLLM_PID_FILE` to the exact PID
 file, when using a custom location.
 
+## Terminal and Multimodal Benchmarks
+
+`run_terminal_bench.sh` runs Terminal-Bench 2.0 and 2.1 with Harbor and
+Terminus-2. `run_multimodal_bench.sh` runs MMMU, MMMU-Pro, SimpleVQA, and
+OmniDocBench 1.5 with lmms-eval. Both runners connect to an existing
+OpenAI-compatible vLLM endpoint. Use separate environments because Harbor and
+lmms-eval have different dependencies.
+
+### Set up the environments
+
+Create and activate a Terminal-Bench environment, then install the pinned
+Harbor release:
+
+```bash
+conda create -n terminal-bench python=3.12 pip
+conda activate terminal-bench
+bash setup_terminal_bench.sh
+```
+
+Use another environment for multimodal evaluation:
+
+```bash
+conda create -n multimodal-bench python=3.12 pip
+conda activate multimodal-bench
+bash setup_multimodal_bench.sh
+```
+
+The multimodal setup clones the lmms-eval revision pinned in `versions.env`,
+applies the OpenAI API compatibility patch, and installs the checkout. The
+patch forwards vLLM sampling extensions such as `top_k`, prevents an HF token
+from being printed in logs, and selects the Qwen prompt for MMMU and MMMU-Pro
+when the `openai` backend is used.
+
+### Start Qwen3.6-35B-A3B
+
+Start one shared multimodal-capable server. Do not pass
+`--language-model-only`, because that disables the vision encoder.
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1 bash start_vllm_serve.sh \
+  /path/to/Qwen3.6-35B-A3B \
+  --port 8002 \
+  --served-model-name Qwen3.6-35B-A3B \
+  --tensor-parallel-size 2 \
+  --dtype bfloat16 \
+  --gpu-memory-utilization 0.92 \
+  --max-num-seqs 1 \
+  --enable-prefix-caching
+```
+
+The same server can handle Terminal-Bench. A text-only server started with
+`--language-model-only` can be used when running only Terminal-Bench.
+
+### Run smoke and full evaluations
+
+Activate the corresponding environment before invoking its runner. Alternatively,
+pass a Conda prefix through `--env-prefix`. `--mini` selects one Terminal-Bench
+task or the first 10 lmms-eval samples.
+
+```bash
+bash run_terminal_bench.sh \
+  --benchmark terminal-bench-2.1 \
+  --port 8002 \
+  --mini
+
+bash run_multimodal_bench.sh \
+  --benchmark mmmu \
+  --port 8002 \
+  --mini
+```
+
+Each runner accepts `all` for the benchmarks it owns:
+
+```bash
+bash run_terminal_bench.sh \
+  --benchmark all \
+  --port 8002 \
+  --workers 1 \
+  --retry-attempts 3
+
+bash run_multimodal_bench.sh \
+  --benchmark all \
+  --port 8002 \
+  --workers 1 \
+  --retry-attempts 3
+```
+
+Terminal-Bench uses `terminal-bench@2.0` and the fixed
+`terminal-bench/terminal-bench-2-1@6` revision, with five trials per task by
+default. MMMU, MMMU-Pro, and OmniDocBench use thinking mode with 32,768 output
+tokens and `temperature=1.0`, `top_p=0.95`, `top_k=20`, and
+`presence_penalty=1.5`. SimpleVQA uses its deterministic task defaults with
+thinking disabled. Results are written under `outputs/terminal-bench/` and
+`outputs/multimodal-bench/`.
+
+Create a normalized summary from completed Harbor and lmms-eval result files:
+
+```bash
+python lib/benchmark_data.py benchmark-report \
+  --terminal-result outputs/terminal-bench/JOB/result.json \
+  --lmms-result outputs/multimodal-bench/MODEL/TIMESTAMP_results.json \
+  --model MODEL_NAME \
+  --output outputs/benchmark-report.json
+```
+
+Pass each option more than once to combine multiple runs. The report records
+the benchmark, model, primary metric as a percentage, sample count, failed
+sample count when available, and source result path.
+
 ## SWE-Verified and SWE-Verified Mini
 
 ### SWE-Verified environment setup
