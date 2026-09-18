@@ -25,6 +25,7 @@ import keras_hub.layers
 import numpy as np
 from jax import numpy as jnp
 from keras import ops
+from keras.src.backend import set_keras_mask
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
 
@@ -637,8 +638,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
                 w_scale = self.w_scale.value
             _kernel_quant = self.wdequantfun(_kernel_quant, w_scale)
             return _kernel_quant
-        ret = super().kernel
-        return ret.value
+        return ops.convert_to_tensor(super().kernel)
 
     def call(self, inputs, training=None):
         """Run calibration observer before the dense computation.
@@ -1384,131 +1384,6 @@ class QStaticGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
 verify_api(Gemma3VisionAttention, QStaticGemma3VisionAttention, "call")
 
 
-# @register_static_quantized_layer(keras_hub.layers.RotaryEmbedding)
-class QStaticRotaryEmbedding(SaveableLayerMixin, keras_hub.layers.RotaryEmbedding):
-    """Statically quantized RotaryEmbedding layer."""
-
-    @classmethod
-    def prepare(
-        cls,
-        orig,
-        weight_dtype,
-        activation_dtype,
-        const_scale,
-        const_weight,
-        w_quant_granularity,
-        dot_product_attention_enable,
-    ):
-        """Convert a RotaryEmbedding instance for static quantization.
-
-        Args:
-            orig (RotaryEmbedding): Original layer instance.
-            weight_dtype (jnp.dtype): Dtype for quantized weights.
-            activation_dtype (jnp.dtype): Dtype for quantized activations.
-            const_scale (bool): Whether to use constant scales.
-            const_weight (bool): ignored, included for API consistency.
-            w_quant_granularity (str): ignored, included for API consistency.
-            dot_product_attention_enable (bool): ignored, included for API consistency.
-
-        Returns:
-            RotaryEmbedding: Updated layer instance.
-        """
-        orig._tracker.unlock()
-        orig.__class__ = cls
-        orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
-        orig.positions_qdq = StaticQDQLayer(
-            "positions_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale
-        )
-        orig.inverse_freq_qdq = StaticQDQLayer(
-            "inverse_freq_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale
-        )
-        orig._is_quantized = None
-        orig._tracker.lock()
-        return orig
-
-    def add_observers(self):
-        """Attach observer layers for calibration.
-
-        Returns:
-            None: Adds observer layers.
-        """
-        self.positions_qdq.add_observers()
-        self.inverse_freq_qdq.add_observers()
-
-    def add_variables(self):
-        """Create quantization variables for activation QDQ.
-
-        Returns:
-            None: Initializes QDQ helper variables.
-        """
-        self.positions_qdq.add_variables()
-        self.inverse_freq_qdq.add_variables()
-
-    def convert(self):
-        """Compute activation calibration values for QDQ helpers.
-
-        Returns:
-            None: Updates QDQ helpers with calibrated values.
-        """
-        self.positions_qdq.convert()
-        self.inverse_freq_qdq.convert()
-
-    def post_quantization_cleanup(self):
-        """Finalize static quantization and mark the layer as quantized.
-
-        Returns:
-            None: Cleans up observers and marks quantized state.
-        """
-        self._tracker.unlock()
-        self.positions_qdq.post_quantization_cleanup()
-        self.inverse_freq_qdq.post_quantization_cleanup()
-        self._is_quantized = True
-        self._tracker.lock()
-
-    def _compute_cos_sin_embedding(self, inputs, start_index=0, positions=None):
-        """Compute cosine/sine embeddings with quantized inputs.
-
-        Args:
-            inputs (jnp.ndarray): Input tensor.
-            start_index (int): Starting index for positions.
-            positions (Optional[jnp.ndarray]): Optional explicit positions tensor.
-
-        Returns:
-            Tuple[jnp.ndarray, jnp.ndarray]: Cosine and sine embeddings.
-        """
-        feature_axis = len(inputs.shape) - 1
-        sequence_axis = 1
-
-        rotary_dim = ops.shape(inputs)[feature_axis]
-        inverse_freq = self._get_inverse_freq(rotary_dim)
-
-        if positions is None:
-            positions = self._compute_positions(inputs, start_index)
-        else:
-            positions = ops.cast(positions, "float32")
-
-        positions = positions / ops.cast(self.scaling_factor, "float32")
-        positions = self.positions_qdq(positions)
-        inverse_freq = self.inverse_freq_qdq(inverse_freq)
-        freq = ops.einsum("i,j->ij", positions, inverse_freq)
-        embedding = ops.stack((freq, freq), axis=-2)
-        embedding = ops.reshape(embedding, (*ops.shape(freq)[:-1], ops.shape(freq)[-1] * 2))
-
-        # Reshape the embedding to be broadcastable with input shape.
-        if feature_axis < sequence_axis:
-            embedding = ops.transpose(embedding)
-        for axis in range(len(inputs.shape)):
-            if axis != sequence_axis and axis != feature_axis:
-                embedding = ops.expand_dims(embedding, axis)
-
-        cos_emb = ops.cast(ops.cos(embedding), self.compute_dtype)
-        sin_emb = ops.cast(ops.sin(embedding), self.compute_dtype)
-        return cos_emb, sin_emb
-
-
-# verify_api(keras_hub.layers.RotaryEmbedding, QStaticRotaryEmbedding, "_compute_cos_sin_embedding")
-
-
 @register_static_quantized_layer(keras.layers.ReversibleEmbedding)
 @register_static_quantized_layer(keras_hub.layers.ReversibleEmbedding)
 class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbedding):
@@ -1616,7 +1491,11 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
                 logits = ops.tanh(logits / soft_cap) * soft_cap
             return logits
 
-        return super(keras.layers.ReversibleEmbedding, self).call(inputs)
+        result = super(keras.layers.ReversibleEmbedding, self).call(inputs)
+        mask = super(keras.layers.ReversibleEmbedding, self).compute_mask(inputs)
+        if mask is not None:
+            set_keras_mask(result, mask)
+        return result
 
 
 verify_api(keras.layers.ReversibleEmbedding, QStaticReversibleEmbedding, "call")

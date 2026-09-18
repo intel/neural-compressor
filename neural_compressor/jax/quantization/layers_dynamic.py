@@ -25,6 +25,7 @@ import keras_hub.layers
 import numpy as np
 from jax import numpy as jnp
 from keras import ops
+from keras.src.backend import set_keras_mask
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
 
@@ -309,8 +310,9 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         """
         self._tracker.unlock()
         self.input_qdq.add_variables()
+        kernel = ops.convert_to_tensor(super().kernel)
         w_scale, _ = get_q_params(
-            self._kernel.value,
+            kernel,
             self.weight_dtype,
             self.compute_dtype,
             asymmetric=False,
@@ -327,14 +329,14 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
         self._kernel_quant = self.add_weight(
             name="_kernel_quant",
-            shape=self._kernel.shape,
+            shape=kernel.shape,
             initializer="zeros",
             trainable=False,
             dtype=self.weight_dtype,
             autocast=False,
         )
 
-        self._kernel_quant.assign(wquantfun(self._kernel.value, scale=self.w_scale.value))
+        self._kernel_quant.assign(wquantfun(kernel, scale=self.w_scale.value))
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
@@ -1015,7 +1017,11 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
                 logits = ops.tanh(logits / soft_cap) * soft_cap
             return logits
 
-        return super(keras.layers.ReversibleEmbedding, self).call(inputs)
+        result = super(keras.layers.ReversibleEmbedding, self).call(inputs)
+        mask = super(keras.layers.ReversibleEmbedding, self).compute_mask(inputs)
+        if mask is not None:
+            set_keras_mask(result, mask)
+        return result
 
 
 verify_api(keras.layers.ReversibleEmbedding, QDynamicReversibleEmbedding, "call")
