@@ -573,11 +573,36 @@ def atlas_report(args):
 
 
 LMMS_TASKS = {
-    "mmmu_val": ("mmmu", "mmmu_acc,none"),
-    "mmmu_pro_vision": ("mmmu-pro", "mmmu_acc,none"),
-    "simplevqa": ("simplevqa", "exact_match,none"),
-    "omnidocbench": ("omnidocbench-1.5", "omnidocbench_overall,none"),
+    "mmmu_val": ("mmmu", "mmmu_acc,none", 1.0),
+    "mmmu_pro_vision": ("mmmu-pro", "mmmu_acc,none", 1.0),
+    "simplevqa": ("simplevqa", "exact_match,none", 1.0),
+    # lmms-eval computes OmniDocBench overall as a percentage from 0 to 100.
+    "omnidocbench": ("omnidocbench-1.5", "omnidocbench_overall,none", 100.0),
 }
+
+
+def percentage_metric(value, source_max: float, metric_name: str, path: Path) -> float:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        raise RuntimeError(f"Invalid primary metric {metric_name} in {path}: {value!r}")
+    if not 0 <= value <= source_max:
+        raise RuntimeError(
+            f"Primary metric {metric_name} in {path} is outside the expected " f"0-{source_max:g} range: {value}"
+        )
+    return value * 100 / source_max
+
+
+def parse_terminal_eval_name(eval_name: str, path: Path) -> tuple[str, str]:
+    parts = eval_name.split("__")
+    if len(parts) != 3 or not all(parts):
+        raise RuntimeError(f"Unexpected Terminal-Bench evaluation name in {path}: {eval_name!r}")
+    _, model, dataset = parts
+    if dataset == "terminal-bench/terminal-bench-2-1":
+        benchmark = "terminal-bench-2.1"
+    elif dataset in {"terminal-bench", "terminal-bench@2.0"}:
+        benchmark = "terminal-bench-2.0"
+    else:
+        raise RuntimeError(f"Unknown Terminal-Bench dataset in {path}: {dataset!r}")
+    return benchmark, model
 
 
 def benchmark_report(args: argparse.Namespace) -> None:
@@ -587,23 +612,23 @@ def benchmark_report(args: argparse.Namespace) -> None:
         payload = json.loads(path.read_text())
         stats = payload.get("stats", {})
         evals = stats.get("evals", {})
-        if len(evals) != 1:
-            raise RuntimeError(f"Expected one Terminal-Bench evaluation in {path}")
-        eval_name, evaluation = next(iter(evals.items()))
-        benchmark = "terminal-bench-2.1" if "terminal-bench-2-1" in eval_name else "terminal-bench-2.0"
-        metrics = evaluation.get("metrics", [])
-        metric = metrics[0].get("mean") if metrics else None
-        records.append(
-            {
-                "benchmark": benchmark,
-                "model": eval_name.split("__")[1] if "__" in eval_name else args.model,
-                "primary_metric": metric * 100 if metric is not None else None,
-                "primary_metric_unit": "percent",
-                "num_samples": evaluation.get("n_trials", 0),
-                "failed_samples": evaluation.get("n_errors", 0),
-                "source": str(path),
-            }
-        )
+        if not evals:
+            raise RuntimeError(f"No Terminal-Bench evaluations found in {path}")
+        for eval_name, evaluation in evals.items():
+            benchmark, model = parse_terminal_eval_name(eval_name, path)
+            metrics = evaluation.get("metrics", [])
+            metric = metrics[0].get("mean") if metrics else None
+            records.append(
+                {
+                    "benchmark": benchmark,
+                    "model": model,
+                    "primary_metric": (percentage_metric(metric, 1.0, "mean", path) if metric is not None else None),
+                    "primary_metric_unit": "percent",
+                    "num_samples": evaluation.get("n_trials", 0),
+                    "failed_samples": evaluation.get("n_errors", 0),
+                    "source": str(path),
+                }
+            )
 
     for result_path in args.lmms_result:
         path = Path(result_path)
@@ -611,18 +636,16 @@ def benchmark_report(args: argparse.Namespace) -> None:
         for task, task_results in payload.get("results", {}).items():
             if task not in LMMS_TASKS:
                 continue
-            benchmark, metric_name = LMMS_TASKS[task]
+            benchmark, metric_name, source_max = LMMS_TASKS[task]
             samples = payload.get("n-samples", {}).get(task, {})
             value = task_results.get(metric_name)
             if value is None:
                 raise RuntimeError(f"Missing primary metric {metric_name} in {path}")
-            if task != "omnidocbench":
-                value *= 100
             records.append(
                 {
                     "benchmark": benchmark,
-                    "model": args.model,
-                    "primary_metric": value,
+                    "model": payload.get("model_name") or args.model,
+                    "primary_metric": percentage_metric(value, source_max, metric_name, path),
                     "primary_metric_unit": "percent",
                     "num_samples": samples.get("effective", 0),
                     "failed_samples": None,

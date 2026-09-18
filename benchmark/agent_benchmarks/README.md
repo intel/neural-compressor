@@ -99,16 +99,18 @@ patch forwards vLLM sampling extensions such as `top_k`, prevents an HF token
 from being printed in logs, and selects the Qwen prompt for MMMU and MMMU-Pro
 when the `openai` backend is used.
 
-### Start Qwen3.6-35B-A3B
+### Start the model server
 
 Start one shared multimodal-capable server. Do not pass
 `--language-model-only`, because that disables the vision encoder.
 
 ```bash
+MODEL_PATH=/path/to/model
+SERVED_MODEL_NAME=model-name
 CUDA_VISIBLE_DEVICES=0,1 bash start_vllm_serve.sh \
-  /path/to/Qwen3.6-35B-A3B \
+  "${MODEL_PATH}" \
   --port 8002 \
-  --served-model-name Qwen3.6-35B-A3B \
+  --served-model-name "${SERVED_MODEL_NAME}" \
   --tensor-parallel-size 2 \
   --dtype bfloat16 \
   --gpu-memory-utilization 0.92 \

@@ -69,6 +69,7 @@ run_benchmark() {
 	case "${benchmark}" in
 		terminal-bench-2.0) dataset="terminal-bench@2.0" ;;
 		terminal-bench-2.1) dataset="terminal-bench/terminal-bench-2-1@6" ;;
+		*) die "Unknown benchmark: ${benchmark}" ;;
 	esac
 	job_name="${benchmark}-${RUN_TAG}"
 

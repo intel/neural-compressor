@@ -45,13 +45,14 @@ else
 fi
 
 require_file "${PATCH_FILE}"
-if git -C "${LMMS_EVAL_DIR}" apply --reverse --check "${PATCH_FILE}" 2>/dev/null; then
+patch_options=(--unidiff-zero "${PATCH_FILE}")
+if git -C "${LMMS_EVAL_DIR}" apply --reverse --check "${patch_options[@]}" 2>/dev/null; then
 	log "OpenAI-compatible API patch is already applied"
-elif git -C "${LMMS_EVAL_DIR}" apply --check "${PATCH_FILE}" 2>/dev/null; then
+elif git -C "${LMMS_EVAL_DIR}" apply --check "${patch_options[@]}" 2>/dev/null; then
 	log "Applying OpenAI-compatible API patch"
-	git -C "${LMMS_EVAL_DIR}" apply "${PATCH_FILE}"
+	git -C "${LMMS_EVAL_DIR}" apply "${patch_options[@]}"
 else
-	die "Patch does not match the lmms-eval checkout: ${PATCH_FILE}"
+	die "Patch does not match the pinned lmms-eval checkout. Recreate it with: git -C ${LMMS_EVAL_DIR} diff --binary --unified=0 HEAD > ${PATCH_FILE}"
 fi
 
 log "Installing lmms-eval"

@@ -72,6 +72,7 @@ run_benchmark() {
 		mmmu-pro) task=mmmu_pro_vision; timeout=600; thinking=true ;;
 		simplevqa) task=simplevqa; timeout=180; thinking=false ;;
 		omnidocbench-1.5) task=omnidocbench; timeout=7200; thinking=true ;;
+		*) die "Unknown benchmark: ${benchmark}" ;;
 	esac
 	if [[ "${thinking}" == true ]]; then
 		gen_kwargs="max_new_tokens=32768,temperature=1.0,top_p=0.95,top_k=20,presence_penalty=1.5"
