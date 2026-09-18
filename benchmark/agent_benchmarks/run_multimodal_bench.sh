@@ -23,6 +23,9 @@ Options:
 	--env-prefix PATH     Conda prefix containing lmms-eval (default: current environment)
 	--lmms-eval-root PATH lmms-eval checkout (default: ./lmms-eval)
 	--output-dir PATH     Output directory (default: ./outputs/multimodal-bench)
+	--run-id ID           Store this run under OUTPUT_DIR/ID
+	--resume              Skip benchmarks completed by the same --run-id
+	--response-cache PATH Reuse deterministic lmms-eval responses (default: RUN_DIR/.response-cache)
 	--workers N           Parallel API requests (default: 1)
 	--retry-attempts N    Retry a failed benchmark process up to N times (default: 1)
 	--mini                Run the first 10 samples
@@ -66,7 +69,7 @@ run_with_retries() {
 }
 
 run_benchmark() {
-	local benchmark="$1" task timeout thinking gen_kwargs
+	local benchmark="$1" task timeout thinking gen_kwargs completion_marker run_signature
 	case "${benchmark}" in
 		mmmu) task=mmmu_val; timeout=600; thinking=true ;;
 		mmmu-pro) task=mmmu_pro_vision; timeout=600; thinking=true ;;
@@ -78,6 +81,15 @@ run_benchmark() {
 		gen_kwargs="max_new_tokens=32768,temperature=1.0,top_p=0.95,top_k=20,presence_penalty=1.5"
 	else
 		gen_kwargs=""
+	fi
+	completion_marker="${OUTPUT_DIR}/.completed/${benchmark}"
+	run_signature="${SERVED_MODEL_NAME}|${OPENAI_BASE_URL}|${task}|mini=${MINI}|${gen_kwargs}"
+	if [[ "${RESUME}" == true && -f "${completion_marker}" ]]; then
+		if [[ "$(<"${completion_marker}")" == "${run_signature}" ]]; then
+			log "Skipping completed benchmark ${benchmark}"
+			return 0
+		fi
+		die "Completed benchmark ${benchmark} does not match the current model or run options: ${completion_marker}"
 	fi
 
 	local model_args="model=${SERVED_MODEL_NAME},base_url=${OPENAI_BASE_URL},api_key=${VLLM_API_KEY},num_concurrent=${WORKERS},timeout=${timeout},httpx_trust_env=false,enable_thinking_kwarg=${thinking}"
@@ -93,6 +105,7 @@ run_benchmark() {
 		--log_samples
 		--output_path "${OUTPUT_DIR}"
 	)
+	[[ -z "${RESPONSE_CACHE}" ]] || command+=(--use_cache "${RESPONSE_CACHE}")
 	[[ -z "${gen_kwargs}" ]] || command+=(--gen_kwargs "${gen_kwargs}")
 	[[ "${MINI}" == false ]] || command+=(--limit 10)
 
@@ -100,6 +113,8 @@ run_benchmark() {
 		run_with_retries "${benchmark}" "${command[@]}"
 	else
 		(cd "${LMMS_EVAL_ROOT}" && run_with_retries "${benchmark}" "${command[@]}")
+		mkdir -p -- "$(dirname -- "${completion_marker}")"
+		printf '%s\n' "${run_signature}" >"${completion_marker}"
 	fi
 }
 
@@ -107,6 +122,9 @@ BENCHMARK=""
 ENV_PREFIX="${MULTIMODAL_BENCH_ENV_PREFIX:-}"
 LMMS_EVAL_ROOT="${LMMS_EVAL_ROOT:-${SCRIPT_DIR}/lmms-eval}"
 OUTPUT_DIR="${OUTPUT_DIR:-${SCRIPT_DIR}/outputs/multimodal-bench}"
+RUN_ID=""
+RESUME=false
+RESPONSE_CACHE=""
 WORKERS=1
 RETRY_ATTEMPTS=1
 MINI=false
@@ -121,6 +139,9 @@ while [[ $# -gt 0 ]]; do
 		--env-prefix) [[ $# -ge 2 ]] || die "$1 requires a value"; ENV_PREFIX="$2"; shift 2 ;;
 		--lmms-eval-root) [[ $# -ge 2 ]] || die "$1 requires a value"; LMMS_EVAL_ROOT="$2"; shift 2 ;;
 		--output-dir) [[ $# -ge 2 ]] || die "$1 requires a value"; OUTPUT_DIR="$2"; shift 2 ;;
+		--run-id) [[ $# -ge 2 ]] || die "$1 requires a value"; RUN_ID="$2"; shift 2 ;;
+		--resume) RESUME=true; shift ;;
+		--response-cache) [[ $# -ge 2 ]] || die "$1 requires a value"; RESPONSE_CACHE="$2"; shift 2 ;;
 		--workers) [[ $# -ge 2 ]] || die "$1 requires a value"; WORKERS="$2"; shift 2 ;;
 		--retry-attempts) [[ $# -ge 2 ]] || die "$1 requires a value"; RETRY_ATTEMPTS="$2"; shift 2 ;;
 		--mini) MINI=true; shift ;;
@@ -137,6 +158,13 @@ case "${BENCHMARK}" in
 esac
 require_positive_integer "--workers" "${WORKERS}"
 require_positive_integer "--retry-attempts" "${RETRY_ATTEMPTS}"
+if [[ -n "${RUN_ID}" ]]; then
+	[[ "${RUN_ID}" =~ ^[A-Za-z0-9._-]+$ ]] || die "--run-id contains unsupported characters: ${RUN_ID}"
+	OUTPUT_DIR="${OUTPUT_DIR}/${RUN_ID}"
+	RESPONSE_CACHE="${RESPONSE_CACHE:-${OUTPUT_DIR}/.response-cache}"
+elif [[ "${RESUME}" == true ]]; then
+	die "--resume requires --run-id"
+fi
 
 init_vllm_endpoint
 if [[ "${DRY_RUN}" == false ]]; then

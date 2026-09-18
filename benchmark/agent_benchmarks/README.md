@@ -177,6 +177,66 @@ Pass each option more than once to combine multiple runs. The report records
 the benchmark, model, primary metric as a percentage, sample count, failed
 sample count when available, and source result path.
 
+### Resume failed or interrupted runs
+
+Harbor persists each Terminal-Bench job under its jobs directory. Resume an
+interrupted job without rerunning completed trials by passing the job directory
+that contains `config.json`:
+
+```bash
+bash run_terminal_bench.sh \
+  --resume-job outputs/terminal-bench/terminal-bench-2.1-RUN_TIMESTAMP \
+  --port 8002
+```
+
+Harbor removes trials with `CancelledError` before resuming by default. Pass
+`--retry-error-type TYPE` one or more times to remove and retry completed trials
+with specific exception types. For a new run, `--max-retries N` retries each
+trial when Harbor encounters an exception; `--retry-attempts N` remains a
+process-level retry for runner failures. `--attempts` controls independent
+trials per task for pass-rate estimation and is not a failure retry count.
+
+For multimodal evaluation, assign a stable run ID from the first invocation and
+reuse it with `--resume`. A completion marker is written only after an entire
+benchmark succeeds, so a resumed `all` run skips completed benchmarks and reruns
+only the benchmark that was interrupted:
+
+```bash
+bash run_multimodal_bench.sh \
+  --benchmark all \
+  --run-id qwen-eval-1 \
+  --port 8002
+
+bash run_multimodal_bench.sh \
+  --benchmark all \
+  --run-id qwen-eval-1 \
+  --resume \
+  --port 8002
+```
+
+Runs with an ID store results, completion markers, and the default lmms-eval
+response cache under `outputs/multimodal-bench/RUN_ID/`. The cache reuses only
+successful deterministic responses, so it provides sample-level recovery for
+SimpleVQA. MMMU, MMMU-Pro, and OmniDocBench use sampling and therefore rerun the
+current benchmark after interruption; lmms-eval intentionally does not cache
+those responses. The completion marker also records the model, endpoint, and
+run options, and resume fails instead of skipping when they differ.
+
+### Clean up artifacts
+
+Terminal-Bench passes Harbor's `--delete` option, so trial containers are
+removed after completion while pulled or built Docker images remain cached for
+later runs. Harbor job directories contain the configuration, trajectories,
+and result files required by `--resume-job`; remove a job directory only after
+it no longer needs to be resumed. Docker images are shared host resources and
+are not deleted automatically. Inspect them with `docker image ls` and remove
+only confirmed unused images according to the host's cleanup policy.
+
+Multimodal evaluation does not create containers or images. Remove a completed
+`outputs/multimodal-bench/RUN_ID/` directory to delete its results, completion
+markers, and response cache. Removing the cache is safe but prevents response
+reuse on a subsequent rerun.
+
 ## SWE-Verified and SWE-Verified Mini
 
 ### SWE-Verified environment setup
