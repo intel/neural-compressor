@@ -97,7 +97,9 @@ The multimodal setup clones the lmms-eval revision pinned in `versions.env`,
 applies the OpenAI API compatibility patch, and installs the checkout. The
 patch forwards vLLM sampling extensions such as `top_k`, prevents an HF token
 from being printed in logs, and selects the Qwen prompt for MMMU and MMMU-Pro
-when the `openai` backend is used.
+when the `openai` backend is used. It also adds the Mini tasks backed by the
+`jia0160/multimodal-benchmarks-mini` dataset at the revision pinned in
+`versions.env`.
 
 ### Start the model server
 
@@ -125,7 +127,7 @@ The same server can handle Terminal-Bench. A text-only server started with
 
 Activate the corresponding environment before invoking its runner. Alternatively,
 pass a Conda prefix through `--env-prefix`. `--mini` selects one Terminal-Bench
-task or the first 10 lmms-eval samples.
+task or the fixed 90-sample Mini dataset for each multimodal benchmark.
 
 ```bash
 bash run_terminal_bench.sh \
@@ -138,6 +140,15 @@ bash run_multimodal_bench.sh \
   --port 8002 \
   --mini
 ```
+
+The multimodal Mini dataset is selected offline rather than taking the first N
+rows at runtime. Its `mmmu`, `mmmu_pro`, `simplevqa`, and `omnidocbench`
+configurations each contain 90 samples. MMMU and MMMU-Pro use three samples
+from each of 30 subjects while covering question and image characteristics.
+SimpleVQA balances nine tasks, nine topics, and Chinese/English samples.
+OmniDocBench balances nine data sources and covers language, layout, table, and
+formula characteristics. The dataset repository and immutable revision are
+recorded in `versions.env` and the patched lmms-eval task definitions.
 
 Each runner accepts `all` for the benchmarks it owns:
 
@@ -153,6 +164,11 @@ bash run_multimodal_bench.sh \
   --port 8002 \
   --workers 1 \
   --retry-attempts 3
+
+bash run_multimodal_bench.sh \
+  --benchmark all \
+  --port 8002 \
+  --mini
 ```
 
 Terminal-Bench uses `terminal-bench@2.0` and the fixed

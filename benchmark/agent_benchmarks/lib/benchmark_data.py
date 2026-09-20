@@ -574,10 +574,14 @@ def atlas_report(args):
 
 LMMS_TASKS = {
     "mmmu_val": ("mmmu", "mmmu_acc,none", 1.0),
+    "mmmu_val_mini": ("mmmu-mini", "mmmu_acc,none", 1.0),
     "mmmu_pro_vision": ("mmmu-pro", "mmmu_acc,none", 1.0),
+    "mmmu_pro_vision_mini": ("mmmu-pro-mini", "mmmu_acc,none", 1.0),
     "simplevqa": ("simplevqa", "exact_match,none", 1.0),
+    "simplevqa_mini": ("simplevqa-mini", "exact_match,none", 1.0),
     # lmms-eval computes OmniDocBench overall as a percentage from 0 to 100.
     "omnidocbench": ("omnidocbench-1.5", "omnidocbench_overall,none", 100.0),
+    "omnidocbench_mini": ("omnidocbench-1.5-mini", "omnidocbench_overall,none", 100.0),
 }
 
 

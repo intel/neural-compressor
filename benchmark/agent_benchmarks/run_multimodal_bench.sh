@@ -28,7 +28,7 @@ Options:
 	--response-cache PATH Reuse deterministic lmms-eval responses (default: RUN_DIR/.response-cache)
 	--workers N           Parallel API requests (default: 1)
 	--retry-attempts N    Retry a failed benchmark process up to N times (default: 1)
-	--mini                Run the first 10 samples
+	--mini                Run the fixed 90-sample Mini dataset
 	--dry-run             Print commands without executing them
 	-h, --help            Show this help message
 
@@ -77,6 +77,9 @@ run_benchmark() {
 		omnidocbench-1.5) task=omnidocbench; timeout=7200; thinking=true ;;
 		*) die "Unknown benchmark: ${benchmark}" ;;
 	esac
+	if [[ "${MINI}" == true ]]; then
+		task="${task}_mini"
+	fi
 	if [[ "${thinking}" == true ]]; then
 		gen_kwargs="max_new_tokens=32768,temperature=1.0,top_p=0.95,top_k=20,presence_penalty=1.5"
 	else
@@ -107,7 +110,6 @@ run_benchmark() {
 	)
 	[[ -z "${RESPONSE_CACHE}" ]] || command+=(--use_cache "${RESPONSE_CACHE}")
 	[[ -z "${gen_kwargs}" ]] || command+=(--gen_kwargs "${gen_kwargs}")
-	[[ "${MINI}" == false ]] || command+=(--limit 10)
 
 	if [[ "${DRY_RUN}" == true ]]; then
 		run_with_retries "${benchmark}" "${command[@]}"
