@@ -261,6 +261,26 @@ def test_moe_config_scales_with_batch(num_tokens: int, expected_block_m: int):
     assert config["BLOCK_SIZE_M"] == expected_block_m
 
 
+@pytest.mark.parametrize("method_class", [INCNvfp4UE5M3MoEMethod, INCNvfp4QDQMoEMethod])
+def test_moe_group_scales_are_tensor_parallel_sharded(method_class):
+    moe = type("MoeConfig", (), {"w13_num_shards": 2})()
+    method = method_class(moe, 16)
+    layer = torch.nn.Module()
+
+    method.create_weights(
+        layer,
+        num_experts=2,
+        hidden_size=128,
+        intermediate_size_per_partition=32,
+        params_dtype=torch.bfloat16,
+        weight_loader=lambda **kwargs: None,
+        load_full_w2=True,
+    )
+
+    assert layer.w13_weight_scale.load_full_w2 is False
+    assert layer.w2_weight_scale.load_full_w2 is False
+
+
 def test_fused_moe_supports_dynamo_fullgraph_capture():
     if not torch.cuda.is_available():
         pytest.skip("CUDA is required")

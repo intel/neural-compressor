@@ -83,6 +83,31 @@ def test_hardware_apply_patches_includes_quantization_once():
     apply_quantization_patches.assert_called_once_with(enable_nvfp4_qdq=False)
 
 
+def test_quantization_patch_upgrades_hardware_registration_to_qdq():
+    from vllm.model_executor.layers.quantization.inc import inc as inc_module
+    from vllm.model_executor.layers.quantization.inc.config_parser import INCConfigParser
+    from vllm.model_executor.layers.quantization.inc.schemes import factory
+    from vllm_qdq_plugin.quantization import patch
+    from vllm_qdq_plugin.quantization.inc_nvfp4_scheme import INCNvfp4QDQScheme
+
+    config = mock.Mock(SUPPORTED_DTYPES=set(), SUPPORTED_FORMATS=set())
+    with (
+        mock.patch.object(patch, "_PATCHED", False),
+        mock.patch.object(patch, "_NVFP4_QDQ_ENABLED", False),
+        mock.patch("vllm.model_executor.layers.quantization.inc.INCConfig", config),
+        mock.patch.object(INCConfigParser, "resolve"),
+        mock.patch.object(factory, "resolve_scheme"),
+        mock.patch.object(inc_module, "resolve_scheme", create=True),
+    ):
+        patch.apply_patches(enable_nvfp4_qdq=False)
+        patch.apply_patches(enable_nvfp4_qdq=True)
+
+        layer_config = mock.Mock(data_type="nv_fp", bits=4)
+        assert isinstance(factory.resolve_scheme(layer_config), INCNvfp4QDQScheme)
+
+    assert config._vllm_qdq_nvfp4_enabled is True
+
+
 @pytest.mark.parametrize("enabled", [False, True])
 def test_dense_method_captures_vllm_qdq(enabled: bool):
     layer_config = type("LayerConfig", (), {"group_size": 16})()

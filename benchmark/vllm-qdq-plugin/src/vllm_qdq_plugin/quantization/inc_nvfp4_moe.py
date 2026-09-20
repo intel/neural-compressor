@@ -51,7 +51,11 @@ class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
             layer.register_parameter(name, weight)
             set_weight_attrs(weight, extra_weight_attrs)
 
-        scale_attrs = {**extra_weight_attrs, "quant_method": FusedMoeWeightScaleSupported.GROUP.value}
+        scale_attrs = {
+            **extra_weight_attrs,
+            "quant_method": FusedMoeWeightScaleSupported.GROUP.value,
+            "load_full_w2": False,
+        }
         scale_specs = (
             ("w13_weight_scale", (num_experts, w13_size, hidden_size // self.group_size)),
             ("w2_weight_scale", (num_experts, hidden_size, intermediate_size_per_partition // self.group_size)),

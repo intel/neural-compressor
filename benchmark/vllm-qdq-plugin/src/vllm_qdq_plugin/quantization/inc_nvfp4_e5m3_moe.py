@@ -57,7 +57,11 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
         layer.register_parameter("w2_weight_packed", w2_weight)
         set_weight_attrs(w2_weight, extra_weight_attrs)
 
-        scale_attrs = {**extra_weight_attrs, "quant_method": FusedMoeWeightScaleSupported.GROUP.value}
+        scale_attrs = {
+            **extra_weight_attrs,
+            "quant_method": FusedMoeWeightScaleSupported.GROUP.value,
+            "load_full_w2": False,
+        }
         w13_scale = torch.nn.Parameter(
             torch.empty(num_experts, w13_size, hidden_size // self.group_size, dtype=torch.uint8),
             requires_grad=False,

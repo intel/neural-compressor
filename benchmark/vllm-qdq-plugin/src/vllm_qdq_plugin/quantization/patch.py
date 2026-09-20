@@ -12,6 +12,7 @@ from .inc_nvfp4_scheme import INCNvfp4QDQScheme
 
 logger = init_logger(__name__)
 _PATCHED = False
+_NVFP4_QDQ_ENABLED = False
 
 
 def _layer_data_type(config: Any, layer_name: str, default: str) -> str:
@@ -28,8 +29,8 @@ def _layer_data_type(config: Any, layer_name: str, default: str) -> str:
 
 def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     """Register AutoRound NVFP4 QDQ metadata and scheme routing."""
-    global _PATCHED
-    if _PATCHED:
+    global _NVFP4_QDQ_ENABLED, _PATCHED
+    if _PATCHED and (not enable_nvfp4_qdq or _NVFP4_QDQ_ENABLED):
         return
 
     from vllm.model_executor.layers.quantization.inc import INCConfig
@@ -75,6 +76,7 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     factory.resolve_scheme = resolve_scheme
     inc_module.resolve_scheme = resolve_scheme
     _PATCHED = True
+    _NVFP4_QDQ_ENABLED = _NVFP4_QDQ_ENABLED or enable_nvfp4_qdq
     formats = "nv_fp and nvfp4_v2" if enable_nvfp4_qdq else "nvfp4_v2"
     logger.warning("vLLM QDQ patch applied: AutoRound %s schemes registered", formats)
 
