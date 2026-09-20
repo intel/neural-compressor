@@ -4,8 +4,6 @@
 - [Usage](#usage)
   - [Using a Fixed `alpha`](#using-a-fixed-alpha)
   - [Determining the `alpha` through auto-tuning](#determining-the-alpha-through-auto-tuning)
-- [Examples](#examples)
-
 
 ## Introduction
 
@@ -45,7 +43,3 @@ best_model = autotune(
 )
 ```
 > Please note that, it may a considerable amount of time as the tuning process applies each `alpha` to the entire model and uses the evaluation result on the entire dataset as the metric to determine the best `alpha`.
-
-## Examples
-
-Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/main/examples/tensorflow/nlp/large_language_models/quantization/ptq/smoothquant) on how to apply smooth quant to a TensorFlow model with `neural_compressor.tensorflow`.
