@@ -7,7 +7,6 @@ TensorFlow Quantization
    2.1 [Without Accuracy Aware Tuning](#without-accuracy-aware-tuning)   
    2.2 [With Accuracy Aware Tuning](#with-accuracy-aware-tuning)   
    2.3 [Specify Quantization Rules](#specify-quantization-rules) 
-3. [Examples](#examples) 
 
 ## Introduction
 
@@ -114,7 +113,3 @@ conv2d_config = StaticQuantConfig(
 )
 quant_config.set_local("conv1", conv2d_config)
 ```
-
-## Examples
-
-Users can also refer to [examples](https://github.com/intel/neural-compressor/blob/main/examples/tensorflow) on how to quantize a TensorFlow model with `neural_compressor.tensorflow`.
