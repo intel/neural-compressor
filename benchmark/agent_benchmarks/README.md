@@ -66,18 +66,13 @@ The stop command uses `logs/vllm_<PORT>.pid` by default. Set the same
 `VLLM_LOG_DIR` used to start the server, or set `VLLM_PID_FILE` to the exact PID
 file, when using a custom location.
 
-## Terminal and Multimodal Benchmarks
+## Terminal-Bench
 
-`run_terminal_bench.sh` runs Terminal-Bench 2.0 and 2.1 with Harbor and
-Terminus-2. `run_multimodal_bench.sh` runs MMMU, MMMU-Pro, SimpleVQA, and
-OmniDocBench 1.5 with lmms-eval. Both runners connect to an existing
-OpenAI-compatible vLLM endpoint. Use separate environments because Harbor and
-lmms-eval have different dependencies.
+`run_terminal_bench.sh` evaluates Terminal-Bench 2.0 and 2.1 with Harbor and
+Terminus-2 against an existing OpenAI-compatible endpoint. It uses
+`terminal-bench@2.0` and `terminal-bench/terminal-bench-2-1@6`.
 
-### Set up the environments
-
-Create and activate a Terminal-Bench environment, then install the pinned
-Harbor release:
+### Set up Terminal-Bench
 
 ```bash
 conda create -n terminal-bench python=3.12 pip
@@ -85,7 +80,51 @@ conda activate terminal-bench
 bash setup_terminal_bench.sh
 ```
 
-Use another environment for multimodal evaluation:
+Start a text or multimodal vLLM server, then run a smoke test or the full suite.
+Pass `--env-prefix` when the Terminal-Bench environment is not active.
+
+```bash
+# One task with one trial
+bash run_terminal_bench.sh \
+  --benchmark terminal-bench-2.1 \
+  --port 8002 \
+  --mini
+
+# Both benchmark versions; five trials per task by default
+bash run_terminal_bench.sh \
+  --benchmark all \
+  --port 8002 \
+  --workers 1 \
+  --retry-attempts 3
+```
+
+Results are written under `outputs/terminal-bench/`. Resume an interrupted job
+from the directory containing its `config.json`:
+
+```bash
+bash run_terminal_bench.sh \
+  --resume-job outputs/terminal-bench/terminal-bench-2.1-RUN_TIMESTAMP \
+  --port 8002
+```
+
+`--max-retries` retries a trial after a Harbor exception, while
+`--retry-attempts` retries the runner process. `--attempts` controls independent
+trials used to estimate the pass rate. Use `--retry-error-type TYPE` to rerun
+completed trials with a specific exception type.
+
+Harbor removes trial containers after completion. It retains Docker images and
+job directories because they are required for later runs and recovery. Remove
+them only when they are no longer needed.
+
+## Multimodal Benchmarks
+
+`run_multimodal_bench.sh` evaluates MMMU, MMMU-Pro, SimpleVQA, and OmniDocBench
+1.5 with lmms-eval against an existing multimodal OpenAI-compatible endpoint.
+
+### Set up multimodal evaluation
+
+Use a separate environment because lmms-eval and Harbor have different
+dependencies:
 
 ```bash
 conda create -n multimodal-bench python=3.12 pip
@@ -93,18 +132,12 @@ conda activate multimodal-bench
 bash setup_multimodal_bench.sh
 ```
 
-The multimodal setup clones the lmms-eval revision pinned in `versions.env`,
-applies the OpenAI API compatibility patch, and installs the checkout. The
-patch forwards vLLM sampling extensions such as `top_k`, prevents an HF token
-from being printed in logs, and selects the Qwen prompt for MMMU and MMMU-Pro
-when the `openai` backend is used. It also adds the Mini tasks backed by the
-`jia0160/multimodal-benchmarks-mini` dataset at the revision pinned in
-`versions.env`.
+The setup script installs the lmms-eval revision pinned in `versions.env` and
+applies the OpenAI compatibility patch. The patch adds the required Qwen
+prompts, vLLM sampling parameters, and fixed Mini tasks.
 
-### Start the model server
-
-Start one shared multimodal-capable server. Do not pass
-`--language-model-only`, because that disables the vision encoder.
+Start the server without `--language-model-only`, which disables the vision
+encoder:
 
 ```bash
 MODEL_PATH=/path/to/model
@@ -120,44 +153,14 @@ CUDA_VISIBLE_DEVICES=0,1 bash start_vllm_serve.sh \
   --enable-prefix-caching
 ```
 
-The same server can handle Terminal-Bench. A text-only server started with
-`--language-model-only` can be used when running only Terminal-Bench.
-
-### Run smoke and full evaluations
-
-Activate the corresponding environment before invoking its runner. Alternatively,
-pass a Conda prefix through `--env-prefix`. `--mini` selects one Terminal-Bench
-task or the fixed 90-sample Mini dataset for each multimodal benchmark.
+Run one benchmark, all full datasets, or all Mini datasets. Pass `--env-prefix`
+when the multimodal environment is not active.
 
 ```bash
-bash run_terminal_bench.sh \
-  --benchmark terminal-bench-2.1 \
-  --port 8002 \
-  --mini
-
 bash run_multimodal_bench.sh \
   --benchmark mmmu \
   --port 8002 \
   --mini
-```
-
-The multimodal Mini dataset is selected offline rather than taking the first N
-rows at runtime. Its `mmmu`, `mmmu_pro`, `simplevqa`, and `omnidocbench`
-configurations each contain 90 samples. MMMU and MMMU-Pro use three samples
-from each of 30 subjects while covering question and image characteristics.
-SimpleVQA balances nine tasks, nine topics, and Chinese/English samples.
-OmniDocBench balances nine data sources and covers language, layout, table, and
-formula characteristics. The dataset repository and immutable revision are
-recorded in `versions.env` and the patched lmms-eval task definitions.
-
-Each runner accepts `all` for the benchmarks it owns:
-
-```bash
-bash run_terminal_bench.sh \
-  --benchmark all \
-  --port 8002 \
-  --workers 1 \
-  --retry-attempts 3
 
 bash run_multimodal_bench.sh \
   --benchmark all \
@@ -171,51 +174,20 @@ bash run_multimodal_bench.sh \
   --mini
 ```
 
-Terminal-Bench uses `terminal-bench@2.0` and the fixed
-`terminal-bench/terminal-bench-2-1@6` revision, with five trials per task by
-default. MMMU, MMMU-Pro, and OmniDocBench use thinking mode with 32,768 output
-tokens and `temperature=1.0`, `top_p=0.95`, `top_k=20`, and
-`presence_penalty=1.5`. SimpleVQA uses its deterministic task defaults with
-thinking disabled. Results are written under `outputs/terminal-bench/` and
-`outputs/multimodal-bench/`.
+`--mini` uses four fixed 90-sample configurations from
+`jia0160/multimodal-benchmarks-mini` at the revision pinned in `versions.env`.
+The samples are selected offline, not truncated from the full datasets at
+runtime. MMMU and MMMU-Pro cover all 30 subjects; SimpleVQA balances task,
+topic, and language; OmniDocBench balances data source and document features.
 
-Create a normalized summary from completed Harbor and lmms-eval result files:
+MMMU, MMMU-Pro, and OmniDocBench use thinking mode with 32,768 output tokens,
+`temperature=1.0`, `top_p=0.95`, `top_k=20`, and `presence_penalty=1.5`.
+SimpleVQA uses deterministic task defaults with thinking disabled. Results are
+written under `outputs/multimodal-bench/`.
 
-```bash
-python lib/benchmark_data.py benchmark-report \
-  --terminal-result outputs/terminal-bench/JOB/result.json \
-  --lmms-result outputs/multimodal-bench/MODEL/TIMESTAMP_results.json \
-  --model MODEL_NAME \
-  --output outputs/benchmark-report.json
-```
+### Resume multimodal evaluation
 
-Pass each option more than once to combine multiple runs. The report records
-the benchmark, model, primary metric as a percentage, sample count, failed
-sample count when available, and source result path.
-
-### Resume failed or interrupted runs
-
-Harbor persists each Terminal-Bench job under its jobs directory. Resume an
-interrupted job without rerunning completed trials by passing the job directory
-that contains `config.json`:
-
-```bash
-bash run_terminal_bench.sh \
-  --resume-job outputs/terminal-bench/terminal-bench-2.1-RUN_TIMESTAMP \
-  --port 8002
-```
-
-Harbor removes trials with `CancelledError` before resuming by default. Pass
-`--retry-error-type TYPE` one or more times to remove and retry completed trials
-with specific exception types. For a new run, `--max-retries N` retries each
-trial when Harbor encounters an exception; `--retry-attempts N` remains a
-process-level retry for runner failures. `--attempts` controls independent
-trials per task for pass-rate estimation and is not a failure retry count.
-
-For multimodal evaluation, assign a stable run ID from the first invocation and
-reuse it with `--resume`. A completion marker is written only after an entire
-benchmark succeeds, so a resumed `all` run skips completed benchmarks and reruns
-only the benchmark that was interrupted:
+Set a stable run ID on the initial run and reuse it with `--resume`:
 
 ```bash
 bash run_multimodal_bench.sh \
@@ -230,28 +202,28 @@ bash run_multimodal_bench.sh \
   --port 8002
 ```
 
-Runs with an ID store results, completion markers, and the default lmms-eval
-response cache under `outputs/multimodal-bench/RUN_ID/`. The cache reuses only
-successful deterministic responses, so it provides sample-level recovery for
-SimpleVQA. MMMU, MMMU-Pro, and OmniDocBench use sampling and therefore rerun the
-current benchmark after interruption; lmms-eval intentionally does not cache
-those responses. The completion marker also records the model, endpoint, and
-run options, and resume fails instead of skipping when they differ.
+A resumed run skips completed benchmarks. The response cache provides
+sample-level recovery for deterministic SimpleVQA requests. Sampling-based
+MMMU, MMMU-Pro, and OmniDocBench rerun the interrupted benchmark. Results,
+completion markers, and the cache are stored under
+`outputs/multimodal-bench/RUN_ID/`; remove that directory when recovery is no
+longer required. Multimodal evaluation does not create containers or images.
 
-### Clean up artifacts
+## Benchmark Report
 
-Terminal-Bench passes Harbor's `--delete` option, so trial containers are
-removed after completion while pulled or built Docker images remain cached for
-later runs. Harbor job directories contain the configuration, trajectories,
-and result files required by `--resume-job`; remove a job directory only after
-it no longer needs to be resumed. Docker images are shared host resources and
-are not deleted automatically. Inspect them with `docker image ls` and remove
-only confirmed unused images according to the host's cleanup policy.
+Create one normalized report from completed Harbor and lmms-eval results:
 
-Multimodal evaluation does not create containers or images. Remove a completed
-`outputs/multimodal-bench/RUN_ID/` directory to delete its results, completion
-markers, and response cache. Removing the cache is safe but prevents response
-reuse on a subsequent rerun.
+```bash
+python lib/benchmark_data.py benchmark-report \
+  --terminal-result outputs/terminal-bench/JOB/result.json \
+  --lmms-result outputs/multimodal-bench/MODEL/TIMESTAMP_results.json \
+  --model MODEL_NAME \
+  --output outputs/benchmark-report.json
+```
+
+Either result option may be repeated or omitted. The report records the model,
+benchmark, primary metric as a percentage, sample count, failed sample count
+when available, and source path.
 
 ## SWE-Verified and SWE-Verified Mini
 
