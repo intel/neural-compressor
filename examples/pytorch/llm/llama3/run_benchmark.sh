@@ -197,6 +197,8 @@ run_ruler_eval() {
         --metadata="{\"max_seq_lengths\":[${seq_lengths}],\"tokenizer\":\"${MODEL_PATH}\"}" \
         --gen_kwargs "max_gen_toks=${max_gen_toks}" \
         --batch_size 32 \
+        --limit 100 \
+        --log_samples \
         --output_path "${output_dir}/seq_${seq_lengths}" \
         --seed 42
 }
