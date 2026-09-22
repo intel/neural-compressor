@@ -8,11 +8,17 @@ BATCH_SIZE=64
 GPU_MEMORY_UTILIZATION=0.8
 KV_CACHE_DTYPE="auto"
 ATTN_DTYPE="auto"
+RULER_MAX_POS=""
+SERVER_PORT=8000
 
 while [[ $# -gt 0 ]]; do
     case $1 in
         --model_path=*)
             MODEL_PATH="${1#*=}"
+            shift
+            ;;
+        --ruler_max_pos=*)
+            RULER_MAX_POS="${1#*=}"
             shift
             ;;
         --tasks=*)
@@ -118,12 +124,101 @@ run_evaluation() {
     fi
 }
 
+start_vllm_server() {
+    local max_length=$1
+    echo "Starting vLLM server on port ${SERVER_PORT}..."
+    vllm serve "${MODEL_PATH}" \
+        --port ${SERVER_PORT} \
+        --tensor-parallel-size ${TENSOR_PARALLEL_SIZE} \
+        --max-model-len ${max_length} \
+        --gpu-memory-utilization ${GPU_MEMORY_UTILIZATION} \
+        --dtype bfloat16 \
+        --kv-cache-dtype ${KV_CACHE_DTYPE} \
+        > vllm_server.log 2>&1 &
+    VLLM_PID=$!
+    echo "vLLM server started with PID: ${VLLM_PID}"
+}
+
+wait_for_server() {
+    local max_retries=300
+    local retry_count=0
+
+    echo "Waiting for vLLM server to be ready..."
+    while [ $retry_count -lt $max_retries ]; do
+        if curl -s http://localhost:${SERVER_PORT}/health > /dev/null 2>&1; then
+            echo "vLLM server is ready!"
+            return 0
+        fi
+        retry_count=$((retry_count + 1))
+        echo "Waiting for server... (${retry_count}/${max_retries})"
+        sleep 5
+    done
+
+    echo "Error: vLLM server failed to start within expected time, check vllm_server.log"
+    return 1
+}
+
+cleanup_server() {
+    echo "Shutting down vLLM server..."
+    kill $VLLM_PID 2>/dev/null || true
+    wait $VLLM_PID 2>/dev/null || true
+    echo "Server stopped"
+}
+
+run_ruler_eval() {
+    local task_name=$1
+    local max_gen_toks=128
+    local max_pos=${RULER_MAX_POS:-131072}
+    local seq_lengths
+
+    # if [[ "$task_name" == *"ruler_qa_squad"* ]]; then
+    #     max_pos=$((max_pos - max_gen_toks))
+    #     task_name="ruler_qa_squad"
+    # else
+    #     task_name="niah_multiquery"
+    # fi
+    seq_lengths=${max_pos}
+
+    local output_dir="$(basename ${MODEL_PATH})-tp${TENSOR_PARALLEL_SIZE}-eval"
+    mkdir -p "${output_dir}"
+
+    start_vllm_server ${max_pos}
+    if ! wait_for_server; then
+        kill $VLLM_PID 2>/dev/null || true
+        return 1
+    fi
+    trap cleanup_server EXIT INT TERM
+
+    echo "Running RULER evaluation against vLLM server..."
+    lm_eval \
+        --model local-completions \
+        --model_args "model=${MODEL_PATH},base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=1,max_retries=50,timeout=500,tokenized_requests=False,max_gen_toks=${max_gen_toks},max_length=${max_pos}" \
+        --tasks ${task_name} \
+        --metadata="{\"max_seq_lengths\":[${seq_lengths}],\"tokenizer\":\"${MODEL_PATH}\"}" \
+        --gen_kwargs "max_gen_toks=${max_gen_toks}" \
+        --batch_size 32 \
+        --output_path "${output_dir}/seq_${seq_lengths}" \
+        --seed 42
+}
+
 
 # Check if tasks contain gsm8k_llama, mmlu_llama, or longbench
 NEED_SPLIT=false
 OTHER_TASKS="$TASKS"
 SPECIAL_TASKS=""
 LONGBENCH_TASK=""
+RULER_TASK=""
+
+if [[ "$TASKS" == *"ruler"* ]] || [[ "$TASKS" == *"niah_multiquery"* ]]; then
+    RULER_TASK="$TASKS"
+    run_ruler_eval "$RULER_TASK"
+    if [[ $? -ne 0 ]]; then
+        echo "Benchmark failed on RULER!"
+        exit 1
+    fi
+    echo "Benchmark completed successfully!"
+    exit 0
+fi
 
 if [[ "$TASKS" == *"gsm8k_llama"* ]]; then
     SPECIAL_TASKS="gsm8k_llama"
