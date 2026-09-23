@@ -24,7 +24,6 @@ Classes
    neural_compressor.jax.quantization.layers_static.QStaticMultiHeadAttention
    neural_compressor.jax.quantization.layers_static.QStaticCachedGemma3Attention
    neural_compressor.jax.quantization.layers_static.QStaticGemma3VisionAttention
-   neural_compressor.jax.quantization.layers_static.QStaticRotaryEmbedding
    neural_compressor.jax.quantization.layers_static.QStaticReversibleEmbedding
 
 
@@ -118,13 +117,6 @@ Module Contents
 
 
    Statically quantized Gemma3VisionAttention layer.
-
-
-.. py:class:: QStaticRotaryEmbedding
-
-
-
-   Statically quantized RotaryEmbedding layer.
 
 
 .. py:class:: QStaticReversibleEmbedding
