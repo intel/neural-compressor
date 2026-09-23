@@ -6,7 +6,7 @@ import unittest
 
 import numpy as np
 import tensorflow as tf
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 
 from neural_compressor.tensorflow.utils.model import Model
 
