@@ -97,34 +97,37 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.MinMaxObserver" title="neural_compressor.jax.quantization.layers_static.MinMaxObserver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">MinMaxObserver</span></code></a></p></td>
 <td><p>Observer that tracks running min/max values for calibration.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.StaticQDQLayer" title="neural_compressor.jax.quantization.layers_static.StaticQDQLayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StaticQDQLayer</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.AbsMaxObserver" title="neural_compressor.jax.quantization.layers_static.AbsMaxObserver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">AbsMaxObserver</span></code></a></p></td>
+<td><p>Observer that tracks the running maximum absolute value for calibration.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.StaticQDQLayer" title="neural_compressor.jax.quantization.layers_static.StaticQDQLayer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StaticQDQLayer</span></code></a></p></td>
 <td><p>Layer that applies static quantize-dequantize to activations.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticDenseMixin" title="neural_compressor.jax.quantization.layers_static.QStaticDenseMixin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticDenseMixin</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticDenseMixin" title="neural_compressor.jax.quantization.layers_static.QStaticDenseMixin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticDenseMixin</span></code></a></p></td>
 <td><p>Mixin that adds static quantization to dense-like layers.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticDense" title="neural_compressor.jax.quantization.layers_static.QStaticDense"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticDense</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticDense" title="neural_compressor.jax.quantization.layers_static.QStaticDense"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticDense</span></code></a></p></td>
 <td><p>Statically quantized Dense layer.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticEinsumDense" title="neural_compressor.jax.quantization.layers_static.QStaticEinsumDense"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticEinsumDense</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticEinsumDense" title="neural_compressor.jax.quantization.layers_static.QStaticEinsumDense"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticEinsumDense</span></code></a></p></td>
 <td><p>Statically quantized EinsumDense layer.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticConv2DMixin" title="neural_compressor.jax.quantization.layers_static.QStaticConv2DMixin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticConv2DMixin</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticConv2DMixin" title="neural_compressor.jax.quantization.layers_static.QStaticConv2DMixin"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticConv2DMixin</span></code></a></p></td>
 <td><p>Mixin that adds static quantization to Conv2D layers.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticConv2d" title="neural_compressor.jax.quantization.layers_static.QStaticConv2d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticConv2d</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticConv2d" title="neural_compressor.jax.quantization.layers_static.QStaticConv2d"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticConv2d</span></code></a></p></td>
 <td><p>Statically quantized Conv2D layer.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticMultiHeadAttention" title="neural_compressor.jax.quantization.layers_static.QStaticMultiHeadAttention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticMultiHeadAttention</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticMultiHeadAttention" title="neural_compressor.jax.quantization.layers_static.QStaticMultiHeadAttention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticMultiHeadAttention</span></code></a></p></td>
 <td><p>Statically quantized MultiHeadAttention layer.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticCachedGemma3Attention" title="neural_compressor.jax.quantization.layers_static.QStaticCachedGemma3Attention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticCachedGemma3Attention</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticCachedGemma3Attention" title="neural_compressor.jax.quantization.layers_static.QStaticCachedGemma3Attention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticCachedGemma3Attention</span></code></a></p></td>
 <td><p>Statically quantized CachedGemma3Attention layer.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticGemma3VisionAttention" title="neural_compressor.jax.quantization.layers_static.QStaticGemma3VisionAttention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticGemma3VisionAttention</span></code></a></p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticGemma3VisionAttention" title="neural_compressor.jax.quantization.layers_static.QStaticGemma3VisionAttention"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticGemma3VisionAttention</span></code></a></p></td>
 <td><p>Statically quantized Gemma3VisionAttention layer.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticReversibleEmbedding" title="neural_compressor.jax.quantization.layers_static.QStaticReversibleEmbedding"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticReversibleEmbedding</span></code></a></p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.QStaticReversibleEmbedding" title="neural_compressor.jax.quantization.layers_static.QStaticReversibleEmbedding"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QStaticReversibleEmbedding</span></code></a></p></td>
 <td><p>Statically quantized ReversibleEmbedding layer.</p></td>
 </tr>
 </tbody>
@@ -136,6 +139,9 @@
 <tbody>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.register_static_quantized_layer" title="neural_compressor.jax.quantization.layers_static.register_static_quantized_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_static_quantized_layer</span></code></a>(clso)</p></td>
 <td><p>Register quantized layer class for an original layer class.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.quantization.layers_static.get_activation_observer" title="neural_compressor.jax.quantization.layers_static.get_activation_observer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_activation_observer</span></code></a>(activation_dtype, asymmetric, ...)</p></td>
+<td><p>Select the appropriate activation observer for a quantization scheme.</p></td>
 </tr>
 </tbody>
 </table>
@@ -163,6 +169,33 @@
 <dt class="sig sig-object py" id="neural_compressor.jax.quantization.layers_static.MinMaxObserver">
 <em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.layers_static.</span></span><span class="sig-name descname"><span class="pre">MinMaxObserver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/quantization/layers_static.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.layers_static.MinMaxObserver" title="Link to this definition"></a></dt>
 <dd><p>Observer that tracks running min/max values for calibration.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.layers_static.AbsMaxObserver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.layers_static.</span></span><span class="sig-name descname"><span class="pre">AbsMaxObserver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/quantization/layers_static.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.layers_static.AbsMaxObserver" title="Link to this definition"></a></dt>
+<dd><p>Observer that tracks the running maximum absolute value for calibration.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.quantization.layers_static.get_activation_observer">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.quantization.layers_static.</span></span><span class="sig-name descname"><span class="pre">get_activation_observer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">activation_dtype</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">asymmetric</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype_policy</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/quantization/layers_static.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.quantization.layers_static.get_activation_observer" title="Link to this definition"></a></dt>
+<dd><p>Select the appropriate activation observer for a quantization scheme.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>activation_dtype</strong> (<em>jnp.dtype</em>) – Activation dtype used for quantization.</p></li>
+<li><p><strong>asymmetric</strong> (<em>bool</em>) – Whether asymmetric quantization is used.</p></li>
+<li><p><strong>dtype_policy</strong> (<em>keras.DTypePolicy</em>) – dtype policy for the observer layer.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>An instance of MinMaxObserver or AbsMaxObserver.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>keras.layers.Layer</p>
+</dd>
+</dl>
 </dd></dl>
 
 <dl class="py class">
@@ -242,7 +275,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f68f1a01370> 
+   <jinja2.runtime.BlockReference object at 0x7fab188fb2c0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

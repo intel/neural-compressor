@@ -15,6 +15,7 @@ Classes
 .. autoapisummary::
 
    neural_compressor.jax.quantization.layers_static.MinMaxObserver
+   neural_compressor.jax.quantization.layers_static.AbsMaxObserver
    neural_compressor.jax.quantization.layers_static.StaticQDQLayer
    neural_compressor.jax.quantization.layers_static.QStaticDenseMixin
    neural_compressor.jax.quantization.layers_static.QStaticDense
@@ -33,6 +34,7 @@ Functions
 .. autoapisummary::
 
    neural_compressor.jax.quantization.layers_static.register_static_quantized_layer
+   neural_compressor.jax.quantization.layers_static.get_activation_observer
 
 
 Module Contents
@@ -54,6 +56,28 @@ Module Contents
 
 
    Observer that tracks running min/max values for calibration.
+
+
+.. py:class:: AbsMaxObserver(*args, **kwargs)
+
+
+
+   Observer that tracks the running maximum absolute value for calibration.
+
+
+.. py:function:: get_activation_observer(activation_dtype, asymmetric, dtype_policy)
+
+   Select the appropriate activation observer for a quantization scheme.
+
+   :param activation_dtype: Activation dtype used for quantization.
+   :type activation_dtype: jnp.dtype
+   :param asymmetric: Whether asymmetric quantization is used.
+   :type asymmetric: bool
+   :param dtype_policy: dtype policy for the observer layer.
+   :type dtype_policy: keras.DTypePolicy
+
+   :returns: An instance of MinMaxObserver or AbsMaxObserver.
+   :rtype: keras.layers.Layer
 
 
 .. py:class:: StaticQDQLayer(name, activation_dtype, dtype='float32', asymmetric=False, const_scale=False, fixed_range=None)
