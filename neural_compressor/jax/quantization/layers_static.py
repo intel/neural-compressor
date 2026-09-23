@@ -154,6 +154,99 @@ class MinMaxObserver(keras.layers.Layer):
         return not (jnp.isinf(self.min_val.value).any())
 
 
+class AbsMaxObserver(keras.layers.Layer):
+    """Observer that tracks the running maximum absolute value for calibration."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the absolute-max observer layer.
+
+        Args:
+            *args: Positional arguments for the base layer.
+            **kwargs: Keyword arguments for the base layer.
+
+        Returns:
+            None: Initializes the observer layer.
+        """
+        super().__init__(*args, **kwargs, name="abs_max")
+        # Track running maximum absolute value as a non-trainable weight
+        self.max_abs_val = self.add_weight(
+            shape=(),
+            initializer=keras.initializers.Constant(-np.inf),
+            trainable=False,
+            name="max_abs_val",
+            dtype=self.compute_dtype,
+        )
+        self.supports_masking = True
+
+    def call(self, inputs, mask=None):
+        """Update the maximum absolute value statistic during calibration.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor to observe.
+            mask (Optional[jnp.ndarray]): Optional mask to ignore padded elements.
+
+        Returns:
+            jnp.ndarray: The original inputs for passthrough.
+        """
+        if 0 not in inputs.shape:
+            if mask is not None:
+                # Expand mask to match input dimensions if needed
+                if len(mask.shape) < len(inputs.shape):
+                    for _ in range(len(inputs.shape) - len(mask.shape)):
+                        mask = ops.expand_dims(mask, axis=-1)
+                # Apply mask to exclude masked positions
+                masked_inputs = ops.where(mask, ops.abs(inputs), jnp.array(float("-inf"), dtype=inputs.dtype))
+                batch_max_abs = keras.ops.max(masked_inputs)
+            else:
+                batch_max_abs = keras.ops.max(ops.abs(inputs))
+
+            self.max_abs_val.assign(keras.ops.maximum(self.max_abs_val, batch_max_abs))
+        return inputs
+
+    def build(self, input_shape):
+        """Override build with no additional variables.
+
+        Args:
+            input_shape (Tuple[int, ...]): Input shape for the layer.
+
+        Returns:
+            None: No additional variables are created.
+        """
+        pass
+
+    def get_calibrated_range(self):
+        """Return the calibrated maximum absolute value.
+
+        Returns:
+            jnp.ndarray: Tensor containing the maximum absolute value.
+        """
+        return ops.array((self.max_abs_val,))
+
+    def is_calibrated(self):
+        """Check if the observer has valid calibration data.
+
+        Returns:
+            bool: True if calibrated, False if the max abs value is still at its initial value.
+        """
+        return not (jnp.isinf(self.max_abs_val.value).any())
+
+
+def get_activation_observer(activation_dtype, asymmetric, dtype_policy):
+    """Select the appropriate activation observer for a quantization scheme.
+
+    Args:
+        activation_dtype (jnp.dtype): Activation dtype used for quantization.
+        asymmetric (bool): Whether asymmetric quantization is used.
+        dtype_policy (keras.DTypePolicy): dtype policy for the observer layer.
+
+    Returns:
+        keras.layers.Layer: An instance of MinMaxObserver or AbsMaxObserver.
+    """
+    if asymmetric and jnp.issubdtype(activation_dtype, jnp.integer):
+        return MinMaxObserver(dtype=dtype_policy)
+    return AbsMaxObserver(dtype=dtype_policy)
+
+
 class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies static quantize-dequantize to activations."""
 
@@ -209,7 +302,7 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         if self.fixed_range is not None:
             return
         self._tracker.unlock()
-        self.input_observer = MinMaxObserver(dtype=self.dtype_policy)
+        self.input_observer = get_activation_observer(self.activation_dtype, self._is_asymmetric, self.dtype_policy)
         self._tracker.lock()
 
     def add_variables(self):
@@ -488,7 +581,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
             None: Adds observer layers.
         """
         self._tracker.unlock()
-        self.input_observer = MinMaxObserver(dtype=self.dtype_policy)
+        self.input_observer = get_activation_observer(self.activation_dtype, self._is_int8, self.dtype_policy)
         self._tracker.lock()
 
     def add_variables(self):
