@@ -27,7 +27,7 @@ from typing import Callable, Dict
 import numpy as np
 import tensorflow as tf
 import yaml
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 
 from neural_compressor.common import logger
 from neural_compressor.tensorflow.quantization.config import StaticQuantConfig

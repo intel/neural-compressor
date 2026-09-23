@@ -26,7 +26,7 @@ from typing import Callable, Dict
 import cpuinfo
 import numpy as np
 import psutil
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 
 from neural_compressor.common.utils import Statistics, logger
 
