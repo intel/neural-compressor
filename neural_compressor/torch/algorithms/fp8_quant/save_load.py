@@ -318,6 +318,8 @@ def save_for_multi_devices(model, checkpoint_dir="saved_results", format="huggin
         format (str, optional): defaults to 'huggingface'.
     """
     from safetensors.torch import save_file as safe_save_file
+    world_size = get_world_size()
+    local_rank = get_local_rank()
     folder_prefix = os.path.join(options.workspace, checkpoint_dir)
     save_rank_model(model, folder_prefix=folder_prefix, **kwargs)
     # Ensure all ranks have saved their model before proceeding
@@ -539,11 +541,13 @@ def shard_state_dict(state_dict, return_all_rank=False, src_world_size=None):
             all_rank_state_dict[rank] = rank_state_dict
         return all_rank_state_dict
     else:
-        return get_rank_state_dict(state_dict, local_rank, world_size)
+        return get_rank_state_dict(state_dict, get_local_rank(), get_world_size())
 
 
 def split_rank_state_dict(model, gathered_state_dict):
     """Split state_dict for current local_rank."""
+    world_size = get_world_size()
+    local_rank = get_local_rank()
     rank_state_dict = {}
     for name, param in model.named_parameters():
         if name in gathered_state_dict:
@@ -942,7 +946,7 @@ def update_to_vllm_compatible(model, gathered_state_dict):
     inc_config.save_temp_json_file()
     prep_model(reference_model, inc_config.json_file)
     # gather weights into 1 rank
-    rank_state_dict = shard_state_dict(gathered_state_dict, return_all_rank=True, src_world_size=world_size)
+    rank_state_dict = shard_state_dict(gathered_state_dict, return_all_rank=True, src_world_size=get_world_size())
     rank_state_dict = get_new_rank_state_dict(rank_state_dict, reference_model, world_size=1)
     # rename param names
     gathered_state_dict = convert_weight_to_vllm_compatible(state_dict=rank_state_dict)
