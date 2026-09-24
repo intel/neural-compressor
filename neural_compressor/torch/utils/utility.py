@@ -334,7 +334,7 @@ def dowload_hf_model(repo_id, cache_dir=None, repo_type=None, revision=None):
         else None
     )
 
-    file_path = snapshot_download(repo_id, ignore_patterns=ignore_patterns)
+    file_path = snapshot_download(repo_id, ignore_patterns=ignore_patterns)  # nosec B615 - caller-supplied repo
     return file_path
 
 

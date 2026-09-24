@@ -422,7 +422,7 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
     model = kwargs.get("original_model", None)
     # Handle Flux pipeline without AutoConfig
     try:
-        config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
+        config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)  # nosec B615
         quantization_config = config.quantization_config if hasattr(config, "quantization_config") else None
         hp_dtype = config.torch_dtype
     except:
@@ -480,7 +480,7 @@ def load_empty_raw_model(model_name_or_path, **kwargs):
     model.to(hp_dtype)
 
     try:
-        generation_config = transformers.GenerationConfig.from_pretrained(model_name_or_path, **kwargs)
+        generation_config = transformers.GenerationConfig.from_pretrained(model_name_or_path, **kwargs)  # nosec B615
         model.generation_config = generation_config
     except:  # Since model.generation_config is optional, relaxed exceptions can handle more situations.
         logger.warning("model.generation_config is not loaded correctly.")

@@ -19,16 +19,18 @@ def initialize_model_and_tokenizer(model_name_or_path, use_load=False, device="c
 
     from neural_compressor.torch.utils import local_rank, logger, world_size
 
-    tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)
+    tokenizer = transformers.AutoTokenizer.from_pretrained(model_name_or_path)  # nosec B615 - caller-supplied model
     if use_load:
         from neural_compressor.torch.quantization import load
 
         model = load(model_name_or_path, format="huggingface", device=device)
         model, tokenizer = update_tokenizer(model, tokenizer)
         return model, tokenizer
-    config = transformers.AutoConfig.from_pretrained(model_name_or_path)
+    config = transformers.AutoConfig.from_pretrained(model_name_or_path)  # nosec B615 - caller-supplied model
     # using memory mapping with torch_dtype=config.torch_dtype
-    model = transformers.AutoModelForCausalLM.from_pretrained(model_name_or_path, torch_dtype=config.torch_dtype)
+    model = transformers.AutoModelForCausalLM.from_pretrained(  # nosec B615 - caller-supplied model
+        model_name_or_path, torch_dtype=config.torch_dtype
+    )
     model, tokenizer = update_tokenizer(model, tokenizer)
     # shard model for multi-cards and enable hpu graph
     if world_size > 1:
@@ -76,7 +78,7 @@ def get_default_llm_dataloader(tokenizer, dataset_name="NeelNanda/pile-10k", bs=
     from datasets import load_dataset
     from torch.utils.data import DataLoader, Dataset
 
-    dataset = load_dataset(dataset_name, split="train")
+    dataset = load_dataset(dataset_name, split="train")  # nosec B615 - caller-supplied dataset
     dataset = dataset.shuffle(seed=seed).select(range(nsamples))
 
     class TokenizedDataset(Dataset):

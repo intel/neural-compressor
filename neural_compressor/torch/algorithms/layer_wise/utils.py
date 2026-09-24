@@ -118,10 +118,11 @@ def update_module(model, module_name, new_module):
 
 def load_layer_wise_quantized_model(path):  # pragma: no cover
     """Load layer wise quantized model."""
-    model = torch.load(os.path.join(path, "model_arch.pt"))
+    # the checkpoints hold pickled nn.Module objects, so weights_only=True cannot be used here
+    model = torch.load(os.path.join(path, "model_arch.pt"), weights_only=False)  # nosec B614
     for name, _ in model.named_modules():
         if name + ".pt" in os.listdir(path):
-            update_module(model, name, torch.load(os.path.join(path, name + ".pt")))
+            update_module(model, name, torch.load(os.path.join(path, name + ".pt"), weights_only=False))  # nosec B614
     model.eval()
     return model
 
@@ -288,6 +289,7 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
                 state_dict = torch.load(
                     os.path.join(LWQ_WORKSPACE, f"{name}.pt"),
                     map_location=torch.device(device) if isinstance(device, str) else device,
+                    weights_only=True,
                 )
             for n, p in module.named_parameters():
                 param_name = name + "." + n
@@ -319,6 +321,7 @@ def register_weight_hooks(model, path, device="cpu", clean_weight=True, saved_pa
                 state_dict = torch.load(
                     os.path.join(LWQ_WORKSPACE, f"{name}.pt"),
                     map_location=torch.device(device) if isinstance(device, str) else device,
+                    weights_only=True,
                 )
             for n, p in module.named_parameters():
                 param_name = name + "." + n
@@ -382,7 +385,7 @@ def save_layers_in_shards_iteratively(checkpoint_dir, output_dir, layers_per_sha
         print(f"Loading layer from {layer_path}")
 
         # Load the layer checkpoint
-        checkpoint = torch.load(layer_path, map_location="cpu")
+        checkpoint = torch.load(layer_path, map_location="cpu", weights_only=True)
         layer_state_dict = checkpoint
 
         # Add the layer's state dict to the buffer

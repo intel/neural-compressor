@@ -16,6 +16,8 @@
 # limitations under the License.
 """Fuse QuantizedMatMul with redundant Dequantize Graph Rewriter."""
 
+import ast
+
 from tensorflow.core.framework import attr_value_pb2, node_def_pb2
 from tensorflow.python.framework import dtypes
 
@@ -128,7 +130,7 @@ class FuseMatMulRedundantDequantizeTransformer(GraphRewriterBase):
                     new_node.attr["U"].CopyFrom(attr_value_pb2.AttrValue(type=dequantize_node.attr["DstT"].type))
                 if str(quantized_node.attr["fused_ops"].list.s) == str([b"Requantize"]):
                     new_node.attr["Tbias"].CopyFrom(attr_value_pb2.AttrValue(type=dequantize_node.attr["dtype"].type))
-                Helper.set_attr_string_list(new_node, "fused_ops", eval(fused_ops))
+                Helper.set_attr_string_list(new_node, "fused_ops", ast.literal_eval(fused_ops))
             else:
                 Helper.set_attr_type_list(new_node, "Thost_outputs", [dequantize_node.attr["DstT"].type])
                 new_node.attr["Tout"].CopyFrom(attr_value_pb2.AttrValue(type=dequantize_node.attr["DstT"].type))
