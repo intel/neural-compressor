@@ -320,6 +320,29 @@ class TestBaseConfig(unittest.TestCase):
         self.assertTrue(configs_mapping[("OP2_NAME", "OP_TYPE1")].weight_bits == 6)
         self.assertTrue(configs_mapping[("OP3_NAME", "OP_TYPE2")].weight_bits == 4)
 
+    def test_params_dict_excludes_internal_state(self):
+        quant_config = FakeAlgoConfig(weight_bits=4)
+        self.assertNotIn("_is_initialized", quant_config.get_params_dict())
+        self.assertNotIn("_is_initialized", quant_config.to_dict())
+
+    def test_update_param_after_init(self):
+        quant_config = FakeAlgoConfig(weight_bits=4)
+        quant_config.weight_bits = 8
+        self.assertEqual(quant_config.global_config.weight_bits, 8)
+
+    def test_json_file_round_trip(self):
+        import os
+        import tempfile
+
+        quant_config = FakeAlgoConfig(weight_bits=4)
+        quant_config.set_local("OP1_NAME", FakeAlgoConfig(weight_bits=6))
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            json_file = os.path.join(tmp_dir, "config.json")
+            quant_config.to_json_file(json_file)
+            loaded_config = FakeAlgoConfig.from_json_file(json_file)
+        self.assertEqual(loaded_config.weight_bits, 4)
+        self.assertEqual(loaded_config.local_config["OP1_NAME"].weight_bits, 6)
+
 
 class TestConfigSet(unittest.TestCase):
     def setUp(self):
