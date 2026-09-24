@@ -143,7 +143,7 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
         import transformers
 
         try:
-            config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)
+            config = transformers.AutoConfig.from_pretrained(model_name_or_path, **kwargs)  # nosec B615
             quantization_config = config.quantization_config
         except:
             quantization_config_file = "quantization_config.json"

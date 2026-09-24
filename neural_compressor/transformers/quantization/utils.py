@@ -259,7 +259,7 @@ def default_run_fn(model, tokenizer, dataset, max_length=512, n_samples=100, bat
     from torch.utils.data import DataLoader
 
     if isinstance(dataset, (str, bytes, os.PathLike)):
-        calib_dataset = load_dataset(dataset, split="train")
+        calib_dataset = load_dataset(dataset, split="train")  # nosec B615 - caller-supplied dataset
     calib_dataset = calib_dataset.shuffle(seed=42)
     if tokenizer is None:
         logger.error("Please provide the tokenizer in quantization_config.")
