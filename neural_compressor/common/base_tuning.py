@@ -482,7 +482,8 @@ class TuningMonitor:
         # Calculate relative loss if baseline is available
         relative_loss_val = 0.0
         relative_loss_str = "N/A"
-        if self.baseline is not None:
+        # The relative loss is undefined for a zero baseline
+        if self.baseline:
             relative_loss_val = (baseline_val - trial_result) / baseline_val
             relative_loss_str = f"{relative_loss_val*100:.2f}%"
 

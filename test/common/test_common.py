@@ -57,6 +57,7 @@ from neural_compressor.common.base_tuning import (
     Evaluator,
     SequentialSampler,
     TuningConfig,
+    TuningMonitor,
     init_tuning,
 )
 from neural_compressor.common.tuning_param import TuningParam
@@ -422,6 +423,13 @@ class TestAutoTune(unittest.TestCase):
 
         q_model = tunner.run(model=model, tune_config=tuning_config, eval_fn=fake_eval_fn)
         self.assertIsNotNone(q_model)
+
+    def test_tuning_monitor_zero_baseline(self):
+        tuning_monitor = TuningMonitor(TuningConfig(config_set=[FakeAlgoConfig(weight_bits=4)], max_trials=2))
+        tuning_monitor.set_baseline(0.0)
+        # Printing the trial table must not fail when the relative loss is undefined.
+        tuning_monitor.add_trial_result(0, 0.0, FakeAlgoConfig(weight_bits=4))
+        self.assertTrue(tuning_monitor.need_stop())
 
 
 if __name__ == "__main__":
