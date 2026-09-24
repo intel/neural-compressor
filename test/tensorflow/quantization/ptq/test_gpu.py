@@ -30,7 +30,9 @@ class TestTensorflowGpu(unittest.TestCase):
                 os.system("md C:\\tmp\.neural_compressor && cd C:\\tmp\.neural_compressor")
                 from urllib import request
 
-                request.urlretrieve(cls.mb_model_url)
+                if not cls.mb_model_url.startswith(("http://", "https://")):
+                    raise ValueError("Only http/https URLs are supported.")
+                request.urlretrieve(cls.mb_model_url)  # nosec B310
         cls.log_env = os.environ.get("LOGLEVEL")
         cls.logger_root = logging.getLogger()
         cls.logger_nc = logging.getLogger("neural_compressor")
