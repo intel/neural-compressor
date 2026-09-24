@@ -80,13 +80,23 @@ def print_gemma_model_fn(dynamic):
 
 class LayerRepresentation:
     def __init__(
-        self, class_name, name=None, val_a_zero_point=False, val_a_scale=False, val_w_scale=False, layer_ref=None
+        self,
+        class_name,
+        name=None,
+        val_a_zero_point=False,
+        val_a_scale=False,
+        val_w_scale=False,
+        val_e_scale=False,
+        val_re_scale=False,
+        layer_ref=None,
     ):
         self.class_name = class_name
         self.name = name
         self.val_a_zero_point = val_a_zero_point
         self.val_a_scale = val_a_scale
         self.val_w_scale = val_w_scale
+        self.val_e_scale = val_e_scale
+        self.val_re_scale = val_re_scale
         self.layer_ref = layer_ref
 
     def compare_with_description(self, dsc, const_vars):
@@ -103,6 +113,12 @@ class LayerRepresentation:
 
         if self.val_w_scale:
             self._validate_w_scale(dsc, const_vars)
+
+        if self.val_e_scale:
+            self._validate_e_scale(dsc, const_vars)
+
+        if self.val_re_scale:
+            self._validate_re_scale(dsc, const_vars)
 
     def _validate_class_name(self, dsc):
         class_name = dsc.split()[0]
@@ -155,6 +171,34 @@ class LayerRepresentation:
         if self.layer_ref:
             values = jnp.array([float(v) for v in values])
             ref = self.layer_ref.w_scale if const_vars else self.layer_ref.w_scale.value
+            jnp.allclose(values, ref, atol=1e-5)
+
+    def _validate_e_scale(self, dsc, const_vars):
+        i_beg = dsc.find("e_scale")
+        i_end = dsc.find("]", i_beg)
+        e_scale = dsc[i_beg : i_end + 1]
+
+        assert e_scale.startswith(
+            f"e_scale{'(attr)' if const_vars else ''}=["
+        ), f"e_scale is missing or incorrect: {e_scale}"
+        values = e_scale[e_scale.rfind("[") + 1 : -1].split()
+        if self.layer_ref:
+            values = jnp.array([float(v) for v in values])
+            ref = self.layer_ref.e_scale if const_vars else self.layer_ref.e_scale.value
+            jnp.allclose(values, ref, atol=1e-5)
+
+    def _validate_re_scale(self, dsc, const_vars):
+        i_beg = dsc.find("re_scale")
+        i_end = dsc.find("]", i_beg)
+        re_scale = dsc[i_beg : i_end + 1]
+
+        assert re_scale.startswith(
+            f"re_scale{'(attr)' if const_vars else ''}=["
+        ), f"re_scale is missing or incorrect: {re_scale}"
+        values = re_scale[re_scale.rfind("[") + 1 : -1].split()
+        if self.layer_ref:
+            values = jnp.array([float(v) for v in values])
+            ref = self.layer_ref.re_scale if const_vars else self.layer_ref.re_scale.value
             jnp.allclose(values, ref, atol=1e-5)
 
 
@@ -276,6 +320,8 @@ def test_print_gemma(dynamic):
             val_a_zero_point=hasattr(layer, "a_zero_point"),
             val_a_scale=hasattr(layer, "a_scale"),
             val_w_scale=hasattr(layer, "w_scale"),
+            val_e_scale=hasattr(layer, "e_scale"),
+            val_re_scale=hasattr(layer, "re_scale"),
             layer_ref=layer,
         ).compare_with_description(next(descriptions), const_vars=False)
 
