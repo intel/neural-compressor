@@ -168,21 +168,14 @@ cleanup_server() {
 run_ruler_eval() {
     local task_name=$1
     local max_gen_toks=128
-    local max_pos=${RULER_MAX_POS:-131072}
-    local seq_lengths
-
-    # if [[ "$task_name" == *"ruler_qa_squad"* ]]; then
-    #     max_pos=$((max_pos - max_gen_toks))
-    #     task_name="ruler_qa_squad"
-    # else
-    #     task_name="niah_multiquery"
-    # fi
-    seq_lengths=${max_pos}
+    local model_max_pos=${RULER_MAX_POS:-131072}
+    # Leave room for generated tokens so prompt + output stays within the server context limit.
+    local seq_lengths=$((model_max_pos - max_gen_toks))
 
     local output_dir="$(basename ${MODEL_PATH})-tp${TENSOR_PARALLEL_SIZE}-eval"
     mkdir -p "${output_dir}"
 
-    start_vllm_server ${max_pos}
+    start_vllm_server ${model_max_pos}
     if ! wait_for_server; then
         kill $VLLM_PID 2>/dev/null || true
         return 1
@@ -192,7 +185,7 @@ run_ruler_eval() {
     echo "Running RULER evaluation against vLLM server..."
     lm_eval \
         --model local-completions \
-        --model_args "model=${MODEL_PATH},base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=1,max_retries=50,timeout=500,tokenized_requests=False,max_gen_toks=${max_gen_toks},max_length=${max_pos}" \
+        --model_args "model=${MODEL_PATH},base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=1,max_retries=50,timeout=500,tokenized_requests=False,max_gen_toks=${max_gen_toks},max_length=${seq_lengths}" \
         --tasks ${task_name} \
         --metadata="{\"max_seq_lengths\":[${seq_lengths}],\"tokenizer\":\"${MODEL_PATH}\"}" \
         --gen_kwargs "max_gen_toks=${max_gen_toks}" \
