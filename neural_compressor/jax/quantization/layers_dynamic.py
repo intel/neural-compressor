@@ -1017,7 +1017,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
             initializer="zeros",
             trainable=False,
             autocast=False,
-            dtype=self.compute_dtype,
+            dtype=self.weight_dtype,
         )
         if not self.tie_weights:
             re_scale, _ = get_q_params(
@@ -1041,7 +1041,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
                 initializer="zeros",
                 trainable=False,
                 autocast=False,
-                dtype=self.compute_dtype,
+                dtype=self.weight_dtype,
             )
         wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)

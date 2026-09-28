@@ -1589,7 +1589,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             initializer="zeros",
             trainable=False,
             autocast=False,
-            dtype=self.compute_dtype,
+            dtype=self.weight_dtype,
         )
         if not self.tie_weights:
             re_scale, _ = get_q_params(
@@ -1613,7 +1613,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
                 initializer="zeros",
                 trainable=False,
                 autocast=False,
-                dtype=self.compute_dtype,
+                dtype=self.weight_dtype,
             )
 
         self.aquantfun = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_int8)
