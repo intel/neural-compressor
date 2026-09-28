@@ -1,0 +1,114 @@
+diff --git a/lmms_eval/__main__.py b/lmms_eval/__main__.py
+index c66d961..34eb851 100755
+--- a/lmms_eval/__main__.py
++++ b/lmms_eval/__main__.py
+@@ -653 +653,4 @@ def cli_evaluate_single(args: Union[argparse.Namespace, None] = None) -> None:
+-    eval_logger.info(f"Evaluation tracker args: {evaluation_tracker_args}")
++    logged_tracker_args = evaluation_tracker_args.copy()
++    if "token" in logged_tracker_args:
++        logged_tracker_args["token"] = "***REDACTED***"
++    eval_logger.info(f"Evaluation tracker args: {logged_tracker_args}")
+diff --git a/lmms_eval/models/chat/openai.py b/lmms_eval/models/chat/openai.py
+index 8bd78cb..381a80a 100644
+--- a/lmms_eval/models/chat/openai.py
++++ b/lmms_eval/models/chat/openai.py
+@@ -207,6 +207,13 @@ class OpenAICompatible(OpenAICompatibleSimple):
+                 if value is not None:
+                     payload[parameter] = value
+             extra_body = {}
++            # top_k / min_p / repetition_penalty are vLLM/SGLang sampling extensions
++            # not part of the standard OpenAI API; they must go through extra_body
++            # so the OpenAI client merges them into the top-level request JSON.
++            for parameter in ("top_k", "min_p", "repetition_penalty"):
++                value = request_gen_kwargs.get(parameter)
++                if value is not None:
++                    extra_body[parameter] = value
+             if self.pass_video_url:
+                 extra_body["media_io_kwargs"] = {"video": {"num_frames": int(self.max_frames_num)}}
+             if self.enable_thinking_kwarg is not None:
+diff --git a/lmms_eval/tasks/mmmu/mmmu_val.yaml b/lmms_eval/tasks/mmmu/mmmu_val.yaml
+index d80da06..6d502c1 100755
+--- a/lmms_eval/tasks/mmmu/mmmu_val.yaml
++++ b/lmms_eval/tasks/mmmu/mmmu_val.yaml
+@@ -27,4 +27,12 @@ lmms_eval_specific_kwargs:
+     pre_prompt: "Question: "
+     post_prompt: "Answer with the option letter only."
+     open_ended_prompt: "Please select the correct answer from the options above."
++  # Alias so that the `--model openai` backend (used to query our vLLM OpenAI-compatible
++  # server) automatically picks up the Qwen-family concise prompt instead of "default",
++  # since self.model_name == "openai" when using this backend.
++  openai:
++    format: "qwen3_vl"
++    pre_prompt: "Question: "
++    post_prompt: "Answer with the option letter only."
++    open_ended_prompt: "Please select the correct answer from the options above."
+ include: _default_template_yaml
+diff --git a/lmms_eval/tasks/mmmu_pro/mmmu_pro_vision.yaml b/lmms_eval/tasks/mmmu_pro/mmmu_pro_vision.yaml
+index 2748a89..55f1464 100755
+--- a/lmms_eval/tasks/mmmu_pro/mmmu_pro_vision.yaml
++++ b/lmms_eval/tasks/mmmu_pro/mmmu_pro_vision.yaml
+@@ -29,4 +29,12 @@ lmms_eval_specific_kwargs:
+     pre_prompt: "Question: "
+     post_prompt: "Answer with the option letter only."
+     vision_prompt: "Question: analyze the image and answer the associated question."
++  # Alias so that the `--model openai` backend (used to query our vLLM OpenAI-compatible
++  # server) automatically picks up the Qwen-family concise prompt instead of "default",
++  # since self.model_name == "openai" when using this backend.
++  openai:
++    format: "qwen3_vl"
++    pre_prompt: "Question: "
++    post_prompt: "Answer with the option letter only."
++    vision_prompt: "Question: analyze the image and answer the associated question."
+ include: _default_template_yaml
+diff --git a/lmms_eval/tasks/mmmu/mmmu_val_mini.yaml b/lmms_eval/tasks/mmmu/mmmu_val_mini.yaml
+new file mode 100644
+index 0000000..574670d
+--- /dev/null
++++ b/lmms_eval/tasks/mmmu/mmmu_val_mini.yaml
+@@ -0,0 +1,7 @@
++include: mmmu_val.yaml
++task: mmmu_val_mini
++dataset_path: jia0160/multimodal-benchmarks-mini
++dataset_name: mmmu
++dataset_kwargs:
++  revision: 6d97451bda7c4f71c2e67bf4cce0474362ee1e3c
++test_split: test
+diff --git a/lmms_eval/tasks/mmmu_pro/mmmu_pro_vision_mini.yaml b/lmms_eval/tasks/mmmu_pro/mmmu_pro_vision_mini.yaml
+new file mode 100644
+index 0000000..5c1dcb5
+--- /dev/null
++++ b/lmms_eval/tasks/mmmu_pro/mmmu_pro_vision_mini.yaml
+@@ -0,0 +1,7 @@
++include: mmmu_pro_vision.yaml
++task: mmmu_pro_vision_mini
++dataset_path: jia0160/multimodal-benchmarks-mini
++dataset_name: mmmu_pro
++dataset_kwargs:
++  revision: 6d97451bda7c4f71c2e67bf4cce0474362ee1e3c
++test_split: test
+diff --git a/lmms_eval/tasks/simplevqa/simplevqa_mini.yaml b/lmms_eval/tasks/simplevqa/simplevqa_mini.yaml
+new file mode 100644
+index 0000000..e9f3c31
+--- /dev/null
++++ b/lmms_eval/tasks/simplevqa/simplevqa_mini.yaml
+@@ -0,0 +1,7 @@
++include: simplevqa.yaml
++task: simplevqa_mini
++dataset_path: jia0160/multimodal-benchmarks-mini
++dataset_name: simplevqa
++dataset_kwargs:
++  revision: 6d97451bda7c4f71c2e67bf4cce0474362ee1e3c
++test_split: test
+diff --git a/lmms_eval/tasks/omnidocbench/omnidocbench_mini.yaml b/lmms_eval/tasks/omnidocbench/omnidocbench_mini.yaml
+new file mode 100644
+index 0000000..da72bad
+--- /dev/null
++++ b/lmms_eval/tasks/omnidocbench/omnidocbench_mini.yaml
+@@ -0,0 +1,7 @@
++include: omnidocbench.yaml
++task: omnidocbench_mini
++dataset_path: jia0160/multimodal-benchmarks-mini
++dataset_name: omnidocbench
++dataset_kwargs:
++  revision: 6d97451bda7c4f71c2e67bf4cce0474362ee1e3c
++test_split: test

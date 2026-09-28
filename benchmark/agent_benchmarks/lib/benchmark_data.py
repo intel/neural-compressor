@@ -5,6 +5,7 @@ import argparse
 import csv
 import glob
 import json
+import math
 import os
 import re
 import shutil
@@ -572,6 +573,188 @@ def atlas_report(args):
     print(f"Report        : {files[-1]}")
 
 
+LMMS_TASKS = {
+    "mmmu_val": ("mmmu", "mmmu_acc,none", 1.0),
+    "mmmu_val_mini": ("mmmu-mini", "mmmu_acc,none", 1.0),
+    "mmmu_pro_vision": ("mmmu-pro", "mmmu_acc,none", 1.0),
+    "mmmu_pro_vision_mini": ("mmmu-pro-mini", "mmmu_acc,none", 1.0),
+    "simplevqa": ("simplevqa", "exact_match,none", 1.0),
+    "simplevqa_mini": ("simplevqa-mini", "exact_match,none", 1.0),
+    # lmms-eval computes OmniDocBench overall as a percentage from 0 to 100.
+    "omnidocbench": ("omnidocbench-1.5", "omnidocbench_overall,none", 100.0),
+    "omnidocbench_mini": ("omnidocbench-1.5-mini", "omnidocbench_overall,none", 100.0),
+}
+
+
+def percentage_metric(value, source_max: float, metric_name: str, path: Path) -> float:
+    if not isinstance(value, (int, float)) or isinstance(value, bool):
+        raise RuntimeError(f"Invalid primary metric {metric_name} in {path}: {value!r}")
+    if not 0 <= value <= source_max:
+        raise RuntimeError(
+            f"Primary metric {metric_name} in {path} is outside the expected " f"0-{source_max:g} range: {value}"
+        )
+    return value * 100 / source_max
+
+
+def parse_terminal_eval_name(eval_name: str, path: Path) -> tuple[str, str]:
+    parts = eval_name.split("__")
+    if len(parts) != 3 or not all(parts):
+        raise RuntimeError(f"Unexpected Terminal-Bench evaluation name in {path}: {eval_name!r}")
+    _, model, dataset = parts
+    if dataset == "terminal-bench/terminal-bench-2-1":
+        benchmark = "terminal-bench-2.1"
+    elif dataset in {"terminal-bench", "terminal-bench@2.0"}:
+        benchmark = "terminal-bench-2.0"
+    else:
+        raise RuntimeError(f"Unknown Terminal-Bench dataset in {path}: {dataset!r}")
+    return benchmark, model
+
+
+def benchmark_report(args: argparse.Namespace) -> None:
+    records = []
+    for result_path in args.terminal_result:
+        path = Path(result_path)
+        payload = json.loads(path.read_text())
+        stats = payload.get("stats", {})
+        evals = stats.get("evals", {})
+        if not evals:
+            raise RuntimeError(f"No Terminal-Bench evaluations found in {path}")
+        for eval_name, evaluation in evals.items():
+            benchmark, model = parse_terminal_eval_name(eval_name, path)
+            metrics = evaluation.get("metrics", [])
+            metric = metrics[0].get("mean") if metrics else None
+            records.append(
+                {
+                    "benchmark": benchmark,
+                    "model": model,
+                    "primary_metric": (percentage_metric(metric, 1.0, "mean", path) if metric is not None else None),
+                    "primary_metric_unit": "percent",
+                    "num_samples": evaluation.get("n_trials", 0),
+                    "failed_samples": evaluation.get("n_errors", 0),
+                    "source": str(path),
+                }
+            )
+
+    for result_path in args.lmms_result:
+        path = Path(result_path)
+        payload = json.loads(path.read_text())
+        for task, task_results in payload.get("results", {}).items():
+            if task not in LMMS_TASKS:
+                continue
+            benchmark, metric_name, source_max = LMMS_TASKS[task]
+            samples = payload.get("n-samples", {}).get(task, {})
+            value = task_results.get(metric_name)
+            if value is None:
+                raise RuntimeError(f"Missing primary metric {metric_name} in {path}")
+            records.append(
+                {
+                    "benchmark": benchmark,
+                    "model": payload.get("model_name") or args.model,
+                    "primary_metric": percentage_metric(value, source_max, metric_name, path),
+                    "primary_metric_unit": "percent",
+                    "num_samples": samples.get("effective", 0),
+                    "failed_samples": None,
+                    "source": str(path),
+                }
+            )
+
+    report = {"model": args.model, "results": sorted(records, key=lambda item: item["benchmark"])}
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2) + "\n")
+    print(f"Wrote {len(records)} benchmark results to {output}")
+
+
+def load_benchmark_report(path: Path) -> tuple[dict, dict[str, dict]]:
+    payload = json.loads(path.read_text())
+    results = payload.get("results")
+    if not isinstance(results, list):
+        raise RuntimeError(f"Benchmark report results must be a list: {path}")
+
+    by_benchmark = {}
+    for record in results:
+        if not isinstance(record, dict):
+            raise RuntimeError(f"Benchmark report contains a non-object result: {path}")
+        benchmark = record.get("benchmark")
+        if not isinstance(benchmark, str) or not benchmark:
+            raise RuntimeError(f"Benchmark report contains a result without a benchmark name: {path}")
+        if benchmark in by_benchmark:
+            raise RuntimeError(f"Benchmark report contains duplicate benchmark {benchmark!r}: {path}")
+        metric = record.get("primary_metric")
+        if (
+            not isinstance(metric, (int, float))
+            or isinstance(metric, bool)
+            or not math.isfinite(metric)
+            or not 0 <= metric <= 100
+        ):
+            raise RuntimeError(f"Invalid primary metric for {benchmark!r} in {path}: {metric!r}")
+        if record.get("primary_metric_unit") != "percent":
+            raise RuntimeError(f"Primary metric for {benchmark!r} is not expressed as percent in {path}")
+        by_benchmark[benchmark] = record
+    return payload, by_benchmark
+
+
+def compare_benchmark_reports(args: argparse.Namespace) -> None:
+    if not math.isfinite(args.tolerance) or args.tolerance < 0:
+        raise RuntimeError(f"Tolerance must be a finite non-negative number: {args.tolerance!r}")
+    baseline_path = Path(args.baseline)
+    current_path = Path(args.current)
+    baseline, baseline_results = load_benchmark_report(baseline_path)
+    current, current_results = load_benchmark_report(current_path)
+    baseline_names = set(baseline_results)
+    current_names = set(current_results)
+    compared_names = sorted(baseline_names & current_names)
+    missing_from_baseline = sorted(current_names - baseline_names)
+    missing_from_current = sorted(baseline_names - current_names)
+
+    counts = {"improved": 0, "regressed": 0, "unchanged": 0}
+    comparisons = []
+    for benchmark in compared_names:
+        baseline_record = baseline_results[benchmark]
+        current_record = current_results[benchmark]
+        metric_delta = current_record["primary_metric"] - baseline_record["primary_metric"]
+        if metric_delta > args.tolerance:
+            status = "improved"
+        elif metric_delta < -args.tolerance:
+            status = "regressed"
+        else:
+            status = "unchanged"
+        counts[status] += 1
+        comparisons.append(
+            {
+                "benchmark": benchmark,
+                "baseline_model": baseline_record.get("model") or baseline.get("model"),
+                "current_model": current_record.get("model") or current.get("model"),
+                "baseline_primary_metric": baseline_record["primary_metric"],
+                "current_primary_metric": current_record["primary_metric"],
+                "primary_metric_delta": metric_delta,
+                "primary_metric_unit": "percentage_points",
+                "baseline_num_samples": baseline_record.get("num_samples"),
+                "current_num_samples": current_record.get("num_samples"),
+                "status": status,
+            }
+        )
+
+    report = {
+        "baseline": {"model": baseline.get("model"), "source": str(baseline_path)},
+        "current": {"model": current.get("model"), "source": str(current_path)},
+        "tolerance": args.tolerance,
+        "summary": {
+            "compared_benchmarks": len(comparisons),
+            **counts,
+            "missing_from_baseline": len(missing_from_baseline),
+            "missing_from_current": len(missing_from_current),
+        },
+        "results": comparisons,
+        "missing_from_baseline": missing_from_baseline,
+        "missing_from_current": missing_from_current,
+    }
+    output = Path(args.output)
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(report, indent=2) + "\n")
+    print(f"Compared {len(comparisons)} benchmarks and wrote {output}")
+
+
 def build_parser():
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(required=True)
@@ -675,6 +858,20 @@ def build_parser():
     command = commands.add_parser("atlas-report")
     command.add_argument("--directory", required=True)
     command.set_defaults(func=atlas_report)
+
+    command = commands.add_parser("benchmark-report")
+    command.add_argument("--terminal-result", action="append", default=[])
+    command.add_argument("--lmms-result", action="append", default=[])
+    command.add_argument("--model", default="Qwen3.6-35B-A3B")
+    command.add_argument("--output", required=True)
+    command.set_defaults(func=benchmark_report)
+
+    command = commands.add_parser("compare-benchmark-reports")
+    command.add_argument("--baseline", required=True)
+    command.add_argument("--current", required=True)
+    command.add_argument("--tolerance", type=float, default=0.0)
+    command.add_argument("--output", required=True)
+    command.set_defaults(func=compare_benchmark_reports)
     return parser
 
 
