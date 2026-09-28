@@ -211,19 +211,41 @@ longer required. Multimodal evaluation does not create containers or images.
 
 ## Benchmark Report
 
-Create one normalized report from completed Harbor and lmms-eval results:
+Create one normalized report from completed Harbor and lmms-eval results.
+Repeat either result option to combine distinct benchmarks from separate jobs
+into the same report:
 
 ```bash
 python lib/benchmark_data.py benchmark-report \
-  --terminal-result outputs/terminal-bench/JOB/result.json \
-  --lmms-result outputs/multimodal-bench/MODEL/TIMESTAMP_results.json \
-  --model MODEL_NAME \
-  --output outputs/benchmark-report.json
+  --terminal-result outputs/terminal-bench/BASELINE_JOB/result.json \
+  --lmms-result outputs/multimodal-bench/BASELINE_RUN/TIMESTAMP_results.json \
+  --model BASELINE_MODEL \
+  --output outputs/baseline-report.json
+
+python lib/benchmark_data.py benchmark-report \
+  --terminal-result outputs/terminal-bench/CURRENT_JOB/result.json \
+  --lmms-result outputs/multimodal-bench/CURRENT_RUN/TIMESTAMP_results.json \
+  --model CURRENT_MODEL \
+  --output outputs/current-report.json
 ```
 
-Either result option may be repeated or omitted. The report records the model,
-benchmark, primary metric as a percentage, sample count, failed sample count
-when available, and source path.
+The normalized report records the model, benchmark, primary metric as a
+percentage, sample count, failed sample count when available, and source path.
+Compare two reports by benchmark:
+
+```bash
+python lib/benchmark_data.py compare-benchmark-reports \
+  --baseline outputs/baseline-report.json \
+  --current outputs/current-report.json \
+  --output outputs/benchmark-comparison.json
+```
+
+The comparison reports both metrics, their percentage-point difference, sample
+counts, and an `improved`, `regressed`, or `unchanged` status. Use
+`--tolerance POINTS` to treat differences within that many percentage points as
+unchanged. Benchmarks present in only one report are listed separately rather
+than compared. Each input report must contain at most one result for each
+benchmark.
 
 ## SWE-Verified and SWE-Verified Mini
 
