@@ -384,6 +384,16 @@ def print_model(container, max_lines=999999, internal=True, str_length=(0, 0), p
             additional_info += f" w_scale(attr)={container.w_scale}"
         else:
             additional_info += f" w_scale={container.w_scale.value}"
+    if hasattr(container, "e_scale"):
+        if isinstance(container.e_scale, jax.Array):
+            additional_info += f" e_scale(attr)={container.e_scale}"
+        else:
+            additional_info += f" e_scale={container.e_scale.value}"
+    if hasattr(container, "re_scale"):
+        if isinstance(container.re_scale, jax.Array):
+            additional_info += f" re_scale(attr)={container.re_scale}"
+        else:
+            additional_info += f" re_scale={container.re_scale.value}"
     logger.debug(f"{container.__class__.__name__:{str_length[0]}} {path:{str_length[1]}}{additional_info}")
 
     if internal:
