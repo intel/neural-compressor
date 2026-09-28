@@ -25,6 +25,7 @@ import keras_hub.layers
 import numpy as np
 from jax import numpy as jnp
 from keras import ops
+from keras.src.backend import set_keras_mask
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
 
@@ -153,6 +154,99 @@ class MinMaxObserver(keras.layers.Layer):
         return not (jnp.isinf(self.min_val.value).any())
 
 
+class AbsMaxObserver(keras.layers.Layer):
+    """Observer that tracks the running maximum absolute value for calibration."""
+
+    def __init__(self, *args, **kwargs):
+        """Initialize the absolute-max observer layer.
+
+        Args:
+            *args: Positional arguments for the base layer.
+            **kwargs: Keyword arguments for the base layer.
+
+        Returns:
+            None: Initializes the observer layer.
+        """
+        super().__init__(*args, **kwargs, name="abs_max")
+        # Track running maximum absolute value as a non-trainable weight
+        self.max_abs_val = self.add_weight(
+            shape=(),
+            initializer=keras.initializers.Constant(-np.inf),
+            trainable=False,
+            name="max_abs_val",
+            dtype=self.compute_dtype,
+        )
+        self.supports_masking = True
+
+    def call(self, inputs, mask=None):
+        """Update the maximum absolute value statistic during calibration.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor to observe.
+            mask (Optional[jnp.ndarray]): Optional mask to ignore padded elements.
+
+        Returns:
+            jnp.ndarray: The original inputs for passthrough.
+        """
+        if 0 not in inputs.shape:
+            if mask is not None:
+                # Expand mask to match input dimensions if needed
+                if len(mask.shape) < len(inputs.shape):
+                    for _ in range(len(inputs.shape) - len(mask.shape)):
+                        mask = ops.expand_dims(mask, axis=-1)
+                # Apply mask to exclude masked positions
+                masked_inputs = ops.where(mask, ops.abs(inputs), jnp.array(float("-inf"), dtype=inputs.dtype))
+                batch_max_abs = keras.ops.max(masked_inputs)
+            else:
+                batch_max_abs = keras.ops.max(ops.abs(inputs))
+
+            self.max_abs_val.assign(keras.ops.maximum(self.max_abs_val, batch_max_abs))
+        return inputs
+
+    def build(self, input_shape):
+        """Override build with no additional variables.
+
+        Args:
+            input_shape (Tuple[int, ...]): Input shape for the layer.
+
+        Returns:
+            None: No additional variables are created.
+        """
+        pass
+
+    def get_calibrated_range(self):
+        """Return the calibrated maximum absolute value.
+
+        Returns:
+            jnp.ndarray: Tensor containing the maximum absolute value.
+        """
+        return ops.array((self.max_abs_val,))
+
+    def is_calibrated(self):
+        """Check if the observer has valid calibration data.
+
+        Returns:
+            bool: True if calibrated, False if the max abs value is still at its initial value.
+        """
+        return not (jnp.isinf(self.max_abs_val.value).any())
+
+
+def get_activation_observer(activation_dtype, asymmetric, dtype_policy):
+    """Select the appropriate activation observer for a quantization scheme.
+
+    Args:
+        activation_dtype (jnp.dtype): Activation dtype used for quantization.
+        asymmetric (bool): Whether asymmetric quantization is used.
+        dtype_policy (keras.DTypePolicy): dtype policy for the observer layer.
+
+    Returns:
+        keras.layers.Layer: An instance of MinMaxObserver or AbsMaxObserver.
+    """
+    if asymmetric and jnp.issubdtype(activation_dtype, jnp.integer):
+        return MinMaxObserver(dtype=dtype_policy)
+    return AbsMaxObserver(dtype=dtype_policy)
+
+
 class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies static quantize-dequantize to activations."""
 
@@ -208,7 +302,7 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         if self.fixed_range is not None:
             return
         self._tracker.unlock()
-        self.input_observer = MinMaxObserver(dtype=self.dtype_policy)
+        self.input_observer = get_activation_observer(self.activation_dtype, self._is_asymmetric, self.dtype_policy)
         self._tracker.lock()
 
     def add_variables(self):
@@ -487,7 +581,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
             None: Adds observer layers.
         """
         self._tracker.unlock()
-        self.input_observer = MinMaxObserver(dtype=self.dtype_policy)
+        self.input_observer = get_activation_observer(self.activation_dtype, self._is_int8, self.dtype_policy)
         self._tracker.lock()
 
     def add_variables(self):
@@ -637,8 +731,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
                 w_scale = self.w_scale.value
             _kernel_quant = self.wdequantfun(_kernel_quant, w_scale)
             return _kernel_quant
-        ret = super().kernel
-        return ret.value
+        return ops.convert_to_tensor(super().kernel)
 
     def call(self, inputs, training=None):
         """Run calibration observer before the dense computation.
@@ -1384,131 +1477,6 @@ class QStaticGemma3VisionAttention(SaveableLayerMixin, Gemma3VisionAttention):
 verify_api(Gemma3VisionAttention, QStaticGemma3VisionAttention, "call")
 
 
-# @register_static_quantized_layer(keras_hub.layers.RotaryEmbedding)
-class QStaticRotaryEmbedding(SaveableLayerMixin, keras_hub.layers.RotaryEmbedding):
-    """Statically quantized RotaryEmbedding layer."""
-
-    @classmethod
-    def prepare(
-        cls,
-        orig,
-        weight_dtype,
-        activation_dtype,
-        const_scale,
-        const_weight,
-        w_quant_granularity,
-        dot_product_attention_enable,
-    ):
-        """Convert a RotaryEmbedding instance for static quantization.
-
-        Args:
-            orig (RotaryEmbedding): Original layer instance.
-            weight_dtype (jnp.dtype): Dtype for quantized weights.
-            activation_dtype (jnp.dtype): Dtype for quantized activations.
-            const_scale (bool): Whether to use constant scales.
-            const_weight (bool): ignored, included for API consistency.
-            w_quant_granularity (str): ignored, included for API consistency.
-            dot_product_attention_enable (bool): ignored, included for API consistency.
-
-        Returns:
-            RotaryEmbedding: Updated layer instance.
-        """
-        orig._tracker.unlock()
-        orig.__class__ = cls
-        orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
-        orig.positions_qdq = StaticQDQLayer(
-            "positions_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale
-        )
-        orig.inverse_freq_qdq = StaticQDQLayer(
-            "inverse_freq_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale
-        )
-        orig._is_quantized = None
-        orig._tracker.lock()
-        return orig
-
-    def add_observers(self):
-        """Attach observer layers for calibration.
-
-        Returns:
-            None: Adds observer layers.
-        """
-        self.positions_qdq.add_observers()
-        self.inverse_freq_qdq.add_observers()
-
-    def add_variables(self):
-        """Create quantization variables for activation QDQ.
-
-        Returns:
-            None: Initializes QDQ helper variables.
-        """
-        self.positions_qdq.add_variables()
-        self.inverse_freq_qdq.add_variables()
-
-    def convert(self):
-        """Compute activation calibration values for QDQ helpers.
-
-        Returns:
-            None: Updates QDQ helpers with calibrated values.
-        """
-        self.positions_qdq.convert()
-        self.inverse_freq_qdq.convert()
-
-    def post_quantization_cleanup(self):
-        """Finalize static quantization and mark the layer as quantized.
-
-        Returns:
-            None: Cleans up observers and marks quantized state.
-        """
-        self._tracker.unlock()
-        self.positions_qdq.post_quantization_cleanup()
-        self.inverse_freq_qdq.post_quantization_cleanup()
-        self._is_quantized = True
-        self._tracker.lock()
-
-    def _compute_cos_sin_embedding(self, inputs, start_index=0, positions=None):
-        """Compute cosine/sine embeddings with quantized inputs.
-
-        Args:
-            inputs (jnp.ndarray): Input tensor.
-            start_index (int): Starting index for positions.
-            positions (Optional[jnp.ndarray]): Optional explicit positions tensor.
-
-        Returns:
-            Tuple[jnp.ndarray, jnp.ndarray]: Cosine and sine embeddings.
-        """
-        feature_axis = len(inputs.shape) - 1
-        sequence_axis = 1
-
-        rotary_dim = ops.shape(inputs)[feature_axis]
-        inverse_freq = self._get_inverse_freq(rotary_dim)
-
-        if positions is None:
-            positions = self._compute_positions(inputs, start_index)
-        else:
-            positions = ops.cast(positions, "float32")
-
-        positions = positions / ops.cast(self.scaling_factor, "float32")
-        positions = self.positions_qdq(positions)
-        inverse_freq = self.inverse_freq_qdq(inverse_freq)
-        freq = ops.einsum("i,j->ij", positions, inverse_freq)
-        embedding = ops.stack((freq, freq), axis=-2)
-        embedding = ops.reshape(embedding, (*ops.shape(freq)[:-1], ops.shape(freq)[-1] * 2))
-
-        # Reshape the embedding to be broadcastable with input shape.
-        if feature_axis < sequence_axis:
-            embedding = ops.transpose(embedding)
-        for axis in range(len(inputs.shape)):
-            if axis != sequence_axis and axis != feature_axis:
-                embedding = ops.expand_dims(embedding, axis)
-
-        cos_emb = ops.cast(ops.cos(embedding), self.compute_dtype)
-        sin_emb = ops.cast(ops.sin(embedding), self.compute_dtype)
-        return cos_emb, sin_emb
-
-
-# verify_api(keras_hub.layers.RotaryEmbedding, QStaticRotaryEmbedding, "_compute_cos_sin_embedding")
-
-
 @register_static_quantized_layer(keras.layers.ReversibleEmbedding)
 @register_static_quantized_layer(keras_hub.layers.ReversibleEmbedding)
 class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbedding):
@@ -1785,6 +1753,20 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         x = super().call(x, reverse=reverse)
         return x
 
+    def call(self, inputs, reverse=False):
+        """Compute forward or reverse embedding with static quantization.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor.
+            reverse (bool): Whether to compute the reverse embedding.
+
+        Returns:
+            jnp.ndarray: Embedded outputs or logits.
+        """
+        if reverse:
+            inputs = self.input_observer(inputs)
+        return super().call(inputs, reverse=reverse)
+
     @property
     def embeddings(self):
         if self._is_quantized:
@@ -1816,20 +1798,6 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             return _reverse_embeddings_quant
         ret = super().reverse_embeddings
         return ret.value
-
-    def call(self, inputs, reverse=False):
-        """Compute forward or reverse embedding with static quantization.
-
-        Args:
-            inputs (jnp.ndarray): Input tensor.
-            reverse (bool): Whether to compute the reverse embedding.
-
-        Returns:
-            jnp.ndarray: Embedded outputs or logits.
-        """
-        if reverse:
-            inputs = self.input_observer(inputs)
-        return super().call(inputs, reverse=reverse)
 
 
 verify_api(keras.layers.ReversibleEmbedding, QStaticReversibleEmbedding, "call")
