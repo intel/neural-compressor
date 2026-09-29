@@ -10,6 +10,7 @@ import os
 
 os.environ.setdefault("KERAS_BACKEND", "jax")
 
+import jax
 import keras
 import numpy as np
 import pytest
@@ -115,3 +116,37 @@ def test_quantized_kv_cache_matches_requantized_bf16_cache(activation_dtype, mon
             np.asarray(a.v_qdq.dequantize_from_storage(nv).astype("float32")),
             np.asarray(a.v_qdq(rv).astype("float32")),
         )
+
+
+@pytest.mark.parametrize("activation_dtype", ["fp8_e4m3", "int8"])
+def test_quantized_kv_cache_jitted_generate(activation_dtype, monkeypatch):
+    # The compiled generate loop carries the quantized cache through a while loop and
+    # updates it under `cache_update_mask`; the eager helpers above cover neither.
+    lm = _quantized_lm(activation_dtype)
+    inputs = _inputs()
+
+    lm.make_generate_function()
+    new_tokens = np.asarray(lm.generate_function(inputs)["token_ids"])
+
+    monkeypatch.setattr(QStaticCachedGemma3Attention, "call", CachedGemma3Attention.call)
+    lm.make_generate_function()
+    ref_tokens = np.asarray(lm.generate_function(inputs)["token_ids"])
+
+    np.testing.assert_array_equal(new_tokens, ref_tokens)
+
+
+def test_quantized_cache_update_saturates():
+    # Decode can produce values beyond the calibrated range. inc.quantize clamps them to
+    # the fp8 range; a quantize fused into the value projection must do the same rather
+    # than overflow to NaN (e4m3fn has no inf), which would poison the cache.
+    lm = _quantized_lm("fp8_e4m3")
+    attn = lm.backbone.transformer_layers[0].attention
+    x = np.random.default_rng(2).normal(size=(BATCH, 1, 32)) * 50
+    x = jnp.asarray(x, dtype=lm.compute_dtype)
+
+    stored = jax.jit(lambda x: attn.v_qdq.quantize_to_storage(attn.value_dense(x)))(x)
+    values = np.asarray(attn.v_qdq.dequantize_from_storage(stored).astype("float32"))
+
+    assert not np.isnan(values).any()
+    limit = np.abs(values).max()
+    assert np.sum(np.abs(values) == limit) > 1  # out-of-range values saturated to the limit
