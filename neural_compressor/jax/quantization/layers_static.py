@@ -19,6 +19,7 @@
 # limitations under the License.
 
 
+import jax
 import keras
 import numpy as np
 from jax import numpy as jnp
@@ -27,6 +28,7 @@ from keras.layers import Dense, EinsumDense, MultiHeadAttention
 from keras_hub.layers import ReversibleEmbedding, RotaryEmbedding
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
+from keras_hub.src.vllm.context import get_vllm_context
 
 from neural_compressor.common import logger
 from neural_compressor.jax.quantization.saving import SaveableLayerMixin
@@ -311,6 +313,71 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         x = self.aquantfun(inputs, a_scale, a_zero_point)
         x = self.adequantfun(x, a_scale, a_zero_point)
         return x
+
+    def _qparams(self):
+        """Return the quantization parameters as positional args for aquantfun/adequantfun.
+
+        Returns:
+            tuple: (a_scale,) or (a_scale, a_zero_point) for asymmetric quantization.
+        """
+        a_scale = self.a_scale if self.const_scale else self.a_scale.value
+        if not self._is_asymmetric:
+            return (a_scale,)
+        a_zero_point = self.a_zero_point if self.const_scale else self.a_zero_point.value
+        return (a_scale, a_zero_point)
+
+    @property
+    def storage_dtype(self):
+        """Dtype that `quantize_to_storage` returns.
+
+        Keras autocasts every floating-point tensor passed through `Layer.__call__` to the
+        compute dtype, and float8 counts as floating point there. A float8 tensor that crosses
+        a layer boundary (e.g. a KV cache passed as `cache=`) would be silently upcast, so
+        float8 values are carried as their bit pattern in an unsigned integer container, which
+        Keras passes through untouched. Integer activation dtypes are stored as-is.
+
+        Returns:
+            jnp.dtype: Storage dtype.
+        """
+        dtype = jnp.dtype(self.activation_dtype)
+        if jnp.issubdtype(dtype, jnp.floating):
+            return jnp.dtype(f"uint{8 * dtype.itemsize}")
+        return dtype
+
+    def quantize_to_storage(self, inputs):
+        """Quantize (without dequantizing) into `storage_dtype`.
+
+        Elementwise with the calibrated static scale, so quantizing a tensor piecewise and
+        assembling the pieces is bit-identical to quantizing the assembled tensor.
+
+        Args:
+            inputs (jnp.ndarray): Input tensor in the compute dtype.
+
+        Returns:
+            jnp.ndarray: Quantized tensor in `storage_dtype`.
+        """
+        x = self.aquantfun(inputs, *self._qparams())
+        if x.dtype != self.storage_dtype:
+            x = jax.lax.bitcast_convert_type(x, self.storage_dtype)
+        return x
+
+    def dequantize_from_storage(self, stored):
+        """Inverse of `quantize_to_storage`.
+
+        The bitcast moves no data, and the `inc.dequantize` composite it feeds is what the
+        XLA CPU oneDNN contraction rewriter folds into a quantized matmul, so the dequantized
+        tensor is never materialized when it feeds a dot.
+
+        Args:
+            stored (jnp.ndarray): Tensor in `storage_dtype`.
+
+        Returns:
+            jnp.ndarray: Dequantized tensor in the compute dtype.
+        """
+        x = stored
+        if x.dtype != jnp.dtype(self.activation_dtype):
+            x = jax.lax.bitcast_convert_type(x, self.activation_dtype)
+        return self.adequantfun(x, *self._qparams())
 
 
 class QStaticDenseMixin(SaveableLayerMixin):
@@ -825,6 +892,112 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         self._is_quantized = True
         self._tracker.lock()
 
+    def call(
+        self,
+        x,
+        attention_mask=None,
+        cache=None,
+        cache_update_index=0,
+        cache_update_mask=None,
+        training=False,
+    ):
+        """Cached attention with the KV cache stored quantized.
+
+        Mirrors `CachedGemma3Attention.call`, except that the new key/value are quantized
+        *before* they are written into the cache and the cache is stored quantized (see
+        `StaticQDQLayer.storage_dtype`). The original stores a bf16 cache and quantizes the
+        whole of it inside `_compute_attention`, which in decode re-quantizes the entire
+        [batch, max_length, kv_heads, head_dim] cache for every layer on every step -- a cost
+        proportional to batch x context that batching cannot amortize. With a static
+        per-tensor scale the quantization is elementwise, so the cache contents, and
+        therefore the attention output, are bit-identical to the original.
+
+        Args:
+            x (jnp.ndarray): Input tensor.
+            attention_mask (Optional[jnp.ndarray]): Optional attention mask.
+            cache (Optional[tuple]): (key_cache, value_cache).
+            cache_update_index (int): Cache update index for generation.
+            cache_update_mask (Optional[jnp.ndarray]): Per-position cache update mask.
+            training (bool): Training mode flag.
+
+        Returns:
+            jnp.ndarray | tuple: Attention output, plus the updated cache if one was given.
+        """
+        vllm_context = get_vllm_context()
+        if (
+            cache is None
+            or not self._is_quantized
+            or (vllm_context is not None and vllm_context.paged_attention_func is not None)
+        ):
+            return super().call(
+                x,
+                attention_mask=attention_mask,
+                cache=cache,
+                cache_update_index=cache_update_index,
+                cache_update_mask=cache_update_mask,
+                training=training,
+            )
+
+        query = self.query_dense(x)
+
+        if self.use_query_key_norm:
+            query = self.query_norm(query)
+
+        query = self._apply_rope(query, cache_update_index)
+
+        key_cache, value_cache = cache
+        # Gemma3CausalLM._build_cache allocates the cache in the compute dtype and passes it
+        # only to the prefill call. Converting it here, once per generate call, means every
+        # cache returned from prefill onwards -- and so the decode loop's carry -- is already
+        # in the storage dtype and this branch is not taken again.
+        if key_cache.dtype != self.k_qdq.storage_dtype:
+            key_cache = self.k_qdq.quantize_to_storage(key_cache)
+        if value_cache.dtype != self.v_qdq.storage_dtype:
+            value_cache = self.v_qdq.quantize_to_storage(value_cache)
+
+        key_update = self.key_dense(x)
+
+        if self.use_query_key_norm:
+            key_update = self.key_norm(key_update)
+
+        key_update = self._apply_rope(key_update, cache_update_index)
+        value_update = self.value_dense(x)
+
+        key_update = self.k_qdq.quantize_to_storage(key_update)
+        value_update = self.v_qdq.quantize_to_storage(value_update)
+
+        start = [0, cache_update_index, 0, 0]
+        if cache_update_mask is not None:
+            cache_update_mask = ops.expand_dims(
+                ops.expand_dims(cache_update_mask, axis=-1),
+                axis=-1,
+            )
+            key_original = ops.slice(key_cache, start, ops.shape(key_update))
+            value_original = ops.slice(value_cache, start, ops.shape(value_update))
+
+            key_update = ops.where(cache_update_mask, key_update, key_original)
+            value_update = ops.where(cache_update_mask, value_update, value_original)
+
+        key = ops.slice_update(key_cache, start, key_update)
+        value = ops.slice_update(value_cache, start, value_update)
+        cache = (key, value)
+
+        attention_vec = self._compute_attention(
+            query,
+            key,
+            value,
+            attention_mask,
+            training=training,
+            cache_update_index=cache_update_index,
+        )
+
+        # Wipe attn vec if there are no attended tokens.
+        no_attended_tokens = ops.all(ops.equal(attention_mask, 0), axis=-1, keepdims=True)[..., None]
+        attention_vec = ops.where(no_attended_tokens, ops.zeros_like(attention_vec), attention_vec)
+
+        attention_output = self.output_dense(attention_vec)
+        return attention_output, cache
+
     def _compute_attention(
         self,
         q,
@@ -838,8 +1011,9 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
 
         Args:
             q (jnp.ndarray): Query tensor.
-            k (jnp.ndarray): Key tensor.
-            v (jnp.ndarray): Value tensor.
+            k (jnp.ndarray): Key tensor, in the compute dtype, or in the storage dtype
+                when it is a quantized cache from `call`.
+            v (jnp.ndarray): Value tensor, same convention as `k`.
             attention_mask (Optional[jnp.ndarray]): Optional attention mask.
             training (bool): Training mode flag.
             cache_update_index (int): Cache update index for generation.
@@ -879,7 +1053,12 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
 
         # Fallback to standard attention if flash attention is disabled
         q = self.q_qdq(q)
-        k = self.k_qdq(k)
+        # A cache from `call` is already quantized: dequantize only. Anything else (no cache,
+        # or during calibration) takes the original quantize-dequantize path.
+        if self._is_quantized and k.dtype == self.k_qdq.storage_dtype:
+            k = self.k_qdq.dequantize_from_storage(k)
+        else:
+            k = self.k_qdq(k)
         attention_logits = ops.einsum("btkgh,bskh->bkgts", q, k)
         if self.logit_soft_cap is not None:
             attention_logits = ops.divide(attention_logits, self.logit_soft_cap)
@@ -894,11 +1073,15 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             attention_softmax = self.dropout_layer(attention_softmax, training=training)
 
         attention_softmax = self.attention_softmax_qdq(attention_softmax)
-        v = self.v_qdq(v)
+        if self._is_quantized and v.dtype == self.v_qdq.storage_dtype:
+            v = self.v_qdq.dequantize_from_storage(v)
+        else:
+            v = self.v_qdq(v)
         results = ops.einsum("bkgts,bskh->btkgh", attention_softmax, v)
         return ops.reshape(results, (b, q_len, self.num_query_heads, h))
 
 
+verify_api(CachedGemma3Attention, QStaticCachedGemma3Attention, "call")
 verify_api(CachedGemma3Attention, QStaticCachedGemma3Attention, "_compute_attention")
 
 
