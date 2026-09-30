@@ -8,12 +8,22 @@ MODEL_PATH=""
 TASKS="gsm8k,mmlu,piqa,hellaswag"
 BATCH_SIZE="auto"
 MAX_MODEL_LEN=8192
+GPU_MEMORY_UTILIZATION=0.8
 KV_CACHE_DTYPE="auto"
 STATIC_ATTENTION_DTYPE="auto"
 
 usage() {
-	echo "Usage: bash run_benchmark.sh --model_path=<path_to_quantized_model>"
-	echo "Optional: --tasks=<task1,task2> --batch_size=<auto|int> --max_model_len=<int> --static_kv_dtype=<auto|fp8>"
+	echo "Usage: bash run_benchmark.sh --model_path=<path_to_quantized_model> [--tasks=<tasks>] [--batch_size=<size>]"
+	echo "  --model_path               Path to the quantized model (required)"
+	echo "  --tasks                    Task name(s) to evaluate (default: gsm8k,mmlu,piqa,hellaswag)"
+	echo "  --batch_size               Batch size (default: auto)"
+	echo "  --max_model_len            Max model length (default: 8192)"
+	echo "  --gpu_memory_utilization   GPU memory utilization (default: 0.8)"
+	echo "  --static_kv_dtype          Data type for static kv cache (default: auto)"
+	echo "  --static_attention_dtype   Data type for static attention cache (default: auto)"
+	echo ""
+	echo "Examples:"
+	echo "  CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=/path/to/model --tasks=gsm8k --batch_size=64"
 	exit 1
 }
 
@@ -30,6 +40,9 @@ for arg in "$@"; do
 			;;
 		--max_model_len=*)
 			MAX_MODEL_LEN="${arg#*=}"
+			;;
+		--gpu_memory_utilization=*)
+			GPU_MEMORY_UTILIZATION="${arg#*=}"
 			;;
 		--static_kv_dtype=*)
 			KV_CACHE_DTYPE="${arg#*=}"
@@ -88,18 +101,19 @@ echo "  Batch Size: $BATCH_SIZE"
 echo "  Max Model Length: $MAX_MODEL_LEN"
 echo "  KV Cache Dtype: $KV_CACHE_DTYPE"
 echo "  Tensor Parallel Size: $TENSOR_PARALLEL_SIZE"
+echo "  GPU Memory Utilization: $GPU_MEMORY_UTILIZATION"
 echo "  CUDA_VISIBLE_DEVICES: $CUDA_VISIBLE_DEVICES"
 
 export VLLM_QDQ=1
 export VLLM_MXFP4_USE_MARLIN=1
 
-CMD="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",tensor_parallel_size=$TENSOR_PARALLEL_SIZE,data_parallel_size=1,max_model_len=$MAX_MODEL_LEN,kv_cache_dtype=$KV_CACHE_DTYPE,trust_remote_code=True --tasks $TASKS --batch_size $BATCH_SIZE"
+CMD="lm_eval --model vllm --model_args pretrained=\"$MODEL_PATH\",tensor_parallel_size=$TENSOR_PARALLEL_SIZE,data_parallel_size=1,max_model_len=$MAX_MODEL_LEN,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,kv_cache_dtype=$KV_CACHE_DTYPE,trust_remote_code=True --tasks $TASKS --batch_size $BATCH_SIZE"
 
 echo "Executing command:"
 echo "VLLM_QDQ=1 VLLM_MXFP4_USE_MARLIN=1 $CMD"
 
 lm_eval --model vllm \
-	--model_args pretrained="$MODEL_PATH",tensor_parallel_size=$TENSOR_PARALLEL_SIZE,data_parallel_size=1,max_model_len=$MAX_MODEL_LEN,kv_cache_dtype=$KV_CACHE_DTYPE,trust_remote_code=True \
+	--model_args pretrained="$MODEL_PATH",tensor_parallel_size=$TENSOR_PARALLEL_SIZE,data_parallel_size=1,max_model_len=$MAX_MODEL_LEN,gpu_memory_utilization=$GPU_MEMORY_UTILIZATION,kv_cache_dtype=$KV_CACHE_DTYPE,trust_remote_code=True \
 	--tasks "$TASKS" \
 	--batch_size "$BATCH_SIZE"
 

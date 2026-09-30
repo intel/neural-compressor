@@ -1,73 +1,75 @@
 #!/bin/bash
 set -e
 
-# Usage: ./run_evaluation.sh -m [model_path] -s [mxfp4|mxfp8] -t [task_name] -tp [tensor_parallel_size] -b [batch_size]
+# Usage: CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=<path_to_quantized_model> [--tasks=<tasks>] [--batch_size=<size>]
 # Default values
 MODEL_PATH=""
 SCHEME="mxfp8"
 TASK_NAME="piqa,hellaswag,mmlu"
-TP_SIZE=8
 BATCH_SIZE=512
+GPU_MEMORY_UTILIZATION=0.8
 KV_CACHE_DTYPE="auto"
-ATTN_DTYPE="None"
+ATTN_DTYPE="auto"
 SEQ_LENGTHS=""
+RULER_MAX_POS=""
 
 # Function to display usage
 usage() {
-    echo "Usage: $0 -m [model_path] -s [mxfp4|mxfp8|nvfp4] -t [task_name] -tp [tensor_parallel_size] -b [batch_size]"
-    echo "  -m: Path to the quantized model (required)"
-    echo "  -s: Quantization scheme (mxfp4 or mxfp8, default: mxfp8)"
-    echo "  -t: Task name(s) to evaluate (default: piqa,hellaswag,mmlu)"
-    echo "  -tp: Tensor parallelism size (default: 8)"
-    echo "  -b: Batch size (default: 512)"
-    echo "  -ruler-max-pos: Max position length for RULER eval (default: 65536)"
+    echo "Usage: bash run_benchmark.sh --model_path=<path_to_quantized_model> [--tasks=<tasks>] [--batch_size=<size>]"
+    echo "  --model_path               Path to the quantized model (required)"
+    echo "  --scheme                   Quantization scheme: mxfp4, mxfp8, nvfp4, fp8 (default: mxfp8)"
+    echo "  --tasks                    Task name(s) to evaluate (default: piqa,hellaswag,mmlu)"
+    echo "  --batch_size               Batch size (default: 512)"
+    echo "  --gpu_memory_utilization   GPU memory utilization (default: 0.8)"
+    echo "  --static_kv_dtype          Data type for static kv cache (default: auto)"
+    echo "  --static_attention_dtype   Data type for static attention cache (default: auto)"
+    echo "  --ruler_max_pos            Max position length for RULER eval (default: 131072)"
     echo ""
     echo "Examples:"
-    echo "  $0 -m /path/to/model -s mxfp4 -t gsm8k -tp 4 -b 256"
-    echo "  $0 -m /path/to/model -s mxfp8 -t piqa,hellaswag -tp 8 -b 512"
+    echo "  CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --model_path=/path/to/model --scheme=mxfp4 --tasks=gsm8k --batch_size=256"
 }
 
 # Parse command-line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -m)
-            MODEL_PATH="$2"
-            shift 2
+        --model_path=*)
+            MODEL_PATH="${1#*=}"
+            shift
             ;;
-        -s)
-            SCHEME="$2"
-            shift 2
+        --scheme=*)
+            SCHEME="${1#*=}"
+            shift
             ;;
-        -t)
-            TASK_NAME="$2"
-            shift 2
+        --tasks=*)
+            TASK_NAME="${1#*=}"
+            shift
             ;;
-        -tp)
-            TP_SIZE="$2"
-            shift 2
+        --batch_size=*)
+            BATCH_SIZE="${1#*=}"
+            shift
             ;;
-        -kv)
-            KV_CACHE_DTYPE="$2"
-            shift 2
+        --gpu_memory_utilization=*)
+            GPU_MEMORY_UTILIZATION="${1#*=}"
+            shift
             ;;
-        -attn)
-            ATTN_DTYPE="$2"
-            shift 2
+        --static_kv_dtype=*)
+            KV_CACHE_DTYPE="${1#*=}"
+            shift
             ;;
-        -b)
-            BATCH_SIZE="$2"
-            shift 2
+        --static_attention_dtype=*)
+            ATTN_DTYPE="${1#*=}"
+            shift
             ;;
-        -ruler-max-pos)
-            RULER_MAX_POS="$2"
-            shift 2
+        --ruler_max_pos=*)
+            RULER_MAX_POS="${1#*=}"
+            shift
             ;;
         -h|--help)
             usage
             exit 0
             ;;
         *)
-            echo "Invalid option: $1" >&2
+            echo "Unknown parameter: $1" >&2
             usage
             exit 1
             ;;
@@ -76,9 +78,17 @@ done
 
 # Validate required arguments
 if [[ -z "$MODEL_PATH" ]]; then
-    echo "Error: Model path (-m) is required."
+    echo "Error: Model path (--model_path) is required."
     usage
     exit 1
+fi
+
+# Count available GPUs and set tensor_parallel_size
+if [[ -n "$CUDA_VISIBLE_DEVICES" ]]; then
+    IFS=',' read -ra GPU_ARRAY <<< "$CUDA_VISIBLE_DEVICES"
+    TP_SIZE=${#GPU_ARRAY[@]}
+else
+    TP_SIZE=1
 fi
 
 # Extract model name and set output directory
@@ -149,7 +159,7 @@ elif [[ "$SCHEME" == "fp8" ]]; then
     echo "Run original model."
     VLLM_USE_DEEP_GEMM=0
 else
-    echo "Error: Invalid quantization scheme (-s). Must be 'mxfp4', 'nvfp4' or 'mxfp8'."
+    echo "Error: Invalid quantization scheme (--scheme). Must be 'mxfp4', 'nvfp4' or 'mxfp8'."
     usage
     exit 1
 fi
@@ -177,6 +187,8 @@ echo "Quantization scheme: ${SCHEME}"
 echo "Tasks: ${TASK_NAME}"
 echo "Tensor parallelism size: ${TP_SIZE}"
 echo "Batch size: ${BATCH_SIZE}"
+echo "GPU memory utilization: ${GPU_MEMORY_UTILIZATION}"
+echo "CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES}"
 echo "Output directory: ${OUTPUT_DIR}"
 
 
@@ -197,7 +209,7 @@ export VLLM_QDQ=1
 # Function to run standard lm-eval tasks
 run_standard_eval() {
     lm_eval --model vllm \
-        --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=0.8,dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}" \
+        --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=8192,max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=${GPU_MEMORY_UTILIZATION},dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}" \
         --tasks $TASK_NAME \
         --batch_size $BATCH_SIZE \
         --log_samples \
@@ -228,7 +240,7 @@ start_vllm_server() {
         --port ${SERVER_PORT} \
         --tensor-parallel-size ${TP_SIZE} \
         --max-model-len ${max_length} \
-        --gpu-memory-utilization 0.8 \
+        --gpu-memory-utilization ${GPU_MEMORY_UTILIZATION} \
         --dtype bfloat16 \
         --kv-cache-dtype ${KV_CACHE_DTYPE} \
         > ${OUTPUT_DIR}/vllm_server.log 2>&1 &

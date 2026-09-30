@@ -3,7 +3,7 @@
 # Usage: CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP8
 
 # Parse command line arguments
-KV_CACHE_DTYPE="auto"
+STATIC_KV_DTYPE="auto"
 STATIC_ATTENTION_DTYPE="auto"
 EXPORT_FORMAT="llm_compressor"
 while [[ $# -gt 0 ]]; do
@@ -25,7 +25,7 @@ while [[ $# -gt 0 ]]; do
             shift
             ;;
         --static_kv_dtype=*)
-            KV_CACHE_DTYPE="${1#*=}"
+            STATIC_KV_DTYPE="${1#*=}"
             shift
             ;;
         --static_attention_dtype=*)
@@ -58,12 +58,12 @@ echo "  Input Model: $INPUT_MODEL"
 echo "  Output Model: $OUTPUT_MODEL"
 
 # Set common parameters
-COMMON_ARGS="--quantize --enable_torch_compile --low_gpu_mem_usage --export_format $EXPORT_FORMAT"
-if [ "$KV_CACHE_DTYPE" != "auto" ]; then
-    COMMON_ARGS="$COMMON_ARGS --static_kv_dtype $KV_CACHE_DTYPE"
+COMMON_ARGS=(--quantize --enable_torch_compile --low_gpu_mem_usage --export_format "$EXPORT_FORMAT")
+if [ "$STATIC_KV_DTYPE" != "auto" ]; then
+    COMMON_ARGS+=(--static_kv_dtype "$STATIC_KV_DTYPE")
 fi
 if [ "$STATIC_ATTENTION_DTYPE" != "auto" ]; then
-    COMMON_ARGS="$COMMON_ARGS --static_attention_dtype $STATIC_ATTENTION_DTYPE"
+    COMMON_ARGS+=(--static_attention_dtype "$STATIC_ATTENTION_DTYPE")
 fi
 
 case "$TOPOLOGY" in
@@ -71,33 +71,33 @@ case "$TOPOLOGY" in
         case "$DTYPE" in
             "mxfp8")
                 echo "Running Llama 3.1 8B MXFP8 quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP8 --iters 0 --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" ${COMMON_ARGS[*]} --dtype MXFP8 --iters 0 --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
-                    $COMMON_ARGS \
+                    "${COMMON_ARGS[@]}" \
                     --dtype MXFP8 \
                     --iters 0 \
                     --export_path "$OUTPUT_MODEL"
                 ;;
             "mxfp4")
                 echo "Running Llama 3.1 8B MXFP4 quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP4  --iters 0 --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" ${COMMON_ARGS[*]} --dtype MXFP4  --iters 0 --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
-                    $COMMON_ARGS \
+                    "${COMMON_ARGS[@]}" \
                     --dtype MXFP4 \
                     --iters 0 \
                     --export_path "$OUTPUT_MODEL"
                 ;;
             "mxfp4_mixed")
                 echo "Running Llama 3.1 8B MXFP4 (Mixed with MXFP8) quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --target_bits 7.8 --iters 0 --options \"MXFP4\" \"MXFP8\" --shared_layers \"k_proj\" \"v_proj\" \"q_proj\" --shared_layers \"gate_proj\" \"up_proj\" --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" ${COMMON_ARGS[*]} --target_bits 7.8 --iters 0 --options \"MXFP4\" \"MXFP8\" --shared_layers \"k_proj\" \"v_proj\" \"q_proj\" --shared_layers \"gate_proj\" \"up_proj\" --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
-                    $COMMON_ARGS \
+                    "${COMMON_ARGS[@]}" \
                     --target_bits 7.8 \
                     --options "MXFP4" "MXFP8" \
                     --shared_layers "k_proj" "v_proj" "q_proj" \
@@ -116,33 +116,33 @@ case "$TOPOLOGY" in
         case "$DTYPE" in
             "mxfp8")
                 echo "Running Llama 3.3 70B MXFP8 quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP8 --iters 0 --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" ${COMMON_ARGS[*]} --dtype MXFP8 --iters 0 --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
-                    $COMMON_ARGS \
+                    "${COMMON_ARGS[@]}" \
                     --dtype MXFP8 \
                     --iters 0 \
                     --export_path "$OUTPUT_MODEL"
                 ;;
             "mxfp4")
                 echo "Running Llama 3.3 70B MXFP4 quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP4  --iters 0 --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" ${COMMON_ARGS[*]} --dtype MXFP4  --iters 0 --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
-                    $COMMON_ARGS \
+                    "${COMMON_ARGS[@]}" \
                     --dtype MXFP4 \
                     --iters 0 \
                     --export_path "$OUTPUT_MODEL"
                 ;;
             "mxfp4_mixed")
                 echo "Running Llama 3.3 70B MXFP4 (Mixed with MXFP8) quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --target_bits 5.8 --options \"MXFP4\" \"MXFP8\" --shared_layers \"k_proj\" \"v_proj\" \"q_proj\" --shared_layers \"gate_proj\" \"up_proj\" --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" ${COMMON_ARGS[*]} --target_bits 5.8 --options \"MXFP4\" \"MXFP8\" --shared_layers \"k_proj\" \"v_proj\" \"q_proj\" --shared_layers \"gate_proj\" \"up_proj\" --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
-                    $COMMON_ARGS \
+                    "${COMMON_ARGS[@]}" \
                     --target_bits 5.8 \
                     --options "MXFP4" "MXFP8" \
                     --shared_layers "k_proj" "v_proj" "q_proj" \
@@ -160,11 +160,11 @@ case "$TOPOLOGY" in
         case "$DTYPE" in
             "mxfp8")
                 echo "Running Llama 3.1 70B MXFP8 quantization..."
-                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" $COMMON_ARGS --dtype MXFP8 --iters 0 --export_path \"$OUTPUT_MODEL\""
+                CMD="python quantize.py --model_name_or_path \"$INPUT_MODEL\" ${COMMON_ARGS[*]} --dtype MXFP8 --iters 0 --export_path \"$OUTPUT_MODEL\""
                 echo "Executing command: $CMD"
                 python quantize.py \
                     --model_name_or_path "$INPUT_MODEL" \
-                    $COMMON_ARGS \
+                    "${COMMON_ARGS[@]}" \
                     --dtype MXFP8 \
                     --iters 0 \
                     --export_path "$OUTPUT_MODEL"

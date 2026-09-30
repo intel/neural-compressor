@@ -17,10 +17,6 @@ while [[ $# -gt 0 ]]; do
             MODEL_PATH="${1#*=}"
             shift
             ;;
-        --ruler_max_pos=*)
-            RULER_MAX_POS="${1#*=}"
-            shift
-            ;;
         --tasks=*)
             TASKS="${1#*=}"
             shift

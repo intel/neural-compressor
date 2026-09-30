@@ -15,29 +15,29 @@ export MODEL=unsloth/DeepSeek-R1-BF16
 
 - MXFP8
 ```bash
-bash run_quant.sh --model $MODEL -t mxfp8 --output_dir ./qmodels
+bash run_quant.sh --dtype=mxfp8 --input_model=$MODEL --output_model=./qmodels
 ```
 
 - MXFP4
 ```bash
-bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels
+bash run_quant.sh --dtype=mxfp4 --input_model=$MODEL --output_model=./qmodels
 ```
 
 - NVFP4
 ```bash
-bash run_quant.sh --model $MODEL -t nvfp4 --output_dir ./qmodels
+bash run_quant.sh --dtype=nvfp4 --input_model=$MODEL --output_model=./qmodels
 ```
 
-To enable `fp8 kv cache`, please add `-kv fp8`:
+To enable `fp8 kv cache`, please add `--static_kv_dtype=fp8`:
 ```bash
 # w/ fp8 kv
-bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels -kv fp8
+bash run_quant.sh --dtype=mxfp4 --input_model=$MODEL --output_model=./qmodels --static_kv_dtype=fp8
 ```
 
   Attention
 ```bash
 export MODEL=unsloth/DeepSeek-R1-BF16
-bash run_quant.sh --model $MODEL -t mxfp4 --output_dir ./qmodels -attn "fp8"
+bash run_quant.sh --dtype=mxfp4 --input_model=$MODEL --output_model=./qmodels --static_attention_dtype=fp8
 ```
 
 ## Evaluation
@@ -66,17 +66,17 @@ bash ./run_generate.sh -s nvfp4 -tp 8 -m /path/to/ds_nvfp4
 
 Usage: 
 ```bash
-bash run_evaluation.sh -m [model_path] -s [mxfp4|mxfp8|nvfp4] -t [task_name] -tp [tensor_parallel_size] -b [batch_size]
+bash run_benchmark.sh --model_path=<model_path> --scheme=[mxfp4|mxfp8|nvfp4] --tasks=<task_name> --batch_size=<size>
 ```
 ```bash
-bash run_evaluation.sh -s mxfp8 -t piqa,hellaswag,mmlu,gsm8k -tp 8 -b 256 -m /path/to/ds_mxfp8
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash run_benchmark.sh --model_path=/path/to/ds_mxfp8 --scheme=mxfp8 --tasks=piqa,hellaswag,mmlu,gsm8k --batch_size=256
 
 ```
 - MXFP4
 ```bash
-bash run_evaluation.sh -s mxfp4 -t piqa,hellaswag,mmlu,gsm8k -tp 8 -b 256 -m /path/to/ds_mxfp4
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash run_benchmark.sh --model_path=/path/to/ds_mxfp4 --scheme=mxfp4 --tasks=piqa,hellaswag,mmlu,gsm8k --batch_size=256
 ```
 - NVFP4
 ```bash
-bash run_evaluation.sh -s nvfp4 -t piqa,hellaswag,mmlu,gsm8k -tp 8 -b 256 -m /path/to/ds_nvfp4
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash run_benchmark.sh --model_path=/path/to/ds_nvfp4 --scheme=nvfp4 --tasks=piqa,hellaswag,mmlu,gsm8k --batch_size=256
 ```

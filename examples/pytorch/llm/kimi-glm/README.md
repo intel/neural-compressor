@@ -36,10 +36,10 @@ Equivalent Python command:
 ```bash
 python quantize.py \
   --dtype mxfp4 \
-  --input_model moonshotai/Kimi-K2.6 \
-  --output_model /workspace/models/moonshotai/Kimi-K2.6-MXFP4 \
+  --model_name_or_path moonshotai/Kimi-K2.6 \
+  --export_path /workspace/models/moonshotai/Kimi-K2.6-MXFP4 \
   --model_type kimi \
-  --format llm_compressor
+  --export_format llm_compressor
 ```
 
 ## Evaluation

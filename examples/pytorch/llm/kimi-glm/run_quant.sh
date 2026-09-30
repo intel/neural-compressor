@@ -6,14 +6,19 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 DTYPE=""
 INPUT_MODEL=""
 OUTPUT_MODEL=""
-FORMAT="llm_compressor"
-KV_CACHE_DTYPE=""
-STATIC_ATTENTION_DTYPE=""
+EXPORT_FORMAT="llm_compressor"
+STATIC_KV_DTYPE="auto"
+STATIC_ATTENTION_DTYPE="auto"
 # required transformers==4.57.6 for fp8kv static quant
 
 usage() {
-	echo "Usage: bash run_quant.sh --dtype=<mxfp4> --input_model=<path_or_name> --output_model=<output_dir>"
-	echo "Optional: --format=<auto_round|llm_compressor> --static_kv_dtype=<dtype> --static_attention_dtype=<dtype>"
+	echo "Usage: bash run_quant.sh --dtype=<dtype> --input_model=<input_model> --output_model=<output_model>"
+	echo "  --dtype                    quantization data type (currently: mxfp4)"
+	echo "  --input_model              Hugging Face model ID or local path"
+	echo "  --output_model             output directory for the quantized model"
+	echo "  --export_format            export format (default: llm_compressor)"
+	echo "  --static_kv_dtype          data type for static kv cache (default: auto)"
+	echo "  --static_attention_dtype   data type for static attention cache (default: auto)"
 	echo ""
 	echo "Model type is auto-detected from --input_model name:"
 	echo "  - Kimi (contains 'kimi'): MXFP4 with ignore_layers for shared_experts/self_attn/mlp"
@@ -32,11 +37,11 @@ for arg in "$@"; do
 		--output_model=*)
 			OUTPUT_MODEL="${arg#*=}"
 			;;
-		--format=*)
-			FORMAT="${arg#*=}"
+		--export_format=*)
+			EXPORT_FORMAT="${arg#*=}"
 			;;
 		--static_kv_dtype=*)
-			KV_CACHE_DTYPE="${arg#*=}"
+			STATIC_KV_DTYPE="${arg#*=}"
 			;;
 		--static_attention_dtype=*)
 			STATIC_ATTENTION_DTYPE="${arg#*=}"
@@ -45,7 +50,7 @@ for arg in "$@"; do
 			usage
 			;;
 		*)
-			echo "Unknown option: $arg"
+			echo "Unknown parameter: $arg"
 			usage
 			;;
 	esac
@@ -66,19 +71,30 @@ else
 	exit 1
 fi
 
-echo "Detected model type: $MODEL_TYPE"
+echo "Starting quantization with parameters:"
+echo "  Model Type: $MODEL_TYPE"
+echo "  Data Type: $DTYPE"
+echo "  Input Model: $INPUT_MODEL"
+echo "  Output Model: $OUTPUT_MODEL"
 
 cd "$SCRIPT_DIR"
 QUANTIZE_ARGS=(
-	--dtype "$DTYPE" \
-	--input_model "$INPUT_MODEL" \
-	--output_model "$OUTPUT_MODEL" \
-	--format "$FORMAT" \
+	--dtype "$DTYPE"
+	--model_name_or_path "$INPUT_MODEL"
+	--export_path "$OUTPUT_MODEL"
+	--export_format "$EXPORT_FORMAT"
 	--model_type "$MODEL_TYPE"
 )
 
-[[ -n "$KV_CACHE_DTYPE" ]] && QUANTIZE_ARGS+=(--static_kv_dtype "$KV_CACHE_DTYPE")
-[[ -n "$STATIC_ATTENTION_DTYPE" ]] && QUANTIZE_ARGS+=(--static_attention_dtype "$STATIC_ATTENTION_DTYPE")
+if [[ "$STATIC_KV_DTYPE" != "auto" ]]; then
+	QUANTIZE_ARGS+=(--static_kv_dtype "$STATIC_KV_DTYPE")
+fi
+if [[ "$STATIC_ATTENTION_DTYPE" != "auto" ]]; then
+	QUANTIZE_ARGS+=(--static_attention_dtype "$STATIC_ATTENTION_DTYPE")
+fi
 
 python quantize.py "${QUANTIZE_ARGS[@]}"
+
+echo "Quantization completed successfully!"
+echo "Output model saved to: $OUTPUT_MODEL"
 
