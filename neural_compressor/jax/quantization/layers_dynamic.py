@@ -41,6 +41,32 @@ from neural_compressor.jax.utils.utility import (
 dynamic_quant_mapping = {}
 
 
+def _normalize_axis_for_composite(axis):
+    """Convert axis value to a hashable form for JAX composite attributes.
+
+    Args:
+        axis (int | Sequence[int] | np.ndarray | None): Axis specification.
+
+    Returns:
+        int | tuple[int, ...] | None: Hashable axis value.
+    """
+    if axis is None:
+        return None
+    if isinstance(axis, (int, np.integer)):
+        return int(axis)
+    if isinstance(axis, tuple):
+        return tuple(int(a) for a in axis)
+    if isinstance(axis, list):
+        return tuple(int(a) for a in axis)
+    if hasattr(axis, "tolist"):
+        axis = axis.tolist()
+        if isinstance(axis, list):
+            return tuple(int(a) for a in axis)
+        if isinstance(axis, (int, np.integer)):
+            return int(axis)
+    return axis
+
+
 def register_dynamic_quantized_layer(clso):
     """Register quantized layer class for an original layer class.
 
@@ -336,7 +362,8 @@ class QDynamicDenseMixin(SaveableLayerMixin):
             autocast=False,
         )
 
-        self._kernel_quant.assign(wquantfun(kernel, scale=self.w_scale.value))
+        axis = _normalize_axis_for_composite(self.w_quant_axis) if self.w_quant_granularity == "per_channel" else None
+        self._kernel_quant.assign(wquantfun(kernel, self.w_scale.value, axis=axis))
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
@@ -381,7 +408,8 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         else:
             w_scale = self.w_scale.value
 
-        _kernel_quant = self.wdequantfun(_kernel_quant, w_scale)
+        axis = _normalize_axis_for_composite(self.w_quant_axis) if self.w_quant_granularity == "per_channel" else None
+        _kernel_quant = self.wdequantfun(_kernel_quant, w_scale, axis=axis)
         return _kernel_quant
 
     def call(self, inputs, training=None):

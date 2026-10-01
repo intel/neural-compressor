@@ -41,6 +41,32 @@ from neural_compressor.jax.utils.utility import (
 static_quant_mapping = {}
 
 
+def _normalize_axis_for_composite(axis):
+    """Convert axis value to a hashable form for JAX composite attributes.
+
+    Args:
+        axis (int | Sequence[int] | np.ndarray | None): Axis specification.
+
+    Returns:
+        int | tuple[int, ...] | None: Hashable axis value.
+    """
+    if axis is None:
+        return None
+    if isinstance(axis, (int, np.integer)):
+        return int(axis)
+    if isinstance(axis, tuple):
+        return tuple(int(a) for a in axis)
+    if isinstance(axis, list):
+        return tuple(int(a) for a in axis)
+    if hasattr(axis, "tolist"):
+        axis = axis.tolist()
+        if isinstance(axis, list):
+            return tuple(int(a) for a in axis)
+        if isinstance(axis, (int, np.integer)):
+            return int(axis)
+    return axis
+
+
 def register_static_quantized_layer(clso):
     """Register quantized layer class for an original layer class.
 
@@ -663,7 +689,8 @@ class QStaticDenseMixin(SaveableLayerMixin):
         if self._is_int8:
             self.a_zero_point.assign(a_zero_point)
 
-        _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value)
+        axis = _normalize_axis_for_composite(self.w_quant_axis) if self.w_quant_granularity == "per_channel" else None
+        _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value, axis=axis)
         self._kernel_quant.assign(_kernel_quant)
         self._is_quantized = True
         self._tracker.lock()
@@ -729,7 +756,10 @@ class QStaticDenseMixin(SaveableLayerMixin):
                 w_scale = self.w_scale
             else:
                 w_scale = self.w_scale.value
-            _kernel_quant = self.wdequantfun(_kernel_quant, w_scale)
+            axis = (
+                _normalize_axis_for_composite(self.w_quant_axis) if self.w_quant_granularity == "per_channel" else None
+            )
+            _kernel_quant = self.wdequantfun(_kernel_quant, w_scale, axis=axis)
             return _kernel_quant
         return ops.convert_to_tensor(super().kernel)
 
