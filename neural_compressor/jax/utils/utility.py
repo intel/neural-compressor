@@ -121,7 +121,7 @@ def get_quantize_fun(dtype=ml_dtypes.float8_e4m3, asymmetric=False):
     """
 
     @partial(jax.lax.composite, name="inc.quantize")
-    def quantize_tensor_float(x, scale, /, *, axis=None):
+    def quantize_tensor_float(x, scale, *, axis=None):
         """Quantize floating-point tensors using clamping.
 
         Args:
@@ -137,7 +137,7 @@ def get_quantize_fun(dtype=ml_dtypes.float8_e4m3, asymmetric=False):
         ).astype(dtype)
 
     @partial(jax.lax.composite, name="inc.quantize")
-    def quantize_tensor_int(x, scale, /, *, axis=None):
+    def quantize_tensor_int(x, scale, *, axis=None):
         """Quantize integer tensors using symmetric scaling.
 
         Args:
@@ -153,7 +153,7 @@ def get_quantize_fun(dtype=ml_dtypes.float8_e4m3, asymmetric=False):
         return val.astype(dtype)
 
     @partial(jax.lax.composite, name="inc.quantize")
-    def quantize_tensor_int_asymmetric(x, scale, zero_point, /, *, axis=None):
+    def quantize_tensor_int_asymmetric(x, scale, zero_point, *, axis=None):
         """Quantize integer tensors using asymmetric scaling.
 
         Args:
@@ -189,7 +189,7 @@ def get_dequantize_fun(dtype=jnp.float32, asymmetric=False):
     """
 
     @partial(jax.lax.composite, name="inc.dequantize")
-    def dequantize(x, scale, /, *, axis=None):
+    def dequantize(x, scale, *, axis=None):
         """Dequantize a tensor by applying the scale.
 
         Args:
@@ -203,7 +203,7 @@ def get_dequantize_fun(dtype=jnp.float32, asymmetric=False):
         return x.astype(dtype) * scale
 
     @partial(jax.lax.composite, name="inc.dequantize")
-    def dequantize_asymmetric(x, scale, zero_point=jnp.array(0, dtype=dtype), /, *, axis=None):
+    def dequantize_asymmetric(x, scale, zero_point=jnp.array(0, dtype=dtype), *, axis=None):
         """Dequantize a tensor with asymmetric scaling.
 
         Args:
