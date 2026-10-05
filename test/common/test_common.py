@@ -57,6 +57,7 @@ from neural_compressor.common.base_tuning import (
     Evaluator,
     SequentialSampler,
     TuningConfig,
+    TuningMonitor,
     init_tuning,
 )
 from neural_compressor.common.tuning_param import TuningParam
@@ -371,6 +372,27 @@ class TestEvaluationFuncWrapper(unittest.TestCase):
         # Test the evaluate method
         result = wrapper.evaluate(5)
         self.assertEqual(result, 10)
+
+
+class TestTuningMonitor(unittest.TestCase):
+    def test_need_stop_with_negative_baseline(self):
+        tuning_config = TuningConfig(config_set=[FakeAlgoConfig(weight_bits=4)], tolerable_loss=0.01, max_trials=10)
+        tuning_monitor = TuningMonitor(tuning_config)
+        # e.g. an eval_fn that returns the negated loss, where higher is still better
+        tuning_monitor.set_baseline(-2.0)
+        tuning_monitor.add_trial_result(0, -2.1, FakeAlgoConfig(weight_bits=4))
+        self.assertFalse(tuning_monitor.need_stop())
+        tuning_monitor.add_trial_result(1, -2.01, FakeAlgoConfig(weight_bits=4))
+        self.assertTrue(tuning_monitor.need_stop())
+
+    def test_need_stop_with_positive_baseline(self):
+        tuning_config = TuningConfig(config_set=[FakeAlgoConfig(weight_bits=4)], tolerable_loss=0.01, max_trials=10)
+        tuning_monitor = TuningMonitor(tuning_config)
+        tuning_monitor.set_baseline(2.0)
+        tuning_monitor.add_trial_result(0, 1.9, FakeAlgoConfig(weight_bits=4))
+        self.assertFalse(tuning_monitor.need_stop())
+        tuning_monitor.add_trial_result(1, 1.99, FakeAlgoConfig(weight_bits=4))
+        self.assertTrue(tuning_monitor.need_stop())
 
 
 class TestAutoTune(unittest.TestCase):

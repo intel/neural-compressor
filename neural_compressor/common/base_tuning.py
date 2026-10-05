@@ -475,9 +475,7 @@ class TuningMonitor:
         """Print trial results in a formatted table using Statistics class."""
         baseline_val = self.baseline if self.baseline is not None else 0.0
         baseline_str = f"{baseline_val:.4f}" if self.baseline is not None else "N/A"
-        target_threshold_str = (
-            f"{baseline_val * (1 - self.tuning_config.tolerable_loss):.4f}" if self.baseline is not None else "N/A"
-        )
+        target_threshold_str = f"{self._target_threshold():.4f}" if self.baseline is not None else "N/A"
 
         # Calculate relative loss if baseline is available
         relative_loss_val = 0.0
@@ -490,7 +488,7 @@ class TuningMonitor:
         best_result = max(record.trial_result for record in self.tuning_history)
 
         # Status indicator with emoji
-        if self.baseline is not None and trial_result >= (baseline_val * (1 - self.tuning_config.tolerable_loss)):
+        if self.baseline is not None and trial_result >= self._target_threshold():
             status = "✅ PASSED"
         else:
             status = "❌ FAILED"
@@ -508,6 +506,14 @@ class TuningMonitor:
         Statistics(
             output_data, header=f"🎯 Auto-Tune Trial #{trial_index} Results", field_names=field_names
         ).print_stat()
+
+    def _target_threshold(self) -> float:
+        """Returns the lowest trial result that is within the tolerable loss of the baseline.
+
+        The allowed drop is relative to the magnitude of the baseline, so that it also works
+        for baselines that are negative (e.g., an eval_fn returning a negated loss).
+        """
+        return self.baseline - abs(self.baseline) * self.tuning_config.tolerable_loss
 
     def set_baseline(self, baseline: float):
         """Set the baseline value for auto-tune.
@@ -557,9 +563,7 @@ class TuningMonitor:
         reach_max_trials = self.trial_cnt >= self.tuning_config.max_trials
         # reach accuracy goal
         meet_accuracy_goal = (
-            False
-            if self.baseline is None
-            else self.tuning_history[-1].trial_result >= (self.baseline * (1 - self.tuning_config.tolerable_loss))
+            False if self.baseline is None else self.tuning_history[-1].trial_result >= self._target_threshold()
         )
         # [-1] is the last element representing the latest trail record.
         return reach_max_trials or meet_accuracy_goal
