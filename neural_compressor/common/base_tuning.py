@@ -14,6 +14,7 @@
 """The auto-tune module."""
 
 import copy
+import functools
 import uuid
 from typing import Any, Callable, Dict, Generator, Iterator, List, Optional, Sized, Tuple, Union
 
@@ -59,6 +60,16 @@ class EvaluationFuncWrapper:
         """
         result = self.eval_fn(model, *self.eval_args) if self.eval_args else self.eval_fn(model)
         return result
+
+
+def _get_eval_fn_name(eval_fn: Callable) -> str:
+    """Return a readable name for an evaluation function.
+
+    ``functools.partial`` objects and callable class instances have no ``__name__``.
+    """
+    while isinstance(eval_fn, functools.partial):
+        eval_fn = eval_fn.func
+    return getattr(eval_fn, "__name__", type(eval_fn).__name__)
 
 
 class Evaluator:
@@ -139,7 +150,7 @@ class Evaluator:
             {
                 self.EVAL_FN: user_eval_fn_pair[self.EVAL_FN],
                 self.WEIGHT: user_eval_fn_pair.get(self.WEIGHT, 1.0),
-                self.FN_NAME: user_eval_fn_pair.get(self.FN_NAME, user_eval_fn_pair[self.EVAL_FN].__name__),
+                self.FN_NAME: user_eval_fn_pair.get(self.FN_NAME) or _get_eval_fn_name(user_eval_fn_pair[self.EVAL_FN]),
             }
             for user_eval_fn_pair in user_eval_fns
         ]
@@ -167,7 +178,7 @@ class Evaluator:
             # single eval_fn
             eval_fn_pair = copy.deepcopy(self.EVAL_FN_TEMPLATE)
             eval_fn_pair[self.EVAL_FN] = eval_fns
-            eval_fn_pair[self.FN_NAME] = eval_fns.__name__
+            eval_fn_pair[self.FN_NAME] = _get_eval_fn_name(eval_fns)
             eval_fns = [eval_fn_pair]
         elif isinstance(eval_fns, Dict):
             eval_fns = [eval_fns]
