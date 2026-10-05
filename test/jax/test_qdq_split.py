@@ -48,7 +48,6 @@ def _make_test_inputs(model_dtype):
 @pytest.mark.smoke_test_if("model_dtype=bfloat16-activation_dtype=float8_e5m2")
 def test_dynamic_qdq_split_equivalence(model_dtype, activation_dtype, fixed_range):
     """Test that layer.call_dq(layer.call_q(x)) == layer(x) on a single DynamicQDQLayer."""
-
     test_inputs = _make_test_inputs(model_dtype)
     if fixed_range:
         fixed_range = (-3.0, 3.0)
@@ -90,7 +89,6 @@ def test_dynamic_qdq_split_equivalence(model_dtype, activation_dtype, fixed_rang
 @pytest.mark.smoke_test_if("const_scale=True-model_dtype=float32-activation_dtype=float8_e4m3fn")
 def test_static_qdq_split_equivalence(model_dtype, activation_dtype, const_scale, fixed_range):
     """Test that layer.call_dq(layer.call_q(x)) == layer(x) on a single StaticQDQLayer."""
-
     test_inputs = _make_test_inputs(model_dtype)
     if fixed_range:
         fixed_range = (-4.0, 4.0)

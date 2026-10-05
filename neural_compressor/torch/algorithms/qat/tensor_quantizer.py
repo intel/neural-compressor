@@ -85,7 +85,6 @@ class TensorQuantizer(nn.Module):
         Returns:
             outputs: A Tensor of type output_dtype
         """
-
         if self._disabled or (not self._if_quant):
             self._input_dtype = inputs.dtype
             return inputs
@@ -104,7 +103,6 @@ class TensorQuantizer(nn.Module):
 
     def _fake_quantize(self, inputs: torch.Tensor):
         """Fake quantization."""
-
         # the shared_exp can be trainable
         if self.learn_exponent:
             q, shared_exp, _ = self.quant_func(

@@ -14,7 +14,6 @@ logger = init_logger(__name__)
 
 def register():
     """Called by vLLM plugin loader in every process (main + workers)."""
-
     if not envs.VLLM_QDQ:
         return
 

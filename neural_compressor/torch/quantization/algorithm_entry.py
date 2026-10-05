@@ -706,7 +706,6 @@ def hybrid_gptq_entry(
     **kwargs,
 ) -> torch.nn.Module:
     """The main entry to apply w4a8 gptq quantization."""
-
     from neural_compressor.torch.algorithms.mixed_low_precision import HybridGPTQQuantizer
 
     quantizer = get_quantizer(model, quantizer_cls=HybridGPTQQuantizer, quant_config=configs_mapping)

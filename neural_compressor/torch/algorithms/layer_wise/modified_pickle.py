@@ -38,6 +38,7 @@ Misc variables:
     compatible_formats
 """
 
+import _compat_pickle
 import codecs
 import io
 import re
@@ -48,8 +49,6 @@ from itertools import islice
 from struct import pack, unpack
 from sys import maxsize
 from types import FunctionType
-
-import _compat_pickle
 
 __all__ = ["PickleError", "PicklingError", "UnpicklingError", "Pickler", "Unpickler", "dump", "dumps", "load", "loads"]
 
