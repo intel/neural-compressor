@@ -1517,13 +1517,12 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         orig.const_scale = const_scale
         orig.const_weight = const_weight
         orig.w_quant_granularity = w_quant_granularity
+        orig.inputs_qdq = StaticQDQLayer("inputs_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
         orig._is_quantized = None
         if const_scale:
-            orig._const_variables = ["a_scale", "e_scale"]
+            orig._const_variables = ["e_scale"]
             if not orig.tie_weights:
                 orig._const_variables.append("re_scale")
-            if orig._is_int8:
-                orig._const_variables.append("a_zero_point")
         else:
             orig._const_variables = []
         if const_weight:
@@ -1540,7 +1539,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             None: Adds observer layers.
         """
         self._tracker.unlock()
-        self.input_observer = MinMaxObserver(dtype=self.dtype_policy)
+        self.inputs_qdq.add_observers()
         self._tracker.lock()
 
     def add_variables(self):
@@ -1550,23 +1549,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             None: Initializes quantization variables.
         """
         self._tracker.unlock()
-        if self._is_int8:
-            self.a_zero_point = self.add_weight(
-                name="a_zero_point",
-                shape=(1,),
-                initializer="zeros",
-                trainable=False,
-                autocast=False,
-                dtype=jnp.int32,
-            )
-        self.a_scale = self.add_weight(
-            name="a_scale",
-            shape=(1,),
-            initializer="zeros",
-            trainable=False,
-            autocast=False,
-            dtype=self.compute_dtype,
-        )
+        self.inputs_qdq.add_variables()
         self.e_quant_axis = self._derive_e_quant() if self.w_quant_granularity == "per_channel" else None
         e_scale, _ = get_q_params(
             self.embeddings,
@@ -1617,8 +1600,6 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
                 dtype=self.weight_dtype,
             )
 
-        self.aquantfun = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_int8)
-        self.adequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_int8)
         self.wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
         self._tracker.lock()
@@ -1631,22 +1612,11 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         """
         self._tracker.unlock()
 
-        a_range = self.input_observer.get_calibrated_range()
-        a_scale, a_zero_point = get_q_params(
-            a_range, self.activation_dtype, self.compute_dtype, asymmetric=self._is_int8
-        )
-        if jnp.isinf(a_scale).any().item():
-            logger.warning(
-                f"Activation scale is inf for layer {self._path}. This may be caused by missing calibration data. "
-                "Please make sure to run calibration with representative dataset."
-            )
+        self.inputs_qdq.convert()
+        if not self.inputs_qdq._is_quantized:
             self._is_quantized = False
             self._tracker.lock()
             return
-
-        self.a_scale.assign(a_scale)
-        if self._is_int8:
-            self.a_zero_point.assign(a_zero_point)
 
         embeddings_quant = self.wquantfun(self.embeddings, self.e_scale.value, axis=self.e_quant_axis)
         self._embeddings_quant.assign(embeddings_quant)
@@ -1670,8 +1640,9 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             return
 
         self._tracker.unlock()
+        self.inputs_qdq.post_quantization_cleanup()
         if self._is_quantized:
-            self.call = self.call_int8 if self._is_int8 else self.call_fp8
+            self.call = self.call_quantized
 
             # convert variables to attributes (const) if needed
             for name in self._const_variables:
@@ -1686,8 +1657,6 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         else:
             self.call = super().call
             for attr_name in [
-                "a_scale",
-                "a_zero_point",
                 "e_scale",
                 "re_scale",
                 "_embeddings_quant",
@@ -1706,7 +1675,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
 
         self._tracker.lock()
 
-    def call_fp8(self, inputs, reverse=False):
+    def call_quantized(self, inputs, reverse=False):
         """Compute embeddings with offline-quantized weights and activation QDQ.
 
         Args:
@@ -1721,38 +1690,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
 
         if self.reverse_dtype is not None:
             inputs = ops.cast(inputs, self.reverse_dtype)
-        if self.const_scale:
-            a_scale = self.a_scale
-        else:
-            a_scale = self.a_scale.value
-        x = self.aquantfun(inputs, a_scale)
-        x = self.adequantfun(x, a_scale)
-        x = super().call(x, reverse=reverse)
-        return x
-
-    def call_int8(self, inputs, reverse=False):
-        """Compute embeddings with offline-quantized weights and activation QDQ.
-
-        Args:
-            inputs (jnp.ndarray): Input tensor.
-            reverse (bool): Whether to compute the reverse embedding.
-
-        Returns:
-            jnp.ndarray: Embedded outputs or logits.
-        """
-        if not reverse:
-            return super().call(inputs, reverse=reverse)
-
-        if self.reverse_dtype is not None:
-            inputs = ops.cast(inputs, self.reverse_dtype)
-        if self.const_scale:
-            a_scale = self.a_scale
-            a_zero_point = self.a_zero_point
-        else:
-            a_scale = self.a_scale.value
-            a_zero_point = self.a_zero_point.value
-        x = self.aquantfun(inputs, a_scale, a_zero_point)
-        x = self.adequantfun(x, a_scale, a_zero_point)
+        x = self.inputs_qdq(inputs)
         x = super().call(x, reverse=reverse)
         return x
 
@@ -1767,7 +1705,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             jnp.ndarray: Embedded outputs or logits.
         """
         if reverse:
-            inputs = self.input_observer(inputs)
+            inputs = self.inputs_qdq(inputs)
         return super().call(inputs, reverse=reverse)
 
     @property
