@@ -1478,8 +1478,11 @@ verify_api(Gemma3VisionAttention, QStaticGemma3VisionAttention, "call")
 class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbedding):
     """Statically quantized ReversibleEmbedding layer."""
 
-    e_quant_axis = 1
-    re_quant_axis = 0
+    def _derive_e_quant(self):
+        return (0,)
+
+    def _derive_re_quant(self):
+        return (1,)
 
     @classmethod
     def prepare(
@@ -1564,12 +1567,13 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             autocast=False,
             dtype=self.compute_dtype,
         )
+        self.e_quant_axis = self._derive_e_quant() if self.w_quant_granularity == "per_channel" else None
         e_scale, _ = get_q_params(
             self.embeddings,
             self.weight_dtype,
             self.compute_dtype,
             asymmetric=False,
-            axis=self.e_quant_axis if self.w_quant_granularity == "per_channel" else None,
+            axis=self.e_quant_axis,
         )
         self.e_scale = self.add_weight(
             name="e_scale",
@@ -1588,12 +1592,13 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             dtype=self.weight_dtype,
         )
         if not self.tie_weights:
+            self.re_quant_axis = self._derive_re_quant() if self.w_quant_granularity == "per_channel" else None
             re_scale, _ = get_q_params(
                 self.reverse_embeddings,
                 self.weight_dtype,
                 self.compute_dtype,
                 asymmetric=False,
-                axis=self.re_quant_axis if self.w_quant_granularity == "per_channel" else None,
+                axis=self.re_quant_axis,
             )
             self.re_scale = self.add_weight(
                 name="re_scale",
@@ -1643,11 +1648,13 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         if self._is_int8:
             self.a_zero_point.assign(a_zero_point)
 
-        embeddings_quant = self.wquantfun(self.embeddings, self.e_scale.value)
+        embeddings_quant = self.wquantfun(self.embeddings, self.e_scale.value, axis=self.e_quant_axis)
         self._embeddings_quant.assign(embeddings_quant)
 
         if not self.tie_weights:
-            reverse_embeddings_quant = self.wquantfun(self.reverse_embeddings, self.re_scale.value)
+            reverse_embeddings_quant = self.wquantfun(
+                self.reverse_embeddings, self.re_scale.value, axis=self.re_quant_axis
+            )
             self._reverse_embeddings_quant.assign(reverse_embeddings_quant)
 
         self._is_quantized = True
@@ -1774,7 +1781,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
                 e_scale = self.e_scale
             else:
                 e_scale = self.e_scale.value
-            _embeddings_quant = self.wdequantfun(_embeddings_quant, e_scale)
+            _embeddings_quant = self.wdequantfun(_embeddings_quant, e_scale, axis=self.e_quant_axis)
             return _embeddings_quant
         ret = super().embeddings
         return ret.value
@@ -1790,7 +1797,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
                 re_scale = self.re_scale
             else:
                 re_scale = self.re_scale.value
-            _reverse_embeddings_quant = self.wdequantfun(_reverse_embeddings_quant, re_scale)
+            _reverse_embeddings_quant = self.wdequantfun(_reverse_embeddings_quant, re_scale, axis=self.re_quant_axis)
             return _reverse_embeddings_quant
         ret = super().reverse_embeddings
         return ret.value
