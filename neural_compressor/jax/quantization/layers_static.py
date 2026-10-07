@@ -608,12 +608,9 @@ class QStaticDenseMixin(SaveableLayerMixin):
             autocast=False,
             dtype=self.compute_dtype,
         )
+        self.w_quant_axis = self._derive_w_quant() if self.w_quant_granularity == "per_channel" else None
         w_scale, _ = get_q_params(
-            self.kernel,
-            self.weight_dtype,
-            self.compute_dtype,
-            asymmetric=False,
-            axis=self.w_quant_axis if self.w_quant_granularity == "per_channel" else None,
+            self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=False, axis=self.w_quant_axis
         )
         self.w_scale = self.add_weight(
             name="w_scale",
@@ -663,7 +660,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
         if self._is_int8:
             self.a_zero_point.assign(a_zero_point)
 
-        _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value)
+        _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value, axis=self.w_quant_axis)
         self._kernel_quant.assign(_kernel_quant)
         self._is_quantized = True
         self._tracker.lock()
@@ -729,7 +726,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
                 w_scale = self.w_scale
             else:
                 w_scale = self.w_scale.value
-            _kernel_quant = self.wdequantfun(_kernel_quant, w_scale)
+            _kernel_quant = self.wdequantfun(_kernel_quant, w_scale, axis=self.w_quant_axis)
             return _kernel_quant
         return ops.convert_to_tensor(super().kernel)
 
@@ -792,7 +789,8 @@ class QStaticDenseMixin(SaveableLayerMixin):
 class QStaticDense(QStaticDenseMixin, keras.layers.Dense):
     """Statically quantized Dense layer."""
 
-    w_quant_axis = 0
+    def _derive_w_quant(self):
+        return (0,)
 
 
 verify_api(keras.layers.Dense, QStaticDense, "call")
@@ -802,10 +800,9 @@ verify_api(keras.layers.Dense, QStaticDense, "call")
 class QStaticEinsumDense(QStaticDenseMixin, keras.layers.EinsumDense):
     """Statically quantized EinsumDense layer."""
 
-    @property
-    def w_quant_axis(self):
+    def _derive_w_quant(self):
         self._set_quantization_info()
-        return self._kernel_reduced_axes
+        return tuple(int(a) for a in self._kernel_reduced_axes)
 
 
 verify_api(keras.layers.EinsumDense, QStaticEinsumDense, "call")
@@ -873,9 +870,8 @@ class QStaticConv2DMixin(QStaticDenseMixin, keras.layers.Conv2D):
 class QStaticConv2d(QStaticConv2DMixin, keras.layers.Conv2D):
     """Statically quantized Conv2D layer."""
 
-    @property
-    def w_quant_axis(self):
-        return tuple(i for i in range(self.kernel.ndim) if i != self.kernel.ndim - 1)
+    def _derive_w_quant(self):
+        return tuple(i for i in range(self._kernel.ndim - 1))
 
 
 verify_api(keras.layers.Conv2D, QStaticConv2d, "call")
