@@ -44,10 +44,7 @@ python quantize.py \
 
 ## Evaluation
 
-`run_benchmark.sh` is aligned with Llama benchmark style:
-
-- Automatically infers `tensor_parallel_size` from `CUDA_VISIBLE_DEVICES`
-- Exports `VLLM_QDQ=1`
+`run_benchmark.sh` is a thin wrapper over the shared driver at `benchmark/lm_eval/run_lm_eval.sh`:
 - Uses vLLM backend through `lm_eval`
 
 ### Benchmark Quick Start

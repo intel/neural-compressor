@@ -183,29 +183,31 @@ For convenience, we provide a benchmark script that automatically handles GPU de
 
 **All 5 MXFP benchmark cases:**
 
+The default task list is `piqa,hellaswag,mmlu`; pass `--tasks` to use the Llama task variants.
+
 1. **Llama 3.1 8B MXFP8** (1 GPU):
 ```bash
-CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=Llama-3.1-8B-MXFP8 --gpu_memory_utilization=0.8
+CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=Llama-3.1-8B-MXFP8 --gpu_memory_utilization=0.8 --tasks=piqa,hellaswag,mmlu_llama,gsm8k_llama
 ```
 
 2. **Llama 3.1 8B MXFP4 Mixed** (1 GPU):
 ```bash
-CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=Llama-3.1-8B-MXFP4-MXFP8  --gpu_memory_utilization=0.6
+CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=Llama-3.1-8B-MXFP4-MXFP8 --gpu_memory_utilization=0.6 --tasks=piqa,hellaswag,mmlu_llama,gsm8k_llama
 ```
 
 3. **Llama 3.3 70B MXFP8** (2 GPU):
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.3-70B-MXFP8  --gpu_memory_utilization=0.8
+CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.3-70B-MXFP8 --gpu_memory_utilization=0.8 --tasks=piqa,hellaswag,mmlu_llama,gsm8k_llama
 ```
 
 4. **Llama 3.3 70B MXFP4 Mixed** (2 GPU):
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.3-70B-MXFP4-MXFP8  --gpu_memory_utilization=0.6
+CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.3-70B-MXFP4-MXFP8 --gpu_memory_utilization=0.6 --tasks=piqa,hellaswag,mmlu_llama,gsm8k_llama
 ```
 
 5. **Llama 3.1 70B MXFP8** (2 GPU):
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.1-70B-MXFP8   --gpu_memory_utilization=0.8
+CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.1-70B-MXFP8 --gpu_memory_utilization=0.8 --tasks=piqa,hellaswag,mmlu_llama,gsm8k_llama
 ```
 
 The script automatically:
