@@ -25,7 +25,6 @@ import keras_hub.layers
 import numpy as np
 from jax import numpy as jnp
 from keras import ops
-from keras.src.backend import set_keras_mask
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
 
@@ -375,11 +374,11 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         self._tracker.unlock()
         if self._is_quantized:
             self._setup_quantized_ops()
-            # convert variables to attributes (const) if needed
-            for name in self._const_variables:
-                var = getattr(self, name)
-                # Check if var is a Variable (has .value attribute) - if not, it's already been converted
-                if hasattr(var, "value"):
+            model_is_during_load = self.a_scale == 0.0
+            if not model_is_during_load:
+                # convert variables to attributes (const) if needed
+                for name in self._const_variables:
+                    var = getattr(self, name)
                     value = jnp.array(var.value)
                     self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
                     setattr(self, name, value)
@@ -387,12 +386,15 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             self.call = self._passthrough
             self.call_q = self._passthrough
             self.call_dq = self._passthrough
-            attrs_to_remove = [self.a_scale]
+            attrs_to_remove = ["a_scale"]
             if self._is_asymmetric:
-                attrs_to_remove.append(self.a_zero_point)
-            for attr in attrs_to_remove:
-                self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not attr]
-                del attr
+                attrs_to_remove.append("a_zero_point")
+            for attr_name in attrs_to_remove:
+                self._non_trainable_variables[:] = [
+                    v for v in self._non_trainable_variables if v is not getattr(self, attr_name)
+                ]
+                if hasattr(self, attr_name):
+                    delattr(self, attr_name)
             # All variables which names are stored in _const_variables are deleted in above loop
             # so _const_variables can be cleared
             self._const_variables.clear()
@@ -682,10 +684,10 @@ class QStaticDenseMixin(SaveableLayerMixin):
             del self._kernel
 
             # convert variables to attributes (const) if needed
-            for name in self._const_variables:
-                var = getattr(self, name)
-                # Check if var is a Variable (has .value attribute) - if not, it's already been converted
-                if hasattr(var, "value"):
+            model_is_during_load = self.a_scale == 0.0
+            if not model_is_during_load:
+                for name in self._const_variables:
+                    var = getattr(self, name)
                     value = jnp.array(var.value)
                     self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
                     delattr(self, name)
@@ -693,12 +695,17 @@ class QStaticDenseMixin(SaveableLayerMixin):
         else:
             self.call = super().call
 
-            attrs_to_remove = [self.a_scale, self.w_scale, self._kernel_quant]
+            attrs_to_remove = [
+                ("a_scale", self.a_scale),
+                ("w_scale", self.w_scale),
+                ("_kernel_quant", self._kernel_quant),
+            ]
             if self._is_int8:
-                attrs_to_remove.append(self.a_zero_point)
-            for attr in attrs_to_remove:
+                attrs_to_remove.append(("a_zero_point", self.a_zero_point))
+            for attr_name, attr in attrs_to_remove:
                 self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not attr]
-                del attr
+                if hasattr(self, attr_name):
+                    delattr(self, attr_name)
 
             # All variables which names are stored in _const_variables are deleted in above loop
             # so _const_variables can be cleared
@@ -1517,7 +1524,9 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         orig.const_scale = const_scale
         orig.const_weight = const_weight
         orig.w_quant_granularity = w_quant_granularity
-        orig.inputs_qdq = StaticQDQLayer("inputs_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
+        orig.inputs_qdq = StaticQDQLayer(
+            "inputs_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, orig.const_scale
+        )
         orig._is_quantized = None
         if const_scale:
             orig._const_variables = ["e_scale"]
@@ -1618,12 +1627,12 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             self._tracker.lock()
             return
 
-        embeddings_quant = self.wquantfun(self.embeddings, self.e_scale.value, axis=self.e_quant_axis)
+        embeddings_quant = self.wquantfun(super().embeddings.value, self.e_scale.value, axis=self.e_quant_axis)
         self._embeddings_quant.assign(embeddings_quant)
 
         if not self.tie_weights:
             reverse_embeddings_quant = self.wquantfun(
-                self.reverse_embeddings, self.re_scale.value, axis=self.re_quant_axis
+                super().reverse_embeddings.value, self.re_scale.value, axis=self.re_quant_axis
             )
             self._reverse_embeddings_quant.assign(reverse_embeddings_quant)
 
@@ -1644,12 +1653,12 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         if self._is_quantized:
             self.call = self.call_quantized
 
-            # convert variables to attributes (const) if needed
-            for name in self._const_variables:
-                if hasattr(self, name):
-                    var = getattr(self, name)
-                    # Check if var is a Variable (has .value attribute) - if not, it's already been converted
-                    if hasattr(var, "value"):
+            model_is_during_load = all(self.e_scale == 0.0)
+            if not model_is_during_load:
+                # convert variables to attributes (const) if needed
+                for name in self._const_variables:
+                    if hasattr(self, name):
+                        var = getattr(self, name)
                         value = jnp.array(var.value)
                         self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
                         delattr(self, name)
@@ -1705,6 +1714,8 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             jnp.ndarray: Embedded outputs or logits.
         """
         if reverse:
+            if self.reverse_dtype is not None:
+                inputs = ops.cast(inputs, self.reverse_dtype)
             inputs = self.inputs_qdq(inputs)
         return super().call(inputs, reverse=reverse)
 

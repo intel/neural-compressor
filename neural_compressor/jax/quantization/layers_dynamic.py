@@ -25,7 +25,6 @@ import keras_hub.layers
 import numpy as np
 from jax import numpy as jnp
 from keras import ops
-from keras.src.backend import set_keras_mask
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
 
