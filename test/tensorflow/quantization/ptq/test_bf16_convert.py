@@ -247,7 +247,9 @@ class TestBF16Convert(unittest.TestCase):
                 os.system("md C:\\tmp\.neural_compressor && cd C:\\tmp\.neural_compressor")
                 from urllib import request
 
-                request.urlretrieve(self.rn50_fp32_pb_url)
+                if not self.rn50_fp32_pb_url.startswith(("http://", "https://")):
+                    raise ValueError("Only http/https URLs are supported.")
+                request.urlretrieve(self.rn50_fp32_pb_url)  # nosec B310
 
         self.input_graph = tf.compat.v1.GraphDef()
         with open(self.pb_path, "rb") as f:

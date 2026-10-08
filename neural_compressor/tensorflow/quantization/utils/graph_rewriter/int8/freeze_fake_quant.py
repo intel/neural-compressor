@@ -16,6 +16,8 @@
 # limitations under the License.
 """Freeze FakeQuant op Graph Rewriter."""
 
+import ast
+
 from tensorflow.python.framework import dtypes
 
 from neural_compressor.tensorflow.quantization.utils.graph_util import GraphAnalyzer, GraphRewriterHelper
@@ -137,7 +139,7 @@ class FreezeFakeQuantOpOptimizer(GraphRewriterBase):  # pragma: no cover
     def do_transformation(self):
         """Execute freeze FakeQuant optimization."""
         for _pattern, _handler in self.freeze_patterns.items():
-            _match_pattern_nodes = self.graph_analyzer.query_fusion_pattern_nodes(eval(_pattern))
+            _match_pattern_nodes = self.graph_analyzer.query_fusion_pattern_nodes(ast.literal_eval(_pattern))
             if len(_match_pattern_nodes) == 0:
                 continue
 

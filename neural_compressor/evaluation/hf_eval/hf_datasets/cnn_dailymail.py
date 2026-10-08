@@ -142,7 +142,7 @@ class CNNDAILYMAIL(object):
 
     def load_dataset(self):
         """Loads dataset."""
-        list_data_dict = load_dataset("cnn_dailymail", "3.0.0")["validation"]
+        list_data_dict = load_dataset("cnn_dailymail", "3.0.0")["validation"]  # nosec B615
         if self.num_samples is not None:
             self.num_samples = min(self.num_samples, len(list_data_dict))
             list_data_dict = random.choices(list_data_dict, k=self.num_samples)
@@ -161,7 +161,7 @@ class CNNDAILYMAIL(object):
 
     def load_tokenizer(self):
         """Returns the tokenizer."""
-        self.tokenizer = AutoTokenizer.from_pretrained(
+        self.tokenizer = AutoTokenizer.from_pretrained(  # nosec B615 - model_path is supplied by the caller
             self.model_path,
             model_max_length=2048,
             padding_side="left",

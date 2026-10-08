@@ -39,7 +39,9 @@ class TestTensorflowShareNodesGraphParsing(unittest.TestCase):
                 os.system("md C:\\tmp\.neural_compressor && cd C:\\tmp\.neural_compressor")
                 from urllib import request
 
-                request.urlretrieve(self.ssd_resnet50_model, self.dst_path)
+                if not self.ssd_resnet50_model.startswith(("http://", "https://")):
+                    raise ValueError("Only http/https URLs are supported.")
+                request.urlretrieve(self.ssd_resnet50_model, self.dst_path)  # nosec B310
                 tar = tarfile.open(self.dst_path)
                 tar.extractall(self.unzipped_folder_name)
 

@@ -32,7 +32,9 @@ class TestTFAutoDetectInputOutput(unittest.TestCase):
                     os.system("md C:\\tmp\.neural_compressor && cd C:\\tmp\.neural_compressor")
                     from urllib import request
 
-                    request.urlretrieve(self.mb_model_url)
+                    if not self.mb_model_url.startswith(("http://", "https://")):
+                        raise ValueError("Only http/https URLs are supported.")
+                    request.urlretrieve(self.mb_model_url)  # nosec B310
             except Exception as e:
                 self.saved_flag = False
 

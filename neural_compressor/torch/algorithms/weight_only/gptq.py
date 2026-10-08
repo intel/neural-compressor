@@ -785,7 +785,7 @@ class RAWGPTQuantizer(object):
                         gptq_perm = None
                     if self.use_layer_wise:
                         state_dict = torch.load(
-                            LWQ_WORKSPACE + f"/{self.get_full_layer_name(layer_name, block_idx)}.pt"
+                            LWQ_WORKSPACE + f"/{self.get_full_layer_name(layer_name, block_idx)}.pt", weights_only=True
                         )
                         Q = state_dict["weight"].data
                         bias = state_dict["bias"] if "bias" in state_dict.keys() else None
@@ -1013,7 +1013,7 @@ class RAWGPTQuantizer(object):
                 else:
                     gptq_perm = None
                 if self.use_layer_wise:  # pragma: no cover
-                    state_dict = torch.load(LWQ_WORKSPACE + f"/{full_layer_name}.pt")
+                    state_dict = torch.load(LWQ_WORKSPACE + f"/{full_layer_name}.pt", weights_only=True)
                     Q = state_dict["weight"].data
                     bias = state_dict["bias"] if "bias" in state_dict.keys() else None
                 else:

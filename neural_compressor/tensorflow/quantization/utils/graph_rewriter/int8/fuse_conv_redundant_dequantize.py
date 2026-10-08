@@ -16,6 +16,8 @@
 # limitations under the License.
 """Fuse QuantizedConv QuantizedDeConv with redundant Dequantize Graph Rewriter."""
 
+import ast
+
 from tensorflow.core.framework import attr_value_pb2, node_def_pb2
 from tensorflow.python.framework import dtypes
 
@@ -123,7 +125,7 @@ class FuseConvRedundantDequantizeTransformer(GraphRewriterBase):
                 new_node.attr["Thost_inputs"].CopyFrom(quantized_node.attr["Thost_inputs"])
             Helper.set_attr_type_list(new_node, "Thost_outputs", [dequantize_node.attr["dtype"].type])
             new_node.attr["out_type"].CopyFrom(attr_value_pb2.AttrValue(type=dequantize_node.attr["dtype"].type))
-            Helper.set_attr_string_list(new_node, "fused_ops", eval(fused_ops))
+            Helper.set_attr_string_list(new_node, "fused_ops", ast.literal_eval(fused_ops))
             if "Tsummand" in quantized_node.attr:
                 Helper.set_attr_dtype(new_node, "Tsummand", dtype_map_dict[dequantize_node.attr["dtype"].type])
 
