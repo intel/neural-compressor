@@ -1653,7 +1653,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         if self._is_quantized:
             self.call = self.call_quantized
 
-            model_is_during_load = all(self.e_scale == 0.0)
+            model_is_during_load = bool(jnp.all(self.e_scale == 0.0))
             if not model_is_during_load:
                 # convert variables to attributes (const) if needed
                 for name in self._const_variables:
