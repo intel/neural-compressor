@@ -88,7 +88,7 @@ RTN (Round-to-Nearest) is enough to keep accuracy.
 
 ```bash
 # Quantize and export AutoRound format
-CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP8
+CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --dtype=mxfp8 --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP8
 ```
 
 #### Llama 3.1 8B MXFP4 (Mixed with MXFP8, Target_bits=7.8)
@@ -96,7 +96,7 @@ CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp8 -
 `Target_bits=7.8` is an empirical value.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-8B --dtype=mxfp4_mixed --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP4-MXFP8
+CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --dtype=mxfp4_mixed --input_model=/models/Meta-Llama-3.1-8B-Instruct --output_model=Llama-3.1-8B-MXFP4-MXFP8
 ```
 
 To obtain the optimal target bit through `autotune` API:
@@ -123,7 +123,7 @@ CUDA_VISIBLE_DEVICES=0 python quantize.py  \
 RTN (Round-to-Nearest) is enough to keep accuracy.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.3-70B --dtype=mxfp8 --input_model=/models/Llama-3.3-70B-Instruct/ --output_model=Llama-3.3-70B-MXFP8
+CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --dtype=mxfp8 --input_model=/models/Llama-3.3-70B-Instruct/ --output_model=Llama-3.3-70B-MXFP8
 ```
 
 > Note: Within the accuracy threshold, lm_head quantization is acceptable, but this feature is not enabled here to support vLLM inference.
@@ -133,7 +133,7 @@ CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.3-70B --dtype=mxfp8 
 `Target_bits=5.8` is an empirical value.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.3-70B --dtype=mxfp4_mixed --input_model=/models/Llama-3.3-70B-Instruct/ --output_model=Llama-3.3-70B-MXFP4-MXFP8
+CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --dtype=mxfp4_mixed --input_model=/models/Llama-3.3-70B-Instruct/ --output_model=Llama-3.3-70B-MXFP4-MXFP8
 ```
 
 #### Llama 3.1 70B MXFP8
@@ -141,7 +141,7 @@ CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.3-70B --dtype=mxfp4_
 RTN (Round-to-Nearest) is enough to keep accuracy.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-70B --dtype=mxfp8 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-MXFP8
+CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --dtype=mxfp8 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-MXFP8
 ```
 
 > Note: Within the accuracy threshold, lm_head quantization is acceptable, but this feature is not enabled here to support vLLM inference.
@@ -151,7 +151,7 @@ CUDA_VISIBLE_DEVICES=0 bash run_quant.sh --topology=Llama-3.1-70B --dtype=mxfp8 
 AutoRound tuning helps improve the accuracy.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 bash run_quant.sh --topology=Llama-3.1-70B --dtype=nvfp4 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-NVFP4
+CUDA_VISIBLE_DEVICES=0,1 bash run_quant.sh --dtype=nvfp4 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-NVFP4
 ```
 
 > Note: Within the accuracy threshold, lm_head quantization is acceptable, but this feature is not enabled here to support vLLM inference.
@@ -161,7 +161,7 @@ CUDA_VISIBLE_DEVICES=0,1 bash run_quant.sh --topology=Llama-3.1-70B --dtype=nvfp
 RTN (Round-to-Nearest) is enough to keep accuracy.
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_quant.sh --topology=Llama-3.1-70B --dtype=unvfp4 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-uNVFP4
+CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_quant.sh --dtype=unvfp4 --input_model=/models/Llama-3.1-70B-Instruct/ --output_model=Llama-3.1-70B-uNVFP4
 ```
 Note: If you got OOM issue, either increasing `CUDA_VISIBLE_DEVICES` or reducing `eval_batch_size` is suggested.
 
