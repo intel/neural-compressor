@@ -7,6 +7,8 @@ import hashlib
 import json
 import os
 
+import jax
+import keras
 import ml_dtypes
 import numpy as np
 from jax import numpy as jnp
@@ -133,3 +135,57 @@ def compute_model_hash(model):
     for w in model.weights:
         h.update(w.numpy().tobytes())
     return h.hexdigest()
+
+
+def compare_models_briefly(m1, m2):
+    """Compare selected variables between layers of two models."""
+
+    def _elements_are_equal(a, b):
+        if type(a) != type(b):
+            return False
+        if isinstance(a, keras.Variable):
+            a = a.value
+            b = b.value
+        if isinstance(a, jax.Array):
+            return bool(jnp.array_equal(a, b))
+        return a == b
+
+    layers_to_skip = ["MultiSegmentPacker"]
+    vars_to_check = [
+        "a_scale",
+        "w_scale",
+        "e_scale",
+        "re_scale",
+        "w_quant_axis",
+        "e_quant_axis",
+        "re_quant_axis",
+        "kernel",
+        "embeddings",
+        "reverse_embeddings",
+    ]
+    m1_layers = m1._flatten_layers()
+    m2_layers = m2._flatten_layers()
+    for lts in layers_to_skip:
+        m1_layers = [l for l in m1_layers if lts not in str(l.__class__)]
+        m2_layers = [l for l in m2_layers if lts not in str(l.__class__)]
+
+    if len(m1_layers) != len(m2_layers):
+        return False, f"Number of layers differs ({len(m1_layers)} != {len(m2_layers)})"
+    for i in range(len(m1_layers)):
+        l1 = m1_layers[i]
+        l2 = m2_layers[i]
+        for var in vars_to_check:
+            if hasattr(l1, var) != hasattr(l2, var):
+                return (
+                    False,
+                    f'hasattr({l1.__class__.__name__}, "{var}") = {hasattr(l1, var)}, '
+                    f'hasattr({l2.__class__.__name__}, "{var}") = {hasattr(l2, var)}',
+                )
+            if hasattr(l1, var) and not _elements_are_equal(getattr(l1, var), getattr(l2, var)):
+                return (
+                    False,
+                    f"{l1.__class__.__name__}.{var} = {getattr(l1, var)}; "
+                    f"{l2.__class__.__name__}.{var} = {getattr(l2, var)}",
+                )
+
+    return True, ""
