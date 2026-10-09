@@ -57,7 +57,6 @@ from neural_compressor.torch.utils import (
 )
 
 
-
 ###################### RTN Algo Entry ##################################
 @register_algo(RTN)
 @torch.no_grad()
