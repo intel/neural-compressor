@@ -313,7 +313,6 @@ class JaxBaseConfig(BaseConfig):
         Returns:
             Self: Parsed configuration instance of the calling class.
         """
-
         quant_type = config_dict.get("quantization_type")
 
         if quant_type == "composable":

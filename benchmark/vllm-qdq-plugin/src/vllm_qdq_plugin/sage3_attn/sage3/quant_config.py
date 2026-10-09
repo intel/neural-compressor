@@ -1,5 +1,4 @@
-"""
-Quantization configuration: enums, QuantConfig, AttentionConfig, and the ATTENTION_CONFIGS registry.
+"""Quantization configuration: enums, QuantConfig, AttentionConfig, and the ATTENTION_CONFIGS registry.
 
 This is the central data model for the composable architecture. Each quantization
 scheme is fully described by an AttentionConfig that composes:

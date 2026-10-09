@@ -87,8 +87,7 @@ class FuseNodeStartWithFusedInstanceNorm(QuantizeNodeBase):  # pragma: no cover
                     elif relu_node.op == "LeakyRelu":
                         helper.set_attr_string(quantized_in_node, "activation_mode", b"LeakyRelu")
                         helper.set_attr_float(quantized_in_node, "leakyrelu_alpha", relu_node.attr["alpha"].f)
-
-                helper.set_attr_dtype(quantized_in_node, "T", dtypes.qint8)
+helper.set_attr_dtype(quantized_in_node, "T", dtypes.qint8)
                 helper.set_attr_dtype(quantized_in_node, "U", dtypes.float32)
                 helper.set_attr_dtype(quantized_in_node, "Tout", dtypes.qint8)
                 helper.copy_attr(quantized_in_node, "reduction_axes", node.attr["reduction_axes"])
@@ -144,12 +143,12 @@ class FuseNodeStartWithFusedInstanceNorm(QuantizeNodeBase):  # pragma: no cover
                     min_tensor_index=1,
                 )
 
-            else:
+else:
                 new_node = node_def_pb2.NodeDef()
                 new_node.CopyFrom(node)
                 self.add_output_graph_node(new_node)
 
-    def get_longest_fuse(self):
+def get_longest_fuse(self):
         """Get the longest fusion pattern."""
         self._get_op_list()
         real_patterns = [pattern[1:-1] for pattern in self.sorted_patterns]
@@ -157,7 +156,7 @@ class FuseNodeStartWithFusedInstanceNorm(QuantizeNodeBase):  # pragma: no cover
         matched_rule, matched_node_name = self._is_match(real_patterns)
         return matched_rule, matched_node_name
 
-    def apply_the_transform(self):
+def apply_the_transform(self):
         """Quantize FusedInstanceNorm and apply the fusion pattern."""
         self._get_op_list()
         real_patterns = [pattern[1:-1] for pattern in self.sorted_patterns]

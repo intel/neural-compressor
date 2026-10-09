@@ -135,15 +135,16 @@ class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         raise RuntimeError("DynamicQDQLayer.call: add_variables() must be called before use.")
 
     def _passthrough(self, x, *args, **kwargs):
-        """No-op passthrough. Used when quantize or dequantize is disabled.
+        """No-op passthrough.
 
-        Args:
-            x (jnp.ndarray): Input tensor.
-            *args: Ignored positional params (e.g. scale, zero_point).
-            **kwargs: Ignored keyword params.
+        Used when quantize or dequantize is disabled.
+                Args:
+                    x (jnp.ndarray): Input tensor.
+                    *args: Ignored positional params (e.g. scale, zero_point).
+                    **kwargs: Ignored keyword params.
 
-        Returns:
-            jnp.ndarray: Unmodified input.
+                Returns:
+                    jnp.ndarray: Unmodified input.
         """
         return x
 
@@ -372,7 +373,6 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         Returns:
             jnp.ndarray: Dequantized kernel tensor.
         """
-
         if self.const_weight:
             _kernel_quant = self._kernel_quant
         else:
