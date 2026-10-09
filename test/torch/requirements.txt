@@ -12,3 +12,4 @@ pytest
 torchao
 torchvision
 transformers >= 5.5.0
+requests
