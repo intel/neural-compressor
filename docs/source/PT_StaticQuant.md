@@ -5,15 +5,12 @@ PyTorch Static Quantization
     2.1 [Static Quantization with IPEX Backend](#static-quantization-with-ipex-backend) \
         2.1.1 [Usage Sample with IPEX](#usage-sample-with-ipex) \
         2.1.2 [Specify Quantization Rules](#specify-quantization-rules) \
-        2.1.3 [Model Examples](#model-examples) \
-    2.2 [Static Quantization with PT2E Backend](#static-quantization-with-pt2e-backend) \
-        2.2.1 [Usage Sample with PT2E](#usage-sample-with-pt2e)  
-        2.2.2 [Model Examples with PT2E](#model-examples-with-pt2e)
+        2.1.3 [Model Examples](#model-examples)
 
 
 ## Introduction
 
-Post-Training Quantization (PTQ) is a technique used to convert a pre-trained floating-point model to a quantized model. This approach does not require model retraining. Instead, it uses calibration data to determine the optimal quantization parameters. Static quantization involves calibrating both weights and activations during the quantization process. Currently, we support two paths to perform static PTQ [Intel Extension for PyTorch (IPEX)](https://github.com/intel/intel-extension-for-pytorch) and [PyTorch 2 Export Quantization (PT2E)](https://pytorch.org/tutorials/prototype/pt2e_quant_x86_inductor.html).
+Post-Training Quantization (PTQ) is a technique used to convert a pre-trained floating-point model to a quantized model. This approach does not require model retraining. Instead, it uses calibration data to determine the optimal quantization parameters. Static quantization involves calibrating both weights and activations during the quantization process. Currently, we support static PTQ with [Intel Extension for PyTorch (IPEX)](https://github.com/intel/intel-extension-for-pytorch).
 
 ## Get Started
 
@@ -69,40 +66,3 @@ q_model = convert(prepared_model)
 #### Model Examples
 
 Users could refer to [examples](https://github.com/intel/neural-compressor/blob/main/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex) on how to quantize a new model.
-
-
-### Static Quantization with PT2E Backend
-Compared to the IPEX backend, which uses JIT compilation to capture the eager model, the PT2E path uses `torch.dynamo` to capture the eager model into an FX graph model, and then inserts the observers and Q/QD pairs on it. Finally it uses the `torch.compile` to perform the pattern matching and replace the  Q/DQ pairs with optimized quantized operators.
-
-#### Usage Sample with PT2E
-There are four steps to perform W8A8 static quantization with PT2E backend: `export`, `prepare`, `convert` and `compile`.
-
-```python
-import torch
-from neural_compressor.torch.export import export
-from neural_compressor.torch.quantization import StaticQuantConfig, prepare, convert
-
-# Prepare the float model and example inputs for export model
-model = UserFloatModel()
-example_inputs = ...
-
-# Export eager model into FX graph model
-exported_model = export(model=model, example_inputs=example_inputs)
-# Quantize the model
-quant_config = StaticQuantConfig()
-prepared_model = prepare(exported_model, quant_config=quant_config)
-# Calibrate
-run_fn(prepared_model)
-q_model = convert(prepared_model)
-# Compile the quantized model and replace the Q/DQ pattern with Q-operator
-from torch._inductor import config
-
-config.freezing = True
-opt_model = torch.compile(q_model)
-```
-
-> Note: The `set_local` of `StaticQuantConfig` will be supported after the torch 2.4 release.
-
-#### Model Examples with PT2E
-
-Users could refer to [examples](https://github.com/intel/neural-compressor/tree/main/examples/pytorch) on how to quantize a new model.
