@@ -65,4 +65,4 @@ q_model = convert(prepared_model)
 
 #### Model Examples
 
-Users could refer to [examples](https://github.com/intel/neural-compressor/blob/main/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex) on how to quantize a new model.
+The usage sample above demonstrates how to quantize a model with the IPEX backend.
