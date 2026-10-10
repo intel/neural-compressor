@@ -21,7 +21,6 @@ Submodules
    /autoapi/neural_compressor/torch/algorithms/layer_wise/index
    /autoapi/neural_compressor/torch/algorithms/mixed_precision/index
    /autoapi/neural_compressor/torch/algorithms/mx_quant/index
-   /autoapi/neural_compressor/torch/algorithms/pt2e_quant/index
    /autoapi/neural_compressor/torch/algorithms/qat/index
    /autoapi/neural_compressor/torch/algorithms/smooth_quant/index
    /autoapi/neural_compressor/torch/algorithms/static_quant/index

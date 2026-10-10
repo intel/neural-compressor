@@ -91,11 +91,11 @@
 <h1>PyTorch Static Quantization<a class="headerlink" href="#pytorch-static-quantization" title="Link to this heading"></a></h1>
 <ol class="simple">
 <li><p><a class="reference external" href="#introduction">Introduction</a></p></li>
-<li><p><a class="reference external" href="#get-started">Get Started</a> <br />2.1 <a class="reference external" href="#static-quantization-with-ipex-backend">Static Quantization with IPEX Backend</a> <br />2.1.1 <a class="reference external" href="#usage-sample-with-ipex">Usage Sample with IPEX</a> <br />2.1.2 <a class="reference external" href="#specify-quantization-rules">Specify Quantization Rules</a> <br />2.1.3 <a class="reference external" href="#model-examples">Model Examples</a> <br />2.2 <a class="reference external" href="#static-quantization-with-pt2e-backend">Static Quantization with PT2E Backend</a> <br />2.2.1 <a class="reference external" href="#usage-sample-with-pt2e">Usage Sample with PT2E</a><br />2.2.2 <a class="reference external" href="#model-examples-with-pt2e">Model Examples with PT2E</a></p></li>
+<li><p><a class="reference external" href="#get-started">Get Started</a> <br />2.1 <a class="reference external" href="#static-quantization-with-ipex-backend">Static Quantization with IPEX Backend</a> <br />2.1.1 <a class="reference external" href="#usage-sample-with-ipex">Usage Sample with IPEX</a> <br />2.1.2 <a class="reference external" href="#specify-quantization-rules">Specify Quantization Rules</a> <br />2.1.3 <a class="reference external" href="#model-examples">Model Examples</a></p></li>
 </ol>
 <section id="introduction">
 <h2>Introduction<a class="headerlink" href="#introduction" title="Link to this heading"></a></h2>
-<p>Post-Training Quantization (PTQ) is a technique used to convert a pre-trained floating-point model to a quantized model. This approach does not require model retraining. Instead, it uses calibration data to determine the optimal quantization parameters. Static quantization involves calibrating both weights and activations during the quantization process. Currently, we support two paths to perform static PTQ <a class="reference external" href="https://github.com/intel/intel-extension-for-pytorch">Intel Extension for PyTorch (IPEX)</a> and <a class="reference external" href="https://pytorch.org/tutorials/prototype/pt2e_quant_x86_inductor.html">PyTorch 2 Export Quantization (PT2E)</a>.</p>
+<p>Post-Training Quantization (PTQ) is a technique used to convert a pre-trained floating-point model to a quantized model. This approach does not require model retraining. Instead, it uses calibration data to determine the optimal quantization parameters. Static quantization involves calibrating both weights and activations during the quantization process. Currently, we support static PTQ with <a class="reference external" href="https://github.com/intel/intel-extension-for-pytorch">Intel Extension for PyTorch (IPEX)</a>.</p>
 </section>
 <section id="get-started">
 <h2>Get Started<a class="headerlink" href="#get-started" title="Link to this heading"></a></h2>
@@ -149,45 +149,7 @@ Here we don’t quantize <code class="docutils literal notranslate"><span class=
 </section>
 <section id="model-examples">
 <h4>Model Examples<a class="headerlink" href="#model-examples" title="Link to this heading"></a></h4>
-<p>Users could refer to <a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/examples/pytorch/nlp/huggingface_models/language-modeling/quantization/static_quant/ipex">examples</a> on how to quantize a new model.</p>
-</section>
-</section>
-<section id="static-quantization-with-pt2e-backend">
-<h3>Static Quantization with PT2E Backend<a class="headerlink" href="#static-quantization-with-pt2e-backend" title="Link to this heading"></a></h3>
-<p>Compared to the IPEX backend, which uses JIT compilation to capture the eager model, the PT2E path uses <code class="docutils literal notranslate"><span class="pre">torch.dynamo</span></code> to capture the eager model into an FX graph model, and then inserts the observers and Q/QD pairs on it. Finally it uses the <code class="docutils literal notranslate"><span class="pre">torch.compile</span></code> to perform the pattern matching and replace the  Q/DQ pairs with optimized quantized operators.</p>
-<section id="usage-sample-with-pt2e">
-<h4>Usage Sample with PT2E<a class="headerlink" href="#usage-sample-with-pt2e" title="Link to this heading"></a></h4>
-<p>There are four steps to perform W8A8 static quantization with PT2E backend: <code class="docutils literal notranslate"><span class="pre">export</span></code>, <code class="docutils literal notranslate"><span class="pre">prepare</span></code>, <code class="docutils literal notranslate"><span class="pre">convert</span></code> and <code class="docutils literal notranslate"><span class="pre">compile</span></code>.</p>
-<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">import</span><span class="w"> </span><span class="nn">torch</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">export</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">StaticQuantConfig</span><span class="p">,</span> <span class="n">prepare</span><span class="p">,</span> <span class="n">convert</span>
-
-<span class="c1"># Prepare the float model and example inputs for export model</span>
-<span class="n">model</span> <span class="o">=</span> <span class="n">UserFloatModel</span><span class="p">()</span>
-<span class="n">example_inputs</span> <span class="o">=</span> <span class="o">...</span>
-
-<span class="c1"># Export eager model into FX graph model</span>
-<span class="n">exported_model</span> <span class="o">=</span> <span class="n">export</span><span class="p">(</span><span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span> <span class="n">example_inputs</span><span class="o">=</span><span class="n">example_inputs</span><span class="p">)</span>
-<span class="c1"># Quantize the model</span>
-<span class="n">quant_config</span> <span class="o">=</span> <span class="n">StaticQuantConfig</span><span class="p">()</span>
-<span class="n">prepared_model</span> <span class="o">=</span> <span class="n">prepare</span><span class="p">(</span><span class="n">exported_model</span><span class="p">,</span> <span class="n">quant_config</span><span class="o">=</span><span class="n">quant_config</span><span class="p">)</span>
-<span class="c1"># Calibrate</span>
-<span class="n">run_fn</span><span class="p">(</span><span class="n">prepared_model</span><span class="p">)</span>
-<span class="n">q_model</span> <span class="o">=</span> <span class="n">convert</span><span class="p">(</span><span class="n">prepared_model</span><span class="p">)</span>
-<span class="c1"># Compile the quantized model and replace the Q/DQ pattern with Q-operator</span>
-<span class="kn">from</span><span class="w"> </span><span class="nn">torch._inductor</span><span class="w"> </span><span class="kn">import</span> <span class="n">config</span>
-
-<span class="n">config</span><span class="o">.</span><span class="n">freezing</span> <span class="o">=</span> <span class="kc">True</span>
-<span class="n">opt_model</span> <span class="o">=</span> <span class="n">torch</span><span class="o">.</span><span class="n">compile</span><span class="p">(</span><span class="n">q_model</span><span class="p">)</span>
-</pre></div>
-</div>
-<blockquote>
-<div><p>Note: The <code class="docutils literal notranslate"><span class="pre">set_local</span></code> of <code class="docutils literal notranslate"><span class="pre">StaticQuantConfig</span></code> will be supported after the torch 2.4 release.</p>
-</div></blockquote>
-</section>
-<section id="model-examples-with-pt2e">
-<h4>Model Examples with PT2E<a class="headerlink" href="#model-examples-with-pt2e" title="Link to this heading"></a></h4>
-<p>Users could refer to <a class="reference external" href="https://github.com/intel/neural-compressor/tree/main/examples/pytorch">examples</a> on how to quantize a new model.</p>
+<p>The usage sample above demonstrates how to quantize a model with the IPEX backend.</p>
 </section>
 </section>
 </section>
@@ -207,7 +169,7 @@ Here we don’t quantize <code class="docutils literal notranslate"><span class=
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f3ed5568410> 
+   <jinja2.runtime.BlockReference object at 0x7fc1fac5b230> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

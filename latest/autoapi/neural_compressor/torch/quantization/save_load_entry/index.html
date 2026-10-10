@@ -112,7 +112,7 @@
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>torch.nn.module</em><em> or </em><em>TorchScript model with IPEX</em><em> or </em><em>fx graph with pt2e</em><em>, </em><em>optional</em>) – Quantized model.</p></li>
+<li><p><strong>model</strong> (<em>torch.nn.module</em><em> or </em><em>TorchScript model with IPEX</em><em>, </em><em>optional</em>) – Quantized model.</p></li>
 <li><p><strong>checkpoint_dir</strong> (<em>str</em><em>, </em><em>optional</em>) – checkpoint directory. Defaults to “saved_results”.</p></li>
 <li><p><strong>format</strong> (<em>str</em><em>, </em><em>optional</em>) – ‘default’ for saving INC quantized model.
 ‘huggingface’ for saving huggingface WOQ causal language model.
@@ -162,7 +162,7 @@ If ‘format’ is set to ‘huggingface’, it means the huggingface model_name
 If ‘format’ is set to ‘default’, it means the ‘checkpoint_dir’.
 Parameter should not be None. it co-works with ‘original_model’ parameter to load INC
 quantized model in local.</p></li>
-<li><p><strong>original_model</strong> (<em>torch.nn.module</em><em> or </em><em>TorchScript model with IPEX</em><em> or </em><em>fx graph with pt2e</em><em>, </em><em>optional</em>) – original model before quantization. Needed if ‘format’ is set to ‘default’ and not TorchScript model.
+<li><p><strong>original_model</strong> (<em>torch.nn.module</em><em> or </em><em>TorchScript model with IPEX</em><em>, </em><em>optional</em>) – original model before quantization. Needed if ‘format’ is set to ‘default’ and not TorchScript model.
 Defaults to None.</p></li>
 <li><p><strong>format</strong> (<em>str</em><em>, </em><em>optional</em>) – ‘default’ for loading INC quantized model.
 ‘huggingface’ for loading huggingface WOQ causal language model. Defaults to “default”.</p></li>
@@ -195,7 +195,7 @@ Will be passed to the huggingface model’s <cite>__init__</cite> method, such a
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f3ed5ed5190> 
+   <jinja2.runtime.BlockReference object at 0x7fc1faedf260> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

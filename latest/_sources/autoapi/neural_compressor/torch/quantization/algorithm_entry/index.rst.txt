@@ -17,8 +17,6 @@ Functions
    neural_compressor.torch.quantization.algorithm_entry.rtn_entry
    neural_compressor.torch.quantization.algorithm_entry.gptq_entry
    neural_compressor.torch.quantization.algorithm_entry.static_quant_entry
-   neural_compressor.torch.quantization.algorithm_entry.pt2e_dynamic_quant_entry
-   neural_compressor.torch.quantization.algorithm_entry.pt2e_static_quant_entry
    neural_compressor.torch.quantization.algorithm_entry.smooth_quant_entry
    neural_compressor.torch.quantization.algorithm_entry.awq_quantize_entry
    neural_compressor.torch.quantization.algorithm_entry.teq_quantize_entry
@@ -65,40 +63,12 @@ Module Contents
 
 .. py:function:: static_quant_entry(model: torch.nn.Module, configs_mapping: Dict[Tuple[str, callable], neural_compressor.torch.quantization.StaticQuantConfig], mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, *args, **kwargs) -> torch.nn.Module
 
-   The main entry to apply static quantization, includes pt2e quantization and ipex quantization.
+   The main entry to apply static quantization.
 
    :param model: raw fp32 model or prepared model.
    :type model: torch.nn.Module
    :param configs_mapping: per-op configuration.
    :type configs_mapping: Dict[Tuple[str, callable], StaticQuantConfig]
-   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
-   :type mode: Mode, optional
-
-   :returns: prepared model or quantized model.
-   :rtype: torch.nn.Module
-
-
-.. py:function:: pt2e_dynamic_quant_entry(model: torch.nn.Module, configs_mapping, mode: neural_compressor.common.utils.Mode, *args, **kwargs) -> torch.nn.Module
-
-   The main entry to apply pt2e dynamic quantization.
-
-   :param model: raw fp32 model or prepared model.
-   :type model: torch.nn.Module
-   :param configs_mapping: per-op configuration.
-   :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
-   :type mode: Mode, optional
-
-   :returns: prepared model or quantized model.
-   :rtype: torch.nn.Module
-
-
-.. py:function:: pt2e_static_quant_entry(model: torch.nn.Module, configs_mapping, mode: neural_compressor.common.utils.Mode, *args, **kwargs) -> torch.nn.Module
-
-   The main entry to apply pt2e static quantization.
-
-   :param model: raw fp32 model or prepared model.
-   :type model: torch.nn.Module
-   :param configs_mapping: per-op configuration.
    :param mode: select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.
    :type mode: Mode, optional
 

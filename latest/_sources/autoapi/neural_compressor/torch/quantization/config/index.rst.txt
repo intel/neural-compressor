@@ -22,7 +22,6 @@ Classes
    neural_compressor.torch.quantization.config.TEQConfig
    neural_compressor.torch.quantization.config.AutoRoundConfig
    neural_compressor.torch.quantization.config.MXQuantConfig
-   neural_compressor.torch.quantization.config.DynamicQuantConfig
    neural_compressor.torch.quantization.config.INT8StaticQuantConfig
    neural_compressor.torch.quantization.config.SmoothQuantConfig
    neural_compressor.torch.quantization.config.HQQConfig
@@ -44,7 +43,6 @@ Functions
    neural_compressor.torch.quantization.config.get_default_teq_config
    neural_compressor.torch.quantization.config.get_default_AutoRound_config
    neural_compressor.torch.quantization.config.get_default_mx_config
-   neural_compressor.torch.quantization.config.get_default_dynamic_config
    neural_compressor.torch.quantization.config.get_default_static_config
    neural_compressor.torch.quantization.config.get_default_sq_config
    neural_compressor.torch.quantization.config.get_default_hqq_config
@@ -195,20 +193,6 @@ Module Contents
    Generate the default mx config.
 
    :returns: the default rtn config.
-
-
-.. py:class:: DynamicQuantConfig(w_dtype: str = 'int8', w_sym: bool = True, w_granularity: str = 'per_tensor', w_algo: str = 'minmax', act_dtype: str = 'uint8', act_sym: bool = False, act_granularity: str = 'per_tensor', act_algo: str = 'kl', white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, **kwargs)
-
-
-
-   Config class for dynamic quantization.
-
-
-.. py:function:: get_default_dynamic_config() -> DynamicQuantConfig
-
-   Generate the default dynamic quant config.
-
-   :returns: the default dynamic quant config.
 
 
 .. py:class:: INT8StaticQuantConfig(w_dtype: str = 'int8', w_sym: bool = True, w_granularity: str = 'per_channel', w_algo: str = 'minmax', act_dtype: str = 'uint8', act_sym: bool = False, act_granularity: str = 'per_tensor', act_algo: str = 'minmax', excluded_precisions: list = [], white_list: Optional[List[neural_compressor.common.utils.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, model_info: Optional[List[Tuple[str, Callable]]] = None, **kwargs)

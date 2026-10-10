@@ -26,7 +26,7 @@ Module Contents
    Save quantized model.
 
    :param model: Quantized model.
-   :type model: torch.nn.module or TorchScript model with IPEX or fx graph with pt2e, optional
+   :type model: torch.nn.module or TorchScript model with IPEX, optional
    :param checkpoint_dir: checkpoint directory. Defaults to "saved_results".
    :type checkpoint_dir: str, optional
    :param format: 'default' for saving INC quantized model.
@@ -67,7 +67,7 @@ Module Contents
    :type model_name_or_path: str
    :param original_model: original model before quantization. Needed if 'format' is set to 'default' and not TorchScript model.
                           Defaults to None.
-   :type original_model: torch.nn.module or TorchScript model with IPEX or fx graph with pt2e, optional
+   :type original_model: torch.nn.module or TorchScript model with IPEX, optional
    :param format: 'default' for loading INC quantized model.
                   'huggingface' for loading huggingface WOQ causal language model. Defaults to "default".
    :type format: str, optional

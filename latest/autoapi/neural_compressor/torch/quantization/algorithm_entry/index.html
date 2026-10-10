@@ -101,13 +101,7 @@
 <td><p>The main entry to apply gptq quantization.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.algorithm_entry.static_quant_entry" title="neural_compressor.torch.quantization.algorithm_entry.static_quant_entry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">static_quant_entry</span></code></a>(→ torch.nn.Module)</p></td>
-<td><p>The main entry to apply static quantization, includes pt2e quantization and ipex quantization.</p></td>
-</tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.algorithm_entry.pt2e_dynamic_quant_entry" title="neural_compressor.torch.quantization.algorithm_entry.pt2e_dynamic_quant_entry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pt2e_dynamic_quant_entry</span></code></a>(→ torch.nn.Module)</p></td>
-<td><p>The main entry to apply pt2e dynamic quantization.</p></td>
-</tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.algorithm_entry.pt2e_static_quant_entry" title="neural_compressor.torch.quantization.algorithm_entry.pt2e_static_quant_entry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pt2e_static_quant_entry</span></code></a>(→ torch.nn.Module)</p></td>
-<td><p>The main entry to apply pt2e static quantization.</p></td>
+<td><p>The main entry to apply static quantization.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.algorithm_entry.smooth_quant_entry" title="neural_compressor.torch.quantization.algorithm_entry.smooth_quant_entry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smooth_quant_entry</span></code></a>(→ torch.nn.Module)</p></td>
 <td><p>The main entry to apply smooth quantization.</p></td>
@@ -186,54 +180,12 @@
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.quantization.algorithm_entry.static_quant_entry">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.algorithm_entry.</span></span><span class="sig-name descname"><span class="pre">static_quant_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configs_mapping</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Dict</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">callable</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">neural_compressor.torch.quantization.StaticQuantConfig</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.common.utils.Mode</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Mode.QUANTIZE</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.nn.Module</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/quantization/algorithm_entry.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.algorithm_entry.static_quant_entry" title="Link to this definition"></a></dt>
-<dd><p>The main entry to apply static quantization, includes pt2e quantization and ipex quantization.</p>
+<dd><p>The main entry to apply static quantization.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
 <li><p><strong>model</strong> (<em>torch.nn.Module</em>) – raw fp32 model or prepared model.</p></li>
 <li><p><strong>configs_mapping</strong> (<em>Dict</em><em>[</em><em>Tuple</em><em>[</em><em>str</em><em>, </em><em>callable</em><em>]</em><em>, </em><a class="reference internal" href="../../../jax/quantization/config/index.html#neural_compressor.jax.quantization.config.StaticQuantConfig" title="neural_compressor.jax.quantization.config.StaticQuantConfig"><em>StaticQuantConfig</em></a><em>]</em>) – per-op configuration.</p></li>
-<li><p><strong>mode</strong> (<a class="reference internal" href="../../../common/utils/constants/index.html#neural_compressor.common.utils.constants.Mode" title="neural_compressor.common.utils.constants.Mode"><em>Mode</em></a><em>, </em><em>optional</em>) – select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>prepared model or quantized model.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>torch.nn.Module</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.torch.quantization.algorithm_entry.pt2e_dynamic_quant_entry">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.algorithm_entry.</span></span><span class="sig-name descname"><span class="pre">pt2e_dynamic_quant_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configs_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.common.utils.Mode</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.nn.Module</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/quantization/algorithm_entry.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.algorithm_entry.pt2e_dynamic_quant_entry" title="Link to this definition"></a></dt>
-<dd><p>The main entry to apply pt2e dynamic quantization.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – raw fp32 model or prepared model.</p></li>
-<li><p><strong>configs_mapping</strong> – per-op configuration.</p></li>
-<li><p><strong>mode</strong> (<a class="reference internal" href="../../../common/utils/constants/index.html#neural_compressor.common.utils.constants.Mode" title="neural_compressor.common.utils.constants.Mode"><em>Mode</em></a><em>, </em><em>optional</em>) – select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.</p></li>
-</ul>
-</dd>
-<dt class="field-even">Returns<span class="colon">:</span></dt>
-<dd class="field-even"><p>prepared model or quantized model.</p>
-</dd>
-<dt class="field-odd">Return type<span class="colon">:</span></dt>
-<dd class="field-odd"><p>torch.nn.Module</p>
-</dd>
-</dl>
-</dd></dl>
-
-<dl class="py function">
-<dt class="sig sig-object py" id="neural_compressor.torch.quantization.algorithm_entry.pt2e_static_quant_entry">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.algorithm_entry.</span></span><span class="sig-name descname"><span class="pre">pt2e_static_quant_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configs_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.common.utils.Mode</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">args</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.nn.Module</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/quantization/algorithm_entry.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.algorithm_entry.pt2e_static_quant_entry" title="Link to this definition"></a></dt>
-<dd><p>The main entry to apply pt2e static quantization.</p>
-<dl class="field-list simple">
-<dt class="field-odd">Parameters<span class="colon">:</span></dt>
-<dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> (<em>torch.nn.Module</em>) – raw fp32 model or prepared model.</p></li>
-<li><p><strong>configs_mapping</strong> – per-op configuration.</p></li>
 <li><p><strong>mode</strong> (<a class="reference internal" href="../../../common/utils/constants/index.html#neural_compressor.common.utils.constants.Mode" title="neural_compressor.common.utils.constants.Mode"><em>Mode</em></a><em>, </em><em>optional</em>) – select from [PREPARE, CONVERT and QUANTIZE]. Defaults to Mode.QUANTIZE.</p></li>
 </ul>
 </dd>
@@ -422,7 +374,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f3ed5ef8830> 
+   <jinja2.runtime.BlockReference object at 0x7fc1fb00dfd0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
