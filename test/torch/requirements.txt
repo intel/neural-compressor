@@ -9,6 +9,7 @@ peft
 prettytable
 psutil
 pytest
+requests
 torchao
 torchvision
 transformers >= 5.5.0

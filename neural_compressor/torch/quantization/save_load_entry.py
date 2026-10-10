@@ -38,7 +38,7 @@ def save(model, checkpoint_dir="saved_results", format="default"):
     """Save quantized model.
 
     Args:
-        model (torch.nn.module or TorchScript model with IPEX or fx graph with pt2e, optional): Quantized model.
+        model (torch.nn.module or TorchScript model with IPEX, optional): Quantized model.
         checkpoint_dir (str, optional): checkpoint directory. Defaults to "saved_results".
         format (str, optional): 'default' for saving INC quantized model.
             'huggingface' for saving huggingface WOQ causal language model.
@@ -93,7 +93,7 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             If 'format' is set to 'default', it means the 'checkpoint_dir'.
             Parameter should not be None. it co-works with 'original_model' parameter to load INC
             quantized model in local.
-        original_model (torch.nn.module or TorchScript model with IPEX or fx graph with pt2e, optional):
+        original_model (torch.nn.module or TorchScript model with IPEX, optional):
             original model before quantization. Needed if 'format' is set to 'default' and not TorchScript model.
             Defaults to None.
         format (str, optional): 'default' for loading INC quantized model.
@@ -121,10 +121,6 @@ def load(model_name_or_path, original_model=None, format="default", device="cpu"
             from neural_compressor.torch.algorithms import static_quant
 
             return static_quant.load(model_name_or_path)
-        elif "static_quant" in per_op_qconfig.keys() or "pt2e_dynamic_quant" in per_op_qconfig.keys():  # PT2E
-            from neural_compressor.torch.algorithms import pt2e_quant
-
-            return pt2e_quant.load(model_name_or_path)
         else:
             config_mapping = load_config_mapping(qconfig_file_path, ConfigRegistry.get_all_configs()["torch"])
             # select load function
