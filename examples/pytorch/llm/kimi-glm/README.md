@@ -36,18 +36,15 @@ Equivalent Python command:
 ```bash
 python quantize.py \
   --dtype mxfp4 \
-  --input_model moonshotai/Kimi-K2.6 \
-  --output_model /workspace/models/moonshotai/Kimi-K2.6-MXFP4 \
+  --model_name_or_path moonshotai/Kimi-K2.6 \
+  --export_path /workspace/models/moonshotai/Kimi-K2.6-MXFP4 \
   --model_type kimi \
-  --format llm_compressor
+  --export_format llm_compressor
 ```
 
 ## Evaluation
 
-`run_benchmark.sh` is aligned with Llama benchmark style:
-
-- Automatically infers `tensor_parallel_size` from `CUDA_VISIBLE_DEVICES`
-- Exports `VLLM_QDQ=1`
+`run_benchmark.sh` is a thin wrapper over the shared driver at `benchmark/lm_eval/run_lm_eval.sh`:
 - Uses vLLM backend through `lm_eval`
 
 ### Benchmark Quick Start

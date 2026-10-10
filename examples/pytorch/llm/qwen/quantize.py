@@ -94,13 +94,13 @@ def quant_model(args):
         convert,
         prepare,
     )
-    if args.t == "mxfp4" and args.kv_cache_dtype == "fp8":
-        args.t = "mxfp4_fp8kv"
-    if is_dense_model(args.model):
-        config = dense_topologies_config[args.t]
+    if args.dtype == "mxfp4" and args.static_kv_dtype == "fp8":
+        args.dtype = "mxfp4_fp8kv"
+    if is_dense_model(args.model_name_or_path):
+        config = dense_topologies_config[args.dtype]
     else:
-        config = topologies_config[args.t]
-    output_dir = f"{args.output_dir}"
+        config = topologies_config[args.dtype]
+    output_dir = f"{args.export_path}"
     static_kv_dtype = args.static_kv_dtype if args.static_kv_dtype is not None else config.get("static_kv_dtype", None)
     if static_kv_dtype is not None and static_kv_dtype.lower() != "fp8":
         raise ValueError("Only 'fp8' is supported for static_kv_dtype currently.")
@@ -108,7 +108,7 @@ def quant_model(args):
     if (static_kv_dtype == "fp8" or args.static_attention_dtype == "fp8") and iters > 0:
         logger.warning("When using static kv dtype or static attn dtype as fp8, setting iters to 0.")
         iters = 0
-    fp32_model, tokenizer = get_model_and_tokenizer(args.model)
+    fp32_model, tokenizer = get_model_and_tokenizer(args.model_name_or_path)
     # if export_format is llm_compressor, scheme with RCEIL is not supported. 
     scheme = config["scheme"] if args.export_format == "auto_round" else config["scheme"].replace("_RCEIL", "")
     quant_config = AutoRoundConfig(
@@ -129,7 +129,7 @@ def quant_model(args):
 
     # quantizer execute
     model = prepare(model=fp32_model, quant_config=quant_config)
-    inc_model = convert(model)
+    convert(model)
     logger.info(f"Quantized model saved to {output_dir}")
 
 
@@ -139,12 +139,12 @@ if __name__ == "__main__":
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Select a quantization scheme.")
     parser.add_argument(
-        "--model",
+        "--model_name_or_path",
         type=str,
         help="Path to the pre-trained model or model identifier from Hugging Face Hub.",
     )
     parser.add_argument(
-        "-t",
+        "--dtype",
         type=str,
         choices=topologies_config.keys(),
         default="mxfp4",
@@ -164,17 +164,11 @@ if __name__ == "__main__":
         help="Export format for the quantized model. Options are 'auto_round' or 'llm_compressor'.",
     )
     parser.add_argument(
-        "--kv_cache_dtype",
-        type=str,
-        choices=["fp8", "auto"],
-        default="auto",
-        help="Data type for KV cache. Options are 'fp8' or 'auto'.",
-    )
-    parser.add_argument(
         "--static_attention_dtype",
+        default=None,
         type=str,
-        choices=["fp8", None],
-        help="Data type to use Attention Cache. e.g. fp8",
+        choices=["fp8", "float8_e4m3fn"],
+        help="Data type for static quantize attention.",
     )
     parser.add_argument(
         "--skip_attn",
@@ -183,9 +177,10 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--static_kv_dtype",
-        type=str,
         default=None,
-        help="Data type to use KV Cache. e.g. fp8",
+        type=str,
+        choices=["fp8", "float8_e4m3fn"],
+        help="Data type for static quantize key and value.",
     )
 
     parser.add_argument(
@@ -195,9 +190,9 @@ if __name__ == "__main__":
         help="Number of iterations for quantization.",
     )
     parser.add_argument(
-        "--output_dir",
+        "--export_path",
         type=str,
-        default="./",
+        default="saved_results",
         help="Directory to save the quantized model.",
     )
     parser.add_argument(
