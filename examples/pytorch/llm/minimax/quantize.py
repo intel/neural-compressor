@@ -25,7 +25,7 @@ _PRESET_CONFIG = {
     # MXFP8 globally, with MoE experts downgraded to MXFP4.
     "mxfp4_mixed": {
         "scheme": "MXFP8",
-        "layer_config": {"block_sparse_moe": {"scheme": "MXFP4"}},
+        "layer_config": {"block_sparse_moe.experts": {"scheme": "MXFP4"}},
     },
     "mxfp8": {
         "scheme": "MXFP8",
