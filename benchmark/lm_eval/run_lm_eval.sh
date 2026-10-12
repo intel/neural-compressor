@@ -29,7 +29,7 @@ set -eo pipefail
 
 MODEL_PATH=""
 TASKS="hellaswag,piqa,mmlu,gsm8k"
-SCHEME="${DEFAULT_SCHEME:-}"
+SCHEME=""
 BATCH_SIZE="auto"
 GPU_MEMORY_UTILIZATION=0.8
 MAX_MODEL_LEN=8192
@@ -39,21 +39,19 @@ RULER_MAX_POS="${RULER_MAX_POS:-131072}"
 LIMIT=""
 
 SERVER_PORT="${SERVER_PORT:-8000}"
-# Tasks that must run one at a time with a chat template applied.
-CHAT_TEMPLATE_TASKS="gsm8k_llama mmlu_llama"
 
 usage() {
     echo "Usage: CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=<path_to_quantized_model> [--tasks=<tasks>]"
     echo "  --model_path               Path to the quantized model (required)"
     echo "  --tasks                    Task name(s) to evaluate (default: ${TASKS})"
-    echo "  --scheme                   Quantization scheme: mxfp4, mxfp8, nvfp4, bf16 (default: ${SCHEME:-unset})"
+    echo "  --scheme                   Quantization scheme: mxfp4, mxfp4_mixed, mxfp8, nvfp4, bf16 (default: ${SCHEME:-unset})"
     echo "  --batch_size               Batch size (default: auto)"
     echo "  --gpu_memory_utilization   GPU memory utilization (default: 0.8)"
     echo "  --max_model_len            Max model length for standard tasks (default: 8192)"
     echo "  --static_kv_dtype          Data type for static kv cache (default: auto)"
     echo "  --static_attention_dtype   Data type for static attention cache (default: auto)"
     echo "  --ruler_max_pos            Max position length for RULER eval (default: ${RULER_MAX_POS:-131072})"
-    echo "  --limit                    Limit the number of samples per task (RULER defaults to 100)"
+    echo "  --limit                    Limit the number of samples per task (default: unset)"
     echo ""
     echo "Tensor parallel size is inferred from CUDA_VISIBLE_DEVICES."
     exit 0
@@ -101,14 +99,21 @@ for arg in "$@"; do
     esac
 done
 
-if [[ -z "$MODEL_PATH" ]]; then
-    echo "Error: --model_path is required."
-    usage
-fi
-
 if [[ ! -d "$MODEL_PATH" ]]; then
     echo "Error: Model path '$MODEL_PATH' does not exist!"
     exit 1
+fi
+
+# Infer scheme from the model's quantization_config when not given explicitly.
+if [[ -z "$SCHEME" ]]; then
+    model_path_lower="${MODEL_PATH,,}"
+    for s in mxfp4_mixed mxfp4 mxfp8 nvfp4; do
+        if [[ "$model_path_lower" == *"$s"* ]]; then
+            SCHEME="$s"
+            break
+        fi
+    done
+    echo "Inferred scheme from model path: ${SCHEME:-unset}"
 fi
 
 # Count available GPUs and set tensor_parallel_size
@@ -124,29 +129,33 @@ OUTPUT_DIR="${MODEL_NAME}-tp${TP_SIZE}-eval"
 mkdir -p "$OUTPUT_DIR"
 
 KV_CACHE_DTYPE="$STATIC_KV_DTYPE"
-max_length=$MAX_MODEL_LEN
-max_gen_toks=2048
-SEQ_LENGTHS=""
 
-if [[ "$TASKS" == *"longbench"* ]]; then
-    max_length=131072
-    max_ctx_length=$((max_length - max_gen_toks))
-fi
-
-if [[ "$TASKS" == *"ruler"* ]] || [[ "$TASKS" == *"niah_multiquery"* ]]; then
-    max_gen_toks=128
-    MODEL_MAX_POS=${RULER_MAX_POS:-131072}
-    if [[ "$TASKS" == *"ruler_qa_squad"* ]]; then
-        TASKS="ruler_qa_squad"
+LONGBENCH_TASKS=""
+RULER_TASKS=""
+CHAT_TEMPLATE_TASKS=""
+STANDARD_TASKS=""
+IFS=',' read -ra task_array <<< "$TASKS"
+for task in "${task_array[@]}"; do
+    [[ -z "$task" ]] && continue
+    if [[ "$task" == *longbench* ]]; then
+        LONGBENCH_TASKS="${LONGBENCH_TASKS:+$LONGBENCH_TASKS,}$task"
+    elif [[ "$task" == *ruler* || "$task" == niah_* ]]; then
+        RULER_TASKS="${RULER_TASKS:+$RULER_TASKS,}$task"
+    # These tasks need a chat template applied.
+    elif [[ "$task" == "gsm8k_llama" || "$task" == "mmlu_llama" ]]; then
+        CHAT_TEMPLATE_TASKS="${CHAT_TEMPLATE_TASKS:+$CHAT_TEMPLATE_TASKS,}$task"
     else
-        TASKS="niah_multiquery"
+        STANDARD_TASKS="${STANDARD_TASKS:+$STANDARD_TASKS,}$task"
     fi
-    # Leave room for generated tokens so prompt + output stays within the server context limit.
-    max_length=${MODEL_MAX_POS}
-    SEQ_LENGTHS=$((MODEL_MAX_POS - max_gen_toks))
-    BATCH_SIZE=32
-    LIMIT="${LIMIT:-100}"
-fi
+done
+
+LONGBENCH_MAX_LEN=131072
+LONGBENCH_MAX_CTX_LEN=$((LONGBENCH_MAX_LEN - 2048))
+
+RULER_GEN_TOKS=128
+# Leave room for generated tokens so prompt + output stays within the server context limit.
+RULER_SEQ_LEN=$((RULER_MAX_POS - RULER_GEN_TOKS))
+RULER_BATCH_SIZE=32
 
 # Set environment variables based on the quantization scheme
 case "$SCHEME" in
@@ -203,9 +212,10 @@ fi
 echo "Running benchmark with parameters:"
 echo "  Model Path: ${MODEL_PATH}"
 echo "  Tasks: ${TASKS}"
+echo "    standard: ${STANDARD_TASKS:-none}; chat-template: ${CHAT_TEMPLATE_TASKS:-none}; longbench: ${LONGBENCH_TASKS:-none}; ruler: ${RULER_TASKS:-none}"
 echo "  Quantization scheme: ${SCHEME:-unset}"
 echo "  Batch Size: ${BATCH_SIZE}"
-echo "  Max Model Length: ${max_length}"
+echo "  Max Model Length: ${MAX_MODEL_LEN}"
 echo "  KV Cache Dtype: ${KV_CACHE_DTYPE}"
 echo "  GPU Memory Utilization: ${GPU_MEMORY_UTILIZATION}"
 echo "  Tensor Parallel Size: ${TP_SIZE}"
@@ -228,24 +238,38 @@ if [[ "$CUDA_SM" != "10.0" ]]; then
     export VLLM_MXFP4_USE_MARLIN=1
 fi
 
-run_standard_eval() {
-    local tasks=$1
-    local extra_args=$2
+STANDARD_VLLM_MODEL_ARGS="pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=${MAX_MODEL_LEN},max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=${GPU_MEMORY_UTILIZATION},dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}${LM_EVAL_EXTRA_ARGS}"
 
-    echo "Running evaluation for tasks: ${tasks}"
+run_standard_eval() {
+    echo "Running evaluation for tasks: ${STANDARD_TASKS}"
     lm_eval --model vllm \
-        --model_args "pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=${MAX_MODEL_LEN},max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=${GPU_MEMORY_UTILIZATION},dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}${LM_EVAL_EXTRA_ARGS}" \
-        --tasks "$tasks" \
+        --model_args "${STANDARD_VLLM_MODEL_ARGS}" \
+        --tasks "${STANDARD_TASKS}" \
         --batch_size "$BATCH_SIZE" \
         --log_samples \
         --seed 42 \
         ${LIMIT:+--limit $LIMIT} \
         --output_path "$OUTPUT_DIR" \
-        $extra_args \
-        --show_config 2>&1 | tee -a "${OUTPUT_DIR}/log.txt"
+        --show_config
+}
+
+run_chat_template_eval() {
+    echo "Running chat-template evaluation for tasks: ${CHAT_TEMPLATE_TASKS}"
+    lm_eval --model vllm \
+        --model_args "${STANDARD_VLLM_MODEL_ARGS}" \
+        --tasks "${CHAT_TEMPLATE_TASKS}" \
+        --batch_size "$BATCH_SIZE" \
+        --log_samples \
+        --seed 42 \
+        ${LIMIT:+--limit $LIMIT} \
+        --output_path "$OUTPUT_DIR" \
+        --apply_chat_template \
+        --fewshot_as_multiturn \
+        --show_config
 }
 
 start_vllm_server() {
+    local max_len=$1
     echo "Starting vLLM server on port ${SERVER_PORT}..."
 
     local rope_args=()
@@ -268,7 +292,7 @@ start_vllm_server() {
     vllm serve "${MODEL_PATH}" \
         --port "${SERVER_PORT}" \
         --tensor-parallel-size "${TP_SIZE}" \
-        --max-model-len "${max_length}" \
+        --max-model-len "${max_len}" \
         --gpu-memory-utilization "${GPU_MEMORY_UTILIZATION}" \
         --dtype bfloat16 \
         --kv-cache-dtype "${KV_CACHE_DTYPE}" \
@@ -307,7 +331,7 @@ cleanup_server() {
 }
 
 start_server_or_exit() {
-    start_vllm_server
+    start_vllm_server "$1"
     if ! wait_for_server; then
         kill $VLLM_PID 2>/dev/null || true
         exit 1
@@ -316,69 +340,52 @@ start_server_or_exit() {
 }
 
 run_longbench_eval() {
-    start_server_or_exit
+    start_server_or_exit "${LONGBENCH_MAX_LEN}"
 
     echo "Running LongBench evaluation against vLLM server..."
     python -m long_bench_eval.cli \
         --api-key dummy \
         --base-url "http://localhost:${SERVER_PORT}/v1" \
         --model "${MODEL_PATH}" \
-        --max-context-length "${max_ctx_length}" \
+        --max-context-length "${LONGBENCH_MAX_CTX_LEN}" \
         --num-threads 1 \
         --deterministic \
         --categories "Long In-context Learning"
+    cleanup_server
 }
 
 run_ruler_eval() {
-    start_server_or_exit
+    start_server_or_exit "${RULER_MAX_POS}"
 
     echo "Running RULER evaluation against vLLM server..."
     lm_eval \
         --model local-completions \
-        --model_args "model=${MODEL_PATH},base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=1,max_retries=50,timeout=500,tokenized_requests=False,max_gen_toks=${max_gen_toks},max_length=${SEQ_LENGTHS}" \
-        --tasks "${TASKS}" \
-        --metadata="{\"max_seq_lengths\":[${SEQ_LENGTHS}],\"tokenizer\":\"${MODEL_PATH}\"}" \
-        --gen_kwargs "max_gen_toks=${max_gen_toks}" \
-        --batch_size "${BATCH_SIZE}" \
+        --model_args "model=${MODEL_PATH},base_url=http://localhost:${SERVER_PORT}/v1/completions,num_concurrent=1,max_retries=50,timeout=500,tokenized_requests=False,max_gen_toks=${RULER_GEN_TOKS},max_length=${RULER_SEQ_LEN}" \
+        --tasks "${RULER_TASKS}" \
+        --metadata="{\"max_seq_lengths\":[${RULER_SEQ_LEN}],\"tokenizer\":\"${MODEL_PATH}\"}" \
+        --gen_kwargs "max_gen_toks=${RULER_GEN_TOKS}" \
+        --batch_size "${RULER_BATCH_SIZE}" \
         ${LIMIT:+--limit $LIMIT} \
         --log_samples \
-        --output_path "${OUTPUT_DIR}/seq_${SEQ_LENGTHS}" \
+        --output_path "${OUTPUT_DIR}/seq_${RULER_SEQ_LEN}" \
         --seed 42
+    cleanup_server
 }
 
-# Split out tasks that need a chat template so they run one at a time.
-split_tasks() {
-    local remaining=""
-    local special=""
-    IFS=',' read -ra task_array <<< "$TASKS"
-    for task in "${task_array[@]}"; do
-        if [[ " $CHAT_TEMPLATE_TASKS " == *" $task "* ]]; then
-            special="${special:+$special,}$task"
-        else
-            remaining="${remaining:+$remaining,}$task"
-        fi
-    done
-    OTHER_TASKS="$remaining"
-    SPECIAL_TASKS="$special"
-}
-
-if [[ "$TASKS" == *"longbench"* ]]; then
+# Standard evals load vLLM in-process, so run them before any server-based eval.
+if [[ -n "$STANDARD_TASKS" ]]; then
+    run_standard_eval
+fi
+if [[ -n "$CHAT_TEMPLATE_TASKS" ]]; then
+    run_chat_template_eval
+fi
+if [[ -n "$LONGBENCH_TASKS" ]]; then
     echo "Running LongBench evaluation..."
     run_longbench_eval
-elif [[ "$TASKS" == "niah_multiquery" ]] || [[ "$TASKS" == "ruler_qa_squad" ]]; then
+fi
+if [[ -n "$RULER_TASKS" ]]; then
     echo "Running RULER evaluation..."
     run_ruler_eval
-else
-    split_tasks
-    if [[ -n "$OTHER_TASKS" ]]; then
-        run_standard_eval "$OTHER_TASKS" ""
-    fi
-    if [[ -n "$SPECIAL_TASKS" ]]; then
-        IFS=',' read -ra special_array <<< "$SPECIAL_TASKS"
-        for special_task in "${special_array[@]}"; do
-            run_standard_eval "$special_task" "--apply_chat_template --fewshot_as_multiturn"
-        done
-    fi
 fi
 
 echo "Benchmark completed successfully! Results saved to ${OUTPUT_DIR}"

@@ -20,7 +20,10 @@ set -eo pipefail
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "${SCRIPT_DIR}/../../../.." && pwd)
 
-export EXTRA_LM_EVAL_MODEL_ARGS=",trust_remote_code=True"
+export NCCL_NVLS_ENABLE=0 
+
+export EXTRA_LM_EVAL_MODEL_ARGS=",trust_remote_code=True,load_format=fastsafetensors"
+export EXTRA_SERVE_ARGS="--trust-remote-code True  --load-format fastsafetensors"
 # Kimi and GLM both use MLA.
 export ATTENTION_BACKEND_FP8KV="FLASHINFER_MLA"
 export ATTENTION_BACKEND_FP8ATTN="FLASHINFER_MLA"

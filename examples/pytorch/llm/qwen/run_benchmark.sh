@@ -20,8 +20,6 @@ set -eo pipefail
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "${SCRIPT_DIR}/../../../.." && pwd)
 
-export DEFAULT_SCHEME="mxfp8"
-
 export ATTENTION_BACKEND_FP8KV="FLASHINFER"
 # fp8 attention is only supported through the TRITON_ATTN backend for LLMC format
 export ATTENTION_BACKEND_FP8ATTN="TRITON_ATTN"
