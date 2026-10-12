@@ -10,7 +10,7 @@ import jax
 import jax.numpy as jnp
 import keras
 import pytest
-from jax_test_utility import compute_model_hash, load_image, load_model_from_preset
+from jax_test_utility import compare_models_briefly, compute_model_hash, load_image, load_model_from_preset
 from keras.applications.imagenet_utils import decode_predictions
 from keras_hub.models import ViTImageClassifier
 
@@ -89,6 +89,9 @@ def test_image_classification(
         else:
             keras.saving.save_model(vit_q, save_path)
             vit_q_loaded = keras.saving.load_model(save_path)
+
+    res, msg = compare_models_briefly(vit_q, vit_q_loaded)
+    assert res, f"Model is different after load!: {msg}"
 
     actual_labels = classify_image(vit_q_loaded, colva_beach_sq)
     assert (

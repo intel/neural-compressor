@@ -151,8 +151,10 @@ class SaveableLayerMixin:
             self._is_quantized = True
         else:
             # Static layers may not be quantized depending on calibration samples
-            # Quantized layers always have a_scale
-            self._is_quantized = "a_scale" in store
+            # We can recognize if layer was quantized by looking if it contains quantizations scales
+            # because post_quantization_cleanup() removes them if layer was not quantized.
+            # We expect QDQ and Dense to have a_scale and ReversibleEmbeddings to have e_scale
+            self._is_quantized = "a_scale" in store or "e_scale" in store
         self.post_quantization_cleanup()
 
         weight_dtype = getattr(self, "weight_dtype", None)

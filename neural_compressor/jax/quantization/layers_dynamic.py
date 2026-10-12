@@ -25,7 +25,6 @@ import keras_hub.layers
 import numpy as np
 from jax import numpy as jnp
 from keras import ops
-from keras.src.backend import set_keras_mask
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
 
@@ -354,11 +353,11 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         self._trainable_variables.remove(self._kernel)
         del self._kernel
 
-        model_is_during_load = jnp.all(self.w_scale == 0.0)
-        if not model_is_during_load:
-            # convert variables to attributes (const) if needed
-            for name in self._const_variables:
-                var = getattr(self, name)
+        # convert variables to attributes (const) if needed
+        for name in self._const_variables:
+            var = getattr(self, name)
+            # Check if var is a Variable (has .value attribute) - if not, it's already been converted
+            if hasattr(var, "value"):
                 value = jnp.array(var.value)
                 self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
                 setattr(self, name, value)
@@ -935,6 +934,12 @@ verify_api(Gemma3VisionAttention, QDynamicGemma3VisionAttention, "call")
 class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbedding):
     """Dynamically quantized ReversibleEmbedding layer."""
 
+    def _derive_e_quant(self):
+        return (0,)
+
+    def _derive_re_quant(self):
+        return (1,)
+
     @classmethod
     def prepare(
         cls,
@@ -962,9 +967,23 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         """
         orig._tracker.unlock()
         orig.__class__ = cls
+        orig.weight_dtype = weight_dtype
+        orig.activation_dtype = activation_dtype
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
+        orig.const_scale = const_scale
+        orig.const_weight = const_weight
+        orig.w_quant_granularity = w_quant_granularity
         orig.inputs_qdq = DynamicQDQLayer("inputs_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
-        orig.kernel_qdq = DynamicQDQLayer("kernel_qdq", weight_dtype, orig.dtype_policy, False)
+        if const_scale:
+            orig._const_variables = ["e_scale"]
+            if not orig.tie_weights:
+                orig._const_variables.append("re_scale")
+        else:
+            orig._const_variables = []
+        if const_weight:
+            orig._const_variables.append("_embeddings_quant")
+            if not orig.tie_weights:
+                orig._const_variables.append("_reverse_embeddings_quant")
         orig._tracker.lock()
         return orig
 
@@ -974,8 +993,70 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         Returns:
             None: Initializes activation helper layers.
         """
+        self._tracker.unlock()
         self.inputs_qdq.add_variables()
-        self.kernel_qdq.add_variables()
+        self.e_quant_axis = self._derive_e_quant() if self.w_quant_granularity == "per_channel" else None
+        e_scale, _ = get_q_params(
+            super().embeddings.value,
+            self.weight_dtype,
+            self.compute_dtype,
+            asymmetric=False,
+            axis=self.e_quant_axis,
+        )
+        self.e_scale = self.add_weight(
+            name="e_scale",
+            shape=e_scale.shape,
+            initializer=keras.initializers.Constant(e_scale),
+            trainable=False,
+            autocast=False,
+            dtype=self.compute_dtype,
+        )
+        self._embeddings_quant = self.add_weight(
+            name="_embeddings_quant",
+            shape=super().embeddings.value.shape,
+            initializer="zeros",
+            trainable=False,
+            autocast=False,
+            dtype=self.weight_dtype,
+        )
+        if not self.tie_weights:
+            self.re_quant_axis = self._derive_re_quant() if self.w_quant_granularity == "per_channel" else None
+            re_scale, _ = get_q_params(
+                super().reverse_embeddings.value,
+                self.weight_dtype,
+                self.compute_dtype,
+                asymmetric=False,
+                axis=self.re_quant_axis,
+            )
+            self.re_scale = self.add_weight(
+                name="re_scale",
+                shape=re_scale.shape,
+                initializer=keras.initializers.Constant(re_scale),
+                trainable=False,
+                autocast=False,
+                dtype=self.compute_dtype,
+            )
+            self._reverse_embeddings_quant = self.add_weight(
+                name="_reverse_embeddings_quant",
+                shape=super().reverse_embeddings.value.shape,
+                initializer="zeros",
+                trainable=False,
+                autocast=False,
+                dtype=self.weight_dtype,
+            )
+        wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
+
+        embeddings_quant = wquantfun(super().embeddings.value, self.e_scale.value, axis=self.e_quant_axis)
+        self._embeddings_quant.assign(embeddings_quant)
+
+        if not self.tie_weights:
+            reverse_embeddings_quant = wquantfun(
+                super().reverse_embeddings.value, self.re_scale.value, axis=self.re_quant_axis
+            )
+            self._reverse_embeddings_quant.assign(reverse_embeddings_quant)
+
+        self._tracker.lock()
 
     def post_quantization_cleanup(self):
         """Finalize dynamic quantization with no extra cleanup.
@@ -983,9 +1064,20 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         Returns:
             None: Keeps the layer ready for inference.
         """
-        pass
+        self._tracker.unlock()
 
-    # TODO maybe make kernel (offline) quantization for reversible embedding (self.embeddings in our path) ?
+        # convert variables to attributes (const) if needed
+        for name in self._const_variables:
+            if hasattr(self, name):
+                var = getattr(self, name)
+                # Check if var is a Variable (has .value attribute) - if not, it's already been converted
+                if hasattr(var, "value"):
+                    value = jnp.array(var.value)
+                    self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+                    delattr(self, name)
+                    setattr(self, name, value)
+
+        self._tracker.lock()
 
     def call(self, inputs, reverse=False):
         """Compute forward or reverse embedding with activation quantization.
@@ -997,28 +1089,40 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         Returns:
             jnp.ndarray: Embedded outputs or logits.
         """
-        if reverse:
-            if self.tie_weights:
-                kernel = ops.transpose(ops.convert_to_tensor(self.embeddings))
-            else:
-                kernel = self.reverse_embeddings
-            if self.reverse_dtype is not None:
-                inputs = ops.cast(inputs, self.reverse_dtype)
-                kernel = ops.cast(kernel, self.reverse_dtype)
-            inputs = self.inputs_qdq(inputs)
-            kernel = self.kernel_qdq(kernel)
-            logits = ops.matmul(inputs, kernel)
-            # Optionally soft-cap logits.
-            if self.logit_soft_cap is not None:
-                soft_cap = self.logit_soft_cap
-                logits = ops.tanh(logits / soft_cap) * soft_cap
-            return logits
+        if not reverse:
+            return super().call(inputs, reverse=reverse)
 
-        result = super(keras.layers.ReversibleEmbedding, self).call(inputs)
-        mask = super(keras.layers.ReversibleEmbedding, self).compute_mask(inputs)
-        if mask is not None:
-            set_keras_mask(result, mask)
-        return result
+        if self.reverse_dtype is not None:
+            inputs = ops.cast(inputs, self.reverse_dtype)
+        x = self.inputs_qdq(inputs)
+        x = super().call(x, reverse=reverse)
+        return x
+
+    @property
+    def embeddings(self):
+        if self.const_weight:
+            _embeddings_quant = self._embeddings_quant
+        else:
+            _embeddings_quant = self._embeddings_quant.value
+        if self.const_scale:
+            e_scale = self.e_scale
+        else:
+            e_scale = self.e_scale.value
+        _embeddings_quant = self.wdequantfun(_embeddings_quant, e_scale, axis=self.e_quant_axis)
+        return _embeddings_quant
+
+    @property
+    def reverse_embeddings(self):
+        if self.const_weight:
+            _reverse_embeddings_quant = self._reverse_embeddings_quant
+        else:
+            _reverse_embeddings_quant = self._reverse_embeddings_quant.value
+        if self.const_scale:
+            re_scale = self.re_scale
+        else:
+            re_scale = self.re_scale.value
+        _reverse_embeddings_quant = self.wdequantfun(_reverse_embeddings_quant, re_scale, axis=self.re_quant_axis)
+        return _reverse_embeddings_quant
 
 
 verify_api(keras.layers.ReversibleEmbedding, QDynamicReversibleEmbedding, "call")
