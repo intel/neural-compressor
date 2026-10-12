@@ -36,7 +36,6 @@ MAX_MODEL_LEN=8192
 STATIC_KV_DTYPE="auto"
 STATIC_ATTENTION_DTYPE="auto"
 RULER_MAX_POS="${RULER_MAX_POS:-131072}"
-LIMIT=""
 
 SERVER_PORT="${SERVER_PORT:-8000}"
 
@@ -51,7 +50,6 @@ usage() {
     echo "  --static_kv_dtype          Data type for static kv cache (default: auto)"
     echo "  --static_attention_dtype   Data type for static attention cache (default: auto)"
     echo "  --ruler_max_pos            Max position length for RULER eval (default: ${RULER_MAX_POS:-131072})"
-    echo "  --limit                    Limit the number of samples per task (default: unset)"
     echo ""
     echo "Tensor parallel size is inferred from CUDA_VISIBLE_DEVICES."
     exit 0
@@ -85,9 +83,6 @@ for arg in "$@"; do
             ;;
         --ruler_max_pos=*)
             RULER_MAX_POS="${arg#*=}"
-            ;;
-        --limit=*)
-            LIMIT="${arg#*=}"
             ;;
         -h|--help)
             usage
@@ -248,7 +243,6 @@ run_standard_eval() {
         --batch_size "$BATCH_SIZE" \
         --log_samples \
         --seed 42 \
-        ${LIMIT:+--limit $LIMIT} \
         --output_path "$OUTPUT_DIR" \
         --show_config
 }
@@ -261,7 +255,6 @@ run_chat_template_eval() {
         --batch_size "$BATCH_SIZE" \
         --log_samples \
         --seed 42 \
-        ${LIMIT:+--limit $LIMIT} \
         --output_path "$OUTPUT_DIR" \
         --apply_chat_template \
         --fewshot_as_multiturn \
@@ -385,6 +378,8 @@ if [[ -n "$LONGBENCH_TASKS" ]]; then
 fi
 if [[ -n "$RULER_TASKS" ]]; then
     echo "Running RULER evaluation..."
+    # Limit the number of samples per task for RULER evaluation to accelerate testing
+    export LIMIT=100 
     run_ruler_eval
 fi
 
