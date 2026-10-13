@@ -22,8 +22,6 @@
 #   FLASHINFER_WORKSPACE_SIZE  VLLM_AR_FLASHINFER_WORKSPACE_BUFFER_SIZE value
 #   EXTRA_SERVE_ARGS           extra flags appended to `vllm serve`
 #   EXTRA_LM_EVAL_MODEL_ARGS   extra `,key=value` pairs appended to --model_args
-#   ROPE_SCALING_JSON          enables rope scaling on `vllm serve` when set
-#   SKIP_ROPE_SCALING_PATTERN  model name substring that disables rope scaling
 
 set -eo pipefail
 
@@ -172,13 +170,6 @@ echo "  Tensor Parallel Size: ${TP_SIZE}"
 echo "  CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES}"
 echo "  Output directory: ${OUTPUT_DIR}"
 
-export VLLM_WORKER_MULTIPROC_METHOD=spawn
-export VLLM_ENABLE_V1_MULTIPROCESSING=0
-export VLLM_AR_MXFP4_MODULAR_MOE=${VLLM_AR_MXFP4_MODULAR_MOE:-}
-export VLLM_MXFP4_PRE_UNPACK_TO_FP8=${VLLM_MXFP4_PRE_UNPACK_TO_FP8:-}
-export VLLM_MXFP4_PRE_UNPACK_WEIGHTS=${VLLM_MXFP4_PRE_UNPACK_WEIGHTS:-}
-export VLLM_ENABLE_STATIC_MOE=${VLLM_ENABLE_STATIC_MOE:-}
-export VLLM_USE_DEEP_GEMM=${VLLM_USE_DEEP_GEMM:-}
 # For https://github.com/yiliu30/vllm-qdq-plugin.git CT format eval on GPUs other than SM 10.0.
 # nvidia-smi does not honor CUDA_VISIBLE_DEVICES; select its first GPU explicitly.
 GPU_ID="${CUDA_VISIBLE_DEVICES%%,*}"
@@ -219,23 +210,6 @@ run_chat_template_eval() {
 start_vllm_server() {
     local max_len=$1
     echo "Starting vLLM server on port ${SERVER_PORT}..."
-
-    local rope_args=()
-    if [[ -n "${ROPE_SCALING_JSON:-}" ]]; then
-        # vLLM >= 0.19 removed --rope-scaling; use --hf-overrides instead
-        local version major_minor
-        version=$(python -c "import vllm; print(vllm.__version__)" 2>/dev/null || echo "0.0.0")
-        major_minor=$(echo "$version" | awk -F. '{printf "%d%02d", $1, $2}')
-        if [ "$major_minor" -ge 19 ] 2>/dev/null; then
-            rope_args=("--hf-overrides" "{\"rope_scaling\":${ROPE_SCALING_JSON},\"max_position_embeddings\":131072}")
-        else
-            rope_args=("--rope-scaling" "${ROPE_SCALING_JSON}")
-        fi
-        if [[ -n "${SKIP_ROPE_SCALING_PATTERN:-}" && "$MODEL_NAME" == *"${SKIP_ROPE_SCALING_PATTERN}"* ]]; then
-            rope_args=()
-            echo "Skipping rope scaling for model: ${MODEL_NAME}"
-        fi
-    fi
 
     vllm serve "${MODEL_PATH}" \
         --port "${SERVER_PORT}" \

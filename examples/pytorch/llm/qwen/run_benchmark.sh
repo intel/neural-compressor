@@ -24,8 +24,6 @@ export ATTENTION_BACKEND_FP8KV="FLASHINFER"
 # fp8 attention is only supported through the TRITON_ATTN backend for LLMC format
 export ATTENTION_BACKEND_FP8ATTN="TRITON_ATTN"
 export FLASHINFER_WORKSPACE_SIZE=2147483648
-export ROPE_SCALING_JSON='{"rope_type":"yarn","factor":4.0,"original_max_position_embeddings":32768}'
-export SKIP_ROPE_SCALING_PATTERN="Qwen3-235B-A22B"
 # B200 special env
 export NLTK_ALLOW_PROXIED_URLOPEN=1
 
