@@ -85,7 +85,7 @@ def register_algo(name):
 
     Usage example:
         @register_algo(name=example_algo)
-        def example_algo(model: tf.keras.Model, quant_config: StaticQuantConfig) -> tf.keras.Model:
+        def example_algo(model: keras.Model, quant_config: StaticQuantConfig) -> keras.Model:
             ...
     Args:
         name (str): The name under which the algorithm function will be registered.

@@ -12,17 +12,10 @@ govern your use of the third party programs as set forth in in the
 Third party programs and their corresponding required notices and/or license
 terms are listed below.
 -------------------------------------------------------------
-1. example-tensorflow-models
-   Copyright 2016, The Authors.
-
-   IntelAI Models
-
-   mlperf-inference
+1. mlperf-inference
 
    mlperf-training
    Copyright 2018 The MLPerf Authors
-
-   tensor2tensor
 
    Transformer
 

@@ -21,9 +21,6 @@ URL = (
     + args.build_id
     + "&view=artifacts&pathAsName=false&type=publishedArtifacts"
 )
-OOB_MODEL_LIST = ["darknet19", "densenet-121", "resnet-101"]
-
-
 def get_model_tuning_dict_results():
     tuning_result_dict = {}
 
@@ -140,10 +137,6 @@ def collect_log():
             for line in f:
                 parse_tuning_line(line, tmp)
         print(tmp)
-
-        # oob_model no need acc
-        if (args.model in OOB_MODEL_LIST) and args.framework == "tensorflow":
-            tmp["fp32_acc"], tmp["int8_acc"] = "unknown", "unknown"
 
         # set for 3x woq models
         if args.inc_new_api.split("_")[0] == "3x":

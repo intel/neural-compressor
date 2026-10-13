@@ -2,7 +2,7 @@
 
 Intel® Neural Compressor
 ===========================
-<h3> An open-source Python library supporting popular model compression techniques on mainstream deep learning frameworks (PyTorch, TensorFlow, and JAX)</h3>
+<h3> An open-source Python library supporting popular model compression techniques on mainstream deep learning frameworks (PyTorch and JAX)</h3>
 
 [![python](https://img.shields.io/badge/python-3.11%2B-blue)](https://github.com/intel/neural-compressor)
 [![version](https://img.shields.io/badge/release-3.10-green)](https://github.com/intel/neural-compressor/releases)
@@ -47,8 +47,6 @@ Intel Neural Compressor supports PyTorch with CPU, GPU and HPU. Please install t
 ```
 # Framework extension API + PyTorch dependency
 pip install neural-compressor-pt
-# Framework extension API + TensorFlow dependency
-pip install neural-compressor-tf
 # Framework extension API + JAX dependency
 pip install neural-compressor-jax
 ```    
@@ -143,18 +141,6 @@ model = load(
         <td colspan="4" align="center"><a href="./docs/source/PT_MXQuant.md">MX Quantization</a></td>
         <td colspan="4" align="center"><a href="./docs/source/PT_NVFP4Quant.md">NVFP4 Quantization</a></td>
     </tr>
-  </tbody>
-  <thead>
-      <tr>
-        <th colspan="8">Tensorflow Extension APIs</th>
-      </tr>
-  </thead>
-  <tbody>
-      <tr>
-          <td colspan="3" align="center"><a href="./docs/source/TensorFlow.md">Overview</a></td>
-          <td colspan="3" align="center"><a href="./docs/source/TF_Quant.md">Static Quantization</a></td>
-          <td colspan="2" align="center"><a href="./docs/source/TF_SQ.md">Smooth Quantization</a></td>
-      </tr>
   </tbody>
   <thead>
       <tr>

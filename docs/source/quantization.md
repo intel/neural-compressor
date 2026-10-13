@@ -62,12 +62,6 @@ If UINT8 is specified, $Scale = max(abs(X_{f_{max}}), abs(X_{f_{min}})) / 255$ a
 Sometimes the reduce_range feature, that's using 7 bit width (1 sign bit + 6 data bits) to represent int8 range, may be needed on some early Xeon platforms, it's because those platforms may have overflow issues due to fp16 intermediate calculation result when executing int8 dot product operation. After AVX512_VNNI instruction is introduced, this issue gets solved by supporting fp32 intermediate data.
 
 
-#### Quantization Scheme in TensorFlow
-+ Symmetric Quantization
-    + int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)
-    + uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))
-
-
 #### Quantization Scheme in PyTorch
 + Symmetric Quantization
     + int8: scale = max(abs(rmin), abs(rmax)) / (float(max(int8) - min(int8)) / 2)
@@ -371,7 +365,7 @@ This tuning algorithm creates a tuning space by querying framework quantization 
 
 Neural compressor also support to quantize all quantizable ops without accuracy tuning, using `quantize_model` interface to achieve that. 
 
-For supported quantization methods for `accuracy aware tuning` and the detailed API usage, please refer to the document of [PyTorch](PyTorch.md) or [TensorFlow](TensorFlow.md) respectively.
+For supported quantization methods for `accuracy aware tuning` and the detailed API usage, please refer to the documentation for [PyTorch](PyTorch.md) or [JAX](JAX.md).
 
 User could refer to below chart to understand the whole tuning flow.
 

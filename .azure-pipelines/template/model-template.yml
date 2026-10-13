@@ -4,7 +4,7 @@ parameters:
     default: "resnet50v1.5"
   - name: framework
     type: string
-    default: "tensorflow"
+    default: "pytorch"
   - name: APIVersion
     type: string
     default: ""

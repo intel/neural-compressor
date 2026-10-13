@@ -898,7 +898,7 @@ class WOQModelLoader:
                         is_sharded = True
 
                 if resolved_archive_file is None:  # pragma: no cover
-                    # Otherwise, maybe there is a TF or Flax model file.  We try those to give a helpful error
+                    # Otherwise, maybe there is a Flax model file.  We try it to give a helpful error
                     # message.
                     has_file_kwargs = {
                         "revision": cached_file_kwargs.get("revision"),
