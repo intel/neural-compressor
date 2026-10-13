@@ -26,10 +26,5 @@ export ATTENTION_BACKEND_FP8ATTN="FLASHINFER_MLA"
 export FLASHINFER_WORKSPACE_SIZE=1073741824
 #FIXME: (yiliu30) remove this env once we have fixed the pynccl issues
 export NCCL_NVLS_ENABLE=0
-for arg in "$@"; do
-    if [[ "$arg" == "--scheme=mxfp8" ]]; then
-        export VLLM_DISABLE_PYNCCL=1
-    fi
-done
 
 bash "${REPO_ROOT}/benchmark/lm_eval/run_lm_eval.sh" "$@"

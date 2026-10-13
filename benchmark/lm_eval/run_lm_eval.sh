@@ -29,7 +29,6 @@ set -eo pipefail
 
 MODEL_PATH=""
 TASKS="hellaswag,piqa,mmlu,gsm8k"
-SCHEME=""
 BATCH_SIZE="auto"
 GPU_MEMORY_UTILIZATION=0.8
 MAX_MODEL_LEN=8192
@@ -43,7 +42,6 @@ usage() {
     echo "Usage: CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=<path_to_quantized_model> [--tasks=<tasks>]"
     echo "  --model_path               Path to the quantized model (required)"
     echo "  --tasks                    Task name(s) to evaluate (default: ${TASKS})"
-    echo "  --scheme                   Quantization scheme: mxfp4, mxfp4_mixed, mxfp8, nvfp4, bf16 (default: ${SCHEME:-unset})"
     echo "  --batch_size               Batch size (default: auto)"
     echo "  --gpu_memory_utilization   GPU memory utilization (default: 0.8)"
     echo "  --max_model_len            Max model length for standard tasks (default: 8192)"
@@ -62,9 +60,6 @@ for arg in "$@"; do
             ;;
         --tasks=*)
             TASKS="${arg#*=}"
-            ;;
-        --scheme=*)
-            SCHEME="${arg#*=}"
             ;;
         --batch_size=*)
             BATCH_SIZE="${arg#*=}"
@@ -97,18 +92,6 @@ done
 if [[ ! -d "$MODEL_PATH" ]]; then
     echo "Error: Model path '$MODEL_PATH' does not exist!"
     exit 1
-fi
-
-# Infer scheme from the model's quantization_config when not given explicitly.
-if [[ -z "$SCHEME" ]]; then
-    model_path_lower="${MODEL_PATH,,}"
-    for s in mxfp4_mixed mxfp4 mxfp8 nvfp4; do
-        if [[ "$model_path_lower" == *"$s"* ]]; then
-            SCHEME="$s"
-            break
-        fi
-    done
-    echo "Inferred scheme from model path: ${SCHEME:-unset}"
 fi
 
 # Count available GPUs and set tensor_parallel_size
@@ -152,33 +135,6 @@ RULER_GEN_TOKS=128
 RULER_SEQ_LEN=$((RULER_MAX_POS - RULER_GEN_TOKS))
 RULER_BATCH_SIZE=32
 
-# Set environment variables based on the quantization scheme
-case "$SCHEME" in
-    mxfp4)
-        VLLM_AR_MXFP4_MODULAR_MOE=1
-        VLLM_MXFP4_PRE_UNPACK_TO_FP8=1
-        VLLM_MXFP4_PRE_UNPACK_WEIGHTS=0
-        VLLM_ENABLE_STATIC_MOE=0
-        VLLM_USE_DEEP_GEMM=0
-        ;;
-    mxfp8|nvfp4)
-        VLLM_AR_MXFP4_MODULAR_MOE=0
-        VLLM_MXFP4_PRE_UNPACK_TO_FP8=0
-        VLLM_MXFP4_PRE_UNPACK_WEIGHTS=0
-        VLLM_ENABLE_STATIC_MOE=0
-        VLLM_USE_DEEP_GEMM=0
-        ;;
-    bf16|fp8)
-        VLLM_USE_DEEP_GEMM=0
-        ;;
-    "")
-        ;;
-    *)
-        echo "Error: Invalid quantization scheme (--scheme): '$SCHEME'."
-        usage
-        ;;
-esac
-
 LM_EVAL_EXTRA_ARGS="${EXTRA_LM_EVAL_MODEL_ARGS:-}"
 SERVE_EXTRA_ARGS="${EXTRA_SERVE_ARGS:-}"
 
@@ -208,7 +164,6 @@ echo "Running benchmark with parameters:"
 echo "  Model Path: ${MODEL_PATH}"
 echo "  Tasks: ${TASKS}"
 echo "    standard: ${STANDARD_TASKS:-none}; chat-template: ${CHAT_TEMPLATE_TASKS:-none}; longbench: ${LONGBENCH_TASKS:-none}; ruler: ${RULER_TASKS:-none}"
-echo "  Quantization scheme: ${SCHEME:-unset}"
 echo "  Batch Size: ${BATCH_SIZE}"
 echo "  Max Model Length: ${MAX_MODEL_LEN}"
 echo "  KV Cache Dtype: ${KV_CACHE_DTYPE}"
