@@ -50,3 +50,33 @@ class TestWeightOnlyLinear:
         new_module.pack(int_weight, scale, zp, m.bias)
         unpacked_int_weight = new_module.unpack_tensor(new_module.qweight)
         assert torch.equal(unpacked_int_weight, int_weight)
+
+    @pytest.mark.parametrize(
+        "compression_dtype, use_optimum_format",
+        [
+            (torch.int8, False),
+            (torch.int16, False),
+            (torch.int32, False),
+            (torch.int64, False),
+            (torch.int32, True),
+        ],
+    )
+    def test_recover_asym_int8_full_range(self, compression_dtype, use_optimum_format):
+        # int_weight - zp spans [-255, 255] for asymmetric 8-bit weights
+        int_weight = torch.tensor([[0, 255], [255, 0]]).repeat(1, 16)
+        zp = torch.tensor([[0], [255]])
+        scale = torch.tensor([[1 / 256], [1 / 256]])
+        expected = (int_weight - zp) * scale
+        new_module = INCWeightOnlyLinear(
+            32,
+            2,
+            dtype="int",
+            bits=8,
+            group_size=32,
+            zp=True,
+            bias=False,
+            use_optimum_format=use_optimum_format,
+            compression_dtype=compression_dtype,
+        )
+        new_module.pack(int_weight, scale, zp, None)
+        assert torch.equal(new_module.recover().float(), expected)
