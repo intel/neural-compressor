@@ -82,27 +82,29 @@ def compute_expected_qdq_dense_output(
         all_a_scales.append(a_scale)
         all_w_scales.append(w_scale)
 
-        # QDQ weights
+        # Quantize
         if np.issubdtype(weight_dtype, np.integer):
-            qdq_weights = np.clip(np.round(layer_weights / w_scale), w_dtype_min, w_dtype_max).astype(weight_dtype)
+            q_weights = np.clip(np.round(layer_weights / w_scale), w_dtype_min, w_dtype_max).astype(weight_dtype)
         else:
-            qdq_weights = np.clip(layer_weights / w_scale, w_dtype_min, w_dtype_max).astype(weight_dtype)
-        qdq_weights = qdq_weights.astype(model_dtype) * w_scale
+            q_weights = np.clip(layer_weights / w_scale, w_dtype_min, w_dtype_max).astype(weight_dtype)
 
-        # QDQ input
         if np.issubdtype(activation_dtype, np.integer):
-            val = np.round(current_input / a_scale) + a_zero_point
-            val = np.clip(val, a_dtype_min, a_dtype_max).astype(activation_dtype)
-            qdq_input = (val.astype(model_dtype) - a_zero_point) * a_scale
+            q_input = np.round(current_input / a_scale) + a_zero_point
+            q_input = np.clip(q_input, a_dtype_min, a_dtype_max).astype(activation_dtype)
         else:
-            qdq_input = np.clip(current_input / a_scale, a_dtype_min, a_dtype_max).astype(activation_dtype)
-            qdq_input = qdq_input.astype(model_dtype) * a_scale
+            q_input = np.clip(current_input / a_scale, a_dtype_min, a_dtype_max).astype(activation_dtype)
 
         # Propagate calib through unquantized layer to get next layer's calib input
         current_calib = _matmul(current_calib, layer_weights)
 
+        # Dequantize
+        if a_zero_point is not None:
+            q_input = q_input - a_zero_point
+        acc = np.matmul(q_input.astype(np.float32), q_weights.astype(np.float32))
+        scale = np.asarray(a_scale, dtype=np.float32) * np.asarray(w_scale, dtype=np.float32)
+
         # Compute output for this layer
-        current_input = _matmul(qdq_input, qdq_weights)
+        current_input = (acc * scale).astype(model_dtype)
 
     return current_input, all_a_scales, all_w_scales
 
