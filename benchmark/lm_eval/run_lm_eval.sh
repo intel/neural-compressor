@@ -34,6 +34,7 @@ STATIC_KV_DTYPE="auto"
 STATIC_ATTENTION_DTYPE="auto"
 RULER_MAX_POS="${RULER_MAX_POS:-131072}"
 
+USER_SERVER_PORT="${SERVER_PORT:+1}"
 SERVER_PORT="${SERVER_PORT:-8000}"
 
 usage() {
@@ -207,8 +208,37 @@ run_chat_template_eval() {
         --show_config
 }
 
+port_in_use() {
+    (: < "/dev/tcp/127.0.0.1/$1") 2>/dev/null
+}
+
+find_available_port() {
+    if ! [[ "$SERVER_PORT" =~ ^[0-9]+$ ]] || (( SERVER_PORT < 1 || SERVER_PORT > 65535 )); then
+        echo "Error: Invalid server port '${SERVER_PORT}'. Expected a value from 1 to 65535." >&2
+        return 1
+    fi
+
+    if [[ -n "$USER_SERVER_PORT" ]]; then
+        if port_in_use "$SERVER_PORT"; then
+            echo "Error: SERVER_PORT ${SERVER_PORT} is already in use." >&2
+            return 1
+        fi
+        return 0
+    fi
+
+    while port_in_use "$SERVER_PORT"; do
+        echo "Port ${SERVER_PORT} is occupied; trying port $((SERVER_PORT + 1))."
+        SERVER_PORT=$((SERVER_PORT + 1))
+        if (( SERVER_PORT > 65535 )); then
+            echo "Error: No available server port up to 65535." >&2
+            return 1
+        fi
+    done
+}
+
 start_vllm_server() {
     local max_len=$1
+    find_available_port || exit 1
     echo "Starting vLLM server on port ${SERVER_PORT}..."
 
     vllm serve "${MODEL_PATH}" \
