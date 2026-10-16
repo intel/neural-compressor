@@ -8,7 +8,7 @@ import unittest
 import numpy as np
 import tensorflow as tf
 import yaml
-from pkg_resources import parse_version
+from packaging.version import parse as parse_version
 from tensorflow.compat.v1 import graph_util
 from tensorflow.python.framework import function
 
