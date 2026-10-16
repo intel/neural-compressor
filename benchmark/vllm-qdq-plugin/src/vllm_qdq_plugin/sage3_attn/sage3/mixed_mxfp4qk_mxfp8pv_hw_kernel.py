@@ -411,8 +411,7 @@ def mixed_mxfp4qk_mxfp8pv_flash_attention(
     causal: bool = False,
     sm_scale: float = None,
 ) -> torch.Tensor:
-    """
-    Mixed-Precision Flash Attention: MXFP4 QK + MXFP8 PV.
+    """Mixed-Precision Flash Attention: MXFP4 QK + MXFP8 PV.
 
     Args:
         q_packed: [B, H, M, D//2] uint8 — packed E2M1 queries (MXFP4, along HEAD_DIM)

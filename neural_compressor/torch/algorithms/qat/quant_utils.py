@@ -31,7 +31,6 @@ from .tensor_quantizer import TensorQuantizer
 
 def convert(module: nn.Module, quant_cfg=None, quant_module=None):
     """Convert the model to a quantized one with quant config."""
-
     # update class
     original_cls = type(module)
     module.__class__ = quant_module
@@ -45,7 +44,6 @@ def convert(module: nn.Module, quant_cfg=None, quant_module=None):
 
 def replace_with_quant_linear(model, quant_cfg=None):
     """Recursively replace the module with quantized module."""
-
     # TODO: support more modules, like kv.
     for name, child in model.named_children():
         if isinstance(child, nn.Linear):
@@ -63,7 +61,6 @@ def replace_with_quant_linear(model, quant_cfg=None):
 
 def get_quant_config_with_scheme(scheme: str):
     """Get quantization config."""
-
     try:
         # use scheme definitions from AutoRound since we utilize the quantization functions now
         from auto_round.schemes import preset_name_to_scheme
@@ -98,7 +95,6 @@ def get_quant_config(scheme: str) -> dict[str, Any]:
     Returns:
         Dictionary containing the quantization configuration
     """
-
     # TODO: support more quant config
     try:
         from auto_round.export.export_to_llmcompressor.config import initialize_quantization

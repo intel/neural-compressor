@@ -68,7 +68,6 @@ class INCQuantizationConfigMixin(QuantizationConfig):
 
     def post_init_cpu(self):
         r"""Safety checker that arguments are correct."""
-
         if self.compute_dtype is not None and self.compute_dtype not in [
             "fp32",
             "bf16",
@@ -98,7 +97,6 @@ class INCQuantizationConfigMixin(QuantizationConfig):
         r"""
         Safety checker that arguments are correct - also replaces some NoneType arguments with their default values.
         """
-
         if self.compute_dtype is not None and self.compute_dtype not in ["fp16"]:
             raise ValueError("compute_dtype must be 'fp16'.")
         elif self.compute_dtype is None:
@@ -355,7 +353,6 @@ class GPTQConfig(INCQuantizationConfigMixin):
 
     def post_init_gptq(self):
         r"""Safety checker that arguments are correct."""
-
         if self.bits not in [4, 8]:
             raise ValueError(f"Only support quantization to [4, 8] bits but found {self.bits}")
 

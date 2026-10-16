@@ -46,7 +46,6 @@ def static_quantize(
     Returns:
         keras.Model: The model with quantized layers.
     """
-
     if calib_function is None:
         raise ValueError("Calibration function must be provided for static quantization.")
 

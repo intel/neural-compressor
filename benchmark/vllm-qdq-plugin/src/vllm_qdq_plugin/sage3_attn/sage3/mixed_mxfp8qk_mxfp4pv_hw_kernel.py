@@ -115,13 +115,11 @@ def quantize_to_mxfp4(x: torch.Tensor, group_size: int = 32) -> tuple:
 def _fp32x2_to_fp4x2(x_lo, x_hi):
     """Convert two f32 values to packed E2M1x2 byte via PTX hardware instruction."""
     return tl.inline_asm_elementwise(
-        """
-        {
+        """{
             .reg .b8 tmp;
             cvt.rn.satfinite.e2m1x2.f32 tmp, $1, $2;
             cvt.u32.u8 $0, tmp;
-        }
-        """,
+        }""",
         constraints="=r,f,f",
         args=[x_hi, x_lo],
         dtype=tl.uint32,
@@ -433,8 +431,7 @@ def mixed_mxfp8qk_mxfp4pv_flash_attention(
     causal: bool = False,
     sm_scale: float = None,
 ) -> torch.Tensor:
-    """
-    Mixed-Precision Flash Attention: MXFP8 QK + MXFP4 PV.
+    """Mixed-Precision Flash Attention: MXFP8 QK + MXFP4 PV.
 
     Args:
         q: [B, H, M, D] float8_e4m3fn — queries (MXFP8)

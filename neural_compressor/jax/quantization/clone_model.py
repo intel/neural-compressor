@@ -89,7 +89,6 @@ def _build_new_model(original_model):
 def _build_all_layers(original_model, model):
     """Reconstructs layers' weights by building each layer from its saved input shape
     and then assigning the original variable values."""
-
     original_build_shapes = [getattr(layer, "_build_shapes_dict", None) for layer in original_model._flatten_layers()]
 
     # Build new model's layers using shapes from original model
@@ -112,7 +111,6 @@ def _build_var_map(model):
     (e.g. Sequential: original path is "sequential/dense/kernel", but during
     from_config self.path is just "dense", giving a lookup key "dense/kernel").
     """
-
     model_name_prefix = model.name + "/"
     original_var_map = {}
     for v in model.variables:
@@ -127,7 +125,6 @@ def _restore_protobufs(orig_obj, new_obj, visited=None):
     like SentencePieceTokenizer whose proto is always saved as None in
     get_config() but must be present for inference.
     """
-
     # Return early if layer was visited before
     if visited is None:
         visited = set()

@@ -245,19 +245,20 @@ def qdq_weight_sym(weight, bits=4, quantile=1.0, return_int=False, full_range=Fa
 
 
 def qdq_weight_actor(weight, bits, scheme, quantile=1.0, dtype="int", return_int=False, full_range=False, **kwargs):
-    """Quant and dequant tensor per channel. It is an in-place op.
+    """Quant and dequant tensor per channel.
 
-    Args:
-        weight : input weight
-        bits (int, optional): bits. Defaults to 4.
-        quantile (float, optional): percentile of clip. Defaults to 1.0.
-        dtype (str, optional): select from int, nf4, fp4. Defaults to int.
-        return_int (bool, optional): Choose return fp32 or int8/uint8 data.
-                                     Defaults to False.
-        full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+    It is an in-place op.
+        Args:
+            weight : input weight
+            bits (int, optional): bits. Defaults to 4.
+            quantile (float, optional): percentile of clip. Defaults to 1.0.
+            dtype (str, optional): select from int, nf4, fp4. Defaults to int.
+            return_int (bool, optional): Choose return fp32 or int8/uint8 data.
+                                         Defaults to False.
+            full_range (bool, optional): Choose sym range whether use -2**(bits-1).
 
-    Returns:
-        output: qdq weight
+        Returns:
+            output: qdq weight
     """
     assert bits > 0, "bits should be larger than 0"
 
@@ -281,21 +282,22 @@ def quant_tensor(
     full_range=False,
     **kwargs,
 ):
-    """Quant and dequant tensor with group size. It's an in-place function.
+    """Quant and dequant tensor with group size.
 
-    Args:
-        weight: input weight
-        bits (int, optional): bits. Defaults to 4.
-        group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
-        scheme (str, optional): sym or asym. Defaults to "asym".
-        quantile (float, optional): percentile of clip. Defaults to 1.0.
-        dtype (str, optional): select from int, nf4, fp4. Defaults to int.
-        return_int (bool, optional): Choose return fp32 or int8/uint8 data.
-                                     Defaults to False.
-        full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+    It's an in-place function.
+        Args:
+            weight: input weight
+            bits (int, optional): bits. Defaults to 4.
+            group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
+            scheme (str, optional): sym or asym. Defaults to "asym".
+            quantile (float, optional): percentile of clip. Defaults to 1.0.
+            dtype (str, optional): select from int, nf4, fp4. Defaults to int.
+            return_int (bool, optional): Choose return fp32 or int8/uint8 data.
+                                         Defaults to False.
+            full_range (bool, optional): Choose sym range whether use -2**(bits-1).
 
-    Returns:
-        output: qdq weight.
+        Returns:
+            output: qdq weight.
     """
     quant_scale = kwargs.get("double_quant", False)
     if bits <= 0:  # pragma: no cover
@@ -437,18 +439,19 @@ def quant_tensor(
 
 
 def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_full_range=False):
-    """Search best clip range of each linear in current block. It's not an in-place function.
+    """Search best clip range of each linear in current block.
 
-    Args:
-        m (torch.nn.Module): torch module.
-        bits (int, optional): num bits.
-        group_size (int, optional): how many elements share one scale/zp.
-        scheme (str, optional): sym or asym.
-        dtype (str, optional): select from int, nf4, fp4. Defaults to int.
-        enable_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
+    It's not an in-place function.
+        Args:
+            m (torch.nn.Module): torch module.
+            bits (int, optional): num bits.
+            group_size (int, optional): how many elements share one scale/zp.
+            scheme (str, optional): sym or asym.
+            dtype (str, optional): select from int, nf4, fp4. Defaults to int.
+            enable_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
 
-    Returns:
-        best_clip_ratio (float): best percentile of clip
+        Returns:
+            best_clip_ratio (float): best percentile of clip
     """
     org_weight = m.weight.data.clone()
     logger.debug("Searching the best clip range with RTN algorithm")
@@ -481,17 +484,18 @@ def search_clip(m, bits=4, group_size=32, scheme="asym", dtype="int", enable_ful
 
 
 def quant_weight_w_scale(weight, scale, scale_bf16_to_fp8, zp=None, group_size=-1, dtype="int", fp8_aware=False):
-    """Quant and dequant tensor with group size. It's an in-place function.
+    """Quant and dequant tensor with group size.
 
-    Args:
-        weight: input weight
-        scale: scale
-        zp: zero point
-        group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
-        dtype: data type, for NF4 FP4
+    It's an in-place function.
+        Args:
+            weight: input weight
+            scale: scale
+            zp: zero point
+            group_size (int, optional): how many elements share one scale/zp. Defaults to -1.
+            dtype: data type, for NF4 FP4
 
-    Returns:
-        output: int weight.
+        Returns:
+            output: int weight.
     """
     device = weight.device
     scale = scale.to(device)

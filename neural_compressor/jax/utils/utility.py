@@ -33,7 +33,6 @@ from neural_compressor.common import logger
 
 def check_backend(raise_error=True):
     """Check if the current Keras backend is JAX and log a warning or error if not."""
-
     if keras.config.backend() != "jax":
         message = (
             f"neural_compressor.jax only supports JAX backend, but the current Keras backend is {keras.config.backend()}. "

@@ -150,13 +150,11 @@ def _fp32x2_to_fp4x2(x_lo, x_hi):
     Low nibble = x_lo, high nibble = x_hi.
     """
     return tl.inline_asm_elementwise(
-        """
-        {
+        """{
             .reg .b8 tmp;
             cvt.rn.satfinite.e2m1x2.f32 tmp, $1, $2;
             cvt.u32.u8 $0, tmp;
-        }
-        """,
+        }""",
         constraints="=r,f,f",
         args=[x_hi, x_lo],
         dtype=tl.uint32,

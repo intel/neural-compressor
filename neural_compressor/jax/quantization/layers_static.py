@@ -479,15 +479,16 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         return self.dequantize(inputs, *params)
 
     def _passthrough(self, x, *args, **kwargs):
-        """No-op passthrough. Used for disabled quantize/dequantize steps and as call_passthrough.
+        """No-op passthrough.
 
-        Args:
-            x (jnp.ndarray): Input tensor.
-            *args: Ignored positional params (e.g. scale, zero_point).
-            **kwargs: Ignored keyword params (e.g. mask).
+        Used for disabled quantize/dequantize steps and as call_passthrough.
+                Args:
+                    x (jnp.ndarray): Input tensor.
+                    *args: Ignored positional params (e.g. scale, zero_point).
+                    **kwargs: Ignored keyword params (e.g. mask).
 
-        Returns:
-            jnp.ndarray: Unmodified input.
+                Returns:
+                    jnp.ndarray: Unmodified input.
         """
         return x
 

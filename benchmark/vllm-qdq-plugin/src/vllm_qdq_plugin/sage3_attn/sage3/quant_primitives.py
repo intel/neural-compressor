@@ -1,5 +1,4 @@
-"""
-Quantization primitives: round/quant functions (torch + triton pairs) and block-processing helpers.
+"""Quantization primitives: round/quant functions (torch + triton pairs) and block-processing helpers.
 
 This module contains the core numerical operations used by both host-side quantization
 (quantize.py) and kernel-side P-quantization (p_quant_kernels.py).

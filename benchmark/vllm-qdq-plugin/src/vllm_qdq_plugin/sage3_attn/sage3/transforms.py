@@ -1,5 +1,4 @@
-"""
-Pre-quantization transforms: operations applied to Q, K, V before quantization.
+"""Pre-quantization transforms: operations applied to Q, K, V before quantization.
 
 Each transform has the signature:
     (q, k, v, ctx: TransformContext) → (q, k, v, ctx: TransformContext)
