@@ -90,7 +90,7 @@ bash run_quant.sh \
   - `w4a16`: `scheme=W4A16` + `layer_config={"wo_a": {"bits": 16}}`
 - `--input_model`: HF model name or local model path.
 - `--output_model`: output directory.
-- `--format`: `auto_round` or `llm_compressor` (default: `llm_compressor`).
+- `--export_format`: `auto_round` or `llm_compressor` (default: `llm_compressor`).
 - `--ignore_layers`: comma-separated layer patterns (default: `compressor,indexer.weights_proj`).
 
 `run_evalscope.sh` arguments:
