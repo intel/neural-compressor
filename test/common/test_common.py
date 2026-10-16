@@ -12,7 +12,6 @@ The folder structure:
 ├── 3x
 │   ├── common
 │   ├── onnxrt
-│   ├── tensorflow
 │   └── torch
 
 For each fwk CI:
@@ -21,12 +20,6 @@ onnxrt_included_folder:
     ├── 3x
     │   ├── common
     │   ├── onnxrt
-
-tensorflow_included_folder:
-    ├── 3x
-    │   ├── common
-    │   ├── tensorflow
-
 
 torch_included_folder:
     ├── 3x

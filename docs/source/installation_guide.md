@@ -42,20 +42,15 @@ https://pytorch.org/get-started/locally
 ### Install from Binary
 - Install from Pypi
 ```Shell
-# Framework extension API for PyTorch/Tensorflow/JAX
+# Framework extension API for PyTorch/JAX
 pip install neural-compressor
 # Framework extension API + corresponding framework dependency
 pip install neural-compressor[pt]
-pip install neural-compressor[tf]
 pip install neural-compressor[jax]
 ```
 ```Shell
 # Framework extension API + PyTorch dependency
 pip install neural-compressor-pt
-```
-```Shell
-# Framework extension API + TensorFlow dependency
-pip install neural-compressor-tf
 ```
 ```Shell
 # Framework extension API + JAX dependency, available since v3.9
@@ -73,11 +68,6 @@ git fetch --tags && git checkout "$(git tag -l 'v*' --sort=-v:refname | head -n 
 ```Shell
 # PyTorch framework extension API + PyTorch dependency
 INC_PT_ONLY=1 pip install .
-```
-
-```Shell
-# TensorFlow framework extension API + TensorFlow dependency
-INC_TF_ONLY=1 pip install .
 ```
 
 ```Shell
@@ -110,7 +100,6 @@ INC_JAX_ONLY=1 pip install .
 <thead>
   <tr style="vertical-align: middle; text-align: center;">
     <th>Framework</th>
-    <th>TensorFlow</th>
     <th>PyTorch</th>
     <th>JAX</th>
   </tr>
@@ -118,8 +107,6 @@ INC_JAX_ONLY=1 pip install .
 <tbody>
   <tr align="center">
     <th>Version</th>
-    <td class="tg-7zrl">
-    <a href=https://github.com/tensorflow/tensorflow/releases/tag/v2.19.0>2.19</a><br></td>
     <td class="tg-7zrl">
     <a href=https://github.com/pytorch/pytorch/releases/tag/v2.12.0>2.12</a><br>
     <a href=https://github.com/pytorch/pytorch/releases/tag/v2.11.0>2.11</a><br>

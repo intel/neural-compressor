@@ -4,8 +4,7 @@ AutoTune
 1. [Overview](#overview)
 2. [How it Works](#how-it-works)
 3. [Working with Autotune](#working-with-autotune) \
-    3.1 [Working with PyTorch Model](#working-with-pytorch-model) \
-    3.1 [Working with Tensorflow Model](#working-with-tensorflow-model)
+    3.1 [Working with PyTorch Model](#working-with-pytorch-model)
 
 
 ## Overview
@@ -62,29 +61,4 @@ tune_config = TuningConfig(
     max_trials=10,
 )
 q_model = autotune(model, tune_config=tune_config, eval_fn=eval_fn)
-```
-
-### Working with Tensorflow Model
-
-The example below demonstrates how to autotune a TensorFlow model on two `StaticQuantConfig` configurations.
-
-```python
-from neural_compressor.tensorflow.quantization import StaticQuantConfig, autotune
-
-calib_dataloader = MyDataloader(...)
-custom_tune_config = TuningConfig(
-    config_set=[
-        StaticQuantConfig(weight_sym=True, act_sym=True),
-        StaticQuantConfig(weight_sym=False, act_sym=False),
-    ]
-)
-
-
-def eval_fn(model) -> float:
-    return ...
-
-
-best_model = autotune(
-    model="baseline_model", tune_config=custom_tune_config, eval_fn=eval_fn, calib_dataloader=calib_dataloader
-)
 ```
