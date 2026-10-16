@@ -35,6 +35,7 @@ torch_included_folder:
 """
 
 import copy
+import functools
 import unittest
 
 from neural_compressor.common import Logger
@@ -247,6 +248,24 @@ class TestEvaluator(unittest.TestCase):
         evaluator.set_eval_fn_registry(eval_fns)
         evaluator.self_check()
         self.assertEqual(evaluator.get_number_of_eval_functions(), 1)
+
+    def test_partial_and_callable_object_eval_fn(self):
+        def eval_acc_fn(model, dataloader) -> float:
+            return 0.5
+
+        class EvalMetric:
+            def __call__(self, model) -> float:
+                return 0.25
+
+        for eval_fn, expected_name in (
+            (functools.partial(eval_acc_fn, dataloader=None), "eval_acc_fn"),
+            (EvalMetric(), "EvalMetric"),
+        ):
+            for eval_fns in (eval_fn, {"eval_fn": eval_fn}):
+                evaluator = Evaluator()
+                evaluator.set_eval_fn_registry(eval_fns)
+                self.assertEqual(evaluator.eval_fn_registry[0]["name"], expected_name)
+                self.assertEqual(evaluator.evaluate("model"), eval_fn("model"))
 
 
 class TestBaseConfig(unittest.TestCase):
