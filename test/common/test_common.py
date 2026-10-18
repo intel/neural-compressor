@@ -45,6 +45,7 @@ from typing import Any, Callable, List, Optional, Tuple, Union
 
 from neural_compressor.common.base_config import (
     BaseConfig,
+    ComposableConfig,
     config_registry,
     get_all_config_set_from_config_registry,
     register_config,
@@ -293,6 +294,20 @@ class TestBaseConfig(unittest.TestCase):
         config_mapping = mixed_config.to_config_mapping(model_info=model_info)
         self.assertIn(OP1_NAME, [op_info[0] for op_info in config_mapping])
         self.assertIn(OP2_NAME, [op_info[0] for op_info in config_mapping])
+
+    def test_composable_config_from_dict(self):
+        config_dict = {
+            FAKE_CONFIG_NAME: {"weight_bits": 2},
+            FAKE_CONFIG_NAME_1: {"weight_bits": 6},
+        }
+        registry = config_registry.get_cls_configs()[FAKE_FRAMEWORK_NAME]
+        mixed_config = ComposableConfig.from_dict(config_dict, config_registry=registry)
+        self.assertIsInstance(mixed_config, ComposableConfig)
+        self.assertEqual(len(mixed_config.config_list), 2)
+        self.assertIsInstance(mixed_config.config_list[0], FakeAlgoConfig)
+        self.assertEqual(mixed_config.config_list[0].weight_bits, 2)
+        self.assertIsInstance(mixed_config.config_list[1], FakeAlgoOneConfig)
+        self.assertEqual(mixed_config.config_list[1].weight_bits, 6)
 
     def test_set_local_op_name(self):
         quant_config = FakeAlgoConfig(weight_bits=4)
