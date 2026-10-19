@@ -73,9 +73,7 @@ def compute_expected_qdq_dense_output(
 
     model_dtype = np.dtype(model_dtype)
     use_onednn_route = _is_onednn_route_enabled()
-    use_excess_precision = (
-        use_onednn_route and _is_excess_precision_enabled() and model_dtype == np.dtype(ml_dtypes.bfloat16)
-    )
+    use_excess_precision = use_onednn_route and _is_excess_precision_enabled()
 
     def inc_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale):
         """INC / default XLA route: dequantize both operands in model_dtype, then matmul."""
@@ -160,10 +158,7 @@ def compute_expected_qdq_dense_output(
         else:
             current_input = inc_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale)
 
-    if use_excess_precision:
-        current_input = current_input.astype(model_dtype)
-
-    return current_input, all_a_scales, all_w_scales
+    return current_input.astype(model_dtype), all_a_scales, all_w_scales
 
 
 def load_image(image_path, target_size):
