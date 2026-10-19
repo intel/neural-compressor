@@ -13,6 +13,15 @@ from jax import numpy as jnp
 from PIL import Image
 
 
+def _parse_xla_flags():
+    """Return `XLA_FLAGS` as a normalized flag dictionary."""
+    flags = {}
+    for flag in os.environ.get("XLA_FLAGS", "").split():
+        name, _, value = flag.lstrip("-").partition("=")
+        flags[name] = value.lower() if value else "true"
+    return flags
+
+
 def _dtype_min_max(dtype, out_dtype):
     """Return (min, max) representable values for dtype, cast to out_dtype."""
     info = np.iinfo(dtype) if np.issubdtype(dtype, np.integer) else ml_dtypes.finfo(dtype)
@@ -32,11 +41,14 @@ def _matmul(a, b):
 
 def _is_onednn_route_enabled():
     """Return True if XLA_FLAGS route quantized dots to oneDNN custom calls."""
-    flags = {}
-    for flag in os.environ.get("XLA_FLAGS", "").split():
-        name, _, value = flag.lstrip("-").partition("=")
-        flags[name] = value.lower() if value else "true"
+    flags = _parse_xla_flags()
     return flags.get("xla_cpu_experimental_onednn_custom_call") in ("true", "1")
+
+
+def _is_excess_precision_enabled():
+    """Return True when XLA is allowed to retain higher internal precision."""
+    flags = _parse_xla_flags()
+    return not flags.get("xla_allow_excess_precision") in ("false", "0")
 
 
 def compute_expected_qdq_dense_output(
@@ -59,6 +71,10 @@ def compute_expected_qdq_dense_output(
         tuple: (expected_output, first_layer_activation_scale, first_layer_weight_scale)
     """
 
+    model_dtype = np.dtype(model_dtype)
+    use_onednn_route = _is_onednn_route_enabled()
+    use_excess_precision = use_onednn_route and _is_excess_precision_enabled() and model_dtype == np.dtype(ml_dtypes.bfloat16)
+
     def inc_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale):
         """INC / default XLA route: dequantize both operands in model_dtype, then matmul."""
         weights = q_weights.astype(model_dtype) * w_scale
@@ -68,22 +84,24 @@ def compute_expected_qdq_dense_output(
             input = q_input.astype(model_dtype) * a_scale
         return _matmul(input, weights)
 
-    def onednn_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale):
+    def onednn_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale, use_excess_precision=True):
         """oneDNN route: matmul raw quantized values with f32 accumulation, then apply
         the combined (activation * weight) scale once and cast to model_dtype."""
         if a_zero_point is not None:
             q_input = q_input - a_zero_point
         acc = np.matmul(q_input.astype(np.float32), q_weights.astype(np.float32))
         scale = np.asarray(a_scale, dtype=np.float32) * np.asarray(w_scale, dtype=np.float32)
-        return (acc * scale).astype(model_dtype)
-
-    dq_dense = onednn_dq_dense if _is_onednn_route_enabled() else inc_dq_dense
+        output = acc * scale
+        if use_excess_precision:
+            return output
+        else:
+            return output.astype(model_dtype)
 
     w_dtype_min, w_dtype_max = _dtype_min_max(weight_dtype, out_dtype=model_dtype)
     a_dtype_min, a_dtype_max = _dtype_min_max(activation_dtype, out_dtype=model_dtype)
 
-    # Convert inputs to model_dtype numpy arrays
-    current_input = np.asarray(test_input, dtype=model_dtype)
+    input_compute_dtype = np.float32 if use_excess_precision else model_dtype
+    current_input = np.asarray(test_input, dtype=input_compute_dtype)
     current_calib = np.asarray(calib_data, dtype=model_dtype)
 
     all_a_scales = []
@@ -128,7 +146,20 @@ def compute_expected_qdq_dense_output(
         current_calib = _matmul(current_calib, layer_weights)
 
         # Compute output for this layer
-        current_input = dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale)
+        if use_onednn_route:
+            current_input = onednn_dq_dense(
+                q_input,
+                q_weights,
+                a_scale,
+                a_zero_point,
+                w_scale,
+                use_excess_precision,
+            )
+        else:
+            current_input = inc_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale)
+
+    if use_excess_precision:
+        current_input = current_input.astype(model_dtype)
 
     return current_input, all_a_scales, all_w_scales
 
