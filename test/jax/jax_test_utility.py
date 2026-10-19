@@ -88,8 +88,8 @@ def compute_expected_qdq_dense_output(
         """oneDNN route: matmul raw quantized values with f32 accumulation, then apply
         the combined (activation * weight) scale once and cast to model_dtype."""
         if a_zero_point is not None:
-            q_input = q_input - a_zero_point
-        acc = np.matmul(q_input.astype(np.float32), q_weights.astype(np.float32))
+            q_input = q_input.astype(np.float32) - np.asarray(a_zero_point, dtype=np.float32)
+        acc = np.matmul(q_input, q_weights.astype(np.float32))
         scale = np.asarray(a_scale, dtype=np.float32) * np.asarray(w_scale, dtype=np.float32)
         output = acc * scale
 
