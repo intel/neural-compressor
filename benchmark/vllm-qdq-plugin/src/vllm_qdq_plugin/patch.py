@@ -5,6 +5,7 @@ Wraps marlin_gemm and moe_wna16_marlin_gemm at the ops level so that
 every call site (dense, MoE gate+up, MoE down) gets QDQ automatically.
 """
 
+import inspect
 import sys
 
 import torch
@@ -14,10 +15,60 @@ from . import envs
 
 logger = init_logger(__name__)
 
+# Pre-0.31 vLLM signatures; used when the wrapped fn has no introspectable params.
+_LEGACY_MARLIN_GEMM_PARAMS = (
+    "a", "c", "b_q_weight", "b_bias", "b_scales", "a_scales", "global_scale", "b_zeros",
+    "g_idx", "perm", "workspace", "b_q_type", "size_m", "size_n", "size_k",
+)  # fmt: skip
+_LEGACY_MOE_MARLIN_GEMM_PARAMS = (
+    "input", "output", "b_qweight", "b_bias", "b_scales", "a_scales", "global_scale", "b_qzeros",
+    "g_idx", "perm", "workspace", "sorted_token_ids", "expert_ids", "num_tokens_past_padded",
+    "topk_weights", "moe_block_size", "top_k", "mul_topk_weights", "b_q_type",
+)  # fmt: skip
 
-def _is_mxfp4_marlin_weight(b_q_type, global_scale, scalar_types) -> bool:
-    """Distinguish MXFP4 from NVFP4, which shares the E2M1 weight type."""
-    return b_q_type == scalar_types.float4_e2m1f and global_scale is None
+
+def _positional_param_names(fn, legacy: tuple[str, ...]) -> tuple[str, ...]:
+    try:
+        params = inspect.signature(fn).parameters.values()
+    except (TypeError, ValueError):
+        return legacy
+    names = tuple(
+        p.name for p in params if p.kind in (inspect.Parameter.POSITIONAL_ONLY, inspect.Parameter.POSITIONAL_OR_KEYWORD)
+    )
+    return names or legacy
+
+
+def _make_qdq_wrapper(_orig, param_names, input_name, type_name, type_matches, mxfp4_qdq, mxfp8_qdq, op_name):
+    """Wrap a marlin gemm so QDQ is applied to its activation regardless of signature."""
+    idx = {name: i for i, name in enumerate(param_names)}
+
+    def _get(args, kwargs, name):
+        if name in kwargs:
+            return kwargs[name]
+        i = idx.get(name)
+        return args[i] if i is not None and i < len(args) else None
+
+    def _patched(*args, **kwargs):
+        x = _get(args, kwargs, input_name)
+        if isinstance(x, torch.Tensor) and x.dim() == 2:
+            b_q_type = _get(args, kwargs, type_name)
+            global_scale = _get(args, kwargs, "global_scale")
+            qdq = None
+            if op_name == "moe_wna16_marlin_gemm" and envs.VLLM_MARLIN_MOE_QDQ_MODE == "FORCE_MXFP4":
+                qdq = mxfp4_qdq
+            elif type_matches(b_q_type, "float4_e2m1f") and global_scale is None:
+                qdq = mxfp4_qdq
+            elif type_matches(b_q_type, "float8_e4m3fn"):
+                qdq = mxfp8_qdq
+            if qdq is not None and (op_name == "moe_wna16_marlin_gemm" or x.dtype in (torch.float16, torch.bfloat16)):
+                x = qdq(x, group_size=32, trace_op_name=op_name)
+                if input_name in kwargs:
+                    kwargs[input_name] = x
+                else:
+                    args = (x, *args[1:])
+        return _orig(*args, **kwargs)
+
+    return _patched
 
 
 def _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq):
@@ -26,68 +77,46 @@ def _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq):
     Returns:
         Tuple of (attr_name, original_fn, patched_fn) for sys.modules fixup.
     """
-    from vllm.scalar_type import ScalarType
-
     _orig = ops.marlin_gemm
-
-    def _patched(
-        a: torch.Tensor,
-        c: torch.Tensor | None,
-        b_q_weight: torch.Tensor,
-        b_bias: torch.Tensor | None,
-        b_scales: torch.Tensor,
-        a_scales: torch.Tensor | None,
-        global_scale: torch.Tensor | None,
-        b_zeros: torch.Tensor | None,
-        g_idx: torch.Tensor | None,
-        perm: torch.Tensor | None,
-        workspace: torch.Tensor,
-        b_q_type: ScalarType,
-        size_m: int,
-        size_n: int,
-        size_k: int,
-        is_k_full: bool = True,
-        use_atomic_add: bool = False,
-        use_fp32_reduce: bool = False,
-        is_zp_float: bool = False,
-    ) -> torch.Tensor:
-        if (
-            _is_mxfp4_marlin_weight(b_q_type, global_scale, scalar_types)
-            and a.dim() == 2
-            and a.dtype
-            in (
-                torch.float16,
-                torch.bfloat16,
-            )
-        ):
-            a = mxfp4_qdq(a, group_size=32, trace_op_name="marlin_gemm")
-        elif b_q_type == scalar_types.float8_e4m3fn and a.dim() == 2 and a.dtype in (torch.float16, torch.bfloat16):
-            a = mxfp8_qdq(a, group_size=32, trace_op_name="marlin_gemm")
-
-        return _orig(
-            a,
-            c,
-            b_q_weight,
-            b_bias,
-            b_scales,
-            a_scales,
-            global_scale,
-            b_zeros,
-            g_idx,
-            perm,
-            workspace,
-            b_q_type,
-            size_m,
-            size_n,
-            size_k,
-            is_k_full,
-            use_atomic_add,
-            use_fp32_reduce,
-            is_zp_float,
-        )
-
+    _patched = _make_qdq_wrapper(
+        _orig,
+        _positional_param_names(_orig, _LEGACY_MARLIN_GEMM_PARAMS),
+        "a",
+        "b_q_type",
+        lambda t, name: t == getattr(scalar_types, name),
+        mxfp4_qdq,
+        mxfp8_qdq,
+        "marlin_gemm",
+    )
     ops.marlin_gemm = _patched
     return ("marlin_gemm", _orig, _patched)
+
+
+def _patch_marlin_gemm_custom_op(scalar_types, mxfp4_qdq, mxfp8_qdq) -> bool:
+    """vLLM>=0.31 dense path: torch.ops.vllm.marlin_gemm -> torch.ops._C.marlin_gemm, bypassing ops.marlin_gemm.
+
+    Patches the ``_C`` op looked up at runtime inside the opaque custom-op impl.
+    """
+    try:
+        from vllm.model_executor.layers.quantization.utils import marlin_utils
+    except ImportError:
+        return False
+    if not hasattr(marlin_utils, "_marlin_gemm"):
+        return False
+
+    _orig = torch.ops._C.marlin_gemm
+    param_names = tuple(a.name for a in _orig.default._schema.arguments)
+    torch.ops._C.marlin_gemm = _make_qdq_wrapper(
+        _orig,
+        param_names,
+        "a",
+        "b_type_id",
+        lambda t, name: t == getattr(scalar_types, name).id,
+        mxfp4_qdq,
+        mxfp8_qdq,
+        "marlin_gemm",
+    )
+    return True
 
 
 def _patch_moe_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq):
@@ -96,80 +125,17 @@ def _patch_moe_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq):
     Returns:
         Tuple of (attr_name, original_fn, patched_fn) for sys.modules fixup.
     """
-    from vllm.scalar_type import ScalarType
-
     _orig = ops.moe_wna16_marlin_gemm
-
-    def _patched(
-        input: torch.Tensor,
-        output: torch.Tensor | None,
-        b_qweight: torch.Tensor,
-        b_bias: torch.Tensor | None,
-        b_scales: torch.Tensor,
-        a_scales: torch.Tensor | None,
-        global_scale: torch.Tensor | None,
-        b_qzeros: torch.Tensor | None,
-        g_idx: torch.Tensor | None,
-        perm: torch.Tensor | None,
-        workspace: torch.Tensor,
-        sorted_token_ids: torch.Tensor,
-        expert_ids: torch.Tensor,
-        num_tokens_past_padded: torch.Tensor,
-        topk_weights: torch.Tensor,
-        moe_block_size: int,
-        top_k: int,
-        mul_topk_weights: bool,
-        b_q_type: ScalarType,
-        size_m: int,
-        size_n: int,
-        size_k: int,
-        is_k_full: bool,
-        use_atomic_add: bool,
-        use_fp32_reduce: bool,
-        is_zp_float: bool,
-        thread_k: int = -1,
-        thread_n: int = -1,
-        blocks_per_sm: int = -1,
-    ) -> torch.Tensor:
-        if input.dim() == 2 and envs.VLLM_MARLIN_MOE_QDQ_MODE == "FORCE_MXFP4":
-            input = mxfp4_qdq(input, group_size=32, trace_op_name="moe_wna16_marlin_gemm")
-        elif _is_mxfp4_marlin_weight(b_q_type, global_scale, scalar_types) and input.dim() == 2:
-            input = mxfp4_qdq(input, group_size=32, trace_op_name="moe_wna16_marlin_gemm")
-        elif b_q_type == scalar_types.float8_e4m3fn and input.dim() == 2:
-            input = mxfp8_qdq(input, group_size=32, trace_op_name="moe_wna16_marlin_gemm")
-
-        return _orig(
-            input,
-            output,
-            b_qweight,
-            b_bias,
-            b_scales,
-            a_scales,
-            global_scale,
-            b_qzeros,
-            g_idx,
-            perm,
-            workspace,
-            sorted_token_ids,
-            expert_ids,
-            num_tokens_past_padded,
-            topk_weights,
-            moe_block_size,
-            top_k,
-            mul_topk_weights,
-            b_q_type,
-            size_m,
-            size_n,
-            size_k,
-            is_k_full,
-            use_atomic_add,
-            use_fp32_reduce,
-            is_zp_float,
-            thread_k,
-            thread_n,
-            blocks_per_sm,
-        )
-
+    _patched = _make_qdq_wrapper(
+        _orig,
+        _positional_param_names(_orig, _LEGACY_MOE_MARLIN_GEMM_PARAMS),
+        "input",
+        "b_q_type",
+        lambda t, name: t == getattr(scalar_types, name),
+        mxfp4_qdq,
+        mxfp8_qdq,
+        "moe_wna16_marlin_gemm",
+    )
     ops.moe_wna16_marlin_gemm = _patched
     return ("moe_wna16_marlin_gemm", _orig, _patched)
 
@@ -232,10 +198,11 @@ def apply_patches():
 
     _patch_mla_kv_b_proj_dtype()
 
-    patches = [
-        _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq),
-        _patch_moe_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq),
-    ]
+    # ops.marlin_gemm also forwards to torch.ops._C.marlin_gemm, so patch only one layer for dense.
+    dense_custom_op = _patch_marlin_gemm_custom_op(scalar_types, mxfp4_qdq, mxfp8_qdq)
+    patches = [_patch_moe_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq)]
+    if not dense_custom_op:
+        patches.insert(0, _patch_marlin_gemm(ops, scalar_types, mxfp4_qdq, mxfp8_qdq))
 
     # Fix up any modules that imported these via
     # `from vllm._custom_ops import marlin_gemm` (direct ref).
@@ -247,10 +214,10 @@ def apply_patches():
         except Exception:
             pass
 
-    logger.warning(
-        "QDQ patches applied: %s (MXFP4, MXFP8)",
-        ", ".join(name for name, _, _ in patches),
-    )
+    names = [name for name, _, _ in patches]
+    if dense_custom_op:
+        names.append("torch.ops._C.marlin_gemm")
+    logger.warning("QDQ patches applied: %s (MXFP4, MXFP8)", ", ".join(names))
     try:
         if not envs.is_set("VLLM_QDQ_CUTE"):
             logger.warning("CUTE QDQ backend defaults to automatic capability detection")
