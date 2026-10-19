@@ -48,7 +48,7 @@ def _is_onednn_route_enabled():
 def _is_excess_precision_enabled():
     """Return True when XLA is allowed to retain higher internal precision."""
     flags = _parse_xla_flags()
-    return not flags.get("xla_allow_excess_precision") in ("false", "0")
+    return flags.get("xla_allow_excess_precision") not in ("false", "0")
 
 
 def compute_expected_qdq_dense_output(
@@ -73,7 +73,9 @@ def compute_expected_qdq_dense_output(
 
     model_dtype = np.dtype(model_dtype)
     use_onednn_route = _is_onednn_route_enabled()
-    use_excess_precision = use_onednn_route and _is_excess_precision_enabled() and model_dtype == np.dtype(ml_dtypes.bfloat16)
+    use_excess_precision = (
+        use_onednn_route and _is_excess_precision_enabled() and model_dtype == np.dtype(ml_dtypes.bfloat16)
+    )
 
     def inc_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale):
         """INC / default XLA route: dequantize both operands in model_dtype, then matmul."""
