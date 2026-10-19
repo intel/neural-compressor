@@ -92,10 +92,10 @@ def compute_expected_qdq_dense_output(
         acc = np.matmul(q_input.astype(np.float32), q_weights.astype(np.float32))
         scale = np.asarray(a_scale, dtype=np.float32) * np.asarray(w_scale, dtype=np.float32)
         output = acc * scale
+        
         if use_excess_precision:
             return output
-        else:
-            return output.astype(model_dtype)
+        return output.astype(model_dtype)
 
     w_dtype_min, w_dtype_max = _dtype_min_max(weight_dtype, out_dtype=model_dtype)
     a_dtype_min, a_dtype_max = _dtype_min_max(activation_dtype, out_dtype=model_dtype)
