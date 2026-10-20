@@ -39,12 +39,6 @@ def _matmul(a, b):
     return np.matmul(a, b)
 
 
-def _is_onednn_route_enabled():
-    """Return True if XLA_FLAGS route quantized dots to oneDNN custom calls."""
-    flags = _parse_xla_flags()
-    return flags.get("xla_cpu_experimental_onednn_custom_call") in ("true", "1")
-
-
 def _is_excess_precision_enabled():
     """Return True when XLA is allowed to retain higher internal precision."""
     flags = _parse_xla_flags()
@@ -52,7 +46,15 @@ def _is_excess_precision_enabled():
 
 
 def compute_expected_qdq_dense_output(
-    test_input, calib_data, weights, weight_dtype, activation_dtype, dynamic, model_dtype, granularity
+    test_input,
+    calib_data,
+    weights,
+    weight_dtype,
+    activation_dtype,
+    dynamic,
+    model_dtype,
+    granularity,
+    use_onednn_custom_calls,
 ):
     """Compute expected output for one or more Dense layers after FP8/int8 quantize-dequantize (QDQ).
 
@@ -72,10 +74,9 @@ def compute_expected_qdq_dense_output(
     """
 
     model_dtype = np.dtype(model_dtype)
-    use_onednn_route = _is_onednn_route_enabled()
-    use_excess_precision = use_onednn_route and _is_excess_precision_enabled()
+    use_excess_precision = use_onednn_custom_calls and _is_excess_precision_enabled()
 
-    def inc_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale):
+    def formal_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale):
         """INC / default XLA route: dequantize both operands in model_dtype, then matmul."""
         weights = q_weights.astype(model_dtype) * w_scale
         if a_zero_point is not None:
@@ -146,7 +147,7 @@ def compute_expected_qdq_dense_output(
         current_calib = _matmul(current_calib, layer_weights)
 
         # Compute output for this layer
-        if use_onednn_route:
+        if use_onednn_custom_calls:
             current_input = onednn_dq_dense(
                 q_input,
                 q_weights,
@@ -156,7 +157,7 @@ def compute_expected_qdq_dense_output(
                 use_excess_precision,
             )
         else:
-            current_input = inc_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale)
+            current_input = formal_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale)
 
     return current_input.astype(model_dtype), all_a_scales, all_w_scales
 

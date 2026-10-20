@@ -28,6 +28,14 @@ _int_dtypes = ["int8"]
 _dtype_pairs = [(f1, f2) for f1 in _fp8_dtypes for f2 in _fp8_dtypes] + [(i, i) for i in _int_dtypes]
 
 
+@pytest.fixture(scope="module")
+def use_onednn_custom_calls():
+    """Return True if XLA uses oneDNN custom calls underneath."""
+    x = jnp.ones((512, 512), jnp.float32)
+    hlo = jax.jit(jnp.matmul).lower(x, x).compile().as_text()
+    return "__onednn$" in hlo
+
+
 def _read_value(var_or_array, is_const):
     """Return numeric value whether variable has `.value` or is a plain array."""
     return var_or_array if is_const else var_or_array.value
@@ -47,7 +55,14 @@ def _read_value(var_or_array, is_const):
 )
 @pytest.mark.smoke_test
 def test_simple_linear_model_accuracy(
-    dynamic, const_vars, weight_scale_granularity, inplace, model_dtype, weight_dtype, activation_dtype
+    dynamic,
+    const_vars,
+    weight_scale_granularity,
+    inplace,
+    model_dtype,
+    weight_dtype,
+    activation_dtype,
+    use_onednn_custom_calls,
 ):
     """Test accuracy on a simple linear model."""
     if weight_dtype != activation_dtype:
@@ -113,6 +128,7 @@ def test_simple_linear_model_accuracy(
         dynamic,
         model_dtype,
         weight_scale_granularity,
+        use_onednn_custom_calls,
     )
 
     # Run inference
