@@ -137,27 +137,44 @@ RULER_BATCH_SIZE=32
 LM_EVAL_EXTRA_ARGS="${EXTRA_LM_EVAL_MODEL_ARGS:-}"
 SERVE_EXTRA_ARGS="${EXTRA_SERVE_ARGS:-}"
 
-if [[ "$STATIC_KV_DTYPE" == "fp8" ]]; then
+# For CT format eval on GPUs other than SM 10.x, use the QDQ plugin.
+GPU_ID="${CUDA_VISIBLE_DEVICES%%,*}"
+CUDA_SM=$(nvidia-smi --id="${GPU_ID:-0}" --query-gpu=compute_cap --format=csv,noheader,nounits)
+IS_SM10=0
+if [[ "$CUDA_SM" == "10."* ]]; then
+    IS_SM10=1
+else
+    export VLLM_QDQ=1
+    export VLLM_MXFP4_USE_MARLIN=1
+fi
+
+# Resolve the attention backend. FP8 attention implies an FP8 kv cache and takes precedence.
+ATTN_BACKEND=""
+if [[ "$STATIC_ATTENTION_DTYPE" == "fp8" ]]; then
+    KV_CACHE_DTYPE="fp8"
+    ATTN_BACKEND="${ATTENTION_BACKEND_FP8ATTN:-FLASHINFER}"
+    # FP8 attention only works with TRITON_ATTN on GPUs other than SM 10.x.
+    [[ "$IS_SM10" == 1 ]] || ATTN_BACKEND="TRITON_ATTN"
+    # Quantize Q only when attention itself runs in FP8.
+    export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
+    echo "Using FP8 Attention with ${ATTN_BACKEND} backend"
+elif [[ "$STATIC_KV_DTYPE" == "fp8" ]]; then
+    ATTN_BACKEND="${ATTENTION_BACKEND_FP8KV:-FLASHINFER}"
     export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=1
-    export VLLM_ATTENTION_BACKEND="${ATTENTION_BACKEND_FP8KV:-FLASHINFER}"
+    echo "Using FP8 for KV cache with ${ATTN_BACKEND} backend"
+fi
+
+# Apply the backend: TRITON_ATTN goes through CLI args, FlashInfer variants through env vars.
+if [[ "$ATTN_BACKEND" == "TRITON_ATTN" ]]; then
+    SERVE_EXTRA_ARGS="${SERVE_EXTRA_ARGS} --attention-backend TRITON_ATTN"
+    LM_EVAL_EXTRA_ARGS="${LM_EVAL_EXTRA_ARGS},attention_backend=TRITON_ATTN"
+elif [[ -n "$ATTN_BACKEND" ]]; then
+    export VLLM_ATTENTION_BACKEND="$ATTN_BACKEND"
     if [[ -n "${FLASHINFER_WORKSPACE_SIZE:-}" ]]; then
         export VLLM_AR_FLASHINFER_WORKSPACE_BUFFER_SIZE="${FLASHINFER_WORKSPACE_SIZE}"
     fi
-    echo "Using FP8 for KV cache"
 fi
 
-if [[ "$STATIC_ATTENTION_DTYPE" == "fp8" ]]; then
-    KV_CACHE_DTYPE="fp8"
-    backend="${ATTENTION_BACKEND_FP8ATTN:-FLASHINFER}"
-    if [[ "$backend" == "TRITON_ATTN" ]]; then
-        SERVE_EXTRA_ARGS="${SERVE_EXTRA_ARGS} --attention-backend TRITON_ATTN"
-        LM_EVAL_EXTRA_ARGS="${LM_EVAL_EXTRA_ARGS},attention_backend=TRITON_ATTN"
-    else
-        export VLLM_FLASHINFER_DISABLE_Q_QUANTIZATION=0
-        export VLLM_ATTENTION_BACKEND="$backend"
-    fi
-    echo "Using FP8 Attention with ${backend} backend"
-fi
 
 echo "Running benchmark with parameters:"
 echo "  Model Path: ${MODEL_PATH}"
@@ -171,14 +188,6 @@ echo "  Tensor Parallel Size: ${TP_SIZE}"
 echo "  CUDA_VISIBLE_DEVICES: ${CUDA_VISIBLE_DEVICES}"
 echo "  Output directory: ${OUTPUT_DIR}"
 
-# For https://github.com/yiliu30/vllm-qdq-plugin.git CT format eval on GPUs other than SM 10.0.
-# nvidia-smi does not honor CUDA_VISIBLE_DEVICES; select its first GPU explicitly.
-GPU_ID="${CUDA_VISIBLE_DEVICES%%,*}"
-CUDA_SM=$(nvidia-smi --id="${GPU_ID:-0}" --query-gpu=compute_cap --format=csv,noheader,nounits)
-if [[ "$CUDA_SM" != "10.0" ]]; then
-    export VLLM_QDQ=1
-    export VLLM_MXFP4_USE_MARLIN=1
-fi
 
 STANDARD_VLLM_MODEL_ARGS="pretrained=${MODEL_PATH},tensor_parallel_size=${TP_SIZE},max_model_len=${MAX_MODEL_LEN},max_num_batched_tokens=32768,max_num_seqs=128,add_bos_token=True,gpu_memory_utilization=${GPU_MEMORY_UTILIZATION},dtype=bfloat16,max_gen_toks=2048,enable_prefix_caching=False,kv_cache_dtype=${KV_CACHE_DTYPE}${LM_EVAL_EXTRA_ARGS}"
 
