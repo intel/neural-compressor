@@ -17,7 +17,6 @@ Submodules
 
    /autoapi/neural_compressor/common/index
    /autoapi/neural_compressor/jax/index
-   /autoapi/neural_compressor/tensorflow/index
    /autoapi/neural_compressor/torch/index
    /autoapi/neural_compressor/version/index
 

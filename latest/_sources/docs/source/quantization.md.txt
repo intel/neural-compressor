@@ -21,7 +21,7 @@ Quantization
 
 ## Introduction
 
-Quantization is a very popular deep learning model optimization technique invented for improving the speed of inference. It minimizes the number of bits required by converting a set of real-valued numbers into the lower bit data representation, such as int8 and int4, mainly on inference phase with minimal to no loss in accuracy. This way reduces the memory requirement, cache miss rate, and computational cost of using neural networks and finally achieve the goal of higher inference performance. On Intel 3rd Gen Intel Xeon Scalable Processors, user could expect up to 4x theoretical performance speedup. We expect further performance improvement with [Intel Advanced Matrix Extensions](https://www.intel.com/content/www/us/en/products/docs/accelerator-engines/advanced-matrix-extensions/overview.html) on 4th Gen Intel Xeon Scalable Processors.
+Quantization is a very popular deep learning model optimization technique invented for improving the speed of inference. It minimizes the number of bits required by converting a set of real-valued numbers into the lower bit data representation, such as int8 and int4, mainly on inference phase with minimal to no loss in accuracy. This way reduces the memory requirement, cache miss rate, and computational cost of using neural networks and finally achieve the goal of higher inference performance. On Intel 3rd Gen Intel Xeon Scalable Processors, user could expect up to 4x theoretical performance speedup. We expect further performance improvement with [Intel Advanced Matrix Extensions](https://www.intel.com/content/www/us/en/products/details/processors/xeon/features/advanced-matrix-extensions.html) on 4th Gen Intel Xeon Scalable Processors.
 
 ## Quantization Fundamentals
 
@@ -60,12 +60,6 @@ If UINT8 is specified, $Scale = max(abs(X_{f_{max}}), abs(X_{f_{min}})) / 255$ a
 *NOTE*
 
 Sometimes the reduce_range feature, that's using 7 bit width (1 sign bit + 6 data bits) to represent int8 range, may be needed on some early Xeon platforms, it's because those platforms may have overflow issues due to fp16 intermediate calculation result when executing int8 dot product operation. After AVX512_VNNI instruction is introduced, this issue gets solved by supporting fp32 intermediate data.
-
-
-#### Quantization Scheme in TensorFlow
-+ Symmetric Quantization
-    + int8: scale = 2 * max(abs(rmin), abs(rmax)) / (max(int8) - min(int8) - 1)
-    + uint8: scale = max(rmin, rmax) / (max(uint8) - min(uint8))
 
 
 #### Quantization Scheme in PyTorch
@@ -371,7 +365,7 @@ This tuning algorithm creates a tuning space by querying framework quantization 
 
 Neural compressor also support to quantize all quantizable ops without accuracy tuning, using `quantize_model` interface to achieve that. 
 
-For supported quantization methods for `accuracy aware tuning` and the detailed API usage, please refer to the document of [PyTorch](PyTorch.html) or [TensorFlow](TensorFlow.html) respectively.
+For supported quantization methods for `accuracy aware tuning` and the detailed API usage, please refer to the documentation for [PyTorch](PyTorch.html) or [JAX](JAX.html).
 
 User could refer to below chart to understand the whole tuning flow.
 
