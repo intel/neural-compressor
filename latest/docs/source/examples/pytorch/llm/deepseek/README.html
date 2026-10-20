@@ -106,29 +106,29 @@ bash<span class="w"> </span>setup.sh
 <ul class="simple">
 <li><p>MXFP8</p></li>
 </ul>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--model<span class="w"> </span><span class="nv">$MODEL</span><span class="w"> </span>-t<span class="w"> </span>mxfp8<span class="w"> </span>--output_dir<span class="w"> </span>./qmodels
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--dtype<span class="o">=</span>mxfp8<span class="w"> </span>--input_model<span class="o">=</span><span class="nv">$MODEL</span><span class="w"> </span>--output_model<span class="o">=</span>./qmodels
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>MXFP4</p></li>
 </ul>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--model<span class="w"> </span><span class="nv">$MODEL</span><span class="w"> </span>-t<span class="w"> </span>mxfp4<span class="w"> </span>--output_dir<span class="w"> </span>./qmodels
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--dtype<span class="o">=</span>mxfp4<span class="w"> </span>--input_model<span class="o">=</span><span class="nv">$MODEL</span><span class="w"> </span>--output_model<span class="o">=</span>./qmodels
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>NVFP4</p></li>
 </ul>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--model<span class="w"> </span><span class="nv">$MODEL</span><span class="w"> </span>-t<span class="w"> </span>nvfp4<span class="w"> </span>--output_dir<span class="w"> </span>./qmodels
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--dtype<span class="o">=</span>nvfp4<span class="w"> </span>--input_model<span class="o">=</span><span class="nv">$MODEL</span><span class="w"> </span>--output_model<span class="o">=</span>./qmodels
 </pre></div>
 </div>
-<p>To enable <code class="docutils literal notranslate"><span class="pre">fp8</span> <span class="pre">kv</span> <span class="pre">cache</span></code>, please add <code class="docutils literal notranslate"><span class="pre">-kv</span> <span class="pre">fp8</span></code>:</p>
+<p>To enable <code class="docutils literal notranslate"><span class="pre">fp8</span> <span class="pre">kv</span> <span class="pre">cache</span></code>, please add <code class="docutils literal notranslate"><span class="pre">--static_kv_dtype=fp8</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># w/ fp8 kv</span>
-bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--model<span class="w"> </span><span class="nv">$MODEL</span><span class="w"> </span>-t<span class="w"> </span>mxfp4<span class="w"> </span>--output_dir<span class="w"> </span>./qmodels<span class="w"> </span>-kv<span class="w"> </span>fp8
+bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--dtype<span class="o">=</span>mxfp4<span class="w"> </span>--input_model<span class="o">=</span><span class="nv">$MODEL</span><span class="w"> </span>--output_model<span class="o">=</span>./qmodels<span class="w"> </span>--static_kv_dtype<span class="o">=</span>fp8
 </pre></div>
 </div>
 <p>Attention</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nb">export</span><span class="w"> </span><span class="nv">MODEL</span><span class="o">=</span>unsloth/DeepSeek-R1-BF16
-bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--model<span class="w"> </span><span class="nv">$MODEL</span><span class="w"> </span>-t<span class="w"> </span>mxfp4<span class="w"> </span>--output_dir<span class="w"> </span>./qmodels<span class="w"> </span>-attn<span class="w"> </span><span class="s2">"fp8"</span>
+bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--dtype<span class="o">=</span>mxfp4<span class="w"> </span>--input_model<span class="o">=</span><span class="nv">$MODEL</span><span class="w"> </span>--output_model<span class="o">=</span>./qmodels<span class="w"> </span>--static_attention_dtype<span class="o">=</span>fp8
 </pre></div>
 </div>
 </section>
@@ -163,22 +163,22 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--model<span cla
 <section id="id1">
 <h2>Evaluation<a class="headerlink" href="#id1" title="Link to this heading"></a></h2>
 <p>Usage:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-m<span class="w"> </span><span class="o">[</span>model_path<span class="o">]</span><span class="w"> </span>-s<span class="w"> </span><span class="o">[</span>mxfp4<span class="p">|</span>mxfp8<span class="p">|</span>nvfp4<span class="o">]</span><span class="w"> </span>-t<span class="w"> </span><span class="o">[</span>task_name<span class="o">]</span><span class="w"> </span>-tp<span class="w"> </span><span class="o">[</span>tensor_parallel_size<span class="o">]</span><span class="w"> </span>-b<span class="w"> </span><span class="o">[</span>batch_size<span class="o">]</span>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>&lt;model_path&gt;<span class="w"> </span>--scheme<span class="o">=[</span>mxfp4<span class="p">|</span>mxfp8<span class="p">|</span>nvfp4<span class="o">]</span><span class="w"> </span>--tasks<span class="o">=</span>&lt;task_name&gt;<span class="w"> </span>--batch_size<span class="o">=</span>&lt;size&gt;
 </pre></div>
 </div>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-s<span class="w"> </span>mxfp8<span class="w"> </span>-t<span class="w"> </span>piqa,hellaswag,mmlu,gsm8k<span class="w"> </span>-tp<span class="w"> </span><span class="m">8</span><span class="w"> </span>-b<span class="w"> </span><span class="m">256</span><span class="w"> </span>-m<span class="w"> </span>/path/to/ds_mxfp8
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3,4,5,6,7<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>/path/to/ds_mxfp8<span class="w"> </span>--scheme<span class="o">=</span>mxfp8<span class="w"> </span>--tasks<span class="o">=</span>piqa,hellaswag,mmlu,gsm8k<span class="w"> </span>--batch_size<span class="o">=</span><span class="m">256</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>MXFP4</p></li>
 </ul>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-s<span class="w"> </span>mxfp4<span class="w"> </span>-t<span class="w"> </span>piqa,hellaswag,mmlu,gsm8k<span class="w"> </span>-tp<span class="w"> </span><span class="m">8</span><span class="w"> </span>-b<span class="w"> </span><span class="m">256</span><span class="w"> </span>-m<span class="w"> </span>/path/to/ds_mxfp4
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3,4,5,6,7<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>/path/to/ds_mxfp4<span class="w"> </span>--scheme<span class="o">=</span>mxfp4<span class="w"> </span>--tasks<span class="o">=</span>piqa,hellaswag,mmlu,gsm8k<span class="w"> </span>--batch_size<span class="o">=</span><span class="m">256</span>
 </pre></div>
 </div>
 <ul class="simple">
 <li><p>NVFP4</p></li>
 </ul>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_evaluation.sh<span class="w"> </span>-s<span class="w"> </span>nvfp4<span class="w"> </span>-t<span class="w"> </span>piqa,hellaswag,mmlu,gsm8k<span class="w"> </span>-tp<span class="w"> </span><span class="m">8</span><span class="w"> </span>-b<span class="w"> </span><span class="m">256</span><span class="w"> </span>-m<span class="w"> </span>/path/to/ds_nvfp4
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3,4,5,6,7<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>/path/to/ds_nvfp4<span class="w"> </span>--scheme<span class="o">=</span>nvfp4<span class="w"> </span>--tasks<span class="o">=</span>piqa,hellaswag,mmlu,gsm8k<span class="w"> </span>--batch_size<span class="o">=</span><span class="m">256</span>
 </pre></div>
 </div>
 </section>
@@ -198,7 +198,7 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--model<span cla
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f1b9d0eb800> 
+   <jinja2.runtime.BlockReference object at 0x7f0f264a30b0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

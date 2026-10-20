@@ -108,9 +108,9 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 vllm serve ~/models/minimax-m2.7-mxfp \
   - `mxfp4`: `scheme=MXFP4` globally
 - `--input_model`: HF model name or local model path.
 - `--output_model`: output directory.
-- `--format`: `auto_round` or `llm_compressor` (default: `llm_compressor`).
-- `--static_kv_dtype`: static KV cache data type, e.g. `fp8` (default: unset).
-- `--static_attention_dtype`: static attention data type, e.g. `fp8` (default: unset).
+- `--export_format`: `auto_round` or `llm_compressor` (default: `llm_compressor`).
+- `--static_kv_dtype`: static KV cache data type, e.g. `fp8` (default: `auto`).
+- `--static_attention_dtype`: static attention data type, e.g. `fp8` (default: `auto`).
 
 ### `run_evalscope.sh`
 

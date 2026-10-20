@@ -141,20 +141,18 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se"
 <p>Equivalent Python command:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>quantize.py<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--dtype<span class="w"> </span>mxfp4<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--input_model<span class="w"> </span>moonshotai/Kimi-K2.6<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--output_model<span class="w"> </span>/workspace/models/moonshotai/Kimi-K2.6-MXFP4<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_name_or_path<span class="w"> </span>moonshotai/Kimi-K2.6<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--export_path<span class="w"> </span>/workspace/models/moonshotai/Kimi-K2.6-MXFP4<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--model_type<span class="w"> </span>kimi<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--format<span class="w"> </span>llm_compressor
+<span class="w">  </span>--export_format<span class="w"> </span>llm_compressor
 </pre></div>
 </div>
 </section>
 </section>
 <section id="evaluation">
 <h2>Evaluation<a class="headerlink" href="#evaluation" title="Link to this heading"></a></h2>
-<p><code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code> is aligned with Llama benchmark style:</p>
+<p><code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code> is a thin wrapper over the shared driver at <code class="docutils literal notranslate"><span class="pre">benchmark/lm_eval/run_lm_eval.sh</span></code>:</p>
 <ul class="simple">
-<li><p>Automatically infers <code class="docutils literal notranslate"><span class="pre">tensor_parallel_size</span></code> from <code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code></p></li>
-<li><p>Exports <code class="docutils literal notranslate"><span class="pre">VLLM_QDQ=1</span></code></p></li>
 <li><p>Uses vLLM backend through <code class="docutils literal notranslate"><span class="pre">lm_eval</span></code></p></li>
 </ul>
 <section id="benchmark-quick-start">
@@ -194,7 +192,7 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se"
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7f1b9d0ebe60> 
+   <jinja2.runtime.BlockReference object at 0x7f0f264c9880> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
