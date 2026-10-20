@@ -54,8 +54,8 @@ def build_config(args: argparse.Namespace) -> AutoRoundConfig:
 		layer_config=preset["layer_config"],
 		static_kv_dtype=args.static_kv_dtype,
 		static_attention_dtype=args.static_attention_dtype,
-		export_format=args.format,
-		output_dir=args.output_model,
+		export_format=args.export_format,
+		output_dir=args.export_path,
 		reloading=False,
 		dataset="HuggingFaceH4/ultrachat_200k",
 	)
@@ -73,13 +73,13 @@ def main() -> None:
 		help="Quantization dtype. Currently only mxfp4 is supported.",
 	)
 	parser.add_argument(
-		"--input_model",
+		"--model_name_or_path",
 		type=str,
 		required=True,
 		help="Model name or local path (e.g. moonshotai/Kimi-K2.6, zai-org/GLM-5.2).",
 	)
 	parser.add_argument(
-		"--output_model",
+		"--export_path",
 		type=str,
 		required=True,
 		help="Output directory for quantized model.",
@@ -92,7 +92,7 @@ def main() -> None:
 		help="Model type. Determines quantization config (scheme, ignore_layers, layer_config).",
 	)
 	parser.add_argument(
-		"--format",
+		"--export_format",
 		type=str,
 		default="llm_compressor",
 		choices=["auto_round", "llm_compressor"],
@@ -100,22 +100,24 @@ def main() -> None:
 	)
 	parser.add_argument(
 		"--static_kv_dtype",
-		type=str,
 		default=None,
-		help="Static KV cache data type.",
+		type=str,
+		choices=["fp8", "float8_e4m3fn"],
+		help="Data type for static quantize key and value.",
 	)
 	parser.add_argument(
 		"--static_attention_dtype",
-		type=str,
 		default=None,
-		help="Static attention data type.",
+		type=str,
+		choices=["fp8", "float8_e4m3fn"],
+		help="Data type for static quantize attention.",
 	)
 	args = parser.parse_args()
 
 	quant_config = build_config(args)
-	model = prepare(args.input_model, quant_config)
+	model = prepare(args.model_name_or_path, quant_config)
 	_ = convert(model)
-	logger.info("Quantized model saved to %s", args.output_model)
+	logger.info("Quantized model saved to %s", args.export_path)
 
 
 if __name__ == "__main__":

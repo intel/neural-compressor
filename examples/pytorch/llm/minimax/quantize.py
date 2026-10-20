@@ -58,8 +58,8 @@ def build_config(args: argparse.Namespace) -> AutoRoundConfig:
         layer_config=layer_config,
         static_kv_dtype=args.static_kv_dtype,
         static_attention_dtype=args.static_attention_dtype,
-        export_format=args.format,
-        output_dir=args.output_model,
+        export_format=args.export_format,
+        output_dir=args.export_path,
         reloading=False,
         dataset="HuggingFaceH4/ultrachat_200k",
     )
@@ -77,19 +77,19 @@ def main() -> None:
         help="Quantization preset. e.g. mxfp4_mixed",
     )
     parser.add_argument(
-        "--input_model",
+        "--model_name_or_path",
         type=str,
         required=True,
         help="Model name or local path.",
     )
     parser.add_argument(
-        "--output_model",
+        "--export_path",
         type=str,
         required=True,
         help="Output directory for quantized model.",
     )
     parser.add_argument(
-        "--format",
+        "--export_format",
         type=str,
         default="llm_compressor",
         choices=["auto_round", "llm_compressor"],
@@ -102,24 +102,26 @@ def main() -> None:
     )
     parser.add_argument(
         "--static_kv_dtype",
-        type=str,
         default=None,
-        help="Static KV cache data type, e.g. fp8.",
+        type=str,
+        choices=["fp8", "float8_e4m3fn"],
+        help="Data type for static quantize key and value.",
     )
     parser.add_argument(
         "--static_attention_dtype",
-        type=str,
         default=None,
-        help="Static attention data type, e.g. fp8.",
+        type=str,
+        choices=["fp8", "float8_e4m3fn"],
+        help="Data type for static quantize attention.",
     )
     args = parser.parse_args()
 
     quant_config = build_config(args)
 
-    model = args.input_model
+    model = args.model_name_or_path
     model = prepare(model, quant_config)
     _ = convert(model)
-    logger.info("Quantized model saved to %s", args.output_model)
+    logger.info("Quantized model saved to %s", args.export_path)
 
 
 if __name__ == "__main__":

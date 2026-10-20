@@ -8,7 +8,7 @@ usage() {
 }
 
 DEVICE="${DEVICE:-gpu}"
-TASKS="${TASKS:-hellaswag,piqa,mmlu,gsm8k}"
+TASKS="${TASKS:-hellaswag,piqa,mmlu,gsm8k,ruler}"
 BENCH_TOOL="${BENCH_TOOL:-lm_eval}"
 
 while [[ $# -gt 0 ]]; do

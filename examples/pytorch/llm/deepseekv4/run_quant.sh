@@ -6,12 +6,19 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 DTYPE=""
 INPUT_MODEL=""
 OUTPUT_MODEL=""
-FORMAT="llm_compressor"
+EXPORT_FORMAT="llm_compressor"
 IGNORE_LAYERS="compressor,indexer.weights_proj"
 
 usage() {
-  echo "Usage: bash run_quant.sh --dtype=<mxfp4|mxfp4_mixed|mxfp8|w4a16> --input_model=<path_or_name> --output_model=<output_dir>"
-  echo "Optional: --format=<auto_round|llm_compressor> --ignore_layers=<comma_separated_patterns>"
+  echo "Usage: bash run_quant.sh --dtype=<dtype> --input_model=<input_model> --output_model=<output_model>"
+  echo "  --dtype            quantization data type: mxfp4, mxfp4_mixed, mxfp8, w4a16"
+  echo "  --input_model      Hugging Face model ID or local path"
+  echo "  --output_model     output directory for the quantized model"
+  echo "  --export_format    export format (default: llm_compressor)"
+  echo "  --ignore_layers    comma-separated layer name patterns to skip"
+  echo ""
+  echo "Examples:"
+  echo "  bash run_quant.sh --dtype=mxfp4 --input_model=/path/to/model --output_model=/path/to/output"
   exit 1
 }
 
@@ -26,8 +33,8 @@ for arg in "$@"; do
     --output_model=*)
       OUTPUT_MODEL="${arg#*=}"
       ;;
-    --format=*)
-      FORMAT="${arg#*=}"
+    --export_format=*)
+      EXPORT_FORMAT="${arg#*=}"
       ;;
     --ignore_layers=*)
       IGNORE_LAYERS="${arg#*=}"
@@ -36,7 +43,7 @@ for arg in "$@"; do
       usage
       ;;
     *)
-      echo "Unknown option: $arg"
+      echo "Unknown parameter: $arg"
       usage
       ;;
   esac
@@ -46,10 +53,18 @@ done
 [[ -z "$INPUT_MODEL" ]] && echo "Error: --input_model is required" && usage
 [[ -z "$OUTPUT_MODEL" ]] && echo "Error: --output_model is required" && usage
 
+echo "Starting quantization with parameters:"
+echo "  Data Type: $DTYPE"
+echo "  Input Model: $INPUT_MODEL"
+echo "  Output Model: $OUTPUT_MODEL"
+
 cd "$SCRIPT_DIR"
 python quantize.py \
   --dtype "$DTYPE" \
-  --input_model "$INPUT_MODEL" \
-  --output_model "$OUTPUT_MODEL" \
-  --format "$FORMAT" \
+  --model_name_or_path "$INPUT_MODEL" \
+  --export_path "$OUTPUT_MODEL" \
+  --export_format "$EXPORT_FORMAT" \
   --ignore_layers "$IGNORE_LAYERS"
+
+echo "Quantization completed successfully!"
+echo "Output model saved to: $OUTPUT_MODEL"
