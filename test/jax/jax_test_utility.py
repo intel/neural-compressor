@@ -13,15 +13,6 @@ from jax import numpy as jnp
 from PIL import Image
 
 
-def _parse_xla_flags():
-    """Return `XLA_FLAGS` as a normalized flag dictionary."""
-    flags = {}
-    for flag in os.environ.get("XLA_FLAGS", "").split():
-        name, _, value = flag.lstrip("-").partition("=")
-        flags[name] = value.lower() if value else "true"
-    return flags
-
-
 def _dtype_min_max(dtype, out_dtype):
     """Return (min, max) representable values for dtype, cast to out_dtype."""
     info = np.iinfo(dtype) if np.issubdtype(dtype, np.integer) else ml_dtypes.finfo(dtype)
@@ -39,12 +30,6 @@ def _matmul(a, b):
     return np.matmul(a, b)
 
 
-def _is_excess_precision_enabled():
-    """Return True when XLA is allowed to retain higher internal precision."""
-    flags = _parse_xla_flags()
-    return flags.get("xla_allow_excess_precision") not in ("false", "0")
-
-
 def compute_expected_qdq_dense_output(
     test_input,
     calib_data,
@@ -55,6 +40,7 @@ def compute_expected_qdq_dense_output(
     model_dtype,
     granularity,
     use_onednn_custom_calls,
+    use_excess_precision,
 ):
     """Compute expected output for one or more Dense layers after FP8/int8 quantize-dequantize (QDQ).
 
@@ -74,7 +60,6 @@ def compute_expected_qdq_dense_output(
     """
 
     model_dtype = np.dtype(model_dtype)
-    use_excess_precision = use_onednn_custom_calls and _is_excess_precision_enabled()
 
     def formal_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale):
         """INC / default XLA route: dequantize both operands in model_dtype, then matmul."""

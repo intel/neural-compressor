@@ -36,6 +36,14 @@ def use_onednn_custom_calls():
     return "__onednn$" in hlo
 
 
+@pytest.fixture(scope="module")
+def use_excess_precision():
+    """Return True if XLA drops a lossy f32 -> bf16 -> f32 round trip (excess precision)."""
+    x = jnp.float32(1 + 2**-10)  # not representable in bf16 (8-bit mantissa), rounds to 1.0
+    y = jax.jit(lambda v: v.astype(jnp.bfloat16).astype(jnp.float32))(x)
+    return bool(y == x)
+
+
 def _read_value(var_or_array, is_const):
     """Return numeric value whether variable has `.value` or is a plain array."""
     return var_or_array if is_const else var_or_array.value
@@ -63,6 +71,7 @@ def test_simple_linear_model_accuracy(
     weight_dtype,
     activation_dtype,
     use_onednn_custom_calls,
+    use_excess_precision,
 ):
     """Test accuracy on a simple linear model."""
     if weight_dtype != activation_dtype:
@@ -129,6 +138,7 @@ def test_simple_linear_model_accuracy(
         model_dtype,
         weight_scale_granularity,
         use_onednn_custom_calls,
+        use_excess_precision,
     )
 
     # Run inference
