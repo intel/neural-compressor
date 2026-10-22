@@ -42,7 +42,7 @@ elif [[ "$DEVICE" == "gpu" ]]; then
     uv pip install setuptools --upgrade
     uv pip install packaging --upgrade
     uv pip install -U "huggingface_hub[cli]"
-    uv pip install vllm==0.25.1
+    uv pip install vllm
 
     uv pip install ray
     git clone https://github.com/yiliu30/vllm-qdq-plugin.git
