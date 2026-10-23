@@ -193,7 +193,7 @@ For Verified Mini, the same layout uses the `swe_verified_mini_<TAG>` prefix
 for the result directory and log file.
 
 
-## SWE-bench Pro
+## SWE-bench Pro V2
 
 ### SWE-bench Pro environment setup
 
@@ -201,11 +201,18 @@ for the result directory and log file.
 bash setup_swebenchpro.sh
 ```
 
-The setup script clones the pinned `scaleapi/SWE-bench_Pro-os` repository and
-its mini-SWE-agent submodule, applies support for the benchmark's Docker Hub
-images and reliable container cleanup, and installs the generation and local
-Docker evaluation dependencies into the currently activated environment using
-uv. Create and activate the environment before running the setup script.
+The setup script clones `scaleapi/SWE-bench_Pro-os` at the V2 release commit
+pinned in `versions.env`, verifies its published SHA256 manifest, and installs
+Harbor 0.24.0 into the activated **Python 3.12+** environment using uv.
+Docker with the Compose plugin is required for local runs. The official V2
+task directories contain the instructions, sanitized GHCR image references,
+and hidden-test verifiers; Hugging Face's mutable default is never loaded.
+
+**Migration from V1:** move an existing `SWE-bench_Pro-os` checkout aside (or
+set `BENCHMARK_DIR` to a new directory) before setup. Setup refuses to silently
+overwrite another revision. V1's 731 tasks, `jefzda/sweap-images` images,
+`swe_bench_pro_eval.py`, and mini-SWE-agent submodule are not used by V2.
+V1 and V2 scores are not comparable.
 
 ### Run SWE-bench Pro
 
@@ -216,52 +223,81 @@ bash run_swebenchpro.sh \
   --tag qwen36_27b_pro
 ```
 
-The runner connects to an existing shared vLLM server and leaves it running
-when the benchmark exits. Generation runs continuously across the full
-selection. As instances finish, their predictions are gathered into evaluation
-chunks while generation continues, overlapping CPU/Docker evaluation with GPU
-inference. Each chunk receives a matching instance CSV and normalized patch
-file, and its Docker images are removed after evaluation. The final chunk may
-contain fewer instances than `--eval-chunk-size`. An independent watchdog
-stops the run if the vLLM health endpoint repeatedly fails. The aggregate
-report is refreshed after every completed evaluation chunk. Host proxy variables
-(`HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY`, and lowercase variants)
-are forwarded to generation containers so repository cloning and dependency
-installation can use the same network path as the host.
+The runner uses the official V2 locked protocol:
 
-Resume an interrupted run by reusing the same `--tag` and selection. Existing
-generation results and already-claimed evaluations are skipped. Use a new tag
-to run the selection from scratch.
+1. A thin subclass of official `locked_mini_swe:LockedMiniSwe` runs the pinned mini-SWE-agent in each
+  sanitized image, with a 50-minute task budget. Harbor enforces the task's
+  agent-phase network isolation, allowing only the model endpoint host.
+  Setup remains online. The official agent captures `agent/model.patch`;
+  verification is disabled in this potentially modified sandbox.
+  The subclass only installs `litellm[mcp]==1.106.2`: the upstream bare
+  LiteLLM installation otherwise fails on its first completion with a missing
+  MCP import. Patch capture, timeout enforcement, and execution are inherited
+  unchanged from the official locked agent.
+2. `patch_replay:PatchReplayAgent` applies the captured diff in a **new**
+  sandbox and runs the unchanged official V2 verifier. Only these regrade
+  rewards determine the reported accuracy. Missing trials, infrastructure
+  failures, and missing verifier rewards remain in the selected denominator
+  and make the runner exit nonzero after writing its report.
+
+The vLLM server is left running. For local Docker, bind it to `0.0.0.0`:
+host loopback URLs are mapped to the Docker bridge gateway. If using a proxy,
+ensure this gateway bypasses the proxy. Override `--agent-base-url` if the
+endpoint needs another sandbox-reachable address. Modal requires configured
+credentials and a remotely reachable model endpoint, not host loopback.
+Only the model host is allowlisted. Host proxy settings are forwarded for
+online setup and verification, but the proxy host is **not** allowlisted
+during agent execution; the model endpoint bypasses the proxy. Environments
+requiring an outbound proxy should export it before running the script.
+Generation exceptions or missing captured patches abort before scoring and
+are saved in `generation_errors.json`; genuinely empty captured patches
+remain valid submissions and are replayed as empty patches.
+
+Tasks are selected in sorted task-directory order from the pinned tree;
+`--subset hard` selects the official HARD-51 before slicing. Each run needs a
+new tag. Old V1 resume/chunking/health-watchdog/image-deletion flags are not
+supported; Harbor owns container lifecycle and enforces phase timeouts.
+Docker images are retained for reuse, not removed from a shared host.
+`--skip-eval` captures patches without claiming a benchmark score. Keep both
+Harbor jobs when publishing results and follow the upstream V2 network and
+git-history probe instructions before a full benchmark run.
 
 | Option | Default | Description |
 | --- | --- | --- |
 | `--host HOST` | `127.0.0.1` | vLLM host |
 | `--port PORT` | `8888` | vLLM port |
 | `--served-name NAME` | discovered | Model ID exposed by vLLM |
-| `--num-tasks N` | all 731 | Run the first N instances |
+| `--num-tasks N` | all 642 | Run the first N sorted V2 tasks |
 | `--slice START:END` | all | Run an explicit slice; cannot be combined with `--num-tasks` |
-| `--workers N` | `8` | Parallel mini-SWE-agent workers |
-| `--eval-workers N` | `4` | Parallel local evaluator workers |
+| `--agent-base-url URL` | derived | Sandbox-reachable OpenAI API endpoint including `/v1` |
+| `--environment NAME` | `docker` | Harbor backend: `docker` or `modal` |
+| `--subset NAME` | `full` | V2 full (642) or hard (51), before slicing |
+| `--workers N` | `8` | Parallel locked-agent trials |
+| `--eval-workers N` | `4` | Parallel pristine-sandbox replay trials |
 | `--step-limit N` | `250` | Maximum model calls per instance |
-| `--pull-timeout N` | `1800` | Docker image pull/start timeout in seconds |
-| `--command-timeout N` | `600` | In-container command timeout in seconds |
-| `--eval-chunk-size N` | `12` | Finished instances gathered before dispatching an evaluation chunk |
-| `--poll-interval N` | `60` | Seconds between checks for newly finished instances |
-| `--health-interval N` | `30` | Seconds between vLLM health checks |
-| `--health-failures N` | `3` | Consecutive failed health checks before stopping the run |
 | `--tag TAG` | UTC timestamp | Output and log label |
-| `--skip-eval` | disabled | Generate patches without local evaluation |
-| `--block-network` | disabled | Disable network access in evaluation containers |
-| `--keep-images` | disabled | Keep benchmark Docker images after each evaluation chunk |
+| `--skip-eval` | disabled | Generate patches without a score |
 
-Outputs are grouped under
-`SWE-bench_Pro-os/mini-swe-agent/results/swebench_pro_<TAG>/`, including
-`preds.json`, normalized `patches.json`, the selected instance CSV, evaluation
-artifacts, and `report.json`. Per-chunk artifacts are retained
-under `eval_chunks/`, while the top-level files contain the merged results. The
-top-level report includes evaluated, resolved, and unresolved counts, accuracy,
-resolved/unresolved ID lists, and the per-instance result mapping. The combined
-run log is written to `logs/swebench_pro_<TAG>.log`.
+Outputs are grouped under `outputs/swebench_pro_v2_<TAG>/`:
+
+- `selection.json`: V2 release commit, subset, selected IDs, and agent limits
+- `tasks/`: unchanged copies of the selected official task directories
+- `agent.yaml`: runtime agent configuration (default 8192 output tokens)
+- `jobs/generation/`: agent trajectories, trial results, and captured patches
+- `jobs/regrade/`: pristine-sandbox verifier artifacts and Harbor results
+- `report.json`: fresh-sandbox accuracy, per-instance results, and error IDs
+
+Logs are written to `logs/swebench_pro_v2_<TAG>.log`. Harbor job configs may
+contain the model API credentials supplied to the agent: keep artifacts private
+and redact secrets before publishing them.
+
+Dependency-light regression tests (no model, Docker, or downloads required):
+
+```bash
+python -m unittest discover -s tests -p 'test_swebench_pro_v2.py' -v
+```
+
+Official protocol: <https://github.com/scaleapi/SWE-bench_Pro-os/blob/66f92766bba642462d4bbe5479e83f91f9211862/v2/README.md>.
 
 
 ## MCP-Atlas
