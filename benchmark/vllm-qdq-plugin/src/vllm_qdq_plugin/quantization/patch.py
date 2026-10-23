@@ -7,7 +7,7 @@ from typing import Any
 
 from vllm.logger import init_logger
 
-from .inc_nvfp4_e5m3_scheme import INCNvfp4UE5M3Scheme
+from .inc_nvfp4_e5m3_scheme import NVFP4_E5M3_DATA_TYPE, NVFP4_E5M3_GS_DATA_TYPE, INCNvfp4UE5M3Scheme
 from .inc_nvfp4_scheme import INCNvfp4QDQScheme
 
 logger = init_logger(__name__)
@@ -37,7 +37,7 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     from vllm.model_executor.layers.quantization.inc.config_parser import INCConfigParser
     from vllm.model_executor.layers.quantization.inc.schemes import factory
 
-    supported_dtypes = {"nvfp4_v2"}
+    supported_dtypes = {NVFP4_E5M3_DATA_TYPE, NVFP4_E5M3_GS_DATA_TYPE}
     if enable_nvfp4_qdq:
         supported_dtypes.add("nv_fp")
         INCConfig._vllm_qdq_nvfp4_enabled = True
@@ -45,6 +45,7 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     INCConfig.SUPPORTED_FORMATS = set(INCConfig.SUPPORTED_FORMATS) | {
         "auto_round:llm_compressor",
         "auto_round:llm_compressor_nvfp4_e5m3",
+        "auto_round:llm_compressor_nvfp4_e5m3_gs",
     }
 
     original_resolve_scheme = factory.resolve_scheme
@@ -75,7 +76,7 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     factory.resolve_scheme = resolve_scheme
     inc_module.resolve_scheme = resolve_scheme
     _PATCHED = True
-    formats = "nv_fp and nvfp4_v2" if enable_nvfp4_qdq else "nvfp4_v2"
+    formats = "nv_fp, nvfp4_v2, and nvfp4_v2_gs" if enable_nvfp4_qdq else "nvfp4_v2 and nvfp4_v2_gs"
     logger.warning("vLLM QDQ patch applied: AutoRound %s schemes registered", formats)
 
 
