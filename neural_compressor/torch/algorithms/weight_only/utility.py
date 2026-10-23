@@ -413,24 +413,13 @@ def quant_tensor(
         if return_int:
             return weight, scale, zp
         else:
-            if weight.shape[1] % group_size != 0:
-                if zp is not None:
-                    weight1 = weight1.reshape(-1, group_size).sub_(zp[:, :-1].reshape(-1, 1))
-                    weight2 = weight2.sub_(zp[:, -1].reshape(-1, 1))
-                else:
-                    weight1 = weight1.reshape(-1, group_size)
-                weight1 = weight1.mul_(scale[:, :-1].reshape(-1, 1))
-                weight1 = weight1.reshape(orig_shape[0], -1)
-                weight2 = weight2.mul_(scale[:, -1].reshape(-1, 1))
-                orig_weight.copy_(torch.cat([weight1, weight2], dim=1))
+            if zp is not None:
+                weight = weight.reshape(-1, group_size) - zp.reshape(-1, 1)
             else:
-                if zp is not None:
-                    weight = weight.reshape(-1, group_size) - zp.reshape(-1, 1)
-                else:
-                    weight = weight.reshape(-1, group_size)
-                weight = weight.mul_(scale.reshape(-1, 1))
-                weight = weight.reshape(orig_shape[0], -1)
-                orig_weight.copy_(weight)
+                weight = weight.reshape(-1, group_size)
+            weight = weight.mul_(scale.reshape(-1, 1))
+            weight = weight.reshape(orig_shape[0], -1)
+            orig_weight.copy_(weight)
             return orig_weight
     else:
         return q_state
