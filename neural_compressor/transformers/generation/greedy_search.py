@@ -322,16 +322,16 @@ def _greedy_search(
 
         # Store scores, attentions and hidden_states when required
         if return_dict_in_generate:
-            if output_scores:
+            if scores is not None:
                 scores += (next_tokens_scores,)
-            if output_attentions:
+            if decoder_attentions is not None:
                 decoder_attentions += (
                     (outputs.decoder_attentions,) if self.config.is_encoder_decoder else (outputs.attentions,)
                 )
-                if self.config.is_encoder_decoder:
-                    cross_attentions += (outputs.cross_attentions,)
+            if cross_attentions is not None and self.config.is_encoder_decoder:
+                cross_attentions += (outputs.cross_attentions,)
 
-            if output_hidden_states:
+            if decoder_hidden_states is not None:
                 decoder_hidden_states += (
                     (outputs.decoder_hidden_states,) if self.config.is_encoder_decoder else (outputs.hidden_states,)
                 )
