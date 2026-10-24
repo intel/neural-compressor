@@ -11,8 +11,8 @@ usage() {
 Usage:
 	bash run_swebenchpro.sh [OPTIONS]
 
-Run mini-SWE-agent on SWE-bench Pro using an already-running vLLM server, then
-evaluate generated patches with the official local-Docker evaluator.
+Run mini-SWE-agent on SWE-bench Pro V2 using an already-running vLLM server, then
+evaluate generated patches with the official V2 verifier in local Docker.
 
 Generation runs continuously across the whole selection. Finished instances
 are evaluated in chunks while generation continues, overlapping CPU/Docker
@@ -22,7 +22,7 @@ Options:
 	--host HOST          vLLM host (default: 127.0.0.1)
 	--port PORT          vLLM port (default: 8888)
 	--served-name NAME   Served model ID (default: discover from /v1/models)
-	--num-tasks N        Run the first N instances (default: all 731)
+	--num-tasks N        Run the first N instances (default: all 642)
 	--slice START:END    Run an explicit dataset slice
 	--workers N          Parallel agent workers (default: 8)
 	--eval-workers N     Parallel evaluation workers (default: 4)
@@ -50,9 +50,9 @@ EOF
 
 remove_chunk_images() {
 	local image_list="$1"
-	[[ "${KEEP_IMAGES}" == false && -s "${image_list}" ]] || return
-	mapfile -t images < <(sort -u "${image_list}" | grep -E '^jefzda/sweap-images:' || true)
-	[[ ${#images[@]} -gt 0 ]] || return
+	[[ "${KEEP_IMAGES}" == false && -s "${image_list}" ]] || return 0
+	mapfile -t images < <(sort -u "${image_list}" | grep -E '^ghcr.io/scaleapi/swe-bench_pro-v2:' || true)
+	[[ ${#images[@]} -gt 0 ]] || return 0
 	log "Removing ${#images[@]} SWE-bench Pro images"
 	docker image rm -f "${images[@]}" >/dev/null 2>&1 || \
 		warn "Some SWE-bench Pro images could not be removed"
@@ -203,6 +203,7 @@ done
 	die "--num-tasks and --slice cannot be combined"
 require_positive_integer "--workers" "${WORKERS}"
 require_positive_integer "--step-limit" "${STEP_LIMIT}"
+require_positive_integer "AGENT_MAX_TOKENS" "${AGENT_MAX_TOKENS:-8192}"
 require_positive_integer "--pull-timeout" "${PULL_TIMEOUT}"
 require_positive_integer "--command-timeout" "${COMMAND_TIMEOUT}"
 require_positive_integer "--eval-chunk-size" "${EVAL_CHUNK_SIZE}"
@@ -234,12 +235,17 @@ readonly RUNTIME_CONFIG="${OUT_DIR}/swebench_pro.yaml"
 readonly GEN_LOG="${OUT_DIR}/generation.log"
 readonly LOG_FILE="${LOG_DIR}/swebench_pro_${RUN_TAG}.log"
 
-require_file "${SWEBENCH_PRO_DIR}/swe_bench_pro_eval.py"
+require_file "${SWEBENCH_PRO_DIR}/v2/SHA256SUMS"
 require_file "${AGENT_DIR}/pyproject.toml"
 require_file "${AGENT_DIR}/src/minisweagent/run/extra/swebench.py"
 require_command mini-extra
 require_command python
 require_command docker
+(cd "${SWEBENCH_PRO_DIR}/v2" && sha256sum --check --quiet SHA256SUMS)
+if [[ -d "${GEN_DIR}" && ! -f "${OUT_DIR}/v2_selection.txt" ]]; then
+	die "Existing output predates V2; use a new --tag"
+fi
+umask 077
 mkdir -p "${GEN_DIR}" "${EVAL_ROOT}" "${LOG_DIR}"
 : >>"${CLAIMED_FILE}"
 : >>"${EVAL_REPORT_LIST}"
@@ -247,21 +253,23 @@ exec > >(tee -a "${LOG_FILE}") 2>&1
 
 python -c 'import datasets, yaml' 2>/dev/null || \
 	die "Generation dependencies are unavailable; run: bash setup_swebenchpro.sh"
-if [[ "${SKIP_EVAL}" == false ]]; then
-	python -c 'import docker, pandas' 2>/dev/null || \
-		die "Local evaluation dependencies are unavailable; run: bash setup_swebenchpro.sh"
-fi
+python -c 'import pandas' 2>/dev/null || \
+	die "V2 data dependencies are unavailable; run: bash setup_swebenchpro.sh"
 
 wait_for_vllm "${VLLM_WAIT_TIMEOUT:-300}"
 SERVED_MODEL_NAME="$(discover_vllm_model "${SERVED_MODEL_NAME}")"
 EVAL_WORKERS="${EVAL_WORKERS:-${WORKERS}}"
 readonly EVAL_PREFIX="$(sanitize_run_tag "${SERVED_MODEL_NAME}_step${STEP_LIMIT}_${RUN_TAG}")"
 
-full_slice_plan="$(plan_batch_slices 731 "${NUM_TASKS}" "${SLICE_ARG}" 731)"
+full_slice_plan="$(plan_batch_slices 642 "${NUM_TASKS}" "${SLICE_ARG}" 642)"
 mapfile -t FULL_SLICE_LINES <<<"${full_slice_plan}"
 [[ ${#FULL_SLICE_LINES[@]} -eq 1 ]] || die "Unexpected slice plan for SWE-bench Pro selection"
 readonly FULL_SLICE="${FULL_SLICE_LINES[0]}"
 
+if [[ -f "${OUT_DIR}/v2_selection.txt" ]]; then
+	[[ "$(cat "${OUT_DIR}/v2_selection.txt")" == "${FULL_SLICE}" ]] || die "Selection changed; use a new --tag"
+fi
+printf '%s\n' "${FULL_SLICE}" >"${OUT_DIR}/v2_selection.txt"
 python "${SCRIPT_DIR}/lib/benchmark_data.py" select-pro \
 	--csv "${INSTANCES_CSV}" --images "${IMAGE_LIST}" --slice "${FULL_SLICE}"
 python "${SCRIPT_DIR}/lib/benchmark_data.py" pro-config \
@@ -270,8 +278,8 @@ python "${SCRIPT_DIR}/lib/benchmark_data.py" pro-config \
 	--step-limit "${STEP_LIMIT}" --pull-timeout "${PULL_TIMEOUT}" \
 	--command-timeout "${COMMAND_TIMEOUT}"
 
-EVAL_OPTIONS=(--use_local_docker)
-[[ "${BLOCK_NETWORK}" == false ]] || EVAL_OPTIONS+=(--block_network)
+EVAL_OPTIONS=()
+[[ "${BLOCK_NETWORK}" == false ]] || EVAL_OPTIONS+=(--block-network)
 
 log "Generating SWE-bench Pro selection ${FULL_SLICE} with model ${SERVED_MODEL_NAME}"
 (
@@ -279,11 +287,11 @@ log "Generating SWE-bench Pro selection ${FULL_SLICE} with model ${SERVED_MODEL_
 	exec mini-extra swebench \
 		--subset ScaleAI/SWE-bench_Pro \
 		--split test \
+		--slice "${FULL_SLICE}" \
 		--model "${SERVED_MODEL_NAME}" \
 		--workers "${WORKERS}" \
 		--output "${GEN_DIR}" \
-		--config "${RUNTIME_CONFIG}" \
-		--slice "${FULL_SLICE}"
+		--config "${RUNTIME_CONFIG}"
 ) >"${GEN_LOG}" 2>&1 &
 GEN_PID=$!
 log "Generation console progress: tail -f ${GEN_LOG}"
@@ -310,7 +318,7 @@ monitor_vllm() {
 }
 
 stop_vllm_monitor() {
-	[[ -n "${MONITOR_PID}" ]] || return
+	[[ -n "${MONITOR_PID}" ]] || return 0
 	kill -TERM "${MONITOR_PID}" 2>/dev/null || true
 	wait "${MONITOR_PID}" 2>/dev/null || true
 	MONITOR_PID=""
@@ -338,24 +346,19 @@ process_pending_chunk() {
 	if [[ "${SKIP_EVAL}" == false ]]; then
 		log "Evaluating $# SWE-bench Pro instances with ${EVAL_WORKERS} workers"
 		rm -f -- "${chunk_eval}/eval_results.json"
-		(
-			cd "${SWEBENCH_PRO_DIR}"
-			exec python swe_bench_pro_eval.py \
-				--raw_sample_path "${chunk_instances}" \
-				--patch_path "${chunk_patches}" \
-				--output_dir "${chunk_eval}" \
-				--scripts_dir run_scripts \
-				--dockerhub_username jefzda \
-				--num_workers "${EVAL_WORKERS}" \
-				"${EVAL_OPTIONS[@]}"
-		) &
+		python "${SCRIPT_DIR}/lib/benchmark_data.py" evaluate-pro \
+			--tasks-root "${SWEBENCH_PRO_DIR}/v2/tasks" --instances "${chunk_instances}" \
+			--patches "${chunk_patches}" --output "${chunk_eval}" --workers "${EVAL_WORKERS}" \
+			--pull-timeout "${PULL_TIMEOUT}" "${EVAL_OPTIONS[@]}" &
 		EVAL_PID=$!
-		wait "${EVAL_PID}"
+		local eval_exit=0
+		wait "${EVAL_PID}" || eval_exit=$?
 		EVAL_PID=""
 		require_file "${chunk_eval}/eval_results.json"
 		printf '%s\n' "${chunk_eval}/eval_results.json" >>"${EVAL_REPORT_LIST}"
 		python "${SCRIPT_DIR}/lib/benchmark_data.py" merge-pro-reports \
 			--chunk-list "${EVAL_REPORT_LIST}" --report "${REPORT_FILE}"
+		[[ "${eval_exit}" -eq 0 ]] || die "V2 evaluation infrastructure failed; chunk remains unclaimed: ${chunk_dir}"
 	fi
 
 	remove_chunk_images "${chunk_images}"

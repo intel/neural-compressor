@@ -13,10 +13,10 @@ usage() {
 Usage:
 	bash setup_swebenchpro.sh
 
-Clone the pinned SWE-bench Pro repository and mini-SWE-agent submodule, apply
-Docker image/cleanup support, and install generation and local-evaluation
-dependencies into the currently activated environment using uv. The
-environment must already provide Python and support `uv pip install`.
+Clone the pinned SWE-bench Pro V2 repository and mini-SWE-agent submodule,
+apply Docker image/cleanup support, and install generation dependencies into
+the currently activated environment using uv. Evaluation uses Docker and the
+unchanged official V2 verifier; Harbor is not required.
 EOF
 }
 
@@ -46,6 +46,7 @@ else
 	log "Using existing SWE-bench Pro checkout at ${SWEBENCH_PRO_COMMIT}"
 fi
 
+(cd "${SWEBENCH_PRO_DIR}/v2" && sha256sum --check --quiet SHA256SUMS)
 log "Initializing the pinned mini-SWE-agent submodule"
 git -C "${SWEBENCH_PRO_DIR}" submodule update --init --depth 1 mini-swe-agent
 submodule_commit="$(git -C "${AGENT_DIR}" rev-parse HEAD)"
@@ -62,8 +63,8 @@ else
 	die "Docker image patch does not match the mini-SWE-agent checkout: ${IMAGE_PATCH}"
 fi
 
-log "Installing mini-SWE-agent and SWE-bench Pro local-evaluation dependencies"
-uv pip install "${AGENT_DIR}" -r "${SWEBENCH_PRO_DIR}/requirements.txt" "swe-rex>=1.4.0"
+log "Installing mini-SWE-agent and V2 data dependencies"
+uv pip install "${AGENT_DIR}" datasets pandas pyyaml
 
 mkdir -p "${AGENT_DIR}/results"
 log "SWE-bench Pro setup complete"

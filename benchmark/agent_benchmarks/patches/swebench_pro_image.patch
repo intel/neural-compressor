@@ -54,35 +54,31 @@ diff --git a/src/minisweagent/run/extra/swebench.py b/src/minisweagent/run/extra
 index b252fed..22ae6db 100644
 --- a/src/minisweagent/run/extra/swebench.py
 +++ b/src/minisweagent/run/extra/swebench.py
-@@ -70,10 +70,14 @@ def get_swebench_docker_image_name(instance: dict) -> str:
-     """Get the image name for a SWEBench instance."""
-     image_name = instance.get("image_name", None)
-     if image_name is None:
--        # Docker doesn't allow double underscore, so we replace them with a magic token
--        iid = instance["instance_id"]
--        id_docker_compatible = iid.replace("__", "_1776_")
--        image_name = f"docker.io/swebench/sweb.eval.x86_64.{id_docker_compatible}:latest".lower()
-+        # SWE-bench Pro: use jefzda/sweap-images via dockerhub_tag
-+        if "dockerhub_tag" in instance:
-+            image_name = f"jefzda/sweap-images:{instance['dockerhub_tag']}"
-+        else:
-+            # Docker doesn't allow double underscore, so we replace them with a magic token
-+            iid = instance["instance_id"]
-+            id_docker_compatible = iid.replace("__", "_1776_")
-+            image_name = f"docker.io/swebench/sweb.eval.x86_64.{id_docker_compatible}:latest".lower()
-     return image_name
-
-
-@@ -83,6 +87,8 @@ def get_sb_environment(config: dict, instance: dict) -> Environment:
+@@ -83,5 +83,7 @@ def get_sb_environment(config: dict, instance: dict) -> Environment:
      image_name = get_swebench_docker_image_name(instance)
      if env_config["environment_class"] == "docker":
          env_config["image"] = image_name
-+        if "dockerhub_tag" in instance:
++        if image_name.startswith("ghcr.io/scaleapi/swe-bench_pro-v2:"):
 +            env_config["shell_entrypoint"] = True
      elif env_config["environment_class"] == "singularity":
          env_config["image"] = "docker://" + image_name
+@@ -89,7 +91,15 @@ def get_sb_environment(config: dict, instance: dict) -> Environment:
      env = get_environment(env_config)
-@@ -138,7 +144,10 @@ def process_instance(
++    if image_name.startswith("ghcr.io/scaleapi/swe-bench_pro-v2:"):
++        out = env.execute("if [ -d /app/.git ]; then echo /app; elif [ -d /testbed/.git ]; then echo /testbed; else exit 1; fi")
++        cwd = out["output"].strip()
++        if out["returncode"] or cwd not in {"/app", "/testbed"}:
++            env.cleanup()
++            raise RuntimeError("Missing sanitized V2 repository")
++        env.config.cwd = cwd
+     if startup_command := config.get("run", {}).get("env_startup_command"):
+         startup_command = Template(startup_command, undefined=StrictUndefined).render(**instance)
+         out = env.execute(startup_command)
+         if out["returncode"] != 0:
++            env.cleanup()
+             raise RuntimeError(f"Error executing startup command: {out}")
+     return env
+@@ -138,7 +148,10 @@ def process_instance(
      progress_manager.update_instance_status(instance_id, "Pulling/starting docker")
 
      agent = None
@@ -93,7 +89,7 @@ index b252fed..22ae6db 100644
 
      try:
          env = get_sb_environment(config, instance)
-@@ -150,11 +159,17 @@ def process_instance(
+@@ -150,11 +163,26 @@ def process_instance(
              **config.get("agent", {}),
          )
          exit_status, result = agent.run(task)
@@ -106,9 +102,31 @@ index b252fed..22ae6db 100644
          extra_info = {"traceback": traceback.format_exc()}
      finally:
 +        if env is not None:
-+            env.cleanup()
++            try:
++                if env.config.image.startswith("ghcr.io/scaleapi/swe-bench_pro-v2:"):
++                    # Capture partial work even when a model call or step limit fails.
++                    result = ""
++                    captured = env.execute("git add -A && git diff --cached --binary", timeout=60)
++                    result = captured["output"] if captured["returncode"] == 0 else ""
++            except Exception:
++                logger.exception("Failed to capture patch for %s", instance_id)
++            finally:
++                env.cleanup()
 +            progress_manager.update_instance_status(instance_id, "Environment cleaned")
 +
          save_traj(
              agent,
              instance_dir / f"{instance_id}.traj.json",
+@@ -212,7 +240,12 @@ def main(
+
+     dataset_path = DATASET_MAPPING.get(subset, subset)
+     logger.info(f"Loading dataset {dataset_path}, split {split}...")
+     instances = list(load_dataset(dataset_path, split=split))
++    if dataset_path == "ScaleAI/SWE-bench_Pro":
++        for instance in instances:
++            if instance.get("image_name") is None:
++                instance["image_name"] = f"ghcr.io/scaleapi/swe-bench_pro-v2:{instance['instance_id']}"
++
+
+     instances = filter_instances(instances, filter_spec=filter_spec, slice_spec=slice_spec, shuffle=shuffle)
+     if not redo_existing and (output_path / "preds.json").exists():

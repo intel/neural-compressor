@@ -193,7 +193,7 @@ For Verified Mini, the same layout uses the `swe_verified_mini_<TAG>` prefix
 for the result directory and log file.
 
 
-## SWE-bench Pro
+## SWE-bench Pro V2
 
 ### SWE-bench Pro environment setup
 
@@ -201,11 +201,17 @@ for the result directory and log file.
 bash setup_swebenchpro.sh
 ```
 
-The setup script clones the pinned `scaleapi/SWE-bench_Pro-os` repository and
-its mini-SWE-agent submodule, applies support for the benchmark's Docker Hub
-images and reliable container cleanup, and installs the generation and local
-Docker evaluation dependencies into the currently activated environment using
-uv. Create and activate the environment before running the setup script.
+The setup script clones the pinned `scaleapi/SWE-bench_Pro-os` V2 repository and
+its mini-SWE-agent submodule, verifies the published V2 SHA256 manifest, applies
+support for the benchmark's GHCR images and reliable container cleanup, and
+installs the generation dependencies into the currently activated environment
+using uv. Create and activate a Python 3.11+ environment before running the
+setup script. Local evaluation requires Docker, not Harbor or Docker Compose.
+
+V2 has 642 tasks and uses sanitized
+`ghcr.io/scaleapi/swe-bench_pro-v2:<instance_id>` images. Move an existing V1
+checkout aside or set `BENCHMARK_DIR` to a new directory before setup; do not
+reuse V1 run tags. V1 and V2 scores are not comparable.
 
 ### Run SWE-bench Pro
 
@@ -224,10 +230,30 @@ inference. Each chunk receives a matching instance CSV and normalized patch
 file, and its Docker images are removed after evaluation. The final chunk may
 contain fewer instances than `--eval-chunk-size`. An independent watchdog
 stops the run if the vLLM health endpoint repeatedly fails. The aggregate
-report is refreshed after every completed evaluation chunk. Host proxy variables
-(`HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY`, and lowercase variants)
-are forwarded to generation containers so repository cloning and dependency
-installation can use the same network path as the host.
+report is refreshed after every completed evaluation chunk.
+
+Selection uses Hugging Face `ScaleAI/SWE-bench_Pro`, config `default`, test
+split (V2). Generation uses mini-SWE-agent's native Hugging Face loader and
+`--slice`, preserving dataset order; no local JSON dataset loader is used.
+The Pro dataset path selects V2 image names from instance IDs without changing
+other benchmarks' image mapping or explicit `image_name` overrides. The matching
+CSV and image list are retained for evaluation and chunk cleanup, and
+`v2_selection.txt` guards against changing the slice when resuming a run.
+Generation starts in the sanitized image's `/app` or
+`/testbed` repository without cloning or resetting history. Agent containers
+are offline; model requests run on the host. Each patch is replayed with strict
+`git apply` in a fresh container running the pinned, unchanged official V2
+verifier. Host proxy variables are forwarded only to the verifier;
+`--block-network` disables verifier networking. Setup and pulls require network.
+
+Scoring uses the official V2 verifier; generation retains this project's
+mini-SWE-agent configuration and budgets, including `--step-limit` and
+`--command-timeout`. The runner does not impose the official locked protocol's
+50-minute whole-task deadline or container resource limits. When reporting
+results, record the model, agent configuration, budgets, HF dataset revision,
+and selected slice. Generation and CSV preparation load HF independently; the
+dataset is not snapshotted, and the pinned verifier checkout is versioned
+independently.
 
 Resume an interrupted run by reusing the same `--tag` and selection. Existing
 generation results and already-claimed evaluations are skipped. Use a new tag
@@ -238,7 +264,7 @@ to run the selection from scratch.
 | `--host HOST` | `127.0.0.1` | vLLM host |
 | `--port PORT` | `8888` | vLLM port |
 | `--served-name NAME` | discovered | Model ID exposed by vLLM |
-| `--num-tasks N` | all 731 | Run the first N instances |
+| `--num-tasks N` | all 642 | Run the first N instances |
 | `--slice START:END` | all | Run an explicit slice; cannot be combined with `--num-tasks` |
 | `--workers N` | `8` | Parallel mini-SWE-agent workers |
 | `--eval-workers N` | `4` | Parallel local evaluator workers |
@@ -260,8 +286,12 @@ Outputs are grouped under
 artifacts, and `report.json`. Per-chunk artifacts are retained
 under `eval_chunks/`, while the top-level files contain the merged results. The
 top-level report includes evaluated, resolved, and unresolved counts, accuracy,
-resolved/unresolved ID lists, and the per-instance result mapping. The combined
-run log is written to `logs/swebench_pro_<TAG>.log`.
+resolved/unresolved/error ID lists, and the per-instance result mapping. The combined
+run log is written to `logs/swebench_pro_<TAG>.log`. Infrastructure errors remain
+in the denominator and stop the run with the chunk unclaimed for retry.
+Runtime configs contain API credentials; keep artifacts private and redact secrets.
+
+Official protocol: <https://github.com/scaleapi/SWE-bench_Pro-os/blob/66f92766bba642462d4bbe5479e83f91f9211862/v2/README.md>.
 
 
 ## MCP-Atlas
