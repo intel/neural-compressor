@@ -26,16 +26,27 @@ class AdapterTests(unittest.TestCase):
             target = base / "tasks" / task
             (target / "tests").mkdir(parents=True)
             (target / "task.toml").write_text(
-                f'[environment]\ndocker_image = "{v2.pro_image(task)}"\n'
-                '[verifier]\ntimeout_sec = 3000\n')
+                f'[environment]\ndocker_image = "{v2.pro_image(task)}"\n' "[verifier]\ntimeout_sec = 3000\n"
+            )
             (target / "tests/test.sh").write_text("official verifier\n")
         (base / "instances.csv").write_text("instance_id\na\nb\n")
-        (base / "patches.json").write_text(json.dumps([
-            {"instance_id": "a", "patch": "diff contents\n", "prefix": "ignored"},
-            {"instance_id": "b", "patch": "", "prefix": "ignored"}]))
-        self.args = SimpleNamespace(tasks_root=base / "tasks", instances=base / "instances.csv",
-                                    patches=base / "patches.json", output=base / "output",
-                                    workers=2, pull_timeout=600, block_network=False)
+        (base / "patches.json").write_text(
+            json.dumps(
+                [
+                    {"instance_id": "a", "patch": "diff contents\n", "prefix": "ignored"},
+                    {"instance_id": "b", "patch": "", "prefix": "ignored"},
+                ]
+            )
+        )
+        self.args = SimpleNamespace(
+            tasks_root=base / "tasks",
+            instances=base / "instances.csv",
+            patches=base / "patches.json",
+            output=base / "output",
+            workers=2,
+            pull_timeout=600,
+            block_network=False,
+        )
 
     def docker(self, command, **kwargs):
         self.commands.append((command, kwargs))
@@ -71,7 +82,9 @@ class AdapterTests(unittest.TestCase):
         self.assertTrue(all("--entrypoint" in c for c in starts))
         self.assertTrue(all(kw["timeout"] == 600 for c, kw in self.commands if c[1] == "run"))
         self.assertEqual(len([c for c, _ in self.commands if "apply" in c]), 1)  # Empty patch still verified.
-        self.assertEqual(len([c for c, kw in self.commands if c[-2:] == ["bash", "/tests/test.sh"] and kw["timeout"] == 3000]), 2)
+        self.assertEqual(
+            len([c for c, kw in self.commands if c[-2:] == ["bash", "/tests/test.sh"] and kw["timeout"] == 3000]), 2
+        )
         self.assertEqual(len([c for c, _ in self.commands if c[1:3] == ["rm", "-f"]]), 2)
 
     def test_testbed_and_block_network(self):
@@ -128,8 +141,9 @@ class AdapterTests(unittest.TestCase):
                 raise subprocess.TimeoutExpired(command, kwargs["timeout"])
             return self.docker(command, **kwargs)
 
-        with patch.dict(os.environ, {"HTTPS_PROXY": "http://user:secret@proxy"}), \
-                patch.object(v2.subprocess, "run", side_effect=timed_out):
+        with patch.dict(os.environ, {"HTTPS_PROXY": "http://user:secret@proxy"}), patch.object(
+            v2.subprocess, "run", side_effect=timed_out
+        ):
             self.assertEqual(v2.evaluate_pro(self.args), 1)
         report_text = (self.args.output / "eval_results.json").read_text()
         self.assertNotIn("secret", report_text)
@@ -162,11 +176,16 @@ class AdapterTests(unittest.TestCase):
                         v2.evaluate_pro(self.args)
                     run.assert_not_called()
         self.args.instances.write_text("instance_id\na\nb\n")
-        for records in ([], [{"instance_id": "ab", "patch": "x"}],
-                [{"instance_id": "a", "patch": "x"}] * 2,
-                [None, None], [{}, {}], ["a", "b"],
-                [{"instance_id": [], "patch": "x"}] * 2,
-                [{"instance_id": "a", "patch": None}, {"instance_id": "b", "patch": ""}]):
+        for records in (
+            [],
+            [{"instance_id": "ab", "patch": "x"}],
+            [{"instance_id": "a", "patch": "x"}] * 2,
+            [None, None],
+            [{}, {}],
+            ["a", "b"],
+            [{"instance_id": [], "patch": "x"}] * 2,
+            [{"instance_id": "a", "patch": None}, {"instance_id": "b", "patch": ""}],
+        ):
             with tempfile.TemporaryDirectory() as output:
                 self.args.output = Path(output)
                 self.args.patches.write_text(json.dumps(records))
@@ -188,8 +207,9 @@ class DataCommandTests(unittest.TestCase):
             ]
             for command in commands:
                 with self.subTest(command=command):
-                    result = subprocess.run([sys.executable, str(ROOT / "lib/benchmark_data.py"), *command],
-                                            capture_output=True, text=True)
+                    result = subprocess.run(
+                        [sys.executable, str(ROOT / "lib/benchmark_data.py"), *command], capture_output=True, text=True
+                    )
                     self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(json.loads(output.read_text())[0]["instance_id"], "a")
 
@@ -200,10 +220,26 @@ class DataCommandTests(unittest.TestCase):
             (base / "patches.json").write_text(json.dumps([{"instance_id": "a", "patch": ""}]))
             # Missing official task files must fail before Docker is ever launched.
             result = subprocess.run(
-                [sys.executable, str(ROOT / "lib/benchmark_data.py"), "evaluate-pro",
-                 "--tasks-root", str(base / "missing-tasks"), "--instances", str(base / "instances.csv"),
-                 "--patches", str(base / "patches.json"), "--output", str(base / "output"),
-                 "--workers", "1", "--pull-timeout", "1"], capture_output=True, text=True)
+                [
+                    sys.executable,
+                    str(ROOT / "lib/benchmark_data.py"),
+                    "evaluate-pro",
+                    "--tasks-root",
+                    str(base / "missing-tasks"),
+                    "--instances",
+                    str(base / "instances.csv"),
+                    "--patches",
+                    str(base / "patches.json"),
+                    "--output",
+                    str(base / "output"),
+                    "--workers",
+                    "1",
+                    "--pull-timeout",
+                    "1",
+                ],
+                capture_output=True,
+                text=True,
+            )
             self.assertEqual(result.returncode, 1, result.stderr)
             report = json.loads((base / "output/eval_results.json").read_text())
             self.assertEqual(report["error_ids"], ["a"])
@@ -217,8 +253,10 @@ class DataCommandTests(unittest.TestCase):
             snapshot.write_text(json.dumps([{"instance_id": "old"}]))
             loader = Mock(return_value=[{"instance_id": "a"}, {"instance_id": "b"}])
             dataframe = Mock()
-            with patch.dict(sys.modules, {"datasets": SimpleNamespace(load_dataset=loader),
-                                         "pandas": SimpleNamespace(DataFrame=dataframe)}):
+            with patch.dict(
+                sys.modules,
+                {"datasets": SimpleNamespace(load_dataset=loader), "pandas": SimpleNamespace(DataFrame=dataframe)},
+            ):
                 with self.assertRaisesRegex(RuntimeError, "Selected V2 data changed"):
                     v2.select_pro(SimpleNamespace(csv=csv_path, images=base / "images.txt", slice="1:2"))
             loader.assert_called_once_with("ScaleAI/SWE-bench_Pro", "default", split="test")
@@ -229,8 +267,11 @@ class DataCommandTests(unittest.TestCase):
 
 class OriginalRunnerTests(unittest.TestCase):
     def test_mini_agent_patch_is_well_formed(self):
-        result = subprocess.run(["git", "apply", "--numstat", str(ROOT / "patches/swebench_pro_image.patch")],
-                                capture_output=True, text=True)
+        result = subprocess.run(
+            ["git", "apply", "--numstat", str(ROOT / "patches/swebench_pro_image.patch")],
+            capture_output=True,
+            text=True,
+        )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertIn("src/minisweagent/environments/docker.py", result.stdout)
         self.assertIn("src/minisweagent/run/extra/swebench.py", result.stdout)
@@ -238,34 +279,51 @@ class OriginalRunnerTests(unittest.TestCase):
     def test_original_cli_options_retained(self):
         result = subprocess.run(["bash", str(ROOT / "run_swebenchpro.sh"), "--help"], capture_output=True, text=True)
         self.assertEqual(result.returncode, 0, result.stderr)
-        for option in ("host port served-name num-tasks slice workers eval-workers step-limit pull-timeout "
-                       "command-timeout eval-chunk-size poll-interval health-interval health-failures tag "
-                       "skip-eval block-network keep-images").split():
+        for option in (
+            "host port served-name num-tasks slice workers eval-workers step-limit pull-timeout "
+            "command-timeout eval-chunk-size poll-interval health-interval health-failures tag "
+            "skip-eval block-network keep-images"
+        ).split():
             self.assertIn(f"--{option}", result.stdout)
 
     def test_async_chunks_and_image_policy_retained(self):
         source = (ROOT / "run_swebenchpro.sh").read_text()
-        for fragment in ('GEN_PID=$!', 'EVAL_PID=$!', 'MONITOR_PID=$!', 'pending-predictions',
-                         'prepare-pro-chunk', 'merge-pro-reports', 'remove_chunk_images',
-                         'docker image rm', 'KEEP_IMAGES', 'EVAL_CHUNK_SIZE', 'claimed_ids.txt',
-                         'wait "${EVAL_PID}"', 'wait "${GEN_PID}"', 'evaluate-pro'):
+        for fragment in (
+            "GEN_PID=$!",
+            "EVAL_PID=$!",
+            "MONITOR_PID=$!",
+            "pending-predictions",
+            "prepare-pro-chunk",
+            "merge-pro-reports",
+            "remove_chunk_images",
+            "docker image rm",
+            "KEEP_IMAGES",
+            "EVAL_CHUNK_SIZE",
+            "claimed_ids.txt",
+            'wait "${EVAL_PID}"',
+            'wait "${GEN_PID}"',
+            "evaluate-pro",
+        ):
             self.assertIn(fragment, source)
         self.assertNotIn("swe_bench_pro_eval.py", source)
 
     def test_cleanup_noops_succeed_under_errexit(self):
         source = (ROOT / "run_swebenchpro.sh").read_text()
-        functions = "\n".join(source[source.index(f"{name}() {{"):].split("\n}", 1)[0] + "\n}"
-                              for name in ("remove_chunk_images", "stop_vllm_monitor"))
+        functions = "\n".join(
+            source[source.index(f"{name}() {{") :].split("\n}", 1)[0] + "\n}"
+            for name in ("remove_chunk_images", "stop_vllm_monitor")
+        )
         with tempfile.TemporaryDirectory() as directory:
             image_list = Path(directory) / "images.txt"
             image_list.write_text("unrelated/image:tag\n")
-            script = ('set -euo pipefail\n' + functions + '\n'
-                      'KEEP_IMAGES=true\nremove_chunk_images "$1"\n'
-                      'KEEP_IMAGES=false\nremove_chunk_images "$1"\n'
-                      'remove_chunk_images "$1.missing"\n'
-                      'MONITOR_PID=""\nstop_vllm_monitor\nstop_vllm_monitor\necho survived\n')
-            result = subprocess.run(["bash", "-s", "--", str(image_list)], input=script,
-                                    capture_output=True, text=True)
+            script = (
+                "set -euo pipefail\n" + functions + "\n"
+                'KEEP_IMAGES=true\nremove_chunk_images "$1"\n'
+                'KEEP_IMAGES=false\nremove_chunk_images "$1"\n'
+                'remove_chunk_images "$1.missing"\n'
+                'MONITOR_PID=""\nstop_vllm_monitor\nstop_vllm_monitor\necho survived\n'
+            )
+            result = subprocess.run(["bash", "-s", "--", str(image_list)], input=script, capture_output=True, text=True)
             self.assertEqual(result.returncode, 0, result.stderr)
             self.assertEqual(result.stdout.strip(), "survived")
 

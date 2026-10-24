@@ -251,17 +251,32 @@ def evaluate_pro_instance(args, record):
 
     try:
         network = ["--network", "none"] if args.block_network else []
-        docker("run", "-d", "--rm", "--name", container, *network,
-               "--entrypoint", "/bin/sh", image, "-c", "sleep 2h", timeout=args.pull_timeout)
-        cwd = docker("exec", container, "sh", "-c",
-                     "if [ -d /app/.git ]; then echo /app; "
-                     "elif [ -d /testbed/.git ]; then echo /testbed; else exit 1; fi").stdout.strip()
+        docker(
+            "run",
+            "-d",
+            "--rm",
+            "--name",
+            container,
+            *network,
+            "--entrypoint",
+            "/bin/sh",
+            image,
+            "-c",
+            "sleep 2h",
+            timeout=args.pull_timeout,
+        )
+        cwd = docker(
+            "exec",
+            container,
+            "sh",
+            "-c",
+            "if [ -d /app/.git ]; then echo /app; " "elif [ -d /testbed/.git ]; then echo /testbed; else exit 1; fi",
+        ).stdout.strip()
         if cwd not in {"/app", "/testbed"}:
             raise RuntimeError("Cannot locate sanitized V2 repository")
         if record["patch"].strip():
             docker("cp", str(model_patch), f"{container}:/tmp/model.patch")
-            applied = docker("exec", "-w", cwd, container, "git", "apply", "--binary", "/tmp/model.patch",
-                             check=False)
+            applied = docker("exec", "-w", cwd, container, "git", "apply", "--binary", "/tmp/model.patch", check=False)
             if applied.returncode:
                 # Invalid submissions are wrong answers, not infrastructure errors.
                 return instance_id, False, None
@@ -269,12 +284,21 @@ def evaluate_pro_instance(args, record):
         docker("cp", str(tests) + "/.", f"{container}:/tests")
         env = []
         if not args.block_network:
-            for key in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
-                        "http_proxy", "https_proxy", "all_proxy", "no_proxy"):
+            for key in (
+                "HTTP_PROXY",
+                "HTTPS_PROXY",
+                "ALL_PROXY",
+                "NO_PROXY",
+                "http_proxy",
+                "https_proxy",
+                "all_proxy",
+                "no_proxy",
+            ):
                 if key in os.environ:
                     env.extend(["-e", f"{key}={os.environ[key]}"])
-        verified = docker("exec", *env, container, "bash", "/tests/test.sh",
-                          timeout=config["verifier"]["timeout_sec"], check=False)
+        verified = docker(
+            "exec", *env, container, "bash", "/tests/test.sh", timeout=config["verifier"]["timeout_sec"], check=False
+        )
         docker("cp", f"{container}:/logs/verifier/.", str(output))
         reward = (output / "reward.txt").read_text().strip()
         if reward not in {"0", "1"} or (reward == "1") != (verified.returncode == 0):
@@ -294,12 +318,19 @@ def evaluate_pro(args):
     records = json.loads(args.patches.read_text())
     for instance_id in selected:
         pro_image(instance_id)
-    if (not selected or len(set(selected)) != len(selected) or
-            not isinstance(records, list) or len(records) != len(selected) or
-            any(not isinstance(record, dict) or
-                not isinstance(record.get("instance_id"), str) or
-                not isinstance(record.get("patch"), str) for record in records) or
-            {record["instance_id"] for record in records} != set(selected)):
+    if (
+        not selected
+        or len(set(selected)) != len(selected)
+        or not isinstance(records, list)
+        or len(records) != len(selected)
+        or any(
+            not isinstance(record, dict)
+            or not isinstance(record.get("instance_id"), str)
+            or not isinstance(record.get("patch"), str)
+            for record in records
+        )
+        or {record["instance_id"] for record in records} != set(selected)
+    ):
         raise ValueError("Expected one patch per selected V2 instance")
 
     def evaluate(record):
