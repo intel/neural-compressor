@@ -274,9 +274,7 @@ class DataCommandTests(unittest.TestCase):
                 },
             ):
                 with self.assertRaisesRegex(RuntimeError, "selected no instances"):
-                    v2.select_pro(
-                        SimpleNamespace(csv=base / "instances.csv", images=base / "images.txt", slice="1:2")
-                    )
+                    v2.select_pro(SimpleNamespace(csv=base / "instances.csv", images=base / "images.txt", slice="1:2"))
             dataframe.assert_not_called()
             self.assertEqual(list(base.iterdir()), [])
 
