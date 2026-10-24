@@ -245,27 +245,76 @@ class DataCommandTests(unittest.TestCase):
             self.assertEqual(report["error_ids"], ["a"])
             self.assertEqual(report["total_instances"], 1)
 
-    def test_changed_selection_preserves_existing_artifacts(self):
+    def test_selection_writes_csv_and_images_without_json_snapshot(self):
         with tempfile.TemporaryDirectory() as directory:
             base = Path(directory)
-            csv_path, snapshot = base / "instances.csv", base / "instances.json"
-            csv_path.write_text("original CSV\n")
-            snapshot.write_text(json.dumps([{"instance_id": "old"}]))
+            csv_path = base / "instances.csv"
             loader = Mock(return_value=[{"instance_id": "a"}, {"instance_id": "b"}])
             dataframe = Mock()
             with patch.dict(
                 sys.modules,
                 {"datasets": SimpleNamespace(load_dataset=loader), "pandas": SimpleNamespace(DataFrame=dataframe)},
             ):
-                with self.assertRaisesRegex(RuntimeError, "Selected V2 data changed"):
-                    v2.select_pro(SimpleNamespace(csv=csv_path, images=base / "images.txt", slice="1:2"))
+                v2.select_pro(SimpleNamespace(csv=csv_path, images=base / "images.txt", slice="1:2"))
             loader.assert_called_once_with("ScaleAI/SWE-bench_Pro", "default", split="test")
+            dataframe.assert_called_once_with([{"instance_id": "b", "image_name": v2.pro_image("b")}])
+            dataframe.return_value.to_csv.assert_called_once_with(csv_path, index=False)
+            self.assertEqual((base / "images.txt").read_text(), v2.pro_image("b") + "\n")
+            self.assertFalse(csv_path.with_suffix(".json").exists())
+
+    def test_empty_selection_writes_no_artifacts(self):
+        with tempfile.TemporaryDirectory() as directory:
+            base = Path(directory)
+            dataframe = Mock()
+            with patch.dict(
+                sys.modules,
+                {
+                    "datasets": SimpleNamespace(load_dataset=Mock(return_value=[{"instance_id": "a"}])),
+                    "pandas": SimpleNamespace(DataFrame=dataframe),
+                },
+            ):
+                with self.assertRaisesRegex(RuntimeError, "selected no instances"):
+                    v2.select_pro(
+                        SimpleNamespace(csv=base / "instances.csv", images=base / "images.txt", slice="1:2")
+                    )
             dataframe.assert_not_called()
-            self.assertEqual(csv_path.read_text(), "original CSV\n")
-            self.assertEqual(json.loads(snapshot.read_text()), [{"instance_id": "old"}])
+            self.assertEqual(list(base.iterdir()), [])
 
 
 class OriginalRunnerTests(unittest.TestCase):
+    def test_native_hf_subset_and_slice(self):
+        source = (ROOT / "run_swebenchpro.sh").read_text()
+        self.assertIn("--subset ScaleAI/SWE-bench_Pro", source)
+        self.assertIn('--slice "${FULL_SLICE}"', source)
+        self.assertNotIn("instances.json", source)
+        self.assertIn("v2_selection.txt", source)
+
+    def test_patch_native_loader_and_dataset_scoped_image_mapping(self):
+        source = (ROOT / "patches/swebench_pro_image.patch").read_text()
+        loader_hunk = source.split("@@ -212,", 1)[1].split("\n", 1)[1]
+        self.assertIn("     instances = list(load_dataset(dataset_path, split=split))", loader_hunk)
+        self.assertIn("     instances = filter_instances(instances,", loader_hunk)
+        self.assertNotIn("json.loads", loader_hunk)
+        self.assertNotIn("swebench_pro_version", source)
+        self.assertNotIn("def get_swebench_docker_image_name", source)
+        # Execute the actual mapping added by the patch, without importing mini-SWE-agent.
+        mapping = "\n".join(line[5:] for line in loader_hunk.splitlines() if line.startswith("+"))
+        for dataset in ("ScaleAI/SWE-bench_Pro", "princeton-nlp/SWE-Bench_Verified", "another/dataset"):
+            with self.subTest(dataset=dataset):
+                instances = [
+                    {"instance_id": "instance_shared__123"},
+                    {"instance_id": "instance_other__456", "image_name": "custom/image:tag"},
+                    {"instance_id": "instance_null__789", "image_name": None},
+                ]
+                exec(mapping, {"dataset_path": dataset, "instances": instances})
+                self.assertEqual(instances[1]["image_name"], "custom/image:tag")
+                if dataset == "ScaleAI/SWE-bench_Pro":
+                    self.assertEqual(instances[0]["image_name"], v2.pro_image(instances[0]["instance_id"]))
+                    self.assertEqual(instances[2]["image_name"], v2.pro_image(instances[2]["instance_id"]))
+                else:
+                    self.assertNotIn("image_name", instances[0])
+                    self.assertIsNone(instances[2]["image_name"])
+
     def test_mini_agent_patch_is_well_formed(self):
         result = subprocess.run(
             ["git", "apply", "--numstat", str(ROOT / "patches/swebench_pro_image.patch")],

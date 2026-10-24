@@ -285,8 +285,9 @@ log "Generating SWE-bench Pro selection ${FULL_SLICE} with model ${SERVED_MODEL_
 (
 	cd "${AGENT_DIR}"
 	exec mini-extra swebench \
-		--subset "${OUT_DIR}/instances.json" \
+		--subset ScaleAI/SWE-bench_Pro \
 		--split test \
+		--slice "${FULL_SLICE}" \
 		--model "${SERVED_MODEL_NAME}" \
 		--workers "${WORKERS}" \
 		--output "${GEN_DIR}" \

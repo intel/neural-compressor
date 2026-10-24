@@ -233,8 +233,13 @@ stops the run if the vLLM health endpoint repeatedly fails. The aggregate
 report is refreshed after every completed evaluation chunk.
 
 Selection uses Hugging Face `ScaleAI/SWE-bench_Pro`, config `default`, test
-split (V2), preserving dataset order and freezing selected rows locally for
-`mini-extra swebench`. Generation starts in the sanitized image's `/app` or
+split (V2). Generation uses mini-SWE-agent's native Hugging Face loader and
+`--slice`, preserving dataset order; no local JSON dataset loader is used.
+The Pro dataset path selects V2 image names from instance IDs without changing
+other benchmarks' image mapping or explicit `image_name` overrides. The matching
+CSV and image list are retained for evaluation and chunk cleanup, and
+`v2_selection.txt` guards against changing the slice when resuming a run.
+Generation starts in the sanitized image's `/app` or
 `/testbed` repository without cloning or resetting history. Agent containers
 are offline; model requests run on the host. Each patch is replayed with strict
 `git apply` in a fresh container running the pinned, unchanged official V2
@@ -245,8 +250,10 @@ Scoring uses the official V2 verifier; generation retains this project's
 mini-SWE-agent configuration and budgets, including `--step-limit` and
 `--command-timeout`. The runner does not impose the official locked protocol's
 50-minute whole-task deadline or container resource limits. When reporting
-results, record the model, agent configuration, budgets, and saved HF selection;
-the HF dataset and pinned verifier checkout are versioned independently.
+results, record the model, agent configuration, budgets, HF dataset revision,
+and selected slice. Generation and CSV preparation load HF independently; the
+dataset is not snapshotted, and the pinned verifier checkout is versioned
+independently.
 
 Resume an interrupted run by reusing the same `--tag` and selection. Existing
 generation results and already-claimed evaluations are skipped. Use a new tag

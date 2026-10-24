@@ -211,12 +211,7 @@ def select_pro(args):
         raise RuntimeError(f"Dataset slice selected no instances: {args.slice or 'all'}")
     for item in instances:
         item["image_name"] = pro_image(item["instance_id"])
-    # Freeze the exact selected HF rows for generation; do not reload/slice independently.
-    snapshot = Path(args.csv).with_suffix(".json")
-    if snapshot.exists() and json.loads(snapshot.read_text()) != instances:
-        raise RuntimeError("Selected V2 data changed; use a new run tag")
     pd.DataFrame(instances).to_csv(args.csv, index=False)
-    snapshot.write_text(json.dumps(instances, indent=2))
     images = sorted({item["image_name"] for item in instances})
     Path(args.images).write_text("\n".join(images) + ("\n" if images else ""))
     print(f"Wrote {len(instances)} instances to {args.csv}")
