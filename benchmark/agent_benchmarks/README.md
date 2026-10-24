@@ -241,10 +241,12 @@ are offline; model requests run on the host. Each patch is replayed with strict
 verifier. Host proxy variables are forwarded only to the verifier;
 `--block-network` disables verifier networking. Setup and pulls require network.
 
-This remains a custom mini-agent workflow, not the official locked-agent
-protocol: the official 50-minute whole-task deadline is not enforced, and HF
-data can change independently of the pinned task checkout. Record the selection
-and configuration; do not compare these scores directly with reference scores.
+Scoring uses the official V2 verifier; generation retains this project's
+mini-SWE-agent configuration and budgets, including `--step-limit` and
+`--command-timeout`. The runner does not impose the official locked protocol's
+50-minute whole-task deadline or container resource limits. When reporting
+results, record the model, agent configuration, budgets, and saved HF selection;
+the HF dataset and pinned verifier checkout are versioned independently.
 
 Resume an interrupted run by reusing the same `--tag` and selection. Existing
 generation results and already-claimed evaluations are skipped. Use a new tag
