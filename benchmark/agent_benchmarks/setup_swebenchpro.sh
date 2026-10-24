@@ -2,8 +2,7 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-readonly SCRIPT_DIR
+readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 # shellcheck source=lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
 # shellcheck source=versions.env
@@ -14,9 +13,10 @@ usage() {
 Usage:
 	bash setup_swebenchpro.sh
 
-Clone the pinned SWE-bench Pro V2 task tree and locked-protocol tooling.
-Install Harbor with Docker and optional Modal support into the activated
-Python 3.12+ environment using uv. V1 checkouts must be moved aside first.
+Clone the pinned SWE-bench Pro V2 repository and mini-SWE-agent submodule,
+apply Docker image/cleanup support, and install generation dependencies into
+the currently activated environment using uv. Evaluation uses Docker and the
+unchanged official V2 verifier; Harbor is not required.
 EOF
 }
 
@@ -32,6 +32,7 @@ init_benchmark_paths
 
 readonly REPOSITORY="https://github.com/scaleapi/SWE-bench_Pro-os.git"
 readonly SWEBENCH_PRO_DIR="${BENCHMARK_DIR}/SWE-bench_Pro-os"
+readonly IMAGE_PATCH="${BENCHMARK_DIR}/patches/swebench_pro_image.patch"
 
 if [[ ! -d "${SWEBENCH_PRO_DIR}/.git" ]]; then
 	log "Cloning SWE-bench Pro at ${SWEBENCH_PRO_COMMIT}"
@@ -45,11 +46,25 @@ else
 	log "Using existing SWE-bench Pro checkout at ${SWEBENCH_PRO_COMMIT}"
 fi
 
-require_file "${SWEBENCH_PRO_DIR}/v2/tooling/locked_mini_swe.py"
-require_file "${SWEBENCH_PRO_DIR}/v2/tooling/patch_replay.py"
-log "Verifying the pinned V2 task tree and tooling"
 (cd "${SWEBENCH_PRO_DIR}/v2" && sha256sum --check --quiet SHA256SUMS)
+log "Initializing the pinned mini-SWE-agent submodule"
+git -C "${SWEBENCH_PRO_DIR}" submodule update --init --depth 1 mini-swe-agent
+submodule_commit="$(git -C "${AGENT_DIR}" rev-parse HEAD)"
+[[ "${submodule_commit}" == "${SWEBENCH_PRO_MINI_SWE_AGENT_COMMIT}" ]] || \
+	die "Unexpected mini-SWE-agent submodule commit: ${submodule_commit}"
 
-log "Installing Harbor (requires Python 3.12+)"
-uv pip install --python "${PYTHON_EXECUTABLE:-python}" "harbor[modal]==${SWEBENCH_PRO_HARBOR_VERSION}" "PyYAML>=6"
-log "SWE-bench Pro V2 setup complete; Docker Compose is required for local runs"
+require_file "${IMAGE_PATCH}"
+if git -C "${AGENT_DIR}" apply --reverse --check "${IMAGE_PATCH}" 2>/dev/null; then
+	log "SWE-bench Pro Docker image and cleanup patch is already applied"
+elif git -C "${AGENT_DIR}" apply --check "${IMAGE_PATCH}" 2>/dev/null; then
+	log "Applying SWE-bench Pro Docker image and cleanup patch"
+	git -C "${AGENT_DIR}" apply "${IMAGE_PATCH}"
+else
+	die "Docker image patch does not match the mini-SWE-agent checkout: ${IMAGE_PATCH}"
+fi
+
+log "Installing mini-SWE-agent and V2 data dependencies"
+uv pip install "${AGENT_DIR}" datasets pandas pyyaml
+
+mkdir -p "${AGENT_DIR}/results"
+log "SWE-bench Pro setup complete"

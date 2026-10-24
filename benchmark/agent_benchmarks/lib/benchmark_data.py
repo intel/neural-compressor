@@ -8,8 +8,12 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import time
+import tomllib
+import uuid
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 csv.field_size_limit(sys.maxsize)
@@ -36,22 +40,14 @@ def pro_config(args):
     environment = config.setdefault("environment", {})
     environment["pull_timeout"] = args.pull_timeout
     environment["timeout"] = args.command_timeout
-    environment["forward_env"] = [
-        "HTTP_PROXY",
-        "HTTPS_PROXY",
-        "ALL_PROXY",
-        "NO_PROXY",
-        "http_proxy",
-        "https_proxy",
-        "all_proxy",
-        "no_proxy",
-    ]
-    config.setdefault("run", {})[
-        "env_startup_command"
-    ] = "git clone https://github.com/{{ repo }}.git . && {{ before_repo_set_cmd }}"
+    # Model requests run on the host. The agent shell needs no network or proxy.
+    environment["forward_env"] = []
+    environment["run_args"] = ["--rm", "--network", "none"]
+    environment["cwd"] = "/"
+    config.setdefault("run", {})["env_startup_command"] = "git rev-parse --is-inside-work-tree"
     old = "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && git add -A && git diff --cached"
     new = (
-        "cd /testbed && echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && git add -A && "
+        "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && git add -A && "
         "git diff --cached -- . ':(exclude,glob)**/test/**' ':(exclude,glob)**/tests/**' "
         "':(exclude,glob)**/test_*.py' ':(exclude,glob)**/*_test.py' "
         "':(exclude,glob)**/*.test.js' ':(exclude,glob)**/*.spec.js' "
@@ -61,7 +57,7 @@ def pro_config(args):
     template = config["agent"]["instance_template"]
     if old not in template:
         raise RuntimeError("Expected submission command not found in mini-SWE-agent config")
-    config["agent"]["instance_template"] = template.replace(old, new)
+    config["agent"]["instance_template"] = template.replace(old, new).replace("/testbed", "{{cwd}}")
     config["model"] = {
         "model_name": args.model,
         "cost_tracking": "ignore_errors",
@@ -190,28 +186,140 @@ def prepare_pro_chunk(args):
         writer.writeheader()
         writer.writerows(rows)
 
-    images = sorted({f"jefzda/sweap-images:{row['dockerhub_tag']}" for row in rows if row.get("dockerhub_tag")})
+    images = sorted({pro_image(row["instance_id"]) for row in rows})
     Path(args.images).write_text("\n".join(images) + ("\n" if images else ""))
     print(f"Prepared {len(instance_ids)} SWE-bench Pro instances for evaluation")
     print(f"Invalid or empty patches: {invalid}")
     print(f"Patches touching test files: {test_changes}")
 
 
+def pro_image(instance_id):
+    if not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]*", instance_id):
+        raise ValueError(f"Invalid V2 instance ID: {instance_id}")
+    return f"ghcr.io/scaleapi/swe-bench_pro-v2:{instance_id}"
+
+
 def select_pro(args):
     import pandas as pd
     from datasets import load_dataset
 
-    instances = list(load_dataset("ScaleAI/SWE-bench_Pro", split="test"))
+    instances = list(load_dataset("ScaleAI/SWE-bench_Pro", "default", split="test"))
     if args.slice:
         bounds = [int(value) if value else None for value in args.slice.split(":")]
         instances = instances[slice(*bounds)]
     if not instances:
         raise RuntimeError(f"Dataset slice selected no instances: {args.slice or 'all'}")
+    for item in instances:
+        item["image_name"] = pro_image(item["instance_id"])
+    # Freeze the exact selected HF rows for generation; do not reload/slice independently.
+    snapshot = Path(args.csv).with_suffix(".json")
+    if snapshot.exists() and json.loads(snapshot.read_text()) != instances:
+        raise RuntimeError("Selected V2 data changed; use a new run tag")
     pd.DataFrame(instances).to_csv(args.csv, index=False)
-    images = sorted({f"jefzda/sweap-images:{item['dockerhub_tag']}" for item in instances if item.get("dockerhub_tag")})
+    snapshot.write_text(json.dumps(instances, indent=2))
+    images = sorted({item["image_name"] for item in instances})
     Path(args.images).write_text("\n".join(images) + ("\n" if images else ""))
     print(f"Wrote {len(instances)} instances to {args.csv}")
     print(f"Tracked {len(images)} Docker images in {args.images}")
+
+
+def evaluate_pro_instance(args, record):
+    """Replay only the submitted diff into a pristine V2 image, then run its verifier."""
+    instance_id = record["instance_id"]
+    image = pro_image(instance_id)
+    task = args.tasks_root / instance_id
+    config = tomllib.loads((task / "task.toml").read_text())
+    if config["environment"]["docker_image"] != image:
+        raise ValueError(f"Unexpected official image for {instance_id}")
+    tests = task / "tests"
+    if not (tests / "test.sh").is_file():
+        raise ValueError(f"Missing V2 verifier for {instance_id}")
+    output = args.output / instance_id
+    output.mkdir(parents=True, exist_ok=False)
+    model_patch = output / "model.patch"
+    model_patch.write_text(record["patch"])
+    container = f"swebench-pro-v2-eval-{uuid.uuid4().hex}"
+
+    def docker(*command, timeout=120, check=True):
+        result = subprocess.run(["docker", *command], capture_output=True, text=True, timeout=timeout)
+        with (output / "docker.log").open("a") as log:
+            log.write(result.stdout + result.stderr)
+        if check and result.returncode:
+            # Do not print command arguments: verifier proxy values can contain credentials.
+            raise RuntimeError(f"Docker operation failed (exit {result.returncode}); see {output / 'docker.log'}")
+        return result
+
+    try:
+        network = ["--network", "none"] if args.block_network else []
+        docker("run", "-d", "--rm", "--name", container, *network,
+               "--entrypoint", "/bin/sh", image, "-c", "sleep 2h", timeout=args.pull_timeout)
+        cwd = docker("exec", container, "sh", "-c",
+                     "if [ -d /app/.git ]; then echo /app; "
+                     "elif [ -d /testbed/.git ]; then echo /testbed; else exit 1; fi").stdout.strip()
+        if cwd not in {"/app", "/testbed"}:
+            raise RuntimeError("Cannot locate sanitized V2 repository")
+        if record["patch"].strip():
+            docker("cp", str(model_patch), f"{container}:/tmp/model.patch")
+            applied = docker("exec", "-w", cwd, container, "git", "apply", "--binary", "/tmp/model.patch",
+                             check=False)
+            if applied.returncode:
+                # Invalid submissions are wrong answers, not infrastructure errors.
+                return instance_id, False, None
+        docker("exec", container, "mkdir", "-p", "/tests", "/logs/verifier")
+        docker("cp", str(tests) + "/.", f"{container}:/tests")
+        env = []
+        if not args.block_network:
+            for key in ("HTTP_PROXY", "HTTPS_PROXY", "ALL_PROXY", "NO_PROXY",
+                        "http_proxy", "https_proxy", "all_proxy", "no_proxy"):
+                if key in os.environ:
+                    env.extend(["-e", f"{key}={os.environ[key]}"])
+        verified = docker("exec", *env, container, "bash", "/tests/test.sh",
+                          timeout=config["verifier"]["timeout_sec"], check=False)
+        docker("cp", f"{container}:/logs/verifier/.", str(output))
+        reward = (output / "reward.txt").read_text().strip()
+        if reward not in {"0", "1"} or (reward == "1") != (verified.returncode == 0):
+            raise RuntimeError("Missing or inconsistent official verifier reward")
+        return instance_id, reward == "1", None
+    finally:
+        docker("rm", "-f", container, check=False)
+
+
+def evaluate_pro(args):
+    if args.workers <= 0 or args.pull_timeout <= 0:
+        raise ValueError("Workers and pull timeout must be positive")
+    args.output = args.output.resolve()
+    args.output.mkdir(parents=True, exist_ok=True)
+    with args.instances.open(newline="") as source:
+        selected = [row["instance_id"] for row in csv.DictReader(source)]
+    records = json.loads(args.patches.read_text())
+    for instance_id in selected:
+        pro_image(instance_id)
+    if (not selected or len(set(selected)) != len(selected) or
+            not isinstance(records, list) or len(records) != len(selected) or
+            any(not isinstance(record, dict) or
+                not isinstance(record.get("instance_id"), str) or
+                not isinstance(record.get("patch"), str) for record in records) or
+            {record["instance_id"] for record in records} != set(selected)):
+        raise ValueError("Expected one patch per selected V2 instance")
+
+    def evaluate(record):
+        try:
+            return evaluate_pro_instance(args, record)
+        except subprocess.TimeoutExpired:
+            # TimeoutExpired includes the full command, potentially including proxy credentials.
+            return record["instance_id"], None, "Docker operation timed out"
+        except (OSError, ValueError, KeyError, RuntimeError, subprocess.SubprocessError) as error:
+            return record["instance_id"], None, str(error)
+
+    results, errors = {}, {}
+    with ThreadPoolExecutor(max_workers=args.workers) as pool:
+        for instance_id, resolved, error in pool.map(evaluate, records):
+            if error is not None:
+                errors[instance_id] = error
+            else:
+                results[instance_id] = resolved
+    (args.output / "eval_results.json").write_text(json.dumps(build_pro_report(results, errors), indent=2))
+    return int(bool(errors))
 
 
 def select_verified(args: argparse.Namespace) -> None:
@@ -432,16 +540,21 @@ def merge_eval_reports(args: argparse.Namespace) -> None:
     print(f"Merged {len(report_paths)} SWE-bench Verified evaluation chunks")
 
 
-def build_pro_report(results):
+def build_pro_report(results, errors=None):
+    errors = errors or {}
     results = dict(sorted(results.items()))
     resolved_ids = [instance_id for instance_id, resolved in results.items() if resolved]
     unresolved_ids = [instance_id for instance_id, resolved in results.items() if not resolved]
-    total = len(results)
+    total = len(results) + len(errors)
     resolved = len(resolved_ids)
     return {
         "schema_version": 1,
         "benchmark": "swebench_pro",
-        "evaluated_instances": total,
+        "evaluated_instances": len(results),
+        "total_instances": total,
+        "error_instances": len(errors),
+        "error_ids": sorted(errors),
+        "errors": errors,
         "resolved_instances": resolved,
         "unresolved_instances": len(unresolved_ids),
         "accuracy": resolved / total if total else 0.0,
@@ -455,12 +568,20 @@ def build_pro_report(results):
 def merge_pro_reports(args: argparse.Namespace) -> None:
     report_paths = [Path(line) for line in Path(args.chunk_list).read_text().splitlines() if line.strip()]
     reports = {}
+    errors = {}
     for path in report_paths:
         if path.is_file():
-            reports.update(json.loads(path.read_text()))
-    if reports:
+            payload = json.loads(path.read_text())
+            results = payload.get("results", payload)
+            chunk_errors = payload.get("errors", {})
+            for instance_id in set(results) | set(chunk_errors):
+                reports.pop(instance_id, None)
+                errors.pop(instance_id, None)
+            reports.update(results)
+            errors.update(chunk_errors)
+    if reports or errors:
         Path(args.report).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.report).write_text(json.dumps(build_pro_report(reports), indent=2))
+        Path(args.report).write_text(json.dumps(build_pro_report(reports, errors), indent=2))
     else:
         Path(args.report).unlink(missing_ok=True)
     print(f"Merged {len(reports)} SWE-bench Pro evaluation results")
@@ -512,7 +633,7 @@ def pro_report(args):
     report = json.loads(Path(args.report).read_text())
     results = report.get("results", report)
     passed = report.get("resolved_instances", sum(bool(value) for value in results.values()))
-    total = report.get("evaluated_instances", len(results))
+    total = report.get("total_instances", report.get("evaluated_instances", len(results)))
     print(f"Local accuracy: {passed}/{total} = {passed / total * 100 if total else 0:.1f}%")
     for instance_id, resolved in sorted(results.items(), key=lambda item: (not item[1], item[0])):
         print(f"  {'PASS' if resolved else 'FAIL'}  {instance_id}")
@@ -599,6 +720,14 @@ def build_parser():
     command.add_argument("--slice", default="")
     command.set_defaults(func=select_pro)
 
+    command = commands.add_parser("evaluate-pro")
+    for name in ("tasks-root", "instances", "patches", "output"):
+        command.add_argument(f"--{name}", required=True, type=Path)
+    for name in ("workers", "pull-timeout"):
+        command.add_argument(f"--{name}", required=True, type=int)
+    command.add_argument("--block-network", action="store_true")
+    command.set_defaults(func=evaluate_pro)
+
     command = commands.add_parser("select-verified")
     command.add_argument("--images", required=True)
     command.add_argument("--slice", required=True)
@@ -680,4 +809,4 @@ def build_parser():
 
 if __name__ == "__main__":
     arguments = build_parser().parse_args()
-    arguments.func(arguments)
+    sys.exit(arguments.func(arguments))

@@ -2,159 +2,426 @@
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
-readonly SCRIPT_DIR
+readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+# shellcheck source=lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
-source "${SCRIPT_DIR}/versions.env"
 
 usage() {
-    cat <<'EOF'
-Usage: bash run_swebenchpro.sh [OPTIONS]
+	cat <<'EOF'
+Usage:
+	bash run_swebenchpro.sh [OPTIONS]
 
-Run SWE-bench Pro V2 with the official locked mini-SWE agent, then replay
-captured patches in pristine containers with the official V2 verifier.
+Run mini-SWE-agent on SWE-bench Pro V2 using an already-running vLLM server, then
+evaluate generated patches with the official V2 verifier in local Docker.
 
-  --host HOST          vLLM host (default: 127.0.0.1; mapped to Docker gateway)
-  --port PORT          vLLM port (default: 8888)
-  --served-name NAME   Model ID exposed by vLLM (default: discover)
-  --agent-base-url URL Sandbox-reachable model API URL, including /v1
-  --environment NAME   docker (default) or modal; Modal needs credentials
-  --subset NAME        full (642 tasks, default) or hard (51 tasks)
-  --num-tasks N        Select the first N tasks in sorted task-directory order
-  --slice START:END    Select a slice instead of --num-tasks
-  --workers N          Parallel generation trials (default: 8)
-  --eval-workers N     Parallel fresh-sandbox replay trials (default: 4)
-  --step-limit N       Agent model-call limit (default: 250)
-  --tag TAG            Unique output label (default: UTC timestamp)
-  --skip-eval          Capture patches only; do not report an accuracy
-  -h, --help           Show this help
+Generation runs continuously across the whole selection. Finished instances
+are evaluated in chunks while generation continues, overlapping CPU/Docker
+evaluation with GPU inference.
 
-Environment: AGENT_MAX_TOKENS (8192), VLLM_API_KEY (EMPTY), OPENAI_BASE_URL,
-BENCHMARK_DIR. The shared vLLM server is never stopped. The agent phase has
-no network access except the model host; setup and verification are online.
-V1 chunking, image cleanup, and --block-network options are not supported.
+Options:
+	--host HOST          vLLM host (default: 127.0.0.1)
+	--port PORT          vLLM port (default: 8888)
+	--served-name NAME   Served model ID (default: discover from /v1/models)
+	--num-tasks N        Run the first N instances (default: all 642)
+	--slice START:END    Run an explicit dataset slice
+	--workers N          Parallel agent workers (default: 8)
+	--eval-workers N     Parallel evaluation workers (default: 4)
+	--step-limit N       Maximum model calls per instance (default: 250)
+	--pull-timeout N     Docker image pull/start timeout in seconds (default: 1800)
+	--command-timeout N  In-container command timeout in seconds (default: 600)
+	--eval-chunk-size N  Finished instances gathered before dispatching an evaluation chunk (default: 12)
+	--poll-interval N    Seconds between checks for newly finished instances (default: 60)
+	--health-interval N  Seconds between vLLM health checks (default: 30)
+	--health-failures N  Consecutive failed health checks before stopping (default: 3)
+	--tag TAG            Run tag (default: UTC timestamp)
+	--skip-eval          Generate patches without local evaluation
+	--block-network      Disable container networking during local evaluation
+	--keep-images        Keep SWE-bench Pro Docker images after each evaluation chunk
+	-h, --help           Show this help message
+
+Environment:
+	AGENT_MAX_TOKENS     Maximum tokens per model response (default: 8192)
+	VLLM_API_KEY         API key sent to vLLM (default: EMPTY)
+	VLLM_NO_PROXY        Hosts that bypass HTTP proxies (default: vLLM host)
+	VLLM_WAIT_TIMEOUT    Readiness timeout in seconds (default: 300)
+	OPENAI_BASE_URL      Override the OpenAI-compatible API base URL
 EOF
+}
+
+remove_chunk_images() {
+	local image_list="$1"
+	[[ "${KEEP_IMAGES}" == false && -s "${image_list}" ]] || return 0
+	mapfile -t images < <(sort -u "${image_list}" | grep -E '^ghcr.io/scaleapi/swe-bench_pro-v2:' || true)
+	[[ ${#images[@]} -gt 0 ]] || return 0
+	log "Removing ${#images[@]} SWE-bench Pro images"
+	docker image rm -f "${images[@]}" >/dev/null 2>&1 || \
+		warn "Some SWE-bench Pro images could not be removed"
+}
+
+readonly RUNNER_PID=$$
+GEN_PID=""
+EVAL_PID=""
+MONITOR_PID=""
+
+cleanup() {
+	local pid
+	for pid in "${MONITOR_PID}" "${EVAL_PID}" "${GEN_PID}"; do
+		[[ -n "${pid}" ]] || continue
+		kill -0 "${pid}" 2>/dev/null || continue
+		kill -TERM "${pid}" 2>/dev/null || true
+	done
+}
+
+termination_requested() {
+	warn "SWE-bench Pro run was interrupted"
+	exit 1
+}
+
+require_positive_integer() {
+	local name="$1"
+	local value="$2"
+	[[ "${value}" =~ ^[1-9][0-9]*$ ]] || die "${name} must be a positive integer: ${value}"
 }
 
 WORKERS=8
 EVAL_WORKERS=4
 STEP_LIMIT=250
-SUBSET=full
-ENVIRONMENT=docker
+PULL_TIMEOUT=1800
+COMMAND_TIMEOUT=600
+EVAL_CHUNK_SIZE=12
+POLL_INTERVAL=60
+HEALTH_INTERVAL=30
+HEALTH_FAILURES=3
 NUM_TASKS=""
 SLICE_ARG=""
 SERVED_MODEL_NAME=""
-AGENT_BASE_URL=""
 RUN_TAG="$(date -u +%Y%m%dT%H%M%SZ)"
 SKIP_EVAL=false
+BLOCK_NETWORK=false
+KEEP_IMAGES=false
+
 while [[ $# -gt 0 ]]; do
-    case "$1" in
-        -h|--help) usage; exit 0 ;;
-        --skip-eval) SKIP_EVAL=true; shift ;;
-        --host|--port|--served-name|--agent-base-url|--environment|--subset|--num-tasks|--slice|--workers|--eval-workers|--step-limit|--tag)
-            [[ $# -ge 2 && -n "$2" ]] || die "$1 requires a value"
-            case "$1" in
-                --host) VLLM_HOST="$2" ;;
-                --port) VLLM_PORT="$2" ;;
-                --served-name) SERVED_MODEL_NAME="$2" ;;
-                --agent-base-url) AGENT_BASE_URL="$2" ;;
-                --environment) ENVIRONMENT="$2" ;;
-                --subset) SUBSET="$2" ;;
-                --num-tasks) NUM_TASKS="$2" ;;
-                --slice) SLICE_ARG="$2" ;;
-                --workers) WORKERS="$2" ;;
-                --eval-workers) EVAL_WORKERS="$2" ;;
-                --step-limit) STEP_LIMIT="$2" ;;
-                --tag) RUN_TAG="$2" ;;
-            esac
-            shift 2 ;;
-        *) die "Unknown V2 option: $1 (see --help; V1 options have changed)" ;;
-    esac
+	case "$1" in
+		--host)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			VLLM_HOST="$2"
+			shift 2
+			;;
+		--port)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			VLLM_PORT="$2"
+			shift 2
+			;;
+		--served-name)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			SERVED_MODEL_NAME="$2"
+			shift 2
+			;;
+		--num-tasks)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			NUM_TASKS="$2"
+			shift 2
+			;;
+		--slice)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			SLICE_ARG="$2"
+			shift 2
+			;;
+		--workers)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			WORKERS="$2"
+			shift 2
+			;;
+		--eval-workers)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			EVAL_WORKERS="$2"
+			shift 2
+			;;
+		--step-limit)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			STEP_LIMIT="$2"
+			shift 2
+			;;
+		--pull-timeout)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			PULL_TIMEOUT="$2"
+			shift 2
+			;;
+		--command-timeout)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			COMMAND_TIMEOUT="$2"
+			shift 2
+			;;
+		--eval-chunk-size)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			EVAL_CHUNK_SIZE="$2"
+			shift 2
+			;;
+		--poll-interval)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			POLL_INTERVAL="$2"
+			shift 2
+			;;
+		--health-interval)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			HEALTH_INTERVAL="$2"
+			shift 2
+			;;
+		--health-failures)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			HEALTH_FAILURES="$2"
+			shift 2
+			;;
+		--tag)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			RUN_TAG="$2"
+			shift 2
+			;;
+		--skip-eval)
+			SKIP_EVAL=true
+			shift
+			;;
+		--block-network)
+			BLOCK_NETWORK=true
+			shift
+			;;
+		--keep-images)
+			KEEP_IMAGES=true
+			shift
+			;;
+		-h | --help)
+			usage
+			exit 0
+			;;
+		*)
+			die "Unknown argument: $1"
+			;;
+	esac
 done
 
-for value in "${WORKERS}" "${EVAL_WORKERS}" "${STEP_LIMIT}" "${AGENT_MAX_TOKENS:-8192}"; do
-    [[ "${value}" =~ ^[1-9][0-9]*$ ]] || die "Worker, step and token limits must be positive integers"
-done
-[[ -z "${NUM_TASKS}" || "${NUM_TASKS}" =~ ^[1-9][0-9]*$ ]] || die "--num-tasks must be positive"
-[[ -z "${SLICE_ARG}" || "${SLICE_ARG}" =~ ^[0-9]*:[0-9]*$ ]] || die "--slice must use START:END"
-[[ -z "${NUM_TASKS}" || -z "${SLICE_ARG}" ]] || die "--num-tasks and --slice are mutually exclusive"
-[[ "${SUBSET}" == full || "${SUBSET}" == hard ]] || die "--subset must be full or hard"
-[[ "${ENVIRONMENT}" == docker || "${ENVIRONMENT}" == modal ]] || die "--environment must be docker or modal"
-require_command python
-require_command harbor
-require_command git
-if [[ "${ENVIRONMENT}" == docker ]]; then
-    require_command docker
-    docker compose version >/dev/null
-fi
+[[ -z "${NUM_TASKS}" || -z "${SLICE_ARG}" ]] || \
+	die "--num-tasks and --slice cannot be combined"
+require_positive_integer "--workers" "${WORKERS}"
+require_positive_integer "--step-limit" "${STEP_LIMIT}"
+require_positive_integer "AGENT_MAX_TOKENS" "${AGENT_MAX_TOKENS:-8192}"
+require_positive_integer "--pull-timeout" "${PULL_TIMEOUT}"
+require_positive_integer "--command-timeout" "${COMMAND_TIMEOUT}"
+require_positive_integer "--eval-chunk-size" "${EVAL_CHUNK_SIZE}"
+require_positive_integer "--poll-interval" "${POLL_INTERVAL}"
+require_positive_integer "--health-interval" "${HEALTH_INTERVAL}"
+require_positive_integer "--health-failures" "${HEALTH_FAILURES}"
+[[ -z "${EVAL_WORKERS}" ]] || require_positive_integer "--eval-workers" "${EVAL_WORKERS}"
+[[ -z "${NUM_TASKS}" ]] || require_positive_integer "--num-tasks" "${NUM_TASKS}"
+[[ -z "${SLICE_ARG}" || "${SLICE_ARG}" =~ ^[0-9]*:[0-9]*$ ]] || \
+	die "--slice must use START:END format: ${SLICE_ARG}"
+
 init_benchmark_paths
 init_vllm_endpoint
-readonly PRO_DIR="${BENCHMARK_DIR}/SWE-bench_Pro-os"
-require_file "${PRO_DIR}/v2/tooling/locked_mini_swe.py"
-[[ "$(git -C "${PRO_DIR}" rev-parse HEAD)" == "${SWEBENCH_PRO_COMMIT}" ]] || die "Run setup_swebenchpro.sh for the pinned V2 checkout"
-python -c 'import sys; from importlib.metadata import version; assert version("harbor") == sys.argv[1], "Re-run setup_swebenchpro.sh for the pinned Harbor version"' "${SWEBENCH_PRO_HARBOR_VERSION}"
-(cd "${PRO_DIR}/v2" && sha256sum --check --quiet SHA256SUMS)
-
+trap cleanup EXIT
+trap termination_requested INT TERM
 RUN_TAG="$(sanitize_run_tag "${RUN_TAG}")"
-readonly OUT_DIR="${OUTPUT_DIR}/swebench_pro_v2_${RUN_TAG}"
-[[ ! -e "${OUT_DIR}" ]] || die "Output exists: ${OUT_DIR}; use a new --tag (never mix V1/V2 or different selections)"
-# Harbor persists agent credentials in job configs; keep run artifacts private.
+readonly SWEBENCH_PRO_DIR="${BENCHMARK_DIR}/SWE-bench_Pro-os"
+readonly OUT_DIR="${AGENT_DIR}/results/swebench_pro_${RUN_TAG}"
+readonly GEN_DIR="${OUT_DIR}/generation"
+readonly EVAL_ROOT="${OUT_DIR}/eval_chunks"
+readonly CLAIMED_FILE="${OUT_DIR}/claimed_ids.txt"
+readonly EVAL_REPORT_LIST="${OUT_DIR}/eval_report_list.txt"
+readonly PREDS_JSON="${OUT_DIR}/preds.json"
+readonly PATCHES_JSON="${OUT_DIR}/patches.json"
+readonly INSTANCES_CSV="${OUT_DIR}/instances.csv"
+readonly IMAGE_LIST="${OUT_DIR}/images.txt"
+readonly REPORT_FILE="${OUT_DIR}/report.json"
+readonly RUNTIME_CONFIG="${OUT_DIR}/swebench_pro.yaml"
+readonly GEN_LOG="${OUT_DIR}/generation.log"
+readonly LOG_FILE="${LOG_DIR}/swebench_pro_${RUN_TAG}.log"
+
+require_file "${SWEBENCH_PRO_DIR}/v2/SHA256SUMS"
+require_file "${AGENT_DIR}/pyproject.toml"
+require_file "${AGENT_DIR}/src/minisweagent/run/extra/swebench.py"
+require_command mini-extra
+require_command python
+require_command docker
+(cd "${SWEBENCH_PRO_DIR}/v2" && sha256sum --check --quiet SHA256SUMS)
+if [[ -d "${GEN_DIR}" && ! -f "${OUT_DIR}/v2_selection.txt" ]]; then
+	die "Existing output predates V2; use a new --tag"
+fi
 umask 077
-mkdir -p "${OUT_DIR}" "${LOG_DIR}"
-exec > >(tee -a "${LOG_DIR}/swebench_pro_v2_${RUN_TAG}.log") 2>&1
+mkdir -p "${GEN_DIR}" "${EVAL_ROOT}" "${LOG_DIR}"
+: >>"${CLAIMED_FILE}"
+: >>"${EVAL_REPORT_LIST}"
+exec > >(tee -a "${LOG_FILE}") 2>&1
+
+python -c 'import datasets, yaml' 2>/dev/null || \
+	die "Generation dependencies are unavailable; run: bash setup_swebenchpro.sh"
+python -c 'import pandas' 2>/dev/null || \
+	die "V2 data dependencies are unavailable; run: bash setup_swebenchpro.sh"
 
 wait_for_vllm "${VLLM_WAIT_TIMEOUT:-300}"
 SERVED_MODEL_NAME="$(discover_vllm_model "${SERVED_MODEL_NAME}")"
-if [[ -z "${AGENT_BASE_URL}" ]]; then
-    AGENT_BASE_URL="${OPENAI_BASE_URL}"
-    if [[ "${ENVIRONMENT}" == docker ]]; then
-        # The service must listen on 0.0.0.0, not only the host loopback.
-        DOCKER_GATEWAY="$(docker network inspect bridge --format '{{(index .IPAM.Config 0).Gateway}}')"
-        [[ -n "${DOCKER_GATEWAY}" ]] || die "Cannot discover Docker gateway; pass --agent-base-url"
-        AGENT_BASE_URL="${AGENT_BASE_URL/127.0.0.1/${DOCKER_GATEWAY}}"
-        AGENT_BASE_URL="${AGENT_BASE_URL/localhost/${DOCKER_GATEWAY}}"
-    fi
+EVAL_WORKERS="${EVAL_WORKERS:-${WORKERS}}"
+readonly EVAL_PREFIX="$(sanitize_run_tag "${SERVED_MODEL_NAME}_step${STEP_LIMIT}_${RUN_TAG}")"
+
+full_slice_plan="$(plan_batch_slices 642 "${NUM_TASKS}" "${SLICE_ARG}" 642)"
+mapfile -t FULL_SLICE_LINES <<<"${full_slice_plan}"
+[[ ${#FULL_SLICE_LINES[@]} -eq 1 ]] || die "Unexpected slice plan for SWE-bench Pro selection"
+readonly FULL_SLICE="${FULL_SLICE_LINES[0]}"
+
+if [[ -f "${OUT_DIR}/v2_selection.txt" ]]; then
+	[[ "$(cat "${OUT_DIR}/v2_selection.txt")" == "${FULL_SLICE}" ]] || die "Selection changed; use a new --tag"
 fi
-python "${SCRIPT_DIR}/lib/swebench_pro_v2.py" prepare \
-    --root "${PRO_DIR}/v2" --output "${OUT_DIR}" --subset "${SUBSET}" \
-    --num-tasks "${NUM_TASKS}" --slice "${SLICE_ARG}" --step-limit "${STEP_LIMIT}" \
-    --max-tokens "${AGENT_MAX_TOKENS:-8192}" --base-url "${AGENT_BASE_URL}" \
-    --commit "${SWEBENCH_PRO_COMMIT}" --agent-version "${SWEBENCH_PRO_AGENT_VERSION}"
-MODEL_HOST="$(python -c 'import sys; from urllib.parse import urlsplit; print(urlsplit(sys.argv[1]).hostname)' "${AGENT_BASE_URL}")"
-export PYTHONPATH="${SCRIPT_DIR}/lib:${PRO_DIR}/v2/tooling${PYTHONPATH:+:${PYTHONPATH}}"
-COMMON=(--path "${OUT_DIR}/tasks" -e "${ENVIRONMENT}" --jobs-dir "${OUT_DIR}/jobs" --yes)
-AGENT_ENV=()
-VERIFIER_ENV=()
-# Proxy settings are usable during online setup/verification, but the proxy
-# host is deliberately NOT added to the agent network allowlist.
-for key in HTTP_PROXY HTTPS_PROXY ALL_PROXY http_proxy https_proxy all_proxy; do
-    if [[ -n "${!key:-}" ]]; then
-        AGENT_ENV+=(--ae "${key}=${!key}")
-        VERIFIER_ENV+=(--ve "${key}=${!key}")
-    fi
+printf '%s\n' "${FULL_SLICE}" >"${OUT_DIR}/v2_selection.txt"
+python "${SCRIPT_DIR}/lib/benchmark_data.py" select-pro \
+	--csv "${INSTANCES_CSV}" --images "${IMAGE_LIST}" --slice "${FULL_SLICE}"
+python "${SCRIPT_DIR}/lib/benchmark_data.py" pro-config \
+	--output "${RUNTIME_CONFIG}" --model "${SERVED_MODEL_NAME}" \
+	--base-url "${OPENAI_BASE_URL}" --api-key "${VLLM_API_KEY}" \
+	--step-limit "${STEP_LIMIT}" --pull-timeout "${PULL_TIMEOUT}" \
+	--command-timeout "${COMMAND_TIMEOUT}"
+
+EVAL_OPTIONS=()
+[[ "${BLOCK_NETWORK}" == false ]] || EVAL_OPTIONS+=(--block-network)
+
+log "Generating SWE-bench Pro selection ${FULL_SLICE} with model ${SERVED_MODEL_NAME}"
+(
+	cd "${AGENT_DIR}"
+	exec mini-extra swebench \
+		--subset "${OUT_DIR}/instances.json" \
+		--split test \
+		--model "${SERVED_MODEL_NAME}" \
+		--workers "${WORKERS}" \
+		--output "${GEN_DIR}" \
+		--config "${RUNTIME_CONFIG}"
+) >"${GEN_LOG}" 2>&1 &
+GEN_PID=$!
+log "Generation console progress: tail -f ${GEN_LOG}"
+log "mini-SWE-agent execution log: tail -f ${GEN_DIR}/minisweagent.log"
+
+monitor_vllm() {
+	local failures=0
+	while true; do
+		sleep "${HEALTH_INTERVAL}"
+		if vllm_curl "${VLLM_ORIGIN}/health" --connect-timeout 5 --max-time 30 >/dev/null 2>&1; then
+			failures=0
+			continue
+		fi
+
+		failures=$((failures + 1))
+		warn "vLLM health check failed (${failures}/${HEALTH_FAILURES}): ${VLLM_ORIGIN}/health"
+		if ((failures >= HEALTH_FAILURES)); then
+			warn "vLLM is unavailable; stopping SWE-bench Pro"
+			kill -TERM "${GEN_PID}" 2>/dev/null || true
+			kill -TERM "${RUNNER_PID}" 2>/dev/null || true
+			return
+		fi
+	done
+}
+
+stop_vllm_monitor() {
+	[[ -n "${MONITOR_PID}" ]] || return 0
+	kill -TERM "${MONITOR_PID}" 2>/dev/null || true
+	wait "${MONITOR_PID}" 2>/dev/null || true
+	MONITOR_PID=""
+}
+
+monitor_vllm &
+MONITOR_PID=$!
+
+process_pending_chunk() {
+	local chunk_dir="$1"
+	shift
+	local chunk_ids_file="${chunk_dir}/ids.txt"
+	local chunk_instances="${chunk_dir}/instances.csv"
+	local chunk_patches="${chunk_dir}/patches.json"
+	local chunk_images="${chunk_dir}/images.txt"
+	local chunk_eval="${chunk_dir}/evaluation"
+	mkdir -p "${chunk_dir}"
+	printf '%s\n' "$@" >"${chunk_ids_file}"
+
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" prepare-pro-chunk \
+		--preds "${GEN_DIR}/preds.json" --ids "${chunk_ids_file}" \
+		--instances "${INSTANCES_CSV}" --output-instances "${chunk_instances}" \
+		--patches "${chunk_patches}" --images "${chunk_images}" --prefix "${EVAL_PREFIX}"
+
+	if [[ "${SKIP_EVAL}" == false ]]; then
+		log "Evaluating $# SWE-bench Pro instances with ${EVAL_WORKERS} workers"
+		rm -f -- "${chunk_eval}/eval_results.json"
+		python "${SCRIPT_DIR}/lib/benchmark_data.py" evaluate-pro \
+			--tasks-root "${SWEBENCH_PRO_DIR}/v2/tasks" --instances "${chunk_instances}" \
+			--patches "${chunk_patches}" --output "${chunk_eval}" --workers "${EVAL_WORKERS}" \
+			--pull-timeout "${PULL_TIMEOUT}" "${EVAL_OPTIONS[@]}" &
+		EVAL_PID=$!
+		local eval_exit=0
+		wait "${EVAL_PID}" || eval_exit=$?
+		EVAL_PID=""
+		require_file "${chunk_eval}/eval_results.json"
+		printf '%s\n' "${chunk_eval}/eval_results.json" >>"${EVAL_REPORT_LIST}"
+		python "${SCRIPT_DIR}/lib/benchmark_data.py" merge-pro-reports \
+			--chunk-list "${EVAL_REPORT_LIST}" --report "${REPORT_FILE}"
+		[[ "${eval_exit}" -eq 0 ]] || die "V2 evaluation infrastructure failed; chunk remains unclaimed: ${chunk_dir}"
+	fi
+
+	remove_chunk_images "${chunk_images}"
+	cat "${chunk_ids_file}" >>"${CLAIMED_FILE}"
+}
+
+gen_running() {
+	kill -0 "${GEN_PID}" 2>/dev/null
+}
+
+pending_instance_ids() {
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" pending-predictions \
+		--preds "${GEN_DIR}/preds.json" --claimed "${CLAIMED_FILE}"
+}
+
+chunk_counter=0
+for existing_chunk in "${EVAL_ROOT}"/chunk_*; do
+	[[ -d "${existing_chunk}" ]] || continue
+	existing_index="${existing_chunk##*/chunk_}"
+	[[ "${existing_index}" =~ ^[0-9]+$ ]] || continue
+	if ((10#${existing_index} >= chunk_counter)); then
+		chunk_counter=$((10#${existing_index} + 1))
+	fi
 done
-SANDBOX_NO_PROXY="${NO_PROXY:-${no_proxy:-}}"
-SANDBOX_NO_PROXY="${SANDBOX_NO_PROXY:+${SANDBOX_NO_PROXY},}${MODEL_HOST}"
-AGENT_ENV+=(--ae "NO_PROXY=${SANDBOX_NO_PROXY}" --ae "no_proxy=${SANDBOX_NO_PROXY}")
-VERIFIER_ENV+=(--ve "NO_PROXY=${SANDBOX_NO_PROXY}" --ve "no_proxy=${SANDBOX_NO_PROXY}")
+while true; do
+	mapfile -t PENDING_IDS < <(pending_instance_ids)
+	if gen_running; then
+		if [[ ${#PENDING_IDS[@]} -lt ${EVAL_CHUNK_SIZE} ]]; then
+			sleep "${POLL_INTERVAL}"
+			continue
+		fi
+	else
+		stop_vllm_monitor
+		if [[ ${#PENDING_IDS[@]} -eq 0 ]]; then
+			break
+		fi
+	fi
 
-log "Generating V2 patches (agent network allowlist: ${MODEL_HOST})"
-harbor run "${COMMON[@]}" --job-name generation --n-concurrent "${WORKERS}" \
-    --agent swebench_pro_agent:V2MiniSwe --model "openai/${SERVED_MODEL_NAME}" \
-    --ak "version=${SWEBENCH_PRO_AGENT_VERSION}" --ak "config_file=${OUT_DIR}/agent.yaml" \
-    --ae "OPENAI_API_KEY=${VLLM_API_KEY}" --ae "MSWEA_API_KEY=${VLLM_API_KEY}" \
-    --ae "OPENAI_API_BASE=${AGENT_BASE_URL}" --ae "OPENAI_BASE_URL=${AGENT_BASE_URL}" \
-    "${AGENT_ENV[@]}" \
-    --allow-agent-host "${MODEL_HOST}" --disable-verification
-python "${SCRIPT_DIR}/lib/swebench_pro_v2.py" check-generation --output "${OUT_DIR}"
+	chunk_size=${EVAL_CHUNK_SIZE}
+	[[ ${#PENDING_IDS[@]} -lt ${chunk_size} ]] && chunk_size=${#PENDING_IDS[@]}
+	printf -v chunk_name 'chunk_%06d' "${chunk_counter}"
+	chunk_counter=$((chunk_counter + 1))
+	process_pending_chunk "${EVAL_ROOT}/${chunk_name}" "${PENDING_IDS[@]:0:${chunk_size}}"
+done
 
-if [[ "${SKIP_EVAL}" == true ]]; then
-    log "Generation only; no V2 accuracy reported. Artifacts: ${OUT_DIR}"
-    exit 0
+GEN_EXIT=0
+wait "${GEN_PID}" || GEN_EXIT=$?
+GEN_PID=""
+stop_vllm_monitor
+require_file "${GEN_DIR}/preds.json"
+cp -- "${GEN_DIR}/preds.json" "${PREDS_JSON}"
+python "${SCRIPT_DIR}/lib/benchmark_data.py" normalize-pro \
+	--source "${PREDS_JSON}" --output "${PATCHES_JSON}" --prefix "${EVAL_PREFIX}"
+
+if [[ "${SKIP_EVAL}" == false ]]; then
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" merge-pro-reports \
+		--chunk-list "${EVAL_REPORT_LIST}" --report "${REPORT_FILE}"
 fi
-log "Replaying patches on pristine V2 images; only this phase determines accuracy"
-harbor run "${COMMON[@]}" --job-name regrade --n-concurrent "${EVAL_WORKERS}" \
-    --agent patch_replay:PatchReplayAgent --model replay \
-    --ak "source_job=${OUT_DIR}/jobs/generation" "${VERIFIER_ENV[@]}"
-python "${SCRIPT_DIR}/lib/swebench_pro_v2.py" report --output "${OUT_DIR}"
-log "V2 report: ${OUT_DIR}/report.json (both Harbor jobs retained)"
+
+log "Patches: ${PATCHES_JSON}"
+if [[ -f "${REPORT_FILE}" ]]; then
+	python "${SCRIPT_DIR}/lib/benchmark_data.py" pro-report --report "${REPORT_FILE}"
+	log "Report: ${REPORT_FILE}"
+fi
+log "Log: ${LOG_FILE}"
+
+[[ "${GEN_EXIT}" -eq 0 ]] || die "mini-SWE-agent generation failed (exit ${GEN_EXIT}); see ${GEN_LOG}"
