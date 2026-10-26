@@ -203,7 +203,6 @@ done
 	die "--num-tasks and --slice cannot be combined"
 require_positive_integer "--workers" "${WORKERS}"
 require_positive_integer "--step-limit" "${STEP_LIMIT}"
-require_positive_integer "AGENT_MAX_TOKENS" "${AGENT_MAX_TOKENS:-8192}"
 require_positive_integer "--pull-timeout" "${PULL_TIMEOUT}"
 require_positive_integer "--command-timeout" "${COMMAND_TIMEOUT}"
 require_positive_integer "--eval-chunk-size" "${EVAL_CHUNK_SIZE}"
@@ -235,7 +234,6 @@ readonly RUNTIME_CONFIG="${OUT_DIR}/swebench_pro.yaml"
 readonly GEN_LOG="${OUT_DIR}/generation.log"
 readonly LOG_FILE="${LOG_DIR}/swebench_pro_${RUN_TAG}.log"
 
-require_file "${SWEBENCH_PRO_DIR}/v2/SHA256SUMS"
 require_file "${AGENT_DIR}/pyproject.toml"
 require_file "${AGENT_DIR}/src/minisweagent/run/extra/swebench.py"
 require_command mini-extra
@@ -243,12 +241,12 @@ require_command python
 require_command docker
 if [[ "${SKIP_EVAL}" == false ]]; then
 	require_command harbor
+	require_file "${SWEBENCH_PRO_DIR}/v2/tooling/patch_replay.py"
 fi
 (cd "${SWEBENCH_PRO_DIR}/v2" && sha256sum --check --quiet SHA256SUMS)
 if [[ -d "${GEN_DIR}" && ! -f "${OUT_DIR}/v2_selection.txt" ]]; then
 	die "Existing output lacks selection metadata; use a new --tag"
 fi
-umask 077
 mkdir -p "${GEN_DIR}" "${EVAL_ROOT}" "${LOG_DIR}"
 : >>"${CLAIMED_FILE}"
 : >>"${EVAL_REPORT_LIST}"
