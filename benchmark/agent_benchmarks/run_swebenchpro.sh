@@ -65,12 +65,17 @@ EVAL_PID=""
 MONITOR_PID=""
 
 cleanup() {
+	# A repeated signal must not interrupt the wait for Harbor teardown/reporting.
+	trap '' INT TERM
 	local pid
 	for pid in "${MONITOR_PID}" "${EVAL_PID}" "${GEN_PID}"; do
 		[[ -n "${pid}" ]] || continue
 		kill -0 "${pid}" 2>/dev/null || continue
 		kill -TERM "${pid}" 2>/dev/null || true
 	done
+	if [[ -n "${EVAL_PID}" ]]; then
+		wait "${EVAL_PID}" 2>/dev/null || true
+	fi
 }
 
 termination_requested() {

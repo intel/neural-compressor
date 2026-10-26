@@ -11,7 +11,6 @@ import shutil
 import subprocess
 import sys
 import time
-import tomllib
 from pathlib import Path
 
 csv.field_size_limit(sys.maxsize)
@@ -218,6 +217,9 @@ def select_pro(args):
 
 def evaluate_pro(args):
     """Adapt a prediction chunk to the official Harbor patch replay agent."""
+    import signal
+    import tomllib
+
     if args.workers <= 0 or args.pull_timeout <= 0:
         raise ValueError("Workers and pull timeout must be positive")
     args.output = args.output.resolve()
@@ -246,6 +248,23 @@ def evaluate_pro(args):
     results = {}
     errors = dict.fromkeys(selected, "Missing completed Harbor replay result")
     status = 1
+    interrupted = 0
+    process = None
+    shutdown_sent = False
+
+    def request_shutdown(signum, _frame):
+        nonlocal interrupted, shutdown_sent
+        interrupted = interrupted or signum
+        if process is not None and not shutdown_sent:
+            shutdown_sent = True
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+
+    previous_handlers = {sig: signal.getsignal(sig) for sig in (signal.SIGTERM, signal.SIGINT)}
+    for sig in previous_handlers:
+        signal.signal(sig, request_shutdown)
     try:
         root = args.tasks_root.resolve()
         tooling = root.parent / "tooling"
@@ -294,7 +313,12 @@ def evaluate_pro(args):
         env = dict(os.environ)
         env["PYTHONPATH"] = str(tooling) + os.pathsep + env.get("PYTHONPATH", "")
         # Docker --no-delete still tears down containers; the shell owns image keep/delete policy.
-        status = subprocess.run(command, env=env, check=False).returncode
+        if not interrupted:
+            process = subprocess.Popen(command, env=env, start_new_session=True)
+            # Also handle a signal received while Popen was starting Harbor.
+            if interrupted:
+                request_shutdown(interrupted, None)
+            status = process.wait()
         seen = set()
         for path in (args.output / "jobs/regrade").glob("*/result.json"):
             trial = json.loads(path.read_text())
@@ -314,8 +338,13 @@ def evaluate_pro(args):
         status = 1
         detail = str(error) if type(error) is ValueError else type(error).__name__
         errors.update(dict.fromkeys(set(selected) - results.keys(), f"Harbor replay failed: {detail}"))
-    (args.output / "eval_results.json").write_text(json.dumps(build_pro_report(results, errors), indent=2))
-    return int(bool(status or errors))
+    finally:
+        try:
+            (args.output / "eval_results.json").write_text(json.dumps(build_pro_report(results, errors), indent=2))
+        finally:
+            for sig, handler in previous_handlers.items():
+                signal.signal(sig, handler)
+    return int(bool(status or errors or interrupted))
 
 
 def select_verified(args: argparse.Namespace) -> None:
