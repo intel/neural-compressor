@@ -193,7 +193,7 @@ For Verified Mini, the same layout uses the `swe_verified_mini_<TAG>` prefix
 for the result directory and log file.
 
 
-## SWE-bench Pro V2
+## SWE-bench Pro
 
 ### SWE-bench Pro environment setup
 
@@ -201,18 +201,16 @@ for the result directory and log file.
 bash setup_swebenchpro.sh
 ```
 
-The setup script clones the pinned `scaleapi/SWE-bench_Pro-os` V2 repository and
-its mini-SWE-agent submodule, verifies the published V2 SHA256 manifest, applies
+SWE-bench Pro uses the V2 release (642 tasks).
+The setup script clones the pinned `scaleapi/SWE-bench_Pro-os` repository and
+its mini-SWE-agent submodule, verifies the published SHA256 manifest, applies
 support for the benchmark's GHCR images and reliable container cleanup, and
 installs the generation dependencies into the currently activated environment
 using uv, including pinned Harbor 0.24.0. Create and activate a Python 3.12+
 environment before running setup. Local evaluation uses Harbor's Docker backend
 and requires Docker Compose v2; no Modal account or cloud service is needed.
 
-V2 has 642 tasks and uses sanitized
-`ghcr.io/scaleapi/swe-bench_pro-v2:<instance_id>` images. Move an existing V1
-checkout aside or set `BENCHMARK_DIR` to a new directory before setup; do not
-reuse V1 run tags. V1 and V2 scores are not comparable.
+Tasks use sanitized `ghcr.io/scaleapi/swe-bench_pro-v2:<instance_id>` images.
 
 ### Run SWE-bench Pro
 

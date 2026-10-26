@@ -246,7 +246,7 @@ if [[ "${SKIP_EVAL}" == false ]]; then
 fi
 (cd "${SWEBENCH_PRO_DIR}/v2" && sha256sum --check --quiet SHA256SUMS)
 if [[ -d "${GEN_DIR}" && ! -f "${OUT_DIR}/v2_selection.txt" ]]; then
-	die "Existing output predates V2; use a new --tag"
+	die "Existing output lacks selection metadata; use a new --tag"
 fi
 umask 077
 mkdir -p "${GEN_DIR}" "${EVAL_ROOT}" "${LOG_DIR}"
