@@ -1651,6 +1651,13 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         if self._is_quantized:
             self.call = self.call_quantized
 
+            self._trainable_variables.remove(self._embeddings)
+            del self._embeddings
+
+            if not self.tie_weights:
+                self._trainable_variables.remove(super().reverse_embeddings)
+                del super().reverse_embeddings
+
             # convert variables to attributes (const) if needed
             if not hasattr(self, "model_is_during_load"):
                 for name in self._const_variables:
@@ -1665,10 +1672,10 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
 
             attrs_to_remove = ["e_scale", "re_scale", "_embeddings_quant", "_reverse_embeddings_quant"]
             for attr_name in attrs_to_remove:
-                self._non_trainable_variables[:] = [
-                    v for v in self._non_trainable_variables if v is not getattr(self, attr_name)
-                ]
                 if hasattr(self, attr_name):
+                    self._non_trainable_variables[:] = [
+                        v for v in self._non_trainable_variables if v is not getattr(self, attr_name)
+                    ]
                     delattr(self, attr_name)
             # All variables which names are stored in _const_variables are deleted in above loop
             # so _const_variables can be cleared

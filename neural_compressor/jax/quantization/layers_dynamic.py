@@ -1064,7 +1064,18 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         Returns:
             None: Keeps the layer ready for inference.
         """
+        if not hasattr(self, "_embeddings"):
+            # post_quantization_cleanup was already called before. Cleanup is done
+            return
+
         self._tracker.unlock()
+
+        self._trainable_variables.remove(self._embeddings)
+        del self._embeddings
+
+        if not self.tie_weights:
+            self._trainable_variables.remove(super().reverse_embeddings)
+            del super().reverse_embeddings
 
         # convert variables to attributes (const) if needed
         if not hasattr(self, "model_is_during_load"):
