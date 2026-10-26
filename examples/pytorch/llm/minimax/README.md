@@ -70,6 +70,16 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_evalscope.sh \
   --tasks gpqa_diamond,aime25,gsm8k,piqa,hellaswag,live_code_bench
 ```
 
+Repeat each task 5 times and report the trimmed mean (drop max/min, average the remaining 3):
+
+```bash
+CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_evalscope.sh \
+  --model ~/models/minimax-m2.7-mxfp \
+  --tp 4 \
+  --port 8001 \
+  --num-runs 5
+```
+
 For a model quantized with static FP8 KV cache / attention:
 
 ```bash
@@ -121,6 +131,7 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 vllm serve ~/models/minimax-m2.7-mxfp \
 - `--max-model-len`: max context length (default: `102400`).
 - `--served-model-name`: served model name alias (default: `minimax-m2.7`).
 - `--tasks`: comma-separated subset of `gpqa_diamond,aime25,gsm8k,piqa,hellaswag,live_code_bench` (default: all).
+- `--num-runs` / `-n`: number of times each task is evaluated (default: `1`). With 3 or more runs, the highest and lowest scores are dropped and the remaining (kept) scores are averaged; otherwise all scores are averaged. After each task a result table (every run, kept/dropped, mean of kept) is printed, and at the end a summary table lists the kept scores and mean of every task plus the average over all tasks. Per-run evalscope outputs are saved under `outputs/<model_name>_<timestamp>/<task>/run<i>/`.
 - `--static_kv_dtype`: vLLM `kv_cache_dtype`, e.g. `fp8` (default: `auto`).
 - `--static_attention_dtype`: set to `fp8` to enable FP8 attention (implies `kv_cache_dtype=fp8`).
 - `--skip_serve`: skip starting vLLM (use existing endpoint on the same `--port`).
