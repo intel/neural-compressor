@@ -141,7 +141,7 @@ def register_patched_measure_modules(model, mod_list, observer_class, d_shapes=N
     patched_modules = []
     with torch.no_grad():
         for name, mod in model.named_modules():
-            if (name in mod_list) or (mod_list is None):
+            if (mod_list is None) or (name in mod_list):
                 IMOD_DICT[mod] = name
                 mod_type_str = mod.__class__.__name__
                 mod_type = config["mod_dict"][mod_type_str]
