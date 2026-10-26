@@ -374,13 +374,14 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         self._tracker.unlock()
         if self._is_quantized:
             self._setup_quantized_ops()
-            model_is_during_load = self.a_scale == 0.0
-            if not model_is_during_load:
-                # convert variables to attributes (const) if needed
+
+            # convert variables to attributes (const) if needed
+            if not hasattr(self, "model_is_during_load"):
                 for name in self._const_variables:
                     var = getattr(self, name)
                     value = jnp.array(var.value)
                     self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+                    delattr(self, name)
                     setattr(self, name, value)
         else:
             self.call = self._passthrough
@@ -684,8 +685,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
             del self._kernel
 
             # convert variables to attributes (const) if needed
-            model_is_during_load = self.a_scale == 0.0
-            if not model_is_during_load:
+            if not hasattr(self, "model_is_during_load"):
                 for name in self._const_variables:
                     var = getattr(self, name)
                     value = jnp.array(var.value)
@@ -1653,9 +1653,8 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         if self._is_quantized:
             self.call = self.call_quantized
 
-            model_is_during_load = bool(jnp.all(self.e_scale == 0.0))
-            if not model_is_during_load:
-                # convert variables to attributes (const) if needed
+            # convert variables to attributes (const) if needed
+            if not hasattr(self, "model_is_during_load"):
                 for name in self._const_variables:
                     if hasattr(self, name):
                         var = getattr(self, name)

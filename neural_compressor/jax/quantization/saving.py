@@ -176,6 +176,7 @@ class SaveableLayerMixin:
                     setattr(self, name, jnp.asarray(value_to_load))
                 else:
                     raise ValueError(f"Constant variable '{name}' not found in the saved model for {self._path}.")
+        delattr(self, "model_is_during_load")
 
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
@@ -521,6 +522,7 @@ def prepare_deserialized_quantized_model(
             cfg.weight_scale_granularity,
             cfg.dot_product_attention_enable,
         )
+        layer.model_is_during_load = True
         layers_mapping[layer.__class__].prepare(layer, *additional_params)
         layer.add_variables()
         layer.post_quantization_cleanup()

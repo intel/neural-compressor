@@ -354,12 +354,12 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         del self._kernel
 
         # convert variables to attributes (const) if needed
-        for name in self._const_variables:
-            var = getattr(self, name)
-            # Check if var is a Variable (has .value attribute) - if not, it's already been converted
-            if hasattr(var, "value"):
+        if not hasattr(self, "model_is_during_load"):
+            for name in self._const_variables:
+                var = getattr(self, name)
                 value = jnp.array(var.value)
                 self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+                delattr(self, name)
                 setattr(self, name, value)
 
         self._tracker.lock()
@@ -1067,11 +1067,10 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         self._tracker.unlock()
 
         # convert variables to attributes (const) if needed
-        for name in self._const_variables:
-            if hasattr(self, name):
-                var = getattr(self, name)
-                # Check if var is a Variable (has .value attribute) - if not, it's already been converted
-                if hasattr(var, "value"):
+        if not hasattr(self, "model_is_during_load"):
+            for name in self._const_variables:
+                if hasattr(self, name):
+                    var = getattr(self, name)
                     value = jnp.array(var.value)
                     self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
                     delattr(self, name)
