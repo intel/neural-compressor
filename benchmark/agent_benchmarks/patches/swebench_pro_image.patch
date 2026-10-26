@@ -122,7 +122,7 @@ index b252fed..22ae6db 100644
      dataset_path = DATASET_MAPPING.get(subset, subset)
      logger.info(f"Loading dataset {dataset_path}, split {split}...")
      instances = list(load_dataset(dataset_path, split=split))
-+    if dataset_path == "ScaleAI/SWE-bench_Pro":
++    if dataset_path in {"ScaleAI/SWE-bench_Pro", "lvkaokao/swe-bench-pro-120"}:
 +        for instance in instances:
 +            if instance.get("image_name") is None:
 +                instance["image_name"] = f"ghcr.io/scaleapi/swe-bench_pro-v2:{instance['instance_id']}"

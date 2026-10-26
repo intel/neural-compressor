@@ -231,13 +231,24 @@ contain fewer instances than `--eval-chunk-size`. An independent watchdog
 stops the run if the vLLM health endpoint repeatedly fails. The aggregate
 report is refreshed after every completed evaluation chunk.
 
-Selection uses Hugging Face `ScaleAI/SWE-bench_Pro`, config `default`, test
-split (V2). Generation uses mini-SWE-agent's native Hugging Face loader and
+Selection defaults to Hugging Face `ScaleAI/SWE-bench_Pro` (642 instances).
+Use `--dataset lvkaokao/swe-bench-pro-120` for the 120-instance subset:
+
+```bash
+bash run_swebenchpro.sh \
+  --dataset lvkaokao/swe-bench-pro-120 \
+  --tag qwen36_27b_pro120
+```
+
+Both datasets use config `default`, test split, and the same V2 task images
+and verifier. Generation uses mini-SWE-agent's native Hugging Face loader and
 `--slice`, preserving dataset order; no local JSON dataset loader is used.
 The Pro dataset path selects V2 image names from instance IDs without changing
 other benchmarks' image mapping or explicit `image_name` overrides. The matching
 CSV and image list are retained for evaluation and chunk cleanup, and
-`v2_selection.txt` guards against changing the slice when resuming a run.
+`v2_selection.txt` and `v2_dataset.txt` guard against changing the slice or
+dataset when resuming a run. Existing tags without dataset metadata are treated
+as `ScaleAI/SWE-bench_Pro`.
 Generation starts in the sanitized image's `/app` or
 `/testbed` repository without cloning or resetting history. Agent containers
 are offline; model requests run on the host. Per chunk, predictions are adapted
@@ -257,21 +268,24 @@ mini-SWE-agent configuration and budgets, including `--step-limit` and
 `--command-timeout`. Generation does not impose the official locked protocol's
 50-minute whole-task deadline or container resource limits; replay uses the
 official task's Harbor limits. When reporting
-results, record the model, agent configuration, budgets, HF dataset revision,
-and selected slice. Generation and CSV preparation load HF independently; the
+results, name the selected dataset: a score on `lvkaokao/swe-bench-pro-120` is
+not a full 642-instance `ScaleAI/SWE-bench_Pro` score. Record the model, agent
+configuration, budgets, HF dataset revision, and selected slice.
+Generation and CSV preparation load HF independently; the
 dataset is not snapshotted, and the pinned verifier checkout is versioned
 independently.
 
-Resume an interrupted run by reusing the same `--tag` and selection. Existing
-generation results and already-claimed evaluations are skipped. Use a new tag
-to run the selection from scratch.
+Resume an interrupted run by reusing the same `--tag`, dataset, and selection.
+Existing generation results and already-claimed evaluations are skipped. Use a
+new tag to run the selection from scratch.
 
 | Option | Default | Description |
 | --- | --- | --- |
+| `--dataset HF_ID` | `ScaleAI/SWE-bench_Pro` | `ScaleAI/SWE-bench_Pro` (642 instances) or `lvkaokao/swe-bench-pro-120` (120 instances) |
 | `--host HOST` | `127.0.0.1` | vLLM host |
 | `--port PORT` | `8888` | vLLM port |
 | `--served-name NAME` | discovered | Model ID exposed by vLLM |
-| `--num-tasks N` | all 642 | Run the first N instances |
+| `--num-tasks N` | all in selected dataset | Run the first N instances |
 | `--slice START:END` | all | Run an explicit slice; cannot be combined with `--num-tasks` |
 | `--workers N` | `8` | Parallel mini-SWE-agent workers |
 | `--eval-workers N` | `4` | Parallel local evaluator workers |

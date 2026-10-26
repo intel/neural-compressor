@@ -201,7 +201,7 @@ def select_pro(args):
     import pandas as pd
     from datasets import load_dataset
 
-    instances = list(load_dataset("ScaleAI/SWE-bench_Pro", "default", split="test"))
+    instances = list(load_dataset(args.dataset, "default", split="test"))
     if args.slice:
         bounds = [int(value) if value else None for value in args.slice.split(":")]
         instances = instances[slice(*bounds)]
@@ -711,6 +711,9 @@ def build_parser():
     command.set_defaults(func=prepare_pro_chunk)
 
     command = commands.add_parser("select-pro")
+    command.add_argument(
+        "--dataset", default="ScaleAI/SWE-bench_Pro", choices=("ScaleAI/SWE-bench_Pro", "lvkaokao/swe-bench-pro-120")
+    )
     command.add_argument("--csv", required=True)
     command.add_argument("--images", required=True)
     command.add_argument("--slice", default="")

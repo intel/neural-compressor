@@ -19,10 +19,11 @@ are evaluated in chunks while generation continues, overlapping CPU/Docker
 evaluation with GPU inference.
 
 Options:
+	--dataset HF_ID      ScaleAI/SWE-bench_Pro (default) or lvkaokao/swe-bench-pro-120
 	--host HOST          vLLM host (default: 127.0.0.1)
 	--port PORT          vLLM port (default: 8888)
 	--served-name NAME   Served model ID (default: discover from /v1/models)
-	--num-tasks N        Run the first N instances (default: all 642)
+	--num-tasks N        Run the first N instances (default: all in selected dataset)
 	--slice START:END    Run an explicit dataset slice
 	--workers N          Parallel agent workers (default: 8)
 	--eval-workers N     Parallel evaluation workers (default: 4)
@@ -92,6 +93,7 @@ EVAL_CHUNK_SIZE=12
 POLL_INTERVAL=60
 HEALTH_INTERVAL=30
 HEALTH_FAILURES=3
+DATASET="ScaleAI/SWE-bench_Pro"
 NUM_TASKS=""
 SLICE_ARG=""
 SERVED_MODEL_NAME=""
@@ -102,6 +104,11 @@ KEEP_IMAGES=false
 
 while [[ $# -gt 0 ]]; do
 	case "$1" in
+		--dataset)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			DATASET="$2"
+			shift 2
+			;;
 		--host)
 			[[ $# -ge 2 ]] || die "$1 requires a value"
 			VLLM_HOST="$2"
@@ -199,6 +206,18 @@ while [[ $# -gt 0 ]]; do
 	esac
 done
 
+case "${DATASET}" in
+	ScaleAI/SWE-bench_Pro)
+		DATASET_SIZE=642
+		;;
+	lvkaokao/swe-bench-pro-120)
+		DATASET_SIZE=120
+		;;
+	*)
+		die "Unsupported --dataset: ${DATASET}; choose ScaleAI/SWE-bench_Pro or lvkaokao/swe-bench-pro-120"
+		;;
+esac
+
 [[ -z "${NUM_TASKS}" || -z "${SLICE_ARG}" ]] || \
 	die "--num-tasks and --slice cannot be combined"
 require_positive_integer "--workers" "${WORKERS}"
@@ -247,6 +266,13 @@ fi
 if [[ -d "${GEN_DIR}" && ! -f "${OUT_DIR}/v2_selection.txt" ]]; then
 	die "Existing output lacks selection metadata; use a new --tag"
 fi
+if [[ -f "${OUT_DIR}/v2_dataset.txt" || -f "${OUT_DIR}/v2_selection.txt" ]]; then
+	previous_dataset="ScaleAI/SWE-bench_Pro"
+	if [[ -f "${OUT_DIR}/v2_dataset.txt" ]]; then
+		previous_dataset="$(cat "${OUT_DIR}/v2_dataset.txt")"
+	fi
+	[[ "${previous_dataset}" == "${DATASET}" ]] || die "Dataset changed; use a new --tag"
+fi
 mkdir -p "${GEN_DIR}" "${EVAL_ROOT}" "${LOG_DIR}"
 : >>"${CLAIMED_FILE}"
 : >>"${EVAL_REPORT_LIST}"
@@ -262,7 +288,7 @@ SERVED_MODEL_NAME="$(discover_vllm_model "${SERVED_MODEL_NAME}")"
 EVAL_WORKERS="${EVAL_WORKERS:-${WORKERS}}"
 readonly EVAL_PREFIX="$(sanitize_run_tag "${SERVED_MODEL_NAME}_step${STEP_LIMIT}_${RUN_TAG}")"
 
-full_slice_plan="$(plan_batch_slices 642 "${NUM_TASKS}" "${SLICE_ARG}" 642)"
+full_slice_plan="$(plan_batch_slices "${DATASET_SIZE}" "${NUM_TASKS}" "${SLICE_ARG}" "${DATASET_SIZE}")"
 mapfile -t FULL_SLICE_LINES <<<"${full_slice_plan}"
 [[ ${#FULL_SLICE_LINES[@]} -eq 1 ]] || die "Unexpected slice plan for SWE-bench Pro selection"
 readonly FULL_SLICE="${FULL_SLICE_LINES[0]}"
@@ -271,8 +297,9 @@ if [[ -f "${OUT_DIR}/v2_selection.txt" ]]; then
 	[[ "$(cat "${OUT_DIR}/v2_selection.txt")" == "${FULL_SLICE}" ]] || die "Selection changed; use a new --tag"
 fi
 printf '%s\n' "${FULL_SLICE}" >"${OUT_DIR}/v2_selection.txt"
+printf '%s\n' "${DATASET}" >"${OUT_DIR}/v2_dataset.txt"
 python "${SCRIPT_DIR}/lib/benchmark_data.py" select-pro \
-	--csv "${INSTANCES_CSV}" --images "${IMAGE_LIST}" --slice "${FULL_SLICE}"
+	--dataset "${DATASET}" --csv "${INSTANCES_CSV}" --images "${IMAGE_LIST}" --slice "${FULL_SLICE}"
 python "${SCRIPT_DIR}/lib/benchmark_data.py" pro-config \
 	--output "${RUNTIME_CONFIG}" --model "${SERVED_MODEL_NAME}" \
 	--base-url "${OPENAI_BASE_URL}" --api-key "${VLLM_API_KEY}" \
@@ -282,11 +309,11 @@ python "${SCRIPT_DIR}/lib/benchmark_data.py" pro-config \
 EVAL_OPTIONS=()
 [[ "${BLOCK_NETWORK}" == false ]] || EVAL_OPTIONS+=(--block-network)
 
-log "Generating SWE-bench Pro selection ${FULL_SLICE} with model ${SERVED_MODEL_NAME}"
+log "Generating ${DATASET} selection ${FULL_SLICE} with model ${SERVED_MODEL_NAME}"
 (
 	cd "${AGENT_DIR}"
 	exec mini-extra swebench \
-		--subset ScaleAI/SWE-bench_Pro \
+		--subset "${DATASET}" \
 		--split test \
 		--slice "${FULL_SLICE}" \
 		--model "${SERVED_MODEL_NAME}" \
