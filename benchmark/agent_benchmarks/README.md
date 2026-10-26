@@ -205,8 +205,9 @@ The setup script clones the pinned `scaleapi/SWE-bench_Pro-os` V2 repository and
 its mini-SWE-agent submodule, verifies the published V2 SHA256 manifest, applies
 support for the benchmark's GHCR images and reliable container cleanup, and
 installs the generation dependencies into the currently activated environment
-using uv. Create and activate a Python 3.11+ environment before running the
-setup script. Local evaluation requires Docker, not Harbor or Docker Compose.
+using uv, including pinned Harbor 0.24.0. Create and activate a Python 3.12+
+environment before running setup. Local evaluation uses Harbor's Docker backend
+and requires Docker Compose v2; no Modal account or cloud service is needed.
 
 V2 has 642 tasks and uses sanitized
 `ghcr.io/scaleapi/swe-bench_pro-v2:<instance_id>` images. Move an existing V1
@@ -241,15 +242,23 @@ CSV and image list are retained for evaluation and chunk cleanup, and
 `v2_selection.txt` guards against changing the slice when resuming a run.
 Generation starts in the sanitized image's `/app` or
 `/testbed` repository without cloning or resetting history. Agent containers
-are offline; model requests run on the host. Each patch is replayed with strict
-`git apply` in a fresh container running the pinned, unchanged official V2
-verifier. Host proxy variables are forwarded only to the verifier;
-`--block-network` disables verifier networking. Setup and pulls require network.
+are offline; model requests run on the host. Per chunk, predictions are adapted
+to source-job trials and replayed in fresh local Docker containers by the pinned
+official `patch_replay:PatchReplayAgent`, including its patch-application retries,
+then scored by the unchanged V2 verifier. Harbor rewards map to the existing
+report format; missing rewards and trial exceptions are infrastructure errors.
+Host proxy variables are forwarded only to the verifier. `--block-network`
+overrides the verifier network in private task copies, leaving the checksummed
+upstream tree unchanged. Setup and pulls require network. `--pull-timeout` maps
+to Harbor's environment-build timeout multiplier (unsupported task timeout
+layouts fail explicitly). Harbor tears down chunk containers without removing
+images; the runner retains its original `--keep-images`/image-removal policy.
 
 Scoring uses the official V2 verifier; generation retains this project's
 mini-SWE-agent configuration and budgets, including `--step-limit` and
-`--command-timeout`. The runner does not impose the official locked protocol's
-50-minute whole-task deadline or container resource limits. When reporting
+`--command-timeout`. Generation does not impose the official locked protocol's
+50-minute whole-task deadline or container resource limits; replay uses the
+official task's Harbor limits. When reporting
 results, record the model, agent configuration, budgets, HF dataset revision,
 and selected slice. Generation and CSV preparation load HF independently; the
 dataset is not snapshotted, and the pinned verifier checkout is versioned

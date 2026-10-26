@@ -14,9 +14,9 @@ Usage:
 	bash setup_swebenchpro.sh
 
 Clone the pinned SWE-bench Pro V2 repository and mini-SWE-agent submodule,
-apply Docker image/cleanup support, and install generation dependencies into
-the currently activated environment using uv. Evaluation uses Docker and the
-unchanged official V2 verifier; Harbor is not required.
+apply Docker image/cleanup support, and install generation and Harbor replay
+dependencies into the activated Python 3.12+ environment using uv. Evaluation
+uses the official V2 patch replay agent and verifier in local Docker.
 EOF
 }
 
@@ -63,8 +63,8 @@ else
 	die "Docker image patch does not match the mini-SWE-agent checkout: ${IMAGE_PATCH}"
 fi
 
-log "Installing mini-SWE-agent and V2 data dependencies"
-uv pip install "${AGENT_DIR}" datasets pandas pyyaml
+log "Installing mini-SWE-agent, V2 data dependencies, and Harbor replay"
+uv pip install "${AGENT_DIR}" datasets pandas pyyaml "harbor==${SWEBENCH_PRO_HARBOR_VERSION}"
 
 mkdir -p "${AGENT_DIR}/results"
 log "SWE-bench Pro setup complete"

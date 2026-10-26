@@ -12,8 +12,6 @@ import subprocess
 import sys
 import time
 import tomllib
-import uuid
-from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 csv.field_size_limit(sys.maxsize)
@@ -218,96 +216,13 @@ def select_pro(args):
     print(f"Tracked {len(images)} Docker images in {args.images}")
 
 
-def evaluate_pro_instance(args, record):
-    """Replay only the submitted diff into a pristine V2 image, then run its verifier."""
-    instance_id = record["instance_id"]
-    image = pro_image(instance_id)
-    task = args.tasks_root / instance_id
-    config = tomllib.loads((task / "task.toml").read_text())
-    if config["environment"]["docker_image"] != image:
-        raise ValueError(f"Unexpected official image for {instance_id}")
-    tests = task / "tests"
-    if not (tests / "test.sh").is_file():
-        raise ValueError(f"Missing V2 verifier for {instance_id}")
-    output = args.output / instance_id
-    output.mkdir(parents=True, exist_ok=False)
-    model_patch = output / "model.patch"
-    model_patch.write_text(record["patch"])
-    container = f"swebench-pro-v2-eval-{uuid.uuid4().hex}"
-
-    def docker(*command, timeout=120, check=True):
-        result = subprocess.run(["docker", *command], capture_output=True, text=True, timeout=timeout)
-        with (output / "docker.log").open("a") as log:
-            log.write(result.stdout + result.stderr)
-        if check and result.returncode:
-            # Do not print command arguments: verifier proxy values can contain credentials.
-            raise RuntimeError(f"Docker operation failed (exit {result.returncode}); see {output / 'docker.log'}")
-        return result
-
-    try:
-        network = ["--network", "none"] if args.block_network else []
-        docker(
-            "run",
-            "-d",
-            "--rm",
-            "--name",
-            container,
-            *network,
-            "--entrypoint",
-            "/bin/sh",
-            image,
-            "-c",
-            "sleep 2h",
-            timeout=args.pull_timeout,
-        )
-        cwd = docker(
-            "exec",
-            container,
-            "sh",
-            "-c",
-            "if [ -d /app/.git ]; then echo /app; " "elif [ -d /testbed/.git ]; then echo /testbed; else exit 1; fi",
-        ).stdout.strip()
-        if cwd not in {"/app", "/testbed"}:
-            raise RuntimeError("Cannot locate sanitized V2 repository")
-        if record["patch"].strip():
-            docker("cp", str(model_patch), f"{container}:/tmp/model.patch")
-            applied = docker("exec", "-w", cwd, container, "git", "apply", "--binary", "/tmp/model.patch", check=False)
-            if applied.returncode:
-                # Invalid submissions are wrong answers, not infrastructure errors.
-                return instance_id, False, None
-        docker("exec", container, "mkdir", "-p", "/tests", "/logs/verifier")
-        docker("cp", str(tests) + "/.", f"{container}:/tests")
-        env = []
-        if not args.block_network:
-            for key in (
-                "HTTP_PROXY",
-                "HTTPS_PROXY",
-                "ALL_PROXY",
-                "NO_PROXY",
-                "http_proxy",
-                "https_proxy",
-                "all_proxy",
-                "no_proxy",
-            ):
-                if key in os.environ:
-                    env.extend(["-e", f"{key}={os.environ[key]}"])
-        verified = docker(
-            "exec", *env, container, "bash", "/tests/test.sh", timeout=config["verifier"]["timeout_sec"], check=False
-        )
-        docker("cp", f"{container}:/logs/verifier/.", str(output))
-        reward = (output / "reward.txt").read_text().strip()
-        if reward not in {"0", "1"} or (reward == "1") != (verified.returncode == 0):
-            raise RuntimeError("Missing or inconsistent official verifier reward")
-        return instance_id, reward == "1", None
-    finally:
-        docker("rm", "-f", container, check=False)
-
-
 def evaluate_pro(args):
+    """Adapt a prediction chunk to the official Harbor patch replay agent."""
     if args.workers <= 0 or args.pull_timeout <= 0:
         raise ValueError("Workers and pull timeout must be positive")
     args.output = args.output.resolve()
     args.output.mkdir(parents=True, exist_ok=True)
+    args.output.chmod(0o700)  # Harbor config can contain forwarded proxy credentials.
     with args.instances.open(newline="") as source:
         selected = [row["instance_id"] for row in csv.DictReader(source)]
     records = json.loads(args.patches.read_text())
@@ -328,24 +243,79 @@ def evaluate_pro(args):
     ):
         raise ValueError("Expected one patch per selected V2 instance")
 
-    def evaluate(record):
-        try:
-            return evaluate_pro_instance(args, record)
-        except subprocess.TimeoutExpired:
-            # TimeoutExpired includes the full command, potentially including proxy credentials.
-            return record["instance_id"], None, "Docker operation timed out"
-        except (OSError, ValueError, KeyError, RuntimeError, subprocess.SubprocessError) as error:
-            return record["instance_id"], None, str(error)
-
-    results, errors = {}, {}
-    with ThreadPoolExecutor(max_workers=args.workers) as pool:
-        for instance_id, resolved, error in pool.map(evaluate, records):
-            if error is not None:
-                errors[instance_id] = error
-            else:
-                results[instance_id] = resolved
+    results = {}
+    errors = dict.fromkeys(selected, "Missing completed Harbor replay result")
+    status = 1
+    try:
+        root = args.tasks_root.resolve()
+        tooling = root.parent / "tooling"
+        if not (tooling / "patch_replay.py").is_file():
+            raise ValueError("Missing official tooling/patch_replay.py")
+        if (args.output / "jobs/regrade").exists():
+            raise ValueError("Refusing stale Harbor results; use a new chunk directory")
+        configs = [tomllib.loads((root / task / "task.toml").read_text()) for task in selected]
+        timeouts = {config["environment"]["build_timeout_sec"] for config in configs}
+        if len(timeouts) != 1 or next(iter(timeouts)) <= 0:
+            raise ValueError("Cannot map --pull-timeout: official tasks need a shared positive build timeout")
+        if args.block_network:
+            copied = args.output / "tasks"
+            for task in selected:
+                shutil.copytree(root / task, copied / task)
+                config = copied / task / "task.toml"
+                text, count = re.subn(
+                    r'(?m)^(\[verifier\]\s*\nnetwork_mode\s*=\s*)"public"', r'\1"no-network"', config.read_text()
+                )
+                if count != 1:
+                    raise ValueError(f"Expected official public verifier network: {task}")
+                config.write_text(text)
+            root = copied
+        source = args.output / "source_job"
+        source.mkdir()  # Refuse reuse of stale source patches or regrade results.
+        for record in records:
+            trial = source / f"instance_{record['instance_id']}"
+            (trial / "agent").mkdir(parents=True)
+            (trial / "result.json").write_text(json.dumps({"task_name": record["instance_id"]}))
+            (trial / "agent/model.patch").write_text(record["patch"])
+        command = "harbor run -e docker -a patch_replay:PatchReplayAgent -m replay --no-delete".split()
+        for flag, value in {
+            "-p": root,
+            "--ak": f"source_job={source}",
+            "--jobs-dir": args.output / "jobs",
+            "--job-name": "regrade",
+            "-n": args.workers,
+            "--environment-build-timeout-multiplier": args.pull_timeout / next(iter(timeouts)),
+        }.items():
+            command.extend([flag, str(value)])
+        for task in selected:
+            command.extend(["-i", task])  # Validated IDs cannot contain fnmatch metacharacters.
+        for key in "HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy".split():
+            if not args.block_network and key in os.environ:
+                command.extend(["--ve", f"{key}={os.environ[key]}"])
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(tooling) + os.pathsep + env.get("PYTHONPATH", "")
+        # Docker --no-delete still tears down containers; the shell owns image keep/delete policy.
+        status = subprocess.run(command, env=env, check=False).returncode
+        seen = set()
+        for path in (args.output / "jobs/regrade").glob("*/result.json"):
+            trial = json.loads(path.read_text())
+            task = trial["task_name"].split("/")[-1]
+            if task not in selected or task in seen:
+                results.pop(task, None)
+                if task in selected:
+                    errors[task] = "Duplicate Harbor replay result"
+                raise ValueError(f"Unexpected or duplicate Harbor result: {task}")
+            seen.add(task)
+            reward = ((trial.get("verifier_result") or {}).get("rewards") or {}).get("reward")
+            if not trial.get("exception_info") and type(reward) in (int, float) and reward in (0, 1):
+                results[task] = reward == 1
+                errors.pop(task)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, subprocess.SubprocessError) as error:
+        # Never copy command arguments or trial exceptions containing proxy credentials into reports.
+        status = 1
+        detail = str(error) if type(error) is ValueError else type(error).__name__
+        errors.update(dict.fromkeys(set(selected) - results.keys(), f"Harbor replay failed: {detail}"))
     (args.output / "eval_results.json").write_text(json.dumps(build_pro_report(results, errors), indent=2))
-    return int(bool(errors))
+    return int(bool(status or errors))
 
 
 def select_verified(args: argparse.Namespace) -> None:

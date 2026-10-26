@@ -241,6 +241,9 @@ require_file "${AGENT_DIR}/src/minisweagent/run/extra/swebench.py"
 require_command mini-extra
 require_command python
 require_command docker
+if [[ "${SKIP_EVAL}" == false ]]; then
+	require_command harbor
+fi
 (cd "${SWEBENCH_PRO_DIR}/v2" && sha256sum --check --quiet SHA256SUMS)
 if [[ -d "${GEN_DIR}" && ! -f "${OUT_DIR}/v2_selection.txt" ]]; then
 	die "Existing output predates V2; use a new --tag"

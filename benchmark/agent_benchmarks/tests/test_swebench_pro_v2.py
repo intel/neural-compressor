@@ -22,11 +22,15 @@ class AdapterTests(unittest.TestCase):
         temp = tempfile.TemporaryDirectory()
         self.addCleanup(temp.cleanup)
         base = Path(temp.name)
+        (base / "tooling").mkdir()
+        (base / "tooling/patch_replay.py").touch()
         for task in ("a", "ab", "b"):
             target = base / "tasks" / task
             (target / "tests").mkdir(parents=True)
             (target / "task.toml").write_text(
-                f'[environment]\ndocker_image = "{v2.pro_image(task)}"\n' "[verifier]\ntimeout_sec = 3000\n"
+                f'[environment]\ndocker_image = "{v2.pro_image(task)}"\nbuild_timeout_sec = 1800\n'
+                '[verifier]\nnetwork_mode = "public"\ntimeout_sec = 3000\n'
+                '[agent]\nnetwork_mode = "no-network"\n'
             )
             (target / "tests/test.sh").write_text("official verifier\n")
         (base / "instances.csv").write_text("instance_id\na\nb\n")
@@ -48,107 +52,122 @@ class AdapterTests(unittest.TestCase):
             block_network=False,
         )
 
-    def docker(self, command, **kwargs):
-        self.commands.append((command, kwargs))
-        stdout, returncode = "", 0
-        if command[1] == "exec" and command[-1].startswith("if [ -d /app"):
-            stdout = self.cwd + "\n"
-        if command[1] == "exec" and "apply" in command:
-            returncode = self.apply_status
-        if command[-2:] == ["bash", "/tests/test.sh"]:
-            returncode = self.verifier_status
-        if command[1] == "cp" and command[-2].endswith(":/logs/verifier/."):
-            if self.reward is not None:
-                (Path(command[-1]) / "reward.txt").write_text(self.reward)
-        return SimpleNamespace(stdout=stdout, stderr="", returncode=returncode)
+    def run_adapter(self, trials=None, returncode=0):
+        if trials is None:
+            trials = [self.trial("a", 1.0), self.trial("b", 0.0)]
 
-    def run_adapter(self):
-        self.commands = []
-        self.cwd = getattr(self, "cwd", "/app")
-        self.reward = getattr(self, "reward", "1")
-        self.apply_status = getattr(self, "apply_status", 0)
-        self.verifier_status = getattr(self, "verifier_status", 0)
-        with patch.object(v2.subprocess, "run", side_effect=self.docker):
+        def harbor(command, **kwargs):
+            self.command, self.kwargs = command, kwargs
+            for index, trial in enumerate(trials):
+                target = self.args.output / f"jobs/regrade/trial_{index}/result.json"
+                target.parent.mkdir(parents=True)
+                target.write_text(json.dumps(trial))
+            return SimpleNamespace(returncode=returncode)
+
+        with patch.object(v2.subprocess, "run", side_effect=harbor):
             status = v2.evaluate_pro(self.args)
         return status, json.loads((self.args.output / "eval_results.json").read_text())
 
-    def test_fresh_docker_replay_and_official_verifier(self):
+    @staticmethod
+    def trial(task, reward, exception=None):
+        return {
+            "task_name": f"swebench-pro/{task}",
+            "verifier_result": {"rewards": {"reward": reward}},
+            "exception_info": exception,
+        }
+
+    def test_official_replay_cli_source_trials_and_rewards(self):
         status, report = self.run_adapter()
         self.assertEqual(status, 0)
-        self.assertEqual(report["resolved_ids"], ["a", "b"])
-        starts = [c for c, _ in self.commands if c[1] == "run"]
-        self.assertEqual(len(starts), 2)
-        self.assertNotEqual(starts[0][starts[0].index("--name") + 1], starts[1][starts[1].index("--name") + 1])
-        self.assertTrue(all("--entrypoint" in c for c in starts))
-        self.assertTrue(all(kw["timeout"] == 600 for c, kw in self.commands if c[1] == "run"))
-        self.assertEqual(len([c for c, _ in self.commands if "apply" in c]), 1)  # Empty patch still verified.
-        self.assertEqual(
-            len([c for c, kw in self.commands if c[-2:] == ["bash", "/tests/test.sh"] and kw["timeout"] == 3000]), 2
-        )
-        self.assertEqual(len([c for c, _ in self.commands if c[1:3] == ["rm", "-f"]]), 2)
+        self.assertEqual(report["results"], {"a": True, "b": False})
+        command = self.command
+        self.assertEqual(command[:2], ["harbor", "run"])
+        self.assertEqual(command[command.index("-e") + 1], "docker")
+        self.assertEqual(command[command.index("-a") + 1], "patch_replay:PatchReplayAgent")
+        self.assertEqual([command[i + 1] for i, flag in enumerate(command) if flag == "-i"], ["a", "b"])
+        self.assertEqual(command[command.index("-n") + 1], "2")
+        self.assertIn("--no-delete", command)  # Shell, not Harbor, owns image deletion.
+        self.assertAlmostEqual(float(command[command.index("--environment-build-timeout-multiplier") + 1]), 1 / 3)
+        source = self.args.output / "source_job"
+        self.assertIn(f"source_job={source}", command)
+        for task, content in (("a", "diff contents\n"), ("b", "")):
+            trial = source / f"instance_{task}"
+            self.assertEqual(json.loads((trial / "result.json").read_text()), {"task_name": task})
+            self.assertEqual((trial / "agent/model.patch").read_text(), content)
+        self.assertTrue(self.kwargs["env"]["PYTHONPATH"].startswith(str(self.args.tasks_root.parent / "tooling")))
+        self.assertEqual(self.args.output.stat().st_mode & 0o777, 0o700)
 
-    def test_testbed_and_block_network(self):
-        self.cwd = "/testbed"
+    def test_block_network_uses_private_copies_only(self):
         self.args.block_network = True
         with patch.dict(os.environ, {"HTTPS_PROXY": "http://test-proxy"}):
             status, _ = self.run_adapter()
         self.assertEqual(status, 0)
-        for command, _ in self.commands:
-            if command[1] == "run":
-                self.assertEqual(command[command.index("--network") + 1], "none")
-            self.assertNotIn("HTTPS_PROXY=http://test-proxy", command)
-        self.assertTrue(any(c[1:4] == ["exec", "-w", "/testbed"] for c, _ in self.commands))
+        self.assertNotIn("HTTPS_PROXY=http://test-proxy", self.command)
+        copied = self.args.output / "tasks"
+        self.assertEqual(self.command[self.command.index("-p") + 1], str(copied))
+        self.assertEqual(sorted(p.name for p in copied.iterdir()), ["a", "b"])
+        for task in ("a", "b"):
+            original = (self.args.tasks_root / task / "task.toml").read_text()
+            self.assertEqual(
+                (copied / task / "task.toml").read_text(),
+                original.replace('[verifier]\nnetwork_mode = "public"', '[verifier]\nnetwork_mode = "no-network"'),
+            )
+            self.assertEqual(
+                (copied / task / "tests/test.sh").read_bytes(),
+                (self.args.tasks_root / task / "tests/test.sh").read_bytes(),
+            )
 
-    def test_invalid_submission_is_unresolved(self):
-        self.apply_status = 1
-        status, report = self.run_adapter()
+    def test_verifier_proxy_forwarding_only(self):
+        with patch.dict(os.environ, {"HTTPS_PROXY": "http://test-proxy"}):
+            status, _ = self.run_adapter()
         self.assertEqual(status, 0)
-        self.assertEqual(report["unresolved_ids"], ["a"])
-        self.assertEqual(report["error_ids"], [])
+        self.assertIn("HTTPS_PROXY=http://test-proxy", self.command)
+        self.assertNotIn("--ae", self.command)
 
-    def test_missing_reward_is_infrastructure_error(self):
-        self.reward = None
-        status, report = self.run_adapter()
-        self.assertEqual(status, 1)
-        self.assertEqual(report["error_ids"], ["a", "b"])
-        self.assertEqual(report["total_instances"], 2)
-        self.assertEqual(report["evaluated_instances"], 0)
-        self.assertEqual(len([c for c, _ in self.commands if c[1:3] == ["rm", "-f"]]), 2)
-
-    def test_failed_official_tests_are_unresolved_not_infrastructure_errors(self):
-        self.reward = "0"
-        self.verifier_status = 1
-        status, report = self.run_adapter()
-        self.assertEqual(status, 0)
-        self.assertEqual(report["unresolved_ids"], ["a", "b"])
-        self.assertEqual(report["error_ids"], [])
-
-    def test_inconsistent_reward_is_infrastructure_error(self):
-        for reward, returncode in (("1", 1), ("0", 0), ("invalid", 0)):
-            with self.subTest(reward=reward, returncode=returncode), tempfile.TemporaryDirectory() as output:
+    def test_missing_invalid_rewards_and_exceptions_are_errors(self):
+        for reward, exception in ((None, None), ("1", None), (True, None), (2, None), (1, {"message": "secret"})):
+            with self.subTest(reward=reward, exception=exception), tempfile.TemporaryDirectory() as output:
                 self.args.output = Path(output)
-                self.reward, self.verifier_status = reward, returncode
-                status, report = self.run_adapter()
+                status, report = self.run_adapter([self.trial("a", reward, exception)])
                 self.assertEqual(status, 1)
                 self.assertEqual(report["error_ids"], ["a", "b"])
+                self.assertEqual(report["total_instances"], 2)
+                self.assertNotIn("secret", json.dumps(report))
 
-    def test_verifier_timeout_is_reported_without_proxy_credentials(self):
-        self.commands = []
-        self.cwd, self.reward, self.apply_status = "/app", "1", 0
-
-        def timed_out(command, **kwargs):
-            if command[-2:] == ["bash", "/tests/test.sh"]:
-                raise subprocess.TimeoutExpired(command, kwargs["timeout"])
-            return self.docker(command, **kwargs)
-
-        with patch.dict(os.environ, {"HTTPS_PROXY": "http://user:secret@proxy"}), patch.object(
-            v2.subprocess, "run", side_effect=timed_out
-        ):
+    def test_subprocess_failure_is_reported_without_proxy_credentials(self):
+        with patch.object(v2.subprocess, "run", side_effect=subprocess.TimeoutExpired(["secret"], 1)):
             self.assertEqual(v2.evaluate_pro(self.args), 1)
         report_text = (self.args.output / "eval_results.json").read_text()
         self.assertNotIn("secret", report_text)
         self.assertEqual(json.loads(report_text)["error_ids"], ["a", "b"])
-        self.assertEqual(len([c for c, _ in self.commands if c[1:3] == ["rm", "-f"]]), 2)
+
+    def test_harbor_exit_and_missing_results_fail(self):
+        for trials, returncode in (([], 0), ([self.trial("a", 1)], 1), ([self.trial("a", 1), self.trial("b", 0)], 2)):
+            with self.subTest(returncode=returncode), tempfile.TemporaryDirectory() as output:
+                self.args.output = Path(output)
+                status, report = self.run_adapter(trials, returncode)
+                self.assertEqual(status, 1)
+                self.assertEqual(report["total_instances"], 2)
+
+    def test_duplicate_unselected_and_malformed_results_fail(self):
+        for bad in (self.trial("a", 0), self.trial("ab", 1), {}, [], {"task_name": None}):
+            with self.subTest(bad=bad), tempfile.TemporaryDirectory() as output:
+                self.args.output = Path(output)
+                status, _ = self.run_adapter([self.trial("a", 1), self.trial("b", 0), bad])
+                self.assertEqual(status, 1)
+
+    def test_stale_output_and_unmappable_pull_timeout_never_launch(self):
+        (self.args.output / "jobs/regrade").mkdir(parents=True)
+        with patch.object(v2.subprocess, "run") as run:
+            self.assertEqual(v2.evaluate_pro(self.args), 1)
+            run.assert_not_called()
+        self.args.output = self.args.output.parent / "new-output"
+        config = self.args.tasks_root / "b/task.toml"
+        config.write_text(config.read_text().replace("1800", "1200"))
+        with patch.object(v2.subprocess, "run") as run:
+            self.assertEqual(v2.evaluate_pro(self.args), 1)
+            run.assert_not_called()
+        self.assertIn("--pull-timeout", (self.args.output / "eval_results.json").read_text())
 
     def test_failure_remains_in_denominator_and_retry_overrides_error(self):
         first = self.args.output.parent / "first.json"
