@@ -387,6 +387,7 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
             self.call = self._passthrough
             self.call_q = self._passthrough
             self.call_dq = self._passthrough
+
             attrs_to_remove = ["a_scale"]
             if self._is_asymmetric:
                 attrs_to_remove.append("a_zero_point")
@@ -695,18 +696,15 @@ class QStaticDenseMixin(SaveableLayerMixin):
         else:
             self.call = super().call
 
-            attrs_to_remove = [
-                ("a_scale", self.a_scale),
-                ("w_scale", self.w_scale),
-                ("_kernel_quant", self._kernel_quant),
-            ]
+            attrs_to_remove = ["a_scale", "w_scale", "_kernel_quant"]
             if self._is_int8:
-                attrs_to_remove.append(("a_zero_point", self.a_zero_point))
-            for attr_name, attr in attrs_to_remove:
-                self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not attr]
+                attrs_to_remove.append("a_zero_point")
+            for attr_name in attrs_to_remove:
+                self._non_trainable_variables[:] = [
+                    v for v in self._non_trainable_variables if v is not getattr(self, attr_name)
+                ]
                 if hasattr(self, attr_name):
                     delattr(self, attr_name)
-
             # All variables which names are stored in _const_variables are deleted in above loop
             # so _const_variables can be cleared
             self._const_variables.clear()
@@ -1664,16 +1662,16 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
                         setattr(self, name, value)
         else:
             self.call = super().call
-            for attr_name in [
-                "e_scale",
-                "re_scale",
-                "_embeddings_quant",
-                "_reverse_embeddings_quant",
-            ]:
+
+            attrs_to_remove = ["e_scale", "re_scale", "_embeddings_quant", "_reverse_embeddings_quant"]
+            for attr_name in attrs_to_remove:
+                self._non_trainable_variables[:] = [
+                    v for v in self._non_trainable_variables if v is not getattr(self, attr_name)
+                ]
                 if hasattr(self, attr_name):
-                    attr = getattr(self, attr_name)
-                    self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not attr]
                     delattr(self, attr_name)
+            # All variables which names are stored in _const_variables are deleted in above loop
+            # so _const_variables can be cleared
             self._const_variables.clear()
 
         if hasattr(self, "_layers") and hasattr(self, "input_observer"):
