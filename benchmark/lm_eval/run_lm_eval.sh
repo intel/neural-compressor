@@ -28,7 +28,7 @@ set -eo pipefail
 MODEL_PATH=""
 TASKS="hellaswag,piqa,mmlu,gsm8k"
 BATCH_SIZE="auto"
-GPU_MEMORY_UTILIZATION=0.8
+GPU_MEMORY_UTILIZATION=0.90
 MAX_MODEL_LEN=8192
 STATIC_KV_DTYPE="auto"
 STATIC_ATTENTION_DTYPE="auto"
@@ -42,7 +42,7 @@ usage() {
     echo "  --model_path               Path to the quantized model (required)"
     echo "  --tasks                    Task name(s) to evaluate (default: ${TASKS})"
     echo "  --batch_size               Batch size (default: auto)"
-    echo "  --gpu_memory_utilization   GPU memory utilization (default: 0.8)"
+    echo "  --gpu_memory_utilization   GPU memory utilization (default: 0.90)"
     echo "  --max_model_len            Max model length for standard tasks (default: 8192)"
     echo "  --static_kv_dtype          Data type for static kv cache (default: auto)"
     echo "  --static_attention_dtype   Data type for static attention cache (default: auto)"

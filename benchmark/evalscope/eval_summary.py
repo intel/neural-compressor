@@ -104,9 +104,7 @@ def render_table(headers, rows):
 def task_table(root, task):
     metric_name, scores = collect_task(root, task)
     kept = trim(scores)
-    rows = [
-        [f"run{i + 1}", fmt(score), "kept" if i in kept else "dropped"] for i, score in enumerate(scores)
-    ]
+    rows = [[f"run{i + 1}", fmt(score), "kept" if i in kept else "dropped"] for i, score in enumerate(scores)]
     rows.append([f"mean of kept ({len(kept)}/{len(scores)})", fmt(mean([scores[i] for i in kept])), ""])
     title = f"Result: {task} ({metric_name}, %)"
     return title + "\n" + render_table(["Run", "Score", "Status"], rows)
@@ -119,22 +117,22 @@ def summary_table(root, tasks):
         kept = trim(scores)
         results.append((task, metric_name, scores, kept))
 
-    max_kept = max(len(kept) for *_, kept in results)
-    headers = ["Task", "Metric", "Runs"] + [f"Kept{i + 1}" for i in range(max_kept)] + ["Mean"]
+    max_runs = max(len(scores) for _, _, scores, _ in results)
+    headers = ["Task", "Metric", "Kept"] + [f"Run{i + 1}" for i in range(max_runs)] + ["Mean"]
     rows = []
     task_means = []
     for task, metric_name, scores, kept in results:
-        kept_scores = [fmt(scores[i]) for i in kept]
+        run_scores = [fmt(score) if i in kept else f"{fmt(score)} (D)" for i, score in enumerate(scores)]
         task_mean = mean([scores[i] for i in kept])
         task_means.append(task_mean)
         rows.append(
             [task, metric_name, f"{len(kept)}/{len(scores)}"]
-            + kept_scores
-            + [""] * (max_kept - len(kept))
+            + run_scores
+            + [""] * (max_runs - len(scores))
             + [fmt(task_mean)]
         )
-    rows.append(["Average (all tasks)", "", ""] + [""] * max_kept + [fmt(mean(task_means))])
-    title = "Summary (scores in %, KeptN = scores kept after dropping max/min when runs >= 3)"
+    rows.append(["Average (all tasks)", "", ""] + [""] * max_runs + [fmt(mean(task_means))])
+    title = "Summary (scores in %, (D) = dropped as max/min when runs >= 3; Mean = average of kept runs)"
     return title + "\n" + render_table(headers, rows)
 
 

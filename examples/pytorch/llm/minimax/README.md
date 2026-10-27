@@ -62,50 +62,55 @@ bash run_quant.sh \
 
 ### 2. Serve + Evaluate
 
+`run_benchmark.sh` is a thin wrapper over the shared drivers. RULER tasks (`*ruler*`, `niah_*`) run with `benchmark/lm_eval/run_lm_eval.sh`; all other tasks run with `benchmark/evalscope/run_evalscope.sh`, which starts `vllm serve`, runs each task `--num_runs` times with evalscope and prints a score table. Tensor parallel size is inferred from `CUDA_VISIBLE_DEVICES`.
+
 ```bash
-CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_evalscope.sh \
-  --model ~/models/minimax-m2.7-mxfp \
-  --tp 4 \
-  --port 8001 \
-  --tasks gpqa_diamond,aime25,gsm8k,piqa,hellaswag,live_code_bench
+CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_benchmark.sh \
+  --model_path=~/models/minimax-m2.7-mxfp \
+  --port=8001 \
+  --tasks=gpqa_diamond,aime25,gsm8k,piqa,hellaswag,live_code_bench
 ```
 
-Repeat each task 5 times and report the trimmed mean (drop max/min, average the remaining 3):
+By default each task is repeated 5 times and the trimmed mean is reported (drop max/min, average the remaining 3); `hellaswag`, `piqa`, `mmlu` and `gsm8k` always run once. Use `--num_runs=1` for a single pass:
 
 ```bash
-CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_evalscope.sh \
-  --model ~/models/minimax-m2.7-mxfp \
-  --tp 4 \
-  --port 8001 \
-  --num-runs 5
+CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_benchmark.sh \
+  --model_path=~/models/minimax-m2.7-mxfp \
+  --num_runs=1
 ```
 
 For a model quantized with static FP8 KV cache / attention:
 
 ```bash
-CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_evalscope.sh \
-  --model ~/models/minimax-m2.7-mxfp-fp8kv \
-  --tp 4 \
-  --port 8001 \
-  --static_kv_dtype fp8 \
-  --static_attention_dtype fp8
+CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_benchmark.sh \
+  --model_path=~/models/minimax-m2.7-mxfp-fp8kv \
+  --static_kv_dtype=fp8 \
+  --static_attention_dtype=fp8
 ```
 
-Equivalent vLLM command used inside `run_evalscope.sh`:
+RULER long-context evaluation (default max position `131072`):
+
+```bash
+CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_benchmark.sh \
+  --model_path=~/models/minimax-m2.7-mxfp \
+  --tasks=ruler
+```
+
+Equivalent vLLM command used by `run_benchmark.sh` for evalscope tasks:
 
 ```bash
 CUDA_VISIBLE_DEVICES=3,4,5,6 vllm serve ~/models/minimax-m2.7-mxfp \
-  --trust-remote-code \
+  --port 8001 \
   --tensor-parallel-size 4 \
+  --served-model-name minimax-m2.7 \
+  --max-model-len 102400 \
+  --trust-remote-code \
   --tool-call-parser minimax_m2 \
   --enable-auto-tool-choice \
   --reasoning-parser minimax_m2 \
-  --served-model-name minimax-m2.7 \
-  --max-model-len 102400 \
   --max-num-seqs 1024 \
   --max-num-batched-tokens 32768 \
-  --enable-chunked-prefill \
-  --port 8001
+  --enable-chunked-prefill
 ```
 
 ## CLI Arguments
@@ -122,19 +127,24 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 vllm serve ~/models/minimax-m2.7-mxfp \
 - `--static_kv_dtype`: static KV cache data type, e.g. `fp8` (default: `auto`).
 - `--static_attention_dtype`: static attention data type, e.g. `fp8` (default: `auto`).
 
-### `run_evalscope.sh`
+### `run_benchmark.sh`
 
-- `--model`: quantized model path for vLLM and evalscope.
-- `--port`: vLLM API port (default: `8001`).
-- `--temp`: generation temperature (default: `1.0`).
-- `--tp`: tensor parallel size for vLLM (default: `4`).
-- `--max-model-len`: max context length (default: `102400`).
-- `--served-model-name`: served model name alias (default: `minimax-m2.7`).
-- `--tasks`: comma-separated subset of `gpqa_diamond,aime25,gsm8k,piqa,hellaswag,live_code_bench` (default: all).
-- `--num-runs` / `-n`: number of times each task is evaluated (default: `1`). With 3 or more runs, the highest and lowest scores are dropped and the remaining (kept) scores are averaged; otherwise all scores are averaged. After each task a result table (every run, kept/dropped, mean of kept) is printed, and at the end a summary table lists the kept scores and mean of every task plus the average over all tasks. Per-run evalscope outputs are saved under `outputs/<model_name>_<timestamp>/<task>/run<i>/`.
+- `--model_path`: quantized model path for vLLM and evalscope (required).
+- `--tasks`: comma-separated tasks (default: `gpqa_diamond,aime25,gsm8k,piqa`). RULER tasks (`*ruler*`, `niah_*`) run with lm_eval, the others with evalscope.
+- `--num_runs`: number of times each task is evaluated (default: `5`). `hellaswag`, `piqa`, `mmlu` and `gsm8k` always run once (override the list with the `SINGLE_RUN_TASKS` environment variable). With 3 or more runs, the highest and lowest scores are dropped and the remaining (kept) scores are averaged; otherwise all scores are averaged. After each task a result table (every run, kept/dropped, mean of kept) is printed, and at the end a summary table lists every run of each task (dropped scores are marked with `(D)`) and the mean of kept scores, plus the average over all tasks.
+- `--temperature`: generation temperature (default: `1.0`).
+- `--top_p`: generation top_p (default: `0.95`).
+- `--max_tokens`: max generated tokens (default: `64000`).
+- `--max_model_len`: vLLM max context length (default: `102400`).
+- `--served_model_name`: served model name alias (default: `minimax-m2.7`).
+- `--eval_batch_size`: evalscope concurrent requests (default: `256`).
+- `--port`: vLLM API port (default: `$SERVER_PORT` or `8001`; the next free port is used when not specified and busy).
 - `--static_kv_dtype`: vLLM `kv_cache_dtype`, e.g. `fp8` (default: `auto`).
 - `--static_attention_dtype`: set to `fp8` to enable FP8 attention (implies `kv_cache_dtype=fp8`).
-- `--skip_serve`: skip starting vLLM (use existing endpoint on the same `--port`).
+- `--skip_serve=true`: skip starting vLLM and reuse an existing endpoint on `--port` (evalscope tasks only).
+- lm_eval (RULER) options: `--ruler_max_pos` (default: `131072`), `--gpu_memory_utilization` (default: `0.90`).
+
+Outputs are written under `<model_name>-tp<N>-evalscope/` in the current directory: the vLLM log, the evaluation log, and per-run evalscope outputs in `outputs_<timestamp>/<task>/run<i>/`. RULER results are written under `<model_name>-tp<N>-eval/`.
 
 ## Evaluation Generation Config
 
