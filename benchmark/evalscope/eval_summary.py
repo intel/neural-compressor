@@ -117,22 +117,22 @@ def summary_table(root, tasks):
         kept = trim(scores)
         results.append((task, metric_name, scores, kept))
 
-    max_runs = max(len(scores) for _, _, scores, _ in results)
-    headers = ["Task", "Metric", "Kept"] + [f"Run{i + 1}" for i in range(max_runs)] + ["Mean"]
+    max_kept = max(len(kept) for *_, kept in results)
+    headers = ["Task", "Metric", "Runs"] + [f"Kept{i + 1}" for i in range(max_kept)] + ["Mean"]
     rows = []
     task_means = []
     for task, metric_name, scores, kept in results:
-        run_scores = [fmt(score) if i in kept else f"{fmt(score)} (D)" for i, score in enumerate(scores)]
+        kept_scores = [fmt(scores[i]) for i in kept]
         task_mean = mean([scores[i] for i in kept])
         task_means.append(task_mean)
         rows.append(
             [task, metric_name, f"{len(kept)}/{len(scores)}"]
-            + run_scores
-            + [""] * (max_runs - len(scores))
+            + kept_scores
+            + [""] * (max_kept - len(kept))
             + [fmt(task_mean)]
         )
-    rows.append(["Average (all tasks)", "", ""] + [""] * max_runs + [fmt(mean(task_means))])
-    title = "Summary (scores in %, (D) = dropped as max/min when runs >= 3; Mean = average of kept runs)"
+    rows.append(["Average (all tasks)", "", ""] + [""] * max_kept + [fmt(mean(task_means))])
+    title = "Summary (scores in %, KeptN = scores kept after dropping max/min when runs >= 3)"
     return title + "\n" + render_table(headers, rows)
 
 
