@@ -935,10 +935,10 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
     """Dynamically quantized ReversibleEmbedding layer."""
 
     def _derive_e_quant(self):
-        return (0,)
+        return (1,)
 
     def _derive_re_quant(self):
-        return (1,)
+        return (0,)
 
     @classmethod
     def prepare(
