@@ -272,7 +272,7 @@ start_vllm_server() {
 }
 
 # Keep the readiness check below identical to benchmark/evalscope/run_evalscope.sh.
-SERVER_WAIT_TIMEOUT=1800
+SERVER_WAIT_TIMEOUT=5400
 SERVER_WAIT_INTERVAL=20
 
 print_server_log_tail() {
