@@ -957,9 +957,9 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
             orig (ReversibleEmbedding): Original layer instance.
             weight_dtype (jnp.dtype): Dtype for quantized weights.
             activation_dtype (jnp.dtype): Dtype for quantized activations.
-            const_scale (bool): ignored, included for API consistency.
-            const_weight (bool): ignored, included for API consistency.
-            w_quant_granularity (str): ignored, included for API consistency.
+            const_scale (bool): Whether to use constant scales.
+            const_weight (bool): Whether to use constant weight.
+            w_quant_granularity (str): Whether to use per_channel or per_tensor quantization for weights
             dot_product_attention_enable (bool): ignored, included for API consistency.
 
         Returns:
@@ -1076,12 +1076,11 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         # convert variables to attributes (const) if needed
         if not hasattr(self, "model_is_during_load"):
             for name in self._const_variables:
-                if hasattr(self, name):
-                    var = getattr(self, name)
-                    value = jnp.array(var.value)
-                    self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
-                    delattr(self, name)
-                    setattr(self, name, value)
+                var = getattr(self, name)
+                value = jnp.array(var.value)
+                self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+                delattr(self, name)
+                setattr(self, name, value)
 
         self._tracker.lock()
 

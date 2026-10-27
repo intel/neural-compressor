@@ -1484,10 +1484,10 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
     """Statically quantized ReversibleEmbedding layer."""
 
     def _derive_e_quant(self):
-        return (0,)
+        return (1,)
 
     def _derive_re_quant(self):
-        return (1,)
+        return (0,)
 
     @classmethod
     def prepare(
@@ -1508,7 +1508,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): Whether to use constant weight.
-            w_quant_granularity (str): ignored, included for API consistency.
+            w_quant_granularity (str): Whether to use per_channel or per_tensor quantization for weights
             dot_product_attention_enable (bool): ignored, included for API consistency.
 
         Returns:
