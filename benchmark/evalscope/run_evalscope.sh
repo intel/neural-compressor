@@ -298,6 +298,38 @@ cleanup_server() {
 trap cleanup_server EXIT
 trap 'exit 130' INT TERM
 
+# Keep the readiness check below identical to benchmark/lm_eval/run_lm_eval.sh.
+SERVER_WAIT_TIMEOUT=1800
+SERVER_WAIT_INTERVAL=10
+
+print_server_log_tail() {
+    if [[ -n "$VLLM_LOG" && -f "$VLLM_LOG" ]]; then
+        echo "----- Last 80 lines of ${VLLM_LOG} -----" >&2
+        tail -n 80 "$VLLM_LOG" >&2 || true
+    fi
+}
+
+# Poll the OpenAI API until it responds; fail early if the vLLM process started by this script exits.
+wait_for_server() {
+    local url="http://127.0.0.1:${SERVER_PORT}/v1/models"
+    local deadline=$((SECONDS + SERVER_WAIT_TIMEOUT))
+    echo "Waiting for vLLM server at ${url} (timeout ${SERVER_WAIT_TIMEOUT}s)..."
+    while (( SECONDS < deadline )); do
+        if curl -sf "$url" -o /dev/null; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] vLLM server is ready."
+            return 0
+        fi
+        if [[ -n "$VLLM_PID" ]] && ! kill -0 "$VLLM_PID" 2>/dev/null; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: vLLM server exited before becoming ready." >&2
+            return 1
+        fi
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] vLLM server on port ${SERVER_PORT} not ready, retrying in ${SERVER_WAIT_INTERVAL}s..."
+        sleep "$SERVER_WAIT_INTERVAL"
+    done
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Timed out after ${SERVER_WAIT_TIMEOUT}s waiting for vLLM server at ${url}." >&2
+    return 1
+}
+
 if [[ "$SKIP_SERVE" != "true" ]]; then
     VLLM_CMD=(
         vllm serve "$MODEL_PATH"
@@ -327,33 +359,12 @@ if [[ "$SKIP_SERVE" != "true" ]]; then
     LOG_TAIL_PID=$!
 fi
 
-echo "Waiting for API at ${API_URL} ..."
-API_READY=0
-for _ in $(seq 1 90); do
-    if curl -sf "${API_URL}/models" -o /dev/null; then
-        API_READY=1
-        break
-    fi
-    if [[ -n "$VLLM_PID" ]] && ! kill -0 "$VLLM_PID" 2>/dev/null; then
-        stop_log_tail
-        echo "[$(date '+%Y-%m-%d %H:%M:%S')] vLLM exited before the API became ready." >&2
-        echo "----- Last 80 lines of ${VLLM_LOG} -----" >&2
-        tail -n 80 "$VLLM_LOG" >&2 || true
-        exit 1
-    fi
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Port ${SERVER_PORT} not ready, retrying in 20s..."
-    sleep 20
-done
-stop_log_tail
-
-if [[ "$API_READY" != 1 ]]; then
-    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Timeout waiting for API at ${API_URL}." >&2
-    if [[ -n "$VLLM_PID" ]]; then
-        echo "----- Last 80 lines of ${VLLM_LOG} -----" >&2
-        tail -n 80 "$VLLM_LOG" >&2 || true
-    fi
+if ! wait_for_server; then
+    stop_log_tail
+    print_server_log_tail
     exit 1
 fi
+stop_log_tail
 
 task_num_runs() {
     if [[ ",${SINGLE_RUN_TASKS//[[:space:]]/}," == *",$1,"* ]]; then

@@ -245,63 +245,93 @@ find_available_port() {
     done
 }
 
+VLLM_PID=""
+VLLM_LOG=""
+
 start_vllm_server() {
     local max_len=$1
+    local log_name=$2
     find_available_port || exit 1
-    echo "Starting vLLM server on port ${SERVER_PORT}..."
+    VLLM_LOG="${OUTPUT_DIR}/vllm_server_${log_name}.log"
+    echo "Starting vLLM server on port ${SERVER_PORT}, log: ${VLLM_LOG}"
 
-    vllm serve "${MODEL_PATH}" \
+    local serve_extra_args=()
+    read -ra serve_extra_args <<< "${SERVE_EXTRA_ARGS}"
+    # setsid puts vLLM and its workers in their own process group so cleanup_server can stop all of them.
+    setsid vllm serve "${MODEL_PATH}" \
         --port "${SERVER_PORT}" \
         --tensor-parallel-size "${TP_SIZE}" \
         --max-model-len "${max_len}" \
         --gpu-memory-utilization "${GPU_MEMORY_UTILIZATION}" \
         --dtype bfloat16 \
         --kv-cache-dtype "${KV_CACHE_DTYPE}" \
-        "${rope_args[@]}" \
-        ${SERVE_EXTRA_ARGS} \
-        > "${OUTPUT_DIR}/vllm_server.log" 2>&1 &
+        "${serve_extra_args[@]}" \
+        > "${VLLM_LOG}" 2>&1 &
     VLLM_PID=$!
     echo "vLLM server started with PID: ${VLLM_PID}"
 }
 
-wait_for_server() {
-    local max_retries=300
-    local retry_count=0
+# Keep the readiness check below identical to benchmark/evalscope/run_evalscope.sh.
+SERVER_WAIT_TIMEOUT=1800
+SERVER_WAIT_INTERVAL=10
 
-    echo "Waiting for vLLM server to be ready..."
-    while [ $retry_count -lt $max_retries ]; do
-        if curl -s "http://localhost:${SERVER_PORT}/health" > /dev/null 2>&1; then
-            echo "vLLM server is ready!"
+print_server_log_tail() {
+    if [[ -n "$VLLM_LOG" && -f "$VLLM_LOG" ]]; then
+        echo "----- Last 80 lines of ${VLLM_LOG} -----" >&2
+        tail -n 80 "$VLLM_LOG" >&2 || true
+    fi
+}
+
+# Poll the OpenAI API until it responds; fail early if the vLLM process started by this script exits.
+wait_for_server() {
+    local url="http://127.0.0.1:${SERVER_PORT}/v1/models"
+    local deadline=$((SECONDS + SERVER_WAIT_TIMEOUT))
+    echo "Waiting for vLLM server at ${url} (timeout ${SERVER_WAIT_TIMEOUT}s)..."
+    while (( SECONDS < deadline )); do
+        if curl -sf "$url" -o /dev/null; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] vLLM server is ready."
             return 0
         fi
-        retry_count=$((retry_count + 1))
-        echo "Waiting for server... (${retry_count}/${max_retries})"
-        sleep 5
+        if [[ -n "$VLLM_PID" ]] && ! kill -0 "$VLLM_PID" 2>/dev/null; then
+            echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: vLLM server exited before becoming ready." >&2
+            return 1
+        fi
+        echo "[$(date '+%Y-%m-%d %H:%M:%S')] vLLM server on port ${SERVER_PORT} not ready, retrying in ${SERVER_WAIT_INTERVAL}s..."
+        sleep "$SERVER_WAIT_INTERVAL"
     done
-
-    echo "Error: vLLM server failed to start within expected time"
-    echo "Check ${OUTPUT_DIR}/vllm_server.log for details"
+    echo "[$(date '+%Y-%m-%d %H:%M:%S')] Error: Timed out after ${SERVER_WAIT_TIMEOUT}s waiting for vLLM server at ${url}." >&2
     return 1
 }
 
 cleanup_server() {
-    echo "Shutting down vLLM server..."
-    kill $VLLM_PID 2>/dev/null || true
-    wait $VLLM_PID 2>/dev/null || true
+    if [[ -z "$VLLM_PID" ]]; then
+        return
+    fi
+    echo "Shutting down vLLM server (PID ${VLLM_PID})..."
+    kill -TERM -- "-${VLLM_PID}" 2>/dev/null || kill -TERM "$VLLM_PID" 2>/dev/null || true
+    for _ in $(seq 1 30); do
+        kill -0 "$VLLM_PID" 2>/dev/null || break
+        sleep 1
+    done
+    kill -KILL -- "-${VLLM_PID}" 2>/dev/null || true
+    wait "$VLLM_PID" 2>/dev/null || true
+    VLLM_PID=""
     echo "Server stopped"
 }
 
+trap cleanup_server EXIT
+trap 'exit 130' INT TERM
+
 start_server_or_exit() {
-    start_vllm_server "$1"
+    start_vllm_server "$1" "$2"
     if ! wait_for_server; then
-        kill $VLLM_PID 2>/dev/null || true
+        print_server_log_tail
         exit 1
     fi
-    trap cleanup_server EXIT INT TERM
 }
 
 run_longbench_eval() {
-    start_server_or_exit "${LONGBENCH_MAX_LEN}"
+    start_server_or_exit "${LONGBENCH_MAX_LEN}" longbench
 
     echo "Running LongBench evaluation against vLLM server..."
     python -m long_bench_eval.cli \
@@ -316,7 +346,7 @@ run_longbench_eval() {
 }
 
 run_ruler_eval() {
-    start_server_or_exit "${RULER_MAX_POS}"
+    start_server_or_exit "${RULER_MAX_POS}" ruler
 
     echo "Running RULER evaluation against vLLM server..."
     lm_eval \
