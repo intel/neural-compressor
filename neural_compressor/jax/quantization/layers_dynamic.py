@@ -1073,10 +1073,6 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         self._trainable_variables.remove(self._embeddings)
         del self._embeddings
 
-        if not self.tie_weights:
-            self._trainable_variables.remove(super().reverse_embeddings)
-            del super().reverse_embeddings
-
         # convert variables to attributes (const) if needed
         if not hasattr(self, "model_is_during_load"):
             for name in self._const_variables:
