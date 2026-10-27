@@ -20,14 +20,14 @@
 # highest and lowest score of each task are dropped before averaging.
 #
 # Model-family specific settings are provided by the caller (a thin run_benchmark.sh in each
-# example directory) through these variables. Built-in defaults follow the MiniMax example.
-#   DEFAULT_TASKS              default value for --tasks (default: gpqa_diamond,aime25,gsm8k,piqa)
-#   DEFAULT_NUM_RUNS           default value for --num_runs (default: 5)
-#   DEFAULT_TEMPERATURE        default value for --temperature (default: 1.0)
-#   DEFAULT_TOP_P              default value for --top_p (default: 0.95, empty: not sent)
-#   DEFAULT_MAX_TOKENS         default value for --max_tokens (default: 64000, empty: not sent)
-#   DEFAULT_MAX_MODEL_LEN      default value for --max_model_len (default: 102400, empty: vLLM default)
-#   DEFAULT_SERVED_MODEL_NAME  default value for --served_model_name (default: minimax-m2.7, empty: the model path)
+# example directory) through these variables. Optional generation/serve options are not sent unless set.
+#   DEFAULT_TASKS              default value for --tasks (default: gsm8k)
+#   DEFAULT_NUM_RUNS           default value for --num_runs (default: 1)
+#   DEFAULT_TEMPERATURE        default value for --temperature (default: 0)
+#   DEFAULT_TOP_P              default value for --top_p (default: not sent)
+#   DEFAULT_MAX_TOKENS         default value for --max_tokens (default: not sent)
+#   DEFAULT_MAX_MODEL_LEN      default value for --max_model_len (default: vLLM default)
+#   DEFAULT_SERVED_MODEL_NAME  default value for --served_model_name (default: the model path)
 #   DEFAULT_EVAL_BATCH_SIZE    default value for --eval_batch_size (default: 256)
 #   EVAL_TIMEOUT               evalscope request timeout in seconds (default: 3600)
 #   EXTRA_GENERATION_CONFIG    JSON object merged into the evalscope --generation-config
@@ -43,14 +43,14 @@ set -eo pipefail
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 
 MODEL_PATH=""
-TASKS="${DEFAULT_TASKS:-gpqa_diamond,aime25,gsm8k,piqa}"
-NUM_RUNS="${DEFAULT_NUM_RUNS:-5}"
-TEMPERATURE="${DEFAULT_TEMPERATURE:-1.0}"
-# An explicitly empty value disables the following options.
-TOP_P="${DEFAULT_TOP_P-0.95}"
-MAX_TOKENS="${DEFAULT_MAX_TOKENS-64000}"
-MAX_MODEL_LEN="${DEFAULT_MAX_MODEL_LEN-102400}"
-SERVED_MODEL_NAME="${DEFAULT_SERVED_MODEL_NAME-minimax-m2.7}"
+TASKS="${DEFAULT_TASKS:-gsm8k}"
+NUM_RUNS="${DEFAULT_NUM_RUNS:-1}"
+TEMPERATURE="${DEFAULT_TEMPERATURE:-0}"
+TOP_P="${DEFAULT_TOP_P:-}"
+MAX_TOKENS="${DEFAULT_MAX_TOKENS:-}"
+MAX_MODEL_LEN="${DEFAULT_MAX_MODEL_LEN:-}"
+GPU_MEMORY_UTILIZATION=""
+SERVED_MODEL_NAME="${DEFAULT_SERVED_MODEL_NAME:-}"
 EVAL_BATCH_SIZE="${DEFAULT_EVAL_BATCH_SIZE:-256}"
 EVAL_TIMEOUT="${EVAL_TIMEOUT:-3600}"
 SINGLE_RUN_TASKS="${SINGLE_RUN_TASKS-hellaswag,piqa,mmlu,gsm8k}"
@@ -71,6 +71,7 @@ usage() {
     echo "  --top_p                    Generation top_p (default: ${TOP_P:-not set})"
     echo "  --max_tokens               Max generated tokens (default: ${MAX_TOKENS:-not set})"
     echo "  --max_model_len            vLLM max model length (default: ${MAX_MODEL_LEN:-vLLM default})"
+    echo "  --gpu_memory_utilization   vLLM GPU memory utilization (default: vLLM default)"
     echo "  --served_model_name        vLLM served model name (default: ${SERVED_MODEL_NAME:-model path})"
     echo "  --eval_batch_size          evalscope concurrent requests (default: ${EVAL_BATCH_SIZE})"
     echo "  --port                     vLLM API port (default: \$SERVER_PORT or 8001; the next free port is used if unset and busy)"
@@ -104,6 +105,9 @@ for arg in "$@"; do
             ;;
         --max_model_len=*)
             MAX_MODEL_LEN="${arg#*=}"
+            ;;
+        --gpu_memory_utilization=*)
+            GPU_MEMORY_UTILIZATION="${arg#*=}"
             ;;
         --served_model_name=*)
             SERVED_MODEL_NAME="${arg#*=}"
@@ -341,6 +345,9 @@ if [[ "$SKIP_SERVE" != "true" ]]; then
     fi
     if [[ -n "$MAX_MODEL_LEN" ]]; then
         VLLM_CMD+=(--max-model-len "$MAX_MODEL_LEN")
+    fi
+    if [[ -n "$GPU_MEMORY_UTILIZATION" ]]; then
+        VLLM_CMD+=(--gpu-memory-utilization "$GPU_MEMORY_UTILIZATION")
     fi
     if [[ "$KV_CACHE_DTYPE" != "auto" ]]; then
         VLLM_CMD+=(--kv-cache-dtype "$KV_CACHE_DTYPE")

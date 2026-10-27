@@ -44,13 +44,14 @@ python quantize.py \
 
 ## Evaluation
 
-`run_benchmark.sh` is a thin wrapper over the shared driver at `benchmark/lm_eval/run_lm_eval.sh`:
-- Uses vLLM backend through `lm_eval`
+`run_benchmark.sh` is a thin wrapper over the shared drivers. Each task is routed to one path:
+- `aime26`, `gpqa_diamond` and `math_500` run with `benchmark/evalscope/run_evalscope.sh` (starts `vllm serve` and evaluates through the OpenAI-compatible API with `evalscope`).
+- All other tasks run with `benchmark/lm_eval/run_lm_eval.sh` (vLLM backend through `lm_eval`).
 
 ### Benchmark Quick Start
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,8 bash run_benchmark.sh \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash run_benchmark.sh \
   --model_path=/workspace/models/moonshotai/Kimi-K2.6-MXFP4/Kimi-K2.6-mxfp-w4g32
 ```
 
@@ -58,13 +59,28 @@ Equivalent default command:
 
 ```bash
 VLLM_QDQ=1 lm_eval --model vllm \
-  --model_args pretrained=/workspace/models/moonshotai/Kimi-K2.6-MXFP4/Kimi-K2.6-mxfp-w4g32,tensor_parallel_size=8,data_parallel_size=1,max_model_len=8192,trust_remote_code=True \
+  --model_args pretrained=/workspace/models/moonshotai/Kimi-K2.6-MXFP4/Kimi-K2.6-mxfp-w4g32,tensor_parallel_size=8,data_parallel_size=1,max_model_len=8192,trust_remote_code=True,load_format=fastsafetensors \
   --tasks gsm8k,mmlu,piqa,hellaswag \
   --batch_size auto
 ```
 
-You can override defaults:
+Evaluate with evalscope:
 
-- `--tasks=<task1,task2,...>`
-- `--batch_size=<auto|int>`
-- `--max_model_len=<int>`
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash run_benchmark.sh \
+  --model_path=/workspace/models/moonshotai/Kimi-K2.6-MXFP4/Kimi-K2.6-mxfp-w4g32 \
+  --tasks=aime26,gpqa_diamond,math_500
+```
+
+The evalscope path serves the model with `vllm serve <model> --tensor-parallel-size <N> --trust-remote-code --load-format fastsafetensors`.
+`VLLM_QDQ=1` is only set on GPUs other than SM 10.x.
+
+Arguments (tensor parallel size is inferred from `CUDA_VISIBLE_DEVICES`):
+
+- `--model_path`: model path for vLLM (required).
+- `--tasks`: comma-separated tasks (default: `gsm8k,mmlu,piqa,hellaswag`).
+- `--static_kv_dtype` / `--static_attention_dtype`: static FP8 KV cache / attention (default: `auto`).
+
+All options other than `--tasks` are passed unchanged to both drivers.
+
+Outputs are written under `<model_name>-tp<N>-eval/` (lm_eval) and `<model_name>-tp<N>-evalscope/` (evalscope) in the current directory.

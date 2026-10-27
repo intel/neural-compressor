@@ -67,13 +67,6 @@ if [[ "$MODEL_NAME" == "DeepSeek-V4-Flash" || "$MODEL_NAME" == "DeepSeek-V4-Pro"
 fi
 export EXTRA_LM_EVAL_MODEL_ARGS=",trust_remote_code=True"
 
-# Override the MiniMax-oriented defaults of the evalscope driver; empty values disable the option.
-export DEFAULT_NUM_RUNS=1
-export DEFAULT_TEMPERATURE=0
-export DEFAULT_TOP_P=""
-export DEFAULT_MAX_TOKENS=""
-export DEFAULT_MAX_MODEL_LEN=""
-export DEFAULT_SERVED_MODEL_NAME=""
 if [[ "$MODEL_NAME" == *"DeepSeek-V4-Pro"* ]]; then
     export DEFAULT_MAX_MODEL_LEN=1048576
     export DEFAULT_EVAL_BATCH_SIZE=10
