@@ -613,7 +613,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
             autocast=False,
             dtype=self.compute_dtype,
         )
-        self.w_quant_axis = self._derive_w_quant() if self.w_quant_granularity == "per_channel" else None
+        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
         w_scale, _ = get_q_params(
             self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=False, axis=self.w_quant_axis
         )
@@ -795,7 +795,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
 class QStaticDense(QStaticDenseMixin, keras.layers.Dense):
     """Statically quantized Dense layer."""
 
-    def _derive_w_quant(self):
+    def _derive_w_quant_axis(self):
         return (0,)
 
 
@@ -806,7 +806,7 @@ verify_api(keras.layers.Dense, QStaticDense, "call")
 class QStaticEinsumDense(QStaticDenseMixin, keras.layers.EinsumDense):
     """Statically quantized EinsumDense layer."""
 
-    def _derive_w_quant(self):
+    def _derive_w_quant_axis(self):
         self._set_quantization_info()
         return tuple(int(a) for a in self._kernel_reduced_axes)
 
@@ -876,7 +876,7 @@ class QStaticConv2DMixin(QStaticDenseMixin, keras.layers.Conv2D):
 class QStaticConv2d(QStaticConv2DMixin, keras.layers.Conv2D):
     """Statically quantized Conv2D layer."""
 
-    def _derive_w_quant(self):
+    def _derive_w_quant_axis(self):
         return tuple(i for i in range(self._kernel.ndim - 1))
 
 
@@ -1484,10 +1484,10 @@ verify_api(Gemma3VisionAttention, QStaticGemma3VisionAttention, "call")
 class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbedding):
     """Statically quantized ReversibleEmbedding layer."""
 
-    def _derive_e_quant(self):
+    def _derive_e_quant_axis(self):
         return (1,)
 
-    def _derive_re_quant(self):
+    def _derive_re_quant_axis(self):
         return (0,)
 
     @classmethod
@@ -1556,8 +1556,8 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         """
         self._tracker.unlock()
         self.inputs_qdq.add_variables()
-        self.e_quant_axis = self._derive_e_quant() if self.w_quant_granularity == "per_channel" else None
-        self.re_quant_axis = self._derive_re_quant() if self.w_quant_granularity == "per_channel" else None
+        self.e_quant_axis = self._derive_e_quant_axis() if self.w_quant_granularity == "per_channel" else None
+        self.re_quant_axis = self._derive_re_quant_axis() if self.w_quant_granularity == "per_channel" else None
         e_scale, _ = get_q_params(
             self.embeddings.value,
             self.weight_dtype,
