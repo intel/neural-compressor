@@ -25,6 +25,7 @@ import keras_hub.layers
 import numpy as np
 from jax import numpy as jnp
 from keras import ops
+from keras.src.backend import set_keras_mask
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
 
@@ -1545,9 +1546,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         Returns:
             None: Adds observer layers.
         """
-        self._tracker.unlock()
         self.inputs_qdq.add_observers()
-        self._tracker.lock()
 
     def add_variables(self):
         """Create quantization variables for activations and embedding weights.
@@ -1558,8 +1557,9 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         self._tracker.unlock()
         self.inputs_qdq.add_variables()
         self.e_quant_axis = self._derive_e_quant() if self.w_quant_granularity == "per_channel" else None
+        self.re_quant_axis = self._derive_re_quant() if self.w_quant_granularity == "per_channel" else None
         e_scale, _ = get_q_params(
-            self.embeddings,
+            self.embeddings.value,
             self.weight_dtype,
             self.compute_dtype,
             asymmetric=False,
@@ -1575,16 +1575,15 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         )
         self._embeddings_quant = self.add_weight(
             name="_embeddings_quant",
-            shape=self.embeddings.shape,
+            shape=self.embeddings.value.shape,
             initializer="zeros",
             trainable=False,
             autocast=False,
             dtype=self.weight_dtype,
         )
         if not self.tie_weights:
-            self.re_quant_axis = self._derive_re_quant() if self.w_quant_granularity == "per_channel" else None
             re_scale, _ = get_q_params(
-                self.reverse_embeddings,
+                self.reverse_embeddings.value,
                 self.weight_dtype,
                 self.compute_dtype,
                 asymmetric=False,
@@ -1600,7 +1599,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             )
             self._reverse_embeddings_quant = self.add_weight(
                 name="_reverse_embeddings_quant",
-                shape=self.reverse_embeddings.shape,
+                shape=self.reverse_embeddings.value.shape,
                 initializer="zeros",
                 trainable=False,
                 autocast=False,
@@ -1651,8 +1650,9 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         if self._is_quantized:
             self.call = self.call_quantized
 
-            self._trainable_variables.remove(self._embeddings)
-            del self._embeddings
+            if hasattr(self, "reverve_embeddings"):
+                self._trainable_variables.remove(self.reverve_embeddings)
+                del self.reverse_embeddings
 
             # convert variables to attributes (const) if needed
             if not hasattr(self, "model_is_during_load"):
@@ -1684,26 +1684,12 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
 
         self._tracker.lock()
 
-    def call_quantized(self, inputs, reverse=False):
-        """Compute embeddings with offline-quantized weights and activation QDQ.
-
-        Args:
-            inputs (jnp.ndarray): Input tensor.
-            reverse (bool): Whether to compute the reverse embedding.
-
-        Returns:
-            jnp.ndarray: Embedded outputs or logits.
-        """
-        if not reverse:
-            return super().call(inputs, reverse=reverse)
-
-        if self.reverse_dtype is not None:
-            inputs = ops.cast(inputs, self.reverse_dtype)
+    def call(self, inputs, reverse=False):
         x = self.inputs_qdq(inputs)
         x = super().call(x, reverse=reverse)
         return x
 
-    def call(self, inputs, reverse=False):
+    def call_quantized(self, inputs, reverse=False):
         """Compute forward or reverse embedding with static quantization.
 
         Args:
@@ -1714,42 +1700,40 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             jnp.ndarray: Embedded outputs or logits.
         """
         if reverse:
+            if self.tie_weights:
+                if self.const_weight:
+                    kernel = ops.transpose(ops.convert_to_tensor(self._embeddings_quant))
+                    scale = ops.transpose(self.e_scale)
+                else:
+                    kernel = ops.transpose(ops.convert_to_tensor(self._embeddings_quant.value))
+                    scale = ops.transpose(self.e_scale.value)
+            else:
+                if self.const_weight:
+                    kernel = self.reverse_embeddings
+                    scale = self.re_scale
+                else:
+                    kernel = self.reverse_embeddings.value
+                    scale = self.re_scale.value
+
             if self.reverse_dtype is not None:
                 inputs = ops.cast(inputs, self.reverse_dtype)
+                kernel = ops.cast(kernel, self.reverse_dtype)
             inputs = self.inputs_qdq(inputs)
-        return super().call(inputs, reverse=reverse)
+            # Always pass self.re_quant_axis as dequantization axis
+            # Even if self.e_scale is actually used it's transposed into re_scale shape
+            kernel = self.wdequantfun(kernel, scale, axis=self.re_quant_axis)
+            logits = ops.matmul(inputs, kernel)
+            # Optionally soft-cap logits.
+            if self.logit_soft_cap is not None:
+                soft_cap = self.logit_soft_cap
+                logits = ops.tanh(logits / soft_cap) * soft_cap
+            return logits
 
-    @property
-    def embeddings(self):
-        if self._is_quantized:
-            if self.const_weight:
-                _embeddings_quant = self._embeddings_quant
-            else:
-                _embeddings_quant = self._embeddings_quant.value
-            if self.const_scale:
-                e_scale = self.e_scale
-            else:
-                e_scale = self.e_scale.value
-            _embeddings_quant = self.wdequantfun(_embeddings_quant, e_scale, axis=self.e_quant_axis)
-            return _embeddings_quant
-        ret = super().embeddings
-        return ret.value
-
-    @property
-    def reverse_embeddings(self):
-        if self._is_quantized:
-            if self.const_weight:
-                _reverse_embeddings_quant = self._reverse_embeddings_quant
-            else:
-                _reverse_embeddings_quant = self._reverse_embeddings_quant.value
-            if self.const_scale:
-                re_scale = self.re_scale
-            else:
-                re_scale = self.re_scale.value
-            _reverse_embeddings_quant = self.wdequantfun(_reverse_embeddings_quant, re_scale, axis=self.re_quant_axis)
-            return _reverse_embeddings_quant
-        ret = super().reverse_embeddings
-        return ret.value
+        result = super(keras.layers.ReversibleEmbedding, self).call(inputs)
+        mask = super(keras.layers.ReversibleEmbedding, self).compute_mask(inputs)
+        if mask is not None:
+            set_keras_mask(result, mask)
+        return result
 
 
 verify_api(keras.layers.ReversibleEmbedding, QStaticReversibleEmbedding, "call")
