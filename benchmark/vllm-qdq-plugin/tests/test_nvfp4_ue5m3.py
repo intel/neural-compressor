@@ -1,6 +1,7 @@
 import json
 import unittest
-from dataclasses import replace
+from dataclasses import dataclass, replace
+from types import SimpleNamespace
 from unittest import mock
 
 import torch
@@ -22,11 +23,45 @@ from vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_linear import INCNvfp4UE5M3Line
 from vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_scheme import INCNvfp4UE5M3Scheme
 from vllm_qdq_plugin.quantization.inc_nvfp4_linear import INCNvfp4QDQLinearMethod
 from vllm_qdq_plugin.quantization.inc_nvfp4_scheme import INCNvfp4QDQScheme
-from vllm_qdq_plugin.quantization.patch import apply_patches
+from vllm_qdq_plugin.quantization.patch import _resolve_layer_config_override, apply_patches
 
 
 class _FusedMoE:
     pass
+
+
+@dataclass(frozen=True)
+class _TestLayerConfig:
+    bits: int
+    group_size: int | tuple[int, ...]
+    sym: bool
+    data_type: str
+    quantized: bool
+
+
+class LayerConfigOverrideTests(unittest.TestCase):
+    def test_most_specific_override_updates_only_declared_fields(self) -> None:
+        config = SimpleNamespace(
+            extra_config={
+                "layers.0": {"bits": 4, "group_size": 32, "sym": True, "data_type": "mx_fp"},
+                "mlp.experts": {"group_size": [16, 64], "data_type": "nvfp4_v2"},
+            }
+        )
+        layer_config = _TestLayerConfig(8, 128, False, "mx_fp", True)
+
+        result = _resolve_layer_config_override(config, "model.layers.0.mlp.experts", layer_config)
+
+        self.assertEqual(result, _TestLayerConfig(8, (16, 64), False, "nvfp4_v2", True))
+
+    def test_bits_override_updates_quantized_and_nonmatching_path_is_unchanged(self) -> None:
+        layer_config = _TestLayerConfig(8, 32, True, "mx_fp", True)
+        config = SimpleNamespace(extra_config={"mlp.experts": {"bits": 16}})
+
+        result = _resolve_layer_config_override(config, "model.layers.0.mlp.experts", layer_config)
+        nonmatching = _resolve_layer_config_override(config, "model.layers.0.mlp.experts2", layer_config)
+
+        self.assertEqual(result, _TestLayerConfig(16, 32, True, "mx_fp", False))
+        self.assertIs(nonmatching, layer_config)
 
 
 def _decode_e2m1(value: torch.Tensor) -> torch.Tensor:
