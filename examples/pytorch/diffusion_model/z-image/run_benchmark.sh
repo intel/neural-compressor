@@ -1,5 +1,5 @@
 #!/bin/bash
-set -x
+set -ex
 
 function main {
   init_params "$@"
@@ -66,7 +66,16 @@ function run_benchmark {
             program_pid+=($!)
             echo "Start (PID: ${program_pid[-1]}, GPU: ${i})"
         done
-        wait "${program_pid[@]}"
+        failed=0
+        for pid in "${program_pid[@]}"; do
+            if ! wait "$pid"; then
+                echo "Generation failed (PID: ${pid})" >&2
+                failed=1
+            fi
+        done
+        if [ "$failed" -ne 0 ]; then
+            return 1
+        fi
     else
         python3 main.py \
             --model ${input_model} \

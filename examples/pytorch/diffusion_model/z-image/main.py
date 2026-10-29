@@ -69,7 +69,7 @@ parser.add_argument("--num_inference_steps", default=8, type=int)
 parser.add_argument("--guidance_scale", default=0.0, type=float)
 parser.add_argument("--height", default=1024, type=int)
 parser.add_argument("--width", default=1024, type=int)
-parser.add_argument("--seed", default=42, type=int, help="image i uses seed + i (aqa convention)")
+parser.add_argument("--seed", default=42, type=int, help="image id i uses seed + i (aqa convention)")
 parser.add_argument("--limit", default=-1, type=int)
 parser.add_argument("--metrics", default="clip,clip-iqa,imagereward")
 parser.add_argument("--clip_model", default="openai/clip-vit-base-patch32")
@@ -151,16 +151,17 @@ def generate_vllm_omni(rows, out_dir):
     from vllm_omni.entrypoints.omni import Omni
 
     omni = Omni(model=args.model, mode="text-to-image")
-    for idx, row in rows.iterrows():
+    for _, row in rows.iterrows():
         path = image_path(out_dir, row["id"])
         if os.path.exists(path) and not args.overwrite:
             continue
+        seed = args.seed + int(row["id"])
         outputs = omni.generate(
             {"prompt": str(row["caption"]), "modalities": ["image"]},
-            sampling_params_list=_omni_sampling_params(omni, args.seed + idx),
+            sampling_params_list=_omni_sampling_params(omni, seed),
         )
         _first_image(outputs).save(path)
-        print(f"generated {path} (seed={args.seed + idx})", flush=True)
+        print(f"generated {path} (seed={seed})", flush=True)
 
 
 def generate_diffusers(rows, out_dir):
@@ -169,11 +170,12 @@ def generate_diffusers(rows, out_dir):
     device = "cuda" if torch.cuda.is_available() else "cpu"
     pipe = AutoPipelineForText2Image.from_pretrained(
         args.model, torch_dtype=torch.bfloat16).to(device)
-    for idx, row in rows.iterrows():
+    for _, row in rows.iterrows():
         path = image_path(out_dir, row["id"])
         if os.path.exists(path) and not args.overwrite:
             continue
-        generator = torch.Generator(device=device).manual_seed(args.seed + idx)
+        seed = args.seed + int(row["id"])
+        generator = torch.Generator(device=device).manual_seed(seed)
         out = pipe(
             prompt=str(row["caption"]),
             height=args.height,
@@ -183,7 +185,7 @@ def generate_diffusers(rows, out_dir):
             generator=generator,
         )
         out.images[0].save(path)
-        print(f"generated {path} (seed={args.seed + idx})", flush=True)
+        print(f"generated {path} (seed={seed})", flush=True)
 
 
 # ── scoring (aqa-compatible definitions) ─────────────────────────────────────
@@ -269,11 +271,16 @@ def main():
 
     if args.accuracy:
         prompts, images = [], []
+        missing_ids = []
         for _, row in rows.iterrows():
             path = image_path(out_dir, row["id"])
             if os.path.exists(path):
                 prompts.append(str(row["caption"]))
                 images.append(path)
+            else:
+                missing_ids.append(row["id"])
+        if missing_ids:
+            raise RuntimeError(f"missing {len(missing_ids)} images under {out_dir}: ids={missing_ids}")
         if not images:
             raise RuntimeError(f"no images found under {out_dir}")
 
