@@ -7,23 +7,29 @@ from typing import Any
 
 from vllm.logger import init_logger
 
-from .inc_nvfp4_e5m3_scheme import INCNvfp4UE5M3Scheme
+from .inc_nvfp4_e5m3_scheme import NVFP4_E5M3_DATA_TYPE, NVFP4_E5M3_GS_DATA_TYPE, INCNvfp4UE5M3Scheme
 from .inc_nvfp4_scheme import INCNvfp4QDQScheme
 
 logger = init_logger(__name__)
 _PATCHED = False
 
 
-def _layer_data_type(config: Any, layer_name: str, default: str) -> str:
+def _resolve_layer_config_override(config: Any, layer_name: str, layer_config: Any) -> Any:
+    layer_path = f".{layer_name}."
     matches = [
         (key, value)
         for key, value in (config.extra_config or {}).items()
-        if isinstance(key, str) and isinstance(value, dict) and (layer_name == key or layer_name.endswith(f".{key}"))
+        if isinstance(key, str) and isinstance(value, dict) and f".{key}." in layer_path
     ]
     if not matches:
-        return default
-    _, layer_config = max(matches, key=lambda item: len(item[0]))
-    return layer_config.get("data_type", default)
+        return layer_config
+    _, override = max(matches, key=lambda item: len(item[0]))
+    updates = {key: override[key] for key in ("bits", "group_size", "sym", "data_type") if key in override}
+    if isinstance(updates.get("group_size"), list):
+        updates["group_size"] = tuple(updates["group_size"])
+    if "bits" in updates:
+        updates["quantized"] = updates["bits"] < 16
+    return replace(layer_config, **updates)
 
 
 def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
@@ -37,7 +43,7 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     from vllm.model_executor.layers.quantization.inc.config_parser import INCConfigParser
     from vllm.model_executor.layers.quantization.inc.schemes import factory
 
-    supported_dtypes = {"nvfp4_v2"}
+    supported_dtypes = {NVFP4_E5M3_DATA_TYPE, NVFP4_E5M3_GS_DATA_TYPE}
     if enable_nvfp4_qdq:
         supported_dtypes.add("nv_fp")
         INCConfig._vllm_qdq_nvfp4_enabled = True
@@ -45,6 +51,7 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     INCConfig.SUPPORTED_FORMATS = set(INCConfig.SUPPORTED_FORMATS) | {
         "auto_round:llm_compressor",
         "auto_round:llm_compressor_nvfp4_e5m3",
+        "auto_round:llm_compressor_nvfp4_e5m3_gs",
     }
 
     original_resolve_scheme = factory.resolve_scheme
@@ -60,8 +67,7 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
 
     def resolve_config(self: Any, layer: Any, layer_name: str):
         layer_config = original_resolve_config(self, layer, layer_name)
-        data_type = _layer_data_type(self._config, layer_name, layer_config.data_type)
-        return replace(layer_config, data_type=data_type)
+        return _resolve_layer_config_override(self._config, layer_name, layer_config)
 
     def resolve_scheme(layer_config: Any):
         if INCNvfp4UE5M3Scheme.can_handle(layer_config):
@@ -75,7 +81,7 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     factory.resolve_scheme = resolve_scheme
     inc_module.resolve_scheme = resolve_scheme
     _PATCHED = True
-    formats = "nv_fp and nvfp4_v2" if enable_nvfp4_qdq else "nvfp4_v2"
+    formats = "nv_fp, nvfp4_v2, and nvfp4_v2_gs" if enable_nvfp4_qdq else "nvfp4_v2 and nvfp4_v2_gs"
     logger.warning("vLLM QDQ patch applied: AutoRound %s schemes registered", formats)
 
 

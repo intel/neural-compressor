@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Fused CuTe DSL kernels for MXFP4 and MXFP8 QDQ."""
+"""Fused CuTe DSL kernels for MXFP4, MXFP8, and NVFP4_E5M3(_GS) QDQ."""
 
 import threading
 
@@ -214,6 +214,31 @@ def nvfp4_e5m3_qdq_group32_kernel(x: cute.Tensor, output: cute.Tensor, group_cou
 
 
 @cute.kernel
+def nvfp4_e5m3_gs_qdq_group16_kernel(
+    x: cute.Tensor,
+    global_scale: cute.Tensor,
+    output: cute.Tensor,
+    group_count: cutlass.Int32,
+):
+    thread, _, _ = cute.arch.thread_idx()
+    block, _, _ = cute.arch.block_idx()
+    group = block * 8 + thread // 16
+    lane = thread % 16
+
+    if group < group_count:
+        index = group * 16 + lane
+        value = x[index].to(cutlass.Float32)
+        gs = global_scale[0]
+        inverse_gs = (gs > 0.0).to(cutlass.Float32) * (1.0 / cutlass.max(gs, 2.0**-126))
+        block_max = cute.arch.warp_reduction_max(_abs_float(value), threads_in_group=16)
+        scale = _quantize_ue5m3_scale(block_max / 6.0 * gs) * inverse_gs
+        normalized = value / cutlass.max(scale, 2.0**-126)
+        quantized = _round_mxfp4(_abs_float(normalized))
+        sign = 1.0 - 2.0 * (normalized < 0.0).to(cutlass.Float32)
+        output[index] = (quantized * sign * scale).to(output.element_type)
+
+
+@cute.kernel
 def nvfp4_e5m3_weight_dequant_kernel(
     packed: cute.Tensor,
     scales: cute.Tensor,
@@ -294,6 +319,21 @@ def launch_nvfp4_e5m3_qdq_group32(
 
 
 @cute.jit
+def launch_nvfp4_e5m3_gs_qdq_group16(
+    x: cute.Tensor,
+    global_scale: cute.Tensor,
+    output: cute.Tensor,
+    group_count: cutlass.Int32,
+    stream: cuda.CUstream,
+):
+    nvfp4_e5m3_gs_qdq_group16_kernel(x, global_scale, output, group_count).launch(
+        grid=[(group_count + 7) // 8, 1, 1],
+        block=[128, 1, 1],
+        stream=stream,
+    )
+
+
+@cute.jit
 def launch_nvfp4_e5m3_weight_dequant(
     packed: cute.Tensor,
     scales: cute.Tensor,
@@ -343,6 +383,19 @@ def _get_compiled_kernel(format_name: str, dtype: torch.dtype, element_count: in
             cute_example = from_dlpack(example)
             cute_output = from_dlpack(example_output)
             group_count = element_count // GROUP_SIZE
+            stream = cuda.CUstream(torch.cuda.current_stream(device).cuda_stream)
+            if format_name == "NVFP4_E5M3_GS_G16":
+                example_scale = torch.ones(1, device=device, dtype=torch.float32)
+                compiled = cute.compile(
+                    launch_nvfp4_e5m3_gs_qdq_group16,
+                    cute_example,
+                    from_dlpack(example_scale),
+                    cute_output,
+                    group_count,
+                    stream,
+                )
+                _COMPILED_KERNELS[key] = compiled
+                return compiled
             if format_name == "MXFP4":
                 launcher = launch_mxfp4_qdq
             elif format_name == "MXFP8":
@@ -385,6 +438,22 @@ def run_nvfp4_e5m3_qdq(x: torch.Tensor, group_size: int) -> torch.Tensor:
     output = torch.empty_like(flat_x)
     stream = cuda.CUstream(torch.cuda.current_stream(x.device).cuda_stream)
     compiled(from_dlpack(flat_x), from_dlpack(output), flat_x.numel() // group_size, stream)
+    return output.reshape_as(x)
+
+
+def run_nvfp4_e5m3_gs_qdq(x: torch.Tensor, global_scale: torch.Tensor) -> torch.Tensor:
+    """Run fused E2M1/UE5M3 activation QDQ with a per-tensor global scale (group size 16)."""
+    flat_x = x.reshape(-1)
+    compiled = _get_compiled_kernel("NVFP4_E5M3_GS_G16", x.dtype, flat_x.numel(), x.device)
+    output = torch.empty_like(flat_x)
+    stream = cuda.CUstream(torch.cuda.current_stream(x.device).cuda_stream)
+    compiled(
+        from_dlpack(flat_x),
+        from_dlpack(global_scale.reshape(1)),
+        from_dlpack(output),
+        flat_x.numel() // 16,
+        stream,
+    )
     return output.reshape_as(x)
 
 

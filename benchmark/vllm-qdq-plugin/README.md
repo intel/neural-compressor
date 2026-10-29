@@ -83,11 +83,13 @@ To force MXFP4 QDQ for Marlin MoE when dtype detection is insufficient, add `VLL
 | **NVFP4** (E2M1 + E4M3 scales) | fused MoE | ✅ Supported | AutoRound `nv_fp`, group size 16, activation QDQ + FP4 Marlin experts |
 | **NVFP4_E5M3** (E2M1 + UE5M3 scales) | dense linear | ✅ Supported | AutoRound `nvfp4_v2`, group size 16, vLLM FP4 Marlin |
 | **NVFP4_E5M3** (E2M1 + UE5M3 scales) | fused MoE | ✅ Supported | AutoRound `nvfp4_v2`, group size 16, vLLM FP4 Marlin experts |
+| **NVFP4_E5M3_GS** (E2M1 + UE5M3 scales + FP32 global scale) | dense linear | ✅ Supported | AutoRound `nvfp4_v2_gs`, group size 16, vLLM FP4 Marlin |
+| **NVFP4_E5M3_GS** (E2M1 + UE5M3 scales + FP32 global scale) | fused MoE | ✅ Supported | AutoRound `nvfp4_v2_gs`, group size 16, vLLM FP4 Marlin experts |
 
 ### NVFP4
 
-The QDQ package supports AutoRound standard NVFP4 (`nv_fp`) and NVFP4_E5M3
-(`nvfp4_v2`) checkpoints for dense and MoE layers. These paths use activation
+The QDQ package supports AutoRound standard NVFP4 (`nv_fp`), NVFP4_E5M3
+(`nvfp4_v2`), and NVFP4_E5M3_GS (`nvfp4_v2_gs`) checkpoints for dense and MoE layers. These paths use activation
 QDQ followed by vLLM FP4 Marlin weight-only GEMMs; they do not use the native
 NVFP4 hardware kernels. See the
 [NVFP4 QDQ guide](src/vllm_qdq_plugin/quantization/README.md).
