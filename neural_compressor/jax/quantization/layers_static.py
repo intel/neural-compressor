@@ -1684,9 +1684,9 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         self._tracker.lock()
 
     def call(self, inputs, reverse=False):
-        x = self.inputs_qdq(inputs)
-        x = super().call(x, reverse=reverse)
-        return x
+        if reverse:
+            inputs = self.inputs_qdq(inputs)
+        return super().call(inputs, reverse=reverse)
 
     def call_quantized(self, inputs, reverse=False):
         """Compute forward or reverse embedding with static quantization.
