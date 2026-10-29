@@ -8,6 +8,7 @@ import json
 import os
 import re
 import shutil
+import subprocess
 import sys
 import time
 from pathlib import Path
@@ -36,22 +37,14 @@ def pro_config(args):
     environment = config.setdefault("environment", {})
     environment["pull_timeout"] = args.pull_timeout
     environment["timeout"] = args.command_timeout
-    environment["forward_env"] = [
-        "HTTP_PROXY",
-        "HTTPS_PROXY",
-        "ALL_PROXY",
-        "NO_PROXY",
-        "http_proxy",
-        "https_proxy",
-        "all_proxy",
-        "no_proxy",
-    ]
-    config.setdefault("run", {})[
-        "env_startup_command"
-    ] = "git clone https://github.com/{{ repo }}.git . && {{ before_repo_set_cmd }}"
+    # Model requests run on the host. The agent shell needs no network or proxy.
+    environment["forward_env"] = []
+    environment["run_args"] = ["--rm", "--network", "none"]
+    environment["cwd"] = "/"
+    config.setdefault("run", {})["env_startup_command"] = "git rev-parse --is-inside-work-tree"
     old = "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && git add -A && git diff --cached"
     new = (
-        "cd /testbed && echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && git add -A && "
+        "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && git add -A && "
         "git diff --cached -- . ':(exclude,glob)**/test/**' ':(exclude,glob)**/tests/**' "
         "':(exclude,glob)**/test_*.py' ':(exclude,glob)**/*_test.py' "
         "':(exclude,glob)**/*.test.js' ':(exclude,glob)**/*.spec.js' "
@@ -61,7 +54,7 @@ def pro_config(args):
     template = config["agent"]["instance_template"]
     if old not in template:
         raise RuntimeError("Expected submission command not found in mini-SWE-agent config")
-    config["agent"]["instance_template"] = template.replace(old, new)
+    config["agent"]["instance_template"] = template.replace(old, new).replace("/testbed", "{{cwd}}")
     config["model"] = {
         "model_name": args.model,
         "cost_tracking": "ignore_errors",
@@ -190,28 +183,168 @@ def prepare_pro_chunk(args):
         writer.writeheader()
         writer.writerows(rows)
 
-    images = sorted({f"jefzda/sweap-images:{row['dockerhub_tag']}" for row in rows if row.get("dockerhub_tag")})
+    images = sorted({pro_image(row["instance_id"]) for row in rows})
     Path(args.images).write_text("\n".join(images) + ("\n" if images else ""))
     print(f"Prepared {len(instance_ids)} SWE-bench Pro instances for evaluation")
     print(f"Invalid or empty patches: {invalid}")
     print(f"Patches touching test files: {test_changes}")
 
 
+def pro_image(instance_id):
+    if not re.fullmatch(r"[A-Za-z0-9_][A-Za-z0-9_.-]*", instance_id):
+        raise ValueError(f"Invalid V2 instance ID: {instance_id}")
+    return f"ghcr.io/scaleapi/swe-bench_pro-v2:{instance_id}"
+
+
 def select_pro(args):
     import pandas as pd
     from datasets import load_dataset
 
-    instances = list(load_dataset("ScaleAI/SWE-bench_Pro", split="test"))
+    instances = list(load_dataset(args.dataset, "default", split="test"))
     if args.slice:
         bounds = [int(value) if value else None for value in args.slice.split(":")]
         instances = instances[slice(*bounds)]
     if not instances:
         raise RuntimeError(f"Dataset slice selected no instances: {args.slice or 'all'}")
+    for item in instances:
+        item["image_name"] = pro_image(item["instance_id"])
     pd.DataFrame(instances).to_csv(args.csv, index=False)
-    images = sorted({f"jefzda/sweap-images:{item['dockerhub_tag']}" for item in instances if item.get("dockerhub_tag")})
+    images = sorted({item["image_name"] for item in instances})
     Path(args.images).write_text("\n".join(images) + ("\n" if images else ""))
     print(f"Wrote {len(instances)} instances to {args.csv}")
     print(f"Tracked {len(images)} Docker images in {args.images}")
+
+
+def evaluate_pro(args):
+    """Adapt a prediction chunk to the official Harbor patch replay agent."""
+    import signal
+    import tomllib
+
+    if args.workers <= 0 or args.pull_timeout <= 0:
+        raise ValueError("Workers and pull timeout must be positive")
+    args.output = args.output.resolve()
+    args.output.mkdir(parents=True, exist_ok=True)
+    args.output.chmod(0o700)  # Harbor config can contain forwarded proxy credentials.
+    with args.instances.open(newline="") as source:
+        selected = [row["instance_id"] for row in csv.DictReader(source)]
+    records = json.loads(args.patches.read_text())
+    for instance_id in selected:
+        pro_image(instance_id)
+    if (
+        not selected
+        or len(set(selected)) != len(selected)
+        or not isinstance(records, list)
+        or len(records) != len(selected)
+        or any(
+            not isinstance(record, dict)
+            or not isinstance(record.get("instance_id"), str)
+            or not isinstance(record.get("patch"), str)
+            for record in records
+        )
+        or {record["instance_id"] for record in records} != set(selected)
+    ):
+        raise ValueError("Expected one patch per selected V2 instance")
+
+    results = {}
+    errors = dict.fromkeys(selected, "Missing completed Harbor replay result")
+    status = 1
+    interrupted = 0
+    process = None
+    shutdown_sent = False
+
+    def request_shutdown(signum, _frame):
+        nonlocal interrupted, shutdown_sent
+        interrupted = interrupted or signum
+        if process is not None and not shutdown_sent:
+            shutdown_sent = True
+            try:
+                os.killpg(process.pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+
+    previous_handlers = {sig: signal.getsignal(sig) for sig in (signal.SIGTERM, signal.SIGINT)}
+    for sig in previous_handlers:
+        signal.signal(sig, request_shutdown)
+    try:
+        root = args.tasks_root.resolve()
+        tooling = root.parent / "tooling"
+        if not (tooling / "patch_replay.py").is_file():
+            raise ValueError("Missing official tooling/patch_replay.py")
+        if (args.output / "jobs/regrade").exists():
+            raise ValueError("Refusing stale Harbor results; use a new chunk directory")
+        configs = [tomllib.loads((root / task / "task.toml").read_text()) for task in selected]
+        timeouts = {config["environment"]["build_timeout_sec"] for config in configs}
+        if len(timeouts) != 1 or next(iter(timeouts)) <= 0:
+            raise ValueError("Cannot map --pull-timeout: official tasks need a shared positive build timeout")
+        if args.block_network:
+            copied = args.output / "tasks"
+            for task in selected:
+                shutil.copytree(root / task, copied / task)
+                config = copied / task / "task.toml"
+                text, count = re.subn(
+                    r'(?m)^(\[verifier\]\s*\nnetwork_mode\s*=\s*)"public"', r'\1"no-network"', config.read_text()
+                )
+                if count != 1:
+                    raise ValueError(f"Expected official public verifier network: {task}")
+                config.write_text(text)
+            root = copied
+        source = args.output / "source_job"
+        source.mkdir()  # Refuse reuse of stale source patches or regrade results.
+        for record in records:
+            trial = source / f"instance_{record['instance_id']}"
+            (trial / "agent").mkdir(parents=True)
+            (trial / "result.json").write_text(json.dumps({"task_name": record["instance_id"]}))
+            (trial / "agent/model.patch").write_text(record["patch"])
+        command = "harbor run -e docker -a patch_replay:PatchReplayAgent -m replay --no-delete".split()
+        for flag, value in {
+            "-p": root,
+            "--ak": f"source_job={source}",
+            "--jobs-dir": args.output / "jobs",
+            "--job-name": "regrade",
+            "-n": args.workers,
+            "--environment-build-timeout-multiplier": args.pull_timeout / next(iter(timeouts)),
+        }.items():
+            command.extend([flag, str(value)])
+        for task in selected:
+            command.extend(["-i", task])  # Validated IDs cannot contain fnmatch metacharacters.
+        for key in "HTTP_PROXY HTTPS_PROXY ALL_PROXY NO_PROXY http_proxy https_proxy all_proxy no_proxy".split():
+            if not args.block_network and key in os.environ:
+                command.extend(["--ve", f"{key}={os.environ[key]}"])
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(tooling) + os.pathsep + env.get("PYTHONPATH", "")
+        # Docker --no-delete still tears down containers; the shell owns image keep/delete policy.
+        if not interrupted:
+            process = subprocess.Popen(command, env=env, start_new_session=True)
+            # Also handle a signal received while Popen was starting Harbor.
+            if interrupted:
+                request_shutdown(interrupted, None)
+            status = process.wait()
+        seen = set()
+        for path in (args.output / "jobs/regrade").glob("*/result.json"):
+            trial = json.loads(path.read_text())
+            task = trial["task_name"].split("/")[-1]
+            if task not in selected or task in seen:
+                results.pop(task, None)
+                if task in selected:
+                    errors[task] = "Duplicate Harbor replay result"
+                raise ValueError(f"Unexpected or duplicate Harbor result: {task}")
+            seen.add(task)
+            reward = ((trial.get("verifier_result") or {}).get("rewards") or {}).get("reward")
+            if not trial.get("exception_info") and type(reward) in (int, float) and reward in (0, 1):
+                results[task] = reward == 1
+                errors.pop(task)
+    except (OSError, ValueError, KeyError, TypeError, AttributeError, subprocess.SubprocessError) as error:
+        # Never copy command arguments or trial exceptions containing proxy credentials into reports.
+        status = 1
+        detail = str(error) if type(error) is ValueError else type(error).__name__
+        errors.update(dict.fromkeys(set(selected) - results.keys(), f"Harbor replay failed: {detail}"))
+    finally:
+        try:
+            (args.output / "eval_results.json").write_text(json.dumps(build_pro_report(results, errors), indent=2))
+        finally:
+            for sig, handler in previous_handlers.items():
+                signal.signal(sig, handler)
+    return int(bool(status or errors or interrupted))
 
 
 def select_verified(args: argparse.Namespace) -> None:
@@ -432,16 +565,21 @@ def merge_eval_reports(args: argparse.Namespace) -> None:
     print(f"Merged {len(report_paths)} SWE-bench Verified evaluation chunks")
 
 
-def build_pro_report(results):
+def build_pro_report(results, errors=None):
+    errors = errors or {}
     results = dict(sorted(results.items()))
     resolved_ids = [instance_id for instance_id, resolved in results.items() if resolved]
     unresolved_ids = [instance_id for instance_id, resolved in results.items() if not resolved]
-    total = len(results)
+    total = len(results) + len(errors)
     resolved = len(resolved_ids)
     return {
         "schema_version": 1,
         "benchmark": "swebench_pro",
-        "evaluated_instances": total,
+        "evaluated_instances": len(results),
+        "total_instances": total,
+        "error_instances": len(errors),
+        "error_ids": sorted(errors),
+        "errors": errors,
         "resolved_instances": resolved,
         "unresolved_instances": len(unresolved_ids),
         "accuracy": resolved / total if total else 0.0,
@@ -455,12 +593,20 @@ def build_pro_report(results):
 def merge_pro_reports(args: argparse.Namespace) -> None:
     report_paths = [Path(line) for line in Path(args.chunk_list).read_text().splitlines() if line.strip()]
     reports = {}
+    errors = {}
     for path in report_paths:
         if path.is_file():
-            reports.update(json.loads(path.read_text()))
-    if reports:
+            payload = json.loads(path.read_text())
+            results = payload.get("results", payload)
+            chunk_errors = payload.get("errors", {})
+            for instance_id in set(results) | set(chunk_errors):
+                reports.pop(instance_id, None)
+                errors.pop(instance_id, None)
+            reports.update(results)
+            errors.update(chunk_errors)
+    if reports or errors:
         Path(args.report).parent.mkdir(parents=True, exist_ok=True)
-        Path(args.report).write_text(json.dumps(build_pro_report(reports), indent=2))
+        Path(args.report).write_text(json.dumps(build_pro_report(reports, errors), indent=2))
     else:
         Path(args.report).unlink(missing_ok=True)
     print(f"Merged {len(reports)} SWE-bench Pro evaluation results")
@@ -512,7 +658,7 @@ def pro_report(args):
     report = json.loads(Path(args.report).read_text())
     results = report.get("results", report)
     passed = report.get("resolved_instances", sum(bool(value) for value in results.values()))
-    total = report.get("evaluated_instances", len(results))
+    total = report.get("total_instances", report.get("evaluated_instances", len(results)))
     print(f"Local accuracy: {passed}/{total} = {passed / total * 100 if total else 0:.1f}%")
     for instance_id, resolved in sorted(results.items(), key=lambda item: (not item[1], item[0])):
         print(f"  {'PASS' if resolved else 'FAIL'}  {instance_id}")
@@ -594,10 +740,21 @@ def build_parser():
     command.set_defaults(func=prepare_pro_chunk)
 
     command = commands.add_parser("select-pro")
+    command.add_argument(
+        "--dataset", default="ScaleAI/SWE-bench_Pro", choices=("ScaleAI/SWE-bench_Pro", "lvkaokao/swe-bench-pro-120")
+    )
     command.add_argument("--csv", required=True)
     command.add_argument("--images", required=True)
     command.add_argument("--slice", default="")
     command.set_defaults(func=select_pro)
+
+    command = commands.add_parser("evaluate-pro")
+    for name in ("tasks-root", "instances", "patches", "output"):
+        command.add_argument(f"--{name}", required=True, type=Path)
+    for name in ("workers", "pull-timeout"):
+        command.add_argument(f"--{name}", required=True, type=int)
+    command.add_argument("--block-network", action="store_true")
+    command.set_defaults(func=evaluate_pro)
 
     command = commands.add_parser("select-verified")
     command.add_argument("--images", required=True)
@@ -680,4 +837,4 @@ def build_parser():
 
 if __name__ == "__main__":
     arguments = build_parser().parse_args()
-    arguments.func(arguments)
+    sys.exit(arguments.func(arguments))
