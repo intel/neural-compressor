@@ -30,7 +30,7 @@ Functions
 Module Contents
 ---------------
 
-.. py:class:: ElemFormat(*args, **kwds)
+.. py:class:: ElemFormat
 
 
 
