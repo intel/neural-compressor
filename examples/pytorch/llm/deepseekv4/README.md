@@ -44,33 +44,37 @@ bash run_quant.sh \
 Then run serving + evaluation in one command:
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1 bash run_evalscope.sh \
-  --model /workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP4-Mixed \
-  --tp 2 \
-  --port 8009 \
-  --tasks piqa,hellaswag,gsm8k,mmlu_pro,math_500,mmlu,aime26,gpqa_diamond,ruler_qa_squad
-  --temp 1.0
+CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh \
+  --model_path=/workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP4-Mixed \
+  --tasks=piqa,hellaswag,gsm8k,mmlu_pro,math_500,mmlu,aime26,gpqa_diamond,ruler_qa_squad \
+  --temperature=1.0
 ```
 
-Equivalent vLLM defaults inside `run_evalscope.sh`:
+`run_benchmark.sh` routes each task to a shared driver; each driver starts and stops its own vLLM server:
+
+- RULER (`*ruler*`, `niah_*`) and LongBench (`*longbench*`) tasks run with `benchmark/lm_eval/run_lm_eval.sh`.
+- All other tasks run with `benchmark/evalscope/run_evalscope.sh`. Use `--num_runs` to repeat tasks.
+
+Equivalent vLLM defaults used by `run_benchmark.sh`:
 
 ```bash
 SAFETENSORS_FAST_GPU=1 CUDA_VISIBLE_DEVICES=0,1 vllm serve <model> \
+  --tensor-parallel-size 2 \
   --trust-remote-code \
   --kv-cache-dtype fp8 \
   --block-size 256 \
-  --tensor-parallel-size 2 \
   --attention_config.use_fp4_indexer_cache=True \
-  --port 8009 \
   --no-enable-flashinfer-autotune
 ```
 
 If model basename is exactly `DeepSeek-V4-Flash` or `DeepSeek-V4-Pro` (without extra suffix),
-`run_evalscope.sh` will also add (automatically):
+`run_benchmark.sh` will also add (automatically):
 
 ```bash
 --enable-expert-parallel --moe-backend deep_gemm_mega_moe
 ```
+
+For `DeepSeek-V4-Pro` models, the evalscope server also uses `--max-model-len 1048576`.
 
 Mixed preset example:
 
@@ -93,15 +97,19 @@ bash run_quant.sh \
 - `--export_format`: `auto_round` or `llm_compressor` (default: `llm_compressor`).
 - `--ignore_layers`: comma-separated layer patterns (default: `compressor,indexer.weights_proj`).
 
-`run_evalscope.sh` arguments:
+`run_benchmark.sh` arguments (tensor parallel size is inferred from `CUDA_VISIBLE_DEVICES`):
 
-- `--model`: model path for vLLM and evalscope.
-- `--port`: vLLM API port (default: `8009`).
-- `--temp`: generation temperature used by evalscope (default: `0`).
-- `--skip_serve`: skip starting vLLM (use existing endpoint on the same `--port`).
-- `--tp`: tensor parallel size for vLLM (default: `2`).
-- `--kv-cache-dtype`: kv cache dtype for vLLM (default: `fp8`).
-- `--block-size`: vLLM block size (default: `256`).
+- `--model_path`: model path for vLLM (required).
+- `--tasks`: comma-separated tasks (default: `aime26,gpqa_diamond,piqa,hellaswag,gsm8k,mmlu_pro,math_500,mmlu`).
+- `--static_kv_dtype` / `--static_attention_dtype`: static FP8 KV cache / attention, passed to both drivers (default: `auto`).
+- evalscope options:
+  - `--temperature`: generation temperature (default: `0`).
+  - `--num_runs`: times each task is evaluated; with 3 or more runs max/min are dropped before averaging (default: `1`); `hellaswag`, `piqa`, `mmlu` and `gsm8k` always run once.
+  - `--eval_batch_size`: evalscope concurrent requests (default: `256`, `10` for DeepSeek-V4-Pro).
+  - `--port`: vLLM API port (default: `$SERVER_PORT` or `8001`).
+  - `--max_model_len`, `--top_p`, `--max_tokens`, `--served_model_name`.
+  - `--skip_serve=true`: skip starting vLLM and reuse an existing endpoint on `--port`.
+- lm_eval options: `--ruler_max_pos` (default: `131072`, e.g. `1048576` for 1M RULER), `--batch_size`, `--gpu_memory_utilization`.
 
 ## Notes
 
