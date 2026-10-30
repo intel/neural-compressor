@@ -31,7 +31,11 @@ from neural_compressor.jax.quantization.config import (
     JaxBaseConfig,
     JaxComposableConfig,
 )
-from neural_compressor.jax.utils.utility import check_backend, dtype_mapping
+from neural_compressor.jax.utils.utility import (
+    causal_lm_make_replace_build_cache,
+    check_backend,
+    dtype_mapping,
+)
 
 
 class VersionManager:
@@ -536,5 +540,9 @@ def prepare_deserialized_quantized_model(
             qmodel._tracker.unlock()
             qmodel.backbone = KerasQuantizedModelBackboneWrapper(qmodel.backbone, quant_config)
             qmodel._tracker.lock()
+
+    # Helper calibration states are restored after preparation; select dtypes at allocation.
+    if isinstance(model, Gemma3CausalLM):
+        causal_lm_make_replace_build_cache(model)
 
     return qmodel
