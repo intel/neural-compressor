@@ -39,7 +39,45 @@ from neural_compressor.jax.quantization import layers_static
 from neural_compressor.jax.quantization.layers_dynamic import QDynamicCachedGemma3Attention
 from neural_compressor.jax.quantization.layers_static import QStaticCachedGemma3Attention
 from neural_compressor.jax.utils import utility
-from neural_compressor.jax.utils.utility import dtype_mapping, select_kv_cache_dtype
+from neural_compressor.jax.utils.utility import (
+    FP8_KV_CACHE_ENV_VAR,
+    dtype_mapping,
+    is_fp8_kv_cache_enabled_by_env,
+    select_kv_cache_dtype,
+)
+
+FP8_KV_CACHE = is_fp8_kv_cache_enabled_by_env()
+requires_fp8_kv_cache = pytest.mark.skipif(
+    not FP8_KV_CACHE, reason=f"FP8 KV cache disabled; set {FP8_KV_CACHE_ENV_VAR}=1 to enable"
+)
+
+
+def _expected_cache_dtype(fp8_dtype, model_dtype):
+    """Return the expected KV-cache dtype of a static-quantized layer with calibrated K/V."""
+    return fp8_dtype if FP8_KV_CACHE else model_dtype
+
+
+@pytest.mark.parametrize(
+    ("env_value", "expected"),
+    [(None, False), ("0", False), ("false", False), ("1", True), ("true", True), ("ON", True)],
+)
+def test_fp8_cache_env_var(env_value, expected, monkeypatch):
+    if env_value is None:
+        monkeypatch.delenv(FP8_KV_CACHE_ENV_VAR, raising=False)
+    else:
+        monkeypatch.setenv(FP8_KV_CACHE_ENV_VAR, env_value)
+    is_fp8_kv_cache_enabled_by_env.cache_clear()
+    try:
+        assert is_fp8_kv_cache_enabled_by_env() is expected
+        attention = CachedGemma3Attention(head_dim=4, num_query_heads=2, num_key_value_heads=1)
+        activation_dtype = dtype_mapping["fp8_e4m3"]
+        QStaticCachedGemma3Attention.prepare(
+            attention, activation_dtype, activation_dtype, False, False, "per_tensor", False
+        )
+        assert attention._use_fp8_cache is expected
+    finally:
+        # Drop the value cached from the patched env so later tests see the real setting.
+        is_fp8_kv_cache_enabled_by_env.cache_clear()
 
 
 def _record_kv_cache_dtypes(model, monkeypatch):
@@ -255,9 +293,10 @@ def test_fp8_cache_requires_one_byte_floating_dtype(activation_dtype, expected):
     QStaticCachedGemma3Attention.prepare(
         attention, activation_dtype, activation_dtype, False, False, "per_tensor", False
     )
-    assert attention._use_fp8_cache is expected
+    assert attention._use_fp8_cache is (expected and FP8_KV_CACHE)
 
 
+@requires_fp8_kv_cache
 @pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"])
 @pytest.mark.parametrize("calibrated", [(False, False), (True, False), (False, True), (True, True)])
 @pytest.mark.parametrize("fused", [False, True])
@@ -374,6 +413,7 @@ def test_fp8_cache_with_incomplete_kv_calibration(
     assert set(calls) == ({"quantized"} if all(calibrated) else {"quantized", "original"})
 
 
+@requires_fp8_kv_cache
 @pytest.mark.parametrize("model_dtype", ["float32", "bfloat16"])
 @pytest.mark.parametrize("uncalibrated_helpers", [("k_qdq",), ("v_qdq",), ("k_qdq", "v_qdq")])
 def test_mixed_layer_kv_cache_save_load(model_dtype, uncalibrated_helpers, monkeypatch, tmp_path):
@@ -491,7 +531,9 @@ def test_text_prompt(dynamic, const_vars, model_dtype, quantization_dtype, rando
         )
         gemma_q = quantize_model(gemma, config, calib_fn, inplace=False)
 
-    expected_cache_dtypes = [model_dtype if dynamic else dtype_mapping[quantization_dtype]] * num_layers
+    expected_cache_dtypes = [
+        model_dtype if dynamic else _expected_cache_dtype(dtype_mapping[quantization_dtype], model_dtype)
+    ] * num_layers
 
     with tempfile.TemporaryDirectory() as tmpdir:
         save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
