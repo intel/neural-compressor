@@ -29,7 +29,7 @@ import keras
 import numpy as np
 import pytest
 from jax import numpy as jnp
-from jax_test_utility import compute_model_hash, load_image, load_model_from_preset
+from jax_test_utility import compare_models_briefly, compute_model_hash, load_image, load_model_from_preset
 from keras_hub.models import Gemma3Backbone, Gemma3CausalLM
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.vllm.context import vllm_context_scope
@@ -613,6 +613,9 @@ def test_image_recognition(dynamic, const_vars, model_dtype, quantization_dtype,
         keras.saving.save_model(gemma_q, save_path)
         gemma_q_loaded = keras.saving.load_model(save_path)
 
+    res, msg = compare_models_briefly(gemma_q, gemma_q_loaded)
+    assert res, f"Model is different after load!: {msg}"
+
     answer = gemma_q_loaded.generate(
         {
             "images": colva_beach_sq,
@@ -649,6 +652,9 @@ def test_static_quantization_with_incomplete_calibration(random_string, colva_be
         save_path = os.path.join(tmpdir, "gemma3_quantized.keras")
         keras.saving.save_model(gemma_q, save_path)
         gemma_q_loaded = keras.saving.load_model(save_path)
+
+    res, msg = compare_models_briefly(gemma_q, gemma_q_loaded)
+    assert res, f"Model is different after load!: {msg}"
 
     answer = gemma_q_loaded.generate(
         {

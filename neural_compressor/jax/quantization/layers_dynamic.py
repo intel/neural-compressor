@@ -311,7 +311,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         self._tracker.unlock()
         self.input_qdq.add_variables()
         kernel = ops.convert_to_tensor(super().kernel)
-        self.w_quant_axis = self._derive_w_quant() if self.w_quant_granularity == "per_channel" else None
+        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
         w_scale, _ = get_q_params(
             kernel,
             self.weight_dtype,
@@ -354,13 +354,13 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         self._trainable_variables.remove(self._kernel)
         del self._kernel
 
-        model_is_during_load = jnp.all(self.w_scale == 0.0)
-        if not model_is_during_load:
-            # convert variables to attributes (const) if needed
+        # convert variables to attributes (const) if needed
+        if not hasattr(self, "model_is_during_load"):
             for name in self._const_variables:
                 var = getattr(self, name)
                 value = jnp.array(var.value)
                 self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+                delattr(self, name)
                 setattr(self, name, value)
 
         self._tracker.lock()
@@ -404,7 +404,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
 class QDynamicDense(QDynamicDenseMixin, keras.layers.Dense):
     """Dynamically quantized Dense layer."""
 
-    def _derive_w_quant(self):
+    def _derive_w_quant_axis(self):
         return (0,)
 
 
@@ -415,7 +415,7 @@ verify_api(keras.layers.Dense, QDynamicDense, "call")
 class QDynamicEinsumDense(QDynamicDenseMixin, keras.layers.EinsumDense):
     """Dynamically quantized EinsumDense layer."""
 
-    def _derive_w_quant(self):
+    def _derive_w_quant_axis(self):
         self._set_quantization_info()
         return tuple(int(a) for a in self._kernel_reduced_axes)
 
@@ -445,7 +445,7 @@ class QDynamicConv2DMixin(QDynamicDenseMixin, keras.layers.Conv2D):
 class QDynamicConv2D(QDynamicConv2DMixin, keras.layers.Conv2D):
     """Dynamically quantized Conv2D layer."""
 
-    def _derive_w_quant(self):
+    def _derive_w_quant_axis(self):
         return tuple(i for i in range(self._kernel.ndim - 1))
 
 
@@ -935,6 +935,9 @@ verify_api(Gemma3VisionAttention, QDynamicGemma3VisionAttention, "call")
 class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbedding):
     """Dynamically quantized ReversibleEmbedding layer."""
 
+    def _derive_w_quant_axis(self):
+        return (0,)
+
     @classmethod
     def prepare(
         cls,
@@ -952,9 +955,9 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
             orig (ReversibleEmbedding): Original layer instance.
             weight_dtype (jnp.dtype): Dtype for quantized weights.
             activation_dtype (jnp.dtype): Dtype for quantized activations.
-            const_scale (bool): ignored, included for API consistency.
-            const_weight (bool): ignored, included for API consistency.
-            w_quant_granularity (str): ignored, included for API consistency.
+            const_scale (bool): Whether to use constant scales.
+            const_weight (bool): Whether to use constant weight.
+            w_quant_granularity (str): Whether to use per_channel or per_tensor quantization for weights
             dot_product_attention_enable (bool): ignored, included for API consistency.
 
         Returns:
@@ -962,9 +965,23 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         """
         orig._tracker.unlock()
         orig.__class__ = cls
+        orig.weight_dtype = weight_dtype
+        orig.activation_dtype = activation_dtype
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
+        orig.const_scale = const_scale
+        orig.const_weight = const_weight
+        orig.w_quant_granularity = w_quant_granularity
         orig.inputs_qdq = DynamicQDQLayer("inputs_qdq", activation_dtype, orig.dtype_policy, orig._is_int8)
-        orig.kernel_qdq = DynamicQDQLayer("kernel_qdq", weight_dtype, orig.dtype_policy, False)
+        if const_scale:
+            orig._const_variables = ["e_scale"]
+            if not orig.tie_weights:
+                orig._const_variables.append("re_scale")
+        else:
+            orig._const_variables = []
+        if const_weight:
+            orig._const_variables.append("_embeddings_transposed_quant")
+            if not orig.tie_weights:
+                orig._const_variables.append("_reverse_embeddings_quant")
         orig._tracker.lock()
         return orig
 
@@ -974,8 +991,72 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         Returns:
             None: Initializes activation helper layers.
         """
+        self._tracker.unlock()
         self.inputs_qdq.add_variables()
-        self.kernel_qdq.add_variables()
+        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
+        embeddings_tr = ops.transpose(self.embeddings.value)
+        e_scale, _ = get_q_params(
+            embeddings_tr,
+            self.weight_dtype,
+            self.compute_dtype,
+            asymmetric=False,
+            axis=self.w_quant_axis,
+        )
+        self.e_scale = self.add_weight(
+            name="e_scale",
+            shape=e_scale.shape,
+            initializer=keras.initializers.Constant(e_scale),
+            trainable=False,
+            autocast=False,
+            dtype=self.compute_dtype,
+        )
+        self._embeddings_transposed_quant = self.add_weight(
+            name="_embeddings_transposed_quant",
+            shape=embeddings_tr.shape,
+            initializer="zeros",
+            trainable=False,
+            autocast=False,
+            dtype=self.weight_dtype,
+        )
+        if not self.tie_weights:
+            re_scale, _ = get_q_params(
+                self.reverse_embeddings.value,
+                self.weight_dtype,
+                self.compute_dtype,
+                asymmetric=False,
+                axis=self.w_quant_axis,
+            )
+            self.re_scale = self.add_weight(
+                name="re_scale",
+                shape=re_scale.shape,
+                initializer=keras.initializers.Constant(re_scale),
+                trainable=False,
+                autocast=False,
+                dtype=self.compute_dtype,
+            )
+            self._reverse_embeddings_quant = self.add_weight(
+                name="_reverse_embeddings_quant",
+                shape=self.reverse_embeddings.value.shape,
+                initializer="zeros",
+                trainable=False,
+                autocast=False,
+                dtype=self.weight_dtype,
+            )
+        wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
+
+        embeddings_transposed_quant = wquantfun(
+            ops.transpose(self.embeddings.value), self.e_scale.value, axis=self.w_quant_axis
+        )
+        self._embeddings_transposed_quant.assign(embeddings_transposed_quant)
+
+        if not self.tie_weights:
+            reverse_embeddings_quant = wquantfun(
+                super().reverse_embeddings.value, self.re_scale.value, axis=self.w_quant_axis
+            )
+            self._reverse_embeddings_quant.assign(reverse_embeddings_quant)
+
+        self._tracker.lock()
 
     def post_quantization_cleanup(self):
         """Finalize dynamic quantization with no extra cleanup.
@@ -983,9 +1064,22 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         Returns:
             None: Keeps the layer ready for inference.
         """
-        pass
+        self._tracker.unlock()
 
-    # TODO maybe make kernel (offline) quantization for reversible embedding (self.embeddings in our path) ?
+        if hasattr(self, "reverve_embeddings"):
+            self._trainable_variables.remove(self.reverve_embeddings)
+            del self.reverse_embeddings
+
+        # convert variables to attributes (const) if needed
+        if not hasattr(self, "model_is_during_load"):
+            for name in self._const_variables:
+                var = getattr(self, name)
+                value = jnp.array(var.value)
+                self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+                delattr(self, name)
+                setattr(self, name, value)
+
+        self._tracker.lock()
 
     def call(self, inputs, reverse=False):
         """Compute forward or reverse embedding with activation quantization.
@@ -999,14 +1093,25 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         """
         if reverse:
             if self.tie_weights:
-                kernel = ops.transpose(ops.convert_to_tensor(self.embeddings))
+                if self.const_weight:
+                    kernel = ops.convert_to_tensor(self._embeddings_transposed_quant)
+                    scale = self.e_scale
+                else:
+                    kernel = ops.convert_to_tensor(self._embeddings_transposed_quant.value)
+                    scale = self.e_scale.value
             else:
-                kernel = self.reverse_embeddings
+                if self.const_weight:
+                    kernel = self.reverse_embeddings
+                    scale = self.re_scale
+                else:
+                    kernel = self.reverse_embeddings.value
+                    scale = self.re_scale.value
+
             if self.reverse_dtype is not None:
                 inputs = ops.cast(inputs, self.reverse_dtype)
                 kernel = ops.cast(kernel, self.reverse_dtype)
             inputs = self.inputs_qdq(inputs)
-            kernel = self.kernel_qdq(kernel)
+            kernel = self.wdequantfun(kernel, scale, axis=self.w_quant_axis)
             logits = ops.matmul(inputs, kernel)
             # Optionally soft-cap logits.
             if self.logit_soft_cap is not None:
