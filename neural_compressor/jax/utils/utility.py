@@ -18,7 +18,7 @@ from typing import Callable, Dict, Optional
 
 algos_mapping: Dict[str, Callable] = {}
 import itertools
-from functools import partial
+from functools import cache, partial
 
 import jax
 import keras
@@ -556,6 +556,24 @@ def _build_cache_fp8(
     )
     return hidden_states, cache
 # fmt: on
+
+
+FP8_KV_CACHE_ENV_VAR = "INC_JAX_FP8_KV_CACHE"
+
+
+@cache
+def is_fp8_kv_cache_enabled_by_env() -> bool:
+    """Check whether FP8 KV cache is enabled by the ``INC_JAX_FP8_KV_CACHE`` environment variable.
+
+    FP8 KV cache is disabled by default; set the variable to ``1``, ``true``, ``yes`` or ``on`` to enable it.
+    The variable is read once per process; call ``is_fp8_kv_cache_enabled_by_env.cache_clear()`` to re-read it.
+
+    Returns:
+        bool: True if FP8 KV cache is enabled.
+    """
+    import os
+
+    return os.environ.get(FP8_KV_CACHE_ENV_VAR, "0").strip().lower() in ("1", "true", "yes", "on")
 
 
 def select_kv_cache_dtype(layer, default_dtype):

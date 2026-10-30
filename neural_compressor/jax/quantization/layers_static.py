@@ -36,6 +36,7 @@ from neural_compressor.jax.utils.utility import (
     get_dequantize_fun,
     get_q_params,
     get_quantize_fun,
+    is_fp8_kv_cache_enabled_by_env,
     verify_api,
 )
 
@@ -1191,7 +1192,7 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         orig.__class__ = cls
         orig.activation_dtype = activation_dtype
         orig.dot_product_attention_enable = dot_product_attention_enable
-        orig._use_fp8_cache = (
+        orig._use_fp8_cache = is_fp8_kv_cache_enabled_by_env() and (
             jnp.issubdtype(activation_dtype, jnp.floating) and jnp.dtype(activation_dtype).itemsize == 1
         )
         orig.q_qdq = StaticQDQLayer("q_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
