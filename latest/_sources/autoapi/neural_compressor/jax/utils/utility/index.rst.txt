@@ -23,8 +23,11 @@ Functions
    neural_compressor.jax.utils.utility.get_q_params
    neural_compressor.jax.utils.utility.print_model
    neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function
+   neural_compressor.jax.utils.utility.select_kv_cache_dtype
+   neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache
    neural_compressor.jax.utils.utility.iterate_over_layers
    neural_compressor.jax.utils.utility.verify_api
+   neural_compressor.jax.utils.utility.verify_replacement_api
 
 
 Module Contents
@@ -154,6 +157,36 @@ Module Contents
    :rtype: Callable
 
 
+.. py:function:: select_kv_cache_dtype(layer, default_dtype)
+
+   Select the KV-cache dtype of a decoder layer and disable autocasting for FP8 caches.
+
+   FP8 is selected only when ``layer.attention.can_use_fp8_kv_cache()`` returns True.
+   In that case input autocasting is disabled on ``layer`` and ``layer.attention``,
+   since Keras would otherwise upcast the FP8 cache to the compute dtype.
+   Other layers are left unchanged and use ``default_dtype``.
+
+   :param layer: Decoder layer with an ``attention`` sublayer.
+   :type layer: keras.layers.Layer
+   :param default_dtype: Cache dtype for layers without an FP8 cache.
+   :type default_dtype: str | jnp.dtype
+
+   :returns: KV-cache dtype for the layer.
+   :rtype: str | jnp.dtype
+
+
+.. py:function:: causal_lm_make_replace_build_cache(self)
+
+   Replace _build_cache to allocate KV caches using each attention layer's dtype.
+
+   The cache dtype and autocasting are decided at cache allocation
+   (see ``select_kv_cache_dtype``). Any cached ``generate_function`` is
+   invalidated so the next ``generate()`` call traces the new cache path.
+
+   :param self: Causal language model instance to modify.
+   :type self: keras.Model
+
+
 .. py:function:: iterate_over_layers(model, operations, /, *, filter_function: Optional[Callable] = lambda _: True)
 
    Apply operations to model layers matching the filter function.
@@ -181,6 +214,21 @@ Module Contents
    :type method_name: str
 
    :returns: Logs an error if the method signatures differ.
+   :rtype: None
+
+
+.. py:function:: verify_replacement_api(orig_cls, method_name, replacement)
+
+   Check if a function bound as a method replacement matches the original method API.
+
+   :param orig_cls: Class owning the original method.
+   :type orig_cls: type
+   :param method_name: Name of the replaced method.
+   :type method_name: str
+   :param replacement: Function installed in place of ``orig_cls.method_name``.
+   :type replacement: Callable
+
+   :returns: Logs an error if the signatures differ.
    :rtype: None
 
 

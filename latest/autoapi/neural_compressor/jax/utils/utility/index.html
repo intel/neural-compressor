@@ -121,11 +121,20 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function" title="neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">causal_lm_make_replace_generate_function</span></code></a>(self[, revert])</p></td>
 <td><p>Replace generate function for calibration and restore on demand.</p></td>
 </tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.select_kv_cache_dtype" title="neural_compressor.jax.utils.utility.select_kv_cache_dtype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_kv_cache_dtype</span></code></a>(layer, default_dtype)</p></td>
+<td><p>Select the KV-cache dtype of a decoder layer and disable autocasting for FP8 caches.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache" title="neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache"><code class="xref py py-obj docutils literal notranslate"><span class="pre">causal_lm_make_replace_build_cache</span></code></a>(self)</p></td>
+<td><p>Replace _build_cache to allocate KV caches using each attention layer's dtype.</p></td>
+</tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.iterate_over_layers" title="neural_compressor.jax.utils.utility.iterate_over_layers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iterate_over_layers</span></code></a>(model, operations, /, *[, ...])</p></td>
 <td><p>Apply operations to model layers matching the filter function.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.verify_api" title="neural_compressor.jax.utils.utility.verify_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_api</span></code></a>(orig_cls, quant_cls, method_name)</p></td>
 <td><p>Check if quantized layer method API matches original layer method API.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.verify_replacement_api" title="neural_compressor.jax.utils.utility.verify_replacement_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_replacement_api</span></code></a>(orig_cls, method_name, replacement)</p></td>
+<td><p>Check if a function bound as a method replacement matches the original method API.</p></td>
 </tr>
 </tbody>
 </table>
@@ -309,6 +318,44 @@ dtypes or symmetric quantization.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.select_kv_cache_dtype">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">select_kv_cache_dtype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dtype</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.select_kv_cache_dtype" title="Link to this definition"></a></dt>
+<dd><p>Select the KV-cache dtype of a decoder layer and disable autocasting for FP8 caches.</p>
+<p>FP8 is selected only when <code class="docutils literal notranslate"><span class="pre">layer.attention.can_use_fp8_kv_cache()</span></code> returns True.
+In that case input autocasting is disabled on <code class="docutils literal notranslate"><span class="pre">layer</span></code> and <code class="docutils literal notranslate"><span class="pre">layer.attention</span></code>,
+since Keras would otherwise upcast the FP8 cache to the compute dtype.
+Other layers are left unchanged and use <code class="docutils literal notranslate"><span class="pre">default_dtype</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>layer</strong> (<em>keras.layers.Layer</em>) – Decoder layer with an <code class="docutils literal notranslate"><span class="pre">attention</span></code> sublayer.</p></li>
+<li><p><strong>default_dtype</strong> (<em>str</em><em> | </em><em>jnp.dtype</em>) – Cache dtype for layers without an FP8 cache.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>KV-cache dtype for the layer.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>str | jnp.dtype</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">causal_lm_make_replace_build_cache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache" title="Link to this definition"></a></dt>
+<dd><p>Replace _build_cache to allocate KV caches using each attention layer’s dtype.</p>
+<p>The cache dtype and autocasting are decided at cache allocation
+(see <code class="docutils literal notranslate"><span class="pre">select_kv_cache_dtype</span></code>). Any cached <code class="docutils literal notranslate"><span class="pre">generate_function</span></code> is
+invalidated so the next <code class="docutils literal notranslate"><span class="pre">generate()</span></code> call traces the new cache path.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><p><strong>self</strong> (<em>keras.Model</em>) – Causal language model instance to modify.</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.iterate_over_layers">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">iterate_over_layers</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">operations</span></span></em>, <em class="sig-param"><span class="positional-only-separator o"><abbr title="Positional-only parameter separator (PEP 570)"><span class="pre">/</span></abbr></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">filter_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">lambda</span> <span class="pre">_:</span> <span class="pre">...</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.iterate_over_layers" title="Link to this definition"></a></dt>
 <dd><p>Apply operations to model layers matching the filter function.</p>
@@ -350,6 +397,27 @@ dtypes or symmetric quantization.</p>
 </dl>
 </dd></dl>
 
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.verify_replacement_api">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">verify_replacement_api</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">orig_cls</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">method_name</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">replacement</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.verify_replacement_api" title="Link to this definition"></a></dt>
+<dd><p>Check if a function bound as a method replacement matches the original method API.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>orig_cls</strong> (<em>type</em>) – Class owning the original method.</p></li>
+<li><p><strong>method_name</strong> (<em>str</em>) – Name of the replaced method.</p></li>
+<li><p><strong>replacement</strong> (<em>Callable</em>) – Function installed in place of <code class="docutils literal notranslate"><span class="pre">orig_cls.method_name</span></code>.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Logs an error if the signatures differ.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>None</p>
+</dd>
+</dl>
+</dd></dl>
+
 </section>
 </section>
 
@@ -367,7 +435,7 @@ dtypes or symmetric quantization.</p>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x71fa7e65ce50> 
+   <jinja2.runtime.BlockReference object at 0x790cd75a9d30> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
