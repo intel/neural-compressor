@@ -33,7 +33,16 @@ def _matmul(a, b):
 
 
 def compute_expected_qdq_dense_output(
-    test_input, calib_data, weights, weight_dtype, activation_dtype, dynamic, model_dtype, granularity
+    test_input,
+    calib_data,
+    weights,
+    weight_dtype,
+    activation_dtype,
+    dynamic,
+    model_dtype,
+    granularity,
+    use_onednn_custom_calls,
+    use_excess_precision,
 ):
     """Compute expected output for one or more Dense layers after FP8/int8 quantize-dequantize (QDQ).
 
@@ -51,11 +60,36 @@ def compute_expected_qdq_dense_output(
     Returns:
         tuple: (expected_output, first_layer_activation_scale, first_layer_weight_scale)
     """
+
+    model_dtype = np.dtype(model_dtype)
+
+    def formal_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale):
+        """INC / default XLA route: dequantize both operands in model_dtype, then matmul."""
+        weights = q_weights.astype(model_dtype) * w_scale
+        if a_zero_point is not None:
+            input = (q_input.astype(model_dtype) - a_zero_point) * a_scale
+        else:
+            input = q_input.astype(model_dtype) * a_scale
+        return _matmul(input, weights)
+
+    def onednn_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale, use_excess_precision=True):
+        """oneDNN route: matmul raw quantized values with f32 accumulation, then apply
+        the combined (activation * weight) scale once and cast to model_dtype."""
+        if a_zero_point is not None:
+            q_input = q_input.astype(np.float32) - np.asarray(a_zero_point, dtype=np.float32)
+        acc = np.matmul(q_input, q_weights.astype(np.float32))
+        scale = np.asarray(a_scale, dtype=np.float32) * np.asarray(w_scale, dtype=np.float32)
+        output = acc * scale
+
+        if use_excess_precision:
+            return output
+        return output.astype(model_dtype)
+
     w_dtype_min, w_dtype_max = _dtype_min_max(weight_dtype, out_dtype=model_dtype)
     a_dtype_min, a_dtype_max = _dtype_min_max(activation_dtype, out_dtype=model_dtype)
 
-    # Convert inputs to model_dtype numpy arrays
-    current_input = np.asarray(test_input, dtype=model_dtype)
+    input_compute_dtype = np.float32 if use_excess_precision else model_dtype
+    current_input = np.asarray(test_input, dtype=input_compute_dtype)
     current_calib = np.asarray(calib_data, dtype=model_dtype)
 
     all_a_scales = []
@@ -84,29 +118,35 @@ def compute_expected_qdq_dense_output(
         all_a_scales.append(a_scale)
         all_w_scales.append(w_scale)
 
-        # QDQ weights
+        # Quantize weights and input
         if np.issubdtype(weight_dtype, np.integer):
-            qdq_weights = np.clip(np.round(layer_weights / w_scale), w_dtype_min, w_dtype_max).astype(weight_dtype)
+            q_weights = np.clip(np.round(layer_weights / w_scale), w_dtype_min, w_dtype_max).astype(weight_dtype)
         else:
-            qdq_weights = np.clip(layer_weights / w_scale, w_dtype_min, w_dtype_max).astype(weight_dtype)
-        qdq_weights = qdq_weights.astype(model_dtype) * w_scale
+            q_weights = np.clip(layer_weights / w_scale, w_dtype_min, w_dtype_max).astype(weight_dtype)
 
-        # QDQ input
         if np.issubdtype(activation_dtype, np.integer):
             val = np.round(current_input / a_scale) + a_zero_point
-            val = np.clip(val, a_dtype_min, a_dtype_max).astype(activation_dtype)
-            qdq_input = (val.astype(model_dtype) - a_zero_point) * a_scale
+            q_input = np.clip(val, a_dtype_min, a_dtype_max).astype(activation_dtype)
         else:
-            qdq_input = np.clip(current_input / a_scale, a_dtype_min, a_dtype_max).astype(activation_dtype)
-            qdq_input = qdq_input.astype(model_dtype) * a_scale
+            q_input = np.clip(current_input / a_scale, a_dtype_min, a_dtype_max).astype(activation_dtype)
 
         # Propagate calib through unquantized layer to get next layer's calib input
         current_calib = _matmul(current_calib, layer_weights)
 
         # Compute output for this layer
-        current_input = _matmul(qdq_input, qdq_weights)
+        if use_onednn_custom_calls:
+            current_input = onednn_dq_dense(
+                q_input,
+                q_weights,
+                a_scale,
+                a_zero_point,
+                w_scale,
+                use_excess_precision,
+            )
+        else:
+            current_input = formal_dq_dense(q_input, q_weights, a_scale, a_zero_point, w_scale)
 
-    return current_input, all_a_scales, all_w_scales
+    return current_input.astype(model_dtype), all_a_scales, all_w_scales
 
 
 def load_image(image_path, target_size):

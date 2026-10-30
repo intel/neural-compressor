@@ -104,7 +104,7 @@ class _BaseINCAutoModelClass:
         quantization_config = kwargs.pop("quantization_config", None)
         for_inference = kwargs.pop("for_inference", True)
         if not isinstance(config, PretrainedConfig):
-            config, _ = AutoConfig.from_pretrained(
+            config, _ = AutoConfig.from_pretrained(  # nosec B615 - caller-supplied model
                 pretrained_model_name_or_path,
                 return_unused_kwargs=True,
                 **kwargs,
@@ -395,14 +395,12 @@ class _BaseINCAutoModelClass:
             from transformers.modeling_utils import _get_resolved_checkpoint_files
 
             gguf_file = kwargs.pop("gguf_file", None)
-            from_tf = kwargs.pop("from_tf", False)
             from_flax = kwargs.pop("from_flax", False)
             checkpoint_files, sharded_metadata = _get_resolved_checkpoint_files(
                 pretrained_model_name_or_path=pretrained_model_name_or_path,
                 subfolder=subfolder,
                 variant=variant,
                 gguf_file=gguf_file,
-                from_tf=from_tf,
                 from_flax=from_flax,
                 use_safetensors=use_safetensors,
                 cache_dir=cache_dir,
@@ -549,7 +547,7 @@ class _BaseINCAutoModelClass:
                                 is_sharded = True
 
                         if resolved_archive_file is None:
-                            # Otherwise, maybe there is a TF or Flax model file.  We try those to give a helpful error
+                            # Otherwise, maybe there is a Flax model file.  We try it to give a helpful error
                             # message.
                             has_file_kwargs = {
                                 "revision": revision,

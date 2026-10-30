@@ -4,4 +4,3 @@ prettytable
 psutil
 py-cpuinfo
 pydantic
-torchao

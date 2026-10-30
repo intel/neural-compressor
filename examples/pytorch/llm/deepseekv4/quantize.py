@@ -57,8 +57,8 @@ def build_config(args: argparse.Namespace) -> AutoRoundConfig:
         scheme=preset["scheme"],
         ignore_layers=args.ignore_layers,
         layer_config=layer_config,
-        export_format=args.format,
-        output_dir=args.output_model,
+        export_format=args.export_format,
+        output_dir=args.export_path,
         reloading=False,
     )
 
@@ -73,13 +73,13 @@ def main() -> None:
         help="Quantization preset. e.g. mxfp4 or mxfp4_mixed",
     )
     parser.add_argument(
-        "--input_model",
+        "--model_name_or_path",
         type=str,
         required=True,
         help="Model name or local path.",
     )
     parser.add_argument(
-        "--output_model",
+        "--export_path",
         type=str,
         required=True,
         help="Output directory for quantized model.",
@@ -91,7 +91,7 @@ def main() -> None:
         help="Comma-separated layer name patterns to skip.",
     )
     parser.add_argument(
-        "--format",
+        "--export_format",
         type=str,
         default="llm_compressor",
         choices=["auto_round", "llm_compressor"],
@@ -106,10 +106,10 @@ def main() -> None:
 
     quant_config = build_config(args)
 
-    model = args.input_model
+    model = args.model_name_or_path
     model = prepare(model, quant_config)
     _ = convert(model)
-    logger.info("Quantized model saved to %s", args.output_model)
+    logger.info("Quantized model saved to %s", args.export_path)
 
 
 if __name__ == "__main__":

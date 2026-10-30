@@ -159,7 +159,7 @@ class CNNDAILYMAIL(object):
 
     def load_tokenizer(self):
         """Returns the tokenizer."""
-        self.tokenizer = AutoTokenizer.from_pretrained(
+        self.tokenizer = AutoTokenizer.from_pretrained(  # nosec B615 - model_path is supplied by the caller
             self.model_path,
             model_max_length=2048,
             padding_side="left",

@@ -300,7 +300,6 @@ In our experiments, an $\alpha$ range of [0.0, 1.0] with a step_size of 0.1 is f
 |:---------:|----------------|---------------------------|
 | PyTorch   | [0-1] / 'auto' | False                     |
 | IPEX      | [0-1] / 'auto' | True / False(Version>2.1) |
-| Tensorflow| [0-1]          | False                     |
 
 ## Reference
 

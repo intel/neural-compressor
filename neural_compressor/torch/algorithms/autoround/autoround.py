@@ -304,7 +304,9 @@ class AutoRoundQuantizer(Quantizer):
                 )
                 import transformers  # pylint: disable=E0401
 
-                model = transformers.AutoModelForCausalLM.from_pretrained(self.output_dir, device_map="auto")
+                model = transformers.AutoModelForCausalLM.from_pretrained(  # nosec B615 - local output_dir
+                    self.output_dir, device_map="auto"
+                )
             except Exception as e:
                 logger.error(f"Error reloading model: {e}")
 

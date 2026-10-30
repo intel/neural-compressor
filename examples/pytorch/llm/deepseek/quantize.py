@@ -65,14 +65,14 @@ def quant_model(args):
         prepare,
     )
 
-    config = topologies_config[args.t]
-    output_dir = f"{args.output_dir}"
+    config = topologies_config[args.dtype]
+    output_dir = f"{args.export_path}"
     static_kv_dtype = args.static_kv_dtype
     iters = config["iters"]
     if (static_kv_dtype == "fp8" or args.static_attention_dtype == "fp8") and iters > 0:
         logger.warning("When using static kv dtype or static attn dtype as fp8, setting iters to 0.")
         iters = 0
-    fp32_model, tokenizer = get_model_and_tokenizer(args.model)
+    fp32_model, tokenizer = get_model_and_tokenizer(args.model_name_or_path)
     # if export_format is llm_compressor, scheme with RCEIL is not supported. 
     scheme = config["scheme"] if args.export_format == "auto_round" else config["scheme"].replace("_RCEIL", "")
     quant_config = AutoRoundConfig(
@@ -94,7 +94,7 @@ def quant_model(args):
 
     # quantizer execute
     model = prepare(model=fp32_model, quant_config=quant_config)
-    inc_model = convert(model)
+    convert(model)
     logger.info(f"Quantized model saved to {output_dir}")
 
 
@@ -104,12 +104,12 @@ if __name__ == "__main__":
     # Parse command-line arguments
     parser = argparse.ArgumentParser(description="Select a quantization scheme.")
     parser.add_argument(
-        "--model",
+        "--model_name_or_path",
         type=str,
         help="Path to the pre-trained model or model identifier from Hugging Face Hub.",
     )
     parser.add_argument(
-        "-t",
+        "--dtype",
         type=str,
         choices=topologies_config.keys(),
         default="mxfp4",
@@ -123,15 +123,17 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--static_kv_dtype",
-        type=str,
         default=None,
-        help="Data type to use KV Cache. e.g. fp8",
+        type=str,
+        choices=["fp8", "float8_e4m3fn"],
+        help="Data type for static quantize key and value.",
     )
     parser.add_argument(
         "--static_attention_dtype",
+        default=None,
         type=str,
-        choices=["fp8", None],
-        help="Data type to use Attention Cache. e.g. fp8",
+        choices=["fp8", "float8_e4m3fn"],
+        help="Data type for static quantize attention.",
     )
     parser.add_argument(
         "--export_format",
@@ -152,9 +154,9 @@ if __name__ == "__main__":
         help="Number of iterations for quantization.",
     )
     parser.add_argument(
-        "--output_dir",
+        "--export_path",
         type=str,
-        default="./",
+        default="saved_results",
         help="Directory to save the quantized model.",
     )
 

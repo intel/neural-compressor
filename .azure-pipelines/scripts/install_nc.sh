@@ -23,11 +23,6 @@ if [[ $1 = *"3x_pt"* ]]; then
     fi
     python setup.py pt bdist_wheel
     uv pip install --no-deps dist/neural_compressor*.whl --force-reinstall
-elif [[ $1 = *"3x_tf"* ]]; then
-	uv pip install tensorflow==2.19.0
-    uv pip install --no-cache-dir -r requirements_tf.txt
-    python setup.py tf bdist_wheel
-    uv pip install dist/neural_compressor*.whl --force-reinstall
 elif [[ $1 = *"3x_jax"* ]]; then
     uv pip install --no-cache-dir -r requirements_jax.txt
     python setup.py jax bdist_wheel
