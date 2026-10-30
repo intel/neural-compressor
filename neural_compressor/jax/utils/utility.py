@@ -27,6 +27,7 @@ import keras_hub.src.utils.tensor_utils as tensor_utils
 import ml_dtypes
 from jax import numpy as jnp
 from keras import ops, tree
+from keras_hub.models import Gemma3CausalLM
 
 from neural_compressor.common import logger
 
@@ -506,6 +507,98 @@ def causal_lm_make_replace_generate_function(self, revert=False):
     return self.generate_function
 
 
+# fmt: off
+def _build_cache_fp8(
+    self,
+    token_ids,
+    img_embeddings,
+    vision_mask,
+    padding_mask,
+    vision_indices,
+):
+    """Build an empty cache for use with `call_with_cache()`.
+
+    Attention layers select FP8 only when both K/V helpers are calibrated.
+    Other layers use the model compute dtype. The decision is made here, at
+    allocation, because K/V calibration states are only restored after
+    deserialization-time preparation.
+    """
+    batch_size = ops.shape(token_ids)[0]
+    max_length = (
+        ops.shape(token_ids)[1]
+        # + self.backbone.image_sequence_length
+    )
+    # num_layers = self.backbone.num_layers
+    num_heads = self.backbone.num_key_value_heads
+    head_dim = self.backbone.head_dim
+    # Allocate per-layer (key, value) caches as a tuple.
+    layer_shape = [batch_size, max_length, num_heads, head_dim]
+    cache = []
+    for layer in self.backbone.transformer_layers:
+        cache_dtype = select_kv_cache_dtype(layer, self.compute_dtype)
+        cache.append(
+            (
+                ops.zeros(layer_shape, dtype=cache_dtype),
+                ops.zeros(layer_shape, dtype=cache_dtype),
+            )
+        )
+    cache = tuple(cache)
+    # Seed the cache.
+    logits, hidden_states, cache = self.call_with_cache(
+        token_ids=token_ids,
+        img_embeddings=img_embeddings,
+        vision_mask=vision_mask,
+        cache=cache,
+        cache_update_index=0,
+        padding_mask=padding_mask,
+        vision_indices=vision_indices,
+        cache_update_mask=None,
+    )
+    return hidden_states, cache
+# fmt: on
+
+
+def select_kv_cache_dtype(layer, default_dtype):
+    """Select the KV-cache dtype of a decoder layer and disable autocasting for FP8 caches.
+
+    FP8 is selected only when ``layer.attention.can_use_fp8_kv_cache()`` returns True.
+    In that case input autocasting is disabled on ``layer`` and ``layer.attention``,
+    since Keras would otherwise upcast the FP8 cache to the compute dtype.
+    Other layers are left unchanged and use ``default_dtype``.
+
+    Args:
+        layer (keras.layers.Layer): Decoder layer with an ``attention`` sublayer.
+        default_dtype (str | jnp.dtype): Cache dtype for layers without an FP8 cache.
+
+    Returns:
+        str | jnp.dtype: KV-cache dtype for the layer.
+    """
+    attention = layer.attention
+    can_use_fp8_kv_cache = getattr(attention, "can_use_fp8_kv_cache", None)
+    if can_use_fp8_kv_cache is None or not can_use_fp8_kv_cache():
+        return default_dtype
+    layer.autocast = False
+    attention.autocast = False
+    return attention.activation_dtype
+
+
+def causal_lm_make_replace_build_cache(self):
+    """Replace _build_cache to allocate KV caches using each attention layer's dtype.
+
+    The cache dtype and autocasting are decided at cache allocation
+    (see ``select_kv_cache_dtype``). Any cached ``generate_function`` is
+    invalidated so the next ``generate()`` call traces the new cache path.
+
+    Args:
+        self (keras.Model): Causal language model instance to modify.
+    """
+    import types
+
+    self._build_cache = types.MethodType(_build_cache_fp8, self)
+    # Drop any previously traced generate function so the next generate() retraces with the new cache path.
+    self.generate_function = None
+
+
 def iterate_over_layers(model, operations, /, *, filter_function: Optional[Callable] = lambda _: True):
     """Apply operations to model layers matching the filter function.
 
@@ -540,8 +633,33 @@ def verify_api(orig_cls, quant_cls, method_name):
     orig_method = getattr(orig_cls, method_name)
     quant_method = getattr(quant_cls, method_name)
     if inspect.signature(orig_method) != inspect.signature(quant_method):
+        library = orig_cls.__module__.split(".", 1)[0]
         logger.error(
             f"Signature of {orig_cls.__name__}.{method_name} has changed, "
             f"please update {quant_cls.__name__} class to match it, "
-            "or revert Keras to earlier version where the signature is not changed.\n"
+            f"or use an earlier compatible version of {library}.\n"
         )
+
+
+def verify_replacement_api(orig_cls, method_name, replacement):
+    """Check if a function bound as a method replacement matches the original method API.
+
+    Args:
+        orig_cls (type): Class owning the original method.
+        method_name (str): Name of the replaced method.
+        replacement (Callable): Function installed in place of ``orig_cls.method_name``.
+
+    Returns:
+        None: Logs an error if the signatures differ.
+    """
+    orig_method = getattr(orig_cls, method_name)
+    if inspect.signature(orig_method) != inspect.signature(replacement):
+        library = orig_cls.__module__.split(".", 1)[0]
+        logger.error(
+            f"Signature of {orig_cls.__name__}.{method_name} has changed, "
+            f"please update {replacement.__qualname__} to match it, "
+            f"or use an earlier compatible version of {library}.\n"
+        )
+
+
+verify_replacement_api(Gemma3CausalLM, "_build_cache", _build_cache_fp8)

@@ -28,6 +28,7 @@ from keras import ops
 from keras.src.backend import set_keras_mask
 from keras_hub.src.models.gemma3.gemma3_attention import CachedGemma3Attention
 from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttention
+from keras_hub.src.vllm.context import get_vllm_context
 
 from neural_compressor.common import logger
 from neural_compressor.jax.quantization.saving import SaveableLayerMixin
@@ -1146,6 +1147,20 @@ verify_api(keras.layers.MultiHeadAttention, QStaticMultiHeadAttention, "_compute
 class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
     """Statically quantized CachedGemma3Attention layer."""
 
+    def can_use_fp8_kv_cache(self) -> bool:
+        """Return whether both K/V helpers can store quantized FP8 values."""
+        return self._use_fp8_cache and self.k_qdq._is_quantized is True and self.v_qdq._is_quantized is True
+
+    def _prepare_k_for_attention(self, key):
+        if self.can_use_fp8_kv_cache():
+            return self.k_qdq.call_dq(key)
+        return self.k_qdq(key)
+
+    def _prepare_v_for_attention(self, value):
+        if self.can_use_fp8_kv_cache():
+            return self.v_qdq.call_dq(value)
+        return self.v_qdq(value)
+
     @classmethod
     def prepare(
         cls,
@@ -1174,7 +1189,11 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         """
         orig._tracker.unlock()
         orig.__class__ = cls
+        orig.activation_dtype = activation_dtype
         orig.dot_product_attention_enable = dot_product_attention_enable
+        orig._use_fp8_cache = (
+            jnp.issubdtype(activation_dtype, jnp.floating) and jnp.dtype(activation_dtype).itemsize == 1
+        )
         orig.q_qdq = StaticQDQLayer("q_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
         orig.k_qdq = StaticQDQLayer("k_qdq", activation_dtype, orig.dtype_policy, False, const_scale)
         orig.attention_softmax_qdq = StaticQDQLayer(
@@ -1265,8 +1284,8 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             else:
                 kwargs = {}
             q = self.q_qdq(q)
-            k = self.k_qdq(k)
-            v = self.v_qdq(v)
+            k = self._prepare_k_for_attention(k)
+            v = self._prepare_v_for_attention(v)
             return ops.dot_product_attention(
                 query=q,
                 key=k,
@@ -1291,7 +1310,7 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
 
         # Fallback to standard attention if flash attention is disabled
         q = self.q_qdq(q)
-        k = self.k_qdq(k)
+        k = self._prepare_k_for_attention(k)
         attention_logits = ops.einsum("btkgh,bskh->bkgts", q, k)
         if self.logit_soft_cap is not None:
             attention_logits = ops.divide(
@@ -1314,13 +1333,147 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             )
 
         attention_softmax = self.attention_softmax_qdq(attention_softmax)
-        v = self.v_qdq(v)
+        v = self._prepare_v_for_attention(v)
         results = ops.einsum("bkgts,bskh->btkgh", attention_softmax, v)
         return ops.reshape(results, (b, q_len, self.num_query_heads, h))
     # fmt: on
 
+    # fmt: off
+    def call(
+        self,
+        x,
+        attention_mask=None,
+        cache=None,
+        cache_update_index=0,
+        cache_update_mask=None,
+        training=False,
+    ):
+        # Preserve the original vLLM route, and use FP8 caching when calibrated.
+        # Calibration data are collected in _compute_attention, which uses exactly
+        # the same k and v tensors as used here in this call.
+
+        # Route to vLLM paged attention while serving on TPU; otherwise the
+        # original dense path below runs unchanged.
+        vllm_context = get_vllm_context()
+        if (
+            vllm_context is not None
+            and vllm_context.paged_attention_func is not None
+        ):
+            return self._compute_vllm_attention(x, cache, vllm_context)
+
+        if not self.can_use_fp8_kv_cache():
+            return super().call(
+                x,
+                attention_mask=attention_mask,
+                cache=cache,
+                cache_update_index=cache_update_index,
+                cache_update_mask=cache_update_mask,
+                training=training,
+            )
+
+        query = self.query_dense(x)
+
+        if self.use_query_key_norm:
+            query = self.query_norm(query)
+
+        query = self._apply_rope(query, cache_update_index)
+
+        if cache is not None:
+            key_cache, value_cache = cache
+            key_update = self.key_dense(x)
+
+            if self.use_query_key_norm:
+                key_update = self.key_norm(key_update)
+
+            key_update = self._apply_rope(key_update, cache_update_index)
+            value_update = self.value_dense(x)
+
+            # Quantize key/value updates to FP8 before writing to cache
+            key_update = self.k_qdq.call_q(key_update)
+            value_update = self.v_qdq.call_q(value_update)
+
+            # Update cache. Note that the cache is updated only if the
+            # corresponding `cache_update_mask` value is True. This is to
+            # ensure that we don't update the cache at indices corresponding to
+            # the prompt. For Gemma3, in particular, this is useful because
+            # image tokens have bidirectional attention. During generation,
+            # if we have uneven inputs during generation, we might end up having
+            # causal attention between image tokens, which is incorrect. To
+            # avoid this, bidirectional attention is taken care of during
+            # the prefill step, and during generation, the cache is not updated
+            # for the prompt. The shape of `cache_update_mask` is
+            # `(bsz, seq_len)`, where `seq_len` is 1 when we are generating
+            # token-by-token.
+            start = [0, cache_update_index, 0, 0]
+            if cache_update_mask is not None:
+                cache_update_mask = ops.expand_dims(
+                    ops.expand_dims(cache_update_mask, axis=-1),
+                    axis=-1,
+                )
+                key_original = ops.slice(
+                    key_cache, start, ops.shape(key_update)
+                )
+                value_original = ops.slice(
+                    value_cache, start, ops.shape(value_update)
+                )
+
+                key_update = ops.where(
+                    cache_update_mask,
+                    key_update,
+                    key_original,
+                )
+                value_update = ops.where(
+                    cache_update_mask,
+                    value_update,
+                    value_original,
+                )
+
+            key = ops.slice_update(key_cache, start, key_update)
+            value = ops.slice_update(value_cache, start, value_update)
+            cache = (key, value)
+
+            # Key/value stay FP8 here; they are dequantized once in _compute_attention,
+            # right before the attention op.
+        else:
+            key = self.key_dense(x)
+
+            if self.use_query_key_norm:
+                key = self.key_norm(key)
+
+            key = self._apply_rope(key, cache_update_index)
+            value = self.value_dense(x)
+
+            # Quantize to FP8 so _compute_attention runs the same single dequant before the op.
+            key = self.k_qdq.call_q(key)
+            value = self.v_qdq.call_q(value)
+
+        attention_vec = self._compute_attention(
+            query,
+            key,
+            value,
+            attention_mask,
+            training=training,
+            cache_update_index=cache_update_index,
+        )
+
+        # Wipe attn vec if there are no attended tokens.
+        no_attended_tokens = ops.all(
+            ops.equal(attention_mask, 0), axis=-1, keepdims=True
+        )[..., None]
+        attention_vec = ops.where(
+            no_attended_tokens, ops.zeros_like(attention_vec), attention_vec
+        )
+
+        attention_output = self.output_dense(attention_vec)
+
+        if cache is not None:
+            return attention_output, cache
+        return attention_output
+    # fmt: on
+
 
 verify_api(CachedGemma3Attention, QStaticCachedGemma3Attention, "_compute_attention")
+verify_api(CachedGemma3Attention, QStaticCachedGemma3Attention, "call")
 
 
 @register_static_quantized_layer(Gemma3VisionAttention)
