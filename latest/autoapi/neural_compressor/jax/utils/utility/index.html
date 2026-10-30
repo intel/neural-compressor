@@ -121,19 +121,22 @@
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function" title="neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function"><code class="xref py py-obj docutils literal notranslate"><span class="pre">causal_lm_make_replace_generate_function</span></code></a>(self[, revert])</p></td>
 <td><p>Replace generate function for calibration and restore on demand.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.select_kv_cache_dtype" title="neural_compressor.jax.utils.utility.select_kv_cache_dtype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_kv_cache_dtype</span></code></a>(layer, default_dtype)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.is_fp8_kv_cache_enabled_by_env" title="neural_compressor.jax.utils.utility.is_fp8_kv_cache_enabled_by_env"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_fp8_kv_cache_enabled_by_env</span></code></a>(→ bool)</p></td>
+<td><p>Check whether FP8 KV cache is enabled by the <code class="docutils literal notranslate"><span class="pre">INC_JAX_FP8_KV_CACHE</span></code> environment variable.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.select_kv_cache_dtype" title="neural_compressor.jax.utils.utility.select_kv_cache_dtype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_kv_cache_dtype</span></code></a>(layer, default_dtype)</p></td>
 <td><p>Select the KV-cache dtype of a decoder layer and disable autocasting for FP8 caches.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache" title="neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache"><code class="xref py py-obj docutils literal notranslate"><span class="pre">causal_lm_make_replace_build_cache</span></code></a>(self)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache" title="neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache"><code class="xref py py-obj docutils literal notranslate"><span class="pre">causal_lm_make_replace_build_cache</span></code></a>(self)</p></td>
 <td><p>Replace _build_cache to allocate KV caches using each attention layer's dtype.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.iterate_over_layers" title="neural_compressor.jax.utils.utility.iterate_over_layers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iterate_over_layers</span></code></a>(model, operations, /, *[, ...])</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.iterate_over_layers" title="neural_compressor.jax.utils.utility.iterate_over_layers"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iterate_over_layers</span></code></a>(model, operations, /, *[, ...])</p></td>
 <td><p>Apply operations to model layers matching the filter function.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.verify_api" title="neural_compressor.jax.utils.utility.verify_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_api</span></code></a>(orig_cls, quant_cls, method_name)</p></td>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.verify_api" title="neural_compressor.jax.utils.utility.verify_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_api</span></code></a>(orig_cls, quant_cls, method_name)</p></td>
 <td><p>Check if quantized layer method API matches original layer method API.</p></td>
 </tr>
-<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.verify_replacement_api" title="neural_compressor.jax.utils.utility.verify_replacement_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_replacement_api</span></code></a>(orig_cls, method_name, replacement)</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.verify_replacement_api" title="neural_compressor.jax.utils.utility.verify_replacement_api"><code class="xref py py-obj docutils literal notranslate"><span class="pre">verify_replacement_api</span></code></a>(orig_cls, method_name, replacement)</p></td>
 <td><p>Check if a function bound as a method replacement matches the original method API.</p></td>
 </tr>
 </tbody>
@@ -318,6 +321,22 @@ dtypes or symmetric quantization.</p>
 </dd></dl>
 
 <dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.is_fp8_kv_cache_enabled_by_env">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">is_fp8_kv_cache_enabled_by_env</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.is_fp8_kv_cache_enabled_by_env" title="Link to this definition"></a></dt>
+<dd><p>Check whether FP8 KV cache is enabled by the <code class="docutils literal notranslate"><span class="pre">INC_JAX_FP8_KV_CACHE</span></code> environment variable.</p>
+<p>FP8 KV cache is disabled by default; set the variable to <code class="docutils literal notranslate"><span class="pre">1</span></code>, <code class="docutils literal notranslate"><span class="pre">true</span></code>, <code class="docutils literal notranslate"><span class="pre">yes</span></code> or <code class="docutils literal notranslate"><span class="pre">on</span></code> to enable it.
+The variable is read once per process; call <code class="docutils literal notranslate"><span class="pre">is_fp8_kv_cache_enabled_by_env.cache_clear()</span></code> to re-read it.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Returns<span class="colon">:</span></dt>
+<dd class="field-odd"><p>True if FP8 KV cache is enabled.</p>
+</dd>
+<dt class="field-even">Return type<span class="colon">:</span></dt>
+<dd class="field-even"><p>bool</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.select_kv_cache_dtype">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">select_kv_cache_dtype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dtype</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.select_kv_cache_dtype" title="Link to this definition"></a></dt>
 <dd><p>Select the KV-cache dtype of a decoder layer and disable autocasting for FP8 caches.</p>
@@ -435,7 +454,7 @@ invalidated so the next <code class="docutils literal notranslate"><span class="
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x790cd75a9d30> 
+   <jinja2.runtime.BlockReference object at 0x7aae3ebeb1c0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

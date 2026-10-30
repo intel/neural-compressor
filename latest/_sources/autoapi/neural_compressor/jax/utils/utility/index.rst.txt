@@ -23,6 +23,7 @@ Functions
    neural_compressor.jax.utils.utility.get_q_params
    neural_compressor.jax.utils.utility.print_model
    neural_compressor.jax.utils.utility.causal_lm_make_replace_generate_function
+   neural_compressor.jax.utils.utility.is_fp8_kv_cache_enabled_by_env
    neural_compressor.jax.utils.utility.select_kv_cache_dtype
    neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache
    neural_compressor.jax.utils.utility.iterate_over_layers
@@ -155,6 +156,17 @@ Module Contents
 
    :returns: Updated generate function.
    :rtype: Callable
+
+
+.. py:function:: is_fp8_kv_cache_enabled_by_env() -> bool
+
+   Check whether FP8 KV cache is enabled by the ``INC_JAX_FP8_KV_CACHE`` environment variable.
+
+   FP8 KV cache is disabled by default; set the variable to ``1``, ``true``, ``yes`` or ``on`` to enable it.
+   The variable is read once per process; call ``is_fp8_kv_cache_enabled_by_env.cache_clear()`` to re-read it.
+
+   :returns: True if FP8 KV cache is enabled.
+   :rtype: bool
 
 
 .. py:function:: select_kv_cache_dtype(layer, default_dtype)
