@@ -19,6 +19,7 @@ from typing import Callable, Optional, OrderedDict, Union
 import keras
 
 from neural_compressor.common.utils import STATIC_QUANT
+from neural_compressor.jax.algorithms.smooth_quant import apply_smooth_quant
 from neural_compressor.jax.quantization.config import JaxBaseConfig
 from neural_compressor.jax.quantization.layers_static import static_quant_mapping
 from neural_compressor.jax.utils import register_algo
@@ -54,6 +55,17 @@ def static_quantize(
     layer_configs = {op_path: cfg for (op_path, _op_type), cfg in configs_mapping.items() if cfg.name == STATIC_QUANT}
 
     qmodel = model
+
+    # SmoothQuant runs first, on the unquantized model: it calibrates per-channel activation ranges and folds the
+    # smoothing factors into the weights, so the static calibration below sees the smoothed activations.
+    smooth_configs = [cfg for cfg in layer_configs.values() if getattr(cfg, "smooth_quant", False)]
+    if smooth_configs:
+        apply_smooth_quant(
+            qmodel,
+            calib_function,
+            alpha=smooth_configs[0].smooth_quant_alpha,
+            layer_filter=lambda layer: (layer.path if layer.path else layer.name) in layer_configs,
+        )
 
     for layer in qmodel._flatten_layers():
         layer_id = layer.path if layer.path else layer.name
