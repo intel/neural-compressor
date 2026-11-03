@@ -1045,9 +1045,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
 
-        embeddings_transposed_quant = wquantfun(
-            ops.transpose(self.embeddings.value), self.e_scale.value, axis=self.w_quant_axis
-        )
+        embeddings_transposed_quant = wquantfun(embeddings_tr, self.e_scale.value, axis=self.w_quant_axis)
         self._embeddings_transposed_quant.assign(embeddings_transposed_quant)
 
         if not self.tie_weights:
