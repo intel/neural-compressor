@@ -191,18 +191,7 @@ def compare_models_briefly(m1, m2):
         return a == b
 
     layers_to_skip = ["MultiSegmentPacker"]
-    vars_to_check = [
-        "a_scale",
-        "w_scale",
-        "e_scale",
-        "re_scale",
-        "w_quant_axis",
-        "e_quant_axis",
-        "re_quant_axis",
-        "kernel",
-        "embeddings",
-        "reverse_embeddings",
-    ]
+    vars_to_check = ["a_scale", "w_scale", "w_quant_axis", "kernel", "_kernel_quant"]
     m1_layers = m1._flatten_layers()
     m2_layers = m2._flatten_layers()
     for lts in layers_to_skip:

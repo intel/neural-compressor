@@ -977,10 +977,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         else:
             orig._const_variables = []
         if const_weight:
-            if orig.tie_weights:
-                orig._const_variables.append("_embeddings_transposed_quant")
-            else:
-                orig._const_variables.append("_reverse_embeddings_quant")
+            orig._const_variables.append("_kernel_quant")
         orig._tracker.lock()
         return orig
 
@@ -994,66 +991,39 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         self.inputs_qdq.add_variables()
         self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
         if self.tie_weights:
-            transposed_embeddings = ops.transpose(self.embeddings.value)
-            w_scale, _ = get_q_params(
-                transposed_embeddings,
-                self.weight_dtype,
-                self.compute_dtype,
-                asymmetric=False,
-                axis=self.w_quant_axis,
-            )
-            self.w_scale = self.add_weight(
-                name="w_scale",
-                shape=w_scale.shape,
-                initializer=keras.initializers.Constant(w_scale),
-                trainable=False,
-                autocast=False,
-                dtype=self.compute_dtype,
-            )
-            self._embeddings_transposed_quant = self.add_weight(
-                name="_embeddings_transposed_quant",
-                shape=transposed_embeddings.shape,
-                initializer="zeros",
-                trainable=False,
-                autocast=False,
-                dtype=self.weight_dtype,
-            )
+            reverse_embeddings = ops.transpose(self.embeddings.value)
         else:
-            w_scale, _ = get_q_params(
-                self.reverse_embeddings.value,
-                self.weight_dtype,
-                self.compute_dtype,
-                asymmetric=False,
-                axis=self.w_quant_axis,
-            )
-            self.w_scale = self.add_weight(
-                name="w_scale",
-                shape=w_scale.shape,
-                initializer=keras.initializers.Constant(w_scale),
-                trainable=False,
-                autocast=False,
-                dtype=self.compute_dtype,
-            )
-            self._reverse_embeddings_quant = self.add_weight(
-                name="_reverse_embeddings_quant",
-                shape=self.reverse_embeddings.value.shape,
-                initializer="zeros",
-                trainable=False,
-                autocast=False,
-                dtype=self.weight_dtype,
-            )
+            reverse_embeddings = self.reverse_embeddings.value
+
+        w_scale, _ = get_q_params(
+            reverse_embeddings,
+            self.weight_dtype,
+            self.compute_dtype,
+            asymmetric=False,
+            axis=self.w_quant_axis,
+        )
+        self.w_scale = self.add_weight(
+            name="w_scale",
+            shape=w_scale.shape,
+            initializer=keras.initializers.Constant(w_scale),
+            trainable=False,
+            autocast=False,
+            dtype=self.compute_dtype,
+        )
+        self._kernel_quant = self.add_weight(
+            name="_kernel_quant",
+            shape=reverse_embeddings.shape,
+            initializer="zeros",
+            trainable=False,
+            autocast=False,
+            dtype=self.weight_dtype,
+        )
+
         wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
 
-        if self.tie_weights:
-            embeddings_transposed_quant = wquantfun(transposed_embeddings, self.w_scale.value, axis=self.w_quant_axis)
-            self._embeddings_transposed_quant.assign(embeddings_transposed_quant)
-        else:
-            reverse_embeddings_quant = wquantfun(
-                self.reverse_embeddings.value, self.w_scale.value, axis=self.w_quant_axis
-            )
-            self._reverse_embeddings_quant.assign(reverse_embeddings_quant)
-
+        _kernel_quant = wquantfun(reverse_embeddings, self.w_scale.value, axis=self.w_quant_axis)
+        self._kernel_quant.assign(_kernel_quant)
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
@@ -1090,23 +1060,18 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
             jnp.ndarray: Embedded outputs or logits.
         """
         if reverse:
-            if self.tie_weights:
-                if self.const_weight:
-                    kernel = ops.convert_to_tensor(self._embeddings_transposed_quant)
-                else:
-                    kernel = ops.convert_to_tensor(self._embeddings_transposed_quant.value)
+            if self.const_weight:
+                kernel = self._kernel_quant
+                w_scale = self.w_scale
             else:
-                if self.const_weight:
-                    kernel = self.reverse_embeddings
-                else:
-                    kernel = self.reverse_embeddings.value
-            scale = self.w_scale if self.const_weight else self.w_scale.value
+                kernel = self._kernel_quant.value
+                w_scale = self.w_scale.value
 
             if self.reverse_dtype is not None:
                 inputs = ops.cast(inputs, self.reverse_dtype)
                 kernel = ops.cast(kernel, self.reverse_dtype)
             inputs = self.inputs_qdq(inputs)
-            kernel = self.wdequantfun(kernel, scale, axis=self.w_quant_axis)
+            kernel = self.wdequantfun(kernel, w_scale, axis=self.w_quant_axis)
             logits = ops.matmul(inputs, kernel)
             # Optionally soft-cap logits.
             if self.logit_soft_cap is not None:

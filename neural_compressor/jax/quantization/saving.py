@@ -155,8 +155,8 @@ class SaveableLayerMixin:
             self._is_quantized = True
         else:
             # Static layers may not be quantized depending on calibration samples
-            # We can recognize if layer was quantized by looking if it contains w_scale
-            self._is_quantized = "w_scale" in store
+            # We can recognize if layer was quantized by looking if it contains scales
+            self._is_quantized = "w_scale" in store or "a_scale" in store
         self.post_quantization_cleanup()
 
         weight_dtype = getattr(self, "weight_dtype", None)
