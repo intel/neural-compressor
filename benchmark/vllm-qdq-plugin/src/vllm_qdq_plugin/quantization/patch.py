@@ -25,9 +25,7 @@ def _matching_layer_config(config: Any, layer_name: str) -> dict[str, Any] | Non
         if any(char in regex_special_chars for char in key):
             try:
                 normalized_name = ".".join(layer_parts)
-                return re.search(key, layer_name) is not None or re.search(
-                    key, normalized_name
-                ) is not None
+                return re.search(key, layer_name) is not None or re.search(key, normalized_name) is not None
             except re.error:
                 return False
 
@@ -44,18 +42,14 @@ def _matching_layer_config(config: Any, layer_name: str) -> dict[str, Any] | Non
     matches = [
         (key, value)
         for key, value in (config.extra_config or {}).items()
-        if isinstance(key, str)
-        and isinstance(value, dict)
-        and matches_layer(key)
+        if isinstance(key, str) and isinstance(value, dict) and matches_layer(key)
     ]
     if not matches:
         return None
     return max(matches, key=lambda item: len(item[0]))[1]
 
 
-def _resolve_layer_config_override(
-    config: Any, layer_name: str, layer_config: Any
-) -> Any:
+def _resolve_layer_config_override(config: Any, layer_name: str, layer_config: Any) -> Any:
     override = _matching_layer_config(config, layer_name)
     if override is None:
         return layer_config
@@ -113,9 +107,7 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
 
     def resolve_config(self: Any, layer: Any, layer_name: str):
         layer_config = original_resolve_config(self, layer, layer_name)
-        return _resolve_layer_config_override(
-            self._config, layer_name, layer_config
-        )
+        return _resolve_layer_config_override(self._config, layer_name, layer_config)
 
     def resolve_scheme(layer_config: Any):
         if INCNvfp4UE5M3Scheme.can_handle(layer_config):

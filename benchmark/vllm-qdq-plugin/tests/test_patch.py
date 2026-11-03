@@ -140,7 +140,6 @@ class PatchMoeMarlinGemmTests(unittest.TestCase):
         self.assertEqual(qdq_calls, [32])
         self.assertTrue(torch.equal(mxfp4_output, input_tensor + 1))
 
-
     def test_force_mxfp4_mode_applies_qdq_case_insensitively(self) -> None:
         scalar_types = types.SimpleNamespace(
             float4_e2m1f=object(),
@@ -217,21 +216,15 @@ class PatchMoeMarlinGemmTests(unittest.TestCase):
 
 class LayerDataTypeResolutionTests(unittest.TestCase):
     def test_mlp_override_applies_to_routed_experts_descendants(self) -> None:
-        config = types.SimpleNamespace(
-            extra_config={"mlp": {"data_type": "nvfp4_v2_gs"}}
-        )
+        config = types.SimpleNamespace(extra_config={"mlp": {"data_type": "nvfp4_v2_gs"}})
 
         resolved = _layer_data_type(config, "model.layers.6.mlp", "mx_fp")
 
         self.assertEqual(resolved, "nvfp4_v2_gs")
 
     def test_short_mlp_override_applies_to_experts_child_path(self) -> None:
-        config = types.SimpleNamespace(
-            extra_config={"mlp": {"data_type": "nvfp4_v2_gs"}}
-        )
+        config = types.SimpleNamespace(extra_config={"mlp": {"data_type": "nvfp4_v2_gs"}})
 
-        resolved = _layer_data_type(
-            config, "model.layers.6.mlp.experts", "mx_fp"
-        )
+        resolved = _layer_data_type(config, "model.layers.6.mlp.experts", "mx_fp")
 
         self.assertEqual(resolved, "nvfp4_v2_gs")
