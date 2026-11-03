@@ -40,6 +40,21 @@ class _TestLayerConfig:
 
 
 class LayerConfigOverrideTests(unittest.TestCase):
+    def test_exact_layer_override_precedes_longer_regex(self) -> None:
+        for exact_path in ("model.layers.0.mlp.experts", "layers.0.mlp.experts"):
+            with self.subTest(exact_path=exact_path):
+                config = SimpleNamespace(
+                    extra_config={
+                        r"model\.layers\.[0-9]+\.mlp\.experts": {"bits": 4},
+                        exact_path: {"bits": 16},
+                    }
+                )
+                layer_config = _TestLayerConfig(4, 16, True, "nvfp4_v2", True)
+
+                result = _resolve_layer_config_override(config, "model.layers.0.mlp.experts", layer_config)
+
+                self.assertEqual(result, _TestLayerConfig(16, 16, True, "nvfp4_v2", False))
+
     def test_most_specific_override_updates_only_declared_fields(self) -> None:
         config = SimpleNamespace(
             extra_config={
@@ -87,6 +102,84 @@ def _dequantize_weight_reference(
 
 
 class Nvfp4UE5M3ConfigTests(unittest.TestCase):
+    @staticmethod
+    def _resolve_mxfp8_layer_config(extra_config: dict[str, dict[str, object]], layer_name: str):
+        apply_patches()
+        config = INCConfig.from_config(
+            {
+                "bits": 8,
+                "group_size": 32,
+                "sym": True,
+                "data_type": "mx_fp",
+                "packing_format": "auto_round:llm_compressor",
+                "extra_config": extra_config,
+            }
+        )
+        layer_config = config.config_parser.resolve(_FusedMoE(), layer_name)
+        return layer_config, factory.resolve_scheme(layer_config)
+
+    def test_full_and_normalized_regex_overrides_select_ue5m3_scheme(self) -> None:
+        layer_name = "model.layers.0.mlp.experts"
+        for pattern in (
+            r"model\.layers\.[0-9]+\.mlp\.experts",
+            r"^layers\.[0-9]+\.mlp\.experts$",
+        ):
+            with self.subTest(pattern=pattern):
+                layer_config, scheme = self._resolve_mxfp8_layer_config(
+                    {
+                        pattern: {
+                            "bits": 4,
+                            "group_size": 16,
+                            "sym": True,
+                            "data_type": "nvfp4_v2",
+                        }
+                    },
+                    layer_name,
+                )
+
+                self.assertEqual(layer_config.bits, 4)
+                self.assertEqual(layer_config.group_size, 16)
+                self.assertEqual(layer_config.data_type, "nvfp4_v2")
+                self.assertIsInstance(scheme, INCNvfp4UE5M3Scheme)
+
+    def test_invalid_and_nonmatching_regex_overrides_are_ignored(self) -> None:
+        layer_name = "model.layers.0.mlp.experts"
+        for pattern in ("mlp.experts[", r"^layers\.[0-9]+\.self_attn$"):
+            with self.subTest(pattern=pattern):
+                layer_config, scheme = self._resolve_mxfp8_layer_config(
+                    {
+                        pattern: {
+                            "bits": 4,
+                            "group_size": 16,
+                            "data_type": "nvfp4_v2",
+                        }
+                    },
+                    layer_name,
+                )
+
+                self.assertEqual(layer_config.bits, 8)
+                self.assertEqual(layer_config.group_size, 32)
+                self.assertEqual(layer_config.data_type, "mx_fp")
+                self.assertNotIsInstance(scheme, INCNvfp4UE5M3Scheme)
+
+    def test_mlp_shorthand_override_routes_mxfp8_layer_to_ue5m3(self) -> None:
+        layer_config, scheme = self._resolve_mxfp8_layer_config(
+            {
+                "mlp": {
+                    "bits": 4,
+                    "group_size": 16,
+                    "sym": True,
+                    "data_type": "nvfp4_v2",
+                }
+            },
+            "model.layers.0.mlp.experts",
+        )
+
+        self.assertEqual(layer_config.bits, 4)
+        self.assertEqual(layer_config.group_size, 16)
+        self.assertEqual(layer_config.data_type, "nvfp4_v2")
+        self.assertIsInstance(scheme, INCNvfp4UE5M3Scheme)
+
     @staticmethod
     def _make_linear_method() -> INCNvfp4UE5M3LinearMethod:
         method = object.__new__(INCNvfp4UE5M3LinearMethod)
