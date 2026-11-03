@@ -17,9 +17,12 @@ _PATCHED = False
 
 def _matching_layer_config(config: Any, layer_name: str) -> dict[str, Any] | None:
     regex_special_chars = set(r"*+?^$()[]{}|\\")
-    layer_parts = layer_name.strip(".").split(".")
-    if layer_parts and layer_parts[0] == "model":
-        layer_parts = layer_parts[1:]
+
+    def normalized_parts(path: str) -> list[str]:
+        parts = path.strip(".").split(".")
+        return parts[1:] if parts and parts[0] == "model" else parts
+
+    layer_parts = normalized_parts(layer_name)
 
     def matches_layer(key: str) -> bool:
         if any(char in regex_special_chars for char in key):
@@ -29,9 +32,7 @@ def _matching_layer_config(config: Any, layer_name: str) -> dict[str, Any] | Non
             except re.error:
                 return False
 
-        key_parts = key.strip(".").split(".")
-        if key_parts and key_parts[0] == "model":
-            key_parts = key_parts[1:]
+        key_parts = normalized_parts(key)
         if not key_parts or len(key_parts) > len(layer_parts):
             return False
         return any(
@@ -46,7 +47,12 @@ def _matching_layer_config(config: Any, layer_name: str) -> dict[str, Any] | Non
     ]
     if not matches:
         return None
-    return max(matches, key=lambda item: len(item[0]))[1]
+    exact_matches = [
+        (key, value)
+        for key, value in matches
+        if not any(char in regex_special_chars for char in key) and normalized_parts(key) == layer_parts
+    ]
+    return max(exact_matches or matches, key=lambda item: len(item[0]))[1]
 
 
 def _resolve_layer_config_override(config: Any, layer_name: str, layer_config: Any) -> Any:
