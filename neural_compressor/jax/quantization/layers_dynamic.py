@@ -68,7 +68,7 @@ def register_dynamic_quantized_layer(clso):
 
 def _calculate_w_scale_shape(kernel_shape, w_quant_axis):
     if w_quant_axis is None:
-        return (1,)
+        return (1,) * len(kernel_shape)
     else:
         return tuple(1 if i in w_quant_axis else dim for i, dim in enumerate(kernel_shape))
 
@@ -1010,18 +1010,18 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         self._tracker.unlock()
         self.inputs_qdq.add_variables()
 
-        if self.tie_weights:
-            reverse_embeddings = ops.transpose(self.embeddings.value)
-        else:
-            reverse_embeddings = self.reverse_embeddings.value
-
         self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
         if hasattr(self, "model_is_during_load"):
             # To be overridden later during load_own_variables
             _w_scale_initializer = "zeros"
             _kernel_quant_initializer = "zeros"
-            w_scale_shape = _calculate_w_scale_shape(self.kernel.shape, self.w_quant_axis)
+            reverse_embeddings_shape = tuple([x for x in reversed(self.embeddings.shape)])
+            w_scale_shape = _calculate_w_scale_shape(reverse_embeddings_shape, self.w_quant_axis)
         else:
+            if self.tie_weights:
+                reverse_embeddings = ops.transpose(self.embeddings.value)
+            else:
+                reverse_embeddings = self.reverse_embeddings.value
             w_scale, _ = get_q_params(
                 reverse_embeddings,
                 self.weight_dtype,
@@ -1034,6 +1034,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
 
             wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
             _kernel_quant = wquantfun(reverse_embeddings, w_scale, axis=self.w_quant_axis)
+            reverse_embeddings_shape = reverse_embeddings.shape
             _kernel_quant_initializer = keras.initializers.Constant(_kernel_quant)
 
         self.w_scale = self.add_weight(
@@ -1046,7 +1047,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         )
         self._kernel_quant = self.add_weight(
             name="_kernel_quant",
-            shape=reverse_embeddings.shape,
+            shape=reverse_embeddings_shape,
             initializer=_kernel_quant_initializer,
             trainable=False,
             autocast=False,
