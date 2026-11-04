@@ -34,6 +34,19 @@ implementations agree within 0.4 points.
   `main.py` auto-detects this dir (`AQA_IMAGEREWARD_ENV` overrides it) and runs
   ImageReward in a subprocess.
 
+## Tested generation environment
+
+| Component | Version |
+|---|---|
+| PyTorch | 2.13.0+cu130 |
+| vLLM | 0.32.0 |
+| vLLM-Omni | 0.32.0 |
+| Transformers | 5.19.0 |
+
+For vLLM-Omni 0.32.0, initialize `Omni(model=...)` without the removed
+`mode="text-to-image"` argument. Keep ImageReward's transformers-4 dependencies
+isolated as described above; do not downgrade the generation environment.
+
 ## Prepare DrawBench TSV
 
 ```bash
@@ -56,6 +69,10 @@ python main.py --inference --accuracy \
   8 steps, guidance 0.0, 1024x1024, seed 42+i.
 - `--backend diffusers` loads the checkpoint with `AutoPipelineForText2Image`
   (bf16 only; auto-round MXFP8 checkpoints need vllm-omni).
+- `--inference` defaults to `CUDA_LAUNCH_BLOCKING=1` before importing PyTorch,
+  including in diffusion workers, to avoid corrupted consecutive MXFP8 outputs.
+  An explicitly set environment value is preserved. Accuracy-only runs do not
+  enable launch blocking.
 
 ## Score existing images only
 

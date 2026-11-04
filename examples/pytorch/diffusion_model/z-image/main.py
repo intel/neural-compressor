@@ -47,6 +47,11 @@ import subprocess
 import sys
 from pathlib import Path
 
+# Set before importing CUDA libraries so diffusion workers inherit the setting.
+# Consecutive MXFP8 requests can produce invalid images without launch blocking.
+if "--inference" in sys.argv:
+    os.environ.setdefault("CUDA_LAUNCH_BLOCKING", "1")
+
 import numpy as np
 import pandas as pd
 import tabulate
@@ -150,7 +155,7 @@ def _first_image(outputs):
 def generate_vllm_omni(rows, out_dir):
     from vllm_omni.entrypoints.omni import Omni
 
-    omni = Omni(model=args.model, mode="text-to-image")
+    omni = Omni(model=args.model)
     for _, row in rows.iterrows():
         path = image_path(out_dir, row["id"])
         if os.path.exists(path) and not args.overwrite:
