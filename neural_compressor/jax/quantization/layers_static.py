@@ -615,14 +615,26 @@ class QStaticDenseMixin(SaveableLayerMixin):
             autocast=False,
             dtype=self.compute_dtype,
         )
-        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
-        w_scale, _ = get_q_params(
-            self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=False, axis=self.w_quant_axis
-        )
+
+        if hasattr(self, "model_is_during_load"):
+            # To be overridden later during load_own_variables
+            _w_scale_initializer = "zeros"
+            _kernel_quant_initializer = "zeros"
+        else:
+            self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
+            w_scale, _ = get_q_params(
+                self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=False, axis=self.w_quant_axis
+            )
+            _w_scale_initializer = keras.initializers.Constant(w_scale)
+
+            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+            _kernel_quant = wquantfun(self.kernel, self.w_scale.value, axis=self.w_quant_axis)
+            _kernel_quant_initializer = keras.initializers.Constant(_kernel_quant)
+
         self.w_scale = self.add_weight(
             name="w_scale",
             shape=w_scale.shape,
-            initializer=keras.initializers.Constant(w_scale),
+            initializer=_w_scale_initializer,
             trainable=False,
             autocast=False,
             dtype=self.compute_dtype,
@@ -630,7 +642,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
         self._kernel_quant = self.add_weight(
             name="_kernel_quant",
             shape=self.kernel_shape,
-            initializer="zeros",
+            initializer=_kernel_quant_initializer,
             trainable=False,
             dtype=self.weight_dtype,
             autocast=False,
@@ -640,10 +652,6 @@ class QStaticDenseMixin(SaveableLayerMixin):
         self.adequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_int8)
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
 
-        if not hasattr(self, "model_is_during_load"):
-            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
-            _kernel_quant = wquantfun(self.kernel, self.w_scale.value, axis=self.w_quant_axis)
-            self._kernel_quant.assign(_kernel_quant)
         self._tracker.lock()
 
     def convert(self):
@@ -1710,18 +1718,29 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         else:
             reverse_embeddings = self.reverse_embeddings.value
 
-        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
-        w_scale, _ = get_q_params(
-            reverse_embeddings,
-            self.weight_dtype,
-            self.compute_dtype,
-            asymmetric=False,
-            axis=self.w_quant_axis,
-        )
+        if hasattr(self, "model_is_during_load"):
+            # To be overridden later during load_own_variables
+            _w_scale_initializer = "zeros"
+            _kernel_quant_initializer = "zeros"
+        else:
+            self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
+            w_scale, _ = get_q_params(
+                reverse_embeddings,
+                self.weight_dtype,
+                self.compute_dtype,
+                asymmetric=False,
+                axis=self.w_quant_axis,
+            )
+            _w_scale_initializer = keras.initializers.Constant(w_scale)
+
+            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+            _kernel_quant = wquantfun(reverse_embeddings, self.w_scale.value, axis=self.w_quant_axis)
+            _kernel_quant_initializer = keras.initializers.Constant(_kernel_quant)
+
         self.w_scale = self.add_weight(
             name="w_scale",
             shape=w_scale.shape,
-            initializer=keras.initializers.Constant(w_scale),
+            initializer=_w_scale_initializer,
             trainable=False,
             autocast=False,
             dtype=self.compute_dtype,
@@ -1729,7 +1748,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         self._kernel_quant = self.add_weight(
             name="_kernel_quant",
             shape=reverse_embeddings.shape,
-            initializer="zeros",
+            initializer=_kernel_quant_initializer,
             trainable=False,
             autocast=False,
             dtype=self.weight_dtype,
@@ -1737,10 +1756,6 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
 
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
 
-        if not hasattr(self, "model_is_during_load"):
-            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
-            _kernel_quant = wquantfun(reverse_embeddings, self.w_scale.value, axis=self.w_quant_axis)
-            self._kernel_quant.assign(_kernel_quant)
         self._tracker.lock()
 
     def convert(self):
