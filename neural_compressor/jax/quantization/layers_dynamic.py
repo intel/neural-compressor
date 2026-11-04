@@ -328,7 +328,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
             _w_scale_initializer = keras.initializers.Constant(w_scale)
 
             wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
-            _kernel_quant = wquantfun(kernel, self.w_scale.value, axis=self.w_quant_axis)
+            _kernel_quant = wquantfun(kernel, w_scale, axis=self.w_quant_axis)
             _kernel_quant_initializer = keras.initializers.Constant(_kernel_quant)
 
         self.w_scale = self.add_weight(
@@ -1022,7 +1022,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
             _w_scale_initializer = keras.initializers.Constant(w_scale)
 
             wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
-            _kernel_quant = wquantfun(reverse_embeddings, self.w_scale.value, axis=self.w_quant_axis)
+            _kernel_quant = wquantfun(reverse_embeddings, w_scale, axis=self.w_quant_axis)
             _kernel_quant_initializer = keras.initializers.Constant(_kernel_quant)
 
         self.w_scale = self.add_weight(
