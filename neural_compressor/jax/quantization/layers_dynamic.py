@@ -66,6 +66,13 @@ def register_dynamic_quantized_layer(clso):
     return decorator
 
 
+def _calculate_w_scale_shape(kernel_shape, w_quant_axis):
+    if w_quant_axis is None:
+        return (1,)
+    else:
+        return tuple(1 if i in w_quant_axis else dim for i, dim in enumerate(kernel_shape))
+
+
 class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies dynamic quantize-dequantize to activations."""
 
@@ -312,12 +319,13 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         self.input_qdq.add_variables()
         kernel = ops.convert_to_tensor(super().kernel)
 
+        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
         if hasattr(self, "model_is_during_load"):
             # To be overridden later during load_own_variables
             _w_scale_initializer = "zeros"
             _kernel_quant_initializer = "zeros"
+            w_scale_shape = _calculate_w_scale_shape(self.kernel.shape, self.w_quant_axis)
         else:
-            self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
             w_scale, _ = get_q_params(
                 kernel,
                 self.weight_dtype,
@@ -325,6 +333,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
                 asymmetric=False,
                 axis=self.w_quant_axis,
             )
+            w_scale_shape = w_scale.shape
             _w_scale_initializer = keras.initializers.Constant(w_scale)
 
             wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
@@ -333,7 +342,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
 
         self.w_scale = self.add_weight(
             name="w_scale",
-            shape=w_scale.shape,
+            shape=w_scale_shape,
             initializer=_w_scale_initializer,
             trainable=False,
             dtype=self.compute_dtype,
@@ -1006,12 +1015,13 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         else:
             reverse_embeddings = self.reverse_embeddings.value
 
+        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
         if hasattr(self, "model_is_during_load"):
             # To be overridden later during load_own_variables
             _w_scale_initializer = "zeros"
             _kernel_quant_initializer = "zeros"
+            w_scale_shape = _calculate_w_scale_shape(self.kernel.shape, self.w_quant_axis)
         else:
-            self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
             w_scale, _ = get_q_params(
                 reverse_embeddings,
                 self.weight_dtype,
@@ -1019,6 +1029,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
                 asymmetric=False,
                 axis=self.w_quant_axis,
             )
+            w_scale_shape = w_scale.shape
             _w_scale_initializer = keras.initializers.Constant(w_scale)
 
             wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
@@ -1027,7 +1038,7 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
 
         self.w_scale = self.add_weight(
             name="w_scale",
-            shape=w_scale.shape,
+            shape=w_scale_shape,
             initializer=_w_scale_initializer,
             trainable=False,
             autocast=False,
