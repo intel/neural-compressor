@@ -638,9 +638,12 @@ class QStaticDenseMixin(SaveableLayerMixin):
 
         self.aquantfun = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_int8)
         self.adequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_int8)
-        self.wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
 
+        if not hasattr(self, "model_is_during_load"):
+            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+            _kernel_quant = wquantfun(self.kernel, self.w_scale.value, axis=self.w_quant_axis)
+            self._kernel_quant.assign(_kernel_quant)
         self._tracker.lock()
 
     def convert(self):
@@ -667,8 +670,6 @@ class QStaticDenseMixin(SaveableLayerMixin):
         if self._is_int8:
             self.a_zero_point.assign(a_zero_point)
 
-        _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value, axis=self.w_quant_axis)
-        self._kernel_quant.assign(_kernel_quant)
         self._is_quantized = True
         self._tracker.lock()
 
@@ -1734,8 +1735,12 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             dtype=self.weight_dtype,
         )
 
-        self.wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
+
+        if not hasattr(self, "model_is_during_load"):
+            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+            _kernel_quant = wquantfun(reverse_embeddings, self.w_scale.value, axis=self.w_quant_axis)
+            self._kernel_quant.assign(_kernel_quant)
         self._tracker.lock()
 
     def convert(self):
@@ -1752,14 +1757,6 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             self._tracker.lock()
             return
 
-        if self.tie_weights:
-            _kernel_quant = self.wquantfun(
-                ops.transpose(self.embeddings.value), self.w_scale.value, axis=self.w_quant_axis
-            )
-        else:
-            _kernel_quant = self.wquantfun(self.reverse_embeddings.value, self.w_scale.value, axis=self.w_quant_axis)
-
-        self._kernel_quant.assign(_kernel_quant)
         self._is_quantized = True
         self._tracker.lock()
 

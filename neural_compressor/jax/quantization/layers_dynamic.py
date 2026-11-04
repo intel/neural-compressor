@@ -326,8 +326,6 @@ class QDynamicDenseMixin(SaveableLayerMixin):
             trainable=False,
             dtype=self.compute_dtype,
         )
-        wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
-        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
         self._kernel_quant = self.add_weight(
             name="_kernel_quant",
             shape=kernel.shape,
@@ -337,7 +335,11 @@ class QDynamicDenseMixin(SaveableLayerMixin):
             autocast=False,
         )
 
-        self._kernel_quant.assign(wquantfun(kernel, self.w_scale.value, axis=self.w_quant_axis))
+        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
+
+        if not hasattr(self, "model_is_during_load"):
+            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+            self._kernel_quant.assign(wquantfun(kernel, self.w_scale.value, axis=self.w_quant_axis))
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
@@ -1019,11 +1021,13 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
             dtype=self.weight_dtype,
         )
 
-        wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
 
-        _kernel_quant = wquantfun(reverse_embeddings, self.w_scale.value, axis=self.w_quant_axis)
-        self._kernel_quant.assign(_kernel_quant)
+        if not hasattr(self, "model_is_during_load"):
+            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+            _kernel_quant = wquantfun(reverse_embeddings, self.w_scale.value, axis=self.w_quant_axis)
+            self._kernel_quant.assign(_kernel_quant)
+
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
