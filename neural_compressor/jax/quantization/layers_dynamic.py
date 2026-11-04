@@ -324,7 +324,7 @@ class QDynamicDenseMixin(SaveableLayerMixin):
             # To be overridden later during load_own_variables
             _w_scale_initializer = "zeros"
             _kernel_quant_initializer = "zeros"
-            w_scale_shape = _calculate_w_scale_shape(self.kernel.shape, self.w_quant_axis)
+            w_scale_shape = _calculate_w_scale_shape(kernel.shape, self.w_quant_axis)
         else:
             w_scale, _ = get_q_params(
                 kernel,
