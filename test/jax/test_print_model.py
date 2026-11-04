@@ -80,7 +80,13 @@ def print_gemma_model_fn(dynamic):
 
 class LayerRepresentation:
     def __init__(
-        self, class_name, name=None, val_a_zero_point=False, val_a_scale=False, val_w_scale=False, layer_ref=None
+        self,
+        class_name,
+        name=None,
+        val_a_zero_point=False,
+        val_a_scale=False,
+        val_w_scale=False,
+        layer_ref=None,
     ):
         self.class_name = class_name
         self.name = name
@@ -125,7 +131,7 @@ class LayerRepresentation:
         if self.layer_ref:
             values = jnp.array([float(v) for v in values])
             ref = self.layer_ref.a_zero_point if const_vars else self.layer_ref.a_zero_point.value
-            jnp.allclose(values, ref, atol=1e-5)
+            assert jnp.allclose(values, ref, atol=1e-5)
 
     def _validate_a_scale(self, dsc, const_vars):
         i_beg = dsc.find("a_scale")
@@ -140,7 +146,7 @@ class LayerRepresentation:
         if self.layer_ref:
             values = jnp.array([float(v) for v in values])
             ref = self.layer_ref.a_scale if const_vars else self.layer_ref.a_scale.value
-            jnp.allclose(values, ref, atol=1e-5)
+            assert jnp.allclose(values, ref, atol=1e-5)
 
     def _validate_w_scale(self, dsc, const_vars):
         i_beg = dsc.find("w_scale")
@@ -155,7 +161,7 @@ class LayerRepresentation:
         if self.layer_ref:
             values = jnp.array([float(v) for v in values])
             ref = self.layer_ref.w_scale if const_vars else self.layer_ref.w_scale.value
-            jnp.allclose(values, ref, atol=1e-5)
+            assert jnp.allclose(values, ref, atol=1e-5)
 
 
 def _layer_descriptions(log):

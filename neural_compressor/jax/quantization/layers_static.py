@@ -377,24 +377,29 @@ class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
         self._tracker.unlock()
         if self._is_quantized:
             self._setup_quantized_ops()
-            model_is_during_load = self.a_scale == 0.0
-            if not model_is_during_load:
-                # convert variables to attributes (const) if needed
+
+            # convert variables to attributes (const) if needed
+            if not hasattr(self, "model_is_during_load"):
                 for name in self._const_variables:
                     var = getattr(self, name)
                     value = jnp.array(var.value)
                     self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+                    delattr(self, name)
                     setattr(self, name, value)
         else:
             self.call = self._passthrough
             self.call_q = self._passthrough
             self.call_dq = self._passthrough
-            attrs_to_remove = [self.a_scale]
+
+            attrs_to_remove = ["a_scale"]
             if self._is_asymmetric:
-                attrs_to_remove.append(self.a_zero_point)
-            for attr in attrs_to_remove:
-                self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not attr]
-                del attr
+                attrs_to_remove.append("a_zero_point")
+            for attr_name in attrs_to_remove:
+                if hasattr(self, attr_name):
+                    self._non_trainable_variables[:] = [
+                        v for v in self._non_trainable_variables if v is not getattr(self, attr_name)
+                    ]
+                    delattr(self, attr_name)
             # All variables which names are stored in _const_variables are deleted in above loop
             # so _const_variables can be cleared
             self._const_variables.clear()
@@ -610,7 +615,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
             autocast=False,
             dtype=self.compute_dtype,
         )
-        self.w_quant_axis = self._derive_w_quant() if self.w_quant_granularity == "per_channel" else None
+        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
         w_scale, _ = get_q_params(
             self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=False, axis=self.w_quant_axis
         )
@@ -683,9 +688,8 @@ class QStaticDenseMixin(SaveableLayerMixin):
             self._trainable_variables.remove(self._kernel)
             del self._kernel
 
-            model_is_during_load = self.a_scale == 0.0
-            if not model_is_during_load:
-                # convert variables to attributes (const) if needed
+            # convert variables to attributes (const) if needed
+            if not hasattr(self, "model_is_during_load"):
                 for name in self._const_variables:
                     var = getattr(self, name)
                     value = jnp.array(var.value)
@@ -695,13 +699,15 @@ class QStaticDenseMixin(SaveableLayerMixin):
         else:
             self.call = super().call
 
-            attrs_to_remove = [self.a_scale, self.w_scale, self._kernel_quant]
+            attrs_to_remove = ["a_scale", "w_scale", "_kernel_quant"]
             if self._is_int8:
-                attrs_to_remove.append(self.a_zero_point)
-            for attr in attrs_to_remove:
-                self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not attr]
-                del attr
-
+                attrs_to_remove.append("a_zero_point")
+            for attr_name in attrs_to_remove:
+                if hasattr(self, attr_name):
+                    self._non_trainable_variables[:] = [
+                        v for v in self._non_trainable_variables if v is not getattr(self, attr_name)
+                    ]
+                    delattr(self, attr_name)
             # All variables which names are stored in _const_variables are deleted in above loop
             # so _const_variables can be cleared
             self._const_variables.clear()
@@ -791,7 +797,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
 class QStaticDense(QStaticDenseMixin, keras.layers.Dense):
     """Statically quantized Dense layer."""
 
-    def _derive_w_quant(self):
+    def _derive_w_quant_axis(self):
         return (0,)
 
 
@@ -802,7 +808,7 @@ verify_api(keras.layers.Dense, QStaticDense, "call")
 class QStaticEinsumDense(QStaticDenseMixin, keras.layers.EinsumDense):
     """Statically quantized EinsumDense layer."""
 
-    def _derive_w_quant(self):
+    def _derive_w_quant_axis(self):
         self._set_quantization_info()
         return tuple(int(a) for a in self._kernel_reduced_axes)
 
@@ -872,7 +878,7 @@ class QStaticConv2DMixin(QStaticDenseMixin, keras.layers.Conv2D):
 class QStaticConv2d(QStaticConv2DMixin, keras.layers.Conv2D):
     """Statically quantized Conv2D layer."""
 
-    def _derive_w_quant(self):
+    def _derive_w_quant_axis(self):
         return tuple(i for i in range(self._kernel.ndim - 1))
 
 
@@ -1632,6 +1638,9 @@ verify_api(Gemma3VisionAttention, QStaticGemma3VisionAttention, "call")
 class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbedding):
     """Statically quantized ReversibleEmbedding layer."""
 
+    def _derive_w_quant_axis(self):
+        return (0,)
+
     @classmethod
     def prepare(
         cls,
@@ -1651,7 +1660,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             activation_dtype (jnp.dtype): Dtype for quantized activations.
             const_scale (bool): Whether to use constant scales.
             const_weight (bool): Whether to use constant weight.
-            w_quant_granularity (str): ignored, included for API consistency.
+            w_quant_granularity (str): Whether to use per_channel or per_tensor quantization for weights
             dot_product_attention_enable (bool): ignored, included for API consistency.
 
         Returns:
@@ -1659,12 +1668,22 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         """
         orig._tracker.unlock()
         orig.__class__ = cls
+        orig.weight_dtype = weight_dtype
+        orig.activation_dtype = activation_dtype
         orig._is_int8 = jnp.issubdtype(activation_dtype, jnp.integer)
-        orig.inputs_qdq = StaticQDQLayer("inputs_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, const_scale)
-        orig.kernel_qdq = StaticQDQLayer("kernel_qdq", weight_dtype, orig.dtype_policy, orig._is_int8, const_scale)
         orig.const_scale = const_scale
         orig.const_weight = const_weight
+        orig.w_quant_granularity = w_quant_granularity
+        orig.inputs_qdq = StaticQDQLayer(
+            "inputs_qdq", activation_dtype, orig.dtype_policy, orig._is_int8, orig.const_scale
+        )
         orig._is_quantized = None
+        if const_scale:
+            orig._const_variables = ["w_scale"]
+        else:
+            orig._const_variables = []
+        if const_weight:
+            orig._const_variables.append("_kernel_quant")
         orig._tracker.lock()
         return orig
 
@@ -1675,39 +1694,129 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             None: Adds observer layers.
         """
         self.inputs_qdq.add_observers()
-        self.kernel_qdq.add_observers()
 
     def add_variables(self):
-        """Create quantization variables for activation QDQ.
+        """Create quantization variables for activations and embedding weights.
 
         Returns:
-            None: Initializes QDQ helper variables.
-        """
-        self.inputs_qdq.add_variables()
-        self.kernel_qdq.add_variables()
-
-    def convert(self):
-        """Compute activation calibration values for QDQ helpers.
-
-        Returns:
-            None: Updates QDQ helpers with calibrated values.
-        """
-        # TODO maybe make kernel (offline) quantization for reversible embedding (self.embeddings in our path) ?
-        self.inputs_qdq.convert()
-        self.kernel_qdq.convert()
-
-    def post_quantization_cleanup(self):
-        """Finalize static quantization and mark the layer as quantized.
-
-        Returns:
-            None: Cleans up observers.
+            None: Initializes quantization variables.
         """
         self._tracker.unlock()
+        self.inputs_qdq.add_variables()
+
+        if self.tie_weights:
+            reverse_embeddings = ops.transpose(self.embeddings.value)
+        else:
+            reverse_embeddings = self.reverse_embeddings.value
+
+        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
+        w_scale, _ = get_q_params(
+            reverse_embeddings,
+            self.weight_dtype,
+            self.compute_dtype,
+            asymmetric=False,
+            axis=self.w_quant_axis,
+        )
+        self.w_scale = self.add_weight(
+            name="w_scale",
+            shape=w_scale.shape,
+            initializer=keras.initializers.Constant(w_scale),
+            trainable=False,
+            autocast=False,
+            dtype=self.compute_dtype,
+        )
+        self._kernel_quant = self.add_weight(
+            name="_kernel_quant",
+            shape=reverse_embeddings.shape,
+            initializer="zeros",
+            trainable=False,
+            autocast=False,
+            dtype=self.weight_dtype,
+        )
+
+        self.wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
+        self._tracker.lock()
+
+    def convert(self):
+        """Compute activation/weight scales and cache offline-quantized embeddings.
+
+        Returns:
+            None: Updates quantization variables with calibrated values.
+        """
+        self._tracker.unlock()
+
+        self.inputs_qdq.convert()
+        if not self.inputs_qdq._is_quantized:
+            self._is_quantized = False
+            self._tracker.lock()
+            return
+
+        if self.tie_weights:
+            _kernel_quant = self.wquantfun(
+                ops.transpose(self.embeddings.value), self.w_scale.value, axis=self.w_quant_axis
+            )
+        else:
+            _kernel_quant = self.wquantfun(self.reverse_embeddings.value, self.w_scale.value, axis=self.w_quant_axis)
+
+        self._kernel_quant.assign(_kernel_quant)
+        self._is_quantized = True
+        self._tracker.lock()
+
+    def post_quantization_cleanup(self):
+        """Finalize static quantization and replace weights with cached constants.
+
+        Returns:
+            None: Cleans up observers and finalizes quantized state.
+        """
+        if self._is_quantized is None:
+            return
+
+        self._tracker.unlock()
         self.inputs_qdq.post_quantization_cleanup()
-        self.kernel_qdq.post_quantization_cleanup()
+        if self._is_quantized:
+            self.call = self.call_quantized
+
+            if hasattr(self, "reverve_embeddings"):
+                self._trainable_variables.remove(self.reverve_embeddings)
+                del self.reverse_embeddings
+
+            # convert variables to attributes (const) if needed
+            if not hasattr(self, "model_is_during_load"):
+                for name in self._const_variables:
+                    if hasattr(self, name):
+                        var = getattr(self, name)
+                        value = jnp.array(var.value)
+                        self._non_trainable_variables[:] = [v for v in self._non_trainable_variables if v is not var]
+                        delattr(self, name)
+                        setattr(self, name, value)
+        else:
+            self.call = super().call
+
+            attrs_to_remove = ["w_scale", "_kernel_quant"]
+            for attr_name in attrs_to_remove:
+                if hasattr(self, attr_name):
+                    self._non_trainable_variables[:] = [
+                        v for v in self._non_trainable_variables if v is not getattr(self, attr_name)
+                    ]
+                    delattr(self, attr_name)
+            # All variables which names are stored in _const_variables are deleted in above loop
+            # so _const_variables can be cleared
+            self._const_variables.clear()
+
+        if hasattr(self, "_layers") and hasattr(self, "input_observer"):
+            if self.input_observer in self._layers:
+                self._layers.remove(self.input_observer)
+                del self.input_observer
+
         self._tracker.lock()
 
     def call(self, inputs, reverse=False):
+        if reverse:
+            inputs = self.inputs_qdq(inputs)
+        return super().call(inputs, reverse=reverse)
+
+    def call_quantized(self, inputs, reverse=False):
         """Compute forward or reverse embedding with static quantization.
 
         Args:
@@ -1718,15 +1827,18 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             jnp.ndarray: Embedded outputs or logits.
         """
         if reverse:
-            if self.tie_weights:
-                kernel = ops.transpose(ops.convert_to_tensor(self.embeddings))
+            if self.const_weight:
+                kernel = self._kernel_quant
+                w_scale = self.w_scale
             else:
-                kernel = self.reverse_embeddings
+                kernel = self._kernel_quant.value
+                w_scale = self.w_scale.value
+
             if self.reverse_dtype is not None:
                 inputs = ops.cast(inputs, self.reverse_dtype)
                 kernel = ops.cast(kernel, self.reverse_dtype)
             inputs = self.inputs_qdq(inputs)
-            kernel = self.kernel_qdq(kernel)
+            kernel = self.wdequantfun(kernel, w_scale, axis=self.w_quant_axis)
             logits = ops.matmul(inputs, kernel)
             # Optionally soft-cap logits.
             if self.logit_soft_cap is not None:
