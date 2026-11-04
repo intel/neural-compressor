@@ -193,6 +193,6 @@ class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
             expert_map=layer.expert_map,
             global_scale1=layer.w13_weight_scale_2,
             global_scale2=layer.w2_weight_scale_2,
-            workspace=layer.workspace,
+            workspace=getattr(layer, "workspace", None),
             activation_config=activation_config,
         )

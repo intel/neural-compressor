@@ -1,4 +1,4 @@
-"""AutoRound NVFP4_E5M3 MoE execution using vLLM FP4 Marlin."""
+"""AutoRound NVFP4_E5M3(_GS) MoE execution using vLLM FP4 Marlin."""
 
 from __future__ import annotations
 
@@ -11,17 +11,27 @@ from vllm.model_executor.layers.fused_moe.fused_moe_method_base import FusedMoEM
 from vllm.model_executor.layers.quantization.utils.marlin_utils_fp4 import prepare_nvfp4_moe_layer_for_marlin
 from vllm.model_executor.utils import set_weight_attrs
 from vllm.scalar_type import scalar_types
-from vllm_qdq_plugin.qdq.nvfp4_e5m3 import decode_ue5m3, nvfp4_e5m3_qdq
+from vllm_qdq_plugin.qdq.nvfp4_e5m3 import decode_ue5m3, fold_ue5m3_global_scale, nvfp4_e5m3_qdq
+
+from .inc_nvfp4_e5m3_linear import shared_input_global_scale
 
 
 class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
-    """Weight-only MoE using packed E2M1 weights and raw UE5M3 scales."""
+    """MoE using packed E2M1 weights, raw UE5M3 scales, and optional per-expert global scales."""
 
-    def __init__(self, moe: FusedMoEConfig, group_size: int | tuple[int, int]) -> None:
+    with_global_scale = False
+
+    def __init__(
+        self,
+        moe: FusedMoEConfig,
+        group_size: int | tuple[int, int],
+        with_global_scale: bool = False,
+    ) -> None:
         super().__init__(moe)
         if group_size != 16:
             raise ValueError(f"NVFP4_E5M3 Marlin MoE requires group_size 16, got {group_size}")
         self.group_size = group_size
+        self.with_global_scale = with_global_scale
 
     def create_weights(
         self,
@@ -75,6 +85,51 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
         layer.register_parameter("w2_weight_scale", w2_scale)
         set_weight_attrs(w2_scale, scale_attrs)
 
+        if self.with_global_scale:
+            num_shards = self.moe.w13_num_shards
+            tensor_attrs = {**extra_weight_attrs, "quant_method": FusedMoeWeightScaleSupported.TENSOR.value}
+            tensor_specs = (
+                ("w13_weight_global_scale", (num_experts, num_shards)),
+                ("w2_weight_global_scale", (num_experts,)),
+                ("w13_input_global_scale", (num_experts, num_shards)),
+                ("w2_input_global_scale", (num_experts,)),
+            )
+            for name, shape in tensor_specs:
+                scale = torch.nn.Parameter(torch.ones(*shape, dtype=torch.float32), requires_grad=False)
+                layer.register_parameter(name, scale)
+                set_weight_attrs(scale, tensor_attrs)
+
+    def _fold_global_scales(
+        self,
+        layer: RoutedExperts,
+        w13_weight_scale: torch.Tensor,
+        w2_weight_scale: torch.Tensor,
+    ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
+        num_shards = layer.w13_weight_global_scale.shape[-1]
+        w13_row_scale = layer.w13_weight_global_scale.repeat_interleave(w13_weight_scale.shape[1] // num_shards, dim=1)
+        w2_row_scale = layer.w2_weight_global_scale[:, None].expand(-1, w2_weight_scale.shape[1])
+        w13_weight_scale, w13_global_scale = fold_ue5m3_global_scale(w13_weight_scale, w13_row_scale)
+        w2_weight_scale, w2_global_scale = fold_ue5m3_global_scale(w2_weight_scale, w2_row_scale)
+
+        w13_input_global_scale = shared_input_global_scale(
+            layer.w13_input_global_scale, "w13 input global scale across experts"
+        )
+        w2_input_global_scale = shared_input_global_scale(
+            layer.w2_input_global_scale, "w2 input global scale across experts"
+        )
+        for name in (
+            "w13_weight_global_scale",
+            "w2_weight_global_scale",
+            "w13_input_global_scale",
+            "w2_input_global_scale",
+        ):
+            delattr(layer, name)
+        if w13_input_global_scale is not None:
+            layer.w13_input_global_scale = torch.nn.Parameter(w13_input_global_scale, requires_grad=False)
+        if w2_input_global_scale is not None:
+            layer.w2_input_global_scale = torch.nn.Parameter(w2_input_global_scale, requires_grad=False)
+        return w13_weight_scale, w13_global_scale, w2_weight_scale, w2_global_scale
+
     def process_weights_after_loading(self, layer: RoutedExperts) -> None:
         w13_weight = layer.w13_weight_packed.detach().contiguous()
         del layer.w13_weight_packed
@@ -82,7 +137,14 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
         del layer.w2_weight_packed
         w13_weight_scale = decode_ue5m3(layer.w13_weight_scale)
         w2_weight_scale = decode_ue5m3(layer.w2_weight_scale)
-        global_scale = torch.ones(layer.num_experts, dtype=torch.float32, device=w13_weight.device)
+        if self.with_global_scale:
+            w13_weight_scale, w13_global_scale, w2_weight_scale, w2_global_scale = self._fold_global_scales(
+                layer, w13_weight_scale, w2_weight_scale
+            )
+        else:
+            w13_global_scale = w2_global_scale = torch.ones(
+                layer.num_experts, dtype=torch.float32, device=w13_weight.device
+            )
         (
             w13_weight,
             w13_weight_scale,
@@ -94,10 +156,10 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
             layer=layer,
             w13=w13_weight,
             w13_scale=w13_weight_scale,
-            w13_scale_2=global_scale,
+            w13_scale_2=w13_global_scale,
             w2=w2_weight,
             w2_scale=w2_weight_scale,
-            w2_scale_2=global_scale,
+            w2_scale_2=w2_global_scale,
             is_act_and_mul=self.moe.is_act_and_mul,
         )
         layer.w13_weight = torch.nn.Parameter(w13_weight, requires_grad=False)
@@ -147,6 +209,7 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
                 nvfp4_e5m3_qdq(
                     output.contiguous(),
                     self.group_size,
+                    input_global_scale=getattr(layer, "w2_input_global_scale", None),
                     trace_op_name="nvfp4_e5m3_moe_activation",
                 )
             )
@@ -154,6 +217,7 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
         quantized_x = nvfp4_e5m3_qdq(
             x.contiguous(),
             self.group_size,
+            input_global_scale=getattr(layer, "w13_input_global_scale", None),
             trace_op_name="nvfp4_e5m3_moe_input",
         )
         return fused_marlin_moe(
@@ -174,6 +238,6 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
             expert_map=layer.expert_map,
             global_scale1=layer.w13_weight_scale_2,
             global_scale2=layer.w2_weight_scale_2,
-            workspace=layer.workspace,
+            workspace=getattr(layer, "workspace", None),
             activation_config=activation_config,
         )
