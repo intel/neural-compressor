@@ -193,20 +193,23 @@ def test_standard_nvfp4_qdq_moe_matches_reference():
     w2_scale = torch.rand(num_experts, hidden_size, intermediate_size // 16, device=device).to(torch.float8_e4m3fn)
     w13_global_scale = torch.full((num_experts, 2), 2.0, device=device)
     w2_global_scale = torch.full((num_experts,), 2.0, device=device)
-    input_global_scale = torch.full((num_experts, 2), 0.25, device=device)
-    w2_input_global_scale = torch.full((num_experts,), 0.25, device=device)
+    input_global_scale = torch.tensor([0.25, 0.5, 0.75, 1.0], device=device)[:, None].expand(-1, 2).contiguous()
+    w2_input_global_scale = torch.tensor([0.2, 0.4, 0.8, 1.2], device=device)
     topk_ids = torch.tensor([[0, 1], [2, 3], [1, 3], [0, 2], [3, 1]], device=device, dtype=torch.int32)
     topk_weights = torch.softmax(torch.randn(num_tokens, top_k, device=device), dim=-1)
 
     decoded_w13 = _decode_standard_weight(w13, w13_scale, 16).to(x.dtype) / 2.0
     decoded_w2 = _decode_standard_weight(w2, w2_scale, 16).to(x.dtype) / 2.0
-    quantized_x = nvfp4_qdq(x, input_global_scale[0, 0], 16)
+    routed_x = x[:, None, :].expand(-1, top_k, -1).reshape(-1, hidden_size)
+    route_ids = topk_ids.reshape(-1)
+    quantized_x = nvfp4_qdq(routed_x, 1.0 / input_global_scale[route_ids, 0], 16)
     expected = torch.zeros_like(x)
     for expert_id in range(num_experts):
         token_ids, slots = torch.where(topk_ids == expert_id)
-        gate_up = quantized_x[token_ids] @ decoded_w13[expert_id].T
+        route_rows = token_ids * top_k + slots
+        gate_up = quantized_x[route_rows] @ decoded_w13[expert_id].T
         activated = F.silu(gate_up[:, :intermediate_size]) * gate_up[:, intermediate_size:]
-        activated = nvfp4_qdq(activated, w2_input_global_scale[expert_id], 16)
+        activated = nvfp4_qdq(activated, 1.0 / w2_input_global_scale[expert_id].expand(token_ids.numel()), 16)
         expert_output = activated @ decoded_w2[expert_id].T
         expected.index_add_(0, token_ids, (expert_output * topk_weights[token_ids, slots, None]).to(expected.dtype))
 
@@ -275,20 +278,29 @@ def test_marlin_moe_with_global_scale_matches_reference():
     )
     w13_global_scale = torch.tensor([4.0e5, 6.0e5, 8.0e5, 1.0e6], device=device)[:, None].repeat(1, 2)
     w2_global_scale = torch.tensor([3.0e5, 5.0e5, 7.0e5, 9.0e5], device=device)
-    w13_input_global_scale = torch.full((num_experts, 2), 3.0e4, device=device)
-    w2_input_global_scale = torch.full((num_experts,), 5.0e4, device=device)
+    w13_input_global_scale = torch.tensor([3.0e4, 4.0e4, 5.0e4, 6.0e4], device=device)[:, None].expand(-1, 2).contiguous()
+    w2_input_global_scale = torch.tensor([5.0e4, 6.0e4, 7.0e4, 8.0e4], device=device)
     topk_ids = torch.tensor([[0, 1], [2, 3], [1, 3], [0, 2], [3, 1]], device=device, dtype=torch.int32)
     topk_weights = torch.softmax(torch.randn(num_tokens, top_k, device=device), dim=-1)
 
     decoded_w13 = (_decode_weight(w13, w13_scale, 16) / w13_global_scale[:, :1, None]).to(x.dtype)
     decoded_w2 = (_decode_weight(w2, w2_scale, 16) / w2_global_scale[:, None, None]).to(x.dtype)
-    quantized_x = nvfp4_e5m3_qdq(x, 16, input_global_scale=w13_input_global_scale[0, 0])
+    routed_x = x[:, None, :].expand(-1, top_k, -1).reshape(-1, hidden_size)
+    route_ids = topk_ids.reshape(-1)
+    quantized_x = nvfp4_e5m3_qdq(
+        routed_x, 16, input_global_scale=w13_input_global_scale[route_ids, 0]
+    )
     expected = torch.zeros_like(x)
     for expert_id in range(num_experts):
         token_ids, slots = torch.where(topk_ids == expert_id)
-        gate_up = quantized_x[token_ids] @ decoded_w13[expert_id].T
+        route_rows = token_ids * top_k + slots
+        gate_up = quantized_x[route_rows] @ decoded_w13[expert_id].T
         activated = F.silu(gate_up[:, :intermediate_size]) * gate_up[:, intermediate_size:]
-        activated = nvfp4_e5m3_qdq(activated, 16, input_global_scale=w2_input_global_scale[0])
+        activated = nvfp4_e5m3_qdq(
+            activated,
+            16,
+            input_global_scale=w2_input_global_scale[expert_id].expand(token_ids.numel()),
+        )
         expert_output = activated @ decoded_w2[expert_id].T
         expected.index_add_(0, token_ids, (expert_output * topk_weights[token_ids, slots, None]).to(expected.dtype))
 
@@ -334,6 +346,16 @@ def test_marlin_moe_with_global_scale_matches_reference():
         expected.float()
     )
     assert relative_l2_error < 0.01
+
+
+def test_e5m3_moe_global_scale_keeps_shared_scale_fast_paths():
+    prepare_scale = INCNvfp4UE5M3MoEMethod._prepare_input_global_scale
+
+    assert prepare_scale(torch.ones(4, 2), "w13 input global scale") is None
+    shared = prepare_scale(torch.full((4,), 5.0), "w2 input global scale")
+    assert shared is not None and shared.ndim == 0 and shared.item() == 5.0
+    per_expert = prepare_scale(torch.tensor([2.0, 3.0, 2.0, 4.0]), "w2 input global scale")
+    torch.testing.assert_close(per_expert, torch.tensor([2.0, 3.0, 2.0, 4.0]))
 
 
 @pytest.mark.parametrize("num_tokens, expected_block_m", [(1, 16), (64, 32), (256, 64), (1024, 128)])

@@ -83,6 +83,30 @@ def nvfp4_e5m3_gs_qdq_cute(x: torch.Tensor, global_scale: torch.Tensor) -> torch
     return torch.ops.vllm.nvfp4_e5m3_gs_qdq_cute(x, global_scale)
 
 
+def _nvfp4_e5m3_gs_qdq_per_row_cute_impl(x: torch.Tensor, global_scales: torch.Tensor) -> torch.Tensor:
+    from .cute_kernels import run_nvfp4_e5m3_gs_qdq_per_row
+
+    return run_nvfp4_e5m3_gs_qdq_per_row(x, global_scales)
+
+
+def _nvfp4_e5m3_gs_qdq_per_row_cute_fake(x: torch.Tensor, global_scales: torch.Tensor) -> torch.Tensor:
+    del global_scales
+    return torch.empty_like(x)
+
+
+direct_register_custom_op(
+    op_name="nvfp4_e5m3_gs_qdq_per_row_cute",
+    op_func=_nvfp4_e5m3_gs_qdq_per_row_cute_impl,
+    mutates_args=[],
+    fake_impl=_nvfp4_e5m3_gs_qdq_per_row_cute_fake,
+)
+
+
+def nvfp4_e5m3_gs_qdq_per_row_cute(x: torch.Tensor, global_scales: torch.Tensor) -> torch.Tensor:
+    """Run fused NVFP4_E5M3_GS QDQ with one global scale per row."""
+    return torch.ops.vllm.nvfp4_e5m3_gs_qdq_per_row_cute(x, global_scales)
+
+
 def nvfp4_e5m3_weight_dequant_cute(
     packed: torch.Tensor,
     scales: torch.Tensor,

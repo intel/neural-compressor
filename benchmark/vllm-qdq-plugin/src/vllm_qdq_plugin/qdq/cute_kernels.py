@@ -239,6 +239,33 @@ def nvfp4_e5m3_gs_qdq_group16_kernel(
 
 
 @cute.kernel
+def nvfp4_e5m3_gs_qdq_row_group16_kernel(
+    x: cute.Tensor,
+    global_scales: cute.Tensor,
+    output: cute.Tensor,
+    group_count: cutlass.Int32,
+    row_width: cutlass.Int32,
+):
+    thread, _, _ = cute.arch.thread_idx()
+    block, _, _ = cute.arch.block_idx()
+    group = block * 8 + thread // 16
+    lane = thread % 16
+
+    if group < group_count:
+        index = group * 16 + lane
+        row = index // row_width
+        value = x[index].to(cutlass.Float32)
+        gs = global_scales[row]
+        inverse_gs = (gs > 0.0).to(cutlass.Float32) * (1.0 / cutlass.max(gs, 2.0**-126))
+        block_max = cute.arch.warp_reduction_max(_abs_float(value), threads_in_group=16)
+        scale = _quantize_ue5m3_scale(block_max / 6.0 * gs) * inverse_gs
+        normalized = value / cutlass.max(scale, 2.0**-126)
+        quantized = _round_mxfp4(_abs_float(normalized))
+        sign = 1.0 - 2.0 * (normalized < 0.0).to(cutlass.Float32)
+        output[index] = (quantized * sign * scale).to(output.element_type)
+
+
+@cute.kernel
 def nvfp4_e5m3_weight_dequant_kernel(
     packed: cute.Tensor,
     scales: cute.Tensor,
@@ -334,6 +361,22 @@ def launch_nvfp4_e5m3_gs_qdq_group16(
 
 
 @cute.jit
+def launch_nvfp4_e5m3_gs_qdq_row_group16(
+    x: cute.Tensor,
+    global_scales: cute.Tensor,
+    output: cute.Tensor,
+    group_count: cutlass.Int32,
+    row_width: cutlass.Int32,
+    stream: cuda.CUstream,
+):
+    nvfp4_e5m3_gs_qdq_row_group16_kernel(x, global_scales, output, group_count, row_width).launch(
+        grid=[(group_count + 7) // 8, 1, 1],
+        block=[128, 1, 1],
+        stream=stream,
+    )
+
+
+@cute.jit
 def launch_nvfp4_e5m3_weight_dequant(
     packed: cute.Tensor,
     scales: cute.Tensor,
@@ -359,9 +402,15 @@ def launch_nvfp4_e5m3_weight_dequant(
     )
 
 
-def _get_compiled_kernel(format_name: str, dtype: torch.dtype, element_count: int, device: torch.device):
+def _get_compiled_kernel(
+    format_name: str,
+    dtype: torch.dtype,
+    element_count: int,
+    device: torch.device,
+    row_width: int | None = None,
+):
     device_index = device.index if device.index is not None else torch.cuda.current_device()
-    key = (format_name, dtype, device_index)
+    key = (format_name, dtype, device_index, row_width)
     compiled = _COMPILED_KERNELS.get(key)
     if compiled is not None:
         return compiled
@@ -392,6 +441,21 @@ def _get_compiled_kernel(format_name: str, dtype: torch.dtype, element_count: in
                     from_dlpack(example_scale),
                     cute_output,
                     group_count,
+                    stream,
+                )
+                _COMPILED_KERNELS[key] = compiled
+                return compiled
+            if format_name == "NVFP4_E5M3_GS_ROW_G16":
+                if row_width is None or row_width % 16 or element_count % row_width:
+                    raise ValueError("Per-row NVFP4_E5M3_GS requires a valid row width divisible by 16")
+                example_scales = torch.ones(element_count // row_width, device=device, dtype=torch.float32)
+                compiled = cute.compile(
+                    launch_nvfp4_e5m3_gs_qdq_row_group16,
+                    cute_example,
+                    from_dlpack(example_scales),
+                    cute_output,
+                    group_count,
+                    row_width,
                     stream,
                 )
                 _COMPILED_KERNELS[key] = compiled
@@ -452,6 +516,28 @@ def run_nvfp4_e5m3_gs_qdq(x: torch.Tensor, global_scale: torch.Tensor) -> torch.
         from_dlpack(global_scale.reshape(1)),
         from_dlpack(output),
         flat_x.numel() // 16,
+        stream,
+    )
+    return output.reshape_as(x)
+
+
+def run_nvfp4_e5m3_gs_qdq_per_row(x: torch.Tensor, global_scales: torch.Tensor) -> torch.Tensor:
+    """Run fused NVFP4_E5M3_GS QDQ with one global scale per activation row."""
+    if x.ndim != 2 or global_scales.ndim != 1 or global_scales.numel() != x.shape[0]:
+        raise ValueError("Per-row NVFP4_E5M3_GS requires [rows, width] input and one scale per row")
+    flat_x = x.reshape(-1)
+    row_width = x.shape[1]
+    compiled = _get_compiled_kernel(
+        "NVFP4_E5M3_GS_ROW_G16", x.dtype, flat_x.numel(), x.device, row_width=row_width
+    )
+    output = torch.empty_like(flat_x)
+    stream = cuda.CUstream(torch.cuda.current_stream(x.device).cuda_stream)
+    compiled(
+        from_dlpack(flat_x),
+        from_dlpack(global_scales.contiguous()),
+        from_dlpack(output),
+        flat_x.numel() // 16,
+        row_width,
         stream,
     )
     return output.reshape_as(x)

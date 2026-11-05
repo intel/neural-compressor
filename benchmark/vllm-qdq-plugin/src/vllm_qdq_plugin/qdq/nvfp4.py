@@ -23,14 +23,16 @@ def _nvfp4_qdq_reference(
         raise TypeError(f"nvfp4_qdq expects BF16/FP16, got {x.dtype}")
     if group_size != 16:
         raise ValueError(f"nvfp4_qdq requires group_size 16, got {group_size}")
-    if input_global_scale.numel() != 1 or input_global_scale.dtype != torch.float32:
-        raise ValueError("nvfp4_qdq requires one float32 input_global_scale value")
+    if input_global_scale.dtype != torch.float32 or input_global_scale.numel() not in (1, x.shape[0]):
+        raise ValueError("nvfp4_qdq requires one float32 scale or one float32 scale per row")
     if x.shape[1] % group_size:
         raise ValueError(f"nvfp4_qdq requires K divisible by group_size={group_size}, got K={x.shape[1]}")
 
     original_dtype = x.dtype
     groups = x.reshape(x.shape[0], -1, group_size).float()
-    global_scale = input_global_scale.reshape(1, 1)
+    global_scale = input_global_scale.reshape(-1, 1)
+    if global_scale.shape[0] == 1:
+        global_scale = global_scale.expand(x.shape[0], -1)
     scales = global_scale * groups.abs().amax(dim=-1).div_(_FP4_MAX)
     scales = scales.clamp_(-_FP8_E4M3_MAX, _FP8_E4M3_MAX).to(torch.float8_e4m3fn).float()
     inverse_scales = torch.where(scales == 0, torch.zeros_like(scales), global_scale / scales)
