@@ -112,9 +112,7 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
         w13_input_global_scale = self._prepare_input_global_scale(
             layer.w13_input_global_scale, "w13 input global scale"
         )
-        w2_input_global_scale = self._prepare_input_global_scale(
-            layer.w2_input_global_scale, "w2 input global scale"
-        )
+        w2_input_global_scale = self._prepare_input_global_scale(layer.w2_input_global_scale, "w2 input global scale")
         for name in (
             "w13_weight_global_scale",
             "w2_weight_global_scale",

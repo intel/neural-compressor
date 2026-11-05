@@ -527,9 +527,7 @@ def run_nvfp4_e5m3_gs_qdq_per_row(x: torch.Tensor, global_scales: torch.Tensor) 
         raise ValueError("Per-row NVFP4_E5M3_GS requires [rows, width] input and one scale per row")
     flat_x = x.reshape(-1)
     row_width = x.shape[1]
-    compiled = _get_compiled_kernel(
-        "NVFP4_E5M3_GS_ROW_G16", x.dtype, flat_x.numel(), x.device, row_width=row_width
-    )
+    compiled = _get_compiled_kernel("NVFP4_E5M3_GS_ROW_G16", x.dtype, flat_x.numel(), x.device, row_width=row_width)
     output = torch.empty_like(flat_x)
     stream = cuda.CUstream(torch.cuda.current_stream(x.device).cuda_stream)
     compiled(

@@ -278,7 +278,9 @@ def test_marlin_moe_with_global_scale_matches_reference():
     )
     w13_global_scale = torch.tensor([4.0e5, 6.0e5, 8.0e5, 1.0e6], device=device)[:, None].repeat(1, 2)
     w2_global_scale = torch.tensor([3.0e5, 5.0e5, 7.0e5, 9.0e5], device=device)
-    w13_input_global_scale = torch.tensor([3.0e4, 4.0e4, 5.0e4, 6.0e4], device=device)[:, None].expand(-1, 2).contiguous()
+    w13_input_global_scale = (
+        torch.tensor([3.0e4, 4.0e4, 5.0e4, 6.0e4], device=device)[:, None].expand(-1, 2).contiguous()
+    )
     w2_input_global_scale = torch.tensor([5.0e4, 6.0e4, 7.0e4, 8.0e4], device=device)
     topk_ids = torch.tensor([[0, 1], [2, 3], [1, 3], [0, 2], [3, 1]], device=device, dtype=torch.int32)
     topk_weights = torch.softmax(torch.randn(num_tokens, top_k, device=device), dim=-1)
@@ -287,9 +289,7 @@ def test_marlin_moe_with_global_scale_matches_reference():
     decoded_w2 = (_decode_weight(w2, w2_scale, 16) / w2_global_scale[:, None, None]).to(x.dtype)
     routed_x = x[:, None, :].expand(-1, top_k, -1).reshape(-1, hidden_size)
     route_ids = topk_ids.reshape(-1)
-    quantized_x = nvfp4_e5m3_qdq(
-        routed_x, 16, input_global_scale=w13_input_global_scale[route_ids, 0]
-    )
+    quantized_x = nvfp4_e5m3_qdq(routed_x, 16, input_global_scale=w13_input_global_scale[route_ids, 0])
     expected = torch.zeros_like(x)
     for expert_id in range(num_experts):
         token_ids, slots = torch.where(topk_ids == expert_id)

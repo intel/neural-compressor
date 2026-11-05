@@ -70,9 +70,7 @@ def benchmark_case(
 
         strategies.append(("expert-loop-cute", expert_loop_cute))
     else:
-        strategies.append(
-            ("shared-scalar-cute", lambda: nvfp4_e5m3_gs_qdq_cute(x, scales[0]))
-        )
+        strategies.append(("shared-scalar-cute", lambda: nvfp4_e5m3_gs_qdq_cute(x, scales[0])))
 
     print(
         f"case: experts={experts}, tokens={tokens}, top_k={top_k}, rows={rows}, "
