@@ -60,6 +60,46 @@ This dataset should be representative of the data distribution expected during i
 The calibration process runs on the original FP32/BF16 model and records tensor distributions for scale calculations.
 Typically, preparing several dozen samples is sufficient for calibration.
 
+### SmoothQuant
+
+[SmoothQuant](https://arxiv.org/abs/2211.10438) moves activation outliers into the weights before static quantization,
+which makes per-tensor activation scales more accurate. Enable it on `StaticQuantConfig`:
+
+```python
+config = StaticQuantConfig(
+    weight_dtype="fp8_e4m3",
+    activation_dtype="fp8_e4m3",
+    smooth_quant=True,  # default False
+    smooth_quant_alpha=0.5,  # migration strength in [0, 1]
+)
+qmodel = quantize_model(model, config, calib_function)
+```
+
+or in a JSON config: `{"quantization_type": "static_quant", "config": {..., "smooth_quant": true, "smooth_quant_alpha": 0.5}}`.
+
+The calibration function runs twice: first to collect per-input-channel activation ranges, then for the usual static
+calibration on the smoothed model. For each group of linear layers that read the same input, the factors
+`s = max|x|^alpha / max|W|^(1 - alpha)` (clipped to [0.01, 100]) multiply the weight input channels, and `1 / s` is
+folded into the layer that produces the input. No operation is added, so the quantized model has the same layers,
+kernels and speed as without SmoothQuant. The smoothing is part of the saved weights and the SmoothQuant options
+are not stored with the model, so it loads like any other quantized model (also with INC versions without
+SmoothQuant).
+
+Supported blocks (`SMOOTH_RULES` in `neural_compressor/jax/algorithms/smooth_quant.py`):
+
+| Block | Smoothed inputs | Folded into |
+|---|---|---|
+| keras-hub `Gemma3DecoderBlock` | q/k/v projections | `pre_attention_norm` |
+| | gate / up projections | `pre_ffw_norm` |
+| | down projection | up projection output channels |
+| | attention output projection | value projection output channels (shared by the query heads of a kv head) |
+
+Other models are left unchanged (a warning is logged).
+
+Example: Gemma3-4B-instruct, fp8 e4m3 static quantization with per-tensor weight scales and 171 BoolQ calibration
+samples, BoolQ accuracy (3270 samples) on Intel Xeon (Diamond Rapids): 81.07% without SmoothQuant, 82.54% with
+`smooth_quant_alpha=0.5` (bf16: 82.17%), with the same oneDNN kernels and throughput.
+
 ## Examples
 
 Examples of how to quantize a model and use a pre-quantized model can be found below.

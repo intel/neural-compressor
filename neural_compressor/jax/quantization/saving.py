@@ -37,6 +37,20 @@ from neural_compressor.jax.utils.utility import (
     dtype_mapping,
 )
 
+# Config options that only act before calibration and are baked into the saved weights (SmoothQuant). They are not
+# needed to load a model, so they are not stored with it: models made with them load with any INC version that can
+# load the same model without them.
+_CALIBRATION_ONLY_PARAMS = ("smooth_quant", "smooth_quant_alpha")
+
+
+def _quant_config_for_saving(quant_config: JaxBaseConfig) -> dict:
+    """Serialize a quant config for storing with a quantized model, without calibration-only options."""
+    config_dict = quant_config.to_dict()
+    for sub_config in config_dict.get("configs", [config_dict]):
+        for param in _CALIBRATION_ONLY_PARAMS:
+            sub_config.get("config", {}).pop(param, None)
+    return config_dict
+
 
 class VersionManager:
     """Handle version metadata for serialized quantized models."""
@@ -248,7 +262,7 @@ class KerasQuantizedModelBackboneWrapper(Backbone):
             dict: Serialized configuration for the wrapper.
         """
         config = super().get_config()
-        config["_quant_config"] = self._quant_config.to_dict()
+        config["_quant_config"] = _quant_config_for_saving(self._quant_config)
         config["_wrapped_model"] = keras.saving.serialize_keras_object(self._wrapped_model)
         return config
 
@@ -365,7 +379,7 @@ class KerasQuantizedModelWrapperMixin:
         """
         config = super().get_config()
         VersionManager.add_versions(config)
-        config["_quant_config"] = self._quant_config.to_dict()
+        config["_quant_config"] = _quant_config_for_saving(self._quant_config)
         # Save backbone without wrapper for load/save_model <-> preset api compatibility
         backbone_wrapper = None
         if hasattr(self, "backbone"):

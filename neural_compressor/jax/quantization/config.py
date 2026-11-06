@@ -429,9 +429,30 @@ class StaticQuantConfig(JaxBaseConfig):
     FP8 formats available:
         - "fp8_e4m3": 4 exponent bits, 3 mantissa bits (default for "fp8")
         - "fp8_e5m2": 5 exponent bits, 2 mantissa bits
+
+    SmoothQuant (``smooth_quant=True``) can be enabled on top: before calibration, per-channel activation ranges are
+    collected with the calibration function and activation outliers are migrated into the weights by folding the
+    smoothing factors into the preceding layers (see ``neural_compressor.jax.algorithms.smooth_quant``). The graph and
+    quantized kernels are unchanged, so inference speed is the same.
     """
 
     name = STATIC_QUANT
+    params_list = JaxBaseConfig.params_list + ["smooth_quant", "smooth_quant_alpha"]
+
+    def __init__(self, *args, smooth_quant: bool = False, smooth_quant_alpha: float = 0.5, **kwargs):
+        """Init static quantization config.
+
+        Args:
+            *args: Positional arguments of :class:`JaxBaseConfig`.
+            smooth_quant (bool): Apply SmoothQuant (folded into the weights) before calibration. Default False.
+            smooth_quant_alpha (float): SmoothQuant migration strength in [0, 1]. Default 0.5.
+            **kwargs: Keyword arguments of :class:`JaxBaseConfig`.
+        """
+        if not isinstance(smooth_quant_alpha, list) and not 0.0 <= smooth_quant_alpha <= 1.0:
+            raise ValueError(f"smooth_quant_alpha must be in [0, 1], got {smooth_quant_alpha}")
+        self.smooth_quant = smooth_quant
+        self.smooth_quant_alpha = smooth_quant_alpha
+        super().__init__(*args, **kwargs)
 
     def _get_supported_class_names(self) -> set:
         """Return the quantizable layer class names for static quantization."""
