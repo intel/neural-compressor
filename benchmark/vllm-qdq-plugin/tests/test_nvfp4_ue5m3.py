@@ -496,6 +496,27 @@ class Nvfp4UE5M3GlobalScaleTests(unittest.TestCase):
         actual = _nvfp4_e5m3_qdq_reference(x, 16, torch.ones((), dtype=torch.float32))
         self.assertTrue(torch.equal(actual, expected))
 
+    def test_gs_qdq_supports_one_scale_per_row(self) -> None:
+        x = torch.randn(4, 64, dtype=torch.bfloat16)
+        scales = torch.tensor([0.5, 1.0, 2.0, 4.0], dtype=torch.float32)
+        actual = nvfp4_e5m3_qdq(x, 16, input_global_scale=scales)
+        expected = torch.cat(
+            [_nvfp4_e5m3_qdq_reference(x[row : row + 1], 16, scales[row]) for row in range(x.shape[0])]
+        )
+        self.assertTrue(torch.equal(actual, expected))
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_cute_gs_qdq_supports_one_scale_per_row(self) -> None:
+        from vllm_qdq_plugin.qdq.cute import cute_qdq_status
+
+        x = torch.randn(8, 256, device="cuda", dtype=torch.bfloat16)
+        scales = torch.tensor([3.0e4 + 1024.0 * i for i in range(8)], device="cuda", dtype=torch.float32)
+        if not cute_qdq_status(x)[0]:
+            self.skipTest("CuTe DSL is not available")
+        expected = _nvfp4_e5m3_qdq_reference(x, 16, scales)
+        actual = nvfp4_e5m3_qdq(x, 16, input_global_scale=scales)
+        self.assertTrue(torch.equal(actual, expected))
+
     def test_fold_global_scale_is_exact_for_shared_scale(self) -> None:
         scales = decode_ue5m3(torch.randint(0, 0xFF, (2, 8, 4), dtype=torch.uint8))
         global_scale = torch.tensor([[1234.5] * 8, [3.0e5] * 8])
