@@ -118,6 +118,31 @@ Do not re-implement argument parsing, tensor-parallel detection, server
 lifecycle, or the `--scheme` environment matrix — the shared driver owns them.
 Tensor parallel size is always inferred from `CUDA_VISIBLE_DEVICES`.
 
+#### evalscope variant
+
+Models evaluated through an OpenAI-compatible endpoint (thinking / chat models,
+e.g. MiniMax) wrap `benchmark/evalscope/run_evalscope.sh` instead. It starts
+`vllm serve`, runs each task `--num_runs` times and summarizes the scores with
+`benchmark/evalscope/eval_summary.py` (drops max/min when runs >= 3). Built-in
+defaults follow the MiniMax example; set a `DEFAULT_*` hook to an empty value to
+disable top_p / max_tokens / max_model_len / served_model_name. Hooks:
+
+| Variable | Purpose |
+| --- | --- |
+| `DEFAULT_TASKS` / `DEFAULT_NUM_RUNS` | defaults for `--tasks` / `--num_runs` |
+| `DEFAULT_TEMPERATURE` / `DEFAULT_TOP_P` / `DEFAULT_MAX_TOKENS` | generation defaults (empty top_p / max_tokens are not sent) |
+| `DEFAULT_MAX_MODEL_LEN` / `DEFAULT_SERVED_MODEL_NAME` | `vllm serve` defaults (empty: vLLM default / model path) |
+| `DEFAULT_EVAL_BATCH_SIZE` / `EVAL_TIMEOUT` | evalscope concurrency and request timeout |
+| `EXTRA_GENERATION_CONFIG` | JSON object merged into `--generation-config`, e.g. `extra_body` |
+| `SINGLE_RUN_TASKS` | tasks run once regardless of `--num_runs` (default: `hellaswag,piqa,mmlu,gsm8k`) |
+| `EXTRA_SERVE_ARGS` | extra flags for `vllm serve` (tool / reasoning parsers, ...) |
+| `ATTENTION_BACKEND_FP8KV` / `ATTENTION_BACKEND_FP8ATTN` / `FLASHINFER_WORKSPACE_SIZE` | same as the lm-eval driver (default `FLASHINFER`; FP8 attention uses `TRITON_ATTN` on GPUs other than SM 10.x) |
+
+When one model needs both drivers (e.g. RULER through lm_eval, see
+`examples/pytorch/llm/minimax` and `examples/pytorch/llm/deepseekv4`), the
+wrapper may split `--tasks` and route flags, but must still delegate all
+evaluation work to the two shared drivers.
+
 ## README
 
 Mirror the structure of `examples/pytorch/llm/qwen/README.md`: quantization
