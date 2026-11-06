@@ -66,6 +66,13 @@ def register_dynamic_quantized_layer(clso):
     return decorator
 
 
+def _calculate_w_scale_shape(kernel_shape, w_quant_axis):
+    if w_quant_axis is None:
+        return (1,) * len(kernel_shape)
+    else:
+        return tuple(1 if i in w_quant_axis else dim for i, dim in enumerate(kernel_shape))
+
+
 class DynamicQDQLayer(SaveableLayerMixin, keras.layers.Layer):
     """Layer that applies dynamic quantize-dequantize to activations."""
 
@@ -311,33 +318,46 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         self._tracker.unlock()
         self.input_qdq.add_variables()
         kernel = ops.convert_to_tensor(super().kernel)
+
         self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
-        w_scale, _ = get_q_params(
-            kernel,
-            self.weight_dtype,
-            self.compute_dtype,
-            asymmetric=False,
-            axis=self.w_quant_axis,
-        )
+        if hasattr(self, "model_is_during_load"):
+            # To be overridden later during load_own_variables
+            _w_scale_initializer = "zeros"
+            _kernel_quant_initializer = "zeros"
+            w_scale_shape = _calculate_w_scale_shape(kernel.shape, self.w_quant_axis)
+        else:
+            w_scale, _ = get_q_params(
+                kernel,
+                self.weight_dtype,
+                self.compute_dtype,
+                asymmetric=False,
+                axis=self.w_quant_axis,
+            )
+            w_scale_shape = w_scale.shape
+            _w_scale_initializer = keras.initializers.Constant(w_scale)
+
+            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+            _kernel_quant = wquantfun(kernel, w_scale, axis=self.w_quant_axis)
+            _kernel_quant_initializer = keras.initializers.Constant(_kernel_quant)
+
         self.w_scale = self.add_weight(
             name="w_scale",
-            shape=w_scale.shape,
-            initializer=keras.initializers.Constant(w_scale),
+            shape=w_scale_shape,
+            initializer=_w_scale_initializer,
             trainable=False,
             dtype=self.compute_dtype,
         )
-        wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
-        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
         self._kernel_quant = self.add_weight(
             name="_kernel_quant",
             shape=kernel.shape,
-            initializer="zeros",
+            initializer=_kernel_quant_initializer,
             trainable=False,
             dtype=self.weight_dtype,
             autocast=False,
         )
 
-        self._kernel_quant.assign(wquantfun(kernel, self.w_scale.value, axis=self.w_quant_axis))
+        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
+
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
@@ -989,41 +1009,53 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         """
         self._tracker.unlock()
         self.inputs_qdq.add_variables()
-        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
-        if self.tie_weights:
-            reverse_embeddings = ops.transpose(self.embeddings.value)
-        else:
-            reverse_embeddings = self.reverse_embeddings.value
 
-        w_scale, _ = get_q_params(
-            reverse_embeddings,
-            self.weight_dtype,
-            self.compute_dtype,
-            asymmetric=False,
-            axis=self.w_quant_axis,
-        )
+        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
+        if hasattr(self, "model_is_during_load"):
+            # To be overridden later during load_own_variables
+            _w_scale_initializer = "zeros"
+            _kernel_quant_initializer = "zeros"
+            reverse_embeddings_shape = tuple([x for x in reversed(self.embeddings.shape)])
+            w_scale_shape = _calculate_w_scale_shape(reverse_embeddings_shape, self.w_quant_axis)
+        else:
+            if self.tie_weights:
+                reverse_embeddings = ops.transpose(self.embeddings.value)
+            else:
+                reverse_embeddings = self.reverse_embeddings.value
+            w_scale, _ = get_q_params(
+                reverse_embeddings,
+                self.weight_dtype,
+                self.compute_dtype,
+                asymmetric=False,
+                axis=self.w_quant_axis,
+            )
+            w_scale_shape = w_scale.shape
+            _w_scale_initializer = keras.initializers.Constant(w_scale)
+
+            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+            _kernel_quant = wquantfun(reverse_embeddings, w_scale, axis=self.w_quant_axis)
+            reverse_embeddings_shape = reverse_embeddings.shape
+            _kernel_quant_initializer = keras.initializers.Constant(_kernel_quant)
+
         self.w_scale = self.add_weight(
             name="w_scale",
-            shape=w_scale.shape,
-            initializer=keras.initializers.Constant(w_scale),
+            shape=w_scale_shape,
+            initializer=_w_scale_initializer,
             trainable=False,
             autocast=False,
             dtype=self.compute_dtype,
         )
         self._kernel_quant = self.add_weight(
             name="_kernel_quant",
-            shape=reverse_embeddings.shape,
-            initializer="zeros",
+            shape=reverse_embeddings_shape,
+            initializer=_kernel_quant_initializer,
             trainable=False,
             autocast=False,
             dtype=self.weight_dtype,
         )
 
-        wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
 
-        _kernel_quant = wquantfun(reverse_embeddings, self.w_scale.value, axis=self.w_quant_axis)
-        self._kernel_quant.assign(_kernel_quant)
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
