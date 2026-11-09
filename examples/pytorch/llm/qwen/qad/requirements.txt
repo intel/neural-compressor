@@ -1,0 +1,11 @@
+torch>=2.4
+transformers>=5.0
+peft>=0.13
+accelerate>=0.34
+safetensors
+numpy
+datasets
+pyyaml
+# optional: auto-round (legacy QAT export path only)
+# auto-round
+# optional: unsloth (lazy backend for LoRA acceleration; not required)

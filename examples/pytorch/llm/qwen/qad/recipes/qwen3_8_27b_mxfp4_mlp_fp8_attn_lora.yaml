@@ -1,0 +1,61 @@
+# Qwen3.8-27B LoRA QAD, path B (merge-before-quant):
+#   y = Q_w(W + BA) * Q_a(x)
+# Same quantization recipe as the full run; only the adapter/training part differs.
+schema: neural_compressor.qad/v1
+name: qwen3_8-27b-mxfp4-mlp-fp8-attn-lora
+
+model:
+  path: /home/kaokaolv/models/Qwen3.8-27B
+  family: qwen3_5
+  dtype: bfloat16
+
+quant:
+  algorithm: max
+  rules:
+    - module: '.*\.mlp\.(gate_proj|up_proj|down_proj)$'
+      weight: {format: mxfp4}
+      input: {format: mxfp4}
+    - module: '.*\.(self_attn|linear_attn)\.(q_proj|k_proj|v_proj|o_proj|in_proj_qkv|in_proj_z|out_proj)$'
+      weight: {format: fp8_e4m3}
+      input: {format: fp8_e4m3, scheme: static}
+  amax_source:
+    file: /home/kaokaolv/qad/ckpt/qwen38-27b-mxfp4-ptq-rtxpro/.quant_summary.txt
+    translate: modelopt_megatron
+
+distill:
+  teacher: /home/kaokaolv/models/Qwen3.8-27B
+  loss: topk_kl
+  top_k: 4096
+  temperature: 1.0
+  kd_weight: 1.0
+  ce_weight: 0.0
+  chunk: 1024
+  teacher_device: shard
+
+train:
+  backend: hf
+  parallel: fsdp2
+  seq_length: 2048
+  micro_batch_size: 1
+  global_batch_size: 4
+  train_iters: 2000
+  lr: 2.0e-4
+  min_lr: 2.0e-5
+  warmup: 0  # reference LoRA script used warmup 0
+  weight_decay: 0.0
+  clip_grad: 1.0
+  seed: 42   # reference LoRA configuration
+  gradient_checkpointing: true
+  gc_mode: trainer
+  save_steps: 500
+  lora:
+    rank: 32
+    alpha: 32
+    dropout: 0.0
+    quant_order: lora_then_quant   # path B
+    targets: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj,
+              in_proj_qkv, in_proj_z, out_proj]
+
+export:
+  format: hf_bf16
+  keep_vision: true
