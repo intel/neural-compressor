@@ -6,11 +6,11 @@ import re
 from dataclasses import replace
 from typing import Any
 
+from nvfp4_hw.inc_nvfp4_scheme import INCNvfp4Scheme
 from vllm.logger import init_logger
 
 from .inc_nvfp4_e5m3_scheme import NVFP4_E5M3_DATA_TYPE, NVFP4_E5M3_GS_DATA_TYPE, INCNvfp4UE5M3Scheme
 from .inc_nvfp4_scheme import INCNvfp4QDQScheme
-from nvfp4_hw.inc_nvfp4_scheme import INCNvfp4Scheme
 
 logger = init_logger(__name__)
 _PATCHED = False
@@ -27,10 +27,7 @@ def _native_nvfp4_kernel_available() -> bool:
         return False
 
     kernel_name = type(kernel).__name__
-    return (
-        kernel_name not in {"MarlinNvFp4LinearKernel", "EmulationNvFp4LinearKernel"}
-        and "W4A16" not in kernel_name
-    )
+    return kernel_name not in {"MarlinNvFp4LinearKernel", "EmulationNvFp4LinearKernel"} and "W4A16" not in kernel_name
 
 
 def _matching_layer_config(config: Any, layer_name: str) -> dict[str, Any] | None:
