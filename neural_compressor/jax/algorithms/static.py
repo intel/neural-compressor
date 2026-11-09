@@ -57,15 +57,16 @@ def static_quantize(
     qmodel = model
 
     # SmoothQuant runs first, on the unquantized model: it calibrates per-channel activation ranges and folds the
-    # smoothing factors into the weights, so the static calibration below sees the smoothed activations.
-    smooth_configs = [cfg for cfg in layer_configs.values() if getattr(cfg, "smooth_quant", False)]
-    if smooth_configs:
-        apply_smooth_quant(
-            qmodel,
-            calib_function,
-            alpha=smooth_configs[0].smooth_quant_alpha,
-            layer_filter=lambda layer: (layer.path if layer.path else layer.name) in layer_configs,
-        )
+    # smoothing factors into the weights, so the static calibration below sees the smoothed activations. Each group of
+    # projections sharing an input uses the settings of its layers' configs (only Gemma3 decoder blocks are supported;
+    # other models get a warning and no extra calibration pass).
+    if any(getattr(cfg, "smooth_quant", False) for cfg in layer_configs.values()):
+
+        def layer_settings(layer):
+            cfg = layer_configs.get(layer.path if layer.path else layer.name)
+            return None if cfg is None else (bool(cfg.smooth_quant), cfg.smooth_quant_alpha)
+
+        apply_smooth_quant(qmodel, calib_function, layer_settings=layer_settings)
 
     for layer in qmodel._flatten_layers():
         layer_id = layer.path if layer.path else layer.name

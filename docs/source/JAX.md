@@ -81,9 +81,13 @@ The calibration function runs twice: first to collect per-input-channel activati
 calibration on the smoothed model. For each group of linear layers that read the same input, the factors
 `s = max|x|^alpha / max|W|^(1 - alpha)` (clipped to [0.01, 100]) multiply the weight input channels, and `1 / s` is
 folded into the layer that produces the input. No operation is added, so the quantized model has the same layers,
-kernels and speed as without SmoothQuant. The smoothing is part of the saved weights and the SmoothQuant options
-are not stored with the model, so it loads like any other quantized model (also with INC versions without
-SmoothQuant).
+kernels and speed as without SmoothQuant. The smoothing is part of the saved weights; the SmoothQuant options are
+stored with the model like the other options (loading does not smooth or calibrate again).
+
+SmoothQuant can be enabled for part of the model with a composable config, e.g.
+`StaticQuantConfig() + StaticQuantConfig(smooth_quant=True, white_list=[r"decoder_block_0/"])`. Projections that read the
+same input share one smoothing factor, so a group is smoothed only if all of its quantized projections enable
+SmoothQuant with the same `smooth_quant_alpha`; otherwise it is skipped with a warning.
 
 Supported blocks (`SMOOTH_RULES` in `neural_compressor/jax/algorithms/smooth_quant.py`):
 
@@ -94,10 +98,10 @@ Supported blocks (`SMOOTH_RULES` in `neural_compressor/jax/algorithms/smooth_qua
 | | down projection | up projection output channels |
 | | attention output projection | value projection output channels (shared by the query heads of a kv head) |
 
-Other models are left unchanged (a warning is logged).
+Other models are left unchanged: a warning is logged and no extra calibration pass is run.
 
 Example: Gemma3-4B-instruct, fp8 e4m3 static quantization with per-tensor weight scales and 171 BoolQ calibration
-samples, BoolQ accuracy (3270 samples) on Intel Xeon (Diamond Rapids): 81.07% without SmoothQuant, 82.54% with
+samples, BoolQ accuracy (3270 samples) on Intel Xeon (Diamond Rapids): 81.07% without SmoothQuant, 82.14% with
 `smooth_quant_alpha=0.5` (bf16: 82.17%), with the same oneDNN kernels and throughput.
 
 ## Examples

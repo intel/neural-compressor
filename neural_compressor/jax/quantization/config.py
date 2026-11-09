@@ -439,20 +439,51 @@ class StaticQuantConfig(JaxBaseConfig):
     name = STATIC_QUANT
     params_list = JaxBaseConfig.params_list + ["smooth_quant", "smooth_quant_alpha"]
 
-    def __init__(self, *args, smooth_quant: bool = False, smooth_quant_alpha: float = 0.5, **kwargs):
+    def __init__(
+        self,
+        weight_dtype: str = "fp8_e4m3",
+        activation_dtype: str = "fp8_e4m3",
+        const_scale: bool = False,
+        const_weight: bool = False,
+        weight_scale_granularity: str = "per_tensor",
+        dot_product_attention_enable: bool = False,
+        smooth_quant: bool = False,
+        smooth_quant_alpha: float = 0.5,
+        white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
+        exclude_list: Optional[List[str]] = None,
+    ):
         """Init static quantization config.
 
+        The parameters are listed explicitly (not ``*args, **kwargs``) because ``BaseConfig.expand`` reads their
+        annotations from this signature.
+
         Args:
-            *args: Positional arguments of :class:`JaxBaseConfig`.
+            weight_dtype (str): Data type for weights, default is "fp8_e4m3".
+            activation_dtype (str): Data type for activations, default is "fp8_e4m3".
+            const_scale (bool): Whether to use a constant scale factor for quantization.
+            const_weight (bool): Whether to use constant quantized weights.
+            weight_scale_granularity (str): Whether to use per_channel or per_tensor quantization for weights.
+            dot_product_attention_enable (bool): Whether quantized attention layers may use the fused
+                dot-product-attention path.
             smooth_quant (bool): Apply SmoothQuant (folded into the weights) before calibration. Default False.
             smooth_quant_alpha (float): SmoothQuant migration strength in [0, 1]. Default 0.5.
-            **kwargs: Keyword arguments of :class:`JaxBaseConfig`.
+            white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): Layers to quantize, see :class:`JaxBaseConfig`.
+            exclude_list (Optional[List[str]]): Layers to skip, see :class:`JaxBaseConfig`.
         """
         if not isinstance(smooth_quant_alpha, list) and not 0.0 <= smooth_quant_alpha <= 1.0:
             raise ValueError(f"smooth_quant_alpha must be in [0, 1], got {smooth_quant_alpha}")
         self.smooth_quant = smooth_quant
         self.smooth_quant_alpha = smooth_quant_alpha
-        super().__init__(*args, **kwargs)
+        super().__init__(
+            weight_dtype=weight_dtype,
+            activation_dtype=activation_dtype,
+            const_scale=const_scale,
+            const_weight=const_weight,
+            weight_scale_granularity=weight_scale_granularity,
+            dot_product_attention_enable=dot_product_attention_enable,
+            white_list=white_list,
+            exclude_list=exclude_list,
+        )
 
     def _get_supported_class_names(self) -> set:
         """Return the quantizable layer class names for static quantization."""

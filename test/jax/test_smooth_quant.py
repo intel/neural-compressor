@@ -20,6 +20,7 @@ import json
 import keras
 import numpy as np
 import pytest
+from jax import numpy as jnp
 from keras_hub.models import Backbone, Gemma3Backbone, Gemma3CausalLM, Gemma3CausalLMPreprocessor
 
 from neural_compressor.jax import JaxBaseConfig, StaticQuantConfig, quantize_model
@@ -27,11 +28,13 @@ from neural_compressor.jax.algorithms import smooth_quant as sq
 
 mock_tokenizer = pytest.importorskip("keras_hub.src.tests.mocks.mock_gemma3_tokenizer")
 
+pytestmark = pytest.mark.smoke_test  # tiny random model, ~1 min for the whole file
+
 PROMPTS = ["the quick brown fox", "the earth is round"]
 
 
-def tiny_gemma3(seed=0, outliers=True):
-    """Small random text-only Gemma3 (float32) with a few outlier channels in the pre-attention / pre-FFW norms."""
+def tiny_gemma3(seed=0, outliers=True, dtype="float32"):
+    """Small random text-only Gemma3 with a few outlier channels in the pre-attention / pre-FFW norms."""
     keras.utils.set_random_seed(seed)
     tokenizer = mock_tokenizer.MockGemma3Tokenizer()
     preprocessor = Gemma3CausalLMPreprocessor(
@@ -53,14 +56,14 @@ def tiny_gemma3(seed=0, outliers=True):
         use_post_ffw_norm=True,
         use_post_attention_norm=True,
         vision_encoder=None,
-        dtype="float32",
+        dtype=dtype,
     )
     model = Gemma3CausalLM(backbone=backbone, preprocessor=preprocessor)
     if outliers:
         rng = np.random.default_rng(seed)
         for block in backbone.transformer_layers:
             for norm in (block.pre_attention_norm, block.pre_ffw_norm):
-                g = np.asarray(norm.scale).copy()
+                g = np.asarray(norm.scale).astype(np.float32)
                 g[rng.choice(g.size, 2, replace=False)] = 30.0
                 norm.scale.assign(g)
     return model, preprocessor
@@ -175,21 +178,101 @@ def test_unsupported_model_is_unchanged(model, calibration_data):
     quantize_model(model, StaticQuantConfig(smooth_quant=True), lambda m: m(calibration_data))
 
 
-def test_save_load_without_smooth_quant_params(tmp_path):
-    """The smoothing is baked into the weights, so the saved model config doesn't carry the SmoothQuant options (it
-    loads with INC versions without them) and reloads with the same outputs."""
+def test_save_load_keeps_smooth_quant_params(tmp_path):
+    """The SmoothQuant options are stored with the model like the other options (so it's visible that it was applied);
+    loading only prepares the quantized layers (no smoothing or calibration) and gives the same outputs."""
     model, preprocessor = tiny_gemma3()
-    config = StaticQuantConfig(const_scale=True, const_weight=True, smooth_quant=True)
+    config = StaticQuantConfig(const_scale=True, const_weight=True, smooth_quant=True, smooth_quant_alpha=0.4)
     qmodel = quantize_model(model, config, generate_calibration)
     inputs = preprocessor.generate_preprocess(PROMPTS)
     inputs = {k: inputs[k] for k in ("token_ids", "padding_mask")}
     expected = np.asarray(qmodel.backbone(inputs))
     # the mock tokenizer has no assets to save, so save the quantized backbone (it carries the quant config)
     qmodel.backbone.save_to_preset(str(tmp_path))
-    saved = (tmp_path / "config.json").read_text()
-    assert "_quant_config" in saved and "smooth_quant" not in saved
+    saved = json.loads((tmp_path / "config.json").read_text())
+    saved_quant = saved["config"]["_quant_config"]["config"]
+    assert saved_quant["smooth_quant"] is True and saved_quant["smooth_quant_alpha"] == 0.4
     loaded = Backbone.from_preset(str(tmp_path))
     np.testing.assert_allclose(np.asarray(loaded(inputs)), expected, rtol=1e-5, atol=1e-5)
+
+
+def _norm_scales(model):
+    return [
+        (np.asarray(b.pre_attention_norm.scale).copy(), np.asarray(b.pre_ffw_norm.scale).copy())
+        for b in model.backbone.transformer_layers
+    ]
+
+
+def test_composable_config_smooths_only_selected_blocks():
+    """A composable config can enable SmoothQuant for part of the model; the other blocks are quantized unsmoothed."""
+    model, preprocessor = tiny_gemma3()
+    ref = logits(model, preprocessor)
+    before = _norm_scales(model)
+    config = StaticQuantConfig(weight_dtype="int8", activation_dtype="int8") + StaticQuantConfig(
+        weight_dtype="int8", activation_dtype="int8", smooth_quant=True, white_list=[r"decoder_block_0/"]
+    )
+    qmodel = quantize_model(model, config, generate_calibration)
+    after = _norm_scales(qmodel)
+    assert not np.allclose(after[0][0], before[0][0]) and not np.allclose(after[0][1], before[0][1])  # block 0
+    np.testing.assert_array_equal(after[1][0], before[1][0])  # block 1 untouched
+    np.testing.assert_array_equal(after[1][1], before[1][1])
+    assert rel_err(logits(qmodel, preprocessor), ref) < 0.1
+
+
+def test_group_with_conflicting_settings_is_skipped():
+    """Projections sharing an input must agree: smoothing only the query (not key/value) skips the q/k/v group."""
+    model, _ = tiny_gemma3()
+    before = _norm_scales(model)
+    config = StaticQuantConfig(weight_dtype="int8", activation_dtype="int8") + StaticQuantConfig(
+        weight_dtype="int8", activation_dtype="int8", smooth_quant=True, white_list=[r"decoder_block_0/attention/query"]
+    )
+    quantize_model(model, config, generate_calibration)
+    np.testing.assert_array_equal(_norm_scales(model)[0][0], before[0][0])
+
+
+def test_per_layer_settings_resolution():
+    model, _ = tiny_gemma3()
+    q_and_k = {"query", "key"}
+
+    def settings(layer):  # q/k with alpha 0.4, v not quantized, gate/up/down/o without SmoothQuant
+        if layer.name == "value":
+            return None
+        return (True, 0.4) if layer.name in q_and_k else (False, 0.5)
+
+    groups = sq.find_smooth_groups(model, settings)
+    assert sorted(g.name for g in groups) == ["decoder_block_0/qkv", "decoder_block_1/qkv"]
+    assert all(g.alpha == 0.4 for g in groups)
+
+
+def test_bfloat16_fold_is_exact():
+    """In bfloat16, a folded norm gain (1 + scale') close to 0 is coarse; the consumers are scaled by the factors the
+    stored gain implements, so gain x weight stays equal per input channel (up to the bf16 rounding of the weights)."""
+    model, preprocessor = tiny_gemma3(dtype="bfloat16")
+    block = model.backbone.transformer_layers[0]
+    gain0 = 1.0 + np.asarray(block.pre_attention_norm.scale).astype(np.float32)
+    q0 = np.asarray(block.attention.query_dense.kernel).astype(np.float32)  # (heads, in, head_dim)
+    x = preprocessor.generate_preprocess(PROMPTS)
+    sq.apply_smooth_quant(model, lambda m: m(x))
+    gain1 = 1.0 + np.asarray(block.pre_attention_norm.scale).astype(np.float32)
+    q1 = np.asarray(block.attention.query_dense.kernel).astype(np.float32)
+    assert (gain0 / gain1).max() > 10  # strong smoothing on the outlier channels, where bf16 rounding matters
+    np.testing.assert_allclose(gain1[None, :, None] * q1, gain0[None, :, None] * q0, rtol=2e-2, atol=1e-6)
+
+
+def test_observer_keeps_input_dtype():
+    """The observer must not autocast: the observed projection gets its bf16 input unchanged during calibration."""
+    x = jnp.ones((2, 3, 4), dtype="bfloat16")
+    for kwargs in ({}, {"dtype": "float32"}):
+        obs = sq.ChannelAbsMaxObserver((4,), **kwargs)
+        assert obs(x).dtype == jnp.bfloat16
+        np.testing.assert_array_equal(np.asarray(obs.channel_abs_max), np.ones(4))
+
+
+def test_config_expand():
+    """StaticQuantConfig keeps an explicit signature, so BaseConfig.expand works (with and without SmoothQuant)."""
+    assert len(StaticQuantConfig().expand()) == 1
+    configs = StaticQuantConfig(smooth_quant=True, smooth_quant_alpha=[0.3, 0.5]).expand()
+    assert sorted(c.smooth_quant_alpha for c in configs) == [0.3, 0.5]
 
 
 def test_config_serialization():

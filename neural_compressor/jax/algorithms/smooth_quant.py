@@ -43,7 +43,8 @@ class ChannelAbsMaxObserver(keras.layers.Layer):
     """Calibration observer: running per-channel maximum of ``|x|`` over all but the last ``num_channel_dims`` axes.
 
     The statistic is a non-trainable variable, so it is updated inside a jitted, stateless calibration function
-    (e.g. the CausalLM generate function used during quantization) like the other INC observers.
+    (e.g. the CausalLM generate function used during quantization) like the other INC observers. Input autocasting is
+    disabled, so the observed layer receives its input unchanged (same dtype) during calibration.
     """
 
     def __init__(self, channel_shape: Tuple[int, ...], **kwargs):
@@ -53,6 +54,7 @@ class ChannelAbsMaxObserver(keras.layers.Layer):
             channel_shape (Tuple[int, ...]): Shape of the trailing (channel) axes of the observed input.
             **kwargs: Keyword arguments for the base layer.
         """
+        kwargs.setdefault("autocast", False)
         super().__init__(name="smooth_quant_observer", **kwargs)
         self.channel_shape = tuple(int(d) for d in channel_shape)
         self.channel_abs_max = self.add_weight(
@@ -148,12 +150,16 @@ class SmoothGroup:
     ``head_repeat`` > 1 means the consumer input channels are ``(n_q, h)`` while the absorbing layer produces
     ``(n_kv, h)`` with ``n_q = n_kv * head_repeat`` (grouped-query attention); one factor per kv channel is shared
     by the query heads of its group.
+
+    ``absorb(s)`` folds ``1 / s`` into the producing layer and returns the factors that the stored (possibly
+    bfloat16-rounded) weights actually implement; the consumers are scaled by those, so the fold stays exact.
     """
 
     name: str
     consumers: List[keras.layers.Layer]
-    absorb: Callable[[np.ndarray], None]
+    absorb: Callable[[np.ndarray], np.ndarray]
     head_repeat: int = 1
+    alpha: float = 0.5
     observer: Optional[ChannelAbsMaxObserver] = field(default=None, repr=False)
 
     @property
@@ -161,20 +167,34 @@ class SmoothGroup:
         return self.consumers[0]
 
 
-def _fold_into_gemma_rms_norm(norm) -> Callable[[np.ndarray], None]:
+def _assign(variable, value: np.ndarray) -> np.ndarray:
+    """Assign and return the stored value (rounded to the variable dtype, e.g. bfloat16)."""
+    variable.assign(value.astype(np.float32))
+    return _np(variable)
+
+
+def _fold_into_gemma_rms_norm(norm) -> Callable[[np.ndarray], np.ndarray]:
     """Fold 1/s into a Gemma RMSNorm.
 
-    It computes ``x_hat * (1 + scale)``, so dividing its output by s gives ``1 + scale' = (1 + scale) / s``.
+    It computes ``x_hat * (1 + scale)``, so dividing its output by s gives ``1 + scale' = (1 + scale) / s``. In
+    bfloat16, ``scale'`` close to -1 is coarse (e.g. s = 100 stores a gain 17% too large), so the returned factors are
+    the ones the stored gain implements, ``(1 + scale) / (1 + scale'_stored)``. Channels whose gain would round to
+    zero are left unsmoothed.
     """
 
     def absorb(s):
-        g = _np(norm.scale)
-        norm.scale.assign(((1.0 + g) / s - 1.0).astype(np.float32))
+        gain = 1.0 + _np(norm.scale)
+        stored = 1.0 + _assign(norm.scale, gain / s - 1.0)
+        lost = (stored == 0) & (gain != 0)
+        if lost.any():
+            s = np.where(lost, 1.0, s)
+            stored = 1.0 + _assign(norm.scale, gain / s - 1.0)
+        return np.where(stored != 0, gain / np.where(stored != 0, stored, 1.0), 1.0).astype(np.float32)
 
     return absorb
 
 
-def _fold_into_output_channels(layer) -> Callable[[np.ndarray], None]:
+def _fold_into_output_channels(layer) -> Callable[[np.ndarray], np.ndarray]:
     """Divide the output channels (and bias) of a linear producer by s."""
 
     def absorb(s):
@@ -184,6 +204,7 @@ def _fold_into_output_channels(layer) -> Callable[[np.ndarray], None]:
         if getattr(layer, "bias", None) is not None:
             b = _np(layer.bias)
             layer.bias.assign((b / s.reshape(b.shape)).astype(np.float32))
+        return s  # per-element rounding of the weights only, no systematic per-channel error
 
     return absorb
 
@@ -218,12 +239,41 @@ SMOOTH_RULES: Dict[str, Callable[[keras.layers.Layer], List[SmoothGroup]]] = {
 }
 
 
-def find_smooth_groups(model, layer_filter: Optional[Callable[[keras.layers.Layer], bool]] = None) -> List[SmoothGroup]:
-    """Collect the foldable groups of all supported blocks; keep groups with at least one consumer passing the filter.
+# Per-layer SmoothQuant settings: ``None`` if the layer is not quantized, else ``(enabled, alpha)``.
+LayerSettings = Callable[[keras.layers.Layer], Optional[Tuple[bool, float]]]
+
+
+def _resolve(group: SmoothGroup, layer_settings: Optional[LayerSettings], alpha: float) -> Optional[float]:
+    """Alpha for a group, or None to skip it.
+
+    A group is smoothed only if all of its quantized consumers enable SmoothQuant with the same alpha: the consumers
+    share one input and one factor, so a consumer configured without SmoothQuant (or with another alpha) would
+    otherwise be changed against its configuration. Consumers that are not quantized don't matter (the fold is exact).
+    """
+    if layer_settings is None:
+        return alpha
+    settings = [st for st in (layer_settings(c) for c in group.consumers) if st is not None]
+    if not settings or not any(enabled for enabled, _ in settings):
+        return None
+    if not all(enabled for enabled, _ in settings) or len({a for _, a in settings}) > 1:
+        logger.warning(
+            "SmoothQuant: %s skipped, its consumers (%s) share an input but have different SmoothQuant settings %s.",
+            group.name,
+            ", ".join(c.path or c.name for c in group.consumers),
+            settings,
+        )
+        return None
+    return settings[0][1]
+
+
+def find_smooth_groups(model, layer_settings: Optional[LayerSettings] = None, alpha: float = 0.5) -> List[SmoothGroup]:
+    """Collect the foldable groups of all supported blocks and their alpha.
 
     Args:
         model (keras.Model): Model to inspect.
-        layer_filter (Callable, optional): Returns True for layers that will be quantized.
+        layer_settings (Callable, optional): Per-layer settings, see ``LayerSettings``. Default: every group with
+            ``alpha``.
+        alpha (float): Alpha used when ``layer_settings`` is not given.
 
     Returns:
         List[SmoothGroup]: Groups to smooth.
@@ -234,9 +284,14 @@ def find_smooth_groups(model, layer_filter: Optional[Callable[[keras.layers.Laye
         if rule is None:
             continue
         for g in rule(layer):
-            if layer_filter is None or any(layer_filter(c) for c in g.consumers):
-                g.name = f"{layer.path or layer.name}/{g.name}"
-                groups.append(g)
+            g.name = f"{layer.path or layer.name}/{g.name}"
+            group_alpha = _resolve(g, layer_settings, alpha)
+            if group_alpha is None:
+                continue
+            if not 0.0 <= group_alpha <= 1.0:
+                raise ValueError(f"smooth_quant_alpha must be in [0, 1], got {group_alpha} for {g.name}")
+            g.alpha = group_alpha
+            groups.append(g)
     return groups
 
 
@@ -244,7 +299,7 @@ def find_smooth_groups(model, layer_filter: Optional[Callable[[keras.layers.Laye
 def _attach_observer(group: SmoothGroup):
     layer = group.observed
     channel_shape = tuple(layer.kernel.shape[a] for a in input_axes(layer))
-    obs = ChannelAbsMaxObserver(channel_shape)
+    obs = ChannelAbsMaxObserver(channel_shape, dtype=layer.dtype_policy)
     original_call = layer.call
 
     def call(inputs, *args, **kwargs):
@@ -290,28 +345,28 @@ def apply_smooth_quant(
     model: keras.Model,
     calib_function: Callable,
     alpha: float = 0.5,
-    layer_filter: Optional[Callable[[keras.layers.Layer], bool]] = None,
-) -> keras.Model:
+    layer_settings: Optional[LayerSettings] = None,
+) -> None:
     """Smooth the model in place: calibrate per-channel activation ranges, then fold the factors into the weights.
 
-    Args:
-        model (keras.Model): FP32/BF16 model (not yet quantized).
-        calib_function (Callable): Runs calibration data through the model (the static-quantization calib function).
-        alpha (float): Migration strength in [0, 1]; 0.5 balances activation and weight ranges.
-        layer_filter (Callable, optional): Returns True for layers that will be quantized; groups without such a
-            consumer are skipped.
+    Only blocks with a rule in ``SMOOTH_RULES`` are smoothed (Gemma3 decoder blocks); for other models a warning is
+    logged and nothing is run (no calibration pass).
 
-    Returns:
-        keras.Model: The same model, smoothed.
+    Args:
+        model (keras.Model): FP32/BF16 model (not yet quantized), modified in place.
+        calib_function (Callable): Runs calibration data through the model (the static-quantization calib function).
+        alpha (float): Migration strength in [0, 1] (0.5 balances activation and weight ranges), used for all
+            groups when ``layer_settings`` is not given.
+        layer_settings (Callable, optional): Per-layer settings from the quantization configs, see ``LayerSettings``.
     """
-    if not 0.0 <= alpha <= 1.0:
-        raise ValueError(f"smooth_quant_alpha must be in [0, 1], got {alpha}")
-    groups = find_smooth_groups(model, layer_filter)
+    groups = find_smooth_groups(model, layer_settings, alpha)
     if not groups:
         logger.warning(
-            "SmoothQuant: no supported blocks found (supported: %s); model left unchanged.", ", ".join(SMOOTH_RULES)
+            "SmoothQuant: no layers to smooth (supported blocks: %s, with SmoothQuant enabled for their projections); "
+            "model left unchanged.",
+            ", ".join(SMOOTH_RULES),
         )
-        return model
+        return
     for g in groups:
         _attach_observer(g)
     try:
@@ -330,11 +385,11 @@ def apply_smooth_quant(
         if g.head_repeat > 1:  # (n_q, h) -> (n_kv, h): one factor per kv channel
             a = a.reshape((-1, g.head_repeat) + a.shape[1:]).max(1)
             w = w.reshape((-1, g.head_repeat) + w.shape[1:]).max(1)
-        s = smoothing_factors(a, w, alpha)
+        s = g.absorb(smoothing_factors(a, w, g.alpha))  # the factors the stored producer weights implement
         s_consumer = np.repeat(s, g.head_repeat, axis=0) if g.head_repeat > 1 else s
         for c in g.consumers:
             scale_kernel(c, s_consumer, input_axes(c))
-        g.absorb(s)
         logger.debug("SmoothQuant: %s factors in [%.3g, %.3g]", g.name, float(s.min()), float(s.max()))
-    logger.info("SmoothQuant: smoothed %d groups (alpha=%s).", len(groups), alpha)
-    return model
+    logger.info(
+        "SmoothQuant: smoothed %d groups (alpha %s).", len(groups), ", ".join(sorted({str(g.alpha) for g in groups}))
+    )
