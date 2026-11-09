@@ -1,185 +1,108 @@
-import math
-import types
+# -*- coding: utf-8 -*-
+# Copyright (c) 2025 Intel Corporation
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#    http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+"""Tests for QuantLinear and the legacy TensorQuantizer shim."""
+
+import warnings
 
 import pytest
 import torch
 import torch.nn as nn
 
-# Skip the whole module if auto_round (needed for get_quant_func inside TensorQuantizer) is not available
-auto_round = pytest.importorskip("auto_round")
-
 from neural_compressor.torch.algorithms.qat.quant_linear import QuantLinear
 from neural_compressor.torch.algorithms.qat.tensor_quantizer import TensorQuantizer
+from neural_compressor.torch.quantization.fake_quant import ModuleQuantConfig, QuantizerConfig
 
 
-def make_quant_cfg(
-    *,
-    data_type="mx_fp8",
-    bits=8,
-    group_size=32,
-    sym=True,
-    act_data_type="mx_fp8",
-    act_bits=8,
-    act_group_size=32,
-    act_sym=True,
-):
-    """Build a lightweight namespace mimicking the attributes QuantLinear._setup expects."""
-    return types.SimpleNamespace(
-        data_type=data_type,
-        bits=bits,
-        group_size=group_size,
-        sym=sym,
-        act_data_type=act_data_type,
-        act_bits=act_bits,
-        act_group_size=act_group_size,
-        act_sym=act_sym,
+def build_quant_linear(in_features=32, out_features=16, bias=True):
+    source = nn.Linear(in_features, out_features, bias=bias)
+    config = ModuleQuantConfig(
+        weight=QuantizerConfig(format="mxfp8"),
+        input=QuantizerConfig(format="mxfp8"),
     )
-
-
-def build_quant_linear(in_features=32, out_features=16, bias=True, quant_cfg=None, device="cpu", dtype=torch.float32):
-    """Manually construct a QuantLinear since the class does not define an __init__.
-
-    Steps:
-      1. Instantiate the module
-      2. Register parameter tensors (weight, bias)
-      3. Add metadata attributes used by extra_repr / repr
-      4. Call internal _setup with provided quant config
-    """
-    if quant_cfg is None:
-        quant_cfg = make_quant_cfg(group_size=32, act_group_size=32)
-
-    ql = QuantLinear()
-    ql.in_features = in_features
-    ql.out_features = out_features
-
-    weight = torch.randn(out_features, in_features, device=device, dtype=dtype)
-    ql.register_parameter("weight", nn.Parameter(weight))
-
-    if bias:
-        b = torch.randn(out_features, device=device, dtype=dtype)
-        ql.register_parameter("bias", nn.Parameter(b))
-    else:
-        ql.bias = None  # make sure attribute exists
-
-    ql._setup(quant_cfg)
-    return ql
+    return QuantLinear.from_float(source, config)
 
 
 @pytest.mark.parametrize("bias", [True, False])
 def test_quant_linear_forward_and_backward(bias):
     torch.manual_seed(42)
-
-    in_features = 32
-    out_features = 16
-    batch_size = 3
-
-    ql = build_quant_linear(in_features=in_features, out_features=out_features, bias=bias)
-
-    # Create a deliberately non-contiguous input (transpose trick)
-    base = torch.randn(in_features, batch_size)
-    x = base.t()  # shape (batch_size, in_features) but non-contiguous
-    assert not x.is_contiguous()
-
-    x.requires_grad_(True)
-    out = ql(x)
-
-    # Shape & dtype checks
-    assert out.shape == (batch_size, out_features)
+    quantized = build_quant_linear(bias=bias)
+    x = torch.randn(32, 3).t().requires_grad_(True)  # non-contiguous input
+    out = quantized(x)
+    assert out.shape == (3, 16)
     assert out.dtype == x.dtype
 
-    # Backward pass
-    loss = out.sum()
-    loss.backward()
-
-    assert ql.weight.grad is not None, "Weight should receive gradient through fake quant path"
+    out.sum().backward()
+    assert quantized.weight.grad is not None
     if bias:
-        assert ql.bias.grad is not None, "Bias should receive gradient"
+        assert quantized.bias.grad is not None
     else:
-        assert ql.bias is None
-
-    # Ensure original weight dtype tracked
-    assert ql.original_weight_dtype == ql.weight.dtype
-
-    # Output quantizer is explicitly disabled in _setup
-    assert "TensorQuantizer(disabled)" in repr(ql.output_quantizer)
-
-    # Input/weight quantizers should be enabled (not containing 'disabled')
-    assert "disabled" not in repr(ql.input_quantizer)
-    assert "disabled" not in repr(ql.weight_quantizer)
+        assert quantized.bias is None
 
 
-def test_quant_linear_repr_and_extra_repr():
-    ql = build_quant_linear(in_features=8, out_features=4, bias=True)
-    r = repr(ql)
-    # Basic structural checks
-    assert "QuantLinear(" in r
-    assert "(input_quantizer):" in r
-    assert "(weight_quantizer):" in r
-    assert "(output_quantizer):" in r
-    # extra_repr path
-    er = ql.extra_repr()
-    assert "in_features=8" in er
-    assert "out_features=4" in er
-    assert "bias=True" in er
+def test_quant_linear_state_dict_keys_are_unchanged():
+    quantized = build_quant_linear()
+    keys = set(quantized.state_dict())
+    assert "weight" in keys
+    assert "bias" in keys
+    assert not any(key.startswith("_quant") for key in keys)
 
 
-def test_tensor_quantizer_disable_and_no_quant_path():
-    tq = TensorQuantizer(if_quant=False)  # constructed with quantization turned off
-    x = torch.randn(5, 7)
-    out = tq(x)
-    # When disabled (not quant) it should return the identical object (same memory)
-    assert out.data_ptr() == x.data_ptr()
-    assert repr(tq) == "TensorQuantizer(disabled)"
+def test_output_quantizer_disabled_by_default():
+    quantized = build_quant_linear()
+    assert not quantized.output_quantizer.enabled
+    assert quantized.weight_quantizer.enabled
+    assert quantized.input_quantizer.enabled
 
 
-def test_tensor_quantizer_enable_disable_cycle():
-    tq = TensorQuantizer()
-    x = torch.randn(4, 32)  # group size default 32, matches last dim
-    y1 = tq(x)
-    assert y1.shape == x.shape
-    # Disable and ensure passthrough (pointer equality)
-    tq.disable()
-    y2 = tq(x)
-    assert y2.data_ptr() == x.data_ptr()
-    assert "disabled" in repr(tq)
-    # Re-enable
-    tq.enable()
-    y3 = tq(x)
-    assert y3.shape == x.shape
-    assert "disabled" not in repr(tq)
+def test_legacy_tensor_quantizer_kwargs():
+    with warnings.catch_warnings(record=True) as caught:
+        warnings.simplefilter("always")
+        quantizer = TensorQuantizer(data_type="mx_fp8", bits=8)
+    assert any(issubclass(item.category, DeprecationWarning) for item in caught)
+    assert quantizer.format.name == "mxfp8"
+    assert quantizer.num_bits == 8
+
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        fp4 = TensorQuantizer(data_type="mx_fp4", bits=4)
+    assert fp4.format.name == "mxfp4"
 
 
-def test_tensor_quantizer_scale_persistence():
-    # Provide scale_shape so internal buffer is registered & updated
-    tq = TensorQuantizer(scale_shape=(4, 32), block_size=32)
-    x = torch.randn(4, 32)
-    # Use internal fake quant function to generate scale
-    q, shared_exp = tq._fake_quantize(x)
-    # scale buffer should have been updated (shape (4, 1))
-    assert hasattr(tq, "scale")
-    assert tq.scale.shape == (4, 1)
-    # We cannot be certain of values, but at least ensure it is uint8 and not all zeros (likely)
-    assert tq.scale.dtype == torch.uint8
-    # Heuristic: at least one non-zero (if all zero it may still be valid, but improbable)
-    assert (tq.scale != 0).any() or (shared_exp == 0).all()
+def test_legacy_tensor_quantizer_unknown_type_raises():
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        with pytest.raises(ValueError):
+            TensorQuantizer(data_type="int3")
 
 
-def test_weight_pack():
-    # Provide scale_shape so internal buffer is registered & updated
-    tq = TensorQuantizer(scale_shape=(4, 32), block_size=32)
-    x = torch.randn(4, 32)
-    # Use internal fake quant function to generate scale
-    q, shared_exp = tq._fake_quantize(x)
 
-    q_packed, scale = tq.weight_pack(q, shared_exp)
+def test_legacy_enable_disable_and_repr():
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        quantizer = TensorQuantizer(data_type="mx_fp8")
+    quantizer.disable()
+    assert not quantizer.enabled
+    assert repr(quantizer) == "TensorQuantizer(disabled)"
+    quantizer.enable()
+    assert quantizer.enabled
+    assert "mx_fp8" in repr(quantizer)
 
-    assert q_packed.dtype == torch.float8_e4m3fn
 
-    tq = TensorQuantizer(data_type="mx_fp4", bits=4, scale_shape=(4, 32), block_size=32)
-    x = torch.randn(4, 32)
-    # Use internal fake quant function to generate scale
-    q, shared_exp = tq._fake_quantize(x)
-
-    q_packed, scale = tq.weight_pack(q, shared_exp)
-
-    assert q_packed.dtype == torch.uint8
+def test_legacy_real_quantize_has_explicit_boundary():
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        quantizer = TensorQuantizer(data_type="mx_fp8")
+    with pytest.raises(NotImplementedError):
+        quantizer._real_quantize(torch.randn(2, 32))
