@@ -1,9 +1,10 @@
 # AutoRound NVFP4 QDQ Support
 
 This package implements activation quant-dequant simulation for AutoRound
-standard NVFP4, NVFP4_E5M3, and NVFP4_E5M3_GS checkpoints. All paths use vLLM FP4 Marlin for
-packed E2M1 weights and apply QDQ to activations before dense and MoE GEMMs.
-They do not invoke the native NVFP4 hardware kernels in `nvfp4_hw`.
+standard NVFP4, NVFP4_E5M3, and NVFP4_E5M3_GS checkpoints. Standard NVFP4 uses
+the native vLLM W4A4 kernel when its kernel selector finds an accelerated
+backend; otherwise it falls back to QDQ and FP4 Marlin. NVFP4_E5M3 and
+NVFP4_E5M3_GS use QDQ and FP4 Marlin.
 
 ## Formats
 
@@ -36,22 +37,22 @@ AutoRound's per-layer FP32 global scales (`gs = 114688 * 6 / amax`):
 
 ## Usage
 
-Install the plugin into the vLLM environment and set `VLLM_QDQ=1`:
+Install the plugin into the vLLM environment. Standard NVFP4 routes
+automatically, so no environment flag is required:
 
 ```bash
-VLLM_QDQ=1 CUDA_VISIBLE_DEVICES=<idle-gpu> \
+CUDA_VISIBLE_DEVICES=<idle-gpu> \
   vllm serve /path/to/autoround-nvfp4-model \
   --dtype bfloat16 --trust-remote-code
 ```
 
-The `inc_nvfp4_qdq` entry point registers both QDQ schemes. The separate
-`nvfp4_hw` entry point observes `VLLM_QDQ=1` and does not register its hardware
-scheme, preventing either implementation from taking over the other's model.
+Set `VLLM_QDQ=1` to force QDQ for standard NVFP4, including on hardware with a
+native W4A4 backend. `nvfp4_v2` and `nvfp4_v2_gs` always use their QDQ schemes.
 
 ## Limitations
 
 - Checkpoint-backed dense and MoE execution requires group size 16 and BF16 activations.
-- Standard NVFP4 currently uses the correctness-first reference activation QDQ implementation.
+- Standard NVFP4 QDQ fallback uses the correctness-first reference activation implementation.
 - Marlin MoE requires one shared input global scale for each expert projection.
   For NVFP4_E5M3_GS, mismatched values fall back to the smallest one with a warning.
 - MoE does not support `apply_router_weight_on_input` or EPLB.
