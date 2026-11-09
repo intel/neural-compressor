@@ -33,6 +33,7 @@ from keras_hub.src.vllm.context import get_vllm_context
 from neural_compressor.common import logger
 from neural_compressor.jax.quantization.saving import SaveableLayerMixin
 from neural_compressor.jax.utils.utility import (
+    calculate_w_scale_shape,
     get_dequantize_fun,
     get_q_params,
     get_quantize_fun,
@@ -247,13 +248,6 @@ def get_activation_observer(activation_dtype, asymmetric, dtype_policy):
     if asymmetric and jnp.issubdtype(activation_dtype, jnp.integer):
         return MinMaxObserver(dtype=dtype_policy)
     return AbsMaxObserver(dtype=dtype_policy)
-
-
-def _calculate_w_scale_shape(kernel_shape, w_quant_axis):
-    if w_quant_axis is None:
-        return (1,) * len(kernel_shape)
-    else:
-        return tuple(1 if i in w_quant_axis else dim for i, dim in enumerate(kernel_shape))
 
 
 class StaticQDQLayer(SaveableLayerMixin, keras.layers.Layer):
@@ -628,7 +622,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
             # To be overridden later during load_own_variables
             _w_scale_initializer = "zeros"
             _kernel_quant_initializer = "zeros"
-            w_scale_shape = _calculate_w_scale_shape(self.kernel.shape, self.w_quant_axis)
+            w_scale_shape = calculate_w_scale_shape(self.kernel.shape, self.w_quant_axis)
         else:
             w_scale, _ = get_q_params(
                 self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=False, axis=self.w_quant_axis
@@ -664,7 +658,7 @@ class QStaticDenseMixin(SaveableLayerMixin):
         self._tracker.lock()
 
     def convert(self):
-        """Compute activation/weight scales and quantize weights.
+        """Compute activation scale and zero pointc.
 
         Returns:
             None: Updates quantization variables with calibrated values.
@@ -1727,8 +1721,8 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             # To be overridden later during load_own_variables
             _w_scale_initializer = "zeros"
             _kernel_quant_initializer = "zeros"
-            reverse_embeddings_shape = tuple([x for x in reversed(self.embeddings.shape)])
-            w_scale_shape = _calculate_w_scale_shape(reverse_embeddings_shape, self.w_quant_axis)
+            reverse_embeddings_shape = tuple(reversed(self.embeddings.shape))
+            w_scale_shape = calculate_w_scale_shape(reverse_embeddings_shape, self.w_quant_axis)
         else:
             if self.tie_weights:
                 reverse_embeddings = ops.transpose(self.embeddings.value)
@@ -1771,7 +1765,7 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         self._tracker.lock()
 
     def convert(self):
-        """Compute activation/weight scales and cache offline-quantized embeddings.
+        """Compute activation calibration values for QDQ helpers, set quantization status flag.
 
         Returns:
             None: Updates quantization variables with calibrated values.
