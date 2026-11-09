@@ -72,11 +72,7 @@ def write_quantization_config(model: torch.nn.Module, out_dir: str | Path, quant
 def without_quantizer_state(state: dict) -> dict:
     """Keep model parameters; quantizer buffers belong in quantization_config.json."""
     fields = ("weight_quantizer", "input_quantizer", "output_quantizer")
-    return {
-        key: value
-        for key, value in state.items()
-        if not any(f".{field}." in key for field in fields)
-    }
+    return {key: value for key, value in state.items() if not any(f".{field}." in key for field in fields)}
 
 
 def _gather_state_dict(model: torch.nn.Module, dtype: torch.dtype) -> dict:

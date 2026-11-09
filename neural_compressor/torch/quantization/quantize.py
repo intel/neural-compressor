@@ -235,8 +235,7 @@ def _legacy_qat_config(mapping):
     for module_type, scheme in mapping.items():
         if module_type is not torch.nn.Linear:
             raise NotImplementedError(
-                f"legacy prepare_qat only supported nn.Linear, got {module_type!r}; "
-                "pass a FakeQuantConfig instead"
+                f"legacy prepare_qat only supported nn.Linear, got {module_type!r}; " "pass a FakeQuantConfig instead"
             )
         schemes.add(scheme)
     if len(schemes) != 1:

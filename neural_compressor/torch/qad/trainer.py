@@ -193,9 +193,9 @@ class QADTrainer(Trainer):
                 teacher_log_probs = F.log_softmax(teacher_logits.float() / self.distill.temperature, dim=-1)
                 if self.distill.reverse:
                     student_log_probs, teacher_log_probs = teacher_log_probs, student_log_probs
-                token_loss = F.kl_div(
-                    student_log_probs, teacher_log_probs, reduction="none", log_target=True
-                ).sum(dim=-1)
+                token_loss = F.kl_div(student_log_probs, teacher_log_probs, reduction="none", log_target=True).sum(
+                    dim=-1
+                )
                 token_sum = (token_loss * loss_mask[:, start:end].float()).sum()
             else:
                 token_sum, _ = _chunked_kd(
