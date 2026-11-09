@@ -48,6 +48,7 @@ from neural_compressor.torch.quantization import (
     StaticQuantConfig,
     TEQConfig,
 )
+from neural_compressor.torch.algorithms.fake_quant import fake_quant_entry  # noqa: F401  (registers "fake_quant")
 from neural_compressor.torch.utils import (
     dump_model_op_stats,
     get_quantizer,
