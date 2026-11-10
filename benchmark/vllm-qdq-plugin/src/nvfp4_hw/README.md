@@ -13,8 +13,9 @@ implementations in `vllm_qdq_plugin.quantization`.
 - vLLM native NVFP4 linear and MoE kernels selected by its hardware oracle.
 
 This package does not implement NVFP4_E5M3 and does not simulate activation
-quantization. When `VLLM_QDQ=1`, its plugin entry point skips registration so
-the QDQ package can select its Marlin-based standard NVFP4 implementation.
+quantization. The QDQ plugin uses vLLM's NVFP4 kernel selector to route standard
+NVFP4 to this scheme when an accelerated W4A4 backend is available; otherwise
+it selects the Marlin-based QDQ implementation. `VLLM_QDQ=1` forces the latter.
 
 ## Entry Point
 
@@ -22,8 +23,8 @@ the QDQ package can select its Marlin-based standard NVFP4 implementation.
 inc_nvfp4 = nvfp4_hw.patch:register
 ```
 
-With QDQ disabled, loading an AutoRound standard NVFP4 checkpoint selects this
-hardware path automatically:
+Loading an AutoRound standard NVFP4 checkpoint selects this hardware path
+automatically when supported:
 
 ```bash
 CUDA_VISIBLE_DEVICES=<idle-gpu> vllm serve /path/to/nvfp4-model \

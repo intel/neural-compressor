@@ -51,9 +51,8 @@ def _quantize_to_e4m3fn_no_fp8_dtype(x: torch.Tensor) -> torch.Tensor:
     # Finite E4M3FN range.
     ax = torch.clamp(ax, 0.0, FLOAT8_E4M3FN_MAX)
 
-    # Subnormal region: values are multiples of 2^-9 in [0, 7*2^-9].
+    # Subnormal region: multiples of 2^-9; rounding up to 8*2^-9 lands exactly on the min normal.
     sub_q = _round_half_to_even(ax / FLOAT8_E4M3_SUBNORMAL_STEP) * FLOAT8_E4M3_SUBNORMAL_STEP
-    sub_q = torch.clamp(sub_q, 0.0, 7.0 * FLOAT8_E4M3_SUBNORMAL_STEP)
 
     # Normal region: step is 2^(e-3), where e=floor(log2(|x|)) in [-6, 8].
     safe_ax = torch.clamp(ax, min=FLOAT8_E4M3_MIN_NORMAL)

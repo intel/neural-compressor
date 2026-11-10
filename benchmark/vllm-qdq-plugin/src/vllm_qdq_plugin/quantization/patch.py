@@ -6,6 +6,7 @@ import re
 from dataclasses import replace
 from typing import Any
 
+from nvfp4_hw.inc_nvfp4_scheme import INCNvfp4Scheme
 from vllm.logger import init_logger
 
 from .inc_nvfp4_e5m3_scheme import NVFP4_E5M3_DATA_TYPE, NVFP4_E5M3_GS_DATA_TYPE, INCNvfp4UE5M3Scheme
@@ -13,6 +14,20 @@ from .inc_nvfp4_scheme import INCNvfp4QDQScheme
 
 logger = init_logger(__name__)
 _PATCHED = False
+
+
+def _native_nvfp4_kernel_available() -> bool:
+    """Return whether vLLM selects an accelerated W4A4 kernel for this device."""
+    try:
+        from vllm.model_executor.kernels.linear import init_nvfp4_linear_kernel
+
+        kernel = init_nvfp4_linear_kernel()
+    except Exception as error:
+        logger.info_once("Native NVFP4 kernel unavailable; using QDQ: %s", error)
+        return False
+
+    kernel_name = type(kernel).__name__
+    return kernel_name not in {"MarlinNvFp4LinearKernel", "EmulationNvFp4LinearKernel"} and "W4A16" not in kernel_name
 
 
 def _matching_layer_config(config: Any, layer_name: str) -> dict[str, Any] | None:
@@ -81,18 +96,17 @@ def _layer_data_type(config: Any, layer_name: str, default: str) -> str:
 def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     """Register AutoRound NVFP4 QDQ metadata and scheme routing."""
     global _PATCHED
+    from vllm.model_executor.layers.quantization.inc import INCConfig
+
+    INCConfig._vllm_qdq_nvfp4_enabled = enable_nvfp4_qdq
     if _PATCHED:
         return
 
-    from vllm.model_executor.layers.quantization.inc import INCConfig
     from vllm.model_executor.layers.quantization.inc import inc as inc_module
     from vllm.model_executor.layers.quantization.inc.config_parser import INCConfigParser
     from vllm.model_executor.layers.quantization.inc.schemes import factory
 
-    supported_dtypes = {NVFP4_E5M3_DATA_TYPE, NVFP4_E5M3_GS_DATA_TYPE}
-    if enable_nvfp4_qdq:
-        supported_dtypes.add("nv_fp")
-        INCConfig._vllm_qdq_nvfp4_enabled = True
+    supported_dtypes = {NVFP4_E5M3_DATA_TYPE, NVFP4_E5M3_GS_DATA_TYPE, "nv_fp"}
     INCConfig.SUPPORTED_DTYPES = set(INCConfig.SUPPORTED_DTYPES) | supported_dtypes
     INCConfig.SUPPORTED_FORMATS = set(INCConfig.SUPPORTED_FORMATS) | {
         "auto_round:llm_compressor",
@@ -105,7 +119,7 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     original_validate_supported_quantization = INCConfig._validate_supported_quantization
 
     def validate_supported_quantization(self: Any) -> None:
-        if enable_nvfp4_qdq and self.data_type == "nv_fp" and self.weight_bits == 4:
+        if self.data_type == "nv_fp" and self.weight_bits == 4:
             if self.packing_format not in INCConfig.SUPPORTED_FORMATS:
                 raise ValueError(f"Unsupported packing_format: {self.packing_format}")
             return
@@ -118,7 +132,10 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     def resolve_scheme(layer_config: Any):
         if INCNvfp4UE5M3Scheme.can_handle(layer_config):
             return INCNvfp4UE5M3Scheme()
-        if enable_nvfp4_qdq and INCNvfp4QDQScheme.can_handle(layer_config):
+        if INCNvfp4QDQScheme.can_handle(layer_config):
+            force_qdq = getattr(INCConfig, "_vllm_qdq_nvfp4_enabled", False)
+            if not force_qdq and _native_nvfp4_kernel_available():
+                return INCNvfp4Scheme()
             return INCNvfp4QDQScheme()
         return original_resolve_scheme(layer_config)
 
@@ -127,7 +144,7 @@ def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     factory.resolve_scheme = resolve_scheme
     inc_module.resolve_scheme = resolve_scheme
     _PATCHED = True
-    formats = "nv_fp, nvfp4_v2, and nvfp4_v2_gs" if enable_nvfp4_qdq else "nvfp4_v2 and nvfp4_v2_gs"
+    formats = "nv_fp, nvfp4_v2, and nvfp4_v2_gs"
     logger.warning("vLLM QDQ patch applied: AutoRound %s schemes registered", formats)
 
 
