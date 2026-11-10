@@ -65,6 +65,17 @@ class TensorQuantizer(nn.Module):
         self.register_buffer("amax", amax, persistent=True)
 
     # ------------------------------------------------------------------ state
+    def _load_from_state_dict(
+        self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
+    ):
+        """Materialize a missing static amax buffer before checkpoint loading."""
+        key = prefix + "amax"
+        if self.amax is None and key in state_dict:
+            self.amax = torch.empty((), dtype=torch.float32, device=state_dict[key].device)
+        super()._load_from_state_dict(
+            state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
+        )
+
     def load_amax(self, amax: torch.Tensor | float) -> None:
         """Set the calibrated amax (fp32, scalar)."""
         value = amax if isinstance(amax, torch.Tensor) else torch.tensor(float(amax))

@@ -52,6 +52,8 @@ def _merge_class():
             if self.disable_adapters or self.merged or adapter_names is not None:
                 # Adapters off/merged: base_layer already holds W (or W+BA)
                 # and fake-quantizes it itself.
+                if adapter_names is not None:
+                    kwargs["adapter_names"] = adapter_names
                 return super().forward(x, *args, **kwargs)
 
             base = self.base_layer

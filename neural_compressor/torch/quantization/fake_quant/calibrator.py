@@ -172,7 +172,7 @@ def apply_amax(
         module = model.get_submodule(name)
         for field_name in ("weight", "input", "output"):
             quantizer_cfg = getattr(config, field_name)
-            if quantizer_cfg is None or quantizer_cfg.scheme != "static":
+            if quantizer_cfg is None or quantizer_cfg.is_noop or quantizer_cfg.scheme != "static":
                 continue
             quantizer = getattr(module, f"{field_name}_quantizer")
             if not isinstance(quantizer, TensorQuantizer):

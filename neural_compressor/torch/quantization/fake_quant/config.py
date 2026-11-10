@@ -126,7 +126,7 @@ class FakeQuantConfig(TorchBaseConfig):
             fields = amax_map.lookup(name) or {}
             for field_name in ("weight", "input", "output"):
                 quantizer_cfg = getattr(config, field_name)
-                if quantizer_cfg is None or quantizer_cfg.scheme != "static":
+                if quantizer_cfg is None or quantizer_cfg.is_noop or quantizer_cfg.scheme != "static":
                     continue
                 if quantizer_cfg.amax is not None:
                     continue
@@ -172,7 +172,7 @@ class FakeQuantConfig(TorchBaseConfig):
             )
         for rule in self.rules:
             configs.extend(cfg for cfg in (rule.weight, rule.input, rule.output) if cfg is not None)
-        return any(cfg.scheme == "static" and cfg.amax is None for cfg in configs)
+        return any(not cfg.is_noop and cfg.scheme == "static" and cfg.amax is None for cfg in configs)
 
     def resolve_amax(self) -> Optional[AmaxMap]:
         """Load the configured amax source into an :class:`AmaxMap` (cached)."""

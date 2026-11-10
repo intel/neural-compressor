@@ -208,7 +208,13 @@ def _write_sharded_state(state: dict, out: Path, max_shard_size: str) -> None:
     weight_map = {}
     for index, tensors in enumerate(groups, 1):
         filename = "model.safetensors" if count == 1 else f"model-{index:05d}-of-{count:05d}.safetensors"
-        save_file(tensors, str(out / filename))
+        seen_storage = set()
+        serialized = {}
+        for key, tensor in tensors.items():
+            storage = tensor.untyped_storage().data_ptr()
+            serialized[key] = tensor.clone() if storage in seen_storage else tensor
+            seen_storage.add(storage)
+        save_file(serialized, str(out / filename))
         weight_map.update({key: filename for key in tensors})
     if count > 1:
         payload = {

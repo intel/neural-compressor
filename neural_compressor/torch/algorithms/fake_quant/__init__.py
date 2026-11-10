@@ -34,7 +34,7 @@ def _pending_static(plan: Dict[str, ModuleQuantConfig]) -> list[str]:
     for name, config in plan.items():
         for field_name in _QUANTIZER_FIELDS:
             quantizer_cfg = getattr(config, field_name)
-            if quantizer_cfg is None or quantizer_cfg.scheme != "static":
+            if quantizer_cfg is None or quantizer_cfg.is_noop or quantizer_cfg.scheme != "static":
                 continue
             if quantizer_cfg.amax is None:
                 pending.append(f"{name}.{field_name}")
@@ -63,13 +63,16 @@ def fake_quant_entry(
         configs_mapping: ``{(module_name, op_type): ModuleQuantConfig}`` from
             :meth:`FakeQuantConfig.to_config_mapping`.
         mode: ``PREPARE`` inserts quantizers only; ``QUANTIZE`` also calibrates
-            static quantizers when ``run_fn`` is given; ``CONVERT`` is a no-op
-            because fake-quant has no real-quant conversion step.
+            static quantizers when ``run_fn`` is given; ``CONVERT`` finalizes
+            calibration without replacing the fake-quant modules.
         run_fn: Calibration forward loop, called as ``run_fn(model, *run_args)``.
         run_args: Positional arguments for ``run_fn``.
     """
     if mode == Mode.CONVERT:
-        logger.info("[fake_quant] convert is a no-op; export() produces deployment artifacts")
+        for module in model.modules():
+            if isinstance(module, TensorQuantizer):
+                module.finalize()
+        logger.info("[fake_quant] finalized calibration; export() produces deployment artifacts")
         return model
 
     plan = {name: config for (name, _op_type), config in configs_mapping.items()}

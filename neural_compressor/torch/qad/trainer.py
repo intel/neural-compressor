@@ -34,7 +34,7 @@ from neural_compressor.torch.quantization.fake_quant import FakeQuantConfig
 
 from .checkpoint import is_peft_model, save_adapter, save_full_state_dict
 from .metrics import memory_report, param_counts, tflops_and_mfu
-from .modeling import get_adapter, hidden_states, logits_from_hidden
+from .modeling import get_adapter, logits_from_hidden
 
 
 def _unwrap(model: Any) -> Any:
@@ -147,7 +147,16 @@ class QADTrainer(Trainer):
             # Execute through the original wrapper so DDP/PEFT/FSDP hooks and
             # gradient reduction keep their required semantics.
             return model(input_ids=input_ids, attention_mask=attention_mask)
-        return hidden_states(model, input_ids, attention_mask, self.adapter)
+        outputs = model(
+            input_ids=input_ids,
+            attention_mask=attention_mask,
+            output_hidden_states=True,
+            use_cache=False,
+        )
+        hidden = getattr(outputs, "hidden_states", None)
+        if hidden is None:
+            raise TypeError(f"{type(module).__name__} did not return hidden_states; use the CausalLM interface")
+        return hidden[-1]
 
     def _logits(self, model: torch.nn.Module, hidden: torch.Tensor):
         module = _unwrap(model)
@@ -170,6 +179,9 @@ class QADTrainer(Trainer):
             loss = self.distill.ce_weight * self._ce_loss(model, inputs)
             self._last_loss_parts = {"kd_loss": 0.0, "kd_tokens": 0.0}
             return (loss, None) if return_outputs else loss
+
+        if self.distill.ce_weight and "labels" not in inputs:
+            raise ValueError("ce_weight > 0 requires labels for the CE term")
 
         student_hidden = self._hidden(model, input_ids, attention_mask)
         with torch.no_grad():

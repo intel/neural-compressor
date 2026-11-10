@@ -55,6 +55,16 @@ def tiny_quant_config():
     )
 
 
+def load_qad_example(filename):
+    import importlib.util
+
+    path = Path(__file__).resolve().parents[3] / "examples/pytorch/llm/qwen/qad" / filename
+    spec = importlib.util.spec_from_file_location(f"qad_example_{path.stem}", path)
+    module = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(module)
+    return module
+
+
 class TestPackedDataset(unittest.TestCase):
     def test_tail_mask_excludes_padding(self):
         from neural_compressor.torch.qad.data import PackedDataset
@@ -472,10 +482,10 @@ class TestReviewFixes(unittest.TestCase):
     def test_tiny_calibration_uses_synthetic_batches(self):
         from types import SimpleNamespace
 
-        from examples.pytorch.llm.qwen.qad.main import build_config, quantize_student
-
+        main = load_qad_example("main.py")
+        recipe = Path(__file__).resolve().parents[3] / "examples/pytorch/llm/qwen/qad/recipes/qwen3_8_27b_mxfp4_mlp_fp8_attn.yaml"
         args = SimpleNamespace(
-            recipe="examples/pytorch/llm/qwen/qad/recipes/qwen3_8_27b_mxfp4_mlp_fp8_attn.yaml",
+            recipe=str(recipe),
             model=None,
             teacher=None,
             amax_source=None,
@@ -489,15 +499,15 @@ class TestReviewFixes(unittest.TestCase):
             calib_batches=1,
             data="",
         )
-        config = build_config(args)
-        student = quantize_student(config, args, local_rank=0, world=1, device=torch.device("cpu"))
+        config = main.build_config(args)
+        student = main.quantize_student(config, args, local_rank=0, world=1, device=torch.device("cpu"))
         self.assertIsNone(config.quant.amax_source)
         self.assertTrue(any(module.amax is not None for module in student.modules() if hasattr(module, "amax")))
 
     def test_prepare_data_writes_independent_document_count(self):
         from types import SimpleNamespace
 
-        from examples.pytorch.llm.qwen.qad import prepare_data
+        prepare_data = load_qad_example("prepare_data.py")
 
         class Tokenizer:
             eos_token_id = 99
@@ -542,6 +552,107 @@ class TestReviewFixes(unittest.TestCase):
         self.assertEqual(sequence_count, 2)
         self.assertEqual(document_count, 3)
         self.assertEqual(indices.tolist(), [0, 3, 6])
+
+
+class TestSecondReviewFixes(unittest.TestCase):
+    def test_tied_weights_export_to_independent_safetensors(self):
+        from safetensors import safe_open
+
+        model = tiny_model()
+        model.lm_head.weight = model.model.embed_tokens.weight
+        with tempfile.TemporaryDirectory() as tmp:
+            out = export(model, None, ExportConfig(keep_vision=False), tmp, dtype=torch.float32)
+            with safe_open(str(Path(out) / "model.safetensors"), "pt") as handle:
+                embedding = handle.get_tensor("model.embed_tokens.weight")
+                head = handle.get_tensor("lm_head.weight")
+        torch.testing.assert_close(head, embedding)
+
+    def test_lora_forwards_mixed_batch_adapter_names(self):
+        from unittest.mock import patch
+
+        from peft.tuners.lora.layer import Linear as LoraLinear
+
+        model = apply_lora(
+            quantize(tiny_model(), tiny_quant_config()),
+            {"rank": 4, "alpha": 4, "targets": ["q_proj"], "quant_order": "lora_then_quant"},
+        )
+        layer = next(module for module in model.modules() if isinstance(module, LoraLinear))
+        with patch.object(LoraLinear, "forward", autospec=True, return_value="output") as forward:
+            result = layer(torch.randn(2, 4, 64), adapter_names=["default", "other"])
+        self.assertEqual(result, "output")
+        self.assertEqual(forward.call_args.kwargs["adapter_names"], ["default", "other"])
+
+    def test_qwen_hub_id_resolves_to_snapshot(self):
+        from unittest.mock import patch
+
+        from neural_compressor.torch.qad.modeling import _resolve_checkpoint_dir
+
+        with tempfile.TemporaryDirectory() as tmp:
+            with patch("huggingface_hub.snapshot_download", return_value=tmp) as download:
+                self.assertEqual(_resolve_checkpoint_dir("org/model"), Path(tmp))
+                self.assertEqual(_resolve_checkpoint_dir(tmp), Path(tmp))
+        download.assert_called_once_with(
+            "org/model", allow_patterns=["*.safetensors", "model.safetensors.index.json"]
+        )
+
+    def test_generic_hf_hidden_uses_root_wrapper_output(self):
+        from types import SimpleNamespace
+
+        from transformers import TrainingArguments
+
+        class GenericHF(torch.nn.Module):
+            def __init__(self):
+                super().__init__()
+                self.config = SimpleNamespace(model_type="generic")
+                self.model = torch.nn.Embedding(128, 16)
+                self.lm_head = torch.nn.Linear(16, 128, bias=False)
+
+            def forward(self, input_ids, attention_mask=None, output_hidden_states=False, use_cache=False):
+                hidden = self.model(input_ids)
+                return SimpleNamespace(hidden_states=(hidden,), logits=self.lm_head(hidden))
+
+        class Wrapper(torch.nn.Module):
+            def __init__(self, model):
+                super().__init__()
+                self.module = model
+                self.calls = 0
+
+            def forward(self, *args, **kwargs):
+                self.calls += 1
+                return self.module(*args, **kwargs)
+
+        student = GenericHF()
+        wrapped = Wrapper(student)
+        trainer = QADTrainer(
+            model=wrapped,
+            teacher=tiny_model(),
+            args=TrainingArguments(output_dir=tempfile.mkdtemp(), report_to=[], use_cpu=True),
+            distill_config=DistillConfig(top_k=16),
+        )
+        hidden = trainer._hidden(wrapped, torch.randint(0, 128, (2, 4)), None)
+        logits = trainer._logits(wrapped, hidden)
+        self.assertEqual(wrapped.calls, 1)
+        self.assertEqual(hidden.shape, (2, 4, 16))
+        self.assertEqual(logits.shape, (2, 4, 128))
+
+    def test_mixed_ce_requires_labels(self):
+        from transformers import TrainingArguments
+
+        student = tiny_model()
+        trainer = QADTrainer(
+            model=student,
+            teacher=tiny_model(),
+            args=TrainingArguments(output_dir=tempfile.mkdtemp(), report_to=[], use_cpu=True),
+            distill_config=DistillConfig(top_k=16, kd_weight=0.0, ce_weight=1.0),
+        )
+        batch = {
+            "input_ids": torch.randint(0, 128, (1, 16)),
+            "attention_mask": torch.ones(1, 16, dtype=torch.long),
+        }
+        with self.assertRaisesRegex(ValueError, "ce_weight > 0 requires labels"):
+            trainer.compute_loss(student, batch)
+        batch["labels"] = torch.randint(0, 128, (1, 16))
+        self.assertTrue(torch.isfinite(trainer.compute_loss(student, batch)))
 
 
 if __name__ == "__main__":

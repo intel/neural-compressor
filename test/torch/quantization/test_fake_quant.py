@@ -118,6 +118,15 @@ class TestTensorQuantizer(unittest.TestCase):
         with self.assertRaises(RuntimeError):
             quantizer(torch.randn(4, 8))
 
+    def test_static_amax_loads_into_fresh_quantizer(self):
+        config = QuantizerConfig(format="fp8_e4m3", scheme="static")
+        calibrated = TensorQuantizer(config)
+        calibrated.load_amax(7.5)
+        restored = TensorQuantizer(config)
+        restored.load_state_dict(calibrated.state_dict(), strict=True)
+        self.assertAlmostEqual(float(restored.amax), 7.5)
+        self.assertTrue(torch.equal(restored(torch.ones(4, 8)), calibrated(torch.ones(4, 8))))
+
     def test_ste_backward_is_identity(self):
         x = torch.randn(4, 32, requires_grad=True)
         quantizer = TensorQuantizer(QuantizerConfig(format="mxfp4"))
@@ -243,6 +252,45 @@ class TestConfigAndQuantize(unittest.TestCase):
         calibrate(model, run_fn, run_args=([torch.randn(2, 32) * 3.0],))
         self.assertIsNotNone(quantizer.amax)
         self.assertGreater(float(quantizer.amax), 0.0)
+
+    def test_convert_finalizes_static_calibration(self):
+        cfg = FakeQuantConfig(
+            rules=[QuantRule(module=r".*\.self_attn\.q_proj$", weight=dict(format="fp8_e4m3", scheme="static"))],
+        )
+        model = prepare_qat(self.model, cfg)
+        quantizer = model.model.layers[0].self_attn.q_proj.weight_quantizer
+        with torch.no_grad():
+            model(torch.randn(2, 32))
+        calibrated_amax = quantizer.amax.clone()
+        model = convert(model)
+        self.assertFalse(quantizer.calibrating)
+        with torch.no_grad():
+            model(torch.randn(2, 32) * 100.0)
+        torch.testing.assert_close(quantizer.amax, calibrated_amax)
+
+    def test_disabled_static_configs_do_not_require_calibration(self):
+        import json
+
+        from neural_compressor.torch.quantization.fake_quant.calibrator import AmaxMap, apply_amax
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "amax.json"
+            path.write_text(json.dumps({"amax": {}}))
+            cfg = FakeQuantConfig(
+                rules=[
+                    QuantRule(
+                        module=r".*\.self_attn\.q_proj$",
+                        weight=dict(format="fp8_e4m3", scheme="static", enabled=False),
+                        input=dict(format="fp8_e4m3", scheme="static", fake_quant=False),
+                    )
+                ],
+                amax_source={"file": str(path), "translate": "identity"},
+            )
+            model = quantize(self.model, cfg)
+        self.assertFalse(FakeQuantConfig(rules=cfg.rules).needs_calibration())
+        result = apply_amax(model, cfg.last_report.plan, AmaxMap({}), strict=True)
+        self.assertEqual(result["missing"], [])
+        self.assertIsNone(model.model.layers[0].self_attn.q_proj.weight_quantizer.amax)
 
     def test_legacy_prepare_qat_mapping(self):
         with warnings.catch_warnings(record=True) as caught:

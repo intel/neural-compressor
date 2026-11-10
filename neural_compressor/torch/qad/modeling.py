@@ -22,6 +22,7 @@ mechanism layer.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from pathlib import Path
 from typing import Any, Dict, List, Optional, Protocol, runtime_checkable
 
 import torch
@@ -315,6 +316,22 @@ def build_tiny_qwen35(
     return CausalLM(text, lm_head, config)
 
 
+def _resolve_checkpoint_dir(path: str) -> "Path":
+    """Return a local checkpoint directory, downloading Hub weights if needed."""
+    from pathlib import Path
+
+    root = Path(path)
+    if not root.is_dir():
+        from huggingface_hub import snapshot_download
+
+        root = Path(
+            snapshot_download(  # nosec B615 - caller-supplied model
+                path, allow_patterns=["*.safetensors", "model.safetensors.index.json"]
+            )
+        )
+    return root
+
+
 def _load_qwen35_text(path: str, config, dtype: torch.dtype) -> CausalLM:
     """Load only the language tower of a Qwen3.5 VLM checkpoint.
 
@@ -337,7 +354,7 @@ def _load_qwen35_text(path: str, config, dtype: torch.dtype) -> CausalLM:
     text = text.to_empty(device="cpu")
     lm_head = lm_head.to_empty(device="cpu")
 
-    root = Path(path)
+    root = _resolve_checkpoint_dir(path)
     index = root / "model.safetensors.index.json"
     if index.is_file():
         files = sorted({root / name for name in json.loads(index.read_text())["weight_map"].values()})
