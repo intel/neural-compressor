@@ -426,8 +426,10 @@ class Nvfp4QDQTests(unittest.TestCase):
 
         actual = nvfp4_qdq(x, row_scales, group_size=16)
         expected = torch.cat(
-            [nvfp4_qdq(x[start : start + 256], row_scales[start : start + 256], group_size=16)
-             for start in range(0, x.shape[0], 256)]
+            [
+                nvfp4_qdq(x[start : start + 256], row_scales[start : start + 256], group_size=16)
+                for start in range(0, x.shape[0], 256)
+            ]
         )
 
         self.assertTrue(torch.equal(actual, expected))
@@ -479,15 +481,11 @@ class Nvfp4QDQTests(unittest.TestCase):
 
         self.assertTrue(torch.equal(nvfp4_qdq(x, scalar), _nvfp4_qdq_reference(x, scalar)))
         self.assertTrue(torch.equal(nvfp4_qdq(x, row_scales[:6]), _nvfp4_qdq_reference(x, row_scales[:6])))
-        self.assertTrue(
-            torch.equal(nvfp4_qdq(x, row_scales, topk=3), _nvfp4_qdq_reference(routed_x, row_scales))
-        )
+        self.assertTrue(torch.equal(nvfp4_qdq(x, row_scales, topk=3), _nvfp4_qdq_reference(routed_x, row_scales)))
         inplace = x.clone()
         nvfp4_qdq(inplace, scalar, inplace=True)
         self.assertTrue(torch.equal(inplace, _nvfp4_qdq_reference(x, scalar)))
-        compiled = torch.compile(
-            lambda value, scale: nvfp4_qdq(value, scale, topk=3), backend="eager", fullgraph=True
-        )
+        compiled = torch.compile(lambda value, scale: nvfp4_qdq(value, scale, topk=3), backend="eager", fullgraph=True)
         self.assertTrue(torch.equal(compiled(x, row_scales), _nvfp4_qdq_reference(routed_x, row_scales)))
 
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")

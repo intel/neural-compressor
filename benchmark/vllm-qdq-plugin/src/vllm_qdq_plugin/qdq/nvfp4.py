@@ -25,9 +25,7 @@ def _nvfp4_qdq_reference(
     if group_size != 16:
         raise ValueError(f"nvfp4_qdq requires group_size 16, got {group_size}")
     if input_global_scale.dtype != torch.float32 or input_global_scale.numel() not in (1, x.shape[0]):
-        raise ValueError(
-            "nvfp4_qdq requires one float32 input_global_scale value or one per input row"
-        )
+        raise ValueError("nvfp4_qdq requires one float32 input_global_scale value or one per input row")
     if x.shape[1] % group_size:
         raise ValueError(f"nvfp4_qdq requires K divisible by group_size={group_size}, got K={x.shape[1]}")
 
@@ -39,9 +37,7 @@ def _nvfp4_qdq_reference(
         chunk_x = x[row_start:row_end]
         groups = chunk_x.reshape(chunk_x.shape[0], -1, group_size).float()
         chunk_scales = (
-            input_global_scales
-            if input_global_scales.numel() == 1
-            else input_global_scales[row_start:row_end]
+            input_global_scales if input_global_scales.numel() == 1 else input_global_scales[row_start:row_end]
         )
         global_scale = chunk_scales.reshape(-1, 1)
         scales = global_scale * (groups.abs().amax(dim=-1) * (1.0 / _FP4_MAX))

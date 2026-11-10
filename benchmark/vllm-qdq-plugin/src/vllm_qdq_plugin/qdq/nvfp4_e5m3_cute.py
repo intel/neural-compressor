@@ -139,7 +139,9 @@ def try_fused_silu_and_mul_qdq(
 
     from .cute import use_nvfp4_cute
 
-    if activation != MoEActivation.SILU or (activation_config is not None and activation_config.clamp_limit is not None):
+    if activation != MoEActivation.SILU or (
+        activation_config is not None and activation_config.clamp_limit is not None
+    ):
         return False
     if (
         output.dim() != 2
@@ -156,5 +158,7 @@ def try_fused_silu_and_mul_qdq(
         if global_scale.dtype != torch.float32 or global_scale.numel() not in (1, output.shape[0]):
             raise ValueError(f"{format_name} QDQ requires one float32 scale or one scale per row")
     trace_qdq(trace_op_name, output.shape, output.dtype, backend="CuTe", format_name=format_name)
-    torch.ops.vllm.qdq_plugin_silu_mul_nvfp4_family_qdq(output, activation_input, global_scale, scale_format, group_size)
+    torch.ops.vllm.qdq_plugin_silu_mul_nvfp4_family_qdq(
+        output, activation_input, global_scale, scale_format, group_size
+    )
     return True
