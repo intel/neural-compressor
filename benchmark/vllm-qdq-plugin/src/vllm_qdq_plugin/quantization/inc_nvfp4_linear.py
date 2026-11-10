@@ -88,7 +88,7 @@ class INCNvfp4QDQLinearMethod(INCLinearScheme):
 
         layer.weight = Parameter(layer.weight_packed.detach().contiguous(), requires_grad=False)
         del layer.weight_packed
-        input_global_scale = (1.0 / layer.input_global_scale.max()).to(torch.float32)
+        input_global_scale = layer.input_global_scale.max().to(torch.float32)
         weight_global_scale_inv = layer.weight_global_scale.max().to(torch.float32)
         layer.input_global_scale = Parameter(input_global_scale, requires_grad=False)
         layer.weight_global_scale = Parameter(1.0 / weight_global_scale_inv, requires_grad=False)

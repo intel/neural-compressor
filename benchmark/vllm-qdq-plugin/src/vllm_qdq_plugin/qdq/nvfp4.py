@@ -31,18 +31,28 @@ def _nvfp4_qdq_reference(
     original_dtype = x.dtype
     groups = x.reshape(x.shape[0], -1, group_size).float()
     global_scale = input_global_scale.reshape(1, 1)
-    scales = global_scale * groups.abs().amax(dim=-1).div_(_FP4_MAX)
+    scales = global_scale * (groups.abs().amax(dim=-1) * (1.0 / _FP4_MAX))
     scales = scales.clamp_(-_FP8_E4M3_MAX, _FP8_E4M3_MAX).to(torch.float8_e4m3fn).float()
-    inverse_scales = torch.where(scales == 0, torch.zeros_like(scales), global_scale / scales)
-    normalized = groups * inverse_scales.unsqueeze(-1)
+    dequant_scales = scales * torch.where(global_scale == 0, torch.zeros_like(global_scale), 1.0 / global_scale)
+    output_scales = torch.where(
+        dequant_scales == 0,
+        torch.zeros_like(dequant_scales),
+        1.0 / dequant_scales,
+    )
+    normalized = groups * output_scales.unsqueeze(-1)
     magnitude = normalized.abs()
-    quantized = torch.where(
-        magnitude < 2.0,
-        torch.round(magnitude * 2.0) / 2.0,
-        torch.where(magnitude < 4.0, torch.round(magnitude), 2.0 * torch.round(magnitude / 2.0)),
-    ).clamp_(max=_FP4_MAX)
-    quantized.copysign_(normalized)
-    dequantized = quantized * (scales / global_scale).unsqueeze(-1)
+    step1 = torch.round(2.0 * magnitude) / 2.0
+    step2 = torch.round(magnitude)
+    step3 = 2.0 * torch.round(magnitude / 2.0)
+    mask1 = magnitude < 2.0
+    mask2 = magnitude < 4.0
+    quantized = (step1 * mask1 + step2 * (~mask1) * mask2 + step3 * (~mask1) * (~mask2)).clamp_(-_FP4_MAX, _FP4_MAX)
+    quantized = quantized.copysign(normalized)
+    dequantized = quantized * torch.where(
+        output_scales == 0,
+        torch.zeros_like(output_scales),
+        1.0 / output_scales,
+    ).unsqueeze(-1)
     return dequantized.reshape_as(x).to(original_dtype)
 
 

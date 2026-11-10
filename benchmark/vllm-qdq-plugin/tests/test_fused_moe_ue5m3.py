@@ -193,18 +193,18 @@ def test_standard_nvfp4_qdq_moe_matches_reference():
     w2_scale = torch.rand(num_experts, hidden_size, intermediate_size // 16, device=device).to(torch.float8_e4m3fn)
     w13_global_scale = torch.full((num_experts, 2), 2.0, device=device)
     w2_global_scale = torch.full((num_experts,), 2.0, device=device)
-    input_global_scale = torch.full((num_experts, 2), 0.25, device=device)
-    w2_input_global_scale = torch.full((num_experts,), 0.25, device=device)
+    input_global_scale = torch.tensor([0.25, 0.125, 0.5, 0.0625], device=device)[:, None].repeat(1, 2)
+    w2_input_global_scale = torch.tensor([0.5, 0.25, 0.125, 1.0], device=device)
     topk_ids = torch.tensor([[0, 1], [2, 3], [1, 3], [0, 2], [3, 1]], device=device, dtype=torch.int32)
     topk_weights = torch.softmax(torch.randn(num_tokens, top_k, device=device), dim=-1)
 
     decoded_w13 = _decode_standard_weight(w13, w13_scale, 16).to(x.dtype) / 2.0
     decoded_w2 = _decode_standard_weight(w2, w2_scale, 16).to(x.dtype) / 2.0
-    quantized_x = nvfp4_qdq(x, input_global_scale[0, 0], 16)
     expected = torch.zeros_like(x)
     for expert_id in range(num_experts):
         token_ids, slots = torch.where(topk_ids == expert_id)
-        gate_up = quantized_x[token_ids] @ decoded_w13[expert_id].T
+        quantized_x = nvfp4_qdq(x[token_ids], input_global_scale[expert_id, 0], 16)
+        gate_up = quantized_x @ decoded_w13[expert_id].T
         activated = F.silu(gate_up[:, :intermediate_size]) * gate_up[:, intermediate_size:]
         activated = nvfp4_qdq(activated, w2_input_global_scale[expert_id], 16)
         expert_output = activated @ decoded_w2[expert_id].T
@@ -244,6 +244,8 @@ def test_standard_nvfp4_qdq_moe_matches_reference():
         },
     )()
     method.process_weights_after_loading(layer)
+    torch.testing.assert_close(layer.w13_input_scale, input_global_scale[:, 0])
+    torch.testing.assert_close(layer.w2_input_scale, w2_input_global_scale)
     actual = method.apply(layer, x, topk_weights, topk_ids, None, None)
 
     assert F.cosine_similarity(actual.float().flatten(), expected.float().flatten(), dim=0) > 0.9999
