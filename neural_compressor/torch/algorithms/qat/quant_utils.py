@@ -50,17 +50,21 @@ def get_quant_config(scheme: str) -> dict[str, Any] | None:
 
 
 def get_quantization_format(module) -> str | None:
-    """Return ``"MXFP8"``/``"MXFP4"`` for a quantized module, else ``None``."""
+    """Return the first ``"MXFP8"``/``"MXFP4"`` format in a module tree."""
     weight_quantizer = getattr(module, "weight_quantizer", None)
-    if weight_quantizer is None or getattr(weight_quantizer, "_disabled", True):
-        return None
-    num_bits = getattr(weight_quantizer, "num_bits", None)
-    data_type = getattr(weight_quantizer, "data_type", None)
-    if num_bits == 8 and data_type == "mx_fp8":
-        return "MXFP8"
-    if num_bits == 4 and data_type == "mx_fp4":
-        return "MXFP4"
-    raise NotImplementedError(f"Unsupported quantizer with num_bits={num_bits}, data_type={data_type}")
+    if weight_quantizer is not None and not getattr(weight_quantizer, "_disabled", True):
+        num_bits = getattr(weight_quantizer, "num_bits", None)
+        data_type = getattr(weight_quantizer, "data_type", None)
+        if num_bits == 8 and data_type == "mx_fp8":
+            return "MXFP8"
+        if num_bits == 4 and data_type == "mx_fp4":
+            return "MXFP4"
+        raise NotImplementedError(f"Unsupported quantizer with num_bits={num_bits}, data_type={data_type}")
+    for _, child in module.named_children():
+        quantization = get_quantization_format(child)
+        if quantization is not None:
+            return quantization
+    return None
 
 
 def is_quantlinear(module) -> bool:

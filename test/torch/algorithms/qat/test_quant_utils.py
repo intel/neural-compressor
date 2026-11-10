@@ -45,3 +45,12 @@ def test_get_quantization_format(weight_format, expected):
 def test_get_quantization_format_unsupported_raises():
     with pytest.raises(NotImplementedError):
         get_quantization_format(_quant_linear("fp8_e4m3"))
+
+
+def test_get_quantization_format_recurses_through_model():
+    model = nn.Sequential(nn.Linear(8, 8), _quant_linear("mxfp4"))
+    assert get_quantization_format(model) == "MXFP4"
+
+
+def test_get_quantization_format_returns_none_for_plain_model():
+    assert get_quantization_format(nn.Sequential(nn.Linear(8, 8))) is None

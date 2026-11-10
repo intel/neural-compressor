@@ -71,6 +71,19 @@ class TensorQuantizer(_TensorQuantizer):
         fmt = _LEGACY_DATA_TYPES.get(data_type)
         if fmt is None:
             raise ValueError(f"unsupported legacy data_type {data_type!r}; known: {sorted(_LEGACY_DATA_TYPES)}")
+        expected_bits = 4 if fmt == "mxfp4" else 8
+        if bits != expected_bits:
+            raise ValueError(
+                f"incompatible legacy arguments: data_type={data_type!r} requires bits={expected_bits}, got {bits}"
+            )
+        if fmt in ("mxfp4", "mxfp8") and block_size != 32:
+            raise ValueError(
+                f"incompatible legacy arguments: data_type={data_type!r} requires block_size=32, got {block_size}"
+            )
+        if fmt == "fp8_e4m3" and block_size not in (None, 32):
+            raise ValueError(
+                f"incompatible legacy arguments: data_type={data_type!r} requires block_size=None or 32, got {block_size}"
+            )
         scheme = "static" if (fmt == "fp8_e4m3" and amax is not None) else "dynamic"
         super().__init__(
             QuantizerConfig(

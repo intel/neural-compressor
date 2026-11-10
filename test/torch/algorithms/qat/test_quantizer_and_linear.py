@@ -87,6 +87,30 @@ def test_legacy_tensor_quantizer_unknown_type_raises():
             TensorQuantizer(data_type="int3")
 
 
+@pytest.mark.parametrize(
+    "data_type,bits,block_size",
+    [
+        ("mx_fp8", 4, 32),
+        ("mx_fp4", 8, 32),
+        ("mx_fp8", 8, 16),
+        ("mx_fp4", 4, 16),
+        ("fp8_e4m3", 4, 32),
+        ("fp8_e4m3", 8, 16),
+    ],
+)
+def test_legacy_tensor_quantizer_rejects_incompatible_formats(data_type, bits, block_size):
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        with pytest.raises(ValueError, match="incompatible legacy arguments"):
+            TensorQuantizer(data_type=data_type, bits=bits, block_size=block_size)
+
+
+def test_legacy_fp8_accepts_per_tensor_block_size_defaults():
+    with warnings.catch_warnings():
+        warnings.simplefilter("ignore")
+        assert TensorQuantizer(data_type="fp8", bits=8).format.name == "fp8_e4m3"
+        assert TensorQuantizer(data_type="fp8_e4m3", bits=8, block_size=None).format.name == "fp8_e4m3"
+
 
 def test_legacy_enable_disable_and_repr():
     with warnings.catch_warnings():
