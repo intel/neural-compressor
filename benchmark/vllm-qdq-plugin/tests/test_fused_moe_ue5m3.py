@@ -4,7 +4,6 @@ import torch.nn.functional as F
 from vllm.model_executor.layers.fused_moe.activation import ApplyMoEActivationConfig, MoEActivation
 from vllm_qdq_plugin.qdq.nvfp4 import nvfp4_qdq
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import nvfp4_e5m3_qdq
-from vllm_qdq_plugin.quantization.fused_moe_e5m3 import _select_moe_config, fused_moe_ue5m3
 from vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_moe import INCNvfp4UE5M3MoEMethod
 from vllm_qdq_plugin.quantization.inc_nvfp4_moe import INCNvfp4QDQMoEMethod
 
@@ -62,57 +61,6 @@ def _reference(
         routed_output = (expert_output * topk_weights[token_ids, slots, None]).to(output.dtype)
         output.index_add_(0, token_ids, routed_output)
     return output
-
-
-@pytest.mark.parametrize("group_size", [16, 32])
-def test_fused_moe_matches_reference(group_size: int):
-    if not torch.cuda.is_available():
-        pytest.skip("CUDA is required")
-
-    torch.manual_seed(1)
-    device = torch.device("cuda")
-    num_experts, num_tokens, top_k = 4, 5, 2
-    hidden_size = intermediate_size = 64
-    x = torch.randn(num_tokens, hidden_size, device=device, dtype=torch.bfloat16)
-    w13 = torch.randint(
-        0, 256, (num_experts, intermediate_size * 2, hidden_size // 2), device=device, dtype=torch.uint8
-    )
-    w2 = torch.randint(0, 256, (num_experts, hidden_size, intermediate_size // 2), device=device, dtype=torch.uint8)
-    w13_scale = torch.randint(
-        0x40,
-        0x79,
-        (num_experts, intermediate_size * 2, hidden_size // group_size),
-        device=device,
-        dtype=torch.uint8,
-    )
-    w2_scale = torch.randint(
-        0x40,
-        0x79,
-        (num_experts, hidden_size, intermediate_size // group_size),
-        device=device,
-        dtype=torch.uint8,
-    )
-    topk_ids = torch.tensor([[0, 1], [2, 3], [1, 3], [0, 2], [3, 1]], device=device, dtype=torch.int32)
-    topk_weights = torch.softmax(torch.randn(num_tokens, top_k, device=device), dim=-1)
-
-    actual = fused_moe_ue5m3(
-        x,
-        w13,
-        w2,
-        w13_scale,
-        w2_scale,
-        topk_weights,
-        topk_ids,
-        MoEActivation.SILU,
-        ApplyMoEActivationConfig(),
-        group_size,
-    )
-    expected = _reference(x, w13, w2, w13_scale, w2_scale, topk_weights, topk_ids, group_size)
-    assert F.cosine_similarity(actual.float().flatten(), expected.float().flatten(), dim=0) > 0.9999
-    relative_l2_error = torch.linalg.vector_norm(actual.float() - expected.float()) / torch.linalg.vector_norm(
-        expected.float()
-    )
-    assert relative_l2_error < 0.01
 
 
 def test_marlin_moe_matches_reference():
@@ -354,6 +302,65 @@ def test_marlin_moe_with_global_scale_matches_reference():
     assert relative_l2_error < 0.01
 
 
+@pytest.mark.parametrize(
+    "scale_format, group_size, per_row",
+    [("UE5M3", 16, False), ("UE5M3", 32, True), ("E4M3", 16, True), ("E4M3", 16, False)],
+)
+@pytest.mark.parametrize("dtype", [torch.bfloat16, torch.float16])
+def test_fused_silu_and_mul_qdq_matches_separate_ops(scale_format, group_size, per_row, dtype):
+    if not torch.cuda.is_available():
+        pytest.skip("CUDA is required")
+    from vllm.model_executor.layers.fused_moe.activation import apply_moe_activation
+    from vllm_qdq_plugin.qdq.cute import cute_qdq_status
+    from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import try_fused_silu_and_mul_qdq
+
+    torch.manual_seed(13)
+    rows, width = 37, 256
+    activation_input = (
+        torch.randn(rows, 2 * width, device="cuda") * torch.logspace(-3, 1.5, 2 * width, device="cuda")
+    ).to(dtype)
+    if not cute_qdq_status(activation_input)[0]:
+        pytest.skip("CuTe DSL is not available")
+    if per_row:
+        scale = torch.rand(rows, device="cuda") * (1.0e4 if scale_format == "UE5M3" else 100.0)
+    else:
+        scale = None if scale_format == "UE5M3" else torch.tensor([50.0], device="cuda")
+    expected = torch.empty(rows, width, device="cuda", dtype=dtype)
+    apply_moe_activation(MoEActivation.SILU, expected, activation_input)
+    if scale_format == "UE5M3":
+        nvfp4_e5m3_qdq(expected, group_size, input_global_scale=scale, inplace=True)
+    else:
+        nvfp4_qdq(expected, scale, group_size, inplace=True)
+
+    actual = torch.empty_like(expected)
+    fused = try_fused_silu_and_mul_qdq(
+        MoEActivation.SILU,
+        actual,
+        activation_input,
+        ApplyMoEActivationConfig(),
+        group_size,
+        scale_format,
+        scale,
+        format_name="TEST",
+        trace_op_name="test",
+    )
+
+    assert fused
+    assert torch.equal(actual, expected)
+    clamped = ApplyMoEActivationConfig(clamp_limit=7.0)
+    assert not try_fused_silu_and_mul_qdq(
+        MoEActivation.SILU,
+        actual,
+        activation_input,
+        clamped,
+        group_size,
+        scale_format,
+        scale,
+        format_name="TEST",
+        trace_op_name="test",
+    )
+
+
 def test_e5m3_moe_global_scale_keeps_shared_scale_fast_paths():
     prepare_scale = INCNvfp4UE5M3MoEMethod._prepare_input_global_scale
 
@@ -362,86 +369,3 @@ def test_e5m3_moe_global_scale_keeps_shared_scale_fast_paths():
     assert shared is not None and shared.ndim == 0 and shared.item() == 5.0
     per_expert = prepare_scale(torch.tensor([2.0, 3.0, 2.0, 4.0]), "w2 input global scale")
     torch.testing.assert_close(per_expert, torch.tensor([2.0, 3.0, 2.0, 4.0]))
-
-
-@pytest.mark.parametrize("num_tokens, expected_block_m", [(1, 16), (64, 32), (256, 64), (1024, 128)])
-def test_moe_config_scales_with_batch(num_tokens: int, expected_block_m: int):
-    w13 = torch.empty(256, 1024, 1024, dtype=torch.uint8)
-    w2 = torch.empty(256, 2048, 256, dtype=torch.uint8)
-    config = _select_moe_config(w13, w2, top_k=8, num_tokens=num_tokens)
-    assert config["BLOCK_SIZE_M"] == expected_block_m
-
-
-def test_fused_moe_supports_dynamo_fullgraph_capture():
-    if not torch.cuda.is_available():
-        pytest.skip("CUDA is required")
-
-    device = torch.device("cuda")
-    x = torch.randn(2, 64, device=device, dtype=torch.bfloat16)
-    w13 = torch.randint(0, 256, (2, 128, 32), device=device, dtype=torch.uint8)
-    w2 = torch.randint(0, 256, (2, 64, 32), device=device, dtype=torch.uint8)
-    w13_scale = torch.randint(0x40, 0x79, (2, 128, 4), device=device, dtype=torch.uint8)
-    w2_scale = torch.randint(0x40, 0x79, (2, 64, 4), device=device, dtype=torch.uint8)
-    topk_ids = torch.tensor([[0, 1], [1, 0]], device=device, dtype=torch.int32)
-    topk_weights = torch.full((2, 2), 0.5, device=device)
-    activation_config = ApplyMoEActivationConfig()
-
-    def apply(value: torch.Tensor) -> torch.Tensor:
-        return fused_moe_ue5m3(
-            value,
-            w13,
-            w2,
-            w13_scale,
-            w2_scale,
-            topk_weights,
-            topk_ids,
-            MoEActivation.SILU,
-            activation_config,
-            16,
-        )
-
-    expected = apply(x)
-    compiled = torch.compile(apply, backend="eager", fullgraph=True)
-    torch.testing.assert_close(compiled(x), expected, rtol=0, atol=0)
-
-
-def test_fused_moe_supports_cuda_graph_capture():
-    if not torch.cuda.is_available():
-        pytest.skip("CUDA is required")
-
-    device = torch.device("cuda")
-    x = torch.randn(2, 64, device=device, dtype=torch.bfloat16)
-    w13 = torch.randint(0, 256, (2, 128, 32), device=device, dtype=torch.uint8)
-    w2 = torch.randint(0, 256, (2, 64, 32), device=device, dtype=torch.uint8)
-    w13_scale = torch.randint(0x40, 0x79, (2, 128, 4), device=device, dtype=torch.uint8)
-    w2_scale = torch.randint(0x40, 0x79, (2, 64, 4), device=device, dtype=torch.uint8)
-    topk_ids = torch.tensor([[0, 1], [1, 0]], device=device, dtype=torch.int32)
-    topk_weights = torch.full((2, 2), 0.5, device=device)
-
-    def apply() -> torch.Tensor:
-        return fused_moe_ue5m3(
-            x,
-            w13,
-            w2,
-            w13_scale,
-            w2_scale,
-            topk_weights,
-            topk_ids,
-            MoEActivation.SILU,
-            ApplyMoEActivationConfig(),
-            16,
-        )
-
-    warmup_stream = torch.cuda.Stream()
-    warmup_stream.wait_stream(torch.cuda.current_stream())
-    with torch.cuda.stream(warmup_stream):
-        for _ in range(3):
-            apply()
-    torch.cuda.current_stream().wait_stream(warmup_stream)
-
-    graph = torch.cuda.CUDAGraph()
-    with torch.cuda.graph(graph):
-        captured_output = apply()
-    graph.replay()
-    torch.cuda.synchronize()
-    assert torch.isfinite(captured_output).all()

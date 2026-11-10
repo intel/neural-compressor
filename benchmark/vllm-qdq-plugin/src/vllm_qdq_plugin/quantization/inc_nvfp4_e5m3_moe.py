@@ -12,6 +12,7 @@ from vllm.model_executor.layers.quantization.utils.marlin_utils_fp4 import prepa
 from vllm.model_executor.utils import set_weight_attrs
 from vllm.scalar_type import scalar_types
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import decode_ue5m3, fold_ue5m3_global_scale, nvfp4_e5m3_qdq
+from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import try_fused_silu_and_mul_qdq
 
 
 class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
@@ -236,6 +237,21 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
         )
 
         def activation_with_qdq(activation, output, activation_input, *, topk_ids, expert_map) -> None:
+            input_global_scale = self._scale_for_routes(
+                getattr(layer, "w2_input_global_scale", None), topk_ids, expert_map
+            )
+            if try_fused_silu_and_mul_qdq(
+                activation,
+                output,
+                activation_input,
+                activation_config,
+                self.group_size,
+                "UE5M3",
+                input_global_scale,
+                format_name="NVFP4_E5M3" if input_global_scale is None else "NVFP4_E5M3_GS",
+                trace_op_name="nvfp4_e5m3_moe_activation",
+            ):
+                return
             apply_moe_activation(
                 activation,
                 output,
@@ -247,9 +263,7 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
             nvfp4_e5m3_qdq(
                 output,
                 self.group_size,
-                input_global_scale=self._scale_for_routes(
-                    getattr(layer, "w2_input_global_scale", None), topk_ids, expert_map
-                ),
+                input_global_scale=input_global_scale,
                 inplace=True,
                 trace_op_name="nvfp4_e5m3_moe_activation",
             )

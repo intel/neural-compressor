@@ -140,6 +140,28 @@ class CuteQDQTests(unittest.TestCase):
                 self.assertTrue(torch.equal(mxfp4_qdq(x), _mxfp4_qdq_reference(x)))
                 self.assertTrue(torch.equal(mxfp8_qdq(x), _mxfp8_qdq_reference(x)))
 
+    def test_mxfp8_e4m3_grid_matches_torch_fp8_cast(self) -> None:
+        from vllm_qdq_plugin.qdq.mxfp8 import _quantize_to_e4m3fn_no_fp8_dtype
+
+        # Dense sweep across subnormals (incl. the [7.5, 8) * 2^-9 boundary) and normals.
+        values = torch.cat([torch.linspace(0, 2.0**-5, 4097), torch.logspace(-5, 8.8, 4096, base=2.0)])
+        values = torch.cat([values, -values])
+        expected = values.to(torch.float8_e4m3fn).float()
+        self.assertTrue(torch.equal(_quantize_to_e4m3fn_no_fp8_dtype(values), expected))
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_cute_mxfp8_rounds_subnormal_boundary_to_min_normal(self) -> None:
+        if torch.cuda.get_device_capability() < (8, 0):
+            self.skipTest("CuTe QDQ requires SM80 or newer")
+
+        x = torch.zeros(1, 32, device="cuda", dtype=torch.bfloat16)
+        x[0, 0] = 256.0
+        x[0, 1:4] = torch.tensor([7.5 / 512, 7.9 / 512, -7.75 / 512])
+        with mock.patch.dict(os.environ, {"VLLM_QDQ_CUTE": "1"}, clear=False):
+            actual = mxfp8_qdq(x)
+        self.assertTrue(torch.equal(actual, _mxfp8_qdq_reference(x)))
+        self.assertTrue(torch.equal(actual[0, 1:4].float().abs(), torch.full((3,), 2.0**-6, device="cuda")))
+
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
     def test_cute_kernels_support_cuda_graph_replay(self) -> None:
         if torch.cuda.get_device_capability() < (8, 0):

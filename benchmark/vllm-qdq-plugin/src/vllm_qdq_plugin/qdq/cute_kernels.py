@@ -21,7 +21,6 @@ NVFP4_THREADS_PER_BLOCK = 256
 
 _COMPILED_KERNELS = {}
 _COMPILED_NVFP4_KERNELS = {}
-_COMPILED_WEIGHT_DEQUANT_KERNELS = {}
 _COMPILE_LOCK = threading.Lock()
 # TVM-FFI accepts torch tensors directly, avoiding per-call DLPack conversion overhead.
 _USE_TVM_FFI = importlib.util.find_spec("tvm_ffi") is not None
@@ -40,15 +39,11 @@ def _clamp(value, lower, upper, *, loc=None, ip=None):
 @cutlass.dsl_user_op
 def _round_mxfp4(value, *, loc=None, ip=None):
     """Round a non-negative value to the E2M1 grid with ties-to-even."""
-    return (
-        (value > 0.25).to(cutlass.Float32) * 0.5
-        + (value >= 0.75).to(cutlass.Float32) * 0.5
-        + (value > 1.25).to(cutlass.Float32) * 0.5
-        + (value >= 1.75).to(cutlass.Float32) * 0.5
-        + (value > 2.5).to(cutlass.Float32)
-        + (value >= 3.5).to(cutlass.Float32)
-        + (value > 5.0).to(cutlass.Float32) * 2.0
+    # Adding 1.5 * 2^23 * step makes the FP32 adder round to a multiple of step (ties-to-even).
+    magic = cutlass.Float32(
+        cutlass.select_(value < 2.0, 6291456.0, cutlass.select_(value < 4.0, 12582912.0, 25165824.0))
     )
+    return cutlass.min((value + magic) - magic, 6.0, loc=loc, ip=ip)
 
 
 @cutlass.dsl_user_op
@@ -130,20 +125,7 @@ def _decode_ue5m3(scale_bits, *, loc=None, ip=None):
 
 @cutlass.dsl_user_op
 def _round_mxfp8(value, *, loc=None, ip=None):
-    magnitude = _abs_float(value)
-    magnitude = _clamp(magnitude, 0.0, 448.0)
-
-    subnormal = _round_half_to_even_positive(magnitude * 512.0) / 512.0
-    subnormal = _clamp(subnormal, 0.0, 7.0 / 512.0)
-
-    normal_input = cutlass.max(magnitude, 2.0**-6)
-    exponent = _clamp(_floor_log2(normal_input), -6, 8)
-    step = cute.math.exp2(exponent.to(cutlass.Float32) - 3.0)
-    normal = _round_half_to_even_positive(magnitude / step) * step
-    normal = _clamp(normal, 2.0**-6, 448.0)
-
-    is_normal = (magnitude >= 2.0**-6).to(cutlass.Float32)
-    quantized = subnormal * (1.0 - is_normal) + normal * is_normal
+    quantized = _round_e4m3_positive(_clamp(_abs_float(value), 0.0, 448.0))
     sign = 1.0 - 2.0 * (value < 0.0).to(cutlass.Float32)
     return quantized * sign
 
@@ -200,11 +182,12 @@ def mxfp8_qdq_kernel(x: cute.Tensor, output: cute.Tensor, group_count: cutlass.I
         output[index] = (quantized * scale).to(output.element_type)
 
 
-def _make_nvfp4_qdq_launcher(group_size: int, scale_format: str, has_global_scale: bool):
+def _make_nvfp4_qdq_launcher(group_size: int, scale_format: str, has_global_scale: bool, silu_mul: bool = False):
     """Build a QDQ launcher where each thread owns one 16-byte vector of a 16/32-element group.
 
     ``scale_format`` is ``"E4M3"`` (standard NVFP4, requires a global scale) or ``"UE5M3"``.
     Output row ``r`` reads input row ``r // topk`` so MoE routes need no expanded copy.
+    With ``silu_mul`` the input row is ``[gate | up]`` and QDQ applies to vLLM's ``silu_and_mul`` result.
     """
     use_e4m3 = scale_format == "E4M3"
     wide_group = group_size == 32
@@ -226,10 +209,23 @@ def _make_nvfp4_qdq_launcher(group_size: int, scale_format: str, has_global_scal
         # Out-of-range lanes recompute the last vector so all lanes join the shuffle.
         vec = cutlass.min(vec, vec_count - 1)
         row = vec // vecs_per_row
-        source_vec = (row // topk) * vecs_per_row + vec % vecs_per_row
+        x_vecs = cute.zipped_divide(x, (NVFP4_VEC,))
 
-        values = cute.make_rmem_tensor(NVFP4_VEC, x.element_type)
-        values.store(cute.zipped_divide(x, (NVFP4_VEC,))[(None, source_vec)].load())
+        values = cute.make_rmem_tensor(NVFP4_VEC, output.element_type)
+        if cutlass.const_expr(silu_mul):
+            gate_vec = row * 2 * vecs_per_row + vec % vecs_per_row
+            gates = cute.make_rmem_tensor(NVFP4_VEC, x.element_type)
+            ups = cute.make_rmem_tensor(NVFP4_VEC, x.element_type)
+            gates.store(x_vecs[(None, gate_vec)].load())
+            ups.store(x_vecs[(None, gate_vec + vecs_per_row)].load())
+            for i in cutlass.range_constexpr(NVFP4_VEC):
+                gate = gates[i].to(cutlass.Float32)
+                # Same rounding points as vLLM's silu_and_mul: SiLU and the product each round to the input dtype.
+                activated = (gate / (1.0 + cute.math.exp(-gate))).to(output.element_type).to(cutlass.Float32)
+                values[i] = (activated * ups[i].to(cutlass.Float32)).to(output.element_type)
+        else:
+            source_vec = (row // topk) * vecs_per_row + vec % vecs_per_row
+            values.store(x_vecs[(None, source_vec)].load())
         block_max = cutlass.Float32(0.0)
         for i in cutlass.range_constexpr(NVFP4_VEC):
             block_max = cutlass.max(block_max, _abs_float(values[i].to(cutlass.Float32)))
@@ -285,30 +281,6 @@ def _make_nvfp4_qdq_launcher(group_size: int, scale_format: str, has_global_scal
     return launch
 
 
-@cute.kernel
-def nvfp4_e5m3_weight_dequant_kernel(
-    packed: cute.Tensor,
-    scales: cute.Tensor,
-    output: cute.Tensor,
-    packed_count: cutlass.Int32,
-    packed_columns: cutlass.Int32,
-    scales_per_row: cutlass.Int32,
-    packed_per_group: cutlass.Int32,
-):
-    thread, _, _ = cute.arch.thread_idx()
-    block, _, _ = cute.arch.block_idx()
-    packed_index = block * 256 + thread
-
-    if packed_index < packed_count:
-        packed_value = packed[packed_index].to(cutlass.Int32)
-        row = packed_index // packed_columns
-        packed_column = packed_index % packed_columns
-        scale_index = row * scales_per_row + packed_column // packed_per_group
-        scale = _decode_ue5m3(scales[scale_index])
-        output[packed_index * 2] = (_decode_e2m1(packed_value & 0xF) * scale).to(output.element_type)
-        output[packed_index * 2 + 1] = (_decode_e2m1((packed_value >> 4) & 0xF) * scale).to(output.element_type)
-
-
 @cute.jit
 def launch_mxfp4_qdq(
     x: cute.Tensor,
@@ -333,32 +305,6 @@ def launch_mxfp8_qdq(
     mxfp8_qdq_kernel(x, output, group_count).launch(
         grid=[(group_count + WARPS_PER_BLOCK - 1) // WARPS_PER_BLOCK, 1, 1],
         block=[THREADS_PER_BLOCK, 1, 1],
-        stream=stream,
-    )
-
-
-@cute.jit
-def launch_nvfp4_e5m3_weight_dequant(
-    packed: cute.Tensor,
-    scales: cute.Tensor,
-    output: cute.Tensor,
-    packed_count: cutlass.Int32,
-    packed_columns: cutlass.Int32,
-    scales_per_row: cutlass.Int32,
-    packed_per_group: cutlass.Int32,
-    stream: cuda.CUstream,
-):
-    nvfp4_e5m3_weight_dequant_kernel(
-        packed,
-        scales,
-        output,
-        packed_count,
-        packed_columns,
-        scales_per_row,
-        packed_per_group,
-    ).launch(
-        grid=[(packed_count + 255) // 256, 1, 1],
-        block=[256, 1, 1],
         stream=stream,
     )
 
@@ -437,9 +383,10 @@ def _get_compiled_nvfp4_kernel(
     has_global_scale: bool,
     dtype: torch.dtype,
     device: torch.device,
+    silu_mul: bool = False,
 ):
     device_index = device.index if device.index is not None else torch.cuda.current_device()
-    key = (group_size, scale_format, has_global_scale, dtype, device_index)
+    key = (group_size, scale_format, has_global_scale, dtype, device_index, silu_mul)
     entry = _COMPILED_NVFP4_KERNELS.get(key)
     if entry is not None:
         return entry
@@ -455,8 +402,8 @@ def _get_compiled_nvfp4_kernel(
             # Placeholder bound to the scale argument when the format has no global scale.
             unit_scale = torch.ones(1, device=device, dtype=torch.float32)
             compiled = cute.compile(
-                _make_nvfp4_qdq_launcher(group_size, scale_format, has_global_scale),
-                _dynamic_vector(example),
+                _make_nvfp4_qdq_launcher(group_size, scale_format, has_global_scale, silu_mul),
+                _dynamic_vector(torch.empty(group_size * (2 if silu_mul else 1), device=device, dtype=dtype)),
                 _dynamic_scales(unit_scale),
                 _dynamic_vector(torch.empty_like(example)),
                 group_size // NVFP4_VEC,
@@ -478,21 +425,27 @@ def run_nvfp4_qdq(
     global_scale: torch.Tensor | None = None,
     topk: int = 1,
     output: torch.Tensor | None = None,
+    silu_mul: bool = False,
 ) -> torch.Tensor:
     """QDQ a contiguous ``[rows, K]`` tensor into ``[rows * topk, K]`` (row ``r`` reads input row ``r // topk``).
 
     ``global_scale`` holds one float32 value or one per output row. ``output`` may alias ``x`` when
-    ``topk == 1``.
+    ``topk == 1``. ``silu_mul`` treats ``x`` as ``[rows, 2 * K]`` gate/up halves and QDQs
+    ``silu_and_mul(x)`` (requires ``topk == 1``).
     """
     rows, width = x.shape
+    if silu_mul:
+        if topk != 1 or width % (2 * NVFP4_VEC):
+            raise ValueError("Fused SiLU-and-mul QDQ requires topk=1 and an even, vector-aligned width")
+        width //= 2
     if output is None:
         output = torch.empty((rows * topk, width), dtype=x.dtype, device=x.device)
     if output.numel() == 0:
         return output
-    if output.numel() >= 2**31:
-        raise ValueError(f"NVFP4 CuTe QDQ supports fewer than 2**31 elements, got {output.numel()}")
+    if x.numel() >= 2**31 or output.numel() >= 2**31:
+        raise ValueError(f"NVFP4 CuTe QDQ supports fewer than 2**31 elements, got {x.numel()}")
     compiled, unit_scale = _get_compiled_nvfp4_kernel(
-        group_size, scale_format, global_scale is not None, x.dtype, x.device
+        group_size, scale_format, global_scale is not None, x.dtype, x.device, silu_mul
     )
     scales = unit_scale if global_scale is None else global_scale.reshape(-1)
     source = x if x.data_ptr() % 16 == 0 else x.clone()
@@ -516,50 +469,4 @@ def run_nvfp4_qdq(
         )
     if target is not output:
         output.copy_(target)
-    return output
-
-
-def dequantize_nvfp4_e5m3_weight(
-    packed: torch.Tensor,
-    scales: torch.Tensor,
-    group_size: int,
-) -> torch.Tensor:
-    """Decode packed E2M1 weights and raw UE5M3 scales into a BF16 matrix."""
-    device_index = packed.device.index if packed.device.index is not None else torch.cuda.current_device()
-    key = (packed.shape, scales.shape, group_size, device_index)
-    compiled = _COMPILED_WEIGHT_DEQUANT_KERNELS.get(key)
-    output = torch.empty((packed.shape[0], packed.shape[1] * 2), dtype=torch.bfloat16, device=packed.device)
-    packed_count = packed.numel()
-    packed_columns = packed.shape[1]
-    scales_per_row = scales.shape[1]
-    packed_per_group = group_size // 2
-
-    if compiled is None:
-        with _COMPILE_LOCK:
-            compiled = _COMPILED_WEIGHT_DEQUANT_KERNELS.get(key)
-            if compiled is None:
-                compiled = cute.compile(
-                    launch_nvfp4_e5m3_weight_dequant,
-                    from_dlpack(packed.reshape(-1)),
-                    from_dlpack(scales.reshape(-1)),
-                    from_dlpack(output.reshape(-1)),
-                    packed_count,
-                    packed_columns,
-                    scales_per_row,
-                    packed_per_group,
-                    cuda.CUstream(torch.cuda.current_stream(packed.device).cuda_stream),
-                )
-                _COMPILED_WEIGHT_DEQUANT_KERNELS[key] = compiled
-
-    stream = cuda.CUstream(torch.cuda.current_stream(packed.device).cuda_stream)
-    compiled(
-        from_dlpack(packed.reshape(-1)),
-        from_dlpack(scales.reshape(-1)),
-        from_dlpack(output.reshape(-1)),
-        packed_count,
-        packed_columns,
-        scales_per_row,
-        packed_per_group,
-        stream,
-    )
     return output

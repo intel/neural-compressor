@@ -64,7 +64,6 @@ native W4A4 backend. `nvfp4_v2` and `nvfp4_v2_gs` always use their QDQ schemes.
 | `patch.py` | Register standard NVFP4, NVFP4_E5M3, and NVFP4_E5M3_GS QDQ schemes. |
 | `inc_nvfp4_{scheme,linear,moe}.py` | Standard NVFP4 QDQ plus FP4 Marlin execution. |
 | `inc_nvfp4_e5m3_{scheme,linear,moe}.py` | NVFP4_E5M3(_GS) QDQ plus FP4 Marlin execution. |
-| `fused_moe_e5m3.py` | Standalone Triton parity and benchmark implementation. |
 | `../qdq/nvfp4.py` | Standard NVFP4 reference activation QDQ. |
 | `../qdq/nvfp4_e5m3.py` | NVFP4_E5M3 backend selection and reference QDQ. |
 | `../qdq/nvfp4_e5m3_cute.py` | Fake-aware CuTe custom operators. |

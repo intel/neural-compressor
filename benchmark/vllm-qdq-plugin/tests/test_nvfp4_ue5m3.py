@@ -18,7 +18,6 @@ from vllm_qdq_plugin.qdq.nvfp4_e5m3 import (
     fold_ue5m3_global_scale,
     nvfp4_e5m3_qdq,
 )
-from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import nvfp4_e5m3_weight_dequant_cute
 from vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_linear import INCNvfp4UE5M3LinearMethod
 from vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_scheme import INCNvfp4UE5M3Scheme
 from vllm_qdq_plugin.quantization.inc_nvfp4_linear import INCNvfp4QDQLinearMethod
@@ -230,21 +229,6 @@ class Nvfp4UE5M3ConfigTests(unittest.TestCase):
         self.assertEqual(layer.weight.dtype, torch.int32)
         self.assertFalse(hasattr(layer, "weight_packed"))
         torch.testing.assert_close(actual, expected, rtol=0.02, atol=0.25)
-
-    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
-    def test_cute_weight_dequant_matches_reference(self) -> None:
-        weight = torch.randint(0, 256, (64, 64), device="cuda", dtype=torch.uint8)
-        scales = torch.randint(0, 255, (64, 8), device="cuda", dtype=torch.uint8)
-        expected = _dequantize_weight_reference(weight, scales, 16)
-        actual = nvfp4_e5m3_weight_dequant_cute(weight, scales, 16)
-        compiled = torch.compile(
-            lambda packed, scale: nvfp4_e5m3_weight_dequant_cute(packed, scale, 16),
-            backend="eager",
-            fullgraph=True,
-        )
-
-        self.assertTrue(torch.equal(actual, expected))
-        self.assertTrue(torch.equal(compiled(weight, scales), expected))
 
     @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
     def test_qdq_supports_dynamo_fullgraph_capture(self) -> None:
