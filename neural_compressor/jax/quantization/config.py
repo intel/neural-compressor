@@ -447,15 +447,16 @@ class StaticQuantConfig(JaxBaseConfig):
         const_weight: bool = False,
         weight_scale_granularity: str = "per_tensor",
         dot_product_attention_enable: bool = False,
-        smooth_quant: bool = False,
-        smooth_quant_alpha: float = 0.5,
         white_list: Optional[List[OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST,
         exclude_list: Optional[List[str]] = None,
+        smooth_quant: bool = False,
+        smooth_quant_alpha: float = 0.5,
     ):
         """Init static quantization config.
 
         The parameters are listed explicitly (not ``*args, **kwargs``) because ``BaseConfig.expand`` reads their
-        annotations from this signature.
+        annotations from this signature. The SmoothQuant options come last, so positional calls with the
+        :class:`JaxBaseConfig` parameters (including ``white_list`` / ``exclude_list``) keep working.
 
         Args:
             weight_dtype (str): Data type for weights, default is "fp8_e4m3".
@@ -465,10 +466,10 @@ class StaticQuantConfig(JaxBaseConfig):
             weight_scale_granularity (str): Whether to use per_channel or per_tensor quantization for weights.
             dot_product_attention_enable (bool): Whether quantized attention layers may use the fused
                 dot-product-attention path.
-            smooth_quant (bool): Apply SmoothQuant (folded into the weights) before calibration. Default False.
-            smooth_quant_alpha (float): SmoothQuant migration strength in [0, 1]. Default 0.5.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): Layers to quantize, see :class:`JaxBaseConfig`.
             exclude_list (Optional[List[str]]): Layers to skip, see :class:`JaxBaseConfig`.
+            smooth_quant (bool): Apply SmoothQuant (folded into the weights) before calibration. Default False.
+            smooth_quant_alpha (float): SmoothQuant migration strength in [0, 1]. Default 0.5.
         """
         if not isinstance(smooth_quant_alpha, list) and not 0.0 <= smooth_quant_alpha <= 1.0:
             raise ValueError(f"smooth_quant_alpha must be in [0, 1], got {smooth_quant_alpha}")

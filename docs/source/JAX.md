@@ -98,11 +98,11 @@ Supported blocks (`SMOOTH_RULES` in `neural_compressor/jax/algorithms/smooth_qua
 | | down projection | up projection output channels |
 | | attention output projection | value projection output channels (shared by the query heads of a kv head) |
 
-Other models are left unchanged: a warning is logged and no extra calibration pass is run.
+SmoothQuant is applied to `Gemma3CausalLM` models only; for other models a warning is logged and the model is
+quantized without it.
 
-Example: Gemma3-4B-instruct, fp8 e4m3 static quantization with per-tensor weight scales and 171 BoolQ calibration
-samples, BoolQ accuracy (3270 samples) on Intel Xeon (Diamond Rapids): 81.07% without SmoothQuant, 82.14% with
-`smooth_quant_alpha=0.5` (bf16: 82.17%), with the same oneDNN kernels and throughput.
+SmoothQuant increases the accuracy of static quantization: for example, for Gemma3-4B-instruct with fp8 e4m3 and
+per-tensor weight scales, BoolQ accuracy goes from 81.07% to 82.14% with `smooth_quant_alpha=0.5`.
 
 ## Examples
 

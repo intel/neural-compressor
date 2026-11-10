@@ -275,6 +275,24 @@ def test_config_expand():
     assert sorted(c.smooth_quant_alpha for c in configs) == [0.3, 0.5]
 
 
+def test_non_gemma3_model_is_not_searched(model, calibration_data, monkeypatch):
+    """quantize_model skips SmoothQuant for models other than Gemma3CausalLM before searching them (no extra pass)."""
+    import neural_compressor.jax.algorithms.static as static_algo
+
+    def fail(*args, **kwargs):
+        raise AssertionError("SmoothQuant must not run for this model")
+
+    monkeypatch.setattr(static_algo, "apply_smooth_quant", fail)
+    quantize_model(model, StaticQuantConfig(smooth_quant=True), lambda m: m(calibration_data))
+
+
+def test_config_positional_filter_arguments():
+    """The SmoothQuant options come after white_list / exclude_list, so positional calls keep their meaning."""
+    config = StaticQuantConfig("int8", "int8", False, False, "per_tensor", False, ["Dense"], ["third"])
+    assert config.white_list == ["Dense"] and config.exclude_list == ["third"]
+    assert config.smooth_quant is False and config.smooth_quant_alpha == 0.5
+
+
 def test_config_serialization():
     config = StaticQuantConfig(weight_scale_granularity="per_tensor", smooth_quant=True, smooth_quant_alpha=0.4)
     d = config.to_dict()
