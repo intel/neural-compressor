@@ -490,6 +490,28 @@ class Nvfp4QDQTests(unittest.TestCase):
         )
         self.assertTrue(torch.equal(compiled(x, row_scales), _nvfp4_qdq_reference(routed_x, row_scales)))
 
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_compiled_nvfp4_dispatch_checks_cutlass_and_width(self) -> None:
+        from vllm_qdq_plugin.qdq import cute
+
+        torch.manual_seed(31)
+        x = torch.randn(4, 256, device="cuda").to(torch.bfloat16)
+        ragged = torch.randn(4, 24, device="cuda").to(torch.bfloat16)
+        scale = torch.tensor([1.0], device="cuda")
+        with mock.patch.object(cute.envs, "VLLM_QDQ_CUTE", True):
+            dispatch = torch.compile(
+                lambda value: cute.use_nvfp4_cute(value, 16, "NVFP4"), backend="eager", fullgraph=True
+            )
+            with mock.patch.object(cute, "_CUTLASS_DSL_INSTALLED", True):
+                self.assertTrue(dispatch(x))
+                self.assertFalse(dispatch(ragged))
+            with mock.patch.object(cute, "_CUTLASS_DSL_INSTALLED", False):
+                self.assertFalse(dispatch(x))
+                compiled = torch.compile(
+                    lambda value, value_scale: nvfp4_qdq(value, value_scale, 16), backend="eager", fullgraph=True
+                )
+                self.assertTrue(torch.equal(compiled(x, scale), _nvfp4_qdq_reference(x, scale)))
+
     def test_qdq_method_requires_sm80_and_preserves_stored_input_scale(self) -> None:
         method = object.__new__(INCNvfp4QDQLinearMethod)
         method.group_size = 16

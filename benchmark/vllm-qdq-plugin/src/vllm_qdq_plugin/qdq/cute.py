@@ -14,6 +14,8 @@ from vllm_qdq_plugin.trace import trace_qdq
 
 _FALLBACK_WARNINGS_EMITTED: set[tuple[str, str]] = set()
 _CUTLASS_DSL_INSTALL_HINT = "install it with `pip install 'nvidia-cutlass-dsl>=4.6.0'`"
+# Process-wide CUTLASS presence, probed at import so traced code never has to probe the environment.
+_CUTLASS_DSL_INSTALLED = importlib.util.find_spec("cutlass") is not None
 
 
 @torch.library.custom_op("vllm_qdq_plugin::mxfp4_qdq_cute", mutates_args=())
@@ -73,8 +75,10 @@ def use_nvfp4_cute(x: torch.Tensor, group_size: int, format_name: str) -> bool:
     """Return whether the fused NVFP4-family CuTe kernel can run ``x``; warn once when it cannot."""
     if not envs.VLLM_QDQ_CUTE:
         return False
-    if torch.compiler.is_compiling() and x.is_cuda:
-        return True
+    if torch.compiler.is_compiling():
+        # Traced code cannot run the eager capability probe. Keep the CUTLASS check and the
+        # width guard; the NVFP4 schemes already require SM80+, so the device check is redundant here.
+        return x.is_cuda and _CUTLASS_DSL_INSTALLED and x.shape[1] % group_size == 0
     available, reason = cute_qdq_status(x)
     if available and x.shape[1] % group_size == 0:
         return True
