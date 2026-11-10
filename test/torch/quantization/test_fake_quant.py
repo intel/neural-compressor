@@ -28,10 +28,12 @@ from neural_compressor.torch.quantization import (
     QuantRule,
     TensorQuantizer,
     calibrate,
+    convert,
     get_format,
     prepare_qat,
     quantize,
 )
+from neural_compressor.torch.quantization.fake_quant.options import ModuleQuantConfig
 from neural_compressor.torch.quantization.fake_quant import QuantLinear
 from neural_compressor.torch.quantization.fake_quant.calibrator import load_amax, modelopt_megatron_translate
 from neural_compressor.torch.quantization.fake_quant.ops.reference import fake_quant, fake_quant_fp8_amax
@@ -270,6 +272,60 @@ class TestConfigAndQuantize(unittest.TestCase):
             amax_source={"file": "somewhere.txt"},
         )
         self.assertFalse(with_file.needs_calibration())
+    def test_default_static_config_has_independent_amax_per_module(self):
+        import json
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "amax.json"
+            path.write_text(json.dumps({
+                "model.layers.0.self_attn.q_proj": {"weight": 1.5},
+                "model.layers.1.self_attn.q_proj": {"weight": 2.5},
+                "model.layers.0.mlp.fc1": {"weight": 3.5},
+                "model.layers.0.mlp.fc2": {"weight": 4.5},
+                "model.layers.1.mlp.fc1": {"weight": 5.5},
+                "model.layers.1.mlp.fc2": {"weight": 6.5},
+            }))
+            cfg = FakeQuantConfig(
+                default=ModuleQuantConfig(weight={"format": "fp8_e4m3", "scheme": "static"}),
+                amax_source={"file": str(path), "translate": "identity"},
+            )
+            model = TinyModel(layers=2)
+            mapping = cfg.to_config_mapping(model_info=cfg.get_model_info(model))
+        self.assertAlmostEqual(float(mapping[("model.layers.0.self_attn.q_proj", "Linear")].weight.amax), 1.5)
+        self.assertAlmostEqual(float(mapping[("model.layers.1.self_attn.q_proj", "Linear")].weight.amax), 2.5)
+        self.assertIsNone(cfg.default.weight.amax)
+
+    def test_needs_calibration_with_default_module_config(self):
+        dynamic = FakeQuantConfig(default=ModuleQuantConfig(weight="mxfp4"))
+        self.assertFalse(dynamic.needs_calibration())
+        static = FakeQuantConfig(default=ModuleQuantConfig(weight={"format": "fp8_e4m3", "scheme": "static"}))
+        self.assertTrue(static.needs_calibration())
+
+    def test_dict_config_and_convert_keep_fake_quant_flag(self):
+        cfg = FakeQuantConfig(rules=self.rules)
+        model = quantize(self.model, {"fake_quant": cfg.to_dict()})
+        self.assertTrue(getattr(model, "is_fake_quant", False))
+        self.assertFalse(getattr(model, "is_quantized", False))
+        model = convert(model)
+        self.assertTrue(getattr(model, "is_fake_quant", False))
+
+    def test_prepare_qat_accepts_legacy_mapping_positionally(self):
+        model = prepare_qat(self.model, {nn.Linear: "MXFP8"})
+        self.assertEqual(model.model.layers[0].mlp.fc1.weight_quantizer.format.name, "mxfp8")
+
+    def test_from_float_preserves_frozen_flags(self):
+        self.model.model.layers[0].mlp.fc1.weight.requires_grad_(False)
+        model = quantize(self.model, FakeQuantConfig(rules=self.rules))
+        self.assertFalse(model.model.layers[0].mlp.fc1.weight.requires_grad)
+
+    def test_legacy_packing_uses_reference_implementation(self):
+        quantizer = TensorQuantizer("mxfp4")
+        weight = torch.randn(4, 64)
+        qdq, scale = quantizer._fake_quantize(weight)
+        packed, encoded = quantizer.weight_pack(qdq, scale)
+        self.assertEqual(qdq.shape, weight.shape)
+        self.assertEqual(packed.shape, (4, 32))
+        self.assertEqual(encoded.shape, (4, 2))
 
 
 class TestAmaxSource(unittest.TestCase):
@@ -324,6 +380,22 @@ class TestAmaxSource(unittest.TestCase):
             model = quantize(model, cfg)
         quantizer = model.model.layers[0].self_attn.q_proj.weight_quantizer
         self.assertAlmostEqual(float(quantizer.amax), 0.436, places=4)
+
+    def test_flat_export_amax_format(self):
+        import json
+
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "quantization_config.json"
+            path.write_text(json.dumps({
+                "schema": "neural_compressor.qad/v1",
+                "amax": {
+                    "model.layers.0.self_attn.q_proj.weight": 0.436,
+                    "model.layers.0.self_attn.q_proj.input": 50.2,
+                },
+            }))
+            amax = load_amax(path)
+        self.assertAlmostEqual(float(amax["model.layers.0.self_attn.q_proj"]["weight"]), 0.436, places=4)
+        self.assertAlmostEqual(float(amax["model.layers.0.self_attn.q_proj"]["input"]), 50.2, places=4)
 
     def test_ambiguous_suffix_raises(self):
         from neural_compressor.torch.quantization.fake_quant.calibrator import AmaxMap

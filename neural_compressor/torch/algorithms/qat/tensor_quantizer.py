@@ -30,6 +30,8 @@ from __future__ import annotations
 
 import warnings
 
+import torch
+
 from neural_compressor.torch.quantization.fake_quant.options import QuantizerConfig
 from neural_compressor.torch.quantization.fake_quant.quantizer import TensorQuantizer as _TensorQuantizer
 
@@ -105,7 +107,7 @@ class TensorQuantizer(_TensorQuantizer):
                 from auto_round.data_type import get_quant_func
             except ImportError as exc:
                 raise ImportError("legacy _fake_quantize requires auto-round") from exc
-            self.quant_func, self.data_type = get_quant_func(self.data_type, self.num_bits, self.sym)
+            self.quant_func, _ = get_quant_func(self.data_type, self.num_bits, self.sym)
         with torch.no_grad():
             q, shared_exp, _ = self.quant_func(
                 inputs.contiguous(),

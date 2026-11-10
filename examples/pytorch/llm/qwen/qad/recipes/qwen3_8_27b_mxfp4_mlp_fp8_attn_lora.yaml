@@ -1,11 +1,12 @@
 # Qwen3.8-27B LoRA QAD, path B (merge-before-quant):
 #   y = Q_w(W + BA) * Q_a(x)
 # Same quantization recipe as the full run; only the adapter/training part differs.
+# To use an existing PTQ amax source, pass `--amax-source <summary-or-json>` to main.py.
 schema: neural_compressor.qad/v1
 name: qwen3_8-27b-mxfp4-mlp-fp8-attn-lora
 
 model:
-  path: /home/kaokaolv/models/Qwen3.8-27B
+  path: Qwen/Qwen3.8-27B
   family: qwen3_5
   dtype: bfloat16
 
@@ -18,12 +19,11 @@ quant:
     - module: '.*\.(self_attn|linear_attn)\.(q_proj|k_proj|v_proj|o_proj|in_proj_qkv|in_proj_z|out_proj)$'
       weight: {format: fp8_e4m3, scheme: static}
       input: {format: fp8_e4m3, scheme: static}
-  amax_source:
-    file: /home/kaokaolv/qad/ckpt/qwen38-27b-mxfp4-ptq-rtxpro/.quant_summary.txt
-    translate: modelopt_megatron
+  # Use exact fp32 amax from PTQ calibration when --amax-source is provided.
+  # Otherwise main.py calibrates on a single rank before distributed training.
 
 distill:
-  teacher: /home/kaokaolv/models/Qwen3.8-27B
+  teacher: Qwen/Qwen3.8-27B
   loss: topk_kl
   top_k: 4096
   temperature: 1.0

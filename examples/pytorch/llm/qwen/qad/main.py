@@ -71,6 +71,7 @@ def parse() -> argparse.Namespace:
     parser.add_argument("--output", required=True, help="checkpoint directory")
     parser.add_argument("--model", default=None, help="override recipe model.path")
     parser.add_argument("--teacher", default=None, help="override recipe distill.teacher")
+    parser.add_argument("--amax-source", default=None, help="optional PTQ summary or amax JSON; omit for run_fn calibration")
     parser.add_argument("--stop-after", type=int, default=0, help="stop after N steps, keep the LR schedule")
     parser.add_argument("--save-steps", type=int, default=None, help="override train.save_steps")
     parser.add_argument("--seq-length", type=int, default=None, help="override train.seq_length")
@@ -94,6 +95,8 @@ def build_config(args: argparse.Namespace) -> QADConfig:
             config.distill.teacher = args.model
     if args.teacher:
         config.distill.teacher = args.teacher
+    if args.amax_source:
+        config.quant.amax_source = {"file": args.amax_source, "translate": "modelopt_megatron"}
     if args.save_steps is not None:
         config.train.save_steps = args.save_steps
     if args.seq_length is not None:
@@ -105,6 +108,7 @@ def build_config(args: argparse.Namespace) -> QADConfig:
     config.train.output_dir = args.output
     if args.tiny:
         config.model.tiny = True
+        config.quant.amax_source = None
         config.distill.teacher = args.model or config.model.path
         config.train.parallel = "none"
         config.train.gradient_checkpointing = False
@@ -165,6 +169,20 @@ def quantize_student(config: QADConfig, args: argparse.Namespace, local_rank: in
         trust_remote_code=config.model.trust_remote_code,
         max_seq_length=config.train.seq_length,
     )
+    if args.tiny:
+        student.to(device)
+        dataset = SyntheticDataset(args.synthetic_batches or args.calib_batches, config.train.seq_length)
+
+        def run_tiny_calibration(model, data, max_batches):
+            model.eval()
+            with torch.no_grad():
+                for index, batch in enumerate(data):
+                    model(batch["input_ids"].unsqueeze(0).to(device), batch["attention_mask"].unsqueeze(0).to(device))
+                    if index + 1 >= max_batches:
+                        break
+
+        return quantize(student, config.quant, run_fn=run_tiny_calibration, run_args=(dataset, args.calib_batches))
+
     if not config.quant.needs_calibration():
         return quantize(student, config.quant)
 

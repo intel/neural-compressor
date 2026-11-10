@@ -95,6 +95,7 @@ def load_state_dict_into_model(model: torch.nn.Module, path: str | Path) -> int:
     """Load a ``model.safetensors`` produced by the QAD trainer into ``model``."""
     from safetensors import safe_open
 
+    path = Path(path)
     state = {}
     with safe_open(str(path), "pt") as handle:
         for key in handle.keys():
@@ -111,13 +112,14 @@ def load_state_dict_into_model(model: torch.nn.Module, path: str | Path) -> int:
         raise ValueError(f"{len(unexpected)} unexpected tensors in {path}: {unexpected[:5]}")
 
     metadata = path.parent / "quantization_config.json"
-    if metadata.is_file():
+    has_quantizers = any(isinstance(module, TensorQuantizer) for module in model.modules())
+    if metadata.is_file() and has_quantizers:
         payload = json.loads(metadata.read_text(encoding="utf-8"))
         for key, value in payload.get("amax", {}).items():
             module_name, field = key.rsplit(".", 1)
             quantizer = getattr(model.get_submodule(module_name), f"{field}_quantizer")
             quantizer.load_amax(value)
-    elif missing:
+    elif missing and has_quantizers:
         raise ValueError(f"{path.parent} lacks quantization_config.json to restore: {missing[:5]}")
     logger.info(f"[export] loaded {len(state)} tensors from {path}")
     return len(state)
@@ -238,15 +240,15 @@ def _export_full_vlm(
     """Restore the base VLM, overwrite its text tower, and save the whole model."""
     from transformers import AutoModelForImageTextToText, AutoProcessor, AutoTokenizer
 
-    full = AutoModelForImageTextToText.from_pretrained(
+    full = AutoModelForImageTextToText.from_pretrained(  # nosec B615 - caller-supplied model
         base_model, dtype=dtype, low_cpu_mem_usage=True, device_map="cpu"
     )
     _load_text_state_dict(full, state)
     full.save_pretrained(out, safe_serialization=True, max_shard_size=max_shard_size)
     try:
-        AutoProcessor.from_pretrained(base_model).save_pretrained(out)
+        AutoProcessor.from_pretrained(base_model).save_pretrained(out)  # nosec B615 - caller-supplied model
     except Exception:
-        AutoTokenizer.from_pretrained(base_model).save_pretrained(out)
+        AutoTokenizer.from_pretrained(base_model).save_pretrained(out)  # nosec B615 - caller-supplied model
     (out / "export_info.json").write_text(
         json.dumps({"backend": "hf-vlm", "method": "merged_16bit", "base": base_model}, indent=2),
         encoding="utf-8",

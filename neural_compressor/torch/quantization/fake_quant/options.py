@@ -125,6 +125,11 @@ class ModuleQuantConfig:
 
     name: ClassVar[str] = "fake_quant"
 
+    def __post_init__(self) -> None:
+        self.weight = QuantizerConfig.from_any(self.weight)
+        self.input = QuantizerConfig.from_any(self.input)
+        self.output = QuantizerConfig.from_any(self.output)
+
     def to_dict(self) -> dict[str, Any]:
         """Serialize to a JSON-friendly dictionary."""
         return {

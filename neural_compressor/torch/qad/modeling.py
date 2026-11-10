@@ -221,15 +221,15 @@ def load_model(
     materializing the vision encoder during training.
     """
     if tiny:
-        return build_tiny_qwen35(dtype=dtype)
+        return build_tiny_qwen35(layer_types=["full_attention", "full_attention"], dtype=dtype)
 
     from transformers import AutoConfig, AutoModelForCausalLM
 
-    config = AutoConfig.from_pretrained(path, trust_remote_code=trust_remote_code)
+    config = AutoConfig.from_pretrained(path, trust_remote_code=trust_remote_code)  # nosec B615 - caller-supplied model
     model_type = getattr(config, "model_type", "")
     if model_type == "qwen3_5" and hasattr(config, "text_config"):
         return _load_qwen35_text(path, config, dtype)
-    full = AutoModelForCausalLM.from_pretrained(
+    full = AutoModelForCausalLM.from_pretrained(  # nosec B615 - caller-supplied model
         path,
         dtype=dtype,
         low_cpu_mem_usage=True,

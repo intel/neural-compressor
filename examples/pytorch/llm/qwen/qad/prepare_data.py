@@ -100,7 +100,7 @@ def main():
         f.write(struct.pack("<Q", 1))
         f.write(struct.pack("<B", 4))  # int32
         f.write(struct.pack("<Q", len(lengths)))
-        f.write(struct.pack("<Q", len(lengths)))
+        f.write(struct.pack("<Q", len(doc_idx)))
         f.write(np.asarray(lengths, dtype=np.int32).tobytes())
         f.write(pointers.tobytes())
         f.write(doc_idx.tobytes())

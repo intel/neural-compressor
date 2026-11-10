@@ -92,7 +92,13 @@ class FakeQuantConfig(TorchBaseConfig):
     # ------------------------------------------------------------- NC contract
     def get_model_info(self, model, *args, **kwargs) -> list[Tuple[str, str]]:
         """Return ``(module_name, class_name)`` pairs for plan compilation."""
-        return [(name, type(module).__name__) for name, module in model.named_modules() if name]
+        from .modules import QuantLinear
+
+        return [
+            (name, "Linear" if isinstance(module, QuantLinear) else type(module).__name__)
+            for name, module in model.named_modules()
+            if name
+        ]
 
     def to_config_mapping(self, config_list=None, model_info: Optional[list] = None) -> "OrderedDict":
         """Compile rules into NC's ``{(op_name, op_type): ModuleQuantConfig}``."""
@@ -159,7 +165,11 @@ class FakeQuantConfig(TorchBaseConfig):
         """True when a static quantizer has no amax and no external source."""
         if self.amax_source is not None:
             return False
-        configs = [self.default] if self.default is not None else []
+        configs = []
+        if self.default is not None:
+            configs.extend(
+                cfg for cfg in (self.default.weight, self.default.input, self.default.output) if cfg is not None
+            )
         for rule in self.rules:
             configs.extend(cfg for cfg in (rule.weight, rule.input, rule.output) if cfg is not None)
         return any(cfg.scheme == "static" and cfg.amax is None for cfg in configs)

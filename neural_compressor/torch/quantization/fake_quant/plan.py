@@ -159,7 +159,11 @@ def _compile_items(
             continue
         config = ModuleQuantConfig()
         if default is not None:
-            config = ModuleQuantConfig(weight=default.weight, input=default.input, output=default.output)
+            config = ModuleQuantConfig(
+                weight=copy.copy(default.weight),
+                input=copy.copy(default.input),
+                output=copy.copy(default.output),
+            )
         for index, rule in enumerate(rules):
             if not rule.matches(name, op_type):
                 continue

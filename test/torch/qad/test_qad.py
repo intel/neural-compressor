@@ -384,5 +384,165 @@ class TestQuantMetadataAndExport(unittest.TestCase):
                 torch.testing.assert_close(reloaded.state_dict()[name], value)
 
 
+class TestReviewFixes(unittest.TestCase):
+    def test_hidden_uses_original_wrapper(self):
+        student = tiny_model()
+
+        class Wrapper(torch.nn.Module):
+            def __init__(self, model):
+                super().__init__()
+                self.module = model
+                self.calls = 0
+
+            def forward(self, *args, **kwargs):
+                self.calls += 1
+                return self.module(*args, **kwargs)
+
+        from transformers import TrainingArguments
+
+        wrapped = Wrapper(student)
+        trainer = QADTrainer(
+            model=wrapped,
+            teacher=tiny_model(),
+            args=TrainingArguments(output_dir=tempfile.mkdtemp(), report_to=[], use_cpu=True),
+            distill_config=DistillConfig(top_k=16),
+        )
+        trainer._hidden(wrapped, torch.randint(0, 128, (1, 4)), None)
+        self.assertEqual(wrapped.calls, 1)
+
+    def test_teacher_is_frozen_and_gets_no_gradients(self):
+        from transformers import TrainingArguments
+
+        student = tiny_model()
+        teacher = tiny_model()
+        trainer = QADTrainer(
+            model=student,
+            teacher=teacher,
+            args=TrainingArguments(output_dir=tempfile.mkdtemp(), report_to=[], use_cpu=True),
+            distill_config=DistillConfig(top_k=16, chunk=4),
+        )
+        self.assertFalse(teacher.training)
+        self.assertTrue(all(not parameter.requires_grad for parameter in teacher.parameters()))
+        batch = {
+            "input_ids": torch.randint(0, 128, (1, 16)),
+            "attention_mask": torch.ones(1, 16, dtype=torch.long),
+        }
+        trainer.compute_loss(student, batch).backward()
+        self.assertTrue(all(parameter.grad is None for parameter in teacher.parameters()))
+
+    def test_save_adapter_keeps_trained_weights(self):
+        from neural_compressor.torch.qad.checkpoint import save_adapter
+        from safetensors import safe_open
+
+        model = apply_lora(
+            quantize(tiny_model(), tiny_quant_config()),
+            {"rank": 4, "alpha": 4, "targets": ["q_proj"], "quant_order": "quant_then_lora"},
+        )
+        expected = {name: value.detach().clone() for name, value in model.state_dict().items() if "lora_" in name}
+        with tempfile.TemporaryDirectory() as tmp:
+            self.assertTrue(save_adapter(model, tmp, should_save=True))
+            reloaded = apply_lora(
+                quantize(tiny_model(), tiny_quant_config()),
+                {"rank": 4, "alpha": 4, "targets": ["q_proj"], "quant_order": "quant_then_lora"},
+            )
+            reloaded.load_adapter(tmp, adapter_name="default", autocast_adapter_dtype=False)
+            for name, value in expected.items():
+                torch.testing.assert_close(reloaded.state_dict()[name], value)
+
+    def test_plain_model_load_skips_quantizer_metadata(self):
+        cfg = FakeQuantConfig(
+            rules=[QuantRule(module=r".*self_attn.q_proj$", weight=dict(format="fp8_e4m3", scheme="static", amax=1.25))]
+        )
+        model = quantize(tiny_model(), cfg)
+        with tempfile.TemporaryDirectory() as tmp:
+            out = export(model, None, ExportConfig(keep_vision=False), tmp, dtype=torch.float32)
+            plain = tiny_model()
+            load_state_dict_into_model(plain, str(Path(out) / "model.safetensors"))
+            for key, value in plain.state_dict().items():
+                if "quantizer" not in key:
+                    torch.testing.assert_close(value, model.state_dict()[key])
+
+    def test_unsloth_source_is_not_registered_as_child(self):
+        from neural_compressor.torch.qad.backends import wrap_unsloth
+
+        source = tiny_model()
+        wrapped = wrap_unsloth(source)
+        self.assertFalse(any(name == "_unsloth_source" for name, _ in wrapped.named_modules()))
+
+    def test_tiny_calibration_uses_synthetic_batches(self):
+        from types import SimpleNamespace
+
+        from examples.pytorch.llm.qwen.qad.main import build_config, quantize_student
+
+        args = SimpleNamespace(
+            recipe="examples/pytorch/llm/qwen/qad/recipes/qwen3_8_27b_mxfp4_mlp_fp8_attn.yaml",
+            model=None,
+            teacher=None,
+            amax_source=None,
+            save_steps=None,
+            seq_length=None,
+            train_iters=None,
+            top_k=None,
+            output=tempfile.mkdtemp(),
+            tiny=True,
+            synthetic_batches=2,
+            calib_batches=1,
+            data="",
+        )
+        config = build_config(args)
+        student = quantize_student(config, args, local_rank=0, world=1, device=torch.device("cpu"))
+        self.assertIsNone(config.quant.amax_source)
+        self.assertTrue(any(module.amax is not None for module in student.modules() if hasattr(module, "amax")))
+
+    def test_prepare_data_writes_independent_document_count(self):
+        from types import SimpleNamespace
+
+        from examples.pytorch.llm.qwen.qad import prepare_data
+
+        class Tokenizer:
+            eos_token_id = 99
+
+            def apply_chat_template(self, *args, **kwargs):
+                return "conversation"
+
+            def __call__(self, text, add_special_tokens=False):
+                return SimpleNamespace(input_ids=[1, 2])
+
+        import sys
+
+        old_from_pretrained = prepare_data.AutoTokenizer.from_pretrained
+        old_datasets = sys.modules.get("datasets")
+        prepare_data.AutoTokenizer.from_pretrained = lambda path: Tokenizer()
+        sys.modules["datasets"] = SimpleNamespace(load_dataset=lambda *args, **kwargs: iter([
+            {"messages": [{"role": "user", "content": "a"}]},
+            {"messages": [{"role": "user", "content": "b"}]},
+        ]))
+        with tempfile.TemporaryDirectory() as tmp:
+            prefix = Path(tmp) / "tokens"
+            old_argv = sys.argv
+            try:
+                sys.argv = ["prepare_data.py", "--model", "fake", "--out", str(prefix), "--max-samples", "2"]
+                prepare_data.main()
+            finally:
+                sys.argv = old_argv
+                prepare_data.AutoTokenizer.from_pretrained = old_from_pretrained
+                if old_datasets is None:
+                    sys.modules.pop("datasets", None)
+                else:
+                    sys.modules["datasets"] = old_datasets
+            with open(f"{prefix}.idx", "rb") as handle:
+                self.assertEqual(handle.read(9), b"MMIDIDX\x00\x00")
+                handle.read(8)
+                handle.read(1)
+                sequence_count = struct.unpack("<Q", handle.read(8))[0]
+                document_count = struct.unpack("<Q", handle.read(8))[0]
+                handle.read(sequence_count * 4)
+                handle.read(sequence_count * 8)
+                indices = np.frombuffer(handle.read(document_count * 8), dtype=np.int64)
+        self.assertEqual(sequence_count, 2)
+        self.assertEqual(document_count, 3)
+        self.assertEqual(indices.tolist(), [0, 3, 6])
+
+
 if __name__ == "__main__":
     unittest.main()

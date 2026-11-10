@@ -170,10 +170,14 @@ def quantize(
             )
     # Fake-quant keeps float parameters, so it is not a deployment-quantized
     # model; marking it `is_quantized` would make HF Trainer refuse to train it.
-    if getattr(quant_config, "name", None) != FAKE_QUANT:
-        setattr(q_model, "is_quantized", True)
-    else:
+    is_fake_quant = any(getattr(config, "name", None) == FAKE_QUANT for config in configs_mapping.values())
+    if is_fake_quant:
         setattr(q_model, "is_fake_quant", True)
+        setattr(q_model, "is_prepared", True)
+        setattr(q_model, "quant_config", quant_config)
+        setattr(q_model, "example_inputs", example_inputs)
+    else:
+        setattr(q_model, "is_quantized", True)
     return q_model
 
 
@@ -274,6 +278,8 @@ def prepare_qat(
     """
     from neural_compressor.torch.quantization.fake_quant import FakeQuantConfig
 
+    if mapping is None and isinstance(quant_config, dict) and any(isinstance(key, type) for key in quant_config):
+        mapping, quant_config = quant_config, None
     if quant_config is None and mapping is None:
         warnings.warn(
             "prepare_qat() without a config keeps the legacy MXFP8 default for one release; "
@@ -368,10 +374,11 @@ def convert(
                 **kwargs,
             )
     if hasattr(q_model, "__dict__"):
-        if getattr(quant_config, "name", None) != FAKE_QUANT:
-            setattr(q_model, "is_quantized", True)
-        else:
+        is_fake_quant = any(getattr(config, "name", None) == FAKE_QUANT for config in configs_mapping.values())
+        if is_fake_quant:
             setattr(q_model, "is_fake_quant", True)
+        else:
+            setattr(q_model, "is_quantized", True)
     return q_model
 
 

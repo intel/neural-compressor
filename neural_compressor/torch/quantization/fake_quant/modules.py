@@ -74,6 +74,9 @@ class QuantLinear(nn.Linear):
             device="meta" if share_params else module.weight.device,
             dtype=module.weight.dtype,
         )
+        quantized.weight.requires_grad_(module.weight.requires_grad)
+        if quantized.bias is not None and module.bias is not None:
+            quantized.bias.requires_grad_(module.bias.requires_grad)
         if share_params:
             quantized.weight = module.weight
             quantized.bias = module.bias

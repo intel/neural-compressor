@@ -42,7 +42,7 @@ def wrap_unsloth(model: Any) -> CausalLM:
     if text is None or lm_head is None:
         raise RuntimeError("unsloth backend: cannot locate text tower/lm_head")
     causal = CausalLM(text, lm_head, getattr(model, "config", getattr(text, "config", None)))
-    causal._unsloth_source = model
+    object.__setattr__(causal, "_unsloth_source", model)
     return causal
 
 

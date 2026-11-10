@@ -67,16 +67,15 @@ def save_full_state_dict(
 
 def save_adapter(model: torch.nn.Module, out_dir: Union[str, Path], *, should_save: bool) -> bool:
     """Gather a PEFT adapter from FSDP2 shards and save a PEFT directory."""
-    from peft import get_peft_model_state_dict
     from torch.distributed.checkpoint.state_dict import get_model_state_dict
 
     state = get_model_state_dict(model)
-    filtered = get_peft_model_state_dict(model, state_dict=state)
-    if not filtered:
+    adapter_state = {key: value for key, value in state.items() if ".lora_" in key}
+    if not adapter_state:
         return False
     gathered = {
         key: (value.full_tensor().cpu() if hasattr(value, "full_tensor") else value.detach().cpu())
-        for key, value in filtered.items()
+        for key, value in adapter_state.items()
     }
     if should_save:
         out = Path(out_dir)

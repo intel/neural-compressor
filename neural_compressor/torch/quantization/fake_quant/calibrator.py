@@ -106,9 +106,16 @@ def load_amax(
     if path.suffix == ".json":
         payload = json.loads(path.read_text())
         raw = payload.get("amax", payload)
-        return {
-            name: {field: torch.tensor(float(value)) for field, value in fields.items()} for name, fields in raw.items()
-        }
+        result = {}
+        for name, value in raw.items():
+            if isinstance(value, dict):
+                fields = value
+            else:
+                name, field = name.rsplit(".", 1)
+                fields = {field: value}
+            for field, item in fields.items():
+                result.setdefault(name, {})[field] = torch.tensor(float(item))
+        return result
     if path.suffix not in (".txt", ""):
         raise ValueError(f"unsupported amax file {path}; expected .txt or .json")
 

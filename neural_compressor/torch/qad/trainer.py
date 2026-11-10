@@ -104,6 +104,8 @@ class QADTrainer(Trainer):
         if distill_config is None:
             raise ValueError("QADTrainer needs a DistillConfig (or a QADConfig)")
         self.teacher = teacher
+        self.teacher.eval()
+        self.teacher.requires_grad_(False)
         self.distill = distill_config
         self.qad_config = qad_config
         self.quant_config = quant_config
@@ -142,12 +144,10 @@ class QADTrainer(Trainer):
     def _hidden(self, model: torch.nn.Module, input_ids, attention_mask):
         module = _unwrap(model)
         if hasattr(module, "forward") and hasattr(module, "forward_hidden"):
-            # Go through forward() so FSDP2's pre-forward hook unshards the root.
-            return module(input_ids=input_ids, attention_mask=attention_mask)
-        fn = _find_attr(module, "forward_hidden")
-        if fn is not None:
-            return fn(input_ids, attention_mask)
-        return hidden_states(module, input_ids, attention_mask, self.adapter)
+            # Execute through the original wrapper so DDP/PEFT/FSDP hooks and
+            # gradient reduction keep their required semantics.
+            return model(input_ids=input_ids, attention_mask=attention_mask)
+        return hidden_states(model, input_ids, attention_mask, self.adapter)
 
     def _logits(self, model: torch.nn.Module, hidden: torch.Tensor):
         module = _unwrap(model)
@@ -185,7 +185,8 @@ class QADTrainer(Trainer):
         chunk = self.distill.chunk or input_ids.shape[1]
         for start in range(0, input_ids.shape[1], chunk):
             end = min(start + chunk, input_ids.shape[1])
-            teacher_logits = self._logits(self.teacher, teacher_hidden[:, start:end])
+            with torch.no_grad():
+                teacher_logits = self._logits(self.teacher, teacher_hidden[:, start:end])
             student_logits = self._logits(model, student_hidden[:, start:end])
             teacher_logits = teacher_logits.to(student_logits.device)
             if self.distill.loss == "kl":

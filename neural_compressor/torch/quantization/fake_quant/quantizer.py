@@ -20,8 +20,16 @@ from typing import Optional
 import torch
 import torch.nn as nn
 
-from .formats import QuantFormat, get_format
-from .ops.reference import fake_quant, fake_quant_fp8_amax, fake_quant_fp8_static
+from .formats import E4M3_MAX, QuantFormat, get_format
+from .ops.reference import (
+    _e2m1_code,
+    dequantize,
+    fake_quant,
+    fake_quant_fp8_amax,
+    fake_quant_fp8_static,
+    pack_nibbles,
+    quantize,
+)
 from .options import QuantizerConfig
 
 
@@ -94,6 +102,27 @@ class TensorQuantizer(nn.Module):
         else:
             quantized = fake_quant(x, self.format)
         return x + (quantized - x).detach()
+
+    def _fake_quantize(self, inputs: torch.Tensor):
+        """Return QDQ weights and the E8M0 exponent used by legacy exporters."""
+        if self.format.name not in ("mxfp4", "mxfp8"):
+            raise NotImplementedError(f"legacy packing does not support {self.format.name}")
+        quantized = quantize(inputs, self.format)
+        return dequantize(quantized).to(inputs.dtype), quantized.scales.float() - 127.0
+
+    def weight_pack(self, weight: torch.Tensor, scale: torch.Tensor):
+        """Pack QDQ weights using the exponent returned by ``_fake_quantize``."""
+        if self.format.name not in ("mxfp4", "mxfp8"):
+            raise NotImplementedError(f"weight_pack does not support {self.format.name}")
+        original_shape = weight.shape
+        rows = weight.reshape(-1, original_shape[-1])
+        scaled = rows / torch.exp2(scale.float()).repeat_interleave(32, dim=-1)
+        encoded_scale = (scale + 127).to(torch.uint8)
+        if self.format.name == "mxfp4":
+            packed = pack_nibbles(_e2m1_code(scaled)).reshape(original_shape[0], original_shape[1] // 2)
+        else:
+            packed = scaled.clamp(-E4M3_MAX, E4M3_MAX).to(torch.float8_e4m3fn).reshape(original_shape)
+        return packed, encoded_scale.reshape(original_shape[0], -1)
 
     # ------------------------------------------------- legacy attribute views
     @property

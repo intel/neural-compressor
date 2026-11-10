@@ -54,14 +54,22 @@ pip install -e . && pip install -r examples/pytorch/llm/qwen/qad/requirements.tx
 bash examples/pytorch/llm/qwen/qad/scripts/smoke_tiny.sh
 
 # 2) full QAD: 8×H200, seq8192/gbs16, 4000 steps
-bash examples/pytorch/llm/qwen/qad/scripts/run_full_8xh200.sh
+DATA=/path/tokenized_prefix SUMMARY=/path/.quant_summary.txt \
+  bash examples/pytorch/llm/qwen/qad/scripts/run_full_8xh200.sh
 
 # 3) LoRA path B: 4×H200, seq2048/gbs4, 2000 steps
-bash examples/pytorch/llm/qwen/qad/scripts/run_lora_4xh200.sh
+DATA=/path/tokenized_prefix SUMMARY=/path/.quant_summary.txt \
+  bash examples/pytorch/llm/qwen/qad/scripts/run_lora_4xh200.sh
 
 # 6-step parity run with the formal 4000-step LR schedule
-STOP_AFTER=6 SAVE_STEPS=0 bash examples/pytorch/llm/qwen/qad/scripts/run_full_8xh200.sh
+DATA=/path/tokenized_prefix SUMMARY=/path/.quant_summary.txt \
+  STOP_AFTER=6 SAVE_STEPS=0 bash examples/pytorch/llm/qwen/qad/scripts/run_full_8xh200.sh
 ```
+
+`DATA` is required for the 27B launchers. `SUMMARY` is optional when you have a
+PTQ amax summary or JSON; multi-rank runs that need static FP8 calibration must
+provide it or calibrate on a single rank first. `MODEL` defaults to
+`Qwen/Qwen3.8-27B`, so no machine-local model path is required.
 
 The scripts read their hyper-parameters from the recipes, so they reproduce the
 runs used for the validation experiments:
@@ -96,26 +104,25 @@ quant:
     - module: '.*\.(self_attn|linear_attn)\.(q_proj|k_proj|v_proj|o_proj|in_proj_qkv|in_proj_z|out_proj)$'
       weight: {format: fp8_e4m3, scheme: static}
       input:  {format: fp8_e4m3, scheme: static}
-  amax_source:
-    file: /path/.quant_summary.txt
-    translate: modelopt_megatron
+  # Optional: pass --amax-source /path/.quant_summary.txt to main.py.
 ```
 
 - `algorithm: max` is the **calibration algorithm** for static quantizers:
   each `amax` is the per-tensor maximum absolute value over the calibration
-  batches (ModelOpt's `"max"`). It is only used when no `amax_source` is given;
-  this recipe reads the PTQ summary instead, so calibration never runs. v1
-  implements only `max` — other values raise `NotImplementedError`.
-  The estimator is the same as ModelOpt's, but the **values are not guaranteed
-  to match**: ModelOpt calibrates fused Megatron tensors (`linear_qkv` covers
-  q/k/v together, `in_proj` covers qkv+z) on `cnn_dailymail` (128×8192), while
-  the fallback calibrates each HF projection separately on the data you pass;
+  batches. It is only used when no `amax_source` is given. Supplying
+  `--amax-source` skips calibration; v1 implements only `max` — other values
+  raise `NotImplementedError`. The estimator is the same as ModelOpt's, but the
+  **values are not guaranteed to match**: ModelOpt calibrates fused Megatron
+  tensors (`linear_qkv` covers q/k/v together, `in_proj` covers qkv+z) on
+  `cnn_dailymail` (128×8192), while the fallback calibrates each HF projection
+  separately on the data you pass;
 - rules are regex matches on **module names**, applied in order (later wins);
 - `default: null` means everything is off unless a rule enables it;
 - `^lm_head$` and `*embed_tokens*` are excluded by default;
-- `scheme: static` needs an `amax`; the recipe reads the exact fp32 values from
-  ModelOpt's `.quant_summary.txt` (the bf16-rounded HF `weight_scale` export is
-  a fallback and drifts grad norm by ~2.3× over 64 FP8 layers).
+- `scheme: static` needs an `amax`; when supplied, exact fp32 values come from
+  the PTQ summary or JSON. ModelOpt's `.quant_summary.txt` is one supported
+  source, not a runtime dependency. The bf16-rounded HF `weight_scale` export
+  is a fallback and drifts grad norm by ~2.3× over 64 FP8 layers.
 
 Without a PTQ summary, calibrate first (single rank) and point
 `amax_source.file` at the JSON:
