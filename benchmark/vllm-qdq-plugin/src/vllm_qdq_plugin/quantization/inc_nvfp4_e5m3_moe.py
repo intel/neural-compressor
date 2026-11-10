@@ -13,8 +13,6 @@ from vllm.model_executor.utils import set_weight_attrs
 from vllm.scalar_type import scalar_types
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import decode_ue5m3, fold_ue5m3_global_scale, nvfp4_e5m3_qdq
 
-from .inc_nvfp4_e5m3_linear import shared_input_global_scale
-
 
 class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
     """MoE using packed E2M1 weights, raw UE5M3 scales, and optional per-expert global scales."""
@@ -111,12 +109,10 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
         w13_weight_scale, w13_global_scale = fold_ue5m3_global_scale(w13_weight_scale, w13_row_scale)
         w2_weight_scale, w2_global_scale = fold_ue5m3_global_scale(w2_weight_scale, w2_row_scale)
 
-        w13_input_global_scale = shared_input_global_scale(
-            layer.w13_input_global_scale, "w13 input global scale across experts"
+        w13_input_global_scale = self._prepare_input_global_scale(
+            layer.w13_input_global_scale, "w13 input global scale"
         )
-        w2_input_global_scale = shared_input_global_scale(
-            layer.w2_input_global_scale, "w2 input global scale across experts"
-        )
+        w2_input_global_scale = self._prepare_input_global_scale(layer.w2_input_global_scale, "w2 input global scale")
         for name in (
             "w13_weight_global_scale",
             "w2_weight_global_scale",
@@ -129,6 +125,37 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
         if w2_input_global_scale is not None:
             layer.w2_input_global_scale = torch.nn.Parameter(w2_input_global_scale, requires_grad=False)
         return w13_weight_scale, w13_global_scale, w2_weight_scale, w2_global_scale
+
+    @staticmethod
+    def _prepare_input_global_scale(stored_scale: torch.Tensor, name: str) -> torch.Tensor | None:
+        if stored_scale.ndim == 2:
+            if not torch.equal(stored_scale, stored_scale[:, :1].expand_as(stored_scale)):
+                raise ValueError(f"NVFP4_E5M3_GS requires matching {name} across gate/up shards per expert")
+            stored_scale = stored_scale[:, 0]
+        elif stored_scale.ndim != 1:
+            raise ValueError(f"NVFP4_E5M3_GS expects one {name} value per expert")
+
+        stored_scale = stored_scale.to(torch.float32)
+        if torch.all(stored_scale == 1):
+            return None
+        if torch.equal(stored_scale, stored_scale[:1].expand_as(stored_scale)):
+            return stored_scale[0].reshape(())
+        return stored_scale.contiguous()
+
+    @staticmethod
+    def _scale_for_routes(
+        scale_per_expert: torch.Tensor | None,
+        topk_ids: torch.Tensor,
+        expert_map: torch.Tensor | None,
+    ) -> torch.Tensor | None:
+        if scale_per_expert is None or scale_per_expert.ndim == 0:
+            return scale_per_expert
+        expert_ids = topk_ids.reshape(-1).to(torch.long)
+        if expert_map is not None:
+            global_ids = expert_ids.clamp(min=0, max=expert_map.numel() - 1)
+            expert_ids = expert_map[global_ids].to(torch.long)
+        local_ids = expert_ids.clamp(min=0, max=scale_per_expert.numel() - 1)
+        return scale_per_expert[local_ids]
 
     def process_weights_after_loading(self, layer: RoutedExperts) -> None:
         w13_weight = layer.w13_weight_packed.detach().contiguous()
@@ -209,18 +236,38 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
                 nvfp4_e5m3_qdq(
                     output.contiguous(),
                     self.group_size,
-                    input_global_scale=getattr(layer, "w2_input_global_scale", None),
+                    input_global_scale=self._scale_for_routes(
+                        getattr(layer, "w2_input_global_scale", None), topk_ids, expert_map
+                    ),
                     trace_op_name="nvfp4_e5m3_moe_activation",
                 )
             )
 
-        quantized_x = nvfp4_e5m3_qdq(
-            x.contiguous(),
-            self.group_size,
-            input_global_scale=getattr(layer, "w13_input_global_scale", None),
-            trace_op_name="nvfp4_e5m3_moe_input",
-        )
-        return fused_marlin_moe(
+        num_tokens, top_k = topk_ids.shape
+        w13_input_scale = getattr(layer, "w13_input_global_scale", None)
+        if w13_input_scale is not None and w13_input_scale.ndim == 1:
+            routed_topk_ids = topk_ids.reshape(-1, 1).contiguous()
+            routed_topk_weights = topk_weights.reshape(-1, 1).contiguous()
+            routed_x = x[:, None, :].expand(-1, top_k, -1).reshape(-1, x.shape[-1]).contiguous()
+            quantized_x = nvfp4_e5m3_qdq(
+                routed_x,
+                self.group_size,
+                input_global_scale=self._scale_for_routes(w13_input_scale, routed_topk_ids, layer.expert_map),
+                trace_op_name="nvfp4_e5m3_moe_input",
+            )
+            moe_topk_ids = routed_topk_ids
+            moe_topk_weights = routed_topk_weights
+        else:
+            quantized_x = nvfp4_e5m3_qdq(
+                x.contiguous(),
+                self.group_size,
+                input_global_scale=w13_input_scale,
+                trace_op_name="nvfp4_e5m3_moe_input",
+            )
+            moe_topk_ids = topk_ids
+            moe_topk_weights = topk_weights
+
+        routed_output = fused_marlin_moe(
             hidden_states=quantized_x,
             w1=layer.w13_weight,
             w2=layer.w2_weight,
@@ -228,8 +275,8 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
             bias2=None,
             w1_scale=layer.w13_weight_scale,
             w2_scale=layer.w2_weight_scale,
-            topk_weights=topk_weights,
-            topk_ids=topk_ids,
+            topk_weights=moe_topk_weights,
+            topk_ids=moe_topk_ids,
             quant_type_id=scalar_types.float4_e2m1f.id,
             apply_router_weight_on_input=layer.apply_router_weight_on_input,
             global_num_experts=layer.global_num_experts,
@@ -241,3 +288,6 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
             workspace=getattr(layer, "workspace", None),
             activation_config=activation_config,
         )
+        if moe_topk_ids is not topk_ids:
+            return routed_output.view(num_tokens, top_k, -1).sum(dim=1)
+        return routed_output

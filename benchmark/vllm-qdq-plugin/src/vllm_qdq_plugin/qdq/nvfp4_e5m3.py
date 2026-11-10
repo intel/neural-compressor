@@ -63,7 +63,7 @@ def _nvfp4_e5m3_qdq_reference(
     groups = x.reshape(rows, -1, group_size)
     scales = groups.float().abs().amax(dim=-1).div_(6.0)
     if input_global_scale is not None:
-        global_scale = _as_global_scale(input_global_scale, x.device)
+        global_scale = _as_global_scale(input_global_scale, x.device, rows)
         scales = _quantize_ue5m3_scale_reference(scales.mul_(global_scale))
         inverse_global_scale = torch.where(global_scale == 0, torch.zeros_like(global_scale), 1.0 / global_scale)
         scales = scales * inverse_global_scale
@@ -84,10 +84,12 @@ def _nvfp4_e5m3_qdq_reference(
     return (quantized * scales.unsqueeze(-1)).reshape(rows, -1)[:, :width].to(original_dtype)
 
 
-def _as_global_scale(global_scale: torch.Tensor, device: torch.device) -> torch.Tensor:
-    if global_scale.numel() != 1 or global_scale.dtype != torch.float32:
-        raise ValueError("NVFP4_E5M3_GS QDQ requires one float32 input_global_scale value")
-    return global_scale.reshape(()).to(device)
+def _as_global_scale(global_scale: torch.Tensor, device: torch.device, rows: int) -> torch.Tensor:
+    if global_scale.dtype != torch.float32 or global_scale.numel() not in (1, rows):
+        raise ValueError("NVFP4_E5M3_GS QDQ requires one float32 scale or one scale per row")
+    if global_scale.numel() == 1:
+        return global_scale.reshape(()).to(device)
+    return global_scale.reshape(rows, 1).to(device)
 
 
 def nvfp4_e5m3_qdq(
@@ -142,7 +144,19 @@ def _nvfp4_e5m3_gs_qdq(
     trace_op_name: str,
 ) -> torch.Tensor:
     format_name = "NVFP4_E5M3_GS"
-    global_scale = _as_global_scale(input_global_scale, x.device)
+    global_scale = _as_global_scale(input_global_scale, x.device, x.shape[0])
+    if global_scale.ndim == 2:
+        if envs.VLLM_QDQ_CUTE and group_size == 16 and x.is_cuda and x.is_contiguous() and x.shape[1] % 16 == 0:
+            from .cute import cute_qdq_status
+
+            available, _ = cute_qdq_status(x)
+            if available:
+                from .nvfp4_e5m3_cute import nvfp4_e5m3_gs_qdq_per_row_cute
+
+                trace_qdq(trace_op_name, x.shape, x.dtype, backend="CuTe", format_name=format_name)
+                return nvfp4_e5m3_gs_qdq_per_row_cute(x, global_scale[:, 0].contiguous())
+        trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name=format_name)
+        return _nvfp4_e5m3_qdq_reference(x, group_size, global_scale)
     if not envs.VLLM_QDQ_CUTE:
         trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name=format_name)
         return _nvfp4_e5m3_qdq_reference(x, group_size, global_scale)

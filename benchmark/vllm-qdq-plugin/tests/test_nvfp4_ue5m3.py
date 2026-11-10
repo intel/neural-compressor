@@ -435,6 +435,19 @@ class Nvfp4QDQTests(unittest.TestCase):
 
         self.assertTrue(torch.equal(actual, expected))
 
+    def test_reference_chunks_large_row_batches(self) -> None:
+        torch.manual_seed(23)
+        x = torch.randn(1025, 64, dtype=torch.bfloat16)
+        row_scales = torch.linspace(0.125, 1.0, x.shape[0], dtype=torch.float32)
+
+        actual = nvfp4_qdq(x, row_scales, group_size=16)
+        expected = torch.cat(
+            [nvfp4_qdq(x[start : start + 256], row_scales[start : start + 256], group_size=16)
+             for start in range(0, x.shape[0], 256)]
+        )
+
+        self.assertTrue(torch.equal(actual, expected))
+
     def test_reference_matches_autoround_nvfp4_scale_rounding(self) -> None:
         from auto_round.data_type.nvfp import calculate_gparam, ref_nvfp4_quant
 

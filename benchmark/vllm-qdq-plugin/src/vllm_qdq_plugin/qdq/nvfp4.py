@@ -5,6 +5,7 @@ from vllm_qdq_plugin.trace import trace_qdq
 
 _FP4_MAX = 6.0
 _FP8_E4M3_MAX = 448.0
+_ROW_CHUNK_SIZE = 1024
 
 
 def _nvfp4_qdq_reference(
@@ -23,37 +24,50 @@ def _nvfp4_qdq_reference(
         raise TypeError(f"nvfp4_qdq expects BF16/FP16, got {x.dtype}")
     if group_size != 16:
         raise ValueError(f"nvfp4_qdq requires group_size 16, got {group_size}")
-    if input_global_scale.numel() != 1 or input_global_scale.dtype != torch.float32:
-        raise ValueError("nvfp4_qdq requires one float32 input_global_scale value")
+    if input_global_scale.dtype != torch.float32 or input_global_scale.numel() not in (1, x.shape[0]):
+        raise ValueError(
+            "nvfp4_qdq requires one float32 input_global_scale value or one per input row"
+        )
     if x.shape[1] % group_size:
         raise ValueError(f"nvfp4_qdq requires K divisible by group_size={group_size}, got K={x.shape[1]}")
 
     original_dtype = x.dtype
-    groups = x.reshape(x.shape[0], -1, group_size).float()
-    global_scale = input_global_scale.reshape(1, 1)
-    scales = global_scale * (groups.abs().amax(dim=-1) * (1.0 / _FP4_MAX))
-    scales = scales.clamp_(-_FP8_E4M3_MAX, _FP8_E4M3_MAX).to(torch.float8_e4m3fn).float()
-    dequant_scales = scales * torch.where(global_scale == 0, torch.zeros_like(global_scale), 1.0 / global_scale)
-    output_scales = torch.where(
-        dequant_scales == 0,
-        torch.zeros_like(dequant_scales),
-        1.0 / dequant_scales,
-    )
-    normalized = groups * output_scales.unsqueeze(-1)
-    magnitude = normalized.abs()
-    step1 = torch.round(2.0 * magnitude) / 2.0
-    step2 = torch.round(magnitude)
-    step3 = 2.0 * torch.round(magnitude / 2.0)
-    mask1 = magnitude < 2.0
-    mask2 = magnitude < 4.0
-    quantized = (step1 * mask1 + step2 * (~mask1) * mask2 + step3 * (~mask1) * (~mask2)).clamp_(-_FP4_MAX, _FP4_MAX)
-    quantized = quantized.copysign(normalized)
-    dequantized = quantized * torch.where(
-        output_scales == 0,
-        torch.zeros_like(output_scales),
-        1.0 / output_scales,
-    ).unsqueeze(-1)
-    return dequantized.reshape_as(x).to(original_dtype)
+    input_global_scales = input_global_scale.reshape(-1)
+    output = torch.empty_like(x)
+    for row_start in range(0, x.shape[0], _ROW_CHUNK_SIZE):
+        row_end = min(row_start + _ROW_CHUNK_SIZE, x.shape[0])
+        chunk_x = x[row_start:row_end]
+        groups = chunk_x.reshape(chunk_x.shape[0], -1, group_size).float()
+        chunk_scales = (
+            input_global_scales
+            if input_global_scales.numel() == 1
+            else input_global_scales[row_start:row_end]
+        )
+        global_scale = chunk_scales.reshape(-1, 1)
+        scales = global_scale * (groups.abs().amax(dim=-1) * (1.0 / _FP4_MAX))
+        scales = scales.clamp_(-_FP8_E4M3_MAX, _FP8_E4M3_MAX).to(torch.float8_e4m3fn).float()
+        dequant_scales = scales * torch.where(global_scale == 0, torch.zeros_like(global_scale), 1.0 / global_scale)
+        output_scales = torch.where(
+            dequant_scales == 0,
+            torch.zeros_like(dequant_scales),
+            1.0 / dequant_scales,
+        )
+        normalized = groups * output_scales.unsqueeze(-1)
+        magnitude = normalized.abs()
+        step1 = torch.round(2.0 * magnitude) / 2.0
+        step2 = torch.round(magnitude)
+        step3 = 2.0 * torch.round(magnitude / 2.0)
+        mask1 = magnitude < 2.0
+        mask2 = magnitude < 4.0
+        quantized = (step1 * mask1 + step2 * (~mask1) * mask2 + step3 * (~mask1) * (~mask2)).clamp_(-_FP4_MAX, _FP4_MAX)
+        quantized = quantized.copysign(normalized)
+        dequantized = quantized * torch.where(
+            output_scales == 0,
+            torch.zeros_like(output_scales),
+            1.0 / output_scales,
+        ).unsqueeze(-1)
+        output[row_start:row_end] = dequantized.reshape_as(chunk_x).to(original_dtype)
+    return output
 
 
 def nvfp4_qdq(
