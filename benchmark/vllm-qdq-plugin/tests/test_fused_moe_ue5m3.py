@@ -176,7 +176,8 @@ def test_marlin_moe_matches_reference():
     assert relative_l2_error < 0.01
 
 
-def test_standard_nvfp4_qdq_moe_matches_reference():
+@pytest.mark.parametrize("uniform_scales", [False, True])
+def test_standard_nvfp4_qdq_moe_matches_reference(uniform_scales: bool):
     if not torch.cuda.is_available():
         pytest.skip("CUDA is required")
 
@@ -195,6 +196,9 @@ def test_standard_nvfp4_qdq_moe_matches_reference():
     w2_global_scale = torch.full((num_experts,), 2.0, device=device)
     input_global_scale = torch.tensor([0.25, 0.125, 0.5, 0.0625], device=device)[:, None].repeat(1, 2)
     w2_input_global_scale = torch.tensor([0.5, 0.25, 0.125, 1.0], device=device)
+    if uniform_scales:
+        input_global_scale = torch.full_like(input_global_scale, 0.25)
+        w2_input_global_scale = torch.full_like(w2_input_global_scale, 0.5)
     topk_ids = torch.tensor([[0, 1], [2, 3], [1, 3], [0, 2], [3, 1]], device=device, dtype=torch.int32)
     topk_weights = torch.softmax(torch.randn(num_tokens, top_k, device=device), dim=-1)
 
@@ -244,8 +248,11 @@ def test_standard_nvfp4_qdq_moe_matches_reference():
         },
     )()
     method.process_weights_after_loading(layer)
-    torch.testing.assert_close(layer.w13_input_scale, input_global_scale[:, 0])
-    torch.testing.assert_close(layer.w2_input_scale, w2_input_global_scale)
+    if uniform_scales:
+        assert layer.w13_input_scale.ndim == 0 and layer.w2_input_scale.ndim == 0
+    else:
+        torch.testing.assert_close(layer.w13_input_scale, input_global_scale[:, 0])
+        torch.testing.assert_close(layer.w2_input_scale, w2_input_global_scale)
     actual = method.apply(layer, x, topk_weights, topk_ids, None, None)
 
     assert F.cosine_similarity(actual.float().flatten(), expected.float().flatten(), dim=0) > 0.9999

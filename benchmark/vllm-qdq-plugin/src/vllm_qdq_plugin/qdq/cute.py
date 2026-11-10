@@ -69,6 +69,21 @@ def warn_reference_fallback(format_name: str, reason: str) -> None:
         _FALLBACK_WARNINGS_EMITTED.add(warning_key)
 
 
+def use_nvfp4_cute(x: torch.Tensor, group_size: int, format_name: str) -> bool:
+    """Return whether the fused NVFP4-family CuTe kernel can run ``x``; warn once when it cannot."""
+    if not envs.VLLM_QDQ_CUTE:
+        return False
+    if torch.compiler.is_compiling() and x.is_cuda:
+        return True
+    available, reason = cute_qdq_status(x)
+    if available and x.shape[1] % group_size == 0:
+        return True
+    if available:
+        reason = f"K={x.shape[1]} is not divisible by group_size={group_size}"
+    warn_reference_fallback(format_name, reason)
+    return False
+
+
 def _make_contiguous_for_cute(x: torch.Tensor, format_name: str) -> torch.Tensor:
     if envs.VLLM_QDQ_TRACE:
         print(

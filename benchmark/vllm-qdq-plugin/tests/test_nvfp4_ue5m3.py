@@ -11,7 +11,7 @@ from vllm.model_executor.layers.quantization.inc.inc import INCConfig
 from vllm.model_executor.layers.quantization.inc.inc_linear import INCLinearMethod
 from vllm.model_executor.layers.quantization.inc.schemes import factory
 from vllm.model_executor.parameter import GroupQuantScaleParameter, ModelWeightParameter
-from vllm_qdq_plugin.qdq.nvfp4 import nvfp4_qdq
+from vllm_qdq_plugin.qdq.nvfp4 import _nvfp4_qdq_reference, nvfp4_qdq
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import (
     _nvfp4_e5m3_qdq_reference,
     decode_ue5m3,
@@ -470,6 +470,42 @@ class Nvfp4QDQTests(unittest.TestCase):
 
         torch.testing.assert_close(actual, torch.tensor([0.25, 0.5, 0.25, 0.25]))
 
+    def test_uniform_expert_input_scales_collapse_to_scalar(self) -> None:
+        shared = INCNvfp4QDQMoEMethod._collapse_uniform(torch.full((4,), 0.5))
+        distinct = INCNvfp4QDQMoEMethod._collapse_uniform(torch.tensor([0.5, 0.25]))
+
+        self.assertEqual(shared.ndim, 0)
+        self.assertEqual(distinct.shape, torch.Size([2]))
+        self.assertIs(INCNvfp4QDQMoEMethod._routed_input_scales(torch.zeros(2, 2), None, shared), shared)
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_cute_matches_reference_for_scalar_row_and_routed_scales(self) -> None:
+        from vllm_qdq_plugin.qdq.cute import cute_qdq_status
+
+        torch.manual_seed(29)
+        spread = torch.logspace(-9, 5, 6 * 256 // 16, device="cuda").repeat_interleave(16).reshape(6, 256)
+        x = (torch.randn(6, 256, device="cuda") * spread).to(torch.bfloat16)
+        x[1] = 0
+        if not cute_qdq_status(x)[0]:
+            self.skipTest("CuTe DSL is not available")
+        routed_x = x[:, None].expand(-1, 3, -1).reshape(-1, 256)
+        scalar = torch.tensor([448.0 * 6.0 / x.float().abs().max().item()], device="cuda")
+        row_scales = torch.rand(18, device="cuda") * 1.0e4
+        row_scales[0] = 0
+
+        self.assertTrue(torch.equal(nvfp4_qdq(x, scalar), _nvfp4_qdq_reference(x, scalar)))
+        self.assertTrue(torch.equal(nvfp4_qdq(x, row_scales[:6]), _nvfp4_qdq_reference(x, row_scales[:6])))
+        self.assertTrue(
+            torch.equal(nvfp4_qdq(x, row_scales, topk=3), _nvfp4_qdq_reference(routed_x, row_scales))
+        )
+        inplace = x.clone()
+        nvfp4_qdq(inplace, scalar, inplace=True)
+        self.assertTrue(torch.equal(inplace, _nvfp4_qdq_reference(x, scalar)))
+        compiled = torch.compile(
+            lambda value, scale: nvfp4_qdq(value, scale, topk=3), backend="eager", fullgraph=True
+        )
+        self.assertTrue(torch.equal(compiled(x, row_scales), _nvfp4_qdq_reference(routed_x, row_scales)))
+
     def test_qdq_method_requires_sm80_and_preserves_stored_input_scale(self) -> None:
         method = object.__new__(INCNvfp4QDQLinearMethod)
         method.group_size = 16
@@ -589,6 +625,36 @@ class Nvfp4UE5M3GlobalScaleTests(unittest.TestCase):
         expected = _nvfp4_e5m3_qdq_reference(x, 16, scales)
         actual = nvfp4_e5m3_qdq(x, 16, input_global_scale=scales)
         self.assertTrue(torch.equal(actual, expected))
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_cute_qdq_supports_routed_rows_and_inplace(self) -> None:
+        from vllm_qdq_plugin.qdq.cute import cute_qdq_status
+
+        x = torch.randn(5, 256, device="cuda", dtype=torch.bfloat16)
+        if not cute_qdq_status(x)[0]:
+            self.skipTest("CuTe DSL is not available")
+        routed_x = x[:, None].expand(-1, 2, -1).reshape(-1, 256)
+        scales = torch.linspace(1.0e3, 6.0e4, 10, device="cuda")
+        for group_size in (16, 32):
+            self.assertTrue(
+                torch.equal(
+                    nvfp4_e5m3_qdq(x, group_size, input_global_scale=scales, topk=2),
+                    _nvfp4_e5m3_qdq_reference(routed_x, group_size, scales),
+                )
+            )
+            inplace = x.clone()
+            nvfp4_e5m3_qdq(inplace, group_size, inplace=True)
+            self.assertTrue(torch.equal(inplace, _nvfp4_e5m3_qdq_reference(x, group_size)))
+
+    def test_decode_ue5m3_matches_bit_formula(self) -> None:
+        codes = torch.arange(256, dtype=torch.int32)
+        exponent, mantissa = codes >> 3, codes & 0x7
+        expected = torch.where(
+            exponent == 0,
+            mantissa.float() * 2.0**-17,
+            torch.ldexp(1.0 + mantissa.float() * 0.125, exponent - 15),
+        )
+        self.assertTrue(torch.equal(decode_ue5m3(codes.to(torch.uint8).reshape(16, 16)), expected.reshape(16, 16)))
 
     def test_fold_global_scale_is_exact_for_shared_scale(self) -> None:
         scales = decode_ue5m3(torch.randint(0, 0xFF, (2, 8, 4), dtype=torch.uint8))

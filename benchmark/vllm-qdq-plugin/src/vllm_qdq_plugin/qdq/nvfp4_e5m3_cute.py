@@ -1,45 +1,90 @@
-"""CuTe DSL custom operators for NVFP4_E5M3 activation and weight conversion."""
+"""CuTe DSL custom operators for NVFP4-family activation QDQ and NVFP4_E5M3 weight conversion."""
 
 import torch
 from vllm.utils.torch_utils import direct_register_custom_op
 
 
-def _nvfp4_e5m3_qdq_cute_impl(x: torch.Tensor, group_size: int) -> torch.Tensor:
-    from .cute_kernels import run_nvfp4_e5m3_qdq
+def _nvfp4_family_qdq_cute_impl(
+    x: torch.Tensor,
+    global_scale: torch.Tensor | None,
+    scale_format: str,
+    group_size: int,
+    topk: int,
+) -> torch.Tensor:
+    from .cute_kernels import run_nvfp4_qdq
 
-    return run_nvfp4_e5m3_qdq(x, group_size)
-
-
-def _nvfp4_e5m3_qdq_cute_fake(x: torch.Tensor, group_size: int) -> torch.Tensor:
-    del group_size
-    return torch.empty_like(x)
-
-
-direct_register_custom_op(
-    op_name="nvfp4_e5m3_qdq_cute",
-    op_func=_nvfp4_e5m3_qdq_cute_impl,
-    mutates_args=[],
-    fake_impl=_nvfp4_e5m3_qdq_cute_fake,
-)
+    return run_nvfp4_qdq(x, group_size, scale_format, global_scale, topk)
 
 
-def _nvfp4_e5m3_gs_qdq_cute_impl(x: torch.Tensor, global_scale: torch.Tensor) -> torch.Tensor:
-    from .cute_kernels import run_nvfp4_e5m3_gs_qdq
-
-    return run_nvfp4_e5m3_gs_qdq(x, global_scale)
-
-
-def _nvfp4_e5m3_gs_qdq_cute_fake(x: torch.Tensor, global_scale: torch.Tensor) -> torch.Tensor:
-    del global_scale
-    return torch.empty_like(x)
+def _nvfp4_family_qdq_cute_fake(
+    x: torch.Tensor,
+    global_scale: torch.Tensor | None,
+    scale_format: str,
+    group_size: int,
+    topk: int,
+) -> torch.Tensor:
+    del global_scale, scale_format, group_size
+    return x.new_empty((x.shape[0] * topk, x.shape[1]))
 
 
 direct_register_custom_op(
-    op_name="nvfp4_e5m3_gs_qdq_cute",
-    op_func=_nvfp4_e5m3_gs_qdq_cute_impl,
+    op_name="qdq_plugin_nvfp4_family_qdq",
+    op_func=_nvfp4_family_qdq_cute_impl,
     mutates_args=[],
-    fake_impl=_nvfp4_e5m3_gs_qdq_cute_fake,
+    fake_impl=_nvfp4_family_qdq_cute_fake,
 )
+
+
+def _nvfp4_family_qdq_cute_inplace_impl(
+    x: torch.Tensor,
+    global_scale: torch.Tensor | None,
+    scale_format: str,
+    group_size: int,
+) -> None:
+    from .cute_kernels import run_nvfp4_qdq
+
+    run_nvfp4_qdq(x, group_size, scale_format, global_scale, output=x)
+
+
+def _nvfp4_family_qdq_cute_inplace_fake(
+    x: torch.Tensor,
+    global_scale: torch.Tensor | None,
+    scale_format: str,
+    group_size: int,
+) -> None:
+    del x, global_scale, scale_format, group_size
+
+
+direct_register_custom_op(
+    op_name="qdq_plugin_nvfp4_family_qdq_",
+    op_func=_nvfp4_family_qdq_cute_inplace_impl,
+    mutates_args=["x"],
+    fake_impl=_nvfp4_family_qdq_cute_inplace_fake,
+)
+
+
+def nvfp4_family_qdq_cute(
+    x: torch.Tensor,
+    group_size: int,
+    scale_format: str,
+    global_scale: torch.Tensor | None = None,
+    *,
+    topk: int = 1,
+    inplace: bool = False,
+) -> torch.Tensor:
+    """Run fused NVFP4 (``"E4M3"``) or NVFP4_E5M3 (``"UE5M3"``) activation QDQ.
+
+    ``topk > 1`` returns each input row repeated ``topk`` times; ``inplace`` writes back into ``x``.
+    """
+    if global_scale is not None:
+        global_scale = global_scale.reshape(-1).contiguous()
+    if inplace and topk == 1 and x.is_contiguous():
+        torch.ops.vllm.qdq_plugin_nvfp4_family_qdq_(x, global_scale, scale_format, group_size)
+        return x
+    result = torch.ops.vllm.qdq_plugin_nvfp4_family_qdq(x.contiguous(), global_scale, scale_format, group_size, topk)
+    if inplace:
+        return x.copy_(result)
+    return result
 
 
 def _nvfp4_e5m3_weight_dequant_cute_impl(
@@ -71,40 +116,6 @@ direct_register_custom_op(
     mutates_args=[],
     fake_impl=_nvfp4_e5m3_weight_dequant_cute_fake,
 )
-
-
-def nvfp4_e5m3_qdq_cute(x: torch.Tensor, group_size: int) -> torch.Tensor:
-    """Run fused CuTe activation QDQ."""
-    return torch.ops.vllm.nvfp4_e5m3_qdq_cute(x, group_size)
-
-
-def nvfp4_e5m3_gs_qdq_cute(x: torch.Tensor, global_scale: torch.Tensor) -> torch.Tensor:
-    """Run fused CuTe activation QDQ with a float32 per-tensor global scale (group size 16)."""
-    return torch.ops.vllm.nvfp4_e5m3_gs_qdq_cute(x, global_scale)
-
-
-def _nvfp4_e5m3_gs_qdq_per_row_cute_impl(x: torch.Tensor, global_scales: torch.Tensor) -> torch.Tensor:
-    from .cute_kernels import run_nvfp4_e5m3_gs_qdq_per_row
-
-    return run_nvfp4_e5m3_gs_qdq_per_row(x, global_scales)
-
-
-def _nvfp4_e5m3_gs_qdq_per_row_cute_fake(x: torch.Tensor, global_scales: torch.Tensor) -> torch.Tensor:
-    del global_scales
-    return torch.empty_like(x)
-
-
-direct_register_custom_op(
-    op_name="nvfp4_e5m3_gs_qdq_per_row_cute",
-    op_func=_nvfp4_e5m3_gs_qdq_per_row_cute_impl,
-    mutates_args=[],
-    fake_impl=_nvfp4_e5m3_gs_qdq_per_row_cute_fake,
-)
-
-
-def nvfp4_e5m3_gs_qdq_per_row_cute(x: torch.Tensor, global_scales: torch.Tensor) -> torch.Tensor:
-    """Run fused NVFP4_E5M3_GS QDQ with one global scale per row."""
-    return torch.ops.vllm.nvfp4_e5m3_gs_qdq_per_row_cute(x, global_scales)
 
 
 def nvfp4_e5m3_weight_dequant_cute(

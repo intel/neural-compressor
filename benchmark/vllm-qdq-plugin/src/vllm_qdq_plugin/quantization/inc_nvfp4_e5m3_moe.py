@@ -100,14 +100,14 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
     def _fold_global_scales(
         self,
         layer: RoutedExperts,
-        w13_weight_scale: torch.Tensor,
-        w2_weight_scale: torch.Tensor,
     ) -> tuple[torch.Tensor, torch.Tensor, torch.Tensor, torch.Tensor]:
         num_shards = layer.w13_weight_global_scale.shape[-1]
-        w13_row_scale = layer.w13_weight_global_scale.repeat_interleave(w13_weight_scale.shape[1] // num_shards, dim=1)
-        w2_row_scale = layer.w2_weight_global_scale[:, None].expand(-1, w2_weight_scale.shape[1])
-        w13_weight_scale, w13_global_scale = fold_ue5m3_global_scale(w13_weight_scale, w13_row_scale)
-        w2_weight_scale, w2_global_scale = fold_ue5m3_global_scale(w2_weight_scale, w2_row_scale)
+        w13_row_scale = layer.w13_weight_global_scale.repeat_interleave(
+            layer.w13_weight_scale.shape[1] // num_shards, dim=1
+        )
+        w2_row_scale = layer.w2_weight_global_scale[:, None].expand(-1, layer.w2_weight_scale.shape[1])
+        w13_weight_scale, w13_global_scale = self._decode_scales(layer, layer.w13_weight_scale, w13_row_scale)
+        w2_weight_scale, w2_global_scale = self._decode_scales(layer, layer.w2_weight_scale, w2_row_scale)
 
         w13_input_global_scale = self._prepare_input_global_scale(
             layer.w13_input_global_scale, "w13 input global scale"
@@ -125,6 +125,23 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
         if w2_input_global_scale is not None:
             layer.w2_input_global_scale = torch.nn.Parameter(w2_input_global_scale, requires_grad=False)
         return w13_weight_scale, w13_global_scale, w2_weight_scale, w2_global_scale
+
+    @staticmethod
+    def _decode_scales(
+        layer: RoutedExperts,
+        scale_bits: torch.Tensor,
+        row_global_scale: torch.Tensor | None,
+    ) -> tuple[torch.Tensor, torch.Tensor]:
+        """Decode (and fold) UE5M3 scales one expert at a time to bound float32 temporaries."""
+        # UE5M3 values and their folded/requantized forms are exact in BF16/FP16 mantissas.
+        decoded = torch.empty(scale_bits.shape, dtype=layer.params_dtype, device=scale_bits.device)
+        global_scale = torch.ones(scale_bits.shape[0], dtype=torch.float32, device=scale_bits.device)
+        for expert in range(scale_bits.shape[0]):
+            expert_scale = decode_ue5m3(scale_bits[expert])
+            if row_global_scale is not None:
+                expert_scale, global_scale[expert] = fold_ue5m3_global_scale(expert_scale, row_global_scale[expert])
+            decoded[expert] = expert_scale
+        return decoded, global_scale
 
     @staticmethod
     def _prepare_input_global_scale(stored_scale: torch.Tensor, name: str) -> torch.Tensor | None:
@@ -162,16 +179,11 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
         del layer.w13_weight_packed
         w2_weight = layer.w2_weight_packed.detach().contiguous()
         del layer.w2_weight_packed
-        w13_weight_scale = decode_ue5m3(layer.w13_weight_scale)
-        w2_weight_scale = decode_ue5m3(layer.w2_weight_scale)
         if self.with_global_scale:
-            w13_weight_scale, w13_global_scale, w2_weight_scale, w2_global_scale = self._fold_global_scales(
-                layer, w13_weight_scale, w2_weight_scale
-            )
+            w13_weight_scale, w13_global_scale, w2_weight_scale, w2_global_scale = self._fold_global_scales(layer)
         else:
-            w13_global_scale = w2_global_scale = torch.ones(
-                layer.num_experts, dtype=torch.float32, device=w13_weight.device
-            )
+            w13_weight_scale, w13_global_scale = self._decode_scales(layer, layer.w13_weight_scale, None)
+            w2_weight_scale, w2_global_scale = self._decode_scales(layer, layer.w2_weight_scale, None)
         (
             w13_weight,
             w13_weight_scale,
@@ -232,34 +244,33 @@ class INCNvfp4UE5M3MoEMethod(FusedMoEMethodBase):
                 topk_ids=topk_ids,
                 expert_map=expert_map,
             )
-            output.copy_(
-                nvfp4_e5m3_qdq(
-                    output.contiguous(),
-                    self.group_size,
-                    input_global_scale=self._scale_for_routes(
-                        getattr(layer, "w2_input_global_scale", None), topk_ids, expert_map
-                    ),
-                    trace_op_name="nvfp4_e5m3_moe_activation",
-                )
+            nvfp4_e5m3_qdq(
+                output,
+                self.group_size,
+                input_global_scale=self._scale_for_routes(
+                    getattr(layer, "w2_input_global_scale", None), topk_ids, expert_map
+                ),
+                inplace=True,
+                trace_op_name="nvfp4_e5m3_moe_activation",
             )
 
         num_tokens, top_k = topk_ids.shape
         w13_input_scale = getattr(layer, "w13_input_global_scale", None)
         if w13_input_scale is not None and w13_input_scale.ndim == 1:
-            routed_topk_ids = topk_ids.reshape(-1, 1).contiguous()
-            routed_topk_weights = topk_weights.reshape(-1, 1).contiguous()
-            routed_x = x[:, None, :].expand(-1, top_k, -1).reshape(-1, x.shape[-1]).contiguous()
+            # Per-expert input scales: run each (token, expert) route as its own row; the kernel
+            # reads token rows directly instead of materializing a top_k-expanded copy.
+            moe_topk_ids = topk_ids.reshape(-1, 1).contiguous()
+            moe_topk_weights = topk_weights.reshape(-1, 1).contiguous()
             quantized_x = nvfp4_e5m3_qdq(
-                routed_x,
+                x,
                 self.group_size,
-                input_global_scale=self._scale_for_routes(w13_input_scale, routed_topk_ids, layer.expert_map),
+                input_global_scale=self._scale_for_routes(w13_input_scale, moe_topk_ids, layer.expert_map),
+                topk=top_k,
                 trace_op_name="nvfp4_e5m3_moe_input",
             )
-            moe_topk_ids = routed_topk_ids
-            moe_topk_weights = routed_topk_weights
         else:
             quantized_x = nvfp4_e5m3_qdq(
-                x.contiguous(),
+                x,
                 self.group_size,
                 input_global_scale=w13_input_scale,
                 trace_op_name="nvfp4_e5m3_moe_input",

@@ -77,11 +77,21 @@ class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
             set_weight_attrs(scale, tensor_attrs)
 
     @staticmethod
+    def _collapse_uniform(scales: torch.Tensor) -> torch.Tensor:
+        """Return a 0-d scale when every expert shares it, so QDQ can skip per-route expansion."""
+        scales = scales.to(torch.float32).contiguous()
+        if torch.equal(scales, scales[:1].expand_as(scales)):
+            return scales[0].clone().reshape(())
+        return scales
+
+    @staticmethod
     def _routed_input_scales(
         topk_ids: torch.Tensor,
         expert_map: torch.Tensor | None,
         per_expert_scales: torch.Tensor,
     ) -> torch.Tensor:
+        if per_expert_scales.ndim == 0:
+            return per_expert_scales
         expert_ids = topk_ids.reshape(-1).long()
         if expert_map is not None:
             global_ids = expert_ids.clamp(min=0, max=expert_map.numel() - 1)
@@ -108,13 +118,9 @@ class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
         del layer.w2_weight_packed
         w13_weight_global_scale = 1.0 / layer.w13_weight_global_scale[:, 0].contiguous()
         w2_weight_global_scale = 1.0 / layer.w2_weight_global_scale
-        layer.w13_input_scale = torch.nn.Parameter(
-            w13_input_scale.to(torch.float32),
-            requires_grad=False,
-        )
+        layer.w13_input_scale = torch.nn.Parameter(self._collapse_uniform(w13_input_scale), requires_grad=False)
         layer.w2_input_scale = torch.nn.Parameter(
-            layer.w2_input_global_scale.to(torch.float32),
-            requires_grad=False,
+            self._collapse_uniform(layer.w2_input_global_scale), requires_grad=False
         )
 
         (
@@ -177,26 +183,30 @@ class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
                 topk_ids=topk_ids,
                 expert_map=expert_map,
             )
-            output.copy_(
-                nvfp4_qdq(
-                    output.contiguous(),
-                    self._routed_input_scales(topk_ids, expert_map, layer.w2_input_scale),
-                    self.group_size,
-                    trace_op_name="nvfp4_moe_activation",
-                )
+            nvfp4_qdq(
+                output,
+                self._routed_input_scales(topk_ids, expert_map, layer.w2_input_scale),
+                self.group_size,
+                inplace=True,
+                trace_op_name="nvfp4_moe_activation",
             )
 
-        topk = topk_ids.shape[1]
-        route_topk_ids = topk_ids.reshape(-1, 1).contiguous()
-        route_topk_weights = topk_weights.reshape(-1, 1).contiguous()
-        routed_scales = self._routed_input_scales(route_topk_ids, layer.expert_map, layer.w13_input_scale)
-        routed_x = x[:, None, :].expand(-1, topk, -1).reshape(-1, x.shape[-1]).contiguous()
-        quantized_x = nvfp4_qdq(
-            routed_x,
-            routed_scales,
-            self.group_size,
-            trace_op_name="nvfp4_moe_input",
-        )
+        num_tokens, topk = topk_ids.shape
+        if layer.w13_input_scale.ndim == 0:
+            moe_topk_ids, moe_topk_weights = topk_ids, topk_weights
+            quantized_x = nvfp4_qdq(x, layer.w13_input_scale, self.group_size, trace_op_name="nvfp4_moe_input")
+        else:
+            # Per-expert input scales: run each (token, expert) route as its own row; the kernel
+            # reads token rows directly instead of materializing a top_k-expanded copy.
+            moe_topk_ids = topk_ids.reshape(-1, 1).contiguous()
+            moe_topk_weights = topk_weights.reshape(-1, 1).contiguous()
+            quantized_x = nvfp4_qdq(
+                x,
+                self._routed_input_scales(moe_topk_ids, layer.expert_map, layer.w13_input_scale),
+                self.group_size,
+                topk=topk,
+                trace_op_name="nvfp4_moe_input",
+            )
         routed_output = fused_marlin_moe(
             hidden_states=quantized_x,
             w1=layer.w13_weight,
@@ -205,8 +215,8 @@ class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
             bias2=None,
             w1_scale=layer.w13_weight_scale,
             w2_scale=layer.w2_weight_scale,
-            topk_weights=route_topk_weights,
-            topk_ids=route_topk_ids,
+            topk_weights=moe_topk_weights,
+            topk_ids=moe_topk_ids,
             quant_type_id=scalar_types.float4_e2m1f.id,
             apply_router_weight_on_input=layer.apply_router_weight_on_input,
             global_num_experts=layer.global_num_experts,
@@ -217,5 +227,7 @@ class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
             global_scale2=layer.w2_weight_scale_2,
             workspace=getattr(layer, "workspace", None),
             activation_config=activation_config,
-        ).reshape(x.shape[0], topk, x.shape[-1]).sum(dim=1)
+        )
+        if moe_topk_ids is not topk_ids:
+            return routed_output.view(num_tokens, topk, -1).sum(dim=1)
         return routed_output

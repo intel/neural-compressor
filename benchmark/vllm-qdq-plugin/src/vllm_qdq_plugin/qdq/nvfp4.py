@@ -75,8 +75,31 @@ def nvfp4_qdq(
     input_global_scale: torch.Tensor,
     group_size: int = 16,
     *,
+    topk: int = 1,
+    inplace: bool = False,
     trace_op_name: str = "nvfp4_qdq",
 ) -> torch.Tensor:
-    """Apply standard NVFP4 activation QDQ without using hardware FP4 GEMM."""
+    """Apply standard NVFP4 activation QDQ without using hardware FP4 GEMM.
+
+    ``topk > 1`` repeats each input row ``topk`` times, so ``input_global_scale`` may hold one
+    value per repeated row; ``inplace`` writes the result back into ``x``.
+    """
+    from .cute import use_nvfp4_cute
+
+    if (
+        x.dim() == 2
+        and x.dtype in (torch.bfloat16, torch.float16)
+        and group_size == 16
+        and use_nvfp4_cute(x, group_size, "NVFP4")
+    ):
+        if input_global_scale.dtype != torch.float32 or input_global_scale.numel() not in (1, x.shape[0] * topk):
+            raise ValueError("nvfp4_qdq requires one float32 input_global_scale value or one per output row")
+        from .nvfp4_e5m3_cute import nvfp4_family_qdq_cute
+
+        trace_qdq(trace_op_name, x.shape, x.dtype, backend="CuTe", format_name="NVFP4")
+        return nvfp4_family_qdq_cute(x, group_size, "E4M3", input_global_scale, topk=topk, inplace=inplace)
+
     trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name="NVFP4")
-    return _nvfp4_qdq_reference(x, input_global_scale, group_size)
+    source = x if topk == 1 else x[:, None, :].expand(-1, topk, -1).reshape(-1, x.shape[-1])
+    result = _nvfp4_qdq_reference(source, input_global_scale, group_size)
+    return x.copy_(result) if inplace else result
