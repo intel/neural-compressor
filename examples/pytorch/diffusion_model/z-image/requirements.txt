@@ -1,0 +1,12 @@
+pandas
+tabulate
+torch
+torchvision
+transformers
+diffusers
+datasets
+Pillow
+# Generation backend (install the build matching your vLLM):
+#   pip install vllm-omni
+# ImageReward is deliberately not listed: it requires transformers<4.45 and is
+# installed into an isolated directory (see README).
