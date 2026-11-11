@@ -1,0 +1,323 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Z-Image-Turbo DrawBench evaluation (aqa-compatible) &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">Z-Image-Turbo DrawBench evaluation (aqa-compatible)</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/docs/source/examples/pytorch/diffusion_model/z-image/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="z-image-turbo-drawbench-evaluation-aqa-compatible">
+<h1>Z-Image-Turbo DrawBench evaluation (aqa-compatible)<a class="headerlink" href="#z-image-turbo-drawbench-evaluation-aqa-compatible" title="Link to this heading"></a></h1>
+<p>This example generates DrawBench images with <strong>vllm-omni</strong> and scores them with
+the same metric definitions used by <code class="docutils literal notranslate"><span class="pre">autoquant-agent</span></code> (aqa), so its numbers can
+be compared directly with aqa runs and the published model cards.</p>
+<section id="metrics-why-they-differ-from-flux-main-py">
+<h2>Metrics (why they differ from <code class="docutils literal notranslate"><span class="pre">flux/main.py</span></code>)<a class="headerlink" href="#metrics-why-they-differ-from-flux-main-py" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Metric</th>
+<th>This example / aqa</th>
+<th><code>flux/main.py</code></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLIP</td>
+<td><code>openai/clip-vit-base-patch32</code>, <code>logits_per_image</code> x100</td>
+<td><code>clip-vit-large-patch14</code>, x100</td>
+</tr>
+<tr>
+<td>CLIP-IQA</td>
+<td>3 antonym pairs averaged, softmax(pos, neg) x100</td>
+<td>torchmetrics default: single <code>quality</code> pair, 0..1</td>
+</tr>
+<tr>
+<td>ImageReward</td>
+<td>ImageReward-v1.0</td>
+<td>ImageReward-v1.0</td>
+</tr>
+</tbody>
+</table><p>Because of the backbone/prompt differences, the absolute values are not
+comparable across the two examples. With matched backbone + prompt set the two
+implementations agree within 0.4 points.</p>
+</section>
+<section id="prerequisites">
+<h2>Prerequisites<a class="headerlink" href="#prerequisites" title="Link to this heading"></a></h2>
+<ul>
+<li><p>A Python env with <code class="docutils literal notranslate"><span class="pre">torch</span></code>, <code class="docutils literal notranslate"><span class="pre">transformers</span></code>, <code class="docutils literal notranslate"><span class="pre">diffusers</span></code>, <code class="docutils literal notranslate"><span class="pre">datasets</span></code>, <code class="docutils literal notranslate"><span class="pre">pandas</span></code>,
+<code class="docutils literal notranslate"><span class="pre">tabulate</span></code>, <code class="docutils literal notranslate"><span class="pre">Pillow</span></code> and (for generation) a working <strong>vllm-omni</strong> install.</p></li>
+<li><p>ImageReward: <code class="docutils literal notranslate"><span class="pre">image-reward==1.5</span></code> is incompatible with transformers 5.x. Either
+run the scoring in an env with <code class="docutils literal notranslate"><span class="pre">transformers&lt;4.45</span></code>, or provision the isolated
+directory used by aqa:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>pip<span class="w"> </span>install<span class="w"> </span>--target<span class="w"> </span>~/.cache/aqa/envs/imagereward<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="s2">"transformers==4.44.2"</span><span class="w"> </span><span class="s2">"diffusers==0.29.2"</span><span class="w"> </span>image-reward<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span><span class="s2">"clip @ https://github.com/openai/CLIP/archive/refs/heads/main.zip"</span>
+<span class="c1"># remove torch/torchvision/nvidia* from that dir so the host torch is used</span>
+</pre></div>
+</div>
+<p><code class="docutils literal notranslate"><span class="pre">main.py</span></code> auto-detects this dir (<code class="docutils literal notranslate"><span class="pre">AQA_IMAGEREWARD_ENV</span></code> overrides it) and runs
+ImageReward in a subprocess.</p>
+</li>
+</ul>
+</section>
+<section id="tested-generation-environment">
+<h2>Tested generation environment<a class="headerlink" href="#tested-generation-environment" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Component</th>
+<th>Version</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>PyTorch</td>
+<td>2.13.0+cu130</td>
+</tr>
+<tr>
+<td>vLLM</td>
+<td>0.32.0</td>
+</tr>
+<tr>
+<td>vLLM-Omni</td>
+<td>0.32.0</td>
+</tr>
+<tr>
+<td>Transformers</td>
+<td>5.19.0</td>
+</tr>
+</tbody>
+</table><p>For vLLM-Omni 0.32.0, initialize <code class="docutils literal notranslate"><span class="pre">Omni(model=...)</span></code> without the removed
+<code class="docutils literal notranslate"><span class="pre">mode=&quot;text-to-image&quot;</span></code> argument. Keep ImageReward’s transformers-4 dependencies
+isolated as described above; do not downgrade the generation environment.</p>
+</section>
+<section id="prepare-drawbench-tsv">
+<h2>Prepare DrawBench TSV<a class="headerlink" href="#prepare-drawbench-tsv" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>prepare_drawbench.py<span class="w"> </span>--output<span class="w"> </span>drawbench.tsv
+</pre></div>
+</div>
+<p>The TSV has <code class="docutils literal notranslate"><span class="pre">id</span></code> (0..199) and <code class="docutils literal notranslate"><span class="pre">caption</span></code>; image <code class="docutils literal notranslate"><span class="pre">i</span></code> is generated with
+<code class="docutils literal notranslate"><span class="pre">seed</span> <span class="pre">+</span> <span class="pre">i</span></code> (seed defaults to 42), matching aqa’s diffusion harness.</p>
+</section>
+<section id="generate-score-vllm-omni-mxfp8-checkpoint">
+<h2>Generate + score (vllm-omni, MXFP8 checkpoint)<a class="headerlink" href="#generate-score-vllm-omni-mxfp8-checkpoint" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>main.py<span class="w"> </span>--inference<span class="w"> </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>/path/to/Z-Image-Turbo-MXFP8-RTN-AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--eval_dataset<span class="w"> </span>drawbench.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_image_path<span class="w"> </span>./drawbench_images
+</pre></div>
+</div>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">--backend</span> <span class="pre">vllm_omni</span></code> (default) reproduces aqa’s generation exactly:
+8 steps, guidance 0.0, 1024x1024, seed 42+i.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--backend</span> <span class="pre">diffusers</span></code> loads the checkpoint with <code class="docutils literal notranslate"><span class="pre">AutoPipelineForText2Image</span></code>
+(bf16 only; auto-round MXFP8 checkpoints need vllm-omni).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--inference</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">CUDA_LAUNCH_BLOCKING=1</span></code> before importing PyTorch,
+including in diffusion workers, to avoid corrupted consecutive MXFP8 outputs.
+An explicitly set environment value is preserved. Accuracy-only runs do not
+enable launch blocking.</p></li>
+</ul>
+</section>
+<section id="score-existing-images-only">
+<h2>Score existing images only<a class="headerlink" href="#score-existing-images-only" title="Link to this heading"></a></h2>
+<p>Images must be named <code class="docutils literal notranslate"><span class="pre">&lt;id&gt;.png</span></code> and match the TSV ids:</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>main.py<span class="w"> </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--eval_dataset<span class="w"> </span>drawbench.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_image_path<span class="w"> </span>./drawbench_images
+</pre></div>
+</div>
+</section>
+<section id="expected-results-published-mxfp8-checkpoint">
+<h2>Expected results (published MXFP8 checkpoint)<a class="headerlink" href="#expected-results-published-mxfp8-checkpoint" title="Link to this heading"></a></h2>
+<p>With <code class="docutils literal notranslate"><span class="pre">--clip_model</span> <span class="pre">openai/clip-vit-base-patch32</span></code> and the 3-pair CLIP-IQA:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="o">+-------------+---------+</span>
+<span class="o">|</span> <span class="n">CLIP</span>        <span class="o">|</span> <span class="mf">31.7738</span> <span class="o">|</span>
+<span class="o">|</span> <span class="n">CLIP</span><span class="o">-</span><span class="n">IQA</span>    <span class="o">|</span> <span class="mf">70.5770</span> <span class="o">|</span>
+<span class="o">|</span> <span class="n">ImageReward</span> <span class="o">|</span>  <span class="mf">0.9825</span> <span class="o">|</span>
+<span class="o">+-------------+---------+</span>
+</pre></div>
+</div>
+<p>These match aqa’s <code class="docutils literal notranslate"><span class="pre">drawbench_metrics</span></code> run on
+<code class="docutils literal notranslate"><span class="pre">INCModel3/Z-Image-Turbo-MXFP8-RTN-AutoRound</span></code> (31.774 / 70.577 / 0.9825).</p>
+</section>
+<section id="multi-gpu">
+<h2>Multi-GPU<a class="headerlink" href="#multi-gpu" title="Link to this heading"></a></h2>
+<p><code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code> follows the <code class="docutils literal notranslate"><span class="pre">flux</span></code> example: it splits the TSV per visible
+GPU, runs one process per GPU writing into the same image directory, then
+scores the full set.</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--topology<span class="o">=</span>zimage_mxfp8<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--input_model<span class="o">=</span>/path/to/Z-Image-Turbo-MXFP8-RTN-AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--dataset_location<span class="o">=</span>drawbench.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_image_path<span class="o">=</span>./drawbench_images
+</pre></div>
+</div>
+</section>
+<section id="reproduction-check-verified-2026-10-26">
+<h2>Reproduction check (verified 2026-10-26)<a class="headerlink" href="#reproduction-check-verified-2026-10-26" title="Link to this heading"></a></h2>
+<p>Command used (single B200, <code class="docutils literal notranslate"><span class="pre">.venv-omini-latest</span></code>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>python<span class="w"> </span>main.py<span class="w"> </span>--inference<span class="w"> </span>--accuracy<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--model<span class="w"> </span>/home/kaokaolv/models/Z-Image-Turbo-MXFP8-RTN-AutoRound<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--eval_dataset<span class="w"> </span>drawbench.tsv<span class="w"> </span><span class="se">\</span>
+<span class="w">    </span>--output_image_path<span class="w"> </span>./drawbench_images
+</pre></div>
+</div>
+<p>Result vs autoquant-agent (aqa) on the same published checkpoint:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Item</th>
+<th>aqa</th>
+<th>this example</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>CLIP</td>
+<td>31.7738</td>
+<td><strong>31.7738</strong></td>
+</tr>
+<tr>
+<td>CLIP-IQA</td>
+<td>70.5770</td>
+<td><strong>70.5770</strong></td>
+</tr>
+<tr>
+<td>ImageReward</td>
+<td>0.9825</td>
+<td><strong>0.9825</strong></td>
+</tr>
+<tr>
+<td>images</td>
+<td>200</td>
+<td>200 (all 200 pixel-identical to aqa)</td>
+</tr>
+</tbody>
+</table><p>Notes:</p>
+<ul class="simple">
+<li><p>The full 200-image run is bitwise identical to aqa’s generation in the same
+environment, and the metric code is the same, so the scores match exactly.</p></li>
+<li><p>vllm-omni is not guaranteed to be bitwise deterministic across environments or
+cold starts: two early short <code class="docutils literal notranslate"><span class="pre">--limit</span></code> runs with the same seed produced
+different pixels, while later runs (and the full run) matched. For strict
+comparison use the full TSV or score the same image directory.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--clip_model</span></code> defaults to <code class="docutils literal notranslate"><span class="pre">openai/clip-vit-base-patch32</span></code> and CLIP-IQA uses the
+3-pair average, which is what aqa/model cards report. Using the <code class="docutils literal notranslate"><span class="pre">flux/main.py</span></code>
+defaults (ViT-L/14, single <code class="docutils literal notranslate"><span class="pre">quality</span></code> prompt) gives different absolute values.</p></li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7576121438c0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
