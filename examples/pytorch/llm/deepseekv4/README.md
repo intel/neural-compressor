@@ -109,7 +109,8 @@ bash run_quant.sh \
   - `--port`: vLLM API port (default: `$SERVER_PORT` or `8001`).
   - `--max_model_len`, `--top_p`, `--max_tokens`, `--served_model_name`.
   - `--skip_serve=true`: skip starting vLLM and reuse an existing endpoint on `--port`.
-- lm_eval options: `--ruler_max_pos` (default: `131072`, e.g. `1048576` for 1M RULER), `--batch_size`, `--gpu_memory_utilization`.
+- `--gpu_memory_utilization`: vLLM GPU memory utilization, applied to both evalscope (default: vLLM default) and lm_eval (default: `0.95`).
+- lm_eval options: `--ruler_max_pos` (default: `131072`, e.g. `1048576` for 1M RULER), `--batch_size`.
 
 ## Notes
 

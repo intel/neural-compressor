@@ -142,7 +142,8 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 vllm serve ~/models/minimax-m2.7-mxfp \
 - `--static_kv_dtype`: vLLM `kv_cache_dtype`, e.g. `fp8` (default: `auto`).
 - `--static_attention_dtype`: set to `fp8` to enable FP8 attention (implies `kv_cache_dtype=fp8`).
 - `--skip_serve=true`: skip starting vLLM and reuse an existing endpoint on `--port` (evalscope tasks only).
-- lm_eval (RULER) options: `--ruler_max_pos` (default: `131072`), `--gpu_memory_utilization` (default: `0.90`).
+- `--gpu_memory_utilization`: vLLM GPU memory utilization, applied to both evalscope (default: vLLM default) and lm_eval (default: `0.95`).
+- lm_eval (RULER) options: `--ruler_max_pos` (default: `131072`).
 
 Outputs are written under `<model_name>-tp<N>-evalscope/` in the current directory: the vLLM log, the evaluation log, and per-run evalscope outputs in `outputs_<timestamp>/<task>/run<i>/`. RULER results are written under `<model_name>-tp<N>-eval/`.
 

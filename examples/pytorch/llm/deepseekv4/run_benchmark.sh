@@ -18,7 +18,7 @@
 # Tasks are split into two paths:
 #   - RULER (*ruler*, niah_*) and LongBench (*longbench*) tasks: benchmark/lm_eval/run_lm_eval.sh
 #   - all other tasks: benchmark/evalscope/run_evalscope.sh
-# --batch_size, --gpu_memory_utilization and --ruler_max_pos only go to lm_eval.
+# --batch_size and --ruler_max_pos only go to lm_eval.
 
 set -eo pipefail
 
@@ -34,10 +34,10 @@ for arg in "$@"; do
         --tasks=*)
             TASKS="${arg#*=}"
             ;;
-        --batch_size=*|--gpu_memory_utilization=*|--ruler_max_pos=*)
+        --batch_size=*|--ruler_max_pos=*)
             LM_EVAL_ARGS+=("$arg")
             ;;
-        --model_path=*|--static_kv_dtype=*|--static_attention_dtype=*)
+        --model_path=*|--gpu_memory_utilization=*|--static_kv_dtype=*|--static_attention_dtype=*)
             [[ "$arg" == --model_path=* ]] && MODEL_NAME=$(basename "${arg#*=}")
             LM_EVAL_ARGS+=("$arg")
             EVALSCOPE_ARGS+=("$arg")

@@ -18,7 +18,7 @@
 # Tasks are split into two paths:
 #   - RULER (*ruler*, niah_*) tasks: benchmark/lm_eval/run_lm_eval.sh
 #   - all other tasks: benchmark/evalscope/run_evalscope.sh
-# --gpu_memory_utilization and --ruler_max_pos only go to lm_eval.
+# --ruler_max_pos only goes to lm_eval.
 
 set -eo pipefail
 
@@ -50,10 +50,10 @@ for arg in "$@"; do
         --tasks=*)
             TASKS="${arg#*=}"
             ;;
-        --gpu_memory_utilization=*|--ruler_max_pos=*)
+        --ruler_max_pos=*)
             LM_EVAL_ARGS+=("$arg")
             ;;
-        --model_path=*|--static_kv_dtype=*|--static_attention_dtype=*)
+        --model_path=*|--gpu_memory_utilization=*|--static_kv_dtype=*|--static_attention_dtype=*)
             LM_EVAL_ARGS+=("$arg")
             EVALSCOPE_ARGS+=("$arg")
             ;;
