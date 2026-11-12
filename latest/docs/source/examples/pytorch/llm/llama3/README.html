@@ -264,7 +264,8 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 <h4>MXFP Benchmark Script<a class="headerlink" href="#mxfp-benchmark-script" title="Link to this heading"></a></h4>
 <p>For convenience, we provide a benchmark script that automatically handles GPU detection and tensor parallelism configuration:</p>
 <p><strong>All 5 MXFP benchmark cases:</strong></p>
-<p>The default task list is <code class="docutils literal notranslate"><span class="pre">piqa,hellaswag,mmlu</span></code>; pass <code class="docutils literal notranslate"><span class="pre">--tasks</span></code> to use the Llama task variants.</p>
+<p>The default task list is <code class="docutils literal notranslate"><span class="pre">hellaswag,piqa,mmlu,gsm8k</span></code>; pass <code class="docutils literal notranslate"><span class="pre">--tasks</span></code> to use the Llama task variants.
+<code class="docutils literal notranslate"><span class="pre">aime26</span></code>, <code class="docutils literal notranslate"><span class="pre">gpqa_diamond</span></code> and <code class="docutils literal notranslate"><span class="pre">math_500</span></code> run with <code class="docutils literal notranslate"><span class="pre">benchmark/evalscope/run_evalscope.sh</span></code>; all other tasks run with <code class="docutils literal notranslate"><span class="pre">benchmark/lm_eval/run_lm_eval.sh</span></code>. All options other than <code class="docutils literal notranslate"><span class="pre">--tasks</span></code> are passed to both drivers.</p>
 <ol class="simple">
 <li><p><strong>Llama 3.1 8B MXFP8</strong> (1 GPU):</p></li>
 </ol>
@@ -298,7 +299,8 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
 <p>The script automatically:</p>
 <ul class="simple">
 <li><p>Detects available GPUs from <code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code> and sets <code class="docutils literal notranslate"><span class="pre">tensor_parallel_size</span></code> accordingly</p></li>
-<li><p>Runs default tasks: <code class="docutils literal notranslate"><span class="pre">piqa,hellaswag,mmlu_llama,gsm8k_llama</span></code> with batch size 64</p></li>
+<li><p>Runs default tasks: <code class="docutils literal notranslate"><span class="pre">hellaswag,piqa,mmlu,gsm8k</span></code></p></li>
+<li><p>Routes <code class="docutils literal notranslate"><span class="pre">aime26</span></code>, <code class="docutils literal notranslate"><span class="pre">gpqa_diamond</span></code> and <code class="docutils literal notranslate"><span class="pre">math_500</span></code> to evalscope (served by <code class="docutils literal notranslate"><span class="pre">vllm</span> <span class="pre">serve</span></code>), e.g. <code class="docutils literal notranslate"><span class="pre">--tasks=piqa,gsm8k_llama,gpqa_diamond</span></code></p></li>
 <li><p>Supports custom task selection and batch size adjustment</p></li>
 <li><p>Handles special tasks like <code class="docutils literal notranslate"><span class="pre">mmlu_llama</span></code>, <code class="docutils literal notranslate"><span class="pre">gsm8k_llama</span></code> (with chat template) and <code class="docutils literal notranslate"><span class="pre">longbench</span></code> (with extended context length) automatically</p></li>
 <li><p>For longbench dataset evaluation, use the <code class="docutils literal notranslate"><span class="pre">--tasks=longbench</span></code> parameter</p></li>
@@ -350,7 +352,7 @@ pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </s
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7576121875b0> 
+   <jinja2.runtime.BlockReference object at 0x7c49b27ba740> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

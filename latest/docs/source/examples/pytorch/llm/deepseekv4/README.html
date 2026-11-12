@@ -127,30 +127,33 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se"
 </pre></div>
 </div>
 <p>Then run serving + evaluation in one command:</p>
-<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1<span class="w"> </span>bash<span class="w"> </span>run_evalscope.sh<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--model<span class="w"> </span>/workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP4-Mixed<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--tp<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--port<span class="w"> </span><span class="m">8009</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--tasks<span class="w"> </span>piqa,hellaswag,gsm8k,mmlu_pro,math_500,mmlu,aime26,gpqa_diamond,ruler_qa_squad
-<span class="w">  </span>--temp<span class="w"> </span><span class="m">1</span>.0
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_path<span class="o">=</span>/workspace/models/deepseek-ai/DeepSeek-V4-Flash-MXFP4-Mixed<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tasks<span class="o">=</span>piqa,hellaswag,gsm8k,mmlu_pro,math_500,mmlu,aime26,gpqa_diamond,ruler_qa_squad<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--temperature<span class="o">=</span><span class="m">1</span>.0
 </pre></div>
 </div>
-<p>Equivalent vLLM defaults inside <code class="docutils literal notranslate"><span class="pre">run_evalscope.sh</span></code>:</p>
+<p><code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code> routes each task to a shared driver; each driver starts and stops its own vLLM server:</p>
+<ul class="simple">
+<li><p>RULER (<code class="docutils literal notranslate"><span class="pre">*ruler*</span></code>, <code class="docutils literal notranslate"><span class="pre">niah_*</span></code>) and LongBench (<code class="docutils literal notranslate"><span class="pre">*longbench*</span></code>) tasks run with <code class="docutils literal notranslate"><span class="pre">benchmark/lm_eval/run_lm_eval.sh</span></code>.</p></li>
+<li><p>All other tasks run with <code class="docutils literal notranslate"><span class="pre">benchmark/evalscope/run_evalscope.sh</span></code>. Use <code class="docutils literal notranslate"><span class="pre">--num_runs</span></code> to repeat tasks.</p></li>
+</ul>
+<p>Equivalent vLLM defaults used by <code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SAFETENSORS_FAST_GPU</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1<span class="w"> </span>vllm<span class="w"> </span>serve<span class="w"> </span>&lt;model&gt;<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tensor-parallel-size<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--trust-remote-code<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--kv-cache-dtype<span class="w"> </span>fp8<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--block-size<span class="w"> </span><span class="m">256</span><span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--tensor-parallel-size<span class="w"> </span><span class="m">2</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--attention_config.use_fp4_indexer_cache<span class="o">=</span>True<span class="w"> </span><span class="se">\</span>
-<span class="w">  </span>--port<span class="w"> </span><span class="m">8009</span><span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--no-enable-flashinfer-autotune
 </pre></div>
 </div>
 <p>If model basename is exactly <code class="docutils literal notranslate"><span class="pre">DeepSeek-V4-Flash</span></code> or <code class="docutils literal notranslate"><span class="pre">DeepSeek-V4-Pro</span></code> (without extra suffix),
-<code class="docutils literal notranslate"><span class="pre">run_evalscope.sh</span></code> will also add (automatically):</p>
+<code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code> will also add (automatically):</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>--enable-expert-parallel<span class="w"> </span>--moe-backend<span class="w"> </span>deep_gemm_mega_moe
 </pre></div>
 </div>
+<p>For <code class="docutils literal notranslate"><span class="pre">DeepSeek-V4-Pro</span></code> models, the evalscope server also uses <code class="docutils literal notranslate"><span class="pre">--max-model-len</span> <span class="pre">1048576</span></code>.</p>
 <p>Mixed preset example:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span>bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se">\</span>
 <span class="w">  </span>--dtype<span class="o">=</span>mxfp4_mixed<span class="w"> </span><span class="se">\</span>
@@ -175,15 +178,23 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se"
 <li><p><code class="docutils literal notranslate"><span class="pre">--export_format</span></code>: <code class="docutils literal notranslate"><span class="pre">auto_round</span></code> or <code class="docutils literal notranslate"><span class="pre">llm_compressor</span></code> (default: <code class="docutils literal notranslate"><span class="pre">llm_compressor</span></code>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--ignore_layers</span></code>: comma-separated layer patterns (default: <code class="docutils literal notranslate"><span class="pre">compressor,indexer.weights_proj</span></code>).</p></li>
 </ul>
-<p><code class="docutils literal notranslate"><span class="pre">run_evalscope.sh</span></code> arguments:</p>
+<p><code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code> arguments (tensor parallel size is inferred from <code class="docutils literal notranslate"><span class="pre">CUDA_VISIBLE_DEVICES</span></code>):</p>
 <ul class="simple">
-<li><p><code class="docutils literal notranslate"><span class="pre">--model</span></code>: model path for vLLM and evalscope.</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--port</span></code>: vLLM API port (default: <code class="docutils literal notranslate"><span class="pre">8009</span></code>).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--temp</span></code>: generation temperature used by evalscope (default: <code class="docutils literal notranslate"><span class="pre">0</span></code>).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--skip_serve</span></code>: skip starting vLLM (use existing endpoint on the same <code class="docutils literal notranslate"><span class="pre">--port</span></code>).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--tp</span></code>: tensor parallel size for vLLM (default: <code class="docutils literal notranslate"><span class="pre">2</span></code>).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--kv-cache-dtype</span></code>: kv cache dtype for vLLM (default: <code class="docutils literal notranslate"><span class="pre">fp8</span></code>).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--block-size</span></code>: vLLM block size (default: <code class="docutils literal notranslate"><span class="pre">256</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--model_path</span></code>: model path for vLLM (required).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--tasks</span></code>: comma-separated tasks (default: <code class="docutils literal notranslate"><span class="pre">aime26,gpqa_diamond,piqa,hellaswag,gsm8k,mmlu_pro,math_500,mmlu</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--static_kv_dtype</span></code> / <code class="docutils literal notranslate"><span class="pre">--static_attention_dtype</span></code>: static FP8 KV cache / attention, passed to both drivers (default: <code class="docutils literal notranslate"><span class="pre">auto</span></code>).</p></li>
+<li><p>evalscope options:</p>
+<ul>
+<li><p><code class="docutils literal notranslate"><span class="pre">--temperature</span></code>: generation temperature (default: <code class="docutils literal notranslate"><span class="pre">0</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--num_runs</span></code>: times each task is evaluated; with 3 or more runs max/min are dropped before averaging (default: <code class="docutils literal notranslate"><span class="pre">1</span></code>); <code class="docutils literal notranslate"><span class="pre">hellaswag</span></code>, <code class="docutils literal notranslate"><span class="pre">piqa</span></code>, <code class="docutils literal notranslate"><span class="pre">mmlu</span></code> and <code class="docutils literal notranslate"><span class="pre">gsm8k</span></code> always run once.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--eval_batch_size</span></code>: evalscope concurrent requests (default: <code class="docutils literal notranslate"><span class="pre">256</span></code>, <code class="docutils literal notranslate"><span class="pre">10</span></code> for DeepSeek-V4-Pro).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--port</span></code>: vLLM API port (default: <code class="docutils literal notranslate"><span class="pre">$SERVER_PORT</span></code> or <code class="docutils literal notranslate"><span class="pre">8001</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--max_model_len</span></code>, <code class="docutils literal notranslate"><span class="pre">--top_p</span></code>, <code class="docutils literal notranslate"><span class="pre">--max_tokens</span></code>, <code class="docutils literal notranslate"><span class="pre">--served_model_name</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--skip_serve=true</span></code>: skip starting vLLM and reuse an existing endpoint on <code class="docutils literal notranslate"><span class="pre">--port</span></code>.</p></li>
+</ul>
+</li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--gpu_memory_utilization</span></code>: vLLM GPU memory utilization, applied to both evalscope (default: vLLM default) and lm_eval (default: <code class="docutils literal notranslate"><span class="pre">0.95</span></code>).</p></li>
+<li><p>lm_eval options: <code class="docutils literal notranslate"><span class="pre">--ruler_max_pos</span></code> (default: <code class="docutils literal notranslate"><span class="pre">131072</span></code>, e.g. <code class="docutils literal notranslate"><span class="pre">1048576</span></code> for 1M RULER), <code class="docutils literal notranslate"><span class="pre">--batch_size</span></code>.</p></li>
 </ul>
 </section>
 <section id="notes">
@@ -215,7 +226,7 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se"
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x757612166cf0> 
+   <jinja2.runtime.BlockReference object at 0x7c49b278dcc0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
