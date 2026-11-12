@@ -17,8 +17,11 @@
 from typing import Callable, Optional, OrderedDict, Union
 
 import keras
+from keras_hub.models import Gemma3CausalLM
 
+from neural_compressor.common import logger
 from neural_compressor.common.utils import STATIC_QUANT
+from neural_compressor.jax.algorithms.smooth_quant import apply_smooth_quant
 from neural_compressor.jax.quantization.config import JaxBaseConfig
 from neural_compressor.jax.quantization.layers_static import static_quant_mapping
 from neural_compressor.jax.utils import register_algo
@@ -54,6 +57,24 @@ def static_quantize(
     layer_configs = {op_path: cfg for (op_path, _op_type), cfg in configs_mapping.items() if cfg.name == STATIC_QUANT}
 
     qmodel = model
+
+    # SmoothQuant runs first, on the unquantized model: it calibrates per-channel activation ranges and folds the
+    # smoothing factors into the weights, so the static calibration below sees the smoothed activations. Each group of
+    # projections sharing an input uses the settings of its layers' configs. Only Gemma3 is supported: other models
+    # get a warning, without searching the model or an extra calibration pass.
+    if any(getattr(cfg, "smooth_quant", False) for cfg in layer_configs.values()):
+        if isinstance(qmodel, Gemma3CausalLM):
+
+            def layer_settings(layer):
+                cfg = layer_configs.get(layer.path if layer.path else layer.name)
+                return None if cfg is None else (bool(cfg.smooth_quant), cfg.smooth_quant_alpha)
+
+            apply_smooth_quant(qmodel, calib_function, layer_settings=layer_settings)
+        else:
+            logger.warning(
+                "SmoothQuant is supported for Gemma3CausalLM models only, not %s; it is skipped.",
+                type(qmodel).__name__,
+            )
 
     for layer in qmodel._flatten_layers():
         layer_id = layer.path if layer.path else layer.name
