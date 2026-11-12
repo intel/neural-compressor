@@ -14,12 +14,13 @@
 """Intel Neural Compressor Pytorch quantization base API."""
 
 import copy
+import warnings
 from typing import Any, Callable, Dict, Tuple
 
 import torch
 
 from neural_compressor.common.base_config import BaseConfig, ComposableConfig, config_registry
-from neural_compressor.common.utils import Mode, call_counter, log_process
+from neural_compressor.common.utils import FAKE_QUANT, Mode, call_counter, log_process
 from neural_compressor.torch.quantization.config import (
     AutoRoundConfig,
     FP8Config,
@@ -167,7 +168,16 @@ def quantize(
                 example_inputs=example_inputs,
                 mode=Mode.QUANTIZE,
             )
-    setattr(q_model, "is_quantized", True)
+    # Fake-quant keeps float parameters, so it is not a deployment-quantized
+    # model; marking it `is_quantized` would make HF Trainer refuse to train it.
+    is_fake_quant = any(getattr(config, "name", None) == FAKE_QUANT for config in configs_mapping.values())
+    if is_fake_quant:
+        setattr(q_model, "is_fake_quant", True)
+        setattr(q_model, "is_prepared", True)
+        setattr(q_model, "quant_config", quant_config)
+        setattr(q_model, "example_inputs", example_inputs)
+    else:
+        setattr(q_model, "is_quantized", True)
     return q_model
 
 
@@ -214,35 +224,82 @@ def prepare(
     return prepared_model
 
 
-@log_process(mode=Mode.PREPARE)
+_LEGACY_QAT_FORMATS = {
+    "MXFP8": "mxfp8",
+    "MXFP4": "mxfp4",
+    "MXFP8_E4M3": "mxfp8",
+}
+
+
+def _legacy_qat_config(mapping):
+    """Translate the legacy ``{nn.ModuleType: scheme}`` mapping into a config."""
+    from neural_compressor.torch.quantization.fake_quant import FakeQuantConfig, QuantRule
+
+    schemes = set()
+    for module_type, scheme in mapping.items():
+        if module_type is not torch.nn.Linear:
+            raise NotImplementedError(
+                f"legacy prepare_qat only supported nn.Linear, got {module_type!r}; " "pass a FakeQuantConfig instead"
+            )
+        schemes.add(scheme)
+    if len(schemes) != 1:
+        raise ValueError(f"legacy prepare_qat needs one scheme for all modules, got {sorted(schemes)}")
+    scheme = schemes.pop()
+    if scheme not in _LEGACY_QAT_FORMATS:
+        raise ValueError(
+            f"unsupported legacy QAT scheme {scheme!r}; known: {sorted(_LEGACY_QAT_FORMATS)}. "
+            "Pass a FakeQuantConfig for the new API."
+        )
+    fmt = _LEGACY_QAT_FORMATS[scheme]
+    return FakeQuantConfig(rules=[QuantRule(module=r".*", weight=fmt, input=fmt)])
+
+
 def prepare_qat(
     model: torch.nn.Module,
+    quant_config=None,
     mapping=None,
     inplace: bool = True,
 ):
-    r"""Prepares a copy of the model for quantization calibration or
-    quantization-aware training and converts it to quantized version.
+    """Prepare a model for quantization-aware training.
 
-    Quantization configuration should be assigned preemptively
-    to individual submodules in `.qconfig` attribute.
+    The new API takes a :class:`FakeQuantConfig` and is equivalent to
+    ``prepare(model, quant_config)``: quantizers are inserted, static ones wait
+    for :func:`calibrate` or a calibration ``run_fn``. The model may be in eval
+    mode (calibration and QAT do not require training mode).
+
+    The legacy ``mapping={nn.Linear: "MXFP8"}`` form is accepted for one
+    release and translated to a config with a deprecation warning.
 
     Args:
-        model: input model to be modified in-place
-        quant_config: quantization config that maps float modules to quantized modules to be
-                 replaced.
-        inplace: carry out model transformations in-place, the original module
-                 is mutated
+        model: Model to modify (in place when ``inplace=True``).
+        quant_config: :class:`FakeQuantConfig` describing the quantizers.
+        mapping: Legacy ``{module_type: scheme}`` mapping.
+        inplace: Mutate the input model instead of a copy.
     """
-    assert model.training, "prepare_qat only works on models in training mode"
+    from neural_compressor.torch.quantization.fake_quant import FakeQuantConfig
 
-    from .config import get_default_qat_module_mappings
-
-    if mapping is None:
-        mapping = get_default_qat_module_mappings()
-
-    from ..algorithms.qat.quant_utils import convert_model_with_mapping
-
-    return convert_model_with_mapping(model, mapping)
+    if mapping is None and isinstance(quant_config, dict) and any(isinstance(key, type) for key in quant_config):
+        mapping, quant_config = quant_config, None
+    if quant_config is None and mapping is None:
+        warnings.warn(
+            "prepare_qat() without a config keeps the legacy MXFP8 default for one release; "
+            "pass a FakeQuantConfig instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        mapping = {torch.nn.Linear: "MXFP8"}
+    if mapping is not None:
+        warnings.warn(
+            "prepare_qat(mapping=...) is deprecated; pass a FakeQuantConfig instead",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        if quant_config is not None:
+            raise ValueError("pass either quant_config or mapping, not both")
+        quant_config = _legacy_qat_config(mapping)
+    if not isinstance(quant_config, FakeQuantConfig):
+        raise TypeError(f"prepare_qat expects a FakeQuantConfig, got {type(quant_config)!r}")
+    return prepare(model, quant_config, inplace=inplace)
 
 
 @log_process(mode=Mode.CONVERT)
@@ -317,7 +374,11 @@ def convert(
                 **kwargs,
             )
     if hasattr(q_model, "__dict__"):
-        setattr(q_model, "is_quantized", True)
+        is_fake_quant = any(getattr(config, "name", None) == FAKE_QUANT for config in configs_mapping.values())
+        if is_fake_quant:
+            setattr(q_model, "is_fake_quant", True)
+        else:
+            setattr(q_model, "is_quantized", True)
     return q_model
 
 
