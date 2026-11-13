@@ -130,11 +130,8 @@ def pack_array_with_numba_b8_c16(
 ) -> np.ndarray:
     """Pack the array with numba when bits=8 and compress_bits=16."""
     for i in range(new_in_features):
-        packed_array[:, i] = (
-            ((raw_array[:, i * n_pack + 3] & 0b11111111) << 24)
-            | ((raw_array[:, i * n_pack + 2] & 0b11111111) << 16)
-            | ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8)
-            | (raw_array[:, i * n_pack] & 0b11111111)
+        packed_array[:, i] = ((raw_array[:, i * n_pack + 1] & 0b11111111) << 8) | (
+            raw_array[:, i * n_pack] & 0b11111111
         )
     return packed_array
 
