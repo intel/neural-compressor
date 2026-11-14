@@ -763,11 +763,10 @@ class ComposableConfig(BaseConfig):
             AssertionError: If the config_dict does not include at least one configuration.
         """
         assert len(config_dict) >= 1, "The config dict must include at least one configuration."
-        num_configs = len(config_dict)
-        name, value = next(iter(config_dict.items()))
+        config_items = iter(config_dict.items())
+        name, value = next(config_items)
         config = config_registry[name].from_dict(value)
-        for _ in range(num_configs - 1):
-            name, value = next(iter(config_dict.items()))
+        for name, value in config_items:
             config += config_registry[name].from_dict(value)
         return config
 
