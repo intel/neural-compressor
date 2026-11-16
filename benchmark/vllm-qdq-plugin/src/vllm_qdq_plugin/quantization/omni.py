@@ -3,11 +3,8 @@
 
 from functools import wraps
 
-
 _E5M3_DTYPES = frozenset({"nvfp4_v2", "nvfp4_v2_gs"})
-_E5M3_FORMATS = frozenset(
-    {"auto_round:llm_compressor_nvfp4_e5m3", "auto_round:llm_compressor_nvfp4_e5m3_gs"}
-)
+_E5M3_FORMATS = frozenset({"auto_round:llm_compressor_nvfp4_e5m3", "auto_round:llm_compressor_nvfp4_e5m3_gs"})
 
 
 def register() -> None:

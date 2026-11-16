@@ -30,10 +30,17 @@ class OmniINCIntegrationTests(unittest.TestCase):
             ("nvfp4_v2", "auto_round:llm_compressor_nvfp4_e5m3"),
             ("nvfp4_v2_gs", "auto_round:llm_compressor_nvfp4_e5m3_gs"),
         ):
-            config = OmniINCConfig.from_config(dict(
-                bits=4, group_size=16, sym=True, data_type=dtype, packing_format=packing,
-                block_name_to_quantize="blocks", extra_config={"proj_out": {"bits": 16, "act_bits": 16}},
-            ))
+            config = OmniINCConfig.from_config(
+                dict(
+                    bits=4,
+                    group_size=16,
+                    sym=True,
+                    data_type=dtype,
+                    packing_format=packing,
+                    block_name_to_quantize="blocks",
+                    extra_config={"proj_out": {"bits": 16, "act_bits": 16}},
+                )
+            )
             config.apply_prefix_map({"blocks": "transformer.blocks", "proj_out": "transformer.proj_out"})
             method = config.get_quant_method(layer, "transformer.blocks.0.attn1.to_q")
             self.assertIsInstance(method, INCLinearMethod)
@@ -45,9 +52,15 @@ class OmniINCIntegrationTests(unittest.TestCase):
             CompressedTensorsLinearMethod,
         )
 
-        config = OmniINCConfig.from_config(dict(
-            bits=4, group_size=16, sym=True, data_type="nv_fp", packing_format="auto_round:llm_compressor",
-        ))
+        config = OmniINCConfig.from_config(
+            dict(
+                bits=4,
+                group_size=16,
+                sym=True,
+                data_type="nv_fp",
+                packing_format="auto_round:llm_compressor",
+            )
+        )
         self.assertIsInstance(config.get_quant_method(layer, "blocks.0.to_q"), CompressedTensorsLinearMethod)
 
 

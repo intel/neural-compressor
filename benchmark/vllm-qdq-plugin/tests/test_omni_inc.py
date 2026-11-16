@@ -1,12 +1,11 @@
 """CPU-only compatibility regressions; no torch/vLLM/Omni installation needed."""
 
 import importlib.util
-from pathlib import Path
 import sys
-from types import ModuleType
 import unittest
+from pathlib import Path
+from types import ModuleType
 from unittest import mock
-
 
 PLUGIN = Path(__file__).resolve().parents[1]
 
@@ -97,6 +96,7 @@ class OmniINCTests(unittest.TestCase):
     def test_absent_omni_is_optional_but_broken_dependencies_are_not_hidden(self):
         original_import = __import__
         for missing in ("vllm_omni", "some_omni_dependency"):
+
             def guarded(name, *args, **kwargs):
                 if name == "vllm_omni.quantization.inc_config":
                     raise ModuleNotFoundError(name=missing)
