@@ -47,6 +47,43 @@ VLLM_QDQ=1 VLLM_QDQ_CUTE=1 CUDA_VISIBLE_DEVICES=<idle-gpu> \
 
 ## QDQ Plugin
 
+### Optional vLLM-Omni E5M3 compatibility
+
+The separate `vllm_omni.general_plugins` entry point `inc_nvfp4_e5m3` adds
+`nvfp4_v2` / `nvfp4_v2_gs` and their AutoRound packing formats to
+`OmniINCConfig`, and routes only those datatypes to the existing INC E5M3
+implementation. Ordinary NVFP4, MXFP, and integer dispatch stay on Omni's
+original method. No vLLM-Omni source edits or external compatibility adapter
+are needed. The existing **vLLM** entry points are unchanged and do not import
+Omni. Omni is not a required dependency of this package.
+
+Reinstall the plugin after updating so the new entry point is discoverable:
+
+```bash
+pip install -e benchmark/vllm-qdq-plugin/
+```
+
+If `VLLM_PLUGINS` is an allowlist, include `inc_nvfp4_e5m3` alongside the
+other plugins you need. The Omni entry point works with `VLLM_QDQ=0`:
+E5M3 activation QDQ is intrinsic to its existing scheme, not the global
+ordinary-NVFP4 QDQ override. Native ordinary-NVFP4 kernel selection is not
+changed. For source-only/manual initialization, call
+`vllm_qdq_plugin.quantization.omni.register()` before constructing any Omni
+quantization config in every model-loading process.
+
+The backend remains FP4 Marlin weights plus E5M3 activation QDQ, not native
+ordinary-NVFP4 W4A4 GEMM. This adaptation does not change model quantization
+scope or repair packed weights for layers that Omni builds as ordinary
+`torch.nn.Linear` (for example an unsupported quantized `proj_out`).
+
+CPU-only isolation tests and opt-in real dependency configuration tests:
+
+```bash
+python -m unittest discover -s benchmark/vllm-qdq-plugin/tests -p 'test_omni_inc.py' -v
+VLLM_QDQ=0 VLLM_QDQ_TEST_OMNI=1 python -m unittest discover \
+  -s benchmark/vllm-qdq-plugin/tests -p 'test_omni_inc_integration.py' -v
+```
+
 ### What It Does
 
 The plugin registers as a `vllm.general_plugins` entry point. vLLM loads it in all processes, including workers. It monkey-patches low-level wrappers in `vllm._custom_ops` to inject activation QDQ before the quantized GEMM call.
