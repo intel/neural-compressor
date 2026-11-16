@@ -100,13 +100,14 @@ def compute_expected_qdq_dense_output(
 
         # Compute scales
         input_samples = current_input if dynamic else current_calib
+        input_max = np.asarray(np.max(input_samples), dtype=model_dtype).astype(input_samples.dtype)
+        input_min = np.asarray(np.min(input_samples), dtype=model_dtype).astype(input_samples.dtype)
+
         if np.issubdtype(activation_dtype, np.integer):
-            input_max = np.max(input_samples)
-            input_min = np.min(input_samples)
             a_scale = np.array((input_max - input_min) / (a_dtype_max - a_dtype_min), dtype=model_dtype)
             a_zero_point = np.round(a_dtype_min - input_min / a_scale)
         else:
-            a_scale = np.array(np.max(np.abs(input_samples)) / a_dtype_max, dtype=model_dtype)
+            a_scale = np.array(np.maximum(np.abs(input_min), np.abs(input_max)) / a_dtype_max, dtype=model_dtype)
             a_zero_point = None
 
         if granularity == "per_channel":
@@ -124,11 +125,12 @@ def compute_expected_qdq_dense_output(
         else:
             q_weights = np.clip(layer_weights / w_scale, w_dtype_min, w_dtype_max).astype(weight_dtype)
 
+        scaled_input = (current_input / a_scale).astype(model_dtype)
         if np.issubdtype(activation_dtype, np.integer):
-            val = np.round(current_input / a_scale) + a_zero_point
+            val = np.round(scaled_input) + a_zero_point
             q_input = np.clip(val, a_dtype_min, a_dtype_max).astype(activation_dtype)
         else:
-            q_input = np.clip(current_input / a_scale, a_dtype_min, a_dtype_max).astype(activation_dtype)
+            q_input = np.clip(scaled_input, a_dtype_min, a_dtype_max).astype(activation_dtype)
 
         # Propagate calib through unquantized layer to get next layer's calib input
         current_calib = _matmul(current_calib, layer_weights)
