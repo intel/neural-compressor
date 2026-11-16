@@ -17,6 +17,10 @@ Expected layout: <root>/<task>/run<i>/reports/**/<dataset>.json
 
 With 3 or more runs, one highest and one lowest score are dropped and the
 remaining ("kept") scores are averaged; otherwise all scores are averaged.
+
+With --breakdown, the per-subset scores of the primary metric (e.g. the 2/4/8
+needle subsets of openai_mrcr) and the scores of the other report metrics (e.g.
+the openai_mrcr token-length bins) are also printed, averaged over all runs.
 """
 
 import argparse
@@ -29,8 +33,8 @@ import sys
 TRIM_MIN_RUNS = 3
 
 
-def load_score(run_dir):
-    """Return (metric_name, score in percent) from the evalscope report of one run."""
+def load_report(run_dir):
+    """Return (report, primary metric) from the evalscope report of one run."""
     report_files = sorted(glob.glob(os.path.join(run_dir, "reports", "**", "*.json"), recursive=True))
     for path in report_files:
         with open(path, encoding="utf-8") as f:
@@ -42,11 +46,39 @@ def load_score(run_dir):
         primary = report.get("primary_metric_identity")
         if primary is not None:
             metric = next((m for m in metrics if m.get("identity") == primary), metric)
-        name = metric.get("legacy_name") or metric.get("name")
-        if not name and isinstance(metric.get("identity"), dict):
-            name = metric["identity"].get("name")
-        return name or "score", float(metric["score"]) * 100
+        return report, metric
     raise FileNotFoundError(f"No evalscope report with metrics found under {run_dir}/reports")
+
+
+def metric_label(metric, with_dimensions=False):
+    name = metric.get("legacy_name") or metric.get("name")
+    identity = metric.get("identity")
+    if not name and isinstance(identity, dict):
+        name = identity.get("name")
+        dimensions = identity.get("dimensions")
+        if with_dimensions and isinstance(dimensions, dict) and dimensions:
+            name = f"{name}[{','.join(f'{k}={v}' for k, v in sorted(dimensions.items()))}]"
+    return name or "score"
+
+
+def load_score(run_dir):
+    """Return (metric_name, score in percent) from the evalscope report of one run."""
+    _, metric = load_report(run_dir)
+    return metric_label(metric), float(metric["score"]) * 100
+
+
+def load_breakdown(run_dir):
+    """Return [(label, score in percent, num)] for primary-metric subsets and the other metrics of one run."""
+    report, primary = load_report(run_dir)
+    rows = []
+    for category in primary.get("categories") or []:
+        for subset in category.get("subsets") or []:
+            if not subset.get("is_aggregate"):
+                rows.append((f"subset {subset.get('name')}", float(subset["score"]) * 100, subset.get("num")))
+    for metric in report["metrics"]:
+        if metric is not primary:
+            rows.append((metric_label(metric, with_dimensions=True), float(metric["score"]) * 100, metric.get("num")))
+    return rows
 
 
 def run_index(run_dir):
@@ -54,13 +86,17 @@ def run_index(run_dir):
     return int(match.group(1)) if match else 0
 
 
-def collect_task(root, task):
+def task_run_dirs(root, task):
     run_dirs = sorted(glob.glob(os.path.join(root, task, "run*")), key=run_index)
     if not run_dirs:
         raise FileNotFoundError(f"No runs found for task '{task}' under {root}")
+    return run_dirs
+
+
+def collect_task(root, task):
     metric_name = None
     scores = []
-    for run_dir in run_dirs:
+    for run_dir in task_run_dirs(root, task):
         metric_name, score = load_score(run_dir)
         scores.append(score)
     return metric_name, scores
@@ -84,7 +120,7 @@ def fmt(value):
     return f"{value:.2f}"
 
 
-def render_table(headers, rows):
+def render_table(headers, rows, footer=True):
     widths = [max(len(str(cell)) for cell in column) for column in zip(headers, *rows)]
     sep = "+" + "+".join("-" * (w + 2) for w in widths) + "+"
 
@@ -92,6 +128,10 @@ def render_table(headers, rows):
         return "| " + " | ".join(str(c).ljust(w) for c, w in zip(cells, widths)) + " |"
 
     out = [sep, line(headers), sep]
+    if not footer:
+        out += [line(row) for row in rows]
+        out.append(sep)
+        return "\n".join(out)
     out += [line(row) for row in rows[:-1]]
     if rows:
         if len(rows) > 1:
@@ -108,6 +148,23 @@ def task_table(root, task):
     rows.append([f"mean of kept ({len(kept)}/{len(scores)})", fmt(mean([scores[i] for i in kept])), ""])
     title = f"Result: {task} ({metric_name}, %)"
     return title + "\n" + render_table(["Run", "Score", "Status"], rows)
+
+
+def breakdown_table(root, task):
+    run_dirs = task_run_dirs(root, task)
+    scores = {}
+    nums = {}
+    for run_dir in run_dirs:
+        for label, score, num in load_breakdown(run_dir):
+            scores.setdefault(label, []).append(score)
+            nums.setdefault(label, num)
+    if not scores:
+        return f"Breakdown: {task}\n(no subset or secondary metric scores in the report)"
+    rows = [
+        [label, "" if nums[label] is None else str(nums[label]), fmt(mean(values))] for label, values in scores.items()
+    ]
+    title = f"Breakdown: {task} (%, mean of {len(run_dirs)} run(s))"
+    return title + "\n" + render_table(["Subset / Metric", "Num", "Score"], rows, footer=False)
 
 
 def summary_table(root, tasks):
@@ -141,6 +198,9 @@ def main():
     parser.add_argument("--root", required=True, help="Directory containing <task>/run<i> evalscope outputs.")
     parser.add_argument("--tasks", required=True, help="Comma-separated task names.")
     parser.add_argument("--summary", action="store_true", help="Print the overall summary table for all tasks.")
+    parser.add_argument(
+        "--breakdown", action="store_true", help="Also print per-subset and secondary metric scores of each task."
+    )
     args = parser.parse_args()
 
     tasks = [t.strip() for t in args.tasks.split(",") if t.strip()]
@@ -148,8 +208,13 @@ def main():
         if args.summary:
             print(summary_table(args.root, tasks))
         else:
-            print("\n\n".join(task_table(args.root, task) for task in tasks))
-    except (OSError, ValueError, KeyError) as e:
+            tables = []
+            for task in tasks:
+                tables.append(task_table(args.root, task))
+                if args.breakdown:
+                    tables.append(breakdown_table(args.root, task))
+            print("\n\n".join(tables))
+    except (OSError, ValueError, KeyError, TypeError) as e:
         print(f"[eval_summary] ERROR: {e}", file=sys.stderr)
         sys.exit(1)
 

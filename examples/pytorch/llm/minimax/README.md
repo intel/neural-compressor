@@ -71,7 +71,7 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_benchmark.sh \
   --tasks=gpqa_diamond,aime25,gsm8k,piqa,hellaswag,live_code_bench
 ```
 
-By default each task is repeated 5 times and the trimmed mean is reported (drop max/min, average the remaining 3); `hellaswag`, `piqa`, `mmlu` and `gsm8k` always run once. Use `--num_runs=1` for a single pass:
+By default each task is repeated 5 times and the trimmed mean is reported (drop max/min, average the remaining 3); `hellaswag`, `piqa`, `mmlu`, `gsm8k` and `openai_mrcr` always run once. Use `--num_runs=1` for a single pass:
 
 ```bash
 CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_benchmark.sh \
@@ -95,6 +95,16 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_benchmark.sh \
   --model_path=~/models/minimax-m2.7-mxfp \
   --tasks=ruler
 ```
+
+Long-context MRCR on the fixed 300-sample `openai_mrcr` subset (see [benchmark/README.md](../../../../benchmark/README.md#openai-mrcr-openai_mrcr)):
+
+```bash
+CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_benchmark.sh \
+  --model_path=~/models/minimax-m2.7-mxfp \
+  --tasks=openai_mrcr
+```
+
+MiniMax always thinks, so `openai_mrcr` keeps the thinking generation config, runs once with `max_tokens=65536` and serves with `--max-model-len 196608` (override with `MRCR_GENERATION_CONFIG` / `MRCR_MAX_MODEL_LEN`).
 
 Equivalent vLLM command used by `run_benchmark.sh` for evalscope tasks:
 
@@ -131,7 +141,7 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 vllm serve ~/models/minimax-m2.7-mxfp \
 
 - `--model_path`: quantized model path for vLLM and evalscope (required).
 - `--tasks`: comma-separated tasks (default: `gpqa_diamond,aime25,gsm8k,piqa`). RULER tasks (`*ruler*`, `niah_*`) run with lm_eval, the others with evalscope.
-- `--num_runs`: number of times each task is evaluated (default: `5`). `hellaswag`, `piqa`, `mmlu` and `gsm8k` always run once (override the list with the `SINGLE_RUN_TASKS` environment variable). With 3 or more runs, the highest and lowest scores are dropped and the remaining (kept) scores are averaged; otherwise all scores are averaged. After each task a result table (every run, kept/dropped, mean of kept) is printed, and at the end a summary table lists every run of each task (dropped scores are marked with `(D)`) and the mean of kept scores, plus the average over all tasks.
+- `--num_runs`: number of times each task is evaluated (default: `5`). `hellaswag`, `piqa`, `mmlu`, `gsm8k` and `openai_mrcr` always run once (override the list with the `SINGLE_RUN_TASKS` environment variable). With 3 or more runs, the highest and lowest scores are dropped and the remaining (kept) scores are averaged; otherwise all scores are averaged. After each task a result table (every run, kept/dropped, mean of kept) is printed, and at the end a summary table lists every run of each task (dropped scores are marked with `(D)`) and the mean of kept scores, plus the average over all tasks.
 - `--temperature`: generation temperature (default: `1.0`).
 - `--top_p`: generation top_p (default: `0.95`).
 - `--max_tokens`: max generated tokens (default: `64000`).
