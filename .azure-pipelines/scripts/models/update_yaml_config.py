@@ -100,7 +100,6 @@ def update_yaml_config_tuning(
     strategy_token=None,
     sampling_size=None,
     dtype=None,
-    tf_new_api=None,
 ):
     with open(yaml_file) as f:
         yaml_config = yaml.round_trip_load(f, preserve_quotes=True)
@@ -213,15 +212,6 @@ def update_yaml_config_tuning(
             prev_dtype = quantization.get("dtype", None)
             quantization.update({"dtype": dtype})
             print(f"Changed dtype from {prev_dtype} to {dtype}")
-        except Exception as e:
-            print(f"[ WARNING ] {e}")
-
-    if tf_new_api == "true":
-        try:
-            model = yaml_config.get("model", {})
-            prev_framework = model.get("framework", None)
-            model.update({"framework": "inteltensorflow"})
-            print(f"Changed framework from {prev_framework} to inteltensorflow")
         except Exception as e:
             print(f"[ WARNING ] {e}")
 

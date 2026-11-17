@@ -2250,7 +2250,7 @@ class TorchSmoothQuant:  # pragma: no cover
                 logger.debug(f"self_absorb_layers:{self_absorb_layers}")
         if self.allow_absorb:
             self.absorb_to_layer, no_absorb_layers = self._trace(str_op_types)
-            if self.absorb_to_layer is None and no_absorb_layers is None:
+            if self.absorb_to_layer is None or no_absorb_layers is None:
                 return None
 
         # remove self.self_absorb_layers if it exists in self.absorb_to_layer
@@ -2259,14 +2259,6 @@ class TorchSmoothQuant:  # pragma: no cover
                 if i in self_absorb_layers:
                     self_absorb_layers.pop(i)
         self.absorb_to_layer.update(self_absorb_layers)
-
-        if self.absorb_to_layer is None and no_absorb_layers is None:
-            logger.warning(
-                "sorry, could not trace the model, smooth quant is ignored."
-                "If you are using huggingface model,"
-                "you could set torchscript to True "
-            )
-            return None
 
         # Check if input_maxes match self.absorb_to_layer
         # (due to self._get_all_layer_names use layer tree instead of forward_path)
@@ -2536,7 +2528,7 @@ class TorchSmoothQuant:  # pragma: no cover
         )
         if not skip_unsupported_layers:
             return absorb_to_layer
-        if absorb_to_layer is None and no_absorb_layers is None:
+        if absorb_to_layer is None or no_absorb_layers is None:
             logger.warning(
                 "sorry, could not trace the model, smooth quant is skipped."
                 "If you are using huggingface model,"

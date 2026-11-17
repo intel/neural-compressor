@@ -43,7 +43,7 @@ except Exception as error:
     assert False, "Error: Could not open '%s' due %s\n" % (filepath, error)
 
 PKG_INSTALL_CFG = {
-    # pip install neural-compressor, install the whole package with all APIs, including PyTorch, TensorFlow and JAX APIs.
+    # pip install neural-compressor, install the whole package with all APIs, including PyTorch and JAX APIs.
     "neural_compressor": {
         "project_name": "neural_compressor",
         "include_packages": find_packages(
@@ -52,7 +52,6 @@ PKG_INSTALL_CFG = {
         "package_data": {"": ["*.json", "*.yaml"]},
         "extras_require": {
             "pt": fetch_requirements("requirements_pt.txt"),
-            "tf": fetch_requirements("requirements_tf.txt"),
             "jax": fetch_requirements("requirements_jax.txt"),
         },
     },
@@ -73,20 +72,6 @@ PKG_INSTALL_CFG = {
         ),
         "package_data": {"": ["*.json"]},
         "install_requires": fetch_requirements("requirements_pt.txt"),
-    },
-    # pip install neural-compressor-tf, install TensorFlow API.
-    "neural_compressor_tf": {
-        "project_name": "neural_compressor_tf",
-        "include_packages": find_packages(
-            include=[
-                "neural_compressor.common",
-                "neural_compressor.common.*",
-                "neural_compressor.tensorflow",
-                "neural_compressor.tensorflow.*",
-            ],
-        ),
-        "package_data": {"": ["*.yaml"]},
-        "install_requires": fetch_requirements("requirements_tf.txt"),
     },
     # 3.x JAX binary build config, pip install neural-compressor-jax, install 3.x JAX API.
     "neural_compressor_jax": {
@@ -112,9 +97,6 @@ if __name__ == "__main__":
     if os.environ.get("INC_PT_ONLY", False):
         cfg_key = "neural_compressor_pt"
         only_set.append("INC_PT_ONLY")
-    if os.environ.get("INC_TF_ONLY", False):
-        cfg_key = "neural_compressor_tf"
-        only_set.append("INC_TF_ONLY")
     if os.environ.get("INC_JAX_ONLY", False):
         cfg_key = "neural_compressor_jax"
         only_set.append("INC_JAX_ONLY")
@@ -125,9 +107,6 @@ if __name__ == "__main__":
     if "pt" in sys.argv:
         sys.argv.remove("pt")
         cfg_key = "neural_compressor_pt"
-    if "tf" in sys.argv:
-        sys.argv.remove("tf")
-        cfg_key = "neural_compressor_tf"
     if "jax" in sys.argv:
         sys.argv.remove("jax")
         cfg_key = "neural_compressor_jax"

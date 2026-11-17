@@ -50,10 +50,6 @@ PRIORITY_TEQ = 60
 PRIORITY_AUTOROUND = 50
 
 
-PT2E_STATIC_QUANT = "pt2e_static_quant"
-PT2E_DYNAMIC_QUANT = "pt2e_dynamic_quant"
-
-
 # load format name
 from enum import Enum
 

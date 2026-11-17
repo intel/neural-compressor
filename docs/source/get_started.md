@@ -21,7 +21,7 @@ quantized_model = convert(model=prepared_model)
 ```
 
 ## Feature Matrix
-Intel Neural Compressor extends PyTorch, TensorFlow and JAX's APIs to support compression techniques.
+Intel Neural Compressor extends PyTorch and JAX's APIs to support compression techniques.
 The below table provides a quick overview of the APIs available in Intel Neural Compressor 3.X.
 The project mainly focuses on quantization-related features, especially for algorithms that benefit LLM accuracy and inference.
 It also provides some common modules across different frameworks. For example, Auto-tune support accuracy driven quantization and mixed precision, benchmark aimed to measure the multiple instances performance of the quantized model.
@@ -57,18 +57,6 @@ It also provides some common modules across different frameworks. For example, A
         <td colspan="3" align="center"><a href="PT_MXQuant.md">MX Quantization</a></td>
         <td colspan="2" align="center"><a href="PT_MixedPrecision.md">Mixed Precision</a></td>
     </tr>
-  </tbody>
-  <thead>
-      <tr>
-        <th colspan="8">Tensorflow Extension APIs</th>
-      </tr>
-  </thead>
-  <tbody>
-      <tr>
-          <td colspan="3" align="center"><a href="TensorFlow.md">Overview</a></td>
-          <td colspan="3" align="center"><a href="TF_Quant.md">Static Quantization</a></td>
-          <td colspan="2" align="center"><a href="TF_SQ.md">Smooth Quantization</a></td>
-      </tr>
   </tbody>
   <thead>
       <tr>
