@@ -283,6 +283,22 @@ bash run_swe_verified.sh \
   --tag qwen36_27b_mini
 ```
 
+To repeat the full evaluation N times and aggregate per-run results:
+
+```bash
+bash run_swe_verified.sh \
+  --dataset verified-mini \
+  --port 8888 \
+  --step-limit 250 \
+  --runs 7 \
+  --tag qwen36_27b_mini_7r
+```
+
+`--runs` defaults to 1 (a single run). Each child run uses its own tag and result directory;
+the suite aggregates accuracy, resolved counts, mean and standard deviation in
+`summary.json` and `summary.md`. Pass `--runs 1` to disable repeats. Retry
+options cannot be combined with `--runs > 1`.
+
 Generation loads the original Hugging Face dataset
 `MariusHobbhahn/swe-bench-verified-mini`, which is mirrored by EvalScope as
 `evalscope/swe-bench-verified-mini`. Evaluation uses the canonical Verified
@@ -354,6 +370,7 @@ retry categories are empty.
 | `--health-interval N` | `30` | Seconds between vLLM health checks |
 | `--health-failures N` | `3` | Consecutive failed health checks before stopping the run |
 | `--tag TAG` | UTC timestamp | Output and log label |
+| `--runs N` | `1` | Repeat the full benchmark N times and write a suite summary |
 | `--retry-errors` | disabled | Re-evaluate valid error patches and regenerate invalid error submissions |
 | `--retry-empty-patches` | disabled | Regenerate and evaluate previously empty patches |
 | `--retry-attempts N` | `1` | Enable error and empty-patch retries for up to N rounds; stop early when accuracy no longer improves or both categories are empty |
@@ -373,6 +390,12 @@ Outputs:
 For Verified Mini, the same layout uses the `swe_verified_mini_<TAG>` prefix
 for the result directory and log file.
 
+With `--runs N` (`N > 1`), the suite lives in
+`mini-swe-agent/results/swe_verified[_mini]_<TAG>_suite/` and contains
+`state.json`, `summary.json`, `summary.md`, and the aggregated report. The
+individual run directories remain siblings (`..._<TAG>_run01`, `..._run02`, ...)
+so each run can be inspected or resumed independently.
+
 
 ## SWE-bench Pro
 
@@ -384,9 +407,10 @@ bash setup_swebenchpro.sh
 
 The setup script clones the pinned `scaleapi/SWE-bench_Pro-os` repository and
 its mini-SWE-agent submodule, applies support for the benchmark's Docker Hub
-images and reliable container cleanup, and installs the generation and local
-Docker evaluation dependencies into the currently activated environment using
-uv. Create and activate the environment before running the setup script.
+images and reliable container cleanup, applies the evaluation proxy/test-patch
+patch, and installs the generation and local Docker evaluation dependencies
+into the currently activated environment using uv. Create and activate the
+environment before running the setup script.
 
 ### Run SWE-bench Pro
 
@@ -395,6 +419,34 @@ bash run_swebenchpro.sh \
   --port 8888 \
   --step-limit 250 \
   --tag qwen36_27b_pro
+```
+
+To run the full evaluation 7 times and aggregate the results:
+
+```bash
+bash run_swebenchpro.sh \
+  --port 8888 \
+  --step-limit 250 \
+  --runs 7 \
+  --keep-images \
+  --tag qwen36_27b_pro_7r
+```
+
+`--runs` defaults to 1 (a single run). Use `--keep-images` for repeated runs so each round
+reuses the pulled Docker images. The suite writes per-run results under a
+dedicated `runs/` directory and aggregates accuracy, resolved counts, mean and
+standard deviation.
+
+To evaluate a different Pro dataset (for example a sampled subset), pass
+`--dataset-repo` and optionally `--dataset-split`:
+
+```bash
+bash run_swebenchpro.sh \
+  --dataset-repo lvkaokao/swe-bench-pro-120 \
+  --dataset-split test \
+  --port 8888 \
+  --runs 7 \
+  --tag pro120_7r
 ```
 
 The runner connects to an existing shared vLLM server and leaves it running
@@ -419,7 +471,7 @@ to run the selection from scratch.
 | `--host HOST` | `127.0.0.1` | vLLM host |
 | `--port PORT` | `8888` | vLLM port |
 | `--served-name NAME` | discovered | Model ID exposed by vLLM |
-| `--num-tasks N` | all 731 | Run the first N instances |
+| `--num-tasks N` | all instances in the dataset | Run the first N instances |
 | `--slice START:END` | all | Run an explicit slice; cannot be combined with `--num-tasks` |
 | `--workers N` | `8` | Parallel mini-SWE-agent workers |
 | `--eval-workers N` | `4` | Parallel local evaluator workers |
@@ -431,6 +483,9 @@ to run the selection from scratch.
 | `--health-interval N` | `30` | Seconds between vLLM health checks |
 | `--health-failures N` | `3` | Consecutive failed health checks before stopping the run |
 | `--tag TAG` | UTC timestamp | Output and log label |
+| `--runs N` | `1` | Repeat the full benchmark N times and write a suite summary |
+| `--dataset-repo REPO` | `ScaleAI/SWE-bench_Pro` | Hugging Face dataset to evaluate |
+| `--dataset-split SPLIT` | `test` | Dataset split |
 | `--skip-eval` | disabled | Generate patches without local evaluation |
 | `--block-network` | disabled | Disable network access in evaluation containers |
 | `--keep-images` | disabled | Keep benchmark Docker images after each evaluation chunk |
@@ -443,6 +498,11 @@ under `eval_chunks/`, while the top-level files contain the merged results. The
 top-level report includes evaluated, resolved, and unresolved counts, accuracy,
 resolved/unresolved ID lists, and the per-instance result mapping. The combined
 run log is written to `logs/swebench_pro_<TAG>.log`.
+
+Set `SWEBENCH_PRO_RESULTS_ROOT` to move the result root. With `--runs N`
+(`N > 1`), the suite is written to
+`${SWEBENCH_PRO_RESULTS_ROOT:-SWE-bench_Pro-os/mini-swe-agent/results}/swebench_pro_<TAG>_suite/`
+with `state.json`, `summary.json`, `summary.md`, and child runs under `runs/`.
 
 
 ## MCP-Atlas
