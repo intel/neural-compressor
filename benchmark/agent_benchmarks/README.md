@@ -201,11 +201,16 @@ for the result directory and log file.
 bash setup_swebenchpro.sh
 ```
 
+SWE-bench Pro uses the V2 release (642 tasks).
 The setup script clones the pinned `scaleapi/SWE-bench_Pro-os` repository and
-its mini-SWE-agent submodule, applies support for the benchmark's Docker Hub
-images and reliable container cleanup, and installs the generation and local
-Docker evaluation dependencies into the currently activated environment using
-uv. Create and activate the environment before running the setup script.
+its mini-SWE-agent submodule, verifies the published SHA256 manifest, applies
+support for the benchmark's GHCR images and reliable container cleanup, and
+installs the generation dependencies into the currently activated environment
+using uv, including pinned Harbor 0.24.0. Create and activate a Python 3.12+
+environment before running setup. Local evaluation uses Harbor's Docker backend
+and requires Docker Compose v2; no Modal account or cloud service is needed.
+
+Tasks use sanitized `ghcr.io/scaleapi/swe-bench_pro-v2:<instance_id>` images.
 
 ### Run SWE-bench Pro
 
@@ -224,21 +229,63 @@ inference. Each chunk receives a matching instance CSV and normalized patch
 file, and its Docker images are removed after evaluation. The final chunk may
 contain fewer instances than `--eval-chunk-size`. An independent watchdog
 stops the run if the vLLM health endpoint repeatedly fails. The aggregate
-report is refreshed after every completed evaluation chunk. Host proxy variables
-(`HTTP_PROXY`, `HTTPS_PROXY`, `ALL_PROXY`, `NO_PROXY`, and lowercase variants)
-are forwarded to generation containers so repository cloning and dependency
-installation can use the same network path as the host.
+report is refreshed after every completed evaluation chunk.
 
-Resume an interrupted run by reusing the same `--tag` and selection. Existing
-generation results and already-claimed evaluations are skipped. Use a new tag
-to run the selection from scratch.
+Selection defaults to Hugging Face `ScaleAI/SWE-bench_Pro` (642 instances).
+Use `--dataset lvkaokao/swe-bench-pro-120` for the 120-instance subset:
+
+```bash
+bash run_swebenchpro.sh \
+  --dataset lvkaokao/swe-bench-pro-120 \
+  --tag qwen36_27b_pro120
+```
+
+Both datasets use config `default`, test split, and the same V2 task images
+and verifier. Generation uses mini-SWE-agent's native Hugging Face loader and
+`--slice`, preserving dataset order; no local JSON dataset loader is used.
+The Pro dataset path selects V2 image names from instance IDs without changing
+other benchmarks' image mapping or explicit `image_name` overrides. The matching
+CSV and image list are retained for evaluation and chunk cleanup, and
+`v2_selection.txt` and `v2_dataset.txt` guard against changing the slice or
+dataset when resuming a run. Existing tags without dataset metadata are treated
+as `ScaleAI/SWE-bench_Pro`.
+Generation starts in the sanitized image's `/app` or
+`/testbed` repository without cloning or resetting history. Agent containers
+are offline; model requests run on the host. Per chunk, predictions are adapted
+to source-job trials and replayed in fresh local Docker containers by the pinned
+official `patch_replay:PatchReplayAgent`, including its patch-application retries,
+then scored by the unchanged V2 verifier. Harbor rewards map to the existing
+report format; missing rewards and trial exceptions are infrastructure errors.
+Host proxy variables are forwarded only to the verifier. `--block-network`
+overrides the verifier network in private task copies, leaving the checksummed
+upstream tree unchanged. Setup and pulls require network. `--pull-timeout` maps
+to Harbor's environment-build timeout multiplier (unsupported task timeout
+layouts fail explicitly). Harbor tears down chunk containers without removing
+images; the runner retains its original `--keep-images`/image-removal policy.
+
+Scoring uses the official V2 verifier; generation retains this project's
+mini-SWE-agent configuration and budgets, including `--step-limit` and
+`--command-timeout`. Generation does not impose the official locked protocol's
+50-minute whole-task deadline or container resource limits; replay uses the
+official task's Harbor limits. When reporting
+results, name the selected dataset: a score on `lvkaokao/swe-bench-pro-120` is
+not a full 642-instance `ScaleAI/SWE-bench_Pro` score. Record the model, agent
+configuration, budgets, HF dataset revision, and selected slice.
+Generation and CSV preparation load HF independently; the
+dataset is not snapshotted, and the pinned verifier checkout is versioned
+independently.
+
+Resume an interrupted run by reusing the same `--tag`, dataset, and selection.
+Existing generation results and already-claimed evaluations are skipped. Use a
+new tag to run the selection from scratch.
 
 | Option | Default | Description |
 | --- | --- | --- |
+| `--dataset HF_ID` | `ScaleAI/SWE-bench_Pro` | `ScaleAI/SWE-bench_Pro` (642 instances) or `lvkaokao/swe-bench-pro-120` (120 instances) |
 | `--host HOST` | `127.0.0.1` | vLLM host |
 | `--port PORT` | `8888` | vLLM port |
 | `--served-name NAME` | discovered | Model ID exposed by vLLM |
-| `--num-tasks N` | all 731 | Run the first N instances |
+| `--num-tasks N` | all in selected dataset | Run the first N instances |
 | `--slice START:END` | all | Run an explicit slice; cannot be combined with `--num-tasks` |
 | `--workers N` | `8` | Parallel mini-SWE-agent workers |
 | `--eval-workers N` | `4` | Parallel local evaluator workers |
@@ -260,8 +307,12 @@ Outputs are grouped under
 artifacts, and `report.json`. Per-chunk artifacts are retained
 under `eval_chunks/`, while the top-level files contain the merged results. The
 top-level report includes evaluated, resolved, and unresolved counts, accuracy,
-resolved/unresolved ID lists, and the per-instance result mapping. The combined
-run log is written to `logs/swebench_pro_<TAG>.log`.
+resolved/unresolved/error ID lists, and the per-instance result mapping. The combined
+run log is written to `logs/swebench_pro_<TAG>.log`. Infrastructure errors remain
+in the denominator and stop the run with the chunk unclaimed for retry.
+Runtime configs contain API credentials; keep artifacts private and redact secrets.
+
+Official protocol: <https://github.com/scaleapi/SWE-bench_Pro-os/blob/66f92766bba642462d4bbe5479e83f91f9211862/v2/README.md>.
 
 
 ## MCP-Atlas
