@@ -129,7 +129,7 @@ model = load(
         <td colspan="8" align="center"><a href="./docs/source/PyTorch.md">概述</a></td>
     </tr>
     <tr>
-        <td colspan="3" align="center"><a href="./docs/source/PT_DynamicQuant.md">动态量化</a></td>
+        <td colspan="3" align="center"><a href="./docs/source/quantization.md#dynamic-quantization">动态量化</a></td>
         <td colspan="3" align="center"><a href="./docs/source/PT_StaticQuant.md">静态量化</a></td>
         <td colspan="2" align="center"><a href="./docs/source/PT_SmoothQuant.md">平滑量化 (SmoothQuant)</a></td>
     </tr>
