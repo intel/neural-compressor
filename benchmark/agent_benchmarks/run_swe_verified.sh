@@ -367,6 +367,7 @@ run_suite() {
 	local failed_runs=0 final_status
 
 	SUITE_STATE_FILE="${suite_dir}/state.json"
+	wait_for_vllm "${VLLM_WAIT_TIMEOUT:-300}"
 	SERVED_MODEL_NAME="$(discover_vllm_model "${SERVED_MODEL_NAME}")"
 
 	for arg in "${ORIGINAL_ARGS[@]}"; do

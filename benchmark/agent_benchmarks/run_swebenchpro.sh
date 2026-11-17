@@ -273,7 +273,11 @@ init_vllm_endpoint
 trap cleanup EXIT
 trap termination_requested INT TERM
 RUN_TAG="$(sanitize_run_tag "${RUN_TAG}")"
-RESULTS_ROOT="${SWEBENCH_PRO_RESULTS_ROOT:-${AGENT_DIR}/results}"
+readonly PYTHON_BIN="$(command -v python)"
+abspath() {
+	"${PYTHON_BIN}" -c 'import os, sys; print(os.path.abspath(sys.argv[1]))' "$1"
+}
+RESULTS_ROOT="$(abspath "${SWEBENCH_PRO_RESULTS_ROOT:-${AGENT_DIR}/results}")"
 readonly RESULTS_ROOT
 
 dataset_label() {
@@ -285,7 +289,6 @@ dataset_label() {
 }
 readonly DATASET_LABEL="$(dataset_label)"
 
-readonly PYTHON_BIN="$(command -v python)"
 environment_label() {
 	if [[ "${PYTHON_BIN}" == */bin/python* ]]; then
 		basename "$(dirname "$(dirname "${PYTHON_BIN}")")"
@@ -321,6 +324,7 @@ run_suite() {
 	local failed_runs=0 final_status
 
 	SUITE_STATE_FILE="${suite_dir}/state.json"
+	wait_for_vllm "${VLLM_WAIT_TIMEOUT:-300}"
 	SERVED_MODEL_NAME="$(discover_vllm_model "${SERVED_MODEL_NAME}")"
 
 	for arg in "${ORIGINAL_ARGS[@]}"; do

@@ -152,6 +152,7 @@ done
 
 [[ -x "${EVALPLUS}" ]] || die "evalplus.evaluate not found or not executable: ${EVALPLUS}"
 [[ -x "${PYTHON}" ]] || die "Python not found or not executable: ${PYTHON}"
+command -v setsid >/dev/null 2>&1 || die "setsid is required for process-group cleanup"
 require_positive_integer "--port" "${PORT}"
 require_positive_integer "--runs" "${RUNS}"
 require_positive_integer "--expected" "${EXPECTED}"
@@ -252,9 +253,13 @@ INTERRUPTED=false
 
 cleanup() {
 	local exit_code=$?
-	if [[ -n "${EVAL_PID}" ]] && kill -0 "${EVAL_PID}" 2>/dev/null; then
-		pkill -TERM -P "${EVAL_PID}" 2>/dev/null || true
-		kill -TERM "${EVAL_PID}" 2>/dev/null || true
+	if [[ -n "${EVAL_PID}" ]] && kill -0 -- "-${EVAL_PID}" 2>/dev/null; then
+		kill -TERM -- "-${EVAL_PID}" 2>/dev/null || true
+		for _ in 1 2 3 4 5; do
+			kill -0 -- "-${EVAL_PID}" 2>/dev/null || break
+			sleep 1
+		done
+		kill -KILL -- "-${EVAL_PID}" 2>/dev/null || true
 		wait "${EVAL_PID}" 2>/dev/null || true
 	fi
 	if [[ "${FINALIZED}" == false && -f "${STATE}" ]]; then
@@ -269,7 +274,7 @@ cleanup() {
 termination_requested() {
 	INTERRUPTED=true
 	warn "HumanEval+ run was interrupted"
-	exit 1
+	exit 130
 }
 
 trap cleanup EXIT
@@ -292,7 +297,7 @@ fi
 
 log "Running HumanEval+ with model ${SERVED_NAME} (samples=${RUNS}, temperature=${TEMPERATURE})"
 log "EvalPlus log: ${LOG}"
-"${EVALPLUS}" "${eval_args[@]}" >"${LOG}" 2>&1 &
+setsid "${EVALPLUS}" "${eval_args[@]}" >"${LOG}" 2>&1 &
 EVAL_PID=$!
 
 while kill -0 "${EVAL_PID}" 2>/dev/null; do

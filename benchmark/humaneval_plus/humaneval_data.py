@@ -142,8 +142,10 @@ def summarize(
             }
         )
 
-    accuracy_values = [run["accuracy"] for run in runs if run["accuracy"] is not None]
-    base_values = [run["base_accuracy"] for run in runs if run["base_accuracy"] is not None]
+    completed_runs = [run for run in runs if run["status"] == "completed"]
+    accuracy_values = [run["accuracy"] for run in completed_runs if run["accuracy"] is not None]
+    base_values = [run["base_accuracy"] for run in completed_runs if run["base_accuracy"] is not None]
+    recorded_values = [run["accuracy"] for run in runs if run["accuracy"] is not None]
     total_evaluated = sum(run["evaluated"] for run in runs)
     total_passed = sum(run["passed"] for run in runs)
     total_base_passed = sum(run["base_passed"] for run in runs)
@@ -170,7 +172,7 @@ def summarize(
         pass_at_7 = statistics.mean([pass_at_k(item["evaluated"], item["passed"], 7) for item in instances])
 
     status = "failed"
-    if accuracy_values:
+    if recorded_values:
         status = "completed" if all(run["status"] == "completed" for run in runs) else "partial"
 
     summary = {
@@ -183,7 +185,7 @@ def summarize(
         "started_at": state.get("started_at"),
         "finished_at": utc_now(),
         "runs_total": sample_runs,
-        "runs_recorded": len(accuracy_values),
+        "runs_recorded": len(recorded_values),
         "metrics": {
             "accuracy": metrics(accuracy_values),
             "base_accuracy": metrics(base_values),

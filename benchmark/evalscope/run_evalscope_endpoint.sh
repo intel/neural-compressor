@@ -171,8 +171,20 @@ entry = next((item for item in data if item.get("id") == model), data[0] if data
 def find(value):
     if isinstance(value, dict):
         for key, item in value.items():
-            if "reasoning_effort" in key.lower() and isinstance(item, str) and item.strip():
+            key_lower = key.lower()
+            if key_lower in (
+                "reasoning_effort",
+                "default_reasoning_effort",
+                "reasoning.effort",
+            ) and isinstance(item, str) and item.strip():
                 return item.strip()
+            if key_lower == "reasoning":
+                if isinstance(item, str) and item.strip():
+                    return item.strip()
+                if isinstance(item, dict):
+                    effort = item.get("effort")
+                    if isinstance(effort, str) and effort.strip():
+                        return effort.strip()
             found = find(item)
             if found:
                 return found
