@@ -4,6 +4,8 @@ set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly ORIGINAL_ARGS=("$@")
+printf -v RUNNER_COMMAND '%q ' bash "${SCRIPT_DIR}/run_swe_verified.sh" "${ORIGINAL_ARGS[@]}"
+readonly RUNNER_COMMAND="${RUNNER_COMMAND% }"
 # shellcheck source=lib/common.sh
 source "${SCRIPT_DIR}/lib/common.sh"
 
@@ -38,6 +40,8 @@ Options:
 	--health-interval N  Seconds between vLLM health checks (default: 30)
 	--health-failures N  Consecutive failed health checks before stopping (default: 3)
 	--tag TAG            Run tag (default: UTC timestamp)
+	--runs N             Repeat the whole benchmark N times sequentially, then report
+	                     mean/std with per-run details (default: 7; 1 disables repeats)
 	--retry-errors       Retry error cases; reuse valid patches and regenerate invalid submissions
 	--retry-empty-patches
 	                     Regenerate and evaluate cases previously reported with empty patches
@@ -79,17 +83,43 @@ readonly RUNNER_PID=$$
 GEN_PID=""
 EVAL_PID=""
 MONITOR_PID=""
+SUITE_CHILD_PID=""
+STATE_FILE=""
+REPORT_FILE=""
+SUITE_STATE_FILE=""
+INTERRUPTED=false
+
+finish_state_file() {
+	local state_file="$1" status="$2" exit_code="$3" report="${4:-}"
+	[[ -n "${state_file}" && -f "${state_file}" ]] || return 0
+	local report_args=()
+	[[ -z "${report}" ]] || report_args=(--report "${report}")
+	python "${SCRIPT_DIR}/lib/run_state.py" finish --state "${state_file}" \
+		--status "${status}" --exit-code "${exit_code}" "${report_args[@]}" \
+		>/dev/null 2>&1 || true
+}
 
 cleanup() {
-	local pid
-	for pid in "${MONITOR_PID}" "${EVAL_PID}" "${GEN_PID}"; do
+	local exit_code=$?
+	local pid status
+	for pid in "${MONITOR_PID}" "${EVAL_PID}" "${GEN_PID}" "${SUITE_CHILD_PID}"; do
 		[[ -n "${pid}" ]] || continue
 		kill -0 "${pid}" 2>/dev/null || continue
 		kill -TERM "${pid}" 2>/dev/null || true
 	done
+	if [[ -n "${SUITE_STATE_FILE}" ]]; then
+		finish_state_file "${SUITE_STATE_FILE}" interrupted "${exit_code}"
+	fi
+	if [[ -n "${STATE_FILE}" ]]; then
+		status=completed
+		((exit_code == 0)) || status=failed
+		[[ "${INTERRUPTED}" == true ]] && status=interrupted
+		finish_state_file "${STATE_FILE}" "${status}" "${exit_code}" "${REPORT_FILE}"
+	fi
 }
 
 termination_requested() {
+	INTERRUPTED=true
 	warn "${BENCHMARK_LABEL:-SWE-bench Verified} run was interrupted"
 	exit 1
 }
@@ -113,6 +143,7 @@ SLICE_ARG=""
 SERVED_MODEL_NAME=""
 RUN_TAG="$(date -u +%Y%m%dT%H%M%SZ)"
 TAG_SPECIFIED=false
+RUNS=1
 SKIP_EVAL=false
 KEEP_IMAGES=false
 RETRY_ERRORS=false
@@ -199,6 +230,11 @@ while [[ $# -gt 0 ]]; do
 			TAG_SPECIFIED=true
 			shift 2
 			;;
+		--runs)
+			[[ $# -ge 2 ]] || die "$1 requires a value"
+			RUNS="$2"
+			shift 2
+			;;
 		--retry-errors)
 			RETRY_ERRORS=true
 			shift
@@ -244,6 +280,10 @@ fi
 if [[ "${TAG_SPECIFIED}" == false && ("${RETRY_ERRORS}" == true || "${RETRY_EMPTY_PATCHES}" == true) ]]; then
 	die "Retry options require the --tag of an existing run"
 fi
+if ((RUNS > 1)) && [[ "${RETRY_ERRORS}" == true || "${RETRY_EMPTY_PATCHES}" == true ]]; then
+	die "--runs cannot be combined with retry options"
+fi
+require_positive_integer "--runs" "${RUNS}"
 require_positive_integer "--workers" "${WORKERS}"
 require_positive_integer "--step-limit" "${STEP_LIMIT}"
 require_positive_integer "--pull-timeout" "${PULL_TIMEOUT}"
@@ -291,6 +331,114 @@ init_vllm_endpoint
 trap cleanup EXIT
 trap termination_requested INT TERM
 RUN_TAG="$(sanitize_run_tag "${RUN_TAG}")"
+
+readonly PYTHON_BIN="$(command -v python)"
+environment_label() {
+	if [[ "${PYTHON_BIN}" == */bin/python* ]]; then
+		basename "$(dirname "$(dirname "${PYTHON_BIN}")")"
+	elif [[ -n "${CONDA_DEFAULT_ENV:-}" ]]; then
+		printf '%s' "${CONDA_DEFAULT_ENV}"
+	else
+		basename "$(dirname "${PYTHON_BIN}")"
+	fi
+}
+readonly ENV_LABEL="$(environment_label)"
+
+preflight_verified_env() {
+	[[ -d "${AGENT_DIR_VERIFIED}/.git" ]] || \
+		die "mini-SWE-agent is not set up; run: bash setup_swe_verified.sh"
+	require_command mini-extra
+	require_command python
+	require_command docker
+	python -c 'import swebench.harness.run_evaluation' 2>/dev/null || \
+		die "SWE-bench harness is unavailable in '${PYTHON_BIN}'. Activate the SWE-bench environment (for example: conda activate swe) and rerun with that python on PATH. Never use the SWE-bench Pro environment for Verified/Verified Mini."
+}
+preflight_verified_env
+
+run_suite() {
+	local suite_dir="${AGENT_DIR_VERIFIED}/results/${OUTPUT_PREFIX}_${RUN_TAG}_suite"
+	local summary_json="${suite_dir}/summary.json"
+	local summary_md="${suite_dir}/summary.md"
+	local child_args=() arg skip_next=false
+	local run_index run_tag run_started run_finished exit_code report_path log_path
+	local failed_runs=0 final_status
+
+	SUITE_STATE_FILE="${suite_dir}/state.json"
+	SERVED_MODEL_NAME="$(discover_vllm_model "${SERVED_MODEL_NAME}")"
+
+	for arg in "${ORIGINAL_ARGS[@]}"; do
+		if [[ "${skip_next}" == true ]]; then
+			skip_next=false
+			continue
+		fi
+		if [[ "${arg}" == "--runs" ]]; then
+			skip_next=true
+			continue
+		fi
+		child_args+=("${arg}")
+	done
+
+	mkdir -p "${suite_dir}" "${LOG_DIR}"
+	python "${SCRIPT_DIR}/lib/run_state.py" start \
+		--state "${SUITE_STATE_FILE}" --name "${RUN_TAG}" --kind swe-verified-suite \
+		--runs-total "${RUNS}" --current-run 1 --pid $$ \
+		--meta "dataset=${DATASET}" --meta "host=${VLLM_HOST}" \
+		--meta "port=${VLLM_PORT}" --meta "step_limit=${STEP_LIMIT}" \
+		--meta "model=${SERVED_MODEL_NAME}" \
+		--meta "env=${ENV_LABEL}" --meta "python=${PYTHON_BIN}" \
+		--meta "command=${RUNNER_COMMAND}" \
+		--message "suite started"
+
+	log "Suite ${RUN_TAG}: ${RUNS} sequential runs; summary -> ${suite_dir}"
+	for ((run_index = 1; run_index <= RUNS; run_index++)); do
+		printf -v run_tag '%s_run%02d' "${RUN_TAG}" "${run_index}"
+		printf -v run_command '%q ' bash "${SCRIPT_DIR}/run_swe_verified.sh" "${child_args[@]}" --tag "${run_tag}" --runs 1
+		run_command="${run_command% }"
+		run_started="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+		log "[suite] Starting run ${run_index}/${RUNS}: ${run_tag}"
+		python "${SCRIPT_DIR}/lib/run_state.py" run-start \
+			--state "${SUITE_STATE_FILE}" --index "${run_index}" --tag "${run_tag}" \
+			--started-at "${run_started}" --command "${run_command}" \
+			--log "${LOG_DIR}/${OUTPUT_PREFIX}_${run_tag}.log"
+		exit_code=0
+		bash "${SCRIPT_DIR}/run_swe_verified.sh" "${child_args[@]}" \
+			--tag "${run_tag}" --runs 1 &
+		SUITE_CHILD_PID=$!
+		wait "${SUITE_CHILD_PID}" || exit_code=$?
+		SUITE_CHILD_PID=""
+		run_finished="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+		report_path="${AGENT_DIR_VERIFIED}/results/${OUTPUT_PREFIX}_${run_tag}/report.json"
+		log_path="${LOG_DIR}/${OUTPUT_PREFIX}_${run_tag}.log"
+		python "${SCRIPT_DIR}/lib/run_state.py" run-finish \
+			--state "${SUITE_STATE_FILE}" --index "${run_index}" \
+			--exit-code "${exit_code}" --report "${report_path}" --log "${log_path}" \
+			--finished-at "${run_finished}"
+		if ((exit_code == 0)); then
+			log "[suite] Run ${run_index}/${RUNS} finished"
+		else
+			warn "[suite] Run ${run_index}/${RUNS} failed with status ${exit_code}; continuing"
+			failed_runs=$((failed_runs + 1))
+		fi
+	done
+
+	python "${SCRIPT_DIR}/lib/run_state.py" aggregate \
+		--state "${SUITE_STATE_FILE}" --output "${summary_json}" --markdown "${summary_md}"
+	final_status=completed
+	((failed_runs == 0)) || final_status=partial
+	python "${SCRIPT_DIR}/lib/run_state.py" finish \
+		--state "${SUITE_STATE_FILE}" --status "${final_status}" \
+		--exit-code "$((failed_runs > 0))"
+	SUITE_STATE_FILE=""
+	log "Suite summary (JSON): ${summary_json}"
+	log "Suite summary (Markdown): ${summary_md}"
+	((failed_runs == 0))
+}
+
+if ((RUNS > 1)); then
+	run_suite
+	exit $?
+fi
+
 readonly OUT_DIR="${AGENT_DIR_VERIFIED}/results/${OUTPUT_PREFIX}_${RUN_TAG}"
 readonly GEN_DIR="${OUT_DIR}/generation"
 readonly EVAL_ROOT="${OUT_DIR}/eval_chunks"
@@ -301,6 +449,7 @@ readonly PREDS_JSONL="${OUT_DIR}/preds.jsonl"
 readonly GEN_LOG="${OUT_DIR}/generation.log"
 readonly LOG_FILE="${LOG_DIR}/${OUTPUT_PREFIX}_${RUN_TAG}.log"
 readonly REPORT_FILE="${OUT_DIR}/report.json"
+readonly STATE_FILE="${OUT_DIR}/state.json"
 
 [[ -d "${AGENT_DIR_VERIFIED}/.git" ]] || \
 	die "mini-SWE-agent is not set up; run: bash setup_swe_verified.sh"
@@ -373,6 +522,19 @@ if [[ "${RETRY_ERRORS}" == true || "${RETRY_EMPTY_PATCHES}" == true ]]; then
 		--backup-dir "${retry_dir}" "${retry_options[@]}"
 fi
 
+state_start_args=(
+	start --state "${STATE_FILE}" --name "${RUN_TAG}" --kind swe-verified
+	--runs-total 1 --current-run 1 --pid $$
+	--meta "dataset=${DATASET}" --meta "host=${VLLM_HOST}"
+	--meta "port=${VLLM_PORT}" --meta "step_limit=${STEP_LIMIT}"
+	--meta "env=${ENV_LABEL}" --meta "python=${PYTHON_BIN}"
+	--meta "command=${RUNNER_COMMAND}"
+	--message "waiting for vLLM"
+)
+[[ "${RETRY_ERRORS}" == false && "${RETRY_EMPTY_PATCHES}" == false ]] || \
+	state_start_args+=(--preserve)
+python "${SCRIPT_DIR}/lib/run_state.py" "${state_start_args[@]}"
+
 if [[ "${SKIP_EVAL}" == false ]]; then
 	python -c 'import swebench.harness.run_evaluation' 2>/dev/null || \
 		die "SWE-bench harness is unavailable; run: bash setup_swe_verified.sh"
@@ -380,6 +542,8 @@ fi
 
 wait_for_vllm "${VLLM_WAIT_TIMEOUT:-300}"
 SERVED_MODEL_NAME="$(discover_vllm_model "${SERVED_MODEL_NAME}")"
+python "${SCRIPT_DIR}/lib/run_state.py" meta --state "${STATE_FILE}" \
+	--meta "model=${SERVED_MODEL_NAME}" --message "generating"
 EVAL_WORKERS="${EVAL_WORKERS:-${WORKERS}}"
 full_slice_plan="$(plan_batch_slices "${BENCHMARK_TOTAL}" "${NUM_TASKS}" "${SLICE_ARG}" "${BENCHMARK_TOTAL}")"
 mapfile -t FULL_SLICE_LINES <<<"${full_slice_plan}"
@@ -428,10 +592,12 @@ monitor_vllm() {
 }
 
 stop_vllm_monitor() {
-	[[ -n "${MONITOR_PID}" ]] || return
-	kill -TERM "${MONITOR_PID}" 2>/dev/null || true
-	wait "${MONITOR_PID}" 2>/dev/null || true
-	MONITOR_PID=""
+	if [[ -n "${MONITOR_PID}" ]]; then
+		kill -TERM "${MONITOR_PID}" 2>/dev/null || true
+		wait "${MONITOR_PID}" 2>/dev/null || true
+		MONITOR_PID=""
+	fi
+	return 0
 }
 
 monitor_vllm &
