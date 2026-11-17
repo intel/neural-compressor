@@ -288,11 +288,7 @@ def aggregate_records(state: dict) -> tuple[list[dict], dict, list[dict]]:
 
     metrics_by_name = {}
     for name in ("accuracy", "resolved", "submitted", "completed", "errors"):
-        values = [
-            float(record[name])
-            for record in records
-            if record.get("status") == "completed" and name in record
-        ]
+        values = [float(record[name]) for record in records if record.get("status") == "completed" and name in record]
         if values:
             metrics_by_name[name] = {
                 "mean": statistics.mean(values),
@@ -377,9 +373,7 @@ def cmd_aggregate(args: argparse.Namespace) -> None:
         "started_at": state.get("started_at"),
         "finished_at": utc_now(),
         "runs_total": state.get("runs_total", len(records)),
-        "runs_recorded": sum(
-            1 for record in records if record.get("status") == "completed" and "accuracy" in record
-        ),
+        "runs_recorded": sum(1 for record in records if record.get("status") == "completed" and "accuracy" in record),
         "failed_runs": sum(1 for record in records if record.get("status") == "failed"),
         "metrics": metrics,
         "instances": instances,
