@@ -460,8 +460,6 @@ class TestAutoTune(unittest.TestCase):
         self.assertIsNotNone(q_model)
 
 
-
-
 class TestTuningMonitorRelativeLoss(unittest.TestCase):
     """The Relative Loss column must agree with the PASSED/FAILED column it is printed next to."""
 
