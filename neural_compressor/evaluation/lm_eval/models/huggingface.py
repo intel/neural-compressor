@@ -536,7 +536,7 @@ class HFLM(TemplateLM):
                 from optimum.onnxruntime import ORTModelForCausalLM
                 from transformers import PretrainedConfig
 
-                model_config = PretrainedConfig.from_pretrained(pretrained)
+                model_config = PretrainedConfig.from_pretrained(pretrained)  # nosec B615 - caller-supplied model
                 sess_options = ort.SessionOptions()
                 sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
@@ -638,7 +638,7 @@ class HFLM(TemplateLM):
                 from optimum.onnxruntime import ORTModelForSeq2SeqLM
                 from transformers import PretrainedConfig
 
-                model_config = PretrainedConfig.from_pretrained(pretrained)
+                model_config = PretrainedConfig.from_pretrained(pretrained)  # nosec B615 - caller-supplied model
                 sess_options = ort.SessionOptions()
                 sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
                 if os.path.exists(os.path.join(pretrained, "decoder_model_merged.onnx")):
@@ -773,7 +773,7 @@ class HFLM(TemplateLM):
                         "to load its custom tokenizer implementation. Loading may fail with the current "
                         "`trust_remote_code=False` setting."
                     )
-                self.tokenizer = transformers.AutoTokenizer.from_pretrained(
+                self.tokenizer = transformers.AutoTokenizer.from_pretrained(  # nosec B615
                     "THUDM/chatglm2-6b", trust_remote_code=trust_remote_code
                 )
             else:

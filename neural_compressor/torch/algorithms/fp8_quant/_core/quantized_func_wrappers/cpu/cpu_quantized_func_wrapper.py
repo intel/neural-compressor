@@ -15,12 +15,31 @@
 from ..quantized_func_wrapper import QuantizedFuncWrapperBase, OP_TYPE, QuantizedFuncWrapperFactory
 
 import torch
-from torchao.quantization.quant_primitives import (
-    _quantize_affine_float8,
-    _dequantize_affine_float8,
-)
-
 from abc import ABCMeta
+
+_torchao_quant_primitives = None
+
+
+def _get_torchao_quant_primitives():
+    """Lazily import torchao quantization primitives.
+
+    Raises:
+        ImportError: If torchao is not installed.
+    """
+    global _torchao_quant_primitives
+    if _torchao_quant_primitives is None:
+        try:
+            from torchao.quantization.quant_primitives import (
+                _quantize_affine_float8,
+                _dequantize_affine_float8,
+            )
+            _torchao_quant_primitives = (_quantize_affine_float8, _dequantize_affine_float8)
+        except ImportError as e:
+            raise ImportError(
+                "torchao is required for CPU FP8 quantization. "
+                "Please install it with: pip install torchao"
+            ) from e
+    return _torchao_quant_primitives
 
 
 
@@ -35,6 +54,7 @@ class QuantizedCPUFuncWrapperBase(QuantizedFuncWrapperBase, metaclass=ABCMeta):
 class QuantizedCPUQuant(QuantizedCPUFuncWrapperBase):
 
     def get_default_quantized_func(self):
+        _quantize_affine_float8, _ = _get_torchao_quant_primitives()
         return _quantize_affine_float8
 
     def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn):
@@ -44,6 +64,7 @@ class QuantizedCPUQuant(QuantizedCPUFuncWrapperBase):
 class QuantizedCPUQuantPC(QuantizedCPUFuncWrapperBase):
 
     def get_default_quantized_func(self):
+        _quantize_affine_float8, _ = _get_torchao_quant_primitives()
         return _quantize_affine_float8
 
     def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn):
@@ -53,6 +74,7 @@ class QuantizedCPUQuantPC(QuantizedCPUFuncWrapperBase):
 class QuantizedCPUDeQuant(QuantizedCPUFuncWrapperBase):
 
     def get_default_quantized_func(self):
+        _, _dequantize_affine_float8 = _get_torchao_quant_primitives()
         return _dequantize_affine_float8
 
     def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn, out_dtype=torch.bfloat16):
@@ -62,6 +84,7 @@ class QuantizedCPUDeQuant(QuantizedCPUFuncWrapperBase):
 class QuantizedCPUDeQuantPC(QuantizedCPUFuncWrapperBase):
 
     def get_default_quantized_func(self):
+        _, _dequantize_affine_float8 = _get_torchao_quant_primitives()
         return _dequantize_affine_float8
 
     def __call__(self, input, scale, zero_point=None, axis=0, quant_min=None, quant_max=None, dtype=torch.float8_e4m3fn, out_dtype=torch.bfloat16):

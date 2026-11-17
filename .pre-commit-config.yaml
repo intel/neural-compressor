@@ -157,4 +157,4 @@ repos:
           (?x)^(
             neural_compressor/.+
           )$
-        args: [-r, -lll, -iii, neural_compressor]
+        args: [-r, -ll, -iii, neural_compressor]

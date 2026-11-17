@@ -105,7 +105,6 @@ class HQQTensorHandle:
         bitpack = tensor_quant_config.pack
 
         assert nbits in cls.SUPPORTED_BITS, "nbits=" + str(nbits) + " not supported."
-        assert axis in [0, 1], "axis should be either 0 or 1, but got {}".format(axis)
         if group_size is not None:
             assert tensor.numel() % group_size == 0, (
                 "group_size should be divisible by the total tensor dimensions. shape: "
@@ -117,9 +116,9 @@ class HQQTensorHandle:
         W = tensor.float()
         shape = W.shape
 
-        # Reshape for grouping
+        # Reshape for grouping (axis is fixed to 0)
         if (group_size is not None) and channel_wise:
-            W = W.reshape([-1, group_size]) if (axis == 1) else W.reshape([group_size, -1])
+            W = W.reshape([group_size, -1])
 
         # Get min/max values
         if not channel_wise:

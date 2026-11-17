@@ -626,7 +626,7 @@ class BaseConfig(ABC):
         Returns:
             str: String identifier for the operator type.
         """
-        # * Ort and TF may override this method.
+        # * Backend-specific subclasses may override this method.
         op_type_name = getattr(op_type, "__name__", "")
         if op_type_name == "":
             logger.warning("The op_type %s has no attribute __name__.", op_type)
@@ -642,7 +642,7 @@ class BaseConfig(ABC):
         Returns:
             bool: True if the identifier is an operator type, otherwise False.
         """
-        # * Ort and TF may override this method.
+        # * Backend-specific subclasses may override this method.
         return not isinstance(name, str)
 
     @classmethod

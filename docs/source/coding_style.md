@@ -64,8 +64,6 @@ logger.info("extraneous leading spaces.")
 ```python
 from neural_compressor.common import logger
 
-logger.info("Current TensorFlow Version is: %s", tf.__version__)  # Use a pattern-string (with %-placeholders)
-
 logger.info("Current $PAGER is: %s", os.getenv("PAGER", default=""))  # Better readability
 
 # Handle long string
@@ -84,8 +82,6 @@ logger.warning(
 - Not recommend
 
 ```python
-logger.info(f"Current TensorFlow Version is: {tf.__version__}")  # Use f-string
-
 logger.info("Current $PAGER is:")  # One sentence in two lines
 logger.info(os.getenv("PAGER", default=""))
 ```
@@ -104,8 +100,8 @@ eval_result: float = evaluator.eval(model)
 # Declare aliases of complex types
 from typing import TypeAlias
 
-_LossAndGradient: TypeAlias = tuple[tf.Tensor, tf.Tensor]
-ComplexTFMap: TypeAlias = Mapping[str, _LossAndGradient]
+_LossAndGradient: TypeAlias = tuple[float, float]
+LossAndGradientMap: TypeAlias = Mapping[str, _LossAndGradient]
 ```
 
 - Not recommend
