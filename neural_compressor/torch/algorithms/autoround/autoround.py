@@ -74,22 +74,9 @@ def _build_autoround_init_kwargs(config, keys_to_pop):
     )
     sign_round_kwargs = {key: init_kwargs.pop(key) for key in sign_round_keys if key in init_kwargs}
     for inc_key, autoround_key in (("dtype", "data_type"), ("use_sym", "sym"), ("act_dtype", "act_data_type")):
-        value = init_kwargs.pop(inc_key, init_kwargs.pop(autoround_key, None))
+        value = init_kwargs.pop(inc_key, None)
         if value is not None:
-            sign_round_kwargs[autoround_key] = value
-    for key in (
-        "bits",
-        "group_size",
-        "act_bits",
-        "act_group_size",
-        "act_sym",
-        "act_dynamic",
-        "super_bits",
-        "super_group_size",
-    ):
-        value = init_kwargs.pop(key, None)
-        if value is not None:
-            sign_round_kwargs[key] = value
+            init_kwargs[autoround_key] = value
 
     # These legacy INC settings have no equivalent in the new AutoRound entry point.
     for key in ("enable_full_range", "non_tunable_params", "sampler", "truncation", "use_layer_wise"):
