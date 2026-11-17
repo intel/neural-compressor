@@ -66,6 +66,42 @@ The stop command uses `logs/vllm_<PORT>.pid` by default. Set the same
 `VLLM_LOG_DIR` used to start the server, or set `VLLM_PID_FILE` to the exact PID
 file, when using a custom location.
 
+### Generic deployment wrapper
+
+`serve_vllm_model.sh` consolidates the common parts of the per-model serve
+scripts: GPU/TP selection, port and GPU-memory checks, background launch,
+PID/log files, health waiting, and stop/replace handling. Model-specific
+virtualenv, overlay, and patch setup is intentionally out of scope; put the
+desired `vllm` on `PATH`, pass `--vllm`, or export the environment first.
+
+```bash
+bash serve_vllm_model.sh \
+  --model /models/Qwen3.8-27B \
+  --served-name Qwen3.8-27B-mxfp4 \
+  --port 8227 \
+  --gpus 7 \
+  --max-model-len 262144 \
+  --reasoning-parser qwen3 \
+  --tool-call-parser qwen3_coder \
+  --enable-auto-tool-choice \
+  --env NCCL_NVLS_ENABLE=0
+```
+
+Useful options:
+
+- `--dry-run` prints the resolved `vllm serve` command without launching.
+- `--wait-timeout N` polls `/health` after launch.
+- `--replace` stops the PID file before starting; `--stop --port PORT` stops it.
+- `--foreground` uses `exec` instead of `nohup setsid`.
+- `--` passes remaining flags directly to `vllm serve`, for example
+  `-- --block-size 256 --mamba-ssm-cache-dtype bfloat16`.
+- `--min-free-gib N` fails before launch when a selected GPU has less free
+  memory than requested.
+
+The default log is `<work-dir>/logs/vllm_<served-name>_<UTC>.log` and the
+default PID file is `<work-dir>/logs/vllm_<port>.pid`. Pass the same
+`--work-dir`/`--pid-file` to `--stop`.
+
 ## Terminal-Bench
 
 `run_terminal_bench.sh` evaluates Terminal-Bench 2.0 and 2.1 with Harbor and
