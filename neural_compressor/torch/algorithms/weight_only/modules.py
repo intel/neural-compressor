@@ -434,7 +434,7 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             # int_weight - zp spans [-(2**bits - 1), 2**bits - 1], subtract in int32 to avoid overflow
             for idx in range(self.in_features):
                 fp32_weight[:, idx] = (
-                    torch.subtract(weight[:, idx].to(torch.int32), zp[:, self.g_idx[idx]].to(torch.int32))
+                    torch.subtract(weight[:, idx].to(torch.int32), zp[:, self.g_idx[idx]].to(torch.int16))
                 ) * scales[:, self.g_idx[idx]]
         else:
             # recover fp32 weight with int_weight, scale
