@@ -31,7 +31,11 @@ from neural_compressor.jax.quantization.config import (
     JaxBaseConfig,
     JaxComposableConfig,
 )
-from neural_compressor.jax.utils.utility import check_backend, dtype_mapping
+from neural_compressor.jax.utils.utility import (
+    causal_lm_make_replace_build_cache,
+    check_backend,
+    dtype_mapping,
+)
 
 
 class VersionManager:
@@ -151,8 +155,8 @@ class SaveableLayerMixin:
             self._is_quantized = True
         else:
             # Static layers may not be quantized depending on calibration samples
-            # Quantized layers always have a_scale
-            self._is_quantized = "a_scale" in store
+            # We can recognize if layer was quantized by looking if it contains scales
+            self._is_quantized = "w_scale" in store or "a_scale" in store
         self.post_quantization_cleanup()
 
         weight_dtype = getattr(self, "weight_dtype", None)
@@ -174,6 +178,7 @@ class SaveableLayerMixin:
                     setattr(self, name, jnp.asarray(value_to_load))
                 else:
                     raise ValueError(f"Constant variable '{name}' not found in the saved model for {self._path}.")
+        delattr(self, "model_is_during_load")
 
 
 @keras.saving.register_keras_serializable(package="INC", name=None)
@@ -519,6 +524,7 @@ def prepare_deserialized_quantized_model(
             cfg.weight_scale_granularity,
             cfg.dot_product_attention_enable,
         )
+        layer.model_is_during_load = True
         layers_mapping[layer.__class__].prepare(layer, *additional_params)
         layer.add_variables()
         layer.post_quantization_cleanup()
@@ -532,5 +538,9 @@ def prepare_deserialized_quantized_model(
             qmodel._tracker.unlock()
             qmodel.backbone = KerasQuantizedModelBackboneWrapper(qmodel.backbone, quant_config)
             qmodel._tracker.lock()
+
+    # Helper calibration states are restored after preparation; select dtypes at allocation.
+    if isinstance(model, Gemma3CausalLM):
+        causal_lm_make_replace_build_cache(model)
 
     return qmodel

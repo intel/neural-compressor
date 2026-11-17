@@ -60,8 +60,8 @@ def run_fn(model, dataloader):
 
 
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
-def test_build_autoround_init_kwargs_uses_new_algorithm_config():
-    """Map INC configuration to AutoRound's algorithm-config API when available."""
+def test_build_autoround_init_kwargs_separates_scheme_and_algorithm_config():
+    """Keep scheme overrides on AutoRound and move tuning options to alg_configs."""
     try:
         from auto_round.algorithms.quantization.sign_round.config import SignRoundConfig
     except ImportError:
@@ -78,10 +78,10 @@ def test_build_autoround_init_kwargs_uses_new_algorithm_config():
     init_kwargs = _build_autoround_init_kwargs(config, keys_to_pop=[])
 
     assert isinstance(init_kwargs["alg_configs"], SignRoundConfig)
-    assert init_kwargs["alg_configs"].data_type == "int4"
-    assert init_kwargs["alg_configs"].sym is False
-    assert init_kwargs["alg_configs"].act_data_type == "int8"
     assert init_kwargs["alg_configs"].iters == 1
+    assert init_kwargs["data_type"] == "int4"
+    assert init_kwargs["sym"] is False
+    assert init_kwargs["act_data_type"] == "int8"
     assert "iters" not in init_kwargs
     assert "non_tunable_params" not in init_kwargs
     assert "sampler" not in init_kwargs
@@ -89,8 +89,8 @@ def test_build_autoround_init_kwargs_uses_new_algorithm_config():
 
 
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
-def test_build_autoround_init_kwargs_handles_entry_renamed_params():
-    """Move parameters renamed by the INC algorithm entry into alg_configs."""
+def test_build_autoround_init_kwargs_keeps_scheme_overrides_at_entry_level():
+    """Keep renamed and direct scheme parameters at the AutoRound entry level."""
     try:
         from auto_round.algorithms.quantization.sign_round.config import SignRoundConfig
     except ImportError:
@@ -107,14 +107,11 @@ def test_build_autoround_init_kwargs_handles_entry_renamed_params():
     init_kwargs = _build_autoround_init_kwargs(quantizer, keys_to_pop=[])
 
     assert isinstance(init_kwargs["alg_configs"], SignRoundConfig)
-    assert init_kwargs["alg_configs"].bits == 4
-    assert init_kwargs["alg_configs"].data_type == "int"
-    assert init_kwargs["alg_configs"].sym is False
-    assert init_kwargs["alg_configs"].act_data_type == "int"
-    assert "bits" not in init_kwargs
-    assert "data_type" not in init_kwargs
-    assert "sym" not in init_kwargs
-    assert "act_data_type" not in init_kwargs
+    assert init_kwargs["bits"] == 4
+    assert init_kwargs["data_type"] == "int"
+    assert init_kwargs["sym"] is False
+    assert init_kwargs["act_data_type"] == "int"
+    assert init_kwargs["act_bits"] == 8
 
 
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")

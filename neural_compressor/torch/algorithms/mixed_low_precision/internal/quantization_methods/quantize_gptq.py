@@ -56,7 +56,7 @@ quantized_model_dir = args.quantized_model_dir
 
 
 def get_data(nsamples, seed, seqlen, model):
-    traindata = load_dataset("wikitext", "wikitext-2-raw-v1", split="train")
+    traindata = load_dataset("wikitext", "wikitext-2-raw-v1", split="train")  # nosec B615
     trainenc = tokenizer("\n\n".join(traindata["text"]), return_tensors="pt")
 
     random.seed(seed)
@@ -74,9 +74,9 @@ def get_data(nsamples, seed, seqlen, model):
 
 
 try:
-    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir, use_fast=False)
+    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir, use_fast=False)  # nosec B615 - CLI-supplied model
 except Exception:
-    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir, use_fast=True)
+    tokenizer = AutoTokenizer.from_pretrained(pretrained_model_dir, use_fast=True)  # nosec B615 - CLI-supplied model
 traindataset = get_data(128, 0, 4096, pretrained_model_dir)  # seqlen prev = 2048
 
 quantize_config = BaseQuantizeConfig(
@@ -106,4 +106,4 @@ model.save_quantized(quantized_model_dir, use_safetensors=True)
 tokenizer.save_pretrained(quantized_model_dir)  # save tokenizer to quantized model dir in order to load it later
 
 
-model = AutoModelForCausalLM.from_pretrained(quantized_model_dir)
+model = AutoModelForCausalLM.from_pretrained(quantized_model_dir)  # nosec B615 - locally saved model

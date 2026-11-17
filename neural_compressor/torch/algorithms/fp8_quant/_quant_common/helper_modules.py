@@ -318,6 +318,24 @@ class PatchedReplicatedLinear(PatchedLinearBase):
         return orig_output
 
 
+class PatchedGateLinear(PatchedReplicatedLinear):
+    """vLLM ``GateLinear``: an MoE router that subclasses ``ReplicatedLinear``.
+
+    ``GateLinear.forward`` casts the router logits to ``out_dtype`` (e.g. fp32), while the
+    quantized matmul returns ``hp_dtype``, so the same cast is applied here.
+    """
+
+    def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
+        super().__init__(mod, parent, mod_extra_config, *args, **kwargs)
+
+    def _format_output(self, output):
+        # Read from orig_mod: vLLM may set out_dtype via set_out_dtype() after attributes were copied.
+        out_dtype = getattr(self.orig_mod, "out_dtype", None)
+        if out_dtype is not None and output.dtype != out_dtype:
+            output = output.to(out_dtype)
+        return super()._format_output(output)
+
+
 class PatchedLinearAllReduce(PatchedLinearBase):
     def __init__(self, mod, parent, mod_extra_config, *args, **kwargs):
         super().__init__(mod, parent, mod_extra_config, *args, **kwargs)

@@ -1,69 +1,89 @@
 #!/bin/bash
 set -e
 
-MODEL=""
-TARGET=""
-OUTPUT_DIR=""
+# Usage: bash run_quant.sh --dtype=mxfp4 --input_model=/models/DeepSeek-R1 --output_model=DeepSeek-R1-MXFP4
+
+DTYPE=""
+INPUT_MODEL=""
+OUTPUT_MODEL=""
 EXPORT_FORMAT="llm_compressor"
-STATIC_KV_DTYPE="None"
-STATIC_ATTENTION_DTYPE="None"
+STATIC_KV_DTYPE="auto"
+STATIC_ATTENTION_DTYPE="auto"
 
 usage() {
-  echo "Usage: $0 --model MODEL -t [mxfp4|mxfp8] --output_dir DIR"
-  echo "  --model      Hugging Face model ID or local path"
-  echo "  -t           quantization target (e.g. mxfp8, mxfp4)"
-  echo "  -kv datatype for kv cache (auto, fp8)"
-  echo "  -attn        Data type for static attention cache (default: None)"
-  echo "  --output_dir output directory for quantized model"
-  echo "  -f           quantize model export_format (default: llm_compressor)"
+  echo "Usage: bash run_quant.sh --dtype=<dtype> --input_model=<input_model> --output_model=<output_model>"
+  echo "  --dtype                    quantization data type, e.g. mxfp8, mxfp4"
+  echo "  --input_model              Hugging Face model ID or local path"
+  echo "  --output_model             output directory for the quantized model"
+  echo "  --export_format            export format (default: llm_compressor)"
+  echo "  --static_kv_dtype          data type for static kv cache (default: auto)"
+  echo "  --static_attention_dtype   data type for static attention cache (default: auto)"
+  echo ""
+  echo "Examples:"
+  echo "  bash run_quant.sh --dtype=mxfp4 --input_model=/path/to/model --output_model=/path/to/output"
   exit 1
 }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --model)
-      MODEL="$2"
-      shift 2
+    --dtype=*)
+      DTYPE="${1#*=}"
+      shift
       ;;
-    -t)
-      TARGET="$2"
-      shift 2
+    --input_model=*)
+      INPUT_MODEL="${1#*=}"
+      shift
       ;;
-    -kv)
-      KV_CACHE_DTYPE="$2"
-      shift 2
+    --output_model=*)
+      OUTPUT_MODEL="${1#*=}"
+      shift
       ;;
-    -attn)
-      STATIC_ATTENTION_DTYPE="$2"
-      shift 2
+    --export_format=*)
+      EXPORT_FORMAT="${1#*=}"
+      shift
       ;;
-    --output_dir)
-      OUTPUT_DIR="$2"
-      shift 2
+    --static_kv_dtype=*)
+      STATIC_KV_DTYPE="${1#*=}"
+      shift
       ;;
-    -f)
-      EXPORT_FORMAT="$2"
-      shift 2
+    --static_attention_dtype=*)
+      STATIC_ATTENTION_DTYPE="${1#*=}"
+      shift
       ;;
     -h|--help)
       usage
       ;;
     *)
-      echo "Unknown option: $1"
+      echo "Unknown parameter: $1"
       usage
       ;;
   esac
 done
 
-[ -z "$MODEL" ] && echo "Error: --model is required" && usage
-[ -z "$TARGET" ] && echo "Error: -t is required" && usage
-[ -z "$OUTPUT_DIR" ] && echo "Error: --output_dir is required" && usage
+if [[ -z "$DTYPE" || -z "$INPUT_MODEL" || -z "$OUTPUT_MODEL" ]]; then
+  usage
+fi
+
+echo "Starting quantization with parameters:"
+echo "  Data Type: $DTYPE"
+echo "  Input Model: $INPUT_MODEL"
+echo "  Output Model: $OUTPUT_MODEL"
+
+EXTRA_ARGS=()
+if [ "$STATIC_KV_DTYPE" != "auto" ]; then
+  EXTRA_ARGS+=(--static_kv_dtype "$STATIC_KV_DTYPE")
+fi
+if [ "$STATIC_ATTENTION_DTYPE" != "auto" ]; then
+  EXTRA_ARGS+=(--static_attention_dtype "$STATIC_ATTENTION_DTYPE")
+fi
 
 AR_LOG_LEVEL=TRACE \
 python quantize.py \
-  --model "$MODEL" \
-  -t "$TARGET" \
+  --model_name_or_path "$INPUT_MODEL" \
+  --dtype "$DTYPE" \
   --export_format "$EXPORT_FORMAT" \
-  --output_dir "$OUTPUT_DIR" \
-  $( [ "$STATIC_KV_DTYPE" != "None" ] && echo "--static_kv_dtype $STATIC_KV_DTYPE" ) \
-  $( [ "$STATIC_ATTENTION_DTYPE" != "None" ] && echo "--static_attention_dtype $STATIC_ATTENTION_DTYPE" )
+  --export_path "$OUTPUT_MODEL" \
+  "${EXTRA_ARGS[@]}"
+
+echo "Quantization completed successfully!"
+echo "Output model saved to: $OUTPUT_MODEL"

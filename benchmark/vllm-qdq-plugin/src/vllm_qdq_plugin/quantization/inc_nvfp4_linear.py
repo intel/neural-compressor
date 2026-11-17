@@ -102,7 +102,7 @@ class INCNvfp4QDQLinearMethod(INCLinearScheme):
     ) -> torch.Tensor:
         if x.dtype != torch.bfloat16:
             raise TypeError(f"NVFP4 QDQ dense linear requires bfloat16 activations, got {x.dtype}")
-        if not hasattr(layer, "workspace"):
+        if layer.weight.dtype != torch.int32:
             raise RuntimeError("NVFP4 QDQ dense weight has not been prepared for Marlin")
 
         flat_x = x.reshape(-1, x.shape[-1]).contiguous()
@@ -112,7 +112,7 @@ class INCNvfp4QDQLinearMethod(INCLinearScheme):
             weight=layer.weight,
             weight_scale=layer.weight_scale,
             weight_global_scale=layer.weight_global_scale,
-            workspace=layer.workspace,
+            workspace=getattr(layer, "workspace", None),
             size_n=layer.output_size_per_partition,
             size_k=layer.input_size_per_partition,
             bias=bias,

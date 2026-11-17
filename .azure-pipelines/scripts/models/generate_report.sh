@@ -530,7 +530,7 @@ cat > ${output_dir}/report.html << eof
 <html lang="en">
 <head>
     <meta http-equiv="content-type" content="text/html; charset=ISO-8859-1">
-    <title>Daily Tests - TensorFlow - Jenkins</title>
+    <title>Daily Tests - Neural Compressor - Jenkins</title>
     <style type="text/css">
         body
         {

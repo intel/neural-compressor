@@ -7,8 +7,6 @@ from typing import Any
 
 from vllm.logger import init_logger
 
-from .inc_nvfp4_scheme import INCNvfp4Scheme
-
 logger = init_logger(__name__)
 _PATCHED = False
 
@@ -32,14 +30,11 @@ def apply_patches() -> None:
         return
 
     from vllm.model_executor.layers.quantization.inc import INCConfig
-    from vllm.model_executor.layers.quantization.inc import inc as inc_module
     from vllm.model_executor.layers.quantization.inc.config_parser import INCConfigParser
-    from vllm.model_executor.layers.quantization.inc.schemes import factory
 
     INCConfig.SUPPORTED_DTYPES = set(INCConfig.SUPPORTED_DTYPES) | {"nv_fp"}
     INCConfig.SUPPORTED_FORMATS = set(INCConfig.SUPPORTED_FORMATS) | {"auto_round:llm_compressor"}
 
-    original_resolve_scheme = factory.resolve_scheme
     original_resolve_config = INCConfigParser.resolve
     original_validate_supported_quantization = INCConfig._validate_supported_quantization
 
@@ -55,27 +50,16 @@ def apply_patches() -> None:
         data_type = _layer_data_type(self._config, layer_name, layer_config.data_type)
         return replace(layer_config, data_type=data_type)
 
-    def resolve_scheme(layer_config: Any):
-        qdq_owns_nvfp4 = getattr(INCConfig, "_vllm_qdq_nvfp4_enabled", False)
-        if INCNvfp4Scheme.can_handle(layer_config) and not qdq_owns_nvfp4:
-            return INCNvfp4Scheme()
-        return original_resolve_scheme(layer_config)
-
     INCConfigParser.resolve = resolve_config
     INCConfig._validate_supported_quantization = validate_supported_quantization
-    factory.resolve_scheme = resolve_scheme
-    inc_module.resolve_scheme = resolve_scheme
     _PATCHED = True
-    logger.warning("vLLM NVFP4 hardware patch applied: AutoRound nv_fp scheme registered")
+    logger.warning("vLLM NVFP4 hardware metadata patch applied")
 
 
 def register() -> None:
     """Entry point used by vLLM's general plugin loader."""
     from vllm_qdq_plugin import envs
 
-    if envs.VLLM_QDQ:
-        logger.info("Skipping NVFP4 hardware registration because VLLM_QDQ=1")
-        return
     apply_patches()
 
 
