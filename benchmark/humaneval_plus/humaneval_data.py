@@ -167,9 +167,7 @@ def summarize(
     always_failed = [item["task_id"] for item in instances if item["rate"] == 0]
     pass_at_7 = None
     if instances and all(item["evaluated"] >= 7 for item in instances):
-        pass_at_7 = statistics.mean(
-            [pass_at_k(item["evaluated"], item["passed"], 7) for item in instances]
-        )
+        pass_at_7 = statistics.mean([pass_at_k(item["evaluated"], item["passed"], 7) for item in instances])
 
     status = "failed"
     if accuracy_values:
@@ -243,9 +241,7 @@ def render_markdown(summary: dict) -> str:
             ]
         )
     if base:
-        lines.append(
-            f"**Mean base pass@1: {base['mean'] * 100:.2f}% ± {base['std'] * 100:.2f}%**"
-        )
+        lines.append(f"**Mean base pass@1: {base['mean'] * 100:.2f}% ± {base['std'] * 100:.2f}%**")
     tokens = summary["metrics"].get("tokens_generated")
     if tokens:
         lines.append(
@@ -254,8 +250,7 @@ def render_markdown(summary: dict) -> str:
         )
     overall = summary["overall"]
     lines.append(
-        f"**Overall pass@1: {overall['pass_at_1'] * 100:.2f}%** "
-        f"({overall['passed']}/{overall['evaluated']})"
+        f"**Overall pass@1: {overall['pass_at_1'] * 100:.2f}%** " f"({overall['passed']}/{overall['evaluated']})"
     )
     if overall.get("pass_at_7") is not None:
         lines.append(f"**pass@7: {overall['pass_at_7'] * 100:.2f}%**")
@@ -264,9 +259,7 @@ def render_markdown(summary: dict) -> str:
         lines.append(f"- Official EvalPlus pass@1 (base + extra): {official['pass_at_1_plus'] * 100:.2f}%")
     if "pass_at_1_base" in official:
         lines.append(f"- Official EvalPlus base pass@1: {official['pass_at_1_base'] * 100:.2f}%")
-    lines.append(
-        f"- Flaky tasks: {len(summary['flaky'])}; always failed: {len(summary['always_failed'])}"
-    )
+    lines.append(f"- Flaky tasks: {len(summary['flaky'])}; always failed: {len(summary['always_failed'])}")
     if summary["flaky"]:
         preview = ", ".join(
             f"{item['task_id']} ({item['passed']}/{item['evaluated']})"
@@ -369,9 +362,12 @@ def cmd_summarize(args: argparse.Namespace) -> None:
     markdown_path.write_text(markdown)
 
     accuracy = summary["metrics"].get("accuracy", {})
-    state["status"] = "completed" if summary["runs_recorded"] == summary["runs_total"] and all(
-        run["status"] == "completed" for run in summary["runs"]
-    ) else ("partial" if summary["runs_recorded"] else "failed")
+    state["status"] = (
+        "completed"
+        if summary["runs_recorded"] == summary["runs_total"]
+        and all(run["status"] == "completed" for run in summary["runs"])
+        else ("partial" if summary["runs_recorded"] else "failed")
+    )
     state["exit_code"] = 0 if state["status"] == "completed" else 1
     state["finished_at"] = utc_now()
     state["message"] = "finished"
@@ -391,6 +387,8 @@ def cmd_summarize(args: argparse.Namespace) -> None:
         "percent": 100.0,
     }
     save_state(state_path, state)
+    if state["exit_code"]:
+        raise SystemExit(state["exit_code"])
     print(markdown, end="")
 
 
@@ -556,9 +554,7 @@ def cmd_suite_run_finish(args: argparse.Namespace) -> None:
     state["progress"] = {
         "expected": state.get("progress", {}).get("expected", 164),
         "generated": state.get("progress", {}).get("generated", 0),
-        "percent": round(state["runs_finished"] / state["runs_total"] * 100, 1)
-        if state.get("runs_total")
-        else 0.0,
+        "percent": round(state["runs_finished"] / state["runs_total"] * 100, 1) if state.get("runs_total") else 0.0,
         "runs_finished": state["runs_finished"],
         "runs_total": state.get("runs_total"),
     }
@@ -583,7 +579,9 @@ def render_independent_markdown(summary: dict) -> str:
     for run in summary["runs"]:
         accuracy_text = f"{run['accuracy'] * 100:.2f}%" if run.get("accuracy") is not None else "-"
         base_text = f"{run['base_accuracy'] * 100:.2f}%" if run.get("base_accuracy") is not None else "-"
-        tokens_text = f"{int(run['tokens_generated']):,}" if isinstance(run.get("tokens_generated"), (int, float)) else "-"
+        tokens_text = (
+            f"{int(run['tokens_generated']):,}" if isinstance(run.get("tokens_generated"), (int, float)) else "-"
+        )
         lines.append(
             f"| {run.get('index')} | {run.get('status')} | {run.get('evaluated', '-')} | "
             f"{run.get('passed', '-')} | {accuracy_text} | {base_text} | {tokens_text} |"
@@ -598,9 +596,7 @@ def render_independent_markdown(summary: dict) -> str:
             ]
         )
     if base:
-        lines.append(
-            f"**Mean base pass@1: {base['mean'] * 100:.2f}% ± {base['std'] * 100:.2f}%**"
-        )
+        lines.append(f"**Mean base pass@1: {base['mean'] * 100:.2f}% ± {base['std'] * 100:.2f}%**")
     tokens = summary["metrics"].get("tokens_generated")
     if tokens:
         lines.append(
@@ -609,14 +605,11 @@ def render_independent_markdown(summary: dict) -> str:
         )
     overall = summary["overall"]
     lines.append(
-        f"**Overall pass@1: {overall['pass_at_1'] * 100:.2f}%** "
-        f"({overall['passed']}/{overall['evaluated']})"
+        f"**Overall pass@1: {overall['pass_at_1'] * 100:.2f}%** " f"({overall['passed']}/{overall['evaluated']})"
     )
     if overall.get("pass_at_7") is not None:
         lines.append(f"**pass@7: {overall['pass_at_7'] * 100:.2f}%**")
-    lines.append(
-        f"- Flaky tasks: {len(summary['flaky'])}; always failed: {len(summary['always_failed'])}"
-    )
+    lines.append(f"- Flaky tasks: {len(summary['flaky'])}; always failed: {len(summary['always_failed'])}")
     lines.append("")
     return "\n".join(lines)
 
@@ -667,9 +660,7 @@ def cmd_suite_aggregate(args: argparse.Namespace) -> None:
             if base_accuracy is not None:
                 base_accuracies.append(float(base_accuracy))
             for instance in summary.get("instances", []):
-                entry = per_task.setdefault(
-                    instance["task_id"], {"passed": 0, "evaluated": 0, "base_passed": 0}
-                )
+                entry = per_task.setdefault(instance["task_id"], {"passed": 0, "evaluated": 0, "base_passed": 0})
                 entry["passed"] += int(instance.get("passed", 0))
                 entry["evaluated"] += int(instance.get("evaluated", 0))
                 entry["base_passed"] += int(instance.get("base_passed", 0))
@@ -705,9 +696,7 @@ def cmd_suite_aggregate(args: argparse.Namespace) -> None:
     total_base_passed = sum(item["base_passed"] for item in instances)
     pass_at_7 = None
     if instances and all(item["evaluated"] >= 7 for item in instances):
-        pass_at_7 = statistics.mean(
-            [pass_at_k(item["evaluated"], item["resolved"], 7) for item in instances]
-        )
+        pass_at_7 = statistics.mean([pass_at_k(item["evaluated"], item["resolved"], 7) for item in instances])
     summary = {
         "schema_version": 1,
         "name": state.get("name"),
@@ -742,18 +731,15 @@ def cmd_suite_aggregate(args: argparse.Namespace) -> None:
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.write_text(markdown)
 
-    all_completed = (
-        len(run_accuracies) == state.get("runs_total")
-        and all(run.get("status") == "completed" for run in records)
+    all_completed = len(run_accuracies) == state.get("runs_total") and all(
+        run.get("status") == "completed" for run in records
     )
     state["status"] = "completed" if all_completed else ("partial" if run_accuracies else "failed")
     state["exit_code"] = 0 if all_completed else 1
     state["finished_at"] = utc_now()
     state["message"] = "finished"
     state["runs"] = records
-    state["runs_finished"] = sum(
-        1 for run in records if run.get("status") in ("completed", "failed")
-    )
+    state["runs_finished"] = sum(1 for run in records if run.get("status") in ("completed", "failed"))
     state["runs_succeeded"] = sum(1 for run in records if run.get("status") == "completed")
     accuracy = metrics_by_name.get("accuracy", {})
     state["result"] = {

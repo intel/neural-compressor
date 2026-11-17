@@ -32,7 +32,7 @@ Options:
 	--max-tokens N         Max tokens; <=0 omits max_tokens (default: 0)
 	--limit N              Only evaluate the first N prompts (smoke test)
 	--no-thinking          Disable chat_template_kwargs.enable_thinking
-	--seed N               Base seed; round i uses seed+i (default: 42)
+	--seed N               Base seed; round i starts at seed+(i-1)*repeats (default: 42)
 	--request-timeout N    Per-request timeout seconds (default: 3600)
 	--max-retries N        Retries per request (default: 10)
 	--tag TAG              Suite tag (default: <model>_ifbench_<UTC>)
@@ -97,6 +97,12 @@ done
 [[ "${WORKERS}" =~ ^[1-9][0-9]*$ ]] || die "--workers must be a positive integer"
 [[ "${REPEATS}" =~ ^[1-9][0-9]*$ ]] || die "--repeats must be a positive integer"
 
+abspath() {
+	"${PYTHON_BIN}" -c 'import os, sys; print(os.path.abspath(sys.argv[1]))' "$1"
+}
+ROOT="$(abspath "${ROOT}")"
+WORKDIR="$(abspath "${WORKDIR}")"
+
 ORIGIN="http://${HOST}:${PORT}"
 API_BASE="${ORIGIN}/v1"
 current_no_proxy="${NO_PROXY:-${no_proxy:-}}"
@@ -106,13 +112,15 @@ fi
 export NO_PROXY="${current_no_proxy}"
 export no_proxy="${current_no_proxy}"
 API_KEY="${IFBENCH_API_KEY:-${VLLM_API_KEY:-EMPTY}}"
+AUTH_ARGS=()
+[[ "${API_KEY}" == "EMPTY" ]] || AUTH_ARGS=(-H "Authorization: Bearer ${API_KEY}")
 CLONE_DIR="${WORKDIR}/IFBench"
 VENV_DIR="${WORKDIR}/.venv"
 PYTHON="${VENV_DIR}/bin/python"
 NO_PROXY_HOST="${VLLM_NO_PROXY:-${HOST}}"
 
 vllm_curl() {
-	curl --noproxy "${NO_PROXY_HOST}" -fsS --connect-timeout 5 --max-time 30 "$@"
+	curl --noproxy "${NO_PROXY_HOST}" -fsS --connect-timeout 5 --max-time 30 "${AUTH_ARGS[@]}" "$@"
 }
 
 metric_sum() {
@@ -259,7 +267,7 @@ for ((index = 1; index <= RUNS; index++)); do
 	run_log="${run_dir}/eval.log"
 	mkdir -p "${run_dir}"
 	started_at="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
-	seed=$((SEED + index - 1))
+	seed=$((SEED + (index - 1) * REPEATS))
 	args=(
 		"${PYTHON}" evaluate_model.py
 		--api-base "${API_BASE}" --model "${SERVED_NAME}" --api-key "${API_KEY}"
@@ -270,7 +278,22 @@ for ((index = 1; index <= RUNS; index++)); do
 	)
 	[[ -z "${LIMIT}" ]] || args+=(--limit "${LIMIT}")
 	[[ "${ENABLE_THINKING}" == true ]] && args+=(--enable-thinking) || args+=(--no-thinking)
-	printf -v run_command '%q ' "${args[@]}"
+	recorded_args=()
+	skip_next=false
+	for arg in "${args[@]}"; do
+		if [[ "${skip_next}" == true ]]; then
+			recorded_args+=("***")
+			skip_next=false
+			continue
+		fi
+		if [[ "${arg}" == "--api-key" ]]; then
+			recorded_args+=("${arg}")
+			skip_next=true
+			continue
+		fi
+		recorded_args+=("${arg}")
+	done
+	printf -v run_command '%q ' "${recorded_args[@]}"
 	run_command="${run_command% }"
 	"${PYTHON_BIN}" "${SCRIPT_DIR}/ifbench_data.py" suite-run-start \
 		--state "${STATE}" --index "${index}" --tag "${run_tag}" \

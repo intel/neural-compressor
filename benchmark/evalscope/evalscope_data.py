@@ -63,10 +63,12 @@ def normalize_score(value) -> float:
 
 def report_score(payload) -> float | None:
     metrics_value = payload.get("metrics")
-    rows = metrics_value if isinstance(metrics_value, list) else []
-    for row in rows:
-        if not isinstance(row, dict):
-            continue
+    rows = [row for row in metrics_value if isinstance(row, dict)] if isinstance(metrics_value, list) else []
+    if rows:
+        row = rows[0]
+        primary = payload.get("primary_metric_identity")
+        if primary is not None:
+            row = next((item for item in rows if item.get("identity") == primary), row)
         for key in SCORE_KEYS:
             if key in row and row[key] is not None:
                 return normalize_score(row[key])
@@ -94,7 +96,7 @@ def collect_scores(work_dir: Path, tasks: list[str]) -> tuple[dict, dict]:
             continue
         try:
             score = report_score(load_json(report))
-        except Exception as error:  # noqa: BLE001 - report the malformed file
+        except Exception as error:  # - report the malformed file
             errors[task] = f"{type(error).__name__}: {error}"
             continue
         if score is None:
@@ -195,7 +197,9 @@ def cmd_suite_run_finish(args: argparse.Namespace) -> None:
         state.setdefault("runs", []).append(run)
     tasks = args.tasks.split()
     scores, errors = collect_scores(Path(args.work_dir), tasks)
-    if len(scores) == len(tasks):
+    if args.exit_code != 0:
+        status = "partial" if scores else "failed"
+    elif len(scores) == len(tasks):
         status = "completed"
     elif scores:
         status = "partial"
@@ -220,9 +224,7 @@ def cmd_suite_run_finish(args: argparse.Namespace) -> None:
         }
     )
     runs = state.get("runs", [])
-    state["runs_finished"] = sum(
-        1 for item in runs if item.get("status") in ("completed", "partial", "failed")
-    )
+    state["runs_finished"] = sum(1 for item in runs if item.get("status") in ("completed", "partial", "failed"))
     state["runs_succeeded"] = sum(1 for item in runs if item.get("status") == "completed")
     total = state.get("runs_total") or len(runs) or 1
     state["progress"] = {
@@ -258,11 +260,7 @@ def render_markdown(summary: dict) -> str:
             cells.append(f"{value * 100:.2f}%" if isinstance(value, (int, float)) else "-")
         mean = run.get("accuracy")
         mean_text = f"{mean * 100:.2f}%" if isinstance(mean, (int, float)) else "-"
-        lines.append(
-            f"| {run.get('index')} | {run.get('status')} | "
-            + " | ".join(cells)
-            + f" | {mean_text} |"
-        )
+        lines.append(f"| {run.get('index')} | {run.get('status')} | " + " | ".join(cells) + f" | {mean_text} |")
     overall = (summary.get("metrics") or {}).get("accuracy") or {}
     if overall:
         lines.extend(
@@ -278,8 +276,7 @@ def render_markdown(summary: dict) -> str:
         item = (summary.get("metrics") or {}).get(task) or {}
         if item:
             lines.append(
-                f"- **{task}**: {item['mean'] * 100:.2f}% ± {item['std'] * 100:.2f}% "
-                f"(n={len(item['values'])})"
+                f"- **{task}**: {item['mean'] * 100:.2f}% ± {item['std'] * 100:.2f}% " f"(n={len(item['values'])})"
             )
     lines.append("")
     return "\n".join(lines)
@@ -307,12 +304,13 @@ def cmd_suite_aggregate(args: argparse.Namespace) -> None:
             "errors": run.get("errors") or {},
             "accuracy": run.get("accuracy"),
         }
-        if isinstance(record["accuracy"], (int, float)):
-            overall_values.append(float(record["accuracy"]))
-        for task in tasks:
-            value = record["datasets"].get(task)
-            if isinstance(value, (int, float)):
-                per_task[task].append(float(value))
+        if record["status"] == "completed":
+            if isinstance(record["accuracy"], (int, float)):
+                overall_values.append(float(record["accuracy"]))
+            for task in tasks:
+                value = record["datasets"].get(task)
+                if isinstance(value, (int, float)):
+                    per_task[task].append(float(value))
         records.append(record)
 
     metrics_by_name = {"accuracy": metrics(overall_values)}
@@ -345,18 +343,15 @@ def cmd_suite_aggregate(args: argparse.Namespace) -> None:
     Path(args.markdown).parent.mkdir(parents=True, exist_ok=True)
     Path(args.markdown).write_text(markdown)
 
-    all_completed = (
-        len(overall_values) == state.get("runs_total")
-        and all(run.get("status") == "completed" for run in records)
+    all_completed = len(overall_values) == state.get("runs_total") and all(
+        run.get("status") == "completed" for run in records
     )
     state["status"] = "completed" if all_completed else ("partial" if overall_values else "failed")
     state["exit_code"] = 0 if all_completed else 1
     state["finished_at"] = utc_now()
     state["message"] = "finished"
     state["runs"] = records
-    state["runs_finished"] = sum(
-        1 for run in records if run.get("status") in ("completed", "partial", "failed")
-    )
+    state["runs_finished"] = sum(1 for run in records if run.get("status") in ("completed", "partial", "failed"))
     state["runs_succeeded"] = sum(1 for run in records if run.get("status") == "completed")
     accuracy = metrics_by_name.get("accuracy", {})
     state["result"] = {

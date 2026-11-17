@@ -7,7 +7,26 @@ set -uo pipefail
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly ORIGINAL_ARGS=("$@")
-printf -v RUNNER_COMMAND '%q ' bash "${SCRIPT_DIR}/run_evalscope_endpoint.sh" "${ORIGINAL_ARGS[@]}"
+recorded_args=()
+skip_next=false
+for arg in "${ORIGINAL_ARGS[@]}"; do
+	if [[ "${skip_next}" == true ]]; then
+		recorded_args+=("***")
+		skip_next=false
+		continue
+	fi
+	if [[ "${arg}" == "--api-key" ]]; then
+		recorded_args+=("${arg}")
+		skip_next=true
+		continue
+	fi
+	if [[ "${arg}" == --api-key=* ]]; then
+		recorded_args+=("--api-key=***")
+		continue
+	fi
+	recorded_args+=("${arg}")
+done
+printf -v RUNNER_COMMAND '%q ' bash "${SCRIPT_DIR}/run_evalscope_endpoint.sh" "${recorded_args[@]}"
 readonly RUNNER_COMMAND="${RUNNER_COMMAND% }"
 
 log() { printf '[INFO] %s\n' "$*" >&2; }
@@ -222,15 +241,29 @@ if [[ "${DRY_RUN}" -eq 1 ]]; then
 fi
 
 FINISHED=0
+EVAL_PID=""
+INTERRUPTED=0
 cleanup() {
 	local rc=$?
+	if [[ -n "${EVAL_PID}" ]] && kill -0 "${EVAL_PID}" 2>/dev/null; then
+		kill -TERM "${EVAL_PID}" 2>/dev/null || true
+		for _ in 1 2 3 4 5; do
+			kill -0 "${EVAL_PID}" 2>/dev/null || break
+			sleep 1
+		done
+		kill -KILL "${EVAL_PID}" 2>/dev/null || true
+		wait "${EVAL_PID}" 2>/dev/null || true
+	fi
+	EVAL_PID=""
 	if [[ "${FINISHED}" -eq 0 && -f "${STATE}" ]]; then
+		[[ "${INTERRUPTED}" -eq 0 ]] || rc=130
 		"$PYTHON" "${SCRIPT_DIR}/evalscope_data.py" suite-finish \
 			--state "${STATE}" --status interrupted --exit-code "${rc}" \
 			--message "interrupted" >/dev/null 2>&1 || true
 	fi
 }
-trap cleanup EXIT INT TERM
+trap cleanup EXIT
+trap 'INTERRUPTED=1; exit 130' INT TERM
 
 EVALSCOPE_PATH="$(command -v "$EVALSCOPE" 2>/dev/null || true)"
 ENV_LABEL=""
@@ -281,8 +314,11 @@ for ((index = 1; index <= RUNS; index++)); do
 		--eval-batch-size "${BATCH}" \
 		--api-url "${API_URL}" \
 		--work-dir "${run_dir}/evalscope" \
-		>"${run_dir}/eval.log" 2>&1
-	rc=$?
+		>"${run_dir}/eval.log" 2>&1 &
+	EVAL_PID=$!
+	rc=0
+	wait "${EVAL_PID}" || rc=$?
+	EVAL_PID=""
 	if [[ "${rc}" -ne 0 ]]; then
 		warn "run ${index}/${RUNS} exited with ${rc}; see ${run_dir}/eval.log"
 	fi

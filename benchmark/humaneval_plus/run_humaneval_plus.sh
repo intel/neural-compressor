@@ -170,6 +170,8 @@ fi
 ORIGIN="http://${HOST}:${PORT}"
 BASE_URL="${ORIGIN}/v1"
 export OPENAI_API_KEY="${OPENAI_API_KEY:-EMPTY}"
+AUTH_ARGS=()
+[[ "${OPENAI_API_KEY}" == "EMPTY" ]] || AUTH_ARGS=(-H "Authorization: Bearer ${OPENAI_API_KEY}")
 
 bypass_host="${VLLM_NO_PROXY:-${HOST}}"
 current_no_proxy="${NO_PROXY:-${no_proxy:-}}"
@@ -180,7 +182,7 @@ export NO_PROXY="${current_no_proxy}"
 export no_proxy="${current_no_proxy}"
 
 vllm_curl() {
-	curl --noproxy "${bypass_host}" -fsS --connect-timeout 5 --max-time 30 "$@"
+	curl --noproxy "${bypass_host}" -fsS --connect-timeout 5 --max-time 30 "${AUTH_ARGS[@]}" "$@"
 }
 
 wait_for_vllm() {
@@ -227,7 +229,7 @@ TAG="${TAG//[^[:alnum:]._-]/_}"
 [[ -n "${TAG}" ]] || die "Run tag is empty after sanitization"
 
 OUT="${ROOT}/${TAG}"
-MODEL_ID="${SERVED_NAME#./}"
+MODEL_ID="$(printf '%s' "${SERVED_NAME}" | sed -E 's#^[./]+##; s#[./]+$##')"
 MODEL_ID="${MODEL_ID//\//--}"
 SAMPLES="${OUT}/evalplus/humaneval/${MODEL_ID}_openai_temp_${TEMPERATURE}.jsonl"
 LOG="${OUT}/evalplus.log"
@@ -318,13 +320,15 @@ if [[ "${EVAL_EXIT}" -ne 0 || ! -f "${RESULT}" ]]; then
 	exit 1
 fi
 
+summarize_rc=0
 "${PYTHON}" "${SCRIPT_DIR}/humaneval_data.py" summarize \
 	--state "${STATE}" --result "${RESULT}" --log "${LOG}" \
 	--output "${SUMMARY_JSON}" --markdown "${SUMMARY_MD}" \
-	--runs "${RUNS}" --expected "${EXPECTED}"
+	--runs "${RUNS}" --expected "${EXPECTED}" || summarize_rc=$?
 FINALIZED=true
 
 log "Summary: ${SUMMARY_MD}"
 log "Summary JSON: ${SUMMARY_JSON}"
 log "Samples: ${SAMPLES}"
 log "EvalPlus log: ${LOG}"
+exit "${summarize_rc}"

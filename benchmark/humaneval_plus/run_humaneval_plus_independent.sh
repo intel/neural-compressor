@@ -101,6 +101,8 @@ TEMPERATURE="$("${PYTHON}" -c 'import sys; value = float(sys.argv[1]); assert va
 ORIGIN="http://${HOST}:${PORT}"
 BASE_URL="${ORIGIN}/v1"
 export OPENAI_API_KEY="${OPENAI_API_KEY:-EMPTY}"
+AUTH_ARGS=()
+[[ "${OPENAI_API_KEY}" == "EMPTY" ]] || AUTH_ARGS=(-H "Authorization: Bearer ${OPENAI_API_KEY}")
 
 bypass_host="${VLLM_NO_PROXY:-${HOST}}"
 current_no_proxy="${NO_PROXY:-${no_proxy:-}}"
@@ -111,7 +113,7 @@ export NO_PROXY="${current_no_proxy}"
 export no_proxy="${current_no_proxy}"
 
 vllm_curl() {
-	curl --noproxy "${bypass_host}" -fsS --connect-timeout 5 --max-time 30 "$@"
+	curl --noproxy "${bypass_host}" -fsS --connect-timeout 5 --max-time 30 "${AUTH_ARGS[@]}" "$@"
 }
 
 vllm_generation_tokens() {

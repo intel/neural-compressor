@@ -87,6 +87,7 @@ SUITE_CHILD_PID=""
 STATE_FILE=""
 REPORT_FILE=""
 SUITE_STATE_FILE=""
+STATE_STARTED=false
 INTERRUPTED=false
 
 finish_state_file() {
@@ -110,7 +111,7 @@ cleanup() {
 	if [[ -n "${SUITE_STATE_FILE}" ]]; then
 		finish_state_file "${SUITE_STATE_FILE}" interrupted "${exit_code}"
 	fi
-	if [[ -n "${STATE_FILE}" ]]; then
+	if [[ "${STATE_STARTED}" == true && -n "${STATE_FILE}" ]]; then
 		status=completed
 		((exit_code == 0)) || status=failed
 		[[ "${INTERRUPTED}" == true ]] && status=interrupted
@@ -350,8 +351,10 @@ preflight_verified_env() {
 	require_command mini-extra
 	require_command python
 	require_command docker
-	python -c 'import swebench.harness.run_evaluation' 2>/dev/null || \
-		die "SWE-bench harness is unavailable in '${PYTHON_BIN}'. Activate the SWE-bench environment (for example: conda activate swe) and rerun with that python on PATH. Never use the SWE-bench Pro environment for Verified/Verified Mini."
+	if [[ "${SKIP_EVAL}" == false ]]; then
+		python -c 'import swebench.harness.run_evaluation' 2>/dev/null || \
+			die "SWE-bench harness is unavailable in '${PYTHON_BIN}'. Activate the SWE-bench environment (for example: conda activate swe) and rerun with that python on PATH. Never use the SWE-bench Pro environment for Verified/Verified Mini."
+	fi
 }
 preflight_verified_env
 
@@ -534,6 +537,7 @@ state_start_args=(
 [[ "${RETRY_ERRORS}" == false && "${RETRY_EMPTY_PATCHES}" == false ]] || \
 	state_start_args+=(--preserve)
 python "${SCRIPT_DIR}/lib/run_state.py" "${state_start_args[@]}"
+STATE_STARTED=true
 
 if [[ "${SKIP_EVAL}" == false ]]; then
 	python -c 'import swebench.harness.run_evaluation' 2>/dev/null || \

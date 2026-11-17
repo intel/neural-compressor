@@ -165,12 +165,8 @@ def cmd_run_finish(args: argparse.Namespace) -> None:
         except ValueError:
             pass
 
-    state["runs_finished"] = sum(
-        1 for item in state.get("runs", []) if item.get("status") in ("completed", "failed")
-    )
-    state["runs_succeeded"] = sum(
-        1 for item in state.get("runs", []) if item.get("status") == "completed"
-    )
+    state["runs_finished"] = sum(1 for item in state.get("runs", []) if item.get("status") in ("completed", "failed"))
+    state["runs_succeeded"] = sum(1 for item in state.get("runs", []) if item.get("status") == "completed")
     total = state.get("runs_total") or 1
     state["progress"] = {
         "current_run": state.get("current_run", args.index),
@@ -269,9 +265,8 @@ def cmd_aggregate(args: argparse.Namespace) -> None:
     markdown_path.parent.mkdir(parents=True, exist_ok=True)
     markdown_path.write_text("\n".join(lines) + "\n", encoding="utf-8")
 
-    all_completed = (
-        len(accuracy_values) == state.get("runs_total")
-        and all(run.get("status") == "completed" for run in records)
+    all_completed = len(accuracy_values) == state.get("runs_total") and all(
+        run.get("status") == "completed" for run in records
     )
     state["status"] = "completed" if all_completed else ("partial" if accuracy_values else "failed")
     state["exit_code"] = 0 if all_completed else 1
@@ -290,7 +285,9 @@ def cmd_aggregate(args: argparse.Namespace) -> None:
         "current_run": state.get("current_run", len(records)),
         "runs_total": state.get("runs_total", len(records)),
         "runs_finished": state["runs_finished"],
-        "percent": 100.0 if all_completed else round(state["runs_finished"] / max(1, state.get("runs_total", 1)) * 100, 1),
+        "percent": (
+            100.0 if all_completed else round(state["runs_finished"] / max(1, state.get("runs_total", 1)) * 100, 1)
+        ),
     }
     save_state(path, state)
     print("\n".join(lines), end="")

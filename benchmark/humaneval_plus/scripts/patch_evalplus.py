@@ -49,7 +49,7 @@ def patch_openai() -> None:
             outputs.append(item.message.content)
 
         return outputs"""
-    new = '''        outputs = [item.message.content or "" for item in ret.choices]
+    new = """        outputs = [item.message.content or "" for item in ret.choices]
         for index, text in enumerate(outputs):
             if text.strip():
                 continue
@@ -67,7 +67,7 @@ def patch_openai() -> None:
                     outputs[index] = candidate
                     break
 
-        return outputs'''
+        return outputs"""
     if old not in text:
         raise SystemExit("openai.py pattern not found; evalplus version may differ")
     path.write_text(text.replace(old, new, 1))

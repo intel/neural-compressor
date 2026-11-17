@@ -303,10 +303,12 @@ preflight_pro_env() {
 	require_command mini-extra
 	require_command python
 	require_command docker
-	python -c 'import datasets, yaml' 2>/dev/null || \
+	python -c 'import datasets, yaml, pandas' 2>/dev/null || \
 		die "SWE-bench Pro generation dependencies are missing in '${PYTHON_BIN}'. Activate the SWE-bench Pro environment (for example: conda activate swe_pro) and rerun with that python on PATH."
-	python -c 'import docker, pandas' 2>/dev/null || \
-		die "SWE-bench Pro evaluation dependencies are missing in '${PYTHON_BIN}'."
+	if [[ "${SKIP_EVAL}" == false ]]; then
+		python -c 'import docker' 2>/dev/null || \
+			die "SWE-bench Pro evaluation dependencies are missing in '${PYTHON_BIN}'."
+	fi
 }
 preflight_pro_env
 
