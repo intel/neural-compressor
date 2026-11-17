@@ -252,10 +252,10 @@ def cfg_to_qconfig(
     """Check configs and quantization configs.
 
     Args:
-        user_cfg (dict): quantization configuration for ops.
+        tune_cfg (dict): quantization configuration for ops.
         cfgs (dict): configs loaded from ipex config path.
         op_infos_from_cfgs (dict): dict containing configs that have been parsed for each op.
-        output_tensor_ids_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
+        output_tensor_id_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
         alpha (float): Value to balance input and weight quantization error,
             between 0 and 1, default is 0.5.
         smooth_quant (bool, optional): whether to use smooth quant.
@@ -912,7 +912,6 @@ class Calibration:  # pragma: no cover
         """Dump min-max per channel information; the min-max values will be saved in the input_maxes attribute.
 
         Args:
-            calibration_method (str): Only supports 'min_max' currently.
             calib_iter (int): Sample size for calibration.
 
         Returns:
@@ -930,8 +929,6 @@ class Calibration:  # pragma: no cover
         """Process the absorb layer and smooth layers, then return the channel-wise max value info.
 
         Args:
-            absorb_to_layer (dict): A dictionary where keys are absorb layers and values are lists
-                of layers to be smoothed.
             calib_iter (int): Data size for calibration.
 
         Returns:
@@ -1997,7 +1994,6 @@ class TorchSmoothQuant:  # pragma: no cover
         Args:
             layer_name (str): The module name.
             scale (Tensor): The scale to be absorbed.
-            alpha_key (str): The alpha value passed to SQLinearWrapper.
 
         Returns:
             None
@@ -2309,10 +2305,9 @@ class TorchSmoothQuant:  # pragma: no cover
             scales_per_op (dict): Not supported currently.
             calib_iter (int): Data size for calibration.
             weight_clip (bool): Whether to clip weight_max when calculating scales.
-            auto_alpha_args (dict): Hyperparameters used to set the alpha search space in SQ auto-tuning.
-                By default, the search space is 0.0-1.0 with step_size 0.1.
-            do_blockwise (bool): Whether to perform blockwise auto-tuning.
-            init_alpha (float): A hyperparameter used in SQ auto-tuning; by default, it is 0.5.
+            auto_alpha_args (dict): Hyperparameters used to set the alpha search space in SQ
+                auto-tuning. By default, the search space is 0.0-1.0 with step_size 0.1, and
+                the ``init_alpha`` key sets the starting point (0.5).
 
         Returns:
             torch.nn.Module: An FP32 model with the same architecture as the original model
