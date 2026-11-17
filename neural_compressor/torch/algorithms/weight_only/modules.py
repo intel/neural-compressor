@@ -848,8 +848,6 @@ class FakeAffineTensorQuantFunction(Function):
         Args:
             ctx: Pytorch convention.
             inputs: A Tensor of type float32.
-            min_range: A float.
-            max_range: A float.
             num_bits: An integer
 
         Returns:
@@ -863,7 +861,7 @@ class FakeAffineTensorQuantFunction(Function):
 
         Args:
             ctx: Pytorch convention.
-            grad_output: A tensor of gradient of outputs
+            grad_outputs: A tensor of gradient of outputs
 
         Returns:
             grad_inputs: A tensor of gradient

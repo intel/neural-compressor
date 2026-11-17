@@ -501,7 +501,7 @@ class RAWGPTQuantizer(object):
         """Gather single batch from a list.
 
         Args:
-            data_dict (dict): data list.
+            data_list (list): data items to gather from.
             idx (int): index
 
         Returns:
@@ -1155,7 +1155,7 @@ class GPTQ:
 
         Args:
             W (tensor): weight tensor.
-            block_size (int): Execute quantization per block, block shape = [C_out, block_size]. Default to 128.
+            blocksize (int): Execute quantization per block, block shape = [C_out, blocksize]. Default to 128.
             percdamp (float): percdamp (float): Percentage of Hessian's diagonal values' average, which will be added
                                 to Hessian's diagonal to increase numerical stability. Defaults to 0.01.
             groupsize (int): Size of weight groups. Defaults to -1.
