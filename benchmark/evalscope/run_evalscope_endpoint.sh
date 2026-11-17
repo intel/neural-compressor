@@ -7,7 +7,7 @@ set -uo pipefail
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly ORIGINAL_ARGS=("$@")
-printf -v RUNNER_COMMAND '%q ' bash "${SCRIPT_DIR}/run_evalscope_7r.sh" "${ORIGINAL_ARGS[@]}"
+printf -v RUNNER_COMMAND '%q ' bash "${SCRIPT_DIR}/run_evalscope_endpoint.sh" "${ORIGINAL_ARGS[@]}"
 readonly RUNNER_COMMAND="${RUNNER_COMMAND% }"
 
 log() { printf '[INFO] %s\n' "$*" >&2; }
@@ -17,7 +17,7 @@ die() { printf '[ERROR] %s\n' "$*" >&2; exit 1; }
 usage() {
 	cat <<'EOF'
 Usage:
-	bash run_evalscope_7r.sh [OPTIONS]
+	bash run_evalscope_endpoint.sh [OPTIONS]
 
 Run EvalScope's AIME 2026, MATH-500 and GPQA Diamond tasks N times against an
 OpenAI-compatible vLLM endpoint, then write per-run and aggregate scores.
@@ -34,13 +34,13 @@ Options:
 	--api-key KEY           API key (default: EMPTY)
 	--reasoning-effort E    reasoning_effort (default: discover, fallback xhigh)
 	--datasets LIST         Space-separated tasks (default: aime26 math_500 gpqa_diamond)
-	--runs N                Independent runs (default: 7)
+	--runs N                Independent runs (default: 1)
 	--temperature T         Sampling temperature (default: 1.0)
 	--top-p P               top_p (default: 0.95)
 	--max-tokens N          max_tokens (default: 131072)
 	--timeout N             Per-request timeout seconds (default: 18000)
 	--eval-batch-size N     EvalScope batch size (default: 16)
-	--tag TAG               Suite tag (default: <model>_evalscope_7r_<UTC>)
+	--tag TAG               Suite tag (default: <model>_evalscope_<UTC>)
 	--root DIR              Results root (default: <script dir>/results)
 	--evalscope PATH        evalscope executable (default: EVALSCOPE_BIN or PATH)
 	--python PATH           Python for the state helper (default: python3)
@@ -57,7 +57,7 @@ MODEL=""
 API_KEY="${EVALSCOPE_API_KEY:-EMPTY}"
 REASONING_EFFORT="${REASONING_EFFORT:-}"
 DATASETS="aime26 math_500 gpqa_diamond"
-RUNS=7
+RUNS=1
 TEMPERATURE=1.0
 TOP_P=0.95
 MAX_TOKENS=131072
@@ -185,7 +185,7 @@ sanitize() {
 		sed -E 's/[^a-z0-9._-]+/-/g; s/^-+//; s/-+$//'
 }
 if [[ -z "${TAG}" ]]; then
-	TAG="$(sanitize "${MODEL}_evalscope_7r_$(date -u +%Y%m%dT%H%M%SZ)")"
+	TAG="$(sanitize "${MODEL}_evalscope_$(date -u +%Y%m%dT%H%M%SZ)")"
 else
 	TAG="$(sanitize "${TAG}")"
 fi

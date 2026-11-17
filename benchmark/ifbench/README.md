@@ -208,18 +208,18 @@ These are the defaults baked into `configs/config.py` and `configs/env.template`
 
 ## Repeated suites against an existing endpoint
 
-`run_ifbench_7r.sh` is the endpoint-mode companion to `run_ifbench.sh`. It
+`run_ifbench_suite.sh` is the endpoint-mode companion to `run_ifbench.sh`. It
 connects to an OpenAI-compatible vLLM server, discovers the model id, and runs
-the complete IFBench test set N times (default 7). Each round is an independent
-generation and scoring pass.
+the complete IFBench test set N times (default 1; pass `--runs 7` for seven
+rounds). Each round is an independent generation and scoring pass.
 
 ```bash
-./run_ifbench_7r.sh \
+./run_ifbench_suite.sh \
   --host <vllm-host> \
   --port <vllm-port> \
   --runs 7 \
   --workers 8 \
-  --tag demo_ifbench_7r
+  --tag demo_ifbench
 ```
 
 Key options:
@@ -228,7 +228,7 @@ Key options:
 | --- | --- | --- |
 | `--host` / `--port` | `127.0.0.1:8000` | vLLM endpoint |
 | `--served-name` | discovered | Model id from `/v1/models` |
-| `--runs` | `7` | Independent full-test-set rounds |
+| `--runs` | `1` | Independent full-test-set rounds |
 | `--workers` | `8` | Concurrent generation requests |
 | `--repeats` | `1` | Consensus samples inside one round |
 | `--limit` | all | Evaluate only the first N prompts (smoke test) |

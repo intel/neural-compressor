@@ -5,7 +5,7 @@ set -euo pipefail
 
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly ORIGINAL_ARGS=("$@")
-printf -v RUNNER_COMMAND '%q ' bash "${SCRIPT_DIR}/run_ifbench_7r.sh" "${ORIGINAL_ARGS[@]}"
+printf -v RUNNER_COMMAND '%q ' bash "${SCRIPT_DIR}/run_ifbench_suite.sh" "${ORIGINAL_ARGS[@]}"
 readonly RUNNER_COMMAND="${RUNNER_COMMAND% }"
 
 log() { printf '[INFO] %s\n' "$*" >&2; }
@@ -15,7 +15,7 @@ die() { printf '[ERROR] %s\n' "$*" >&2; exit 1; }
 usage() {
 	cat <<'EOF'
 Usage:
-	bash run_ifbench_7r.sh [OPTIONS]
+	bash run_ifbench_suite.sh [OPTIONS]
 
 Run the IFBench instruction-following benchmark N independent times against
 an OpenAI-compatible vLLM endpoint.
@@ -24,7 +24,7 @@ Options:
 	--host HOST            vLLM host (default: 127.0.0.1)
 	--port PORT            vLLM port (default: 8000)
 	--served-name NAME     Served model id (default: discover from /v1/models)
-	--runs N               Independent rounds (default: 7)
+	--runs N               Independent rounds (default: 1)
 	--workers N            Concurrent generation requests (default: 8)
 	--repeats N            Consensus repeats inside one round (default: 1)
 	--temperature T        Sampling temperature (default: 1.0)
@@ -35,7 +35,7 @@ Options:
 	--seed N               Base seed; round i uses seed+i (default: 42)
 	--request-timeout N    Per-request timeout seconds (default: 3600)
 	--max-retries N        Retries per request (default: 10)
-	--tag TAG              Suite tag (default: <model>_ifbench_7r_<UTC>)
+	--tag TAG              Suite tag (default: <model>_ifbench_<UTC>)
 	--root DIR             Results root (default: <script dir>/results)
 	--workdir DIR          IFBench clone/venv root (default: ~/ifbench-run)
 	--skip-setup           Do not clone/install; use the existing workdir
@@ -48,7 +48,7 @@ EOF
 HOST="127.0.0.1"
 PORT=8000
 SERVED_NAME=""
-RUNS=7
+RUNS=1
 WORKERS=8
 REPEATS=1
 TEMPERATURE="1.0"
@@ -193,7 +193,7 @@ SERVED_NAME="$(discover_model)"
 [[ -n "${SERVED_NAME}" ]] || die "Unable to discover served model"
 
 if [[ -z "${TAG}" ]]; then
-	TAG="$(printf '%s_ifbench_7r_%s' "${SERVED_NAME//\//-}" "$(date -u +%Y%m%dT%H%M%SZ)")"
+	TAG="$(printf '%s_ifbench_%s' "${SERVED_NAME//\//-}" "$(date -u +%Y%m%dT%H%M%SZ)")"
 fi
 TAG="${TAG//[^[:alnum:]._-]/_}"
 [[ -n "${TAG}" ]] || die "Suite tag is empty"

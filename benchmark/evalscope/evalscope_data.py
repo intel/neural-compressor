@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""State and summary helper for the EvalScope seven-run suite."""
+"""State and summary helper for the EvalScope repeated suite."""
 
 from __future__ import annotations
 
@@ -238,7 +238,7 @@ def cmd_suite_run_finish(args: argparse.Namespace) -> None:
 def render_markdown(summary: dict) -> str:
     tasks = summary.get("tasks", [])
     lines = [
-        f"# EvalScope seven-run suite: {summary['name']}",
+        f"# EvalScope repeated suite: {summary['name']}",
         "",
         f"- Model: `{summary.get('model', 'unknown')}`",
         f"- API: `{summary.get('api_url', '')}`",

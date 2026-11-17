@@ -5,20 +5,20 @@ Two drivers live here:
 - `run_evalscope.sh` starts a local `vllm serve` from a model path, evaluates
   every task `--num_runs` times, and summarizes the scores with
   `eval_summary.py`. Use it when the model is served on the same host.
-- `run_evalscope_7r.sh` connects to an existing OpenAI-compatible endpoint,
+- `run_evalscope_endpoint.sh` connects to an existing OpenAI-compatible endpoint,
   discovers the model id and `reasoning_effort`, runs the complete task list N
   times, and writes a per-run + aggregate suite. Use it for remote services or
   when several benchmark runners share one vLLM server.
 
-## Endpoint mode: `run_evalscope_7r.sh`
+## Endpoint mode: `run_evalscope_endpoint.sh`
 
 ```bash
 export EVALSCOPE_BIN=/path/to/evalscope
-./run_evalscope_7r.sh \
+./run_evalscope_endpoint.sh \
   --host <vllm-host> \
   --port <vllm-port> \
   --runs 7 \
-  --tag demo_evalscope_7r
+  --tag demo_evalscope
 ```
 
 Defaults:
@@ -30,7 +30,7 @@ Defaults:
 | `--served-name` | discovered | Model id from `/v1/models` |
 | `--reasoning-effort` | discovered | `reasoning_effort`; falls back to `xhigh` |
 | `--datasets` | `aime26 math_500 gpqa_diamond` | Space-separated EvalScope tasks |
-| `--runs` | `7` | Independent full-suite runs |
+| `--runs` | `1` | Independent full-suite runs |
 | `--temperature` | `1.0` | Sampling temperature |
 | `--top-p` | `0.95` | Nucleus sampling |
 | `--max-tokens` | `131072` | Per-request generation limit |
