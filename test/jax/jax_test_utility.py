@@ -100,12 +100,13 @@ def compute_expected_qdq_dense_output(
 
         # Compute scales
         input_samples = current_input if dynamic else current_calib
+        # min/max are casted down to model_dtype and back to input_samples.dtype to assure the exact same behaviour as in real quantization
         input_max = np.asarray(np.max(input_samples), dtype=model_dtype).astype(input_samples.dtype)
         input_min = np.asarray(np.min(input_samples), dtype=model_dtype).astype(input_samples.dtype)
 
         if np.issubdtype(activation_dtype, np.integer):
             a_scale = np.array((input_max - input_min) / (a_dtype_max - a_dtype_min), dtype=model_dtype)
-            a_zero_point = np.round(a_dtype_min - input_min / a_scale)
+            a_zero_point = int(np.round(a_dtype_min - input_min / a_scale))
         else:
             a_scale = np.array(np.maximum(np.abs(input_min), np.abs(input_max)) / a_dtype_max, dtype=model_dtype)
             a_zero_point = None
