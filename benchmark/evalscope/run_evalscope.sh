@@ -31,7 +31,14 @@
 #   DEFAULT_EVAL_BATCH_SIZE    default value for --eval_batch_size (default: 256)
 #   EVAL_TIMEOUT               evalscope request timeout in seconds (default: 3600)
 #   EXTRA_GENERATION_CONFIG    JSON object merged into the evalscope --generation-config
-#   SINGLE_RUN_TASKS           tasks evaluated only once regardless of --num_runs (default: hellaswag,piqa,mmlu,gsm8k)
+#   SINGLE_RUN_TASKS           tasks evaluated only once regardless of --num_runs
+#                              (default: hellaswag,piqa,mmlu,gsm8k,openai_mrcr)
+#   MRCR_DATA_DIR              where the fixed 300-sample openai_mrcr subset is written
+#                              (default: ~/.cache/inc_benchmark/openai_mrcr_300)
+#   MRCR_MAX_MODEL_LEN         vLLM max model length when openai_mrcr is selected and --max_model_len is not passed
+#                              (default: 131072). openai_mrcr needs a model with a native context of at least 131072.
+#   MRCR_GENERATION_CONFIG     JSON object deep-merged over the generation config for openai_mrcr
+#                              (default: temperature 0, max_tokens 2048, thinking disabled)
 #   EXTRA_SERVE_ARGS           extra flags appended to `vllm serve`
 #   ATTENTION_BACKEND_FP8KV    vLLM attention backend when static kv is fp8 (default: FLASHINFER)
 #   ATTENTION_BACKEND_FP8ATTN  vLLM attention backend when static attention is fp8 (default: FLASHINFER;
@@ -53,7 +60,12 @@ GPU_MEMORY_UTILIZATION=""
 SERVED_MODEL_NAME="${DEFAULT_SERVED_MODEL_NAME:-}"
 EVAL_BATCH_SIZE="${DEFAULT_EVAL_BATCH_SIZE:-256}"
 EVAL_TIMEOUT="${EVAL_TIMEOUT:-3600}"
-SINGLE_RUN_TASKS="${SINGLE_RUN_TASKS-hellaswag,piqa,mmlu,gsm8k}"
+SINGLE_RUN_TASKS="${SINGLE_RUN_TASKS-hellaswag,piqa,mmlu,gsm8k,openai_mrcr}"
+MRCR_DATA_DIR="${MRCR_DATA_DIR:-${HOME}/.cache/inc_benchmark/openai_mrcr_300}"
+MRCR_MAX_MODEL_LEN="${MRCR_MAX_MODEL_LEN:-131072}"
+DEFAULT_MRCR_GENERATION_CONFIG='{"temperature": 0, "max_tokens": 2048, "extra_body": {"chat_template_kwargs": {"enable_thinking": false, "thinking": false}}}'
+MRCR_GENERATION_CONFIG="${MRCR_GENERATION_CONFIG:-$DEFAULT_MRCR_GENERATION_CONFIG}"
+USER_MAX_MODEL_LEN=""
 STATIC_KV_DTYPE="auto"
 STATIC_ATTENTION_DTYPE="auto"
 SKIP_SERVE="${SKIP_SERVE:-false}"
@@ -65,6 +77,7 @@ usage() {
     echo "Usage: CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=<path_to_quantized_model> [--tasks=<tasks>]"
     echo "  --model_path               Local model directory or Hugging Face model id <org>/<name> (required)"
     echo "  --tasks                    Comma-separated evalscope dataset names (default: ${TASKS})"
+    echo "                             openai_mrcr runs the fixed 300-sample subset in mrcr/openai_mrcr_300.json"
     echo "  --num_runs                 Times each task is evaluated; with >= 3 runs max/min are dropped (default: ${NUM_RUNS})."
     echo "                             Tasks in SINGLE_RUN_TASKS (${SINGLE_RUN_TASKS:-none}) always run once."
     echo "  --temperature              Generation temperature (default: ${TEMPERATURE})"
@@ -105,6 +118,7 @@ for arg in "$@"; do
             ;;
         --max_model_len=*)
             MAX_MODEL_LEN="${arg#*=}"
+            USER_MAX_MODEL_LEN=1
             ;;
         --gpu_memory_utilization=*)
             GPU_MEMORY_UTILIZATION="${arg#*=}"
@@ -174,6 +188,18 @@ if [[ ${#SELECTED_TASKS[@]} -eq 0 ]]; then
     exit 1
 fi
 
+# openai_mrcr evaluates a fixed 300-sample subset (see mrcr/openai_mrcr_300.json) of up to ~112k tokens.
+HAS_MRCR=0
+if [[ " ${SELECTED_TASKS[*]} " == *" openai_mrcr "* ]]; then
+    HAS_MRCR=1
+    MRCR_DATA_DIR="${MRCR_DATA_DIR/#\~/$HOME}"
+    python3 "${SCRIPT_DIR}/mrcr/prepare_mrcr_subset.py" --output_dir="$MRCR_DATA_DIR"
+    if [[ -z "$USER_MAX_MODEL_LEN" && -n "$MRCR_MAX_MODEL_LEN" ]]; then
+        echo "openai_mrcr selected: using --max_model_len=${MRCR_MAX_MODEL_LEN}."
+        MAX_MODEL_LEN="$MRCR_MAX_MODEL_LEN"
+    fi
+fi
+
 if [[ -n "$CUDA_VISIBLE_DEVICES" ]]; then
     IFS=',' read -ra GPU_ARRAY <<< "$CUDA_VISIBLE_DEVICES"
     TP_SIZE=${#GPU_ARRAY[@]}
@@ -237,6 +263,31 @@ if extra:
     config.update(json.loads(extra))
 print(json.dumps(config))
 ' "$TEMPERATURE" "$TOP_P" "$MAX_TOKENS" "${EXTRA_GENERATION_CONFIG:-}")
+
+MRCR_GEN_CONFIG=""
+MRCR_DATASET_ARGS=""
+if [[ "$HAS_MRCR" == 1 ]]; then
+    MRCR_GEN_CONFIG=$(python3 -c '
+import json, sys
+
+
+def merge(base, override):
+    for key, value in override.items():
+        if isinstance(value, dict) and isinstance(base.get(key), dict):
+            merge(base[key], value)
+        else:
+            base[key] = value
+    return base
+
+
+print(json.dumps(merge(json.loads(sys.argv[1]), json.loads(sys.argv[2]))))
+' "$GEN_CONFIG" "$MRCR_GENERATION_CONFIG")
+    MRCR_DATASET_ARGS=$(python3 -c '
+import json, sys
+
+print(json.dumps({"openai_mrcr": {"dataset_id": sys.argv[1], "subset_list": ["2needle", "4needle", "8needle"]}}))
+' "$MRCR_DATA_DIR")
+fi
 
 port_in_use() {
     (: < "/dev/tcp/127.0.0.1/$1") 2>/dev/null
@@ -400,13 +451,22 @@ STEP_INDEX=1
 SUMMARY_FAILED=0
 for task in "${SELECTED_TASKS[@]}"; do
     DATASET_ARGS=()
+    TASK_GEN_CONFIG="$GEN_CONFIG"
+    SUMMARY_ARGS=()
     if [[ "$task" == "live_code_bench" ]]; then
         DATASET_ARGS=(--dataset-args '{"live_code_bench": {"subset_list": ["v6"]}}')
+    elif [[ "$task" == "openai_mrcr" ]]; then
+        DATASET_ARGS=(--dataset-args "$MRCR_DATASET_ARGS")
+        TASK_GEN_CONFIG="$MRCR_GEN_CONFIG"
+        SUMMARY_ARGS=(--breakdown)
     fi
 
     {
         echo ""
         echo "=== [${STEP_INDEX}/${#SELECTED_TASKS[@]}] ${task} ==="
+        if [[ "$TASK_GEN_CONFIG" != "$GEN_CONFIG" ]]; then
+            echo "Generation config (${task}): ${TASK_GEN_CONFIG}"
+        fi
     } | tee -a "$OUTPUT_FILE"
     STEP_INDEX=$((STEP_INDEX + 1))
 
@@ -421,14 +481,15 @@ for task in "${SELECTED_TASKS[@]}"; do
             --timeout "$EVAL_TIMEOUT" \
             --datasets "$task" \
             "${DATASET_ARGS[@]}" \
-            --generation-config "$GEN_CONFIG" \
+            --generation-config "$TASK_GEN_CONFIG" \
             --eval-batch-size "$EVAL_BATCH_SIZE" \
             --work-dir "${EVAL_OUTPUT_ROOT}/${task}/run${run}" \
             --no-timestamp 2>&1 | tee -a "$OUTPUT_FILE"
     done
 
     echo "" | tee -a "$OUTPUT_FILE"
-    if ! python3 "${SCRIPT_DIR}/eval_summary.py" --root "$EVAL_OUTPUT_ROOT" --tasks "$task" 2>&1 | tee -a "$OUTPUT_FILE"; then
+    if ! python3 "${SCRIPT_DIR}/eval_summary.py" --root "$EVAL_OUTPUT_ROOT" --tasks "$task" "${SUMMARY_ARGS[@]}" 2>&1 \
+        | tee -a "$OUTPUT_FILE"; then
         SUMMARY_FAILED=1
     fi
 done
