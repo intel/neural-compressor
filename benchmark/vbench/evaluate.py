@@ -95,9 +95,6 @@ def _evaluate(root, task, metrics, manifest):
             raise ImportError(f"Missing official metric: {metric}")
         evidence["metric_source_sha256"][metric] = sha256(Path(spec.origin))
     digest = fingerprint(evidence)
-    previous_protocol = out / "protocol.json"
-    if previous_protocol.exists() and load_json(previous_protocol).get("fingerprint") != digest:
-        raise RuntimeError("Stale metric result: evaluation inputs or implementation changed; use a new run root")
     atomic_json(
         out / "protocol.json",
         dict(
@@ -113,9 +110,8 @@ def _evaluate(root, task, metrics, manifest):
         done = out / metric / "result.json"
         if done.exists():
             saved = load_json(done)
-            if saved.get("fingerprint") != digest:
-                raise RuntimeError(f"Stale metric result; use a new run root: {done}")
-            summary[metric] = saved["score"]
+            if saved.get("fingerprint") == digest:
+                summary[metric] = saved["score"]
     folder, prompts = evaluation_view(root, jobs)
     for metric in selected_metrics:
         if metric in summary:
@@ -135,6 +131,8 @@ def _evaluate(root, task, metrics, manifest):
                 evaluator = VBench(
                     torch.device("cuda"), str(Path(vbench.__file__).parent / "VBench_full_info.json"), str(metric_out)
                 )
+                raw_results = metric_out / "results_eval_results.json"
+                raw_results.unlink(missing_ok=True)
                 evaluator.evaluate(
                     videos_path=str(folder),
                     name="results",
@@ -145,7 +143,7 @@ def _evaluate(root, task, metrics, manifest):
                     read_frame=False,
                     imaging_quality_preprocessing_mode="longer",
                 )
-                raw = load_json(metric_out / "results_eval_results.json")
+                raw = load_json(raw_results)
                 score, details = raw[metric]
             else:
                 from vbench2_beta_i2v.utils import init_submodules
