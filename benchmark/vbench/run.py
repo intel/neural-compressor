@@ -8,6 +8,7 @@ import os
 import signal
 import subprocess
 import sys
+import time
 from contextlib import nullcontext
 from pathlib import Path
 
@@ -50,10 +51,7 @@ def run_workers(commands, root):
                 raise RuntimeError(f"Benchmark stage failed. See {root / 'logs'} for generation logs.")
             if all(status == 0 for status in statuses):
                 return
-            try:
-                next(worker for worker in workers if worker.returncode is None).wait(timeout=0.25)
-            except subprocess.TimeoutExpired:
-                pass
+            time.sleep(0.25)
         raise SystemExit(128 + interrupted)
     finally:
         active = [worker for worker in workers if worker.poll() is None]
@@ -69,11 +67,58 @@ def run_workers(commands, root):
             signal.signal(signum, handler)
 
 
+def generate_videos(args, output_dir, gpus):
+    """Prepare inputs, check the checkpoint, and start one shard per GPU."""
+    if args.omni_source is None:
+        raise ValueError("Set OMNI_SOURCE or pass --omni_source")
+    if args.task == "i2v" and args.i2v_images is None:
+        raise ValueError("Set I2V_IMAGES or pass --i2v_images pointing to crop/16-9")
+
+    model = Path(args.model_path).expanduser()
+    if not model.is_dir():
+        from huggingface_hub import snapshot_download
+
+        model = Path(snapshot_download(args.model_path, revision=args.revision))
+    model = model.resolve()
+    model_class = MODEL_CLASSES[args.task]
+    if load_json(model / "model_index.json").get("_class_name") != model_class:
+        raise ValueError(f"--task={args.task} requires a {model_class} checkpoint")
+
+    quant_config = model / "transformer" / "quantization_config.json"
+    data_type = load_json(quant_config).get("data_type") if quant_config.exists() else None
+    if data_type not in PRECISIONS:
+        raise ValueError(f"Unsupported checkpoint data_type: {data_type}")
+    prepare(output_dir, args.task, args.i2v_images if args.task == "i2v" else None)
+    bind_checkpoint(output_dir, args.task, model, PRECISIONS[data_type], args.omni_source)
+
+    command = [sys.executable, str(BENCHMARK), "generate", "--task", args.task, "--root", str(output_dir)]
+    logs = output_dir / "logs"
+    workers = []
+    for shard_index, gpu in enumerate(gpus):
+        shard_args = ["--shard-index", str(shard_index), "--num-shards", str(len(gpus))]
+        workers.append((command + shard_args, gpu, logs / f"gpu-{gpu}.log"))
+    print(f"Generating {args.task} videos in {output_dir / 'videos'}. Worker logs: {logs}", flush=True)
+    run_workers(workers, output_dir)
+
+
+def evaluate_videos(args, output_dir, gpus):
+    """Score the videos already written to the output directory."""
+    if load_json(output_dir / "task.json")["task"] != args.task:
+        raise ValueError("--task must match the task used to generate this output directory")
+    command = [sys.executable, str(BENCHMARK), "evaluate", "--task", args.task, "--root", str(output_dir)]
+    if args.metrics:
+        command += ["--metrics", *args.metrics.split(",")]
+    run_workers([(command, gpus[0], None)], output_dir)
+    print(f"Scores: {output_dir / 'evaluation' / 'summary.json'}", flush=True)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    stages = parser.add_subparsers(dest="stage", required=True)
+    stages = parser.add_subparsers(required=True)
     generate = stages.add_parser("generate", help="Generate videos for the fixed VBench inputs")
     evaluate = stages.add_parser("evaluate", help="Verify and score a completed video set")
+    generate.set_defaults(run_stage=generate_videos)
+    evaluate.set_defaults(run_stage=evaluate_videos)
     for stage in (generate, evaluate):
         stage.add_argument("--task", choices=tuple(METRICS), required=True)
         stage.add_argument("--output_dir", type=Path, required=True)
@@ -91,50 +136,13 @@ def main():
     gpus = [str(int(gpu)) for gpu in gpus]
     if len(set(gpus)) != len(gpus):
         parser.error("Duplicate GPU indices")
-    root = args.output_dir.expanduser().resolve()
-    base = [sys.executable, str(BENCHMARK), args.stage, "--task", args.task, "--root", str(root)]
-
+    output_dir = args.output_dir.expanduser().resolve()
     try:
-        root.mkdir(parents=True, exist_ok=True)
-        # Keep generation and evaluation from using the same outputs at the same time.
-        with (root / ".run.lock").open("a") as lock:
+        output_dir.mkdir(parents=True, exist_ok=True)
+        # Keep the lock until the workers exit so scoring can't overlap generation in this directory.
+        with (output_dir / ".run.lock").open("a") as lock:
             fcntl.flock(lock, fcntl.LOCK_EX)
-            if args.stage == "generate":
-                if args.omni_source is None:
-                    parser.error("Set OMNI_SOURCE or pass --omni_source")
-                if args.task == "i2v" and args.i2v_images is None:
-                    parser.error("Set I2V_IMAGES or pass --i2v_images pointing to crop/16-9")
-                model = Path(args.model_path).expanduser()
-                if not model.is_dir():
-                    from huggingface_hub import snapshot_download
-
-                    model = Path(snapshot_download(args.model_path, revision=args.revision))
-                model = model.resolve()
-                if load_json(model / "model_index.json").get("_class_name") != MODEL_CLASSES[args.task]:
-                    parser.error(f"--task={args.task} requires a {MODEL_CLASSES[args.task]} checkpoint")
-                quant = model / "transformer" / "quantization_config.json"
-                dtype = load_json(quant).get("data_type") if quant.exists() else None
-                if dtype not in PRECISIONS:
-                    parser.error(f"Unsupported checkpoint data_type: {dtype}")
-                prepare(root, args.task, args.i2v_images if args.task == "i2v" else None)
-                bind_checkpoint(root, args.task, model, PRECISIONS[dtype], args.omni_source)
-                commands = [
-                    (
-                        base + ["--shard-index", str(index), "--num-shards", str(len(gpus))],
-                        gpu,
-                        root / "logs" / f"gpu-{gpu}.log",
-                    )
-                    for index, gpu in enumerate(gpus)
-                ]
-                print(f"Generating {args.task} videos in {root / 'videos'}. Worker logs: {root / 'logs'}", flush=True)
-                run_workers(commands, root)
-            else:
-                if load_json(root / "task.json")["task"] != args.task:
-                    parser.error("--task must match the task used to generate this output directory")
-                if args.metrics:
-                    base += ["--metrics", *args.metrics.split(",")]
-                run_workers([(base, gpus[0], None)], root)
-                print(f"Scores: {root / 'evaluation' / 'summary.json'}", flush=True)
+            args.run_stage(args, output_dir, gpus)
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
         parser.exit(1, f"ERROR: {exc}\n")
 
