@@ -54,6 +54,7 @@ CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh \
 
 - RULER (`*ruler*`, `niah_*`) and LongBench (`*longbench*`) tasks run with `benchmark/lm_eval/run_lm_eval.sh`.
 - All other tasks run with `benchmark/evalscope/run_evalscope.sh`. Use `--num_runs` to repeat tasks.
+- `openai_mrcr` evaluates the fixed 300-sample MRCR subset with thinking disabled and `--max-model-len` 131072 by default, see [benchmark/README.html](../../../../benchmark/README.html#openai-mrcr-openai_mrcr).
 
 Equivalent vLLM defaults used by `run_benchmark.sh`:
 
@@ -104,7 +105,7 @@ bash run_quant.sh \
 - `--static_kv_dtype` / `--static_attention_dtype`: static FP8 KV cache / attention, passed to both drivers (default: `auto`).
 - evalscope options:
   - `--temperature`: generation temperature (default: `0`).
-  - `--num_runs`: times each task is evaluated; with 3 or more runs max/min are dropped before averaging (default: `1`); `hellaswag`, `piqa`, `mmlu` and `gsm8k` always run once.
+  - `--num_runs`: times each task is evaluated; with 3 or more runs max/min are dropped before averaging (default: `1`); `hellaswag`, `piqa`, `mmlu`, `gsm8k` and `openai_mrcr` always run once.
   - `--eval_batch_size`: evalscope concurrent requests (default: `256`, `10` for DeepSeek-V4-Pro).
   - `--port`: vLLM API port (default: `$SERVER_PORT` or `8001`).
   - `--max_model_len`, `--top_p`, `--max_tokens`, `--served_model_name`.

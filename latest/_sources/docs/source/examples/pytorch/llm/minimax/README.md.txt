@@ -96,6 +96,16 @@ CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_benchmark.sh \
   --tasks=ruler
 ```
 
+Long-context MRCR on the fixed 300-sample `openai_mrcr` subset (see [benchmark/README.html](../../../../benchmark/README.html#openai-mrcr-openai_mrcr)):
+
+```bash
+CUDA_VISIBLE_DEVICES=3,4,5,6 bash run_benchmark.sh \
+  --model_path=~/models/minimax-m2.7-mxfp \
+  --tasks=openai_mrcr
+```
+
+MiniMax always thinks, so `openai_mrcr` keeps the thinking generation config, is repeated `--num_runs` times (default 5, trimmed mean) with `max_tokens=65536` and serves with `--max-model-len 196608` (override with `MRCR_GENERATION_CONFIG` / `MRCR_MAX_MODEL_LEN`).
+
 Equivalent vLLM command used by `run_benchmark.sh` for evalscope tasks:
 
 ```bash

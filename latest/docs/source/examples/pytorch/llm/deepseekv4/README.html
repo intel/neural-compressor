@@ -137,6 +137,7 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se"
 <ul class="simple">
 <li><p>RULER (<code class="docutils literal notranslate"><span class="pre">*ruler*</span></code>, <code class="docutils literal notranslate"><span class="pre">niah_*</span></code>) and LongBench (<code class="docutils literal notranslate"><span class="pre">*longbench*</span></code>) tasks run with <code class="docutils literal notranslate"><span class="pre">benchmark/lm_eval/run_lm_eval.sh</span></code>.</p></li>
 <li><p>All other tasks run with <code class="docutils literal notranslate"><span class="pre">benchmark/evalscope/run_evalscope.sh</span></code>. Use <code class="docutils literal notranslate"><span class="pre">--num_runs</span></code> to repeat tasks.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">openai_mrcr</span></code> evaluates the fixed 300-sample MRCR subset with thinking disabled and <code class="docutils literal notranslate"><span class="pre">--max-model-len</span></code> 131072 by default, see <a class="reference external" href="../../../../benchmark/README.html#openai-mrcr-openai_mrcr">benchmark/README.html</a>.</p></li>
 </ul>
 <p>Equivalent vLLM defaults used by <code class="docutils literal notranslate"><span class="pre">run_benchmark.sh</span></code>:</p>
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">SAFETENSORS_FAST_GPU</span><span class="o">=</span><span class="m">1</span><span class="w"> </span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1<span class="w"> </span>vllm<span class="w"> </span>serve<span class="w"> </span>&lt;model&gt;<span class="w"> </span><span class="se">\</span>
@@ -186,7 +187,7 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se"
 <li><p>evalscope options:</p>
 <ul>
 <li><p><code class="docutils literal notranslate"><span class="pre">--temperature</span></code>: generation temperature (default: <code class="docutils literal notranslate"><span class="pre">0</span></code>).</p></li>
-<li><p><code class="docutils literal notranslate"><span class="pre">--num_runs</span></code>: times each task is evaluated; with 3 or more runs max/min are dropped before averaging (default: <code class="docutils literal notranslate"><span class="pre">1</span></code>); <code class="docutils literal notranslate"><span class="pre">hellaswag</span></code>, <code class="docutils literal notranslate"><span class="pre">piqa</span></code>, <code class="docutils literal notranslate"><span class="pre">mmlu</span></code> and <code class="docutils literal notranslate"><span class="pre">gsm8k</span></code> always run once.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">--num_runs</span></code>: times each task is evaluated; with 3 or more runs max/min are dropped before averaging (default: <code class="docutils literal notranslate"><span class="pre">1</span></code>); <code class="docutils literal notranslate"><span class="pre">hellaswag</span></code>, <code class="docutils literal notranslate"><span class="pre">piqa</span></code>, <code class="docutils literal notranslate"><span class="pre">mmlu</span></code>, <code class="docutils literal notranslate"><span class="pre">gsm8k</span></code> and <code class="docutils literal notranslate"><span class="pre">openai_mrcr</span></code> always run once.</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--eval_batch_size</span></code>: evalscope concurrent requests (default: <code class="docutils literal notranslate"><span class="pre">256</span></code>, <code class="docutils literal notranslate"><span class="pre">10</span></code> for DeepSeek-V4-Pro).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--port</span></code>: vLLM API port (default: <code class="docutils literal notranslate"><span class="pre">$SERVER_PORT</span></code> or <code class="docutils literal notranslate"><span class="pre">8001</span></code>).</p></li>
 <li><p><code class="docutils literal notranslate"><span class="pre">--max_model_len</span></code>, <code class="docutils literal notranslate"><span class="pre">--top_p</span></code>, <code class="docutils literal notranslate"><span class="pre">--max_tokens</span></code>, <code class="docutils literal notranslate"><span class="pre">--served_model_name</span></code>.</p></li>
@@ -226,7 +227,7 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span><span class="se"
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7a427e4475b0> 
+   <jinja2.runtime.BlockReference object at 0x7d4a8285bee0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
