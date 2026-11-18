@@ -13,12 +13,44 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-# Usage: CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --model_path=<path_to_quantized_model>
+# Usage: CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --model_path=<path_to_quantized_model> [--tasks=<tasks>]
+#
+# Tasks are split into two paths:
+#   - aime26, gpqa_diamond and math_500: benchmark/evalscope/run_evalscope.sh
+#   - all other tasks: benchmark/lm_eval/run_lm_eval.sh
+# All other options are passed to both drivers.
 
 set -eo pipefail
 
 SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "${SCRIPT_DIR}/../../../.." && pwd)
+
+TASKS="hellaswag,piqa,mmlu,gsm8k"
+EVALSCOPE_TASK_LIST="aime26,gpqa_diamond,math_500"
+COMMON_ARGS=()
+for arg in "$@"; do
+    case $arg in
+        --tasks=*)
+            TASKS="${arg#*=}"
+            ;;
+        *)
+            COMMON_ARGS+=("$arg")
+            ;;
+    esac
+done
+
+LM_EVAL_TASKS=""
+EVALSCOPE_TASKS=""
+IFS=',' read -ra task_array <<< "$TASKS"
+for task in "${task_array[@]}"; do
+    task="${task//[[:space:]]/}"
+    [[ -z "$task" ]] && continue
+    if [[ ",${EVALSCOPE_TASK_LIST}," == *",${task},"* ]]; then
+        EVALSCOPE_TASKS="${EVALSCOPE_TASKS:+$EVALSCOPE_TASKS,}$task"
+    else
+        LM_EVAL_TASKS="${LM_EVAL_TASKS:+$LM_EVAL_TASKS,}$task"
+    fi
+done
 
 export ATTENTION_BACKEND_FP8KV="FLASHINFER"
 # fp8 attention is only supported through the TRITON_ATTN backend for LLMC format
@@ -27,4 +59,9 @@ export FLASHINFER_WORKSPACE_SIZE=2147483648
 # B200 special env
 export NLTK_ALLOW_PROXIED_URLOPEN=1
 
-bash "${REPO_ROOT}/benchmark/lm_eval/run_lm_eval.sh" "$@"
+if [[ -n "$LM_EVAL_TASKS" ]]; then
+    bash "${REPO_ROOT}/benchmark/lm_eval/run_lm_eval.sh" "${COMMON_ARGS[@]}" --tasks="$LM_EVAL_TASKS"
+fi
+if [[ -n "$EVALSCOPE_TASKS" ]]; then
+    bash "${REPO_ROOT}/benchmark/evalscope/run_evalscope.sh" "${COMMON_ARGS[@]}" --tasks="$EVALSCOPE_TASKS"
+fi

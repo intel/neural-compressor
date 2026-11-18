@@ -342,7 +342,7 @@ class BaseConfig(ABC):
         """
         result = dict()
         for param, value in self.__dict__.items():
-            if param not in ["_global_config", "_local_config", "_white_list"]:
+            if param not in ["_global_config", "_local_config", "_white_list", "_is_initialized"]:
                 result[param] = value
         return result
 
@@ -392,7 +392,7 @@ class BaseConfig(ABC):
         """
         with open(filename, "r", encoding="utf-8") as file:
             config_dict = json.load(file)
-        return cls.from_dict(**config_dict)
+        return cls.from_dict(config_dict)
 
     def to_json_file(self, filename):
         """Save the config to a JSON file.

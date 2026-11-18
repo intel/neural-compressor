@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import torch
+from vllm.logger import init_logger
 from vllm.model_executor.layers.fused_moe import FusedMoeWeightScaleSupported, RoutedExperts, SharedExperts
 from vllm.model_executor.layers.fused_moe.activation import ApplyMoEActivationConfig, apply_moe_activation
 from vllm.model_executor.layers.fused_moe.config import FusedMoEConfig, FusedMoEQuantConfig
@@ -12,6 +13,9 @@ from vllm.model_executor.layers.quantization.utils.marlin_utils_fp4 import prepa
 from vllm.model_executor.utils import set_weight_attrs
 from vllm.scalar_type import scalar_types
 from vllm_qdq_plugin.qdq.nvfp4 import nvfp4_qdq
+from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import try_fused_silu_and_mul_qdq
+
+logger = init_logger(__name__)
 
 
 class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
@@ -74,47 +78,50 @@ class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
             set_weight_attrs(scale, tensor_attrs)
 
     @staticmethod
-    def _input_scale_per_expert(stored_scale: torch.Tensor, name: str) -> torch.Tensor:
-        if stored_scale.ndim == 2:
-            if not torch.allclose(stored_scale, stored_scale[:, :1].expand_as(stored_scale)):
-                raise ValueError(f"NVFP4 QDQ requires matching {name} across gate/up shards per expert")
-            stored_scale = stored_scale[:, 0]
-        elif stored_scale.ndim != 1:
-            raise ValueError(f"NVFP4 QDQ expects one {name} value per expert")
-        return (1.0 / stored_scale).to(torch.float32)
+    def _collapse_uniform(scales: torch.Tensor) -> torch.Tensor:
+        """Return a 0-d scale when every expert shares it, so QDQ can skip per-route expansion."""
+        scales = scales.to(torch.float32).contiguous()
+        if torch.equal(scales, scales[:1].expand_as(scales)):
+            return scales[0].clone().reshape(())
+        return scales
 
     @staticmethod
-    def _scale_for_routes(
-        scale_per_expert: torch.Tensor,
+    def _routed_input_scales(
         topk_ids: torch.Tensor,
         expert_map: torch.Tensor | None,
+        per_expert_scales: torch.Tensor,
     ) -> torch.Tensor:
-        expert_ids = topk_ids.reshape(-1).to(torch.long)
+        if per_expert_scales.ndim == 0:
+            return per_expert_scales
+        expert_ids = topk_ids.reshape(-1).long()
         if expert_map is not None:
             global_ids = expert_ids.clamp(min=0, max=expert_map.numel() - 1)
-            expert_ids = expert_map[global_ids].to(torch.long)
-        local_ids = expert_ids.clamp(min=0, max=scale_per_expert.numel() - 1)
-        return scale_per_expert[local_ids]
+            expert_ids = expert_map[global_ids].long()
+        local_ids = expert_ids.clamp(min=0, max=per_expert_scales.numel() - 1)
+        return per_expert_scales.index_select(0, local_ids)
 
     def process_weights_after_loading(self, layer: RoutedExperts) -> None:
+        if self.moe.is_act_and_mul and not torch.allclose(
+            layer.w13_weight_global_scale[:, 0], layer.w13_weight_global_scale[:, 1]
+        ):
+            raise ValueError("NVFP4 QDQ requires matching gate/up weight global scales within each expert")
+        if self.moe.is_act_and_mul and not torch.allclose(
+            layer.w13_input_global_scale[:, 0], layer.w13_input_global_scale[:, 1]
+        ):
+            logger.warning_once(
+                "NVFP4 QDQ gate/up input scales differ within an expert; using the larger stored scale."
+            )
+        w13_input_scale = layer.w13_input_global_scale.max(dim=1).values
+
         w13_weight = layer.w13_weight_packed.detach().contiguous()
         del layer.w13_weight_packed
         w2_weight = layer.w2_weight_packed.detach().contiguous()
         del layer.w2_weight_packed
-
-        if self.moe.is_act_and_mul and not torch.allclose(
-            layer.w13_weight_global_scale[:, 0], layer.w13_weight_global_scale[:, 1]
-        ):
-            raise ValueError("NVFP4 QDQ requires matching gate/up weight global scales")
         w13_weight_global_scale = 1.0 / layer.w13_weight_global_scale[:, 0].contiguous()
         w2_weight_global_scale = 1.0 / layer.w2_weight_global_scale
-        layer.w13_input_scale = torch.nn.Parameter(
-            self._input_scale_per_expert(layer.w13_input_global_scale, "w13 input global scale"),
-            requires_grad=False,
-        )
+        layer.w13_input_scale = torch.nn.Parameter(self._collapse_uniform(w13_input_scale), requires_grad=False)
         layer.w2_input_scale = torch.nn.Parameter(
-            self._input_scale_per_expert(layer.w2_input_global_scale, "w2 input global scale"),
-            requires_grad=False,
+            self._collapse_uniform(layer.w2_input_global_scale), requires_grad=False
         )
 
         (
@@ -169,6 +176,19 @@ class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
         )
 
         def activation_with_qdq(activation, output, activation_input, *, topk_ids, expert_map) -> None:
+            input_global_scale = self._routed_input_scales(topk_ids, expert_map, layer.w2_input_scale)
+            if try_fused_silu_and_mul_qdq(
+                activation,
+                output,
+                activation_input,
+                activation_config,
+                self.group_size,
+                "E4M3",
+                input_global_scale,
+                format_name="NVFP4",
+                trace_op_name="nvfp4_moe_activation",
+            ):
+                return
             apply_moe_activation(
                 activation,
                 output,
@@ -177,25 +197,30 @@ class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
                 topk_ids=topk_ids,
                 expert_map=expert_map,
             )
-            output.copy_(
-                nvfp4_qdq(
-                    output.contiguous(),
-                    self._scale_for_routes(layer.w2_input_scale, topk_ids, expert_map),
-                    self.group_size,
-                    trace_op_name="nvfp4_moe_activation",
-                )
+            nvfp4_qdq(
+                output,
+                input_global_scale,
+                self.group_size,
+                inplace=True,
+                trace_op_name="nvfp4_moe_activation",
             )
 
-        num_tokens, top_k = topk_ids.shape
-        route_topk_ids = topk_ids.reshape(-1, 1).contiguous()
-        route_topk_weights = topk_weights.reshape(-1, 1).contiguous()
-        routed_x = x[:, None, :].expand(-1, top_k, -1).reshape(-1, x.shape[-1]).contiguous()
-        quantized_x = nvfp4_qdq(
-            routed_x,
-            self._scale_for_routes(layer.w13_input_scale, route_topk_ids, layer.expert_map),
-            self.group_size,
-            trace_op_name="nvfp4_moe_input",
-        )
+        num_tokens, topk = topk_ids.shape
+        if layer.w13_input_scale.ndim == 0:
+            moe_topk_ids, moe_topk_weights = topk_ids, topk_weights
+            quantized_x = nvfp4_qdq(x, layer.w13_input_scale, self.group_size, trace_op_name="nvfp4_moe_input")
+        else:
+            # Per-expert input scales: run each (token, expert) route as its own row; the kernel
+            # reads token rows directly instead of materializing a top_k-expanded copy.
+            moe_topk_ids = topk_ids.reshape(-1, 1).contiguous()
+            moe_topk_weights = topk_weights.reshape(-1, 1).contiguous()
+            quantized_x = nvfp4_qdq(
+                x,
+                self._routed_input_scales(moe_topk_ids, layer.expert_map, layer.w13_input_scale),
+                self.group_size,
+                topk=topk,
+                trace_op_name="nvfp4_moe_input",
+            )
         routed_output = fused_marlin_moe(
             hidden_states=quantized_x,
             w1=layer.w13_weight,
@@ -204,8 +229,8 @@ class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
             bias2=None,
             w1_scale=layer.w13_weight_scale,
             w2_scale=layer.w2_weight_scale,
-            topk_weights=route_topk_weights,
-            topk_ids=route_topk_ids,
+            topk_weights=moe_topk_weights,
+            topk_ids=moe_topk_ids,
             quant_type_id=scalar_types.float4_e2m1f.id,
             apply_router_weight_on_input=layer.apply_router_weight_on_input,
             global_num_experts=layer.global_num_experts,
@@ -217,4 +242,6 @@ class INCNvfp4QDQMoEMethod(FusedMoEMethodBase):
             workspace=getattr(layer, "workspace", None),
             activation_config=activation_config,
         )
-        return routed_output.view(num_tokens, top_k, -1).sum(dim=1)
+        if moe_topk_ids is not topk_ids:
+            return routed_output.view(num_tokens, topk, -1).sum(dim=1)
+        return routed_output

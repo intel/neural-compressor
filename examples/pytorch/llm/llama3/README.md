@@ -183,7 +183,8 @@ For convenience, we provide a benchmark script that automatically handles GPU de
 
 **All 5 MXFP benchmark cases:**
 
-The default task list is `piqa,hellaswag,mmlu`; pass `--tasks` to use the Llama task variants.
+The default task list is `hellaswag,piqa,mmlu,gsm8k`; pass `--tasks` to use the Llama task variants.
+`aime26`, `gpqa_diamond` and `math_500` run with `benchmark/evalscope/run_evalscope.sh`; all other tasks run with `benchmark/lm_eval/run_lm_eval.sh`. All options other than `--tasks` are passed to both drivers.
 
 1. **Llama 3.1 8B MXFP8** (1 GPU):
 ```bash
@@ -212,7 +213,8 @@ CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=Llama-3.1-70B-MXFP8 
 
 The script automatically:
 - Detects available GPUs from `CUDA_VISIBLE_DEVICES` and sets `tensor_parallel_size` accordingly
-- Runs default tasks: `piqa,hellaswag,mmlu_llama,gsm8k_llama` with batch size 64
+- Runs default tasks: `hellaswag,piqa,mmlu,gsm8k`
+- Routes `aime26`, `gpqa_diamond` and `math_500` to evalscope (served by `vllm serve`), e.g. `--tasks=piqa,gsm8k_llama,gpqa_diamond`
 - Supports custom task selection and batch size adjustment
 - Handles special tasks like `mmlu_llama`, `gsm8k_llama` (with chat template) and `longbench` (with extended context length) automatically
 - For longbench dataset evaluation, use the `--tasks=longbench` parameter
