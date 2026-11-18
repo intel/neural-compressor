@@ -30,7 +30,7 @@ environment active.
 
 ```bash
 # 1. Generate videos.
-bash benchmark/vbench/run_vbench.sh generate --task=t2v --model_path=org/model --output_dir=runs/t2v
+bash benchmark/vbench/run_vbench.sh generate --task=t2v --model_path=org/model --dtype=mxfp8 --output_dir=runs/t2v
 
 # 2. Verify and score those videos.
 bash benchmark/vbench/run_vbench.sh evaluate --task=t2v --output_dir=runs/t2v
@@ -39,6 +39,10 @@ bash benchmark/vbench/run_vbench.sh evaluate --task=t2v --output_dir=runs/t2v
 For I2V, use `--task=i2v` on both commands, an I2V checkpoint, and a separate
 output directory. Set `I2V_IMAGES` before generation. The evaluation command
 uses the reference images recorded by generation and needs no model path.
+
+Use `--dtype=bf16`, `mxfp8`, `nvfp4`, or `nvfp4_e5m3` to state which
+checkpoint precision you expect. If omitted, generation reads the precision from
+the checkpoint. The flag validates the checkpoint and does not convert weights.
 
 The model path can be a local checkpoint or a Hugging Face model ID. Use
 `--revision=FULL_HUB_COMMIT` to pin a Hub checkpoint and `--gpus=0,1,2,3` to shard

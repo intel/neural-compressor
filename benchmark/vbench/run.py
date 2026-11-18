@@ -88,8 +88,11 @@ def generate_videos(args, output_dir, gpus):
     data_type = load_json(quant_config).get("data_type") if quant_config.exists() else None
     if data_type not in PRECISIONS:
         raise ValueError(f"Unsupported checkpoint data_type: {data_type}")
+    precision = PRECISIONS[data_type]
+    if args.dtype is not None and args.dtype != precision:
+        raise ValueError(f"--dtype={args.dtype} does not match the checkpoint precision ({precision})")
     prepare(output_dir, args.task, args.i2v_images if args.task == "i2v" else None)
-    bind_checkpoint(output_dir, args.task, model, PRECISIONS[data_type], args.omni_source)
+    bind_checkpoint(output_dir, args.task, model, precision, args.omni_source)
 
     command = [sys.executable, str(BENCHMARK), "generate", "--task", args.task, "--root", str(output_dir)]
     logs = output_dir / "logs"
@@ -124,6 +127,11 @@ def main():
         stage.add_argument("--output_dir", type=Path, required=True)
         stage.add_argument("--gpus", default=os.environ.get("CUDA_VISIBLE_DEVICES", "0"))
     generate.add_argument("--model_path", required=True, help="Local checkpoint or Hugging Face model ID")
+    generate.add_argument(
+        "--dtype",
+        choices=tuple(PRECISIONS.values()),
+        help="Check the expected precision (default: read the checkpoint)",
+    )
     generate.add_argument("--revision", help="Hugging Face checkpoint revision")
     generate.add_argument("--omni_source", type=Path, default=os.environ.get("OMNI_SOURCE"))
     generate.add_argument("--i2v_images", type=Path, default=os.environ.get("I2V_IMAGES"))
