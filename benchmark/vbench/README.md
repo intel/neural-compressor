@@ -1,7 +1,8 @@
 # Wan2.2 VBench
 
 Generate and score Wan2.2-A14B Diffusers videos with BF16, MXFP8, NVFP4,
-or NVFP4 E5M3 checkpoints. The runner infers the task and precision.
+or NVFP4 E5M3 checkpoints. Choose the task explicitly. The runner checks that
+the checkpoint matches the task and reads its precision from the config.
 
 ## Setup
 
@@ -24,27 +25,28 @@ and set `I2V_IMAGES` to the extracted `crop/16-9` directory.
 
 ## Reproduce
 
-From the neural-compressor repository root, with the environment above active,
-pass a local checkpoint directory or Hugging Face model ID.
+Run these commands from the neural-compressor repository root with the benchmark
+environment active.
 
 ```bash
-bash benchmark/vbench/run_vbench.sh --model_path=org/model
+# 1. Generate videos.
+bash benchmark/vbench/run_vbench.sh generate --task=t2v --model_path=org/model --output_dir=runs/t2v
+
+# 2. Verify and score those videos.
+bash benchmark/vbench/run_vbench.sh evaluate --task=t2v --output_dir=runs/t2v
 ```
 
-Use `--revision=FULL_HUB_COMMIT` to pin a Hub checkpoint. Add `--gpus=0,1,2,3`
-to shard generation across GPUs. By default the runner uses the indices in
-`CUDA_VISIBLE_DEVICES`, or GPU 0 when unset. The first selected GPU scores the
-verified video set. Repeating the command with the same checkpoint and output
-directory resumes valid videos and cached scores.
+For I2V, use `--task=i2v` on both commands, an I2V checkpoint, and a separate
+output directory. Set `I2V_IMAGES` before generation. The evaluation command
+uses the reference images recorded by generation and needs no model path.
 
-```bash
-# Generate first and score later.
-bash benchmark/vbench/run_vbench.sh --model_path=org/model --output_dir=runs/model --stage=generate
-bash benchmark/vbench/run_vbench.sh --output_dir=runs/model --stage=evaluate
-```
+The model path can be a local checkpoint or a Hugging Face model ID. Use
+`--revision=FULL_HUB_COMMIT` to pin a Hub checkpoint and `--gpus=0,1,2,3` to shard
+generation across GPUs. By default the runner uses `CUDA_VISIBLE_DEVICES`, or
+GPU 0 when unset. Evaluation uses the first selected GPU.
 
-Scores are in `<output_dir>/evaluation/summary.json`. The runner prints the
-output path at startup and defaults to `runs/TASK-PRECISION-CHECKPOINT_PATH_HASH`.
+Repeat a command with the same settings and output directory to resume.
+Scores are written to `<output_dir>/evaluation/summary.json`.
 
 ## Protocol
 

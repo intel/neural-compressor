@@ -8,7 +8,7 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from pathlib import Path
 
-from benchmark import METRICS, _lock, atomic_json, fingerprint, load_json, read_prepared, sha256, verify
+from benchmark import METRICS, atomic_json, fingerprint, load_json, read_prepared, sha256, verify
 
 
 @contextmanager
@@ -50,13 +50,12 @@ def evaluation_view(root, jobs):
 
 def evaluate(root, task, metrics):
     root = Path(root).resolve()
-    with _lock(root / "locks" / "evaluation.lock"):
-        out = root / "evaluation"
-        # Publish a new summary only after the requested metrics succeed.
-        (out / "completed.json").unlink(missing_ok=True)
-        (out / "summary.json").unlink(missing_ok=True)
-        manifest = verify(root, task)
-        return _evaluate(root, task, metrics, manifest)
+    out = root / "evaluation"
+    # Publish a new summary only after the requested metrics succeed.
+    (out / "completed.json").unlink(missing_ok=True)
+    (out / "summary.json").unlink(missing_ok=True)
+    manifest = verify(root, task)
+    return _evaluate(root, task, metrics, manifest)
 
 
 def _evaluate(root, task, metrics, manifest):

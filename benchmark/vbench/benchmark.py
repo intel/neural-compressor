@@ -9,16 +9,12 @@ Weight bytes are NOT fingerprinted: local checkpoint weights must be immutable.
 """
 
 import argparse
-import contextlib
 import datetime
-import fcntl
 import hashlib
 import importlib
-import importlib.metadata
 import importlib.util
 import json
 import os
-import platform
 import subprocess
 import sys
 import tempfile
@@ -90,17 +86,6 @@ SETTINGS = {
     ),
 }
 MODEL_CLASSES = {"t2v": "WanPipeline", "i2v": "WanImageToVideoPipeline"}
-PACKAGES = (
-    "torch",
-    "numpy",
-    "vllm",
-    "vllm-omni",
-    "flashinfer-python",
-    "nvidia-cutlass-dsl",
-    "diffusers",
-    "transformers",
-    "vbench",
-)
 
 
 def load_json(path):
@@ -153,18 +138,6 @@ def atomic_json(path, value):
     finally:
         if tmp is not None:
             tmp.unlink(missing_ok=True)
-
-
-@contextlib.contextmanager
-def _lock(path):
-    path = Path(path)
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with path.open("a") as handle:
-        fcntl.flock(handle, fcntl.LOCK_EX)
-        try:
-            yield
-        finally:
-            fcntl.flock(handle, fcntl.LOCK_UN)
 
 
 def _immutable(path, value):
@@ -263,15 +236,14 @@ def prepare(root, task, images=None):
         raise ValueError("--i2v-images is only valid for I2V")
     jobs = build_jobs(task, images)
     task_record = _task_record(task, jobs, images)
-    for folder in ("logs", "metadata", "locks", "videos"):
+    for folder in ("logs", "metadata", "videos"):
         (root / folder).mkdir(parents=True, exist_ok=True)
-    with _lock(root / "locks" / "state.lock"):
-        # Check both before writing either: mismatches never change a snapshot.
-        for name, value in (("task.json", task_record), ("jobs.json", jobs)):
-            if (root / name).exists() and load_json(root / name) != value:
-                raise RuntimeError(f"Refusing mismatched preparation: {root / name}")
-        _immutable(root / "jobs.json", jobs)
-        _immutable(root / "task.json", task_record)
+    # Check both before writing either: mismatches never change a snapshot.
+    for name, value in (("task.json", task_record), ("jobs.json", jobs)):
+        if (root / name).exists() and load_json(root / name) != value:
+            raise RuntimeError(f"Refusing mismatched preparation: {root / name}")
+    _immutable(root / "jobs.json", jobs)
+    _immutable(root / "task.json", task_record)
     print(f"PREPARED {task} {len(jobs)} inputs: {root}", flush=True)
     return jobs
 
@@ -481,18 +453,26 @@ def validate_model(model, task, precision):
     )
 
 
-def configuration(root, task, model, precision, source):
+def bind_checkpoint(root, task, model, precision, source):
+    """Record the generation settings once before starting GPU workers."""
     task_record, _ = read_prepared(root, task)
-    return dict(
+    config = dict(
         schema_version=1,
         task=task,
         task_sha256=fingerprint(task_record),
         source=validate_source(source),
         model=validate_model(model, task, precision),
+        runtime={
+            key: os.environ.get(key) for key in ("VLLM_PLUGINS", "VLLM_QDQ", "VLLM_QDQ_CUTE", "VLLM_NVFP4_GEMM_BACKEND")
+        },
         settings=SETTINGS[task],
         sampling_sha256=fingerprint(SETTINGS[task]),
         benchmark_sha256=sha256(Path(__file__)),
     )
+    path = root / "configuration.json"
+    if not path.exists() and (any((root / "metadata").glob("*.json")) or any((root / "videos").glob("*.mp4"))):
+        raise RuntimeError("Existing outputs without configuration; use a new output directory")
+    _immutable(path, config)
 
 
 def _check_configuration(config, task, task_record):
@@ -726,12 +706,7 @@ def generate(args):
         raise ValueError("Require num-shards >= 1, 0 <= shard-index < num-shards, limit >= 0")
     root = Path(args.root).expanduser().resolve()
     task_record, jobs = read_prepared(root, args.task)
-    cfg = configuration(root, args.task, args.model, args.precision, args.omni_source)
-    with _lock(root / "locks" / "state.lock"):
-        if not (root / "configuration.json").exists():
-            if any((root / "metadata").glob("*.json")) or any((root / "videos").glob("*.mp4")):
-                raise RuntimeError("Existing outputs without configuration; refusing to rebind")
-        _immutable(root / "configuration.json", cfg)
+    cfg = load_json(root / "configuration.json")
     _check_configuration(cfg, args.task, task_record)
     # This must precede all runtime imports, including the official example import.
     old_attention = os.environ.get("DIFFUSION_ATTENTION_BACKEND")
@@ -760,51 +735,51 @@ def generate(args):
             if job["index"] % args.num_shards != args.shard_index:
                 continue
             index = job["index"]
-            with _lock(root / "locks" / f"{index:04d}.lock"):
-                if args.task == "i2v" and sha256(job["image"]) != job["image_sha256"]:
-                    raise RuntimeError(f"Reference image changed: {job['image_name']}")
-                if _completed_job(root, job, cfg):
-                    skipped += 1
-                    event("SKIP", index=index)
-                    continue
-                with _lock(root / "locks" / "state.lock"):
-                    (root / "completed.json").unlink(missing_ok=True)
-                video, meta = _job_paths(root, job)
-                fd, name = tempfile.mkstemp(prefix=f".{index:04d}.", suffix=".tmp.mp4", dir=root / "videos")
-                os.close(fd)
-                temporary = Path(name)
-                start = time.monotonic()
-                try:
-                    event("START_VIDEO", index=index, prompt=job["prompt"])
-                    command = runner.generate(job, temporary)
-                    s = cfg["settings"]
-                    if not probe(temporary, s["frames"], s["width"], s["height"], s["fps"]):
-                        raise RuntimeError(f"Output validation failed for index {index}")
-                    video_hash = sha256(temporary)
-                    with temporary.open("rb") as handle:
-                        os.fsync(handle.fileno())
-                    os.replace(temporary, video)
-                    _fsync_directory(video.parent)
-                    elapsed = time.monotonic() - start
-                    atomic_json(
-                        meta,
-                        dict(
-                            job=job,
-                            fingerprint=fingerprint(cfg, job),
-                            configuration_sha256=fingerprint(cfg),
-                            video_sha256=video_hash,
-                            size_bytes=video.stat().st_size,
-                            gpu=runner.gpu,
-                            physical_gpu=os.environ.get("CUDA_VISIBLE_DEVICES"),
-                            elapsed_seconds=elapsed,
-                            finished_at=_now(),
-                            command=command,
-                        ),
-                    )
-                    count += 1
-                    event("DONE_VIDEO", index=index, elapsed_seconds=elapsed, video_sha256=video_hash)
-                finally:
-                    temporary.unlink(missing_ok=True)
+            if args.task == "i2v" and sha256(job["image"]) != job["image_sha256"]:
+                raise RuntimeError(f"Reference image changed: {job['image_name']}")
+            if _completed_job(root, job, cfg):
+                skipped += 1
+                event("SKIP", index=index)
+                continue
+            (root / "completed.json").unlink(missing_ok=True)
+            (root / "evaluation" / "completed.json").unlink(missing_ok=True)
+            (root / "evaluation" / "summary.json").unlink(missing_ok=True)
+            video, meta = _job_paths(root, job)
+            fd, name = tempfile.mkstemp(prefix=f".{index:04d}.", suffix=".tmp.mp4", dir=root / "videos")
+            os.close(fd)
+            temporary = Path(name)
+            start = time.monotonic()
+            try:
+                event("START_VIDEO", index=index, prompt=job["prompt"])
+                command = runner.generate(job, temporary)
+                s = cfg["settings"]
+                if not probe(temporary, s["frames"], s["width"], s["height"], s["fps"]):
+                    raise RuntimeError(f"Output validation failed for index {index}")
+                video_hash = sha256(temporary)
+                with temporary.open("rb") as handle:
+                    os.fsync(handle.fileno())
+                os.replace(temporary, video)
+                _fsync_directory(video.parent)
+                elapsed = time.monotonic() - start
+                atomic_json(
+                    meta,
+                    dict(
+                        job=job,
+                        fingerprint=fingerprint(cfg, job),
+                        configuration_sha256=fingerprint(cfg),
+                        video_sha256=video_hash,
+                        size_bytes=video.stat().st_size,
+                        gpu=runner.gpu,
+                        physical_gpu=os.environ.get("CUDA_VISIBLE_DEVICES"),
+                        elapsed_seconds=elapsed,
+                        finished_at=_now(),
+                        command=command,
+                    ),
+                )
+                count += 1
+                event("DONE_VIDEO", index=index, elapsed_seconds=elapsed, video_sha256=video_hash)
+            finally:
+                temporary.unlink(missing_ok=True)
             if args.limit and count >= args.limit:
                 break
         event(
@@ -812,7 +787,7 @@ def generate(args):
             newly_generated=count,
             skipped=skipped,
             limited=bool(args.limit and count >= args.limit),
-            note="Worker exit is not full-run completion; run verify",
+            note="Run evaluate to verify and score the complete video set",
         )
     except BaseException as exc:
         event("WORKER_FAILED", error_type=type(exc).__name__, error=str(exc))
@@ -835,137 +810,47 @@ def verify(root, task):
     """
     root = Path(root).expanduser().resolve()
     # Remove stale completion evidence even if the input/config checks now fail.
-    with _lock(root / "locks" / "state.lock"):
-        (root / "completed.json").unlink(missing_ok=True)
+    (root / "completed.json").unlink(missing_ok=True)
     task_record, jobs = read_prepared(root, task)
     config = load_json(root / "configuration.json")
     _check_configuration(config, task, task_record)
     failures = []
     videos = []
-    # Holding the job locks through publication prevents concurrent repair from
-    # racing the verified hash manifest. Workers use the same job -> state order.
-    with contextlib.ExitStack() as stack:
-        for job in jobs:
-            stack.enter_context(_lock(root / "locks" / f"{job['index']:04d}.lock"))
-        for job in jobs:
-            if not _completed_job(root, job, config):
-                failures.append(job["index"])
-            else:
-                _, metadata = _job_paths(root, job)
-                record = load_json(metadata)
-                videos.append(
-                    dict(
-                        index=job["index"],
-                        filename=job["filename"],
-                        fingerprint=record["fingerprint"],
-                        video_sha256=record["video_sha256"],
-                        size_bytes=record["size_bytes"],
-                    )
+    for job in jobs:
+        if not _completed_job(root, job, config):
+            failures.append(job["index"])
+        else:
+            _, metadata = _job_paths(root, job)
+            record = load_json(metadata)
+            videos.append(
+                dict(
+                    index=job["index"],
+                    filename=job["filename"],
+                    fingerprint=record["fingerprint"],
+                    video_sha256=record["video_sha256"],
+                    size_bytes=record["size_bytes"],
                 )
-        if failures:
-            raise RuntimeError(
-                f"Verification failed: {len(failures)}/{len(jobs)} missing/invalid "
-                f"jobs; indices={failures}. No full completion recorded."
             )
-        manifest = dict(
-            schema_version=1,
-            task=task,
-            selected_count=EXPECTED_COUNTS[task],
-            videos_count=len(videos),
-            task_sha256=fingerprint(task_record),
-            configuration_sha256=fingerprint(config),
-            jobs_sha256=fingerprint(jobs),
-            videos=videos,
-            videos_sha256=fingerprint(videos),
-            verified_at=_now(),
+    if failures:
+        raise RuntimeError(
+            f"Verification failed: {len(failures)}/{len(jobs)} missing/invalid "
+            f"jobs; indices={failures}. No full completion recorded."
         )
-        with _lock(root / "locks" / "state.lock"):
-            # Recheck immutable files before certifying the snapshot.
-            if load_json(root / "configuration.json") != config or load_json(root / "jobs.json") != jobs:
-                raise RuntimeError("Configuration/jobs changed during verification")
-            atomic_json(root / "completed.json", manifest)
+    manifest = dict(
+        schema_version=1,
+        task=task,
+        selected_count=EXPECTED_COUNTS[task],
+        videos_count=len(videos),
+        task_sha256=fingerprint(task_record),
+        configuration_sha256=fingerprint(config),
+        jobs_sha256=fingerprint(jobs),
+        videos=videos,
+        videos_sha256=fingerprint(videos),
+        verified_at=_now(),
+    )
+    atomic_json(root / "completed.json", manifest)
     print(f"VERIFIED {task} {len(videos)}/{EXPECTED_COUNTS[task]} videos", flush=True)
     return manifest
-
-
-def _command_evidence(command):
-    try:
-        result = subprocess.run(command, capture_output=True, text=True, timeout=120)
-        return dict(
-            command=command, returncode=result.returncode, stdout=result.stdout.strip(), stderr=result.stderr.strip()
-        )
-    except (OSError, subprocess.TimeoutExpired) as exc:
-        return dict(command=command, error=type(exc).__name__)
-
-
-def environment(root=None, task=None, source=None):
-    """Collect only allowlisted environment fields; never dump argv or os.environ."""
-    source_info = validate_source(source) if source else None
-    versions = {}
-    for package in PACKAGES:
-        try:
-            versions[package] = importlib.metadata.version(package)
-        except importlib.metadata.PackageNotFoundError:
-            versions[package] = None
-    # Isolate runtime imports from this stdlib CLI. No model/engine is constructed.
-    code = """
-import importlib.util, json, sys
-if len(sys.argv) > 1:
-    sys.path.insert(0, sys.argv[1])
-origins = {}
-for name in ('torch', 'numpy', 'vllm', 'vllm_omni', 'diffusers', 'flashinfer', 'cutlass', 'vbench'):
-    try:
-        spec = importlib.util.find_spec(name)
-        origins[name] = spec.origin if spec else None
-    except Exception as exc:
-        origins[name] = {'error_type': type(exc).__name__}
-result = {'imports': origins}
-try:
-    import torch
-    result['torch'] = {'version': torch.__version__, 'cuda_build': torch.version.cuda,
-                       'cuda_available': torch.cuda.is_available(), 'file': torch.__file__}
-except Exception as exc:
-    result['torch'] = {'error_type': type(exc).__name__}
-print(json.dumps(result))
-"""
-    imports = _command_evidence([sys.executable, "-c", code] + ([str(Path(source).resolve())] if source else []))
-    try:
-        runtime = json.loads(imports.get("stdout", "").splitlines()[-1])
-    except (ValueError, IndexError):
-        runtime = dict(error="Runtime import probe failed", returncode=imports.get("returncode"))
-    if source_info:
-        origin = runtime.get("imports", {}).get("vllm_omni")
-        if not isinstance(origin, str) or not Path(origin).resolve().is_relative_to(
-            Path(source_info["path"]) / "vllm_omni"
-        ):
-            raise RuntimeError("Environment import probe did not resolve the selected Omni checkout")
-    evidence = dict(
-        schema_version=1,
-        captured_at=_now(),
-        task=task,
-        python=dict(executable=sys.executable, version=sys.version),
-        platform=platform.platform(),
-        versions=versions,
-        runtime=runtime,
-        source=source_info,
-        environment={
-            key: os.environ.get(key)
-            for key in ("PYTHONPATH", "CUDA_VISIBLE_DEVICES", "CUDA_HOME", "CUDA_PATH", "DIFFUSION_ATTENTION_BACKEND")
-        },
-        commands={
-            name: _command_evidence(command)
-            for name, command in (
-                ("nvcc", ["nvcc", "--version"]),
-                ("nvidia-smi", ["nvidia-smi"]),
-                ("ffmpeg", ["ffmpeg", "-version"]),
-                ("ffprobe", ["ffprobe", "-version"]),
-            )
-        },
-    )
-    if root is not None:
-        atomic_json(Path(root).expanduser().resolve() / "environment.json", evidence)
-    print(json.dumps(evidence, ensure_ascii=False, indent=2), flush=True)
-    return evidence
 
 
 def evaluate(root, task, metrics=None):
@@ -988,17 +873,11 @@ def evaluate(root, task, metrics=None):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     commands = parser.add_subparsers(dest="command", required=True)
-    for name in ("prepare", "generate", "verify", "evaluate", "environment"):
+    for name in ("generate", "evaluate"):
         command = commands.add_parser(name)
-        command.add_argument("--task", choices=tuple(SETTINGS), required=name != "environment")
-        command.add_argument("--root", type=Path, required=name != "environment")
-        if name == "prepare":
-            command.add_argument("--i2v-images", type=Path)
-        if name in ("generate", "environment"):
-            command.add_argument("--omni-source", type=Path, required=name == "generate")
+        command.add_argument("--task", choices=tuple(SETTINGS), required=True)
+        command.add_argument("--root", type=Path, required=True)
         if name == "generate":
-            command.add_argument("--model", type=Path, required=True, help="Local immutable checkpoint directory")
-            command.add_argument("--precision", choices=("bf16", "nvfp4", "mxfp8", "nvfp4_e5m3"), required=True)
             command.add_argument("--shard-index", type=int, default=0)
             command.add_argument("--num-shards", type=int, default=1)
             command.add_argument("--limit", type=int, default=0, help="Maximum NEW videos per worker; 0 means no limit")
@@ -1006,16 +885,10 @@ def main(argv=None):
             command.add_argument("--metrics", nargs="+", help="Task metric subset (default: all five)")
     args = parser.parse_args(argv)
     try:
-        if args.command == "prepare":
-            prepare(args.root, args.task, args.i2v_images)
-        elif args.command == "generate":
+        if args.command == "generate":
             generate(args)
-        elif args.command == "verify":
-            verify(args.root, args.task)
-        elif args.command == "evaluate":
-            evaluate(args.root, args.task, args.metrics)
         else:
-            environment(args.root, args.task, args.omni_source)
+            evaluate(args.root, args.task, args.metrics)
     except (OSError, ValueError, RuntimeError, subprocess.SubprocessError) as exc:
         parser.exit(1, f"ERROR: {exc}\n")
 
