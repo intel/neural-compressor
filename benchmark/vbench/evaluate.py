@@ -8,7 +8,7 @@ from collections import OrderedDict
 from contextlib import contextmanager
 from pathlib import Path
 
-from benchmark import METRICS, atomic_json, fingerprint, load_json, read_prepared, sha256, verify
+from benchmark import METRICS, _lock, atomic_json, fingerprint, load_json, read_prepared, sha256, verify
 
 
 @contextmanager
@@ -49,11 +49,16 @@ def evaluation_view(root, jobs):
 
 
 def evaluate(root, task, metrics):
+    root = Path(root).resolve()
+    with _lock(root / "locks" / "evaluation.lock"):
+        manifest = verify(root, task)
+        return _evaluate(root, task, metrics, manifest)
+
+
+def _evaluate(root, task, metrics, manifest):
     import torch
     import vbench
 
-    root = Path(root).resolve()
-    verify(root, task)
     task_record, jobs = read_prepared(root, task)
     cfg = load_json(root / "configuration.json")
     out = root / "evaluation"
@@ -67,7 +72,7 @@ def evaluate(root, task, metrics):
         task=task,
         task_fingerprint=fingerprint(task_record),
         configuration_fingerprint=fingerprint(cfg),
-        video_hashes={j["filename"]: sha256(root / "videos" / j["filename"]) for j in jobs},
+        video_hashes={video["filename"]: video["video_sha256"] for video in manifest["videos"]},
         vbench_version=importlib.metadata.version("vbench"),
         torch_version=torch.__version__,
         samples_per_input=1,

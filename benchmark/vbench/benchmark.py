@@ -438,6 +438,10 @@ def validate_model(model, task, precision):
                 raise RuntimeError(f"Conflicting inline quantization config: {component}")
         if not any(directory.glob("*.safetensors")):
             raise RuntimeError(f"Missing safetensors weights: {component}")
+    weight_roots = [model]
+    # Hub snapshots normally symlink their weights to blobs in the same cache repository.
+    if model.parent.name == "snapshots" and model.parent.parent.name.startswith("models--"):
+        weight_roots.append(model.parent.parent / "blobs")
     json_files = {}
     indexes = {}
     for path in sorted(model.rglob("*.json")):
@@ -450,8 +454,11 @@ def validate_model(model, task, precision):
                 raise RuntimeError(f"Invalid safetensors weight index: {path}")
             shards = sorted(set(weight_map.values()))
             for name in shards:
-                shard = (path.parent / name).resolve(strict=True)
-                if not shard.is_relative_to(model) or not shard.is_file():
+                relative_shard = Path(name)
+                if relative_shard.is_absolute() or ".." in relative_shard.parts:
+                    raise RuntimeError(f"Unsafe indexed weight path: {name}")
+                shard = (path.parent / relative_shard).resolve()
+                if not shard.is_file() or not any(shard.is_relative_to(root) for root in weight_roots):
                     raise RuntimeError(f"Unsafe/missing indexed weight: {name}")
             indexes[relative] = dict(sha256=json_files[relative]["sha256"], shards=shards)
     weights = {
@@ -967,7 +974,6 @@ def evaluate(root, task, metrics=None):
     if not selected or len(set(selected)) != len(selected) or any(m not in METRICS[task] for m in selected):
         raise ValueError(f"Metrics must be distinct members of {METRICS[task]}")
     root = Path(root).expanduser().resolve()
-    verify(root, task)
     # Keep one module identity when the companion imports benchmark from a CLI run.
     sys.modules.setdefault("benchmark", sys.modules[__name__])
     path = Path(__file__).resolve().with_name("evaluate.py")

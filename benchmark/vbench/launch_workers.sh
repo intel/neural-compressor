@@ -3,7 +3,7 @@ set -euo pipefail
 if [[ ${1:-} == --help || ${1:-} == -h ]]; then
     echo "Usage: bash $0 TASK MODEL PRECISION ROOT OMNI_SOURCE GPU_LIST [I2V_IMAGES]"
     echo "GPU_LIST is comma-separated physical GPU indices (e.g. 0,1). Uses PYTHON or python3."
-    echo "Prepare once, generate disjoint shards, wait for every worker, then verify. No evaluation."
+    echo "Prepare once, generate disjoint shards, and wait for every worker."
     exit 0
 fi
 if [[ $# != 6 && $# != 7 ]]; then echo "Expected TASK MODEL PRECISION ROOT OMNI_SOURCE GPU_LIST [I2V_IMAGES]" >&2; exit 2; fi
@@ -153,9 +153,6 @@ try:
         # Do not short circuit: reap every worker even if an earlier shard failed.
         exits = [wait(pair) for pair in workers]
         code = 1 if any(exits) else 0
-        if code == 0:
-            code = wait(start('verify', base + ['verify', '--task', args.task,
-                                               '--root', str(root)], gpus[0]))
     report['status'] = 'succeeded' if code == 0 else 'failed'
 except Interrupted as exc:
     code = 128 + exc.number

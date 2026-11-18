@@ -103,11 +103,13 @@ def main(argv=None):
         if task == "i2v":
             command.append(str(args.i2v_images.expanduser().resolve()))
         subprocess.run(command, env=env, check=True)
-    if args.stage != "generate":
-        command = [sys.executable, str(scripts / "benchmark.py"), "evaluate", "--task", task, "--root", str(root)]
+    stage = "verify" if args.stage == "generate" else "evaluate"
+    command = [sys.executable, str(scripts / "benchmark.py"), stage, "--task", task, "--root", str(root)]
+    if stage == "evaluate":
         if metrics:
             command += ["--metrics", *metrics]
-        subprocess.run(command, env=dict(env, CUDA_VISIBLE_DEVICES=gpus[0]), check=True)
+    subprocess.run(command, env=dict(env, CUDA_VISIBLE_DEVICES=gpus[0]), check=True)
+    if stage == "evaluate":
         print(f'Scores: {root / "evaluation/summary.json"}', flush=True)
 
 
