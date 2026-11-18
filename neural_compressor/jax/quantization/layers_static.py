@@ -1791,8 +1791,8 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         if self._is_quantized:
             self.call = self.call_quantized
 
-            if hasattr(self, "reverve_embeddings"):
-                self._trainable_variables.remove(self.reverve_embeddings)
+            if hasattr(self, "reverse_embeddings"):
+                self._trainable_variables.remove(self.reverse_embeddings)
                 del self.reverse_embeddings
 
             # convert variables to attributes (const) if needed
