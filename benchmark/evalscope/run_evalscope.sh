@@ -63,7 +63,7 @@ SERVER_PORT="${SERVER_PORT:-8001}"
 
 usage() {
     echo "Usage: CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=<path_to_quantized_model> [--tasks=<tasks>]"
-    echo "  --model_path               Path to the quantized model (required)"
+    echo "  --model_path               Local model directory or Hugging Face model id <org>/<name> (required)"
     echo "  --tasks                    Comma-separated evalscope dataset names (default: ${TASKS})"
     echo "  --num_runs                 Times each task is evaluated; with >= 3 runs max/min are dropped (default: ${NUM_RUNS})."
     echo "                             Tasks in SINGLE_RUN_TASKS (${SINGLE_RUN_TASKS:-none}) always run once."
@@ -146,8 +146,9 @@ if [[ -z "$MODEL_PATH" ]]; then
     echo "Error: --model_path is required." >&2
     exit 1
 fi
-if [[ "$SKIP_SERVE" != "true" && ! -d "$MODEL_PATH" ]]; then
-    echo "Error: Model path '$MODEL_PATH' does not exist!" >&2
+# Accept a local model directory or a Hugging Face model id (<org>/<name>), which vLLM downloads.
+if [[ "$SKIP_SERVE" != "true" && ! -d "$MODEL_PATH" && ! "$MODEL_PATH" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9._-]+$ ]]; then
+    echo "Error: Model path '$MODEL_PATH' is neither a local directory nor a Hugging Face model id (<org>/<name>)." >&2
     exit 1
 fi
 if ! [[ "$NUM_RUNS" =~ ^[1-9][0-9]*$ ]]; then
