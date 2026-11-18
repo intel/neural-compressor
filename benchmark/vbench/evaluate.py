@@ -51,6 +51,10 @@ def evaluation_view(root, jobs):
 def evaluate(root, task, metrics):
     root = Path(root).resolve()
     with _lock(root / "locks" / "evaluation.lock"):
+        out = root / "evaluation"
+        # Publish a new summary only after the requested metrics succeed.
+        (out / "completed.json").unlink(missing_ok=True)
+        (out / "summary.json").unlink(missing_ok=True)
         manifest = verify(root, task)
         return _evaluate(root, task, metrics, manifest)
 
@@ -92,8 +96,6 @@ def _evaluate(root, task, metrics, manifest):
             raise ImportError(f"Missing official metric: {metric}")
         evidence["metric_source_sha256"][metric] = sha256(Path(spec.origin))
     digest = fingerprint(evidence)
-    # Never leave a previous full-completion marker on a failed/stale rerun.
-    (out / "completed.json").unlink(missing_ok=True)
     previous_protocol = out / "protocol.json"
     if previous_protocol.exists() and load_json(previous_protocol).get("fingerprint") != digest:
         raise RuntimeError("Stale metric result: evaluation inputs or implementation changed; use a new run root")
@@ -184,7 +186,6 @@ def _evaluate(root, task, metrics, manifest):
             metric_out / "result.json", dict(fingerprint=digest, score=score, video_count=len(details), details=details)
         )
         summary[metric] = score
-        atomic_json(out / "summary.json", summary)
         print("DONE_METRIC", task, metric, score, len(details), flush=True)
         torch.cuda.empty_cache()
     atomic_json(out / "summary.json", summary)

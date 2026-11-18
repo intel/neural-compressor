@@ -6,11 +6,50 @@ import argparse
 import hashlib
 import json
 import os
+import signal
 import subprocess
 import sys
 from pathlib import Path
 
 from benchmark import MODEL_CLASSES, validate_model, validate_source
+
+
+def run_command(command, env):
+    """Forward cancellation to the stage and wait for its cleanup."""
+    child = None
+    received_signal = None
+    forwarded = False
+
+    def forward():
+        nonlocal forwarded
+        if child is None or received_signal is None or forwarded:
+            return
+        forwarded = True
+        try:
+            os.killpg(child.pid, received_signal)
+        except ProcessLookupError:
+            pass
+
+    def interrupt(signum, _frame):
+        nonlocal received_signal
+        if received_signal is None:
+            received_signal = signum
+            forward()
+
+    handled = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
+    previous = {signum: signal.signal(signum, interrupt) for signum in handled}
+    try:
+        # Give each stage its own process group so terminal signals go through this handler once.
+        child = subprocess.Popen(command, env=env, start_new_session=True)
+        forward()
+        returncode = child.wait()
+    finally:
+        for signum, handler in previous.items():
+            signal.signal(signum, handler)
+    if received_signal is not None:
+        raise SystemExit(128 + received_signal)
+    if returncode:
+        raise subprocess.CalledProcessError(returncode, command)
 
 
 def main(argv=None):
@@ -102,13 +141,13 @@ def main(argv=None):
         ]
         if task == "i2v":
             command.append(str(args.i2v_images.expanduser().resolve()))
-        subprocess.run(command, env=env, check=True)
+        run_command(command, env)
     stage = "verify" if args.stage == "generate" else "evaluate"
     command = [sys.executable, str(scripts / "benchmark.py"), stage, "--task", task, "--root", str(root)]
     if stage == "evaluate":
         if metrics:
             command += ["--metrics", *metrics]
-    subprocess.run(command, env=dict(env, CUDA_VISIBLE_DEVICES=gpus[0]), check=True)
+    run_command(command, dict(env, CUDA_VISIBLE_DEVICES=gpus[0]))
     if stage == "evaluate":
         print(f'Scores: {root / "evaluation/summary.json"}', flush=True)
 
