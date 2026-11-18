@@ -1,0 +1,71 @@
+{
+  "protocol": {
+    "mode": "custom_input",
+    "full_standard_protocol": false,
+    "video_count": 165,
+    "videos_per_prompt": 1,
+    "prompt_groups": {"subject_consistency": 72, "overall_consistency": 93},
+    "aggregation": "VBench on all165 videos in one input",
+    "metric_counts": {
+      "imaging_quality": 165,
+      "aesthetic_quality": 165,
+      "motion_smoothness": 165,
+      "overall_consistency": 165,
+      "subject_consistency": 165
+    },
+    "generation": {
+      "width": 1280,
+      "height": 720,
+      "frames": 81,
+      "fps": 16,
+      "steps": 40,
+      "seed": 42,
+      "guidance_scale": 4.0,
+      "guidance_scale_2": 3.0,
+      "boundary_ratio": 0.875,
+      "flow_shift": 5.0,
+      "negative_prompt": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "attention": "TRTLLM_ATTN",
+      "linear_backend": "flashinfer_cutlass",
+      "cache_backend": null,
+      "enforce_eager": true
+    },
+    "imaging_quality_preprocessing_mode": "longer",
+    "local": true,
+    "read_frame": false,
+    "vllm_omni_commit": "7465c0f52bcb46a55f62c1b8613846cda30d0083",
+    "source_summary_pattern": "wan22_t2v/vbench_{model}_main_7465c0f52_cfg43_officialneg_720p/evaluation_combined/summary.json"
+  },
+  "models": {
+    "bf16": {
+      "model_id": "Wan-AI/Wan2.2-T2V-A14B-Diffusers",
+      "scores": {
+        "imaging_quality": 0.7218889263822397,
+        "aesthetic_quality": 0.6220035941311808,
+        "motion_smoothness": 0.9801938021871339,
+        "overall_consistency": 0.23738084271775953,
+        "subject_consistency": 0.9515503867376934
+      }
+    },
+    "mxfp8": {
+      "model_id": "intel-ai/Wan2.2-T2V-A14B-Diffusers-MXFP8-AutoRound",
+      "scores": {
+        "imaging_quality": 0.7222442780911054,
+        "aesthetic_quality": 0.6210655156410102,
+        "motion_smoothness": 0.9805028541362358,
+        "overall_consistency": 0.2380925087766214,
+        "subject_consistency": 0.9521171957626939
+      }
+    },
+    "nvfp4": {
+      "model_id": "intel-ai/Wan2.2-T2V-A14B-Diffusers-NVFP4-AutoRound",
+      "scores": {
+        "motion_smoothness": 0.9809034917964539,
+        "imaging_quality": 0.7193358409209418,
+        "aesthetic_quality": 0.6096992107954893,
+        "overall_consistency": 0.23840135157559858,
+        "subject_consistency": 0.9474571227000067
+      }
+    }
+  }
+}

@@ -1,0 +1,13 @@
+This repository contains independent benchmark orchestration and documentation.
+It is not an official VBench or vLLM-Omni distribution.
+
+VBench prompt/metadata snapshots under data/ originate from Vchitect/VBench:
+https://github.com/Vchitect/VBench
+They retain their upstream terms; see data/README.md and the upstream repository.
+This repository does not relicense third-party datasets, model weights, images,
+generated videos, evaluator checkpoints, or externally downloaded source code.
+
+Inference and scoring import the separately installed upstream projects:
+vLLM-Omni: https://github.com/vllm-project/vllm-omni
+VBench: https://github.com/Vchitect/VBench
+AutoRound: https://github.com/intel/auto-round

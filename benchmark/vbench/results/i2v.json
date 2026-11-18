@@ -1,0 +1,74 @@
+{
+  "protocol": {
+    "mode": "official metadata dimension filtering",
+    "full_standard_protocol": false,
+    "ratio": "16-9",
+    "video_count": 355,
+    "videos_per_prompt": 1,
+    "metric_counts": {
+      "i2v_subject": 246,
+      "subject_consistency": 246,
+      "background_consistency": 109,
+      "motion_smoothness": 246,
+      "i2v_background": 109
+    },
+    "generation": {
+      "width": 832,
+      "height": 480,
+      "dimension_multiple": 16,
+      "frames": 81,
+      "fps": 16,
+      "steps": 40,
+      "seed": 0,
+      "guidance_scale": 3.5,
+      "guidance_scale_2": 3.5,
+      "boundary_ratio": 0.9,
+      "flow_shift": 3.0,
+      "negative_prompt": "色调艳丽，过曝，静态，细节模糊不清，字幕，风格，作品，画作，画面，静止，整体发灰，最差质量，低质量，JPEG压缩残留，丑陋的，残缺的，多余的手指，画得不好的手部，画得不好的脸部，畸形的，毁容的，形态畸形的肢体，手指融合，静止不动的画面，杂乱的背景，三条腿，背景人很多，倒着走",
+      "image_resize": "LANCZOS (official Omni example)",
+      "attention": "TRTLLM_ATTN",
+      "enforce_eager": true,
+      "cache": null,
+      "cpu_offload": false,
+      "vae_tiling": false,
+      "vae_slicing": false
+    },
+    "local": true,
+    "read_frame": false,
+    "vllm_omni_commit": "7465c0f52bcb46a55f62c1b8613846cda30d0083",
+    "metadata_sha256": "8cf4d34dc11779a336c216a1a71d482927cfa24a1bf736ab5c92425609f129f8",
+    "source_summary_pattern": "wan22_i2v/runs_832x480_seed0/{model}/evaluation/summary.json"
+  },
+  "models": {
+    "bf16": {
+      "model_id": "Wan-AI/Wan2.2-I2V-A14B-Diffusers",
+      "scores": {
+        "i2v_subject": 0.9775844285967266,
+        "subject_consistency": 0.9526026905976175,
+        "background_consistency": 0.969535617653383,
+        "motion_smoothness": 0.9845980721048039,
+        "i2v_background": 0.9910735762508909
+      }
+    },
+    "mxfp8": {
+      "model_id": "intel-ai/Wan2.2-I2V-A14B-Diffusers-MXFP8-AutoRound",
+      "scores": {
+        "i2v_subject": 0.9756404829846045,
+        "subject_consistency": 0.9519102743258927,
+        "background_consistency": 0.9688302976275803,
+        "motion_smoothness": 0.9852716223834217,
+        "i2v_background": 0.9899654466194023
+      }
+    },
+    "nvfp4": {
+      "model_id": "intel-ai/Wan2.2-I2V-A14B-Diffusers-NVFP4-AutoRound",
+      "scores": {
+        "i2v_subject": 0.9617349679147202,
+        "subject_consistency": 0.9363069311132639,
+        "background_consistency": 0.9617780772917861,
+        "motion_smoothness": 0.9832274752402079,
+        "i2v_background": 0.982622336524479
+      }
+    }
+  }
+}
