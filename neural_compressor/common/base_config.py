@@ -767,9 +767,7 @@ class ComposableConfig(BaseConfig):
 
         def config_class(config_name: str) -> Type[BaseConfig]:
             if config_name not in config_registry:
-                raise ValueError(
-                    f"Unknown config name {config_name!r}; known: {sorted(config_registry)}"
-                )
+                raise ValueError(f"Unknown config name {config_name!r}; known: {sorted(config_registry)}")
             return config_registry[config_name]
 
         config_items = iter(config_dict.items())
