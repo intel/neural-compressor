@@ -26,7 +26,7 @@ import time
 from fractions import Fraction
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[1]
+REPO = Path(__file__).resolve().parent
 DATA = REPO / "data"
 SOURCE_COMMIT = "7465c0f52bcb46a55f62c1b8613846cda30d0083"
 I2V_EXAMPLE = "examples/offline_inference/image_to_video/image_to_video.py"
