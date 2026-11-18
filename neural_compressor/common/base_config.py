@@ -761,13 +761,22 @@ class ComposableConfig(BaseConfig):
 
         Raises:
             AssertionError: If the config_dict does not include at least one configuration.
+            ValueError: If config_dict names a configuration that is not in config_registry.
         """
         assert len(config_dict) >= 1, "The config dict must include at least one configuration."
+
+        def config_class(config_name: str) -> Type[BaseConfig]:
+            if config_name not in config_registry:
+                raise ValueError(
+                    f"Unknown config name {config_name!r}; known: {sorted(config_registry)}"
+                )
+            return config_registry[config_name]
+
         config_items = iter(config_dict.items())
         name, value = next(config_items)
-        config = config_registry[name].from_dict(value)
+        config = config_class(name).from_dict(value)
         for name, value in config_items:
-            config += config_registry[name].from_dict(value)
+            config += config_class(name).from_dict(value)
         return config
 
     def to_json_string(self, use_diff: bool = False) -> str:

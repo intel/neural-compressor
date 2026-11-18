@@ -309,6 +309,15 @@ class TestBaseConfig(unittest.TestCase):
         self.assertIsInstance(mixed_config.config_list[1], FakeAlgoOneConfig)
         self.assertEqual(mixed_config.config_list[1].weight_bits, 6)
 
+    def test_composable_config_from_dict_unknown_name(self):
+        config_dict = {
+            FAKE_CONFIG_NAME: {"weight_bits": 2},
+            "no_such_config": {"weight_bits": 4},
+        }
+        registry = config_registry.get_cls_configs()[FAKE_FRAMEWORK_NAME]
+        with self.assertRaisesRegex(ValueError, "Unknown config name 'no_such_config'"):
+            ComposableConfig.from_dict(config_dict, config_registry=registry)
+
     def test_set_local_op_name(self):
         quant_config = FakeAlgoConfig(weight_bits=4)
         # set `OP1_NAME`
