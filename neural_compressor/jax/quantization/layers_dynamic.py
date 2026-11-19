@@ -32,6 +32,7 @@ from keras_hub.src.models.gemma3.gemma3_vision_encoder import Gemma3VisionAttent
 from neural_compressor.common import logger
 from neural_compressor.jax.quantization.saving import SaveableLayerMixin
 from neural_compressor.jax.utils.utility import (
+    calculate_w_scale_shape,
     get_dequantize_fun,
     get_q_params,
     get_quantize_fun,
@@ -310,34 +311,45 @@ class QDynamicDenseMixin(SaveableLayerMixin):
         """
         self._tracker.unlock()
         self.input_qdq.add_variables()
-        kernel = ops.convert_to_tensor(super().kernel)
+
         self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
-        w_scale, _ = get_q_params(
-            kernel,
-            self.weight_dtype,
-            self.compute_dtype,
-            asymmetric=False,
-            axis=self.w_quant_axis,
-        )
+        if hasattr(self, "model_is_during_load"):
+            w_scale_shape = calculate_w_scale_shape(self._kernel.shape, self.w_quant_axis)
+        else:
+            kernel = ops.convert_to_tensor(super().kernel)
+            w_scale, _ = get_q_params(
+                kernel,
+                self.weight_dtype,
+                self.compute_dtype,
+                asymmetric=False,
+                axis=self.w_quant_axis,
+            )
+            w_scale_shape = w_scale.shape
+            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+            _kernel_quant = wquantfun(kernel, w_scale, axis=self.w_quant_axis)
+
         self.w_scale = self.add_weight(
             name="w_scale",
-            shape=w_scale.shape,
-            initializer=keras.initializers.Constant(w_scale),
+            shape=w_scale_shape,
+            initializer="zeros",
             trainable=False,
             dtype=self.compute_dtype,
         )
-        wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
-        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
         self._kernel_quant = self.add_weight(
             name="_kernel_quant",
-            shape=kernel.shape,
+            shape=self._kernel.shape,
             initializer="zeros",
             trainable=False,
             dtype=self.weight_dtype,
             autocast=False,
         )
 
-        self._kernel_quant.assign(wquantfun(kernel, self.w_scale.value, axis=self.w_quant_axis))
+        if not hasattr(self, "model_is_during_load"):
+            self.w_scale.assign(w_scale)
+            self._kernel_quant.assign(_kernel_quant)
+
+        self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
+
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
@@ -989,41 +1001,51 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         """
         self._tracker.unlock()
         self.inputs_qdq.add_variables()
-        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
-        if self.tie_weights:
-            reverse_embeddings = ops.transpose(self.embeddings.value)
-        else:
-            reverse_embeddings = self.reverse_embeddings.value
 
-        w_scale, _ = get_q_params(
-            reverse_embeddings,
-            self.weight_dtype,
-            self.compute_dtype,
-            asymmetric=False,
-            axis=self.w_quant_axis,
-        )
+        self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
+        if hasattr(self, "model_is_during_load"):
+            reverse_embeddings_shape = tuple(reversed(self.embeddings.shape))
+            w_scale_shape = calculate_w_scale_shape(reverse_embeddings_shape, self.w_quant_axis)
+        else:
+            if self.tie_weights:
+                reverse_embeddings = ops.transpose(self.embeddings.value)
+            else:
+                reverse_embeddings = self.reverse_embeddings.value
+            w_scale, _ = get_q_params(
+                reverse_embeddings,
+                self.weight_dtype,
+                self.compute_dtype,
+                asymmetric=False,
+                axis=self.w_quant_axis,
+            )
+            w_scale_shape = w_scale.shape
+            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+            _kernel_quant = wquantfun(reverse_embeddings, w_scale, axis=self.w_quant_axis)
+            reverse_embeddings_shape = reverse_embeddings.shape
+
         self.w_scale = self.add_weight(
             name="w_scale",
-            shape=w_scale.shape,
-            initializer=keras.initializers.Constant(w_scale),
+            shape=w_scale_shape,
+            initializer="zeros",
             trainable=False,
             autocast=False,
             dtype=self.compute_dtype,
         )
         self._kernel_quant = self.add_weight(
             name="_kernel_quant",
-            shape=reverse_embeddings.shape,
+            shape=reverse_embeddings_shape,
             initializer="zeros",
             trainable=False,
             autocast=False,
             dtype=self.weight_dtype,
         )
 
-        wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+        if not hasattr(self, "model_is_during_load"):
+            self.w_scale.assign(w_scale)
+            self._kernel_quant.assign(_kernel_quant)
+
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
 
-        _kernel_quant = wquantfun(reverse_embeddings, self.w_scale.value, axis=self.w_quant_axis)
-        self._kernel_quant.assign(_kernel_quant)
         self._tracker.lock()
 
     def post_quantization_cleanup(self):
@@ -1034,8 +1056,8 @@ class QDynamicReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmb
         """
         self._tracker.unlock()
 
-        if hasattr(self, "reverve_embeddings"):
-            self._trainable_variables.remove(self.reverve_embeddings)
+        if hasattr(self, "reverse_embeddings"):
+            self._trainable_variables.remove(self.reverse_embeddings)
             del self.reverse_embeddings
 
         # convert variables to attributes (const) if needed
