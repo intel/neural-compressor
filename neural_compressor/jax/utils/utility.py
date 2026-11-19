@@ -584,12 +584,15 @@ def is_fp8_kv_cache_enabled_by_env() -> bool:
 
 
 def select_kv_cache_dtype(layer, default_dtype):
-    """Select the KV-cache dtype of a decoder layer and disable autocasting for FP8 caches.
+    """Select the KV-cache dtype of a decoder layer and keep an FP8 cache from being upcast.
 
     FP8 is selected only when ``layer.attention.can_use_fp8_kv_cache()`` returns True.
-    In that case input autocasting is disabled on ``layer`` and ``layer.attention``,
-    since Keras would otherwise upcast the FP8 cache to the compute dtype.
-    Other layers are left unchanged and use ``default_dtype``.
+    Keras casts floating-point call inputs, the cache included, to the compute dtype.
+    For an FP8 cache, that input conversion (``_convert_input_args``) is turned off on
+    ``layer`` and ``layer.attention``. Autocast stays on, so the rest of the layer
+    still computes in the policy dtype (turning autocast off changed the precision of
+    the whole layer and made it slower). Other layers are left unchanged and use
+    ``default_dtype``.
 
     Args:
         layer (keras.layers.Layer): Decoder layer with an ``attention`` sublayer.
@@ -602,15 +605,15 @@ def select_kv_cache_dtype(layer, default_dtype):
     can_use_fp8_kv_cache = getattr(attention, "can_use_fp8_kv_cache", None)
     if can_use_fp8_kv_cache is None or not can_use_fp8_kv_cache():
         return default_dtype
-    layer.autocast = False
-    attention.autocast = False
+    layer._convert_input_args = False
+    attention._convert_input_args = False
     return attention.activation_dtype
 
 
 def causal_lm_make_replace_build_cache(self):
     """Replace _build_cache to allocate KV caches using each attention layer's dtype.
 
-    The cache dtype and autocasting are decided at cache allocation
+    The cache dtype and input conversion are decided at cache allocation
     (see ``select_kv_cache_dtype``). Any cached ``generate_function`` is
     invalidated so the next ``generate()`` call traces the new cache path.
 
