@@ -39,7 +39,7 @@ SERVER_PORT="${SERVER_PORT:-8000}"
 
 usage() {
     echo "Usage: CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=<path_to_quantized_model> [--tasks=<tasks>]"
-    echo "  --model_path               Path to the quantized model (required)"
+    echo "  --model_path               Local model directory or Hugging Face model id <org>/<name> (required)"
     echo "  --tasks                    Task name(s) to evaluate (default: ${TASKS})"
     echo "  --batch_size               Batch size (default: auto)"
     echo "  --gpu_memory_utilization   GPU memory utilization (default: 0.95)"
@@ -88,8 +88,16 @@ for arg in "$@"; do
     esac
 done
 
-if [[ ! -d "$MODEL_PATH" ]]; then
-    echo "Error: Model path '$MODEL_PATH' does not exist!"
+# `--model_path=~/...` is not tilde-expanded by the shell.
+MODEL_PATH="${MODEL_PATH/#\~/$HOME}"
+MODEL_PATH="${MODEL_PATH%/}"
+if [[ -z "$MODEL_PATH" ]]; then
+    echo "Error: --model_path is required." >&2
+    exit 1
+fi
+# Accept a local model directory or a Hugging Face model id (<org>/<name>), which vLLM downloads.
+if [[ ! -d "$MODEL_PATH" && ! "$MODEL_PATH" =~ ^[A-Za-z0-9][A-Za-z0-9._-]*/[A-Za-z0-9._-]+$ ]]; then
+    echo "Error: Model path '$MODEL_PATH' is neither a local directory nor a Hugging Face model id (<org>/<name>)." >&2
     exit 1
 fi
 
