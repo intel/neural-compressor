@@ -522,6 +522,10 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
         new_in_features = (in_features + n_pack - 1) // n_pack
         packed_array = np.zeros((out_features, new_in_features), dtype=compression_dtype)
         raw_array = raw_array.astype(compression_dtype)
+        # Pad with zeros so the packers never read past the end of a row when in_features % n_pack != 0.
+        pad_len = new_in_features * n_pack - in_features
+        if pad_len > 0:
+            raw_array = np.pad(raw_array, ((0, 0), (0, pad_len)))
         pack_method = bit_packers[pack_func_name]
         return pack_method(raw_array, packed_array, n_pack, new_in_features)
 
