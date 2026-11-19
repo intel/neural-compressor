@@ -8,9 +8,10 @@ or NVFP4 E5M3 checkpoints.
 The GPU smoke tests used Python 3.12, B200, PyTorch 2.14.0 (CUDA 13.0),
 vLLM 0.33.0, and vLLM-Omni commit `7465c0f52bcb46a55f62c1b8613846cda30d0083`.
 Use Linux x86-64 with a CUDA 13 compatible driver, `uv`, `ffmpeg`, and
-`ffprobe`. The smoke environment used CUDA toolkit 12.8 for JIT compilation.
-The commands below set up a fresh environment. The smoke tests ran in an
-existing environment.
+`ffprobe`. The smoke environment used `nvcc` from CUDA toolkit 12.8.
+If FlashInfer cannot find the right `nvcc` for JIT compilation, set
+`CUDA_HOME` to your toolkit directory. The smoke tests used an existing
+environment.
 
 From the neural-compressor repository root:
 
@@ -22,8 +23,6 @@ git clone https://github.com/vllm-project/vllm-omni.git
 export OMNI_SOURCE="$PWD/vllm-omni"
 git -C "$OMNI_SOURCE" checkout --detach 7465c0f52bcb46a55f62c1b8613846cda30d0083
 
-export CUDA_HOME=/usr/local/cuda-12.8
-export PATH="$CUDA_HOME/bin:$PATH"
 VLLM_OMNI_TARGET_DEVICE=cuda uv pip install --torch-backend=cu130 \
   'vllm @ https://wheels.vllm.ai/4ba787ec9959e566d3b587a796dff07673324da5/vllm-0.33.0-cp38-abi3-manylinux_2_28_x86_64.whl' \
   -e "$OMNI_SOURCE" ninja nvidia-cutlass-dsl==4.8.0 \
