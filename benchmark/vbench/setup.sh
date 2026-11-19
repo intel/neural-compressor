@@ -31,7 +31,7 @@ fi
 uv pip install --python "$python" --torch-backend=cu130 \
   vllm==0.32.0 vllm-omni==0.32.0 ninja nvidia-cutlass-dsl==4.8.0 \
   dreamsim==0.2.1 pyiqa==0.1.16 timm==1.0.12 \
-  boto3 cython decord easydict fairscale fvcore lvis matplotlib openai-clip \
+  boto3 cython decord gdown==4.7.3 easydict fairscale fvcore lvis matplotlib openai-clip \
   opencv-python pycocoevalcap scikit-learn scikit-image tensorboard wheel
 # VBench pins older Transformers and NumPy versions. Its metric dependencies are installed above.
 uv pip install --python "$python" --no-deps vbench==0.1.5

@@ -20,8 +20,17 @@ Use `bash benchmark/vbench/setup.sh --nvfp4_e5m3` to include the NVFP4 E5M3 plug
 Have `git` and `wget` on `PATH` for the first evaluation, when VBench downloads
 its evaluator models.
 
-For **I2V**, extract the [VBench image archive](https://drive.google.com/file/d/1Y_JnYnyJ3a6QhiranoX0MQVZFcTDPekZ/view)
-and set `I2V_IMAGES` to its `crop/16-9` directory.
+For **I2V**, the first generation run downloads the [VBench crop archive](https://drive.google.com/file/d/1Y_JnYnyJ3a6QhiranoX0MQVZFcTDPekZ/view)
+(about 2.3 GB) and keeps the 16:9 images in `~/.cache/inc-vbench/crop/16-9`
+by default. To reuse local images, set
+`I2V_IMAGES` to the extracted `crop/16-9` directory:
+
+```bash
+export I2V_IMAGES=/path/to/crop/16-9
+```
+
+The `--i2v_images` flag overrides that variable. Evaluation uses the path
+recorded during generation.
 
 ## Run
 

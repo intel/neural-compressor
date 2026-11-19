@@ -8,13 +8,16 @@ import os
 import signal
 import subprocess
 import sys
+import tempfile
 import time
 from contextlib import nullcontext
-from pathlib import Path
+from pathlib import Path, PurePosixPath
+from zipfile import BadZipFile, ZipFile
 
-from benchmark import METRICS, MODEL_CLASSES, bind_checkpoint, load_json, prepare
+from benchmark import METRICS, MODEL_CLASSES, bind_checkpoint, build_jobs, load_json, prepare
 
 BENCHMARK = Path(__file__).with_name("benchmark.py")
+I2V_CROP_ARCHIVE_ID = "1Y_JnYnyJ3a6QhiranoX0MQVZFcTDPekZ"
 PRECISIONS = {None: "bf16", "mx_fp": "mxfp8", "nv_fp": "nvfp4", "nvfp4_v2": "nvfp4_e5m3"}
 
 
@@ -67,11 +70,44 @@ def run_workers(commands, root):
             signal.signal(signum, handler)
 
 
+def cached_i2v_images():
+    """Download the official crops once and keep only the 16:9 images."""
+    cache_root = Path(os.environ.get("XDG_CACHE_HOME") or Path.home() / ".cache").expanduser()
+    images = cache_root / "inc-vbench" / "crop" / "16-9"
+    if images.is_dir():
+        return images
+
+    images.parent.mkdir(parents=True, exist_ok=True)
+    print(f"Downloading the VBench crop archive (~2.3 GB) to prepare {images}", flush=True)
+    with tempfile.TemporaryDirectory(dir=images.parent) as staging:
+        staging = Path(staging)
+        archive = staging / "crop.zip"
+        try:
+            subprocess.run([sys.executable, "-m", "gdown", I2V_CROP_ARCHIVE_ID, "-O", str(archive)], check=True)
+            with ZipFile(archive) as crops:
+                members = []
+                for entry in crops.infolist():
+                    path = PurePosixPath(entry.filename)
+                    if path.parts[:2] == ("crop", "16-9") and len(path.parts) == 3 and path.suffix.lower() == ".jpg":
+                        members.append(entry)
+                crops.extractall(staging, members)
+        except (subprocess.CalledProcessError, BadZipFile) as exc:
+            raise RuntimeError(
+                "Could not download the VBench crops. Set I2V_IMAGES to a local crop/16-9 directory."
+            ) from exc
+
+        extracted = staging / "crop" / "16-9"
+        build_jobs("i2v", extracted)
+        try:
+            extracted.rename(images)
+        except OSError:
+            if not images.is_dir():
+                raise
+    return images
+
+
 def generate_videos(args, output_dir, gpus):
     """Prepare inputs, check the checkpoint, and start one shard per GPU."""
-    if args.task == "i2v" and args.i2v_images is None:
-        raise ValueError("Set I2V_IMAGES or pass --i2v_images pointing to crop/16-9")
-
     model = Path(args.model_path).expanduser()
     if not model.is_dir():
         from huggingface_hub import snapshot_download
@@ -89,7 +125,19 @@ def generate_videos(args, output_dir, gpus):
     precision = PRECISIONS[data_type]
     if args.dtype is not None and args.dtype != precision:
         raise ValueError(f"--dtype={args.dtype} does not match the checkpoint precision ({precision})")
-    prepare(output_dir, args.task, args.i2v_images if args.task == "i2v" else None)
+    images = None
+    if args.task == "i2v":
+        images = args.i2v_images
+        if images is None:
+            task_file = output_dir / "task.json"
+            if task_file.exists():
+                task_record = load_json(task_file)
+                if task_record["task"] != args.task:
+                    raise ValueError("--task must match the task already recorded in the output directory")
+                images = task_record["i2v_images"]
+        if images is None:
+            images = cached_i2v_images()
+    prepare(output_dir, args.task, images)
     bind_checkpoint(output_dir, args.task, model, precision)
 
     command = [sys.executable, str(BENCHMARK), "generate", "--task", args.task, "--root", str(output_dir)]
@@ -131,7 +179,12 @@ def main():
         help="Check the expected precision (default: read the checkpoint)",
     )
     generate.add_argument("--revision", help="Hugging Face checkpoint revision")
-    generate.add_argument("--i2v_images", type=Path, default=os.environ.get("I2V_IMAGES"))
+    generate.add_argument(
+        "--i2v_images",
+        type=Path,
+        default=os.environ.get("I2V_IMAGES") or None,
+        help="Local crop/16-9 directory (default: I2V_IMAGES or download to the cache)",
+    )
     evaluate.add_argument("--metrics", help="Comma-separated metric subset")
     args = parser.parse_args()
 
