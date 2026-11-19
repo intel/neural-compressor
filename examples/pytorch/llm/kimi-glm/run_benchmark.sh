@@ -16,7 +16,7 @@
 # Usage: CUDA_VISIBLE_DEVICES=0,1 bash run_benchmark.sh --model_path=<path_to_quantized_model> [--tasks=<tasks>]
 #
 # Tasks are split into two paths:
-#   - aime26, gpqa_diamond and math_500: benchmark/evalscope/run_evalscope.sh
+#   - aime26, gpqa_diamond, math_500 and openai_mrcr: benchmark/evalscope/run_evalscope.sh
 #   - all other tasks: benchmark/lm_eval/run_lm_eval.sh
 # All other options are passed to both drivers.
 
@@ -26,7 +26,7 @@ SCRIPT_DIR=$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)
 REPO_ROOT=$(cd -- "${SCRIPT_DIR}/../../../.." && pwd)
 
 TASKS="gsm8k,mmlu,piqa,hellaswag,niah_multiquery,ruler_qa_squad"
-EVALSCOPE_TASK_LIST="aime26,gpqa_diamond,math_500"
+EVALSCOPE_TASK_LIST="aime26,gpqa_diamond,math_500,openai_mrcr"
 COMMON_ARGS=()
 for arg in "$@"; do
     case $arg in
