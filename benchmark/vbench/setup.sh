@@ -4,15 +4,15 @@ set -euo pipefail
 
 case "${1:-}" in
   -h|--help)
-    echo "Usage: bash benchmark/vbench/setup.sh [--e5m3]"
-    echo "Create or reuse venv/vbench. Add --e5m3 to install the NVFP4 E5M3 plugin."
+    echo "Usage: bash benchmark/vbench/setup.sh [--nvfp4_e5m3]"
+    echo "Create or reuse venv/vbench. Add --nvfp4_e5m3 to install the NVFP4 E5M3 plugin."
     exit 0
     ;;
-  ""|--e5m3) ;;
+  ""|--nvfp4_e5m3) ;;
   *) echo "Unknown argument: $1" >&2; exit 2 ;;
 esac
 if (( $# > 1 )); then
-  echo "Usage: bash benchmark/vbench/setup.sh [--e5m3]" >&2
+  echo "Usage: bash benchmark/vbench/setup.sh [--nvfp4_e5m3]" >&2
   exit 2
 fi
 
@@ -36,7 +36,7 @@ uv pip install --python "$python" --torch-backend=cu130 \
 # VBench pins older Transformers and NumPy versions. Its metric dependencies are installed above.
 uv pip install --python "$python" --no-deps vbench==0.1.5
 
-if [[ "${1:-}" == --e5m3 ]]; then
+if [[ "${1:-}" == --nvfp4_e5m3 ]]; then
   uv pip install --python "$python" --no-deps -e "$repo_dir/benchmark/vllm-qdq-plugin"
 fi
 

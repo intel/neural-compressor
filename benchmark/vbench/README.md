@@ -16,7 +16,7 @@ bash benchmark/vbench/setup.sh
 source venv/vbench/bin/activate
 ```
 
-Use `bash benchmark/vbench/setup.sh --e5m3` to include the NVFP4 E5M3 plugin.
+Use `bash benchmark/vbench/setup.sh --nvfp4_e5m3` to include the NVFP4 E5M3 plugin.
 Have `git` and `wget` on `PATH` for the first evaluation, when VBench downloads
 its evaluator models.
 
