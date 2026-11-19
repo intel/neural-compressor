@@ -5,9 +5,9 @@ or NVFP4 E5M3 checkpoints.
 
 ## Environment setup
 
-Use Linux x86-64, Python 3.12, a CUDA 13 compatible NVIDIA driver, `uv`, and
-`ffmpeg` and `ffprobe` on `PATH`. If FlashInfer cannot find `nvcc`, set
-`CUDA_HOME` to your toolkit directory.
+The GPU tests used NVIDIA B200. Use Linux x86-64, Python 3.12, a CUDA
+13 compatible driver, and `uv`, `ffmpeg`, and `ffprobe` on `PATH`. If
+FlashInfer cannot find `nvcc`, set `CUDA_HOME` to your toolkit directory.
 
 From the neural-compressor repository root:
 
@@ -25,7 +25,8 @@ uv pip install --no-deps vbench==0.1.5
 
 Install VBench with `--no-deps` because its Transformers and NumPy pins
 conflict with this inference stack. The command above installs its evaluator
-dependencies separately. The first evaluation may download metric weights.
+dependencies separately. Have `git` and `wget` on `PATH` for the first
+evaluation, when VBench downloads its evaluator models.
 
 For **NVFP4 E5M3**, install the Omni plugin in the same environment.
 
