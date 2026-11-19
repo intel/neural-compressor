@@ -86,3 +86,5 @@ against its OpenAI-compatible API. Each benchmark has a `setup_*.sh` and a `run_
 formats can be evaluated on GPUs without native kernels, plus a Sage3 Triton diffusion attention backend. The
 shared drivers enable it with `VLLM_QDQ=1` on GPUs other than SM 10.x. See
 [vllm-qdq-plugin/README.md](vllm-qdq-plugin/README.md).
+
+- [VBench](vbench/README.md): Wan2.2 T2V/I2V video generation and quality evaluation for BF16, MXFP8, NVFP4, and NVFP4 E5M3.
