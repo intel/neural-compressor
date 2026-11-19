@@ -19,6 +19,7 @@
 # limitations under the License.
 
 
+import jax
 import keras
 import keras.layers
 import keras_hub.layers
@@ -1168,14 +1169,24 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         """Return whether both K/V helpers can store quantized FP8 values."""
         return self._use_fp8_cache and self.k_qdq._is_quantized is True and self.v_qdq._is_quantized is True
 
+    def _to_cache(self, x):
+        """Store FP8 K/V bits as uint8: Keras only autocasts floating-point inputs, so the cache stays 1 byte."""
+        return jax.lax.bitcast_convert_type(x, jnp.uint8)
+
+    def _from_cache(self, x):
+        """View a uint8 cache as FP8 again (same bits)."""
+        if x.dtype == jnp.uint8:
+            return jax.lax.bitcast_convert_type(x, self.activation_dtype)
+        return x
+
     def _prepare_k_for_attention(self, key):
         if self.can_use_fp8_kv_cache():
-            return self.k_qdq.call_dq(key)
+            return self.k_qdq.call_dq(self._from_cache(key))
         return self.k_qdq(key)
 
     def _prepare_v_for_attention(self, value):
         if self.can_use_fp8_kv_cache():
-            return self.v_qdq.call_dq(value)
+            return self.v_qdq.call_dq(self._from_cache(value))
         return self.v_qdq(value)
 
     @classmethod
@@ -1406,8 +1417,8 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             value_update = self.value_dense(x)
 
             # Quantize key/value updates to FP8 before writing to cache
-            key_update = self.k_qdq.call_q(key_update)
-            value_update = self.v_qdq.call_q(value_update)
+            key_update = self._to_cache(self.k_qdq.call_q(key_update))
+            value_update = self._to_cache(self.v_qdq.call_q(value_update))
 
             # Update cache. Note that the cache is updated only if the
             # corresponding `cache_update_mask` value is True. This is to
@@ -1461,8 +1472,8 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             value = self.value_dense(x)
 
             # Quantize to FP8 so _compute_attention runs the same single dequant before the op.
-            key = self.k_qdq.call_q(key)
-            value = self.v_qdq.call_q(value)
+            key = self._to_cache(self.k_qdq.call_q(key))
+            value = self._to_cache(self.v_qdq.call_q(value))
 
         attention_vec = self._compute_attention(
             query,

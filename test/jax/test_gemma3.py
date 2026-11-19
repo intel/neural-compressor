@@ -53,8 +53,8 @@ requires_fp8_kv_cache = pytest.mark.skipif(
 
 
 def _expected_cache_dtype(fp8_dtype, model_dtype):
-    """Return the expected KV-cache dtype of a static-quantized layer with calibrated K/V."""
-    return fp8_dtype if FP8_KV_CACHE else model_dtype
+    """Return the expected KV-cache dtype of a static-quantized layer with calibrated K/V (FP8 bits stored as uint8)."""
+    return jnp.uint8 if FP8_KV_CACHE else model_dtype
 
 
 @pytest.mark.parametrize(
@@ -100,11 +100,9 @@ def _check_recorded_kv_cache(model, recorded, expected_dtypes):
     assert recorded, "generate() did not build a KV cache"
     for layer, layer_dtypes, expected_dtype in zip(model.backbone.transformer_layers, recorded[0], expected_dtypes):
         assert layer_dtypes == (jnp.dtype(expected_dtype),) * 2
-        uses_fp8_cache = jnp.dtype(expected_dtype).itemsize == 1
+        # The FP8 cache is stored as uint8, so autocast stays on for every layer.
         assert layer.autocast is True
         assert layer.attention.autocast is True
-        assert layer._convert_input_args is not uses_fp8_cache
-        assert layer.attention._convert_input_args is not uses_fp8_cache
     assert len(recorded[0]) == len(model.backbone.transformer_layers) == len(expected_dtypes)
 
 
@@ -122,11 +120,8 @@ def _check_model_kv_cache(model, expected_dtypes):
     assert isinstance(cache, tuple)
     assert len(cache) == len(model.backbone.transformer_layers) == len(expected_dtypes)
     for layer, layer_cache, expected_dtype in zip(model.backbone.transformer_layers, cache, expected_dtypes):
-        uses_fp8_cache = jnp.dtype(expected_dtype).itemsize == 1
         assert layer.autocast is True
         assert layer.attention.autocast is True
-        assert layer._convert_input_args is not uses_fp8_cache
-        assert layer.attention._convert_input_args is not uses_fp8_cache
         assert isinstance(layer_cache, tuple)
         assert len(layer_cache) == 2
         for value in layer_cache:
@@ -143,7 +138,6 @@ def test_build_cache_uses_fp8_per_attention_layer():
             self._use_fp8_cache = use_fp8_cache
             self.activation_dtype = utility.dtype_mapping["fp8_e4m3"]
             self.autocast = True
-            self._convert_input_args = True
 
         def can_use_fp8_kv_cache(self):
             return self._use_fp8_cache
@@ -152,7 +146,6 @@ def test_build_cache_uses_fp8_per_attention_layer():
         def __init__(self, use_fp8_cache):
             self.attention = Attention(use_fp8_cache)
             self.autocast = True
-            self._convert_input_args = True
 
     class Model:
         compute_dtype = "bfloat16"
@@ -182,10 +175,9 @@ def test_build_cache_uses_fp8_per_attention_layer():
     utility.causal_lm_make_replace_build_cache(model)
     assert model._build_cache.__func__ is utility._build_cache_fp8
     assert model.generate_function is None
-    # Input conversion is decided at cache allocation, not at installation.
     for layer in model.backbone.transformer_layers:
-        assert layer._convert_input_args is True
-        assert layer.attention._convert_input_args is True
+        assert layer.autocast is True
+        assert layer.attention.autocast is True
 
     hidden_states, cache = model._build_cache(
         token_ids=jnp.ones((2, 3), dtype="int32"),
@@ -198,7 +190,7 @@ def test_build_cache_uses_fp8_per_attention_layer():
     assert hidden_states == "hidden_states"
     assert isinstance(cache, tuple)
     assert len(cache) == 2
-    for layer_cache, dtype in zip(cache, [utility.dtype_mapping["fp8_e4m3"], jnp.dtype("bfloat16")]):
+    for layer_cache, dtype in zip(cache, [jnp.dtype(jnp.uint8), jnp.dtype("bfloat16")]):
         assert isinstance(layer_cache, tuple)
         assert len(layer_cache) == 2
         for value in layer_cache:
@@ -208,10 +200,6 @@ def test_build_cache_uses_fp8_per_attention_layer():
     for layer in model.backbone.transformer_layers:
         assert layer.autocast is True
         assert layer.attention.autocast is True
-    assert model.backbone.transformer_layers[0]._convert_input_args is False
-    assert model.backbone.transformer_layers[0].attention._convert_input_args is False
-    assert model.backbone.transformer_layers[1]._convert_input_args is True
-    assert model.backbone.transformer_layers[1].attention._convert_input_args is True
 
 
 @pytest.mark.smoke_test
@@ -253,15 +241,14 @@ def test_build_cache_repeated_installation_does_not_track_backbone_layers():
     assert [layer.autocast for layer in model.backbone.transformer_layers] == [True, False]
 
     for layer in model.backbone.transformer_layers:
-        assert utility.select_kv_cache_dtype(layer, "bfloat16") == utility.dtype_mapping["fp8_e4m3"]
+        assert utility.select_kv_cache_dtype(layer, "bfloat16") == jnp.uint8
 
     assert model._tracker.locked
     assert tuple(model._layers) == original_layers
     assert tuple(model.variables) == original_variables
-    # Autocast is left as it was; only the input conversion is turned off.
+    # Autocast is left as it was.
     assert [layer.autocast for layer in model.backbone.transformer_layers] == [True, False]
-    assert all(not layer._convert_input_args for layer in model.backbone.transformer_layers)
-    assert all(not layer.attention._convert_input_args for layer in model.backbone.transformer_layers)
+    assert all(layer.attention.autocast for layer in model.backbone.transformer_layers)
 
 
 @pytest.mark.smoke_test
@@ -345,20 +332,18 @@ def test_fp8_cache_with_incomplete_kv_calibration(
             getattr(restored, name).load_own_variables(store)
         attention = restored
 
-    expected_dtype = dtype_mapping["fp8_e4m3"] if all(calibrated) else jnp.dtype(model_dtype)
+    expected_dtype = jnp.dtype(jnp.uint8) if all(calibrated) else jnp.dtype(model_dtype)
     assert attention.can_use_fp8_kv_cache() is all(calibrated)
     assert attention._use_fp8_cache
     assert not hasattr(attention, "k_cache")
     assert not hasattr(attention, "v_cache")
-    # prepare() leaves input conversion alone; it's turned off at cache allocation for FP8-cache layers only.
-    assert attention._convert_input_args is True
-    decoder_layer = SimpleNamespace(attention=attention, autocast=True, _convert_input_args=True)
+    assert attention.autocast is True
+    decoder_layer = SimpleNamespace(attention=attention, autocast=True)
     cache_dtype = select_kv_cache_dtype(decoder_layer, attention.compute_dtype)
     assert jnp.dtype(cache_dtype) == expected_dtype
+    # The FP8 cache is stored as uint8, so autocast stays on.
     assert attention.autocast is True
     assert decoder_layer.autocast is True
-    assert attention._convert_input_args is not all(calibrated)
-    assert decoder_layer._convert_input_args is not all(calibrated)
 
     original_call = CachedGemma3Attention.call
     quantized_call = QStaticCachedGemma3Attention.call
@@ -460,7 +445,7 @@ def test_mixed_layer_kv_cache_save_load(model_dtype, uncalibrated_helpers, monke
             prepared(inputs)
 
     quantized = quantize_model(model, config, calibrate)
-    expected_dtypes = [dtype_mapping["fp8_e4m3"], model_dtype, model_dtype, model_dtype]
+    expected_dtypes = [jnp.uint8, model_dtype, model_dtype, model_dtype]
 
     def check_layers(model):
         layers = model.backbone.transformer_layers
