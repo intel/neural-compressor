@@ -28,7 +28,8 @@ from neural_compressor.jax.algorithms import smooth_quant as sq
 
 mock_tokenizer = pytest.importorskip("keras_hub.src.tests.mocks.mock_gemma3_tokenizer")
 
-pytestmark = pytest.mark.smoke_test  # tiny random model, ~1 min for the whole file
+# Fast unit tests are marked smoke_test (they run in the time-limited PR job); the tests that calibrate and
+# quantize the tiny Gemma3 through generate are not marked and run in the separate full test job.
 
 PROMPTS = ["the quick brown fox", "the earth is round"]
 
@@ -81,6 +82,7 @@ def rel_err(got, ref):
     return float(np.linalg.norm(got - ref) / np.linalg.norm(ref))
 
 
+@pytest.mark.smoke_test
 def test_groups_found_for_gemma3():
     model, _ = tiny_gemma3()
     groups = sq.find_smooth_groups(model)
@@ -90,7 +92,8 @@ def test_groups_found_for_gemma3():
     assert att_out.head_repeat == 2  # 4 query heads share 2 kv heads
 
 
-@pytest.mark.parametrize("alpha", [0.3, 0.5, 0.8])
+@pytest.mark.parametrize("alpha", [0.3, 0.5, 0.8], ids=["alpha=0.3", "alpha=0.5", "alpha=0.8"])
+@pytest.mark.smoke_test_if("alpha=0.5")
 def test_smoothing_preserves_outputs(alpha):
     """Folding is exact: the smoothed float model gives the same logits, with the same variables."""
     model, preprocessor = tiny_gemma3()
@@ -109,6 +112,7 @@ def test_smoothing_preserves_outputs(alpha):
         assert "call" not in layer.__dict__  # the class call is used again
 
 
+@pytest.mark.smoke_test
 def test_smoothing_factors():
     a = np.array([4.0, 1.0, 0.0, 1e6])
     w = np.array([1.0, 4.0, 1.0, 1e-6])
@@ -168,6 +172,7 @@ def test_same_quantized_structure(dtype):
     assert structures[0] == structures[1]
 
 
+@pytest.mark.smoke_test
 def test_unsupported_model_is_unchanged(model, calibration_data):
     """Models without a SmoothQuant rule are quantized as before, with a warning."""
     before = [np.asarray(w).copy() for w in model.weights]
@@ -230,6 +235,7 @@ def test_group_with_conflicting_settings_is_skipped():
     np.testing.assert_array_equal(_norm_scales(model)[0][0], before[0][0])
 
 
+@pytest.mark.smoke_test
 def test_per_layer_settings_resolution():
     model, _ = tiny_gemma3()
     q_and_k = {"query", "key"}
@@ -244,6 +250,7 @@ def test_per_layer_settings_resolution():
     assert all(g.alpha == 0.4 for g in groups)
 
 
+@pytest.mark.smoke_test
 def test_bfloat16_fold_is_exact():
     """In bfloat16, a folded norm gain (1 + scale') close to 0 is coarse; the consumers are scaled by the factors the
     stored gain implements, so gain x weight stays equal per input channel (up to the bf16 rounding of the weights)."""
@@ -259,6 +266,7 @@ def test_bfloat16_fold_is_exact():
     np.testing.assert_allclose(gain1[None, :, None] * q1, gain0[None, :, None] * q0, rtol=2e-2, atol=1e-6)
 
 
+@pytest.mark.smoke_test
 def test_observer_keeps_input_dtype():
     """The observer must not autocast: the observed projection gets its bf16 input unchanged during calibration."""
     x = jnp.ones((2, 3, 4), dtype="bfloat16")
@@ -268,6 +276,7 @@ def test_observer_keeps_input_dtype():
         np.testing.assert_array_equal(np.asarray(obs.channel_abs_max), np.ones(4))
 
 
+@pytest.mark.smoke_test
 def test_config_expand():
     """StaticQuantConfig keeps an explicit signature, so BaseConfig.expand works (with and without SmoothQuant)."""
     assert len(StaticQuantConfig().expand()) == 1
@@ -275,6 +284,7 @@ def test_config_expand():
     assert sorted(c.smooth_quant_alpha for c in configs) == [0.3, 0.5]
 
 
+@pytest.mark.smoke_test
 def test_non_gemma3_model_is_not_searched(model, calibration_data, monkeypatch):
     """quantize_model skips SmoothQuant for models other than Gemma3CausalLM before searching them (no extra pass)."""
     import neural_compressor.jax.algorithms.static as static_algo
@@ -286,6 +296,7 @@ def test_non_gemma3_model_is_not_searched(model, calibration_data, monkeypatch):
     quantize_model(model, StaticQuantConfig(smooth_quant=True), lambda m: m(calibration_data))
 
 
+@pytest.mark.smoke_test
 def test_config_positional_filter_arguments():
     """The SmoothQuant options come after white_list / exclude_list, so positional calls keep their meaning."""
     config = StaticQuantConfig("int8", "int8", False, False, "per_tensor", False, ["Dense"], ["third"])
@@ -293,6 +304,7 @@ def test_config_positional_filter_arguments():
     assert config.smooth_quant is False and config.smooth_quant_alpha == 0.5
 
 
+@pytest.mark.smoke_test
 def test_config_serialization():
     config = StaticQuantConfig(weight_scale_granularity="per_tensor", smooth_quant=True, smooth_quant_alpha=0.4)
     d = config.to_dict()
@@ -303,6 +315,7 @@ def test_config_serialization():
     assert StaticQuantConfig().smooth_quant is False
 
 
+@pytest.mark.smoke_test
 def test_config_rejects_bad_alpha():
     with pytest.raises(ValueError):
         StaticQuantConfig(smooth_quant=True, smooth_quant_alpha=1.5)
