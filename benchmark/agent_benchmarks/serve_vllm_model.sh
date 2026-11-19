@@ -72,6 +72,24 @@ Examples:
 EOF
 }
 
+is_secret_name() {
+  local name="${1,,}"
+  case "${name}" in
+    *token | *key | *secret | *password | *credential | *auth) return 0 ;;
+  esac
+  return 1
+}
+
+redact_env_pair() {
+  local pair="$1"
+  local key="${pair%%=*}"
+  if is_secret_name "${key}"; then
+    printf '%s=REDACTED' "${key}"
+  else
+    printf '%s' "${pair}"
+  fi
+}
+
 MODEL=""
 SERVED_NAME=""
 PORT=8000
@@ -189,7 +207,7 @@ MODEL="$(cd -- "${MODEL}" && pwd -P)"
 if [[ -z "${SERVED_NAME}" ]]; then
   SERVED_NAME="$(basename -- "${MODEL}")"
 fi
-SERVED_NAME="$(sanitize_run_tag "${SERVED_NAME}")"
+[[ -n "${SERVED_NAME}" ]] || die "--served-name must not be empty"
 
 if [[ "${VLLM_BIN}" == */* ]]; then
   [[ -x "${VLLM_BIN}" ]] || die "vllm executable not found: ${VLLM_BIN}"
@@ -243,14 +261,44 @@ ARGS=(
 [[ -z "${BLOCK_SIZE}" ]] || ARGS+=(--block-size "${BLOCK_SIZE}")
 ARGS+=("${EXTRA_VLLM_ARGS[@]}")
 
+DISPLAY_ENV=()
+for pair in "${ENV_PAIRS[@]}"; do
+  DISPLAY_ENV+=("$(redact_env_pair "${pair}")")
+done
+
+DISPLAY_ARGS=()
+skip_next=false
+for arg in "${ARGS[@]}"; do
+  if [[ "${skip_next}" == true ]]; then
+    DISPLAY_ARGS+=("REDACTED")
+    skip_next=false
+    continue
+  fi
+  if [[ "${arg}" == --*=* ]]; then
+    name="${arg%%=*}"
+    if is_secret_name "${name#--}"; then
+      DISPLAY_ARGS+=("${name}=REDACTED")
+    else
+      DISPLAY_ARGS+=("${arg}")
+    fi
+    continue
+  fi
+  if [[ "${arg}" == --* ]] && is_secret_name "${arg#--}"; then
+    DISPLAY_ARGS+=("${arg}")
+    skip_next=true
+    continue
+  fi
+  DISPLAY_ARGS+=("${arg}")
+done
+
 printf '[vLLM] CUDA_VISIBLE_DEVICES=%s\n' "${GPUS}"
-if [[ ${#ENV_PAIRS[@]} -gt 0 ]]; then
+if [[ ${#DISPLAY_ENV[@]} -gt 0 ]]; then
   printf '[vLLM] env:'
-  printf ' %q' "${ENV_PAIRS[@]}"
+  printf ' %s' "${DISPLAY_ENV[@]}"
   printf '\n'
 fi
 printf '[vLLM] Command:'
-printf ' %q' "${VLLM_BIN}" "${ARGS[@]}"
+printf ' %q' "${VLLM_BIN}" "${DISPLAY_ARGS[@]}"
 printf '\n'
 
 if [[ "${DRY_RUN}" -eq 1 ]]; then
