@@ -4,6 +4,7 @@ auto-round-lib
 compressed-tensors >= 0.15.0
 datasets
 expecttest
+lm_eval
 numpy
 peft
 prettytable
