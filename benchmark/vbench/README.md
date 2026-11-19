@@ -12,27 +12,13 @@ FlashInfer cannot find `nvcc`, set `CUDA_HOME` to your toolkit directory.
 From the neural-compressor repository root:
 
 ```bash
-uv venv --seed --python 3.12 .venv-vbench
-source .venv-vbench/bin/activate
-
-uv pip install --torch-backend=cu130 vllm==0.32.0 vllm-omni==0.32.0 \
-  ninja nvidia-cutlass-dsl==4.8.0 \
-  dreamsim==0.2.1 pyiqa==0.1.16 timm==1.0.12 \
-  boto3 cython decord easydict fairscale fvcore lvis matplotlib openai-clip \
-  opencv-python pycocoevalcap scikit-learn scikit-image tensorboard wheel
-uv pip install --no-deps vbench==0.1.5
+bash benchmark/vbench/setup.sh
+source venv/vbench/bin/activate
 ```
 
-Install VBench with `--no-deps` because its Transformers and NumPy pins
-conflict with this inference stack. The command above installs its evaluator
-dependencies separately. Have `git` and `wget` on `PATH` for the first
-evaluation, when VBench downloads its evaluator models.
-
-For **NVFP4 E5M3**, install the Omni plugin in the same environment.
-
-```bash
-uv pip install --no-deps -e benchmark/vllm-qdq-plugin
-```
+Use `bash benchmark/vbench/setup.sh --e5m3` to include the NVFP4 E5M3 plugin.
+Have `git` and `wget` on `PATH` for the first evaluation, when VBench downloads
+its evaluator models.
 
 For **I2V**, extract the [VBench image archive](https://drive.google.com/file/d/1Y_JnYnyJ3a6QhiranoX0MQVZFcTDPekZ/view)
 and set `I2V_IMAGES` to its `crop/16-9` directory.
