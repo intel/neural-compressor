@@ -69,8 +69,6 @@ def run_workers(commands, root):
 
 def generate_videos(args, output_dir, gpus):
     """Prepare inputs, check the checkpoint, and start one shard per GPU."""
-    if args.omni_source is None:
-        raise ValueError("Set OMNI_SOURCE or pass --omni_source")
     if args.task == "i2v" and args.i2v_images is None:
         raise ValueError("Set I2V_IMAGES or pass --i2v_images pointing to crop/16-9")
 
@@ -92,7 +90,7 @@ def generate_videos(args, output_dir, gpus):
     if args.dtype is not None and args.dtype != precision:
         raise ValueError(f"--dtype={args.dtype} does not match the checkpoint precision ({precision})")
     prepare(output_dir, args.task, args.i2v_images if args.task == "i2v" else None)
-    bind_checkpoint(output_dir, args.task, model, precision, args.omni_source)
+    bind_checkpoint(output_dir, args.task, model, precision)
 
     command = [sys.executable, str(BENCHMARK), "generate", "--task", args.task, "--root", str(output_dir)]
     logs = output_dir / "logs"
@@ -133,7 +131,6 @@ def main():
         help="Check the expected precision (default: read the checkpoint)",
     )
     generate.add_argument("--revision", help="Hugging Face checkpoint revision")
-    generate.add_argument("--omni_source", type=Path, default=os.environ.get("OMNI_SOURCE"))
     generate.add_argument("--i2v_images", type=Path, default=os.environ.get("I2V_IMAGES"))
     evaluate.add_argument("--metrics", help="Comma-separated metric subset")
     args = parser.parse_args()

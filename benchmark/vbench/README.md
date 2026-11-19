@@ -5,13 +5,9 @@ or NVFP4 E5M3 checkpoints.
 
 ## Environment setup
 
-The GPU smoke tests used Python 3.12, B200, PyTorch 2.14.0 (CUDA 13.0),
-vLLM 0.33.0, and vLLM-Omni commit `7465c0f52bcb46a55f62c1b8613846cda30d0083`.
-Use Linux x86-64 with a CUDA 13 compatible driver, `uv`, `ffmpeg`, and
-`ffprobe`. The smoke environment used `nvcc` from CUDA toolkit 12.8.
-If FlashInfer cannot find the right `nvcc` for JIT compilation, set
-`CUDA_HOME` to your toolkit directory. The smoke tests used an existing
-environment.
+Use Linux x86-64, Python 3.12, a CUDA 13 compatible NVIDIA driver, `uv`, and
+`ffmpeg` and `ffprobe` on `PATH`. If FlashInfer cannot find `nvcc`, set
+`CUDA_HOME` to your toolkit directory.
 
 From the neural-compressor repository root:
 
@@ -19,13 +15,8 @@ From the neural-compressor repository root:
 uv venv --seed --python 3.12 .venv-vbench
 source .venv-vbench/bin/activate
 
-git clone https://github.com/vllm-project/vllm-omni.git
-export OMNI_SOURCE="$PWD/vllm-omni"
-git -C "$OMNI_SOURCE" checkout --detach 7465c0f52bcb46a55f62c1b8613846cda30d0083
-
-VLLM_OMNI_TARGET_DEVICE=cuda uv pip install --torch-backend=cu130 \
-  'vllm @ https://wheels.vllm.ai/4ba787ec9959e566d3b587a796dff07673324da5/vllm-0.33.0-cp38-abi3-manylinux_2_28_x86_64.whl' \
-  -e "$OMNI_SOURCE" ninja nvidia-cutlass-dsl==4.8.0 \
+uv pip install --torch-backend=cu130 vllm==0.32.0 vllm-omni==0.32.0 \
+  ninja nvidia-cutlass-dsl==4.8.0 \
   dreamsim==0.2.1 pyiqa==0.1.16 timm==1.0.12 \
   boto3 cython decord easydict fairscale fvcore lvis matplotlib openai-clip \
   opencv-python pycocoevalcap scikit-learn scikit-image tensorboard wheel

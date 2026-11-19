@@ -11,7 +11,7 @@ Weight bytes are NOT fingerprinted: local checkpoint weights must be immutable.
 import argparse
 import datetime
 import hashlib
-import importlib
+import importlib.metadata
 import importlib.util
 import json
 import os
@@ -24,8 +24,6 @@ from pathlib import Path
 
 REPO = Path(__file__).resolve().parent
 DATA = REPO / "data"
-SOURCE_COMMIT = "7465c0f52bcb46a55f62c1b8613846cda30d0083"
-I2V_EXAMPLE = "examples/offline_inference/image_to_video/image_to_video.py"
 EXPECTED_COUNTS = {"t2v": 165, "i2v": 355}
 DATA_FILES = {"t2v": "t2v_prompts.json", "i2v": "i2v_metadata.json"}
 GROUPS = ("subject_consistency", "overall_consistency")
@@ -65,8 +63,6 @@ SETTINGS = {
         boundary_ratio=0.875,
         flow_shift=5.0,
         linear_backend="flashinfer_cutlass",
-        init_timeout=3600,
-        stage_init_timeout=3600,
         enable_diffusion_pipeline_profiler=True,
     ),
     "i2v": dict(
@@ -79,9 +75,8 @@ SETTINGS = {
         boundary_ratio=0.9,
         flow_shift=3.0,
         dimension_multiple=16,
-        image_resize="LANCZOS (official Omni example)",
-        init_timeout=7200,
-        stage_init_timeout=7200,
+        image_resize="LANCZOS",
+        sample_solver="unipc",
         enable_diffusion_pipeline_profiler=False,
     ),
 }
@@ -307,55 +302,16 @@ def valid(path, width, height, frames=81, fps=16):
     return probe(path, frames, width, height, fps)
 
 
-def _git(source, *args):
-    return subprocess.check_output(["git", "-C", str(source), *args], text=True, stderr=subprocess.PIPE).strip()
-
-
-def validate_source(source):
-    source = Path(source).expanduser().resolve(strict=True)
-    if Path(_git(source, "rev-parse", "--show-toplevel")).resolve() != source:
-        raise RuntimeError("--omni-source must be the checkout root")
-    commit = _git(source, "rev-parse", "HEAD")
-    if commit != SOURCE_COMMIT:
-        raise RuntimeError(f"Expected Omni commit {SOURCE_COMMIT}, got {commit}")
-    scopes = (
-        "vllm_omni",
-        "examples/offline_inference",
-        "pyproject.toml",
-        "setup.py",
-        "setup.cfg",
-        "requirements",
-        "requirements.txt",
-    )
-    dirty = _git(source, "status", "--porcelain", "--untracked-files=no", "--", *scopes)
-    if dirty:
-        raise RuntimeError(f"Tracked Omni source changes in inference scope:\n{dirty}")
-    example = source / I2V_EXAMPLE
-    if not example.is_file() or not (source / "vllm_omni" / "__init__.py").is_file():
-        raise RuntimeError("Omni source/example missing")
-    return dict(
-        path=str(source),
-        commit=commit,
-        clean_tracked_scopes=list(scopes),
-        i2v_example=I2V_EXAMPLE,
-        i2v_example_sha256=sha256(example),
-    )
-
-
-def _import_omni(source):
-    """Prepend the requested checkout BEFORE any Omni import, then check origin."""
-    source = Path(source).resolve()
-    sys.path.insert(0, str(source))
-    importlib.invalidate_caches()
-    for name, module in tuple(sys.modules.items()):
-        if name == "vllm_omni" or name.startswith("vllm_omni."):
-            origin = getattr(module, "__file__", None)
-            if origin and not Path(origin).resolve().is_relative_to(source / "vllm_omni"):
-                raise RuntimeError(f"Already imported Omni outside selected checkout: {origin}")
-    module = importlib.import_module("vllm_omni")
-    if not module.__file__ or not Path(module.__file__).resolve().is_relative_to(source / "vllm_omni"):
-        raise RuntimeError(f"Imported Omni outside selected checkout: {module.__file__}")
-    return module
+def runtime_versions():
+    """Record the installed inference packages so resuming uses the same stack."""
+    versions = {}
+    for package in ("vllm", "vllm-omni", "torch", "diffusers", "flashinfer-python", "vllm-qdq-plugin"):
+        try:
+            versions[package] = importlib.metadata.version(package)
+        except importlib.metadata.PackageNotFoundError:
+            if package != "vllm-qdq-plugin":
+                raise RuntimeError(f"Missing {package}. Follow the environment setup in the VBench README.") from None
+    return versions
 
 
 def validate_model(model, task, precision):
@@ -453,14 +409,14 @@ def validate_model(model, task, precision):
     )
 
 
-def bind_checkpoint(root, task, model, precision, source):
+def bind_checkpoint(root, task, model, precision):
     """Record the generation settings once before starting GPU workers."""
     task_record, _ = read_prepared(root, task)
     config = dict(
         schema_version=1,
         task=task,
         task_sha256=fingerprint(task_record),
-        source=validate_source(source),
+        versions=runtime_versions(),
         model=validate_model(model, task, precision),
         runtime={
             key: os.environ.get(key) for key in ("VLLM_PLUGINS", "VLLM_QDQ", "VLLM_QDQ_CUTE", "VLLM_NVFP4_GEMM_BACKEND")
@@ -482,7 +438,6 @@ def _check_configuration(config, task, task_record):
         or config.get("task_sha256") != fingerprint(task_record)
         or config.get("settings") != SETTINGS[task]
         or config.get("sampling_sha256") != fingerprint(SETTINGS[task])
-        or config.get("source", {}).get("commit") != SOURCE_COMMIT
         or config.get("model", {}).get("pipeline_class") != MODEL_CLASSES[task]
         or config.get("model", {}).get("precision") not in ("bf16", "nvfp4", "mxfp8", "nvfp4_e5m3")
         or config.get("benchmark_sha256") != sha256(Path(__file__))
@@ -556,145 +511,86 @@ def normalize_output(result):
 
 
 class _Generator:
-    """One lazy engine per worker.
-
-    The official I2V main function is unchanged.
-    """
+    """Reuse one Omni engine per GPU worker."""
 
     def __init__(self, config):
         self.config = config
         self.engine = None
-        self.engine_kwargs = None
-        self.example = None
-        self.original_omni = None
         self.gpu = None
 
-    def _initialize_imports(self):
-        source = self.config["source"]["path"]
-        if validate_source(source) != self.config["source"]:
-            raise RuntimeError("Omni source changed after configuration binding")
-        _import_omni(source)
+    def _start_engine(self):
         import torch
+        from vllm_omni.entrypoints.omni import Omni
 
+        settings = self.config["settings"]
+        options = {
+            key: settings[key]
+            for key in (
+                "boundary_ratio",
+                "flow_shift",
+                "enforce_eager",
+                "cache_backend",
+                "enable_cpu_offload",
+                "enable_layerwise_offload",
+                "vae_use_tiling",
+                "vae_use_slicing",
+                "enable_diffusion_pipeline_profiler",
+            )
+        }
+        if "linear_backend" in settings:
+            options["linear_backend"] = settings["linear_backend"]
+        self.engine = Omni(
+            model=self.config["model"]["path"],
+            model_class_name=MODEL_CLASSES[self.config["task"]],
+            **options,
+        )
         self.gpu = dict(
             visible_devices=os.environ.get("CUDA_VISIBLE_DEVICES"),
             logical_device=torch.cuda.current_device(),
             name=torch.cuda.get_device_name(torch.cuda.current_device()),
         )
-        if self.config["task"] == "i2v":
-            path = Path(source) / I2V_EXAMPLE
-            spec = importlib.util.spec_from_file_location("_wan_benchmark_official_i2v", path)
-            if spec is None or spec.loader is None:
-                raise RuntimeError("Cannot import the official I2V example")
-            example = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(example)
-            self.example = example
-            self.original_omni = example.Omni
-            example.Omni = self._reuse_engine
-
-    def _reuse_engine(self, **kwargs):
-        if self.engine is None:
-            self.engine = self.original_omni(**kwargs)
-            self.engine_kwargs = kwargs.copy()
-        elif kwargs != self.engine_kwargs:
-            raise RuntimeError("Official example engine arguments changed between inputs")
-        return self.engine
 
     def generate(self, job, output):
-        if self.gpu is None:
-            self._initialize_imports()
-        settings = self.config["settings"]
-        model = self.config["model"]["path"]
-        if self.config["task"] == "i2v":
-            argv = [
-                str(Path(self.config["source"]["path"]) / I2V_EXAMPLE),
-                "--model",
-                model,
-                "--model-class-name",
-                MODEL_CLASSES["i2v"],
-                "--image",
-                job["image"],
-                "--prompt",
-                job["prompt"],
-                "--negative-prompt",
-                settings["negative_prompt"],
-                "--width",
-                "832",
-                "--height",
-                "480",
-                "--num-frames",
-                "81",
-                "--fps",
-                "16",
-                "--num-inference-steps",
-                "40",
-                "--guidance-scale",
-                "3.5",
-                "--guidance-scale-high",
-                "3.5",
-                "--boundary-ratio",
-                "0.9",
-                "--flow-shift",
-                "3.0",
-                "--seed",
-                "0",
-                "--enforce-eager",
-                "--init-timeout",
-                "7200",
-                "--stage-init-timeout",
-                "7200",
-                "--output",
-                str(output),
-            ]
-            previous = sys.argv
-            try:
-                sys.argv = argv
-                self.example.main()
-            finally:
-                sys.argv = previous
-            return argv
         import torch
         from diffusers.utils import export_to_video
-        from vllm_omni import Omni
         from vllm_omni.inputs.data import OmniDiffusionSamplingParams
 
         if self.engine is None:
-            self.engine = Omni(
-                model=model,
-                model_class_name="WanPipeline",
-                enforce_eager=True,
-                init_timeout=3600,
-                stage_init_timeout=3600,
-                linear_backend="flashinfer_cutlass",
-                boundary_ratio=0.875,
-                flow_shift=5.0,
-                enable_cpu_offload=False,
-                enable_layerwise_offload=False,
-                vae_use_tiling=False,
-                vae_use_slicing=False,
-                enable_diffusion_pipeline_profiler=True,
-            )
-        params = OmniDiffusionSamplingParams(
-            height=720,
-            width=1280,
-            num_frames=81,
-            num_inference_steps=40,
-            guidance_scale=4.0,
-            guidance_scale_2=3.0,
-            generator=torch.Generator(device="cuda").manual_seed(42),
-            fps=16,
+            self._start_engine()
+
+        settings = self.config["settings"]
+        prompt = {"prompt": job["prompt"], "negative_prompt": settings["negative_prompt"]}
+        sampling = dict(
+            height=settings["height"],
+            width=settings["width"],
+            num_frames=settings["frames"],
+            num_inference_steps=settings["steps"],
+            guidance_scale=settings["guidance_scale"],
+            guidance_scale_2=settings["guidance_scale_2"],
+            generator=torch.Generator(device="cuda").manual_seed(settings["seed"]),
+            fps=settings["fps"],
         )
-        result = self.engine.generate({"prompt": job["prompt"], "negative_prompt": settings["negative_prompt"]}, params)
-        export_to_video(normalize_output(result), str(output), fps=16)
-        return None
+        if self.config["task"] == "i2v":
+            from PIL import Image
+
+            # Match the Wan I2V example shipped in the 0.32.0 source tag.
+            with Image.open(job["image"]) as reference:
+                image = reference.convert("RGB").resize(
+                    (settings["width"], settings["height"]), Image.Resampling.LANCZOS
+                )
+            prompt.update(modalities=["video"], multi_modal_data={"image": image})
+            sampling.update(
+                boundary_ratio=settings["boundary_ratio"],
+                frame_rate=float(settings["fps"]),
+                extra_args={"sample_solver": settings["sample_solver"], "flow_shift": settings["flow_shift"]},
+            )
+
+        result = self.engine.generate(prompt, OmniDiffusionSamplingParams(**sampling))
+        export_to_video(normalize_output(result), str(output), fps=settings["fps"])
 
     def close(self):
-        try:
-            if self.engine is not None:
-                self.engine.close()
-        finally:
-            if self.example is not None:
-                self.example.Omni = self.original_omni
+        if self.engine is not None:
+            self.engine.close()
 
 
 def _now():
@@ -708,6 +604,8 @@ def generate(args):
     task_record, jobs = read_prepared(root, args.task)
     cfg = load_json(root / "configuration.json")
     _check_configuration(cfg, args.task, task_record)
+    if runtime_versions() != cfg["versions"]:
+        raise RuntimeError("Inference package versions changed after configuration binding")
     # This must precede all runtime imports, including the official example import.
     old_attention = os.environ.get("DIFFUSION_ATTENTION_BACKEND")
     os.environ["DIFFUSION_ATTENTION_BACKEND"] = "TRTLLM_ATTN"
@@ -751,7 +649,7 @@ def generate(args):
             start = time.monotonic()
             try:
                 event("START_VIDEO", index=index, prompt=job["prompt"])
-                command = runner.generate(job, temporary)
+                runner.generate(job, temporary)
                 s = cfg["settings"]
                 if not probe(temporary, s["frames"], s["width"], s["height"], s["fps"]):
                     raise RuntimeError(f"Output validation failed for index {index}")
@@ -773,7 +671,6 @@ def generate(args):
                         physical_gpu=os.environ.get("CUDA_VISIBLE_DEVICES"),
                         elapsed_seconds=elapsed,
                         finished_at=_now(),
-                        command=command,
                     ),
                 )
                 count += 1
