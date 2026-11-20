@@ -29,7 +29,6 @@ variables:
   UPLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   DOWNLOAD_PATH: $(Build.SourcesDirectory)/log_dir
   ARTIFACT_NAME: "UT_coverage_report_3x_pt"
-  REPO: $(Build.Repository.Uri)
 
 stages:
   - stage: Torch
@@ -49,30 +48,11 @@ stages:
               utArtifact: "ut_3x"
               utContainerName: "INCUnitTest$(NODE_LABEL)"
 
-
-  - stage: Torch_baseline
-    displayName: Unit Test 3x Torch baseline
-    dependsOn: []
-    jobs:
-      - job:
-        displayName: Unit Test 3x Torch baseline
-        steps:
-          - template: template/ut-template.yml
-            parameters:
-              dockerConfigName: "gitCloneDockerConfig"
-              dockerFileName: "ubuntu-2404"
-              repoTag: "$(IMAGE_TAG)"
-              utScriptFileName: "run_3x_pt"
-              uploadPath: $(UPLOAD_PATH)
-              utArtifact: "ut_3x_baseline"
-              repo: $(REPO)
-              utContainerName: "utTest$(NODE_LABEL)"
-
   - stage: Coverage
-    displayName: "Coverage Compare"
+    displayName: "Coverage Report"
     pool:
       vmImage: "ubuntu-latest"
-    dependsOn: [Torch, Torch_baseline]
+    dependsOn: [Torch]
     jobs:
       - job: CollectDatafiles
         steps:

@@ -47,9 +47,22 @@ def pro_config(args):
         "all_proxy",
         "no_proxy",
     ]
-    config.setdefault("run", {})[
-        "env_startup_command"
-    ] = "git clone https://github.com/{{ repo }}.git . && {{ before_repo_set_cmd }}"
+    # The jefzda/sweap-images images do not ship /tests/test_patch.patch.
+    # Materialize the dataset's test_patch so before_repo_set_cmd can apply it.
+    # Clone the repo from /app (already in the image) when possible: cloning
+    # large repositories from GitHub can exceed the 600s command timeout.
+    config.setdefault("run", {})["env_startup_command"] = (
+        "mkdir -p /tests\n"
+        "cat > /tests/test_patch.patch <<'__SWE_PRO_TEST_PATCH__'\n"
+        "{{ test_patch }}\n"
+        "__SWE_PRO_TEST_PATCH__\n"
+        "if [ -d /app/.git ]; then\n"
+        "  git clone --quiet /app . || exit 1\n"
+        "else\n"
+        "  git clone --quiet https://github.com/{{ repo }}.git . || exit 1\n"
+        "fi\n"
+        "{{ before_repo_set_cmd }}"
+    )
     old = "echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && git add -A && git diff --cached"
     new = (
         "cd /testbed && echo COMPLETE_TASK_AND_SUBMIT_FINAL_OUTPUT && git add -A && "
@@ -69,6 +82,7 @@ def pro_config(args):
         "model_kwargs": {
             "api_base": args.base_url,
             "api_key": args.api_key,
+            "custom_llm_provider": "openai",
             "drop_params": True,
             "temperature": 0.0,
             "max_tokens": int(os.getenv("AGENT_MAX_TOKENS", "8192")),
@@ -202,7 +216,7 @@ def select_pro(args):
     import pandas as pd
     from datasets import load_dataset
 
-    instances = list(load_dataset("ScaleAI/SWE-bench_Pro", split="test"))
+    instances = list(load_dataset(args.dataset, split=args.split))
     if args.slice:
         bounds = [int(value) if value else None for value in args.slice.split(":")]
         instances = instances[slice(*bounds)]
@@ -755,6 +769,12 @@ def compare_benchmark_reports(args: argparse.Namespace) -> None:
     print(f"Compared {len(comparisons)} benchmarks and wrote {output}")
 
 
+def pro_dataset_size(args):
+    from datasets import load_dataset
+
+    print(len(load_dataset(args.dataset, split=args.split)))
+
+
 def build_parser():
     parser = argparse.ArgumentParser()
     commands = parser.add_subparsers(required=True)
@@ -779,8 +799,15 @@ def build_parser():
     command = commands.add_parser("select-pro")
     command.add_argument("--csv", required=True)
     command.add_argument("--images", required=True)
+    command.add_argument("--dataset", default="ScaleAI/SWE-bench_Pro")
+    command.add_argument("--split", default="test")
     command.add_argument("--slice", default="")
     command.set_defaults(func=select_pro)
+
+    command = commands.add_parser("pro-dataset-size")
+    command.add_argument("--dataset", default="ScaleAI/SWE-bench_Pro")
+    command.add_argument("--split", default="test")
+    command.set_defaults(func=pro_dataset_size)
 
     command = commands.add_parser("select-verified")
     command.add_argument("--images", required=True)
