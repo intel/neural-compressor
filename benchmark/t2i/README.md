@@ -21,9 +21,8 @@ Set `HF_TOKEN` in your environment for Hugging Face checkpoints that require it.
 ## Prepare prompts
 
 ```bash
-runner=benchmark/t2i/run_t2i.sh
-bash "$runner" prepare drawbench --output runs/t2i/prompts/drawbench.tsv
-bash "$runner" prepare coco2014 --source /path/to/captions_val2014.json \
+bash benchmark/t2i/run_t2i.sh prepare drawbench --output runs/t2i/prompts/drawbench.tsv
+bash benchmark/t2i/run_t2i.sh prepare coco2014 --source /path/to/captions_val2014.json \
   --output runs/t2i/prompts/coco2014.tsv
 ```
 
@@ -41,20 +40,20 @@ generation seed `42 + i`.
 ## Generate and evaluate
 
 ```bash
-CUDA_VISIBLE_DEVICES=0 bash "$runner" generate \
+CUDA_VISIBLE_DEVICES=0 bash benchmark/t2i/run_t2i.sh generate \
   --model_path=Tongyi-MAI/Z-Image-Turbo --dtype=bf16 --output_dir=runs/t2i/z-image-bf16 \
   --manifest drawbench runs/t2i/prompts/drawbench.tsv \
   --manifest coco2014 runs/t2i/prompts/coco2014.tsv
 
-CUDA_VISIBLE_DEVICES=0 bash "$runner" generate \
+CUDA_VISIBLE_DEVICES=0 bash benchmark/t2i/run_t2i.sh generate \
   --model_path=intel-ai/Z-Image-Turbo-MXFP8-AutoRound --dtype=mxfp8 --output_dir=runs/t2i/z-image-mxfp8 \
   --manifest drawbench runs/t2i/prompts/drawbench.tsv \
   --manifest coco2014 runs/t2i/prompts/coco2014.tsv
 
 for precision in bf16 mxfp8; do
-  CUDA_VISIBLE_DEVICES=0 bash "$runner" evaluate --output_dir="runs/t2i/z-image-$precision"
+  CUDA_VISIBLE_DEVICES=0 bash benchmark/t2i/run_t2i.sh evaluate --output_dir="runs/t2i/z-image-$precision"
 done
-bash "$runner" summarize --output runs/t2i/summary.csv runs/t2i/z-image-{bf16,mxfp8}
+bash benchmark/t2i/run_t2i.sh summarize --output runs/t2i/summary.csv runs/t2i/z-image-{bf16,mxfp8}
 ```
 
 `--model_path` accepts a local Diffusers-format checkpoint or a Hugging Face ID.
