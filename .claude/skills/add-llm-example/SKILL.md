@@ -134,7 +134,10 @@ disable top_p / max_tokens / max_model_len / served_model_name. Hooks:
 | `DEFAULT_MAX_MODEL_LEN` / `DEFAULT_SERVED_MODEL_NAME` | `vllm serve` defaults (empty: vLLM default / model path) |
 | `DEFAULT_EVAL_BATCH_SIZE` / `EVAL_TIMEOUT` | evalscope concurrency and request timeout |
 | `EXTRA_GENERATION_CONFIG` | JSON object merged into `--generation-config`, e.g. `extra_body` |
-| `SINGLE_RUN_TASKS` | tasks run once regardless of `--num_runs` (default: `hellaswag,piqa,mmlu,gsm8k`) |
+| `SINGLE_RUN_TASKS` | tasks run once regardless of `--num_runs` (default: `hellaswag,piqa,mmlu,gsm8k,openai_mrcr`) |
+| `MRCR_DATA_DIR` | where the fixed 300-sample `openai_mrcr` subset (`benchmark/evalscope/mrcr/openai_mrcr_300.json`) is materialized |
+| `MRCR_MAX_MODEL_LEN` | `--max-model-len` for `openai_mrcr` when `--max_model_len` is not passed (default `131072`). Only add `openai_mrcr` to models with a native context >= 131072 |
+| `MRCR_GENERATION_CONFIG` | JSON deep-merged over the generation config for `openai_mrcr` (default: temperature 0, `max_tokens=2048`, thinking off); always-thinking models raise `max_tokens` and `MRCR_MAX_MODEL_LEN` |
 | `EXTRA_SERVE_ARGS` | extra flags for `vllm serve` (tool / reasoning parsers, ...) |
 | `ATTENTION_BACKEND_FP8KV` / `ATTENTION_BACKEND_FP8ATTN` / `FLASHINFER_WORKSPACE_SIZE` | same as the lm-eval driver (default `FLASHINFER`; FP8 attention uses `TRITON_ATTN` on GPUs other than SM 10.x) |
 
