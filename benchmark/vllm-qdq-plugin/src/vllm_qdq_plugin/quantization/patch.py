@@ -100,6 +100,7 @@ def _patch_compressed_tensors_nvfp4() -> None:
     if _COMPRESSED_TENSORS_PATCHED:
         return
 
+    from vllm.model_executor.kernels.linear.nvfp4.marlin import MarlinNvFp4LinearKernel
     from vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors import (
         CompressedTensorsConfig,
     )
@@ -109,7 +110,6 @@ def _patch_compressed_tensors_nvfp4() -> None:
     from vllm.model_executor.layers.quantization.compressed_tensors.schemes.compressed_tensors_w4a4_nvfp4 import (
         CompressedTensorsW4A4Fp4,
     )
-    from vllm.model_executor.kernels.linear.nvfp4.marlin import MarlinNvFp4LinearKernel
 
     original_linear_apply = CompressedTensorsW4A4Fp4.apply_weights
     original_moe_method = CompressedTensorsMoEMethod.get_moe_method
@@ -135,10 +135,7 @@ def _patch_compressed_tensors_nvfp4() -> None:
         enabled = getattr(CompressedTensorsConfig, "_vllm_qdq_nvfp4_enabled", False)
         if enabled:
             quant_config._add_fused_moe_to_target_scheme_map()
-            projection_names = [
-                layer_name + suffix
-                for suffix in (".0.gate_proj", ".0.up_proj", ".0.down_proj")
-            ]
+            projection_names = [layer_name + suffix for suffix in (".0.gate_proj", ".0.up_proj", ".0.down_proj")]
             scheme_dicts = [quant_config.get_scheme_dict(layer, name) for name in projection_names]
             scheme_dict = scheme_dicts[-1]
             if scheme_dict is not None and all(item == scheme_dict for item in scheme_dicts[:-1]):

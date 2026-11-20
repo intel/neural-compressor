@@ -12,7 +12,6 @@ from vllm.model_executor.layers.quantization.compressed_tensors.compressed_tenso
 from vllm.model_executor.layers.quantization.compressed_tensors.schemes.compressed_tensors_w4a4_nvfp4 import (
     CompressedTensorsW4A4Fp4,
 )
-
 from vllm_qdq_plugin.qdq.nvfp4 import _nvfp4_qdq_reference
 from vllm_qdq_plugin.quantization.inc_nvfp4_moe import INCNvfp4QDQMoEMethod
 from vllm_qdq_plugin.quantization.patch import apply_patches
@@ -64,9 +63,7 @@ class TestCompressedTensorsNvfp4Qdq:
 
         with (
             mock.patch.object(CompressedTensorsConfig, "_vllm_qdq_nvfp4_enabled", True),
-            mock.patch(
-                "vllm_qdq_plugin.quantization.inc_nvfp4_moe.INCNvfp4QDQMoEMethod"
-            ) as qdq_method,
+            mock.patch("vllm_qdq_plugin.quantization.inc_nvfp4_moe.INCNvfp4QDQMoEMethod") as qdq_method,
         ):
             CompressedTensorsMoEMethod.get_moe_method(quant_config, layer, "model.layers.3.mlp.experts")
 
