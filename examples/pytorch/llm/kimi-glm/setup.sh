@@ -59,6 +59,10 @@ elif [[ "$DEVICE" == "gpu" ]]; then
     elif [[ "$BENCH_TOOL" == "aisbench" ]]; then
         echo "Installing aisbench..."
     fi
+    # evalscope tasks (aime26, gpqa_diamond, math_500, openai_mrcr); openai_mrcr also needs tiktoken
+    if [[ "$TASKS" =~ (aime26|gpqa_diamond|math_500|openai_mrcr) ]]; then
+        uv pip install -U evalscope tiktoken
+    fi
     # Uninstall flash_attn to avoid conflicts
     uv pip uninstall flash_attn
 else
