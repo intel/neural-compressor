@@ -37,6 +37,12 @@ export DEFAULT_TEMPERATURE=1.0
 export DEFAULT_TOP_P=0.95
 export DEFAULT_MAX_TOKENS=64000
 export EXTRA_GENERATION_CONFIG='{"extra_body": {"chat_template_kwargs": {"enable_thinking": true, "reasoning_effort": "max"}}}'
+# MiniMax always thinks, so openai_mrcr keeps the thinking config above and reserves room for the
+# reasoning within the native 196608 context.
+export MRCR_MAX_MODEL_LEN=196608
+export MRCR_GENERATION_CONFIG='{"max_tokens": 65536}'
+# Sampling with thinking makes MRCR noisy, so it is repeated --num_runs times like the other tasks.
+export SINGLE_RUN_TASKS="${SINGLE_RUN_TASKS-hellaswag,piqa,mmlu,gsm8k}"
 
 export EXTRA_SERVE_ARGS="--trust-remote-code --tool-call-parser minimax_m2 --enable-auto-tool-choice --reasoning-parser minimax_m2 --max-num-seqs 1024 --max-num-batched-tokens 32768 --enable-chunked-prefill"
 export ATTENTION_BACKEND_FP8KV="FLASHINFER"
