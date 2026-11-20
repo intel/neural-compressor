@@ -342,7 +342,7 @@ class BaseConfig(ABC):
         """
         result = dict()
         for param, value in self.__dict__.items():
-            if param not in ["_global_config", "_local_config", "_white_list"]:
+            if param not in ["_global_config", "_local_config", "_white_list", "_is_initialized"]:
                 result[param] = value
         return result
 
@@ -392,7 +392,7 @@ class BaseConfig(ABC):
         """
         with open(filename, "r", encoding="utf-8") as file:
             config_dict = json.load(file)
-        return cls.from_dict(**config_dict)
+        return cls.from_dict(config_dict)
 
     def to_json_file(self, filename):
         """Save the config to a JSON file.
@@ -626,7 +626,7 @@ class BaseConfig(ABC):
         Returns:
             str: String identifier for the operator type.
         """
-        # * Ort and TF may override this method.
+        # * Backend-specific subclasses may override this method.
         op_type_name = getattr(op_type, "__name__", "")
         if op_type_name == "":
             logger.warning("The op_type %s has no attribute __name__.", op_type)
@@ -642,7 +642,7 @@ class BaseConfig(ABC):
         Returns:
             bool: True if the identifier is an operator type, otherwise False.
         """
-        # * Ort and TF may override this method.
+        # * Backend-specific subclasses may override this method.
         return not isinstance(name, str)
 
     @classmethod

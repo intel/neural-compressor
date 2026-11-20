@@ -36,24 +36,22 @@ Equivalent Python command:
 ```bash
 python quantize.py \
   --dtype mxfp4 \
-  --input_model moonshotai/Kimi-K2.6 \
-  --output_model /workspace/models/moonshotai/Kimi-K2.6-MXFP4 \
+  --model_name_or_path moonshotai/Kimi-K2.6 \
+  --export_path /workspace/models/moonshotai/Kimi-K2.6-MXFP4 \
   --model_type kimi \
-  --format llm_compressor
+  --export_format llm_compressor
 ```
 
 ## Evaluation
 
-`run_benchmark.sh` is aligned with Llama benchmark style:
-
-- Automatically infers `tensor_parallel_size` from `CUDA_VISIBLE_DEVICES`
-- Exports `VLLM_QDQ=1`
-- Uses vLLM backend through `lm_eval`
+`run_benchmark.sh` is a thin wrapper over the shared drivers. Each task is routed to one path:
+- `aime26`, `gpqa_diamond`, `math_500` and `openai_mrcr` run with `benchmark/evalscope/run_evalscope.sh` (starts `vllm serve` and evaluates through the OpenAI-compatible API with `evalscope`).
+- All other tasks run with `benchmark/lm_eval/run_lm_eval.sh` (vLLM backend through `lm_eval`).
 
 ### Benchmark Quick Start
 
 ```bash
-CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,8 bash run_benchmark.sh \
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash run_benchmark.sh \
   --model_path=/workspace/models/moonshotai/Kimi-K2.6-MXFP4/Kimi-K2.6-mxfp-w4g32
 ```
 
@@ -61,13 +59,36 @@ Equivalent default command:
 
 ```bash
 VLLM_QDQ=1 lm_eval --model vllm \
-  --model_args pretrained=/workspace/models/moonshotai/Kimi-K2.6-MXFP4/Kimi-K2.6-mxfp-w4g32,tensor_parallel_size=8,data_parallel_size=1,max_model_len=8192,trust_remote_code=True \
+  --model_args pretrained=/workspace/models/moonshotai/Kimi-K2.6-MXFP4/Kimi-K2.6-mxfp-w4g32,tensor_parallel_size=8,data_parallel_size=1,max_model_len=8192,trust_remote_code=True,load_format=fastsafetensors \
   --tasks gsm8k,mmlu,piqa,hellaswag \
   --batch_size auto
 ```
 
-You can override defaults:
+Evaluate with evalscope:
 
-- `--tasks=<task1,task2,...>`
-- `--batch_size=<auto|int>`
-- `--max_model_len=<int>`
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash run_benchmark.sh \
+  --model_path=/workspace/models/moonshotai/Kimi-K2.6-MXFP4/Kimi-K2.6-mxfp-w4g32 \
+  --tasks=aime26,gpqa_diamond,math_500
+```
+
+Long-context MRCR on the fixed 300-sample `openai_mrcr` subset (vLLM `--max-model-len` defaults to 131072, thinking is disabled; see [benchmark/README.md](../../../../benchmark/README.md#openai-mrcr-openai_mrcr)):
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash run_benchmark.sh \
+  --model_path=/workspace/models/moonshotai/Kimi-K2.6-MXFP4/Kimi-K2.6-mxfp-w4g32 \
+  --tasks=openai_mrcr
+```
+
+The evalscope path serves the model with `vllm serve <model> --tensor-parallel-size <N> --trust-remote-code --load-format fastsafetensors`.
+`VLLM_QDQ=1` is only set on GPUs other than SM 10.x.
+
+Arguments (tensor parallel size is inferred from `CUDA_VISIBLE_DEVICES`):
+
+- `--model_path`: model path for vLLM (required).
+- `--tasks`: comma-separated tasks (default: `gsm8k,mmlu,piqa,hellaswag`).
+- `--static_kv_dtype` / `--static_attention_dtype`: static FP8 KV cache / attention (default: `auto`).
+
+All options other than `--tasks` are passed unchanged to both drivers.
+
+Outputs are written under `<model_name>-tp<N>-eval/` (lm_eval) and `<model_name>-tp<N>-evalscope/` (evalscope) in the current directory.
