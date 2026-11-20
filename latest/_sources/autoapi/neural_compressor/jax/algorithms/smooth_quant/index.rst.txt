@@ -1,0 +1,143 @@
+neural_compressor.jax.algorithms.smooth_quant
+=============================================
+
+.. py:module:: neural_compressor.jax.algorithms.smooth_quant
+
+.. autoapi-nested-parse::
+
+   SmoothQuant for JAX/Keras models, applied by folding (no extra ops at inference).
+
+   SmoothQuant (Xiao et al., 2023) migrates activation outliers into the weights. For a matmul ``y = x @ W`` and a
+   per-input-channel factor ``s``::
+
+       y = (x / s) @ (diag(s) W),    s_j = max|x_j| ** alpha / max|W_j| ** (1 - alpha)
+
+   The division ``x / s`` is folded into the layer that produces ``x`` (a normalization gain or the output channels of
+   a previous linear layer), so the smoothed model computes the same function with the same graph, and quantizing it
+   gives the same kernels and speed as quantizing the original model.
+
+   Which layers can be folded depends on the model's data flow, so the foldable groups are described per decoder-block
+   class in ``SMOOTH_RULES``. Gemma3 decoder blocks are supported; other models are left unchanged (with a warning).
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.jax.algorithms.smooth_quant.ChannelAbsMaxObserver
+   neural_compressor.jax.algorithms.smooth_quant.SmoothGroup
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.jax.algorithms.smooth_quant.input_axes
+   neural_compressor.jax.algorithms.smooth_quant.output_axes
+   neural_compressor.jax.algorithms.smooth_quant.kernel_input_abs_max
+   neural_compressor.jax.algorithms.smooth_quant.scale_kernel
+   neural_compressor.jax.algorithms.smooth_quant.gemma3_decoder_block_groups
+   neural_compressor.jax.algorithms.smooth_quant.find_smooth_groups
+   neural_compressor.jax.algorithms.smooth_quant.smoothing_factors
+   neural_compressor.jax.algorithms.smooth_quant.apply_smooth_quant
+
+
+Module Contents
+---------------
+
+.. py:class:: ChannelAbsMaxObserver(channel_shape: Tuple[int, Ellipsis], **kwargs)
+
+
+
+   Calibration observer: running per-channel maximum of ``|x|`` over all but the last ``num_channel_dims`` axes.
+
+   The statistic is a non-trainable variable, so it is updated inside a jitted, stateless calibration function
+   (e.g. the CausalLM generate function used during quantization) like the other INC observers. Input autocasting is
+   disabled, so the observed layer receives its input unchanged (same dtype) during calibration.
+
+
+.. py:function:: input_axes(layer) -> Tuple[int, Ellipsis]
+
+   Kernel axes contracted with the layer input (the input channels), in input order.
+
+
+.. py:function:: output_axes(layer) -> Tuple[int, Ellipsis]
+
+   Kernel axes that become output channels, in kernel order.
+
+
+.. py:function:: kernel_input_abs_max(layer) -> numpy.ndarray
+
+   Per-input-channel max |W| of a layer's kernel, shape = input channel shape.
+
+
+.. py:function:: scale_kernel(layer, s: numpy.ndarray, axes: Tuple[int, Ellipsis])
+
+   Multiply the kernel by ``s`` along ``axes``.
+
+
+.. py:class:: SmoothGroup
+
+   Consumers sharing one input, the layer whose input is observed, and how ``1 / s`` is folded.
+
+   ``head_repeat`` > 1 means the consumer input channels are ``(n_q, h)`` while the absorbing layer produces
+   ``(n_kv, h)`` with ``n_q = n_kv * head_repeat`` (grouped-query attention); one factor per kv channel is shared
+   by the query heads of its group.
+
+   ``absorb(s)`` folds ``1 / s`` into the producing layer and returns the factors that the stored (possibly
+   bfloat16-rounded) weights actually implement; the consumers are scaled by those, so the fold stays exact.
+
+
+.. py:function:: gemma3_decoder_block_groups(block) -> List[SmoothGroup]
+
+   Foldable groups of a keras-hub ``Gemma3DecoderBlock``.
+
+   - q/k/v projections, input = ``pre_attention_norm`` output -> fold into that norm
+   - gate/up projections, input = ``pre_ffw_norm`` output -> fold into that norm
+   - down projection, input = ``gelu(gate) * up`` -> fold into the up projection output channels
+   - attention output projection, input = ``softmax(qk) @ v`` -> fold into the value projection output channels
+     (shared by the query heads of each kv head)
+
+
+.. py:function:: find_smooth_groups(model, layer_settings: Optional[LayerSettings] = None, alpha: float = 0.5) -> List[SmoothGroup]
+
+   Collect the foldable groups of all supported blocks and their alpha.
+
+   :param model: Model to inspect.
+   :type model: keras.Model
+   :param layer_settings: Per-layer settings, see ``LayerSettings``. Default: every group with
+                          ``alpha``.
+   :type layer_settings: Callable, optional
+   :param alpha: Alpha used when ``layer_settings`` is not given.
+   :type alpha: float
+
+   :returns: Groups to smooth.
+   :rtype: List[SmoothGroup]
+
+
+.. py:function:: smoothing_factors(act_abs_max: numpy.ndarray, weight_abs_max: numpy.ndarray, alpha: float) -> numpy.ndarray
+
+   ``s = act^alpha / w^(1 - alpha)``, clipped to [SCALE_MIN, SCALE_MAX]; 1 where a statistic is zero.
+
+
+.. py:function:: apply_smooth_quant(model: keras.Model, calib_function: Callable, alpha: float = 0.5, layer_settings: Optional[LayerSettings] = None) -> None
+
+   Smooth the model in place: calibrate per-channel activation ranges, then fold the factors into the weights.
+
+   Only blocks with a rule in ``SMOOTH_RULES`` are smoothed (Gemma3 decoder blocks); for other models a warning is
+   logged and nothing is run (no calibration pass).
+
+   :param model: FP32/BF16 model (not yet quantized), modified in place.
+   :type model: keras.Model
+   :param calib_function: Runs calibration data through the model (the static-quantization calib function).
+   :type calib_function: Callable
+   :param alpha: Migration strength in [0, 1] (0.5 balances activation and weight ranges), used for all
+                 groups when ``layer_settings`` is not given.
+   :type alpha: float
+   :param layer_settings: Per-layer settings from the quantization configs, see ``LayerSettings``.
+   :type layer_settings: Callable, optional
+
+

@@ -71,7 +71,7 @@ Module Contents
        - "fp8_e5m2": 5 exponent bits, 2 mantissa bits
 
 
-.. py:class:: StaticQuantConfig(weight_dtype: str = 'fp8_e4m3', activation_dtype: str = 'fp8_e4m3', const_scale: bool = False, const_weight: bool = False, weight_scale_granularity: str = 'per_tensor', dot_product_attention_enable: bool = False, white_list: Optional[List[neural_compressor.common.base_config.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, exclude_list: Optional[List[str]] = None)
+.. py:class:: StaticQuantConfig(weight_dtype: str = 'fp8_e4m3', activation_dtype: str = 'fp8_e4m3', const_scale: bool = False, const_weight: bool = False, weight_scale_granularity: str = 'per_tensor', dot_product_attention_enable: bool = False, white_list: Optional[List[neural_compressor.common.base_config.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, exclude_list: Optional[List[str]] = None, smooth_quant: bool = False, smooth_quant_alpha: float = 0.5)
 
 
 
@@ -88,6 +88,11 @@ Module Contents
    FP8 formats available:
        - "fp8_e4m3": 4 exponent bits, 3 mantissa bits (default for "fp8")
        - "fp8_e5m2": 5 exponent bits, 2 mantissa bits
+
+   SmoothQuant (``smooth_quant=True``) can be enabled on top: before calibration, per-channel activation ranges are
+   collected with the calibration function and activation outliers are migrated into the weights by folding the
+   smoothing factors into the preceding layers (see ``neural_compressor.jax.algorithms.smooth_quant``). The graph and
+   quantized kernels are unchanged, so inference speed is the same.
 
 
 .. py:class:: JaxComposableConfig(weight_dtype: str = 'fp8_e4m3', activation_dtype: str = 'fp8_e4m3', const_scale: bool = False, const_weight: bool = False, weight_scale_granularity: str = 'per_tensor', dot_product_attention_enable: bool = False, white_list: Optional[List[neural_compressor.common.base_config.OP_NAME_OR_MODULE_TYPE]] = DEFAULT_WHITE_LIST, exclude_list: Optional[List[str]] = None)

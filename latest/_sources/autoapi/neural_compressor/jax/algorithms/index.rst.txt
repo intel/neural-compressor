@@ -16,6 +16,7 @@ Submodules
    :maxdepth: 1
 
    /autoapi/neural_compressor/jax/algorithms/dynamic/index
+   /autoapi/neural_compressor/jax/algorithms/smooth_quant/index
    /autoapi/neural_compressor/jax/algorithms/static/index
 
 

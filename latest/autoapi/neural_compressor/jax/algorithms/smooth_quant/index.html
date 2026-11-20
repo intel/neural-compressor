@@ -1,0 +1,286 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.jax.algorithms.smooth_quant &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.jax.algorithms.smooth_quant</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/jax/algorithms/smooth_quant/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.jax.algorithms.smooth_quant">
+<span id="neural-compressor-jax-algorithms-smooth-quant"></span><h1>neural_compressor.jax.algorithms.smooth_quant<a class="headerlink" href="#module-neural_compressor.jax.algorithms.smooth_quant" title="Link to this heading"></a></h1>
+<p>SmoothQuant for JAX/Keras models, applied by folding (no extra ops at inference).</p>
+<p>SmoothQuant (Xiao et al., 2023) migrates activation outliers into the weights. For a matmul <code class="docutils literal notranslate"><span class="pre">y</span> <span class="pre">=</span> <span class="pre">x</span> <span class="pre">&#64;</span> <span class="pre">W</span></code> and a
+per-input-channel factor <code class="docutils literal notranslate"><span class="pre">s</span></code>:</p>
+<div class="highlight-default notranslate"><div class="highlight"><pre><span></span><span class="n">y</span> <span class="o">=</span> <span class="p">(</span><span class="n">x</span> <span class="o">/</span> <span class="n">s</span><span class="p">)</span> <span class="o">@</span> <span class="p">(</span><span class="n">diag</span><span class="p">(</span><span class="n">s</span><span class="p">)</span> <span class="n">W</span><span class="p">),</span>    <span class="n">s_j</span> <span class="o">=</span> <span class="nb">max</span><span class="o">|</span><span class="n">x_j</span><span class="o">|</span> <span class="o">**</span> <span class="n">alpha</span> <span class="o">/</span> <span class="nb">max</span><span class="o">|</span><span class="n">W_j</span><span class="o">|</span> <span class="o">**</span> <span class="p">(</span><span class="mi">1</span> <span class="o">-</span> <span class="n">alpha</span><span class="p">)</span>
+</pre></div>
+</div>
+<p>The division <code class="docutils literal notranslate"><span class="pre">x</span> <span class="pre">/</span> <span class="pre">s</span></code> is folded into the layer that produces <code class="docutils literal notranslate"><span class="pre">x</span></code> (a normalization gain or the output channels of
+a previous linear layer), so the smoothed model computes the same function with the same graph, and quantizing it
+gives the same kernels and speed as quantizing the original model.</p>
+<p>Which layers can be folded depends on the model’s data flow, so the foldable groups are described per decoder-block
+class in <code class="docutils literal notranslate"><span class="pre">SMOOTH_RULES</span></code>. Gemma3 decoder blocks are supported; other models are left unchanged (with a warning).</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.ChannelAbsMaxObserver" title="neural_compressor.jax.algorithms.smooth_quant.ChannelAbsMaxObserver"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ChannelAbsMaxObserver</span></code></a></p></td>
+<td><p>Calibration observer: running per-channel maximum of <code class="docutils literal notranslate"><span class="pre">|x|</span></code> over all but the last <code class="docutils literal notranslate"><span class="pre">num_channel_dims</span></code> axes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.SmoothGroup" title="neural_compressor.jax.algorithms.smooth_quant.SmoothGroup"><code class="xref py py-obj docutils literal notranslate"><span class="pre">SmoothGroup</span></code></a></p></td>
+<td><p>Consumers sharing one input, the layer whose input is observed, and how <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">s</span></code> is folded.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.input_axes" title="neural_compressor.jax.algorithms.smooth_quant.input_axes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">input_axes</span></code></a>(→ Tuple[int, Ellipsis])</p></td>
+<td><p>Kernel axes contracted with the layer input (the input channels), in input order.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.output_axes" title="neural_compressor.jax.algorithms.smooth_quant.output_axes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">output_axes</span></code></a>(→ Tuple[int, Ellipsis])</p></td>
+<td><p>Kernel axes that become output channels, in kernel order.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.kernel_input_abs_max" title="neural_compressor.jax.algorithms.smooth_quant.kernel_input_abs_max"><code class="xref py py-obj docutils literal notranslate"><span class="pre">kernel_input_abs_max</span></code></a>(→ numpy.ndarray)</p></td>
+<td><p>Per-input-channel max <a href="#id1"><span class="problematic" id="id2">|W|</span></a> of a layer's kernel, shape = input channel shape.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.scale_kernel" title="neural_compressor.jax.algorithms.smooth_quant.scale_kernel"><code class="xref py py-obj docutils literal notranslate"><span class="pre">scale_kernel</span></code></a>(layer, s, axes)</p></td>
+<td><p>Multiply the kernel by <code class="docutils literal notranslate"><span class="pre">s</span></code> along <code class="docutils literal notranslate"><span class="pre">axes</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.gemma3_decoder_block_groups" title="neural_compressor.jax.algorithms.smooth_quant.gemma3_decoder_block_groups"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gemma3_decoder_block_groups</span></code></a>(→ List[SmoothGroup])</p></td>
+<td><p>Foldable groups of a keras-hub <code class="docutils literal notranslate"><span class="pre">Gemma3DecoderBlock</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.find_smooth_groups" title="neural_compressor.jax.algorithms.smooth_quant.find_smooth_groups"><code class="xref py py-obj docutils literal notranslate"><span class="pre">find_smooth_groups</span></code></a>(→ List[SmoothGroup])</p></td>
+<td><p>Collect the foldable groups of all supported blocks and their alpha.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.smoothing_factors" title="neural_compressor.jax.algorithms.smooth_quant.smoothing_factors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">smoothing_factors</span></code></a>(→ numpy.ndarray)</p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">s</span> <span class="pre">=</span> <span class="pre">act^alpha</span> <span class="pre">/</span> <span class="pre">w^(1</span> <span class="pre">-</span> <span class="pre">alpha)</span></code>, clipped to [SCALE_MIN, SCALE_MAX]; 1 where a statistic is zero.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.apply_smooth_quant" title="neural_compressor.jax.algorithms.smooth_quant.apply_smooth_quant"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_smooth_quant</span></code></a>(→ None)</p></td>
+<td><p>Smooth the model in place: calibrate per-channel activation ranges, then fold the factors into the weights.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.algorithms.smooth_quant.ChannelAbsMaxObserver">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.algorithms.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">ChannelAbsMaxObserver</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">channel_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/algorithms/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.algorithms.smooth_quant.ChannelAbsMaxObserver" title="Link to this definition"></a></dt>
+<dd><p>Calibration observer: running per-channel maximum of <code class="docutils literal notranslate"><span class="pre">|x|</span></code> over all but the last <code class="docutils literal notranslate"><span class="pre">num_channel_dims</span></code> axes.</p>
+<p>The statistic is a non-trainable variable, so it is updated inside a jitted, stateless calibration function
+(e.g. the CausalLM generate function used during quantization) like the other INC observers. Input autocasting is
+disabled, so the observed layer receives its input unchanged (same dtype) during calibration.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.algorithms.smooth_quant.input_axes">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.algorithms.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">input_axes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/algorithms/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.algorithms.smooth_quant.input_axes" title="Link to this definition"></a></dt>
+<dd><p>Kernel axes contracted with the layer input (the input channels), in input order.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.algorithms.smooth_quant.output_axes">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.algorithms.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">output_axes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/algorithms/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.algorithms.smooth_quant.output_axes" title="Link to this definition"></a></dt>
+<dd><p>Kernel axes that become output channels, in kernel order.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.algorithms.smooth_quant.kernel_input_abs_max">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.algorithms.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">kernel_input_abs_max</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/algorithms/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.algorithms.smooth_quant.kernel_input_abs_max" title="Link to this definition"></a></dt>
+<dd><p>Per-input-channel max <a href="#id3"><span class="problematic" id="id4">|W|</span></a> of a layer’s kernel, shape = input channel shape.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.algorithms.smooth_quant.scale_kernel">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.algorithms.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">scale_kernel</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">s</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">axes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/algorithms/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.algorithms.smooth_quant.scale_kernel" title="Link to this definition"></a></dt>
+<dd><p>Multiply the kernel by <code class="docutils literal notranslate"><span class="pre">s</span></code> along <code class="docutils literal notranslate"><span class="pre">axes</span></code>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.jax.algorithms.smooth_quant.SmoothGroup">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.algorithms.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">SmoothGroup</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/algorithms/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.algorithms.smooth_quant.SmoothGroup" title="Link to this definition"></a></dt>
+<dd><p>Consumers sharing one input, the layer whose input is observed, and how <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">s</span></code> is folded.</p>
+<p><code class="docutils literal notranslate"><span class="pre">head_repeat</span></code> &gt; 1 means the consumer input channels are <code class="docutils literal notranslate"><span class="pre">(n_q,</span> <span class="pre">h)</span></code> while the absorbing layer produces
+<code class="docutils literal notranslate"><span class="pre">(n_kv,</span> <span class="pre">h)</span></code> with <code class="docutils literal notranslate"><span class="pre">n_q</span> <span class="pre">=</span> <span class="pre">n_kv</span> <span class="pre">*</span> <span class="pre">head_repeat</span></code> (grouped-query attention); one factor per kv channel is shared
+by the query heads of its group.</p>
+<p><code class="docutils literal notranslate"><span class="pre">absorb(s)</span></code> folds <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">s</span></code> into the producing layer and returns the factors that the stored (possibly
+bfloat16-rounded) weights actually implement; the consumers are scaled by those, so the fold stays exact.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.algorithms.smooth_quant.gemma3_decoder_block_groups">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.algorithms.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">gemma3_decoder_block_groups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">block</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.SmoothGroup" title="neural_compressor.jax.algorithms.smooth_quant.SmoothGroup"><span class="pre">SmoothGroup</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/algorithms/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.algorithms.smooth_quant.gemma3_decoder_block_groups" title="Link to this definition"></a></dt>
+<dd><p>Foldable groups of a keras-hub <code class="docutils literal notranslate"><span class="pre">Gemma3DecoderBlock</span></code>.</p>
+<ul class="simple">
+<li><p>q/k/v projections, input = <code class="docutils literal notranslate"><span class="pre">pre_attention_norm</span></code> output -&gt; fold into that norm</p></li>
+<li><p>gate/up projections, input = <code class="docutils literal notranslate"><span class="pre">pre_ffw_norm</span></code> output -&gt; fold into that norm</p></li>
+<li><p>down projection, input = <code class="docutils literal notranslate"><span class="pre">gelu(gate)</span> <span class="pre">*</span> <span class="pre">up</span></code> -&gt; fold into the up projection output channels</p></li>
+<li><p>attention output projection, input = <code class="docutils literal notranslate"><span class="pre">softmax(qk)</span> <span class="pre">&#64;</span> <span class="pre">v</span></code> -&gt; fold into the value projection output channels
+(shared by the query heads of each kv head)</p></li>
+</ul>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.algorithms.smooth_quant.find_smooth_groups">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.algorithms.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">find_smooth_groups</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">LayerSettings</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.SmoothGroup" title="neural_compressor.jax.algorithms.smooth_quant.SmoothGroup"><span class="pre">SmoothGroup</span></a><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/algorithms/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.algorithms.smooth_quant.find_smooth_groups" title="Link to this definition"></a></dt>
+<dd><p>Collect the foldable groups of all supported blocks and their alpha.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>keras.Model</em>) – Model to inspect.</p></li>
+<li><p><strong>layer_settings</strong> (<em>Callable</em><em>, </em><em>optional</em>) – Per-layer settings, see <code class="docutils literal notranslate"><span class="pre">LayerSettings</span></code>. Default: every group with
+<code class="docutils literal notranslate"><span class="pre">alpha</span></code>.</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – Alpha used when <code class="docutils literal notranslate"><span class="pre">layer_settings</span></code> is not given.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p>Groups to smooth.</p>
+</dd>
+<dt class="field-odd">Return type<span class="colon">:</span></dt>
+<dd class="field-odd"><p>List[<a class="reference internal" href="#neural_compressor.jax.algorithms.smooth_quant.SmoothGroup" title="neural_compressor.jax.algorithms.smooth_quant.SmoothGroup">SmoothGroup</a>]</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.algorithms.smooth_quant.smoothing_factors">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.algorithms.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">smoothing_factors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">act_abs_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_abs_max</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">numpy.ndarray</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">numpy.ndarray</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/algorithms/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.algorithms.smooth_quant.smoothing_factors" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">s</span> <span class="pre">=</span> <span class="pre">act^alpha</span> <span class="pre">/</span> <span class="pre">w^(1</span> <span class="pre">-</span> <span class="pre">alpha)</span></code>, clipped to [SCALE_MIN, SCALE_MAX]; 1 where a statistic is zero.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.jax.algorithms.smooth_quant.apply_smooth_quant">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.algorithms.smooth_quant.</span></span><span class="sig-name descname"><span class="pre">apply_smooth_quant</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">keras.Model</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_function</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">alpha</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.5</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">layer_settings</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">LayerSettings</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/algorithms/smooth_quant.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.algorithms.smooth_quant.apply_smooth_quant" title="Link to this definition"></a></dt>
+<dd><p>Smooth the model in place: calibrate per-channel activation ranges, then fold the factors into the weights.</p>
+<p>Only blocks with a rule in <code class="docutils literal notranslate"><span class="pre">SMOOTH_RULES</span></code> are smoothed (Gemma3 decoder blocks); for other models a warning is
+logged and nothing is run (no calibration pass).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> (<em>keras.Model</em>) – FP32/BF16 model (not yet quantized), modified in place.</p></li>
+<li><p><strong>calib_function</strong> (<em>Callable</em>) – Runs calibration data through the model (the static-quantization calib function).</p></li>
+<li><p><strong>alpha</strong> (<em>float</em>) – Migration strength in [0, 1] (0.5 balances activation and weight ranges), used for all
+groups when <code class="docutils literal notranslate"><span class="pre">layer_settings</span></code> is not given.</p></li>
+<li><p><strong>layer_settings</strong> (<em>Callable</em><em>, </em><em>optional</em>) – Per-layer settings from the quantization configs, see <code class="docutils literal notranslate"><span class="pre">LayerSettings</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x7d18cb314590> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>
