@@ -82,3 +82,25 @@ def test_save_load():
     assert (
         out1 == out2
     ).all(), f"The output of the model is different after save and load with scale_method: {scale_method}"
+
+
+def test_shard_state_dict_keeps_current_rank(monkeypatch):
+    # A tensor-parallel checkpoint loaded on the same number of cards keeps this
+    # rank's shards (suffix _<rank>_<world_size>) and the tensors all ranks share.
+    from neural_compressor.torch.algorithms.fp8_quant import save_load
+
+    monkeypatch.setattr(save_load, "get_world_size", lambda: 2)
+    monkeypatch.setattr(save_load, "get_local_rank", lambda: 1)
+    state_dict = {"w_0_2": "rank 0", "w_1_2": "rank 1", "embed": "shared"}
+    assert save_load.shard_state_dict(state_dict) == {"w": "rank 1", "embed": "shared"}
+
+
+def test_split_rank_state_dict_takes_current_rank_slice(monkeypatch):
+    from neural_compressor.torch.algorithms.fp8_quant import save_load
+
+    monkeypatch.setattr(save_load, "get_world_size", lambda: 2)
+    monkeypatch.setattr(save_load, "get_local_rank", lambda: 1)
+    model = torch.nn.Linear(4, 2, bias=False)  # this rank holds half the rows of a (4, 4) weight
+    full_weight = torch.arange(16.0).reshape(4, 4)
+    rank_state_dict = save_load.split_rank_state_dict(model, {"weight": full_weight})
+    assert torch.equal(rank_state_dict["weight"], full_weight[2:])
