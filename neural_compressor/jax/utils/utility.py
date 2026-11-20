@@ -110,6 +110,13 @@ def register_algo(name):
     return decorator
 
 
+def calculate_w_scale_shape(kernel_shape, w_quant_axis):
+    if w_quant_axis is None:
+        return (1,) * len(kernel_shape)
+    else:
+        return tuple(1 if i in w_quant_axis else dim for i, dim in enumerate(kernel_shape))
+
+
 def get_quantize_fun(dtype=ml_dtypes.float8_e4m3, asymmetric=False):
     """Create a quantization function for the specified dtype.
 
