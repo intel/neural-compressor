@@ -37,6 +37,7 @@ AUTOROUND = "autoround"
 FP8_QUANT = "fp8_quant"
 HYBRID_GPTQ = "hybrid_gptq"
 MX_QUANT = "mx_quant"
+FAKE_QUANT = "fake_quant"
 MIXED_PRECISION = "mixed_precision"
 
 # options

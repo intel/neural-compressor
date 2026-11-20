@@ -1,0 +1,36 @@
+# Example-specific dependencies for Qwen3.8-27B QAD.
+#
+# neural-compressor itself must be installed from this repository:
+#     pip install -e .            # at the neural-compressor repo root
+# That pulls its own runtime deps (numpy, packaging, prettytable, psutil,
+# py-cpuinfo, pydantic), so they are not duplicated here.
+#
+# Tested in the H200 container with:
+#   torch 2.10.0a0+nv26.01, transformers 5.12.1, peft 0.21.2,
+#   accelerate 1.15.0, pytest 8.1.1.
+
+# --- core runtime -----------------------------------------------------------
+torch>=2.4                  # FSDP2 (fully_shard) and torch.distributed.checkpoint
+transformers>=5.12.1        # Qwen3.5 (qwen3_5) architecture; tested with 5.12.1
+accelerate>=1.0             # HF Trainer FSDP2 path (fsdp_version=2)
+peft>=0.13                  # LoRA path A/B (lora_A/lora_B, active_adapters)
+safetensors                 # model load/export
+numpy                       # packed dataset reader
+pyyaml                      # recipes/*.yaml
+
+# --- data preparation -------------------------------------------------------
+datasets                    # prepare_data.py: HF dataset -> Megatron .bin/.idx
+
+# --- full-VLM export (default --format full) --------------------------------
+pillow                      # AutoProcessor / image processor
+torchvision                 # Qwen2VL/Qwen3.5 image processor imports torchvision
+
+# --- tests ------------------------------------------------------------------
+pytest                      # test/torch/qad and test/torch/quantization
+
+# --- optional ---------------------------------------------------------------
+# flash-attn                # faster attention; SDPA fallback works without it
+# triton                    # optional kernels; not required by the reference path
+# auto-round                # legacy QAT export path only (examples/.../qad/export.py)
+# unsloth                   # optional backend; LoRA path A only (HF supports A/B)
+# torchao>=0.16             # only if torchao is already installed with peft 0.21.2

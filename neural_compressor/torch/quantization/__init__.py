@@ -13,7 +13,13 @@
 # limitations under the License.
 """Intel Neural Compressor PyTorch quantization API."""
 
-from neural_compressor.torch.quantization.quantize import quantize, prepare, convert, finalize_calibration
+from neural_compressor.torch.quantization.quantize import (
+    quantize,
+    prepare,
+    prepare_qat,
+    convert,
+    finalize_calibration,
+)
 from neural_compressor.torch.quantization.config import (
     RTNConfig,
     get_default_rtn_config,
@@ -43,6 +49,19 @@ from neural_compressor.torch.quantization.config import (
     get_default_mixed_precision_config_set,
     get_woq_tuning_config,
     HybridGPTQConfig,
+)
+
+from neural_compressor.torch.quantization.fake_quant import (
+    FakeQuantConfig,
+    QuantFormat,
+    QuantLinear,
+    QuantizerConfig,
+    QuantRule,
+    TensorQuantizer,
+    calibrate,
+    get_format,
+    list_formats,
+    print_plan_summary,
 )
 
 from neural_compressor.torch.quantization.autotune import (
