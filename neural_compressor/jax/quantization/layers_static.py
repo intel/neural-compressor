@@ -834,7 +834,6 @@ class QStaticConv2DMixin(QStaticDenseMixin, keras.layers.Conv2D):
 
         Args:
             inputs (jnp.ndarray): Input tensor.
-            training (Optional[bool]): Training mode flag.
 
         Returns:
             jnp.ndarray: Layer output tensor.
@@ -848,7 +847,6 @@ class QStaticConv2DMixin(QStaticDenseMixin, keras.layers.Conv2D):
 
         Args:
             inputs (jnp.ndarray): Input tensor.
-            training (Optional[bool]): Training mode flag.
 
         Returns:
             jnp.ndarray: Layer output tensor.
@@ -867,7 +865,6 @@ class QStaticConv2DMixin(QStaticDenseMixin, keras.layers.Conv2D):
 
         Args:
             inputs (jnp.ndarray): Input tensor.
-            training (Optional[bool]): Training mode flag.
 
         Returns:
             jnp.ndarray: Layer output tensor.

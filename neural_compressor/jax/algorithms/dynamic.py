@@ -38,7 +38,6 @@ def dynamic_quantize(
         model (keras.Model): JAX model to be quantized.
         configs_mapping (Optional[OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]]): Mapping of configurations
             for the algorithm.
-        quant_config (Optional[BaseConfig]): Quantization configuration for wrapper selection.
         *args (Any): Additional positional arguments (unused).
         **kwargs (Any): Additional keyword arguments (unused).
 
