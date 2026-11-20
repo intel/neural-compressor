@@ -203,3 +203,52 @@ These are the defaults baked into `configs/config.py` and `configs/env.template`
 - Nemotron 3 Ultra reproduction (IFBench = `nemo_skills.ns_ifbench`):
   `NVIDIA-NeMo/Evaluator` → `examples/nemotron/nemotron-3-ultra/` (`reproducibility.md`,
   `v0.2/README.md`, `local_nemotron-3-ultra-550b-a55b.yaml`)
+
+---
+
+## Repeated suites against an existing endpoint
+
+`run_ifbench_suite.sh` is the endpoint-mode companion to `run_ifbench.sh`. It
+connects to an OpenAI-compatible vLLM server, discovers the model id, and runs
+the complete IFBench test set N times (default 1; pass `--runs 7` for seven
+rounds). Each round is an independent generation and scoring pass.
+
+```bash
+./run_ifbench_suite.sh \
+  --host <vllm-host> \
+  --port <vllm-port> \
+  --runs 7 \
+  --workers 8 \
+  --tag demo_ifbench
+```
+
+Key options:
+
+| Option | Default | Description |
+| --- | --- | --- |
+| `--host` / `--port` | `127.0.0.1:8000` | vLLM endpoint |
+| `--served-name` | discovered | Model id from `/v1/models` |
+| `--runs` | `1` | Independent full-test-set rounds |
+| `--workers` | `8` | Concurrent generation requests |
+| `--repeats` | `1` | Consensus samples inside one round |
+| `--limit` | all | Evaluate only the first N prompts (smoke test) |
+| `--root` | `<script dir>/results` | Results root |
+| `--workdir` | `~/ifbench-run` | IFBench clone and virtualenv |
+| `--skip-setup` | off | Reuse an existing clone and virtualenv |
+
+The runner clones `allenai/IFBench` into `--workdir` on first use, overlays
+`evaluate_model.py` and `configs/config.py`, and stores one scored result per
+round. The suite directory contains:
+
+```text
+<root>/<tag>_suite/
+├── state.json
+├── summary.json
+├── summary.md
+├── run01.log ...
+└── runs/<tag>_runNN/eval/
+```
+
+`summary.json` records strict prompt-level, loose prompt-level and strict
+instruction-level accuracy for every round, plus their mean and standard
+deviation.
