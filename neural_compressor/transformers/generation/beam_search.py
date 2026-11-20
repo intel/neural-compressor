@@ -380,16 +380,16 @@ def _beam_search(
         next_token_scores = next_token_scores_processed + beam_scores[:, None].expand_as(next_token_scores_processed)
         # Store scores, attentions and hidden_states when required
         if return_dict_in_generate:
-            if output_scores:
+            if scores is not None:
                 scores += (next_token_scores_processed,)
-            if output_attentions:
+            if decoder_attentions is not None:
                 decoder_attentions += (
                     (outputs.decoder_attentions,) if self.config.is_encoder_decoder else (outputs.attentions,)
                 )
-                if self.config.is_encoder_decoder:
-                    cross_attentions += (outputs.cross_attentions,)
+            if cross_attentions is not None and self.config.is_encoder_decoder:
+                cross_attentions += (outputs.cross_attentions,)
 
-            if output_hidden_states:
+            if decoder_hidden_states is not None:
                 decoder_hidden_states += (
                     (outputs.decoder_hidden_states,) if self.config.is_encoder_decoder else (outputs.hidden_states,)
                 )
@@ -427,8 +427,7 @@ def _beam_search(
         if model_kwargs["past_key_values"] is not None:
             model_kwargs["past_key_values"] = self._temporary_reorder_cache(model_kwargs["past_key_values"], beam_idx)
 
-        if return_dict_in_generate and output_scores:
-            # pylint: disable=unsubscriptable-object
+        if beam_indices is not None:
             beam_indices = tuple((beam_indices[beam_idx[i]] + (beam_idx[i],) for i in range(len(beam_indices))))
         # increase cur_len
         cur_len = cur_len + 1

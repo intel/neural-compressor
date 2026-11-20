@@ -18,7 +18,7 @@ from neural_compressor.torch.quantization import (
 )
 from neural_compressor.torch.quantization.quantize import (
     _AutoRoundModelReference,
-    _is_autoround_model_free_string_case,
+    _is_autoround_string_model_reference,
 )
 from neural_compressor.torch.utils import logger
 
@@ -30,6 +30,12 @@ try:
     auto_round_installed = True
 except ImportError:
     auto_round_installed = False
+
+if auto_round_installed:
+    from neural_compressor.torch.algorithms.autoround.autoround import (
+        AutoRoundQuantizer,
+        _build_autoround_init_kwargs,
+    )
 
 try:
     import compressed_tensors
@@ -51,6 +57,61 @@ def run_fn(model, dataloader):
             model(**data)
         else:
             model(data)
+
+
+@pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
+def test_build_autoround_init_kwargs_separates_scheme_and_algorithm_config():
+    """Keep scheme overrides on AutoRound and move tuning options to alg_configs."""
+    try:
+        from auto_round.algorithms.quantization.sign_round.config import SignRoundConfig
+    except ImportError:
+        pytest.skip("Installed AutoRound uses the legacy flat parameter API")
+
+    config = AutoRoundConfig(
+        dtype="int4",
+        use_sym=False,
+        act_dtype="int8",
+        iters=1,
+        sampler="rand",
+        truncation=True,
+    )
+    init_kwargs = _build_autoround_init_kwargs(config, keys_to_pop=[])
+
+    assert isinstance(init_kwargs["alg_configs"], SignRoundConfig)
+    assert init_kwargs["alg_configs"].iters == 1
+    assert init_kwargs["data_type"] == "int4"
+    assert init_kwargs["sym"] is False
+    assert init_kwargs["act_data_type"] == "int8"
+    assert "iters" not in init_kwargs
+    assert "non_tunable_params" not in init_kwargs
+    assert "sampler" not in init_kwargs
+    assert "truncation" not in init_kwargs
+
+
+@pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
+def test_build_autoround_init_kwargs_keeps_scheme_overrides_at_entry_level():
+    """Keep renamed and direct scheme parameters at the AutoRound entry level."""
+    try:
+        from auto_round.algorithms.quantization.sign_round.config import SignRoundConfig
+    except ImportError:
+        pytest.skip("Installed AutoRound uses the legacy flat parameter API")
+
+    quantizer = AutoRoundQuantizer(
+        bits=4,
+        data_type="int",
+        sym=False,
+        act_data_type="int",
+        act_bits=8,
+        iters=0,
+    )
+    init_kwargs = _build_autoround_init_kwargs(quantizer, keys_to_pop=[])
+
+    assert isinstance(init_kwargs["alg_configs"], SignRoundConfig)
+    assert init_kwargs["bits"] == 4
+    assert init_kwargs["data_type"] == "int"
+    assert init_kwargs["sym"] is False
+    assert init_kwargs["act_data_type"] == "int"
+    assert init_kwargs["act_bits"] == 8
 
 
 @pytest.mark.skipif(not auto_round_installed, reason="auto_round module is not installed")
@@ -204,7 +265,7 @@ class TestAutoRoundCPU:
         tokenizer = AutoTokenizer.from_pretrained(model_name)
         processor = AutoProcessor.from_pretrained(model_name, trust_remote_code=True)
         model = Qwen2VLForConditionalGeneration.from_pretrained(model_name, trust_remote_code=True, device_map="cpu")
-        dataloader, template, truncation, batch_size, gradient_accumulate_steps, seqlen, nsamples = get_mllm_dataloader(
+        dataloader, template, truncation, batch_size, seqlen, nsamples = get_mllm_dataloader(
             template=None,
             model=model,
             tokenizer=tokenizer,
@@ -219,19 +280,18 @@ class TestAutoRoundCPU:
             truncation=False,
             seed=42,
             nsamples=1,
-            gradient_accumulate_steps=1,
             quant_nontext_module=True,
         )
         quant_config = AutoRoundConfig(
             bits=4,
             group_size=128,
             nsamples=1,
-            batch_size=batch_size,
+            batch_size=4,
             iters=1,
             seqlen=seqlen,
             quant_nontext_module=True,
             truncation=truncation,
-            gradient_accumulate_steps=gradient_accumulate_steps,
+            gradient_accumulate_steps=1,
             device_map="cpu",
             tokenizer=tokenizer,
             processor=processor,
@@ -643,29 +703,23 @@ class TestAutoRoundCPU:
                 getattr(attn, "q_scale", None) is not None
             ), f"Missing q_scale in attention for scheme={scheme}, static_attention_dtype={static_attention_dtype}"
 
-    def test_is_autoround_model_free_string_case_true(self):
-        """Test detection when model is string and config has model_free=True."""
+    def test_is_autoround_string_model_reference(self):
+        """Test detection when AutoRound receives a string model reference."""
         config = AutoRoundConfig(model_free=True, scheme="MXFP4")
         model = "/path/to/model"
-        assert _is_autoround_model_free_string_case(model, config) is True
+        assert _is_autoround_string_model_reference(model, config) is True
 
-    def test_is_autoround_model_free_string_case_false_not_string(self):
+    def test_is_autoround_string_model_reference_false_not_string(self):
         """Test detection returns False when model is not a string."""
         config = AutoRoundConfig(model_free=True, scheme="MXFP4")
         model = torch.nn.Linear(10, 10)
-        assert _is_autoround_model_free_string_case(model, config) is False
+        assert _is_autoround_string_model_reference(model, config) is False
 
-    def test_is_autoround_model_free_string_case_false_no_flag(self):
-        """Test detection returns False when model_free is not set."""
-        config = AutoRoundConfig(scheme="MXFP4")
+    def test_is_autoround_string_model_reference_with_model_free_false(self):
+        """Test string references are preserved when static quantization disables model-free mode."""
+        config = AutoRoundConfig(model_free=False, scheme="MXFP4", static_kv_dtype="fp8")
         model = "/path/to/model"
-        assert _is_autoround_model_free_string_case(model, config) is False
-
-    def test_is_autoround_model_free_string_case_false_model_free_false(self):
-        """Test detection returns False when model_free is explicitly False."""
-        config = AutoRoundConfig(model_free=False, scheme="MXFP4")
-        model = "/path/to/model"
-        assert _is_autoround_model_free_string_case(model, config) is False
+        assert _is_autoround_string_model_reference(model, config) is True
 
     def test_autoround_model_reference_creation(self):
         """Test _AutoRoundModelReference wrapper creation."""
@@ -689,6 +743,17 @@ class TestAutoRoundCPU:
             ignore_layers="compressor",
             output_dir="/tmp/test_output",
         )
+
+        result = prepare(model, config)
+
+        assert isinstance(result, _AutoRoundModelReference)
+        assert result.model_reference == model
+        assert result.quant_config is config
+
+    def test_prepare_with_string_model_and_static_kv_returns_reference(self):
+        """Test prepare keeps a model path usable when static KV disables model-free mode."""
+        model = "/path/to/model"
+        config = AutoRoundConfig(model_free=False, scheme="MXFP4", static_kv_dtype="fp8")
 
         result = prepare(model, config)
 

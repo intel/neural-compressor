@@ -1,6 +1,0 @@
-transformers>=5.0
-torch
-sentencepiece
-neural-compressor
-lm-eval==0.4.3
-peft

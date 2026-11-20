@@ -536,7 +536,7 @@ class HFLM(TemplateLM):
                 from optimum.onnxruntime import ORTModelForCausalLM
                 from transformers import PretrainedConfig
 
-                model_config = PretrainedConfig.from_pretrained(pretrained)
+                model_config = PretrainedConfig.from_pretrained(pretrained)  # nosec B615 - caller-supplied model
                 sess_options = ort.SessionOptions()
                 sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
 
@@ -638,7 +638,7 @@ class HFLM(TemplateLM):
                 from optimum.onnxruntime import ORTModelForSeq2SeqLM
                 from transformers import PretrainedConfig
 
-                model_config = PretrainedConfig.from_pretrained(pretrained)
+                model_config = PretrainedConfig.from_pretrained(pretrained)  # nosec B615 - caller-supplied model
                 sess_options = ort.SessionOptions()
                 sess_options.graph_optimization_level = ort.GraphOptimizationLevel.ORT_ENABLE_ALL
                 if os.path.exists(os.path.join(pretrained, "decoder_model_merged.onnx")):
@@ -761,13 +761,21 @@ class HFLM(TemplateLM):
                 # get the HF hub name via accessor on model
                 model_name = self.model.name_or_path
 
-            # chatglm2 tokenizer doesn't support loading from local.
+            # chatglm2 tokenizer doesn't support loading from local; it requires trust_remote_code.
             if (
                 hasattr(self.model, "config")
                 and hasattr(self.model.config, "auto_map")
                 and "chatglm2" in self.model.config.auto_map["AutoConfig"]
             ):
-                self.tokenizer = transformers.AutoTokenizer.from_pretrained("THUDM/chatglm2-6b", trust_remote_code=True)
+                if not trust_remote_code:
+                    eval_logger.warning(
+                        "The chatglm2 tokenizer (THUDM/chatglm2-6b) requires `trust_remote_code=True` "
+                        "to load its custom tokenizer implementation. Loading may fail with the current "
+                        "`trust_remote_code=False` setting."
+                    )
+                self.tokenizer = transformers.AutoTokenizer.from_pretrained(  # nosec B615
+                    "THUDM/chatglm2-6b", trust_remote_code=trust_remote_code
+                )
             else:
                 self.tokenizer = transformers.AutoTokenizer.from_pretrained(
                     model_name,

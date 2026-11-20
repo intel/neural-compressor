@@ -28,6 +28,7 @@ class OP_TYPE(Enum):
     CAST_FROM_FP8 = auto()
     DYNAMIC_MOE = auto()
     DYNAMIC_MOE_FUSED_WEIGHTS = auto()
+    DYNAMIC_MOE_FUSED_WEIGHTS_BIAS = auto()
     QUANT = auto()
     DEQUANT = auto()
     QUANT_PC = auto()

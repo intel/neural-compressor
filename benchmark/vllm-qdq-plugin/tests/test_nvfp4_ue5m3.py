@@ -1,0 +1,757 @@
+import json
+import unittest
+from dataclasses import dataclass, replace
+from types import SimpleNamespace
+from unittest import mock
+
+import torch
+from nvfp4_hw.inc_nvfp4_scheme import INCNvfp4Scheme
+from nvfp4_hw.patch import apply_patches as apply_hw_patches
+from vllm.model_executor.layers.quantization.inc.inc import INCConfig
+from vllm.model_executor.layers.quantization.inc.inc_linear import INCLinearMethod
+from vllm.model_executor.layers.quantization.inc.schemes import factory
+from vllm.model_executor.parameter import GroupQuantScaleParameter, ModelWeightParameter
+from vllm_qdq_plugin.qdq.nvfp4 import _nvfp4_qdq_reference, nvfp4_qdq
+from vllm_qdq_plugin.qdq.nvfp4_e5m3 import (
+    _nvfp4_e5m3_qdq_reference,
+    decode_ue5m3,
+    fold_ue5m3_global_scale,
+    nvfp4_e5m3_qdq,
+)
+from vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_linear import INCNvfp4UE5M3LinearMethod
+from vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_scheme import INCNvfp4UE5M3Scheme
+from vllm_qdq_plugin.quantization.inc_nvfp4_linear import INCNvfp4QDQLinearMethod
+from vllm_qdq_plugin.quantization.inc_nvfp4_moe import INCNvfp4QDQMoEMethod
+from vllm_qdq_plugin.quantization.inc_nvfp4_scheme import INCNvfp4QDQScheme
+from vllm_qdq_plugin.quantization.patch import _resolve_layer_config_override, apply_patches
+
+
+class _FusedMoE:
+    pass
+
+
+@dataclass(frozen=True)
+class _TestLayerConfig:
+    bits: int
+    group_size: int | tuple[int, ...]
+    sym: bool
+    data_type: str
+    quantized: bool
+
+
+class LayerConfigOverrideTests(unittest.TestCase):
+    def test_exact_layer_override_precedes_longer_regex(self) -> None:
+        for exact_path in ("model.layers.0.mlp.experts", "layers.0.mlp.experts"):
+            with self.subTest(exact_path=exact_path):
+                config = SimpleNamespace(
+                    extra_config={
+                        r"model\.layers\.[0-9]+\.mlp\.experts": {"bits": 4},
+                        exact_path: {"bits": 16},
+                    }
+                )
+                layer_config = _TestLayerConfig(4, 16, True, "nvfp4_v2", True)
+
+                result = _resolve_layer_config_override(config, "model.layers.0.mlp.experts", layer_config)
+
+                self.assertEqual(result, _TestLayerConfig(16, 16, True, "nvfp4_v2", False))
+
+    def test_most_specific_override_updates_only_declared_fields(self) -> None:
+        config = SimpleNamespace(
+            extra_config={
+                "layers.0": {"bits": 4, "group_size": 32, "sym": True, "data_type": "mx_fp"},
+                "mlp.experts": {"group_size": [16, 64], "data_type": "nvfp4_v2"},
+            }
+        )
+        layer_config = _TestLayerConfig(8, 128, False, "mx_fp", True)
+
+        result = _resolve_layer_config_override(config, "model.layers.0.mlp.experts", layer_config)
+
+        self.assertEqual(result, _TestLayerConfig(8, (16, 64), False, "nvfp4_v2", True))
+
+    def test_bits_override_updates_quantized_and_nonmatching_path_is_unchanged(self) -> None:
+        layer_config = _TestLayerConfig(8, 32, True, "mx_fp", True)
+        config = SimpleNamespace(extra_config={"mlp.experts": {"bits": 16}})
+
+        result = _resolve_layer_config_override(config, "model.layers.0.mlp.experts", layer_config)
+        nonmatching = _resolve_layer_config_override(config, "model.layers.0.mlp.experts2", layer_config)
+
+        self.assertEqual(result, _TestLayerConfig(16, 32, True, "mx_fp", False))
+        self.assertIs(nonmatching, layer_config)
+
+
+def _decode_e2m1(value: torch.Tensor) -> torch.Tensor:
+    value = value.to(torch.int32)
+    sign = 1.0 - 2.0 * ((value >> 3) & 1).float()
+    exponent = (value >> 1) & 0x3
+    mantissa = value & 1
+    subnormal = mantissa.float() * 0.5
+    normal = torch.ldexp(1.0 + mantissa.float() * 0.5, exponent - 1)
+    return torch.where(exponent == 0, subnormal, normal) * sign
+
+
+def _dequantize_weight_reference(
+    packed: torch.Tensor,
+    scales: torch.Tensor,
+    group_size: int,
+) -> torch.Tensor:
+    low = _decode_e2m1(packed & 0xF)
+    high = _decode_e2m1((packed >> 4) & 0xF)
+    values = torch.stack((low, high), dim=-1).reshape(packed.shape[0], -1)
+    decoded_scales = decode_ue5m3(scales).repeat_interleave(group_size, dim=1)
+    return (values * decoded_scales).to(torch.bfloat16)
+
+
+class Nvfp4UE5M3ConfigTests(unittest.TestCase):
+    @staticmethod
+    def _resolve_mxfp8_layer_config(extra_config: dict[str, dict[str, object]], layer_name: str):
+        apply_patches()
+        config = INCConfig.from_config(
+            {
+                "bits": 8,
+                "group_size": 32,
+                "sym": True,
+                "data_type": "mx_fp",
+                "packing_format": "auto_round:llm_compressor",
+                "extra_config": extra_config,
+            }
+        )
+        layer_config = config.config_parser.resolve(_FusedMoE(), layer_name)
+        return layer_config, factory.resolve_scheme(layer_config)
+
+    def test_full_and_normalized_regex_overrides_select_ue5m3_scheme(self) -> None:
+        layer_name = "model.layers.0.mlp.experts"
+        for pattern in (
+            r"model\.layers\.[0-9]+\.mlp\.experts",
+            r"^layers\.[0-9]+\.mlp\.experts$",
+        ):
+            with self.subTest(pattern=pattern):
+                layer_config, scheme = self._resolve_mxfp8_layer_config(
+                    {
+                        pattern: {
+                            "bits": 4,
+                            "group_size": 16,
+                            "sym": True,
+                            "data_type": "nvfp4_v2",
+                        }
+                    },
+                    layer_name,
+                )
+
+                self.assertEqual(layer_config.bits, 4)
+                self.assertEqual(layer_config.group_size, 16)
+                self.assertEqual(layer_config.data_type, "nvfp4_v2")
+                self.assertIsInstance(scheme, INCNvfp4UE5M3Scheme)
+
+    def test_invalid_and_nonmatching_regex_overrides_are_ignored(self) -> None:
+        layer_name = "model.layers.0.mlp.experts"
+        for pattern in ("mlp.experts[", r"^layers\.[0-9]+\.self_attn$"):
+            with self.subTest(pattern=pattern):
+                layer_config, scheme = self._resolve_mxfp8_layer_config(
+                    {
+                        pattern: {
+                            "bits": 4,
+                            "group_size": 16,
+                            "data_type": "nvfp4_v2",
+                        }
+                    },
+                    layer_name,
+                )
+
+                self.assertEqual(layer_config.bits, 8)
+                self.assertEqual(layer_config.group_size, 32)
+                self.assertEqual(layer_config.data_type, "mx_fp")
+                self.assertNotIsInstance(scheme, INCNvfp4UE5M3Scheme)
+
+    def test_mlp_shorthand_override_routes_mxfp8_layer_to_ue5m3(self) -> None:
+        layer_config, scheme = self._resolve_mxfp8_layer_config(
+            {
+                "mlp": {
+                    "bits": 4,
+                    "group_size": 16,
+                    "sym": True,
+                    "data_type": "nvfp4_v2",
+                }
+            },
+            "model.layers.0.mlp.experts",
+        )
+
+        self.assertEqual(layer_config.bits, 4)
+        self.assertEqual(layer_config.group_size, 16)
+        self.assertEqual(layer_config.data_type, "nvfp4_v2")
+        self.assertIsInstance(scheme, INCNvfp4UE5M3Scheme)
+
+    @staticmethod
+    def _make_linear_method() -> INCNvfp4UE5M3LinearMethod:
+        method = object.__new__(INCNvfp4UE5M3LinearMethod)
+        method.group_size = 16
+        return method
+
+    @staticmethod
+    def _make_dense_layer(device: torch.device) -> torch.nn.Module:
+        layer = torch.nn.Module()
+        with (
+            mock.patch("vllm.model_executor.parameter.get_tensor_model_parallel_rank", return_value=0),
+            mock.patch("vllm.model_executor.parameter.get_tensor_model_parallel_world_size", return_value=1),
+        ):
+            layer.weight_packed = ModelWeightParameter(
+                data=torch.randint(0, 256, (64, 32), device=device, dtype=torch.uint8),
+                input_dim=1,
+                output_dim=0,
+                weight_loader=None,
+            )
+            layer.weight_scale = GroupQuantScaleParameter(
+                data=torch.randint(0x40, 0x79, (64, 4), device=device, dtype=torch.uint8),
+                input_dim=1,
+                output_dim=0,
+                weight_loader=None,
+            )
+        layer.input_size_per_partition = 64
+        layer.output_size_per_partition = 64
+        layer.params_dtype = torch.bfloat16
+        return layer
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_marlin_dense_matches_dequantized_reference(self) -> None:
+        torch.manual_seed(1)
+        method = self._make_linear_method()
+        layer = self._make_dense_layer(torch.device("cuda"))
+        packed = layer.weight_packed.detach().clone()
+        scales = layer.weight_scale.detach().clone()
+        x = torch.randn(5, 64, device="cuda", dtype=torch.bfloat16)
+        expected = torch.nn.functional.linear(
+            nvfp4_e5m3_qdq(x, 16),
+            _dequantize_weight_reference(packed, scales, 16),
+        )
+
+        method.process_weights_after_loading(layer)
+        actual = method.apply_weights(layer, x)
+
+        self.assertEqual(layer.weight.dtype, torch.int32)
+        self.assertFalse(hasattr(layer, "weight_packed"))
+        torch.testing.assert_close(actual, expected, rtol=0.02, atol=0.25)
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_qdq_supports_dynamo_fullgraph_capture(self) -> None:
+        x = torch.randn(3, 32, device="cuda", dtype=torch.bfloat16)
+        expected = _nvfp4_e5m3_qdq_reference(x, 16)
+        compiled = torch.compile(nvfp4_e5m3_qdq, backend="eager", fullgraph=True)
+
+        self.assertTrue(torch.equal(nvfp4_e5m3_qdq(x), expected))
+        self.assertTrue(torch.equal(compiled(x), expected))
+
+    def test_global_nvfp4_e5m3_config_selects_linear_method(self) -> None:
+        apply_patches()
+        config = INCConfig.from_config(
+            {
+                "bits": 4,
+                "group_size": 16,
+                "sym": True,
+                "data_type": "nvfp4_v2",
+                "packing_format": "auto_round:llm_compressor_nvfp4_e5m3",
+            }
+        )
+
+        layer_config = config.config_parser.resolve(object(), "model.layers.0.self_attn.q_proj")
+        scheme = factory.resolve_scheme(layer_config)
+        method = scheme.get_linear_method(config, object(), "model.layers.0.self_attn.q_proj", layer_config)
+
+        self.assertEqual(layer_config.data_type, "nvfp4_v2")
+        self.assertEqual(layer_config.group_size, 16)
+        self.assertIsInstance(scheme, INCNvfp4UE5M3Scheme)
+        self.assertIsInstance(method, INCLinearMethod)
+        self.assertEqual(method.scheme.__class__.__name__, "INCNvfp4UE5M3LinearMethod")
+
+    def test_global_nvfp4_config_selects_native_method_when_supported(self) -> None:
+        apply_patches(enable_nvfp4_qdq=False)
+        config = INCConfig.from_config(
+            {
+                "bits": 4,
+                "group_size": 16,
+                "sym": True,
+                "data_type": "nv_fp",
+                "packing_format": "auto_round:llm_compressor",
+            }
+        )
+
+        layer_config = config.config_parser.resolve(object(), "model.layers.0.self_attn.q_proj")
+        with mock.patch(
+            "vllm_qdq_plugin.quantization.patch._native_nvfp4_kernel_available",
+            return_value=True,
+        ):
+            scheme = factory.resolve_scheme(layer_config)
+
+        self.assertEqual(layer_config.data_type, "nv_fp")
+        self.assertEqual(layer_config.group_size, 16)
+        self.assertIsInstance(scheme, INCNvfp4Scheme)
+
+    def test_global_nvfp4_config_falls_back_to_qdq_when_native_unsupported(self) -> None:
+        apply_patches(enable_nvfp4_qdq=False)
+        config = INCConfig.from_config(
+            {
+                "bits": 4,
+                "group_size": 16,
+                "sym": True,
+                "data_type": "nv_fp",
+                "packing_format": "auto_round:llm_compressor",
+            }
+        )
+
+        layer_config = config.config_parser.resolve(object(), "model.layers.0.self_attn.q_proj")
+        with mock.patch(
+            "vllm_qdq_plugin.quantization.patch._native_nvfp4_kernel_available",
+            return_value=False,
+        ):
+            scheme = factory.resolve_scheme(layer_config)
+
+        self.assertIsInstance(scheme, INCNvfp4QDQScheme)
+
+    def test_global_nvfp4_qdq_config_selects_marlin_method(self) -> None:
+        apply_patches(enable_nvfp4_qdq=True)
+        config = INCConfig.from_config(
+            {
+                "bits": 4,
+                "group_size": 16,
+                "sym": True,
+                "data_type": "nv_fp",
+                "packing_format": "auto_round:llm_compressor",
+            }
+        )
+
+        layer_config = config.config_parser.resolve(object(), "model.layers.0.self_attn.q_proj")
+        scheme = factory.resolve_scheme(layer_config)
+        method = scheme.get_linear_method(config, object(), "model.layers.0.self_attn.q_proj", layer_config)
+
+        self.assertIsInstance(scheme, INCNvfp4QDQScheme)
+        self.assertEqual(method.scheme.__class__.__name__, "INCNvfp4QDQLinearMethod")
+
+    def test_extra_config_data_type_selects_ue5m3_scheme(self) -> None:
+        apply_patches()
+        config = INCConfig.from_config(
+            {
+                "bits": 8,
+                "group_size": 32,
+                "sym": True,
+                "data_type": "mx_fp",
+                "packing_format": "auto_round:llm_compressor",
+                "extra_config": {
+                    "mlp.experts": {
+                        "bits": 4,
+                        "group_size": 16,
+                        "data_type": "nvfp4_v2",
+                    }
+                },
+            }
+        )
+
+        layer_config = config.config_parser.resolve(_FusedMoE(), "model.language_model.layers.0.mlp.experts")
+
+        self.assertEqual(layer_config.data_type, "nvfp4_v2")
+        self.assertEqual(layer_config.group_size, 16)
+        self.assertIsInstance(factory.resolve_scheme(layer_config), INCNvfp4UE5M3Scheme)
+
+    def test_regular_layer_keeps_top_level_data_type(self) -> None:
+        apply_patches()
+        config = INCConfig.from_config(
+            {
+                "bits": 8,
+                "group_size": 32,
+                "sym": True,
+                "data_type": "mx_fp",
+                "packing_format": "auto_round:llm_compressor",
+                "extra_config": {"mlp.experts": {"data_type": "nvfp4_v2"}},
+            }
+        )
+
+        layer_config = config.config_parser.resolve(object(), "model.layers.0.self_attn.q_proj")
+
+        self.assertEqual(layer_config.data_type, "mx_fp")
+
+
+class Nvfp4QDQTests(unittest.TestCase):
+    @staticmethod
+    def _make_dense_layer(device: torch.device) -> torch.nn.Module:
+        layer = torch.nn.Module()
+        with (
+            mock.patch("vllm.model_executor.parameter.get_tensor_model_parallel_rank", return_value=0),
+            mock.patch("vllm.model_executor.parameter.get_tensor_model_parallel_world_size", return_value=1),
+        ):
+            layer.weight_packed = ModelWeightParameter(
+                data=torch.randint(0, 256, (64, 32), device=device, dtype=torch.uint8),
+                input_dim=1,
+                output_dim=0,
+                weight_loader=None,
+            )
+            layer.weight_scale = GroupQuantScaleParameter(
+                data=torch.rand(64, 4, device=device).to(torch.float8_e4m3fn),
+                input_dim=1,
+                output_dim=0,
+                weight_loader=None,
+            )
+        layer.weight_global_scale = torch.nn.Parameter(torch.tensor([2.0], device=device), requires_grad=False)
+        layer.input_global_scale = torch.nn.Parameter(torch.tensor([0.25], device=device), requires_grad=False)
+        layer.input_size_per_partition = 64
+        layer.output_size_per_partition = 64
+        layer.params_dtype = torch.bfloat16
+        return layer
+
+    def test_reference_matches_vllm_nvfp4_emulation(self) -> None:
+        from vllm.model_executor.layers.quantization.utils.nvfp4_emulation_utils import ref_nvfp4_quant
+
+        torch.manual_seed(7)
+        x = torch.randn(3, 64, dtype=torch.bfloat16)
+        input_global_scale = torch.tensor(0.5, dtype=torch.float32)
+
+        fp4, block_scale = ref_nvfp4_quant(x, input_global_scale, block_size=16)
+        expected = (fp4.reshape(3, 4, 16) * (block_scale / input_global_scale).unsqueeze(-1)).reshape_as(x).to(x.dtype)
+        actual = nvfp4_qdq(x, input_global_scale, group_size=16)
+
+        self.assertTrue(torch.equal(actual, expected))
+
+    def test_reference_supports_per_row_global_scales(self) -> None:
+        torch.manual_seed(19)
+        x = torch.randn(4, 64, dtype=torch.bfloat16)
+        row_scales = torch.tensor([0.125, 0.25, 0.5, 1.0], dtype=torch.float32)
+
+        actual = nvfp4_qdq(x, row_scales, group_size=16)
+        expected = torch.cat(
+            [nvfp4_qdq(x[index : index + 1], row_scales[index], group_size=16) for index in range(x.shape[0])]
+        )
+
+        self.assertTrue(torch.equal(actual, expected))
+
+    def test_reference_chunks_large_row_batches(self) -> None:
+        torch.manual_seed(23)
+        x = torch.randn(1025, 64, dtype=torch.bfloat16)
+        row_scales = torch.linspace(0.125, 1.0, x.shape[0], dtype=torch.float32)
+
+        actual = nvfp4_qdq(x, row_scales, group_size=16)
+        expected = torch.cat(
+            [
+                nvfp4_qdq(x[start : start + 256], row_scales[start : start + 256], group_size=16)
+                for start in range(0, x.shape[0], 256)
+            ]
+        )
+
+        self.assertTrue(torch.equal(actual, expected))
+
+    def test_reference_matches_autoround_nvfp4_scale_rounding(self) -> None:
+        from auto_round.data_type.nvfp import calculate_gparam, ref_nvfp4_quant
+
+        torch.manual_seed(7)
+        x = torch.randn(4, 64, dtype=torch.bfloat16)
+        global_scale = calculate_gparam(x)
+        expected, _ = ref_nvfp4_quant(x.float().reshape(-1, 16), global_scale, 16)
+        expected = expected.reshape_as(x).to(x.dtype)
+
+        actual = nvfp4_qdq(x, global_scale, group_size=16)
+
+        self.assertTrue(torch.equal(actual, expected))
+
+    def test_routed_input_scales_follow_expert_parallel_map(self) -> None:
+        topk_ids = torch.tensor([[2, 0], [1, 2]], dtype=torch.int32)
+        expert_map = torch.tensor([1, -1, 0], dtype=torch.int32)
+        local_scales = torch.tensor([0.25, 0.5], dtype=torch.float32)
+
+        actual = INCNvfp4QDQMoEMethod._routed_input_scales(topk_ids, expert_map, local_scales)
+
+        torch.testing.assert_close(actual, torch.tensor([0.25, 0.5, 0.25, 0.25]))
+
+    def test_uniform_expert_input_scales_collapse_to_scalar(self) -> None:
+        shared = INCNvfp4QDQMoEMethod._collapse_uniform(torch.full((4,), 0.5))
+        distinct = INCNvfp4QDQMoEMethod._collapse_uniform(torch.tensor([0.5, 0.25]))
+
+        self.assertEqual(shared.ndim, 0)
+        self.assertEqual(distinct.shape, torch.Size([2]))
+        self.assertIs(INCNvfp4QDQMoEMethod._routed_input_scales(torch.zeros(2, 2), None, shared), shared)
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_cute_matches_reference_for_scalar_row_and_routed_scales(self) -> None:
+        from vllm_qdq_plugin.qdq.cute import cute_qdq_status
+
+        torch.manual_seed(29)
+        spread = torch.logspace(-9, 5, 6 * 256 // 16, device="cuda").repeat_interleave(16).reshape(6, 256)
+        x = (torch.randn(6, 256, device="cuda") * spread).to(torch.bfloat16)
+        x[1] = 0
+        if not cute_qdq_status(x)[0]:
+            self.skipTest("CuTe DSL is not available")
+        routed_x = x[:, None].expand(-1, 3, -1).reshape(-1, 256)
+        scalar = torch.tensor([448.0 * 6.0 / x.float().abs().max().item()], device="cuda")
+        row_scales = torch.rand(18, device="cuda") * 1.0e4
+        row_scales[0] = 0
+
+        self.assertTrue(torch.equal(nvfp4_qdq(x, scalar), _nvfp4_qdq_reference(x, scalar)))
+        self.assertTrue(torch.equal(nvfp4_qdq(x, row_scales[:6]), _nvfp4_qdq_reference(x, row_scales[:6])))
+        self.assertTrue(torch.equal(nvfp4_qdq(x, row_scales, topk=3), _nvfp4_qdq_reference(routed_x, row_scales)))
+        inplace = x.clone()
+        nvfp4_qdq(inplace, scalar, inplace=True)
+        self.assertTrue(torch.equal(inplace, _nvfp4_qdq_reference(x, scalar)))
+        compiled = torch.compile(lambda value, scale: nvfp4_qdq(value, scale, topk=3), backend="eager", fullgraph=True)
+        self.assertTrue(torch.equal(compiled(x, row_scales), _nvfp4_qdq_reference(routed_x, row_scales)))
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_compiled_nvfp4_dispatch_checks_cutlass_and_width(self) -> None:
+        from vllm_qdq_plugin.qdq import cute
+
+        torch.manual_seed(31)
+        x = torch.randn(4, 256, device="cuda").to(torch.bfloat16)
+        ragged = torch.randn(4, 24, device="cuda").to(torch.bfloat16)
+        scale = torch.tensor([1.0], device="cuda")
+        with mock.patch.object(cute.envs, "VLLM_QDQ_CUTE", True):
+            dispatch = torch.compile(
+                lambda value: cute.use_nvfp4_cute(value, 16, "NVFP4"), backend="eager", fullgraph=True
+            )
+            with mock.patch.object(cute, "_CUTLASS_DSL_INSTALLED", True):
+                self.assertTrue(dispatch(x))
+                self.assertFalse(dispatch(ragged))
+            with mock.patch.object(cute, "_CUTLASS_DSL_INSTALLED", False):
+                self.assertFalse(dispatch(x))
+                compiled = torch.compile(
+                    lambda value, value_scale: nvfp4_qdq(value, value_scale, 16), backend="eager", fullgraph=True
+                )
+                self.assertTrue(torch.equal(compiled(x, scale), _nvfp4_qdq_reference(x, scale)))
+
+    def test_qdq_method_requires_sm80_and_preserves_stored_input_scale(self) -> None:
+        method = object.__new__(INCNvfp4QDQLinearMethod)
+        method.group_size = 16
+        layer = self._make_dense_layer(torch.device("cpu"))
+        stored_input_global_scale = layer.input_global_scale.detach().clone()
+
+        with mock.patch("vllm_qdq_plugin.quantization.inc_nvfp4_linear.prepare_fp4_layer_for_marlin"):
+            method.process_weights_after_loading(layer)
+
+        self.assertEqual(method.get_min_capability(), 80)
+        torch.testing.assert_close(layer.input_global_scale, stored_input_global_scale.max())
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_marlin_dense_matches_dequantized_reference(self) -> None:
+        torch.manual_seed(11)
+        layer = self._make_dense_layer(torch.device("cuda"))
+        packed = layer.weight_packed.detach().clone()
+        block_scale = layer.weight_scale.detach().clone().float()
+        stored_weight_global_scale = layer.weight_global_scale.detach().clone()
+        stored_input_global_scale = layer.input_global_scale.detach().clone()
+        x = torch.randn(5, 64, device="cuda", dtype=torch.bfloat16)
+
+        low = _decode_e2m1(packed & 0xF)
+        high = _decode_e2m1((packed >> 4) & 0xF)
+        values = torch.stack((low, high), dim=-1).reshape(64, 64)
+        weight = values * block_scale.repeat_interleave(16, dim=1) / stored_weight_global_scale
+        expected = torch.nn.functional.linear(
+            nvfp4_qdq(x, stored_input_global_scale.max(), 16),
+            weight.to(torch.bfloat16),
+        )
+
+        method = object.__new__(INCNvfp4QDQLinearMethod)
+        method.group_size = 16
+        method.process_weights_after_loading(layer)
+        actual = method.apply_weights(layer, x)
+
+        self.assertEqual(layer.weight.dtype, torch.int32)
+        torch.testing.assert_close(actual, expected, rtol=0.02, atol=0.25)
+
+
+class Nvfp4UE5M3GlobalScaleTests(unittest.TestCase):
+    @staticmethod
+    def _make_gs_layer(
+        device: torch.device,
+        weight_global_scale: list[float],
+        input_global_scale: list[float],
+        logical_widths: list[int],
+    ) -> torch.nn.Module:
+        layer = Nvfp4UE5M3ConfigTests._make_dense_layer(device)
+        rows = sum(logical_widths)
+        layer.weight_packed.data = torch.randint(0, 256, (rows, 32), device=device, dtype=torch.uint8)
+        # High UE5M3 codes (up to 114688) exercise the Marlin range shift.
+        layer.weight_scale.data = torch.randint(0xB0, 0xFF, (rows, 4), device=device, dtype=torch.uint8)
+        layer.weight_global_scale = torch.nn.Parameter(
+            torch.tensor(weight_global_scale, device=device), requires_grad=False
+        )
+        layer.input_global_scale = torch.nn.Parameter(
+            torch.tensor(input_global_scale, device=device), requires_grad=False
+        )
+        layer.logical_widths = logical_widths
+        layer.output_size_per_partition = rows
+        return layer
+
+    @staticmethod
+    def _make_gs_method() -> INCNvfp4UE5M3LinearMethod:
+        method = object.__new__(INCNvfp4UE5M3LinearMethod)
+        method.group_size = 16
+        method.with_global_scale = True
+        return method
+
+    @staticmethod
+    def _gs_qdq_formula(x: torch.Tensor, global_scale: float) -> torch.Tensor:
+        from vllm_qdq_plugin.qdq.nvfp4_e5m3 import _quantize_ue5m3_scale_reference
+
+        groups = x.float().reshape(x.shape[0], -1, 16)
+        global_scale = torch.tensor(global_scale)
+        scale = _quantize_ue5m3_scale_reference(groups.abs().amax(-1) / 6.0 * global_scale) * (1.0 / global_scale)
+        normalized = torch.where(scale[..., None] == 0, 0.0, groups / scale[..., None])
+        magnitude = normalized.abs()
+        quantized = torch.where(
+            magnitude < 2.0,
+            torch.round(magnitude * 2.0) / 2.0,
+            torch.where(magnitude < 4.0, torch.round(magnitude), 2.0 * torch.round(magnitude / 2.0)),
+        ).clamp(max=6.0)
+        return (quantized.copysign(normalized) * scale[..., None]).reshape_as(x).to(x.dtype)
+
+    def test_gs_reference_matches_autoround_formula(self) -> None:
+        torch.manual_seed(3)
+        x = torch.randn(4, 64, dtype=torch.bfloat16)
+        global_scale = 114688.0 * 6.0 / (x.float().abs().max().item() * 0.5)
+        actual = _nvfp4_e5m3_qdq_reference(x, 16, torch.tensor(global_scale, dtype=torch.float32))
+        self.assertTrue(torch.equal(actual, self._gs_qdq_formula(x, global_scale)))
+
+    def test_gs_one_matches_global_scale_free_qdq(self) -> None:
+        x = torch.randn(4, 64, dtype=torch.bfloat16)
+        expected = _nvfp4_e5m3_qdq_reference(x, 16)
+        actual = _nvfp4_e5m3_qdq_reference(x, 16, torch.ones((), dtype=torch.float32))
+        self.assertTrue(torch.equal(actual, expected))
+
+    def test_gs_qdq_supports_one_scale_per_row(self) -> None:
+        x = torch.randn(4, 64, dtype=torch.bfloat16)
+        scales = torch.tensor([0.5, 1.0, 2.0, 4.0], dtype=torch.float32)
+        actual = nvfp4_e5m3_qdq(x, 16, input_global_scale=scales)
+        expected = torch.cat(
+            [_nvfp4_e5m3_qdq_reference(x[row : row + 1], 16, scales[row]) for row in range(x.shape[0])]
+        )
+        self.assertTrue(torch.equal(actual, expected))
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_cute_gs_qdq_supports_one_scale_per_row(self) -> None:
+        from vllm_qdq_plugin.qdq.cute import cute_qdq_status
+
+        x = torch.randn(8, 256, device="cuda", dtype=torch.bfloat16)
+        scales = torch.tensor([3.0e4 + 1024.0 * i for i in range(8)], device="cuda", dtype=torch.float32)
+        if not cute_qdq_status(x)[0]:
+            self.skipTest("CuTe DSL is not available")
+        expected = _nvfp4_e5m3_qdq_reference(x, 16, scales)
+        actual = nvfp4_e5m3_qdq(x, 16, input_global_scale=scales)
+        self.assertTrue(torch.equal(actual, expected))
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_cute_qdq_supports_routed_rows_and_inplace(self) -> None:
+        from vllm_qdq_plugin.qdq.cute import cute_qdq_status
+
+        x = torch.randn(5, 256, device="cuda", dtype=torch.bfloat16)
+        if not cute_qdq_status(x)[0]:
+            self.skipTest("CuTe DSL is not available")
+        routed_x = x[:, None].expand(-1, 2, -1).reshape(-1, 256)
+        scales = torch.linspace(1.0e3, 6.0e4, 10, device="cuda")
+        for group_size in (16, 32):
+            self.assertTrue(
+                torch.equal(
+                    nvfp4_e5m3_qdq(x, group_size, input_global_scale=scales, topk=2),
+                    _nvfp4_e5m3_qdq_reference(routed_x, group_size, scales),
+                )
+            )
+            inplace = x.clone()
+            nvfp4_e5m3_qdq(inplace, group_size, inplace=True)
+            self.assertTrue(torch.equal(inplace, _nvfp4_e5m3_qdq_reference(x, group_size)))
+
+    def test_decode_ue5m3_matches_bit_formula(self) -> None:
+        codes = torch.arange(256, dtype=torch.int32)
+        exponent, mantissa = codes >> 3, codes & 0x7
+        expected = torch.where(
+            exponent == 0,
+            mantissa.float() * 2.0**-17,
+            torch.ldexp(1.0 + mantissa.float() * 0.125, exponent - 15),
+        )
+        self.assertTrue(torch.equal(decode_ue5m3(codes.to(torch.uint8).reshape(16, 16)), expected.reshape(16, 16)))
+
+    def test_fold_global_scale_is_exact_for_shared_scale(self) -> None:
+        scales = decode_ue5m3(torch.randint(0, 0xFF, (2, 8, 4), dtype=torch.uint8))
+        global_scale = torch.tensor([[1234.5] * 8, [3.0e5] * 8])
+        folded, multiplier = fold_ue5m3_global_scale(scales, global_scale)
+
+        self.assertLessEqual(folded.max().item(), 448.0)
+        torch.testing.assert_close(
+            folded * multiplier[:, None, None], scales / global_scale[..., None], rtol=1e-6, atol=0
+        )
+
+    def test_global_nvfp4_e5m3_gs_config_selects_linear_method(self) -> None:
+        apply_patches()
+        config = INCConfig.from_config(
+            {
+                "bits": 4,
+                "group_size": 16,
+                "sym": True,
+                "data_type": "nvfp4_v2_gs",
+                "act_data_type": "nvfp4_v2_with_static_gs",
+                "packing_format": "auto_round:llm_compressor_nvfp4_e5m3_gs",
+            }
+        )
+
+        layer_config = config.config_parser.resolve(object(), "model.layers.0.self_attn.q_proj")
+        scheme = factory.resolve_scheme(layer_config)
+        method = scheme.get_linear_method(config, object(), "model.layers.0.self_attn.q_proj", layer_config)
+
+        self.assertIsInstance(scheme, INCNvfp4UE5M3Scheme)
+        self.assertTrue(method.scheme.with_global_scale)
+        self.assertTrue(INCNvfp4UE5M3Scheme.can_handle(replace(layer_config, data_type="opt_rtn_nvfp4_v2_gs")))
+
+    def test_unit_input_global_scale_uses_global_scale_free_qdq(self) -> None:
+        layer = self._make_gs_layer(torch.device("cpu"), [100.0], [1.0], [64])
+        with mock.patch("vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_linear.prepare_fp4_layer_for_marlin") as prepare:
+            self._make_gs_method().process_weights_after_loading(layer)
+
+        prepare.assert_called_once()
+        self.assertFalse(hasattr(layer, "input_global_scale"))
+        self.assertLessEqual(layer.weight_scale.float().max().item(), 448.0)
+        self.assertEqual(layer.weight_global_scale.shape, torch.Size([]))
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_cute_gs_qdq_matches_reference(self) -> None:
+        from vllm_qdq_plugin.qdq.cute import cute_qdq_status
+
+        x = torch.randn(64, 256, device="cuda", dtype=torch.bfloat16)
+        x[0] = 0
+        if not cute_qdq_status(x)[0]:
+            self.skipTest("CuTe DSL is not available")
+        # Calibrated amax below the runtime amax exercises the UE5M3 upper clamp.
+        global_scale = torch.tensor(114688.0 * 6.0 / (x.float().abs().max().item() * 0.5), device="cuda")
+        expected = _nvfp4_e5m3_qdq_reference(x, 16, global_scale)
+        actual = nvfp4_e5m3_qdq(x, 16, input_global_scale=global_scale)
+        compiled = torch.compile(
+            lambda value, scale: nvfp4_e5m3_qdq(value, 16, input_global_scale=scale), backend="eager", fullgraph=True
+        )
+
+        self.assertTrue(torch.equal(actual, expected))
+        self.assertTrue(torch.equal(compiled(x, global_scale), expected))
+
+    def _check_marlin_dense(self, weight_global_scale: list[float], logical_widths: list[int]) -> None:
+        torch.manual_seed(5)
+        layer = self._make_gs_layer(
+            torch.device("cuda"), weight_global_scale, [2.0e4] * len(logical_widths), logical_widths
+        )
+        packed = layer.weight_packed.detach().clone()
+        scales = layer.weight_scale.detach().clone()
+        row_global_scale = torch.tensor(weight_global_scale, device="cuda").repeat_interleave(
+            torch.tensor(logical_widths, device="cuda")
+        )
+        x = torch.randn(5, 64, device="cuda", dtype=torch.bfloat16)
+        low = _decode_e2m1(packed & 0xF)
+        high = _decode_e2m1((packed >> 4) & 0xF)
+        values = torch.stack((low, high), dim=-1).reshape(packed.shape[0], -1)
+        weight = values * decode_ue5m3(scales).repeat_interleave(16, dim=1) / row_global_scale[:, None]
+        expected = torch.nn.functional.linear(
+            nvfp4_e5m3_qdq(x, 16, input_global_scale=torch.tensor(2.0e4, device="cuda")),
+            weight.to(torch.bfloat16),
+        )
+
+        method = self._make_gs_method()
+        method.process_weights_after_loading(layer)
+        actual = method.apply_weights(layer, x)
+
+        self.assertEqual(layer.weight.dtype, torch.int32)
+        relative_error = (actual.float() - expected.float()).norm() / expected.float().norm()
+        self.assertLess(relative_error.item(), 0.02)
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_marlin_dense_gs_matches_dequantized_reference(self) -> None:
+        self._check_marlin_dense([5.0e3, 5.0e3, 5.0e3], [32, 16, 16])
+
+    @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
+    def test_marlin_dense_gs_folds_mismatched_fused_scales(self) -> None:
+        self._check_marlin_dense([5.0e3, 7.0e3, 9.0e3], [32, 16, 16])

@@ -4,11 +4,13 @@ auto-round-lib
 compressed-tensors >= 0.15.0
 datasets
 expecttest
+lm_eval
 numpy
 peft
 prettytable
 psutil
 pytest
+requests
 torchao
 torchvision
 transformers >= 5.5.0

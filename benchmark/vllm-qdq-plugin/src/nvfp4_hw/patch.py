@@ -2,14 +2,25 @@
 
 from __future__ import annotations
 
+from dataclasses import replace
 from typing import Any
 
 from vllm.logger import init_logger
 
-from .inc_nvfp4_scheme import INCNvfp4Scheme
-
 logger = init_logger(__name__)
 _PATCHED = False
+
+
+def _layer_data_type(config: Any, layer_name: str, default: str) -> str:
+    matches = [
+        (key, value)
+        for key, value in (config.extra_config or {}).items()
+        if isinstance(key, str) and isinstance(value, dict) and (layer_name == key or layer_name.endswith(f".{key}"))
+    ]
+    if not matches:
+        return default
+    _, layer_config = max(matches, key=lambda item: len(item[0]))
+    return layer_config.get("data_type", default)
 
 
 def apply_patches() -> None:
@@ -19,25 +30,36 @@ def apply_patches() -> None:
         return
 
     from vllm.model_executor.layers.quantization.inc import INCConfig
-    from vllm.model_executor.layers.quantization.inc.schemes import factory
+    from vllm.model_executor.layers.quantization.inc.config_parser import INCConfigParser
 
     INCConfig.SUPPORTED_DTYPES = set(INCConfig.SUPPORTED_DTYPES) | {"nv_fp"}
     INCConfig.SUPPORTED_FORMATS = set(INCConfig.SUPPORTED_FORMATS) | {"auto_round:llm_compressor"}
 
-    original_resolve_scheme = factory.resolve_scheme
+    original_resolve_config = INCConfigParser.resolve
+    original_validate_supported_quantization = INCConfig._validate_supported_quantization
 
-    def resolve_scheme(layer_config: Any):
-        if INCNvfp4Scheme.can_handle(layer_config):
-            return INCNvfp4Scheme()
-        return original_resolve_scheme(layer_config)
+    def validate_supported_quantization(self: Any) -> None:
+        if self.data_type == "nv_fp" and self.weight_bits == 4:
+            if self.packing_format not in INCConfig.SUPPORTED_FORMATS:
+                raise ValueError(f"Unsupported packing_format: {self.packing_format}")
+            return
+        original_validate_supported_quantization(self)
 
-    factory.resolve_scheme = resolve_scheme
+    def resolve_config(self: Any, layer: Any, layer_name: str):
+        layer_config = original_resolve_config(self, layer, layer_name)
+        data_type = _layer_data_type(self._config, layer_name, layer_config.data_type)
+        return replace(layer_config, data_type=data_type)
+
+    INCConfigParser.resolve = resolve_config
+    INCConfig._validate_supported_quantization = validate_supported_quantization
     _PATCHED = True
-    logger.warning("vLLM NVFP4 patch applied: AutoRound nv_fp scheme registered")
+    logger.warning("vLLM NVFP4 hardware metadata patch applied")
 
 
 def register() -> None:
     """Entry point used by vLLM's general plugin loader."""
+    from vllm_qdq_plugin import envs
+
     apply_patches()
 
 

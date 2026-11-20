@@ -8,6 +8,7 @@ bias=7, max=448) with per-group E8M0 (power-of-2) scales of group_size elements.
 import torch
 
 from .. import envs
+from ..trace import trace_qdq
 
 FLOAT8_E8M0_MAX_EXP = 127
 
@@ -50,9 +51,8 @@ def _quantize_to_e4m3fn_no_fp8_dtype(x: torch.Tensor) -> torch.Tensor:
     # Finite E4M3FN range.
     ax = torch.clamp(ax, 0.0, FLOAT8_E4M3FN_MAX)
 
-    # Subnormal region: values are multiples of 2^-9 in [0, 7*2^-9].
+    # Subnormal region: multiples of 2^-9; rounding up to 8*2^-9 lands exactly on the min normal.
     sub_q = _round_half_to_even(ax / FLOAT8_E4M3_SUBNORMAL_STEP) * FLOAT8_E4M3_SUBNORMAL_STEP
-    sub_q = torch.clamp(sub_q, 0.0, 7.0 * FLOAT8_E4M3_SUBNORMAL_STEP)
 
     # Normal region: step is 2^(e-3), where e=floor(log2(|x|)) in [-6, 8].
     safe_ax = torch.clamp(ax, min=FLOAT8_E4M3_MIN_NORMAL)
@@ -120,10 +120,11 @@ def _mxfp8_qdq_reference(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
     return x_fp8.reshape(m, -1)[:, :k]
 
 
-def mxfp8_qdq(x: torch.Tensor, group_size: int = 32) -> torch.Tensor:
+def mxfp8_qdq(x: torch.Tensor, group_size: int = 32, *, trace_op_name: str = "mxfp8_qdq") -> torch.Tensor:
     """Quantize-dequantize input to MXFP8 (E4M3 + E8M0 scales)."""
     if envs.VLLM_QDQ_CUTE:
         from .cute import mxfp8_qdq_cute
 
-        return mxfp8_qdq_cute(x, group_size)
+        return mxfp8_qdq_cute(x, group_size, trace_op_name=trace_op_name)
+    trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name="MXFP8")
     return _mxfp8_qdq_reference(x, group_size)

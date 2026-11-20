@@ -16,7 +16,7 @@
 from typing import Callable, Dict, Tuple
 
 import keras
-from keras_hub.src.models.causal_lm import CausalLM
+from keras_hub.models import CausalLM, Gemma3CausalLM
 
 from neural_compressor.common import logger
 from neural_compressor.common.utils import STATIC_QUANT, Mode, log_process
@@ -26,7 +26,10 @@ from neural_compressor.jax.quantization.saving import (
     KerasQuantizedModelBackboneWrapper,
 )
 from neural_compressor.jax.utils import algos_mapping, check_backend
-from neural_compressor.jax.utils.utility import causal_lm_make_replace_generate_function
+from neural_compressor.jax.utils.utility import (
+    causal_lm_make_replace_build_cache,
+    causal_lm_make_replace_generate_function,
+)
 
 from .clone_model import clone_model
 
@@ -89,6 +92,10 @@ def quantize_model(
     # Post-quantization: revert CausalLM generate function
     if isinstance(model, CausalLM):
         causal_lm_make_replace_generate_function(model, revert=True)
+
+    # Defer per-layer cache dtype selection until cache allocation.
+    if isinstance(model, Gemma3CausalLM):
+        causal_lm_make_replace_build_cache(model)
 
     if hasattr(model, "backbone"):
         model._tracker.unlock()

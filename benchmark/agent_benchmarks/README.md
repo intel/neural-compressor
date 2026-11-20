@@ -66,7 +66,224 @@ The stop command uses `logs/vllm_<PORT>.pid` by default. Set the same
 `VLLM_LOG_DIR` used to start the server, or set `VLLM_PID_FILE` to the exact PID
 file, when using a custom location.
 
-## SWE-Verified
+### Generic deployment wrapper
+
+`serve_vllm_model.sh` consolidates the common parts of the per-model serve
+scripts: GPU/TP selection, port and GPU-memory checks, background launch,
+PID/log files, health waiting, and stop/replace handling. Model-specific
+virtualenv, overlay, and patch setup is intentionally out of scope; put the
+desired `vllm` on `PATH`, pass `--vllm`, or export the environment first.
+
+```bash
+bash serve_vllm_model.sh \
+  --model /models/Qwen3.8-27B \
+  --served-name Qwen3.8-27B-mxfp4 \
+  --port 8227 \
+  --gpus 7 \
+  --max-model-len 262144 \
+  --reasoning-parser qwen3 \
+  --tool-call-parser qwen3_coder \
+  --enable-auto-tool-choice \
+  --env NCCL_NVLS_ENABLE=0
+```
+
+Useful options:
+
+- `--dry-run` prints the resolved `vllm serve` command without launching.
+- `--wait-timeout N` polls `/health` after launch.
+- `--replace` stops the PID file before starting; `--stop --port PORT` stops it.
+- `--foreground` uses `exec` instead of `nohup setsid`.
+- `--` passes remaining flags directly to `vllm serve`, for example
+  `-- --block-size 256 --mamba-ssm-cache-dtype bfloat16`.
+- `--min-free-gib N` fails before launch when a selected GPU has less free
+  memory than requested.
+
+The default log is `<work-dir>/logs/vllm_<served-name>_<UTC>.log` and the
+default PID file is `<work-dir>/logs/vllm_<port>.pid`. Pass the same
+`--work-dir`/`--pid-file` to `--stop`.
+
+## Terminal-Bench
+
+`run_terminal_bench.sh` evaluates Terminal-Bench 2.0 and 2.1 with Harbor and
+Terminus-2 against an existing OpenAI-compatible endpoint. It uses
+`terminal-bench@2.0` and `terminal-bench/terminal-bench-2-1@6`.
+
+### Set up Terminal-Bench
+
+```bash
+conda create -n terminal-bench python=3.12 pip
+conda activate terminal-bench
+bash setup_terminal_bench.sh
+```
+
+Start a text or multimodal vLLM server, then run a smoke test or the full suite.
+Pass `--env-prefix` when the Terminal-Bench environment is not active.
+
+```bash
+# One task with one trial
+bash run_terminal_bench.sh \
+  --benchmark terminal-bench-2.1 \
+  --port 8002 \
+  --mini
+
+# Both benchmark versions; five trials per task by default
+bash run_terminal_bench.sh \
+  --benchmark all \
+  --port 8002 \
+  --workers 1 \
+  --retry-attempts 3
+```
+
+Results are written under `outputs/terminal-bench/`. Resume an interrupted job
+from the directory containing its `config.json`:
+
+```bash
+bash run_terminal_bench.sh \
+  --resume-job outputs/terminal-bench/terminal-bench-2.1-RUN_TIMESTAMP \
+  --port 8002
+```
+
+`--max-retries` retries a trial after a Harbor exception, while
+`--retry-attempts` retries the runner process. `--attempts` controls independent
+trials used to estimate the pass rate. Use `--retry-error-type TYPE` to rerun
+completed trials with a specific exception type.
+
+Harbor removes trial containers after completion. It retains Docker images and
+job directories because they are required for later runs and recovery. Remove
+them only when they are no longer needed.
+
+## Multimodal Benchmarks
+
+`run_multimodal_bench.sh` evaluates MMMU, MMMU-Pro, SimpleVQA, and OmniDocBench
+1.5 with lmms-eval against an existing multimodal OpenAI-compatible endpoint.
+
+### Set up multimodal evaluation
+
+Use a separate environment because lmms-eval and Harbor have different
+dependencies:
+
+```bash
+conda create -n multimodal-bench python=3.12 pip
+conda activate multimodal-bench
+bash setup_multimodal_bench.sh
+```
+
+The setup script installs the lmms-eval revision pinned in `versions.env` and
+applies the OpenAI compatibility patch. The patch adds the required Qwen
+prompts, vLLM sampling parameters, and fixed Mini tasks.
+
+Start the server without `--language-model-only`, which disables the vision
+encoder:
+
+```bash
+MODEL_PATH=/path/to/model
+SERVED_MODEL_NAME=model-name
+CUDA_VISIBLE_DEVICES=0,1 bash start_vllm_serve.sh \
+  "${MODEL_PATH}" \
+  --port 8002 \
+  --served-model-name "${SERVED_MODEL_NAME}" \
+  --tensor-parallel-size 2 \
+  --dtype bfloat16 \
+  --gpu-memory-utilization 0.92 \
+  --max-num-seqs 1 \
+  --enable-prefix-caching
+```
+
+Run one benchmark, all full datasets, or all Mini datasets. Pass `--env-prefix`
+when the multimodal environment is not active.
+
+```bash
+bash run_multimodal_bench.sh \
+  --benchmark mmmu \
+  --port 8002 \
+  --mini
+
+bash run_multimodal_bench.sh \
+  --benchmark all \
+  --port 8002 \
+  --workers 1 \
+  --retry-attempts 3
+
+bash run_multimodal_bench.sh \
+  --benchmark all \
+  --port 8002 \
+  --mini
+```
+
+`--mini` uses four fixed 90-sample configurations from
+`jia0160/multimodal-benchmarks-mini` at the revision pinned in `versions.env`.
+The samples are selected offline, not truncated from the full datasets at
+runtime. MMMU and MMMU-Pro cover all 30 subjects; SimpleVQA balances task,
+topic, and language; OmniDocBench balances data source and document features.
+
+MMMU, MMMU-Pro, and OmniDocBench use thinking mode with 32,768 output tokens,
+`temperature=1.0`, `top_p=0.95`, `top_k=20`, and `presence_penalty=1.5`.
+SimpleVQA uses deterministic task defaults with thinking disabled. Results are
+written under `outputs/multimodal-bench/`.
+
+### Resume multimodal evaluation
+
+Set a stable run ID on the initial run and reuse it with `--resume`:
+
+```bash
+bash run_multimodal_bench.sh \
+  --benchmark all \
+  --run-id qwen-eval-1 \
+  --port 8002
+
+bash run_multimodal_bench.sh \
+  --benchmark all \
+  --run-id qwen-eval-1 \
+  --resume \
+  --port 8002
+```
+
+A resumed run skips completed benchmarks. The response cache provides
+sample-level recovery for deterministic SimpleVQA requests. Sampling-based
+MMMU, MMMU-Pro, and OmniDocBench rerun the interrupted benchmark. Results,
+completion markers, and the cache are stored under
+`outputs/multimodal-bench/RUN_ID/`; remove that directory when recovery is no
+longer required. Multimodal evaluation does not create containers or images.
+
+## Benchmark Report
+
+Create one normalized report from completed Harbor and lmms-eval results.
+Repeat either result option to combine distinct benchmarks from separate jobs
+into the same report:
+
+```bash
+python lib/benchmark_data.py benchmark-report \
+  --terminal-result outputs/terminal-bench/BASELINE_JOB/result.json \
+  --lmms-result outputs/multimodal-bench/BASELINE_RUN/TIMESTAMP_results.json \
+  --model BASELINE_MODEL \
+  --output outputs/baseline-report.json
+
+python lib/benchmark_data.py benchmark-report \
+  --terminal-result outputs/terminal-bench/CURRENT_JOB/result.json \
+  --lmms-result outputs/multimodal-bench/CURRENT_RUN/TIMESTAMP_results.json \
+  --model CURRENT_MODEL \
+  --output outputs/current-report.json
+```
+
+The normalized report records the model, benchmark, primary metric as a
+percentage, sample count, failed sample count when available, and source path.
+Compare two reports by benchmark:
+
+```bash
+python lib/benchmark_data.py compare-benchmark-reports \
+  --baseline outputs/baseline-report.json \
+  --current outputs/current-report.json \
+  --output outputs/benchmark-comparison.json
+```
+
+The comparison reports both metrics, their percentage-point difference, sample
+counts, and an `improved`, `regressed`, or `unchanged` status. Use
+`--tolerance POINTS` to treat differences within that many percentage points as
+unchanged. Benchmarks present in only one report are listed separately rather
+than compared. Each input report must contain at most one result for each
+benchmark.
+
+## SWE-Verified and SWE-Verified Mini
 
 ### SWE-Verified environment setup
 
@@ -78,7 +295,7 @@ The setup script:
 
 1. Clones mini-SWE-agent v2.4.6 into `mini-swe-agent/`.
 2. Applies `patches/swebench_verified_per_instance_cleanup.patch` so each instance reliably removes its Docker container during cleanup.
-3. Installs mini-SWE-agent to generate predictions and the official SWE-bench harness to evaluate those predictions locally. It also installs datasets for loading SWE-bench Verified.
+3. Installs mini-SWE-agent to generate predictions, the pinned SWE-bench 4.1.0 harness for local evaluation, and datasets for loading SWE-bench Verified and Verified Mini.
 
 
 ### Run SWE-Verified
@@ -90,6 +307,40 @@ bash run_swe_verified.sh \
   --tag qwen36_27b_full
 ```
 
+To run the 50-instance
+[SWE-bench Verified Mini](https://evalscope.readthedocs.io/zh-cn/latest/benchmarks/swe_bench_verified_mini.html)
+dataset instead, select it through the same runner:
+
+```bash
+bash run_swe_verified.sh \
+  --dataset verified-mini \
+  --port 8888 \
+  --step-limit 250 \
+  --tag qwen36_27b_mini
+```
+
+To repeat the full evaluation N times and aggregate per-run results:
+
+```bash
+bash run_swe_verified.sh \
+  --dataset verified-mini \
+  --port 8888 \
+  --step-limit 250 \
+  --runs 7 \
+  --tag qwen36_27b_mini_7r
+```
+
+`--runs` defaults to 1 (a single run). Each child run uses its own tag and result directory;
+the suite aggregates accuracy, resolved counts, mean and standard deviation in
+`summary.json` and `summary.md`. Pass `--runs 1` to disable repeats. Retry
+options cannot be combined with `--runs > 1`.
+
+Generation loads the original Hugging Face dataset
+`MariusHobbhahn/swe-bench-verified-mini`, which is mirrored by EvalScope as
+`evalscope/swe-bench-verified-mini`. Evaluation uses the canonical Verified
+dataset plus the selected Mini instance IDs, so it remains compatible with the
+official SWE-bench harness and prebuilt images.
+
 The runner connects to the existing shared vLLM server and leaves it running
 when the benchmark exits, whether the benchmark succeeds or fails. Generation
 runs as a single continuous process across the whole selection instead of
@@ -99,10 +350,12 @@ evaluated with the local harness in the background while generation continues
 for the remaining instances, overlapping the CPU/Docker-bound evaluation with
 GPU-bound generation instead of alternating between the two. A chunk's Docker
 images are removed once its instances are evaluated, so evaluation reuses the
-images pulled during generation while disk usage remains bounded. Any
+images pulled during generation while disk usage remains bounded. Verified Mini
+retains images by default because its smaller image set is practical to reuse.
+Pass `--keep-images` to retain images explicitly for a full Verified run. Any
 remaining instances are drained into a final, possibly smaller chunk once
 generation finishes. With `--skip-eval`, images are removed as each chunk is
-claimed unless `--keep-images` is also specified. An independent watchdog
+claimed according to the same image policy. An independent watchdog
 checks the vLLM health endpoint during generation and stops the run after three
 consecutive failures by default. The aggregate report is refreshed after every
 completed evaluation chunk, so completed results remain available if the run
@@ -132,10 +385,13 @@ state is changed, the runner saves `report.json`, `generation/preds.json`,
 `retries/retry_<TIMESTAMP>_<PID>/`. New chunk reports override the old
 classification for the same instance in the aggregate report. Set
 `--retry-attempts N` to enable both retry modes and run up to N retry rounds.
-The runner stops early when both categories are empty.
+After every round, the runner compares aggregate accuracy with the preceding
+round and stops when accuracy no longer improves. It also stops early when both
+retry categories are empty.
 
 | Option | Default | Description |
 | --- | --- | --- |
+| `--dataset NAME` | `verified` | Dataset selection: `verified` (500 instances) or `verified-mini` (50 instances) |
 | `--host HOST` | `127.0.0.1` | vLLM host |
 | `--port PORT` | `8888` | vLLM port |
 | `--served-name NAME` | discovered | Model ID exposed by vLLM |
@@ -150,11 +406,12 @@ The runner stops early when both categories are empty.
 | `--health-interval N` | `30` | Seconds between vLLM health checks |
 | `--health-failures N` | `3` | Consecutive failed health checks before stopping the run |
 | `--tag TAG` | UTC timestamp | Output and log label |
+| `--runs N` | `1` | Repeat the full benchmark N times and write a suite summary |
 | `--retry-errors` | disabled | Re-evaluate valid error patches and regenerate invalid error submissions |
 | `--retry-empty-patches` | disabled | Regenerate and evaluate previously empty patches |
-| `--retry-attempts N` | `1` | Enable error and empty-patch retries for up to N rounds; stop early when both are empty |
+| `--retry-attempts N` | `1` | Enable error and empty-patch retries for up to N rounds; stop early when accuracy no longer improves or both categories are empty |
 | `--skip-eval` | disabled | Generate predictions without local evaluation |
-| `--keep-images` | disabled | Keep benchmark Docker images after each evaluation chunk |
+| `--keep-images` | enabled for Verified Mini | Keep benchmark Docker images after each evaluation chunk |
 
 Outputs:
 
@@ -165,6 +422,15 @@ Outputs:
 - Local evaluation report with resolved counts and accuracy:
   `mini-swe-agent/results/swe_verified_<TAG>/report.json`
 - Log: `logs/swe_verified_<TAG>.log`
+
+For Verified Mini, the same layout uses the `swe_verified_mini_<TAG>` prefix
+for the result directory and log file.
+
+With `--runs N` (`N > 1`), the suite lives in
+`mini-swe-agent/results/swe_verified[_mini]_<TAG>_suite/` and contains
+`state.json`, `summary.json`, `summary.md`, and the aggregated report. The
+individual run directories remain siblings (`..._<TAG>_run01`, `..._run02`, ...)
+so each run can be inspected or resumed independently.
 
 
 ## SWE-bench Pro
@@ -177,9 +443,10 @@ bash setup_swebenchpro.sh
 
 The setup script clones the pinned `scaleapi/SWE-bench_Pro-os` repository and
 its mini-SWE-agent submodule, applies support for the benchmark's Docker Hub
-images and reliable container cleanup, and installs the generation and local
-Docker evaluation dependencies into the currently activated environment using
-uv. Create and activate the environment before running the setup script.
+images and reliable container cleanup, applies the evaluation proxy/test-patch
+patch, and installs the generation and local Docker evaluation dependencies
+into the currently activated environment using uv. Create and activate the
+environment before running the setup script.
 
 ### Run SWE-bench Pro
 
@@ -188,6 +455,34 @@ bash run_swebenchpro.sh \
   --port 8888 \
   --step-limit 250 \
   --tag qwen36_27b_pro
+```
+
+To run the full evaluation 7 times and aggregate the results:
+
+```bash
+bash run_swebenchpro.sh \
+  --port 8888 \
+  --step-limit 250 \
+  --runs 7 \
+  --keep-images \
+  --tag qwen36_27b_pro_7r
+```
+
+`--runs` defaults to 1 (a single run). Use `--keep-images` for repeated runs so each round
+reuses the pulled Docker images. The suite writes per-run results under a
+dedicated `runs/` directory and aggregates accuracy, resolved counts, mean and
+standard deviation.
+
+To evaluate a different Pro dataset (for example a sampled subset), pass
+`--dataset-repo` and optionally `--dataset-split`:
+
+```bash
+bash run_swebenchpro.sh \
+  --dataset-repo lvkaokao/swe-bench-pro-120 \
+  --dataset-split test \
+  --port 8888 \
+  --runs 7 \
+  --tag pro120_7r
 ```
 
 The runner connects to an existing shared vLLM server and leaves it running
@@ -212,7 +507,7 @@ to run the selection from scratch.
 | `--host HOST` | `127.0.0.1` | vLLM host |
 | `--port PORT` | `8888` | vLLM port |
 | `--served-name NAME` | discovered | Model ID exposed by vLLM |
-| `--num-tasks N` | all 731 | Run the first N instances |
+| `--num-tasks N` | all instances in the dataset | Run the first N instances |
 | `--slice START:END` | all | Run an explicit slice; cannot be combined with `--num-tasks` |
 | `--workers N` | `8` | Parallel mini-SWE-agent workers |
 | `--eval-workers N` | `4` | Parallel local evaluator workers |
@@ -224,6 +519,9 @@ to run the selection from scratch.
 | `--health-interval N` | `30` | Seconds between vLLM health checks |
 | `--health-failures N` | `3` | Consecutive failed health checks before stopping the run |
 | `--tag TAG` | UTC timestamp | Output and log label |
+| `--runs N` | `1` | Repeat the full benchmark N times and write a suite summary |
+| `--dataset-repo REPO` | `ScaleAI/SWE-bench_Pro` | Hugging Face dataset to evaluate |
+| `--dataset-split SPLIT` | `test` | Dataset split |
 | `--skip-eval` | disabled | Generate patches without local evaluation |
 | `--block-network` | disabled | Disable network access in evaluation containers |
 | `--keep-images` | disabled | Keep benchmark Docker images after each evaluation chunk |
@@ -236,6 +534,11 @@ under `eval_chunks/`, while the top-level files contain the merged results. The
 top-level report includes evaluated, resolved, and unresolved counts, accuracy,
 resolved/unresolved ID lists, and the per-instance result mapping. The combined
 run log is written to `logs/swebench_pro_<TAG>.log`.
+
+Set `SWEBENCH_PRO_RESULTS_ROOT` to move the result root. With `--runs N`
+(`N > 1`), the suite is written to
+`${SWEBENCH_PRO_RESULTS_ROOT:-SWE-bench_Pro-os/mini-swe-agent/results}/swebench_pro_<TAG>_suite/`
+with `state.json`, `summary.json`, `summary.md`, and child runs under `runs/`.
 
 
 ## MCP-Atlas
