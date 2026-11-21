@@ -77,16 +77,12 @@ woq_model = AutoModelForCausalLM.from_pretrained(
 )
 
 # AutoRound
-from transformers import AutoTokenizer
-from neural_compressor.transformers import AutoModelForCausalLM, AutoRoundConfig
 
-model_name_or_path = "MODEL_NAME_OR_PATH"
-tokenizer = AutoTokenizer.from_pretrained(model_name_or_path)
-woq_config = AutoRoundConfig(bits=4, tokenizer=tokenizer)
-woq_model = AutoModelForCausalLM.from_pretrained(
-    model_name_or_path,
-    quantization_config=woq_config,
-)
+AutoRound is not available through this API: `AutoModelForCausalLM.from_pretrained`
+only routes `RtnConfig`, `AwqConfig`, `TeqConfig` and `GPTQConfig` through the
+weight-only quantizer, and any other config falls through to the unquantized model.
+See [AutoRound](./PT_AutoRound.md) for the supported entry point.
+
 
 # inference
 from transformers import AutoTokenizer
