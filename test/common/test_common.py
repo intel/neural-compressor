@@ -52,6 +52,7 @@ from neural_compressor.common.base_tuning import (
     SequentialSampler,
     TuningConfig,
     init_tuning,
+    TuningMonitor,
 )
 from neural_compressor.common.tuning_param import TuningParam
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
@@ -411,7 +412,6 @@ class TestEvaluationFuncWrapper(unittest.TestCase):
 class TestAutoTune(unittest.TestCase):
     def test_autotune(self):
         class AutoTuner:
-
             @staticmethod
             def _quantize(model, quant_config, *args, **kwargs):
                 return model
@@ -457,6 +457,24 @@ class TestAutoTune(unittest.TestCase):
 
         q_model = tunner.run(model=model, tune_config=tuning_config, eval_fn=fake_eval_fn)
         self.assertIsNotNone(q_model)
+
+    def test_need_stop_does_not_fire_on_a_zero_baseline(self):
+        """A zero baseline is not an accuracy goal that has already been met.
+
+        The accuracy rule is `trial_result >= baseline * (1 - tolerable_loss)`. With a
+        zero baseline the threshold is zero and trial results are scores, so the first
+        trial satisfied it and auto-tuning stopped having tuned anything.
+
+        The results table is stubbed out here because it divides by the baseline too;
+        that display-side zero is handled separately.
+        """
+        tuning_monitor = TuningMonitor(TuningConfig(config_set=[FakeAlgoConfig(weight_bits=4)], max_trials=2))
+        tuning_monitor._print_trial_results_table = lambda *args, **kwargs: None
+        tuning_monitor.set_baseline(0.0)
+        tuning_monitor.add_trial_result(0, 0.0, FakeAlgoConfig(weight_bits=4))
+
+        self.assertEqual(len(tuning_monitor.tuning_history), 1)
+        self.assertFalse(tuning_monitor.need_stop())
 
 
 if __name__ == "__main__":
