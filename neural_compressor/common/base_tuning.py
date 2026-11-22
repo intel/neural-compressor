@@ -413,6 +413,20 @@ class TuningConfig:
                 The metric loss is relative, it can be both positive and negative. Default is 0.01.
             max_trials: Max tuning times. Combine with `tolerable_loss` field to decide when to stop. Default is 100.
         """
+        # Both values drive the accuracy stop in `TuningMonitor.need_stop()`:
+        # `trial_result >= baseline * (1 - tolerable_loss)`. A `tolerable_loss` of 1 or more
+        # makes that threshold zero or negative, so every trial satisfies it and tuning
+        # stops after the first one without reporting anything. Reject it here rather than
+        # let a run look like it converged.
+        if tolerable_loss >= 1:
+            raise ValueError(
+                f"tolerable_loss is a relative loss and must be below 1, got {tolerable_loss}. "
+                "Values of 1 or more make the accuracy stop fire on the first trial; set "
+                "max_trials=1 instead if a single trial is what you want."
+            )
+        if max_trials < 1:
+            raise ValueError(f"max_trials must be at least 1, got {max_trials}")
+
         self.config_set = config_set
         self.sampler = sampler
         self.tolerable_loss = tolerable_loss

@@ -411,7 +411,6 @@ class TestEvaluationFuncWrapper(unittest.TestCase):
 class TestAutoTune(unittest.TestCase):
     def test_autotune(self):
         class AutoTuner:
-
             @staticmethod
             def _quantize(model, quant_config, *args, **kwargs):
                 return model
@@ -457,6 +456,27 @@ class TestAutoTune(unittest.TestCase):
 
         q_model = tunner.run(model=model, tune_config=tuning_config, eval_fn=fake_eval_fn)
         self.assertIsNotNone(q_model)
+
+    def test_tuning_config_rejects_a_degenerate_tolerable_loss(self):
+        """A tolerable_loss of 1 or more accepts the whole metric range.
+
+        The accuracy stop is `trial_result >= baseline * (1 - tolerable_loss)`, so from 1
+        upwards every trial satisfies it and tuning ends after the first one. Negative
+        values stay allowed: they ask for an improvement over the baseline.
+        """
+        with self.assertRaises(ValueError):
+            TuningConfig(config_set=[FakeAlgoConfig(weight_bits=4)], tolerable_loss=1.0)
+        with self.assertRaises(ValueError):
+            TuningConfig(config_set=[FakeAlgoConfig(weight_bits=4)], tolerable_loss=1.5)
+
+        # strict mode stays valid
+        TuningConfig(config_set=[FakeAlgoConfig(weight_bits=4)], tolerable_loss=-0.5)
+
+    def test_tuning_config_rejects_a_non_positive_max_trials(self):
+        with self.assertRaises(ValueError):
+            TuningConfig(config_set=[FakeAlgoConfig(weight_bits=4)], max_trials=0)
+        with self.assertRaises(ValueError):
+            TuningConfig(config_set=[FakeAlgoConfig(weight_bits=4)], max_trials=-1)
 
 
 if __name__ == "__main__":
