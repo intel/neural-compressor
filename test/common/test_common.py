@@ -51,8 +51,8 @@ from neural_compressor.common.base_tuning import (
     Evaluator,
     SequentialSampler,
     TuningConfig,
-    init_tuning,
     TuningMonitor,
+    init_tuning,
 )
 from neural_compressor.common.tuning_param import TuningParam
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, OP_NAME_OR_MODULE_TYPE
