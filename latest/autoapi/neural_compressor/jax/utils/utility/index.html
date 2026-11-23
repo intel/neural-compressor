@@ -125,7 +125,7 @@
 <td><p>Check whether FP8 KV cache is enabled by the <code class="docutils literal notranslate"><span class="pre">INC_JAX_FP8_KV_CACHE</span></code> environment variable.</p></td>
 </tr>
 <tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.select_kv_cache_dtype" title="neural_compressor.jax.utils.utility.select_kv_cache_dtype"><code class="xref py py-obj docutils literal notranslate"><span class="pre">select_kv_cache_dtype</span></code></a>(layer, default_dtype)</p></td>
-<td><p>Select the KV-cache dtype of a decoder layer and disable autocasting for FP8 caches.</p></td>
+<td><p>Select the KV-cache dtype of a decoder layer.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache" title="neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache"><code class="xref py py-obj docutils literal notranslate"><span class="pre">causal_lm_make_replace_build_cache</span></code></a>(self)</p></td>
 <td><p>Replace _build_cache to allocate KV caches using each attention layer's dtype.</p></td>
@@ -339,11 +339,12 @@ The variable is read once per process; call <code class="docutils literal notran
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.select_kv_cache_dtype">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">select_kv_cache_dtype</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_dtype</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.select_kv_cache_dtype" title="Link to this definition"></a></dt>
-<dd><p>Select the KV-cache dtype of a decoder layer and disable autocasting for FP8 caches.</p>
-<p>FP8 is selected only when <code class="docutils literal notranslate"><span class="pre">layer.attention.can_use_fp8_kv_cache()</span></code> returns True.
-In that case input autocasting is disabled on <code class="docutils literal notranslate"><span class="pre">layer</span></code> and <code class="docutils literal notranslate"><span class="pre">layer.attention</span></code>,
-since Keras would otherwise upcast the FP8 cache to the compute dtype.
-Other layers are left unchanged and use <code class="docutils literal notranslate"><span class="pre">default_dtype</span></code>.</p>
+<dd><p>Select the KV-cache dtype of a decoder layer.</p>
+<p>An FP8 cache is used only when <code class="docutils literal notranslate"><span class="pre">layer.attention.can_use_fp8_kv_cache()</span></code> returns True.
+Its FP8 values are stored as uint8 bits (<code class="docutils literal notranslate"><span class="pre">QStaticCachedGemma3Attention._to_cache</span></code>):
+Keras casts floating-point call inputs to the compute dtype, but leaves integer ones
+alone, so autocast stays on and the rest of the layer computes in the policy dtype.
+Other layers use <code class="docutils literal notranslate"><span class="pre">default_dtype</span></code>.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
@@ -364,7 +365,7 @@ Other layers are left unchanged and use <code class="docutils literal notranslat
 <dt class="sig sig-object py" id="neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache">
 <span class="sig-prename descclassname"><span class="pre">neural_compressor.jax.utils.utility.</span></span><span class="sig-name descname"><span class="pre">causal_lm_make_replace_build_cache</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">self</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/jax/utils/utility.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.jax.utils.utility.causal_lm_make_replace_build_cache" title="Link to this definition"></a></dt>
 <dd><p>Replace _build_cache to allocate KV caches using each attention layer’s dtype.</p>
-<p>The cache dtype and autocasting are decided at cache allocation
+<p>The cache dtype is decided at cache allocation
 (see <code class="docutils literal notranslate"><span class="pre">select_kv_cache_dtype</span></code>). Any cached <code class="docutils literal notranslate"><span class="pre">generate_function</span></code> is
 invalidated so the next <code class="docutils literal notranslate"><span class="pre">generate()</span></code> call traces the new cache path.</p>
 <dl class="field-list simple">
@@ -454,7 +455,7 @@ invalidated so the next <code class="docutils literal notranslate"><span class="
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7034ae499710> 
+   <jinja2.runtime.BlockReference object at 0x77d273a5d1d0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
