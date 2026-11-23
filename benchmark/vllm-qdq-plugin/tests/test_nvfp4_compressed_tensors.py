@@ -1,6 +1,7 @@
 from types import SimpleNamespace
 from unittest import mock
 
+import pytest
 import torch
 from vllm.model_executor.kernels.linear.nvfp4.marlin import MarlinNvFp4LinearKernel
 from vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors import (
@@ -51,23 +52,43 @@ class TestCompressedTensorsNvfp4Qdq:
         kernel.apply_weights.assert_called_once()
         assert output is x
 
-    def test_compressed_tensors_moe_uses_qdq_method(self) -> None:
+    @pytest.mark.parametrize("native_kernel_available", [True, False])
+    def test_compressed_tensors_moe_respects_native_kernel_availability(self, native_kernel_available: bool) -> None:
         quant_args = SimpleNamespace(group_size=16)
         scheme_dict = {"weights": quant_args, "input_activations": quant_args}
         quant_config = SimpleNamespace(
             _add_fused_moe_to_target_scheme_map=mock.Mock(),
             get_scheme_dict=mock.Mock(return_value=scheme_dict),
+            _is_mxfp4_w4a8_fp8=mock.Mock(return_value=False),
+            _is_mxfp4=mock.Mock(return_value=False),
+            _is_mxfp8=mock.Mock(return_value=False),
+            _is_wNa16_group_channel=mock.Mock(return_value=False),
             _is_nvfp4_format=mock.Mock(return_value=True),
         )
         layer = SimpleNamespace(moe_config=object())
+        original_method = object()
 
         with (
             mock.patch.object(CompressedTensorsConfig, "_vllm_qdq_nvfp4_enabled", True),
+            mock.patch(
+                "vllm_qdq_plugin.quantization.patch._native_nvfp4_kernel_available",
+                return_value=native_kernel_available,
+            ),
             mock.patch("vllm_qdq_plugin.quantization.inc_nvfp4_moe.INCNvfp4QDQMoEMethod") as qdq_method,
+            mock.patch(
+                "vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors_moe.compressed_tensors_moe_w4a4_nvfp4.CompressedTensorsW4A4Nvfp4MoEMethod",
+                return_value=original_method,
+            ) as native_method,
         ):
-            CompressedTensorsMoEMethod.get_moe_method(quant_config, layer, "model.layers.3.mlp.experts")
+            result = CompressedTensorsMoEMethod.get_moe_method(quant_config, layer, "model.layers.3.mlp.experts")
 
-        qdq_method.assert_called_once_with(layer.moe_config, 16)
+        if native_kernel_available:
+            assert result is original_method
+            qdq_method.assert_not_called()
+            native_method.assert_called_once()
+        else:
+            qdq_method.assert_called_once_with(layer.moe_config, 16)
+            native_method.assert_not_called()
 
     def test_moe_uses_stored_input_scales_directly(self) -> None:
         method = object.__new__(INCNvfp4QDQMoEMethod)

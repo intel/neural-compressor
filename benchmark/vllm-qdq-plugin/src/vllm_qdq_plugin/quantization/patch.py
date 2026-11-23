@@ -142,6 +142,9 @@ def _patch_compressed_tensors_nvfp4() -> None:
                 weight_quant = scheme_dict.get("weights")
                 input_quant = scheme_dict.get("input_activations")
                 if quant_config._is_nvfp4_format(weight_quant) and quant_config._is_nvfp4_format(input_quant):
+                    if _native_nvfp4_kernel_available():
+                        return original_moe_method(quant_config, layer, layer_name)
+
                     from .inc_nvfp4_moe import INCNvfp4QDQMoEMethod
 
                     return INCNvfp4QDQMoEMethod(layer.moe_config, weight_quant.group_size)
