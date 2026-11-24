@@ -63,7 +63,7 @@ Module Contents
 
    Get the elapsed time for decorated functions.
 
-   :param customized_msg: The parameter passed to decorator. Defaults to None.
+   :param customized_msg: The parameter passed to decorator. Defaults to "".
    :type customized_msg: string, optional
 
 
