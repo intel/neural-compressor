@@ -39,6 +39,7 @@ from neural_compressor.jax.utils.utility import (
     get_q_params,
     get_quantize_fun,
     is_fp8_kv_cache_enabled_by_env,
+    is_sliding_window_slice_enabled_by_env,
     verify_api,
 )
 
@@ -1186,6 +1187,50 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             return self.v_qdq.call_dq(self._from_cache(value))
         return self.v_qdq(value)
 
+    def _slice_to_sliding_window(self, key, value, attention_mask, cache_update_index):
+        """Slice local-attention K/V and the mask to the sliding window.
+
+        Args:
+            key (jnp.ndarray): Keys, ``(batch, key_len, num_kv_heads, head_dim)``.
+            value (jnp.ndarray): Values, same shape as ``key``.
+            attention_mask (Optional[jnp.ndarray]): Mask, ``(batch, q_len, key_len)``.
+            cache_update_index (int | jnp.ndarray): Position of the first query.
+
+        Returns:
+            Tuple[jnp.ndarray, jnp.ndarray, Optional[jnp.ndarray], bool]: Sliced tensors and
+            mask, plus whether slicing was applied.
+        """
+        if (
+            not self.use_sliding_window_attention
+            or attention_mask is None
+            or getattr(self, "use_bidirectional_attention", False)
+            or not is_sliding_window_slice_enabled_by_env()
+        ):
+            return key, value, attention_mask, False
+
+        window = self.sliding_window_size
+        batch_size, q_len, key_len = ops.shape(attention_mask)
+        span = window + q_len - 1
+        if span >= key_len:
+            # Short cache or prefill: the window covers every key, nothing to save.
+            return key, value, attention_mask, False
+
+        index = ops.cast(cache_update_index, "int32")
+        start = ops.clip(index - (window - 1), 0, key_len - span)
+
+        key = ops.slice(key, [0, start, 0, 0], [ops.shape(key)[0], span, *ops.shape(key)[2:]])
+        value = ops.slice(value, [0, start, 0, 0], [ops.shape(value)[0], span, *ops.shape(value)[2:]])
+        attention_mask = ops.slice(attention_mask, [0, 0, start], [batch_size, q_len, span])
+
+        # Window band in absolute positions, same rule as `_mask_sliding_window` (|q_pos - k_pos| <= W - 1).
+        # With one query (q_len == 1, every keras-hub `generate()` decode step) the slice is exactly the
+        # window, so the band is all True. It matters when several queries share the slice (q_len > 1)
+        q_pos = index + ops.arange(q_len, dtype="int32")[:, None]
+        k_pos = start + ops.arange(span, dtype="int32")[None, :]
+        band = ops.less_equal(ops.abs(q_pos - k_pos), window - 1)
+        attention_mask = ops.logical_and(ops.cast(attention_mask, "bool"), band[None, :, :])
+        return key, value, attention_mask, True
+
     @classmethod
     def prepare(
         cls,
@@ -1293,7 +1338,15 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
                 self.hidden_dim // self.num_query_heads
             )
 
-        if self.use_sliding_window_attention and attention_mask is not None:
+        # Local layers: attend only over the window instead of masking the whole cache.
+        k, v, attention_mask, windowed = self._slice_to_sliding_window(
+            k, v, attention_mask, cache_update_index
+        )
+        if (
+            self.use_sliding_window_attention
+            and attention_mask is not None
+            and not windowed
+        ):
             attention_mask = self._mask_sliding_window(
                 attention_mask,
                 cache_update_index=cache_update_index,

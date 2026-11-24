@@ -583,6 +583,26 @@ def is_fp8_kv_cache_enabled_by_env() -> bool:
     return os.environ.get(FP8_KV_CACHE_ENV_VAR, "0").strip().lower() in ("1", "true", "yes", "on")
 
 
+SLIDING_WINDOW_SLICE_ENV_VAR = "INC_JAX_SLIDING_WINDOW_SLICE"
+
+
+@cache
+def is_sliding_window_slice_enabled_by_env() -> bool:
+    """Check whether sliding-window attention is computed only over the window.
+
+    Controlled by the ``INC_JAX_SLIDING_WINDOW_SLICE`` environment variable. Enabled by default;
+    set the variable to ``0``, ``false``, ``no`` or ``off`` to fall back to masking the full KV cache.
+    The variable is read once per process; call ``is_sliding_window_slice_enabled_by_env.cache_clear()``
+    to re-read it.
+
+    Returns:
+        bool: True if sliding-window attention is limited to the window.
+    """
+    import os
+
+    return os.environ.get(SLIDING_WINDOW_SLICE_ENV_VAR, "1").strip().lower() not in ("0", "false", "no", "off")
+
+
 def select_kv_cache_dtype(layer, default_dtype):
     """Select the KV-cache dtype of a decoder layer.
 
