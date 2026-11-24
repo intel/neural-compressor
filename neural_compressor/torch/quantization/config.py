@@ -159,9 +159,9 @@ class RTNConfig(TorchBaseConfig):
             model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization. Default is False.
             double_quant_dtype (str): Data type for double_quant scale. Default is "int".
-            double_quant_bits (int): Number of bits used to represent double_quant scale. Default is 4.
-            double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric. Default is True.
-            double_quant_group_size (int): Size of double_quant groups. Default is 32.
+            double_quant_bits (int): Number of bits used to represent double_quant scale. Default is 8.
+            double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric. Default is False.
+            double_quant_group_size (int): Size of double_quant groups. Default is 256.
             quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
                 Default is DEFAULT_WHITE_LIST.
@@ -372,9 +372,9 @@ class GPTQConfig(TorchBaseConfig):
             model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization. Default is False.
             double_quant_dtype (str): Data type for double_quant scale. Default is "int".
-            double_quant_bits (int): Number of bits used to represent double_quant scale. Default is 4.
-            double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric. Default is True.
-            double_quant_group_size (int): Size of double_quant groups. Default is 32.
+            double_quant_bits (int): Number of bits used to represent double_quant scale. Default is 8.
+            double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric. Default is False.
+            double_quant_group_size (int): Size of double_quant groups. Default is 256.
             quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
             act_order (bool): Whether to sort Hessian's diagonal values to rearrange channel-wise
                               quantization order. Default is False.
@@ -385,7 +385,7 @@ class GPTQConfig(TorchBaseConfig):
             percdamp (float): Percentage of Hessian's diagonal values' average, which will be added to
                               Hessian's diagonal to increase numerical stability. Default is 0.01.
             block_size (int): Execute GPTQ quantization per block, block shape = [C_out, block_size].
-                              Default is 128.
+                              Default is 2048.
             static_groups (bool): Whether to calculate group wise quantization parameters in advance.
                                   This option mitigate actorder's extra computational requirements.
                                   Default is False.
@@ -572,9 +572,9 @@ class AWQConfig(TorchBaseConfig):
             model_path (str): Model path that is used to load state_dict per layer.
             use_double_quant (bool): Enables double quantization, default is False.
             double_quant_dtype (str): Data type for double_quant scale, default is "int".
-            double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
+            double_quant_bits (int): Number of bits used to represent double_quant scale, default is 8.
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
-            double_quant_group_size (int): Size of double_quant groups, default is 32.
+            double_quant_group_size (int): Size of double_quant groups, default is 256.
             quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformer, default is False.
             use_auto_scale (bool): Enables best scales search based on activation distribution, default is True.
             use_auto_clip (bool):  Enables clip range search. Defaults to True.
@@ -728,13 +728,13 @@ class TEQConfig(TorchBaseConfig):
             use_layer_wise (bool): Enables quantize model per layer. Defaults to False.
             use_double_quant (bool): Enables double quantization, default is False.
             double_quant_dtype (str): Data type for double_quant scale, default is "int".
-            double_quant_bits (int): Number of bits used to represent double_quant scale, default is 4.
+            double_quant_bits (int): Number of bits used to represent double_quant scale, default is 8.
             double_quant_use_sym (bool): Indicates whether double_quant scale are symmetric, default is True.
-            double_quant_group_size (int): Size of double_quant groups, default is 32.
+            double_quant_group_size (int): Size of double_quant groups, default is 256.
             quant_lm_head (bool): Indicates whether quantize the lm_head layer in transformers。 Default is False.
             absorb_to_layer (dict): The layer dict that scale can be absorbed, default is {}.
             folding(bool): Allow insert mul before linear when the scale cannot be absorbed by last layer,
-              default is False.
+              default is True.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
               Default is DEFAULT_WHITE_LIST.
         """
@@ -924,12 +924,12 @@ class AutoRoundConfig(TorchBaseConfig):
             lr_scheduler: The learning rate scheduler to be used.
             enable_quanted_input (bool): Whether to use quantized input data (default is True).
             enable_minmax_tuning (bool): Whether to enable min-max tuning (default is True).
-            lr (float): The learning rate (default is 0.005).
+            lr (float): The learning rate (default is None, will be set to 1.0/iters).
             minmax_lr (float): The learning rate for min-max tuning (default is None).
             low_gpu_mem_usage (bool): Whether to use low GPU memory (default is False).
             iters (int): Number of iterations (default is 200).
             seqlen (int): Length of the sequence.
-            nsamples (int): Number of samples (default is 512).
+            nsamples (int): Number of samples (default is 128).
             sampler (str): The sampling method (default is "rand").
             seed (int): The random seed (default is 42).
             nblocks (int): Number of blocks (default is 1).
@@ -1278,7 +1278,7 @@ class INT8StaticQuantConfig(TorchBaseConfig):
             w_algo (str): Quatization algorithm used to compute parameters for weights, default is "minmax".
             act_dtype (str): Data type for activations, default is "uint8".
             act_sym (bool): Whether to use symmetric quantization for activations, default is False.
-            act_granularity (str): Level of quantization granularity for activations, default is "per_channel".
+            act_granularity (str): Level of quantization granularity for activations, default is "per_tensor".
             act_algo (str): Quatization algorithm used to compute parameters for activations, default is "minmax".
             excluded_precisions (list): Precisions to be excluded, Default value is empty list.
             white_list (Optional[List[OP_NAME_OR_MODULE_TYPE]]): White list of operator names or module types.
@@ -1436,7 +1436,7 @@ class SmoothQuantConfig(TorchBaseConfig):
             w_algo (str): Quatization algorithm used to compute parameters for weights, default is "minmax".
             act_dtype (str): Data type for activations, default is "uint8".
             act_sym (bool): Whether to use symmetric quantization for activations, default is False.
-            act_granularity (str): Level of quantization granularity for activations, default is "per_channel".
+            act_granularity (str): Level of quantization granularity for activations, default is "per_tensor".
             act_algo (str): Quatization algorithm used to compute parameters for activations, default is "minmax".
             excluded_precisions (list): Precisions to be excluded, Default value is empty list.
             alpha (float): Value to balance input and weight quantization error, between 0 and 1, default is 0.5.

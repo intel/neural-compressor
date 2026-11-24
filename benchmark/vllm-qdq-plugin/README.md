@@ -133,6 +133,9 @@ NVFP4 hardware kernels. See the
 
 The separate [`nvfp4_hw`](src/nvfp4_hw/README.md) package loads standard NVFP4
 checkpoints through vLLM's native hardware kernels when `VLLM_QDQ` is disabled.
+With `VLLM_QDQ=1`, compressed-tensors NVFP4 LLMC checkpoints also use activation
+QDQ on the W4A16 Marlin fallback selected on GPUs such as H200 that lack native
+FP4 compute. Native W4A4 kernels are left unchanged.
 
 ### Performance and Accuracy
 

@@ -45,7 +45,7 @@ python quantize.py \
 ## Evaluation
 
 `run_benchmark.sh` is a thin wrapper over the shared drivers. Each task is routed to one path:
-- `aime26`, `gpqa_diamond` and `math_500` run with `benchmark/evalscope/run_evalscope.sh` (starts `vllm serve` and evaluates through the OpenAI-compatible API with `evalscope`).
+- `aime26`, `gpqa_diamond`, `math_500` and `openai_mrcr` run with `benchmark/evalscope/run_evalscope.sh` (starts `vllm serve` and evaluates through the OpenAI-compatible API with `evalscope`).
 - All other tasks run with `benchmark/lm_eval/run_lm_eval.sh` (vLLM backend through `lm_eval`).
 
 ### Benchmark Quick Start
@@ -70,6 +70,14 @@ Evaluate with evalscope:
 CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash run_benchmark.sh \
   --model_path=/workspace/models/moonshotai/Kimi-K2.6-MXFP4/Kimi-K2.6-mxfp-w4g32 \
   --tasks=aime26,gpqa_diamond,math_500
+```
+
+Long-context MRCR on the fixed 300-sample `openai_mrcr` subset (vLLM `--max-model-len` defaults to 131072, thinking is disabled; see [benchmark/README.md](../../../../benchmark/README.md#openai-mrcr-openai_mrcr)):
+
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3,4,5,6,7 bash run_benchmark.sh \
+  --model_path=/workspace/models/moonshotai/Kimi-K2.6-MXFP4/Kimi-K2.6-mxfp-w4g32 \
+  --tasks=openai_mrcr
 ```
 
 The evalscope path serves the model with `vllm serve <model> --tensor-parallel-size <N> --trust-remote-code --load-format fastsafetensors`.

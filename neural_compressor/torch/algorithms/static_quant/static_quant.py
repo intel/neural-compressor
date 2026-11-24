@@ -179,7 +179,7 @@ def _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=False):
         model (QuantizationInterceptionModule): a prepared model.
         example_inputs (tensor/tuple/dict): used to trace torch model.
         use_bf16 (bool): whether to use bf16 for mixed precision.
-        inplace (bool, optional): whether to carry out model transformations in-place. Defaults to True.
+        inplace (bool, optional): whether to carry out model transformations in-place. Defaults to False.
 
     Returns:
         A converted jit model.
@@ -188,7 +188,7 @@ def _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=False):
         use_bf16 and (not os.getenv("FORCE_FP32") == "1") and (CpuInfo().bf16 or os.getenv("FORCE_BF16") == "1")
     ):  # pragma: no cover
         with torch.no_grad():
-            with torch.cpu.amp.autocast():
+            with torch.amp.autocast("cpu"):
                 model = ipex.quantization.convert(model, inplace=inplace)
                 try:
                     if isinstance(example_inputs, dict):

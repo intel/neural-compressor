@@ -48,6 +48,8 @@ CUDA_VISIBLE_DEVICES=<idle-gpu> \
 
 Set `VLLM_QDQ=1` to force QDQ for standard NVFP4, including on hardware with a
 native W4A4 backend. `nvfp4_v2` and `nvfp4_v2_gs` always use their QDQ schemes.
+Compressed-tensors NVFP4 LLMC checkpoints use the same QDQ behavior on the
+W4A16 Marlin fallback selected by GPUs without native FP4 compute, including H200.
 
 ## Limitations
 
