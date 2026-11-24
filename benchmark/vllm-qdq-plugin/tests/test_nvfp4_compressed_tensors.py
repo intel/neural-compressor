@@ -53,12 +53,9 @@ class TestCompressedTensorsNvfp4Qdq:
         assert output is x
 
     @pytest.mark.parametrize("native_kernel_available", [True, False])
-    @pytest.mark.parametrize("checkpoint_format", ["nvfp4-pack-quantized", "nvfp4-e5m3-pack-quantized"])
-    def test_compressed_tensors_moe_respects_native_kernel_availability(
-        self, native_kernel_available: bool, checkpoint_format: str
-    ) -> None:
+    def test_compressed_tensors_moe_respects_native_kernel_availability(self, native_kernel_available: bool) -> None:
         quant_args = SimpleNamespace(group_size=16)
-        scheme_dict = {"weights": quant_args, "input_activations": quant_args, "format": checkpoint_format}
+        scheme_dict = {"weights": quant_args, "input_activations": quant_args}
         quant_config = SimpleNamespace(
             _add_fused_moe_to_target_scheme_map=mock.Mock(),
             get_scheme_dict=mock.Mock(return_value=scheme_dict),
@@ -68,12 +65,7 @@ class TestCompressedTensorsNvfp4Qdq:
             _is_wNa16_group_channel=mock.Mock(return_value=False),
             _is_nvfp4_format=mock.Mock(return_value=True),
         )
-        layer = SimpleNamespace(
-            moe_config=object(),
-            ckpt_gate_proj_name="gate_proj",
-            ckpt_up_proj_name="up_proj",
-            ckpt_down_proj_name="down_proj",
-        )
+        layer = SimpleNamespace(moe_config=object())
         original_method = object()
 
         with (
@@ -90,7 +82,7 @@ class TestCompressedTensorsNvfp4Qdq:
         ):
             result = CompressedTensorsMoEMethod.get_moe_method(quant_config, layer, "model.layers.3.mlp.experts")
 
-        if native_kernel_available or checkpoint_format == "nvfp4-e5m3-pack-quantized":
+        if native_kernel_available:
             assert result is original_method
             qdq_method.assert_not_called()
             native_method.assert_called_once()

@@ -12,7 +12,8 @@ from unittest import mock
 import torch
 
 SOURCE = Path(__file__).resolve().parents[1] / "src/vllm_qdq_plugin/deepseek_v4.py"
-CT_MOE = "vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors_moe"
+CT_CONFIG = "vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors"
+FUSED_MOE = "vllm.model_executor.layers.fused_moe"
 E5M3_MOE = "vllm_qdq_plugin.quantization.inc_nvfp4_e5m3_moe"
 
 
@@ -106,8 +107,11 @@ class DeepSeekV4Tests(unittest.TestCase):
                 self.wo_a = layer
                 self._fuse_rope_quant = True
 
-        class MoE:
-            get_moe_method = staticmethod(mock.Mock(return_value="native-moe"))
+        class CTConfig:
+            get_quant_method = mock.Mock(return_value="native-quant-method")
+
+        class RoutedExperts(SimpleNamespace):
+            pass
 
         config = SimpleNamespace(model_config=SimpleNamespace(hf_config=SimpleNamespace(model_type="deepseek_v4")))
         get_config = mock.Mock(return_value=config)
@@ -117,7 +121,8 @@ class DeepSeekV4Tests(unittest.TestCase):
             ("vllm.platforms", {"current_platform": SimpleNamespace(is_cuda=lambda: is_cuda)}),
             ("vllm.config", {"get_current_vllm_config": get_config}),
             ("vllm.logger", {"init_logger": mock.Mock()}),
-            (CT_MOE, {"CompressedTensorsMoEMethod": MoE}),
+            (CT_CONFIG, {"CompressedTensorsConfig": CTConfig}),
+            (FUSED_MOE, {"RoutedExperts": RoutedExperts}),
             (E5M3_MOE, {"INCNvfp4UE5M3MoEMethod": mock.Mock(return_value="e5m3-moe")}),
             ("vllm.models.deepseek_v4.nvidia.flashinfer_sparse", {"DeepseekV4FlashInferMLAAttention": Attention}),
             (
@@ -180,10 +185,10 @@ class DeepSeekV4Tests(unittest.TestCase):
     @mock.patch.dict(os.environ, {"VLLM_DEEPSEEK_V4_WO_A_BF16": "1"})
     def test_e5m3_moe_routes_only_matching_deepseek_v4_experts(self):
         _, config, _, modules = self.runtime()
-        moe = modules[CT_MOE].CompressedTensorsMoEMethod
-        native = moe.get_moe_method
+        config_cls = modules[CT_CONFIG].CompressedTensorsConfig
+        native = config_cls.get_quant_method
         e5m3 = modules[E5M3_MOE].INCNvfp4UE5M3MoEMethod
-        layer = SimpleNamespace(
+        layer = modules[FUSED_MOE].RoutedExperts(
             ckpt_gate_proj_name="w1", ckpt_up_proj_name="w3", ckpt_down_proj_name="w2", moe_config=object()
         )
         prefix = "model.layers.0.ffn.experts"
@@ -193,16 +198,16 @@ class DeepSeekV4Tests(unittest.TestCase):
         quant_config.get_scheme_dict.return_value = e5m3_scheme
         with mock.patch.dict(sys.modules, modules):
             self.plugin.register()
-            patched = moe.get_moe_method
+            patched = config_cls.get_quant_method
             load_plugin().register()
-            self.assertIs(moe.get_moe_method, patched)
+            self.assertIs(config_cls.get_quant_method, patched)
             self.assertEqual(patched(quant_config, layer, prefix), "e5m3-moe")
             e5m3.assert_called_once_with(layer.moe_config, 16)
             quant_config.get_scheme_dict.assert_has_calls(
                 [mock.call(layer, f"{prefix}.0.{name}") for name in ("w1", "w3", "w2")]
             )
             native.assert_not_called()
-            for kind in ("other_model", "other_layer", "other_format", "mixed_projections", "ignored"):
+            for kind in ("other_model", "other_layer", "other_type", "other_format", "mixed_projections", "ignored"):
                 with self.subTest(kind=kind):
                     config.model_config.hf_config.model_type = "other" if kind == "other_model" else "deepseek_v4"
                     params = {
@@ -212,8 +217,9 @@ class DeepSeekV4Tests(unittest.TestCase):
                     }
                     quant_config.get_scheme_dict.side_effect = params.get(kind)
                     name = "model.layers.0.other.experts" if kind == "other_layer" else prefix
-                    self.assertEqual(patched(quant_config, layer, name), "native-moe")
-                    native.assert_called_with(quant_config, layer, name)
+                    candidate = SimpleNamespace(**vars(layer)) if kind == "other_type" else layer
+                    self.assertEqual(patched(quant_config, candidate, name), "native-quant-method")
+                    native.assert_called_with(quant_config, candidate, name)
             e5m3.assert_called_once()
 
     @mock.patch.dict(os.environ, {"VLLM_DEEPSEEK_V4_WO_A_BF16": "1"})
@@ -245,8 +251,8 @@ class DeepSeekV4Tests(unittest.TestCase):
 
     @unittest.skipUnless(os.getenv("VLLM_QDQ_TEST_DEEPSEEK_V4") == "1", "requires vLLM 0.33.0")
     def test_real_scheme_and_native_bf16_o_proj(self):
-        from vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors_moe import (
-            CompressedTensorsMoEMethod,
+        from vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors import (
+            CompressedTensorsConfig,
         )
         from vllm.model_executor.layers.quantization.compressed_tensors.schemes.compressed_tensors_w8a8_mxfp8 import (
             CompressedTensorsW8A8Mxfp8,
@@ -257,7 +263,7 @@ class DeepSeekV4Tests(unittest.TestCase):
 
         cls = CompressedTensorsW8A8Mxfp8
         original = cls.process_weights_after_loading
-        original_moe = CompressedTensorsMoEMethod.get_moe_method
+        original_get_quant_method = CompressedTensorsConfig.get_quant_method
         attention_cls = flashinfer_sparse.DeepseekV4FlashInferMLAAttention
         original_init = attention_cls.__init__
         layer = self.layer()
@@ -318,7 +324,7 @@ class DeepSeekV4Tests(unittest.TestCase):
             torch.testing.assert_close(actual, expected, rtol=0, atol=0)
         finally:
             cls.process_weights_after_loading = original
-            CompressedTensorsMoEMethod.get_moe_method = staticmethod(original_moe)
+            CompressedTensorsConfig.get_quant_method = original_get_quant_method
             attention_cls.__init__ = original_init
 
 

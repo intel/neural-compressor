@@ -139,9 +139,6 @@ def _patch_compressed_tensors_nvfp4() -> None:
             scheme_dicts = [quant_config.get_scheme_dict(layer, name) for name in projection_names]
             scheme_dict = scheme_dicts[-1]
             if scheme_dict is not None and all(item == scheme_dict for item in scheme_dicts[:-1]):
-                # Leave E5M3 scale decoding to the model-specific MoE hook.
-                if scheme_dict.get("format") == "nvfp4-e5m3-pack-quantized":
-                    return original_moe_method(quant_config, layer, layer_name)
                 weight_quant = scheme_dict.get("weights")
                 input_quant = scheme_dict.get("input_activations")
                 if quant_config._is_nvfp4_format(weight_quant) and quant_config._is_nvfp4_format(input_quant):

@@ -62,8 +62,9 @@ def register():
 
     from vllm.config import get_current_vllm_config
     from vllm.logger import init_logger
-    from vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors_moe import (
-        CompressedTensorsMoEMethod,
+    from vllm.model_executor.layers.fused_moe import RoutedExperts
+    from vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors import (
+        CompressedTensorsConfig,
     )
     from vllm.model_executor.layers.quantization.compressed_tensors.schemes.compressed_tensors_w8a8_mxfp8 import (
         CompressedTensorsW8A8Mxfp8,
@@ -75,17 +76,18 @@ def register():
     if getattr(original, "_inc_deepseek_v4_wo_a_bf16", False):
         return
     logger = init_logger(__name__)
-    get_moe_method = CompressedTensorsMoEMethod.get_moe_method
+    original_get_quant_method = CompressedTensorsConfig.get_quant_method
 
-    @wraps(get_moe_method)
-    def get_e5m3_moe_method(quant_config, layer, layer_name):
+    @wraps(original_get_quant_method)
+    def get_quant_method(self, layer, prefix):
         if (
-            layer_name.endswith(".ffn.experts")
+            prefix.endswith(".ffn.experts")
+            and isinstance(layer, RoutedExperts)
             and get_current_vllm_config().model_config.hf_config.model_type == "deepseek_v4"
         ):
-            quant_config._add_fused_moe_to_target_scheme_map()
+            self._add_fused_moe_to_target_scheme_map()
             projection_names = (layer.ckpt_gate_proj_name, layer.ckpt_up_proj_name, layer.ckpt_down_proj_name)
-            schemes = [quant_config.get_scheme_dict(layer, f"{layer_name}.0.{name}") for name in projection_names]
+            schemes = [self.get_scheme_dict(layer, f"{prefix}.0.{name}") for name in projection_names]
             scheme = schemes[0]
             if (
                 scheme is not None
@@ -94,9 +96,9 @@ def register():
             ):
                 from .quantization.inc_nvfp4_e5m3_moe import INCNvfp4UE5M3MoEMethod
 
-                logger.info("DeepSeek V4 compressed-tensors NVFP4 E5M3 routed experts: %s", layer_name)
+                logger.info("DeepSeek V4 compressed-tensors NVFP4 E5M3 routed experts: %s", prefix)
                 return INCNvfp4UE5M3MoEMethod(layer.moe_config, scheme["weights"].group_size)
-        return get_moe_method(quant_config, layer, layer_name)
+        return original_get_quant_method(self, layer, prefix)
 
     # FlashInfer caches the fused inverse-RoPE/FP8-output choice in __init__,
     # before weights are loaded. Its FP8 output cannot feed BF16 wo_a BMM.
@@ -131,4 +133,4 @@ def register():
 
     process_weights_after_loading._inc_deepseek_v4_wo_a_bf16 = True
     cls.process_weights_after_loading = process_weights_after_loading
-    CompressedTensorsMoEMethod.get_moe_method = staticmethod(get_e5m3_moe_method)
+    CompressedTensorsConfig.get_quant_method = get_quant_method
