@@ -57,7 +57,7 @@ def _export_hf_checkpoint(model: nn.Module, scheme: str | None = None) -> tuple[
 
     Args:
         model: the torch model.
-        dtype: the weights data type to export the unquantized layers or the default model data type if None.
+        scheme: the quantization scheme the checkpoint is being exported for, if any.
 
     Returns:
         post_state_dict: Dict containing quantized weights
