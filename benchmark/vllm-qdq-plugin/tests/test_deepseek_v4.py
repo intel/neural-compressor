@@ -99,6 +99,11 @@ class DeepSeekV4Tests(unittest.TestCase):
 
         Scheme.original_call = original_call
 
+        class Attention:
+            def __init__(self, config, layer):
+                self.wo_a = layer
+                self._fuse_rope_quant = True
+
         config = SimpleNamespace(model_config=SimpleNamespace(hf_config=SimpleNamespace(model_type="deepseek_v4")))
         get_config = mock.Mock(return_value=config)
         modules = {}
@@ -107,6 +112,7 @@ class DeepSeekV4Tests(unittest.TestCase):
             ("vllm.platforms", {"current_platform": SimpleNamespace(is_cuda=lambda: is_cuda)}),
             ("vllm.config", {"get_current_vllm_config": get_config}),
             ("vllm.logger", {"init_logger": mock.Mock()}),
+            ("vllm.models.deepseek_v4.nvidia.flashinfer_sparse", {"DeepseekV4FlashInferMLAAttention": Attention}),
             (
                 "vllm.model_executor.layers.quantization.compressed_tensors.schemes.compressed_tensors_w8a8_mxfp8",
                 {"CompressedTensorsW8A8Mxfp8": Scheme},
@@ -165,6 +171,25 @@ class DeepSeekV4Tests(unittest.TestCase):
             self.assertEqual(scheme.original_call.call_count, 4)
 
     @mock.patch.dict(os.environ, {"VLLM_DEEPSEEK_V4_WO_A_BF16": "1"})
+    def test_flashinfer_fusion_disabled_only_for_target_scheme(self):
+        scheme, config, _, modules = self.runtime()
+        attention = modules["vllm.models.deepseek_v4.nvidia.flashinfer_sparse"].DeepseekV4FlashInferMLAAttention
+        with mock.patch.dict(sys.modules, modules):
+            self.plugin.register()
+            first_init = attention.__init__
+            load_plugin().register()
+            self.assertIs(attention.__init__, first_init)
+            for kind in ("target", "other_scheme", "other_model", "other_layer"):
+                layer = self.layer()
+                layer.scheme = scheme() if kind != "other_scheme" else object()
+                config.model_config.hf_config.model_type = "other" if kind == "other_model" else "deepseek_v4"
+                if kind == "other_layer":
+                    layer.prefix = "model.layers.0.attn.wo_b"
+                with self.subTest(kind=kind):
+                    instance = attention(config, layer)
+                    self.assertEqual(instance._fuse_rope_quant, kind != "target")
+
+    @mock.patch.dict(os.environ, {"VLLM_DEEPSEEK_V4_WO_A_BF16": "1"})
     def test_unsupported_version_fails_before_patching(self):
         scheme, _, _, modules = self.runtime(version="0.34.0")
         original = scheme.process_weights_after_loading
@@ -178,21 +203,46 @@ class DeepSeekV4Tests(unittest.TestCase):
             CompressedTensorsW8A8Mxfp8,
         )
         from vllm.models.deepseek_v4.nvidia.ops import o_proj
+        from vllm.models.deepseek_v4.nvidia import flashinfer_sparse
+        from vllm.models.deepseek_v4.attention import DeepseekV4Attention
 
         cls = CompressedTensorsW8A8Mxfp8
         original = cls.process_weights_after_loading
+        attention_cls = flashinfer_sparse.DeepseekV4FlashInferMLAAttention
+        original_init = attention_cls.__init__
         layer = self.layer()
+        layer.scheme = cls()
         expected_weight = (layer.weight.float() * torch.tensor([[0.25], [0.5], [1.0], [2.0]])).bfloat16()
         config = SimpleNamespace(model_config=SimpleNamespace(hf_config=SimpleNamespace(model_type="deepseek_v4")))
+
+        def base_init(instance, *args, **kwargs):
+            torch.nn.Module.__init__(instance)
+            instance.wo_a = layer
+            instance.n_local_heads = 128
+            instance.kv_cache_torch_dtype = torch.float8_e4m3fn
+            instance.scale = 1.0
+            instance.padded_heads, instance.head_dim = 128, 32
+
         try:
             with (
                 mock.patch.dict(os.environ, {"VLLM_DEEPSEEK_V4_WO_A_BF16": "1"}),
                 mock.patch("vllm.config.get_current_vllm_config", return_value=config),
                 # This is a CPU branch test, not a CUDA execution test.
                 mock.patch("vllm.platforms.current_platform.is_cuda", return_value=True),
+                mock.patch.object(DeepseekV4Attention, "__init__", base_init),
+                mock.patch.object(flashinfer_sparse, "compute_fp8_einsum_recipe", return_value=((1, 1, 128), True)),
             ):
+                # The actual unpatched constructor caches fusion while weights
+                # are FP8. Reproduce that condition before installing the fix.
+                before = attention_cls(config)
+                self.assertTrue(before._fuse_rope_quant)
                 self.plugin.register()
+                attention = attention_cls(config)
+                self.assertFalse(attention._fuse_rope_quant)
                 cls().process_weights_after_loading(layer)
+            allocated = attention._alloc_attn_out(3, torch.ones(3, 32, dtype=torch.bfloat16))
+            self.assertIsInstance(allocated, torch.Tensor)
+            self.assertEqual(allocated.dtype, torch.bfloat16)
             x = torch.ones(3, 2, 32, dtype=torch.bfloat16)
             # Stub only CUDA inverse RoPE; execute native dtype dispatch and bmm.
             with (
@@ -200,7 +250,7 @@ class DeepSeekV4Tests(unittest.TestCase):
                 mock.patch.object(o_proj, "fp8_einsum", side_effect=AssertionError("FP8 path used")),
             ):
                 actual = o_proj.deep_gemm_fp8_o_proj(
-                    x,
+                    allocated,
                     torch.arange(3),
                     torch.empty(0),
                     layer,
@@ -218,6 +268,7 @@ class DeepSeekV4Tests(unittest.TestCase):
             torch.testing.assert_close(actual, expected, rtol=0, atol=0)
         finally:
             cls.process_weights_after_loading = original
+            attention_cls.__init__ = original_init
 
 
 if __name__ == "__main__":

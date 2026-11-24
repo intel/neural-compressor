@@ -65,12 +65,32 @@ def register():
     from vllm.model_executor.layers.quantization.compressed_tensors.schemes.compressed_tensors_w8a8_mxfp8 import (
         CompressedTensorsW8A8Mxfp8,
     )
+    from vllm.models.deepseek_v4.nvidia.flashinfer_sparse import DeepseekV4FlashInferMLAAttention
 
     cls = CompressedTensorsW8A8Mxfp8
     original = cls.process_weights_after_loading
     if getattr(original, "_inc_deepseek_v4_wo_a_bf16", False):
         return
     logger = init_logger(__name__)
+
+    # FlashInfer caches the fused inverse-RoPE/FP8-output choice in __init__,
+    # before weights are loaded. Its FP8 output cannot feed BF16 wo_a BMM.
+    # Disable only for the exact scheme/layer that this plugin will convert.
+    attention_init = DeepseekV4FlashInferMLAAttention.__init__
+
+    @wraps(attention_init)
+    def init_attention(self, vllm_config, *args, **kwargs):
+        attention_init(self, vllm_config, *args, **kwargs)
+        layer = self.wo_a
+        if (
+            vllm_config.model_config.hf_config.model_type == "deepseek_v4"
+            and isinstance(getattr(layer, "scheme", None), cls)
+            and getattr(layer, "is_bmm", False)
+            and getattr(layer, "prefix", "").endswith(".wo_a")
+        ):
+            self._fuse_rope_quant = False
+
+    DeepseekV4FlashInferMLAAttention.__init__ = init_attention
 
     @wraps(original)
     def process_weights_after_loading(self, layer):

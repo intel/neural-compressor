@@ -71,6 +71,11 @@ linears, other models, and other quantization schemes keep their original
 dispatch. Existing native block-FP8 and unquantized `wo_a` are not changed.
 No vLLM source changes or forward/kernel patches are needed.
 
+For the targeted MXFP8 `wo_a`, the plugin also disables FlashInfer's cached
+fused inverse-RoPE/FP8-output choice during attention construction, before
+weight loading. Otherwise that FP8 output cannot feed the BF16 projection.
+Other schemes keep their original fusion selection.
+
 The fallback decodes weights once into BF16 and uses vLLM's existing inverse
 RoPE (without FP8 activation quantization) plus grouped BF16 `torch.bmm` path.
 It **does not restore original BF16 precision**: checkpoint quantization loss
