@@ -78,22 +78,6 @@ memory increases. This is not an MXFP8 W8A8 compute path. Checkpoint files and
 the remaining layers are unchanged. Invalid scales/layouts fail rather than
 silently selecting another kernel.
 
-CPU-only numerical and dispatch-isolation regressions (requires PyTorch with
-`float8_e4m3fn` and `float8_e8m0fnu` support):
-
-```bash
-python -m unittest discover -s benchmark/vllm-qdq-plugin/tests -p 'test_deepseek_v4.py' -v
-```
-
-An optional dependency integration check exercises the real vLLM 0.33.0
-scheme hook and native BF16 `o_proj` branch on CPU. It stubs only the CUDA
-inverse-RoPE helper, so it is not an end-to-end CUDA/model-loading test:
-
-```bash
-CUDA_VISIBLE_DEVICES='' VLLM_QDQ_TEST_DEEPSEEK_V4=1 VLLM_PLUGINS='' \
-  python -m unittest discover -s benchmark/vllm-qdq-plugin/tests -p 'test_deepseek_v4_integration.py' -v
-```
-
 ### Optional vLLM-Omni E5M3 compatibility
 
 The separate `vllm_omni.general_plugins` entry point `inc_nvfp4_e5m3` adds

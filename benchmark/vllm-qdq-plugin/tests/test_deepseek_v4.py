@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""CPU-only numerical and dispatch isolation tests; no installed vLLM needed."""
+"""CPU regressions; real vLLM check is opt-in via VLLM_QDQ_TEST_DEEPSEEK_V4=1."""
 
 import importlib.util
 import os
@@ -118,7 +118,6 @@ class DeepSeekV4Tests(unittest.TestCase):
     @mock.patch.dict(os.environ, {"VLLM_DEEPSEEK_V4_WO_A_BF16": "1", "VLLM_QDQ": "0"})
     def test_routing_is_narrow_and_registration_idempotent(self):
         scheme, config, get_config, modules = self.runtime()
-        original = scheme.process_weights_after_loading
         with mock.patch.dict(sys.modules, modules):
             self.plugin.register()
             patched = scheme.process_weights_after_loading
@@ -154,6 +153,51 @@ class DeepSeekV4Tests(unittest.TestCase):
         with mock.patch.dict(sys.modules, modules), self.assertRaisesRegex(RuntimeError, "0.33.0"):
             self.plugin.register()
         self.assertIs(scheme.process_weights_after_loading, original)
+
+    @unittest.skipUnless(os.getenv("VLLM_QDQ_TEST_DEEPSEEK_V4") == "1", "requires vLLM 0.33.0")
+    def test_real_scheme_and_native_bf16_o_proj(self):
+        from vllm.model_executor.layers.quantization.compressed_tensors.schemes.compressed_tensors_w8a8_mxfp8 import (
+            CompressedTensorsW8A8Mxfp8,
+        )
+        from vllm.models.deepseek_v4.nvidia.ops import o_proj
+
+        cls = CompressedTensorsW8A8Mxfp8
+        original = cls.process_weights_after_loading
+        layer = self.layer()
+        expected_weight = (layer.weight.float() * torch.tensor([[0.25], [0.5], [1.0], [2.0]])).bfloat16()
+        config = SimpleNamespace(model_config=SimpleNamespace(hf_config=SimpleNamespace(model_type="deepseek_v4")))
+        try:
+            with (
+                mock.patch.dict(os.environ, {"VLLM_DEEPSEEK_V4_WO_A_BF16": "1"}),
+                mock.patch("vllm.config.get_current_vllm_config", return_value=config),
+            ):
+                self.plugin.register()
+                cls().process_weights_after_loading(layer)
+            x = torch.ones(3, 2, 32, dtype=torch.bfloat16)
+            # Stub only CUDA inverse RoPE; execute native dtype dispatch and bmm.
+            with (
+                mock.patch.object(o_proj, "fused_inv_rope_fp8_quant", return_value=(x, None)) as inv_rope,
+                mock.patch.object(o_proj, "fp8_einsum", side_effect=AssertionError("FP8 path used")),
+            ):
+                actual = o_proj.deep_gemm_fp8_o_proj(
+                    x,
+                    torch.arange(3),
+                    torch.empty(0),
+                    layer,
+                    lambda z: z,
+                    n_groups=2,
+                    heads_per_group=1,
+                    nope_dim=32,
+                    rope_dim=0,
+                    o_lora_rank=2,
+                    einsum_recipe=(1, 128, 128),
+                    tma_aligned_scales=False,
+                )
+            self.assertFalse(inv_rope.call_args.kwargs["quantize"])
+            expected = expected_weight.sum(dim=1).expand(3, -1)
+            torch.testing.assert_close(actual, expected, rtol=0, atol=0)
+        finally:
+            cls.process_weights_after_loading = original
 
 
 if __name__ == "__main__":
