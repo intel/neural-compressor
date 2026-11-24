@@ -47,6 +47,53 @@ VLLM_QDQ=1 VLLM_QDQ_CUTE=1 CUDA_VISIBLE_DEVICES=<idle-gpu> \
 
 ## QDQ Plugin
 
+### Optional DeepSeek V4 MXFP8 wo_a compatibility
+
+The independent `vllm.general_plugins` entry point `deepseek_v4_wo_a_bf16`
+provides an **opt-in, load-time** fallback for compressed-tensors DeepSeek V4
+checkpoints with MXFP8 E4M3 weights and uint8 E8M0 group32 scales in grouped
+`wo_a`. It is **disabled by default**, independent of `VLLM_QDQ`, and currently
+supports **vLLM 0.33.0 only**. An explicitly enabled unsupported version fails
+before installing the hook. Reinstall this package to discover the new entry
+point; if using a `VLLM_PLUGINS` allowlist, include `deepseek_v4_wo_a_bf16`.
+
+```bash
+VLLM_DEEPSEEK_V4_WO_A_BF16=1 vllm serve /path/to/deepseek-v4-mixed-ct \
+  --tensor-parallel-size 2
+```
+
+This addresses checkpoint-layout grouped MXFP8 weights reaching the native
+DeepSeek V4 block-FP8 `o_proj` einsum path with incompatible weight/scale
+shapes. The hook only intercepts `CompressedTensorsW8A8Mxfp8` post-loading for
+`model_type=deepseek_v4`, `is_bmm=True`, and a `.wo_a` prefix suffix. Ordinary
+linears, other models, and other quantization schemes keep their original
+dispatch. Existing native block-FP8 and unquantized `wo_a` are not changed.
+No vLLM source changes or forward/kernel patches are needed.
+
+The fallback decodes weights once into BF16 and uses vLLM's existing inverse
+RoPE (without FP8 activation quantization) plus grouped BF16 `torch.bmm` path.
+It **does not restore original BF16 precision**: checkpoint quantization loss
+remains, activation quantization is bypassed for `wo_a`, and device weight
+memory increases. This is not an MXFP8 W8A8 compute path. Checkpoint files and
+the remaining layers are unchanged. Invalid scales/layouts fail rather than
+silently selecting another kernel.
+
+CPU-only numerical and dispatch-isolation regressions (requires PyTorch with
+`float8_e4m3fn` and `float8_e8m0fnu` support):
+
+```bash
+python -m unittest discover -s benchmark/vllm-qdq-plugin/tests -p 'test_deepseek_v4.py' -v
+```
+
+An optional dependency integration check exercises the real vLLM 0.33.0
+scheme hook and native BF16 `o_proj` branch on CPU. It stubs only the CUDA
+inverse-RoPE helper, so it is not an end-to-end CUDA/model-loading test:
+
+```bash
+CUDA_VISIBLE_DEVICES='' VLLM_QDQ_TEST_DEEPSEEK_V4=1 VLLM_PLUGINS='' \
+  python -m unittest discover -s benchmark/vllm-qdq-plugin/tests -p 'test_deepseek_v4_integration.py' -v
+```
+
 ### Optional vLLM-Omni E5M3 compatibility
 
 The separate `vllm_omni.general_plugins` entry point `inc_nvfp4_e5m3` adds
