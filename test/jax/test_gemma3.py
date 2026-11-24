@@ -756,7 +756,7 @@ def test_sliding_window_slice(monkeypatch):
     backbone = Gemma3Backbone(
         vocabulary_size=16,
         image_size=16,
-        num_layers=6,  
+        num_layers=6,
         num_query_heads=2,
         num_key_value_heads=1,
         hidden_dim=8,
