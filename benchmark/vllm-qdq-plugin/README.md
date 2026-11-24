@@ -76,6 +76,12 @@ fused inverse-RoPE/FP8-output choice during attention construction, before
 weight loading. Otherwise that FP8 output cannot feed the BF16 projection.
 Other schemes keep their original fusion selection.
 
+With the same opt-in, the plugin recognizes `nvfp4-e5m3-pack-quantized` on
+DeepSeek V4 routed experts. It checks all three expert projections and uses the
+plugin's E5M3 MoE implementation for UE5M3 weight scales and E5M3 activation
+QDQ. The same launch command supports a mixed checkpoint with E5M3 routed
+experts and MXFP8 attention, including `wo_a`.
+
 The fallback decodes weights once into BF16 and uses vLLM's existing inverse
 RoPE (without FP8 activation quantization) plus grouped BF16 `torch.bmm` path.
 It **does not restore original BF16 precision**: checkpoint quantization loss

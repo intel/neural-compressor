@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: Apache-2.0
-"""Opt-in MXFP8-storage/BF16-compute compatibility for DeepSeek V4 wo_a."""
+"""Opt-in compressed-tensors compatibility for DeepSeek V4 on NVIDIA."""
 
 import os
 from functools import wraps
@@ -62,6 +62,9 @@ def register():
 
     from vllm.config import get_current_vllm_config
     from vllm.logger import init_logger
+    from vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors_moe import (
+        CompressedTensorsMoEMethod,
+    )
     from vllm.model_executor.layers.quantization.compressed_tensors.schemes.compressed_tensors_w8a8_mxfp8 import (
         CompressedTensorsW8A8Mxfp8,
     )
@@ -72,6 +75,28 @@ def register():
     if getattr(original, "_inc_deepseek_v4_wo_a_bf16", False):
         return
     logger = init_logger(__name__)
+    get_moe_method = CompressedTensorsMoEMethod.get_moe_method
+
+    @wraps(get_moe_method)
+    def get_e5m3_moe_method(quant_config, layer, layer_name):
+        if (
+            layer_name.endswith(".ffn.experts")
+            and get_current_vllm_config().model_config.hf_config.model_type == "deepseek_v4"
+        ):
+            quant_config._add_fused_moe_to_target_scheme_map()
+            projection_names = (layer.ckpt_gate_proj_name, layer.ckpt_up_proj_name, layer.ckpt_down_proj_name)
+            schemes = [quant_config.get_scheme_dict(layer, f"{layer_name}.0.{name}") for name in projection_names]
+            scheme = schemes[0]
+            if (
+                scheme is not None
+                and scheme.get("format") == "nvfp4-e5m3-pack-quantized"
+                and all(item == scheme for item in schemes)
+            ):
+                from .quantization.inc_nvfp4_e5m3_moe import INCNvfp4UE5M3MoEMethod
+
+                logger.info("DeepSeek V4 compressed-tensors NVFP4 E5M3 routed experts: %s", layer_name)
+                return INCNvfp4UE5M3MoEMethod(layer.moe_config, scheme["weights"].group_size)
+        return get_moe_method(quant_config, layer, layer_name)
 
     # FlashInfer caches the fused inverse-RoPE/FP8-output choice in __init__,
     # before weights are loaded. Its FP8 output cannot feed BF16 wo_a BMM.
@@ -106,3 +131,4 @@ def register():
 
     process_weights_after_loading._inc_deepseek_v4_wo_a_bf16 = True
     cls.process_weights_after_loading = process_weights_after_loading
+    CompressedTensorsMoEMethod.get_moe_method = staticmethod(get_e5m3_moe_method)
