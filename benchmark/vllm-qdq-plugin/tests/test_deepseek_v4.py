@@ -202,9 +202,9 @@ class DeepSeekV4Tests(unittest.TestCase):
         from vllm.model_executor.layers.quantization.compressed_tensors.schemes.compressed_tensors_w8a8_mxfp8 import (
             CompressedTensorsW8A8Mxfp8,
         )
-        from vllm.models.deepseek_v4.nvidia.ops import o_proj
-        from vllm.models.deepseek_v4.nvidia import flashinfer_sparse
         from vllm.models.deepseek_v4.attention import DeepseekV4Attention
+        from vllm.models.deepseek_v4.nvidia import flashinfer_sparse
+        from vllm.models.deepseek_v4.nvidia.ops import o_proj
 
         cls = CompressedTensorsW8A8Mxfp8
         original = cls.process_weights_after_loading
