@@ -90,7 +90,7 @@ class DeepSeekV4Tests(unittest.TestCase):
             ):
                 load_plugin().register()
 
-    def runtime(self, version="0.33.0"):
+    def runtime(self, version="0.33.0", is_cuda=True):
         original_call = mock.Mock(return_value="original-result")
 
         class Scheme:
@@ -104,6 +104,7 @@ class DeepSeekV4Tests(unittest.TestCase):
         modules = {}
         for name, attrs in (
             ("vllm", {"__version__": version}),
+            ("vllm.platforms", {"current_platform": SimpleNamespace(is_cuda=lambda: is_cuda)}),
             ("vllm.config", {"get_current_vllm_config": get_config}),
             ("vllm.logger", {"init_logger": mock.Mock()}),
             (
@@ -114,6 +115,23 @@ class DeepSeekV4Tests(unittest.TestCase):
             modules[name] = ModuleType(name)
             modules[name].__dict__.update(attrs)
         return Scheme, config, get_config, modules
+
+    @mock.patch.dict(os.environ, {"VLLM_DEEPSEEK_V4_WO_A_BF16": "1"})
+    def test_non_cuda_keeps_original_method_without_importing_scheme(self):
+        scheme, _, get_config, modules = self.runtime(version="unverified", is_cuda=False)
+        original_method = scheme.process_weights_after_loading
+        original_import = __import__
+
+        def guarded(name, *args, **kwargs):
+            if name.startswith(("vllm.config", "vllm.model_executor")):
+                self.fail(f"Non-CUDA registration imported {name}")
+            return original_import(name, *args, **kwargs)
+
+        with mock.patch.dict(sys.modules, modules), mock.patch("builtins.__import__", side_effect=guarded):
+            self.plugin.register()
+            self.assertIs(scheme.process_weights_after_loading, original_method)
+            self.assertEqual(scheme().process_weights_after_loading(self.layer()), "original-result")
+        get_config.assert_not_called()
 
     @mock.patch.dict(os.environ, {"VLLM_DEEPSEEK_V4_WO_A_BF16": "1", "VLLM_QDQ": "0"})
     def test_routing_is_narrow_and_registration_idempotent(self):
@@ -170,6 +188,8 @@ class DeepSeekV4Tests(unittest.TestCase):
             with (
                 mock.patch.dict(os.environ, {"VLLM_DEEPSEEK_V4_WO_A_BF16": "1"}),
                 mock.patch("vllm.config.get_current_vllm_config", return_value=config),
+                # This is a CPU branch test, not a CUDA execution test.
+                mock.patch("vllm.platforms.current_platform.is_cuda", return_value=True),
             ):
                 self.plugin.register()
                 cls().process_weights_after_loading(layer)

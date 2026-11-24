@@ -48,6 +48,12 @@ def register():
         return
 
     import vllm
+    from vllm.platforms import current_platform
+
+    # Only the NVIDIA o_proj path has been verified to dispatch by weight
+    # dtype. XPU, for example, needs its original FP8 BMM post-processing.
+    if not current_platform.is_cuda():
+        return
 
     # This hook depends on checkpoint-layout weights and the native BF16
     # o_proj branch. Do not silently apply it to unverified vLLM releases.
