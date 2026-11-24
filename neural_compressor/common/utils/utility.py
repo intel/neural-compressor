@@ -231,7 +231,7 @@ def dump_elapsed_time(customized_msg=""):
     """Get the elapsed time for decorated functions.
 
     Args:
-        customized_msg (string, optional): The parameter passed to decorator. Defaults to None.
+        customized_msg (string, optional): The parameter passed to decorator. Defaults to "".
     """
 
     def f(func):

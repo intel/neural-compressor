@@ -443,7 +443,6 @@ class QDynamicConv2DMixin(QDynamicDenseMixin, keras.layers.Conv2D):
 
         Args:
             inputs (jnp.ndarray): Input tensor.
-            training (Optional[bool]): Training mode flag.
 
         Returns:
             jnp.ndarray: Layer output tensor.
