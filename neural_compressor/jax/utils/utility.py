@@ -110,6 +110,13 @@ def register_algo(name):
     return decorator
 
 
+def calculate_w_scale_shape(kernel_shape, w_quant_axis):
+    if w_quant_axis is None:
+        return (1,) * len(kernel_shape)
+    else:
+        return tuple(1 if i in w_quant_axis else dim for i, dim in enumerate(kernel_shape))
+
+
 def get_quantize_fun(dtype=ml_dtypes.float8_e4m3, asymmetric=False):
     """Create a quantization function for the specified dtype.
 
@@ -577,12 +584,13 @@ def is_fp8_kv_cache_enabled_by_env() -> bool:
 
 
 def select_kv_cache_dtype(layer, default_dtype):
-    """Select the KV-cache dtype of a decoder layer and disable autocasting for FP8 caches.
+    """Select the KV-cache dtype of a decoder layer.
 
-    FP8 is selected only when ``layer.attention.can_use_fp8_kv_cache()`` returns True.
-    In that case input autocasting is disabled on ``layer`` and ``layer.attention``,
-    since Keras would otherwise upcast the FP8 cache to the compute dtype.
-    Other layers are left unchanged and use ``default_dtype``.
+    An FP8 cache is used only when ``layer.attention.can_use_fp8_kv_cache()`` returns True.
+    Its FP8 values are stored as uint8 bits (``QStaticCachedGemma3Attention._to_cache``):
+    Keras casts floating-point call inputs to the compute dtype, but leaves integer ones
+    alone, so autocast stays on and the rest of the layer computes in the policy dtype.
+    Other layers use ``default_dtype``.
 
     Args:
         layer (keras.layers.Layer): Decoder layer with an ``attention`` sublayer.
@@ -595,15 +603,13 @@ def select_kv_cache_dtype(layer, default_dtype):
     can_use_fp8_kv_cache = getattr(attention, "can_use_fp8_kv_cache", None)
     if can_use_fp8_kv_cache is None or not can_use_fp8_kv_cache():
         return default_dtype
-    layer.autocast = False
-    attention.autocast = False
-    return attention.activation_dtype
+    return jnp.uint8
 
 
 def causal_lm_make_replace_build_cache(self):
     """Replace _build_cache to allocate KV caches using each attention layer's dtype.
 
-    The cache dtype and autocasting are decided at cache allocation
+    The cache dtype is decided at cache allocation
     (see ``select_kv_cache_dtype``). Any cached ``generate_function`` is
     invalidated so the next ``generate()`` call traces the new cache path.
 

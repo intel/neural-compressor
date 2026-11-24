@@ -33,6 +33,7 @@ init_benchmark_paths
 readonly REPOSITORY="https://github.com/scaleapi/SWE-bench_Pro-os.git"
 readonly SWEBENCH_PRO_DIR="${BENCHMARK_DIR}/SWE-bench_Pro-os"
 readonly IMAGE_PATCH="${BENCHMARK_DIR}/patches/swebench_pro_image.patch"
+readonly EVAL_PROXY_PATCH="${BENCHMARK_DIR}/patches/swebench_pro_eval_proxy.patch"
 
 if [[ ! -d "${SWEBENCH_PRO_DIR}/.git" ]]; then
 	log "Cloning SWE-bench Pro at ${SWEBENCH_PRO_COMMIT}"
@@ -60,6 +61,16 @@ elif git -C "${AGENT_DIR}" apply --check "${IMAGE_PATCH}" 2>/dev/null; then
 	git -C "${AGENT_DIR}" apply "${IMAGE_PATCH}"
 else
 	die "Docker image patch does not match the mini-SWE-agent checkout: ${IMAGE_PATCH}"
+fi
+
+require_file "${EVAL_PROXY_PATCH}"
+if git -C "${SWEBENCH_PRO_DIR}" apply --reverse --check "${EVAL_PROXY_PATCH}" 2>/dev/null; then
+	log "SWE-bench Pro evaluation proxy patch is already applied"
+elif git -C "${SWEBENCH_PRO_DIR}" apply --check "${EVAL_PROXY_PATCH}" 2>/dev/null; then
+	log "Applying SWE-bench Pro evaluation proxy patch"
+	git -C "${SWEBENCH_PRO_DIR}" apply "${EVAL_PROXY_PATCH}"
+else
+	die "Evaluation proxy patch does not match the SWE-bench Pro checkout: ${EVAL_PROXY_PATCH}"
 fi
 
 log "Installing mini-SWE-agent and SWE-bench Pro local-evaluation dependencies"
