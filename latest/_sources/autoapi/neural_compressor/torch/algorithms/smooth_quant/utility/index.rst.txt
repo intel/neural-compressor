@@ -100,14 +100,14 @@ Module Contents
 
    Check configs and quantization configs.
 
-   :param user_cfg: quantization configuration for ops.
-   :type user_cfg: dict
+   :param tune_cfg: quantization configuration for ops.
+   :type tune_cfg: dict
    :param cfgs: configs loaded from ipex config path.
    :type cfgs: dict
    :param op_infos_from_cfgs: dict containing configs that have been parsed for each op.
    :type op_infos_from_cfgs: dict
-   :param output_tensor_ids_op_name: dict containing op names corresponding to 'op_infos_from_cfgs'.
-   :type output_tensor_ids_op_name: dict
+   :param output_tensor_id_op_name: dict containing op names corresponding to 'op_infos_from_cfgs'.
+   :type output_tensor_id_op_name: dict
    :param alpha: Value to balance input and weight quantization error,
                  between 0 and 1, default is 0.5.
    :type alpha: float

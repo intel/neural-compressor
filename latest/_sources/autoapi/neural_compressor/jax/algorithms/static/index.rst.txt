@@ -29,8 +29,6 @@ Module Contents
    :param configs_mapping: Mapping of configurations
                            for the algorithm.
    :type configs_mapping: Optional[OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]]
-   :param quant_config: Quantization configuration for wrapper selection.
-   :type quant_config: Optional[BaseConfig]
    :param calib_function: Calibration function used to collect activation statistics.
    :type calib_function: Optional[Callable]
 
