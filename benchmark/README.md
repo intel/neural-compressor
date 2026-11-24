@@ -1,4 +1,4 @@
-This folder is for benchmarking code: accuracy evaluation of (quantized) LLMs served by vLLM, agent benchmarks and
+This folder contains LLM accuracy evaluation, agent benchmarks, diffusion quality evaluation, and
 vLLM plugins used for evaluation. The per-model wrappers under `examples/pytorch/llm/<model>/run_benchmark.sh` route
 tasks to the shared drivers below.
 
@@ -9,6 +9,7 @@ tasks to the shared drivers below.
 | [`humaneval_plus/`](humaneval_plus) | `run_humaneval_plus.sh`, `run_humaneval_plus_independent.sh` | [HumanEval+](https://github.com/evalplus/evalplus) pass@1 against an OpenAI-compatible endpoint |
 | [`ifbench/`](ifbench) | `run_ifbench.sh`, `run_ifbench_suite.sh` | [IFBench](https://github.com/allenai/IFBench) instruction following; one-shot or repeated endpoint runs |
 | [`agent_benchmarks/`](agent_benchmarks) | `run_swe_verified.sh`, `run_swebenchpro.sh`, `run_mcp_atlas.sh`, `serve_vllm_model.sh` | agentic coding and tool-use benchmarks; optional `--runs N` suites |
+| [`t2i/`](t2i) | `run_t2i.sh` | DrawBench and COCO2014 image generation and scoring for BF16 and AutoRound MXFP8 checkpoints using vLLM-Omni |
 | [`vllm-qdq-plugin/`](vllm-qdq-plugin) | `pip install -e benchmark/vllm-qdq-plugin` | vLLM plugin for quant-dequant (QDQ) simulation and Sage3 attention |
 
 Both shared drivers take `--key=value` options, accept a local model directory or a Hugging Face model id for
