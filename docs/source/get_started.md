@@ -60,16 +60,6 @@ It also provides some common modules across different frameworks. For example, A
   </tbody>
   <thead>
       <tr>
-        <th colspan="8">Transformers-like APIs</th>
-      </tr>
-  </thead>
-  <tbody>
-      <tr>
-          <td colspan="8" align="center"><a href="transformers_like_api.md">Overview</a></td>
-      </tr>
-  </tbody>
-  <thead>
-      <tr>
         <th colspan="8">JAX Extension APIs</th>
       </tr>
   </thead>
