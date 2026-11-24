@@ -43,7 +43,6 @@ def static_quantize(
         model (keras.Model): JAX model to be quantized.
         configs_mapping (Optional[OrderedDict[Union[str, str], OrderedDict[str, BaseConfig]]]): Mapping of configurations
             for the algorithm.
-        quant_config (Optional[BaseConfig]): Quantization configuration for wrapper selection.
         calib_function (Optional[Callable]): Calibration function used to collect activation statistics.
 
     Returns:
