@@ -179,7 +179,7 @@ def _ipex_post_quant_process(model, example_inputs, use_bf16, inplace=False):
         model (QuantizationInterceptionModule): a prepared model.
         example_inputs (tensor/tuple/dict): used to trace torch model.
         use_bf16 (bool): whether to use bf16 for mixed precision.
-        inplace (bool, optional): whether to carry out model transformations in-place. Defaults to True.
+        inplace (bool, optional): whether to carry out model transformations in-place. Defaults to False.
 
     Returns:
         A converted jit model.
