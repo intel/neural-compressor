@@ -244,7 +244,7 @@ Module Contents
    Test a list of modules' validity.
 
    Args:
-   modules (list of str): List of strings to be validated.
+   module_names (list of str): List of block names to be validated.
 
    Returns:
    bool: True if all modules have equal length or not dependent, otherwise False.
