@@ -41,8 +41,10 @@ from neural_compressor.jax.quantization.layers_static import QStaticCachedGemma3
 from neural_compressor.jax.utils import utility
 from neural_compressor.jax.utils.utility import (
     FP8_KV_CACHE_ENV_VAR,
+    SLIDING_WINDOW_SLICE_ENV_VAR,
     dtype_mapping,
     is_fp8_kv_cache_enabled_by_env,
+    is_sliding_window_slice_enabled_by_env,
     select_kv_cache_dtype,
 )
 
@@ -746,3 +748,69 @@ def test_inplace_false():
     duration_difference = duration_inplace_false - duration_inplace_true
     performance_hit = (duration_difference / duration_inplace_true) * 100
     print(f"performance hit: {performance_hit:.2f}%")
+
+
+@pytest.mark.smoke_test
+def test_sliding_window_slice(monkeypatch):
+    window, max_length = 4, 16
+    backbone = Gemma3Backbone(
+        vocabulary_size=16,
+        image_size=16,
+        num_layers=6,
+        num_query_heads=2,
+        num_key_value_heads=1,
+        hidden_dim=8,
+        intermediate_dim=16,
+        head_dim=4,
+        use_sliding_window_attention=True,
+        sliding_window_size=window,
+    )
+    model = Gemma3CausalLM(backbone=backbone, preprocessor=None)
+    token_ids = jnp.arange(max_length, dtype="int32")[None, :] % 16
+    model = quantize_model(
+        model,
+        StaticQuantConfig(),
+        lambda prepared: prepared({"token_ids": token_ids[:, :8], "padding_mask": jnp.ones((1, 8), dtype="bool")}),
+    )
+
+    applied = []
+    slice_to_sliding_window = QStaticCachedGemma3Attention._slice_to_sliding_window
+
+    def record_slicing(self, *args, **kwargs):
+        result = slice_to_sliding_window(self, *args, **kwargs)
+        applied.append((self.use_sliding_window_attention, result[-1]))
+        return result
+
+    monkeypatch.setattr(QStaticCachedGemma3Attention, "_slice_to_sliding_window", record_slicing)
+
+    def decode_logits(slice_enabled):
+        monkeypatch.setenv(SLIDING_WINDOW_SLICE_ENV_VAR, "1" if slice_enabled else "0")
+        is_sliding_window_slice_enabled_by_env.cache_clear()
+        applied.clear()
+        _, cache = model._build_cache(
+            token_ids=token_ids,
+            img_embeddings=None,
+            vision_mask=None,
+            padding_mask=jnp.ones_like(token_ids, dtype="bool"),
+            vision_indices=None,
+        )
+        assert not any(was_applied for _, was_applied in applied), "prefill must not be sliced"
+        applied.clear()
+        # Decode steps past the window as in Gemma3CausalLM.generate_step (one token), plus one step
+        # with two tokens, where both queries share one slice and the window band matters.
+        logits = [
+            model.call_with_cache(token_ids=token_ids[:, i : i + n], cache=cache, cache_update_index=i)[0]
+            for i, n in ((window, 1), (9, 2), (max_length - 1, 1))
+        ]
+        return jnp.concatenate(logits, axis=1), list(applied)
+
+    try:
+        masked_logits, masked_applied = decode_logits(False)
+        sliced_logits, sliced_applied = decode_logits(True)
+    finally:
+        is_sliding_window_slice_enabled_by_env.cache_clear()
+    np.testing.assert_allclose(np.asarray(sliced_logits), np.asarray(masked_logits), rtol=1e-4, atol=1e-4)
+    assert not any(was_applied for _, was_applied in masked_applied)
+    # With slicing on, every local layer slices its KV cache to the window and the global layer does not.
+    assert {local for local, _ in sliced_applied} == {True, False}
+    assert all(was_applied == local for local, was_applied in sliced_applied)
