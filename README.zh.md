@@ -32,7 +32,6 @@ Intel® Neural Compressor 旨在提供主流的模型压缩技术，如静态量
 * [2025/10] 实验性支持 [MXFP8 / MXFP4 量化](./docs/source/PT_MXQuant.md)
 * [2025/09] 在 Intel Gaudi AI 加速器上支持 FP8 动态量化（涵盖 Linear、FusedMoE）
 * [2025/05] 在 Intel Gaudi AI 加速器上实现 DeepSeek V3/R1 模型的 FP8 静态量化
-* [2025/03] 在 Intel CPU/GPU 上通过类似 transformers 的 API 支持 VLM 量化
 
 ## 安装指南
 请根据您的部署环境选择并安装相应的框架依赖。
@@ -142,16 +141,6 @@ model = load(
         <td colspan="4" align="center"><a href="./docs/source/PT_MXQuant.md">MX 量化</a></td>
         <td colspan="4" align="center"><a href="./docs/source/PT_NVFP4Quant.md">NVFP4 量化</a></td>
     </tr>
-  </tbody>
-  <thead>
-      <tr>
-        <th colspan="8">类 Transformers API</th>
-      </tr>
-  </thead>
-  <tbody>
-      <tr>
-          <td colspan="8" align="center"><a href="./docs/source/transformers_like_api.md">概述</a></td>
-      </tr>
   </tbody>
   <thead>
       <tr>
