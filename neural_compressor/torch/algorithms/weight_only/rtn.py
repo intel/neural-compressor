@@ -96,7 +96,7 @@ class RTNQuantizer(Quantizer):
             use_full_range (bool, optional): Choose sym range whether use -2**(bits-1).
                                         Defaults to False.
             use_mse_search (bool, optional):  Whether to search clip range.
-                                        Defaults to True.
+                                        Defaults to False.
             quant_lm_head (bool, optional):  Whether to quantize the lm_head layer.
                                         Defaults to False.
 

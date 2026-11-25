@@ -15,7 +15,6 @@ pr:
       - .azure-pipelines/scripts/ut/coverage.3x_pt_hpu
       - neural_compressor/common
       - neural_compressor/torch
-      - neural_compressor/transformers
       - test/torch/algorithms/fp8_quant
       - test/torch/quantization/fp8_quant
       - test/torch/quantization/weight_only/test_rtn.py
