@@ -508,7 +508,9 @@ class TuningMonitor:
         relative_loss_val = 0.0
         relative_loss_str = "N/A"
         if self.baseline is not None:
-            relative_loss_val = (baseline_val - trial_result) / baseline_val
+            # Divide by |baseline| so a negative baseline keeps the same sign convention as a
+            # positive one: a better trial reports a negative loss, matching the PASSED/FAILED column.
+            relative_loss_val = (baseline_val - trial_result) / abs(baseline_val)
             relative_loss_str = f"{relative_loss_val*100:.2f}%"
 
         # Get best result so far

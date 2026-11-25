@@ -35,7 +35,6 @@ support AMD CPU, ARM CPU, and NVidia GPU with limited testing.
 * [2025/10] [MXFP8 / MXFP4 quantization](./docs/source/PT_MXQuant.md) experimental support
 * [2025/09] FP8 dynamic quantization, including Linear, FusedMoE on Intel Gaudi AI Accelerators
 * [2025/05] FP8 static quantization of DeepSeek V3/R1 model on Intel Gaudi AI Accelerators
-* [2025/03] VLM quantization in transformers-like API on Intel CPU/GPU   
 
 ## Installation
 Choose the necessary framework dependencies to install based on your deploy environment.
@@ -145,16 +144,6 @@ model = load(
         <td colspan="4" align="center"><a href="./docs/source/PT_MXQuant.md">MX Quantization</a></td>
         <td colspan="4" align="center"><a href="./docs/source/PT_NVFP4Quant.md">NVFP4 Quantization</a></td>
     </tr>
-  </tbody>
-  <thead>
-      <tr>
-        <th colspan="8">Transformers-like APIs</th>
-      </tr>
-  </thead>
-  <tbody>
-      <tr>
-          <td colspan="8" align="center"><a href="./docs/source/transformers_like_api.md">Overview</a></td>
-      </tr>
   </tbody>
   <thead>
       <tr>

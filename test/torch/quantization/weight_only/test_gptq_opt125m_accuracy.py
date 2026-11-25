@@ -81,6 +81,7 @@ class TestGPTQOpt125mAccuracy:
         results = simple_evaluate(model=lm, tasks=[EVAL_TASK], limit=EVAL_LIMIT)
         acc = results["results"][EVAL_TASK]["acc,none"]
         print(f"{EVAL_TASK} accuracy: {acc:.4f}, reference: {REFERENCE_ACC:.4f}")
-        assert abs(acc - REFERENCE_ACC) <= RELATIVE_TOLERANCE * REFERENCE_ACC, (
-            f"Accuracy {acc:.4f} deviates more than {RELATIVE_TOLERANCE:.0%} from reference {REFERENCE_ACC:.4f}"
+        # One-sided: GPTQ rounding is sensitive to CPU/BLAS numerics, so higher accuracy is not a regression.
+        assert acc >= (1 - RELATIVE_TOLERANCE) * REFERENCE_ACC, (
+            f"Accuracy {acc:.4f} is more than {RELATIVE_TOLERANCE:.0%} below reference {REFERENCE_ACC:.4f}"
         )

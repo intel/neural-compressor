@@ -10,7 +10,6 @@ pr:
     include:
       - neural_compressor/common
       - neural_compressor/torch
-      - neural_compressor/transformers
       - test/torch
       - test/common
       - setup.py

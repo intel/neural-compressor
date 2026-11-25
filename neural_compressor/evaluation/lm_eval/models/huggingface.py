@@ -74,8 +74,7 @@ def _get_accelerate_args(
 
 class HFLM(TemplateLM):
     """An abstracted Huggingface model class. Enables usage with both models of
-    `neural_compressor.transformers.AutoModelForCausalLM` and
-    `neural_compressor.transformers.AutoModelForSeq2SeqLM` classes.
+    `transformers.AutoModelForCausalLM` and `transformers.AutoModelForSeq2SeqLM` classes.
 
     Supports data-parallel multi-GPU with HF Accelerate.
     """
