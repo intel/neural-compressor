@@ -600,15 +600,17 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             if weight.dtype == torch.float16 and device.type == "cpu":
                 weight = weight.float()
                 self.bias = self.bias.float() if self.bias is not None else None
+        input_dtype = input.dtype
         if True:  # keep reusing self.weight due to recover is too slow.
             if not hasattr(self, "weight"):
                 self.weight = weight
             input = input.type(self.weight.dtype)
             logger.debug(f"Calculating {self}")
-            return F.linear(input, self.weight, self.bias)
+            # cast back so downstream ops (e.g. SDPA) see a consistent dtype
+            return F.linear(input, self.weight, self.bias).to(input_dtype)
         else:
             input = input.type(weight.dtype)
-            return F.linear(input, weight, self.bias)
+            return F.linear(input, weight, self.bias).to(input_dtype)
 
     def extra_repr(self) -> str:
         """Extract the configuration string.

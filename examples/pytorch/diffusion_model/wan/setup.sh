@@ -65,6 +65,7 @@ uv pip install --no-cache-dir  opencv-python-headless==4.10.0.84
 
 if [[ "$task" == "t2v" || "$task" == "i2v" ]]; then
   uv pip install --no-cache-dir VBench --no-deps
+  uv pip install --no-cache-dir gdown==4.7.3
 fi
 
 echo "Setup completed for task: $task"
