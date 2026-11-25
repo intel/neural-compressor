@@ -9,6 +9,7 @@ dependencies = ["torch"]
 qdq = "vllm_qdq_plugin:register"
 inc_nvfp4 = "nvfp4_hw.patch:register"
 inc_nvfp4_qdq = "vllm_qdq_plugin.quantization.patch:register"
+deepseek_v4_wo_a_bf16 = "vllm_qdq_plugin.deepseek_v4:register"
 
 [project.entry-points."vllm_omni.general_plugins"]
 sage3_attn = "vllm_qdq_plugin:register_omni"
