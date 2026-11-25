@@ -47,18 +47,12 @@ def register():
     if os.getenv("VLLM_DEEPSEEK_V4_WO_A_BF16", "0") != "1":
         return
 
-    import vllm
     from vllm.platforms import current_platform
 
     # Only the NVIDIA o_proj path has been verified to dispatch by weight
     # dtype. XPU, for example, needs its original FP8 BMM post-processing.
     if not current_platform.is_cuda():
         return
-
-    # This hook depends on checkpoint-layout weights and the native BF16
-    # o_proj branch. Do not silently apply it to unverified vLLM releases.
-    if vllm.__version__ != "0.33.0":
-        raise RuntimeError("VLLM_DEEPSEEK_V4_WO_A_BF16 requires vLLM 0.33.0")
 
     from vllm.config import get_current_vllm_config
     from vllm.logger import init_logger

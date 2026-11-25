@@ -53,9 +53,9 @@ The independent `vllm.general_plugins` entry point `deepseek_v4_wo_a_bf16`
 provides an **opt-in, load-time** fallback for compressed-tensors DeepSeek V4
 checkpoints with MXFP8 E4M3 weights and uint8 E8M0 group32 scales in grouped
 `wo_a`. It is **disabled by default**, independent of `VLLM_QDQ`, and currently
-supports **NVIDIA CUDA with vLLM 0.33.0 only**. Non-CUDA platforms leave the
-original methods untouched, even when enabled. On CUDA, an explicitly enabled
-unsupported version fails before installing the hook. Reinstall this package to discover the new entry
+supports **NVIDIA CUDA**, tested with **vLLM 0.33.0**, without an exact-version
+restriction. Non-CUDA platforms leave the original methods untouched, even when
+enabled. Reinstall this package to discover the new entry
 point; if using a `VLLM_PLUGINS` allowlist, include `deepseek_v4_wo_a_bf16`.
 
 ```bash

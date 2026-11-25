@@ -242,14 +242,16 @@ class DeepSeekV4Tests(unittest.TestCase):
                     self.assertEqual(instance._fuse_rope_quant, kind != "target")
 
     @mock.patch.dict(os.environ, {"VLLM_DEEPSEEK_V4_WO_A_BF16": "1"})
-    def test_unsupported_version_fails_before_patching(self):
-        scheme, _, _, modules = self.runtime(version="0.34.0")
-        original = scheme.process_weights_after_loading
-        with mock.patch.dict(sys.modules, modules), self.assertRaisesRegex(RuntimeError, "0.33.0"):
-            self.plugin.register()
-        self.assertIs(scheme.process_weights_after_loading, original)
+    def test_compatible_versions_are_not_rejected(self):
+        for version in ("0.33.0", "0.33.1", "0.34.0", "0.34.0.dev1+local"):
+            scheme, _, _, modules = self.runtime(version=version)
+            with self.subTest(version=version), mock.patch.dict(sys.modules, modules):
+                self.plugin.register()
+                layer = self.layer()
+                scheme().process_weights_after_loading(layer)
+                self.assertEqual(layer.weight.dtype, torch.bfloat16)
 
-    @unittest.skipUnless(os.getenv("VLLM_QDQ_TEST_DEEPSEEK_V4") == "1", "requires vLLM 0.33.0")
+    @unittest.skipUnless(os.getenv("VLLM_QDQ_TEST_DEEPSEEK_V4") == "1", "requires compatible vLLM runtime")
     def test_real_scheme_and_native_bf16_o_proj(self):
         from vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors import (
             CompressedTensorsConfig,
