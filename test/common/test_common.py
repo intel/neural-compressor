@@ -52,6 +52,7 @@ from neural_compressor.common.base_tuning import (
     Evaluator,
     SequentialSampler,
     TuningConfig,
+    TuningMonitor,
     init_tuning,
 )
 from neural_compressor.common.tuning_param import TuningParam
@@ -481,6 +482,36 @@ class TestAutoTune(unittest.TestCase):
 
         q_model = tunner.run(model=model, tune_config=tuning_config, eval_fn=fake_eval_fn)
         self.assertIsNotNone(q_model)
+
+
+class TestTuningMonitorRelativeLoss(unittest.TestCase):
+    """The Relative Loss column must agree with the PASSED/FAILED column it is printed next to."""
+
+    def _table_output(self, baseline: float, trial_result: float) -> str:
+        """Run one trial and return the printed results table as text."""
+        monitor = TuningMonitor(TuningConfig(tolerable_loss=0.01))
+        monitor.set_baseline(baseline)
+        with self.assertLogs("neural_compressor", level="INFO") as captured:
+            monitor.add_trial_result(0, trial_result, FakeAlgoConfig(weight_bits=8))
+        output = chr(10).join(captured.output)
+        self.assertIn("Relative Loss", output)
+        return output
+
+    def test_better_trial_on_negative_baseline_is_a_negative_loss(self):
+        # baseline -2.0, trial -1.9 is better (higher is better), so it must not read as +5.00%
+        table = self._table_output(baseline=-2.0, trial_result=-1.9)
+        self.assertIn("PASSED", table)
+        self.assertIn("/ -5.00%", table)
+
+    def test_worse_trial_on_negative_baseline_is_a_positive_loss(self):
+        table = self._table_output(baseline=-2.0, trial_result=-2.1)
+        self.assertIn("FAILED", table)
+        self.assertIn("/ 5.00%", table)
+
+    def test_positive_baseline_is_unchanged(self):
+        table = self._table_output(baseline=2.0, trial_result=2.1)
+        self.assertIn("PASSED", table)
+        self.assertIn("/ -5.00%", table)
 
 
 if __name__ == "__main__":

@@ -252,6 +252,9 @@ def load_module(model, module_name, path, device="cpu"):
         param_name = module_name + "." + n
         value = load_value(model, param_name, path, device)
         set_module_tensor_to_device(model, param_name, device, value)
+    for n, buffer in module.named_buffers():
+        buffer_name = f"{module_name}.{n}" if module_name else n
+        set_module_tensor_to_device(model, buffer_name, device, buffer)
 
 
 def load_first_layer_only(user_model, model_name):

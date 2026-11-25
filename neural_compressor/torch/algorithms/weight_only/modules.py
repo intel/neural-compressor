@@ -431,11 +431,11 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             )
         if zp is not None:
             # recover fp32 weight with int_weight, scale, and zero_point
-            # int_weight - zp spans [-(2**bits - 1), 2**bits - 1], subtract in int32 to avoid overflow
+            # int_weight - zp spans [-(2**bits - 1), 2**bits - 1], subtract in int16 to avoid overflow
             for idx in range(self.in_features):
-                fp32_weight[:, idx] = (
-                    torch.subtract(weight[:, idx].to(torch.int32), zp[:, self.g_idx[idx]].to(torch.int16))
-                ) * scales[:, self.g_idx[idx]]
+                fp32_weight[:, idx] = (torch.subtract(weight[:, idx], zp[:, self.g_idx[idx]].to(torch.int16))) * scales[
+                    :, self.g_idx[idx]
+                ]
         else:
             # recover fp32 weight with int_weight, scale
             for idx in range(self.in_features):
@@ -600,15 +600,17 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             if weight.dtype == torch.float16 and device.type == "cpu":
                 weight = weight.float()
                 self.bias = self.bias.float() if self.bias is not None else None
+        input_dtype = input.dtype
         if True:  # keep reusing self.weight due to recover is too slow.
             if not hasattr(self, "weight"):
                 self.weight = weight
             input = input.type(self.weight.dtype)
             logger.debug(f"Calculating {self}")
-            return F.linear(input, self.weight, self.bias)
+            # cast back so downstream ops (e.g. SDPA) see a consistent dtype
+            return F.linear(input, self.weight, self.bias).to(input_dtype)
         else:
             input = input.type(weight.dtype)
-            return F.linear(input, weight, self.bias)
+            return F.linear(input, weight, self.bias).to(input_dtype)
 
     def extra_repr(self) -> str:
         """Extract the configuration string.
