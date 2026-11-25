@@ -32,16 +32,7 @@ torch._C._LinAlgError: linalg.cholesky: The factorization could not be completed
 [AutoGPTQ/AutoGPTQ#196](https://github.com/AutoGPTQ/AutoGPTQ/issues/196). 
 Try increasing `percdamp` (percent of the average Hessian diagonal to use for dampening), 
 or increasing `nsamples` (the number of calibration samples).
-#### Issue 7:  
-If you run GPTQ quantization with transformers-like API on Intel GPU device, then you may encounter the following error:  
-```shell
-[ERROR][modeling_auto.py:128] index 133 is out of bounds for dimension 0 with size 128
-[ERROR][modeling_auto.py:129] Saved low bit model loading failed, please check your model.
-HINT:
-Intel GPU device does not support `g_idx` for GPTQ quantization now. Please stay tuned.
-You can set desc_act=False.
-```
-#### Issue 8:
+#### Issue 7:
 UnicodeEncodeError: 'charmap' codec can't encode character '\u2191' in position 195: character maps to <undefined>
 **Solution:**
 ```
