@@ -71,6 +71,7 @@ set `--family` or pass both `--steps` and `--guidance`.
 | `flux2-dev` (including Multimodal) | 50 | 4.0 |
 | `flux2-klein` | 4 | 1.0 |
 | `z-image-turbo` | 8 | 0.0 |
+| `flux3-klein` (distilled, native package) | 16 | omitted (no CFG) |
 
 For FLUX.2-dev, `--engine-kwargs '{"enable_cpu_offload":true}'` enables CPU
 offload. The runner sets a longer initialization timeout for its larger weights.
@@ -81,6 +82,67 @@ Each `<output_dir>/<dataset>/` contains `images/`, `prompts.tsv`, and `run.json`
 Rerun generation with the same configuration to fill missing or damaged images.
 Evaluation writes `per_image_scores.csv`, `summary.csv`, and `summary.json`.
 DrawBench summaries include per-category scores.
+
+### FLUX.3 Image Klein (native vLLM-Omni)
+
+This opt-in family uses `Flux3Pipeline`, **not** the Diffusers adapter. Existing
+model environments and defaults are unchanged. Use `T2I_GENERATE_PYTHON` to select
+a separate compatible environment; the default setup's vLLM-Omni 0.32.0 does not
+include this pipeline. Native BF16 was tested with vLLM 0.34.0 and vLLM-Omni
+commit `dc945ca8f4fb8b363b3e8696410aced593c033f0` (Diffusers 0.42.0).
+
+**MXFP8 prerequisite:** that Omni revision rejects quantized FLUX.3 checkpoints
+out of the box. It needs native AutoRound MXFP8 enablement and separate Q/K/V
+loading. Those engine changes are outside this benchmark PR. MXFP8 evaluation
+must use a compatible engine; this runner does not patch Omni or fall back to
+Diffusers. A successful benchmark configuration check alone does not certify
+the worker's quantized kernels.
+
+Pass the **BFL package root**, containing its package configuration, a native
+`model.safetensors`, `ae.safetensors`, and `text_encoder/`. A Diffusers transformer
+subdirectory is not a native package. For MXFP8, prepare weights in the same
+native naming/layout with their serialized scales and an AutoRound
+`quantization_config.json` sidecar. Retain the shared package's
+`quantization: null`; only the transformer is quantized. Weight conversion and
+quantization are outside this benchmark. The runner derives exact quantized
+module names from the serialized scales, including modulation/output linears.
+
+```bash
+T2I_GENERATE_PYTHON=/path/to/flux3-env/bin/python CUDA_VISIBLE_DEVICES=0 \
+  bash benchmark/t2i/run_t2i.sh generate \
+  --model_path=/path/to/flux-3-image-klein --family=flux3-klein --dtype=bf16 \
+  --manifest drawbench runs/t2i/prompts/drawbench.tsv \
+  --output_dir=runs/t2i/flux3-bf16 \
+  --prompt-cache=/path/to/expanded-drawbench.json
+```
+
+Repeat with the native MXFP8 package, `--dtype=mxfp8`, and a separate output
+directory. Use the existing `evaluate` and `summarize` commands unchanged.
+Do not pass `--guidance`, even zero: the distilled flow-map model rejects CFG.
+Use the same steps, resolution, seed, and prompt cache for both precisions.
+
+The model recommends prompt expansion. Generate expanded captions once with the
+model's prompt upsampler (or another explicitly documented policy) and reuse
+them for both precisions. The optional `--prompt-cache` accepts one manifest:
+
+```json
+{
+  "manifest_sha256": "SHA256 of the original TSV bytes",
+  "captions": {"0": "Expanded scene caption for manifest ID 0"}
+}
+```
+
+Include exactly every manifest ID, expressed as a string. The runner validates
+the manifest hash and caches the expansion file's hash in `run.json` for resume
+safety. Generation uses expanded captions; scoring and `prompts.tsv` retain
+the originals. Without this option, generation uses the original prompts and
+records that policy. It never silently invokes an upsampler.
+
+CPU-only regression tests (Pillow required):
+
+```bash
+python -m unittest discover -s benchmark/t2i -p 'test_flux3.py' -v
+```
 
 ## Metrics
 

@@ -28,6 +28,7 @@ PRESETS = {
     "flux2-dev": (50, 4.0),
     "flux2-klein": (4, 1.0),
     "z-image-turbo": (8, 0.0),
+    "flux3-klein": (16, None),
 }
 FAMILY_PATTERNS = {
     "flux1-dev": "flux.1-dev",
@@ -35,6 +36,7 @@ FAMILY_PATTERNS = {
     "flux2-dev": "flux.2-dev",
     "flux2-klein": "flux.2-klein",
     "z-image-turbo": "z-image-turbo",
+    "flux3-klein": "flux-3-image-klein",
 }
 FLUX2_QUANTIZED_COMPONENTS = ("transformer", "text_encoder")
 PRECISIONS = ("bf16", "mxfp8")
@@ -261,6 +263,9 @@ def generate(args):
     if family is None and (args.steps is None or args.guidance is None):
         raise ValueError("Specify --family or both --steps and --guidance for this model")
     default_steps, default_guidance = PRESETS.get(family, (None, None))
+    prompt_cache = getattr(args, "prompt_cache", None)
+    if prompt_cache is not None and family != "flux3-klein":
+        raise ValueError("--prompt-cache is currently supported only for --family flux3-klein")
     if family == "flux2-dev":
         # Large text encoder and transformer shards can exceed the default on shared storage.
         settings.setdefault("init_timeout", 2400)
@@ -276,7 +281,14 @@ def generate(args):
     print(f"Resolving checkpoint {args.model_path}", flush=True)
     model_path, revision = checkpoint(args)
     checkpoint_path = Path(model_path).resolve()
-    precision = checkpoint_precision(checkpoint_path)
+    prompt_overrides, prompt_metadata = {}, {}
+    if family == "flux3-klein":
+        from flux3 import configure_package, load_prompt_cache
+
+        precision = configure_package(checkpoint_path, settings, args.guidance)
+        prompt_overrides, prompt_metadata = load_prompt_cache(prompt_cache, manifests)
+    else:
+        precision = checkpoint_precision(checkpoint_path)
     if args.dtype is not None and args.dtype != precision:
         raise ValueError(f"--dtype={args.dtype} does not match the checkpoint precision ({precision})")
     if precision == "bf16":
@@ -303,6 +315,7 @@ def generate(args):
         "height": args.height,
         "width": args.width,
         "base_seed": args.seed,
+        **prompt_metadata,
     }
     with ExitStack() as lock:
         open_run_lock(output_dir, lock)
@@ -349,11 +362,12 @@ def generate(args):
                         omni = Omni(model=omni_model, **settings)
                         engine.callback(omni.close)
                     seed = args.seed + row_id
+                    guidance_kwargs = {} if family == "flux3-klein" else {"guidance_scale": config["guidance"]}
                     params = OmniDiffusionSamplingParams(
                         height=config["height"],
                         width=config["width"],
                         seed=seed,
-                        guidance_scale=config["guidance"],
+                        **guidance_kwargs,
                         num_inference_steps=config["steps"],
                         num_outputs_per_prompt=1,
                     )
@@ -368,7 +382,7 @@ def generate(args):
                     )
                     started = time.perf_counter()
                     outputs = omni.generate(
-                        {"prompt": row["caption"], "modalities": ["image"]},
+                        {"prompt": prompt_overrides.get(str(row_id), row["caption"]), "modalities": ["image"]},
                         sampling_params_list=sampling,
                         use_tqdm=False,
                     )
@@ -408,6 +422,7 @@ def main():
     gen.add_argument("--width", type=positive_int, default=1024)
     gen.add_argument("--seed", type=int, default=42)
     gen.add_argument("--engine-kwargs", default="{}")
+    gen.add_argument("--prompt-cache", type=Path, help="FLUX.3 expanded-caption JSON; score original manifest captions")
     gen.set_defaults(func=generate)
 
     args = parser.parse_args()
