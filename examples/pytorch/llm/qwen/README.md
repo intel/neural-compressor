@@ -65,3 +65,9 @@ CUDA_VISIBLE_DEVICES=0 bash run_benchmark.sh --model_path=/path/to/qwen_mxfp4 --
 ```bash
 CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --model_path=/path/to/qwen_mxfp4 --tasks=aime26,gpqa_diamond,math_500
 ```
+- RULER
+```bash
+CUDA_VISIBLE_DEVICES=0,1,2,3 bash run_benchmark.sh --model_path=/path/to/qwen_mxfp4 --tasks=ruler
+```
+> [!NOTE]
+> Qwen3-32B and Qwen3-30B-A3B have a native context length of 32K, so RULER runs with `--ruler_max_pos=32768` for them by default (detected from the model name in `--model_path`). Other models use the driver default (`131072`). Pass `--ruler_max_pos=<len>` to override; it is only forwarded to `benchmark/lm_eval/run_lm_eval.sh`.
