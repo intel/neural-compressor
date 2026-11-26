@@ -18,6 +18,8 @@
 # Tasks are split into two paths:
 #   - aime26, gpqa_diamond and math_500: benchmark/evalscope/run_evalscope.sh
 #   - all other tasks: benchmark/lm_eval/run_lm_eval.sh
+# --ruler_max_pos only goes to lm_eval; it defaults to 32768 for Qwen3-32B and Qwen3-30B-A3B
+# (native 32K context) unless overridden by --ruler_max_pos or the RULER_MAX_POS env var.
 # All other options are passed to both drivers.
 
 set -eo pipefail
@@ -28,16 +30,32 @@ REPO_ROOT=$(cd -- "${SCRIPT_DIR}/../../../.." && pwd)
 TASKS="hellaswag,piqa,mmlu,gsm8k"
 EVALSCOPE_TASK_LIST="aime26,gpqa_diamond,math_500"
 COMMON_ARGS=()
+LM_EVAL_ARGS=()
+MODEL_PATH=""
 for arg in "$@"; do
     case $arg in
         --tasks=*)
             TASKS="${arg#*=}"
+            ;;
+        --model_path=*)
+            MODEL_PATH="${arg#*=}"
+            COMMON_ARGS+=("$arg")
+            ;;
+        --ruler_max_pos=*)
+            LM_EVAL_ARGS+=("$arg")
             ;;
         *)
             COMMON_ARGS+=("$arg")
             ;;
     esac
 done
+
+# Qwen3-32B and Qwen3-30B-A3B have a native context length of 32K, so run RULER at 32K by default.
+MODEL_NAME_LOWER=$(basename "${MODEL_PATH%/}" | tr '[:upper:]' '[:lower:]')
+if [[ ${#LM_EVAL_ARGS[@]} -eq 0 && -z "${RULER_MAX_POS:-}" && "$MODEL_NAME_LOWER" != *2507* ]] \
+    && [[ "$MODEL_NAME_LOWER" == *qwen3-32b* || "$MODEL_NAME_LOWER" == *qwen3-30b-a3b* ]]; then
+    LM_EVAL_ARGS+=("--ruler_max_pos=32768")
+fi
 
 LM_EVAL_TASKS=""
 EVALSCOPE_TASKS=""
@@ -60,7 +78,7 @@ export FLASHINFER_WORKSPACE_SIZE=2147483648
 export NLTK_ALLOW_PROXIED_URLOPEN=1
 
 if [[ -n "$LM_EVAL_TASKS" ]]; then
-    bash "${REPO_ROOT}/benchmark/lm_eval/run_lm_eval.sh" "${COMMON_ARGS[@]}" --tasks="$LM_EVAL_TASKS"
+    bash "${REPO_ROOT}/benchmark/lm_eval/run_lm_eval.sh" "${COMMON_ARGS[@]}" "${LM_EVAL_ARGS[@]}" --tasks="$LM_EVAL_TASKS"
 fi
 if [[ -n "$EVALSCOPE_TASKS" ]]; then
     bash "${REPO_ROOT}/benchmark/evalscope/run_evalscope.sh" "${COMMON_ARGS[@]}" --tasks="$EVALSCOPE_TASKS"
