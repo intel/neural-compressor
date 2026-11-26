@@ -167,6 +167,16 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--dtype<span cla
 <div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>/path/to/qwen_mxfp4<span class="w"> </span>--tasks<span class="o">=</span>aime26,gpqa_diamond,math_500
 </pre></div>
 </div>
+<ul class="simple">
+<li><p>RULER</p></li>
+</ul>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>bash<span class="w"> </span>run_benchmark.sh<span class="w"> </span>--model_path<span class="o">=</span>/path/to/qwen_mxfp4<span class="w"> </span>--tasks<span class="o">=</span>ruler
+</pre></div>
+</div>
+<blockquote>
+<div><p>[!NOTE]
+Qwen3-32B and Qwen3-30B-A3B have a native context length of 32K, so RULER runs with <code class="docutils literal notranslate"><span class="pre">--ruler_max_pos=32768</span></code> for them by default (detected from the model name in <code class="docutils literal notranslate"><span class="pre">--model_path</span></code>). Other models use the driver default (<code class="docutils literal notranslate"><span class="pre">131072</span></code>). Pass <code class="docutils literal notranslate"><span class="pre">--ruler_max_pos=&lt;len&gt;</span></code> to override; it is only forwarded to <code class="docutils literal notranslate"><span class="pre">benchmark/lm_eval/run_lm_eval.sh</span></code>.</p>
+</div></blockquote>
 </section>
 
 
@@ -183,7 +193,7 @@ bash<span class="w"> </span>run_quant.sh<span class="w"> </span>--dtype<span cla
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7ca31c4acad0> 
+   <jinja2.runtime.BlockReference object at 0x7c959889a7b0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 
