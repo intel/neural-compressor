@@ -1120,7 +1120,7 @@ def get_module_input_output(
         Args:
             name: the module name.
             record_input (bool): to record input.
-            record_ouput (bool): to record output.
+            record_output (bool): to record output.
 
         Returns:
             A hook function
