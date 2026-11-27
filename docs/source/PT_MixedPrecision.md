@@ -3,7 +3,7 @@ PyTorch Mixed Precision
 
 1. [Introduction](#introduction)
 2. [Mixed Precision Support Matrix](#mixed-precision-support-matrix)
-3. [Get Started](#get-start)
+3. [Get Started](#get-started-with-autotune-api)
 4. [Examples](#examples)
 
 ## Introduction

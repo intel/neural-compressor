@@ -2,7 +2,7 @@ Microscaling Quantization
 ===============
 
 1. [Introduction](#introduction)
-2. [Get Started with Microscaling Quantization API](#get-start-with-microscaling-quantization-api)
+2. [Get Started with Microscaling Quantization API](#get-started-with-microscaling-quantization-api)
 3. [Examples](#examples)
 4. [Reference](#reference)
 
