@@ -25,7 +25,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
-from neural_compressor.torch.quantization.fake_quant import load_quantizer_state_dict
+from neural_compressor.torch.algorithms.fake_quant import load_quantizer_state_dict
 from neural_compressor.torch.quantization import (
     FakeQuantConfig,
     ModuleQuantConfig,
@@ -38,9 +38,11 @@ from neural_compressor.torch.quantization import (
     calibrate,
     calibrate_static_amax,
     convert,
+    convert_to_quantized_model,
     disable_fake_quant,
     get_format,
     load_quantizer_state,
+    match_quant_config,
     prepare,
     prepare_qat,
     quantize,
@@ -333,10 +335,14 @@ class TestPlanCalibrationAndQwen35Preset(unittest.TestCase):
             expected_amax,
         )
 
+        from neural_compressor.torch.algorithms.fake_quant import (
+            compile_plan_from_info,
+            match_quant_config_from_info,
+        )
         from neural_compressor.torch.quantization.config import FakeQuantConfig as ConfigFacadeFakeQuantConfig
-        from neural_compressor.torch.quantization.fake_quant import compile_plan_from_info
 
         self.assertIs(ConfigFacadeFakeQuantConfig, FakeQuantConfig)
+        self.assertIs(compile_plan_from_info, match_quant_config_from_info)
         with tempfile.TemporaryDirectory() as tmp:
             qstate_file = Path(tmp) / "quantizer_state.json"
             qstate_file.write_text(json.dumps({"quantizers": wrapped_state}))
@@ -350,6 +356,40 @@ class TestPlanCalibrationAndQwen35Preset(unittest.TestCase):
                 report.plan["model.layers.1.linear_attn.in_proj_qkv"].input_activations.amax,
                 expected_amax,
             )
+
+    def test_idiomatic_conversion_api_and_flat_quantization_facade(self):
+        import subprocess
+        import sys
+
+        import neural_compressor.torch.quantization as quant_pkg
+
+        quant_dir = Path(quant_pkg.__file__).resolve().parent
+        subpackages = [
+            p.name for p in quant_dir.iterdir() if p.is_dir() and (p / "__init__.py").exists()
+        ]
+        self.assertEqual(subpackages, [], f"Expected flat quantization facade, found {subpackages}")
+
+        model = TinyHybridModel(dim=32)
+        cfg = FakeQuantConfig.mxfp4()
+        matched = match_quant_config(model, cfg)
+        self.assertIs(matched.module_configs, matched.plan)
+        self.assertGreater(len(matched.module_configs), 0)
+
+        converted = convert_to_quantized_model(model, cfg)
+        self.assertEqual(set(converted.module_configs.keys()), set(matched.module_configs.keys()))
+        self.assertIsInstance(model.model.layers[0].mlp.gate_proj, QuantLinear)
+
+        for stmt in (
+            "import neural_compressor.torch.algorithms.fake_quant, neural_compressor.torch.quantization",
+            "import neural_compressor.torch.quantization, neural_compressor.torch.algorithms.fake_quant",
+        ):
+            proc = subprocess.run(
+                [sys.executable, "-c", stmt],
+                capture_output=True,
+                text=True,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 0, msg=proc.stderr)
 
 
 if __name__ == "__main__":

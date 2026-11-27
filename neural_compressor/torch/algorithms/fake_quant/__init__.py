@@ -11,108 +11,194 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Algorithm entry for fake quantization (QAT/QAD building block)."""
+"""Fake-quantization algorithm implementation (formats, functional QDQ, modules, conversion, calibration)."""
 
 from __future__ import annotations
 
-from typing import Any, Dict
+from .calib import calibrate, calibrate_static_amax
+from .config import (
+    DEFAULT_IGNORE,
+    FP8_DEFAULT_CFG,
+    FakeQuantConfig,
+    MXFP4_DEFAULT_CFG,
+    MXFP4_FP8_HYBRID_CFG,
+    MXFP8_DEFAULT_CFG,
+    ModuleQuantConfig,
+    NVFP4_DEFAULT_CFG,
+    NVFP4_FP8_HYBRID_CFG,
+    ObserverName,
+    QuantSchemeRule,
+    QuantizerConfig,
+    QuantizerSpec,
+    get_default_fake_quant_config,
+)
+from .conversion import (
+    PlanReport,
+    QuantConversionReport,
+    QuantFactory,
+    apply_quant_plan,
+    build_quant_plan,
+    compile_plan_from_info,
+    convert_to_quantized_model,
+    fake_quant_entry,
+    is_supported_module,
+    match_quant_config,
+    match_quant_config_from_info,
+    matches_target,
+    quantize_module,
+    register_quant_module,
+    replace_quant_modules,
+    supported_module_types,
+    unregister_quant_module,
+)
+from .formats import (
+    BF16,
+    FP8_E4M3,
+    MXFP4,
+    MXFP8,
+    NVFP4,
+    QuantFormat,
+    get_format,
+    list_formats,
+    register_format,
+)
+from .functional import (
+    QuantBackendName,
+    StraightThroughFakeQuant,
+    fake_quant_dynamic,
+    fake_quant_fp8_static_amax,
+    get_quant_backend,
+    register_quant_backend,
+    set_quant_backend,
+    ste_fake_quant,
+)
+from .pack import (
+    PackedWeightTensor,
+    dequantize_packed_weight,
+    pack_nibbles,
+    pack_weight,
+    unpack_nibbles,
+)
+from .plugins import (
+    QuantLoraLinear,
+    QuantOrder,
+    convert_peft_lora_to_quant_lora,
+    ensure_peft_torchao_compat,
+    is_peft_available,
+    merge_lora_into_quant_linear,
+    register_peft_quant_modules,
+)
+from .quant_linear import QuantLinear
+from .save_load import (
+    apply_amax_map_to_module_config,
+    canonicalize_module_name,
+    canonicalize_quantizer_key,
+    get_quantizer_state_dict,
+    load_amax_map_from_state,
+    load_quantizer_state,
+    load_quantizer_state_dict,
+    save_quantizer_state,
+)
+from .tensor_quantizer import TensorQuantizer, disable_fake_quant
 
-import torch
-
-from neural_compressor.common.utils import FAKE_QUANT, Mode
-from neural_compressor.torch.quantization.fake_quant.calibrate import calibrate
-from neural_compressor.torch.quantization.fake_quant.config import ModuleQuantConfig
-from neural_compressor.torch.quantization.fake_quant.plan import PlanReport, apply_quant_plan
-from neural_compressor.torch.quantization.fake_quant.quantizer import TensorQuantizer
-from neural_compressor.torch.utils import logger, register_algo
-
-_QUANTIZER_SLOTS = (
-    ("weights", "weight_quantizer"),
-    ("input_activations", "input_quantizer"),
-    ("output_activations", "output_quantizer"),
+_TRAINER_EXPORTS = (
+    "QATTrainer",
+    "QuantizationTrainingArguments",
+    "ensure_peft_gradient_checkpointing_delegation",
+    "is_peft_model",
+    "save_fsdp2_full_model",
+    "save_fsdp2_peft_adapter",
+    "unwrap_model",
 )
 
 
-def _pending_static(plan: Dict[str, ModuleQuantConfig]) -> list[str]:
-    pending = []
-    for name, config in plan.items():
-        for attr_name, slot_name in _QUANTIZER_SLOTS:
-            quantizer_cfg = getattr(config, attr_name)
-            if quantizer_cfg is None or quantizer_cfg.is_noop or quantizer_cfg.dynamic:
-                continue
-            if quantizer_cfg.amax is None:
-                pending.append(f"{name}.{slot_name}")
-    return pending
+def __getattr__(name: str):
+    if name in _TRAINER_EXPORTS:
+        from . import trainer
+
+        return getattr(trainer, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
-def _set_calibrating(model: torch.nn.Module, enabled: bool) -> None:
-    for module in model.modules():
-        if isinstance(module, TensorQuantizer) and not module.is_dynamic and module.is_enabled:
-            if enabled:
-                if module.amax is None:
-                    module.enable_calib()
-                else:
-                    module.disable_calib()
-            else:
-                module.disable_calib()
-
-
-@register_algo(name=FAKE_QUANT)
-def fake_quant_entry(
-    model: torch.nn.Module,
-    configs_mapping,
-    mode: Mode = Mode.QUANTIZE,
-    run_fn=None,
-    run_args: Any = None,
-    **kwargs,
-) -> torch.nn.Module:
-    """Replace modules with fake-quant subclasses and optionally calibrate.
-
-    Args:
-        model: Float model, modified in place.
-        configs_mapping: ``{(module_name, op_type): ModuleQuantConfig}`` from
-            :meth:`FakeQuantConfig.to_config_mapping`.
-        mode: ``PREPARE`` inserts quantizers only; ``QUANTIZE`` also calibrates
-            static quantizers when ``run_fn`` is given; ``CONVERT`` finalizes
-            calibration without replacing the fake-quant modules.
-        run_fn: Calibration forward loop, called as ``run_fn(model, *run_args)``.
-        run_args: Positional arguments for ``run_fn``.
-    """
-    if mode == Mode.CONVERT:
-        for module in model.modules():
-            if isinstance(module, TensorQuantizer):
-                module.finalize()
-        logger.info("[fake_quant] finalized calibration; export() produces deployment artifacts")
-        return model
-
-    plan = {name: config for (name, _op_type), config in configs_mapping.items()}
-    report = PlanReport(
-        plan=plan,
-        op_types={name: op_type for (name, op_type) in configs_mapping},
-    )
-    pending = _pending_static(plan)
-    if mode != Mode.PREPARE and pending and run_fn is None:
-        head = ", ".join(pending[:5])
-        raise ValueError(
-            f"{len(pending)} static quantizers have no amax and no run_fn was given: {head} ...; "
-            "pass run_fn/run_args, an amax summary, or use prepare()+calibrate()"
-        )
-    result = apply_quant_plan(model, report)
-    logger.info(f"[fake_quant] replaced {result['n_replaced']} modules with quantized subclasses")
-
-    if mode == Mode.PREPARE:
-        _set_calibrating(model, True)
-        if pending:
-            logger.info(f"[fake_quant] {len(pending)} static quantizers await calibration")
-        return model
-
-    if pending:
-        logger.info(f"[fake_quant] calibrating {len(pending)} static quantizers with run_fn")
-        calibrate(model, run_fn, run_args or ())
-    for module in model.modules():
-        if isinstance(module, TensorQuantizer):
-            module.finalize()
-    return model
-
-
-__all__ = ["fake_quant_entry"]
+__all__ = [
+    "BF16",
+    "DEFAULT_IGNORE",
+    "FP8_DEFAULT_CFG",
+    "FP8_E4M3",
+    "FakeQuantConfig",
+    "MXFP4",
+    "MXFP4_DEFAULT_CFG",
+    "MXFP4_FP8_HYBRID_CFG",
+    "MXFP8",
+    "MXFP8_DEFAULT_CFG",
+    "ModuleQuantConfig",
+    "NVFP4",
+    "NVFP4_DEFAULT_CFG",
+    "NVFP4_FP8_HYBRID_CFG",
+    "ObserverName",
+    "PackedWeightTensor",
+    "PlanReport",
+    "QATTrainer",
+    "QuantBackendName",
+    "QuantConversionReport",
+    "QuantFactory",
+    "QuantFormat",
+    "QuantLinear",
+    "QuantLoraLinear",
+    "QuantOrder",
+    "QuantSchemeRule",
+    "QuantizationTrainingArguments",
+    "QuantizerConfig",
+    "QuantizerSpec",
+    "StraightThroughFakeQuant",
+    "TensorQuantizer",
+    "apply_amax_map_to_module_config",
+    "apply_quant_plan",
+    "build_quant_plan",
+    "calibrate",
+    "calibrate_static_amax",
+    "canonicalize_module_name",
+    "canonicalize_quantizer_key",
+    "compile_plan_from_info",
+    "convert_peft_lora_to_quant_lora",
+    "convert_to_quantized_model",
+    "dequantize_packed_weight",
+    "disable_fake_quant",
+    "ensure_peft_gradient_checkpointing_delegation",
+    "ensure_peft_torchao_compat",
+    "fake_quant_dynamic",
+    "fake_quant_entry",
+    "fake_quant_fp8_static_amax",
+    "get_default_fake_quant_config",
+    "get_format",
+    "get_quant_backend",
+    "get_quantizer_state_dict",
+    "is_peft_available",
+    "is_peft_model",
+    "is_supported_module",
+    "list_formats",
+    "load_amax_map_from_state",
+    "load_quantizer_state",
+    "load_quantizer_state_dict",
+    "match_quant_config",
+    "match_quant_config_from_info",
+    "matches_target",
+    "merge_lora_into_quant_linear",
+    "pack_nibbles",
+    "pack_weight",
+    "quantize_module",
+    "register_format",
+    "register_peft_quant_modules",
+    "register_quant_backend",
+    "register_quant_module",
+    "replace_quant_modules",
+    "save_fsdp2_full_model",
+    "save_fsdp2_peft_adapter",
+    "save_quantizer_state",
+    "set_quant_backend",
+    "ste_fake_quant",
+    "supported_module_types",
+    "unpack_nibbles",
+    "unregister_quant_module",
+    "unwrap_model",
+]

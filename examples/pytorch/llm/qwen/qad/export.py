@@ -33,7 +33,7 @@ from __future__ import annotations
 import argparse
 
 from neural_compressor.torch.export import export_hf_checkpoint
-from neural_compressor.torch.quantization.fake_quant import FakeQuantConfig
+from neural_compressor.torch.quantization import FakeQuantConfig
 
 
 def parse() -> argparse.Namespace:

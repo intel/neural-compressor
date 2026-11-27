@@ -39,10 +39,10 @@ if str(EXAMPLE_ROOT) not in sys.path:
 from data.megatron_indexed_dataset import PackedDataset  # noqa: E402
 from modeling.qwen35_text_loader import load_qwen_causal_lm  # noqa: E402
 
-from neural_compressor.torch.quantization import prepare_qat  # noqa: E402
-from neural_compressor.torch.quantization.fake_quant import (  # noqa: E402
+from neural_compressor.torch.quantization import (  # noqa: E402
     FakeQuantConfig,
     calibrate_static_amax,
+    prepare_qat,
     save_quantizer_state,
 )
 

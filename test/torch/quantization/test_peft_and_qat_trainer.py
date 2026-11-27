@@ -22,7 +22,7 @@ import torch.nn as nn
 from transformers import Qwen2Config, Qwen2ForCausalLM, TrainingArguments
 
 from neural_compressor.torch.quantization import FakeQuantConfig, QATTrainer, QuantSchemeRule, prepare_qat
-from neural_compressor.torch.quantization.fake_quant import (
+from neural_compressor.torch.algorithms.fake_quant import (
     QuantLinear,
     QuantLoraLinear,
     convert_peft_lora_to_quant_lora,

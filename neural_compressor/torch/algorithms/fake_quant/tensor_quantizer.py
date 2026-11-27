@@ -24,7 +24,7 @@ import torch.nn as nn
 
 from .config import QuantizerConfig
 from .formats import QuantFormat
-from .ops.qdq import (
+from .functional import (
     QuantBackendName,
     fake_quant_dynamic,
     fake_quant_fp8_static_amax,

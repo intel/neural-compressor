@@ -18,9 +18,9 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from typing import Optional
 
+from neural_compressor.torch.algorithms.fake_quant import FakeQuantConfig
+from neural_compressor.torch.algorithms.fake_quant.trainer import QuantizationTrainingArguments
 from neural_compressor.torch.distillation.config import DistillationConfig, DistillationTrainingArguments
-from neural_compressor.torch.quantization.fake_quant import FakeQuantConfig
-from neural_compressor.torch.quantization.qat_trainer import QuantizationTrainingArguments
 
 
 @dataclass

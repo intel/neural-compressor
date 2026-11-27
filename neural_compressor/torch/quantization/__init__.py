@@ -51,7 +51,7 @@ from neural_compressor.torch.quantization.config import (
     HybridGPTQConfig,
 )
 
-from neural_compressor.torch.quantization.fake_quant import (
+from neural_compressor.torch.algorithms.fake_quant import (
     FP8_DEFAULT_CFG,
     FakeQuantConfig,
     MXFP4_DEFAULT_CFG,
@@ -60,6 +60,7 @@ from neural_compressor.torch.quantization.fake_quant import (
     ModuleQuantConfig,
     NVFP4_DEFAULT_CFG,
     NVFP4_FP8_HYBRID_CFG,
+    QuantConversionReport,
     QuantFormat,
     QuantLinear,
     QuantLoraLinear,
@@ -70,13 +71,16 @@ from neural_compressor.torch.quantization.fake_quant import (
     calibrate,
     calibrate_static_amax,
     convert_peft_lora_to_quant_lora,
+    convert_to_quantized_model,
     disable_fake_quant,
     get_default_fake_quant_config,
     get_format,
     list_formats,
     load_quantizer_state,
+    match_quant_config,
     merge_lora_into_quant_linear,
     register_peft_quant_modules,
+    replace_quant_modules,
     save_quantizer_state,
 )
 
@@ -90,9 +94,9 @@ from neural_compressor.torch.quantization.autotune import (
 
 def __getattr__(name: str):
     if name in ("QATTrainer", "QuantizationTrainingArguments", "save_fsdp2_full_model", "save_fsdp2_peft_adapter"):
-        from neural_compressor.torch.quantization import qat_trainer
+        from neural_compressor.torch.algorithms.fake_quant import trainer
 
-        return getattr(qat_trainer, name)
+        return getattr(trainer, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 ### Quantization Function Registration ###

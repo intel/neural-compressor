@@ -57,7 +57,7 @@ from neural_compressor.torch.qad import (  # noqa: E402
     decoder_layer_class_names,
     prepare_qad_model,
 )
-from neural_compressor.torch.quantization.fake_quant import FakeQuantConfig  # noqa: E402
+from neural_compressor.torch.quantization import FakeQuantConfig  # noqa: E402
 
 
 @dataclass
@@ -425,7 +425,7 @@ def run_training(argv: Optional[list[str]] = None) -> QADTrainer:
         )
         if legacy_amax_source:
             import importlib.util
-            from neural_compressor.torch.quantization.fake_quant.calibrate import load_quantizer_state_dict
+            from neural_compressor.torch.algorithms.fake_quant import load_quantizer_state_dict
 
             conv_spec = importlib.util.spec_from_file_location(
                 "nc_qad_convert_modelopt_amax", EXAMPLE_ROOT / "tools" / "convert_modelopt_amax.py"

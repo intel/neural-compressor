@@ -11,7 +11,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Unified HuggingFace checkpoint exporter (``compressed-tensors`` & ``bf16`` + VLM surgery)."""
+"""Unified HuggingFace checkpoint exporter (``compressed-tensors`` & ``bf16`` + VLM utilities)."""
 
 from __future__ import annotations
 
@@ -25,27 +25,27 @@ from typing import Any, Literal, Optional, Union
 import torch
 import torch.nn as nn
 
-from neural_compressor.torch.quantization.fake_quant import (
+from neural_compressor.torch.algorithms.fake_quant import (
     FakeQuantConfig,
     QuantLinear,
     TensorQuantizer,
     apply_amax_map_to_module_config,
     canonicalize_quantizer_key,
-    compile_plan_from_info,
     load_amax_map_from_state,
     load_quantizer_state,
+    match_quant_config_from_info as compile_plan_from_info,
     merge_lora_into_quant_linear,
     save_quantizer_state,
 )
 from neural_compressor.torch.utils import logger
 
-from .compressed_tensors_packer import (
+from .compressed_tensors import (
     LayerSchemeSpec,
     build_compressed_tensors_config,
     pack_linear_tensors,
     pack_model_to_compressed_tensors,
 )
-from .vlm_surgery import (
+from .hf_vlm_utils import (
     StreamingSafetensorsWriter,
     copy_auxiliary_hf_files,
     is_vlm_checkpoint,
@@ -317,7 +317,7 @@ def export_hf_checkpoint(
                     raise ValueError(
                         "Model has no QuantLinear modules; pass a fake-quantized model or provide quant_config."
                     )
-                from neural_compressor.torch.quantization.fake_quant import prepare_qat
+                from neural_compressor.torch.quantization.quantize import prepare_qat
 
                 prepare_qat(model, quant_config)
                 if quant_state_path is not None:

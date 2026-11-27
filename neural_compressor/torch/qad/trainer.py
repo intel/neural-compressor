@@ -23,24 +23,24 @@ import torch
 import torch.distributed as dist
 import torch.nn as nn
 
-from neural_compressor.torch.distillation import DistillationConfig, KDTrainer
-from neural_compressor.torch.quantization.fake_quant import (
+from neural_compressor.torch.algorithms.fake_quant import (
     FakeQuantConfig,
     TensorQuantizer,
     convert_peft_lora_to_quant_lora,
     ensure_peft_torchao_compat,
     register_peft_quant_modules,
 )
-from neural_compressor.torch.quantization.qat_trainer import (
+from neural_compressor.torch.algorithms.fake_quant.trainer import (
     QATTrainer,
     ensure_peft_gradient_checkpointing_delegation,
     is_peft_model,
     unwrap_model,
 )
+from neural_compressor.torch.distillation import DistillationConfig, KDTrainer
 from neural_compressor.torch.quantization.quantize import prepare_qat
 
 from .args import QADTrainingArguments
-from .metrics import device_hardware_name, memory_report, param_counts, reset_peak_memory, tflops_and_mfu
+from .utils import device_hardware_name, memory_report, param_counts, reset_peak_memory, tflops_and_mfu
 
 
 def prepare_qad_model(

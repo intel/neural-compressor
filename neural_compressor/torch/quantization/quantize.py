@@ -233,7 +233,7 @@ _LEGACY_QAT_FORMATS = {
 
 def _legacy_qat_config(mapping):
     """Translate the legacy ``{nn.ModuleType: scheme}`` mapping into a config."""
-    from neural_compressor.torch.quantization.fake_quant import FakeQuantConfig, QuantSchemeRule
+    from neural_compressor.torch.algorithms.fake_quant import FakeQuantConfig, QuantSchemeRule
 
     schemes = set()
     for module_type, scheme in mapping.items():
@@ -278,7 +278,7 @@ def prepare_qat(
         mapping: Legacy ``{module_type: scheme}`` mapping.
         inplace: Mutate the input model instead of a copy.
     """
-    from neural_compressor.torch.quantization.fake_quant import FakeQuantConfig
+    from neural_compressor.torch.algorithms.fake_quant import FakeQuantConfig
 
     if mapping is None and isinstance(quant_config, dict) and any(isinstance(key, type) for key in quant_config):
         mapping, quant_config = quant_config, None

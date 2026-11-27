@@ -13,7 +13,7 @@
 # limitations under the License.
 """Cold-path weight bit-packing and dequantization utilities for checkpoint export.
 
-This module is strictly separated from :mod:`.qdq` so nibble packing/unpacking
+This module is strictly separated from :mod:`.functional` so nibble packing/unpacking
 never executes during QAT/QAD training forward or activation recomputation.
 Packed layouts follow ``compressed-tensors`` and ``vLLM`` conventions:
 
@@ -34,7 +34,7 @@ from typing import Optional
 
 import torch
 
-from ..formats import (
+from .formats import (
     BF16,
     E2M1_MAX,
     E4M3_MAX,
@@ -45,7 +45,7 @@ from ..formats import (
     QuantFormat,
     get_format,
 )
-from .qdq import _check_block_dim, _get_e2m1_luts
+from .functional import _check_block_dim, _get_e2m1_luts
 
 
 @dataclass

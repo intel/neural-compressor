@@ -23,9 +23,9 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from ..config import ModuleQuantConfig
-from ..modules import QuantLinear
-from ..quantizer import TensorQuantizer
-from ..registry import register_quant_module
+from ..conversion import register_quant_module
+from ..quant_linear import QuantLinear
+from ..tensor_quantizer import TensorQuantizer
 
 QuantOrder = Literal["lora_then_quant", "quant_then_lora"]
 

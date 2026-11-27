@@ -22,7 +22,7 @@ import torch.nn as nn
 
 from neural_compressor.torch.algorithms.qat.quant_linear import QuantLinear
 from neural_compressor.torch.algorithms.qat.tensor_quantizer import TensorQuantizer
-from neural_compressor.torch.quantization.fake_quant import ModuleQuantConfig, QuantizerConfig
+from neural_compressor.torch.quantization import ModuleQuantConfig, QuantizerConfig
 
 
 def build_quant_linear(in_features=32, out_features=16, bias=True):

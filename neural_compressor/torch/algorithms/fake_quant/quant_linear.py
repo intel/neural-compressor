@@ -20,8 +20,8 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 from .config import ModuleQuantConfig
-from .quantizer import TensorQuantizer
-from .registry import register_quant_module
+from .conversion import register_quant_module
+from .tensor_quantizer import TensorQuantizer
 
 
 @register_quant_module(nn.Linear)

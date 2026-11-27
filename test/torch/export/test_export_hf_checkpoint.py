@@ -33,13 +33,14 @@ from neural_compressor.torch.export import (
     export_hf_checkpoint,
     pack_linear_tensors,
 )
-from neural_compressor.torch.quantization import FakeQuantConfig, prepare_qat
-from neural_compressor.torch.quantization.fake_quant import (
+from neural_compressor.torch.algorithms.fake_quant import ensure_peft_torchao_compat
+from neural_compressor.torch.quantization import (
+    FakeQuantConfig,
     QuantizerConfig,
     QuantSchemeRule,
     TensorQuantizer,
     calibrate_static_amax,
-    ensure_peft_torchao_compat,
+    prepare_qat,
     save_quantizer_state,
 )
 

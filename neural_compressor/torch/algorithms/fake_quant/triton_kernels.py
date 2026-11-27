@@ -14,7 +14,7 @@
 """Fused single-pass Triton QDQ kernels for MXFP4, NVFP4, MXFP8, and FP8 E4M3.
 
 Key properties:
-1. **0-ULP bit-level parity** with ``ops/qdq.py`` (``"pytorch"`` backend) and
+1. **0-ULP bit-level parity** with ``functional.py`` (``"pytorch"`` backend) and
    NVIDIA ModelOpt CUDA kernels across random, boundary, midpoint, zero, and
    subnormal inputs by using IEEE-754 ``tl.div_rn``, NVIDIA ``libdevice``
    ``log2``/``ceil``/``exp2``, and exact register-predicated E2M1 round-to-even.
@@ -31,7 +31,7 @@ from typing import Optional
 
 import torch
 
-from ..formats import QuantFormat
+from .formats import QuantFormat
 
 try:
     import triton

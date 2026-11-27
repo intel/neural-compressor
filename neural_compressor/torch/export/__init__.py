@@ -11,9 +11,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Export subsystem for HuggingFace ``compressed-tensors`` / ``bf16`` and VLM surgery."""
+"""Export subsystem for HuggingFace ``compressed-tensors`` / ``bf16`` and VLM checkpoints."""
 
-from .compressed_tensors_packer import (
+from .compressed_tensors import (
     LayerSchemeSpec,
     build_compressed_tensors_config,
     dequantize_compressed_tensors_layer,
@@ -26,7 +26,7 @@ from .export_hf import (
     export_hf2compressored_model,
     export_hf_checkpoint,
 )
-from .vlm_surgery import (
+from .hf_vlm_utils import (
     StreamingSafetensorsWriter,
     copy_auxiliary_hf_files,
     is_vlm_checkpoint,

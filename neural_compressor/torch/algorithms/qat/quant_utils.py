@@ -20,7 +20,7 @@
 """Export helpers for fake-quant/QAT models.
 
 Only the HF/compressed-tensors export helpers remain here. Model conversion
-moved to :mod:`neural_compressor.torch.quantization.fake_quant` (see
+moved to :mod:`neural_compressor.torch.algorithms.fake_quant` (see
 ``FakeQuantConfig`` and ``prepare_qat``), so this module no longer mutates
 module classes or builds quantized models.
 """

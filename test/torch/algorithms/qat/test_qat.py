@@ -19,8 +19,13 @@ import warnings
 import torch
 import torch.nn as nn
 
-from neural_compressor.torch.quantization import FakeQuantConfig, QuantSchemeRule, prepare_qat
-from neural_compressor.torch.quantization.fake_quant import QuantLinear, TensorQuantizer
+from neural_compressor.torch.quantization import (
+    FakeQuantConfig,
+    QuantLinear,
+    QuantSchemeRule,
+    TensorQuantizer,
+    prepare_qat,
+)
 
 
 class TinyModel(nn.Module):

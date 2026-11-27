@@ -5,7 +5,7 @@ Reference example for Intel Neural Compressor's composable PyTorch QAT + KD + QA
 - `neural_compressor.torch.quantization`: `FakeQuantConfig`, `QuantSchemeRule`, `prepare_qat`, `QATTrainer`, `QuantizationTrainingArguments`, fused Triton QDQ kernels, and PEFT `QuantLoraLinear`.
 - `neural_compressor.torch.distillation`: `DistillationConfig`, `DistillationTrainingArguments`, `KDTrainer`, chunked `TopKLogitsKLLoss` / `LogitsKLLoss`, FSDP2 teacher sharding, and zero-VRAM `teacher_model="self"`.
 - `neural_compressor.torch.qad`: `QADTrainingArguments`, `QADTrainer`, and `prepare_qad_model`.
-- `neural_compressor.torch.export`: `export_hf_checkpoint` (`export_format="bf16"` and `export_format="compressed_tensors"` real packed `MXFP4` + `FP8` / `MXFP8` / `NVFP4` for direct **vLLM** serving, including multimodal VLM text-tower surgery).
+- `neural_compressor.torch.export`: `export_hf_checkpoint` (`export_format="bf16"` and `export_format="compressed_tensors"` real packed `MXFP4` + `FP8` / `MXFP8` / `NVFP4` for direct **vLLM** serving, including multimodal VLM text-tower key remapping).
 
 What the shipped recipes train:
 
@@ -24,7 +24,6 @@ What the shipped recipes train:
 | Path | Purpose |
 |---|---|
 | `train.py` | Standard `HfArgumentParser((ModelDataArguments, QADTrainingArguments))` + `--config <yaml>` training script |
-| `main.py` | Backward-compatible legacy CLI shim translating v1 flags into `train.py` |
 | `modeling/qwen35_text_loader.py` | Streams `model.language_model.*` + `lm_head.*` from a Qwen3.5/3.8 VLM checkpoint into standard `Qwen3_5ForCausalLM` (plus optional `unsloth` loader) |
 | `data/megatron_indexed_dataset.py` | Memory-mapped Megatron `.bin/.idx` reader, `PackedDataset` (loss-masked padding), and `SyntheticDataset` |
 | `recipes/qwen3_8_27b_mxfp4_mlp_fp8_attn_lora.yaml` | Formal 4×GPU RTX Pro 6000 / H200 Path-B LoRA QAD recipe (`seq8192`, `gbs16`, `rank=32`, `warmup=50`, `wd=0.1`) |

@@ -28,7 +28,7 @@ from neural_compressor.common.base_config import BaseConfig, register_config
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, EMPTY_WHITE_LIST, FAKE_QUANT
 
 from .formats import BF16, FP8_E4M3, QuantFormat, get_format
-from .ops.qdq import QuantBackendName
+from .functional import QuantBackendName
 
 ObserverName = Literal["minmax", "max"]
 
@@ -587,7 +587,7 @@ class FakeQuantConfig(BaseConfig):
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> list[Tuple[str, str]]:
         """Collect ``(module_name, op_type)`` pairs for all registered quantizable modules."""
-        from .plan import _collect_supported_modules
+        from .conversion import _collect_supported_modules
 
         return _collect_supported_modules(model)  # type: ignore[return-value]
 
@@ -597,7 +597,7 @@ class FakeQuantConfig(BaseConfig):
         model_info: Optional[list[Tuple[str, Any]]] = None,
     ) -> OrderedDict[Tuple[str, Any], ModuleQuantConfig]:
         """Compile ``(module_name, op_type) -> ModuleQuantConfig`` mapping for INC ``quantize`` / ``prepare``."""
-        from .plan import compile_plan_from_info
+        from .conversion import match_quant_config_from_info
 
         config_list = [self] if config_list is None else config_list
         mapping: OrderedDict[Tuple[str, Any], ModuleQuantConfig] = OrderedDict()
@@ -606,14 +606,11 @@ class FakeQuantConfig(BaseConfig):
         for cfg in config_list:
             if not isinstance(cfg, FakeQuantConfig):
                 continue
-            report = compile_plan_from_info(model_info, cfg)
+            report = match_quant_config_from_info(model_info, cfg)
             for name, op_type in model_info:
                 if name in report.plan:
                     mapping[(name, op_type)] = report.plan[name]
         return mapping
-
-
-FakeQuantConfig.register_supported_configs()
 
 
 def get_default_fake_quant_config() -> FakeQuantConfig:

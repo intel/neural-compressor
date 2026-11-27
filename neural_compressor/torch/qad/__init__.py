@@ -21,19 +21,21 @@ into a single HuggingFace-native :class:`QADTrainer`.
 from neural_compressor.torch.distillation import DistillConfig, DistillationConfig
 
 from .args import QADTrainingArguments
-from .callbacks import GradDebugCallback, StopAfterSteps
-from .metrics import (
+from .trainer import QADTrainer, prepare_qad_model
+from .utils import (
+    GradDebugCallback,
     PEAK_BF16,
+    StopAfterSteps,
+    decoder_layer_class_names,
     device_hardware_name,
     gib,
     memory_report,
     param_counts,
     per_token_flops,
     reset_peak_memory,
+    teacher_placement,
     tflops_and_mfu,
 )
-from .parallel import decoder_layer_class_names, teacher_placement
-from .trainer import QADTrainer, prepare_qad_model
 
 __all__ = [
     "DistillConfig",

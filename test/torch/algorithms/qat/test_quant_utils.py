@@ -21,7 +21,7 @@ from neural_compressor.torch.algorithms.qat.quant_utils import (
     get_quantization_format,
     is_quantlinear,
 )
-from neural_compressor.torch.quantization.fake_quant import ModuleQuantConfig, QuantizerConfig, QuantLinear
+from neural_compressor.torch.quantization import ModuleQuantConfig, QuantizerConfig, QuantLinear
 
 
 def _quant_linear(weight_format):

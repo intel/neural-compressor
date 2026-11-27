@@ -20,7 +20,7 @@
 """Compatibility shim for the legacy QAT ``QuantLinear``.
 
 The implementation moved to
-:mod:`neural_compressor.torch.quantization.fake_quant.modules`. Importing the
+:mod:`neural_compressor.torch.algorithms.fake_quant.quant_linear`. Importing the
 old path keeps downstream code working; new code should use
 ``neural_compressor.torch.quantization.QuantLinear`` (re-exported here) and
 ``FakeQuantConfig`` instead of ``prepare_qat(mapping=...)``.
@@ -28,6 +28,6 @@ old path keeps downstream code working; new code should use
 
 from __future__ import annotations
 
-from neural_compressor.torch.quantization.fake_quant.modules import QuantLinear
+from neural_compressor.torch.algorithms.fake_quant.quant_linear import QuantLinear
 
 __all__ = ["QuantLinear"]

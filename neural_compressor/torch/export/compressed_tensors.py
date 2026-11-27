@@ -13,7 +13,7 @@
 # limitations under the License.
 """Pack fake-quantized linear layers into ``compressed-tensors`` / ``vLLM`` layout.
 
-This module bridges :mod:`neural_compressor.torch.quantization.fake_quant` and
+This module bridges :mod:`neural_compressor.torch.algorithms.fake_quant` and
 ``compressed-tensors`` (>= 0.9) / ``vLLM`` (>= 0.8) without requiring either
 inference package to be installed in the training environment:
 
@@ -39,14 +39,14 @@ from typing import Any, Optional
 import torch
 import torch.nn as nn
 
-from neural_compressor.torch.quantization.fake_quant.formats import E2M1_MAX, E4M3_MAX, get_format
-from neural_compressor.torch.quantization.fake_quant.modules import QuantLinear
-from neural_compressor.torch.quantization.fake_quant.ops.pack import (
+from neural_compressor.torch.algorithms.fake_quant.formats import E2M1_MAX, E4M3_MAX, get_format
+from neural_compressor.torch.algorithms.fake_quant.pack import (
     PackedWeightTensor,
     dequantize_packed_weight,
     pack_weight,
 )
-from neural_compressor.torch.quantization.fake_quant.quantizer import TensorQuantizer
+from neural_compressor.torch.algorithms.fake_quant.quant_linear import QuantLinear
+from neural_compressor.torch.algorithms.fake_quant.tensor_quantizer import TensorQuantizer
 from neural_compressor.torch.utils import logger
 
 
@@ -431,7 +431,7 @@ def pack_model_to_compressed_tensors(
     Any ``QuantLoraLinear`` or PEFT wrapper on ``model`` should be merged beforehand via
     :func:`merge_lora_into_quant_linear` (handled automatically by ``export_hf_checkpoint``).
     """
-    from neural_compressor.torch.quantization.fake_quant import merge_lora_into_quant_linear
+    from neural_compressor.torch.algorithms.fake_quant import merge_lora_into_quant_linear
 
     model = merge_lora_into_quant_linear(model)
 

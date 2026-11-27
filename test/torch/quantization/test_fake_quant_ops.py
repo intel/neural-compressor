@@ -19,19 +19,19 @@ import pytest
 import torch
 import torch.nn as nn
 
-from neural_compressor.torch.quantization.fake_quant import (
+from neural_compressor.torch.algorithms.fake_quant import (
     ModuleQuantConfig,
     QuantLinear,
     QuantizerConfig,
     dequantize_packed_weight,
     fake_quant_dynamic,
     fake_quant_fp8_static_amax,
+    functional as qdq_mod,
     pack_nibbles,
     pack_weight,
     ste_fake_quant,
     unpack_nibbles,
 )
-from neural_compressor.torch.quantization.fake_quant.ops import qdq as qdq_mod
 
 
 def test_e2m1_round_half_to_even_midpoints():

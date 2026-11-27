@@ -28,15 +28,11 @@ from transformers import Trainer, TrainingArguments
 
 from neural_compressor.torch.utils import logger
 
-from .fake_quant import (
-    FakeQuantConfig,
-    TensorQuantizer,
-    calibrate_static_amax,
-    load_quantizer_state,
-    merge_lora_into_quant_linear,
-    save_quantizer_state,
-)
-from .quantize import prepare_qat
+from .calib import calibrate_static_amax
+from .config import FakeQuantConfig
+from .plugins import merge_lora_into_quant_linear
+from .save_load import load_quantizer_state, save_quantizer_state
+from .tensor_quantizer import TensorQuantizer
 
 
 def unwrap_model(model: Any) -> nn.Module:
@@ -209,6 +205,8 @@ class QATTrainer(Trainer):
             ensure_peft_gradient_checkpointing_delegation(model)
             has_quantizers = any(isinstance(m, TensorQuantizer) for m in model.modules())
             if quant_config is not None and not has_quantizers:
+                from neural_compressor.torch.quantization.quantize import prepare_qat
+
                 prepare_qat(model, quant_config)
             if quantizer_state_path is not None:
                 load_quantizer_state(model, quantizer_state_path, strict=False)

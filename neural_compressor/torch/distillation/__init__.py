@@ -21,7 +21,7 @@ from .offline_topk import (
     extract_teacher_topk_batch,
     save_precomputed_topk_shard,
 )
-from .packing import pack_sft_sequences
+from .seq_packing import pack_sft_sequences
 
 __all__ = [
     "DistillConfig",

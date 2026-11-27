@@ -32,7 +32,7 @@ from neural_compressor.torch.distillation import (
     topk_kl,
 )
 from neural_compressor.torch.quantization import FakeQuantConfig, prepare_qat
-from neural_compressor.torch.quantization.fake_quant import QuantLoraLinear, ensure_peft_torchao_compat
+from neural_compressor.torch.algorithms.fake_quant import QuantLoraLinear, ensure_peft_torchao_compat
 
 
 def _tiny_qwen2():

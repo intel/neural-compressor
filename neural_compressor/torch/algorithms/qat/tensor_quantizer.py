@@ -20,10 +20,10 @@
 """Compatibility shim for the legacy QAT ``TensorQuantizer``.
 
 The implementation moved to
-:mod:`neural_compressor.torch.quantization.fake_quant.quantizer`. The old
+:mod:`neural_compressor.torch.algorithms.fake_quant.tensor_quantizer`. The old
 constructor (auto_round ``data_type``/``bits`` keyword arguments) is still
 accepted for one release and translated to a
-:class:`~neural_compressor.torch.quantization.fake_quant.options.QuantizerConfig`.
+:class:`~neural_compressor.torch.algorithms.fake_quant.config.QuantizerConfig`.
 """
 
 from __future__ import annotations
@@ -32,8 +32,8 @@ import warnings
 
 import torch
 
-from neural_compressor.torch.quantization.fake_quant.config import QuantizerConfig
-from neural_compressor.torch.quantization.fake_quant.quantizer import TensorQuantizer as _TensorQuantizer
+from neural_compressor.torch.algorithms.fake_quant.config import QuantizerConfig
+from neural_compressor.torch.algorithms.fake_quant.tensor_quantizer import TensorQuantizer as _TensorQuantizer
 
 _LEGACY_DATA_TYPES = {
     "mx_fp8": "mxfp8",

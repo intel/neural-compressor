@@ -11,17 +11,21 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Training metrics: FLOPs/MFU, memory and parameter counts.
+"""QAD training utilities: throughput/memory metrics, callbacks, and FSDP2 layer discovery.
 
-All numbers report their basis (peak table, per-device vs cluster). Unknown
+All FLOPs/MFU numbers report their basis (peak table, per-device vs cluster). Unknown
 devices return ``mfu=None`` instead of a made-up denominator.
 """
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import List, Optional
 
 import torch
+import torch.nn as nn
+from transformers import TrainerCallback
+
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 PEAK_BF16 = {
     "NVIDIA H200": 989e12,
@@ -154,13 +158,108 @@ def param_counts(model: torch.nn.Module) -> dict:
     return {"params_total": total, "params_trainable": trainable}
 
 
+def _find_layers(model: nn.Module) -> Optional[nn.ModuleList]:
+    """Walk wrapper attributes (PeftModel/VLM/DDP) looking for decoder ``nn.ModuleList``."""
+    for list_attr in ("layers", "h", "blocks", "block"):
+        layers = getattr(model, list_attr, None)
+        if isinstance(layers, nn.ModuleList) and len(layers) > 0:
+            return layers
+    for attr in ("language_model", "base_model", "model", "transformer", "module"):
+        sub = getattr(model, attr, None)
+        if isinstance(sub, nn.Module) and sub is not model:
+            found = _find_layers(sub)
+            if found is not None:
+                return found
+    return None
+
+
+def decoder_layer_class_names(model: nn.Module) -> List[str]:
+    """Return decoder block class names for ``fsdp_config["transformer_layer_cls_to_wrap"]``.
+
+    Discovers actual decoder layer classes (including hybrid GatedDeltaNet + Attention or MoE
+    blocks) directly from ``model`` while walking ``PeftModel`` / VLM / DDP wrappers, falling
+    back to HuggingFace ``_no_split_modules`` when available.
+    """
+    layers = _find_layers(model)
+    if layers is not None and len(layers) > 0:
+        return sorted({type(layer).__name__ for layer in layers})
+
+    cur: nn.Module = model
+    for attr in ("module", "base_model", "model"):
+        sub = getattr(cur, attr, None)
+        if isinstance(sub, nn.Module):
+            cur = sub
+    no_split = getattr(cur, "_no_split_modules", None)
+    if no_split:
+        return sorted(str(name) for name in no_split)
+    return []
+
+
+def teacher_placement(model: nn.Module) -> str:
+    """Return a suggested teacher placement for ``model``.
+
+    Models under 8B parameters default to the active local accelerator (e.g. ``"cuda"`` / ``"xpu"``);
+    larger models (such as a 27B teacher alongside a 27B student) default to FSDP2 ``"shard"``.
+    """
+    try:
+        n_params = sum(param.numel() for param in model.parameters())
+    except Exception:
+        return "shard"
+    if n_params < 8e9:
+        acc_name = auto_detect_accelerator().name()
+        return acc_name if acc_name in ("cuda", "cpu") else "shard"
+    return "shard"
+
+
+class GradDebugCallback(TrainerCallback):
+    """Report non-finite gradients by parameter name before the optimizer step."""
+
+    def on_pre_optimizer_step(self, args, state, control, model=None, **kwargs):
+        """Scan gradients and print the offending parameters."""
+        if model is None:
+            return
+        bad = 0
+        for name, param in model.named_parameters():
+            grad = param.grad
+            if grad is None:
+                continue
+            local = grad.to_local() if hasattr(grad, "to_local") else grad
+            if not torch.isfinite(local).all():
+                bad += 1
+                print(
+                    f"[grad-nan] step={state.global_step} {name} "
+                    f"shape={tuple(local.shape)} dtype={local.dtype} "
+                    f"finite={torch.isfinite(local).float().mean().item():.3f}",
+                    flush=True,
+                )
+        if bad == 0:
+            print(f"[grad-nan] step={state.global_step} all grads finite", flush=True)
+
+
+class StopAfterSteps(TrainerCallback):
+    """Stop after N optimizer steps while keeping a longer LR schedule."""
+
+    def __init__(self, step: int) -> None:
+        """Store the stopping step."""
+        self.step = step
+
+    def on_step_end(self, args, state, control, **kwargs):
+        """Request a stop once the target step is reached."""
+        if self.step and state.global_step >= self.step:
+            control.should_training_stop = True
+
+
 __all__ = [
+    "GradDebugCallback",
     "PEAK_BF16",
+    "StopAfterSteps",
+    "decoder_layer_class_names",
     "device_hardware_name",
     "gib",
     "memory_report",
     "param_counts",
     "per_token_flops",
     "reset_peak_memory",
+    "teacher_placement",
     "tflops_and_mfu",
 ]

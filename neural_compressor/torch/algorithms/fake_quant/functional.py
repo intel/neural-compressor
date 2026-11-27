@@ -29,7 +29,7 @@ from typing import Callable, Literal, Optional
 
 import torch
 
-from ..formats import (
+from .formats import (
     E2M1_BOUNDS,
     E2M1_MAX,
     E2M1_VALUES,
