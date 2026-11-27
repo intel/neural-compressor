@@ -27,7 +27,27 @@ def _iter_named_quantizers(model: nn.Module) -> list[tuple[str, TensorQuantizer]
     return [(name, mod) for name, mod in model.named_modules() if isinstance(mod, TensorQuantizer)]
 
 
-def _observe_static_weights(model: nn.Module, *, only_uncalibrated: bool = False) -> None:
+def _infer_model_device(model: nn.Module) -> torch.device:
+    for p in model.parameters():
+        if p.device.type == "meta":
+            continue
+        mesh = getattr(p, "device_mesh", None)
+        if mesh is not None and getattr(mesh, "device_type", None) == "cuda" and torch.cuda.is_available():
+            return torch.device("cuda", torch.cuda.current_device())
+        if p.device.type != "cpu":
+            return p.device
+    for b in model.buffers():
+        if b.device.type not in ("meta", "cpu"):
+            return b.device
+    return torch.device("cpu")
+
+
+def _observe_static_weights(
+    model: nn.Module,
+    *,
+    only_uncalibrated: bool = False,
+    device: Optional[torch.device] = None,
+) -> None:
     """Directly observe static weight quantizers so unrouted MoE experts still receive weight amax."""
     for mod in model.modules():
         wq = getattr(mod, "weight_quantizer", None)
@@ -41,22 +61,24 @@ def _observe_static_weights(model: nn.Module, *, only_uncalibrated: bool = False
             weight = mod.effective_weight()
         if isinstance(weight, torch.Tensor):
             wq.observe(weight)
+            if device is not None and device.type != "meta" and wq.amax is not None and wq.amax.device != device:
+                wq.amax = wq.amax.to(device=device, dtype=torch.float32)
 
 
-def _forward_batch(model: nn.Module, batch: Any) -> None:
-    device = next((p.device for p in model.parameters() if p.device.type != "meta"), torch.device("cpu"))
+def _forward_batch(model: nn.Module, batch: Any, *, device: Optional[torch.device] = None) -> None:
+    target_device = device if device is not None else _infer_model_device(model)
     if isinstance(batch, Mapping):
         kwargs = {
-            k: (v.to(device) if isinstance(v, torch.Tensor) else v)
+            k: (v.to(target_device) if isinstance(v, torch.Tensor) else v)
             for k, v in batch.items()
             if k not in ("labels", "loss_mask")
         }
         model(**kwargs)
     elif isinstance(batch, (tuple, list)):
-        args = [v.to(device) if isinstance(v, torch.Tensor) else v for v in batch]
+        args = [v.to(target_device) if isinstance(v, torch.Tensor) else v for v in batch]
         model(*args)
     elif isinstance(batch, torch.Tensor):
-        model(batch.to(device))
+        model(batch.to(target_device))
     else:
         raise TypeError(f"Unsupported calibration batch type {type(batch).__name__}")
 
@@ -68,6 +90,7 @@ def calibrate_static_amax(
     dataloader: Optional[Iterable[Any]] = None,
     num_batches: Optional[int] = None,
     distributed_sync: bool = True,
+    device: Optional[torch.device] = None,
 ) -> dict[str, float]:
     """Calibrate all enabled static :class:`TensorQuantizer` modules in ``model``.
 
@@ -99,6 +122,7 @@ def calibrate_static_amax(
     for q in enabled_dynamic:
         q.disable_quant()
 
+    resolved_device = device if device is not None else _infer_model_device(model)
     try:
         model.eval()
         with torch.no_grad():
@@ -109,8 +133,8 @@ def calibrate_static_amax(
                 for step, batch in enumerate(dataloader):
                     if num_batches is not None and step >= num_batches:
                         break
-                    _forward_batch(model, batch)
-            _observe_static_weights(model, only_uncalibrated=True)
+                    _forward_batch(model, batch, device=resolved_device)
+            _observe_static_weights(model, only_uncalibrated=True, device=resolved_device)
     finally:
         for _, q in named_static:
             q.disable_calib()

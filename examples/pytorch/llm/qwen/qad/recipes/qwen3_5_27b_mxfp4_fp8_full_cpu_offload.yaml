@@ -15,13 +15,14 @@ quant:
       input_activations: {format: fp8_e4m3, dynamic: false}
   ignore: ['lm_head', 're:.*mlp\.gate$']
 
-calib_batches: 8
+calib_batches: 32
 
 # Distillation (teacher_model_name_or_path defaults to model_name_or_path when omitted)
 teacher_placement: shard
 kd_loss_type: topk_kl
 kd_top_k: 4096
 kd_temperature: 1.0
+kd_reverse_kl: false
 kd_loss_weight: 1.0
 ce_loss_weight: 0.0
 logits_chunk_size: 1024
@@ -42,7 +43,7 @@ max_grad_norm: 1.0
 adam_beta1: 0.9
 adam_beta2: 0.95
 adam_epsilon: 1.0e-8
-seed: 42
+seed: 1234
 logging_steps: 1
 save_strategy: steps
 save_steps: 500

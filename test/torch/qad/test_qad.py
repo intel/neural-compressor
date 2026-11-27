@@ -18,10 +18,10 @@ import json
 import struct
 import sys
 import tempfile
-from types import SimpleNamespace
 import unittest
-from unittest.mock import patch
 from pathlib import Path
+from types import SimpleNamespace
+from unittest.mock import patch
 
 import numpy as np
 import torch
@@ -29,9 +29,9 @@ import torch.nn.functional as F
 from transformers import TrainingArguments
 
 from neural_compressor.torch.distillation import (
-    DistillConfig,
     DistillationConfig,
     DistillationTrainingArguments,
+    DistillConfig,
     LogitsKLLoss,
     TopKLogitsKLLoss,
     topk_kl,
@@ -46,9 +46,9 @@ from neural_compressor.torch.qad import (
 )
 from neural_compressor.torch.quantization import (
     FakeQuantConfig,
+    QuantizationTrainingArguments,
     QuantLoraLinear,
     QuantSchemeRule,
-    QuantizationTrainingArguments,
     prepare_qat,
     quantize,
     save_fsdp2_peft_adapter,
@@ -283,8 +283,12 @@ class TestQADTrainer(unittest.TestCase):
         loss = trainer.compute_loss(student, batch)
 
         with torch.no_grad():
-            student_logits = student(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits
-            teacher_logits = teacher(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits
+            student_logits = student(
+                input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False
+            ).logits
+            teacher_logits = teacher(
+                input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False
+            ).logits
             manual = topk_kl(student_logits, teacher_logits, k=16).mean()
         torch.testing.assert_close(loss, manual)
 
@@ -319,8 +323,12 @@ class TestDistillModes(unittest.TestCase):
         }
         loss = trainer.compute_loss(student, batch)
         with torch.no_grad():
-            student_logits = student(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits
-            teacher_logits = trainer.teacher(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits
+            student_logits = student(
+                input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False
+            ).logits
+            teacher_logits = trainer.teacher(
+                input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False
+            ).logits
             expected = topk_kl(student_logits, teacher_logits, k=16, reverse=True).mean()
         torch.testing.assert_close(loss, expected)
 
@@ -332,14 +340,22 @@ class TestDistillModes(unittest.TestCase):
         }
         loss = trainer.compute_loss(student, batch)
         with torch.no_grad():
-            student_logits = student(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits.float()
-            teacher_logits = trainer.teacher(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits.float()
-            expected = F.kl_div(
-                F.log_softmax(student_logits, dim=-1),
-                F.log_softmax(teacher_logits, dim=-1),
-                reduction="none",
-                log_target=True,
-            ).sum(dim=-1).mean()
+            student_logits = student(
+                input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False
+            ).logits.float()
+            teacher_logits = trainer.teacher(
+                input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False
+            ).logits.float()
+            expected = (
+                F.kl_div(
+                    F.log_softmax(student_logits, dim=-1),
+                    F.log_softmax(teacher_logits, dim=-1),
+                    reduction="none",
+                    log_target=True,
+                )
+                .sum(dim=-1)
+                .mean()
+            )
         torch.testing.assert_close(loss, expected)
 
     def test_full_vocab_reverse_matches_manual_formula(self):
@@ -350,14 +366,22 @@ class TestDistillModes(unittest.TestCase):
         }
         loss = trainer.compute_loss(student, batch)
         with torch.no_grad():
-            student_logits = student(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits.float()
-            teacher_logits = trainer.teacher(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits.float()
-            expected = F.kl_div(
-                F.log_softmax(teacher_logits, dim=-1),
-                F.log_softmax(student_logits, dim=-1),
-                reduction="none",
-                log_target=True,
-            ).sum(dim=-1).mean()
+            student_logits = student(
+                input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False
+            ).logits.float()
+            teacher_logits = trainer.teacher(
+                input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False
+            ).logits.float()
+            expected = (
+                F.kl_div(
+                    F.log_softmax(teacher_logits, dim=-1),
+                    F.log_softmax(student_logits, dim=-1),
+                    reduction="none",
+                    log_target=True,
+                )
+                .sum(dim=-1)
+                .mean()
+            )
         torch.testing.assert_close(loss, expected)
 
     def test_plain_ce(self):
@@ -369,7 +393,9 @@ class TestDistillModes(unittest.TestCase):
         }
         loss = trainer.compute_loss(student, batch)
         with torch.no_grad():
-            logits = student(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits
+            logits = student(
+                input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False
+            ).logits
             expected = F.cross_entropy(
                 logits[:, :-1].reshape(-1, logits.shape[-1]).float(), batch["labels"][:, 1:].reshape(-1)
             )
@@ -391,7 +417,13 @@ class TestLoraAndExportRoundtrip(unittest.TestCase):
         return prepare_qad_model(
             tiny_model(),
             cfg,
-            lora_config={"r": 4, "lora_alpha": 4, "target_modules": ["q_proj"], "bias": "none", "task_type": "CAUSAL_LM"},
+            lora_config={
+                "r": 4,
+                "lora_alpha": 4,
+                "target_modules": ["q_proj"],
+                "bias": "none",
+                "task_type": "CAUSAL_LM",
+            },
             lora_merge_before_quant=merge_before_quant,
         )
 
@@ -496,8 +528,14 @@ class TestWrapperAndExampleHelpers(unittest.TestCase):
         self.assertTrue(all(parameter.grad is None for parameter in teacher.parameters()))
 
     def test_save_adapter_keeps_trained_weights(self):
+        from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import checkpoint_wrapper
+
         model = _apply_peft_lora(tiny_model(), merge_before_quant=False)
         expected = {name: value.detach().clone() for name, value in model.state_dict().items() if "lora_" in name}
+        # Wrap decoder layers in CheckpointWrapper to mirror FSDP2 `activation_checkpointing=True`
+        layers = model.base_model.model.model.layers
+        for idx in range(len(layers)):
+            layers[idx] = checkpoint_wrapper(layers[idx])
         with tempfile.TemporaryDirectory() as tmp:
             self.assertTrue(save_fsdp2_peft_adapter(model, tmp, should_save=True))
             reloaded = _apply_peft_lora(tiny_model(), merge_before_quant=False)

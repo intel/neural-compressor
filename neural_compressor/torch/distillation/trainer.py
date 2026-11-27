@@ -106,6 +106,18 @@ def _place_teacher_model(teacher: nn.Module, placement: str, device: torch.devic
         if layers is not None:
             for layer in layers:
                 fully_shard(layer, mp_policy=mp_policy, reshard_after_forward=True)
+        get_in = getattr(teacher, "get_input_embeddings", None)
+        get_out = getattr(teacher, "get_output_embeddings", None)
+        in_emb = get_in() if callable(get_in) else None
+        out_emb = get_out() if callable(get_out) else None
+        is_tied = (
+            isinstance(in_emb, nn.Module)
+            and isinstance(out_emb, nn.Module)
+            and getattr(in_emb, "weight", None) is not None
+            and getattr(in_emb, "weight", None) is getattr(out_emb, "weight", None)
+        )
+        if isinstance(in_emb, nn.Module) and not is_tied:
+            fully_shard(in_emb, mp_policy=mp_policy, reshard_after_forward=True)
         fully_shard(teacher, mp_policy=mp_policy, reshard_after_forward=True)
         return teacher.to(device)
 
@@ -260,6 +272,9 @@ class KDTrainer(Trainer):
 
         self._last_loss_parts: dict[str, float] = {}
         super().__init__(model=model, args=args, *pos_args, **kwargs)
+        # KDTrainer.compute_loss returns a per-microbatch mean loss, so instruct
+        # HF Trainer to scale by 1 / gradient_accumulation_steps as standard.
+        self.model_accepts_loss_kwargs = False
         if self.teacher is not None:
             self.teacher = _place_teacher_model(self.teacher, self.distill.teacher_device, self.args.device)
 

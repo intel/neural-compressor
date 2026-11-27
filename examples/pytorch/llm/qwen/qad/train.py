@@ -29,16 +29,16 @@ Example invocations:
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
 import os
 import sys
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Optional
 
 import torch
 import torch.distributed as dist
-from transformers import HfArgumentParser
 import yaml
+from transformers import HfArgumentParser
 
 EXAMPLE_ROOT = Path(__file__).resolve().parent
 if str(EXAMPLE_ROOT) not in sys.path:
@@ -271,7 +271,9 @@ def _normalize_yaml_dict(raw: dict[str, Any], yaml_path: str) -> tuple[dict[str,
     return flat, inline_quant
 
 
-def _parse_cli_overrides_into_dict(base: dict[str, Any], cli_argv: list[str], parser: HfArgumentParser) -> dict[str, Any]:
+def _parse_cli_overrides_into_dict(
+    base: dict[str, Any], cli_argv: list[str], parser: HfArgumentParser
+) -> dict[str, Any]:
     """Apply explicit CLI flags on top of ``base`` dictionary before ``parser.parse_dict``."""
     merged = dict(base)
     action_map: dict[str, Any] = {}
@@ -318,7 +320,9 @@ def _parse_cli_overrides_into_dict(base: dict[str, Any], cli_argv: list[str], pa
     return merged
 
 
-def parse_args(argv: Optional[list[str]] = None) -> tuple[ModelDataArguments, QADTrainingArguments, Optional[FakeQuantConfig]]:
+def parse_args(
+    argv: Optional[list[str]] = None,
+) -> tuple[ModelDataArguments, QADTrainingArguments, Optional[FakeQuantConfig]]:
     raw_argv = list(sys.argv[1:] if argv is None else argv)
     config_path, cli_argv = _extract_config_path_and_remaining_argv(raw_argv)
     parser = HfArgumentParser((ModelDataArguments, QADTrainingArguments))
@@ -425,6 +429,7 @@ def run_training(argv: Optional[list[str]] = None) -> QADTrainer:
         )
         if legacy_amax_source:
             import importlib.util
+
             from neural_compressor.torch.algorithms.fake_quant import load_quantizer_state_dict
 
             conv_spec = importlib.util.spec_from_file_location(
@@ -475,7 +480,9 @@ def run_training(argv: Optional[list[str]] = None) -> QADTrainer:
         data_collator = default_collator
     else:
         if not model_args.data_prefix:
-            raise ValueError("Provide `--data_prefix <prefix>`, `--offline_topk_dir <dir>`, or `--synthetic_batches N`.")
+            raise ValueError(
+                "Provide `--data_prefix <prefix>`, `--offline_topk_dir <dir>`, or `--synthetic_batches N`."
+            )
         train_dataset = PackedDataset(model_args.data_prefix, training_args.seq_length)
         data_collator = default_collator
 
@@ -517,4 +524,8 @@ def run_training(argv: Optional[list[str]] = None) -> QADTrainer:
 
 
 if __name__ == "__main__":
-    run_training()
+    try:
+        run_training()
+    finally:
+        if dist.is_available() and dist.is_initialized():
+            dist.destroy_process_group()

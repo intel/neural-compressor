@@ -110,6 +110,7 @@ def _without_quantizer_buffers(state: dict[str, torch.Tensor]) -> dict[str, torc
 
 def save_fsdp2_peft_adapter(model: nn.Module, out_dir: Union[str, Path], *, should_save: bool) -> bool:
     """Gather sharded PEFT LoRA adapter parameters under FSDP2 and save a PEFT checkpoint."""
+    from safetensors.torch import load_file, save_file
     from torch.distributed.checkpoint.state_dict import get_model_state_dict
 
     state = get_model_state_dict(model)
@@ -123,7 +124,26 @@ def save_fsdp2_peft_adapter(model: nn.Module, out_dir: Union[str, Path], *, shou
     if should_save:
         out = Path(out_dir)
         out.mkdir(parents=True, exist_ok=True)
-        unwrap_model(model).save_pretrained(out, state_dict=gathered)
+        peft_model = unwrap_model(model)
+        peft_model.save_pretrained(out, state_dict=gathered)
+        # PyTorch FSDP2 activation checkpointing inserts `_checkpoint_wrapped_module` into
+        # `named_modules()` while `get_model_state_dict` strips it, causing PEFT >= 0.15's
+        # prefix matcher to write an empty `adapter_model.safetensors`. Repair per adapter if empty.
+        peft_cfgs = getattr(peft_model, "peft_config", {}) or {"default": None}
+        for adapter_name in peft_cfgs:
+            adapter_dir = out if adapter_name == "default" else out / adapter_name
+            st_path = adapter_dir / "adapter_model.safetensors"
+            if st_path.is_file() and len(load_file(str(st_path))) == 0:
+                needle = f".{adapter_name}."
+                repaired = {}
+                for key, tensor in gathered.items():
+                    clean_key = key.replace("._checkpoint_wrapped_module.", ".")
+                    if needle in clean_key:
+                        repaired[clean_key.replace(needle, ".")] = tensor.contiguous()
+                    elif adapter_name == "default":
+                        repaired[clean_key] = tensor.contiguous()
+                if repaired:
+                    save_file(repaired, str(st_path), metadata={"format": "pt"})
     return True
 
 
@@ -277,6 +297,7 @@ class QATTrainer(Trainer):
                     dataloader=self._build_calib_dataloader(),
                     num_batches=self.calib_batches,
                     distributed_sync=True,
+                    device=self.args.device,
                 )
             pending = self._uncalibrated_static_quantizers()
             if pending:
