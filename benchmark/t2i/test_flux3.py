@@ -7,14 +7,14 @@ import sys
 import tempfile
 import types
 import unittest
-from contextlib import nullcontext
 from pathlib import Path
 from unittest.mock import patch
 
-from flux3 import configure_package, load_prompt_cache
 from PIL import Image
 
 import benchmark
+from benchmark import configure_flux3_package as configure_package
+from benchmark import load_prompt_cache
 
 
 class Flux3Tests(unittest.TestCase):
@@ -56,27 +56,23 @@ class Flux3Tests(unittest.TestCase):
         with self.assertRaises(FileNotFoundError):
             configure_package(self.root, {}, None)
 
-    def test_quantization_scope_includes_top_level_linears(self):
+    def test_prepared_quantization_config_is_used_unchanged(self):
         quant = {
             "quant_method": "auto-round",
             "bits": 8,
             "group_size": 32,
             "data_type": "mx_fp",
             "packing_format": "auto_round:llm_compressor",
+            "block_name_to_quantize": "single_blocks.0.q_proj,early_stream_modulations.image.lin,final_layer.image.linear",
         }
         self.write("quantization_config.json", quant)
-        names = [
-            "single_blocks.0.q_proj.weight_scale",
-            "early_stream_modulations.image.lin.weight_scale",
-            "final_layer.image.linear.weight_scale",
-            "txt_in.weight",
-        ]
-        fake = types.SimpleNamespace(safe_open=lambda *a, **k: nullcontext(types.SimpleNamespace(keys=lambda: names)))
+        before = (self.root / "quantization_config.json").read_bytes()
+        fake = types.SimpleNamespace(safe_open=lambda *a, **k: self.fail("Benchmark must not inspect weights"))
         settings = {}
         with patch.dict(sys.modules, {"safetensors": fake}):
             self.assertEqual(configure_package(self.root, settings, None), "mxfp8")
-        actual = settings["quantization_config"]["block_name_to_quantize"].split(",")
-        self.assertEqual(actual, sorted(name.removesuffix(".weight_scale") for name in names[:-1]))
+        self.assertEqual(settings["quantization_config"], quant)
+        self.assertEqual((self.root / "quantization_config.json").read_bytes(), before)
         with self.assertRaises(ValueError):
             configure_package(self.root, {"quantization_config": quant}, None)
 

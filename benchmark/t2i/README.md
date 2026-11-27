@@ -104,8 +104,11 @@ subdirectory is not a native package. For MXFP8, prepare weights in the same
 native naming/layout with their serialized scales and an AutoRound
 `quantization_config.json` sidecar. Retain the shared package's
 `quantization: null`; only the transformer is quantized. Weight conversion and
-quantization are outside this benchmark. The runner derives exact quantized
-module names from the serialized scales, including modulation/output linears.
+quantization are outside this benchmark. Before running, replace the transformer
+with native MXFP8 weights and prepare a complete, engine-compatible sidecar,
+including the quantization scope for modulation/output linears. The runner uses
+that metadata unchanged: it does not replace components, scan weight tensors,
+or repair quantization metadata.
 
 ```bash
 T2I_GENERATE_PYTHON=/path/to/flux3-env/bin/python CUDA_VISIBLE_DEVICES=0 \
