@@ -77,7 +77,7 @@ def cfg_to_qconfig(tune_cfg, cfgs, op_infos_from_cfgs, output_tensor_id_op_name)
         tune_cfg (dict): dictionary of quantization configuration.
         cfgs (dict): configs loaded from ipex config path.
         op_infos_from_cfgs (dict): dict containing configs that have been parsed for each op.
-        output_tensor_ids_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
+        output_tensor_id_op_name (dict): dict containing op names corresponding to 'op_infos_from_cfgs'.
 
     Returns:
         user_cfg (dict): quantization configuration for ops.
