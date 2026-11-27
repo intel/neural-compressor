@@ -28,6 +28,7 @@ PRESETS = {
     "flux2-dev": (50, 4.0),
     "flux2-klein": (4, 1.0),
     "z-image-turbo": (8, 0.0),
+    "flux3-klein": (16, None),
 }
 FAMILY_PATTERNS = {
     "flux1-dev": "flux.1-dev",
@@ -35,9 +36,70 @@ FAMILY_PATTERNS = {
     "flux2-dev": "flux.2-dev",
     "flux2-klein": "flux.2-klein",
     "z-image-turbo": "z-image-turbo",
+    "flux3-klein": "flux-3-image-klein",
 }
 FLUX2_QUANTIZED_COMPONENTS = ("transformer", "text_encoder")
 PRECISIONS = ("bf16", "mxfp8")
+
+
+def configure_flux3_package(path, settings, guidance):
+    """Validate a distilled BFL package and configure native Omni loading."""
+    package = json.loads((path / "config.json").read_text())
+    if package.get("model") != "flux-3-image-klein" or not package.get("dit", {}).get("flow_map"):
+        raise ValueError("flux3-klein requires a distilled FLUX.3 Image Klein package")
+    if guidance is not None or package.get("sampler", {}).get("guidance") is not None:
+        raise ValueError("Distilled FLUX.3 does not support --guidance; omit it")
+    if package.get("quantization") is not None:
+        raise ValueError("Use a shared FLUX.3 package root with an AutoRound sidecar, not a variant")
+    for name in ("model.safetensors", "ae.safetensors", "text_encoder"):
+        if not (path / name).exists():
+            raise FileNotFoundError(f"Missing native FLUX.3 package asset: {path / name}")
+    for key, value in (("model_class_name", "Flux3Pipeline"), ("diffusion_load_format", "default")):
+        if settings.setdefault(key, value) != value:
+            raise ValueError(f"FLUX.3 requires native {key}={value!r}")
+    settings.setdefault("init_timeout", 1200)
+    settings.setdefault("stage_init_timeout", 1200)
+    sidecar = path / "quantization_config.json"
+    if not sidecar.exists():
+        return "bf16"
+    quant = json.loads(sidecar.read_text())
+    expected = {
+        "quant_method": "auto-round",
+        "bits": 8,
+        "group_size": 32,
+        "data_type": "mx_fp",
+        "packing_format": "auto_round:llm_compressor",
+    }
+    if not isinstance(quant, dict) or any(quant.get(key) != value for key, value in expected.items()):
+        raise ValueError("Native FLUX.3 requires an AutoRound MXFP8 checkpoint")
+    if "quantization" in settings or "quantization_config" in settings:
+        raise ValueError("FLUX.3 reads quantization from its checkpoint; do not override it")
+    # The native package and complete quantization scope must be prepared before benchmarking.
+    # Pass checkpoint metadata through unchanged; do not inspect or rewrite weights.
+    settings["quantization_config"] = quant
+    return "mxfp8"
+
+
+def load_prompt_cache(path, manifests):
+    """Reuse expanded prompts while keeping original captions for scoring."""
+    if path is None:
+        return {}, {"prompt_policy": "original"}
+    if len(manifests) != 1:
+        raise ValueError("--prompt-cache requires exactly one --manifest")
+    data = path.expanduser().read_bytes()
+    cache = json.loads(data)
+    rows, manifest = next(iter(manifests.values()))
+    if cache.get("manifest_sha256") != hashlib.sha256(manifest).hexdigest():
+        raise ValueError("Prompt cache manifest hash mismatch")
+    captions = cache.get("captions", {})
+    if not isinstance(captions, dict) or set(captions) != {str(row["id"]) for row in rows}:
+        raise ValueError("Prompt cache must contain exactly the manifest IDs")
+    if any(not isinstance(text, str) or not text.strip() for text in captions.values()):
+        raise ValueError("Cached prompts must be nonempty strings")
+    return captions, {
+        "prompt_policy": "cached_expansion_score_original",
+        "prompt_cache_sha256": hashlib.sha256(data).hexdigest(),
+    }
 
 
 def atomic_write(path, data):
@@ -261,6 +323,9 @@ def generate(args):
     if family is None and (args.steps is None or args.guidance is None):
         raise ValueError("Specify --family or both --steps and --guidance for this model")
     default_steps, default_guidance = PRESETS.get(family, (None, None))
+    prompt_cache = getattr(args, "prompt_cache", None)
+    if prompt_cache is not None and family != "flux3-klein":
+        raise ValueError("--prompt-cache is currently supported only for --family flux3-klein")
     if family == "flux2-dev":
         # Large text encoder and transformer shards can exceed the default on shared storage.
         settings.setdefault("init_timeout", 2400)
@@ -276,7 +341,12 @@ def generate(args):
     print(f"Resolving checkpoint {args.model_path}", flush=True)
     model_path, revision = checkpoint(args)
     checkpoint_path = Path(model_path).resolve()
-    precision = checkpoint_precision(checkpoint_path)
+    prompt_overrides, prompt_metadata = {}, {}
+    if family == "flux3-klein":
+        precision = configure_flux3_package(checkpoint_path, settings, args.guidance)
+        prompt_overrides, prompt_metadata = load_prompt_cache(prompt_cache, manifests)
+    else:
+        precision = checkpoint_precision(checkpoint_path)
     if args.dtype is not None and args.dtype != precision:
         raise ValueError(f"--dtype={args.dtype} does not match the checkpoint precision ({precision})")
     if precision == "bf16":
@@ -303,6 +373,7 @@ def generate(args):
         "height": args.height,
         "width": args.width,
         "base_seed": args.seed,
+        **prompt_metadata,
     }
     with ExitStack() as lock:
         open_run_lock(output_dir, lock)
@@ -349,11 +420,12 @@ def generate(args):
                         omni = Omni(model=omni_model, **settings)
                         engine.callback(omni.close)
                     seed = args.seed + row_id
+                    guidance_kwargs = {} if family == "flux3-klein" else {"guidance_scale": config["guidance"]}
                     params = OmniDiffusionSamplingParams(
                         height=config["height"],
                         width=config["width"],
                         seed=seed,
-                        guidance_scale=config["guidance"],
+                        **guidance_kwargs,
                         num_inference_steps=config["steps"],
                         num_outputs_per_prompt=1,
                     )
@@ -368,7 +440,7 @@ def generate(args):
                     )
                     started = time.perf_counter()
                     outputs = omni.generate(
-                        {"prompt": row["caption"], "modalities": ["image"]},
+                        {"prompt": prompt_overrides.get(str(row_id), row["caption"]), "modalities": ["image"]},
                         sampling_params_list=sampling,
                         use_tqdm=False,
                     )
@@ -408,6 +480,7 @@ def main():
     gen.add_argument("--width", type=positive_int, default=1024)
     gen.add_argument("--seed", type=int, default=42)
     gen.add_argument("--engine-kwargs", default="{}")
+    gen.add_argument("--prompt-cache", type=Path, help="FLUX.3 expanded-caption JSON; score original manifest captions")
     gen.set_defaults(func=generate)
 
     args = parser.parse_args()
