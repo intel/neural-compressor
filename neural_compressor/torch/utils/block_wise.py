@@ -73,7 +73,10 @@ def replace_forward(model):
         # update total_hidden_states, total_block_kwargs, per batch
         model.total_block_args.append(list(args))
         model.total_block_kwargs.append(kwargs)
-        raise ValueError
+        raise ValueError(
+            "Calibration inputs collected; this forward is only a capture hook "
+            "and returns nothing. " + '(internal: the temporary forward installed to capture calibration inputs has no result to return)'
+        )
 
     block_prefix, block_num = get_block_prefix(model)
     block_list = fetch_module(model, block_prefix)
