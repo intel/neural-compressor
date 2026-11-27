@@ -569,9 +569,13 @@ class TuningMonitor:
         # reach max trials
         reach_max_trials = self.trial_cnt >= self.tuning_config.max_trials
         # reach accuracy goal
+        # A zero baseline makes the threshold aseline * (1 - tolerable_loss) zero, and
+        # trial results are scores, so 	rial_result >= 0 holds on the first trial and
+        # tuning stopped immediately. A baseline of zero carries no reference to compare
+        # against, so treat it like an absent one and let max_trials/timeout decide.
         meet_accuracy_goal = (
             False
-            if self.baseline is None
+            if not self.baseline
             else self.tuning_history[-1].trial_result >= (self.baseline * (1 - self.tuning_config.tolerable_loss))
         )
         # [-1] is the last element representing the latest trail record.
