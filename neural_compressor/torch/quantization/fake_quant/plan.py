@@ -142,11 +142,7 @@ def compile_plan_from_info(
 
     entries = list(model_info)
     parent_roots = {name for name, _ in entries}
-    filtered_entries = [
-        (name, op_type)
-        for name, op_type in entries
-        if not _has_proper_ancestor(name, parent_roots)
-    ]
+    filtered_entries = [(name, op_type) for name, op_type in entries if not _has_proper_ancestor(name, parent_roots)]
 
     report = PlanReport()
     for module_name, op_type in filtered_entries:

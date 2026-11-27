@@ -351,8 +351,7 @@ class FakeQuantConfig(BaseConfig):
             ]
         else:
             self.config_groups = [
-                rule if isinstance(rule, QuantSchemeRule) else QuantSchemeRule.from_dict(rule)
-                for rule in config_groups
+                rule if isinstance(rule, QuantSchemeRule) else QuantSchemeRule.from_dict(rule) for rule in config_groups
             ]
         self.ignore: list[str] = list(DEFAULT_IGNORE) if ignore is None else list(ignore)
         self.quantizer_state_path: Optional[str] = (

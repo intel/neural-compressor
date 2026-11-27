@@ -97,9 +97,7 @@ class QuantLoraLinear(LoraLinear):
         if not isinstance(mod, LoraLinear):
             raise TypeError(f"QuantLoraLinear.from_lora expects peft.tuners.lora.Linear, got {type(mod).__name__}")
         if quant_order not in ("lora_then_quant", "quant_then_lora"):
-            raise ValueError(
-                f"Unknown quant_order {quant_order!r}; expected 'lora_then_quant' or 'quant_then_lora'."
-            )
+            raise ValueError(f"Unknown quant_order {quant_order!r}; expected 'lora_then_quant' or 'quant_then_lora'.")
         if quant_order == "lora_then_quant":
             for dropout in mod.lora_dropout.values():
                 if getattr(dropout, "p", 0.0) > 0:

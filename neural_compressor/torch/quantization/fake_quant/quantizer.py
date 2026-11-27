@@ -56,9 +56,7 @@ class TensorQuantizer(nn.Module):
         self.observer: str = self.config.observer
         self.backend: QuantBackendName = self.config.backend
 
-        init_amax = (
-            torch.tensor(float(self.config.amax), dtype=torch.float32) if self.config.amax is not None else None
-        )
+        init_amax = torch.tensor(float(self.config.amax), dtype=torch.float32) if self.config.amax is not None else None
         self.register_buffer("amax", init_amax, persistent=True)
 
     # ------------------------------------------------------------------
@@ -137,9 +135,7 @@ class TensorQuantizer(nn.Module):
         """Exit calibration mode and verify static quantizers hold a valid ``amax``."""
         self._calibrating = False
         if self._enabled and not self._dynamic and self.amax is None:
-            raise RuntimeError(
-                f"Static TensorQuantizer ({self.format.name}) was finalized without a calibrated amax."
-            )
+            raise RuntimeError(f"Static TensorQuantizer ({self.format.name}) was finalized without a calibrated amax.")
 
     # ------------------------------------------------------------------
     # Precision & checkpoint invariants

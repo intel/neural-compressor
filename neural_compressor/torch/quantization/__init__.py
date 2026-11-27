@@ -95,6 +95,7 @@ def __getattr__(name: str):
         return getattr(qat_trainer, name)
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
+
 ### Quantization Function Registration ###
 import neural_compressor.torch.quantization.algorithm_entry
 from neural_compressor.torch.quantization.save_load_entry import save, load

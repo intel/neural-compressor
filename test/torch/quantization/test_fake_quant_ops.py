@@ -296,4 +296,3 @@ def test_triton_backend_0ulp_parity_vs_modelopt():
     amax = torch.tensor(4.875, device=device, dtype=torch.float32)
     mo_fp8.amax = amax
     assert torch.equal(fake_quant_fp8_static_amax(x, amax, backend="triton"), mo_fp8(x))
-
