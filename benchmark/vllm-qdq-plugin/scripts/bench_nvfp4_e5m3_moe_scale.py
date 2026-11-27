@@ -13,7 +13,7 @@ sys.path.insert(0, os.path.join(REPO_ROOT, "src"))
 
 from vllm_qdq_plugin.qdq.cute import cute_qdq_status
 from vllm_qdq_plugin.qdq.nvfp4_e5m3 import _nvfp4_e5m3_qdq_reference, nvfp4_e5m3_qdq
-from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import nvfp4_e5m3_gs_qdq_cute
+from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import nvfp4_family_qdq_cute
 
 
 def measure(fn: Callable[[], torch.Tensor], warmup: int, iterations: int) -> float:
@@ -51,11 +51,9 @@ def benchmark_case(
         ("batched-reference", lambda: nvfp4_e5m3_qdq(x, 16, input_global_scale=row_scales)),
     ]
     if not shared_scale:
-        from vllm_qdq_plugin.qdq.nvfp4_e5m3_cute import nvfp4_e5m3_gs_qdq_per_row_cute
-
         expert_rows = [torch.where(expert_ids == expert)[0] for expert in range(experts)]
 
-        strategies.append(("batched-row-cute", lambda: nvfp4_e5m3_gs_qdq_per_row_cute(x, row_scales)))
+        strategies.append(("batched-row-cute", lambda: nvfp4_family_qdq_cute(x, 16, "UE5M3", row_scales)))
 
         def expert_loop_cute() -> torch.Tensor:
             output = torch.empty_like(x)
@@ -64,13 +62,13 @@ def benchmark_case(
                     output.index_copy_(
                         0,
                         indices,
-                        nvfp4_e5m3_gs_qdq_cute(x.index_select(0, indices).contiguous(), scales[expert]),
+                        nvfp4_family_qdq_cute(x.index_select(0, indices), 16, "UE5M3", scales[expert]),
                     )
             return output
 
         strategies.append(("expert-loop-cute", expert_loop_cute))
     else:
-        strategies.append(("shared-scalar-cute", lambda: nvfp4_e5m3_gs_qdq_cute(x, scales[0])))
+        strategies.append(("shared-scalar-cute", lambda: nvfp4_family_qdq_cute(x, 16, "UE5M3", scales[0])))
 
     print(
         f"case: experts={experts}, tokens={tokens}, top_k={top_k}, rows={rows}, "

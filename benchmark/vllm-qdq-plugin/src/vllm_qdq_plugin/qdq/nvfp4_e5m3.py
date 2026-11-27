@@ -1,11 +1,11 @@
 """NVFP4 E2M1 with UE5M3 scale activation quant-dequant."""
 
 import torch
-from vllm_qdq_plugin import envs
 from vllm_qdq_plugin.trace import trace_qdq
 
 # Keep Marlin block scales inside the FP8-E4M3 range its S0E5M3 scale path is tuned for.
 _MARLIN_SCALE_MAX = 448.0
+_ROW_CHUNK_SIZE = 1024
 
 
 def decode_ue5m3(scale_bits: torch.Tensor) -> torch.Tensor:
@@ -13,12 +13,14 @@ def decode_ue5m3(scale_bits: torch.Tensor) -> torch.Tensor:
     if scale_bits.dtype != torch.uint8:
         raise TypeError(f"decode_ue5m3 expects uint8 scale bits, got {scale_bits.dtype}")
 
-    bits = scale_bits.to(torch.int32)
-    exponent = bits >> 3
-    mantissa = bits & 0x7
+    # A 256-entry lookup keeps the temporary footprint to one int32 index per scale.
+    codes = torch.arange(256, dtype=torch.int32, device=scale_bits.device)
+    exponent = codes >> 3
+    mantissa = codes & 0x7
     subnormal = mantissa.float() * 2.0**-17
     normal = torch.ldexp(1.0 + mantissa.float() * 0.125, exponent - 15)
-    return torch.where(exponent == 0, subnormal, normal)
+    table = torch.where(exponent == 0, subnormal, normal)
+    return table.index_select(0, scale_bits.reshape(-1).to(torch.int32)).reshape(scale_bits.shape)
 
 
 def _quantize_ue5m3_scale_reference(value: torch.Tensor) -> torch.Tensor:
@@ -55,6 +57,25 @@ def _nvfp4_e5m3_qdq_reference(
     if group_size not in (16, 32):
         raise ValueError(f"nvfp4_e5m3_qdq requires group_size 16 or 32, got {group_size}")
 
+    rows = x.shape[0]
+    global_scale = None
+    if input_global_scale is not None:
+        global_scale = _as_global_scale(input_global_scale, x.device, rows)
+    if rows <= _ROW_CHUNK_SIZE:
+        return _nvfp4_e5m3_qdq_reference_rows(x, group_size, global_scale)
+    output = torch.empty_like(x)
+    for start in range(0, rows, _ROW_CHUNK_SIZE):
+        end = min(start + _ROW_CHUNK_SIZE, rows)
+        chunk_scale = global_scale if global_scale is None or global_scale.ndim == 0 else global_scale[start:end]
+        output[start:end] = _nvfp4_e5m3_qdq_reference_rows(x[start:end], group_size, chunk_scale)
+    return output
+
+
+def _nvfp4_e5m3_qdq_reference_rows(
+    x: torch.Tensor,
+    group_size: int,
+    global_scale: torch.Tensor | None,
+) -> torch.Tensor:
     original_dtype = x.dtype
     rows, width = x.shape
     pad = (-width) % group_size
@@ -62,18 +83,13 @@ def _nvfp4_e5m3_qdq_reference(
         x = torch.nn.functional.pad(x, (0, pad))
     groups = x.reshape(rows, -1, group_size)
     scales = groups.float().abs().amax(dim=-1).div_(6.0)
-    if input_global_scale is not None:
-        global_scale = _as_global_scale(input_global_scale, x.device, rows)
+    if global_scale is not None:
         scales = _quantize_ue5m3_scale_reference(scales.mul_(global_scale))
         inverse_global_scale = torch.where(global_scale == 0, torch.zeros_like(global_scale), 1.0 / global_scale)
         scales = scales * inverse_global_scale
     else:
         scales = _quantize_ue5m3_scale_reference(scales)
-    normalized = torch.where(
-        scales.unsqueeze(-1) == 0,
-        torch.zeros_like(groups, dtype=torch.float32),
-        groups.float() / scales.unsqueeze(-1),
-    )
+    normalized = torch.where(scales.unsqueeze(-1) == 0, 0.0, groups.float() / scales.unsqueeze(-1))
     magnitude = normalized.abs()
     quantized = torch.where(
         magnitude < 2.0,
@@ -97,12 +113,15 @@ def nvfp4_e5m3_qdq(
     group_size: int = 16,
     *,
     input_global_scale: torch.Tensor | None = None,
+    topk: int = 1,
+    inplace: bool = False,
     trace_op_name: str = "nvfp4_e5m3_qdq",
 ) -> torch.Tensor:
     """Quantize-dequantize BF16/FP16 activations using E2M1 and UE5M3 scales.
 
     ``input_global_scale`` enables NVFP4_E5M3_GS semantics; ``None`` keeps the
-    global-scale-free NVFP4_E5M3 path.
+    global-scale-free NVFP4_E5M3 path. ``topk > 1`` repeats each input row ``topk``
+    times (the scale may hold one value per repeated row); ``inplace`` writes into ``x``.
     """
     if x.dim() != 2:
         raise ValueError(f"nvfp4_e5m3_qdq expects a 2D tensor, got {x.dim()}D")
@@ -110,78 +129,22 @@ def nvfp4_e5m3_qdq(
         raise TypeError(f"nvfp4_e5m3_qdq expects BF16/FP16, got {x.dtype}")
     if group_size not in (16, 32):
         raise ValueError(f"nvfp4_e5m3_qdq requires group_size 16 or 32, got {group_size}")
+    from .cute import use_nvfp4_cute
+
+    format_name = "NVFP4_E5M3" if input_global_scale is None else "NVFP4_E5M3_GS"
+    global_scale = None
     if input_global_scale is not None:
-        return _nvfp4_e5m3_gs_qdq(x, group_size, input_global_scale, trace_op_name)
-    if not envs.VLLM_QDQ_CUTE:
-        trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name="NVFP4_E5M3")
-        return _nvfp4_e5m3_qdq_reference(x, group_size)
-    if torch.compiler.is_compiling() and x.is_cuda:
-        from .nvfp4_e5m3_cute import nvfp4_e5m3_qdq_cute
-
-        trace_qdq(trace_op_name, x.shape, x.dtype, backend="CuTe", format_name="NVFP4_E5M3")
-        return nvfp4_e5m3_qdq_cute(x, group_size)
-    from .cute import cute_qdq_status, warn_reference_fallback
-
-    available, reason = cute_qdq_status(x)
-    if available and x.is_contiguous() and x.shape[1] % group_size == 0:
-        from .nvfp4_e5m3_cute import nvfp4_e5m3_qdq_cute
-
-        trace_qdq(trace_op_name, x.shape, x.dtype, backend="CuTe", format_name="NVFP4_E5M3")
-        return nvfp4_e5m3_qdq_cute(x, group_size)
-    if available and not x.is_contiguous():
-        reason = "input is not contiguous"
-    elif available:
-        reason = f"K={x.shape[1]} is not divisible by group_size={group_size}"
-    warn_reference_fallback("NVFP4_E5M3", reason)
-    trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name="NVFP4_E5M3")
-    return _nvfp4_e5m3_qdq_reference(x, group_size)
-
-
-def _nvfp4_e5m3_gs_qdq(
-    x: torch.Tensor,
-    group_size: int,
-    input_global_scale: torch.Tensor,
-    trace_op_name: str,
-) -> torch.Tensor:
-    format_name = "NVFP4_E5M3_GS"
-    global_scale = _as_global_scale(input_global_scale, x.device, x.shape[0])
-    if global_scale.ndim == 2:
-        if envs.VLLM_QDQ_CUTE and group_size == 16 and x.is_cuda and x.is_contiguous() and x.shape[1] % 16 == 0:
-            from .cute import cute_qdq_status
-
-            available, _ = cute_qdq_status(x)
-            if available:
-                from .nvfp4_e5m3_cute import nvfp4_e5m3_gs_qdq_per_row_cute
-
-                trace_qdq(trace_op_name, x.shape, x.dtype, backend="CuTe", format_name=format_name)
-                return nvfp4_e5m3_gs_qdq_per_row_cute(x, global_scale[:, 0].contiguous())
-        trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name=format_name)
-        return _nvfp4_e5m3_qdq_reference(x, group_size, global_scale)
-    if not envs.VLLM_QDQ_CUTE:
-        trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name=format_name)
-        return _nvfp4_e5m3_qdq_reference(x, group_size, global_scale)
-    if torch.compiler.is_compiling() and x.is_cuda and group_size == 16:
-        from .nvfp4_e5m3_cute import nvfp4_e5m3_gs_qdq_cute
+        global_scale = _as_global_scale(input_global_scale, x.device, x.shape[0] * topk)
+    if use_nvfp4_cute(x, group_size, format_name):
+        from .nvfp4_e5m3_cute import nvfp4_family_qdq_cute
 
         trace_qdq(trace_op_name, x.shape, x.dtype, backend="CuTe", format_name=format_name)
-        return nvfp4_e5m3_gs_qdq_cute(x, global_scale)
-    from .cute import cute_qdq_status, warn_reference_fallback
+        return nvfp4_family_qdq_cute(x, group_size, "UE5M3", global_scale, topk=topk, inplace=inplace)
 
-    available, reason = cute_qdq_status(x)
-    if available and group_size == 16 and x.is_contiguous() and x.shape[1] % group_size == 0:
-        from .nvfp4_e5m3_cute import nvfp4_e5m3_gs_qdq_cute
-
-        trace_qdq(trace_op_name, x.shape, x.dtype, backend="CuTe", format_name=format_name)
-        return nvfp4_e5m3_gs_qdq_cute(x, global_scale)
-    if available and group_size != 16:
-        reason = f"group_size={group_size} is unsupported"
-    elif available and not x.is_contiguous():
-        reason = "input is not contiguous"
-    elif available:
-        reason = f"K={x.shape[1]} is not divisible by group_size={group_size}"
-    warn_reference_fallback(format_name, reason)
     trace_qdq(trace_op_name, x.shape, x.dtype, backend="Reference", format_name=format_name)
-    return _nvfp4_e5m3_qdq_reference(x, group_size, global_scale)
+    source = x if topk == 1 else x[:, None, :].expand(-1, topk, -1).reshape(-1, x.shape[-1])
+    result = _nvfp4_e5m3_qdq_reference(source, group_size, global_scale)
+    return x.copy_(result) if inplace else result
 
 
 def fold_ue5m3_global_scale(

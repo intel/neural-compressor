@@ -7,6 +7,7 @@ These tests aim to assess the fundamental functionalities of common utils and en
 All tests will be included for each framework CI.
 """
 
+import inspect
 import time
 import unittest
 from unittest.mock import MagicMock, patch
@@ -198,6 +199,19 @@ class TestCallCounter(unittest.TestCase):
 
         # Count should be incremented accordingly
         self.assertEqual(inc_utils.FUNC_CALL_COUNTS["add"], 3)
+
+    def test_decorators_preserve_function_metadata(self):
+        def quantize(model, config, example_inputs=None):
+            """Quantize the model."""
+            return model
+
+        expected_signature = inspect.signature(quantize)
+        for decorator in (dump_elapsed_time("msg"), log_process(), inc_utils.call_counter):
+            wrapped = decorator(quantize)
+            self.assertEqual(wrapped.__name__, "quantize")
+            self.assertEqual(wrapped.__doc__, "Quantize the model.")
+            self.assertEqual(inspect.signature(wrapped), expected_signature)
+            self.assertEqual(wrapped("model", None), "model")
 
 
 class TestAutoDetectProcessorType:

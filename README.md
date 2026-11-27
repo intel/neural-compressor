@@ -4,6 +4,10 @@ Intel® Neural Compressor
 ===========================
 <h3> An open-source Python library supporting popular model compression techniques on mainstream deep learning frameworks (PyTorch and JAX)</h3>
 
+<p align="center">
+  <b>English</b> · <a href="https://github.com/intel/neural-compressor/blob/main/README.zh.md">简体中文</a>
+</p>
+
 [![python](https://img.shields.io/badge/python-3.11%2B-blue)](https://github.com/intel/neural-compressor)
 [![version](https://img.shields.io/badge/release-3.10-green)](https://github.com/intel/neural-compressor/releases)
 [![license](https://img.shields.io/badge/license-Apache%202-blue)](https://github.com/intel/neural-compressor/blob/main/LICENSE)

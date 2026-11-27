@@ -28,6 +28,7 @@ torch_included_folder:
 """
 
 import copy
+import functools
 import unittest
 
 from neural_compressor.common import Logger
@@ -241,6 +242,24 @@ class TestEvaluator(unittest.TestCase):
         evaluator.self_check()
         self.assertEqual(evaluator.get_number_of_eval_functions(), 1)
 
+    def test_partial_and_callable_object_eval_fn(self):
+        def eval_acc_fn(model, dataloader) -> float:
+            return 0.5
+
+        class EvalMetric:
+            def __call__(self, model) -> float:
+                return 0.25
+
+        for eval_fn, expected_name in (
+            (functools.partial(eval_acc_fn, dataloader=None), "eval_acc_fn"),
+            (EvalMetric(), "EvalMetric"),
+        ):
+            for eval_fns in (eval_fn, {"eval_fn": eval_fn}):
+                evaluator = Evaluator()
+                evaluator.set_eval_fn_registry(eval_fns)
+                self.assertEqual(evaluator.eval_fn_registry[0]["name"], expected_name)
+                self.assertEqual(evaluator.evaluate("model"), eval_fn("model"))
+
 
 class TestBaseConfig(unittest.TestCase):
     @classmethod
@@ -312,6 +331,29 @@ class TestBaseConfig(unittest.TestCase):
         self.assertTrue(configs_mapping[("OP1_NAME", "OP_TYPE1")].weight_bits == 6)
         self.assertTrue(configs_mapping[("OP2_NAME", "OP_TYPE1")].weight_bits == 6)
         self.assertTrue(configs_mapping[("OP3_NAME", "OP_TYPE2")].weight_bits == 4)
+
+    def test_params_dict_excludes_internal_state(self):
+        quant_config = FakeAlgoConfig(weight_bits=4)
+        self.assertNotIn("_is_initialized", quant_config.get_params_dict())
+        self.assertNotIn("_is_initialized", quant_config.to_dict())
+
+    def test_update_param_after_init(self):
+        quant_config = FakeAlgoConfig(weight_bits=4)
+        quant_config.weight_bits = 8
+        self.assertEqual(quant_config.global_config.weight_bits, 8)
+
+    def test_json_file_round_trip(self):
+        import os
+        import tempfile
+
+        quant_config = FakeAlgoConfig(weight_bits=4)
+        quant_config.set_local("OP1_NAME", FakeAlgoConfig(weight_bits=6))
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            json_file = os.path.join(tmp_dir, "config.json")
+            quant_config.to_json_file(json_file)
+            loaded_config = FakeAlgoConfig.from_json_file(json_file)
+        self.assertEqual(loaded_config.weight_bits, 4)
+        self.assertEqual(loaded_config.local_config["OP1_NAME"].weight_bits, 6)
 
 
 class TestConfigSet(unittest.TestCase):
