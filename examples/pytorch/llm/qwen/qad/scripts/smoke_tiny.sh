@@ -9,10 +9,10 @@ OUT=${OUT:-runs/qad-smoke-tiny}
 PYTHON=${PYTHON:-python}
 CONTAINER=${CONTAINER:-}
 
-CMD=("$PYTHON" examples/pytorch/llm/qwen/qad/main.py
-     --recipe examples/pytorch/llm/qwen/qad/recipes/qwen3_8_27b_mxfp4_mlp_fp8_attn.yaml
-     --output "$OUT" --tiny --synthetic-batches 64
-     --seq-length 128 --train-iters 2 --stop-after 2 --save-steps 0 --top-k 64)
+CMD=("$PYTHON" examples/pytorch/llm/qwen/qad/train.py
+     --config examples/pytorch/llm/qwen/qad/recipes/qwen3_5_27b_mxfp4_fp8_full_fsdp2.yaml
+     --output_dir "$OUT" --tiny true --synthetic_batches 64 --calib_batches 2
+     --seq_length 128 --max_steps 2 --save_strategy no --kd_top_k 64 --teacher_placement cuda)
 
 GPU_ENV=()
 if [[ -n "${CUDA_VISIBLE_DEVICES:-}" ]]; then

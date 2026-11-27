@@ -11,52 +11,141 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Fake quantization: mechanism shared by QAT and QAD."""
+"""Fake-quantization foundation layer (formats, QDQ kernels, configs, modules, calibration)."""
 
-from .calibrator import AmaxMap, apply_amax, calibrate, load_amax, modelopt_megatron_translate
-from .config import FakeQuantConfig
-from .formats import BF16, FP8_E4M3, MXFP4, NVFP4, QuantFormat, get_format, list_formats, register_format
-from .modules import QuantLinear
-from .options import ModuleQuantConfig, QuantizerConfig
-from .plan import (
-    DEFAULT_EXCLUDE,
-    PlanReport,
-    QuantRule,
-    apply_plan,
-    compile_plan,
-    compile_plan_from_info,
-    print_plan_summary,
-    summarize_plan,
+from .calibrate import (
+    calibrate,
+    calibrate_static_amax,
+    get_quantizer_state_dict,
+    load_quantizer_state,
+    load_quantizer_state_dict,
+    save_quantizer_state,
 )
-from .quantizer import TensorQuantizer
-from .registry import QuantModuleRegistry
+from .config import (
+    DEFAULT_IGNORE,
+    FP8_DEFAULT_CFG,
+    FakeQuantConfig,
+    MXFP4_DEFAULT_CFG,
+    MXFP4_FP8_HYBRID_CFG,
+    MXFP8_DEFAULT_CFG,
+    ModuleQuantConfig,
+    NVFP4_DEFAULT_CFG,
+    NVFP4_FP8_HYBRID_CFG,
+    ObserverName,
+    QuantSchemeRule,
+    QuantizerConfig,
+    QuantizerSpec,
+    get_default_fake_quant_config,
+)
+from .formats import (
+    BF16,
+    FP8_E4M3,
+    MXFP4,
+    MXFP8,
+    NVFP4,
+    QuantFormat,
+    get_format,
+    list_formats,
+    register_format,
+)
+from .modules import QuantLinear
+from .plugins import (
+    QuantLoraLinear,
+    QuantOrder,
+    convert_peft_lora_to_quant_lora,
+    ensure_peft_torchao_compat,
+    is_peft_available,
+    merge_lora_into_quant_linear,
+    register_peft_quant_modules,
+)
+from .ops import (
+    PackedWeightTensor,
+    QuantBackendName,
+    StraightThroughFakeQuant,
+    dequantize_packed_weight,
+    fake_quant_dynamic,
+    fake_quant_fp8_static_amax,
+    get_quant_backend,
+    pack_nibbles,
+    pack_weight,
+    register_quant_backend,
+    set_quant_backend,
+    ste_fake_quant,
+    unpack_nibbles,
+)
+from .plan import (
+    PlanReport,
+    apply_quant_plan,
+    build_quant_plan,
+    compile_plan_from_info,
+    matches_target,
+)
+from .quantizer import TensorQuantizer, disable_fake_quant
+from .registry import (
+    QuantFactory,
+    is_supported_module,
+    quantize_module,
+    register_quant_module,
+    supported_module_types,
+    unregister_quant_module,
+)
 
 __all__ = [
-    "AmaxMap",
     "BF16",
-    "DEFAULT_EXCLUDE",
-    "FakeQuantConfig",
+    "DEFAULT_IGNORE",
     "FP8_E4M3",
-    "ModuleQuantConfig",
+    "FakeQuantConfig",
     "MXFP4",
+    "MXFP8",
+    "ModuleQuantConfig",
     "NVFP4",
+    "ObserverName",
+    "PackedWeightTensor",
     "PlanReport",
+    "QuantBackendName",
+    "QuantFactory",
     "QuantFormat",
     "QuantLinear",
-    "QuantModuleRegistry",
-    "QuantRule",
+    "QuantLoraLinear",
+    "QuantOrder",
+    "QuantSchemeRule",
     "QuantizerConfig",
+    "QuantizerSpec",
+    "StraightThroughFakeQuant",
     "TensorQuantizer",
-    "apply_amax",
-    "apply_plan",
+    "apply_quant_plan",
+    "build_quant_plan",
     "calibrate",
-    "compile_plan",
+    "calibrate_static_amax",
     "compile_plan_from_info",
+    "convert_peft_lora_to_quant_lora",
+    "dequantize_packed_weight",
+    "disable_fake_quant",
+    "ensure_peft_torchao_compat",
+    "fake_quant_dynamic",
+    "fake_quant_fp8_static_amax",
+    "get_default_fake_quant_config",
     "get_format",
+    "get_quant_backend",
+    "get_quantizer_state_dict",
+    "is_peft_available",
+    "is_supported_module",
     "list_formats",
-    "load_amax",
-    "modelopt_megatron_translate",
-    "print_plan_summary",
+    "load_quantizer_state",
+    "load_quantizer_state_dict",
+    "matches_target",
+    "merge_lora_into_quant_linear",
+    "pack_nibbles",
+    "pack_weight",
+    "quantize_module",
     "register_format",
-    "summarize_plan",
+    "register_peft_quant_modules",
+    "register_quant_backend",
+    "register_quant_module",
+    "save_quantizer_state",
+    "set_quant_backend",
+    "ste_fake_quant",
+    "supported_module_types",
+    "unpack_nibbles",
+    "unregister_quant_module",
 ]

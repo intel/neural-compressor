@@ -11,300 +11,162 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""QADTrainer: HuggingFace ``Trainer`` + teacher top-k KL.
-
-The trainer owns the distillation loss (not a wrapped model) so FSDP2,
-PEFT and ``Trainer`` checkpointing keep working unchanged. Quantization is
-inserted beforehand by ``quantize(model, FakeQuantConfig, ...)``.
-"""
+"""QADTrainer composing KDTrainer + QATTrainer via cooperative multiple inheritance."""
 
 from __future__ import annotations
 
-import os
 import time
-from typing import Any, Optional
+from pathlib import Path
+from typing import Any, Optional, Union
 
 import torch
 import torch.distributed as dist
-import torch.nn.functional as F
-from transformers import Trainer
+import torch.nn as nn
 
-from neural_compressor.torch.distill import DistillConfig, topk_kl
-from neural_compressor.torch.quantization.fake_quant import FakeQuantConfig
+from neural_compressor.torch.distillation import DistillationConfig, KDTrainer
+from neural_compressor.torch.quantization.fake_quant import (
+    FakeQuantConfig,
+    TensorQuantizer,
+    convert_peft_lora_to_quant_lora,
+    ensure_peft_torchao_compat,
+    register_peft_quant_modules,
+)
+from neural_compressor.torch.quantization.qat_trainer import (
+    QATTrainer,
+    ensure_peft_gradient_checkpointing_delegation,
+    is_peft_model,
+    unwrap_model,
+)
+from neural_compressor.torch.quantization.quantize import prepare_qat
 
-from .checkpoint import is_peft_model, save_adapter, save_full_state_dict
-from .metrics import memory_report, param_counts, tflops_and_mfu
-from .modeling import get_adapter, logits_from_hidden
-
-
-def _unwrap(model: Any) -> Any:
-    return getattr(model, "module", model)
-
-
-def _find_attr(model: Any, name: str, seen: Optional[set] = None):
-    """Walk wrapper attributes (PeftModel/DDP) looking for a method."""
-    if seen is None:
-        seen = set()
-    if id(model) in seen:
-        return None
-    seen.add(id(model))
-    if hasattr(model, name):
-        return getattr(model, name)
-    for attr in ("module", "base_model", "model", "base"):
-        sub = getattr(model, attr, None)
-        if sub is not None:
-            found = _find_attr(sub, name, seen)
-            if found is not None:
-                return found
-    return None
+from .args import QADTrainingArguments
+from .metrics import device_hardware_name, memory_report, param_counts, reset_peak_memory, tflops_and_mfu
 
 
-def _chunked_kd(
-    student_logits: torch.Tensor,
-    teacher_logits: torch.Tensor,
-    loss_mask: torch.Tensor,
+def prepare_qad_model(
+    model: nn.Module,
+    quant_config: FakeQuantConfig,
     *,
-    top_k: int,
-    temperature: float,
-    reverse: bool = False,
-) -> tuple[torch.Tensor, torch.Tensor]:
-    """Top-k KL for one chunk; returns ``(masked_sum, masked_tokens)``."""
-    token_loss = topk_kl(student_logits, teacher_logits, k=top_k, temperature=temperature, reverse=reverse)
-    mask = loss_mask.float()
-    return (token_loss * mask).sum(), mask.sum()
-
-
-class QADTrainer(Trainer):
-    """Trainer that computes ``kd_weight * KD + ce_weight * CE``.
+    lora_config: Optional[Any] = None,
+    lora_merge_before_quant: bool = True,
+) -> nn.Module:
+    """Prepare ``model`` for QAD by inserting fake-quantizers and optionally attaching PEFT LoRA.
 
     Args:
-        teacher: Loaded teacher (same layout as the student).
-        distill_config: Teacher/loss settings; defaults to ``qad_config.distill``.
-        qad_config: Optional full recipe (used for metadata and defaults).
-        quant_config: FakeQuantConfig used on the student; written next to
-            checkpoints so the quantizers can be rebuilt.
-        mode: ``"full"`` or ``"lora"`` (affects the FLOPs estimate only).
-        backend: Label for logging (``"hf"``/``"unsloth"``).
+        model: Standard ``transformers.PreTrainedModel`` (or ``PeftModel``).
+        quant_config: :class:`FakeQuantConfig` describing weight and activation fake-quantization.
+        lora_config: Optional ``peft.LoraConfig`` instance or ``dict`` of ``LoraConfig`` kwargs.
+        lora_merge_before_quant: When ``True`` (Path-B, recommended for inference export parity),
+            quantizes ``W + s * B @ A`` before weight fake-quantization.
+    """
+    if not any(isinstance(m, TensorQuantizer) for m in model.modules()):
+        prepare_qat(model, quant_config)
+    if lora_config is not None:
+        from peft import LoraConfig, get_peft_model
+
+        ensure_peft_torchao_compat()
+        register_peft_quant_modules()
+        peft_cfg = lora_config if isinstance(lora_config, LoraConfig) else LoraConfig(**dict(lora_config))
+        model = get_peft_model(model, peft_cfg)
+        quant_order = "lora_then_quant" if lora_merge_before_quant else "quant_then_lora"
+        convert_peft_lora_to_quant_lora(model, quant_order=quant_order)
+        ensure_peft_gradient_checkpointing_delegation(model)
+    return model
+
+
+class QADTrainer(KDTrainer, QATTrainer):
+    """Unified Quantization-Aware Distillation Trainer composing :class:`KDTrainer` and :class:`QATTrainer`.
+
+    MRO: ``QADTrainer -> KDTrainer -> QATTrainer -> transformers.Trainer``
+    * ``KDTrainer.compute_loss`` provides chunked zero-logit-allocation Top-K KL / Full KL / Hybrid CE
+      across online external teacher, zero-VRAM LoRA ``teacher_model="self"``, and offline Top-K shards.
+    * ``QATTrainer`` provides ``prepare_qat``, automatic static ``amax`` calibration, FSDP2 + PEFT
+      checkpoint gathering, and lossless ``quantizer_state.json`` + ``quant_config.json`` persistence.
     """
 
     def __init__(
         self,
-        *args,
-        teacher: torch.nn.Module,
-        distill_config: Optional[DistillConfig] = None,
-        qad_config=None,
+        model: Union[nn.Module, Any] = None,
+        args: Any = None,
+        *pos_args,
+        teacher_model: Optional[Union[nn.Module, str]] = None,
+        teacher: Optional[Union[nn.Module, str]] = None,
+        distill_config: Optional[DistillationConfig] = None,
         quant_config: Optional[FakeQuantConfig] = None,
-        mode: str = "full",
-        backend: str = "hf",
+        calib_batches: Optional[int] = None,
+        quantizer_state_path: Optional[Union[str, Path]] = None,
         **kwargs,
     ) -> None:
-        super().__init__(*args, **kwargs)
-        if distill_config is None and qad_config is not None:
-            distill_config = qad_config.distill
+        if distill_config is None and isinstance(args, QADTrainingArguments):
+            distill_config = args.build_distill_config()
         if distill_config is None:
-            raise ValueError("QADTrainer needs a DistillConfig (or a QADConfig)")
-        self.teacher = teacher
-        self.teacher.eval()
-        self.teacher.requires_grad_(False)
-        self.distill = distill_config
-        self.qad_config = qad_config
-        self.quant_config = quant_config
-        self.mode = mode
-        self.backend = backend
-        self.adapter = get_adapter(self.model)
-        self.teacher_adapter = get_adapter(teacher)
+            raise ValueError("QADTrainer requires `distill_config` or `QADTrainingArguments`.")
+
+        if quant_config is None and isinstance(args, QADTrainingArguments):
+            quant_config = args.build_quant_config()
+        if calib_batches is None:
+            calib_batches = int(getattr(args, "calib_batches", 0) or 0)
+        if quantizer_state_path is None:
+            quantizer_state_path = getattr(args, "quantizer_state_path", None)
+
         self._last_log_time = time.time()
         self._last_log_step = 0
-        self._last_loss_parts: dict[str, float] = {}
+        self._tokens_since_last_log = 0
         self._peak_reset = False
 
-    # --------------------------------------------------------------- training
+        super().__init__(
+            model=model,
+            args=args,
+            *pos_args,
+            teacher_model=teacher_model,
+            teacher=teacher,
+            distill_config=distill_config,
+            quant_config=quant_config,
+            calib_batches=calib_batches,
+            quantizer_state_path=quantizer_state_path,
+            **kwargs,
+        )
+        self.mode = "lora" if (model is not None and is_peft_model(unwrap_model(self.model))) else "full"
+
+    def compute_loss(self, model: nn.Module, inputs: dict[str, Any], return_outputs: bool = False, **kwargs):
+        if model.training and "input_ids" in inputs:
+            self._tokens_since_last_log += int(inputs["input_ids"].numel())
+        return super().compute_loss(model, inputs, return_outputs=return_outputs, **kwargs)
+
     def training_step(self, *args, **kwargs):
-        """Run one step and reset the peak-memory window on the first one."""
-        if os.environ.get("NC_QAD_DEBUG_MEMORY") == "1":
-            report = memory_report(self.args.device)
-            print(
-                f"mem[step_entry] global_step={self.state.global_step} "
-                f"alloc={report['allocated'] / 2**30:.1f}GiB peak={report['peak'] / 2**30:.1f}GiB",
-                flush=True,
-            )
-        # peak_gib should describe the step, not the loader or FSDP2 wrapping.
         if not self._peak_reset:
-            if torch.cuda.is_available():
-                torch.cuda.reset_peak_memory_stats()
+            reset_peak_memory(self.args.device)
+            self._last_log_time = time.time()
             self._peak_reset = True
-        if os.environ.get("NC_QAD_FORCE_AUTOCAST") == "1" and torch.cuda.is_available():
-            # HF's FSDP2 path runs without autocast while the plain bf16 path
-            # uses it; this switch restores the non-FSDP numerics for A/B.
-            with torch.autocast("cuda", dtype=torch.bfloat16):
-                return super().training_step(*args, **kwargs)
         return super().training_step(*args, **kwargs)
 
-    # ------------------------------------------------------------------- loss
-    def _hidden(self, model: torch.nn.Module, input_ids, attention_mask):
-        module = _unwrap(model)
-        if hasattr(module, "forward") and hasattr(module, "forward_hidden"):
-            # Execute through the original wrapper so DDP/PEFT/FSDP hooks and
-            # gradient reduction keep their required semantics.
-            return model(input_ids=input_ids, attention_mask=attention_mask)
-        outputs = model(
-            input_ids=input_ids,
-            attention_mask=attention_mask,
-            output_hidden_states=True,
-            use_cache=False,
-        )
-        hidden = getattr(outputs, "hidden_states", None)
-        if hidden is None:
-            raise TypeError(f"{type(module).__name__} did not return hidden_states; use the CausalLM interface")
-        return hidden[-1]
-
-    def _logits(self, model: torch.nn.Module, hidden: torch.Tensor):
-        module = _unwrap(model)
-        fn = _find_attr(module, "logits")
-        if fn is not None:
-            return fn(hidden)
-        return logits_from_hidden(module, hidden, self.adapter)
-
-    def compute_loss(self, model, inputs, return_outputs=False, **kwargs):
-        """Chunk the sequence, compute top-k KL, and reduce tokens globally."""
-        input_ids = inputs["input_ids"]
-        attention_mask = inputs.get("attention_mask")
-        loss_mask = inputs.get("loss_mask")
-        if loss_mask is None:
-            loss_mask = torch.ones_like(input_ids, dtype=torch.float32)
-
-        if self.distill.loss == "ce":
-            if "labels" not in inputs:
-                raise ValueError("loss='ce' requires labels")
-            loss = self.distill.ce_weight * self._ce_loss(model, inputs)
-            self._last_loss_parts = {"kd_loss": 0.0, "kd_tokens": 0.0}
-            return (loss, None) if return_outputs else loss
-
-        if self.distill.ce_weight and "labels" not in inputs:
-            raise ValueError("ce_weight > 0 requires labels for the CE term")
-
-        student_hidden = self._hidden(model, input_ids, attention_mask)
-        with torch.no_grad():
-            if self.distill.teacher_device == "cpu":
-                teacher_input_ids = input_ids.cpu()
-                teacher_attention_mask = attention_mask.cpu() if attention_mask is not None else None
-            else:
-                teacher_input_ids, teacher_attention_mask = input_ids, attention_mask
-            teacher_hidden = self._hidden(self.teacher, teacher_input_ids, teacher_attention_mask)
-
-        local_sum = input_ids.new_zeros((), dtype=torch.float32)
-        local_tokens = loss_mask.sum().float()
-        chunk = self.distill.chunk or input_ids.shape[1]
-        for start in range(0, input_ids.shape[1], chunk):
-            end = min(start + chunk, input_ids.shape[1])
-            with torch.no_grad():
-                teacher_logits = self._logits(self.teacher, teacher_hidden[:, start:end])
-            student_logits = self._logits(model, student_hidden[:, start:end])
-            teacher_logits = teacher_logits.to(student_logits.device)
-            if self.distill.loss == "kl":
-                student_log_probs = F.log_softmax(student_logits.float() / self.distill.temperature, dim=-1)
-                teacher_log_probs = F.log_softmax(teacher_logits.float() / self.distill.temperature, dim=-1)
-                if self.distill.reverse:
-                    student_log_probs, teacher_log_probs = teacher_log_probs, student_log_probs
-                token_loss = F.kl_div(student_log_probs, teacher_log_probs, reduction="none", log_target=True).sum(
-                    dim=-1
-                )
-                token_sum = (token_loss * loss_mask[:, start:end].float()).sum()
-            else:
-                token_sum, _ = _chunked_kd(
-                    student_logits,
-                    teacher_logits,
-                    loss_mask[:, start:end],
-                    top_k=self.distill.top_k,
-                    temperature=self.distill.temperature,
-                    reverse=self.distill.reverse,
-                )
-            local_sum = local_sum + token_sum
-
-        if dist.is_available() and dist.is_initialized():
-            world = dist.get_world_size()
-            tokens = local_tokens.clone()
-            dist.all_reduce(tokens, op=dist.ReduceOp.SUM)
-        else:
-            world, tokens = 1, local_tokens
-        # FSDP2 reduces gradients with AVG; multiply by world for a global
-        # token mean. Equal-length windows make this a no-op.
-        loss = world * local_sum / tokens.clamp(min=1.0) * self.distill.kd_weight
-
-        if self.distill.ce_weight and "labels" in inputs:
-            loss = loss + self.distill.ce_weight * self._ce_loss(model, inputs)
-
-        if os.environ.get("NC_QAD_DEBUG_LOSS") == "1":
-            rank = dist.get_rank() if dist.is_initialized() else 0
-            print(
-                f"[loss] rank={rank} local_tokens={float(local_tokens):.0f} "
-                f"tokens={float(tokens):.0f} local_sum={float(local_sum):.6f} "
-                f"loss={float(loss):.6f}",
-                flush=True,
-            )
-        self._last_loss_parts = {
-            "kd_loss": float(local_sum.detach()) / max(float(tokens), 1.0),
-            "kd_tokens": float(tokens),
-        }
-        return (loss, None) if return_outputs else loss
-
-    def _ce_loss(self, model, inputs) -> torch.Tensor:
-        labels = inputs["labels"]
-        hidden = self._hidden(model, inputs["input_ids"], inputs.get("attention_mask"))
-        logits = self._logits(model, hidden)
-        return F.cross_entropy(
-            logits[:, :-1].reshape(-1, logits.shape[-1]).float(),
-            labels[:, 1:].reshape(-1),
-        )
-
-    # ------------------------------------------------------------- checkpoint
-    def save_model(self, output_dir: Optional[str] = None, _internal_call: bool = False):
-        """Save FSDP2-gathered weights plus ``quantization_config.json``."""
-        out = output_dir or self.args.output_dir
-        if self.is_fsdp_enabled and is_peft_model(self.model):
-            if save_adapter(self.model, out, should_save=self.args.should_save):
-                if self.args.should_save:
-                    os.makedirs(out, exist_ok=True)
-                    torch.save(self.args, os.path.join(out, "training_args.bin"))
-                    self._write_quant_metadata(out)
-                return
-        if self.is_fsdp_enabled and not is_peft_model(self.model):
-            if save_full_state_dict(self.model, out, should_save=self.args.should_save):
-                if self.args.should_save:
-                    torch.save(self.args, os.path.join(out, "training_args.bin"))
-                    self._write_quant_metadata(out)
-                return
-        super().save_model(output_dir, _internal_call)
-        if self.args.should_save:
-            self._write_quant_metadata(out)
-
-    def _write_quant_metadata(self, out: str) -> None:
-        if self.quant_config is None:
-            return
-        from .export import write_quantization_config
-
-        write_quantization_config(_unwrap(self.model), out, self.quant_config)
-
-    # -------------------------------------------------------------------- log
-    def log(self, logs: dict[str, float], start_time: Optional[float] = None) -> None:
-        """Add throughput, FLOPs, memory and parameter counts to Trainer logs."""
+    def log(self, logs: dict[str, Any], start_time: Optional[float] = None) -> None:
         now = time.time()
         step = int(self.state.global_step)
         delta = step - self._last_log_step
         world = dist.get_world_size() if dist.is_available() and dist.is_initialized() else 1
         device = self.args.device
-        device_name = ""
-        try:
-            if torch.cuda.is_available() and torch.device(device).type == "cuda":
-                device_name = torch.cuda.get_device_name(torch.device(device))
-        except Exception:
-            pass
+        device_name = device_hardware_name(device)
         if delta > 0:
-            seq = self.qad_config.train.seq_length if self.qad_config else 0
-            tokens = delta * self.args.per_device_train_batch_size * self.args.gradient_accumulation_steps * world * seq
+            if self._tokens_since_last_log > 0:
+                tokens = self._tokens_since_last_log * world
+            else:
+                seq = int(getattr(self.args, "seq_length", 0) or 0)
+                tokens = (
+                    delta
+                    * self.args.per_device_train_batch_size
+                    * self.args.gradient_accumulation_steps
+                    * world
+                    * seq
+                )
             seconds = max(now - self._last_log_time, 1e-9)
-            counts = param_counts(_unwrap(self.model))
-            teacher_params = sum(p.numel() for p in _unwrap(self.teacher).parameters())
+            counts = param_counts(unwrap_model(self.model))
+            if self.self_teacher:
+                teacher_params = max(counts["params_total"] - counts["params_trainable"], 0)
+            elif self.teacher is not None:
+                teacher_params = param_counts(unwrap_model(self.teacher))["params_total"]
+            else:
+                teacher_params = 0
             perf = tflops_and_mfu(
                 tokens=tokens,
                 step_seconds=seconds,
@@ -323,11 +185,11 @@ class QADTrainer(Trainer):
                     "tokens": float(tokens),
                     "tokens_per_s": tokens / seconds,
                     "step_s": seconds / delta,
-                    "backend": self.backend,
                     **counts,
                     **{key: value for key, value in perf.items() if value is not None},
                 }
             )
+            self._tokens_since_last_log = 0
         memory = memory_report(device)
         logs["peak_gib"] = memory["peak"] / (1024**3)
         logs["alloc_gib"] = memory["allocated"] / (1024**3)
@@ -336,4 +198,4 @@ class QADTrainer(Trainer):
         super().log(logs, start_time=start_time)
 
 
-__all__ = ["QADTrainer"]
+__all__ = ["QADTrainer", "prepare_qad_model"]

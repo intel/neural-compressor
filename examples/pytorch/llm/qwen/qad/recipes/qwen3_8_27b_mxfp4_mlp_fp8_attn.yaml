@@ -2,7 +2,7 @@
 # The reference recipe is `mxfp4_w4a4_mlp_fp8_attn_mcore_dynamic`:
 # https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt_recipes/models/Qwen/Qwen3.8-27B/ptq/mxfp4_w4a4_mlp_fp8_attn_mcore_dynamic.yaml
 # To use an existing PTQ amax source, pass `--amax-source <summary-or-json>` to main.py.
-schema: neural_compressor.qad/v1
+schema: neural_compressor.qad/v2
 name: qwen3_8-27b-mxfp4-mlp-fp8-attn
 
 model:
@@ -11,15 +11,14 @@ model:
   dtype: bfloat16
 
 quant:
-  algorithm: max
-  # default=None => everything off; only the rules below are quantized.
-  rules:
-    - module: '.*\.mlp\.(gate_proj|up_proj|down_proj)$'
-      weight: {format: mxfp4}
-      input: {format: mxfp4}
-    - module: '.*\.(self_attn|linear_attn)\.(q_proj|k_proj|v_proj|o_proj|in_proj_qkv|in_proj_z|out_proj)$'
-      weight: {format: fp8_e4m3, scheme: static}
-      input: {format: fp8_e4m3, scheme: static}
+  config_groups:
+    - targets: ['re:.*\.mlp\.(gate_proj|up_proj|down_proj)$']
+      weights: {format: mxfp4, dynamic: true}
+      input_activations: {format: mxfp4, dynamic: true}
+    - targets: ['re:.*\.(self_attn|linear_attn)\.(q_proj|k_proj|v_proj|o_proj|in_proj_qkv|in_proj_z|out_proj)$']
+      weights: {format: fp8_e4m3, dynamic: false}
+      input_activations: {format: fp8_e4m3, dynamic: false}
+  ignore: ['lm_head', 're:.*mlp\.gate$']
   # Use exact fp32 amax from PTQ calibration when --amax-source is provided.
   # Otherwise main.py calibrates on a single rank before distributed training.
 

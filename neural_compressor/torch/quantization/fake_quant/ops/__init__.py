@@ -11,26 +11,38 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Tensor-level kernels for fake quantization."""
+"""Tensor-level QDQ hot-path kernels and cold-path export packing utilities."""
 
-from .reference import (
-    QuantizedTensor,
-    dequantize,
-    fake_quant,
-    fake_quant_fp8_amax,
-    fake_quant_fp8_static,
+from .pack import (
+    PackedWeightTensor,
+    dequantize_packed_weight,
     pack_nibbles,
-    quantize,
+    pack_weight,
     unpack_nibbles,
+)
+from .qdq import (
+    QuantBackendName,
+    StraightThroughFakeQuant,
+    fake_quant_dynamic,
+    fake_quant_fp8_static_amax,
+    get_quant_backend,
+    register_quant_backend,
+    set_quant_backend,
+    ste_fake_quant,
 )
 
 __all__ = [
-    "QuantizedTensor",
-    "dequantize",
-    "fake_quant",
-    "fake_quant_fp8_amax",
-    "fake_quant_fp8_static",
+    "PackedWeightTensor",
+    "QuantBackendName",
+    "StraightThroughFakeQuant",
+    "dequantize_packed_weight",
+    "fake_quant_dynamic",
+    "fake_quant_fp8_static_amax",
+    "get_quant_backend",
     "pack_nibbles",
-    "quantize",
+    "pack_weight",
+    "register_quant_backend",
+    "set_quant_backend",
+    "ste_fake_quant",
     "unpack_nibbles",
 ]

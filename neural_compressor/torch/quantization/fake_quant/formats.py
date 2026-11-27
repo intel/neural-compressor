@@ -24,45 +24,61 @@ from dataclasses import dataclass
 
 E2M1_VALUES = (0.0, 0.5, 1.0, 1.5, 2.0, 3.0, 4.0, 6.0)
 E2M1_BOUNDS = (0.25, 0.75, 1.25, 1.75, 2.5, 3.5, 5.0)
+E2M1_ODD_BOUNDS = (0.75, 1.75, 3.5)
 E4M3_MAX = 448.0
 E2M1_MAX = 6.0
 
 
 @dataclass(frozen=True)
 class QuantFormat:
-    """Static description of one quantization format.
+    """Immutable specification of one quantization data format.
 
     Attributes:
-        name: Registry key, e.g. ``"mxfp4"``.
-        element_bits: Bits per element (4, 8 or 16).
-        block_size: Elements sharing one scale factor; ``None`` means per-tensor.
-        scale: Scale representation: ``"e8m0"``, ``"e4m3"``, ``"fp32"`` or ``None``.
-        exponent_bits: Exponent bits for FP formats (E2M1 -> 2).
-        mantissa_bits: Mantissa bits for FP formats (E2M1 -> 1).
-        global_scale: Whether a second-level global scale is used (NVFP4).
-        max_value: Largest representable magnitude.
+        name: Registry key, e.g. ``"mxfp4"`` or ``"fp8_e4m3"``.
+        element_bits: Bits per quantized element (4, 8, or 16).
+        block_size: Elements sharing one block scale factor; ``None`` means per-tensor.
+        scale_format: Scale representation: ``"e8m0"``, ``"e4m3"``, ``"fp32"``, or ``None``.
+        exponent_bits: Exponent bits for floating-point formats (E2M1 -> 2).
+        mantissa_bits: Mantissa bits for floating-point formats (E2M1 -> 1).
+        has_global_scale: Whether a second-level FP32 per-tensor global scale is used (NVFP4).
+        max_value: Largest representable positive magnitude.
         signed: Whether negative values are representable.
     """
 
     name: str
     element_bits: int
     block_size: int | None = None
-    scale: str | None = None
+    scale_format: str | None = None
     exponent_bits: int | None = None
     mantissa_bits: int | None = None
-    global_scale: bool = False
+    has_global_scale: bool = False
     max_value: float | None = None
     signed: bool = True
 
     @property
+    def scale(self) -> str | None:
+        """Alias for ``scale_format``."""
+        return self.scale_format
+
+    @property
     def is_float(self) -> bool:
-        """Return True for floating-point style formats."""
+        """Return True for floating-point element formats."""
         return self.exponent_bits is not None
 
     @property
-    def is_dynamic(self) -> bool:
-        """Return True when the scale is computed from the current tensor."""
-        return self.scale in ("e8m0", "e4m3") and self.block_size is not None
+    def is_block_scaled(self) -> bool:
+        """Return True when blockwise scaling is used."""
+        return self.block_size is not None
+
+    @property
+    def supports_dynamic(self) -> bool:
+        """Return True when dynamic on-the-fly scaling is supported."""
+        return self.name != "bf16"
+
+    @property
+    def supports_static(self) -> bool:
+        """Return True when static calibrated per-tensor amax scaling is supported."""
+        return self.block_size is None and self.scale_format == "fp32"
 
     def __str__(self) -> str:
         return self.name
@@ -72,7 +88,7 @@ MXFP4 = QuantFormat(
     name="mxfp4",
     element_bits=4,
     block_size=32,
-    scale="e8m0",
+    scale_format="e8m0",
     exponent_bits=2,
     mantissa_bits=1,
     max_value=E2M1_MAX,
@@ -81,17 +97,17 @@ NVFP4 = QuantFormat(
     name="nvfp4",
     element_bits=4,
     block_size=16,
-    scale="e4m3",
+    scale_format="e4m3",
     exponent_bits=2,
     mantissa_bits=1,
-    global_scale=True,
+    has_global_scale=True,
     max_value=E2M1_MAX,
 )
 MXFP8 = QuantFormat(
     name="mxfp8",
     element_bits=8,
     block_size=32,
-    scale="e8m0",
+    scale_format="e8m0",
     exponent_bits=4,
     mantissa_bits=3,
     max_value=E4M3_MAX,
@@ -100,7 +116,7 @@ FP8_E4M3 = QuantFormat(
     name="fp8_e4m3",
     element_bits=8,
     block_size=None,
-    scale="fp32",
+    scale_format="fp32",
     exponent_bits=4,
     mantissa_bits=3,
     max_value=E4M3_MAX,

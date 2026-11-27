@@ -11,20 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Dataset adapters for QAD training.
+"""Megatron ``.bin/.idx`` binary token reader and packed sequence dataset for QAD examples.
 
-``PackedDataset`` reads Megatron ``.bin/.idx`` files directly (no Megatron
-import) and packs documents end-to-end, matching ``GPTDataset`` with
-``reset_attention_mask=False``. HuggingFace ``datasets`` can be plugged in by
-the caller; the trainer only needs ``input_ids`` / ``attention_mask`` /
-``loss_mask``.
+Reads Megatron ``MMIDIDX`` token files directly via ``numpy.memmap`` without importing
+``megatron-core``, packing documents end-to-end to match ``GPTDataset(reset_attention_mask=False)``.
 """
 
 from __future__ import annotations
 
-import os
 import struct
-from pathlib import Path
 
 import numpy as np
 import torch
@@ -42,21 +37,18 @@ _DTYPE_CODES = {
     8: np.uint16,
 }
 
-_BATCH_PRINTED = False
-
 
 class IndexedDataset:
-    """Minimal reader for Megatron's indexed token files."""
+    """Minimal memory-mapped reader for Megatron ``<prefix>.idx`` and ``<prefix>.bin`` files."""
 
     def __init__(self, prefix: str) -> None:
-        """Parse ``<prefix>.idx`` and memory-map ``<prefix>.bin``."""
         self.prefix = prefix
         with open(f"{prefix}.idx", "rb") as handle:
             if handle.read(9) != _HEADER:
-                raise ValueError(f"bad idx header: {prefix}.idx")
+                raise ValueError(f"Invalid Megatron .idx header in {prefix}.idx")
             version = struct.unpack("<Q", handle.read(8))[0]
             if version != 1:
-                raise ValueError(f"bad idx version {version}: {prefix}.idx")
+                raise ValueError(f"Unsupported Megatron .idx version {version} in {prefix}.idx")
             dtype_code = struct.unpack("<B", handle.read(1))[0]
             self.dtype = np.dtype(_DTYPE_CODES[dtype_code])
             self.sequence_count = struct.unpack("<Q", handle.read(8))[0]
@@ -75,17 +67,15 @@ class IndexedDataset:
         return int(self.sequence_count)
 
     def get(self, index: int) -> np.ndarray:
-        """Return one document's token ids."""
         length = int(self.sequence_lengths[index])
         start = int(self.sequence_pointers[index]) // self.dtype.itemsize
         return np.asarray(self.data[start : start + length])
 
 
 class PackedDataset(Dataset):
-    """Concatenate all documents, then slice fixed-length chunks."""
+    """Concatenate all documents in an :class:`IndexedDataset` and slice fixed ``seq_length`` chunks."""
 
     def __init__(self, prefix: str, seq_length: int, *, drop_tail: bool = True) -> None:
-        """Build the chunk index; ``drop_tail`` mirrors ``drop_last`` packing."""
         self.dataset = IndexedDataset(prefix)
         self.seq_length = seq_length
         self.total_tokens = int(self.dataset.sequence_lengths.sum())
@@ -93,42 +83,55 @@ class PackedDataset(Dataset):
         if not drop_tail and self.total_tokens % seq_length:
             self.n_chunks += 1
         if self.n_chunks == 0:
-            raise ValueError(f"no chunks of length {seq_length} in {prefix}")
+            raise ValueError(f"No chunks of length {seq_length} found in {prefix}")
 
     def __len__(self) -> int:
         return self.n_chunks
 
-    def __getitem__(self, index: int) -> dict:
-        """Return one packed chunk with masks."""
+    def __getitem__(self, index: int) -> dict[str, torch.Tensor]:
         start = index * self.seq_length
         chunk = np.asarray(self.dataset.data[start : start + self.seq_length])
         if chunk.size < self.seq_length:
             chunk = np.concatenate([chunk, np.zeros(self.seq_length - chunk.size, dtype=chunk.dtype)])
         input_ids = torch.from_numpy(chunk.astype(np.int64, copy=False))
-        valid_tokens = min(index * self.seq_length + self.seq_length, self.total_tokens) - index * self.seq_length
+        valid_tokens = min(start + self.seq_length, self.total_tokens) - start
         mask = torch.arange(self.seq_length) < valid_tokens
+        labels = input_ids.clone()
+        if valid_tokens < self.seq_length:
+            labels[valid_tokens:] = -100
         return {
             "input_ids": input_ids,
             "attention_mask": mask.long(),
             "loss_mask": mask.float(),
+            "labels": labels,
         }
 
 
-def default_collator(features):
-    """Stack samples and optionally print a batch fingerprint for A/B runs."""
-    global _BATCH_PRINTED
-    batch = {key: torch.stack([sample[key] for sample in features], dim=0) for key in features[0]}
-    if os.environ.get("NC_QAD_DEBUG_BATCH") in ("1", "all") and (
-        os.environ.get("NC_QAD_DEBUG_BATCH") == "all" or not _BATCH_PRINTED
-    ):
-        _BATCH_PRINTED = True
-        ids = batch["input_ids"]
-        print(
-            f"[batch] rank={os.environ.get('RANK', '0')} shape={tuple(ids.shape)} "
-            f"sum={ids.sum().item()} first8={ids.flatten()[:8].tolist()}",
-            flush=True,
-        )
-    return batch
+class SyntheticDataset(Dataset):
+    """Deterministic synthetic token dataset for smoke runs and memory profiling."""
+
+    def __init__(self, num_samples: int, seq_length: int, vocab_size: int = 128) -> None:
+        self.num_samples = num_samples
+        self.seq_length = seq_length
+        self.vocab_size = vocab_size
+
+    def __len__(self) -> int:
+        return self.num_samples
+
+    def __getitem__(self, index: int) -> dict[str, torch.Tensor]:
+        generator = torch.Generator().manual_seed(index)
+        input_ids = torch.randint(0, self.vocab_size, (self.seq_length,), generator=generator)
+        return {
+            "input_ids": input_ids,
+            "attention_mask": torch.ones_like(input_ids),
+            "loss_mask": torch.ones_like(input_ids, dtype=torch.float32),
+            "labels": input_ids.clone(),
+        }
+
+
+def default_collator(features: list[dict[str, torch.Tensor]]) -> dict[str, torch.Tensor]:
+    """Stack fixed-length token samples into a batch dictionary."""
+    return {key: torch.stack([sample[key] for sample in features], dim=0) for key in features[0]}
 
 
 def make_loader(
@@ -142,7 +145,7 @@ def make_loader(
     shuffle: bool = True,
     seed: int = 1234,
 ) -> tuple[DataLoader, DistributedSampler]:
-    """Build a sharded loader over a packed ``.bin/.idx`` stream."""
+    """Build a distributed ``DataLoader`` over a packed Megatron ``.bin/.idx`` token stream."""
     dataset = PackedDataset(prefix, seq_length)
     sampler = DistributedSampler(
         dataset,
@@ -152,16 +155,17 @@ def make_loader(
         drop_last=True,
         seed=seed,
     )
+    pin_mem = bool(getattr(torch, "accelerator", None) and torch.accelerator.is_available())
     loader = DataLoader(
         dataset,
         batch_size=micro_batch_size,
         sampler=sampler,
         num_workers=num_workers,
-        pin_memory=torch.cuda.is_available(),
+        pin_memory=pin_mem,
         drop_last=True,
         collate_fn=default_collator,
     )
     return loader, sampler
 
 
-__all__ = ["IndexedDataset", "PackedDataset", "default_collator", "make_loader"]
+__all__ = ["IndexedDataset", "PackedDataset", "SyntheticDataset", "default_collator", "make_loader"]

@@ -13,58 +13,44 @@
 # limitations under the License.
 """Quantization-Aware Distillation (QAD).
 
-Quantization is inserted by ``quantize(model, FakeQuantConfig, ...)`` from
-``neural_compressor.torch.quantization``; this package adds the teacher, the
-distillation trainer and export.
+Composes ``neural_compressor.torch.quantization`` (``FakeQuantConfig``, ``prepare_qat``, ``QATTrainer``,
+``export_hf_checkpoint``) and ``neural_compressor.torch.distillation`` (``DistillationConfig``, ``KDTrainer``)
+into a single HuggingFace-native :class:`QADTrainer`.
 """
 
-from neural_compressor.torch.distill import DistillConfig
+from neural_compressor.torch.distillation import DistillConfig, DistillationConfig
 
-from .backends import load_backend_model, wrap_unsloth
+from .args import QADTrainingArguments
 from .callbacks import GradDebugCallback, StopAfterSteps
-from .config import ExportConfig, ModelConfig, QADConfig, TrainConfig
-from .data import PackedDataset, default_collator, make_loader
-from .export import export, write_quantization_config
-from .modeling import (
-    CausalLM,
-    GenericAdapter,
-    ModelAdapter,
-    Qwen35Adapter,
-    build_tiny_qwen35,
-    get_adapter,
-    load_model,
-    register_adapter,
+from .metrics import (
+    PEAK_BF16,
+    device_hardware_name,
+    gib,
+    memory_report,
+    param_counts,
+    per_token_flops,
+    reset_peak_memory,
+    tflops_and_mfu,
 )
-from .lora import apply_lora, apply_merge_before_quant
 from .parallel import decoder_layer_class_names, teacher_placement
-from .trainer import QADTrainer
+from .trainer import QADTrainer, prepare_qad_model
 
 __all__ = [
-    "CausalLM",
     "DistillConfig",
-    "ExportConfig",
-    "GenericAdapter",
+    "DistillationConfig",
     "GradDebugCallback",
-    "ModelAdapter",
-    "ModelConfig",
-    "PackedDataset",
-    "QADConfig",
+    "PEAK_BF16",
     "QADTrainer",
-    "Qwen35Adapter",
+    "QADTrainingArguments",
     "StopAfterSteps",
-    "TrainConfig",
-    "apply_lora",
-    "apply_merge_before_quant",
-    "build_tiny_qwen35",
     "decoder_layer_class_names",
-    "default_collator",
-    "export",
-    "get_adapter",
-    "load_backend_model",
-    "load_model",
-    "make_loader",
-    "wrap_unsloth",
-    "register_adapter",
+    "device_hardware_name",
+    "gib",
+    "memory_report",
+    "param_counts",
+    "per_token_flops",
+    "prepare_qad_model",
+    "reset_peak_memory",
     "teacher_placement",
-    "write_quantization_config",
+    "tflops_and_mfu",
 ]

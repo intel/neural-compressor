@@ -29,19 +29,32 @@ tensors, while this script calibrates each HF projection separately.
 from __future__ import annotations
 
 import argparse
-import json
+from pathlib import Path
+import sys
 
 import torch
+import yaml
 
-from neural_compressor.torch.qad import QADConfig, load_model
-from neural_compressor.torch.qad.data import PackedDataset
-from neural_compressor.torch.quantization.fake_quant import compile_plan
+EXAMPLE_ROOT = Path(__file__).resolve().parent
+if str(EXAMPLE_ROOT) not in sys.path:
+    sys.path.insert(0, str(EXAMPLE_ROOT))
+
+from data.megatron_indexed_dataset import PackedDataset  # noqa: E402
+from modeling.qwen35_text_loader import load_qwen_causal_lm  # noqa: E402
+
+from neural_compressor.torch.quantization import prepare_qat  # noqa: E402
+from neural_compressor.torch.quantization.fake_quant import (  # noqa: E402
+    FakeQuantConfig,
+    calibrate_static_amax,
+    save_quantizer_state,
+)
 
 
 def parse() -> argparse.Namespace:
     """Parse the calibration arguments."""
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--recipe", required=True, help="QAD recipe YAML")
+    parser.add_argument("--recipe", "--config", dest="recipe", required=True, help="QAD recipe YAML")
+    parser.add_argument("--model", default=None, help="override model checkpoint path")
     parser.add_argument("--data", required=True, help="Megatron bin/idx prefix")
     parser.add_argument("--samples", type=int, default=32)
     parser.add_argument("--seq-length", type=int, default=None)
@@ -51,53 +64,32 @@ def parse() -> argparse.Namespace:
 
 
 def main() -> None:
-    """Run the forward passes and write the amax JSON."""
+    """Run calibration forwards and write a lossless ``quantizer_state.json``."""
     args = parse()
-    config = QADConfig.from_yaml(args.recipe)
-    seq_length = args.seq_length or config.train.seq_length
+    raw = yaml.safe_load(Path(args.recipe).read_text()) or {}
+    model_path = args.model or raw.get("model_name_or_path") or (raw.get("model") or {}).get("path")
+    if not model_path:
+        raise ValueError("Provide `--model <path>` or `model_name_or_path` in the recipe YAML.")
+    seq_length = args.seq_length or int(raw.get("seq_length") or (raw.get("train") or {}).get("seq_length", 8192))
+    quant_cfg = FakeQuantConfig.from_yaml(args.recipe)
+    quant_cfg.quantizer_state_path = None
+
     device = torch.device(args.device if torch.cuda.is_available() else "cpu")
+    model = load_qwen_causal_lm(model_path, dtype=torch.bfloat16 if device.type != "cpu" else torch.float32)
+    model = model.to(device).eval()
+    prepare_qat(model, quant_cfg)
 
-    model = load_model(config.model.path, dtype=torch.bfloat16).to(device).eval()
-    report = compile_plan(
-        model,
-        config.quant.rules,
-        default=config.quant.default,
-        exclude=config.quant.exclude,
-    )
-
-    targets = {}
-    for name, module_config in report.plan.items():
-        if module_config.input is None or module_config.input.scheme != "static":
-            continue
-        module = model.get_submodule(name)
-        targets[name] = {"module": module, "input": 0.0}
-
-    def make_hook(key):
-        def hook(module, inputs):
-            value = float(inputs[0].detach().abs().amax())
-            targets[key]["input"] = max(targets[key]["input"], value)
-
-        return hook
-
-    handles = [targets[name]["module"].register_forward_pre_hook(make_hook(name)) for name in targets]
     dataset = PackedDataset(args.data, seq_length)
-    with torch.no_grad():
-        for index in range(min(args.samples, len(dataset))):
-            batch = dataset[index]
-            model(
-                batch["input_ids"].unsqueeze(0).to(device),
-                batch["attention_mask"].unsqueeze(0).to(device),
-            )
-    for handle in handles:
-        handle.remove()
-
-    payload = {}
-    for name, entry in targets.items():
-        weight = entry["module"].weight.detach().abs().amax().item()
-        payload[name] = {"weight": weight, "input": entry["input"]}
-    with open(args.out, "w", encoding="utf-8") as handle:
-        json.dump(payload, handle, indent=2)
-    print(f"calibrated {len(payload)} FP8 modules -> {args.out}", flush=True)
+    batches = (
+        {
+            "input_ids": dataset[index]["input_ids"].unsqueeze(0).to(device),
+            "attention_mask": dataset[index]["attention_mask"].unsqueeze(0).to(device),
+        }
+        for index in range(min(args.samples, len(dataset)))
+    )
+    calibrated = calibrate_static_amax(model, dataloader=batches, num_batches=args.samples)
+    save_quantizer_state(model, args.out)
+    print(f"calibrated {len(calibrated)} static quantizers -> {args.out}", flush=True)
 
 
 if __name__ == "__main__":

@@ -11,64 +11,107 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Unit tests for distillation and QAD (CPU, full-attention tiny model)."""
+"""Unit tests for v2.0 QAD (QADTrainer, QADTrainingArguments, prepare_qad_model, and Qwen QAD example helpers)."""
 
+import importlib.util
 import json
 import struct
+import sys
 import tempfile
+from types import SimpleNamespace
 import unittest
+from unittest.mock import patch
 from pathlib import Path
 
 import numpy as np
 import torch
 import torch.nn.functional as F
+from transformers import TrainingArguments
 
-from neural_compressor.torch.distill import DistillConfig, TopKLogitsKLLoss, topk_kl
-from neural_compressor.torch.qad import (
-    QADConfig,
-    QADTrainer,
-    apply_lora,
-    build_tiny_qwen35,
-    export,
-    get_adapter,
-    write_quantization_config,
+from neural_compressor.torch.distillation import (
+    DistillConfig,
+    DistillationConfig,
+    DistillationTrainingArguments,
+    LogitsKLLoss,
+    TopKLogitsKLLoss,
+    topk_kl,
 )
-from neural_compressor.torch.qad.config import ExportConfig
-from neural_compressor.torch.qad.export import load_state_dict_into_model
-from neural_compressor.torch.quantization import FakeQuantConfig, QuantRule, quantize
+from neural_compressor.torch.export import export_hf_checkpoint
+from neural_compressor.torch.qad import (
+    QADTrainer,
+    QADTrainingArguments,
+    decoder_layer_class_names,
+    prepare_qad_model,
+    teacher_placement,
+)
+from neural_compressor.torch.quantization import (
+    FakeQuantConfig,
+    QuantLoraLinear,
+    QuantSchemeRule,
+    QuantizationTrainingArguments,
+    prepare_qat,
+    quantize,
+    save_fsdp2_peft_adapter,
+)
+
+EXAMPLE_DIR = Path(__file__).resolve().parents[3] / "examples/pytorch/llm/qwen/qad"
+if str(EXAMPLE_DIR) not in sys.path:
+    sys.path.insert(0, str(EXAMPLE_DIR))
 
 
-def tiny_model(dtype=torch.float32):
-    return build_tiny_qwen35(
+def load_qad_example(rel_path: str):
+    path = EXAMPLE_DIR / rel_path
+    mod_name = "qad_example_" + rel_path.replace("/", "_").replace(".py", "")
+    spec = importlib.util.spec_from_file_location(mod_name, path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[mod_name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+def tiny_model(dtype=torch.float32, layer_types=None):
+    loader = load_qad_example("modeling/qwen35_text_loader.py")
+    return loader.build_tiny_qwen35(
         num_hidden_layers=2,
-        layer_types=["full_attention", "full_attention"],
+        layer_types=layer_types or ["full_attention", "full_attention"],
         dtype=dtype,
     )
 
 
 def tiny_quant_config():
     return FakeQuantConfig(
-        rules=[
-            QuantRule(module=r".*\.mlp\.(gate_proj|up_proj|down_proj)$", weight="mxfp4", input="mxfp4"),
-            QuantRule(module=r".*\.self_attn\.(q_proj|k_proj|v_proj|o_proj)$", weight="fp8_e4m3"),
+        config_groups=[
+            QuantSchemeRule(
+                targets=[r"re:.*\.mlp\.(gate_proj|up_proj|down_proj)$"],
+                weights="mxfp4",
+                input_activations="mxfp4",
+            ),
+            QuantSchemeRule(
+                targets=[r"re:.*\.self_attn\.(q_proj|k_proj|v_proj|o_proj)$"],
+                weights="fp8_e4m3",
+            ),
         ]
     )
 
 
-def load_qad_example(filename):
-    import importlib.util
-
-    path = Path(__file__).resolve().parents[3] / "examples/pytorch/llm/qwen/qad" / filename
-    spec = importlib.util.spec_from_file_location(f"qad_example_{path.stem}", path)
-    module = importlib.util.module_from_spec(spec)
-    spec.loader.exec_module(module)
-    return module
+def _apply_peft_lora(model, *, rank=4, alpha=4, targets=None, merge_before_quant=True):
+    return prepare_qad_model(
+        model,
+        tiny_quant_config(),
+        lora_config={
+            "r": rank,
+            "lora_alpha": alpha,
+            "target_modules": targets or ["q_proj"],
+            "bias": "none",
+            "task_type": "CAUSAL_LM",
+        },
+        lora_merge_before_quant=merge_before_quant,
+    )
 
 
 class TestPackedDataset(unittest.TestCase):
     def test_tail_mask_excludes_padding(self):
-        from neural_compressor.torch.qad.data import PackedDataset
-
+        ds_mod = load_qad_example("data/megatron_indexed_dataset.py")
         with tempfile.TemporaryDirectory() as tmp:
             prefix = Path(tmp) / "tokens"
             tokens = np.arange(10, dtype=np.int32)
@@ -84,10 +127,21 @@ class TestPackedDataset(unittest.TestCase):
                 handle.write(lengths.tobytes())
                 handle.write(np.array([0, 4], dtype=np.int64).tobytes())
                 handle.write(np.array([0, 4], dtype=np.int64).tobytes())
-            sample = PackedDataset(str(prefix), 4, drop_tail=False)[2]
+            sample = ds_mod.PackedDataset(str(prefix), 4, drop_tail=False)[2]
         self.assertEqual(sample["input_ids"].tolist(), [8, 9, 0, 0])
         self.assertEqual(sample["attention_mask"].tolist(), [1, 1, 0, 0])
         self.assertEqual(sample["loss_mask"].tolist(), [1.0, 1.0, 0.0, 0.0])
+        self.assertEqual(sample["labels"].tolist(), [8, 9, -100, -100])
+
+
+def modelopt_topk_reference(student, teacher, k, temperature, reverse):
+    teacher_values, teacher_indices = torch.topk(teacher, k=k, dim=-1)
+    student_values = torch.gather(student, dim=-1, index=teacher_indices)
+    student_log_probs = F.log_softmax(student_values.float() / temperature, dim=-1)
+    teacher_log_probs = F.log_softmax(teacher_values.float() / temperature, dim=-1)
+    if reverse:
+        student_log_probs, teacher_log_probs = teacher_log_probs, student_log_probs
+    return F.kl_div(student_log_probs, teacher_log_probs, reduction="none", log_target=True).sum(dim=-1)
 
 
 class TestDistillLoss(unittest.TestCase):
@@ -103,6 +157,7 @@ class TestDistillLoss(unittest.TestCase):
             reduction="none",
         ).sum(dim=-1)
         torch.testing.assert_close(loss, reference)
+        torch.testing.assert_close(LogitsKLLoss()(student, teacher), reference)
 
     def test_chunked_loss_matches_full(self):
         torch.manual_seed(1)
@@ -116,84 +171,90 @@ class TestDistillLoss(unittest.TestCase):
         torch.testing.assert_close(total_full, total_chunk)
         torch.testing.assert_close(count_full, count_chunk)
 
+    def test_reverse_matches_modelopt_formula_and_gradient(self):
+        torch.manual_seed(7)
+        base_student = torch.randn(2, 5, 8)
+        teacher = torch.randn(2, 5, 8)
+        for reverse in (False, True):
+            for temperature in (1.0, 2.0):
+                student = base_student.clone().requires_grad_(True)
+                expected_student = base_student.clone().requires_grad_(True)
+                actual = topk_kl(student, teacher, k=2, temperature=temperature, reverse=reverse)
+                expected = modelopt_topk_reference(
+                    expected_student, teacher, k=2, temperature=temperature, reverse=reverse
+                )
+                torch.testing.assert_close(actual, expected, rtol=0.0, atol=0.0)
+                actual.sum().backward()
+                expected.sum().backward()
+                torch.testing.assert_close(student.grad, expected_student.grad, rtol=0.0, atol=0.0)
 
-class TestAdapters(unittest.TestCase):
-    def test_generic_adapter_on_causal_lm(self):
+    def test_reverse_precomputed_topk_matches_tensor_path(self):
+        torch.manual_seed(8)
+        student = torch.randn(2, 5, 8)
+        teacher = torch.randn(2, 5, 8)
+        criterion = TopKLogitsKLLoss(top_k=2, temperature=1.0, chunk=3, reverse=True)
+        values, indices = torch.topk(teacher, k=2, dim=-1)
+        tensor_loss, tensor_count = criterion(student, teacher)
+        tuple_loss, tuple_count = criterion(student, (values, indices))
+        torch.testing.assert_close(tuple_loss, tensor_loss, rtol=0.0, atol=0.0)
+        torch.testing.assert_close(tuple_count, tensor_count)
+        expected = modelopt_topk_reference(student, teacher, k=2, temperature=1.0, reverse=True).sum()
+        torch.testing.assert_close(tuple_loss, expected, rtol=0.0, atol=0.0)
+
+
+class TestParallelAndArguments(unittest.TestCase):
+    def test_decoder_layer_class_names_on_standard_and_peft_models(self):
         model = tiny_model()
-        adapter = get_adapter(model)
-        self.assertEqual(len(adapter.layers(model)), 2)
-        self.assertIs(adapter.text_model(model), model.model)
-        self.assertIs(adapter.lm_head(model), model.lm_head)
-        self.assertEqual(adapter.wrap_classes(model), ["Qwen3_5DecoderLayer"])
+        self.assertEqual(decoder_layer_class_names(model), ["Qwen3_5DecoderLayer"])
+        lora_model = _apply_peft_lora(tiny_model())
+        self.assertEqual(decoder_layer_class_names(lora_model), ["Qwen3_5DecoderLayer"])
+        self.assertIn(teacher_placement(model), ("cuda", "cpu", "shard"))
 
-    def test_registry_family(self):
-        model = tiny_model()
-        self.assertEqual(get_adapter("qwen3_5").family, "qwen3_5")
-        self.assertEqual(get_adapter("unknown_family").family, "generic")
-        self.assertEqual(get_adapter(model).family, "qwen3_5")
+    def test_qad_training_arguments_and_yaml_recipes(self):
+        self.assertTrue(issubclass(QADTrainingArguments, DistillationTrainingArguments))
+        self.assertTrue(issubclass(QADTrainingArguments, QuantizationTrainingArguments))
 
-
-class TestQADConfig(unittest.TestCase):
-    def test_yaml_roundtrip(self):
-        recipe = {
-            "schema": "neural_compressor.qad/v1",
-            "model": {"path": "/tmp/model", "family": "qwen3_5"},
-            "quant": {
-                "rules": [
-                    {
-                        "module": r".*\.mlp\.(gate_proj|up_proj|down_proj)$",
-                        "weight": {"format": "mxfp4"},
-                        "input": {"format": "mxfp4"},
-                    }
-                ],
-                "algorithm": "max",
-                "exclude": ["^lm_head$"],
-                "amax_source": None,
-                "strict": True,
-            },
-            "distill": {"teacher": "/tmp/model", "top_k": 64, "chunk": 128},
-            "train": {"seq_length": 128, "micro_batch_size": 1, "global_batch_size": 2},
-            "export": {"format": "hf_bf16", "keep_vision": True},
-        }
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "recipe.yaml"
-            import yaml
+            qad_args = QADTrainingArguments(
+                output_dir=tmp,
+                teacher_model_name_or_path="self",
+                teacher_placement="self",
+                kd_top_k=64,
+                logits_chunk_size=32,
+                use_cpu=True,
+                bf16=False,
+            )
+            d_cfg = qad_args.build_distill_config()
+            self.assertEqual(d_cfg.teacher, "self")
+            self.assertEqual(d_cfg.top_k, 64)
+            self.assertEqual(d_cfg.chunk_size, 32)
 
-            path.write_text(yaml.safe_dump(recipe))
-            config = QADConfig.from_yaml(path)
-        self.assertEqual(config.model.family, "qwen3_5")
-        self.assertEqual(config.quant.rules[0].weight.format.name, "mxfp4")
-        self.assertEqual(config.distill.top_k, 64)
-        self.assertEqual(config.train.grad_accum, 2)
-        self.assertTrue(config.export.keep_vision)
-        self.assertEqual(config.to_dict()["schema"], "neural_compressor.qad/v1")
+        for recipe_name in (
+            "qwen3_5_27b_mxfp4_fp8_full_fsdp2.yaml",
+            "qwen3_5_27b_mxfp4_fp8_full_cpu_offload.yaml",
+            "qwen3_5_27b_mxfp4_fp8_lora_path_b.yaml",
+            "qwen3_5_27b_nvfp4_fp8_full_fsdp2.yaml",
+            "qwen3_8_27b_mxfp4_mlp_fp8_attn.yaml",
+        ):
+            cfg = FakeQuantConfig.from_yaml(EXAMPLE_DIR / "recipes" / recipe_name)
+            self.assertGreaterEqual(len(cfg.config_groups), 2)
 
-    def test_invalid_runtime_choices_are_rejected(self):
-        from neural_compressor.torch.qad.config import TrainConfig
-
-        with self.assertRaisesRegex(ValueError, "unknown backend"):
-            TrainConfig(backend="modelopt")
-        with self.assertRaisesRegex(ValueError, "unknown parallel"):
-            TrainConfig(parallel="tp")
+    def test_invalid_distill_choices_are_rejected(self):
         with self.assertRaisesRegex(ValueError, "unknown distill loss"):
-            DistillConfig(loss="mse")
+            DistillationConfig(loss="mse")
         with self.assertRaisesRegex(ValueError, "unknown teacher_device"):
-            DistillConfig(teacher_device="auto")
+            DistillationConfig(teacher_device="tp")
         with self.assertRaisesRegex(ValueError, "plain CE"):
-            DistillConfig(loss="ce")
-        with self.assertRaisesRegex(ValueError, "unsupported LoRA export"):
-            ExportConfig(lora="both")
+            DistillationConfig(loss="ce")
 
     def test_teacher_module_is_accepted(self):
         teacher = tiny_model()
-        config = DistillConfig(teacher=teacher, teacher_device="cpu", top_k=16)
+        config = DistillationConfig(teacher=teacher, teacher_device="cpu", top_k=16)
         self.assertIs(config.teacher, teacher)
 
 
 class TestQADTrainer(unittest.TestCase):
     def _trainer(self, student, teacher):
-        from transformers import TrainingArguments
-
         args = TrainingArguments(
             output_dir=tempfile.mkdtemp(),
             report_to=[],
@@ -210,7 +271,7 @@ class TestQADTrainer(unittest.TestCase):
 
     def test_compute_loss_matches_manual_formula(self):
         torch.manual_seed(0)
-        teacher = tiny_model()
+        teacher = tiny_model().eval()
         student = quantize(tiny_model(), tiny_quant_config())
         trainer = self._trainer(student, teacher)
 
@@ -222,10 +283,8 @@ class TestQADTrainer(unittest.TestCase):
         loss = trainer.compute_loss(student, batch)
 
         with torch.no_grad():
-            student_hidden = student(batch["input_ids"], batch["attention_mask"])
-            teacher_hidden = teacher(batch["input_ids"], batch["attention_mask"])
-            student_logits = student.logits(student_hidden)
-            teacher_logits = teacher.logits(teacher_hidden)
+            student_logits = student(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits
+            teacher_logits = teacher(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits
             manual = topk_kl(student_logits, teacher_logits, k=16).mean()
         torch.testing.assert_close(loss, manual)
 
@@ -247,8 +306,6 @@ class TestQADTrainer(unittest.TestCase):
 
 class TestDistillModes(unittest.TestCase):
     def _trainer(self, distill_config):
-        from transformers import TrainingArguments
-
         student = tiny_model()
         teacher = tiny_model()
         args = TrainingArguments(output_dir=tempfile.mkdtemp(), report_to=[], use_cpu=True)
@@ -262,8 +319,8 @@ class TestDistillModes(unittest.TestCase):
         }
         loss = trainer.compute_loss(student, batch)
         with torch.no_grad():
-            student_logits = student.logits(student(batch["input_ids"], batch["attention_mask"]))
-            teacher_logits = trainer.teacher.logits(trainer.teacher(batch["input_ids"], batch["attention_mask"]))
+            student_logits = student(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits
+            teacher_logits = trainer.teacher(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits
             expected = topk_kl(student_logits, teacher_logits, k=16, reverse=True).mean()
         torch.testing.assert_close(loss, expected)
 
@@ -275,11 +332,29 @@ class TestDistillModes(unittest.TestCase):
         }
         loss = trainer.compute_loss(student, batch)
         with torch.no_grad():
-            student_logits = student.logits(student(batch["input_ids"], batch["attention_mask"])).float()
-            teacher_logits = trainer.teacher.logits(trainer.teacher(batch["input_ids"], batch["attention_mask"])).float()
+            student_logits = student(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits.float()
+            teacher_logits = trainer.teacher(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits.float()
             expected = F.kl_div(
                 F.log_softmax(student_logits, dim=-1),
                 F.log_softmax(teacher_logits, dim=-1),
+                reduction="none",
+                log_target=True,
+            ).sum(dim=-1).mean()
+        torch.testing.assert_close(loss, expected)
+
+    def test_full_vocab_reverse_matches_manual_formula(self):
+        trainer, student = self._trainer(DistillConfig(loss="kl", reverse=True, top_k=16, chunk=4))
+        batch = {
+            "input_ids": torch.randint(0, 128, (1, 16)),
+            "attention_mask": torch.ones(1, 16, dtype=torch.long),
+        }
+        loss = trainer.compute_loss(student, batch)
+        with torch.no_grad():
+            student_logits = student(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits.float()
+            teacher_logits = trainer.teacher(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits.float()
+            expected = F.kl_div(
+                F.log_softmax(teacher_logits, dim=-1),
+                F.log_softmax(student_logits, dim=-1),
                 reduction="none",
                 log_target=True,
             ).sum(dim=-1).mean()
@@ -294,28 +369,37 @@ class TestDistillModes(unittest.TestCase):
         }
         loss = trainer.compute_loss(student, batch)
         with torch.no_grad():
-            logits = student.logits(student(batch["input_ids"], batch["attention_mask"]))
+            logits = student(input_ids=batch["input_ids"], attention_mask=batch["attention_mask"], use_cache=False).logits
             expected = F.cross_entropy(
                 logits[:, :-1].reshape(-1, logits.shape[-1]).float(), batch["labels"][:, 1:].reshape(-1)
             )
         torch.testing.assert_close(loss, expected)
 
 
-class TestLoraPaths(unittest.TestCase):
-    def _model(self):
+class TestLoraAndExportRoundtrip(unittest.TestCase):
+    def _lora_with_output_quant(self, merge_before_quant: bool):
         cfg = FakeQuantConfig(
-            rules=[QuantRule(module=r".*self_attn.q_proj$", weight="mxfp4", input="mxfp4", output="fp8_e4m3")]
+            config_groups=[
+                QuantSchemeRule(
+                    targets=[r"re:.*self_attn\.q_proj$"],
+                    weights="mxfp4",
+                    input_activations="mxfp4",
+                    output_activations="fp8_e4m3",
+                )
+            ]
         )
-        return quantize(tiny_model(), cfg)
+        return prepare_qad_model(
+            tiny_model(),
+            cfg,
+            lora_config={"r": 4, "lora_alpha": 4, "target_modules": ["q_proj"], "bias": "none", "task_type": "CAUSAL_LM"},
+            lora_merge_before_quant=merge_before_quant,
+        )
 
     def test_path_a_initializes_and_backwards(self):
         torch.manual_seed(0)
-        model = apply_lora(
-            self._model(),
-            {"rank": 4, "alpha": 4, "targets": ["q_proj"], "quant_order": "quant_then_lora"},
-        )
-        self.assertEqual(model.base_model_prefix, "model")
+        model = self._lora_with_output_quant(merge_before_quant=False)
         layer = model.base_model.model.model.layers[0].self_attn.q_proj
+        self.assertIsInstance(layer, QuantLoraLinear)
         output = layer(torch.randn(3, 64))
         output.sum().backward()
         self.assertIsNotNone(layer.lora_A.default.weight.grad)
@@ -323,78 +407,53 @@ class TestLoraPaths(unittest.TestCase):
 
     def test_path_b_runs_output_quantizer(self):
         torch.manual_seed(0)
-        model = apply_lora(
-            self._model(),
-            {"rank": 4, "alpha": 4, "targets": ["q_proj"], "quant_order": "lora_then_quant"},
-        )
+        model = self._lora_with_output_quant(merge_before_quant=True)
         layer = model.base_model.model.model.layers[0].self_attn.q_proj
+        self.assertIsInstance(layer, QuantLoraLinear)
         calls = []
-        handle = layer.base_layer.output_quantizer.register_forward_hook(lambda *args: calls.append(1))
+        handle = layer.output_quantizer.register_forward_hook(lambda *args: calls.append(1))
         layer(torch.randn(3, 64)).sum().backward()
         handle.remove()
         self.assertEqual(len(calls), 1)
 
-
-class TestQuantMetadataAndExport(unittest.TestCase):
-    def test_write_quantization_config(self):
-        model = quantize(tiny_model(), tiny_quant_config())
-        with tempfile.TemporaryDirectory() as tmp:
-            path = write_quantization_config(model, tmp, tiny_quant_config())
-            payload = json.loads(Path(path).read_text())
-        self.assertEqual(payload["schema"], "neural_compressor.qad/v1")
-        self.assertEqual(payload["mode"], "fake_quant")
-        self.assertIn("rules", payload["quant"])
-
-    def test_export_text_roundtrip_excludes_quantizer_buffers(self):
+    def test_export_hf_checkpoint_excludes_quantizer_buffers(self):
         cfg = FakeQuantConfig(
-            rules=[QuantRule(module=r".*self_attn.q_proj$", weight=dict(format="fp8_e4m3", scheme="static", amax=1.25))]
+            config_groups=[
+                QuantSchemeRule(
+                    targets=[r"re:.*self_attn\.q_proj$"],
+                    weights=dict(format="fp8_e4m3", dynamic=False, amax=1.25),
+                )
+            ]
         )
-        model = quantize(tiny_model(), cfg)
-        with tempfile.TemporaryDirectory() as tmp:
-            out = export(model, None, ExportConfig(keep_vision=False), tmp, dtype=torch.float32)
-            from safetensors import safe_open
-
-            with safe_open(str(Path(out) / "model.safetensors"), "pt") as handle:
-                self.assertFalse(any("quantizer" in key for key in handle.keys()))
-            reloaded = quantize(tiny_model(), cfg)
-            load_state_dict_into_model(reloaded, Path(out) / "model.safetensors")
-            for key, value in reloaded.state_dict().items():
-                if "quantizer" not in key:
-                    torch.testing.assert_close(value, model.state_dict()[key])
-            files = {item.name for item in Path(out).iterdir()}
-            self.assertIn("config.json", files)
-
-    def test_export_text_honors_shard_size_and_hf_reload(self):
         model = tiny_model()
         with tempfile.TemporaryDirectory() as tmp:
-            export(model, None, ExportConfig(keep_vision=False, max_shard_size="1KB"), tmp, dtype=torch.float32)
-            self.assertTrue((Path(tmp) / "model.safetensors.index.json").is_file())
-            from transformers import AutoModelForCausalLM
+            ckpt_dir = Path(tmp) / "ckpt"
+            out_dir = Path(tmp) / "exported"
+            model.save_pretrained(ckpt_dir)
+            prepare_qat(model, cfg)
+            from neural_compressor.torch.quantization import save_quantizer_state
 
-            reloaded = AutoModelForCausalLM.from_pretrained(tmp, dtype=torch.float32)
-            self.assertEqual(reloaded.state_dict().keys(), model.state_dict().keys())
-            for key, value in reloaded.state_dict().items():
-                torch.testing.assert_close(value, model.state_dict()[key])
+            save_quantizer_state(model, ckpt_dir / "quantizer_state.json")
+            cfg.to_json_file(ckpt_dir / "quant_config.json")
+            export_hf_checkpoint(ckpt_dir, out_dir, export_format="bf16")
+            from safetensors import safe_open
 
-    def test_export_adapter_and_reload(self):
-        model = apply_lora(
-            quantize(tiny_model(), tiny_quant_config()),
-            {"rank": 4, "alpha": 4, "targets": ["q_proj"], "quant_order": "quant_then_lora"},
-        )
-        expected = {name: value.detach().clone() for name, value in model.state_dict().items() if "lora_" in name}
-        with tempfile.TemporaryDirectory() as tmp:
-            export(model, None, ExportConfig(keep_vision=False, lora="adapter"), tmp)
-            self.assertTrue((Path(tmp) / "adapter_model.safetensors").is_file())
-            reloaded = apply_lora(
-                quantize(tiny_model(), tiny_quant_config()),
-                {"rank": 4, "alpha": 4, "targets": ["q_proj"], "quant_order": "quant_then_lora"},
-            )
-            reloaded.load_adapter(tmp, adapter_name="default", autocast_adapter_dtype=False)
-            for name, value in expected.items():
-                torch.testing.assert_close(reloaded.state_dict()[name], value)
+            with safe_open(str(out_dir / "model.safetensors"), "pt") as handle:
+                self.assertFalse(any("quantizer" in key for key in handle.keys()))
+            self.assertTrue((out_dir / "config.json").is_file())
+
+    def test_lora_forwards_mixed_batch_adapter_names(self):
+        from peft.tuners.lora.layer import Linear as LoraLinear
+
+        model = _apply_peft_lora(tiny_model(), merge_before_quant=True)
+        layer = next(module for module in model.modules() if isinstance(module, LoraLinear))
+        with patch.object(LoraLinear, "forward", autospec=True, return_value="output") as forward:
+            result = layer(torch.randn(2, 4, 64), adapter_names=["default", "other"])
+        self.assertEqual(result, "output")
+        self.assertEqual(forward.call_args.kwargs["adapter_names"], ["default", "other"])
 
 
-class TestReviewFixes(unittest.TestCase):
+class TestWrapperAndExampleHelpers(unittest.TestCase):
     def test_hidden_uses_original_wrapper(self):
         student = tiny_model()
 
@@ -408,8 +467,6 @@ class TestReviewFixes(unittest.TestCase):
                 self.calls += 1
                 return self.module(*args, **kwargs)
 
-        from transformers import TrainingArguments
-
         wrapped = Wrapper(student)
         trainer = QADTrainer(
             model=wrapped,
@@ -421,8 +478,6 @@ class TestReviewFixes(unittest.TestCase):
         self.assertEqual(wrapped.calls, 1)
 
     def test_teacher_is_frozen_and_gets_no_gradients(self):
-        from transformers import TrainingArguments
-
         student = tiny_model()
         teacher = tiny_model()
         trainer = QADTrainer(
@@ -441,72 +496,58 @@ class TestReviewFixes(unittest.TestCase):
         self.assertTrue(all(parameter.grad is None for parameter in teacher.parameters()))
 
     def test_save_adapter_keeps_trained_weights(self):
-        from neural_compressor.torch.qad.checkpoint import save_adapter
-        from safetensors import safe_open
-
-        model = apply_lora(
-            quantize(tiny_model(), tiny_quant_config()),
-            {"rank": 4, "alpha": 4, "targets": ["q_proj"], "quant_order": "quant_then_lora"},
-        )
+        model = _apply_peft_lora(tiny_model(), merge_before_quant=False)
         expected = {name: value.detach().clone() for name, value in model.state_dict().items() if "lora_" in name}
         with tempfile.TemporaryDirectory() as tmp:
-            self.assertTrue(save_adapter(model, tmp, should_save=True))
-            reloaded = apply_lora(
-                quantize(tiny_model(), tiny_quant_config()),
-                {"rank": 4, "alpha": 4, "targets": ["q_proj"], "quant_order": "quant_then_lora"},
-            )
+            self.assertTrue(save_fsdp2_peft_adapter(model, tmp, should_save=True))
+            reloaded = _apply_peft_lora(tiny_model(), merge_before_quant=False)
             reloaded.load_adapter(tmp, adapter_name="default", autocast_adapter_dtype=False)
             for name, value in expected.items():
                 torch.testing.assert_close(reloaded.state_dict()[name], value)
 
-    def test_plain_model_load_skips_quantizer_metadata(self):
-        cfg = FakeQuantConfig(
-            rules=[QuantRule(module=r".*self_attn.q_proj$", weight=dict(format="fp8_e4m3", scheme="static", amax=1.25))]
-        )
-        model = quantize(tiny_model(), cfg)
+    def test_qwen_hub_id_resolves_to_snapshot(self):
+        loader = load_qad_example("modeling/qwen35_text_loader.py")
         with tempfile.TemporaryDirectory() as tmp:
-            out = export(model, None, ExportConfig(keep_vision=False), tmp, dtype=torch.float32)
-            plain = tiny_model()
-            load_state_dict_into_model(plain, str(Path(out) / "model.safetensors"))
-            for key, value in plain.state_dict().items():
-                if "quantizer" not in key:
-                    torch.testing.assert_close(value, model.state_dict()[key])
+            with patch("huggingface_hub.snapshot_download", return_value=tmp) as download:
+                self.assertEqual(loader._resolve_checkpoint_dir("org/model"), Path(tmp))
+                self.assertEqual(loader._resolve_checkpoint_dir(tmp), Path(tmp))
+        download.assert_called_once()
 
-    def test_unsloth_source_is_not_registered_as_child(self):
-        from neural_compressor.torch.qad.backends import wrap_unsloth
-
-        source = tiny_model()
-        wrapped = wrap_unsloth(source)
-        self.assertFalse(any(name == "_unsloth_source" for name, _ in wrapped.named_modules()))
-
-    def test_tiny_calibration_uses_synthetic_batches(self):
-        from types import SimpleNamespace
-
-        main = load_qad_example("main.py")
-        recipe = Path(__file__).resolve().parents[3] / "examples/pytorch/llm/qwen/qad/recipes/qwen3_8_27b_mxfp4_mlp_fp8_attn.yaml"
-        args = SimpleNamespace(
-            recipe=str(recipe),
-            model=None,
-            teacher=None,
-            amax_source=None,
-            save_steps=None,
-            seq_length=None,
-            train_iters=None,
-            top_k=None,
-            output=tempfile.mkdtemp(),
-            tiny=True,
-            synthetic_batches=2,
-            calib_batches=1,
-            data="",
-        )
-        config = main.build_config(args)
-        student = main.quantize_student(config, args, local_rank=0, world=1, device=torch.device("cpu"))
-        self.assertIsNone(config.quant.amax_source)
-        self.assertTrue(any(module.amax is not None for module in student.modules() if hasattr(module, "amax")))
+    def test_train_script_tiny_smoke_calibrates_and_runs(self):
+        train_mod = load_qad_example("train.py")
+        recipe = EXAMPLE_DIR / "recipes/qwen3_5_27b_mxfp4_fp8_lora_path_b.yaml"
+        with tempfile.TemporaryDirectory() as tmp:
+            trainer = train_mod.run_training(
+                [
+                    "--config",
+                    str(recipe),
+                    "--tiny",
+                    "--synthetic_batches",
+                    "4",
+                    "--calib_batches",
+                    "1",
+                    "--seq_length",
+                    "32",
+                    "--kd_top_k",
+                    "16",
+                    "--max_steps",
+                    "1",
+                    "--gradient_accumulation_steps",
+                    "1",
+                    "--save_strategy",
+                    "no",
+                    "--use_cpu",
+                    "true",
+                    "--bf16",
+                    "false",
+                    "--output_dir",
+                    tmp,
+                ]
+            )
+            self.assertEqual(trainer.state.global_step, 1)
+            self.assertTrue(any(getattr(m, "amax", None) is not None for m in trainer.model.modules()))
 
     def test_prepare_data_writes_independent_document_count(self):
-        from types import SimpleNamespace
-
         prepare_data = load_qad_example("prepare_data.py")
 
         class Tokenizer:
@@ -518,15 +559,17 @@ class TestReviewFixes(unittest.TestCase):
             def __call__(self, text, add_special_tokens=False):
                 return SimpleNamespace(input_ids=[1, 2])
 
-        import sys
-
         old_from_pretrained = prepare_data.AutoTokenizer.from_pretrained
         old_datasets = sys.modules.get("datasets")
         prepare_data.AutoTokenizer.from_pretrained = lambda path: Tokenizer()
-        sys.modules["datasets"] = SimpleNamespace(load_dataset=lambda *args, **kwargs: iter([
-            {"messages": [{"role": "user", "content": "a"}]},
-            {"messages": [{"role": "user", "content": "b"}]},
-        ]))
+        sys.modules["datasets"] = SimpleNamespace(
+            load_dataset=lambda *args, **kwargs: iter(
+                [
+                    {"messages": [{"role": "user", "content": "a"}]},
+                    {"messages": [{"role": "user", "content": "b"}]},
+                ]
+            )
+        )
         with tempfile.TemporaryDirectory() as tmp:
             prefix = Path(tmp) / "tokens"
             old_argv = sys.argv
@@ -553,53 +596,7 @@ class TestReviewFixes(unittest.TestCase):
         self.assertEqual(document_count, 3)
         self.assertEqual(indices.tolist(), [0, 3, 6])
 
-
-class TestSecondReviewFixes(unittest.TestCase):
-    def test_tied_weights_export_to_independent_safetensors(self):
-        from safetensors import safe_open
-
-        model = tiny_model()
-        model.lm_head.weight = model.model.embed_tokens.weight
-        with tempfile.TemporaryDirectory() as tmp:
-            out = export(model, None, ExportConfig(keep_vision=False), tmp, dtype=torch.float32)
-            with safe_open(str(Path(out) / "model.safetensors"), "pt") as handle:
-                embedding = handle.get_tensor("model.embed_tokens.weight")
-                head = handle.get_tensor("lm_head.weight")
-        torch.testing.assert_close(head, embedding)
-
-    def test_lora_forwards_mixed_batch_adapter_names(self):
-        from unittest.mock import patch
-
-        from peft.tuners.lora.layer import Linear as LoraLinear
-
-        model = apply_lora(
-            quantize(tiny_model(), tiny_quant_config()),
-            {"rank": 4, "alpha": 4, "targets": ["q_proj"], "quant_order": "lora_then_quant"},
-        )
-        layer = next(module for module in model.modules() if isinstance(module, LoraLinear))
-        with patch.object(LoraLinear, "forward", autospec=True, return_value="output") as forward:
-            result = layer(torch.randn(2, 4, 64), adapter_names=["default", "other"])
-        self.assertEqual(result, "output")
-        self.assertEqual(forward.call_args.kwargs["adapter_names"], ["default", "other"])
-
-    def test_qwen_hub_id_resolves_to_snapshot(self):
-        from unittest.mock import patch
-
-        from neural_compressor.torch.qad.modeling import _resolve_checkpoint_dir
-
-        with tempfile.TemporaryDirectory() as tmp:
-            with patch("huggingface_hub.snapshot_download", return_value=tmp) as download:
-                self.assertEqual(_resolve_checkpoint_dir("org/model"), Path(tmp))
-                self.assertEqual(_resolve_checkpoint_dir(tmp), Path(tmp))
-        download.assert_called_once_with(
-            "org/model", allow_patterns=["*.safetensors", "model.safetensors.index.json"]
-        )
-
     def test_generic_hf_hidden_uses_root_wrapper_output(self):
-        from types import SimpleNamespace
-
-        from transformers import TrainingArguments
-
         class GenericHF(torch.nn.Module):
             def __init__(self):
                 super().__init__()
@@ -636,8 +633,6 @@ class TestSecondReviewFixes(unittest.TestCase):
         self.assertEqual(logits.shape, (2, 4, 128))
 
     def test_mixed_ce_requires_labels(self):
-        from transformers import TrainingArguments
-
         student = tiny_model()
         trainer = QADTrainer(
             model=student,

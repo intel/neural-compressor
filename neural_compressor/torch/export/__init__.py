@@ -11,4 +11,45 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Export module for quantization."""
+"""Export subsystem for HuggingFace ``compressed-tensors`` / ``bf16`` and VLM surgery."""
+
+from .compressed_tensors_packer import (
+    LayerSchemeSpec,
+    build_compressed_tensors_config,
+    dequantize_compressed_tensors_layer,
+    pack_linear_tensors,
+    pack_model_to_compressed_tensors,
+)
+from .export_hf import (
+    ExportFormat,
+    export_compressed_tensors,
+    export_hf2compressored_model,
+    export_hf_checkpoint,
+)
+from .vlm_surgery import (
+    StreamingSafetensorsWriter,
+    copy_auxiliary_hf_files,
+    is_vlm_checkpoint,
+    remap_text_key_to_vlm,
+    remap_vlm_key_to_text,
+    stream_non_text_tensors_from_vlm,
+)
+
+__all__ = [
+    "ExportFormat",
+    "LayerSchemeSpec",
+    "StreamingSafetensorsWriter",
+    "build_compressed_tensors_config",
+    "copy_auxiliary_hf_files",
+    "dequantize_compressed_tensors_layer",
+    "export_compressed_tensors",
+    "export_hf2compressored_model",
+    "export_hf_checkpoint",
+    "is_vlm_checkpoint",
+    "pack_linear_tensors",
+    "pack_model_to_compressed_tensors",
+    "remap_text_key_to_vlm",
+    "remap_vlm_key_to_text",
+    "stream_non_text_tensors_from_vlm",
+]
+

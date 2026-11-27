@@ -11,160 +11,251 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""TensorQuantizer: the single building block behind QAT and QAD."""
+"""Stateful ``TensorQuantizer`` module for QAT, QAD, and PTQ simulation."""
 
 from __future__ import annotations
 
-from typing import Optional
+import contextlib
+from typing import Iterator, Optional, Union
 
 import torch
+import torch.distributed as dist
 import torch.nn as nn
 
-from .formats import E4M3_MAX, QuantFormat, get_format
-from .ops.reference import (
-    _e2m1_code,
-    dequantize,
-    fake_quant,
-    fake_quant_fp8_amax,
-    fake_quant_fp8_static,
-    pack_nibbles,
-    quantize,
+from .config import QuantizerConfig
+from .formats import QuantFormat
+from .ops.qdq import (
+    QuantBackendName,
+    fake_quant_dynamic,
+    fake_quant_fp8_static_amax,
+    ste_fake_quant,
 )
-from .options import QuantizerConfig
 
 
 class TensorQuantizer(nn.Module):
-    """Quantize-dequantize one tensor with a straight-through gradient.
+    """Per-slot (weight / input / output) fake-quantizer module.
 
-    Dynamic formats (MXFP4/NVFP4) compute their block scales on every forward.
-    Static formats (per-tensor FP8) consume a calibrated ``amax`` buffer, which
-    is persistent so a checkpoint can rebuild the quantizer exactly.
-
-    Args:
-        config: Quantizer behaviour. ``amax`` may carry a calibrated value;
-            otherwise :meth:`load_amax` or calibration must provide one.
+    Guarantees:
+    * ``amax`` buffer is strictly maintained in ``torch.float32`` even if ``model.to(torch.bfloat16)``
+      or ``model.half()`` is called on an ancestor module.
+    * When ``x.requires_grad`` is ``False`` (e.g. frozen base weights under LoRA or teacher/eval runs),
+      QDQ executes directly under ``torch.no_grad()`` without building autograd nodes.
+    * When ``x.requires_grad`` is ``True``, :func:`ste_fake_quant` applies an identity STE backward
+      with zero saved tensors.
     """
 
-    def __init__(self, config: QuantizerConfig | str | dict) -> None:
+    amax: Optional[torch.Tensor]
+
+    def __init__(self, config: Optional[QuantizerConfig] = None) -> None:
         super().__init__()
-        self.config = QuantizerConfig.from_any(config)
-        self.format: QuantFormat = get_format(self.config.format)
-        self.scheme = self.config.scheme
-        self.enabled = (not self.config.is_noop) and self.format.name != "bf16"
-        self.fake_quant = self.config.fake_quant
-        self.calibrating = False
+        self.config: QuantizerConfig = config if config is not None else QuantizerConfig(enabled=False)
+        self.format: QuantFormat = self.config.format
+        self._dynamic: bool = self.config.dynamic
+        self._enabled: bool = self.config.enabled and self.format.name != "bf16"
+        self._calibrating: bool = False
+        self.observer: str = self.config.observer
+        self.backend: QuantBackendName = self.config.backend
 
-        amax = self.config.amax
-        if isinstance(amax, (int, float)):
-            amax = torch.tensor(float(amax), dtype=torch.float32)
-        elif isinstance(amax, torch.Tensor):
-            amax = amax.detach().reshape(()).to(torch.float32)
-        elif amax is not None:
-            # "ptq" / {"file": ...} are resolved by the calibration source, not here.
-            amax = None
-        self.register_buffer("amax", amax, persistent=True)
+        init_amax = (
+            torch.tensor(float(self.config.amax), dtype=torch.float32) if self.config.amax is not None else None
+        )
+        self.register_buffer("amax", init_amax, persistent=True)
 
-    # ------------------------------------------------------------------ state
+    # ------------------------------------------------------------------
+    # State properties & controls
+    # ------------------------------------------------------------------
+
+    @property
+    def is_enabled(self) -> bool:
+        return self._enabled
+
+    @is_enabled.setter
+    def is_enabled(self, value: bool) -> None:
+        self._enabled = bool(value) and self.format.name != "bf16"
+
+    @property
+    def enabled(self) -> bool:
+        """Alias for :attr:`is_enabled`."""
+        return self._enabled
+
+    @enabled.setter
+    def enabled(self, value: bool) -> None:
+        self.is_enabled = value
+
+    @property
+    def is_dynamic(self) -> bool:
+        return self._dynamic
+
+    @property
+    def scheme(self) -> str:
+        return "dynamic" if self._dynamic else "static"
+
+    @property
+    def is_calibrating(self) -> bool:
+        return self._calibrating
+
+    @is_calibrating.setter
+    def is_calibrating(self, value: bool) -> None:
+        self._calibrating = bool(value)
+
+    @property
+    def calibrating(self) -> bool:
+        """Alias for :attr:`is_calibrating`."""
+        return self._calibrating
+
+    @calibrating.setter
+    def calibrating(self, value: bool) -> None:
+        self.is_calibrating = value
+
+    def enable_quant(self) -> None:
+        self.is_enabled = True
+
+    def disable_quant(self) -> None:
+        self.is_enabled = False
+
+    def enable_calib(self) -> None:
+        if not self._dynamic and self._enabled:
+            self._calibrating = True
+
+    def disable_calib(self) -> None:
+        self._calibrating = False
+
+    def reset_amax(self) -> None:
+        self.amax = None
+
+    def set_amax(self, value: Union[float, torch.Tensor]) -> None:
+        if isinstance(value, torch.Tensor):
+            val_t = value.detach().to(dtype=torch.float32).reshape(())
+        else:
+            device = self.amax.device if self.amax is not None else torch.device("cpu")
+            val_t = torch.tensor(float(value), dtype=torch.float32, device=device)
+        if (val_t < 0).any():
+            raise ValueError(f"amax must be non-negative, got {float(val_t)}")
+        self.amax = val_t
+
+    def finalize(self) -> None:
+        """Exit calibration mode and verify static quantizers hold a valid ``amax``."""
+        self._calibrating = False
+        if self._enabled and not self._dynamic and self.amax is None:
+            raise RuntimeError(
+                f"Static TensorQuantizer ({self.format.name}) was finalized without a calibrated amax."
+            )
+
+    # ------------------------------------------------------------------
+    # Precision & checkpoint invariants
+    # ------------------------------------------------------------------
+
+    def _apply(self, fn):
+        orig_amax = self.amax
+        super()._apply(fn)
+        if orig_amax is not None and self.amax is not None:
+            self.amax = orig_amax.to(device=self.amax.device, dtype=torch.float32)
+        return self
+
     def _load_from_state_dict(
-        self, state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
-    ):
-        """Materialize a missing static amax buffer before checkpoint loading."""
-        key = prefix + "amax"
-        if self.amax is None and key in state_dict:
-            self.amax = torch.empty((), dtype=torch.float32, device=state_dict[key].device)
+        self,
+        state_dict,
+        prefix,
+        local_metadata,
+        strict,
+        missing_keys,
+        unexpected_keys,
+        error_msgs,
+    ) -> None:
+        amax_key = f"{prefix}amax"
+        if amax_key in state_dict and self.amax is None and state_dict[amax_key] is not None:
+            src = state_dict[amax_key]
+            self.amax = torch.empty_like(src, dtype=torch.float32)
         super()._load_from_state_dict(
             state_dict, prefix, local_metadata, strict, missing_keys, unexpected_keys, error_msgs
         )
+        if self.amax is not None and self.amax.dtype != torch.float32:
+            self.amax = self.amax.to(torch.float32)
 
-    def load_amax(self, amax: torch.Tensor | float) -> None:
-        """Set the calibrated amax (fp32, scalar)."""
-        value = amax if isinstance(amax, torch.Tensor) else torch.tensor(float(amax))
-        self.amax = value.detach().reshape(()).to(torch.float32)
+    # ------------------------------------------------------------------
+    # Observation & Forward
+    # ------------------------------------------------------------------
 
-    def finalize(self) -> None:
-        """Leave calibration mode; static quantizers now require an amax."""
-        self.calibrating = False
-        if self.scheme == "static" and self.enabled and self.amax is None:
-            raise RuntimeError(
-                f"{self._get_name()} is static but has no amax; run calibration or load it from a summary"
-            )
-
-    def _update_amax(self, x: torch.Tensor) -> None:
-        current = x.detach().float().abs().amax()
+    @torch.no_grad()
+    def observe(self, x: torch.Tensor) -> None:
+        """Update running ``amax`` from ``x`` without affecting autograd."""
+        local_x = x.to_local() if hasattr(x, "to_local") else x
+        if local_x.numel() == 0:
+            return
+        cur = local_x.detach().abs().amax().to(dtype=torch.float32)
         if self.amax is None:
-            self.amax = current.reshape(()).to(torch.float32)
+            self.amax = cur
         else:
-            self.amax = torch.maximum(self.amax, current).reshape(()).to(torch.float32)
+            if self.amax.device != cur.device:
+                self.amax = self.amax.to(device=cur.device, dtype=torch.float32)
+            torch.maximum(self.amax, cur, out=self.amax)
 
-    # ---------------------------------------------------------------- forward
+    @torch.no_grad()
+    def sync_amax_across_distributed(self, group: Optional[dist.ProcessGroup] = None) -> None:
+        """All-reduce ``amax`` with ``ReduceOp.MAX`` across ranks when distributed is active."""
+        if self.amax is None or not dist.is_available() or not dist.is_initialized():
+            return
+        backend = dist.get_backend(group)
+        orig_device = self.amax.device
+        work_tensor = self.amax
+        if backend == "nccl" and orig_device.type != "cuda" and torch.cuda.is_available():
+            work_tensor = self.amax.cuda()
+        dist.all_reduce(work_tensor, op=dist.ReduceOp.MAX, group=group)
+        if work_tensor is not self.amax:
+            self.amax = work_tensor.to(device=orig_device, dtype=torch.float32)
+
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Return fake-quantized ``x`` with an identity backward."""
-        if not self.enabled:
+        if not self._enabled or self.format.name == "bf16":
             return x
-        if self.scheme == "static":
-            if self.calibrating:
-                self._update_amax(x)
-            if self.amax is None:
-                raise RuntimeError(
-                    f"static quantizer for {self.format.name} has no amax; "
-                    "call calibrate()/load_amax() before the forward pass"
-                )
-            quantized = fake_quant_fp8_amax(x, self.amax)
-        else:
-            quantized = fake_quant(x, self.format)
-        return x + (quantized - x).detach()
-
-    def _fake_quantize(self, inputs: torch.Tensor):
-        """Return QDQ weights and the E8M0 exponent used by legacy exporters."""
-        if self.format.name not in ("mxfp4", "mxfp8"):
-            raise NotImplementedError(f"legacy packing does not support {self.format.name}")
-        quantized = quantize(inputs, self.format)
-        return dequantize(quantized).to(inputs.dtype), quantized.scales.float() - 127.0
-
-    def weight_pack(self, weight: torch.Tensor, scale: torch.Tensor):
-        """Pack QDQ weights using the exponent returned by ``_fake_quantize``."""
-        if self.format.name not in ("mxfp4", "mxfp8"):
-            raise NotImplementedError(f"weight_pack does not support {self.format.name}")
-        original_shape = weight.shape
-        rows = weight.reshape(-1, original_shape[-1])
-        scaled = rows / torch.exp2(scale.float()).repeat_interleave(32, dim=-1)
-        encoded_scale = (scale + 127).to(torch.uint8)
-        if self.format.name == "mxfp4":
-            packed = pack_nibbles(_e2m1_code(scaled)).reshape(original_shape[0], original_shape[1] // 2)
-        else:
-            packed = scaled.clamp(-E4M3_MAX, E4M3_MAX).to(torch.float8_e4m3fn).reshape(original_shape)
-        return packed, encoded_scale.reshape(original_shape[0], -1)
-
-    # ------------------------------------------------- legacy attribute views
-    @property
-    def num_bits(self) -> int:
-        """Element bits, kept for the legacy QAT/export helpers."""
-        return self.format.element_bits
-
-    @property
-    def data_type(self) -> str:
-        """Legacy auto_round-style data type name."""
-        return {
-            "mxfp8": "mx_fp8",
-            "mxfp4": "mx_fp4",
-            "fp8_e4m3": "fp8_e4m3",
-        }.get(self.format.name, self.format.name)
-
-    @property
-    def _disabled(self) -> bool:
-        """Legacy ``_disabled`` flag."""
-        return not self.enabled
+        if self._calibrating:
+            if not self._dynamic:
+                self.observe(x)
+            return x
+        if not self._dynamic and self.amax is None:
+            raise RuntimeError(
+                f"Static TensorQuantizer ({self.format.name}) has no calibrated amax; "
+                "run calibrate_static_amax() or provide quantizer_state_path."
+            )
+        if not torch.is_grad_enabled() or not x.requires_grad:
+            if self._dynamic:
+                return fake_quant_dynamic(x, self.format, backend=self.backend)
+            assert self.amax is not None
+            return fake_quant_fp8_static_amax(x, self.amax, backend=self.backend)
+        return ste_fake_quant(
+            x,
+            self.format,
+            self.amax,
+            dynamic=self._dynamic,
+            backend=self.backend,
+        )
 
     def extra_repr(self) -> str:
-        """Human-readable state used by plan summaries and ``print(model)``."""
-        amax = "none" if self.amax is None else f"{float(self.amax):.4g}"
-        return f"format={self.format.name}, scheme={self.scheme}, " f"enabled={self.enabled}, amax={amax}"
+        if not self._enabled or self.format.name == "bf16":
+            return "disabled"
+        parts = [f"format={self.format.name}", f"scheme={self.scheme}"]
+        if self.format.block_size is not None:
+            parts.append(f"block_size={self.format.block_size}")
+        if not self._dynamic:
+            amax_str = f"{float(self.amax.detach().cpu()):.6g}" if self.amax is not None else "uncalibrated"
+            parts.append(f"amax={amax_str}")
+        if self._calibrating:
+            parts.append("calibrating=True")
+        return ", ".join(parts)
 
 
-# Backwards-compatible alias for the legacy QAT path.
-def build_quantizer(config: QuantizerConfig | str | dict) -> TensorQuantizer:
-    """Factory kept separate so call sites read ``build_quantizer(cfg)``."""
-    return TensorQuantizer(config)
+@contextlib.contextmanager
+def disable_fake_quant(model: nn.Module) -> Iterator[None]:
+    """Temporarily disable all :class:`TensorQuantizer` modules inside ``model``."""
+    saved: list[tuple[TensorQuantizer, bool]] = []
+    for mod in model.modules():
+        if isinstance(mod, TensorQuantizer):
+            saved.append((mod, mod.is_enabled))
+            mod.is_enabled = False
+    try:
+        yield
+    finally:
+        for mod, prev in saved:
+            mod.is_enabled = prev
 
 
-__all__ = ["TensorQuantizer", "build_quantizer", "fake_quant_fp8_static"]
+__all__ = ["TensorQuantizer", "disable_fake_quant"]

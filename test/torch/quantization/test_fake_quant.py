@@ -11,8 +11,12 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Unit tests for the fake-quant mechanism (QAT/QAD shared layer)."""
+"""Unit tests for FakeQuantConfig, QuantSchemeRule, TensorQuantizer, Plan, and Calibration."""
 
+from __future__ import annotations
+
+import importlib.util
+import json
 import tempfile
 import unittest
 import warnings
@@ -23,437 +27,274 @@ import torch.nn as nn
 
 from neural_compressor.torch.quantization import (
     FakeQuantConfig,
+    ModuleQuantConfig,
     QuantFormat,
+    QuantLinear,
+    QuantSchemeRule,
     QuantizerConfig,
-    QuantRule,
     TensorQuantizer,
+    build_quant_plan,
     calibrate,
+    calibrate_static_amax,
     convert,
+    disable_fake_quant,
     get_format,
+    load_quantizer_state,
+    prepare,
     prepare_qat,
     quantize,
+    save_quantizer_state,
 )
-from neural_compressor.torch.quantization.fake_quant.options import ModuleQuantConfig
-from neural_compressor.torch.quantization.fake_quant import QuantLinear
-from neural_compressor.torch.quantization.fake_quant.calibrator import load_amax, modelopt_megatron_translate
-from neural_compressor.torch.quantization.fake_quant.ops.reference import fake_quant, fake_quant_fp8_amax
-from neural_compressor.torch.quantization.fake_quant.plan import compile_plan
 
 
-class TinyBlock(nn.Module):
-    """Two linears with names a recipe can match."""
-
-    def __init__(self, dim=32):
+class TinyHybridBlock(nn.Module):
+    def __init__(self, dim: int = 32, is_linear_attn: bool = False):
         super().__init__()
         self.mlp = nn.Module()
-        self.mlp.fc1 = nn.Linear(dim, dim * 2, bias=False)
-        self.mlp.fc2 = nn.Linear(dim * 2, dim, bias=False)
-        self.self_attn = nn.Module()
-        self.self_attn.q_proj = nn.Linear(dim, dim, bias=False)
+        self.mlp.gate_proj = nn.Linear(dim, dim * 2, bias=False)
+        self.mlp.up_proj = nn.Linear(dim, dim * 2, bias=False)
+        self.mlp.down_proj = nn.Linear(dim * 2, dim, bias=False)
+        if is_linear_attn:
+            self.linear_attn = nn.Module()
+            self.linear_attn.in_proj_qkv = nn.Linear(dim, dim, bias=False)
+            self.linear_attn.in_proj_z = nn.Linear(dim, dim, bias=False)
+            self.linear_attn.in_proj_a = nn.Linear(dim, 8, bias=False)
+            self.linear_attn.in_proj_b = nn.Linear(dim, 8, bias=False)
+            self.linear_attn.out_proj = nn.Linear(dim, dim, bias=False)
+        else:
+            self.self_attn = nn.Module()
+            self.self_attn.q_proj = nn.Linear(dim, dim, bias=False)
+            self.self_attn.k_proj = nn.Linear(dim, dim, bias=False)
+            self.self_attn.v_proj = nn.Linear(dim, dim, bias=False)
+            self.self_attn.o_proj = nn.Linear(dim, dim, bias=False)
+        self._is_linear = is_linear_attn
 
-    def forward(self, x):
-        return self.self_attn.q_proj(self.mlp.fc2(self.mlp.fc1(x)))
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        h = self.mlp.down_proj(self.mlp.gate_proj(x) * self.mlp.up_proj(x))
+        if self._is_linear:
+            _ = self.linear_attn.in_proj_a(x), self.linear_attn.in_proj_b(x)
+            h = self.linear_attn.out_proj(self.linear_attn.in_proj_qkv(h) + self.linear_attn.in_proj_z(h))
+        else:
+            h = self.self_attn.o_proj(self.self_attn.q_proj(h) + self.self_attn.k_proj(h) + self.self_attn.v_proj(h))
+        return h
 
 
-class TinyModel(nn.Module):
-    """Minimal decoder stack with an excluded lm_head."""
-
-    def __init__(self, dim=32, layers=1):
+class TinyHybridModel(nn.Module):
+    def __init__(self, dim: int = 32):
         super().__init__()
+        self.embed_tokens = nn.Embedding(64, dim)
         self.model = nn.Module()
-        self.model.layers = nn.ModuleList([TinyBlock(dim) for _ in range(layers)])
-        self.lm_head = nn.Linear(dim, 8, bias=False)
+        self.model.layers = nn.ModuleList(
+            [TinyHybridBlock(dim, is_linear_attn=False), TinyHybridBlock(dim, is_linear_attn=True)]
+        )
+        self.lm_head = nn.Linear(dim, 64, bias=False)
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         for layer in self.model.layers:
             x = layer(x)
         return self.lm_head(x)
 
 
-class TestFormats(unittest.TestCase):
-    def test_known_formats(self):
+class TestFormatsAndConfigs(unittest.TestCase):
+    def test_known_formats_and_capabilities(self):
         self.assertEqual(get_format("mxfp4").block_size, 32)
+        self.assertTrue(get_format("mxfp4").is_block_scaled)
+        self.assertFalse(get_format("mxfp4").supports_static)
         self.assertEqual(get_format("nvfp4").block_size, 16)
-        self.assertEqual(get_format("fp8_e4m3").element_bits, 8)
-        self.assertEqual(get_format("mxfp8").block_size, 32)
-        self.assertEqual(get_format("bf16").element_bits, 16)
+        self.assertTrue(get_format("nvfp4").has_global_scale)
+        self.assertTrue(get_format("fp8_e4m3").supports_static)
+        self.assertFalse(get_format("bf16").supports_dynamic)
+        custom = QuantFormat(name="custom4", element_bits=4)
+        self.assertIs(get_format(custom), custom)
 
-    def test_custom_object_passthrough(self):
-        fmt = QuantFormat(name="toy", element_bits=4)
-        self.assertIs(get_format(fmt), fmt)
+    def test_reject_static_on_block_scaled_formats(self):
+        for fmt in ("mxfp4", "nvfp4", "mxfp8"):
+            with self.assertRaises(ValueError):
+                QuantizerConfig(format=fmt, dynamic=False)
 
-    def test_unknown_format(self):
-        with self.assertRaises(ValueError):
-            get_format("does_not_exist")
-
-    def test_static_scheme_rejected_for_block_formats(self):
-        with self.assertRaises(ValueError):
-            QuantizerConfig(format="mxfp4", scheme="static")
-
-
-def _ste(x, quantized):
-    """Straight-through view: identical to TensorQuantizer.forward."""
-    return x + (quantized - x).detach()
-
-
-class TestTensorQuantizer(unittest.TestCase):
-    def test_dynamic_matches_reference(self):
-        torch.manual_seed(0)
-        x = torch.randn(8, 64)
-        for fmt in ("mxfp4", "nvfp4", "fp8_e4m3", "mxfp8"):
-            quantizer = TensorQuantizer(QuantizerConfig(format=fmt))
-            self.assertTrue(torch.equal(quantizer(x), _ste(x, fake_quant(x, fmt))), msg=fmt)
-            self.assertIsNone(quantizer.amax)
-
-    def test_static_fp8_matches_reference(self):
-        torch.manual_seed(1)
-        x = torch.randn(8, 64)
-        amax = torch.tensor(7.5)
-        quantizer = TensorQuantizer(QuantizerConfig(format="fp8_e4m3", scheme="static", amax=amax))
-        self.assertTrue(torch.equal(quantizer(x), _ste(x, fake_quant_fp8_amax(x, amax))))
-        self.assertAlmostEqual(float(quantizer.amax), 7.5)
-
-    def test_static_without_amax_raises(self):
-        quantizer = TensorQuantizer(QuantizerConfig(format="fp8_e4m3", scheme="static"))
-        with self.assertRaises(RuntimeError):
-            quantizer(torch.randn(4, 8))
-
-    def test_static_amax_loads_into_fresh_quantizer(self):
-        config = QuantizerConfig(format="fp8_e4m3", scheme="static")
-        calibrated = TensorQuantizer(config)
-        calibrated.load_amax(7.5)
-        restored = TensorQuantizer(config)
-        restored.load_state_dict(calibrated.state_dict(), strict=True)
-        self.assertAlmostEqual(float(restored.amax), 7.5)
-        self.assertTrue(torch.equal(restored(torch.ones(4, 8)), calibrated(torch.ones(4, 8))))
-
-    def test_ste_backward_is_identity(self):
-        x = torch.randn(4, 32, requires_grad=True)
-        quantizer = TensorQuantizer(QuantizerConfig(format="mxfp4"))
-        quantizer(x).sum().backward()
-        self.assertTrue(torch.equal(x.grad, torch.ones_like(x)))
-
-    def test_calibration_updates_amax(self):
-        quantizer = TensorQuantizer(QuantizerConfig(format="fp8_e4m3", scheme="static"))
-        quantizer.calibrating = True
-        first = torch.full((4, 8), 2.0)
-        second = torch.full((4, 8), 5.0)
-        quantizer(first)
-        quantizer(second)
-        quantizer.finalize()
-        self.assertAlmostEqual(float(quantizer.amax), 5.0)
-
-    def test_bf16_is_noop(self):
-        x = torch.randn(4, 8)
-        quantizer = TensorQuantizer(QuantizerConfig(format="bf16"))
-        self.assertFalse(quantizer.enabled)
-        self.assertIs(quantizer(x), x)
-
-
-class TestPlan(unittest.TestCase):
-    def setUp(self):
-        self.model = TinyModel()
-
-    def _rules(self):
-        return [
-            QuantRule(module=r".*\.mlp\.(fc1|fc2)$", weight="mxfp4", input="mxfp4"),
-            QuantRule(module=r".*\.self_attn\.q_proj$", weight="fp8_e4m3"),
-        ]
-
-    def test_plan_matches_expected_modules(self):
-        report = compile_plan(self.model, self._rules())
-        self.assertEqual(
-            set(report.plan),
-            {
-                "model.layers.0.mlp.fc1",
-                "model.layers.0.mlp.fc2",
-                "model.layers.0.self_attn.q_proj",
-            },
-        )
-        self.assertIn("lm_head", report.excluded)
-
-    def test_later_rule_overrides_earlier(self):
-        rules = [
-            QuantRule(module=r".*\.mlp\.fc1$", weight="mxfp4", input="mxfp4"),
-            QuantRule(module=r".*\.mlp\.fc1$", weight="fp8_e4m3"),
-        ]
-        report = compile_plan(self.model, rules)
-        config = report.plan["model.layers.0.mlp.fc1"]
-        self.assertEqual(config.weight.format.name, "fp8_e4m3")
-        self.assertEqual(config.input.format.name, "mxfp4")
-
-    def test_unmatched_rule_raises(self):
-        rules = [QuantRule(module=r".*does_not_exist$", weight="mxfp4")]
-        with self.assertRaises(ValueError):
-            compile_plan(self.model, rules)
-        report = compile_plan(self.model, rules, strict=False)
-        self.assertEqual(report.unmatched_rules, [r".*does_not_exist$"])
-
-    def test_quantizer_level_rule(self):
-        rule = QuantRule(quantizer=r".*mlp\.fc1\.weight_quantizer$", weight="mxfp4")
-        report = compile_plan(self.model, [rule])
-        self.assertEqual(set(report.plan), {"model.layers.0.mlp.fc1"})
-        self.assertEqual(report.plan["model.layers.0.mlp.fc1"].weight.format.name, "mxfp4")
-        self.assertIsNone(report.plan["model.layers.0.mlp.fc1"].input)
-
-    def test_invalid_rule_selectors(self):
-        with self.assertRaises(ValueError):
-            QuantRule(weight="mxfp4")
-        with self.assertRaises(ValueError):
-            QuantRule(module=".*", quantizer=".*")
-
-
-class TestConfigAndQuantize(unittest.TestCase):
-    def setUp(self):
-        torch.manual_seed(0)
-        self.model = TinyModel()
-        self.rules = [
-            QuantRule(module=r".*\.mlp\.(fc1|fc2)$", weight="mxfp4", input="mxfp4"),
-            QuantRule(module=r".*\.self_attn\.q_proj$", weight="fp8_e4m3"),
-        ]
-
-    def test_config_mapping_contract(self):
-        cfg = FakeQuantConfig(rules=self.rules)
-        mapping = cfg.to_config_mapping(model_info=cfg.get_model_info(self.model))
-        self.assertTrue(mapping)
-        for the_config in mapping.values():
-            self.assertEqual(the_config.name, "fake_quant")
-
-    def test_quantize_replaces_modules(self):
-        model = quantize(self.model, FakeQuantConfig(rules=self.rules))
-        self.assertIsInstance(model.model.layers[0].mlp.fc1, QuantLinear)
-        self.assertIsInstance(model.model.layers[0].self_attn.q_proj, QuantLinear)
-        self.assertNotIsInstance(model.lm_head, QuantLinear)
-        # Fake-quant keeps float weights: HF Trainer must still accept the model.
-        self.assertFalse(getattr(model, "is_quantized", False))
-        self.assertTrue(getattr(model, "is_fake_quant", False))
-        # weight/bias keys are unchanged by the subclass
-        self.assertIn("model.layers.0.mlp.fc1.weight", model.state_dict())
-
-    def test_quantize_forward_and_backward(self):
-        model = quantize(self.model, FakeQuantConfig(rules=self.rules))
-        x = torch.randn(2, 32, requires_grad=True)
-        model(x).sum().backward()
-        self.assertIsNotNone(x.grad)
-
-    def test_prepare_then_calibrate(self):
+    def test_config_json_and_dict_roundtrip_preserves_exact_amax(self):
+        tricky_amax = 0.4360000193119049  # exact FP32 value
         cfg = FakeQuantConfig(
-            rules=[QuantRule(module=r".*\.self_attn\.q_proj$", weight=dict(format="fp8_e4m3", scheme="static"))],
+            config_groups=[
+                QuantSchemeRule(targets=[r"re:.*mlp\..*_proj$"], weights="mxfp4", input_activations="mxfp4"),
+                QuantSchemeRule(
+                    targets=[r"re:.*self_attn\..*_proj$"],
+                    weights=QuantizerConfig(format="fp8_e4m3", dynamic=False, amax=tricky_amax),
+                    input_activations="fp8_static",
+                ),
+            ],
+            ignore=["lm_head"],
         )
-        model = prepare_qat(self.model, cfg)
-        quantizer = model.model.layers[0].self_attn.q_proj.weight_quantizer
-        self.assertTrue(quantizer.calibrating)
+        with tempfile.TemporaryDirectory() as tmp:
+            json_path = Path(tmp) / "cfg.json"
+            cfg.to_json_file(json_path)
+            restored = FakeQuantConfig.from_json_file(json_path)
+        self.assertEqual(len(restored.config_groups), 2)
+        resolved = restored.config_groups[1].resolve()
+        self.assertEqual(resolved.weights.amax, tricky_amax)
+        self.assertFalse(resolved.input_activations.dynamic)
 
-        def run_fn(mod, loader):
-            with torch.no_grad():
-                for batch in loader:
-                    mod(batch)
 
-        calibrate(model, run_fn, run_args=([torch.randn(2, 32) * 3.0],))
-        self.assertIsNotNone(quantizer.amax)
-        self.assertGreater(float(quantizer.amax), 0.0)
-
-    def test_convert_finalizes_static_calibration(self):
-        cfg = FakeQuantConfig(
-            rules=[QuantRule(module=r".*\.self_attn\.q_proj$", weight=dict(format="fp8_e4m3", scheme="static"))],
+class TestTensorQuantizerInvariants(unittest.TestCase):
+    def test_fp32_amax_survives_model_to_bf16_and_fp16(self):
+        model = nn.Sequential(
+            QuantLinear.from_float(
+                nn.Linear(32, 32, bias=False),
+                ModuleQuantConfig(
+                    weights=QuantizerConfig(format="fp8_e4m3", dynamic=False, amax=0.12345679104328156),
+                    input_activations=QuantizerConfig(format="fp8_e4m3", dynamic=False, amax=42.87654495239258),
+                ),
+            )
         )
-        model = prepare_qat(self.model, cfg)
-        quantizer = model.model.layers[0].self_attn.q_proj.weight_quantizer
-        with torch.no_grad():
-            model(torch.randn(2, 32))
-        calibrated_amax = quantizer.amax.clone()
-        model = convert(model)
-        self.assertFalse(quantizer.calibrating)
-        with torch.no_grad():
-            model(torch.randn(2, 32) * 100.0)
-        torch.testing.assert_close(quantizer.amax, calibrated_amax)
+        orig_w_amax = model[0].weight_quantizer.amax.clone()
+        orig_i_amax = model[0].input_quantizer.amax.clone()
 
-    def test_disabled_static_configs_do_not_require_calibration(self):
-        import json
+        model.to(torch.bfloat16)
+        self.assertEqual(model[0].weight.dtype, torch.bfloat16)
+        self.assertEqual(model[0].weight_quantizer.amax.dtype, torch.float32)
+        self.assertEqual(model[0].input_quantizer.amax.dtype, torch.float32)
+        self.assertTrue(torch.equal(model[0].weight_quantizer.amax, orig_w_amax))
+        self.assertTrue(torch.equal(model[0].input_quantizer.amax, orig_i_amax))
 
-        from neural_compressor.torch.quantization.fake_quant.calibrator import AmaxMap, apply_amax
+        model.half()
+        self.assertEqual(model[0].weight_quantizer.amax.dtype, torch.float32)
+        self.assertTrue(torch.equal(model[0].weight_quantizer.amax, orig_w_amax))
+
+    def test_state_dict_loads_calibrated_amax_into_uncalibrated_quantizer(self):
+        cfg = ModuleQuantConfig(weights="fp8_static", input_activations="fp8_static")
+        src = QuantLinear.from_float(nn.Linear(32, 16, bias=False), cfg.clone())
+        src.weight_quantizer.set_amax(1.75)
+        src.input_quantizer.set_amax(9.25)
+
+        dst = QuantLinear.from_float(nn.Linear(32, 16, bias=False), cfg.clone())
+        self.assertIsNone(dst.weight_quantizer.amax)
+        dst.load_state_dict(src.state_dict(), strict=True)
+        self.assertEqual(dst.weight_quantizer.amax.dtype, torch.float32)
+        self.assertEqual(float(dst.weight_quantizer.amax), 1.75)
+        self.assertEqual(float(dst.input_quantizer.amax), 9.25)
+
+    def test_disable_fake_quant_context_restores_exact_states(self):
+        cfg = ModuleQuantConfig(weights="mxfp4", input_activations="bf16")
+        qlin = QuantLinear.from_float(nn.Linear(32, 16, bias=False), cfg)
+        x = torch.randn(2, 32)
+        q_out = qlin(x)
+        float_out = nn.functional.linear(x, qlin.weight)
+        self.assertFalse(torch.equal(q_out, float_out))
+
+        with disable_fake_quant(qlin):
+            self.assertFalse(qlin.weight_quantizer.is_enabled)
+            self.assertTrue(torch.equal(qlin(x), float_out))
+
+        self.assertTrue(qlin.weight_quantizer.is_enabled)
+        self.assertFalse(qlin.input_quantizer.is_enabled)
+
+
+class TestPlanCalibrationAndQwen35Preset(unittest.TestCase):
+    def test_qwen35_hybrid_preset_routing_and_calibration(self):
+        torch.manual_seed(0)
+        model = TinyHybridModel(dim=32)
+        cfg = FakeQuantConfig.qwen3_5_mxfp4_hybrid()
+        report = build_quant_plan(model, cfg)
+
+        # 2 layers * 3 MLP = 6 MXFP4; 1 self_attn * 4 + 1 linear_attn * 3 (qkv, z, out) = 7 FP8 static -> 13 total
+        self.assertEqual(len(report.plan), 13)
+        self.assertIn("lm_head", report.ignored)
+        self.assertIn("model.layers.1.linear_attn.in_proj_a", report.ignored)
+        self.assertIn("model.layers.1.linear_attn.in_proj_b", report.ignored)
+        self.assertEqual(report.plan["model.layers.0.mlp.gate_proj"].weights.format.name, "mxfp4")
+        self.assertEqual(report.plan["model.layers.1.linear_attn.in_proj_z"].weights.format.name, "fp8_e4m3")
+        self.assertFalse(report.plan["model.layers.1.linear_attn.in_proj_z"].weights.dynamic)
+
+        prepare(model, cfg)
+        summary = calibrate_static_amax(model, dataloader=[torch.randn(2, 32) * 2.5, torch.randn(2, 32) * 4.0])
+        self.assertEqual(len(summary), 14)  # 7 FP8 modules * 2 (weight + input)
+        convert(model)
 
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "amax.json"
-            path.write_text(json.dumps({"amax": {}}))
-            cfg = FakeQuantConfig(
-                rules=[
-                    QuantRule(
-                        module=r".*\.self_attn\.q_proj$",
-                        weight=dict(format="fp8_e4m3", scheme="static", enabled=False),
-                        input=dict(format="fp8_e4m3", scheme="static", fake_quant=False),
-                    )
-                ],
-                amax_source={"file": str(path), "translate": "identity"},
-            )
-            model = quantize(self.model, cfg)
-        self.assertFalse(FakeQuantConfig(rules=cfg.rules).needs_calibration())
-        result = apply_amax(model, cfg.last_report.plan, AmaxMap({}), strict=True)
-        self.assertEqual(result["missing"], [])
-        self.assertIsNone(model.model.layers[0].self_attn.q_proj.weight_quantizer.amax)
+            state_path = Path(tmp) / "quantizer_state.json"
+            save_quantizer_state(model, state_path)
 
-    def test_legacy_prepare_qat_mapping(self):
+            fresh = TinyHybridModel(dim=32)
+            fresh.load_state_dict(model.state_dict(), strict=False)
+            cfg_with_state = FakeQuantConfig.qwen3_5_mxfp4_hybrid(quantizer_state_path=state_path)
+            quantize(fresh, cfg_with_state)
+
+            x = torch.randn(2, 32)
+            torch.testing.assert_close(fresh(x), model(x), rtol=0, atol=0)
+
+            # Verify prepare_qat with pre-calibrated state and load_quantizer_state API
+            fresh2 = TinyHybridModel(dim=32)
+            fresh2.load_state_dict(model.state_dict(), strict=False)
+            prepare_qat(fresh2, cfg)
+            self.assertTrue(fresh2.model.layers[0].self_attn.q_proj.input_quantizer.is_calibrating)
+            load_result = load_quantizer_state(fresh2, state_path, strict=True)
+            self.assertEqual(len(load_result["loaded"]), 14)
+            self.assertFalse(fresh2.model.layers[0].self_attn.q_proj.input_quantizer.is_calibrating)
+            torch.testing.assert_close(fresh2(x), model(x), rtol=0, atol=0)
+
+            fresh3 = TinyHybridModel(dim=32)
+            fresh3.load_state_dict(model.state_dict(), strict=False)
+            prepare_qat(fresh3, cfg_with_state)
+            self.assertFalse(fresh3.model.layers[0].self_attn.q_proj.input_quantizer.is_calibrating)
+            torch.testing.assert_close(fresh3(x), model(x), rtol=0, atol=0)
+
+    def test_legacy_prepare_qat_mapping_and_inc_dict_quantize(self):
+        model = TinyHybridModel(dim=32)
         with warnings.catch_warnings(record=True) as caught:
             warnings.simplefilter("always")
-            model = prepare_qat(self.model, mapping={nn.Linear: "MXFP8"})
-        self.assertTrue(any(issubclass(item.category, DeprecationWarning) for item in caught))
-        self.assertEqual(model.model.layers[0].mlp.fc1.weight_quantizer.format.name, "mxfp8")
+            prepare_qat(model, mapping={nn.Linear: "MXFP8"})
+        self.assertTrue(any(issubclass(w.category, DeprecationWarning) for w in caught))
+        self.assertIsInstance(model.model.layers[0].mlp.gate_proj, QuantLinear)
+        self.assertNotIsInstance(model.lm_head, QuantLinear)
 
-    def test_config_roundtrip(self):
-        cfg = FakeQuantConfig(rules=self.rules, algorithm="max", strict=False)
-        restored = FakeQuantConfig.from_dict(cfg.to_dict())
-        self.assertEqual(len(restored.rules), len(cfg.rules))
-        self.assertEqual(restored.rules[0].module, cfg.rules[0].module)
-        self.assertEqual(restored.rules[0].weight.format.name, "mxfp4")
+        model2 = TinyHybridModel(dim=32)
+        cfg = FakeQuantConfig.mxfp4()
+        quantize(model2, {"fake_quant": cfg.to_dict()})
+        self.assertTrue(getattr(model2, "is_fake_quant", False))
+        self.assertFalse(getattr(model2, "is_quantized", False))
 
-    def test_unknown_calibration_algorithm_raises(self):
-        with self.assertRaises(NotImplementedError):
-            FakeQuantConfig(rules=self.rules, algorithm="histogram")
+    def test_calibrate_inc_run_fn_entry(self):
+        model = TinyHybridModel(dim=32)
+        cfg = FakeQuantConfig.fp8_static()
+        quantize(model, cfg, run_fn=lambda m, batch: m(batch), run_args=(torch.randn(2, 32),))
+        q = model.model.layers[0].self_attn.q_proj.input_quantizer
+        self.assertIsNotNone(q.amax)
+        self.assertFalse(q.is_calibrating)
 
-    def test_needs_calibration(self):
-        dynamic = FakeQuantConfig(rules=self.rules)
-        self.assertFalse(dynamic.needs_calibration())
-        static = FakeQuantConfig(rules=[QuantRule(module=r".*", weight=dict(format="fp8_e4m3", scheme="static"))])
-        self.assertTrue(static.needs_calibration())
-        with_file = FakeQuantConfig(
-            rules=[QuantRule(module=r".*", weight=dict(format="fp8_e4m3", scheme="static"))],
-            amax_source={"file": "somewhere.txt"},
+    def test_convert_modelopt_amax_tool(self):
+        tool_path = (
+            Path(__file__).resolve().parents[3]
+            / "examples/pytorch/llm/qwen/qad/tools/convert_modelopt_amax.py"
         )
-        self.assertFalse(with_file.needs_calibration())
-    def test_default_static_config_has_independent_amax_per_module(self):
-        import json
+        spec = importlib.util.spec_from_file_location("convert_modelopt_amax", tool_path)
+        assert spec is not None and spec.loader is not None
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
 
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "amax.json"
-            path.write_text(json.dumps({
-                "model.layers.0.self_attn.q_proj": {"weight": 1.5},
-                "model.layers.1.self_attn.q_proj": {"weight": 2.5},
-                "model.layers.0.mlp.fc1": {"weight": 3.5},
-                "model.layers.0.mlp.fc2": {"weight": 4.5},
-                "model.layers.1.mlp.fc1": {"weight": 5.5},
-                "model.layers.1.mlp.fc2": {"weight": 6.5},
-            }))
-            cfg = FakeQuantConfig(
-                default=ModuleQuantConfig(weight={"format": "fp8_e4m3", "scheme": "static"}),
-                amax_source={"file": str(path), "translate": "identity"},
-            )
-            model = TinyModel(layers=2)
-            mapping = cfg.to_config_mapping(model_info=cfg.get_model_info(model))
-        self.assertAlmostEqual(float(mapping[("model.layers.0.self_attn.q_proj", "Linear")].weight.amax), 1.5)
-        self.assertAlmostEqual(float(mapping[("model.layers.1.self_attn.q_proj", "Linear")].weight.amax), 2.5)
-        self.assertIsNone(cfg.default.weight.amax)
-
-    def test_needs_calibration_with_default_module_config(self):
-        dynamic = FakeQuantConfig(default=ModuleQuantConfig(weight="mxfp4"))
-        self.assertFalse(dynamic.needs_calibration())
-        static = FakeQuantConfig(default=ModuleQuantConfig(weight={"format": "fp8_e4m3", "scheme": "static"}))
-        self.assertTrue(static.needs_calibration())
-
-    def test_dict_config_and_convert_keep_fake_quant_flag(self):
-        cfg = FakeQuantConfig(rules=self.rules)
-        model = quantize(self.model, {"fake_quant": cfg.to_dict()})
-        self.assertTrue(getattr(model, "is_fake_quant", False))
-        self.assertFalse(getattr(model, "is_quantized", False))
-        model = convert(model)
-        self.assertTrue(getattr(model, "is_fake_quant", False))
-
-    def test_prepare_qat_accepts_legacy_mapping_positionally(self):
-        model = prepare_qat(self.model, {nn.Linear: "MXFP8"})
-        self.assertEqual(model.model.layers[0].mlp.fc1.weight_quantizer.format.name, "mxfp8")
-
-    def test_from_float_preserves_frozen_flags(self):
-        self.model.model.layers[0].mlp.fc1.weight.requires_grad_(False)
-        model = quantize(self.model, FakeQuantConfig(rules=self.rules))
-        self.assertFalse(model.model.layers[0].mlp.fc1.weight.requires_grad)
-
-    def test_legacy_packing_uses_reference_implementation(self):
-        quantizer = TensorQuantizer("mxfp4")
-        weight = torch.randn(4, 64)
-        qdq, scale = quantizer._fake_quantize(weight)
-        packed, encoded = quantizer.weight_pack(qdq, scale)
-        self.assertEqual(qdq.shape, weight.shape)
-        self.assertEqual(packed.shape, (4, 32))
-        self.assertEqual(encoded.shape, (4, 2))
-
-
-class TestAmaxSource(unittest.TestCase):
-    SUMMARY = (
-        "language_model.decoder.layers.0.self_attention.linear_qkv.input_quantizer "
-        "TensorQuantizer((4, 3) bit fake per-tensor amax=5.02e+01 calibrator=MaxCalibrator quant)\n"
-        "language_model.decoder.layers.0.self_attention.linear_qkv.weight_quantizer "
-        "TensorQuantizer((4, 3) bit fake per-tensor amax=4.36e-01 calibrator=MaxCalibrator quant)\n"
-        "language_model.decoder.layers.0.mlp.linear_fc1.input_quantizer "
-        "TensorQuantizer((2, 1) bit fake block_sizes={-1: 32}, amax=None calibrator=MaxCalibrator quant)\n"
-    )
-
-    def test_translate_megatron_names(self):
-        self.assertEqual(
-            modelopt_megatron_translate("language_model.decoder.layers.0.self_attention.linear_qkv.input_quantizer"),
-            [
-                "layers.0.self_attn.q_proj",
-                "layers.0.self_attn.k_proj",
-                "layers.0.self_attn.v_proj",
-            ],
+        txt = (
+            "language_model.decoder.layers.0.self_attention.linear_qkv.input_quantizer "
+            "TensorQuantizer((4, 3) bit fake per-tensor amax=5.02e+01 calibrator=MaxCalibrator quant)\n"
+            "language_model.decoder.layers.0.self_attention.linear_qkv.weight_quantizer "
+            "TensorQuantizer((4, 3) bit fake per-tensor amax=4.36e-01 calibrator=MaxCalibrator quant)\n"
         )
-
-    def test_load_summary(self):
         with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "summary.txt"
-            path.write_text(self.SUMMARY)
-            amax = load_amax(path)
-        self.assertIn("layers.0.self_attn.q_proj", amax)
-        self.assertAlmostEqual(float(amax["layers.0.self_attn.q_proj"]["weight"]), 0.436, places=4)
-        self.assertAlmostEqual(float(amax["layers.0.self_attn.q_proj"]["input"]), 50.2, places=4)
-        # MXFP4 lines have amax=None and must not appear as static values
-        self.assertNotIn("layers.0.mlp.fc1", amax)
-
-    def test_quantize_with_summary(self):
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "summary.txt"
-            path.write_text(self.SUMMARY)
-            model = TinyModel()
-            cfg = FakeQuantConfig(
-                rules=[
-                    QuantRule(
-                        module=r".*\.self_attn\.(q|k|v)_proj$",
-                        weight=dict(format="fp8_e4m3", scheme="static"),
-                    ),
-                    QuantRule(
-                        module=r".*\.self_attn\.q_proj$",
-                        input=dict(format="fp8_e4m3", scheme="static"),
-                    ),
-                ],
-                amax_source={"file": str(path)},
-            )
-            model = quantize(model, cfg)
-        quantizer = model.model.layers[0].self_attn.q_proj.weight_quantizer
-        self.assertAlmostEqual(float(quantizer.amax), 0.436, places=4)
-
-    def test_flat_export_amax_format(self):
-        import json
-
-        with tempfile.TemporaryDirectory() as tmp:
-            path = Path(tmp) / "quantization_config.json"
-            path.write_text(json.dumps({
-                "schema": "neural_compressor.qad/v1",
-                "amax": {
-                    "model.layers.0.self_attn.q_proj.weight": 0.436,
-                    "model.layers.0.self_attn.q_proj.input": 50.2,
-                },
-            }))
-            amax = load_amax(path)
-        self.assertAlmostEqual(float(amax["model.layers.0.self_attn.q_proj"]["weight"]), 0.436, places=4)
-        self.assertAlmostEqual(float(amax["model.layers.0.self_attn.q_proj"]["input"]), 50.2, places=4)
-
-    def test_ambiguous_suffix_raises(self):
-        from neural_compressor.torch.quantization.fake_quant.calibrator import AmaxMap
-
-        amax = AmaxMap({
-            "self_attn.q_proj": {"weight": torch.tensor(1.0)},
-            "layers.0.self_attn.q_proj": {"weight": torch.tensor(2.0)},
-        })
-        with self.assertRaisesRegex(ValueError, "ambiguous"):
-            amax.lookup("model.layers.0.self_attn.q_proj")
+            src = Path(tmp) / "amax.txt"
+            dst = Path(tmp) / "state.json"
+            src.write_text(txt)
+            payload = mod.convert_modelopt_amax(src, dst, hf_prefixes=("model.layers",))
+            loaded_json = json.loads(dst.read_text())
+        self.assertEqual(payload, loaded_json)
+        qmap = payload["quantizers"]
+        self.assertAlmostEqual(
+            float.fromhex(qmap["model.layers.0.self_attn.q_proj.weight_quantizer"]["amax_hex"]),
+            0.436,
+            places=6,
+        )
+        self.assertAlmostEqual(
+            float.fromhex(qmap["model.layers.0.linear_attn.in_proj_z.input_quantizer"]["amax_hex"]),
+            50.2,
+            places=5,
+        )
 
 
 if __name__ == "__main__":

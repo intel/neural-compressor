@@ -52,16 +52,32 @@ from neural_compressor.torch.quantization.config import (
 )
 
 from neural_compressor.torch.quantization.fake_quant import (
+    FP8_DEFAULT_CFG,
     FakeQuantConfig,
+    MXFP4_DEFAULT_CFG,
+    MXFP4_FP8_HYBRID_CFG,
+    MXFP8_DEFAULT_CFG,
+    ModuleQuantConfig,
+    NVFP4_DEFAULT_CFG,
+    NVFP4_FP8_HYBRID_CFG,
     QuantFormat,
     QuantLinear,
+    QuantLoraLinear,
+    QuantSchemeRule,
     QuantizerConfig,
-    QuantRule,
     TensorQuantizer,
+    build_quant_plan,
     calibrate,
+    calibrate_static_amax,
+    convert_peft_lora_to_quant_lora,
+    disable_fake_quant,
+    get_default_fake_quant_config,
     get_format,
     list_formats,
-    print_plan_summary,
+    load_quantizer_state,
+    merge_lora_into_quant_linear,
+    register_peft_quant_modules,
+    save_quantizer_state,
 )
 
 from neural_compressor.torch.quantization.autotune import (
@@ -70,6 +86,14 @@ from neural_compressor.torch.quantization.autotune import (
     get_all_config_set,
     get_rtn_double_quant_config_set,
 )
+
+
+def __getattr__(name: str):
+    if name in ("QATTrainer", "QuantizationTrainingArguments", "save_fsdp2_full_model", "save_fsdp2_peft_adapter"):
+        from neural_compressor.torch.quantization import qat_trainer
+
+        return getattr(qat_trainer, name)
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 ### Quantization Function Registration ###
 import neural_compressor.torch.quantization.algorithm_entry

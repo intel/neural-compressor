@@ -20,31 +20,41 @@ from typing import Any, Dict
 import torch
 
 from neural_compressor.common.utils import FAKE_QUANT, Mode
-from neural_compressor.torch.quantization.fake_quant.calibrator import calibrate
-from neural_compressor.torch.quantization.fake_quant.options import ModuleQuantConfig
-from neural_compressor.torch.quantization.fake_quant.plan import PlanReport, apply_plan
+from neural_compressor.torch.quantization.fake_quant.calibrate import calibrate
+from neural_compressor.torch.quantization.fake_quant.config import ModuleQuantConfig
+from neural_compressor.torch.quantization.fake_quant.plan import PlanReport, apply_quant_plan
 from neural_compressor.torch.quantization.fake_quant.quantizer import TensorQuantizer
 from neural_compressor.torch.utils import logger, register_algo
 
-_QUANTIZER_FIELDS = ("weight", "input", "output")
+_QUANTIZER_SLOTS = (
+    ("weights", "weight_quantizer"),
+    ("input_activations", "input_quantizer"),
+    ("output_activations", "output_quantizer"),
+)
 
 
 def _pending_static(plan: Dict[str, ModuleQuantConfig]) -> list[str]:
     pending = []
     for name, config in plan.items():
-        for field_name in _QUANTIZER_FIELDS:
-            quantizer_cfg = getattr(config, field_name)
-            if quantizer_cfg is None or quantizer_cfg.is_noop or quantizer_cfg.scheme != "static":
+        for attr_name, slot_name in _QUANTIZER_SLOTS:
+            quantizer_cfg = getattr(config, attr_name)
+            if quantizer_cfg is None or quantizer_cfg.is_noop or quantizer_cfg.dynamic:
                 continue
             if quantizer_cfg.amax is None:
-                pending.append(f"{name}.{field_name}")
+                pending.append(f"{name}.{slot_name}")
     return pending
 
 
 def _set_calibrating(model: torch.nn.Module, enabled: bool) -> None:
     for module in model.modules():
-        if isinstance(module, TensorQuantizer) and module.scheme == "static" and module.enabled:
-            module.calibrating = enabled
+        if isinstance(module, TensorQuantizer) and not module.is_dynamic and module.is_enabled:
+            if enabled:
+                if module.amax is None:
+                    module.enable_calib()
+                else:
+                    module.disable_calib()
+            else:
+                module.disable_calib()
 
 
 @register_algo(name=FAKE_QUANT)
@@ -87,7 +97,7 @@ def fake_quant_entry(
             f"{len(pending)} static quantizers have no amax and no run_fn was given: {head} ...; "
             "pass run_fn/run_args, an amax summary, or use prepare()+calibrate()"
         )
-    result = apply_plan(model, report)
+    result = apply_quant_plan(model, report)
     logger.info(f"[fake_quant] replaced {result['n_replaced']} modules with quantized subclasses")
 
     if mode == Mode.PREPARE:

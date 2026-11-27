@@ -11,266 +11,278 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""User-facing quantization rules and the compiled per-module plan."""
+"""Quantization plan resolution, reporting, and in-place module replacement."""
 
 from __future__ import annotations
 
-import copy
+import fnmatch
+import json
 import re
+from collections import Counter
 from dataclasses import dataclass, field
-from typing import Dict, Iterable, Optional, Sequence, Tuple
+from pathlib import Path
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import torch
 import torch.nn as nn
 
-from neural_compressor.torch.utils import logger
+from .config import FakeQuantConfig, ModuleQuantConfig
+from .registry import is_supported_module, quantize_module
 
-from .modules import QuantLinear
-from .options import ModuleQuantConfig, QuantizerConfig
-from .registry import QuantModuleRegistry
-
-DEFAULT_EXCLUDE = (r"^lm_head$", r".*embed_tokens.*")
-
-_QUANTIZER_FIELDS = ("weight", "input", "output")
+_LINEAR_LIKE_TYPE_NAMES = frozenset({"Linear", "QuantLinear", "QuantLoraLinear"})
+_WRAPPER_PREFIXES = ("module.", "base_model.model.")
 
 
-@dataclass
-class QuantRule:
-    """One declarative rule: match modules, then configure their quantizers.
+def _canonical_module_name(name: str) -> str:
+    """Strip outer DDP / PEFT wrapper prefixes so rules match wrapped and unwrapped models identically."""
+    changed = True
+    while changed:
+        changed = False
+        for prefix in _WRAPPER_PREFIXES:
+            if name.startswith(prefix):
+                name = name[len(prefix) :]
+                changed = True
+    return name
 
-    Exactly one of ``module`` / ``quantizer`` selects the target:
 
-    * ``module``: ``re.search`` against the qualified module name
-      (e.g. ``.*\\.mlp\\.(gate_proj|up_proj|down_proj)$``). This is the common
-      case: recipe authors know layer names, not internal quantizer names.
-    * ``quantizer``: ``re.search`` against ``<module>.<quantizer_name>``
-      (e.g. ``.*mlp.*weight_quantizer$``). Escape hatch for per-quantizer control.
+def _op_type_name(op_type: Any) -> str:
+    if isinstance(op_type, str):
+        return op_type
+    if isinstance(op_type, type):
+        return op_type.__name__
+    return type(op_type).__name__
 
-    ``weight`` / ``input`` / ``output`` accept a format name, a dict or a
-    :class:`QuantizerConfig`. Rules are applied in list order; later rules
-    override earlier ones for the quantizers they set.
-    """
 
-    module: Optional[str] = None
-    quantizer: Optional[str] = None
-    parent_class: Optional[str] = None
-    weight: Optional[QuantizerConfig | str | dict] = None
-    input: Optional[QuantizerConfig | str | dict] = None
-    output: Optional[QuantizerConfig | str | dict] = None
-    enable: bool = True
+def _matches_single_name(module_name: str, op_type: Any, pattern: str) -> bool:
+    if pattern.startswith("re:"):
+        return re.fullmatch(pattern[3:], module_name) is not None
 
-    def __post_init__(self) -> None:
-        """Validate the selector and coerce the quantizer configs."""
-        if (self.module is None) == (self.quantizer is None):
-            raise ValueError("QuantRule needs exactly one of `module=` or `quantizer=`")
-        for pattern in (self.module, self.quantizer):
-            if pattern is not None:
-                try:
-                    re.compile(pattern)
-                except re.error as exc:
-                    raise ValueError(f"invalid regex {pattern!r}: {exc}") from exc
-        self.weight = QuantizerConfig.from_any(self.weight)
-        self.input = QuantizerConfig.from_any(self.input)
-        self.output = QuantizerConfig.from_any(self.output)
-        if not self.enable:
-            self.weight = self.input = self.output = QuantizerConfig(format="bf16")
+    type_name = _op_type_name(op_type)
+    if pattern == "Linear":
+        if type_name in _LINEAR_LIKE_TYPE_NAMES:
+            return True
+        if isinstance(op_type, type) and issubclass(op_type, nn.Linear):
+            return True
+        if "Linear" in type_name:
+            return True
+    elif pattern == type_name:
+        return True
 
-    def matches(self, module_name: str, op_type: str) -> bool:
-        """Return True when the rule targets this module."""
-        if self.parent_class is not None and op_type != self.parent_class:
-            return False
-        if self.module is not None:
-            return re.search(self.module, module_name) is not None
-        prefix = f"{module_name}." if module_name else ""
-        return any(re.search(self.quantizer, f"{prefix}{field}_quantizer") is not None for field in _QUANTIZER_FIELDS)
+    if any(ch in pattern for ch in "*?["):
+        return fnmatch.fnmatchcase(module_name, pattern)
 
-    def contributions(self, module_name: str, op_type: str) -> Dict[str, QuantizerConfig]:
-        """Return the quantizer configs this rule sets for a matched module."""
-        if self.quantizer is None:
-            return {f: getattr(self, f) for f in _QUANTIZER_FIELDS if getattr(self, f) is not None}
-        prefix = f"{module_name}." if module_name else ""
-        out: Dict[str, QuantizerConfig] = {}
-        for field_name in _QUANTIZER_FIELDS:
-            if getattr(self, field_name) is None:
-                continue
-            if re.search(self.quantizer, f"{prefix}{field_name}_quantizer") is not None:
-                out[field_name] = getattr(self, field_name)
-        return out
+    return module_name == pattern or module_name.endswith(f".{pattern}")
 
-    def to_dict(self) -> dict:
-        """Serialize to a JSON-friendly dictionary."""
-        payload = {"enable": self.enable}
-        for key in ("module", "quantizer", "parent_class"):
-            value = getattr(self, key)
-            if value is not None:
-                payload[key] = value
-        for key in _QUANTIZER_FIELDS:
-            value = getattr(self, key)
-            payload[key] = value.to_dict() if value is not None else None
-        return payload
 
-    @classmethod
-    def from_dict(cls, payload: dict) -> "QuantRule":
-        """Build a rule from :meth:`to_dict` output."""
-        return cls(**payload)
+def matches_target(module_name: str, op_type: Any, pattern: str) -> bool:
+    """Match ``(module_name, op_type)`` against a ``compressed-tensors`` / ``ModelOpt`` target pattern."""
+    if _matches_single_name(module_name, op_type, pattern):
+        return True
+    canonical = _canonical_module_name(module_name)
+    if canonical != module_name:
+        return _matches_single_name(canonical, op_type, pattern)
+    return False
+
+
+def _extract_amax_value(raw: Any) -> Optional[float]:
+    if raw is None:
+        return None
+    if isinstance(raw, (int, float)):
+        return float(raw)
+    if isinstance(raw, dict):
+        if raw.get("amax_hex") is not None:
+            return float.fromhex(raw["amax_hex"])
+        if raw.get("amax") is not None:
+            return float(raw["amax"])
+    raise ValueError(f"Invalid quantizer state entry {raw!r}")
+
+
+def _load_quantizer_state_map(path: Union[str, Path]) -> dict[str, float]:
+    """Load a calibrated quantizer state JSON into ``{key: float_amax}``."""
+    raw = json.loads(Path(path).read_text())
+    if isinstance(raw, dict) and "quantizers" in raw and isinstance(raw["quantizers"], dict):
+        raw = raw["quantizers"]
+    if not isinstance(raw, dict):
+        raise ValueError(f"Expected JSON object in {path}, got {type(raw).__name__}")
+    resolved: dict[str, float] = {}
+    for key, val in raw.items():
+        amax_val = _extract_amax_value(val)
+        if amax_val is not None:
+            resolved[key] = amax_val
+    return resolved
+
+
+def _apply_precalibrated_amax(
+    module_name: str,
+    module_cfg: ModuleQuantConfig,
+    state_map: dict[str, float],
+) -> None:
+    canonical = _canonical_module_name(module_name)
+    prefixes = (module_name,) if canonical == module_name else (module_name, canonical)
+    slot_candidates = (
+        (module_cfg.weights, ("weight_quantizer", "weight", "weights")),
+        (module_cfg.input_activations, ("input_quantizer", "input", "input_activations")),
+        (module_cfg.output_activations, ("output_quantizer", "output", "output_activations")),
+    )
+    for q_cfg, suffixes in slot_candidates:
+        if q_cfg.is_noop:
+            continue
+        found = False
+        for prefix in prefixes:
+            for suffix in suffixes:
+                key = f"{prefix}.{suffix}"
+                if key in state_map:
+                    q_cfg.amax = state_map[key]
+                    found = True
+                    break
+            if found:
+                break
 
 
 @dataclass
 class PlanReport:
-    """What :func:`compile_plan` did, for logging and tests."""
+    """Resolved per-module fake-quantization plan and audit statistics."""
 
-    plan: Dict[str, ModuleQuantConfig]
-    op_types: Dict[str, str] = field(default_factory=dict)
-    rule_hits: list[int] = field(default_factory=list)
-    unmatched_rules: list[str] = field(default_factory=list)
-    excluded: list[str] = field(default_factory=list)
+    plan: Dict[str, ModuleQuantConfig] = field(default_factory=dict)
+    ignored: List[str] = field(default_factory=list)
+    unmatched: List[str] = field(default_factory=list)
+    op_types: Dict[str, Any] = field(default_factory=dict)
 
-    @property
-    def n_modules(self) -> int:
-        """Number of modules that will be quantized."""
-        return len(self.plan)
-
-
-def _supported_type_names() -> set[str]:
-    return {src.__name__ for src in QuantModuleRegistry._registry}
-
-
-def _is_empty(config: ModuleQuantConfig) -> bool:
-    return all(getattr(config, field_name) is None for field_name in _QUANTIZER_FIELDS)
-
-
-def _compile_items(
-    items: Sequence[Tuple[str, str]],
-    rules: Iterable[QuantRule],
-    *,
-    default: Optional[ModuleQuantConfig],
-    exclude: Iterable[str],
-    strict: bool,
-) -> PlanReport:
-    rules = list(rules)
-    exclude_patterns = tuple(exclude)
-    supported = _supported_type_names()
-    report = PlanReport(plan={}, rule_hits=[0] * len(rules))
-    for name, op_type in items:
-        if not name or op_type not in supported:
-            continue
-        if any(re.search(pattern, name) for pattern in exclude_patterns):
-            report.excluded.append(name)
-            continue
-        config = ModuleQuantConfig()
-        if default is not None:
-            config = ModuleQuantConfig(
-                weight=copy.copy(default.weight),
-                input=copy.copy(default.input),
-                output=copy.copy(default.output),
+    def summary(self) -> dict[str, Any]:
+        """Return structured counts by ``(weight_fmt, input_fmt, scheme)``."""
+        combo_counts: Counter[str] = Counter()
+        pending_static = 0
+        for cfg in self.plan.values():
+            w_desc = "bf16" if cfg.weights.is_noop else f"{cfg.weights.format.name}({cfg.weights.scheme})"
+            i_desc = (
+                "bf16"
+                if cfg.input_activations.is_noop
+                else f"{cfg.input_activations.format.name}({cfg.input_activations.scheme})"
             )
-        for index, rule in enumerate(rules):
-            if not rule.matches(name, op_type):
-                continue
-            report.rule_hits[index] += 1
-            for field_name, quantizer_cfg in rule.contributions(name, op_type).items():
-                # Copy: the same rule config is shared by every matched module,
-                # but calibrated amax is per-module state.
-                setattr(config, field_name, copy.copy(quantizer_cfg))
-        if not _is_empty(config):
-            report.plan[name] = config
-            report.op_types[name] = op_type
-    for index, rule in enumerate(rules):
-        if report.rule_hits[index] == 0:
-            selector = rule.module if rule.module is not None else rule.quantizer
-            report.unmatched_rules.append(selector)
-    if strict and report.unmatched_rules:
-        raise ValueError(
-            "these quantization rules matched 0 modules: "
-            f"{report.unmatched_rules}; check the regex or the model module names"
-        )
-    return report
+            combo_counts[f"W={w_desc}, A={i_desc}"] += 1
+            for q_cfg in (cfg.weights, cfg.input_activations, cfg.output_activations):
+                if not q_cfg.is_noop and not q_cfg.dynamic and q_cfg.amax is None:
+                    pending_static += 1
+        return {
+            "quantized_modules": len(self.plan),
+            "ignored_modules": len(self.ignored),
+            "unmatched_modules": len(self.unmatched),
+            "pending_static_quantizers": pending_static,
+            "schemes": dict(combo_counts),
+        }
 
-
-def compile_plan(
-    model: nn.Module,
-    rules: Iterable[QuantRule],
-    *,
-    default: Optional[ModuleQuantConfig] = None,
-    exclude: Iterable[str] = DEFAULT_EXCLUDE,
-    strict: bool = True,
-) -> PlanReport:
-    """Match rules against a live model and return one config per module."""
-    items = [
-        (name, type(module).__name__)
-        for name, module in model.named_modules()
-        if name and not isinstance(module, QuantLinear)
-    ]
-    return _compile_items(items, rules, default=default, exclude=exclude, strict=strict)
+    def format_table(self) -> str:
+        """Render a concise human-readable plan summary."""
+        stats = self.summary()
+        lines = [
+            f"FakeQuantPlan: quantized={stats['quantized_modules']}, "
+            f"ignored={stats['ignored_modules']}, unmatched={stats['unmatched_modules']}, "
+            f"pending_static={stats['pending_static_quantizers']}"
+        ]
+        for scheme_label, count in sorted(stats["schemes"].items()):
+            lines.append(f"  - {scheme_label}: {count} modules")
+        return "\n".join(lines)
 
 
 def compile_plan_from_info(
-    model_info: Sequence[Tuple[str, str]],
-    rules: Iterable[QuantRule],
-    *,
-    default: Optional[ModuleQuantConfig] = None,
-    exclude: Iterable[str] = DEFAULT_EXCLUDE,
-    strict: bool = True,
+    model_info: Iterable[Tuple[str, Any]],
+    config: FakeQuantConfig,
 ) -> PlanReport:
-    """Compile a plan from ``(name, type_name)`` pairs (NC's ``model_info``)."""
-    return _compile_items(model_info, rules, default=default, exclude=exclude, strict=strict)
+    """Resolve ``config`` against ``(module_name, op_type)`` tuples without mutating a model."""
+    state_map: Optional[dict[str, float]] = None
+    if config.quantizer_state_path is not None:
+        state_map = _load_quantizer_state_map(config.quantizer_state_path)
 
-
-def summarize_plan(report: PlanReport, model: Optional[nn.Module] = None) -> dict:
-    """Aggregate a plan by ``format/scheme`` for logging and tests."""
-    stats: Dict[str, dict] = {}
-    params = dict(model.named_parameters()) if model is not None else {}
-    for name, config in report.plan.items():
-        for field_name in _QUANTIZER_FIELDS:
-            quantizer_cfg = getattr(config, field_name)
-            if quantizer_cfg is None or quantizer_cfg.is_noop:
-                continue
-            key = f"{quantizer_cfg.format.name}/{quantizer_cfg.scheme}"
-            bucket = stats.setdefault(key, {"n_quantizers": 0, "n_params": 0})
-            bucket["n_quantizers"] += 1
-            if field_name == "weight":
-                bucket["n_params"] += params.get(f"{name}.weight", torch.empty(0)).numel()
-    return stats
-
-
-def print_plan_summary(report: PlanReport, model: Optional[nn.Module] = None, tag: str = "plan") -> None:
-    """Log a one-line-per-format summary plus rule statistics."""
-    stats = summarize_plan(report, model)
-    parts = [
-        f"{key}={value['n_quantizers']} quantizers"
-        + (f" ({value['n_params'] / 1e9:.2f}B params)" if value["n_params"] else "")
-        for key, value in sorted(stats.items())
+    entries = list(model_info)
+    parent_roots = {name for name, _ in entries}
+    filtered_entries = [
+        (name, op_type)
+        for name, op_type in entries
+        if not any(name.startswith(f"{root}.") for root in parent_roots if root != name)
     ]
-    logger.info(f"[{tag}] {report.n_modules} modules quantized: " + (", ".join(parts) if parts else "none"))
-    if report.excluded:
-        logger.info(f"[{tag}] excluded {len(report.excluded)} modules (lm_head/embed_tokens)")
-    for index, hits in enumerate(report.rule_hits):
-        logger.debug(f"[{tag}] rule[{index}] hits={hits}")
+
+    report = PlanReport()
+    for module_name, op_type in filtered_entries:
+        report.op_types[module_name] = op_type
+        if any(matches_target(module_name, op_type, pat) for pat in config.ignore):
+            report.ignored.append(module_name)
+            continue
+
+        resolved_cfg: Optional[ModuleQuantConfig] = None
+        for rule in config.config_groups:
+            if any(matches_target(module_name, op_type, pat) for pat in rule.targets):
+                resolved_cfg = rule.resolve(default_backend=config.backend)
+
+        if resolved_cfg is None or resolved_cfg.is_noop:
+            report.unmatched.append(module_name)
+            continue
+
+        if state_map is not None:
+            _apply_precalibrated_amax(module_name, resolved_cfg, state_map)
+
+        report.plan[module_name] = resolved_cfg
+    return report
 
 
-def apply_plan(model: nn.Module, report: PlanReport, *, share_params: bool = False) -> dict:
-    """Replace every module in ``report.plan`` with its quantized subclass."""
-    replaced = []
-    for name, config in report.plan.items():
-        parent_name, _, leaf = name.rpartition(".")
-        parent = model.get_submodule(parent_name) if parent_name else model
-        module = getattr(parent, leaf)
-        target_cls = QuantModuleRegistry.get(module)
-        if target_cls is None:
-            raise TypeError(f"no quantized class for {name} ({type(module).__name__})")
-        quantized = target_cls.from_float(module, config, share_params=share_params)
-        setattr(parent, leaf, quantized)
-        replaced.append({"name": name})
-    return {"replaced": replaced, "n_replaced": len(replaced)}
+def _collect_supported_modules(root: nn.Module) -> List[Tuple[str, Any]]:
+    """Traverse ``root`` top-down, stopping at atomic fake-quant or supported leaf/wrapper modules."""
+    collected: List[Tuple[str, Any]] = []
+
+    def _walk(mod: nn.Module, prefix: str) -> None:
+        for child_name, child in mod._modules.items():
+            if child is None:
+                continue
+            full_name = f"{prefix}.{child_name}" if prefix else child_name
+            if getattr(child, "_is_fake_quant_module", False):
+                continue
+            if is_supported_module(child):
+                collected.append((full_name, type(child)))
+                # Do not recurse into internal submodules (e.g. LoraLinear.base_layer / lora_A / lora_B).
+                continue
+            _walk(child, full_name)
+
+    _walk(root, "")
+    return collected
+
+
+def build_quant_plan(model: nn.Module, config: FakeQuantConfig) -> PlanReport:
+    """Inspect ``model`` and produce a :class:`PlanReport` for ``config``."""
+    info = _collect_supported_modules(model)
+    return compile_plan_from_info(info, config)
+
+
+def _set_submodule(root: nn.Module, dotted_name: str, new_module: nn.Module) -> None:
+    if "." in dotted_name:
+        parent_name, child_name = dotted_name.rsplit(".", 1)
+        parent = root.get_submodule(parent_name)
+    else:
+        parent = root
+        child_name = dotted_name
+    setattr(parent, child_name, new_module)
+
+
+def apply_quant_plan(model: nn.Module, report: PlanReport) -> dict[str, int]:
+    """Replace every planned module in ``model`` with its registered fake-quant counterpart."""
+    n_replaced = 0
+    for module_name, module_cfg in report.plan.items():
+        if module_cfg.is_noop:
+            continue
+        target = model.get_submodule(module_name)
+        replacement = quantize_module(target, module_cfg)
+        if replacement is not target:
+            _set_submodule(model, module_name, replacement)
+            n_replaced += 1
+    return {
+        "n_replaced": n_replaced,
+        "n_ignored": len(report.ignored),
+        "n_unmatched": len(report.unmatched),
+    }
 
 
 __all__ = [
-    "DEFAULT_EXCLUDE",
     "PlanReport",
-    "QuantRule",
-    "apply_plan",
-    "compile_plan",
+    "apply_quant_plan",
+    "build_quant_plan",
     "compile_plan_from_info",
-    "print_plan_summary",
-    "summarize_plan",
+    "matches_target",
 ]

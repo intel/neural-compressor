@@ -32,13 +32,19 @@ import warnings
 
 import torch
 
-from neural_compressor.torch.quantization.fake_quant.options import QuantizerConfig
+from neural_compressor.torch.quantization.fake_quant.config import QuantizerConfig
 from neural_compressor.torch.quantization.fake_quant.quantizer import TensorQuantizer as _TensorQuantizer
 
 _LEGACY_DATA_TYPES = {
     "mx_fp8": "mxfp8",
     "mx_fp4": "mxfp4",
     "fp8": "fp8_e4m3",
+    "fp8_e4m3": "fp8_e4m3",
+}
+
+_CANONICAL_LEGACY_NAMES = {
+    "mxfp8": "mx_fp8",
+    "mxfp4": "mx_fp4",
     "fp8_e4m3": "fp8_e4m3",
 }
 
@@ -93,6 +99,8 @@ class TensorQuantizer(_TensorQuantizer):
                 amax=amax,
             )
         )
+        self.data_type = _CANONICAL_LEGACY_NAMES[fmt]
+        self.num_bits = self.format.element_bits
         self.sym = sym
         self.block_size = block_size
         self._if_quant = bool(if_quant)

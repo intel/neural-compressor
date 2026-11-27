@@ -11,38 +11,65 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Small CUDA/FSDP2 tests; no model download or multi-GB allocation."""
+"""Small CUDA/FSDP2 tests for v2.0 QAD (no model download or multi-GB allocation)."""
 
+import importlib.util
+import os
+import sys
 import tempfile
 import unittest
 from pathlib import Path
 
+from safetensors import safe_open
 import torch
+from transformers import TrainingArguments
 
-from neural_compressor.torch.qad import apply_lora, build_tiny_qwen35
-from neural_compressor.torch.qad.checkpoint import save_adapter, save_full_state_dict
-from neural_compressor.torch.qad.export import load_state_dict_into_model
-from neural_compressor.torch.quantization import FakeQuantConfig, QuantRule, quantize
+from neural_compressor.torch.distillation import DistillConfig
+from neural_compressor.torch.qad import QADTrainer, prepare_qad_model
+from neural_compressor.torch.quantization import (
+    FakeQuantConfig,
+    QuantSchemeRule,
+    save_fsdp2_full_model,
+    save_fsdp2_peft_adapter,
+)
+
+EXAMPLE_DIR = Path(__file__).resolve().parents[3] / "examples/pytorch/llm/qwen/qad"
+if str(EXAMPLE_DIR) not in sys.path:
+    sys.path.insert(0, str(EXAMPLE_DIR))
+
+
+def build_tiny_qwen35(**kwargs):
+    path = EXAMPLE_DIR / "modeling/qwen35_text_loader.py"
+    spec = importlib.util.spec_from_file_location("qad_example_qwen35_text_loader", path)
+    module = importlib.util.module_from_spec(spec)
+    sys.modules["qad_example_qwen35_text_loader"] = module
+    spec.loader.exec_module(module)
+    return module.build_tiny_qwen35(**kwargs)
 
 
 @unittest.skipUnless(torch.cuda.is_available(), "CUDA is required")
 class TestGPUQAD(unittest.TestCase):
     def setUp(self):
-        import os
         import torch.distributed as dist
 
+        local_rank = int(os.environ.get("LOCAL_RANK", "0"))
+        torch.cuda.set_device(local_rank)
         os.environ.setdefault("MASTER_ADDR", "127.0.0.1")
         os.environ.setdefault("MASTER_PORT", "29651")
         os.environ.setdefault("RANK", "0")
         os.environ.setdefault("LOCAL_RANK", "0")
         os.environ.setdefault("WORLD_SIZE", "1")
+        self._created_pg = False
         if not dist.is_initialized():
-            dist.init_process_group("gloo", rank=0, world_size=1)
+            world_size = int(os.environ["WORLD_SIZE"])
+            backend = "nccl" if world_size > 1 else "gloo"
+            dist.init_process_group(backend, rank=int(os.environ["RANK"]), world_size=world_size)
+            self._created_pg = world_size == 1
 
     def tearDown(self):
         import torch.distributed as dist
 
-        if dist.is_initialized():
+        if getattr(self, "_created_pg", False) and dist.is_initialized():
             dist.destroy_process_group()
 
     def _lora_model(self, quant_order):
@@ -53,12 +80,20 @@ class TestGPUQAD(unittest.TestCase):
             dtype=torch.bfloat16,
         )
         config = FakeQuantConfig(
-            rules=[QuantRule(module=r".*self_attn.q_proj$", weight="mxfp4", input="mxfp4", output="fp8_e4m3")]
+            config_groups=[
+                QuantSchemeRule(
+                    targets=[r"re:.*self_attn\.q_proj$"],
+                    weights="mxfp4",
+                    input_activations="mxfp4",
+                    output_activations="fp8_e4m3",
+                )
+            ]
         )
-        model = quantize(model, config)
-        model = apply_lora(
+        model = prepare_qad_model(
             model,
-            {"rank": 4, "alpha": 4, "targets": ["q_proj"], "quant_order": quant_order},
+            config,
+            lora_config={"r": 4, "lora_alpha": 4, "target_modules": ["q_proj"], "bias": "none", "task_type": "CAUSAL_LM"},
+            lora_merge_before_quant=(quant_order == "lora_then_quant"),
         )
         return model.to("cuda")
 
@@ -84,21 +119,24 @@ class TestGPUQAD(unittest.TestCase):
             fully_shard(layer, mp_policy=policy, reshard_after_forward=True)
         fully_shard(model, mp_policy=policy, reshard_after_forward=False)
         with tempfile.TemporaryDirectory() as tmp:
-            self.assertTrue(save_adapter(model, tmp, should_save=True))
-            self.assertTrue((Path(tmp) / "adapter_model.safetensors").is_file())
-            save_full_state_dict(model, tmp, should_save=True)
-            reloaded = build_tiny_qwen35(
+            adapter_dir = Path(tmp) / "adapter"
+            full_dir = Path(tmp) / "full"
+            self.assertTrue(save_fsdp2_peft_adapter(model, adapter_dir, should_save=True))
+            self.assertTrue((adapter_dir / "adapter_model.safetensors").is_file())
+
+            plain = build_tiny_qwen35(
                 num_hidden_layers=2,
                 layer_types=["full_attention", "full_attention"],
                 dtype=torch.bfloat16,
-            )
-            load_state_dict_into_model(reloaded, Path(tmp) / "model.safetensors")
-            self.assertFalse(any("quantizer" in key for key in reloaded.state_dict()))
-    def test_cpu_teacher_logits_work_with_cuda_student(self):
-        from neural_compressor.torch.distill import DistillConfig
-        from neural_compressor.torch.qad import QADTrainer
-        from transformers import TrainingArguments
+            ).to("cuda")
+            for layer in plain.model.layers:
+                fully_shard(layer, mp_policy=policy, reshard_after_forward=True)
+            fully_shard(plain, mp_policy=policy, reshard_after_forward=False)
+            self.assertTrue(save_fsdp2_full_model(plain, full_dir, should_save=True, dtype=torch.bfloat16))
+            with safe_open(str(full_dir / "model.safetensors"), "pt") as handle:
+                self.assertFalse(any("quantizer" in key for key in handle.keys()))
 
+    def test_cpu_teacher_logits_work_with_cuda_student(self):
         student = self._lora_model("quant_then_lora")
         teacher = build_tiny_qwen35(
             num_hidden_layers=2,
@@ -122,11 +160,27 @@ class TestGPUQAD(unittest.TestCase):
             loss.backward()
         self.assertIsNotNone(student.base_model.model.model.layers[0].self_attn.q_proj.lora_A.default.weight.grad)
 
-    def test_trainer_fsdp2_resume(self):
-        from neural_compressor.torch.distill import DistillConfig
-        from neural_compressor.torch.qad import QADTrainer
-        from transformers import TrainingArguments
+    def test_self_teacher_zero_vram_lora_step(self):
+        student = self._lora_model("lora_then_quant")
+        batch = {
+            "input_ids": torch.randint(0, 128, (1, 16), device="cuda"),
+            "attention_mask": torch.ones(1, 16, dtype=torch.long, device="cuda"),
+            "loss_mask": torch.ones(1, 16, device="cuda"),
+        }
+        with tempfile.TemporaryDirectory() as tmp:
+            trainer = QADTrainer(
+                model=student,
+                teacher="self",
+                args=TrainingArguments(output_dir=tmp, report_to=[], use_cpu=False, bf16=True),
+                distill_config=DistillConfig(teacher="self", teacher_device="self", top_k=16, chunk=4),
+            )
+            self.assertIsNone(trainer.teacher)
+            loss = trainer.compute_loss(student, batch)
+            self.assertTrue(torch.isfinite(loss))
+            loss.backward()
+        self.assertIsNotNone(student.base_model.model.model.layers[0].self_attn.q_proj.lora_B.default.weight.grad)
 
+    def test_trainer_fsdp2_resume(self):
         student = self._lora_model("lora_then_quant")
         teacher = build_tiny_qwen35(
             num_hidden_layers=2,
@@ -141,7 +195,14 @@ class TestGPUQAD(unittest.TestCase):
             }
             for _ in range(4)
         ]
-        with tempfile.TemporaryDirectory() as tmp:
+        with tempfile.TemporaryDirectory() as local_tmp:
+            import torch.distributed as dist
+
+            obj_list = [local_tmp]
+            if dist.is_initialized() and dist.get_world_size() > 1:
+                dist.broadcast_object_list(obj_list, src=0)
+            tmp = obj_list[0]
+
             def arguments(steps):
                 return TrainingArguments(
                     output_dir=tmp,
@@ -182,6 +243,8 @@ class TestGPUQAD(unittest.TestCase):
             )
             resumed.train(resume_from_checkpoint=str(Path(tmp) / "checkpoint-1"))
             self.assertEqual(resumed.state.global_step, 2)
+            if dist.is_initialized() and dist.get_world_size() > 1:
+                dist.barrier()
 
 
 if __name__ == "__main__":

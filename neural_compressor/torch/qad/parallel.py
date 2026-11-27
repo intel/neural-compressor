@@ -19,51 +19,60 @@ from typing import List, Optional
 
 import torch.nn as nn
 
-from .modeling import CausalLM, ModelAdapter, get_adapter
+from neural_compressor.torch.utils.auto_accelerator import auto_detect_accelerator
 
 
 def _find_layers(model: nn.Module) -> Optional[nn.ModuleList]:
-    """Walk wrapper attributes (PeftModel/DDP) looking for ``.layers``."""
-    layers = getattr(model, "layers", None)
-    if isinstance(layers, nn.ModuleList):
-        return layers
-    for attr in ("base", "base_model", "model", "module"):
+    """Walk wrapper attributes (PeftModel/VLM/DDP) looking for decoder ``nn.ModuleList``."""
+    for list_attr in ("layers", "h", "blocks", "block"):
+        layers = getattr(model, list_attr, None)
+        if isinstance(layers, nn.ModuleList) and len(layers) > 0:
+            return layers
+    for attr in ("language_model", "base_model", "model", "transformer", "module"):
         sub = getattr(model, attr, None)
-        if sub is None:
-            continue
-        found = _find_layers(sub)
-        if found is not None:
-            return found
+        if isinstance(sub, nn.Module) and sub is not model:
+            found = _find_layers(sub)
+            if found is not None:
+                return found
     return None
 
 
-def decoder_layer_class_names(model: nn.Module, adapter: Optional[ModelAdapter] = None) -> List[str]:
-    """Class names for ``fsdp_config["transformer_layer_cls_to_wrap"]``.
+def decoder_layer_class_names(model: nn.Module) -> List[str]:
+    """Return decoder block class names for ``fsdp_config["transformer_layer_cls_to_wrap"]``.
 
-    The CLI used to hardcode this list; here it comes from the actual layer
-    modules, so GDN/MoE layers are covered and PeftModel wrappers are walked.
+    Discovers actual decoder layer classes (including hybrid GatedDeltaNet + Attention or MoE
+    blocks) directly from ``model`` while walking ``PeftModel`` / VLM / DDP wrappers, falling
+    back to HuggingFace ``_no_split_modules`` when available.
     """
     layers = _find_layers(model)
     if layers is not None and len(layers) > 0:
         return sorted({type(layer).__name__ for layer in layers})
-    adapter = adapter or get_adapter(model)
-    return adapter.wrap_classes(model)
+
+    cur: nn.Module = model
+    for attr in ("module", "base_model", "model"):
+        sub = getattr(cur, attr, None)
+        if isinstance(sub, nn.Module):
+            cur = sub
+    no_split = getattr(cur, "_no_split_modules", None)
+    if no_split:
+        return sorted(str(name) for name in no_split)
+    return []
 
 
 def teacher_placement(model: nn.Module) -> str:
-    """Return a suggested teacher placement for a loaded model.
+    """Return a suggested teacher placement for ``model``.
 
-    Small models stay on the current device; large ones (a 27B teacher next to
-    a 27B student) default to FSDP2 layer sharding. ``"cpu"`` is chosen by the
-    caller for the most memory-constrained runs.
+    Models under 8B parameters default to the active local accelerator (e.g. ``"cuda"`` / ``"xpu"``);
+    larger models (such as a 27B teacher alongside a 27B student) default to FSDP2 ``"shard"``.
     """
-    if isinstance(model, CausalLM):
-        return "shard"
     try:
         n_params = sum(param.numel() for param in model.parameters())
     except Exception:
         return "shard"
-    return "cuda" if n_params < 8e9 else "shard"
+    if n_params < 8e9:
+        acc_name = auto_detect_accelerator().name()
+        return acc_name if acc_name in ("cuda", "cpu") else "shard"
+    return "shard"
 
 
 __all__ = ["decoder_layer_class_names", "teacher_placement"]

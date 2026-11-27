@@ -27,7 +27,19 @@ PEAK_BF16 = {
     "NVIDIA H200": 989e12,
     "NVIDIA H100": 989e12,
     "NVIDIA B200": 2250e12,
+    "NVIDIA RTX PRO 6000": 1007e12,
 }
+
+
+def _lookup_peak_bf16(device_name: str) -> Optional[float]:
+    if not device_name:
+        return None
+    if device_name in PEAK_BF16:
+        return PEAK_BF16[device_name]
+    for prefix, flops in PEAK_BF16.items():
+        if device_name.startswith(prefix):
+            return flops
+    return None
 
 
 def per_token_flops(params: int, *, mode: str = "full", teacher: bool = False, recompute: bool = False) -> float:
@@ -57,7 +69,7 @@ def tflops_and_mfu(
     student = tokens * per_token_flops(params, mode=mode, recompute=recompute) / step_seconds
     teacher = tokens * per_token_flops(teacher_params, teacher=True) / step_seconds
     total = student + teacher
-    peak = PEAK_BF16.get(device_name)
+    peak = _lookup_peak_bf16(device_name)
     aggregate_peak = peak * world_size if peak else None
     return {
         "tflops_student": student / 1e12,
@@ -85,6 +97,32 @@ def _accelerator(device: torch.device):
     except Exception:
         return None
     return acc
+
+
+def reset_peak_memory(device: torch.device | str) -> None:
+    """Reset peak accelerator memory statistics on ``device`` if supported."""
+    dev = torch.device(device)
+    acc = _accelerator(dev)
+    if acc is not None and hasattr(acc, "reset_peak_memory_stats"):
+        try:
+            acc.reset_peak_memory_stats(dev)
+        except Exception:
+            pass
+
+
+def device_hardware_name(device: torch.device | str) -> str:
+    """Query human-readable hardware name for ``device`` via backend module without hardcoding CUDA."""
+    dev = torch.device(device)
+    if dev.type == "cpu":
+        return "cpu"
+    backend_mod = getattr(torch, dev.type, None)
+    get_name = getattr(backend_mod, "get_device_name", None) if backend_mod is not None else None
+    if callable(get_name):
+        try:
+            return str(get_name(dev))
+        except Exception:
+            return ""
+    return ""
 
 
 def memory_report(device: torch.device | str) -> dict:
@@ -116,4 +154,13 @@ def param_counts(model: torch.nn.Module) -> dict:
     return {"params_total": total, "params_trainable": trainable}
 
 
-__all__ = ["PEAK_BF16", "gib", "memory_report", "param_counts", "per_token_flops", "tflops_and_mfu"]
+__all__ = [
+    "PEAK_BF16",
+    "device_hardware_name",
+    "gib",
+    "memory_report",
+    "param_counts",
+    "per_token_flops",
+    "reset_peak_memory",
+    "tflops_and_mfu",
+]

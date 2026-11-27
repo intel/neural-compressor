@@ -11,105 +11,91 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Quantized module implementations (fake quantization)."""
+"""Fake-quantized module subclasses (``QuantLinear``)."""
 
 from __future__ import annotations
-
-from typing import Any, Optional
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
-from .options import ModuleQuantConfig, QuantizerConfig
+from .config import ModuleQuantConfig
 from .quantizer import TensorQuantizer
-from .registry import QuantModuleRegistry
-
-_DISABLED = QuantizerConfig(format="bf16")
+from .registry import register_quant_module
 
 
+@register_quant_module(nn.Linear)
 class QuantLinear(nn.Linear):
-    """``nn.Linear`` with named ``weight_quantizer`` / ``input_quantizer``.
+    """Drop-in ``nn.Linear`` subclass with weight, input, and output :class:`TensorQuantizer` slots.
 
-    Subclassing keeps ``weight``/``bias`` keys and ``isinstance(nn.Linear)``
-    intact, which PEFT, FSDP2 and ``torch.compile`` depend on. Quantizers are
-    always created (disabled when unused) so module names are stable and
-    recipes that match ``*weight_quantizer`` behave predictably.
+    Shares ``weight`` and ``bias`` ``nn.Parameter`` objects in-place via :meth:`from_float`
+    without duplicating memory or altering ``state_dict`` parameter keys.
     """
+
+    _is_fake_quant_module: bool = True
 
     def __init__(
         self,
         in_features: int,
         out_features: int,
         bias: bool = True,
-        *,
-        config: Optional[ModuleQuantConfig] = None,
-        **factory_kwargs: Any,
+        config: ModuleQuantConfig | None = None,
+        device=None,
+        dtype=None,
     ) -> None:
-        super().__init__(in_features, out_features, bias=bias, **factory_kwargs)
-        config = config or ModuleQuantConfig()
-        self.weight_quantizer = TensorQuantizer(config.weight or _DISABLED)
-        self.input_quantizer = TensorQuantizer(config.input or _DISABLED)
-        self.output_quantizer = TensorQuantizer(config.output or _DISABLED)
+        super().__init__(in_features, out_features, bias=bias, device=device, dtype=dtype)
+        resolved = config if config is not None else ModuleQuantConfig()
+        self.quant_config = resolved
+        self.weight_quantizer = TensorQuantizer(resolved.weights)
+        self.input_quantizer = TensorQuantizer(resolved.input_activations)
+        self.output_quantizer = TensorQuantizer(resolved.output_activations)
 
     @classmethod
-    def from_float(
-        cls,
-        module: nn.Linear,
-        config: ModuleQuantConfig,
-        *,
-        share_params: bool = False,
-    ) -> "QuantLinear":
-        """Build a quantized copy of ``nn.Linear``.
-
-        ``share_params=True`` allocates the shell on the meta device and reuses
-        the source ``Parameter`` objects; used when student/teacher must share
-        weights without materializing a second 27B tensor.
-        """
-        quantized = cls(
-            module.in_features,
-            module.out_features,
-            bias=module.bias is not None,
+    def from_float(cls, mod: nn.Linear, config: ModuleQuantConfig) -> "QuantLinear":
+        """Construct a :class:`QuantLinear` sharing ``mod.weight`` and ``mod.bias`` without copying."""
+        if not isinstance(mod, nn.Linear):
+            raise TypeError(f"QuantLinear.from_float expects nn.Linear, got {type(mod).__name__}")
+        # Allocate shell on meta device so zero memory is allocated before sharing parameters.
+        qlinear = cls(
+            mod.in_features,
+            mod.out_features,
+            bias=mod.bias is not None,
             config=config,
-            device="meta" if share_params else module.weight.device,
-            dtype=module.weight.dtype,
+            device="meta",
+            dtype=mod.weight.dtype,
         )
-        quantized.weight.requires_grad_(module.weight.requires_grad)
-        if quantized.bias is not None and module.bias is not None:
-            quantized.bias.requires_grad_(module.bias.requires_grad)
-        if share_params:
-            quantized.weight = module.weight
-            quantized.bias = module.bias
-            return quantized
-        with torch.no_grad():
-            quantized.weight.copy_(module.weight)
-            if module.bias is not None and quantized.bias is not None:
-                quantized.bias.copy_(module.bias)
-        return quantized
+        qlinear.weight = mod.weight
+        qlinear.bias = mod.bias
+        param_device = mod.weight.device
+        if param_device.type != "meta":
+            for q_mod in (qlinear.weight_quantizer, qlinear.input_quantizer, qlinear.output_quantizer):
+                if q_mod.amax is not None:
+                    q_mod.amax = q_mod.amax.to(device=param_device, dtype=torch.float32)
+        return qlinear
 
-    def forward(self, x: torch.Tensor) -> torch.Tensor:
-        """Fake-quantize input/weight, then run the ordinary GEMM."""
-        x = self.input_quantizer(x)
-        # A frozen weight (LoRA, teacher) must not be saved for backward:
-        # quantize it without autograd and detach. The GEMM itself stays
-        # outside ``no_grad`` so gradients still reach earlier activations.
-        if self.weight.requires_grad:
-            weight = self.weight_quantizer(self.weight)
-            out = F.linear(x, weight, self.bias)
-        else:
-            with torch.no_grad():
-                weight = self.weight_quantizer(self.weight)
-            out = F.linear(x, weight, self.bias)
-        return self.output_quantizer(out)
-
-    def extra_repr(self) -> str:
-        """Append quantizer state to the default Linear repr."""
-        return (
-            f"in_features={self.in_features}, out_features={self.out_features}, "
-            f"bias={self.bias is not None}, weight_fmt={self.weight_quantizer.format.name}"
+    def to_float(self) -> nn.Linear:
+        """Unwrap back into a plain ``nn.Linear`` sharing ``weight`` and ``bias``."""
+        linear = nn.Linear(
+            self.in_features,
+            self.out_features,
+            bias=self.bias is not None,
+            device="meta",
+            dtype=self.weight.dtype,
         )
+        linear.weight = self.weight
+        linear.bias = self.bias
+        return linear
 
+    def forward(self, input: torch.Tensor) -> torch.Tensor:
+        q_input = self.input_quantizer(input)
+        q_weight = self.weight_quantizer(self.weight)
+        if q_weight.dtype != q_input.dtype:
+            q_weight = q_weight.to(q_input.dtype)
+        bias = self.bias
+        if bias is not None and bias.dtype != q_input.dtype:
+            bias = bias.to(q_input.dtype)
+        output = F.linear(q_input, q_weight, bias)
+        return self.output_quantizer(output)
 
-QuantModuleRegistry.register(nn.Linear, QuantLinear)
 
 __all__ = ["QuantLinear"]

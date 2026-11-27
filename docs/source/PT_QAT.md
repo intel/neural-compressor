@@ -11,8 +11,9 @@ This document describes how to use Quantization-Aware Training (QAT) in Intel Ne
 3. [Quick Start](#quick-start)  
 4. [Core Components](#core-components)  
 5. [Configuration and Key Parameters](#configuration-and-key-parameters)  
-6. [Best Practices and Troubleshooting](#best-practices-and-troubleshooting)  
-7. [References](#references)
+6. [Unified Fake-Quant QAT, Distillation (KD), QAD, and `compressed-tensors` Export](#unified-fake-quant-qat-distillation-kd-qad-and-compressed-tensors-export)  
+7. [Best Practices and Troubleshooting](#best-practices-and-troubleshooting)  
+8. [References](#references)
 
 ---
 
@@ -414,6 +415,118 @@ if weight_quantizer.num_bits == 8 and weight_quantizer.data_type == "mx_fp8":
 if weight_quantizer.num_bits == 4 and weight_quantizer.data_type == "mx_fp4":
     return "MXFP4"
 ```
+
+---
+
+## Unified Fake-Quant QAT, Distillation (KD), QAD, and `compressed-tensors` Export
+
+Intel Neural Compressor also provides a unified, self-contained fake-quantization, knowledge distillation, and Quantization-Aware Distillation (QAD) stack that does not require external quantization toolkits at training time and exports directly to **vLLM**-ready `compressed-tensors` checkpoints.
+
+### Supported Quantization Formats & Triton QDQ Kernels
+
+`FakeQuantConfig` (`neural_compressor.torch.quantization`) supports mixed per-layer / regex-targeted schemes across 6 native formats:
+
+| Format | Block Size | Scale Representation | Dynamic / Static |
+|---|---|---|---|
+| `mxfp4` | 32 | `E8M0` power-of-two (`ceil(log2(max / 6.0))`) | Dynamic |
+| `mxfp8` | 32 | `E8M0` power-of-two (`ceil(log2(max / 448.0))`) | Dynamic |
+| `nvfp4` | 16 | Two-level FP8 `E4M3` block scale + global FP32 `amax` | Static global / Dynamic block |
+| `fp8_e4m3` | Per-tensor / Per-channel | FP32 `amax / 448.0` | Static (`amax`) or Dynamic |
+| `int8` | Per-tensor / Per-channel / Group | Symmetric FP32 `amax / 127.0` | Static or Dynamic |
+| `int4` | Group (`32` / `64` / `128`) | Symmetric / Asymmetric | Static or Dynamic |
+
+On GPU, `qdq_backend="auto"` dispatches to fused single-pass Triton QDQ kernels (`MXFP4`, `MXFP8`, `NVFP4`, `FP8_E4M3`) with **0-ULP bitwise parity** against reference PyTorch/CUDA implementations and **0 B** temporary workspace.
+
+### Composable Python APIs
+
+#### 1. Mixed-Precision QAT (`FakeQuantConfig` + `prepare_qat` + `QATTrainer`)
+
+```python
+from neural_compressor.torch.quantization import (
+    FakeQuantConfig,
+    QATTrainer,
+    QuantSchemeRule,
+    QuantizationTrainingArguments,
+    prepare_qat,
+)
+
+quant_cfg = FakeQuantConfig(
+    qdq_backend="auto",
+    config_groups=[
+        QuantSchemeRule(
+            targets=[r"re:.*\.mlp\.(gate_proj|up_proj|down_proj)$"],
+            weights="mxfp4",
+            input_activations="mxfp4",
+        ),
+        QuantSchemeRule(
+            targets=[r"re:.*\.self_attn\.(q_proj|k_proj|v_proj|o_proj)$"],
+            weights={"format": "fp8_e4m3", "dynamic": False},
+            input_activations={"format": "fp8_e4m3", "dynamic": False},
+        ),
+    ],
+)
+
+model = prepare_qat(model, quant_cfg)
+trainer = QATTrainer(
+    model=model,
+    args=QuantizationTrainingArguments(output_dir="runs/qat", calib_batches=32, bf16=True),
+    train_dataset=train_dataset,
+)
+trainer.train()
+```
+
+#### 2. Standalone Knowledge Distillation (`KDTrainer`)
+
+`neural_compressor.torch.distillation` provides `KDTrainer` with chunked `lm_head` evaluation (`kd_lm_head_chunk_size`), reverse/forward/JSD KL (`LogitsKLLoss`), automatic FSDP2 teacher layer sharding (`teacher_device="shard"`), and zero-VRAM `teacher_model="self"` for LoRA self-distillation.
+
+#### 3. Quantization-Aware Distillation (`QADTrainer` & PEFT `QuantLoraLinear`)
+
+`neural_compressor.torch.qad` composes `KDTrainer` and `QATTrainer` via cooperative multiple inheritance, plus `prepare_qad_model` for PEFT LoRA integration (`lora_merge_before_quant=True` $\implies y = Q_w(W + s \cdot BA)\,Q_a(x)$):
+
+```python
+from neural_compressor.torch.qad import QADTrainer, QADTrainingArguments, prepare_qad_model
+
+student = prepare_qad_model(
+    student,
+    quant_cfg,
+    lora_config={"r": 32, "lora_alpha": 32, "target_modules": ["q_proj", "k_proj", "v_proj", "o_proj", "gate_proj", "up_proj", "down_proj"]},
+    lora_merge_before_quant=True,
+)
+
+trainer = QADTrainer(
+    model=student,
+    teacher_model="self",  # Zero extra teacher VRAM!
+    args=QADTrainingArguments(
+        output_dir="runs/qad_lora",
+        kd_alpha=1.0,
+        kd_loss_type="reverse_kl",
+        kd_lm_head_chunk_size=1024,
+        bf16=True,
+    ),
+    train_dataset=train_dataset,
+)
+trainer.train()
+```
+
+#### 4. Real Packed `compressed-tensors` Export for vLLM
+
+`export_hf_checkpoint` streams safetensors shards in bounded host RAM, merges optional PEFT LoRA adapters, packs real `MXFP4` (`uint8` nibbles + `E8M0` scales), `NVFP4`, `FP8_E4M3`, `INT8`, or `INT4` weights with a `compressed-tensors` `quantization_config` header, and preserves multimodal VLM vision towers (`keep_vision=True`):
+
+```python
+from neural_compressor.torch.export import export_hf_checkpoint
+
+export_hf_checkpoint(
+    base_model_path="/path/to/Qwen3.8-27B",
+    output_dir="runs/export-mxfp4-fp8",
+    format="compressed_tensors",
+    quant_config=quant_cfg,
+    state_dict_path="runs/qad/checkpoint-1000/model.safetensors",
+    quant_state_path="runs/qad/checkpoint-1000/quantization_config.json",
+    keep_vision=True,
+)
+```
+
+See the complete end-to-end 27B recipes and launch scripts in [`examples/pytorch/llm/qwen/qad`](/examples/pytorch/llm/qwen/qad).
 
 ---
 

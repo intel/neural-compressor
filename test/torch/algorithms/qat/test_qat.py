@@ -19,7 +19,7 @@ import warnings
 import torch
 import torch.nn as nn
 
-from neural_compressor.torch.quantization import FakeQuantConfig, QuantRule, prepare_qat
+from neural_compressor.torch.quantization import FakeQuantConfig, QuantSchemeRule, prepare_qat
 from neural_compressor.torch.quantization.fake_quant import QuantLinear, TensorQuantizer
 
 
@@ -36,7 +36,9 @@ class TinyModel(nn.Module):
 
 
 def _qat_config():
-    return FakeQuantConfig(rules=[QuantRule(module=r".*fc1$", weight="mxfp8", input="mxfp8")])
+    return FakeQuantConfig(
+        config_groups=[QuantSchemeRule(targets=[r"re:.*fc1$"], weights="mxfp8", input_activations="mxfp8")]
+    )
 
 
 def test_prepare_inserts_quantizers():
