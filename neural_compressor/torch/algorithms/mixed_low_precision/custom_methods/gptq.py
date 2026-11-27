@@ -496,7 +496,11 @@ class BaseGaudiGPTQForCausalLM(BaseGPTQForCausalLM):
                 if k not in ["hidden_states", "attention_mask", "position_ids"]:
                     one_kwargs[k] = nested_move_to_device(v, data_device)
             layer_input_kwargs.append(one_kwargs)
-            raise ValueError
+            raise ValueError(
+                "Calibration inputs collected; this forward is only a capture hook "
+                "and returns nothing. "
+                + "(internal: the temporary forward installed to capture calibration inputs has no result to return)"
+            )
 
         force_layer_back_to_cpu = False
         if get_device(layers[0]) == CPU:

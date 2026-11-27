@@ -430,7 +430,10 @@ class RAWGPTQuantizer(object):
                     # initialize
                     self.cache_positional_arguments.append([])
                 self.cache_positional_arguments[idx].append(item)
-            raise ValueError
+            raise ValueError(
+                "Positional arguments are not supported for GPTQ calibration; "
+                "call the model with keyword arguments such as input_ids=..."
+            )
 
         # Step1: fetch the embeddings and other layers before the transformer stack.
         if not self.use_layer_wise:  # pragma: no cover
