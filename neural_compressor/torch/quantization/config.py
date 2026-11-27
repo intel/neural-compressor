@@ -1946,8 +1946,8 @@ def get_default_mixed_precision_config_set() -> MixedPrecisionConfig:
 from neural_compressor.torch.algorithms.fake_quant.config import (  # noqa: E402
     FakeQuantConfig,
     ModuleQuantConfig,
-    QuantSchemeRule,
     QuantizerConfig,
+    QuantSchemeRule,
     get_default_fake_quant_config,
 )
 
@@ -2031,4 +2031,3 @@ QAT_MODULE_MAPPINGS: dict[Callable, Any] = {
 def get_default_qat_module_mappings() -> dict[Callable, Any]:
     """Get default module mapping for quantization aware training."""
     return copy.deepcopy(DEFAULT_QAT_MODULE_MAPPINGS)
-

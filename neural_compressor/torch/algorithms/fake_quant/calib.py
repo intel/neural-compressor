@@ -82,16 +82,8 @@ def calibrate_static_amax(
         raise ValueError("Provide exactly one of `calib_fn` or `dataloader` to calibrate_static_amax().")
 
     all_quantizers = _iter_named_quantizers(model)
-    named_static = [
-        (name, q)
-        for name, q in all_quantizers
-        if q.is_enabled and not q.is_dynamic
-    ]
-    enabled_dynamic = [
-        q
-        for _, q in all_quantizers
-        if q.is_enabled and q.is_dynamic
-    ]
+    named_static = [(name, q) for name, q in all_quantizers if q.is_enabled and not q.is_dynamic]
+    enabled_dynamic = [q for _, q in all_quantizers if q.is_enabled and q.is_dynamic]
     was_training = model.training
     cfg_objs: list[tuple[Any, Any]] = []
     seen_cfgs: set[int] = set()

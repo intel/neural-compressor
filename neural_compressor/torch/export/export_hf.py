@@ -33,7 +33,9 @@ from neural_compressor.torch.algorithms.fake_quant import (
     canonicalize_quantizer_key,
     load_amax_map_from_state,
     load_quantizer_state,
-    match_quant_config_from_info as compile_plan_from_info,
+)
+from neural_compressor.torch.algorithms.fake_quant import match_quant_config_from_info as compile_plan_from_info
+from neural_compressor.torch.algorithms.fake_quant import (
     merge_lora_into_quant_linear,
     save_quantizer_state,
 )
@@ -296,7 +298,9 @@ def export_hf_checkpoint(
     out = Path(output_dir)
     out.mkdir(parents=True, exist_ok=True)
     base_path = Path(base_model_path) if base_model_path is not None else None
-    keep_vlm = bool(keep_vision and base_path is not None and is_vlm_checkpoint(base_path, vlm_target_prefix=vlm_target_prefix))
+    keep_vlm = bool(
+        keep_vision and base_path is not None and is_vlm_checkpoint(base_path, vlm_target_prefix=vlm_target_prefix)
+    )
     target_prefix = vlm_target_prefix if keep_vlm else ""
     extra_ignore = ["re:.*visual.*", "re:.*mtp.*"] if keep_vlm else None
 
@@ -498,10 +502,7 @@ def export_hf_checkpoint(
     elif state_map:
         payload = {
             "schema": "neural_compressor.quantizer_state/v1",
-            "quantizers": {
-                k: {"amax": v, "amax_hex": float(v).hex()}
-                for k, v in sorted(state_map.items())
-            },
+            "quantizers": {k: {"amax": v, "amax_hex": float(v).hex()} for k, v in sorted(state_map.items())},
         }
         (out / "quantizer_state.json").write_text(json.dumps(payload, indent=2) + "\n", encoding="utf-8")
 
@@ -587,4 +588,3 @@ __all__ = [
     "export_hf2compressored_model",
     "export_hf_checkpoint",
 ]
-

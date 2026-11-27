@@ -278,9 +278,7 @@ register_quant_backend(
 register_quant_backend(
     "triton",
     dynamic_fn=lambda x, fmt: triton_dynamic_qdq(x, fmt, pytorch_fallback=_pytorch_dynamic_qdq),
-    fp8_static_fn=lambda x, amax: triton_fp8_static_amax_qdq(
-        x, amax, pytorch_fallback=_pytorch_fp8_static_amax_qdq
-    ),
+    fp8_static_fn=lambda x, amax: triton_fp8_static_amax_qdq(x, amax, pytorch_fallback=_pytorch_fp8_static_amax_qdq),
     is_available_fn=is_triton_qdq_available,
     priority=20,
 )

@@ -101,11 +101,7 @@ class PrecomputedTopKCollator:
                 if "attention_mask" in feat
                 else torch.ones(seq_len, dtype=torch.long)
             )
-            lmask = (
-                torch.as_tensor(feat["loss_mask"], dtype=torch.float32)
-                if "loss_mask" in feat
-                else attn.float()
-            )
+            lmask = torch.as_tensor(feat["loss_mask"], dtype=torch.float32) if "loss_mask" in feat else attn.float()
             vals = torch.as_tensor(feat["teacher_topk_values"])
             inds = torch.as_tensor(feat["teacher_topk_indices"], dtype=torch.long)
 

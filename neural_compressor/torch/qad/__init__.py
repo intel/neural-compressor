@@ -18,13 +18,13 @@ Composes ``neural_compressor.torch.quantization`` (``FakeQuantConfig``, ``prepar
 into a single HuggingFace-native :class:`QADTrainer`.
 """
 
-from neural_compressor.torch.distillation import DistillConfig, DistillationConfig
+from neural_compressor.torch.distillation import DistillationConfig, DistillConfig
 
 from .args import QADTrainingArguments
 from .trainer import QADTrainer, prepare_qad_model
 from .utils import (
-    GradDebugCallback,
     PEAK_BF16,
+    GradDebugCallback,
     StopAfterSteps,
     decoder_layer_class_names,
     device_hardware_name,

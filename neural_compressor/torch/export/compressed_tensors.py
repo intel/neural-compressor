@@ -97,7 +97,9 @@ def _quant_args_dict(
     }
 
 
-def _extract_amax_tensor(quantizer: Optional[TensorQuantizer], *, role: str, module_name: str) -> Optional[torch.Tensor]:
+def _extract_amax_tensor(
+    quantizer: Optional[TensorQuantizer], *, role: str, module_name: str
+) -> Optional[torch.Tensor]:
     if quantizer is None or not quantizer.is_enabled:
         return None
     amax = quantizer.amax

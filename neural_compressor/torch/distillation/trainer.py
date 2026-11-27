@@ -110,6 +110,8 @@ def _place_teacher_model(teacher: nn.Module, placement: str, device: torch.devic
         return teacher.to(device)
 
     return teacher.to(device)
+
+
 def _core_pretrained_model(model: nn.Module) -> nn.Module:
     """Walk DDP/FSDP and PEFT wrappers to find the underlying ``PreTrainedModel``."""
     cur = _unwrap_model(model)

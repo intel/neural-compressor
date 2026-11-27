@@ -318,4 +318,3 @@ def test_export_autodiscovers_qat_trainer_quant_config_json(tmp_path: Path) -> N
         sd["model.layers.0.self_attn.q_proj.input_scale"],
         torch.tensor([4.48 / 448.0], dtype=torch.float32),
     )
-

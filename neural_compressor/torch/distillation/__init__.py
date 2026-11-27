@@ -13,7 +13,7 @@
 # limitations under the License.
 """Knowledge Distillation package (chunked Top-K KL, online/self/offline teacher, KDTrainer)."""
 
-from .config import DistillConfig, DistillationConfig, DistillationTrainingArguments
+from .config import DistillationConfig, DistillationTrainingArguments, DistillConfig
 from .losses import LogitsKLLoss, TopKLogitsKLLoss, full_vocab_kl, teacher_topk, topk_kl, topk_kl_from_topk
 from .offline_topk import (
     PrecomputedTopKCollator,

@@ -153,11 +153,7 @@ class QADTrainer(KDTrainer, QATTrainer):
             else:
                 seq = int(getattr(self.args, "seq_length", 0) or 0)
                 tokens = (
-                    delta
-                    * self.args.per_device_train_batch_size
-                    * self.args.gradient_accumulation_steps
-                    * world
-                    * seq
+                    delta * self.args.per_device_train_batch_size * self.args.gradient_accumulation_steps * world * seq
                 )
             seconds = max(now - self._last_log_time, 1e-9)
             counts = param_counts(unwrap_model(self.model))
