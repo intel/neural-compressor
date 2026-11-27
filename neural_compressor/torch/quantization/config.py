@@ -1943,6 +1943,16 @@ def get_default_mixed_precision_config_set() -> MixedPrecisionConfig:
 ##################### Algo Configs End ###################################
 
 
+from neural_compressor.torch.algorithms.fake_quant.config import (  # noqa: E402
+    FakeQuantConfig,
+    ModuleQuantConfig,
+    QuantizerConfig,
+    QuantSchemeRule,
+    get_default_fake_quant_config,
+)
+
+FakeQuantConfig.register_supported_configs()
+
 register_supported_configs_for_fwk(fwk_name=FRAMEWORK_NAME)
 
 

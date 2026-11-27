@@ -1,0 +1,78 @@
+# Qwen3.8-27B Formal LoRA Path-B QAD (4xGPU RTX Pro 6000 / H200, seq8192, gbs16)
+# Path-B formula: y = Q_w(W + s * B @ A) @ Q_a(x)
+# Exact counterpart to the formal Megatron-Bridge + ModelOpt LoRA-B QAD recipe:
+#   - MXFP4 dynamic W4A4 on MLP (`gate_proj`, `up_proj`, `down_proj`)
+#   - Static FP8 E4M3 W8A8 on full-attention & GatedDeltaNet projections
+#   - LoRA rank=32, alpha=32, dropout=0.0 on `self_attn.{q,k,v,o}_proj` + `mlp.{gate,up,down}_proj` (146.6M params)
+#   - Self-teacher Top-4096 forward KL (`kd_temperature=1.0`, `kd_loss_weight=1.0`, `ce_loss_weight=0.0`)
+#   - AdamW (`lr=2e-4 -> 2e-5` cosine, `warmup_steps=50`, `beta1=0.9`, `beta2=0.95`, `weight_decay=0.1`, `clip=1.0`)
+model_name_or_path: Qwen/Qwen3.8-27B
+model_dtype: bfloat16
+
+quant:
+  backend: auto
+  config_groups:
+    - targets: ['re:.*\.mlp\.(gate_proj|up_proj|down_proj)$']
+      weights: {format: mxfp4, dynamic: true}
+      input_activations: {format: mxfp4, dynamic: true}
+    - targets: ['re:.*\.(self_attn|linear_attn)\.(q_proj|k_proj|v_proj|o_proj|in_proj_qkv|in_proj_z|out_proj)$']
+      weights: {format: fp8_e4m3, dynamic: false}
+      input_activations: {format: fp8_e4m3, dynamic: false}
+  ignore: ['lm_head', 're:.*mlp\.gate$']
+
+calib_batches: 32
+
+use_lora: true
+lora_r: 32
+lora_alpha: 32
+lora_dropout: 0.0
+lora_merge_before_quant: true
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+teacher_model_name_or_path: self
+teacher_placement: self
+kd_loss_type: topk_kl
+kd_top_k: 4096
+kd_temperature: 1.0
+kd_reverse_kl: false
+kd_loss_weight: 1.0
+ce_loss_weight: 0.0
+logits_chunk_size: 1024
+
+bf16: true
+seq_length: 8192
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 4
+max_steps: 4000
+learning_rate: 2.0e-4
+lr_scheduler_type: cosine_with_min_lr
+lr_scheduler_kwargs:
+  min_lr: 2.0e-5
+warmup_steps: 50
+weight_decay: 0.1
+adam_beta1: 0.9
+adam_beta2: 0.95
+adam_epsilon: 1.0e-8
+max_grad_norm: 1.0
+seed: 1234
+logging_steps: 1
+save_strategy: steps
+save_steps: 1000
+save_total_limit: 2
+fsdp: "full_shard auto_wrap"
+fsdp_config:
+  fsdp_version: 2
+  reshard_after_forward: true
+  activation_checkpointing: true
+  transformer_layer_cls_to_wrap:
+    - Qwen3_5DecoderLayer
+
+export_format: compressed_tensors
+keep_vision_on_export: true
