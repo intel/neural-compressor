@@ -815,6 +815,10 @@ class RAWGPTQuantizer(object):
                     if isinstance(sequential_layers[layer_name], torch.nn.Linear):
                         in_features = sequential_layers[layer_name].in_features
                         out_features = sequential_layers[layer_name].out_features
+                    elif isinstance(sequential_layers[layer_name], (torch.nn.Conv1d, torch.nn.Conv2d)):
+                        # quantized as a 2D [out, in*kernel] weight
+                        in_features = sequential_layers[layer_name].weight[0].numel()
+                        out_features = sequential_layers[layer_name].weight.shape[0]
                     elif is_transformers_imported() and isinstance(sequential_layers[layer_name], transformers.Conv1D):
                         in_features = sequential_layers[layer_name].weight.shape[0]
                         out_features = sequential_layers[layer_name].weight.shape[1]
@@ -1042,6 +1046,10 @@ class RAWGPTQuantizer(object):
                 if isinstance(sub_layers[layer_name], torch.nn.Linear):
                     in_features = sub_layers[layer_name].in_features
                     out_features = sub_layers[layer_name].out_features
+                elif isinstance(sub_layers[layer_name], (torch.nn.Conv1d, torch.nn.Conv2d)):
+                    # quantized as a 2D [out, in*kernel] weight
+                    in_features = sub_layers[layer_name].weight[0].numel()
+                    out_features = sub_layers[layer_name].weight.shape[0]
                 elif is_transformers_imported() and isinstance(
                     sub_layers[layer_name], transformers.Conv1D
                 ):  # pragma: no cover
@@ -1169,8 +1177,11 @@ class GPTQ:
         """
         # W = self.layer.weight.data.clone()
         weight_shape, weight_dtype = W.shape, W.data.dtype
-        if isinstance(self.layer, nn.Conv2d):
+        # conv layers are quantized as 2D [out, in*kernel]; the shape is captured
+        # after the flatten so the quantized result can be reshaped back to it
+        if isinstance(self.layer, nn.Conv2d) or isinstance(self.layer, nn.Conv1d):
             W = W.flatten(1)
+            weight_shape = W.shape
         if is_transformers_imported() and isinstance(self.layer, transformers.Conv1D):
             W = W.t()
         W = W.float()
