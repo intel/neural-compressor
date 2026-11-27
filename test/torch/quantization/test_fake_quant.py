@@ -137,6 +137,17 @@ class TestFormatsAndConfigs(unittest.TestCase):
         self.assertEqual(resolved.weights.amax, tricky_amax)
         self.assertFalse(resolved.input_activations.dynamic)
 
+    def test_from_dict_resolves_preset_shorthand(self):
+        for preset_name in (
+            "mxfp4",
+            "fp8_static",
+            "qwen3_5_mxfp4_hybrid",
+            "diffusion_mxfp4_fp8_hybrid",
+        ):
+            cfg = FakeQuantConfig.from_dict({"preset": preset_name, "backend": "pytorch"})
+            self.assertGreater(len(cfg.config_groups), 0, msg=f"Empty config_groups for preset={preset_name}")
+            self.assertEqual(cfg.backend, "pytorch")
+
 
 class TestTensorQuantizerInvariants(unittest.TestCase):
     def test_fp32_amax_survives_model_to_bf16_and_fp16(self):

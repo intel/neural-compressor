@@ -45,53 +45,80 @@ def _install_cpu_safe_qwen35_fallbacks(model: nn.Module) -> nn.Module:
     present = {type(m).__name__ for m in model.modules()}
     if hasattr(model, "_no_split_modules") and model._no_split_modules:
         model._no_split_modules = [n for n in model._no_split_modules if n in present]
-    from transformers.models.qwen3_5 import modeling_qwen3_5 as qwen35_mod
 
-    Qwen3_5GatedDeltaNet = getattr(qwen35_mod, "Qwen3_5GatedDeltaNet", None)
-    if Qwen3_5GatedDeltaNet is None:
-        return model
-    Qwen3_5RMSNormGated = getattr(qwen35_mod, "Qwen3_5RMSNormGated", None)
-    torch_causal_conv1d_update = getattr(qwen35_mod, "torch_causal_conv1d_update", None)
-    torch_chunk_gated_delta_rule = getattr(qwen35_mod, "torch_chunk_gated_delta_rule", None)
-    torch_recurrent_gated_delta_rule = getattr(qwen35_mod, "torch_recurrent_gated_delta_rule", None)
+    candidate_specs = (
+        ("transformers.models.qwen3_5.modeling_qwen3_5", "Qwen3_5GatedDeltaNet", "Qwen3_5RMSNormGated"),
+        (
+            "transformers.models.qwen3_5_moe.modeling_qwen3_5_moe",
+            "Qwen3_5MoeGatedDeltaNet",
+            "Qwen3_5MoeRMSNormGated",
+        ),
+    )
+    import importlib
 
-    for mod in model.modules():
-        if not isinstance(mod, Qwen3_5GatedDeltaNet):
+    for mod_path, gdn_cls_name, norm_cls_name in candidate_specs:
+        try:
+            qwen35_mod = importlib.import_module(mod_path)
+        except Exception:
             continue
-        fast_chunk = getattr(mod, "chunk_gated_delta_rule", None)
-        if (
-            torch_chunk_gated_delta_rule is not None
-            and fast_chunk is not None
-            and fast_chunk is not torch_chunk_gated_delta_rule
-        ):
+        GatedDeltaNetCls = getattr(qwen35_mod, gdn_cls_name, None)
+        if GatedDeltaNetCls is None:
+            continue
+        RMSNormGatedCls = getattr(qwen35_mod, norm_cls_name, None)
+        torch_causal_conv1d_update = getattr(qwen35_mod, "torch_causal_conv1d_update", None)
+        torch_chunk_gated_delta_rule = getattr(qwen35_mod, "torch_chunk_gated_delta_rule", None)
+        torch_recurrent_gated_delta_rule = getattr(qwen35_mod, "torch_recurrent_gated_delta_rule", None)
 
-            def _chunk_dispatch(query, key, value, g, beta, _fast=fast_chunk, **kwargs):
-                if query.is_cuda:
-                    return _fast(query, key, value, g=g, beta=beta, **kwargs)
-                return torch_chunk_gated_delta_rule(query, key, value, g=g, beta=beta, **kwargs)
-
-            mod.chunk_gated_delta_rule = _chunk_dispatch
-
-        fast_recurrent = getattr(mod, "recurrent_gated_delta_rule", None)
-        if (
-            torch_recurrent_gated_delta_rule is not None
-            and fast_recurrent is not None
-            and fast_recurrent is not torch_recurrent_gated_delta_rule
-        ):
-
-            def _recurrent_dispatch(
-                query,
-                key,
-                value,
-                g,
-                beta,
-                initial_state=None,
-                output_final_state=False,
-                use_qk_l2norm_in_kernel=False,
-                _fast=fast_recurrent,
+        for mod in model.modules():
+            if not isinstance(mod, GatedDeltaNetCls):
+                continue
+            fast_chunk = getattr(mod, "chunk_gated_delta_rule", None)
+            if (
+                torch_chunk_gated_delta_rule is not None
+                and fast_chunk is not None
+                and fast_chunk is not torch_chunk_gated_delta_rule
             ):
-                if query.is_cuda:
-                    return _fast(
+
+                def _chunk_dispatch(
+                    query, key, value, g, beta, _fast=fast_chunk, _fb=torch_chunk_gated_delta_rule, **kwargs
+                ):
+                    if query.is_cuda:
+                        return _fast(query, key, value, g=g, beta=beta, **kwargs)
+                    return _fb(query, key, value, g=g, beta=beta, **kwargs)
+
+                mod.chunk_gated_delta_rule = _chunk_dispatch
+
+            fast_recurrent = getattr(mod, "recurrent_gated_delta_rule", None)
+            if (
+                torch_recurrent_gated_delta_rule is not None
+                and fast_recurrent is not None
+                and fast_recurrent is not torch_recurrent_gated_delta_rule
+            ):
+
+                def _recurrent_dispatch(
+                    query,
+                    key,
+                    value,
+                    g,
+                    beta,
+                    initial_state=None,
+                    output_final_state=False,
+                    use_qk_l2norm_in_kernel=False,
+                    _fast=fast_recurrent,
+                    _fb=torch_recurrent_gated_delta_rule,
+                ):
+                    if query.is_cuda:
+                        return _fast(
+                            query,
+                            key,
+                            value,
+                            g=g,
+                            beta=beta,
+                            initial_state=initial_state,
+                            output_final_state=output_final_state,
+                            use_qk_l2norm_in_kernel=use_qk_l2norm_in_kernel,
+                        )
+                    return _fb(
                         query,
                         key,
                         value,
@@ -101,60 +128,58 @@ def _install_cpu_safe_qwen35_fallbacks(model: nn.Module) -> nn.Module:
                         output_final_state=output_final_state,
                         use_qk_l2norm_in_kernel=use_qk_l2norm_in_kernel,
                     )
-                return torch_recurrent_gated_delta_rule(
-                    query,
-                    key,
-                    value,
-                    g=g,
-                    beta=beta,
-                    initial_state=initial_state,
-                    output_final_state=output_final_state,
-                    use_qk_l2norm_in_kernel=use_qk_l2norm_in_kernel,
-                )
 
-            mod.recurrent_gated_delta_rule = _recurrent_dispatch
+                mod.recurrent_gated_delta_rule = _recurrent_dispatch
 
-        if getattr(mod, "causal_conv1d_fn", None) is not None:
-            fast_conv = mod.causal_conv1d_fn
+            if getattr(mod, "causal_conv1d_fn", None) is not None:
+                fast_conv = mod.causal_conv1d_fn
 
-            def _conv_dispatch(*, x, weight, bias=None, activation="silu", seq_idx=None, _fast=fast_conv, _mod=mod):
-                if x.is_cuda:
-                    return _fast(x=x, weight=weight, bias=bias, activation=activation, seq_idx=seq_idx)
-                return F.silu(_mod.conv1d(x)[:, :, : x.shape[-1]])
+                def _conv_dispatch(*, x, weight, bias=None, activation="silu", seq_idx=None, _fast=fast_conv, _mod=mod):
+                    if x.is_cuda:
+                        return _fast(x=x, weight=weight, bias=bias, activation=activation, seq_idx=seq_idx)
+                    return F.silu(_mod.conv1d(x)[:, :, : x.shape[-1]])
 
-            mod.causal_conv1d_fn = _conv_dispatch
+                mod.causal_conv1d_fn = _conv_dispatch
 
-        fast_conv_update = getattr(mod, "causal_conv1d_update", None)
-        if (
-            torch_causal_conv1d_update is not None
-            and fast_conv_update is not None
-            and fast_conv_update is not torch_causal_conv1d_update
-        ):
+            fast_conv_update = getattr(mod, "causal_conv1d_update", None)
+            if (
+                torch_causal_conv1d_update is not None
+                and fast_conv_update is not None
+                and fast_conv_update is not torch_causal_conv1d_update
+            ):
 
-            def _conv_update_dispatch(x, conv_state, weight, bias=None, activation=None, _fast=fast_conv_update):
-                if x.is_cuda:
-                    return _fast(x, conv_state, weight, bias, activation)
-                return torch_causal_conv1d_update(x, conv_state, weight, bias, activation)
+                def _conv_update_dispatch(
+                    x,
+                    conv_state,
+                    weight,
+                    bias=None,
+                    activation=None,
+                    _fast=fast_conv_update,
+                    _fb=torch_causal_conv1d_update,
+                ):
+                    if x.is_cuda:
+                        return _fast(x, conv_state, weight, bias, activation)
+                    return _fb(x, conv_state, weight, bias, activation)
 
-            mod.causal_conv1d_update = _conv_update_dispatch
+                mod.causal_conv1d_update = _conv_update_dispatch
 
-        if Qwen3_5RMSNormGated is not None and hasattr(mod, "norm") and not isinstance(mod.norm, Qwen3_5RMSNormGated):
-            norm_mod = mod.norm
-            fast_norm_fwd = norm_mod.forward
-            eps = float(getattr(norm_mod, "eps", getattr(norm_mod, "variance_epsilon", 1e-6)))
+            if RMSNormGatedCls is not None and hasattr(mod, "norm") and not isinstance(mod.norm, RMSNormGatedCls):
+                norm_mod = mod.norm
+                fast_norm_fwd = norm_mod.forward
+                eps = float(getattr(norm_mod, "eps", getattr(norm_mod, "variance_epsilon", 1e-6)))
 
-            def _norm_dispatch(hidden_states, gate=None, _fast=fast_norm_fwd, _norm=norm_mod, _eps=eps):
-                if hidden_states.is_cuda:
-                    return _fast(hidden_states, gate)
-                in_dtype = hidden_states.dtype
-                hs = hidden_states.to(torch.float32)
-                hs = hs * torch.rsqrt(hs.pow(2).mean(-1, keepdim=True) + _eps)
-                hs = _norm.weight * hs.to(in_dtype)
-                if gate is not None:
-                    hs = hs * F.silu(gate.to(torch.float32))
-                return hs.to(in_dtype)
+                def _norm_dispatch(hidden_states, gate=None, _fast=fast_norm_fwd, _norm=norm_mod, _eps=eps):
+                    if hidden_states.is_cuda:
+                        return _fast(hidden_states, gate)
+                    in_dtype = hidden_states.dtype
+                    hs = hidden_states.to(torch.float32)
+                    hs = hs * torch.rsqrt(hs.pow(2).mean(-1, keepdim=True) + _eps)
+                    hs = _norm.weight * hs.to(in_dtype)
+                    if gate is not None:
+                        hs = hs * F.silu(gate.to(torch.float32))
+                    return hs.to(in_dtype)
 
-            norm_mod.forward = _norm_dispatch
+                norm_mod.forward = _norm_dispatch
     return model
 
 
@@ -229,13 +254,20 @@ def _finalize_meta_loaded_buffers(model: nn.Module, loaded_keys: set[str]) -> No
 
 
 def _load_qwen35_vlm_text_as_causal_lm(path: str, vlm_config, dtype: torch.dtype) -> nn.Module:
-    """Stream ``model.language_model.*`` + ``lm_head.*`` from a Qwen3.5 VLM checkpoint into ``Qwen3_5ForCausalLM``."""
+    """Stream ``model.language_model.*`` + ``lm_head.*`` from a Qwen3.5 / Qwen3.5-MoE VLM checkpoint."""
     from safetensors import safe_open
-    from transformers.models.qwen3_5.modeling_qwen3_5 import Qwen3_5ForCausalLM
 
+    model_type = getattr(vlm_config, "model_type", "qwen3_5")
     text_config = vlm_config.text_config
+    if model_type == "qwen3_5_moe" or getattr(text_config, "model_type", "") == "qwen3_5_moe_text":
+        from transformers.models.qwen3_5_moe.modeling_qwen3_5_moe import Qwen3_5MoeForCausalLM as CausalLMCls
+
+        text_config._experts_implementation = "grouped_mm"
+    else:
+        from transformers.models.qwen3_5.modeling_qwen3_5 import Qwen3_5ForCausalLM as CausalLMCls
+
     with torch.device("meta"):
-        model = Qwen3_5ForCausalLM(text_config)
+        model = CausalLMCls(text_config)
     model = model.to_empty(device="cpu")
 
     root = _resolve_checkpoint_dir(path)
@@ -315,11 +347,15 @@ def load_qwen_causal_lm(
     from transformers import AutoConfig, AutoModelForCausalLM
 
     config = AutoConfig.from_pretrained(path, trust_remote_code=trust_remote_code)  # nosec B615 - caller-supplied model
-    if getattr(config, "model_type", "") == "qwen3_5" and hasattr(config, "text_config"):
+    if getattr(config, "model_type", "") in ("qwen3_5", "qwen3_5_moe") and hasattr(config, "text_config"):
         return _load_qwen35_vlm_text_as_causal_lm(path, config, dtype)
+
+    if hasattr(config, "num_experts"):
+        config._experts_implementation = "grouped_mm"
 
     return AutoModelForCausalLM.from_pretrained(  # nosec B615 - caller-supplied model
         path,
+        config=config,
         dtype=dtype,
         low_cpu_mem_usage=True,
         trust_remote_code=trust_remote_code,

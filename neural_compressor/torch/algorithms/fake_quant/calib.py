@@ -49,17 +49,26 @@ def _observe_static_weights(
     device: Optional[torch.device] = None,
 ) -> None:
     """Directly observe static weight quantizers so unrouted MoE experts still receive weight amax."""
+    slot_pairs = (
+        ("weight_quantizer", "weight", "effective_weight"),
+        ("gate_up_weight_quantizer", "gate_up_proj", "effective_gate_up_weight"),
+        ("gate_up_weight_quantizer", "up_proj", "effective_gate_up_weight"),
+        ("down_weight_quantizer", "down_proj", "effective_down_weight"),
+    )
     for mod in model.modules():
-        wq = getattr(mod, "weight_quantizer", None)
-        if not (isinstance(wq, TensorQuantizer) and wq.is_enabled and not wq.is_dynamic):
-            continue
-        if only_uncalibrated and wq.amax is not None:
-            continue
-        weight = getattr(mod, "weight", None)
-        is_sharded = hasattr(weight, "to_local")
-        if not is_sharded and hasattr(mod, "effective_weight") and callable(mod.effective_weight):
-            weight = mod.effective_weight()
-        if isinstance(weight, torch.Tensor):
+        for q_attr, w_attr, eff_fn_name in slot_pairs:
+            wq = getattr(mod, q_attr, None)
+            if not (isinstance(wq, TensorQuantizer) and wq.is_enabled and not wq.is_dynamic):
+                continue
+            if only_uncalibrated and wq.amax is not None:
+                continue
+            weight = getattr(mod, w_attr, None)
+            if not isinstance(weight, torch.Tensor):
+                continue
+            is_sharded = hasattr(weight, "to_local")
+            eff_fn = getattr(mod, eff_fn_name, None)
+            if not is_sharded and callable(eff_fn):
+                weight = eff_fn()
             wq.observe(weight)
             if device is not None and device.type != "meta" and wq.amax is not None and wq.amax.device != device:
                 wq.amax = wq.amax.to(device=device, dtype=torch.float32)

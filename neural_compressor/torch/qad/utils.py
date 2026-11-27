@@ -159,8 +159,8 @@ def param_counts(model: torch.nn.Module) -> dict:
 
 
 def _find_layers(model: nn.Module) -> Optional[nn.ModuleList]:
-    """Walk wrapper attributes (PeftModel/VLM/DDP) looking for decoder ``nn.ModuleList``."""
-    for list_attr in ("layers", "h", "blocks", "block"):
+    """Walk wrapper attributes (PeftModel/VLM/DiT/DDP) looking for decoder ``nn.ModuleList``."""
+    for list_attr in ("layers", "h", "blocks", "block", "transformer_blocks", "single_transformer_blocks"):
         layers = getattr(model, list_attr, None)
         if isinstance(layers, nn.ModuleList) and len(layers) > 0:
             return layers

@@ -35,6 +35,7 @@ ObserverName = Literal["minmax", "max"]
 DEFAULT_IGNORE: tuple[str, ...] = (
     "lm_head",
     "re:.*embed.*",
+    r"re:.*mlp\.(gate|shared_expert_gate)$",
 )
 
 
@@ -455,6 +456,7 @@ class FakeQuantConfig(BaseConfig):
         groups = [
             QuantSchemeRule(
                 targets=[
+                    r"re:.*mlp\.experts$",
                     r"re:.*mlp\.(experts|shared_expert).*(gate|up|down|gate_up)_proj$",
                     r"re:.*mlp\.(gate|up|down|gate_up)_proj$",
                 ],
@@ -508,6 +510,51 @@ class FakeQuantConfig(BaseConfig):
         )
         return cfg
 
+    @classmethod
+    def diffusion_mxfp4_fp8_hybrid(
+        cls,
+        quantizer_state_path: Optional[Union[str, Path]] = None,
+        *,
+        backend: QuantBackendName = "auto",
+    ) -> "FakeQuantConfig":
+        """Hybrid MXFP4 (FFN) + Static FP8 E4M3 (Self/Cross-Attention) recipe for Diffusion DiTs.
+
+        Covers Wan2.1/Wan2.2, Flux, SD3, HunyuanVideo, CogVideoX, and Qwen-Image DiT blocks while
+        keeping patch embeddings, timestep/text condition embedders, and final ``proj_out`` in BF16.
+        """
+        ignore = [
+            "re:.*patch_embed.*",
+            "re:.*pos_embed.*",
+            "re:.*time_embed.*",
+            "re:.*condition_embed.*",
+            "re:.*text_embed.*",
+            "re:.*context_embed.*",
+            "re:.*proj_out.*",
+            "re:.*norm_out.*",
+        ]
+        groups = [
+            QuantSchemeRule(
+                targets=[
+                    r"re:.*\.(ffn|ff|ff_context|mlp)\..*",
+                ],
+                weights="mxfp4",
+                input_activations="mxfp4",
+            ),
+            QuantSchemeRule(
+                targets=[
+                    r"re:.*attn.*\.(to_q|to_k|to_v|to_out\.0|add_q_proj|add_k_proj|add_v_proj|to_add_out|qkv|proj)$",
+                ],
+                weights="fp8_static",
+                input_activations="fp8_static",
+            ),
+        ]
+        return cls(
+            config_groups=groups,
+            ignore=ignore,
+            quantizer_state_path=quantizer_state_path,
+            backend=backend,
+        )
+
     # ------------------------------------------------------------------
     # INC BaseConfig Interface & Serialization
     # ------------------------------------------------------------------
@@ -538,11 +585,48 @@ class FakeQuantConfig(BaseConfig):
 
     @classmethod
     def from_dict(cls, config_dict: dict[str, Any]) -> "FakeQuantConfig":
+        preset = config_dict.get("preset") or config_dict.get("scheme")
+        backend = config_dict.get("backend", "auto")
+        q_state = config_dict.get("quantizer_state_path")
+        if preset and not config_dict.get("config_groups"):
+            preset_factories: dict[str, Any] = {
+                "mxfp4": cls.mxfp4,
+                "nvfp4": cls.nvfp4,
+                "mxfp8": cls.mxfp8,
+                "fp8_static": cls.fp8_static,
+                "qwen3_5_mxfp4_hybrid": cls.qwen3_5_mxfp4_hybrid,
+                "mxfp4_fp8_hybrid": cls.mxfp4_fp8_hybrid,
+                "nvfp4_fp8_hybrid": cls.nvfp4_fp8_hybrid,
+                "diffusion_mxfp4_fp8_hybrid": cls.diffusion_mxfp4_fp8_hybrid,
+            }
+            if preset not in preset_factories:
+                raise ValueError(
+                    f"Unknown FakeQuantConfig preset {preset!r}; expected one of {sorted(preset_factories)}."
+                )
+            kwargs: dict[str, Any] = {"backend": backend}
+            if q_state is not None and preset in (
+                "fp8_static",
+                "qwen3_5_mxfp4_hybrid",
+                "mxfp4_fp8_hybrid",
+                "nvfp4_fp8_hybrid",
+                "diffusion_mxfp4_fp8_hybrid",
+            ):
+                kwargs["quantizer_state_path"] = q_state
+            if "fp8_router" in config_dict and preset in (
+                "qwen3_5_mxfp4_hybrid",
+                "mxfp4_fp8_hybrid",
+                "nvfp4_fp8_hybrid",
+            ):
+                kwargs["fp8_router"] = bool(config_dict["fp8_router"])
+            cfg = preset_factories[preset](**kwargs)
+            if "ignore" in config_dict:
+                cfg.ignore = list(config_dict["ignore"])
+            return cfg
         return cls(
             config_groups=config_dict.get("config_groups", []),
             ignore=config_dict.get("ignore", list(DEFAULT_IGNORE)),
-            quantizer_state_path=config_dict.get("quantizer_state_path"),
-            backend=config_dict.get("backend", "auto"),
+            quantizer_state_path=q_state,
+            backend=backend,
         )
 
     def to_json_file(self, json_file_path: Union[str, Path]) -> None:

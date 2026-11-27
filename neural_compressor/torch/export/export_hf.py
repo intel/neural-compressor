@@ -26,6 +26,7 @@ import torch
 import torch.nn as nn
 
 from neural_compressor.torch.algorithms.fake_quant import (
+    QUANTIZER_BUFFER_MARKERS,
     FakeQuantConfig,
     QuantLinear,
     TensorQuantizer,
@@ -97,10 +98,9 @@ def _gather_dense_state_dict(model: nn.Module, dtype: torch.dtype) -> dict[str, 
         )
     except Exception:
         raw = model.state_dict()
-    quantizer_markers = (".weight_quantizer.", ".input_quantizer.", ".output_quantizer.")
     clean: dict[str, torch.Tensor] = {}
     for k, v in raw.items():
-        if any(m in f".{k}" for m in quantizer_markers):
+        if any(m in f".{k}" for m in QUANTIZER_BUFFER_MARKERS):
             continue
         t = v.detach()
         if t.is_floating_point():
@@ -427,10 +427,8 @@ def export_hf_checkpoint(
 
     layer_schemes: dict[str, LayerSchemeSpec] = {}
     ignore_targets: list[str] = []
-    quantizer_markers = (".weight_quantizer.", ".input_quantizer.", ".output_quantizer.")
-
     for raw_key, tensor in iter_safetensors_tensors(weight_source_dir):
-        if any(m in f".{raw_key}" for m in quantizer_markers):
+        if any(m in f".{raw_key}" for m in QUANTIZER_BUFFER_MARKERS):
             continue
 
         if source_is_vlm and not is_vlm_text_key(raw_key, vlm_target_prefix=vlm_target_prefix):

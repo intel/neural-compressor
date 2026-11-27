@@ -25,7 +25,9 @@ import torch.nn as nn
 
 from neural_compressor.torch.algorithms.fake_quant import (
     FakeQuantConfig,
+    QuantFusedMoEExperts,
     TensorQuantizer,
+    attach_moe_expert_lora,
     convert_peft_lora_to_quant_lora,
     ensure_peft_torchao_compat,
     register_peft_quant_modules,
@@ -49,6 +51,7 @@ def prepare_qad_model(
     *,
     lora_config: Optional[Any] = None,
     lora_merge_before_quant: bool = True,
+    lora_moe_experts: bool = True,
 ) -> nn.Module:
     """Prepare ``model`` for QAD by inserting fake-quantizers and optionally attaching PEFT LoRA.
 
@@ -58,6 +61,8 @@ def prepare_qad_model(
         lora_config: Optional ``peft.LoraConfig`` instance or ``dict`` of ``LoraConfig`` kwargs.
         lora_merge_before_quant: When ``True`` (Path-B, recommended for inference export parity),
             quantizes ``W + s * B @ A`` before weight fake-quantization.
+        lora_moe_experts: When ``True`` and ``lora_config`` is provided, also attaches 3D grouped
+            LoRA adapters to any :class:`QuantFusedMoEExperts` modules in ``model``.
     """
     if not any(isinstance(m, TensorQuantizer) for m in model.modules()):
         prepare_qat(model, quant_config)
@@ -70,6 +75,14 @@ def prepare_qad_model(
         model = get_peft_model(model, peft_cfg)
         quant_order = "lora_then_quant" if lora_merge_before_quant else "quant_then_lora"
         convert_peft_lora_to_quant_lora(model, quant_order=quant_order)
+        if lora_moe_experts:
+            attach_moe_expert_lora(
+                model,
+                r=int(peft_cfg.r),
+                lora_alpha=float(peft_cfg.lora_alpha),
+                use_rslora=bool(getattr(peft_cfg, "use_rslora", False)),
+                quant_order=quant_order,
+            )
         ensure_peft_gradient_checkpointing_delegation(model)
     return model
 
@@ -126,7 +139,13 @@ class QADTrainer(KDTrainer, QATTrainer):
             quantizer_state_path=quantizer_state_path,
             **kwargs,
         )
-        self.mode = "lora" if (model is not None and is_peft_model(unwrap_model(self.model))) else "full"
+        unwrapped_model = unwrap_model(self.model) if model is not None else None
+        has_moe_lora = unwrapped_model is not None and any(
+            isinstance(m, QuantFusedMoEExperts) and m.has_lora for m in unwrapped_model.modules()
+        )
+        self.mode = (
+            "lora" if (unwrapped_model is not None and (is_peft_model(unwrapped_model) or has_moe_lora)) else "full"
+        )
 
     def compute_loss(self, model: nn.Module, inputs: dict[str, Any], return_outputs: bool = False, **kwargs):
         if model.training and "input_ids" in inputs:

@@ -59,6 +59,18 @@ def _parse_state_entry(raw: Any) -> float:
     raise ValueError(f"Invalid quantizer state entry: {raw!r}")
 
 
+QUANTIZER_SLOT_NAMES: tuple[str, ...] = (
+    "weight_quantizer",
+    "input_quantizer",
+    "output_quantizer",
+    "gate_up_weight_quantizer",
+    "gate_up_input_quantizer",
+    "down_weight_quantizer",
+    "down_input_quantizer",
+)
+
+QUANTIZER_BUFFER_MARKERS: tuple[str, ...] = tuple(f".{slot}." for slot in QUANTIZER_SLOT_NAMES)
+
 _LEGACY_SLOT_SUFFIXES = {
     ".weight": ".weight_quantizer",
     ".weights": ".weight_quantizer",
@@ -118,7 +130,8 @@ def _normalize_quantizer_key(key: str) -> str:
 def canonicalize_quantizer_key(key: str) -> str:
     """Normalize a quantizer key across wrapper prefixes/infixes and legacy slot suffixes."""
     norm = _normalize_quantizer_key(key)
-    for slot_suffix in (".weight_quantizer", ".input_quantizer", ".output_quantizer"):
+    for slot_name in QUANTIZER_SLOT_NAMES:
+        slot_suffix = f".{slot_name}"
         if norm.endswith(slot_suffix):
             mod_part = norm[: -len(slot_suffix)]
             return f"{canonicalize_module_name(mod_part)}{slot_suffix}"
@@ -153,8 +166,14 @@ def apply_amax_map_to_module_config(
     canonical = canonicalize_module_name(module_name)
     prefixes = (module_name,) if canonical == module_name else (module_name, canonical)
     slot_candidates = (
-        (module_cfg.weights, ("weight_quantizer", "weight", "weights")),
-        (module_cfg.input_activations, ("input_quantizer", "input", "input_activations")),
+        (
+            module_cfg.weights,
+            ("weight_quantizer", "weight", "weights", "gate_up_weight_quantizer", "down_weight_quantizer"),
+        ),
+        (
+            module_cfg.input_activations,
+            ("input_quantizer", "input", "input_activations", "gate_up_input_quantizer", "down_input_quantizer"),
+        ),
         (module_cfg.output_activations, ("output_quantizer", "output", "output_activations")),
     )
     for q_cfg, suffixes in slot_candidates:

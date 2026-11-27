@@ -31,7 +31,7 @@ from neural_compressor.torch.utils import logger
 from .calib import calibrate_static_amax
 from .config import FakeQuantConfig
 from .plugins import merge_lora_into_quant_linear
-from .save_load import load_quantizer_state, save_quantizer_state
+from .save_load import QUANTIZER_BUFFER_MARKERS, load_quantizer_state, save_quantizer_state
 from .tensor_quantizer import TensorQuantizer
 
 
@@ -104,8 +104,7 @@ def ensure_peft_gradient_checkpointing_delegation(model: nn.Module) -> None:
 
 
 def _without_quantizer_buffers(state: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
-    slots = (".weight_quantizer.", ".input_quantizer.", ".output_quantizer.")
-    return {k: v for k, v in state.items() if not any(slot in k for slot in slots)}
+    return {k: v for k, v in state.items() if not any(slot in f".{k}" for slot in QUANTIZER_BUFFER_MARKERS)}
 
 
 def save_fsdp2_peft_adapter(model: nn.Module, out_dir: Union[str, Path], *, should_save: bool) -> bool:
@@ -144,6 +143,13 @@ def save_fsdp2_peft_adapter(model: nn.Module, out_dir: Union[str, Path], *, shou
                         repaired[clean_key] = tensor.contiguous()
                 if repaired:
                     save_file(repaired, str(st_path), metadata={"format": "pt"})
+        moe_lora = {
+            key.replace("._checkpoint_wrapped_module.", "."): tensor.contiguous()
+            for key, tensor in gathered.items()
+            if (".lora_gate_up_" in key or ".lora_down_" in key)
+        }
+        if moe_lora:
+            save_file(moe_lora, str(out / "moe_expert_lora.safetensors"), metadata={"format": "pt"})
     return True
 
 
@@ -273,6 +279,15 @@ class QATTrainer(Trainer):
             )
         return self.get_train_dataloader()
 
+    def _run_static_calibration(self, target_model: nn.Module) -> None:
+        calibrate_static_amax(
+            target_model,
+            dataloader=self._build_calib_dataloader(),
+            num_batches=self.calib_batches,
+            distributed_sync=True,
+            device=self.args.device,
+        )
+
     def _ensure_qat_calibrated_and_finalized(
         self,
         resume_from_checkpoint: Optional[Union[str, bool]] = None,
@@ -292,13 +307,7 @@ class QATTrainer(Trainer):
                 logger.info(
                     f"[QATTrainer] Calibrating {len(pending)} static quantizers using {self.calib_batches} batches."
                 )
-                calibrate_static_amax(
-                    target_model,
-                    dataloader=self._build_calib_dataloader(),
-                    num_batches=self.calib_batches,
-                    distributed_sync=True,
-                    device=self.args.device,
-                )
+                self._run_static_calibration(target_model)
             pending = self._uncalibrated_static_quantizers()
             if pending:
                 names = [n for n, _ in pending[:5]]

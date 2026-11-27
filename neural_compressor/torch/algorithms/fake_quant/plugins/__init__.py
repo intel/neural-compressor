@@ -11,8 +11,15 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Optional ecosystem integration plugins for ``fake_quant`` (PEFT LoRA, etc.)."""
+"""Optional ecosystem integration plugins for ``fake_quant`` (PEFT LoRA, Fused 3D MoE, etc.)."""
 
+from .moe import (
+    QuantFusedMoEExperts,
+    attach_moe_expert_lora,
+    is_fused_moe_experts_class,
+    is_fused_moe_experts_module,
+    register_moe_quant_modules,
+)
 from .peft import (
     QuantLoraLinear,
     QuantOrder,
@@ -24,11 +31,16 @@ from .peft import (
 )
 
 __all__ = [
+    "QuantFusedMoEExperts",
     "QuantLoraLinear",
     "QuantOrder",
+    "attach_moe_expert_lora",
     "convert_peft_lora_to_quant_lora",
     "ensure_peft_torchao_compat",
+    "is_fused_moe_experts_class",
+    "is_fused_moe_experts_module",
     "is_peft_available",
     "merge_lora_into_quant_linear",
+    "register_moe_quant_modules",
     "register_peft_quant_modules",
 ]

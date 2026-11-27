@@ -45,7 +45,9 @@ from neural_compressor.torch.algorithms.fake_quant.pack import (
     dequantize_packed_weight,
     pack_weight,
 )
+from neural_compressor.torch.algorithms.fake_quant.plugins.moe import QuantFusedMoEExperts
 from neural_compressor.torch.algorithms.fake_quant.quant_linear import QuantLinear
+from neural_compressor.torch.algorithms.fake_quant.save_load import QUANTIZER_BUFFER_MARKERS
 from neural_compressor.torch.algorithms.fake_quant.tensor_quantizer import TensorQuantizer
 from neural_compressor.torch.utils import logger
 
@@ -494,14 +496,58 @@ def pack_model_to_compressed_tensors(
                 layer_schemes[mapped_mod] = spec
             else:
                 ignore_targets.append(mapped_mod)
+        elif isinstance(mod, QuantFusedMoEExperts):
+            mapped_mod = _map_module_name(mod_name)
+            gu_w = mod.effective_gate_up_weight().detach()
+            dn_w = mod.effective_down_weight().detach()
+            handled_module_prefixes.add(mod_name)
+            for e_idx in range(mod.num_experts):
+                gu_e = gu_w[e_idx].T.contiguous() if mod.is_transposed else gu_w[e_idx]
+                dn_e = dn_w[e_idx].T.contiguous() if mod.is_transposed else dn_w[e_idx]
+                if mod.has_gate:
+                    gate_e, up_e = gu_e.chunk(2, dim=0)
+                    up_entries = (("gate_proj", gate_e), ("up_proj", up_e))
+                else:
+                    up_entries = (("up_proj", gu_e),)
+                for proj_suffix, proj_w in up_entries:
+                    proj_mod = f"{mapped_mod}.{e_idx}.{proj_suffix}"
+                    tensors, spec = pack_linear_tensors(
+                        f"{mod_name}.{e_idx}.{proj_suffix}",
+                        proj_w,
+                        None,
+                        mod.gate_up_weight_quantizer,
+                        mod.gate_up_input_quantizer,
+                        tensor_prefix=proj_mod,
+                        dtype=dtype,
+                    )
+                    packed_state.update(tensors)
+                    if spec is not None:
+                        layer_schemes[proj_mod] = spec
+                    else:
+                        ignore_targets.append(proj_mod)
+
+                dn_mod = f"{mapped_mod}.{e_idx}.down_proj"
+                tensors_dn, spec_dn = pack_linear_tensors(
+                    f"{mod_name}.{e_idx}.down_proj",
+                    dn_e,
+                    None,
+                    mod.down_weight_quantizer,
+                    mod.down_input_quantizer,
+                    tensor_prefix=dn_mod,
+                    dtype=dtype,
+                )
+                packed_state.update(tensors_dn)
+                if spec_dn is not None:
+                    layer_schemes[dn_mod] = spec_dn
+                else:
+                    ignore_targets.append(dn_mod)
         elif isinstance(mod, nn.Linear):
             mapped_mod = _map_module_name(mod_name)
             ignore_targets.append(mapped_mod)
 
     # Copy all remaining non-quantizer parameters/buffers (embeddings, norms, unquantized linears, etc.)
-    quantizer_markers = (".weight_quantizer.", ".input_quantizer.", ".output_quantizer.")
     for key, val in raw_state.items():
-        if any(m in f".{key}" for m in quantizer_markers):
+        if any(m in f".{key}" for m in QUANTIZER_BUFFER_MARKERS):
             continue
         mod_prefix = key.rsplit(".", 1)[0] if "." in key else ""
         if mod_prefix in handled_module_prefixes:

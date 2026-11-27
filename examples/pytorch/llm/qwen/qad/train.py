@@ -399,7 +399,7 @@ def run_training(argv: Optional[list[str]] = None) -> QADTrainer:
 
     lora_cfg: Optional[dict[str, Any]] = None
     if model_args.use_lora:
-        targets = model_args.lora_target_modules or [
+        default_targets = [
             "q_proj",
             "k_proj",
             "v_proj",
@@ -411,6 +411,11 @@ def run_training(argv: Optional[list[str]] = None) -> QADTrainer:
             "in_proj_z",
             "out_proj",
         ]
+        if model_args.lora_target_modules:
+            targets = list(model_args.lora_target_modules)
+        else:
+            present_leaves = {name.rsplit(".", 1)[-1] for name, _ in student.named_modules() if name}
+            targets = [t for t in default_targets if t in present_leaves] or default_targets
         lora_cfg = {
             "r": model_args.lora_r,
             "lora_alpha": model_args.lora_alpha,

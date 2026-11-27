@@ -1,0 +1,67 @@
+# Wan2.2-TI2V-5B-Diffusers MXFP4+FP8 Hybrid Diffusion QAD (4-GPU FSDP2 + Self-Teacher Path-B LoRA)
+# - Attention (attn1 self-attn + attn2 cross-attn): FP8 E4M3 static per-tensor weight + activation
+# - DiT FFN (ffn.net.0.proj + ffn.net.2): MXFP4 dynamic block-32 E8M0 weight + activation
+# - Stem / Modulators / Head (patch_embedding, condition_embedder, proj_out): BF16 unquantized
+# - Teacher: zero-extra-VRAM Self-Teacher (`_self_teacher_context` disables QDQ + LoRA)
+
+model_name_or_path: /mnt/weka/video/hf/hub/models--Wan-AI--Wan2.2-TI2V-5B-Diffusers/snapshots/b8fff7315c768468a5333511427288870b2e9635
+subfolder: transformer
+model_dtype: bfloat16
+encode_real_prompts: true
+num_samples: 128
+latent_frames: 5
+latent_height: 16
+latent_width: 16
+max_text_seq_len: 128
+
+quant:
+  preset: diffusion_mxfp4_fp8_hybrid
+  backend: auto
+
+lora:
+  r: 32
+  lora_alpha: 32
+  dropout: 0.0
+  quant_order: lora_then_quant
+  target_modules:
+    - to_q
+    - to_k
+    - to_v
+    - to_out.0
+    - ffn.net.0.proj
+    - ffn.net.2
+
+teacher_model_name_or_path: self
+teacher_placement: self
+diffusion_loss_type: mse
+diffusion_kd_weight: 1.0
+diffusion_task_weight: 0.05
+diffusion_feature_kd_weight: 0.05
+feature_block_indices: [7, 15, 23, 29]
+prediction_type: flow_matching
+num_train_timesteps: 1000
+flow_shift: 5.0
+timestep_sampling: logit_normal
+
+calib_batches: 4
+bf16: true
+gradient_checkpointing: false
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 2
+learning_rate: 1.0e-4
+weight_decay: 0.0
+warmup_ratio: 0.1
+lr_scheduler_type: cosine
+max_grad_norm: 1.0
+max_steps: 20
+logging_steps: 1
+save_strategy: "no"
+seed: 42
+
+fsdp: "full_shard auto_wrap"
+fsdp_config:
+  fsdp_version: 2
+  reshard_after_forward: true
+  activation_checkpointing: true
+  transformer_layer_cls_to_wrap:
+    - WanTransformerBlock

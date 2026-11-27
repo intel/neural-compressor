@@ -309,7 +309,13 @@ def convert_peft_lora_to_quant_lora(
 
 
 def merge_lora_into_quant_linear(model: nn.Module) -> nn.Module:
-    """Merge all PEFT LoRA adapters in ``model`` into :class:`QuantLinear` (or ``nn.Linear``) and unwrap ``PeftModel``."""
+    """Merge all PEFT LoRA and 3D MoE LoRA adapters in ``model`` and unwrap ``PeftModel``."""
+    from .moe import QuantFusedMoEExperts
+
+    for mod in model.modules():
+        if isinstance(mod, QuantFusedMoEExperts) and mod.has_lora:
+            mod.merge_lora_()
+
     if not is_peft_available():
         return model
     ensure_peft_torchao_compat()

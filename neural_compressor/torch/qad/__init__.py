@@ -21,6 +21,12 @@ into a single HuggingFace-native :class:`QADTrainer`.
 from neural_compressor.torch.distillation import DistillationConfig, DistillConfig
 
 from .args import QADTrainingArguments
+from .diffusion import (
+    DiffusionQADConfig,
+    DiffusionQADTrainer,
+    DiffusionQADTrainingArguments,
+    prepare_diffusion_qad_model,
+)
 from .trainer import QADTrainer, prepare_qad_model
 from .utils import (
     PEAK_BF16,
@@ -38,6 +44,9 @@ from .utils import (
 )
 
 __all__ = [
+    "DiffusionQADConfig",
+    "DiffusionQADTrainer",
+    "DiffusionQADTrainingArguments",
     "DistillConfig",
     "DistillationConfig",
     "GradDebugCallback",
@@ -51,6 +60,7 @@ __all__ = [
     "memory_report",
     "param_counts",
     "per_token_flops",
+    "prepare_diffusion_qad_model",
     "prepare_qad_model",
     "reset_peak_memory",
     "teacher_placement",

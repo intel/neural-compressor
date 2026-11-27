@@ -88,6 +88,11 @@ def _lookup_factory(mod_cls: Type[nn.Module]) -> Optional[QuantFactory]:
         from .plugins.peft import register_peft_quant_modules
 
         register_peft_quant_modules()
+    if mod_cls not in _MODULE_REGISTRY:
+        from .plugins.moe import is_fused_moe_experts_class, register_moe_quant_modules
+
+        if is_fused_moe_experts_class(mod_cls):
+            register_moe_quant_modules()
     exact = _MODULE_REGISTRY.get(mod_cls)
     if exact is not None:
         return exact
@@ -101,7 +106,15 @@ def is_supported_module(module: nn.Module) -> bool:
     """Return True if ``module`` is an unwrapped module with a registered fake-quant replacement."""
     if getattr(module, "_is_fake_quant_module", False):
         return False
-    return _lookup_factory(type(module)) is not None
+    if _lookup_factory(type(module)) is not None:
+        return True
+    from .plugins.moe import _MOE_REGISTERED_CLASSES, QuantFusedMoEExperts, is_fused_moe_experts_module
+
+    if is_fused_moe_experts_module(module):
+        _MOE_REGISTERED_CLASSES.add(type(module))
+        register_quant_module(type(module), QuantFusedMoEExperts.from_float)
+        return True
+    return False
 
 
 def quantize_module(module: nn.Module, config: ModuleQuantConfig) -> nn.Module:
@@ -144,12 +157,25 @@ def _matches_single_name(module_name: str, op_type: Any, pattern: str) -> bool:
 
     type_name = _op_type_name(op_type)
     if pattern == "Linear":
-        if type_name in _LINEAR_LIKE_TYPE_NAMES:
+        if type_name in _LINEAR_LIKE_TYPE_NAMES or type_name == "QuantFusedMoEExperts":
             return True
-        if isinstance(op_type, type) and issubclass(op_type, nn.Linear):
-            return True
+        if isinstance(op_type, type) and issubclass(op_type, nn.Module):
+            if issubclass(op_type, nn.Linear):
+                return True
+            from .plugins.moe import is_fused_moe_experts_class
+
+            if is_fused_moe_experts_class(op_type):
+                return True
         if "Linear" in type_name:
             return True
+    elif pattern == "FusedMoEExperts":
+        if type_name == "QuantFusedMoEExperts" or type_name.endswith("Experts"):
+            return True
+        if isinstance(op_type, type) and issubclass(op_type, nn.Module):
+            from .plugins.moe import is_fused_moe_experts_class
+
+            if is_fused_moe_experts_class(op_type):
+                return True
     elif pattern == type_name:
         return True
 
