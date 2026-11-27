@@ -30,9 +30,9 @@ from neural_compressor.torch.quantization import (
     FakeQuantConfig,
     ModuleQuantConfig,
     QuantFormat,
+    QuantizerConfig,
     QuantLinear,
     QuantSchemeRule,
-    QuantizerConfig,
     TensorQuantizer,
     build_quant_plan,
     calibrate,
@@ -265,10 +265,7 @@ class TestPlanCalibrationAndQwen35Preset(unittest.TestCase):
         self.assertFalse(q.is_calibrating)
 
     def test_convert_modelopt_amax_tool(self):
-        tool_path = (
-            Path(__file__).resolve().parents[3]
-            / "examples/pytorch/llm/qwen/qad/tools/convert_modelopt_amax.py"
-        )
+        tool_path = Path(__file__).resolve().parents[3] / "examples/pytorch/llm/qwen/qad/tools/convert_modelopt_amax.py"
         spec = importlib.util.spec_from_file_location("convert_modelopt_amax", tool_path)
         assert spec is not None and spec.loader is not None
         mod = importlib.util.module_from_spec(spec)
@@ -298,7 +295,6 @@ class TestPlanCalibrationAndQwen35Preset(unittest.TestCase):
             50.2,
             places=5,
         )
-
 
     def test_calibrate_bypasses_dynamic_quantizers_and_strips_checkpoint_wrappers(self):
         torch.manual_seed(0)
@@ -364,9 +360,7 @@ class TestPlanCalibrationAndQwen35Preset(unittest.TestCase):
         import neural_compressor.torch.quantization as quant_pkg
 
         quant_dir = Path(quant_pkg.__file__).resolve().parent
-        subpackages = [
-            p.name for p in quant_dir.iterdir() if p.is_dir() and (p / "__init__.py").exists()
-        ]
+        subpackages = [p.name for p in quant_dir.iterdir() if p.is_dir() and (p / "__init__.py").exists()]
         self.assertEqual(subpackages, [], f"Expected flat quantization facade, found {subpackages}")
 
         model = TinyHybridModel(dim=32)
@@ -382,6 +376,7 @@ class TestPlanCalibrationAndQwen35Preset(unittest.TestCase):
         for stmt in (
             "import neural_compressor.torch.algorithms.fake_quant, neural_compressor.torch.quantization",
             "import neural_compressor.torch.quantization, neural_compressor.torch.algorithms.fake_quant",
+            "import importlib; at = importlib.import_module('neural_compressor.torch.quantization.autotune'); assert callable(at.quantize)",
         ):
             proc = subprocess.run(
                 [sys.executable, "-c", stmt],

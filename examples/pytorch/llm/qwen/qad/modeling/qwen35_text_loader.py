@@ -45,19 +45,26 @@ def _install_cpu_safe_qwen35_fallbacks(model: nn.Module) -> nn.Module:
     present = {type(m).__name__ for m in model.modules()}
     if hasattr(model, "_no_split_modules") and model._no_split_modules:
         model._no_split_modules = [n for n in model._no_split_modules if n in present]
-    from transformers.models.qwen3_5.modeling_qwen3_5 import (
-        Qwen3_5GatedDeltaNet,
-        Qwen3_5RMSNormGated,
-        torch_causal_conv1d_update,
-        torch_chunk_gated_delta_rule,
-        torch_recurrent_gated_delta_rule,
-    )
+    from transformers.models.qwen3_5 import modeling_qwen3_5 as qwen35_mod
+
+    Qwen3_5GatedDeltaNet = getattr(qwen35_mod, "Qwen3_5GatedDeltaNet", None)
+    if Qwen3_5GatedDeltaNet is None:
+        return model
+    Qwen3_5RMSNormGated = getattr(qwen35_mod, "Qwen3_5RMSNormGated", None)
+    torch_causal_conv1d_update = getattr(qwen35_mod, "torch_causal_conv1d_update", None)
+    torch_chunk_gated_delta_rule = getattr(qwen35_mod, "torch_chunk_gated_delta_rule", None)
+    torch_recurrent_gated_delta_rule = getattr(qwen35_mod, "torch_recurrent_gated_delta_rule", None)
 
     for mod in model.modules():
         if not isinstance(mod, Qwen3_5GatedDeltaNet):
             continue
-        fast_chunk = mod.chunk_gated_delta_rule
-        if fast_chunk is not torch_chunk_gated_delta_rule:
+        fast_chunk = getattr(mod, "chunk_gated_delta_rule", None)
+        if (
+            torch_chunk_gated_delta_rule is not None
+            and fast_chunk is not None
+            and fast_chunk is not torch_chunk_gated_delta_rule
+        ):
+
             def _chunk_dispatch(query, key, value, g, beta, _fast=fast_chunk, **kwargs):
                 if query.is_cuda:
                     return _fast(query, key, value, g=g, beta=beta, **kwargs)
@@ -65,8 +72,13 @@ def _install_cpu_safe_qwen35_fallbacks(model: nn.Module) -> nn.Module:
 
             mod.chunk_gated_delta_rule = _chunk_dispatch
 
-        fast_recurrent = mod.recurrent_gated_delta_rule
-        if fast_recurrent is not torch_recurrent_gated_delta_rule:
+        fast_recurrent = getattr(mod, "recurrent_gated_delta_rule", None)
+        if (
+            torch_recurrent_gated_delta_rule is not None
+            and fast_recurrent is not None
+            and fast_recurrent is not torch_recurrent_gated_delta_rule
+        ):
+
             def _recurrent_dispatch(
                 query,
                 key,
@@ -102,7 +114,7 @@ def _install_cpu_safe_qwen35_fallbacks(model: nn.Module) -> nn.Module:
 
             mod.recurrent_gated_delta_rule = _recurrent_dispatch
 
-        if mod.causal_conv1d_fn is not None:
+        if getattr(mod, "causal_conv1d_fn", None) is not None:
             fast_conv = mod.causal_conv1d_fn
 
             def _conv_dispatch(*, x, weight, bias=None, activation="silu", seq_idx=None, _fast=fast_conv, _mod=mod):
@@ -112,8 +124,13 @@ def _install_cpu_safe_qwen35_fallbacks(model: nn.Module) -> nn.Module:
 
             mod.causal_conv1d_fn = _conv_dispatch
 
-        fast_conv_update = mod.causal_conv1d_update
-        if fast_conv_update is not torch_causal_conv1d_update:
+        fast_conv_update = getattr(mod, "causal_conv1d_update", None)
+        if (
+            torch_causal_conv1d_update is not None
+            and fast_conv_update is not None
+            and fast_conv_update is not torch_causal_conv1d_update
+        ):
+
             def _conv_update_dispatch(x, conv_state, weight, bias=None, activation=None, _fast=fast_conv_update):
                 if x.is_cuda:
                     return _fast(x, conv_state, weight, bias, activation)
@@ -121,7 +138,7 @@ def _install_cpu_safe_qwen35_fallbacks(model: nn.Module) -> nn.Module:
 
             mod.causal_conv1d_update = _conv_update_dispatch
 
-        if not isinstance(mod.norm, Qwen3_5RMSNormGated):
+        if Qwen3_5RMSNormGated is not None and hasattr(mod, "norm") and not isinstance(mod.norm, Qwen3_5RMSNormGated):
             norm_mod = mod.norm
             fast_norm_fwd = norm_mod.forward
             eps = float(getattr(norm_mod, "eps", getattr(norm_mod, "variance_epsilon", 1e-6)))

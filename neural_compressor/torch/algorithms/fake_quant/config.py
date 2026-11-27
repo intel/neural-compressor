@@ -579,9 +579,13 @@ class FakeQuantConfig(BaseConfig):
         return cls.supported_configs
 
     @classmethod
-    def get_config_set_for_tuning(cls) -> list["FakeQuantConfig"]:
-        """Return default tuning candidates required by INC :class:`BaseConfig`."""
-        return [cls.mxfp4(), cls.mxfp8()]
+    def get_config_set_for_tuning(cls) -> "FakeQuantConfig":
+        """Return default tuning candidate required by INC :class:`BaseConfig`."""
+        return cls.mxfp4()
+
+    def expand(self) -> list[BaseConfig]:
+        """Return ``[self]`` since ``config_groups`` and ``ignore`` are structured rule lists, not grid axes."""
+        return [self]
 
     @staticmethod
     def get_model_info(model: torch.nn.Module) -> list[Tuple[str, str]]:
