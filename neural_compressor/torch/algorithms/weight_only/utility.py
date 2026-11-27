@@ -1044,7 +1044,8 @@ def replace_forward(model):
         model.total_block_kwargs.append(kwargs)
         raise ValueError(
             "Calibration inputs collected; this forward is only a capture hook "
-            "and returns nothing. " + '(internal: the temporary forward installed to capture calibration inputs has no result to return)'
+            "and returns nothing. "
+            + "(internal: the temporary forward installed to capture calibration inputs has no result to return)"
         )
 
     block_prefix, block_num = get_block_prefix(model)

@@ -498,7 +498,8 @@ class BaseGaudiGPTQForCausalLM(BaseGPTQForCausalLM):
             layer_input_kwargs.append(one_kwargs)
             raise ValueError(
                 "Calibration inputs collected; this forward is only a capture hook "
-                "and returns nothing. " + '(internal: the temporary forward installed to capture calibration inputs has no result to return)'
+                "and returns nothing. "
+                + "(internal: the temporary forward installed to capture calibration inputs has no result to return)"
             )
 
         force_layer_back_to_cpu = False
