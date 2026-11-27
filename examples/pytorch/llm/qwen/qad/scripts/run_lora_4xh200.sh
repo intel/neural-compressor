@@ -1,9 +1,10 @@
 #!/usr/bin/env bash
-# Qwen3.8-27B LoRA QAD (path B: merge-before-quant + self-teacher), 4xH200, seq2048/gbs4.
+# Qwen3.8-27B LoRA QAD (path B: merge-before-quant + self-teacher), 4xH200, seq8192/gbs16.
 #
 # Hyper-parameters live in recipes/qwen3_5_27b_mxfp4_fp8_lora_path_b.yaml:
-#   lr 2e-4 -> 2e-5, warmup 0, clip 1.0, rank/alpha 32, 2000 steps.
-# DATA is required for 27B runs. SUMMARY optionally supplies PTQ amax values.
+#   lr 2e-4 -> 2e-5, warmup 0, clip 1.0, rank/alpha 64, 2000 steps.
+# DATA is required for 27B runs. Static FP8 amax calibrates online via `calib_batches`
+# unless QUANTIZER_STATE (native JSON) or SUMMARY (legacy ModelOpt summary) is supplied.
 set -euo pipefail
 cd "$(dirname "$0")/../../../../../.."   # neural-compressor repo root
 export NCCL_NVLS_ENABLE=0
@@ -11,9 +12,10 @@ export PYTHONPATH="${PYTHONPATH:-$PWD}"
 
 MODEL=${MODEL:-Qwen/Qwen3.8-27B}
 DATA=${DATA:-}
+QUANTIZER_STATE=${QUANTIZER_STATE:-}
 SUMMARY=${SUMMARY:-}
 RECIPE=${RECIPE:-examples/pytorch/llm/qwen/qad/recipes/qwen3_5_27b_mxfp4_fp8_lora_path_b.yaml}
-OUT=${OUT:-runs/qwen3_8-27b__mxfp4__lora-qad__hf__h200x4__s2048__gbs4}
+OUT=${OUT:-runs/qwen3_8-27b__mxfp4__lora-qad__hf__h200x4__s8192__gbs16}
 PYTHON=${PYTHON:-python}
 NPROC=${NPROC:-4}
 CONTAINER=${CONTAINER:-}
@@ -32,9 +34,11 @@ if [[ -n "$SAVE_STEPS" ]]; then
   fi
 fi
 if [[ -n "$DATA" ]]; then
-  EXTRA+=(--data_path "$DATA")
+  EXTRA+=(--data_prefix "$DATA")
 fi
-if [[ -n "$SUMMARY" ]]; then
+if [[ -n "$QUANTIZER_STATE" ]]; then
+  EXTRA+=(--quantizer_state_path "$QUANTIZER_STATE")
+elif [[ -n "$SUMMARY" ]]; then
   EXTRA+=(--amax_source "$SUMMARY")
 fi
 

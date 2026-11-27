@@ -19,6 +19,7 @@
 # limitations under the License.
 
 
+import jax
 import keras
 import keras.layers
 import keras_hub.layers
@@ -33,6 +34,7 @@ from keras_hub.src.vllm.context import get_vllm_context
 from neural_compressor.common import logger
 from neural_compressor.jax.quantization.saving import SaveableLayerMixin
 from neural_compressor.jax.utils.utility import (
+    calculate_w_scale_shape,
     get_dequantize_fun,
     get_q_params,
     get_quantize_fun,
@@ -615,14 +617,22 @@ class QStaticDenseMixin(SaveableLayerMixin):
             autocast=False,
             dtype=self.compute_dtype,
         )
+
         self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
-        w_scale, _ = get_q_params(
-            self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=False, axis=self.w_quant_axis
-        )
+        if hasattr(self, "model_is_during_load"):
+            w_scale_shape = calculate_w_scale_shape(self.kernel.shape, self.w_quant_axis)
+        else:
+            w_scale, _ = get_q_params(
+                self.kernel, self.weight_dtype, self.compute_dtype, asymmetric=False, axis=self.w_quant_axis
+            )
+            w_scale_shape = w_scale.shape
+            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+            _kernel_quant = wquantfun(self.kernel, w_scale, axis=self.w_quant_axis)
+
         self.w_scale = self.add_weight(
             name="w_scale",
-            shape=w_scale.shape,
-            initializer=keras.initializers.Constant(w_scale),
+            shape=w_scale_shape,
+            initializer="zeros",
             trainable=False,
             autocast=False,
             dtype=self.compute_dtype,
@@ -636,15 +646,18 @@ class QStaticDenseMixin(SaveableLayerMixin):
             autocast=False,
         )
 
+        if not hasattr(self, "model_is_during_load"):
+            self.w_scale.assign(w_scale)
+            self._kernel_quant.assign(_kernel_quant)
+
         self.aquantfun = get_quantize_fun(dtype=self.activation_dtype, asymmetric=self._is_int8)
         self.adequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=self._is_int8)
-        self.wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
 
         self._tracker.lock()
 
     def convert(self):
-        """Compute activation/weight scales and quantize weights.
+        """Compute activation scale and zero pointc.
 
         Returns:
             None: Updates quantization variables with calibrated values.
@@ -667,8 +680,6 @@ class QStaticDenseMixin(SaveableLayerMixin):
         if self._is_int8:
             self.a_zero_point.assign(a_zero_point)
 
-        _kernel_quant = self.wquantfun(self.kernel, self.w_scale.value, axis=self.w_quant_axis)
-        self._kernel_quant.assign(_kernel_quant)
         self._is_quantized = True
         self._tracker.lock()
 
@@ -824,7 +835,6 @@ class QStaticConv2DMixin(QStaticDenseMixin, keras.layers.Conv2D):
 
         Args:
             inputs (jnp.ndarray): Input tensor.
-            training (Optional[bool]): Training mode flag.
 
         Returns:
             jnp.ndarray: Layer output tensor.
@@ -838,7 +848,6 @@ class QStaticConv2DMixin(QStaticDenseMixin, keras.layers.Conv2D):
 
         Args:
             inputs (jnp.ndarray): Input tensor.
-            training (Optional[bool]): Training mode flag.
 
         Returns:
             jnp.ndarray: Layer output tensor.
@@ -857,7 +866,6 @@ class QStaticConv2DMixin(QStaticDenseMixin, keras.layers.Conv2D):
 
         Args:
             inputs (jnp.ndarray): Input tensor.
-            training (Optional[bool]): Training mode flag.
 
         Returns:
             jnp.ndarray: Layer output tensor.
@@ -1158,14 +1166,24 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
         """Return whether both K/V helpers can store quantized FP8 values."""
         return self._use_fp8_cache and self.k_qdq._is_quantized is True and self.v_qdq._is_quantized is True
 
+    def _to_cache(self, x):
+        """Store FP8 K/V bits as uint8: Keras only autocasts floating-point inputs, so the cache stays 1 byte."""
+        return jax.lax.bitcast_convert_type(x, jnp.uint8)
+
+    def _from_cache(self, x):
+        """View a uint8 cache as FP8 again (same bits)."""
+        if x.dtype == jnp.uint8:
+            return jax.lax.bitcast_convert_type(x, self.activation_dtype)
+        return x
+
     def _prepare_k_for_attention(self, key):
         if self.can_use_fp8_kv_cache():
-            return self.k_qdq.call_dq(key)
+            return self.k_qdq.call_dq(self._from_cache(key))
         return self.k_qdq(key)
 
     def _prepare_v_for_attention(self, value):
         if self.can_use_fp8_kv_cache():
-            return self.v_qdq.call_dq(value)
+            return self.v_qdq.call_dq(self._from_cache(value))
         return self.v_qdq(value)
 
     @classmethod
@@ -1396,8 +1414,8 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             value_update = self.value_dense(x)
 
             # Quantize key/value updates to FP8 before writing to cache
-            key_update = self.k_qdq.call_q(key_update)
-            value_update = self.v_qdq.call_q(value_update)
+            key_update = self._to_cache(self.k_qdq.call_q(key_update))
+            value_update = self._to_cache(self.v_qdq.call_q(value_update))
 
             # Update cache. Note that the cache is updated only if the
             # corresponding `cache_update_mask` value is True. This is to
@@ -1451,8 +1469,8 @@ class QStaticCachedGemma3Attention(SaveableLayerMixin, CachedGemma3Attention):
             value = self.value_dense(x)
 
             # Quantize to FP8 so _compute_attention runs the same single dequant before the op.
-            key = self.k_qdq.call_q(key)
-            value = self.v_qdq.call_q(value)
+            key = self._to_cache(self.k_qdq.call_q(key))
+            value = self._to_cache(self.v_qdq.call_q(value))
 
         attention_vec = self._compute_attention(
             query,
@@ -1704,42 +1722,54 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         self._tracker.unlock()
         self.inputs_qdq.add_variables()
 
-        if self.tie_weights:
-            reverse_embeddings = ops.transpose(self.embeddings.value)
-        else:
-            reverse_embeddings = self.reverse_embeddings.value
-
         self.w_quant_axis = self._derive_w_quant_axis() if self.w_quant_granularity == "per_channel" else None
-        w_scale, _ = get_q_params(
-            reverse_embeddings,
-            self.weight_dtype,
-            self.compute_dtype,
-            asymmetric=False,
-            axis=self.w_quant_axis,
-        )
+        if hasattr(self, "model_is_during_load"):
+            reverse_embeddings_shape = tuple(reversed(self.embeddings.shape))
+            w_scale_shape = calculate_w_scale_shape(reverse_embeddings_shape, self.w_quant_axis)
+        else:
+            if self.tie_weights:
+                reverse_embeddings = ops.transpose(self.embeddings.value)
+            else:
+                reverse_embeddings = self.reverse_embeddings.value
+            w_scale, _ = get_q_params(
+                reverse_embeddings,
+                self.weight_dtype,
+                self.compute_dtype,
+                asymmetric=False,
+                axis=self.w_quant_axis,
+            )
+            w_scale_shape = w_scale.shape
+            wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+            _kernel_quant = wquantfun(reverse_embeddings, w_scale, axis=self.w_quant_axis)
+            reverse_embeddings_shape = reverse_embeddings.shape
+
         self.w_scale = self.add_weight(
             name="w_scale",
-            shape=w_scale.shape,
-            initializer=keras.initializers.Constant(w_scale),
+            shape=w_scale_shape,
+            initializer="zeros",
             trainable=False,
             autocast=False,
             dtype=self.compute_dtype,
         )
         self._kernel_quant = self.add_weight(
             name="_kernel_quant",
-            shape=reverse_embeddings.shape,
+            shape=reverse_embeddings_shape,
             initializer="zeros",
             trainable=False,
             autocast=False,
             dtype=self.weight_dtype,
         )
 
-        self.wquantfun = get_quantize_fun(dtype=self.weight_dtype, asymmetric=False)
+        if not hasattr(self, "model_is_during_load"):
+            self.w_scale.assign(w_scale)
+            self._kernel_quant.assign(_kernel_quant)
+
         self.wdequantfun = get_dequantize_fun(dtype=self.compute_dtype, asymmetric=False)
+
         self._tracker.lock()
 
     def convert(self):
-        """Compute activation/weight scales and cache offline-quantized embeddings.
+        """Compute activation calibration values for QDQ helpers, set quantization status flag.
 
         Returns:
             None: Updates quantization variables with calibrated values.
@@ -1752,14 +1782,6 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
             self._tracker.lock()
             return
 
-        if self.tie_weights:
-            _kernel_quant = self.wquantfun(
-                ops.transpose(self.embeddings.value), self.w_scale.value, axis=self.w_quant_axis
-            )
-        else:
-            _kernel_quant = self.wquantfun(self.reverse_embeddings.value, self.w_scale.value, axis=self.w_quant_axis)
-
-        self._kernel_quant.assign(_kernel_quant)
         self._is_quantized = True
         self._tracker.lock()
 
@@ -1777,8 +1799,8 @@ class QStaticReversibleEmbedding(SaveableLayerMixin, keras.layers.ReversibleEmbe
         if self._is_quantized:
             self.call = self.call_quantized
 
-            if hasattr(self, "reverve_embeddings"):
-                self._trainable_variables.remove(self.reverve_embeddings)
+            if hasattr(self, "reverse_embeddings"):
+                self._trainable_variables.remove(self.reverse_embeddings)
                 del self.reverse_embeddings
 
             # convert variables to attributes (const) if needed

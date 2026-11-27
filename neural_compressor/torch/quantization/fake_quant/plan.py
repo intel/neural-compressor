@@ -16,33 +16,23 @@
 from __future__ import annotations
 
 import fnmatch
-import json
 import re
 from collections import Counter
 from dataclasses import dataclass, field
-from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Tuple
 
 import torch
 import torch.nn as nn
 
+from .calibrate import (
+    apply_amax_map_to_module_config,
+    canonicalize_module_name,
+    load_amax_map_from_state,
+)
 from .config import FakeQuantConfig, ModuleQuantConfig
 from .registry import is_supported_module, quantize_module
 
 _LINEAR_LIKE_TYPE_NAMES = frozenset({"Linear", "QuantLinear", "QuantLoraLinear"})
-_WRAPPER_PREFIXES = ("module.", "base_model.model.")
-
-
-def _canonical_module_name(name: str) -> str:
-    """Strip outer DDP / PEFT wrapper prefixes so rules match wrapped and unwrapped models identically."""
-    changed = True
-    while changed:
-        changed = False
-        for prefix in _WRAPPER_PREFIXES:
-            if name.startswith(prefix):
-                name = name[len(prefix) :]
-                changed = True
-    return name
 
 
 def _op_type_name(op_type: Any) -> str:
@@ -78,65 +68,22 @@ def matches_target(module_name: str, op_type: Any, pattern: str) -> bool:
     """Match ``(module_name, op_type)`` against a ``compressed-tensors`` / ``ModelOpt`` target pattern."""
     if _matches_single_name(module_name, op_type, pattern):
         return True
-    canonical = _canonical_module_name(module_name)
+    canonical = canonicalize_module_name(module_name)
     if canonical != module_name:
         return _matches_single_name(canonical, op_type, pattern)
     return False
 
 
-def _extract_amax_value(raw: Any) -> Optional[float]:
-    if raw is None:
-        return None
-    if isinstance(raw, (int, float)):
-        return float(raw)
-    if isinstance(raw, dict):
-        if raw.get("amax_hex") is not None:
-            return float.fromhex(raw["amax_hex"])
-        if raw.get("amax") is not None:
-            return float(raw["amax"])
-    raise ValueError(f"Invalid quantizer state entry {raw!r}")
-
-
-def _load_quantizer_state_map(path: Union[str, Path]) -> dict[str, float]:
-    """Load a calibrated quantizer state JSON into ``{key: float_amax}``."""
-    raw = json.loads(Path(path).read_text())
-    if isinstance(raw, dict) and "quantizers" in raw and isinstance(raw["quantizers"], dict):
-        raw = raw["quantizers"]
-    if not isinstance(raw, dict):
-        raise ValueError(f"Expected JSON object in {path}, got {type(raw).__name__}")
-    resolved: dict[str, float] = {}
-    for key, val in raw.items():
-        amax_val = _extract_amax_value(val)
-        if amax_val is not None:
-            resolved[key] = amax_val
-    return resolved
-
-
-def _apply_precalibrated_amax(
-    module_name: str,
-    module_cfg: ModuleQuantConfig,
-    state_map: dict[str, float],
-) -> None:
-    canonical = _canonical_module_name(module_name)
-    prefixes = (module_name,) if canonical == module_name else (module_name, canonical)
-    slot_candidates = (
-        (module_cfg.weights, ("weight_quantizer", "weight", "weights")),
-        (module_cfg.input_activations, ("input_quantizer", "input", "input_activations")),
-        (module_cfg.output_activations, ("output_quantizer", "output", "output_activations")),
-    )
-    for q_cfg, suffixes in slot_candidates:
-        if q_cfg.is_noop:
-            continue
-        found = False
-        for prefix in prefixes:
-            for suffix in suffixes:
-                key = f"{prefix}.{suffix}"
-                if key in state_map:
-                    q_cfg.amax = state_map[key]
-                    found = True
-                    break
-            if found:
-                break
+def _has_proper_ancestor(name: str, roots: set[str]) -> bool:
+    """Return True in ``O(depth)`` if any proper dot-separated prefix of ``name`` is in ``roots``."""
+    if not roots:
+        return False
+    idx = name.find(".")
+    while idx != -1:
+        if name[:idx] in roots:
+            return True
+        idx = name.find(".", idx + 1)
+    return False
 
 
 @dataclass
@@ -191,14 +138,14 @@ def compile_plan_from_info(
     """Resolve ``config`` against ``(module_name, op_type)`` tuples without mutating a model."""
     state_map: Optional[dict[str, float]] = None
     if config.quantizer_state_path is not None:
-        state_map = _load_quantizer_state_map(config.quantizer_state_path)
+        state_map = load_amax_map_from_state(config.quantizer_state_path)
 
     entries = list(model_info)
     parent_roots = {name for name, _ in entries}
     filtered_entries = [
         (name, op_type)
         for name, op_type in entries
-        if not any(name.startswith(f"{root}.") for root in parent_roots if root != name)
+        if not _has_proper_ancestor(name, parent_roots)
     ]
 
     report = PlanReport()
@@ -218,7 +165,7 @@ def compile_plan_from_info(
             continue
 
         if state_map is not None:
-            _apply_precalibrated_amax(module_name, resolved_cfg, state_map)
+            apply_amax_map_to_module_config(module_name, resolved_cfg, state_map)
 
         report.plan[module_name] = resolved_cfg
     return report

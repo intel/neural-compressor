@@ -3,20 +3,20 @@
 Reference example for Intel Neural Compressor's composable PyTorch QAT + KD + QAD stack:
 
 - `neural_compressor.torch.quantization`: `FakeQuantConfig`, `QuantSchemeRule`, `prepare_qat`, `QATTrainer`, `QuantizationTrainingArguments`, fused Triton QDQ kernels, and PEFT `QuantLoraLinear`.
-- `neural_compressor.torch.distillation`: `DistillationConfig`, `DistillationTrainingArguments`, `KDTrainer`, chunked `LogitsKLLoss`, FSDP2 teacher sharding, and zero-VRAM `teacher_model="self"`.
+- `neural_compressor.torch.distillation`: `DistillationConfig`, `DistillationTrainingArguments`, `KDTrainer`, chunked `TopKLogitsKLLoss` / `LogitsKLLoss`, FSDP2 teacher sharding, and zero-VRAM `teacher_model="self"`.
 - `neural_compressor.torch.qad`: `QADTrainingArguments`, `QADTrainer`, and `prepare_qad_model`.
-- `neural_compressor.torch.export`: `export_hf_checkpoint` (`format="bf16"` and `format="compressed_tensors"` real packed MXFP4 + FP8 / NVFP4 / INT8 / INT4 for direct **vLLM** serving, including multimodal VLM text-tower surgery).
+- `neural_compressor.torch.export`: `export_hf_checkpoint` (`export_format="bf16"` and `export_format="compressed_tensors"` real packed `MXFP4` + `FP8` / `MXFP8` / `NVFP4` for direct **vLLM** serving, including multimodal VLM text-tower surgery).
 
 What the shipped recipes train:
 
-- **Mixed fake quantization** — MXFP4 (`E2M1`, block 32, `E8M0` power-of-two scales) or NVFP4 (`E2M1`, block 16, `E4M3` + global `amax`) for MLP weights and activations, paired with static FP8 `E4M3` (`amax` calibrated or imported) for attention & GatedDeltaNet projections;
-- **Fused Triton QDQ kernels** — automatically dispatched on GPU (`qdq_backend="auto"`), achieving **0-ULP bitwise parity** against PyTorch / ModelOpt CUDA references with **8.9x–21.6x kernel speedups** and **0 B** temporary workspace;
-- **Chunked Top-$k$ / Full-vocab KL distillation** — FP32 reverse/forward/JSD KL computed over token chunks with `lm_head` chunking so full `[B, S, V]` logits never materialize simultaneously;
+- **Mixed fake quantization** — MXFP4 (`E2M1`, block 32, `E8M0` power-of-two scales) or NVFP4 (`E2M1`, block 16, `E4M3` + global `amax`) for MLP weights and activations, paired with static FP8 `E4M3` (`amax` calibrated natively or loaded from `quantizer_state.json`) for attention & GatedDeltaNet projections;
+- **Fused Triton QDQ kernels** — automatically dispatched on GPU (`quant_backend="auto"`), achieving **0-ULP bitwise parity** against PyTorch / ModelOpt CUDA references with **8.9x–21.6x kernel speedups** and **0 B** temporary workspace;
+- **Chunked Top-$k$ / Full-vocab KL distillation** — FP32 forward/reverse KL computed over token chunks with `lm_head` chunking (`logits_chunk_size`) so full `[B, S, V]` logits never materialize simultaneously;
 - **Full fine-tuning and PEFT LoRA**:
-  - **Path B (`lora_then_quant`, default)**: $y = Q_w(W + s \cdot BA)\,Q_a(x)$ — deployment-exact adapter merging inside quantization;
-  - **Path A (`quant_then_lora`)**: $y = Q_w(W)\,Q_a(x) + s \cdot BA\,x$ — compatible with optional `unsloth` models;
-  - **Zero-VRAM Self-Teacher (`kd_teacher_mode: self`)**: dynamically disables student LoRA adapters and fake quantizers during the `torch.no_grad()` teacher pass — eliminating the second 54 GiB 27B teacher model entirely;
-- **PyTorch FSDP2** (`fsdp_version: 2`) with activation checkpointing, automatic teacher layer sharding (`kd_teacher_device: shard`), and optional FSDP2 CPU offload (`fsdp_config.cpu_offload: true`) for `< 82 GiB/GPU` 4-card full-parameter 27B QAD;
+  - **Path B (`lora_merge_before_quant: true`, default)**: $y = Q_w(W + s \cdot BA)\,Q_a(x)$ — deployment-exact adapter merging inside quantization;
+  - **Path A (`lora_merge_before_quant: false`)**: $y = Q_w(W)\,Q_a(x) + s \cdot BA\,x$ — compatible with optional `unsloth` models;
+  - **Zero-VRAM Self-Teacher (`teacher_placement: self`)**: dynamically disables student LoRA adapters and fake quantizers during the `torch.no_grad()` teacher pass — eliminating the second 54 GiB 27B teacher model entirely;
+- **PyTorch FSDP2** (`fsdp_version: 2`) with activation checkpointing, automatic teacher layer sharding (`teacher_placement: shard`), and optional FSDP2 CPU offload (`fsdp_config.cpu_offload: true`) for `< 82 GiB/GPU` 4-card full-parameter 27B QAD;
 - **Real packed `compressed-tensors` & BF16 HF export** (`export.py --format compressed_tensors`), preserving multimodal VLM vision weights & processors (`keep_vision=True`) for immediate **vLLM** and `lm_eval` deployment.
 
 ## Directory Layout
@@ -27,15 +27,18 @@ What the shipped recipes train:
 | `main.py` | Backward-compatible legacy CLI shim translating v1 flags into `train.py` |
 | `modeling/qwen35_text_loader.py` | Streams `model.language_model.*` + `lm_head.*` from a Qwen3.5/3.8 VLM checkpoint into standard `Qwen3_5ForCausalLM` (plus optional `unsloth` loader) |
 | `data/megatron_indexed_dataset.py` | Memory-mapped Megatron `.bin/.idx` reader, `PackedDataset` (loss-masked padding), and `SyntheticDataset` |
+| `recipes/qwen3_8_27b_mxfp4_mlp_fp8_attn_lora.yaml` | Formal 4×GPU RTX Pro 6000 / H200 Path-B LoRA QAD recipe (`seq8192`, `gbs16`, `rank=32`, `warmup=50`, `wd=0.1`) |
+| `recipes/qwen3_8_27b_mxfp4_mlp_fp8_attn.yaml` | Formal 8×GPU FSDP2 full-parameter MXFP4+FP8 QAD recipe (`seq8192`, `gbs16`, 4000 steps) |
 | `recipes/qwen3_5_27b_mxfp4_fp8_full_fsdp2.yaml` | Full-parameter MXFP4+FP8 QAD recipe (8×GPU FSDP2, `seq8192`, `gbs16`, 4000 steps) |
 | `recipes/qwen3_5_27b_mxfp4_fp8_full_cpu_offload.yaml` | Low-memory 4×GPU (`< 82 GiB/GPU`) full-parameter MXFP4+FP8 QAD recipe (FSDP2 `cpu_offload: true` + sharded teacher) |
-| `recipes/qwen3_5_27b_mxfp4_fp8_lora_path_b.yaml` | Zero-VRAM `self`-teacher Path-B LoRA QAD recipe (`< 45 GiB/GPU` on 1–4 GPUs, `seq2048`, 2000 steps) |
+| `recipes/qwen3_5_27b_mxfp4_fp8_lora_path_b.yaml` | Zero-VRAM `self`-teacher Path-B LoRA QAD recipe (`< 45 GiB/GPU` on 4 GPUs, `seq8192`, `rank=64`, 2000 steps) |
 | `recipes/qwen3_5_27b_nvfp4_fp8_full_fsdp2.yaml` | Full-parameter NVFP4+FP8 QAD recipe (8×GPU FSDP2, `seq8192`, `gbs16`, 4000 steps) |
 | `prepare_data.py` | Tokenizes an HF chat/text dataset into Megatron `.bin/.idx` shards |
-| `calibrate_amax.py` | Single-rank static `amax` calibration utility writing `amax.json` |
-| `tools/convert_modelopt_amax.py` | Offline converter from ModelOpt `.quant_summary.txt` or PTQ HF `weight_scale` into `amax.json` |
+| `calibrate_amax.py` | Single-rank native static `amax` calibration utility writing `quantizer_state.json` |
+| `tools/convert_modelopt_amax.py` | Optional offline converter from ModelOpt `.quant_summary.txt` or `.pt` state into `quantizer_state.json` |
 | `export.py` | Streaming checkpoint exporter (`--format compressed_tensors` or `--format bf16`) with VLM vision preservation |
 | `scripts/smoke_tiny.sh` | 1-GPU tiny-model end-to-end smoke test (calibration + QAD step + metrics) |
+| `scripts/run_qad_rtxpro_mxfp4_lora_b.sh` | Formal 4-GPU RTX Pro 6000 / H200 MXFP4+FP8 Path-B LoRA QAD launcher |
 | `scripts/run_full_8xh200.sh` | 8-GPU full-parameter QAD launcher |
 | `scripts/run_lora_4xh200.sh` | 4-GPU Path-B LoRA QAD launcher |
 
@@ -65,27 +68,27 @@ python examples/pytorch/llm/qwen/qad/prepare_data.py \
 CUDA_VISIBLE_DEVICES=0 python examples/pytorch/llm/qwen/qad/calibrate_amax.py \
   --model /path/Qwen3.8-27B \
   --recipe examples/pytorch/llm/qwen/qad/recipes/qwen3_5_27b_mxfp4_fp8_full_fsdp2.yaml \
-  --data /path/tokenized_cascade2 --samples 32 --out /path/amax.json
+  --data /path/tokenized_cascade2 --samples 32 --out /path/quantizer_state.json
 
-# 3) Full QAD on 8×H200 (seq8192, gbs16, 4000 steps)
-DATA=/path/tokenized_cascade2 SUMMARY=/path/amax.json \
+# 3) Formal 4×GPU RTX Pro 6000 / H200 MXFP4+FP8 LoRA Path-B QAD (seq8192, gbs16, native online calibration)
+QAD_GPUS=0,1,2,3 QAD_MODEL=/path/Qwen3.8-27B QAD_DATA=/path/tokenized_cascade2 \
+  bash examples/pytorch/llm/qwen/qad/scripts/run_qad_rtxpro_mxfp4_lora_b.sh
+
+# 4) Full QAD on 8×H200 (seq8192, gbs16, 4000 steps)
+DATA=/path/tokenized_cascade2 QUANTIZER_STATE=/path/quantizer_state.json \
   bash examples/pytorch/llm/qwen/qad/scripts/run_full_8xh200.sh
 
-# 4) Low-Memory Full QAD on 4×80GB/96GB GPUs (FSDP2 CPU offload, < 82 GiB/GPU)
+# 5) Low-Memory Full QAD on 4×80GB/96GB GPUs (FSDP2 CPU offload, < 82 GiB/GPU)
 CUDA_VISIBLE_DEVICES=0,1,2,3 torchrun --nproc_per_node=4 \
   examples/pytorch/llm/qwen/qad/train.py \
   --config examples/pytorch/llm/qwen/qad/recipes/qwen3_5_27b_mxfp4_fp8_full_cpu_offload.yaml \
   --model_name_or_path /path/Qwen3.8-27B \
-  --data_path /path/tokenized_cascade2 \
-  --amax_source /path/amax.json \
+  --data_prefix /path/tokenized_cascade2 \
+  --quantizer_state_path /path/quantizer_state.json \
   --output_dir runs/qwen35_27b_lowmem
-
-# 5) Zero-VRAM Self-Teacher LoRA Path-B QAD on 1–4 GPUs (< 45 GiB/GPU)
-DATA=/path/tokenized_cascade2 SUMMARY=/path/amax.json \
-  bash examples/pytorch/llm/qwen/qad/scripts/run_lora_4xh200.sh
 ```
 
-Every field in `--config <yaml>` maps directly onto `ModelDataArguments` or `QADTrainingArguments` (`transformers.TrainingArguments` subclass), so any parameter (`--learning_rate`, `--max_steps`, `--qdq_backend`, `--kd_temperature`, `--kd_top_k`, `--save_steps`, etc.) can be overridden cleanly on the command line.
+Every field in `--config <yaml>` maps directly onto `ModelDataArguments` or `QADTrainingArguments` (`transformers.TrainingArguments` subclass), so any parameter (`--learning_rate`, `--max_steps`, `--quant_backend`, `--kd_temperature`, `--kd_top_k`, `--save_steps`, etc.) can be overridden cleanly on the command line.
 
 ## YAML Recipe Format
 
@@ -128,10 +131,11 @@ fsdp_config:
 
 ### Static FP8 `amax` Sources
 
-Static quantizers (`dynamic: false`, such as `fp8_e4m3` or static global `nvfp4`) require calibrated FP32 `amax` buffers before multi-rank training:
+Static quantizers (`dynamic: false`, such as `fp8_e4m3`) calibrate FP32 `amax` buffers natively without external toolkits:
 
-1. **Single-rank INC calibration (`calibrate_amax.py`)**: Runs `calibrate_static_amax` over `N` batches on 1 GPU and writes `amax.json` (`{"quantizers": {"model.layers.0...input_quantizer": {"amax": ...}}}`).
-2. **Offline ModelOpt conversion (`tools/convert_modelopt_amax.py`)**: Converts a ModelOpt `.quant_summary.txt` (exact FP32 `amax`) or PTQ HF `weight_scale` checkpoint into `amax.json`, splitting Megatron fused projections (`linear_qkv` $\to$ `q_proj`/`k_proj`/`v_proj`, `in_proj` $\to$ `in_proj_qkv`/`in_proj_z`) automatically.
+1. **Native online FSDP2 calibration (`calib_batches`, default)**: `QADTrainer` automatically bypasses dynamic quantizers during calibration, observes static activations across distributed ranks, and all-reduces exact `MAX` `amax` buffers before step 1 (`0.0`-ULP identical to ModelOpt `mtq.quantize`).
+2. **Standalone pre-calibration (`calibrate_amax.py`)**: Runs `calibrate_static_amax` over `N` sequences on 1 GPU and writes lossless `quantizer_state.json` (`amax` + IEEE-754 `amax_hex`), reusable via `--quantizer_state_path`.
+3. **Optional ModelOpt import (`tools/convert_modelopt_amax.py`)**: Converts legacy ModelOpt `.quant_summary.txt` or `.pt` state files into `quantizer_state.json` for cross-framework parity experiments.
 
 ## Training Metrics & Checkpoints
 
@@ -145,7 +149,7 @@ tflops_student, tflops_teacher, tflops_total, tflops_*_per_gpu,
 mfu_student, mfu_teacher, mfu_total, peak_basis, peak_gib, alloc_gib
 ```
 
-Every saved checkpoint writes `quantization_config.json` (containing both the quantization plan and exact FP32 `amax` state) alongside `model.safetensors` (or PEFT `adapter_model.safetensors`), enabling deterministic resume under single-GPU, DDP, and FSDP2.
+Every saved checkpoint writes `quantizer_state.json` (exact IEEE-754 `amax_hex` buffers) and `quant_config.json` alongside `model.safetensors` (or PEFT `adapter_model.safetensors`), enabling deterministic resume and one-command `compressed-tensors` export.
 
 ## Export & vLLM Deployment
 
@@ -156,18 +160,14 @@ Export runs in a standalone process with bounded host RAM (~1 shard in memory at
 python examples/pytorch/llm/qwen/qad/export.py \
   --model /path/Qwen3.8-27B \
   --format compressed_tensors \
-  --recipe examples/pytorch/llm/qwen/qad/recipes/qwen3_5_27b_mxfp4_fp8_full_fsdp2.yaml \
-  --quant-state runs/<run>/checkpoint-1000/quantization_config.json \
-  --state-dict runs/<run>/checkpoint-1000/model.safetensors \
+  --checkpoint runs/<run>/checkpoint-1000 \
   --out runs/export-mxfp4-fp8
 
 # 2) Path-B LoRA adapter merge + real compressed-tensors export
 python examples/pytorch/llm/qwen/qad/export.py \
   --model /path/Qwen3.8-27B \
   --format compressed_tensors \
-  --recipe examples/pytorch/llm/qwen/qad/recipes/qwen3_5_27b_mxfp4_fp8_lora_path_b.yaml \
-  --quant-state runs/<run>/checkpoint-500/quantization_config.json \
-  --adapter runs/<run>/checkpoint-500 \
+  --checkpoint runs/<run>/checkpoint-1000 \
   --out runs/export-lora-mxfp4-fp8
 
 # 3) Serve directly with vLLM or evaluate with lm_eval
@@ -179,7 +179,7 @@ lm_eval --model vllm \
 ## Numerical Parity & Performance Highlights
 
 - **L1–L4 Numerical Parity vs. ModelOpt / Megatron**:
-  - **L1 Operator QDQ**: **0-ULP bitwise identity** across `MXFP4`, `MXFP8`, `NVFP4`, `FP8_E4M3`, `INT8`, and `INT4` (both PyTorch ATen and fused Triton kernels).
+  - **L1 Operator QDQ**: **0-ULP bitwise identity** across `MXFP4`, `MXFP8`, `NVFP4`, and `FP8_E4M3` (both PyTorch ATen and fused Triton kernels).
   - **L2 Checkpoint / Scale Import**: **0.0 diff** FP32 `amax` preservation across Megatron $\leftrightarrow$ HuggingFace projection splits.
   - **L3 Single-Step & Multi-Step Training**: Steps 1–2 match the formal 8×H200 run (`...1108-0747`) to `< 1e-8` (`0.08816621`, `0.09347378`), and controlled single-step/2-step FSDP2 probes match loss, grad norms, and parameter updates bitwise (`0.0` diff).
   - **L4 Export & Serving**: Packed `compressed-tensors` `MXFP4` + `FP8` checkpoints decompress with **0-ULP exact match** against fake-quantized `Q_w(W)` tensors and load natively in **vLLM V1**.

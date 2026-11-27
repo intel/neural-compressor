@@ -47,6 +47,49 @@ VLLM_QDQ=1 VLLM_QDQ_CUTE=1 CUDA_VISIBLE_DEVICES=<idle-gpu> \
 
 ## QDQ Plugin
 
+### Optional DeepSeek V4 MXFP8 wo_a compatibility
+
+The independent `vllm.general_plugins` entry point `deepseek_v4_wo_a_bf16`
+provides an **opt-in, load-time** fallback for compressed-tensors DeepSeek V4
+checkpoints with MXFP8 E4M3 weights and uint8 E8M0 group32 scales in grouped
+`wo_a`. It is **disabled by default**, independent of `VLLM_QDQ`, and currently
+supports **NVIDIA CUDA**, tested with **vLLM 0.33.0**, without an exact-version
+restriction. Non-CUDA platforms leave the original methods untouched, even when
+enabled. Reinstall this package to discover the new entry
+point; if using a `VLLM_PLUGINS` allowlist, include `deepseek_v4_wo_a_bf16`.
+
+```bash
+VLLM_DEEPSEEK_V4_WO_A_BF16=1 vllm serve /path/to/deepseek-v4-mixed-ct \
+  --tensor-parallel-size 2
+```
+
+This addresses checkpoint-layout grouped MXFP8 weights reaching the native
+DeepSeek V4 block-FP8 `o_proj` einsum path with incompatible weight/scale
+shapes. The hook only intercepts `CompressedTensorsW8A8Mxfp8` post-loading for
+`model_type=deepseek_v4`, `is_bmm=True`, and a `.wo_a` prefix suffix. Ordinary
+linears, other models, and other quantization schemes keep their original
+dispatch. Existing native block-FP8 and unquantized `wo_a` are not changed.
+No vLLM source changes or forward/kernel patches are needed.
+
+For the targeted MXFP8 `wo_a`, the plugin also disables FlashInfer's cached
+fused inverse-RoPE/FP8-output choice during attention construction, before
+weight loading. Otherwise that FP8 output cannot feed the BF16 projection.
+Other schemes keep their original fusion selection.
+
+With the same opt-in, the plugin recognizes `nvfp4-e5m3-pack-quantized` on
+DeepSeek V4 routed experts. It checks all three expert projections and uses the
+plugin's E5M3 MoE implementation for UE5M3 weight scales and E5M3 activation
+QDQ. The same launch command supports a mixed checkpoint with E5M3 routed
+experts and MXFP8 attention, including `wo_a`.
+
+The fallback decodes weights once into BF16 and uses vLLM's existing inverse
+RoPE (without FP8 activation quantization) plus grouped BF16 `torch.bmm` path.
+It **does not restore original BF16 precision**: checkpoint quantization loss
+remains, activation quantization is bypassed for `wo_a`, and device weight
+memory increases. This is not an MXFP8 W8A8 compute path. Checkpoint files and
+the remaining layers are unchanged. Invalid scales/layouts fail rather than
+silently selecting another kernel.
+
 ### Optional vLLM-Omni E5M3 compatibility
 
 The separate `vllm_omni.general_plugins` entry point `inc_nvfp4_e5m3` adds
@@ -133,6 +176,9 @@ NVFP4 hardware kernels. See the
 
 The separate [`nvfp4_hw`](src/nvfp4_hw/README.md) package loads standard NVFP4
 checkpoints through vLLM's native hardware kernels when `VLLM_QDQ` is disabled.
+With `VLLM_QDQ=1`, compressed-tensors NVFP4 LLMC checkpoints also use activation
+QDQ on the W4A16 Marlin fallback selected on GPUs such as H200 that lack native
+FP4 compute. Native W4A4 kernels are left unchanged.
 
 ### Performance and Accuracy
 

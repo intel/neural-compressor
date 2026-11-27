@@ -279,3 +279,42 @@ def test_legacy_export_hf2compressored_model_compat(tmp_path: Path) -> None:
     out = export_hf2compressored_model(model, tmp_path / "legacy_ct")
     assert (Path(out) / "config.json").is_file()
     assert (Path(out) / "model.safetensors").is_file()
+
+
+def test_export_autodiscovers_qat_trainer_quant_config_json(tmp_path: Path) -> None:
+    model = _make_tiny_qwen2(seed=11)
+    ckpt_dir = tmp_path / "qat_ckpt"
+    ckpt_dir.mkdir(parents=True, exist_ok=True)
+    model.save_pretrained(ckpt_dir, safe_serialization=True)
+
+    qcfg = FakeQuantConfig(
+        config_groups=[
+            QuantSchemeRule(
+                targets=[r"re:.*layers\.0\.self_attn\.q_proj$"],
+                weights={"format": "fp8_e4m3", "dynamic": False},
+                input_activations={"format": "fp8_e4m3", "dynamic": False},
+            )
+        ]
+    )
+    qcfg.to_json_file(ckpt_dir / "quant_config.json")
+    wrapped_state = {
+        "version": 1,
+        "quantizers": {
+            "base_model.model.model.layers.0._fsdp_wrapped_module.self_attn.q_proj.base_layer.weight_quantizer": {
+                "amax_hex": (2.24).hex()
+            },
+            "base_model.model.model.layers.0._fsdp_wrapped_module.self_attn.q_proj.base_layer.input_quantizer": {
+                "amax_hex": (4.48).hex()
+            },
+        },
+    }
+    (ckpt_dir / "quantizer_state.json").write_text(json.dumps(wrapped_state), encoding="utf-8")
+
+    out_dir = export_hf_checkpoint(ckpt_dir, tmp_path / "exported_auto_ct", export_format="compressed_tensors")
+    sd = _load_all_safetensors(out_dir)
+    assert sd["model.layers.0.self_attn.q_proj.weight"].dtype == torch.float8_e4m3fn
+    torch.testing.assert_close(
+        sd["model.layers.0.self_attn.q_proj.input_scale"],
+        torch.tensor([4.48 / 448.0], dtype=torch.float32),
+    )
+

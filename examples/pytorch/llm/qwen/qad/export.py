@@ -47,6 +47,7 @@ def parse() -> argparse.Namespace:
         default="compressed_tensors",
     )
     parser.add_argument("--keep-vision", action=argparse.BooleanOptionalAction, default=True)
+    parser.add_argument("--checkpoint", default=None, help="QAD checkpoint or PEFT adapter directory")
     parser.add_argument("--adapter", default=None, help="PEFT adapter directory")
     parser.add_argument("--state-dict", default=None, help="full-FT checkpoint dir or model.safetensors")
     parser.add_argument("--recipe", default=None, help="optional QAD YAML recipe containing quant config")
@@ -59,9 +60,9 @@ def parse() -> argparse.Namespace:
 def main() -> None:
     """Stream-export the trained checkpoint or adapter into a deployable HF directory."""
     args = parse()
-    source = args.adapter or args.state_dict
+    source = args.checkpoint or args.adapter or args.state_dict
     if source is None:
-        raise ValueError("pass --adapter (LoRA) or --state-dict (full fine-tuning checkpoint)")
+        raise ValueError("pass --checkpoint (or --adapter / --state-dict)")
 
     if args.format == "full":
         export_fmt, keep_vision = "bf16", True

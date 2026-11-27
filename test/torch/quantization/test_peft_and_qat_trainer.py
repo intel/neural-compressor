@@ -184,6 +184,38 @@ class TestStandaloneQATTrainer(unittest.TestCase):
             self.assertEqual(len(restored["loaded"]), 8)  # 2 layers * 2 projs * (weight + input)
             self.assertEqual(restored["missing"], [])
 
+    def test_peft_lora_with_reentrant_checkpoint_wrapper_preserves_layer0_grads(self):
+        from torch.distributed.algorithms._checkpoint.checkpoint_wrapper import (
+            CheckpointImpl,
+            apply_activation_checkpointing,
+            checkpoint_wrapper,
+        )
+        from neural_compressor.torch.qad import prepare_qad_model
+
+        model = _tiny_qwen2()
+        model = prepare_qad_model(
+            model,
+            FakeQuantConfig.mxfp4(),
+            lora_config={"r": 4, "lora_alpha": 4, "target_modules": ["q_proj", "gate_proj"], "bias": "none", "task_type": "CAUSAL_LM"},
+            lora_merge_before_quant=True,
+        )
+        apply_activation_checkpointing(
+            model,
+            checkpoint_wrapper_fn=lambda m: checkpoint_wrapper(m, checkpoint_impl=CheckpointImpl.REENTRANT, preserve_rng_state=False),
+            check_fn=lambda m: type(m).__name__ == "Qwen2DecoderLayer",
+        )
+        input_ids = torch.randint(0, 128, (2, 8))
+        with torch.no_grad():
+            no_grad_out = model(input_ids=input_ids).logits
+            self.assertFalse(no_grad_out.requires_grad)
+
+        model.train()
+        loss = model(input_ids=input_ids).logits.sum()
+        loss.backward()
+        l0_q = model.base_model.model.model.layers[0]._checkpoint_wrapped_module.self_attn.q_proj
+        self.assertIsNotNone(l0_q.lora_B.default.weight.grad)
+        self.assertGreater(float(l0_q.lora_B.default.weight.grad.abs().max()), 0.0)
+
 
 if __name__ == "__main__":
     unittest.main()

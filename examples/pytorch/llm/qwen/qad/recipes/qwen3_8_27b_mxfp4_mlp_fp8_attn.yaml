@@ -1,16 +1,10 @@
-# Qwen3.8-27B full QAD: MXFP4 W4A4 MLP + static FP8 attention/GDN.
-# The reference recipe is `mxfp4_w4a4_mlp_fp8_attn_mcore_dynamic`:
-# https://github.com/NVIDIA/TensorRT-Model-Optimizer/blob/main/modelopt_recipes/models/Qwen/Qwen3.8-27B/ptq/mxfp4_w4a4_mlp_fp8_attn_mcore_dynamic.yaml
-# To use an existing PTQ amax source, pass `--amax-source <summary-or-json>` to main.py.
-schema: neural_compressor.qad/v2
-name: qwen3_8-27b-mxfp4-mlp-fp8-attn
-
-model:
-  path: Qwen/Qwen3.8-27B
-  family: qwen3_5
-  dtype: bfloat16
+# Qwen3.8-27B Full-Parameter QAD (8xH200 FSDP2, MXFP4 W4A4 MLP + Static FP8 Attention/GDN)
+# Matches ModelOpt `mxfp4_w4a4_mlp_fp8_attn_mcore_dynamic` + `default_disabled_quantizers`.
+model_name_or_path: Qwen/Qwen3.8-27B
+model_dtype: bfloat16
 
 quant:
+  backend: auto
   config_groups:
     - targets: ['re:.*\.mlp\.(gate_proj|up_proj|down_proj)$']
       weights: {format: mxfp4, dynamic: true}
@@ -19,39 +13,46 @@ quant:
       weights: {format: fp8_e4m3, dynamic: false}
       input_activations: {format: fp8_e4m3, dynamic: false}
   ignore: ['lm_head', 're:.*mlp\.gate$']
-  # Use exact fp32 amax from PTQ calibration when --amax-source is provided.
-  # Otherwise main.py calibrates on a single rank before distributed training.
 
-distill:
-  teacher: Qwen/Qwen3.8-27B
-  loss: topk_kl
-  top_k: 4096
-  temperature: 1.0
-  kd_weight: 1.0
-  ce_weight: 0.0
-  chunk: 1024
-  teacher_device: shard
+calib_batches: 32
 
-train:
-  backend: hf
-  parallel: fsdp2
-  seq_length: 8192
-  micro_batch_size: 1
-  global_batch_size: 16
-  train_iters: 4000
-  lr: 2.0e-6
+teacher_model_name_or_path: Qwen/Qwen3.8-27B
+teacher_placement: shard
+kd_loss_type: topk_kl
+kd_top_k: 4096
+kd_temperature: 1.0
+kd_reverse_kl: false
+kd_loss_weight: 1.0
+ce_loss_weight: 0.0
+logits_chunk_size: 1024
+
+bf16: true
+seq_length: 8192
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 2
+max_steps: 4000
+learning_rate: 2.0e-6
+lr_scheduler_type: cosine_with_min_lr
+lr_scheduler_kwargs:
   min_lr: 2.0e-7
-  warmup: 50
-  weight_decay: 0.1
-  clip_grad: 1.0
-  adam_beta2: 0.95
-  adam_eps: 1.0e-8
-  seed: 42   # matches the formal 8xH200 run (training_args.bin)
-  gradient_checkpointing: true
-  gc_mode: trainer
-  save_steps: 500
-  logging_steps: 1
+warmup_steps: 50
+weight_decay: 0.1
+adam_beta1: 0.9
+adam_beta2: 0.95
+adam_epsilon: 1.0e-8
+max_grad_norm: 1.0
+seed: 42
+logging_steps: 1
+save_strategy: steps
+save_steps: 500
+save_total_limit: 2
+fsdp: "full_shard auto_wrap"
+fsdp_config:
+  fsdp_version: 2
+  reshard_after_forward: true
+  activation_checkpointing: true
+  transformer_layer_cls_to_wrap:
+    - Qwen3_5DecoderLayer
 
-export:
-  format: hf_bf16
-  keep_vision: true
+export_format: compressed_tensors
+keep_vision_on_export: true

@@ -17,12 +17,15 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
-from typing import Any, Callable, Dict, Iterable, Mapping, Optional, Union
+from typing import TYPE_CHECKING, Any, Callable, Dict, Iterable, Mapping, Optional, Union
 
 import torch
 import torch.nn as nn
 
 from .quantizer import TensorQuantizer
+
+if TYPE_CHECKING:
+    from .config import ModuleQuantConfig
 
 
 def _iter_named_quantizers(model: nn.Module) -> list[tuple[str, TensorQuantizer]]:
@@ -195,6 +198,46 @@ _LEGACY_SLOT_SUFFIXES = {
 }
 
 
+_WRAPPER_PREFIXES = (
+    "module.",
+    "_orig_mod.",
+    "_fsdp_wrapped_module.",
+    "_checkpoint_wrapped_module.",
+    "base_model.model.",
+)
+_WRAPPER_INFIXES = (
+    ".base_layer.",
+    "._orig_mod.",
+    "._fsdp_wrapped_module.",
+    "._checkpoint_wrapped_module.",
+)
+_WRAPPER_SUFFIXES = (
+    ".base_layer",
+    "._orig_mod",
+    "._fsdp_wrapped_module",
+    "._checkpoint_wrapped_module",
+)
+
+
+def canonicalize_module_name(name: str) -> str:
+    """Strip DDP, FSDP2, activation-checkpointing, ``torch.compile``, and PEFT wrapper segments."""
+    changed = True
+    while changed:
+        changed = False
+        for prefix in _WRAPPER_PREFIXES:
+            if name.startswith(prefix):
+                name = name[len(prefix) :]
+                changed = True
+        for suffix in _WRAPPER_SUFFIXES:
+            if name.endswith(suffix):
+                name = name[: -len(suffix)]
+                changed = True
+    for infix in _WRAPPER_INFIXES:
+        while infix in name:
+            name = name.replace(infix, ".")
+    return name
+
+
 def _normalize_quantizer_key(key: str) -> str:
     for old_suffix, new_suffix in _LEGACY_SLOT_SUFFIXES.items():
         if key.endswith(old_suffix):
@@ -202,30 +245,64 @@ def _normalize_quantizer_key(key: str) -> str:
     return key
 
 
-def _canonical_quantizer_key(key: str) -> str:
-    key = _normalize_quantizer_key(key)
-    changed = True
-    while changed:
-        changed = False
-        for prefix in (
-            "module.",
-            "_orig_mod.",
-            "_fsdp_wrapped_module.",
-            "_checkpoint_wrapped_module.",
-            "base_model.model.",
-        ):
-            if key.startswith(prefix):
-                key = key[len(prefix) :]
-                changed = True
-    for infix in (
-        ".base_layer.",
-        "._orig_mod.",
-        "._fsdp_wrapped_module.",
-        "._checkpoint_wrapped_module.",
-    ):
-        while infix in key:
-            key = key.replace(infix, ".")
-    return key
+def canonicalize_quantizer_key(key: str) -> str:
+    """Normalize a quantizer key across wrapper prefixes/infixes and legacy slot suffixes."""
+    norm = _normalize_quantizer_key(key)
+    for slot_suffix in (".weight_quantizer", ".input_quantizer", ".output_quantizer"):
+        if norm.endswith(slot_suffix):
+            mod_part = norm[: -len(slot_suffix)]
+            return f"{canonicalize_module_name(mod_part)}{slot_suffix}"
+    return canonicalize_module_name(norm)
+
+
+_canonical_quantizer_key = canonicalize_quantizer_key
+
+
+def load_amax_map_from_state(state_or_path: Union[Mapping[str, Any], str, Path]) -> dict[str, float]:
+    """Load a calibrated quantizer state mapping or JSON file into ``{canonical_key: float_amax}``."""
+    raw: Any = json.loads(Path(state_or_path).read_text()) if isinstance(state_or_path, (str, Path)) else state_or_path
+    if isinstance(raw, Mapping) and isinstance(raw.get("quantizers"), Mapping):
+        raw = raw["quantizers"]
+    if not isinstance(raw, Mapping):
+        raise ValueError(f"Expected quantizer state mapping, got {type(raw).__name__}")
+    resolved: dict[str, float] = {}
+    for key, val in raw.items():
+        if val is None:
+            continue
+        amax_val = _parse_state_entry(val)
+        norm_key = _normalize_quantizer_key(str(key))
+        canon_key = canonicalize_quantizer_key(str(key))
+        resolved[norm_key] = amax_val
+        resolved.setdefault(canon_key, amax_val)
+    return resolved
+
+
+def apply_amax_map_to_module_config(
+    module_name: str,
+    module_cfg: "ModuleQuantConfig",
+    amax_map: Mapping[str, float],
+) -> None:
+    """Populate static ``amax`` fields on ``module_cfg`` from a pre-calibrated state map."""
+    canonical = canonicalize_module_name(module_name)
+    prefixes = (module_name,) if canonical == module_name else (module_name, canonical)
+    slot_candidates = (
+        (module_cfg.weights, ("weight_quantizer", "weight", "weights")),
+        (module_cfg.input_activations, ("input_quantizer", "input", "input_activations")),
+        (module_cfg.output_activations, ("output_quantizer", "output", "output_activations")),
+    )
+    for q_cfg, suffixes in slot_candidates:
+        if q_cfg.is_noop:
+            continue
+        found = False
+        for prefix in prefixes:
+            for suffix in suffixes:
+                candidate = f"{prefix}.{suffix}"
+                if candidate in amax_map:
+                    q_cfg.amax = float(amax_map[candidate])
+                    found = True
+                    break
+            if found:
+                break
 
 
 def load_quantizer_state_dict(
@@ -303,9 +380,13 @@ def load_quantizer_state(
 
 
 __all__ = [
+    "apply_amax_map_to_module_config",
     "calibrate",
     "calibrate_static_amax",
+    "canonicalize_module_name",
+    "canonicalize_quantizer_key",
     "get_quantizer_state_dict",
+    "load_amax_map_from_state",
     "load_quantizer_state",
     "load_quantizer_state_dict",
     "save_quantizer_state",

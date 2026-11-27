@@ -29,14 +29,13 @@ from neural_compressor.torch.quantization.fake_quant import (
     FakeQuantConfig,
     QuantLinear,
     TensorQuantizer,
+    apply_amax_map_to_module_config,
+    canonicalize_quantizer_key,
+    compile_plan_from_info,
+    load_amax_map_from_state,
     load_quantizer_state,
     merge_lora_into_quant_linear,
     save_quantizer_state,
-)
-from neural_compressor.torch.quantization.fake_quant.plan import (
-    _apply_precalibrated_amax,
-    _load_quantizer_state_map,
-    compile_plan_from_info,
 )
 from neural_compressor.torch.utils import logger
 
@@ -161,22 +160,31 @@ def _discover_quant_config_and_amax(
     state_map: dict[str, float] = {}
     qstate_candidate = Path(quant_state_path) if quant_state_path is not None else (ckpt_dir / "quantizer_state.json")
     if qstate_candidate.is_file():
-        state_map.update(_load_quantizer_state_map(qstate_candidate))
+        state_map.update(load_amax_map_from_state(qstate_candidate))
+
+    qcfg_json = ckpt_dir / "quant_config.json"
+    if quant_config is None and qcfg_json.is_file():
+        quant_config = FakeQuantConfig.from_json_file(qcfg_json)
 
     meta_json = ckpt_dir / "quantization_config.json"
     if meta_json.is_file():
         meta = json.loads(meta_json.read_text(encoding="utf-8"))
-        if quant_config is None and isinstance(meta.get("quant"), dict):
-            quant_config = FakeQuantConfig.from_dict(meta["quant"])
+        if quant_config is None:
+            if isinstance(meta.get("quant"), dict):
+                quant_config = FakeQuantConfig.from_dict(meta["quant"])
+            elif "config_groups" in meta and meta.get("quant_method") != "compressed-tensors":
+                quant_config = FakeQuantConfig.from_dict(meta)
         hex_map = meta.get("amax_hex", {})
         for k, v in meta.get("amax", {}).items():
-            if k not in state_map:
-                state_map[k] = float.fromhex(hex_map[k]) if k in hex_map else float(v)
+            val = float.fromhex(hex_map[k]) if k in hex_map else float(v)
+            canon_k = canonicalize_quantizer_key(str(k))
+            state_map.setdefault(str(k), val)
+            state_map.setdefault(canon_k, val)
 
     if quant_config is not None and quant_config.quantizer_state_path is not None and not state_map:
         p = Path(quant_config.quantizer_state_path)
         if p.is_file():
-            state_map.update(_load_quantizer_state_map(p))
+            state_map.update(load_amax_map_from_state(p))
 
     return quant_config, state_map
 
@@ -393,14 +401,14 @@ def export_hf_checkpoint(
         if quant_config is None:
             raise ValueError(
                 f"Cannot export {ckpt_dir} to compressed_tensors without FakeQuantConfig "
-                "(pass quant_config=... or include quantization_config.json in the checkpoint directory)."
+                "(pass quant_config=... or include quant_config.json in the checkpoint directory)."
             )
         cfg_no_file = copy.deepcopy(quant_config)
         cfg_no_file.quantizer_state_path = None
         report = compile_plan_from_info(linear_infos, cfg_no_file)
         for mod_name, mod_cfg in report.plan.items():
             if state_map:
-                _apply_precalibrated_amax(mod_name, mod_cfg, state_map)
+                apply_amax_map_to_module_config(mod_name, mod_cfg, state_map)
         resolved_plan = report.plan
 
     # Pre-collect lightweight 1D biases for quantized linear layers so weight+bias pack together cleanly
@@ -545,7 +553,16 @@ def export_compressed_tensors(
 
 
 def _export_hf_checkpoint(model: nn.Module, scheme: str | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
-    """Legacy helper returning ``(packed_state_dict, quant_config)``."""
+    """Exports the torch model to the packed checkpoint with original HF naming.
+
+    Args:
+        model: the torch model.
+        scheme: the quantization scheme the checkpoint is being exported for, if any.
+
+    Returns:
+        post_state_dict: Dict containing quantized weights
+        quant_config: config information to export hf_quant_cfg.json
+    """
     del scheme
     return pack_model_to_compressed_tensors(model)
 

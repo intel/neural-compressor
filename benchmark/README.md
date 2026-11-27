@@ -1,18 +1,27 @@
-This folder is for benchmarking code: accuracy evaluation of (quantized) LLMs served by vLLM, agent benchmarks and
+This folder contains LLM accuracy evaluation, agent benchmarks, diffusion quality evaluation, and
 vLLM plugins used for evaluation. The per-model wrappers under `examples/pytorch/llm/<model>/run_benchmark.sh` route
 tasks to the shared drivers below.
 
 | Directory | Entry point | What it evaluates |
 | --- | --- | --- |
 | [`lm_eval/`](lm_eval) | `run_lm_eval.sh` | [lm-evaluation-harness](https://github.com/EleutherAI/lm-evaluation-harness) tasks with the vLLM backend |
-| [`evalscope/`](evalscope) | `run_evalscope.sh` | [evalscope](https://github.com/modelscope/evalscope) datasets through `vllm serve` (OpenAI-compatible API) |
-| [`ifbench/`](ifbench) | `run_ifbench.sh` | [IFBench](https://github.com/allenai/IFBench) instruction following against an OpenAI-compatible endpoint |
-| [`agent_benchmarks/`](agent_benchmarks) | `run_swe_verified.sh`, `run_swebenchpro.sh`, `run_mcp_atlas.sh` | agentic coding and tool-use benchmarks |
+| [`evalscope/`](evalscope) | `run_evalscope.sh`, `run_evalscope_endpoint.sh` | [evalscope](https://github.com/modelscope/evalscope) datasets via a local `vllm serve` or an existing endpoint |
+| [`humaneval_plus/`](humaneval_plus) | `run_humaneval_plus.sh`, `run_humaneval_plus_independent.sh` | [HumanEval+](https://github.com/evalplus/evalplus) pass@1 against an OpenAI-compatible endpoint |
+| [`ifbench/`](ifbench) | `run_ifbench.sh`, `run_ifbench_suite.sh` | [IFBench](https://github.com/allenai/IFBench) instruction following; one-shot or repeated endpoint runs |
+| [`agent_benchmarks/`](agent_benchmarks) | `run_swe_verified.sh`, `run_swebenchpro.sh`, `run_mcp_atlas.sh`, `serve_vllm_model.sh` | agentic coding and tool-use benchmarks; optional `--runs N` suites |
+| [`t2i/`](t2i) | `run_t2i.sh` | DrawBench and COCO2014 image generation and scoring for BF16 and AutoRound MXFP8 checkpoints using vLLM-Omni |
 | [`vllm-qdq-plugin/`](vllm-qdq-plugin) | `pip install -e benchmark/vllm-qdq-plugin` | vLLM plugin for quant-dequant (QDQ) simulation and Sage3 attention |
 
 Both shared drivers take `--key=value` options, accept a local model directory or a Hugging Face model id for
 `--model_path`, and infer the tensor parallel size from `CUDA_VISIBLE_DEVICES`. Run a driver with `--help` for all
 options.
+
+The endpoint-mode runners (`run_swe_verified.sh`, `run_swebenchpro.sh`,
+`run_humaneval_plus_independent.sh`, `run_evalscope_endpoint.sh`, and
+`run_ifbench_suite.sh`) accept `--runs N` and write per-run `state.json` plus
+aggregate `summary.json`/`summary.md`. `serve_vllm_model.sh` is the
+model-agnostic server wrapper for GPU/TP selection, port checks, background
+launch, PID/log files, health waiting, and stop/replace.
 
 ## lm_eval
 
@@ -36,6 +45,10 @@ CUDA_VISIBLE_DEVICES=0,1 bash lm_eval/run_lm_eval.sh --model_path=<model> --task
 ```bash
 CUDA_VISIBLE_DEVICES=0,1 bash evalscope/run_evalscope.sh --model_path=<model> --tasks=aime26,gpqa_diamond --num_runs=5
 ```
+
+For an existing OpenAI-compatible endpoint, `run_evalscope_endpoint.sh`
+discovers the served model and `reasoning_effort`, runs the configured tasks N
+times, and writes per-run plus aggregate suites.
 
 ### OpenAI MRCR (`openai_mrcr`)
 
@@ -64,11 +77,23 @@ MRCR is only meant for models with native long-context support (at least 131072 
 (`examples/pytorch/llm/kimi-glm`), DeepSeek-V4 (`examples/pytorch/llm/deepseekv4`) and MiniMax
 (`examples/pytorch/llm/minimax`).
 
+## HumanEval+
+
+`humaneval_plus/run_humaneval_plus.sh --runs N` evaluates N samples per problem
+in one EvalPlus invocation. `run_humaneval_plus_independent.sh --runs N` runs N
+separate full invocations (one sample per problem), which is the mode used for
+7-run mean/std. Both accept `--host`, `--port`, `--served-name`, `--root`,
+`--evalplus`, and `--python`.
+
 ## IFBench
 
 `ifbench/run_ifbench.sh` clones upstream IFBench, overlays `evaluate_model.py` and `configs/config.py`, and generates
 and scores responses against any OpenAI-compatible endpoint with parameters aligned to the NVIDIA Nemotron 3 Ultra
 IFBench recipe. See [ifbench/README.md](ifbench/README.md).
+
+`run_ifbench_suite.sh` is the endpoint-mode repeated runner. It records strict
+prompt-level, loose prompt-level and strict instruction-level accuracy for
+each round, plus mean/std across completed rounds.
 
 ## Agent benchmarks
 
@@ -80,9 +105,15 @@ against its OpenAI-compatible API. Each benchmark has a `setup_*.sh` and a `run_
 - SWE-bench Pro: `setup_swebenchpro.sh`, `run_swebenchpro.sh`
 - MCP-Atlas: `setup_mcp_atlas.sh`, `run_mcp_atlas.sh`
 
+`run_swe_verified.sh` and `run_swebenchpro.sh` accept `--runs N` and write a
+repeated suite with per-run state and aggregate summary. `serve_vllm_model.sh`
+is a generic serve wrapper for models that do not use `start_vllm_serve.sh`.
+
 ## vLLM QDQ plugin
 
 `vllm-qdq-plugin/` is an out-of-tree vLLM plugin that simulates activation quant-dequant (QDQ), so quantized
 formats can be evaluated on GPUs without native kernels, plus a Sage3 Triton diffusion attention backend. The
 shared drivers enable it with `VLLM_QDQ=1` on GPUs other than SM 10.x. See
 [vllm-qdq-plugin/README.md](vllm-qdq-plugin/README.md).
+
+- [VBench](vbench/README.md): Wan2.2 T2V/I2V video generation and quality evaluation for BF16, MXFP8, NVFP4, and NVFP4 E5M3.

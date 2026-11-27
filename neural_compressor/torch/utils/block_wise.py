@@ -166,7 +166,7 @@ def block_wise_calibration(model, dataloader=None, data=None, inference_dtype=to
         """Calibrate current block and update args and kwargs for the next block.
 
         Args:
-            raw_block (torch.nn.Module): block module for calibration
+            block (torch.nn.Module): block module for calibration
             total_block_args: list of input args of each batch.
             total_block_kwargs: list of input kwargs of each batch.
             device (str, optional): target device. Defaults to "cpu".

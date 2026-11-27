@@ -11,19 +11,16 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Calibrate per-tensor FP8 ``amax`` for the QAD plan.
+"""Calibrate static per-tensor ``amax`` values for a QAD recipe and write ``quantizer_state.json``.
 
-This is the fallback when no ModelOpt ``.quant_summary.txt`` exists. It runs
-the float model over ``--samples`` packed sequences and records the max
-absolute value of every static FP8 target (input and weight), writing:
+Runs ``calibrate_static_amax`` over ``--samples`` packed sequences (bypassing dynamic quantizers
+during calibration to match ModelOpt ``enable_stats_collection``) and persists exact IEEE-754
+``amax_hex`` buffers via :func:`save_quantizer_state`:
 
-    {"model.layers.3.self_attn.q_proj": {"weight": 0.12, "input": 8.4}, ...}
+    {"version": 1, "quantizers": {"model.layers.3.self_attn.q_proj.input_quantizer": {"amax": ..., "amax_hex": ...}}}
 
-Use it as ``quant.amax_source: {file: <out>, translate: identity}``.
-
-For bit-exact parity with the reference experiments prefer the
-``.quant_summary.txt``: it calibrates the *fused* ``linear_qkv``/``in_proj``
-tensors, while this script calibrates each HF projection separately.
+Pass the output file via ``--quantizer_state_path <out>`` to ``train.py`` (or let ``QADTrainer``
+calibrate online across FSDP2 ranks automatically via ``calib_batches``).
 """
 
 from __future__ import annotations

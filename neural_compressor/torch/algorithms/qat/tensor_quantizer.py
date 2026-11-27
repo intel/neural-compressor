@@ -155,7 +155,10 @@ class TensorQuantizer(_TensorQuantizer):
             e8m0_scale = (scale + 127).to(torch.uint8)
             return qweight.reshape(original_shape), e8m0_scale.reshape(original_shape[0], -1)
         if self.data_type == "mx_fp4":
-            from auto_round.export.export_to_autoround.qlinear_fp import pack_fp4_to_uint8
+            try:
+                from auto_round.export.formats.autoround.qlinear_fp import pack_fp4_to_uint8
+            except ImportError:  # older auto_round layout
+                from auto_round.export.export_to_autoround.qlinear_fp import pack_fp4_to_uint8
 
             qweight = weight.reshape(-1, self.block_size) / torch.exp2(scale.float())
             qweight_packed = pack_fp4_to_uint8(qweight)

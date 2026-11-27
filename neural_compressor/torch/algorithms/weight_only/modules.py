@@ -431,8 +431,9 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             )
         if zp is not None:
             # recover fp32 weight with int_weight, scale, and zero_point
+            # int_weight - zp spans [-(2**bits - 1), 2**bits - 1], subtract in int16 to avoid overflow
             for idx in range(self.in_features):
-                fp32_weight[:, idx] = (torch.subtract(weight[:, idx], zp[:, self.g_idx[idx]]).to(torch.int8)) * scales[
+                fp32_weight[:, idx] = (torch.subtract(weight[:, idx], zp[:, self.g_idx[idx]].to(torch.int16))) * scales[
                     :, self.g_idx[idx]
                 ]
         else:
@@ -599,15 +600,17 @@ class INCWeightOnlyLinear(WeightOnlyLinear):
             if weight.dtype == torch.float16 and device.type == "cpu":
                 weight = weight.float()
                 self.bias = self.bias.float() if self.bias is not None else None
+        input_dtype = input.dtype
         if True:  # keep reusing self.weight due to recover is too slow.
             if not hasattr(self, "weight"):
                 self.weight = weight
             input = input.type(self.weight.dtype)
             logger.debug(f"Calculating {self}")
-            return F.linear(input, self.weight, self.bias)
+            # cast back so downstream ops (e.g. SDPA) see a consistent dtype
+            return F.linear(input, self.weight, self.bias).to(input_dtype)
         else:
             input = input.type(weight.dtype)
-            return F.linear(input, weight, self.bias)
+            return F.linear(input, weight, self.bias).to(input_dtype)
 
     def extra_repr(self) -> str:
         """Extract the configuration string.
@@ -658,13 +661,13 @@ class HPUWeightOnlyLinear(WeightOnlyLinear):
             zp (bool, optional): zero point. Defaults to False.
             bias (bool, optional): module bias. Defaults to False.
             scale_dtype (torch.Tensor, optional): the data type of quantization scale to be used.
-                                                  Defaults to torch.float32.
+                                                  Defaults to torch.bfloat16.
             compression_dtype (torch.Tensor, optional): the target dtype after comoression.
                                                         Defaults to torch.int32.
             compression_dim (int, optional): select from [0, 1], 0 is output channel, 1 is input channel.
                                              Defaults to 1.
             g_idx (bool, optional): for recording the channel order.
-            device (str, optional): choose device for compression. Defaults to cpu.
+            device (str, optional): choose device for compression. Defaults to hpu.
             use_optimum_format (bool, optional): use the popular huggingface compression format.
                 1: compression_dim: weight = 1, zeros = 0 and both are transposed.
                 2: zeros -= 1 before compression.

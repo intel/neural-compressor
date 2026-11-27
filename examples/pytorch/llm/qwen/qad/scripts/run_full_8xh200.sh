@@ -17,6 +17,7 @@ export PYTHONPATH="${PYTHONPATH:-$PWD}"
 
 MODEL=${MODEL:-Qwen/Qwen3.8-27B}
 DATA=${DATA:-}
+QUANTIZER_STATE=${QUANTIZER_STATE:-}
 SUMMARY=${SUMMARY:-}
 RECIPE=${RECIPE:-examples/pytorch/llm/qwen/qad/recipes/qwen3_5_27b_mxfp4_fp8_full_fsdp2.yaml}
 OUT=${OUT:-runs/qwen3_8-27b__mxfp4__qad-full__hf__h200x8__s8192__gbs16}
@@ -38,9 +39,11 @@ if [[ -n "$SAVE_STEPS" ]]; then
   fi
 fi
 if [[ -n "$DATA" ]]; then
-  EXTRA+=(--data_path "$DATA")
+  EXTRA+=(--data_prefix "$DATA")
 fi
-if [[ -n "$SUMMARY" ]]; then
+if [[ -n "$QUANTIZER_STATE" ]]; then
+  EXTRA+=(--quantizer_state_path "$QUANTIZER_STATE")
+elif [[ -n "$SUMMARY" ]]; then
   EXTRA+=(--amax_source "$SUMMARY")
 fi
 

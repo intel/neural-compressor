@@ -26,7 +26,6 @@ import torch
 
 from neural_compressor.common.base_config import BaseConfig, register_config
 from neural_compressor.common.utils import DEFAULT_WHITE_LIST, EMPTY_WHITE_LIST, FAKE_QUANT
-from neural_compressor.torch.quantization.config import OperatorConfig
 
 from .formats import BF16, FP8_E4M3, QuantFormat, get_format
 from .ops.qdq import QuantBackendName
@@ -572,7 +571,9 @@ class FakeQuantConfig(BaseConfig):
         return cls.from_dict(raw)
 
     @classmethod
-    def register_supported_configs(cls) -> list[OperatorConfig]:
+    def register_supported_configs(cls) -> list[Any]:
+        from neural_compressor.torch.quantization.config import OperatorConfig
+
         cls.supported_configs = [
             OperatorConfig(config=cls, operators=EMPTY_WHITE_LIST, valid_func_list=[]),
         ]

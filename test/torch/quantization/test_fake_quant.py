@@ -25,6 +25,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
+from neural_compressor.torch.quantization.fake_quant import load_quantizer_state_dict
 from neural_compressor.torch.quantization import (
     FakeQuantConfig,
     ModuleQuantConfig,
@@ -295,6 +296,60 @@ class TestPlanCalibrationAndQwen35Preset(unittest.TestCase):
             50.2,
             places=5,
         )
+
+
+    def test_calibrate_bypasses_dynamic_quantizers_and_strips_checkpoint_wrappers(self):
+        torch.manual_seed(0)
+        float_model = TinyHybridModel(dim=32).eval()
+        x = torch.randn(4, 32)
+        seen_float_inputs: list[torch.Tensor] = []
+        h = float_model.model.layers[1].linear_attn.in_proj_qkv.register_forward_pre_hook(
+            lambda _m, inp: seen_float_inputs.append(inp[0].detach().clone())
+        )
+        with torch.no_grad():
+            float_model(x)
+        h.remove()
+        expected_amax = float(seen_float_inputs[0].abs().amax().to(torch.float32))
+
+        q_model = TinyHybridModel(dim=32)
+        q_model.load_state_dict(float_model.state_dict())
+        prepare_qat(q_model, FakeQuantConfig.qwen3_5_mxfp4_hybrid())
+        calibrate_static_amax(q_model, dataloader=[x])
+
+        q_in = q_model.model.layers[1].linear_attn.in_proj_qkv.input_quantizer
+        self.assertEqual(float(q_in.amax), expected_amax)
+        self.assertTrue(q_model.model.layers[0].mlp.gate_proj.weight_quantizer.is_enabled)
+
+        wrapped_state = {
+            f"module.model.layers.1._checkpoint_wrapped_module._fsdp_wrapped_module."
+            f"linear_attn.in_proj_qkv.input_quantizer": {"amax_hex": expected_amax.hex()}
+        }
+        fresh = TinyHybridModel(dim=32)
+        prepare_qat(fresh, FakeQuantConfig.qwen3_5_mxfp4_hybrid())
+        res = load_quantizer_state_dict(fresh, wrapped_state, strict=False)
+        self.assertIn("model.layers.1.linear_attn.in_proj_qkv.input_quantizer", res["loaded"])
+        self.assertEqual(
+            float(fresh.model.layers[1].linear_attn.in_proj_qkv.input_quantizer.amax),
+            expected_amax,
+        )
+
+        from neural_compressor.torch.quantization.config import FakeQuantConfig as ConfigFacadeFakeQuantConfig
+        from neural_compressor.torch.quantization.fake_quant import compile_plan_from_info
+
+        self.assertIs(ConfigFacadeFakeQuantConfig, FakeQuantConfig)
+        with tempfile.TemporaryDirectory() as tmp:
+            qstate_file = Path(tmp) / "quantizer_state.json"
+            qstate_file.write_text(json.dumps({"quantizers": wrapped_state}))
+            cfg_with_state = FakeQuantConfig.qwen3_5_mxfp4_hybrid()
+            cfg_with_state.quantizer_state_path = str(qstate_file)
+            report = compile_plan_from_info(
+                [("model.layers.1.linear_attn.in_proj_qkv", "Linear")],
+                cfg_with_state,
+            )
+            self.assertEqual(
+                report.plan["model.layers.1.linear_attn.in_proj_qkv"].input_activations.amax,
+                expected_amax,
+            )
 
 
 if __name__ == "__main__":

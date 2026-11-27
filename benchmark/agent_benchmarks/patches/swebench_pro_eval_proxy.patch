@@ -1,0 +1,50 @@
+diff --git a/swe_bench_pro_eval.py b/swe_bench_pro_eval.py
+index cac63a6..c5c2a36 100644
+--- a/swe_bench_pro_eval.py
++++ b/swe_bench_pro_eval.py
+@@ -118,7 +118,10 @@ cd /app
+ git reset --hard {base_commit}
+ git checkout {base_commit}
+ git apply -v /workspace/patch.diff
+-{before_repo_set_cmd}
++git apply --verbose /workspace/test_patch.diff || {{
++  echo "Dataset test patch failed; trying the image test patch"
++  {before_repo_set_cmd}
++}}
+ # run test and save stdout and stderr to separate files
+ bash /workspace/run_script.sh {selected_test_files_to_run} > /workspace/stdout.log 2> /workspace/stderr.log
+ # run parsing script
+@@ -189,8 +192,10 @@ def assemble_workspace_files(uid, scripts_dir, patch, sample):
+     if cleaned_patch != patch:
+         print(f"Stripped binary diff hunks from patch for {uid}")
+ 
++    test_patch = strip_binary_hunks(sample.get("test_patch", "") or "")
+     files = {
+         "patch.diff": cleaned_patch,
++        "test_patch.diff": test_patch,
+         "run_script.sh": run_script,
+         "parser.py": parser_script,
+         "entryscript.sh": entryscript_content,
+@@ -404,6 +409,22 @@ def eval_with_docker(patch, sample, output_dir, dockerhub_username, scripts_dir,
+         }
+         if block_network:
+             run_kwargs["network_mode"] = "none"
++        proxy_env = {
++            name: os.environ[name]
++            for name in (
++                "HTTP_PROXY",
++                "HTTPS_PROXY",
++                "NO_PROXY",
++                "http_proxy",
++                "https_proxy",
++                "no_proxy",
++            )
++            if name in os.environ
++        }
++        # Egress is often proxy-only on internal runners; without this npm
++        # installs inside the evaluation container time out on IPv6.
++        if proxy_env and not block_network:
++            run_kwargs["environment"] = proxy_env
+         # Optional platform override (useful on Apple Silicon)
+         if docker_platform:
+             run_kwargs["platform"] = docker_platform

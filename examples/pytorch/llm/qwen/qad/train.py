@@ -361,7 +361,7 @@ def run_training(argv: Optional[list[str]] = None) -> QADTrainer:
     model_args, training_args, inline_quant = parse_args(argv)
     if model_args.data_path and not model_args.data_prefix:
         model_args.data_prefix = model_args.data_path
-    amax_source = model_args.amax_source or training_args.quantizer_state_path
+    legacy_amax_source = model_args.amax_source
     world = int(os.environ.get("WORLD_SIZE", "1"))
     local_rank = int(os.environ.get("LOCAL_RANK", "0"))
     if torch.cuda.is_available():
@@ -390,7 +390,7 @@ def run_training(argv: Optional[list[str]] = None) -> QADTrainer:
     if quant_config is not None:
         if training_args.quant_backend and training_args.quant_backend != "auto":
             quant_config.backend = training_args.quant_backend  # type: ignore[assignment]
-        if amax_source:
+        if legacy_amax_source or training_args.quantizer_state_path:
             quant_config.quantizer_state_path = None
 
     lora_cfg: Optional[dict[str, Any]] = None
@@ -423,7 +423,7 @@ def run_training(argv: Optional[list[str]] = None) -> QADTrainer:
             lora_config=lora_cfg,
             lora_merge_before_quant=training_args.lora_merge_before_quant,
         )
-        if amax_source:
+        if legacy_amax_source:
             import importlib.util
             from neural_compressor.torch.quantization.fake_quant.calibrate import load_quantizer_state_dict
 
@@ -433,10 +433,11 @@ def run_training(argv: Optional[list[str]] = None) -> QADTrainer:
             assert conv_spec is not None and conv_spec.loader is not None
             conv_mod = importlib.util.module_from_spec(conv_spec)
             conv_spec.loader.exec_module(conv_mod)
-            payload = conv_mod.convert_modelopt_amax(amax_source)
+            payload = conv_mod.convert_modelopt_amax(legacy_amax_source)
             load_quantizer_state_dict(student, payload, strict=False)
             training_args.calib_batches = 0
-            training_args.quantizer_state_path = None
+        elif training_args.quantizer_state_path:
+            training_args.calib_batches = 0
 
     # Resolve teacher model ('self', offline shards -> None, or online CausalLM)
     distill_cfg = training_args.build_distill_config()

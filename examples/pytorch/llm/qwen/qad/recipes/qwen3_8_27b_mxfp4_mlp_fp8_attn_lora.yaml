@@ -1,16 +1,16 @@
-# Qwen3.8-27B LoRA QAD, path B (merge-before-quant):
-#   y = Q_w(W + BA) * Q_a(x)
-# Same quantization recipe as the full run; only the adapter/training part differs.
-# To use an existing PTQ amax source, pass `--amax-source <summary-or-json>` to main.py.
-schema: neural_compressor.qad/v2
-name: qwen3_8-27b-mxfp4-mlp-fp8-attn-lora
-
-model:
-  path: Qwen/Qwen3.8-27B
-  family: qwen3_5
-  dtype: bfloat16
+# Qwen3.8-27B Formal LoRA Path-B QAD (4xGPU RTX Pro 6000 / H200, seq8192, gbs16)
+# Path-B formula: y = Q_w(W + s * B @ A) @ Q_a(x)
+# Exact counterpart to the formal Megatron-Bridge + ModelOpt LoRA-B QAD recipe:
+#   - MXFP4 dynamic W4A4 on MLP (`gate_proj`, `up_proj`, `down_proj`)
+#   - Static FP8 E4M3 W8A8 on full-attention & GatedDeltaNet projections
+#   - LoRA rank=32, alpha=32, dropout=0.0 on `self_attn.{q,k,v,o}_proj` + `mlp.{gate,up,down}_proj` (146.6M params)
+#   - Self-teacher Top-4096 forward KL (`kd_temperature=1.0`, `kd_loss_weight=1.0`, `ce_loss_weight=0.0`)
+#   - AdamW (`lr=2e-4 -> 2e-5` cosine, `warmup_steps=50`, `beta1=0.9`, `beta2=0.95`, `weight_decay=0.1`, `clip=1.0`)
+model_name_or_path: Qwen/Qwen3.8-27B
+model_dtype: bfloat16
 
 quant:
+  backend: auto
   config_groups:
     - targets: ['re:.*\.mlp\.(gate_proj|up_proj|down_proj)$']
       weights: {format: mxfp4, dynamic: true}
@@ -19,43 +19,60 @@ quant:
       weights: {format: fp8_e4m3, dynamic: false}
       input_activations: {format: fp8_e4m3, dynamic: false}
   ignore: ['lm_head', 're:.*mlp\.gate$']
-  # Use exact fp32 amax from PTQ calibration when --amax-source is provided.
-  # Otherwise main.py calibrates on a single rank before distributed training.
 
-distill:
-  teacher: Qwen/Qwen3.8-27B
-  loss: topk_kl
-  top_k: 4096
-  temperature: 1.0
-  kd_weight: 1.0
-  ce_weight: 0.0
-  chunk: 1024
-  teacher_device: shard
+calib_batches: 32
 
-train:
-  backend: hf
-  parallel: fsdp2
-  seq_length: 2048
-  micro_batch_size: 1
-  global_batch_size: 4
-  train_iters: 2000
-  lr: 2.0e-4
+use_lora: true
+lora_r: 32
+lora_alpha: 32
+lora_dropout: 0.0
+lora_merge_before_quant: true
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+
+teacher_model_name_or_path: self
+teacher_placement: self
+kd_loss_type: topk_kl
+kd_top_k: 4096
+kd_temperature: 1.0
+kd_reverse_kl: false
+kd_loss_weight: 1.0
+ce_loss_weight: 0.0
+logits_chunk_size: 1024
+
+bf16: true
+seq_length: 8192
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 4
+max_steps: 4000
+learning_rate: 2.0e-4
+lr_scheduler_type: cosine_with_min_lr
+lr_scheduler_kwargs:
   min_lr: 2.0e-5
-  warmup: 0  # reference LoRA script used warmup 0
-  weight_decay: 0.0
-  clip_grad: 1.0
-  seed: 42   # reference LoRA configuration
-  gradient_checkpointing: true
-  gc_mode: trainer
-  save_steps: 500
-  lora:
-    rank: 32
-    alpha: 32
-    dropout: 0.0
-    quant_order: lora_then_quant   # path B
-    targets: [q_proj, k_proj, v_proj, o_proj, gate_proj, up_proj, down_proj,
-              in_proj_qkv, in_proj_z, out_proj]
+warmup_steps: 50
+weight_decay: 0.1
+adam_beta1: 0.9
+adam_beta2: 0.95
+adam_epsilon: 1.0e-8
+max_grad_norm: 1.0
+seed: 1234
+logging_steps: 1
+save_strategy: steps
+save_steps: 1000
+save_total_limit: 2
+fsdp: "full_shard auto_wrap"
+fsdp_config:
+  fsdp_version: 2
+  reshard_after_forward: true
+  activation_checkpointing: true
+  transformer_layer_cls_to_wrap:
+    - Qwen3_5DecoderLayer
 
-export:
-  format: hf_bf16
-  keep_vision: true
+export_format: compressed_tensors
+keep_vision_on_export: true

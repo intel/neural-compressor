@@ -14,6 +14,7 @@ from .inc_nvfp4_scheme import INCNvfp4QDQScheme
 
 logger = init_logger(__name__)
 _PATCHED = False
+_COMPRESSED_TENSORS_PATCHED = False
 
 
 def _native_nvfp4_kernel_available() -> bool:
@@ -93,12 +94,79 @@ def _layer_data_type(config: Any, layer_name: str, default: str) -> str:
     return override.get("data_type", default)
 
 
+def _patch_compressed_tensors_nvfp4() -> None:
+    """Use activation QDQ on compressed-tensors NVFP4 Marlin fallback paths."""
+    global _COMPRESSED_TENSORS_PATCHED
+    if _COMPRESSED_TENSORS_PATCHED:
+        return
+
+    from vllm.model_executor.kernels.linear.nvfp4.marlin import MarlinNvFp4LinearKernel
+    from vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors import (
+        CompressedTensorsConfig,
+    )
+    from vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors_moe import (
+        CompressedTensorsMoEMethod,
+    )
+    from vllm.model_executor.layers.quantization.compressed_tensors.schemes.compressed_tensors_w4a4_nvfp4 import (
+        CompressedTensorsW4A4Fp4,
+    )
+
+    original_linear_apply = CompressedTensorsW4A4Fp4.apply_weights
+    original_moe_method = CompressedTensorsMoEMethod.get_moe_method
+
+    def apply_nvfp4_qdq(self: Any, layer: Any, x: Any, bias: Any = None):
+        enabled = getattr(CompressedTensorsConfig, "_vllm_qdq_nvfp4_enabled", False)
+        if enabled and isinstance(self.kernel, MarlinNvFp4LinearKernel):
+            from vllm_qdq_plugin.qdq.nvfp4 import nvfp4_qdq
+
+            # vLLM keeps the checkpoint quantization scale here; input_global_scale holds its reciprocal.
+            input_scale = getattr(layer, "input_global_scale_inv", None)
+            if input_scale is not None:
+                original_shape = x.shape
+                x = nvfp4_qdq(
+                    x.reshape(-1, x.shape[-1]).contiguous(),
+                    input_scale,
+                    group_size=16,
+                    trace_op_name="compressed_tensors_nvfp4_linear",
+                ).reshape(original_shape)
+        return original_linear_apply(self, layer, x, bias)
+
+    def get_nvfp4_qdq_moe_method(quant_config: Any, layer: Any, layer_name: str):
+        enabled = getattr(CompressedTensorsConfig, "_vllm_qdq_nvfp4_enabled", False)
+        if enabled:
+            quant_config._add_fused_moe_to_target_scheme_map()
+            projection_names = [layer_name + suffix for suffix in (".0.gate_proj", ".0.up_proj", ".0.down_proj")]
+            scheme_dicts = [quant_config.get_scheme_dict(layer, name) for name in projection_names]
+            scheme_dict = scheme_dicts[-1]
+            if scheme_dict is not None and all(item == scheme_dict for item in scheme_dicts[:-1]):
+                weight_quant = scheme_dict.get("weights")
+                input_quant = scheme_dict.get("input_activations")
+                if quant_config._is_nvfp4_format(weight_quant) and quant_config._is_nvfp4_format(input_quant):
+                    if _native_nvfp4_kernel_available():
+                        return original_moe_method(quant_config, layer, layer_name)
+
+                    from .inc_nvfp4_moe import INCNvfp4QDQMoEMethod
+
+                    return INCNvfp4QDQMoEMethod(layer.moe_config, weight_quant.group_size)
+        return original_moe_method(quant_config, layer, layer_name)
+
+    CompressedTensorsW4A4Fp4.apply_weights = apply_nvfp4_qdq
+    CompressedTensorsMoEMethod.get_moe_method = staticmethod(get_nvfp4_qdq_moe_method)
+    _COMPRESSED_TENSORS_PATCHED = True
+
+
 def apply_patches(enable_nvfp4_qdq: bool = True) -> None:
     """Register AutoRound NVFP4 QDQ metadata and scheme routing."""
     global _PATCHED
     from vllm.model_executor.layers.quantization.inc import INCConfig
 
     INCConfig._vllm_qdq_nvfp4_enabled = enable_nvfp4_qdq
+    _patch_compressed_tensors_nvfp4()
+    from vllm.model_executor.layers.quantization.compressed_tensors.compressed_tensors import (
+        CompressedTensorsConfig,
+    )
+
+    CompressedTensorsConfig._vllm_qdq_nvfp4_enabled = enable_nvfp4_qdq
     if _PATCHED:
         return
 

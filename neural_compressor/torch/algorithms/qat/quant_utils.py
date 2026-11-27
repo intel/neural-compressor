@@ -36,7 +36,10 @@ def get_quant_config(scheme: str) -> dict[str, Any] | None:
     Kept for the legacy export path; requires ``auto-round`` when called.
     """
     try:
-        from auto_round.export.export_to_llmcompressor.config import initialize_quantization
+        try:
+            from auto_round.export.formats.compressed_tensors.config import initialize_quantization
+        except ImportError:  # older auto_round layout
+            from auto_round.export.export_to_llmcompressor.config import initialize_quantization
 
         quantization_config = initialize_quantization(scheme=scheme)
         quantization_config = quantization_config.to_dict()

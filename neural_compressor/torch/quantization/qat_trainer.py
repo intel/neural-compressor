@@ -53,7 +53,15 @@ def is_peft_model(model: nn.Module) -> bool:
 
 
 def ensure_peft_gradient_checkpointing_delegation(model: nn.Module) -> None:
-    """Ensure ``PeftModel`` forwards gradient checkpointing toggles to the inner backbone."""
+    """Ensure ``PeftModel`` delegates gradient checkpointing and preserves adapter gradients under FSDP2 AC.
+
+    Besides forwarding ``gradient_checkpointing_enable`` / ``disable`` to the inner backbone, this
+    registers an idempotent forward hook on the input embedding module that marks its output
+    ``requires_grad_(True)`` whenever ``torch.is_grad_enabled()`` is ``True``. Without this hook,
+    FSDP2 ``activation_checkpointing: true`` (which wraps decoder layers in reentrant
+    ``checkpoint_wrapper`` without calling ``Trainer.gradient_checkpointing_enable``) receives
+    ``requires_grad=False`` hidden states from frozen base embeddings and drops adapter gradients.
+    """
     if not (hasattr(model, "peft_config") and hasattr(model, "base_model")):
         return
     inner = getattr(model.base_model, "model", None)
@@ -81,6 +89,22 @@ def ensure_peft_gradient_checkpointing_delegation(model: nn.Module) -> None:
         model.gradient_checkpointing_enable = _gc_enable  # type: ignore[method-assign]
         model.gradient_checkpointing_disable = _gc_disable  # type: ignore[method-assign]
         object.__setattr__(model, "_nc_gc_patched", True)
+
+    get_emb = getattr(inner, "get_input_embeddings", None)
+    emb = get_emb() if callable(get_emb) else None
+    if isinstance(emb, nn.Module) and not getattr(emb, "_nc_peft_input_grad_hooked", False):
+
+        def _require_grad_when_enabled(_module: nn.Module, _inp: Any, output: Any) -> Any:
+            if not torch.is_grad_enabled():
+                return output
+            if isinstance(output, torch.Tensor):
+                output.requires_grad_(True)
+            elif isinstance(output, tuple) and output and isinstance(output[0], torch.Tensor):
+                output[0].requires_grad_(True)
+            return output
+
+        emb.register_forward_hook(_require_grad_when_enabled)
+        object.__setattr__(emb, "_nc_peft_input_grad_hooked", True)
 
 
 def _without_quantizer_buffers(state: dict[str, torch.Tensor]) -> dict[str, torch.Tensor]:
