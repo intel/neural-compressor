@@ -165,6 +165,33 @@ class ConfigRegistry(object):
         return configs_cls
 
 
+def _default_config_registry() -> Dict[str, BaseConfig]:
+    """Flatten every registered config into one name -> class mapping.
+
+    A config file does not name a framework, so a file-based caller cannot build
+    the nested registry itself. Frameworks that register the same config name are
+    ambiguous for such a file, so that case raises instead of picking one.
+
+    Returns:
+        Dict[str, BaseConfig]: registered config classes keyed by config name.
+
+    Raises:
+        ValueError: If two frameworks register different classes under one name.
+    """
+    flat: Dict[str, BaseConfig] = {}
+    for framework_name, algo_configs in config_registry.get_cls_configs().items():
+        for config_name, config_cls in algo_configs.items():
+            existing = flat.get(config_name)
+            if existing is not None and existing is not config_cls:
+                raise ValueError(
+                    f"Config name {config_name!r} is registered by more than one framework "
+                    f"(including {framework_name!r}); pass config_registry explicitly to "
+                    "disambiguate."
+                )
+            flat[config_name] = config_cls
+    return flat
+
+
 config_registry = ConfigRegistry()
 
 
@@ -749,7 +776,11 @@ class ComposableConfig(BaseConfig):
         return result
 
     @classmethod
-    def from_dict(cls, config_dict: OrderedDict[str, Dict], config_registry: Dict[str, BaseConfig]):
+    def from_dict(
+        cls,
+        config_dict: OrderedDict[str, Dict],
+        config_registry: Optional[Dict[str, BaseConfig]] = None,
+    ):
         """Create a BaseConfig object from a dictionary representation.
 
         Args:
@@ -764,6 +795,9 @@ class ComposableConfig(BaseConfig):
             ValueError: If config_dict names a configuration that is not in config_registry.
         """
         assert len(config_dict) >= 1, "The config dict must include at least one configuration."
+
+        if config_registry is None:
+            config_registry = _default_config_registry()
 
         def config_class(config_name: str) -> Type[BaseConfig]:
             if config_name not in config_registry:
