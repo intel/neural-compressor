@@ -165,7 +165,6 @@ class ConfigRegistry(object):
         return configs_cls
 
 
-
 def _default_config_registry() -> Dict[str, BaseConfig]:
     """Flatten every registered config into one name -> class mapping.
 

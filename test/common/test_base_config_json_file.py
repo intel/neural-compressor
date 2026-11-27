@@ -36,9 +36,7 @@ def test_from_json_file_uses_the_registered_configs():
     _register_torch_configs()
 
     with tempfile.TemporaryDirectory() as directory:
-        path = _write_config(
-            directory, {"rtn": {"weight_bits": 4}, "awq": {"weight_bits": 4}}
-        )
+        path = _write_config(directory, {"rtn": {"weight_bits": 4}, "awq": {"weight_bits": 4}})
         composed = ComposableConfig.from_json_file(path)
 
     assert isinstance(composed, ComposableConfig)
