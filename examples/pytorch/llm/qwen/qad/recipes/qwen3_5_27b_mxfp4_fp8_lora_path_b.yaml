@@ -1,0 +1,75 @@
+# Qwen3.5 / Qwen3.8-27B LoRA Path-B QAD (< 45 GiB/GPU, Zero-VRAM Self-Teacher)
+# Path-B formula: y = Q_w(W + s * B @ A) @ Q_a(x)
+# Zero teacher VRAM via `teacher_placement: self` (toggles fake-quant + LoRA off during teacher pass).
+model_name_or_path: Qwen/Qwen3.8-27B
+model_dtype: bfloat16
+
+quant:
+  backend: auto
+  config_groups:
+    - targets: ['re:.*\.mlp\.(gate_proj|up_proj|down_proj)$']
+      weights: {format: mxfp4, dynamic: true}
+      input_activations: {format: mxfp4, dynamic: true}
+    - targets: ['re:.*\.(self_attn|linear_attn)\.(q_proj|k_proj|v_proj|o_proj|in_proj_qkv|in_proj_z|out_proj)$']
+      weights: {format: fp8_e4m3, dynamic: false}
+      input_activations: {format: fp8_e4m3, dynamic: false}
+  ignore: ['lm_head', 're:.*mlp\.gate$']
+
+calib_batches: 8
+
+# PEFT LoRA Path-B (merge_before_quant=True)
+use_lora: true
+lora_r: 64
+lora_alpha: 64
+lora_dropout: 0.0
+lora_merge_before_quant: true
+lora_target_modules:
+  - q_proj
+  - k_proj
+  - v_proj
+  - o_proj
+  - gate_proj
+  - up_proj
+  - down_proj
+  - in_proj_qkv
+  - in_proj_z
+  - out_proj
+
+# Zero-VRAM Self-Teacher Distillation
+teacher_model_name_or_path: self
+teacher_placement: self
+kd_loss_type: topk_kl
+kd_top_k: 4096
+kd_temperature: 1.0
+kd_loss_weight: 1.0
+ce_loss_weight: 0.0
+logits_chunk_size: 1024
+
+# HF TrainingArguments + FSDP2
+bf16: true
+seq_length: 8192
+per_device_train_batch_size: 1
+gradient_accumulation_steps: 4
+max_steps: 2000
+learning_rate: 2.0e-4
+lr_scheduler_type: cosine_with_min_lr
+lr_scheduler_kwargs:
+  min_lr: 2.0e-5
+warmup_steps: 0
+weight_decay: 0.0
+max_grad_norm: 1.0
+seed: 42
+logging_steps: 1
+save_strategy: steps
+save_steps: 500
+save_total_limit: 2
+fsdp: "full_shard auto_wrap"
+fsdp_config:
+  fsdp_version: 2
+  reshard_after_forward: true
+  activation_checkpointing: true
+  transformer_layer_cls_to_wrap:
+    - Qwen3_5DecoderLayer
+
+export_format: compressed_tensors
+keep_vision_on_export: true
