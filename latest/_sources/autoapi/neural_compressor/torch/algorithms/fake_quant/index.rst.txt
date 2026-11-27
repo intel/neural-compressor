@@ -1,0 +1,31 @@
+neural_compressor.torch.algorithms.fake_quant
+=============================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant
+
+.. autoapi-nested-parse::
+
+   Fake-quantization algorithm implementation (formats, functional QDQ, modules, conversion, calibration).
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/calib/index
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/config/index
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/conversion/index
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/formats/index
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/functional/index
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/pack/index
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/plugins/index
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/quant_linear/index
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/save_load/index
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/tensor_quantizer/index
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/trainer/index
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/triton_kernels/index
+
+

@@ -1,0 +1,50 @@
+neural_compressor.torch.algorithms.fake_quant.triton_kernels
+============================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.triton_kernels
+
+.. autoapi-nested-parse::
+
+   Fused single-pass Triton QDQ kernels for MXFP4, NVFP4, MXFP8, and FP8 E4M3.
+
+   Key properties:
+   1. **0-ULP bit-level parity** with ``functional.py`` (``"pytorch"`` backend) and
+      NVIDIA ModelOpt CUDA kernels across random, boundary, midpoint, zero, and
+      subnormal inputs by using IEEE-754 ``tl.div_rn``, NVIDIA ``libdevice``
+      ``log2``/``ceil``/``exp2``, and exact register-predicated E2M1 round-to-even.
+   2. **Zero intermediate global memory buffers**: block-wise ``amax``, E8M0 / E4M3
+      scale quantization, E2M1 / E4M3 element rounding, and rescaling all execute in
+      registers within a single kernel pass (1 global read + 1 global write).
+   3. **64-bit pointer safety**: supports activations exceeding ``2**31`` elements
+      (e.g., ``[B, 8192, 17408]`` on 27B+ models) without 32-bit index overflow.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.triton_kernels.is_triton_qdq_available
+   neural_compressor.torch.algorithms.fake_quant.triton_kernels.triton_dynamic_qdq
+   neural_compressor.torch.algorithms.fake_quant.triton_kernels.triton_fp8_static_amax_qdq
+
+
+Module Contents
+---------------
+
+.. py:function:: is_triton_qdq_available() -> bool
+
+   Return True when Triton, CUDA, and ``tl.float8e4nv`` are available.
+
+
+.. py:function:: triton_dynamic_qdq(x: torch.Tensor, fmt: neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat, *, pytorch_fallback=None) -> torch.Tensor
+
+   Execute fused single-pass Triton dynamic QDQ on CUDA tensors.
+
+
+.. py:function:: triton_fp8_static_amax_qdq(x: torch.Tensor, amax: torch.Tensor, *, pytorch_fallback=None) -> torch.Tensor
+
+   Execute fused single-pass Triton static FP8 E4M3 QDQ matching ModelOpt CUDA.
+
+

@@ -1,0 +1,159 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.algorithms.fake_quant.calib &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.fake_quant.calib</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/fake_quant/calib/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.algorithms.fake_quant.calib">
+<span id="neural-compressor-torch-algorithms-fake-quant-calib"></span><h1>neural_compressor.torch.algorithms.fake_quant.calib<a class="headerlink" href="#module-neural_compressor.torch.algorithms.fake_quant.calib" title="Link to this heading"></a></h1>
+<p>Forward observer calibration for static <code class="docutils literal notranslate"><span class="pre">TensorQuantizer</span></code> <code class="docutils literal notranslate"><span class="pre">amax</span></code> statistics.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.calib.calibrate_static_amax" title="neural_compressor.torch.algorithms.fake_quant.calib.calibrate_static_amax"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calibrate_static_amax</span></code></a>(→ dict[str, float])</p></td>
+<td><p>Calibrate all enabled static <code class="xref py py-class docutils literal notranslate"><span class="pre">TensorQuantizer</span></code> modules in <code class="docutils literal notranslate"><span class="pre">model</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.calib.calibrate" title="neural_compressor.torch.algorithms.fake_quant.calib.calibrate"><code class="xref py py-obj docutils literal notranslate"><span class="pre">calibrate</span></code></a>(, *, distributed, float])</p></td>
+<td><p>INC <code class="docutils literal notranslate"><span class="pre">quantize(...,</span> <span class="pre">run_fn=...,</span> <span class="pre">run_args=...)</span></code> compatible calibration entry point.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.calib.calibrate_static_amax">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.calib.</span></span><span class="sig-name descname"><span class="pre">calibrate_static_amax</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="p"><span class="pre">[</span></span><span class="pre">torch.nn.Module</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">dataloader</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">num_batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distributed_sync</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/calib.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.calib.calibrate_static_amax" title="Link to this definition"></a></dt>
+<dd><p>Calibrate all enabled static <code class="xref py py-class docutils literal notranslate"><span class="pre">TensorQuantizer</span></code> modules in <code class="docutils literal notranslate"><span class="pre">model</span></code>.</p>
+<p>Provide either <code class="docutils literal notranslate"><span class="pre">calib_fn(model)</span></code> or <code class="docutils literal notranslate"><span class="pre">dataloader</span></code> (optionally bounded by <code class="docutils literal notranslate"><span class="pre">num_batches</span></code>).
+Enabled dynamic quantizers are temporarily bypassed during the calibration forward pass
+(matching ModelOpt <code class="docutils literal notranslate"><span class="pre">enable_stats_collection</span></code>) so static activation quantizers observe clean
+reference activations, then re-enabled upon completion. Static weight quantizers are also
+observed directly so MoE experts unvisited by small calibration sets still acquire valid
+weight <code class="docutils literal notranslate"><span class="pre">amax</span></code> buffers.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.calib.calibrate">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.calib.</span></span><span class="sig-name descname"><span class="pre">calibrate</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Callable</span><span class="p"><span class="pre">[</span></span><span class="pre">Ellipsis</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Any</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">()</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">distributed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/calib.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.calib.calibrate" title="Link to this definition"></a></dt>
+<dd><p>INC <code class="docutils literal notranslate"><span class="pre">quantize(...,</span> <span class="pre">run_fn=...,</span> <span class="pre">run_args=...)</span></code> compatible calibration entry point.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2f200d00> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

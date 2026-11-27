@@ -1,0 +1,375 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>QAD (Quantization-Aware Distillation) for Qwen3.5 / Qwen3.8-27B &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">QAD (Quantization-Aware Distillation) for Qwen3.5 / Qwen3.8-27B</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../../_sources/docs/source/examples/pytorch/llm/qwen/qad/README.md.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="qad-quantization-aware-distillation-for-qwen3-5-qwen3-8-27b">
+<h1>QAD (Quantization-Aware Distillation) for Qwen3.5 / Qwen3.8-27B<a class="headerlink" href="#qad-quantization-aware-distillation-for-qwen3-5-qwen3-8-27b" title="Link to this heading"></a></h1>
+<p>Reference example for Intel Neural Compressor’s composable PyTorch QAT + KD + QAD stack:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">neural_compressor.torch.quantization</span></code>: <code class="docutils literal notranslate"><span class="pre">FakeQuantConfig</span></code>, <code class="docutils literal notranslate"><span class="pre">QuantSchemeRule</span></code>, <code class="docutils literal notranslate"><span class="pre">prepare_qat</span></code>, <code class="docutils literal notranslate"><span class="pre">QATTrainer</span></code>, <code class="docutils literal notranslate"><span class="pre">QuantizationTrainingArguments</span></code>, fused Triton QDQ kernels, and PEFT <code class="docutils literal notranslate"><span class="pre">QuantLoraLinear</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">neural_compressor.torch.distillation</span></code>: <code class="docutils literal notranslate"><span class="pre">DistillationConfig</span></code>, <code class="docutils literal notranslate"><span class="pre">DistillationTrainingArguments</span></code>, <code class="docutils literal notranslate"><span class="pre">KDTrainer</span></code>, chunked <code class="docutils literal notranslate"><span class="pre">TopKLogitsKLLoss</span></code> / <code class="docutils literal notranslate"><span class="pre">LogitsKLLoss</span></code>, FSDP2 teacher sharding, and zero-VRAM <code class="docutils literal notranslate"><span class="pre">teacher_model=&quot;self&quot;</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">neural_compressor.torch.qad</span></code>: <code class="docutils literal notranslate"><span class="pre">QADTrainingArguments</span></code>, <code class="docutils literal notranslate"><span class="pre">QADTrainer</span></code>, and <code class="docutils literal notranslate"><span class="pre">prepare_qad_model</span></code>.</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">neural_compressor.torch.export</span></code>: <code class="docutils literal notranslate"><span class="pre">export_hf_checkpoint</span></code> (<code class="docutils literal notranslate"><span class="pre">export_format=&quot;bf16&quot;</span></code> and <code class="docutils literal notranslate"><span class="pre">export_format=&quot;compressed_tensors&quot;</span></code> real packed <code class="docutils literal notranslate"><span class="pre">MXFP4</span></code> + <code class="docutils literal notranslate"><span class="pre">FP8</span></code> / <code class="docutils literal notranslate"><span class="pre">MXFP8</span></code> / <code class="docutils literal notranslate"><span class="pre">NVFP4</span></code> for direct <strong>vLLM</strong> serving, including multimodal VLM text-tower key remapping).</p></li>
+</ul>
+<p>What the shipped recipes train:</p>
+<ul class="simple">
+<li><p><strong>Mixed fake quantization</strong> — MXFP4 (<code class="docutils literal notranslate"><span class="pre">E2M1</span></code>, block 32, <code class="docutils literal notranslate"><span class="pre">E8M0</span></code> power-of-two scales) or NVFP4 (<code class="docutils literal notranslate"><span class="pre">E2M1</span></code>, block 16, <code class="docutils literal notranslate"><span class="pre">E4M3</span></code> + global <code class="docutils literal notranslate"><span class="pre">amax</span></code>) for MLP weights and activations, paired with static FP8 <code class="docutils literal notranslate"><span class="pre">E4M3</span></code> (<code class="docutils literal notranslate"><span class="pre">amax</span></code> calibrated natively or loaded from <code class="docutils literal notranslate"><span class="pre">quantizer_state.json</span></code>) for attention &amp; GatedDeltaNet projections;</p></li>
+<li><p><strong>Fused Triton QDQ kernels</strong> — automatically dispatched on GPU (<code class="docutils literal notranslate"><span class="pre">quant_backend=&quot;auto&quot;</span></code>), achieving <strong>0-ULP bitwise parity</strong> against PyTorch / ModelOpt CUDA references with <strong>8.9x–21.6x kernel speedups</strong> and <strong>0 B</strong> temporary workspace;</p></li>
+<li><p><strong>Chunked Top-$k$ / Full-vocab KL distillation</strong> — FP32 forward/reverse KL computed over token chunks with <code class="docutils literal notranslate"><span class="pre">lm_head</span></code> chunking (<code class="docutils literal notranslate"><span class="pre">logits_chunk_size</span></code>) so full <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">S,</span> <span class="pre">V]</span></code> logits never materialize simultaneously;</p></li>
+<li><p><strong>Full fine-tuning and PEFT LoRA</strong>:</p>
+<ul>
+<li><p><strong>Path B (<code class="docutils literal notranslate"><span class="pre">lora_merge_before_quant:</span> <span class="pre">true</span></code>, default)</strong>: $y = Q_w(W + s \cdot BA),Q_a(x)$ — deployment-exact adapter merging inside quantization;</p></li>
+<li><p><strong>Path A (<code class="docutils literal notranslate"><span class="pre">lora_merge_before_quant:</span> <span class="pre">false</span></code>)</strong>: $y = Q_w(W),Q_a(x) + s \cdot BA,x$ — compatible with optional <code class="docutils literal notranslate"><span class="pre">unsloth</span></code> models;</p></li>
+<li><p><strong>Zero-VRAM Self-Teacher (<code class="docutils literal notranslate"><span class="pre">teacher_placement:</span> <span class="pre">self</span></code>)</strong>: dynamically disables student LoRA adapters and fake quantizers during the <code class="docutils literal notranslate"><span class="pre">torch.no_grad()</span></code> teacher pass — eliminating the second 54 GiB 27B teacher model entirely;</p></li>
+</ul>
+</li>
+<li><p><strong>PyTorch FSDP2</strong> (<code class="docutils literal notranslate"><span class="pre">fsdp_version:</span> <span class="pre">2</span></code>) with activation checkpointing, automatic teacher layer sharding (<code class="docutils literal notranslate"><span class="pre">teacher_placement:</span> <span class="pre">shard</span></code>), and optional FSDP2 CPU offload (<code class="docutils literal notranslate"><span class="pre">fsdp_config.cpu_offload:</span> <span class="pre">true</span></code>) for <code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">82</span> <span class="pre">GiB/GPU</span></code> 4-card full-parameter 27B QAD;</p></li>
+<li><p><strong>Real packed <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> &amp; BF16 HF export</strong> (<code class="docutils literal notranslate"><span class="pre">export.py</span> <span class="pre">--format</span> <span class="pre">compressed_tensors</span></code>), preserving multimodal VLM vision weights &amp; processors (<code class="docutils literal notranslate"><span class="pre">keep_vision=True</span></code>) for immediate <strong>vLLM</strong> and <code class="docutils literal notranslate"><span class="pre">lm_eval</span></code> deployment.</p></li>
+</ul>
+<section id="directory-layout">
+<h2>Directory Layout<a class="headerlink" href="#directory-layout" title="Link to this heading"></a></h2>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Path</th>
+<th>Purpose</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>train.py</code></td>
+<td>Standard <code>HfArgumentParser((ModelDataArguments, QADTrainingArguments))</code> + <code>--config &lt;yaml&gt;</code> training script</td>
+</tr>
+<tr>
+<td><code>modeling/qwen35_text_loader.py</code></td>
+<td>Streams <code>model.language_model.*</code> + <code>lm_head.*</code> from a Qwen3.5/3.8 VLM checkpoint into standard <code>Qwen3_5ForCausalLM</code> (plus optional <code>unsloth</code> loader)</td>
+</tr>
+<tr>
+<td><code>data/megatron_indexed_dataset.py</code></td>
+<td>Memory-mapped Megatron <code>.bin/.idx</code> reader, <code>PackedDataset</code> (loss-masked padding), and <code>SyntheticDataset</code></td>
+</tr>
+<tr>
+<td><code>recipes/qwen3_8_27b_mxfp4_mlp_fp8_attn_lora.yaml</code></td>
+<td>Formal 4×GPU RTX Pro 6000 / H200 Path-B LoRA QAD recipe (<code>seq8192</code>, <code>gbs16</code>, <code>rank=32</code>, <code>warmup=50</code>, <code>wd=0.1</code>)</td>
+</tr>
+<tr>
+<td><code>recipes/qwen3_8_27b_mxfp4_mlp_fp8_attn.yaml</code></td>
+<td>Formal 8×GPU FSDP2 full-parameter MXFP4+FP8 QAD recipe (<code>seq8192</code>, <code>gbs16</code>, 4000 steps)</td>
+</tr>
+<tr>
+<td><code>recipes/qwen3_5_27b_mxfp4_fp8_full_fsdp2.yaml</code></td>
+<td>Full-parameter MXFP4+FP8 QAD recipe (8×GPU FSDP2, <code>seq8192</code>, <code>gbs16</code>, 4000 steps)</td>
+</tr>
+<tr>
+<td><code>recipes/qwen3_5_27b_mxfp4_fp8_full_cpu_offload.yaml</code></td>
+<td>Low-memory 4×GPU (<code>&lt; 82 GiB/GPU</code>) full-parameter MXFP4+FP8 QAD recipe (FSDP2 <code>cpu_offload: true</code> + sharded teacher)</td>
+</tr>
+<tr>
+<td><code>recipes/qwen3_5_27b_mxfp4_fp8_lora_path_b.yaml</code></td>
+<td>Zero-VRAM <code>self</code>-teacher Path-B LoRA QAD recipe (<code>&lt; 45 GiB/GPU</code> on 4 GPUs, <code>seq8192</code>, <code>rank=64</code>, 2000 steps)</td>
+</tr>
+<tr>
+<td><code>recipes/qwen3_5_27b_nvfp4_fp8_full_fsdp2.yaml</code></td>
+<td>Full-parameter NVFP4+FP8 QAD recipe (8×GPU FSDP2, <code>seq8192</code>, <code>gbs16</code>, 4000 steps)</td>
+</tr>
+<tr>
+<td><code>prepare_data.py</code></td>
+<td>Tokenizes an HF chat/text dataset into Megatron <code>.bin/.idx</code> shards</td>
+</tr>
+<tr>
+<td><code>calibrate_amax.py</code></td>
+<td>Single-rank native static <code>amax</code> calibration utility writing <code>quantizer_state.json</code></td>
+</tr>
+<tr>
+<td><code>tools/convert_modelopt_amax.py</code></td>
+<td>Optional offline converter from ModelOpt <code>.quant_summary.txt</code> or <code>.pt</code> state into <code>quantizer_state.json</code></td>
+</tr>
+<tr>
+<td><code>export.py</code></td>
+<td>Streaming checkpoint exporter (<code>--format compressed_tensors</code> or <code>--format bf16</code>) with VLM vision preservation</td>
+</tr>
+<tr>
+<td><code>scripts/smoke_tiny.sh</code></td>
+<td>1-GPU tiny-model end-to-end smoke test (calibration + QAD step + metrics)</td>
+</tr>
+<tr>
+<td><code>scripts/run_qad_rtxpro_mxfp4_lora_b.sh</code></td>
+<td>Formal 4-GPU RTX Pro 6000 / H200 MXFP4+FP8 Path-B LoRA QAD launcher</td>
+</tr>
+<tr>
+<td><code>scripts/run_full_8xh200.sh</code></td>
+<td>8-GPU full-parameter QAD launcher</td>
+</tr>
+<tr>
+<td><code>scripts/run_lora_4xh200.sh</code></td>
+<td>4-GPU Path-B LoRA QAD launcher</td>
+</tr>
+</tbody>
+</table><p>Library entry points used in <code class="docutils literal notranslate"><span class="pre">train.py</span></code> and <code class="docutils literal notranslate"><span class="pre">export.py</span></code>:</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="n">FakeQuantConfig</span><span class="p">,</span> <span class="n">prepare_qat</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.qad</span><span class="w"> </span><span class="kn">import</span> <span class="n">QADTrainer</span><span class="p">,</span> <span class="n">QADTrainingArguments</span><span class="p">,</span> <span class="n">prepare_qad_model</span>
+<span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">export_hf_checkpoint</span>
+</pre></div>
+</div>
+</section>
+<section id="quick-start">
+<h2>Quick Start<a class="headerlink" href="#quick-start" title="Link to this heading"></a></h2>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 0) Install Neural Compressor (editable) and example dependencies</span>
+pip<span class="w"> </span>install<span class="w"> </span>-e<span class="w"> </span>.<span class="w"> </span><span class="o">&amp;&amp;</span><span class="w"> </span>pip<span class="w"> </span>install<span class="w"> </span>-r<span class="w"> </span>examples/pytorch/llm/qwen/qad/requirements.txt
+
+<span class="c1"># 1) 1-GPU wiring smoke test (tiny Qwen3.5, synthetic tokens, 2 steps)</span>
+<span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>bash<span class="w"> </span>examples/pytorch/llm/qwen/qad/scripts/smoke_tiny.sh
+
+<span class="c1"># 2) Optional: prepare Megatron .bin/.idx data &amp; single-rank static FP8 amax JSON</span>
+python<span class="w"> </span>examples/pytorch/llm/qwen/qad/prepare_data.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model<span class="w"> </span>/path/Qwen3.8-27B<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--dataset<span class="w"> </span>nvidia/Nemotron-Cascade-2-SFT-Data<span class="w"> </span>--subset<span class="w"> </span>chat<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--out<span class="w"> </span>/path/tokenized_cascade2
+
+<span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span><span class="w"> </span>python<span class="w"> </span>examples/pytorch/llm/qwen/qad/calibrate_amax.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model<span class="w"> </span>/path/Qwen3.8-27B<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--recipe<span class="w"> </span>examples/pytorch/llm/qwen/qad/recipes/qwen3_5_27b_mxfp4_fp8_full_fsdp2.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data<span class="w"> </span>/path/tokenized_cascade2<span class="w"> </span>--samples<span class="w"> </span><span class="m">32</span><span class="w"> </span>--out<span class="w"> </span>/path/quantizer_state.json
+
+<span class="c1"># 3) Formal 4×GPU RTX Pro 6000 / H200 MXFP4+FP8 LoRA Path-B QAD (seq8192, gbs16, native online calibration)</span>
+<span class="nv">QAD_GPUS</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span><span class="nv">QAD_MODEL</span><span class="o">=</span>/path/Qwen3.8-27B<span class="w"> </span><span class="nv">QAD_DATA</span><span class="o">=</span>/path/tokenized_cascade2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>bash<span class="w"> </span>examples/pytorch/llm/qwen/qad/scripts/run_qad_rtxpro_mxfp4_lora_b.sh
+
+<span class="c1"># 4) Full QAD on 8×H200 (seq8192, gbs16, 4000 steps)</span>
+<span class="nv">DATA</span><span class="o">=</span>/path/tokenized_cascade2<span class="w"> </span><span class="nv">QUANTIZER_STATE</span><span class="o">=</span>/path/quantizer_state.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>bash<span class="w"> </span>examples/pytorch/llm/qwen/qad/scripts/run_full_8xh200.sh
+
+<span class="c1"># 5) Low-Memory Full QAD on 4×80GB/96GB GPUs (FSDP2 CPU offload, &lt; 82 GiB/GPU)</span>
+<span class="nv">CUDA_VISIBLE_DEVICES</span><span class="o">=</span><span class="m">0</span>,1,2,3<span class="w"> </span>torchrun<span class="w"> </span>--nproc_per_node<span class="o">=</span><span class="m">4</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>examples/pytorch/llm/qwen/qad/train.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--config<span class="w"> </span>examples/pytorch/llm/qwen/qad/recipes/qwen3_5_27b_mxfp4_fp8_full_cpu_offload.yaml<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_name_or_path<span class="w"> </span>/path/Qwen3.8-27B<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--data_prefix<span class="w"> </span>/path/tokenized_cascade2<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--quantizer_state_path<span class="w"> </span>/path/quantizer_state.json<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--output_dir<span class="w"> </span>runs/qwen35_27b_lowmem
+</pre></div>
+</div>
+<p>Every field in <code class="docutils literal notranslate"><span class="pre">--config</span> <span class="pre">&lt;yaml&gt;</span></code> maps directly onto <code class="docutils literal notranslate"><span class="pre">ModelDataArguments</span></code> or <code class="docutils literal notranslate"><span class="pre">QADTrainingArguments</span></code> (<code class="docutils literal notranslate"><span class="pre">transformers.TrainingArguments</span></code> subclass), so any parameter (<code class="docutils literal notranslate"><span class="pre">--learning_rate</span></code>, <code class="docutils literal notranslate"><span class="pre">--max_steps</span></code>, <code class="docutils literal notranslate"><span class="pre">--quant_backend</span></code>, <code class="docutils literal notranslate"><span class="pre">--kd_temperature</span></code>, <code class="docutils literal notranslate"><span class="pre">--kd_top_k</span></code>, <code class="docutils literal notranslate"><span class="pre">--save_steps</span></code>, etc.) can be overridden cleanly on the command line.</p>
+</section>
+<section id="yaml-recipe-format">
+<h2>YAML Recipe Format<a class="headerlink" href="#yaml-recipe-format" title="Link to this heading"></a></h2>
+<div class="highlight-yaml notranslate"><div class="highlight"><pre><span></span><span class="nt">model_name_or_path</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">Qwen/Qwen3.8-27B</span>
+<span class="nt">model_dtype</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">bfloat16</span>
+<span class="nt">seq_length</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">8192</span>
+
+<span class="c1"># Quantization (FakeQuantConfig inline dict or preset path)</span>
+<span class="nt">quant</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">backend</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">auto</span><span class="w">              </span><span class="c1"># auto -&gt; fused Triton QDQ on GPU, PyTorch ATen fallback</span>
+<span class="w">  </span><span class="nt">config_groups</span><span class="p">:</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'re:.*\.mlp\.(gate_proj|up_proj|down_proj)$'</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">weights</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="nv">mxfp4</span><span class="p p-Indicator">,</span><span class="nt"> dynamic</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">input_activations</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="nv">mxfp4</span><span class="p p-Indicator">,</span><span class="nt"> dynamic</span><span class="p">:</span><span class="w"> </span><span class="nv">true</span><span class="p p-Indicator">}</span>
+<span class="w">    </span><span class="p p-Indicator">-</span><span class="w"> </span><span class="nt">targets</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'re:.*\.(self_attn|linear_attn)\.(q_proj|k_proj|v_proj|o_proj|in_proj_qkv|in_proj_z|out_proj)$'</span><span class="p p-Indicator">]</span>
+<span class="w">      </span><span class="nt">weights</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="nv">fp8_e4m3</span><span class="p p-Indicator">,</span><span class="nt"> dynamic</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">}</span>
+<span class="w">      </span><span class="nt">input_activations</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">{</span><span class="nt">format</span><span class="p">:</span><span class="w"> </span><span class="nv">fp8_e4m3</span><span class="p p-Indicator">,</span><span class="nt"> dynamic</span><span class="p">:</span><span class="w"> </span><span class="nv">false</span><span class="p p-Indicator">}</span>
+<span class="w">  </span><span class="nt">ignore</span><span class="p">:</span><span class="w"> </span><span class="p p-Indicator">[</span><span class="s">'lm_head'</span><span class="p p-Indicator">,</span><span class="w"> </span><span class="s">'re:.*mlp\.gate$'</span><span class="p p-Indicator">]</span>
+
+<span class="c1"># Knowledge Distillation (DistillationTrainingArguments)</span>
+<span class="nt">teacher_placement</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">shard</span><span class="w">     </span><span class="c1"># shard (FSDP2) | self (zero-VRAM LoRA) | cuda | cpu</span>
+<span class="nt">kd_loss_type</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">topk_kl</span><span class="w">        </span><span class="c1"># topk_kl | kl | ce</span>
+<span class="nt">kd_top_k</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">4096</span>
+<span class="nt">kd_temperature</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="nt">kd_reverse_kl</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+<span class="nt">kd_loss_weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1.0</span>
+<span class="nt">ce_loss_weight</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">0.0</span>
+<span class="nt">logits_chunk_size</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">1024</span><span class="w">      </span><span class="c1"># bounds peak logit memory on 248k vocabulary</span>
+
+<span class="c1"># Standard HuggingFace TrainingArguments + FSDP2</span>
+<span class="nt">bf16</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="nt">fsdp</span><span class="p">:</span><span class="w"> </span><span class="s">"full_shard</span><span class="nv"> </span><span class="s">auto_wrap"</span>
+<span class="nt">fsdp_config</span><span class="p">:</span>
+<span class="w">  </span><span class="nt">fsdp_version</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">2</span>
+<span class="w">  </span><span class="nt">reshard_after_forward</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">activation_checkpointing</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">true</span>
+<span class="w">  </span><span class="nt">cpu_offload</span><span class="p">:</span><span class="w"> </span><span class="l l-Scalar l-Scalar-Plain">false</span>
+</pre></div>
+</div>
+<section id="static-fp8-amax-sources">
+<h3>Static FP8 <code class="docutils literal notranslate"><span class="pre">amax</span></code> Sources<a class="headerlink" href="#static-fp8-amax-sources" title="Link to this heading"></a></h3>
+<p>Static quantizers (<code class="docutils literal notranslate"><span class="pre">dynamic:</span> <span class="pre">false</span></code>, such as <code class="docutils literal notranslate"><span class="pre">fp8_e4m3</span></code>) calibrate FP32 <code class="docutils literal notranslate"><span class="pre">amax</span></code> buffers natively without external toolkits:</p>
+<ol class="simple">
+<li><p><strong>Native online FSDP2 calibration (<code class="docutils literal notranslate"><span class="pre">calib_batches</span></code>, default)</strong>: <code class="docutils literal notranslate"><span class="pre">QADTrainer</span></code> automatically bypasses dynamic quantizers during calibration, observes static activations across distributed ranks, and all-reduces exact <code class="docutils literal notranslate"><span class="pre">MAX</span></code> <code class="docutils literal notranslate"><span class="pre">amax</span></code> buffers before step 1 (<code class="docutils literal notranslate"><span class="pre">0.0</span></code>-ULP identical to ModelOpt <code class="docutils literal notranslate"><span class="pre">mtq.quantize</span></code>).</p></li>
+<li><p><strong>Standalone pre-calibration (<code class="docutils literal notranslate"><span class="pre">calibrate_amax.py</span></code>)</strong>: Runs <code class="docutils literal notranslate"><span class="pre">calibrate_static_amax</span></code> over <code class="docutils literal notranslate"><span class="pre">N</span></code> sequences on 1 GPU and writes lossless <code class="docutils literal notranslate"><span class="pre">quantizer_state.json</span></code> (<code class="docutils literal notranslate"><span class="pre">amax</span></code> + IEEE-754 <code class="docutils literal notranslate"><span class="pre">amax_hex</span></code>), reusable via <code class="docutils literal notranslate"><span class="pre">--quantizer_state_path</span></code>.</p></li>
+<li><p><strong>Optional ModelOpt import (<code class="docutils literal notranslate"><span class="pre">tools/convert_modelopt_amax.py</span></code>)</strong>: Converts legacy ModelOpt <code class="docutils literal notranslate"><span class="pre">.quant_summary.txt</span></code> or <code class="docutils literal notranslate"><span class="pre">.pt</span></code> state files into <code class="docutils literal notranslate"><span class="pre">quantizer_state.json</span></code> for cross-framework parity experiments.</p></li>
+</ol>
+</section>
+</section>
+<section id="training-metrics-checkpoints">
+<h2>Training Metrics &amp; Checkpoints<a class="headerlink" href="#training-metrics-checkpoints" title="Link to this heading"></a></h2>
+<p>Each <code class="docutils literal notranslate"><span class="pre">QADTrainer</span></code> log step emits:</p>
+<div class="highlight-text notranslate"><div class="highlight"><pre><span></span>loss, kd_loss, ce_loss, kd_tokens, learning_rate, grad_norm,
+tokens, tokens_per_s, step_s, world_size, recompute,
+params_total, params_trainable,
+tflops_student, tflops_teacher, tflops_total, tflops_*_per_gpu,
+mfu_student, mfu_teacher, mfu_total, peak_basis, peak_gib, alloc_gib
+</pre></div>
+</div>
+<p>Every saved checkpoint writes <code class="docutils literal notranslate"><span class="pre">quantizer_state.json</span></code> (exact IEEE-754 <code class="docutils literal notranslate"><span class="pre">amax_hex</span></code> buffers) and <code class="docutils literal notranslate"><span class="pre">quant_config.json</span></code> alongside <code class="docutils literal notranslate"><span class="pre">model.safetensors</span></code> (or PEFT <code class="docutils literal notranslate"><span class="pre">adapter_model.safetensors</span></code>), enabling deterministic resume and one-command <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> export.</p>
+</section>
+<section id="export-vllm-deployment">
+<h2>Export &amp; vLLM Deployment<a class="headerlink" href="#export-vllm-deployment" title="Link to this heading"></a></h2>
+<p>Export runs in a standalone process with bounded host RAM (~1 shard in memory at a time) and supports both <strong>real packed <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code></strong> (<code class="docutils literal notranslate"><span class="pre">MXFP4</span></code> packed <code class="docutils literal notranslate"><span class="pre">uint8</span></code> + <code class="docutils literal notranslate"><span class="pre">E8M0</span></code> scales and <code class="docutils literal notranslate"><span class="pre">FP8_E4M3</span></code> tensors + scales) and <strong>BF16</strong> (<code class="docutils literal notranslate"><span class="pre">format=&quot;bf16&quot;</span></code>), automatically transplanting quantized text weights back into the full multimodal VLM directory (<code class="docutils literal notranslate"><span class="pre">keep_vision=True</span></code>):</p>
+<div class="highlight-bash notranslate"><div class="highlight"><pre><span></span><span class="c1"># 1) Real packed compressed-tensors MXFP4 + FP8 export (ready for vLLM V1!)</span>
+python<span class="w"> </span>examples/pytorch/llm/qwen/qad/export.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model<span class="w"> </span>/path/Qwen3.8-27B<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="w"> </span>compressed_tensors<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--checkpoint<span class="w"> </span>runs/&lt;run&gt;/checkpoint-1000<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--out<span class="w"> </span>runs/export-mxfp4-fp8
+
+<span class="c1"># 2) Path-B LoRA adapter merge + real compressed-tensors export</span>
+python<span class="w"> </span>examples/pytorch/llm/qwen/qad/export.py<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model<span class="w"> </span>/path/Qwen3.8-27B<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--format<span class="w"> </span>compressed_tensors<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--checkpoint<span class="w"> </span>runs/&lt;run&gt;/checkpoint-1000<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--out<span class="w"> </span>runs/export-lora-mxfp4-fp8
+
+<span class="c1"># 3) Serve directly with vLLM or evaluate with lm_eval</span>
+lm_eval<span class="w"> </span>--model<span class="w"> </span>vllm<span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--model_args<span class="w"> </span><span class="nv">pretrained</span><span class="o">=</span>runs/export-mxfp4-fp8,tensor_parallel_size<span class="o">=</span><span class="m">4</span>,gpu_memory_utilization<span class="o">=</span><span class="m">0</span>.85,max_model_len<span class="o">=</span><span class="m">8192</span><span class="w"> </span><span class="se">\</span>
+<span class="w">  </span>--tasks<span class="w"> </span>mmlu,gsm8k,piqa,hellaswag<span class="w"> </span>--batch_size<span class="w"> </span>auto
+</pre></div>
+</div>
+</section>
+<section id="numerical-parity-performance-highlights">
+<h2>Numerical Parity &amp; Performance Highlights<a class="headerlink" href="#numerical-parity-performance-highlights" title="Link to this heading"></a></h2>
+<ul class="simple">
+<li><p><strong>L1–L4 Numerical Parity vs. ModelOpt / Megatron</strong>:</p>
+<ul>
+<li><p><strong>L1 Operator QDQ</strong>: <strong>0-ULP bitwise identity</strong> across <code class="docutils literal notranslate"><span class="pre">MXFP4</span></code>, <code class="docutils literal notranslate"><span class="pre">MXFP8</span></code>, <code class="docutils literal notranslate"><span class="pre">NVFP4</span></code>, and <code class="docutils literal notranslate"><span class="pre">FP8_E4M3</span></code> (both PyTorch ATen and fused Triton kernels).</p></li>
+<li><p><strong>L2 Checkpoint / Scale Import</strong>: <strong>0.0 diff</strong> FP32 <code class="docutils literal notranslate"><span class="pre">amax</span></code> preservation across Megatron $\leftrightarrow$ HuggingFace projection splits.</p></li>
+<li><p><strong>L3 Single-Step &amp; Multi-Step Training</strong>: Steps 1–2 match the formal 8×H200 run (<code class="docutils literal notranslate"><span class="pre">...1108-0747</span></code>) to <code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">1e-8</span></code> (<code class="docutils literal notranslate"><span class="pre">0.08816621</span></code>, <code class="docutils literal notranslate"><span class="pre">0.09347378</span></code>), and controlled single-step/2-step FSDP2 probes match loss, grad norms, and parameter updates bitwise (<code class="docutils literal notranslate"><span class="pre">0.0</span></code> diff).</p></li>
+<li><p><strong>L4 Export &amp; Serving</strong>: Packed <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> <code class="docutils literal notranslate"><span class="pre">MXFP4</span></code> + <code class="docutils literal notranslate"><span class="pre">FP8</span></code> checkpoints decompress with <strong>0-ULP exact match</strong> against fake-quantized <code class="docutils literal notranslate"><span class="pre">Q_w(W)</span></code> tensors and load natively in <strong>vLLM V1</strong>.</p></li>
+</ul>
+</li>
+<li><p><strong>Memory &amp; Kernel Efficiency</strong>:</p>
+<ul>
+<li><p><strong>Fused Triton QDQ</strong>: <strong>8.95x–21.64x</strong> faster than eager PyTorch QDQ on <code class="docutils literal notranslate"><span class="pre">Qwen3.8-27B</span></code> MLP shapes (<code class="docutils literal notranslate"><span class="pre">[5120,</span> <span class="pre">17408]</span></code>, <code class="docutils literal notranslate"><span class="pre">[17408,</span> <span class="pre">5120]</span></code>) with <strong>0 B</strong> temporary workspace.</p></li>
+<li><p><strong>4-GPU Low-Memory Full QAD</strong>: <code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">82</span> <span class="pre">GiB/GPU</span></code> at <code class="docutils literal notranslate"><span class="pre">seq8192</span></code> via FSDP2 <code class="docutils literal notranslate"><span class="pre">cpu_offload:</span> <span class="pre">true</span></code> + layer-sharded teacher (<code class="docutils literal notranslate"><span class="pre">13.5</span> <span class="pre">GiB/GPU</span></code>).</p></li>
+<li><p><strong>Zero-VRAM Self-Teacher LoRA QAD</strong>: <code class="docutils literal notranslate"><span class="pre">&lt;</span> <span class="pre">45</span> <span class="pre">GiB/GPU</span></code> on 1–4 GPUs by reusing the student’s frozen base weights for teacher inference.</p></li>
+</ul>
+</li>
+</ul>
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2dbaf4d0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

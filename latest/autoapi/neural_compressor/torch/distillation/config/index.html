@@ -1,0 +1,215 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.distillation.config &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.distillation.config</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/torch/distillation/config/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.distillation.config">
+<span id="neural-compressor-torch-distillation-config"></span><h1>neural_compressor.torch.distillation.config<a class="headerlink" href="#module-neural_compressor.torch.distillation.config" title="Link to this heading"></a></h1>
+<p>Declarative Knowledge Distillation configuration.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.distillation.config.DistillationConfig" title="neural_compressor.torch.distillation.config.DistillationConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DistillationConfig</span></code></a></p></td>
+<td><p>Teacher placement and divergence loss configuration for <code class="xref py py-class docutils literal notranslate"><span class="pre">KDTrainer</span></code> and <code class="xref py py-class docutils literal notranslate"><span class="pre">QADTrainer</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.distillation.config.DistillationTrainingArguments" title="neural_compressor.torch.distillation.config.DistillationTrainingArguments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">DistillationTrainingArguments</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">transformers.TrainingArguments</span></code> extended with knowledge-distillation CLI options.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.distillation.config.DistillationConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.distillation.config.</span></span><span class="sig-name descname"><span class="pre">DistillationConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">teacher</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">loss</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'topk_kl'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">top_k</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">4096</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">temperature</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">reverse</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">kd_weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ce_weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0.0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1024</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">teacher_device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'shard'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">offline_topk_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">chunk</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/distillation/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.distillation.config.DistillationConfig" title="Link to this definition"></a></dt>
+<dd><p>Teacher placement and divergence loss configuration for <code class="xref py py-class docutils literal notranslate"><span class="pre">KDTrainer</span></code> and <code class="xref py py-class docutils literal notranslate"><span class="pre">QADTrainer</span></code>.</p>
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.distillation.config.DistillationConfig.teacher">
+<span class="sig-name descname"><span class="pre">teacher</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/distillation/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.distillation.config.DistillationConfig.teacher" title="Link to this definition"></a></dt>
+<dd><p>Teacher model specification: <code class="docutils literal notranslate"><span class="pre">None</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;self&quot;</span></code> (zero-VRAM LoRA self-teacher),
+a HuggingFace model path/ID string, or a pre-loaded <code class="docutils literal notranslate"><span class="pre">torch.nn.Module</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.distillation.config.DistillationConfig.loss">
+<span class="sig-name descname"><span class="pre">loss</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/distillation/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.distillation.config.DistillationConfig.loss" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">&quot;topk_kl&quot;</span></code> (default, ModelOpt-aligned), <code class="docutils literal notranslate"><span class="pre">&quot;kl&quot;</span></code> (full-vocab KL), or <code class="docutils literal notranslate"><span class="pre">&quot;ce&quot;</span></code>.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.distillation.config.DistillationConfig.top_k">
+<span class="sig-name descname"><span class="pre">top_k</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/distillation/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.distillation.config.DistillationConfig.top_k" title="Link to this definition"></a></dt>
+<dd><p>Number of highest-logit teacher vocabulary entries retained per token.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.distillation.config.DistillationConfig.temperature">
+<span class="sig-name descname"><span class="pre">temperature</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/distillation/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.distillation.config.DistillationConfig.temperature" title="Link to this definition"></a></dt>
+<dd><p>Logit temperature (applied without any <code class="docutils literal notranslate"><span class="pre">T^2</span></code> multiplier, matching ModelOpt).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.distillation.config.DistillationConfig.reverse">
+<span class="sig-name descname"><span class="pre">reverse</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/distillation/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.distillation.config.DistillationConfig.reverse" title="Link to this definition"></a></dt>
+<dd><p>Swap <code class="docutils literal notranslate"><span class="pre">(student_topk,</span> <span class="pre">teacher_topk)</span></code> <em>after</em> gathering on teacher Top-K indices.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.distillation.config.DistillationConfig.kd_weight">
+<span class="sig-name descname"><span class="pre">kd_weight</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/distillation/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.distillation.config.DistillationConfig.kd_weight" title="Link to this definition"></a></dt>
+<dd><p>Scalar multiplier on the knowledge-distillation term.</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.distillation.config.DistillationConfig.ce_weight">
+<span class="sig-name descname"><span class="pre">ce_weight</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/distillation/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.distillation.config.DistillationConfig.ce_weight" title="Link to this definition"></a></dt>
+<dd><p>Scalar multiplier on the next-token Cross-Entropy term (requires <code class="docutils literal notranslate"><span class="pre">labels</span></code>).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.distillation.config.DistillationConfig.chunk_size">
+<span class="sig-name descname"><span class="pre">chunk_size</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/distillation/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.distillation.config.DistillationConfig.chunk_size" title="Link to this definition"></a></dt>
+<dd><p>Sequence token chunk size for memory-bounded <code class="docutils literal notranslate"><span class="pre">lm_head</span></code> projection (<code class="docutils literal notranslate"><span class="pre">0</span></code> = unchunked).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.distillation.config.DistillationConfig.teacher_device">
+<span class="sig-name descname"><span class="pre">teacher_device</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/distillation/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.distillation.config.DistillationConfig.teacher_device" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">&quot;shard&quot;</span></code> (FSDP2 sharded), <code class="docutils literal notranslate"><span class="pre">&quot;cuda&quot;</span></code> (replicated GPU), <code class="docutils literal notranslate"><span class="pre">&quot;cpu&quot;</span></code> (offloaded),
+<code class="docutils literal notranslate"><span class="pre">&quot;self&quot;</span></code> (in-place adapter/fake-quant toggle), or <code class="docutils literal notranslate"><span class="pre">&quot;offline&quot;</span></code> (precomputed Top-K shards).</p>
+</dd></dl>
+
+<dl class="py attribute">
+<dt class="sig sig-object py" id="neural_compressor.torch.distillation.config.DistillationConfig.offline_topk_dir">
+<span class="sig-name descname"><span class="pre">offline_topk_dir</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/distillation/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.distillation.config.DistillationConfig.offline_topk_dir" title="Link to this definition"></a></dt>
+<dd><p>Optional directory containing precomputed teacher Top-K shards.</p>
+</dd></dl>
+
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.distillation.config.DistillationTrainingArguments">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.distillation.config.</span></span><span class="sig-name descname"><span class="pre">DistillationTrainingArguments</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/distillation/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.distillation.config.DistillationTrainingArguments" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">transformers.TrainingArguments</span></code> extended with knowledge-distillation CLI options.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2eb0f3f0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

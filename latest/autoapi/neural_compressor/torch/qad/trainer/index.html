@@ -1,0 +1,180 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.qad.trainer &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.qad.trainer</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/torch/qad/trainer/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.qad.trainer">
+<span id="neural-compressor-torch-qad-trainer"></span><h1>neural_compressor.torch.qad.trainer<a class="headerlink" href="#module-neural_compressor.torch.qad.trainer" title="Link to this heading"></a></h1>
+<p>QADTrainer composing KDTrainer + QATTrainer via cooperative multiple inheritance.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.trainer.QADTrainer" title="neural_compressor.torch.qad.trainer.QADTrainer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QADTrainer</span></code></a></p></td>
+<td><p>Unified Quantization-Aware Distillation Trainer composing <code class="xref py py-class docutils literal notranslate"><span class="pre">KDTrainer</span></code> and <code class="xref py py-class docutils literal notranslate"><span class="pre">QATTrainer</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.trainer.prepare_qad_model" title="neural_compressor.torch.qad.trainer.prepare_qad_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_qad_model</span></code></a>(→ torch.nn.Module)</p></td>
+<td><p>Prepare <code class="docutils literal notranslate"><span class="pre">model</span></code> for QAD by inserting fake-quantizers and optionally attaching PEFT LoRA.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.trainer.prepare_qad_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.trainer.</span></span><span class="sig-name descname"><span class="pre">prepare_qad_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.torch.algorithms.fake_quant.FakeQuantConfig</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">lora_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">lora_merge_before_quant</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.nn.Module</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/trainer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.trainer.prepare_qad_model" title="Link to this definition"></a></dt>
+<dd><p>Prepare <code class="docutils literal notranslate"><span class="pre">model</span></code> for QAD by inserting fake-quantizers and optionally attaching PEFT LoRA.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – Standard <code class="docutils literal notranslate"><span class="pre">transformers.PreTrainedModel</span></code> (or <code class="docutils literal notranslate"><span class="pre">PeftModel</span></code>).</p></li>
+<li><p><strong>quant_config</strong> – <code class="xref py py-class docutils literal notranslate"><span class="pre">FakeQuantConfig</span></code> describing weight and activation fake-quantization.</p></li>
+<li><p><strong>lora_config</strong> – Optional <code class="docutils literal notranslate"><span class="pre">peft.LoraConfig</span></code> instance or <code class="docutils literal notranslate"><span class="pre">dict</span></code> of <code class="docutils literal notranslate"><span class="pre">LoraConfig</span></code> kwargs.</p></li>
+<li><p><strong>lora_merge_before_quant</strong> – When <code class="docutils literal notranslate"><span class="pre">True</span></code> (Path-B, recommended for inference export parity),
+quantizes <code class="docutils literal notranslate"><span class="pre">W</span> <span class="pre">+</span> <span class="pre">s</span> <span class="pre">*</span> <span class="pre">B</span> <span class="pre">&#64;</span> <span class="pre">A</span></code> before weight fake-quantization.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.trainer.QADTrainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.trainer.</span></span><span class="sig-name descname"><span class="pre">QADTrainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">pos_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">teacher_model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">teacher</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">distill_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.torch.distillation.DistillationConfig</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.torch.algorithms.fake_quant.FakeQuantConfig</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantizer_state_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/trainer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.trainer.QADTrainer" title="Link to this definition"></a></dt>
+<dd><p>Unified Quantization-Aware Distillation Trainer composing <code class="xref py py-class docutils literal notranslate"><span class="pre">KDTrainer</span></code> and <code class="xref py py-class docutils literal notranslate"><span class="pre">QATTrainer</span></code>.</p>
+<p>MRO: <code class="docutils literal notranslate"><span class="pre">QADTrainer</span> <span class="pre">-&gt;</span> <span class="pre">KDTrainer</span> <span class="pre">-&gt;</span> <span class="pre">QATTrainer</span> <span class="pre">-&gt;</span> <span class="pre">transformers.Trainer</span></code>
+* <code class="docutils literal notranslate"><span class="pre">KDTrainer.compute_loss</span></code> provides chunked zero-logit-allocation Top-K KL / Full KL / Hybrid CE</p>
+<blockquote>
+<div><p>across online external teacher, zero-VRAM LoRA <code class="docutils literal notranslate"><span class="pre">teacher_model=&quot;self&quot;</span></code>, and offline Top-K shards.</p>
+</div></blockquote>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">QATTrainer</span></code> provides <code class="docutils literal notranslate"><span class="pre">prepare_qat</span></code>, automatic static <code class="docutils literal notranslate"><span class="pre">amax</span></code> calibration, FSDP2 + PEFT
+checkpoint gathering, and lossless <code class="docutils literal notranslate"><span class="pre">quantizer_state.json</span></code> + <code class="docutils literal notranslate"><span class="pre">quant_config.json</span></code> persistence.</p></li>
+</ul>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2e98dbe0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

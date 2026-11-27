@@ -89,26 +89,12 @@
              
   <section id="module-neural_compressor.torch.algorithms.qat.quant_linear">
 <span id="neural-compressor-torch-algorithms-qat-quant-linear"></span><h1>neural_compressor.torch.algorithms.qat.quant_linear<a class="headerlink" href="#module-neural_compressor.torch.algorithms.qat.quant_linear" title="Link to this heading"></a></h1>
-<p>Quantized Linear.</p>
-<section id="classes">
-<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
-<table class="autosummary longtable docutils align-default">
-<tbody>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.qat.quant_linear.QuantLinear" title="neural_compressor.torch.algorithms.qat.quant_linear.QuantLinear"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantLinear</span></code></a></p></td>
-<td><p>Quantized version of nn.Linear.</p></td>
-</tr>
-</tbody>
-</table>
-</section>
-<section id="module-contents">
-<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
-<dl class="py class">
-<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.qat.quant_linear.QuantLinear">
-<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.qat.quant_linear.</span></span><span class="sig-name descname"><span class="pre">QuantLinear</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/qat/quant_linear.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.qat.quant_linear.QuantLinear" title="Link to this definition"></a></dt>
-<dd><p>Quantized version of nn.Linear.</p>
-</dd></dl>
-
-</section>
+<p>Compatibility shim for the legacy QAT <code class="docutils literal notranslate"><span class="pre">QuantLinear</span></code>.</p>
+<p>The implementation moved to
+<a class="reference internal" href="../../fake_quant/quant_linear/index.html#module-neural_compressor.torch.algorithms.fake_quant.quant_linear" title="neural_compressor.torch.algorithms.fake_quant.quant_linear"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.fake_quant.quant_linear</span></code></a>. Importing the
+old path keeps downstream code working; new code should use
+<code class="docutils literal notranslate"><span class="pre">neural_compressor.torch.quantization.QuantLinear</span></code> (re-exported here) and
+<code class="docutils literal notranslate"><span class="pre">FakeQuantConfig</span></code> instead of <code class="docutils literal notranslate"><span class="pre">prepare_qat(mapping=...)</span></code>.</p>
 </section>
 
 
@@ -125,7 +111,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7c95a0939b70> 
+   <jinja2.runtime.BlockReference object at 0x75ca2ef678c0> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

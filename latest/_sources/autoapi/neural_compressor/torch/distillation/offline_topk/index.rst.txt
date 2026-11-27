@@ -1,0 +1,54 @@
+neural_compressor.torch.distillation.offline_topk
+=================================================
+
+.. py:module:: neural_compressor.torch.distillation.offline_topk
+
+.. autoapi-nested-parse::
+
+   Offline precomputed Teacher Top-K extraction and data collation utilities.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.distillation.offline_topk.PrecomputedTopKDataset
+   neural_compressor.torch.distillation.offline_topk.PrecomputedTopKCollator
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.distillation.offline_topk.extract_teacher_topk_batch
+   neural_compressor.torch.distillation.offline_topk.save_precomputed_topk_shard
+
+
+Module Contents
+---------------
+
+.. py:function:: extract_teacher_topk_batch(teacher_logits: torch.Tensor, top_k: int = 4096, *, values_dtype: torch.dtype = torch.bfloat16, indices_dtype: torch.dtype = torch.int32) -> tuple[torch.Tensor, torch.Tensor]
+
+   Extract compact ``(topk_values, topk_indices)`` tensors suitable for disk caching.
+
+
+.. py:function:: save_precomputed_topk_shard(samples: Sequence[Mapping[str, torch.Tensor]], path: Union[str, pathlib.Path]) -> pathlib.Path
+
+   Persist a list of sample dicts containing ``input_ids`` and ``teacher_topk_{values,indices}``.
+
+
+.. py:class:: PrecomputedTopKDataset(shard_paths: Union[str, pathlib.Path, Iterable[Union[str, pathlib.Path]]])
+
+
+
+   Dataset wrapper loading offline teacher Top-K ``.pt`` shards produced by :func:`save_precomputed_topk_shard`.
+
+
+.. py:class:: PrecomputedTopKCollator(pad_token_id: int = 0)
+
+   Pad and stack batches containing ``input_ids`` plus offline ``teacher_topk_values`` & ``teacher_topk_indices``.
+
+

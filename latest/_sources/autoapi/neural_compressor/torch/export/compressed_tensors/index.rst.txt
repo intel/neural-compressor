@@ -1,0 +1,92 @@
+neural_compressor.torch.export.compressed_tensors
+=================================================
+
+.. py:module:: neural_compressor.torch.export.compressed_tensors
+
+.. autoapi-nested-parse::
+
+   Pack fake-quantized linear layers into ``compressed-tensors`` / ``vLLM`` layout.
+
+   This module bridges :mod:`neural_compressor.torch.algorithms.fake_quant` and
+   ``compressed-tensors`` (>= 0.9) / ``vLLM`` (>= 0.8) without requiring either
+   inference package to be installed in the training environment:
+
+   * ``mxfp4`` -> ``mxfp4-pack-quantized``:
+     ``weight_packed`` (``uint8 [out, in // 2]``) + ``weight_scale`` (``uint8 [out, in // 32]`` E8M0).
+   * ``nvfp4`` -> ``nvfp4-pack-quantized``:
+     ``weight_packed`` (``uint8 [out, in // 2]``) + ``weight_scale`` (``float8_e4m3fn [out, in // 16]``)
+     + ``weight_global_scale`` (``float32 [1]`` divisor ``1 / global_scale``)
+     + optional ``input_global_scale`` (``float32 [1]`` divisor ``(6 * 448) / input_amax``).
+   * ``mxfp8`` -> ``mxfp8-quantized``:
+     ``weight`` (``float8_e4m3fn [out, in]``) + ``weight_scale`` (``uint8 [out, in // 32]`` E8M0).
+   * ``fp8_e4m3`` -> ``float-quantized``:
+     ``weight`` (``float8_e4m3fn [out, in]``) + ``weight_scale`` (``float32 [1]``)
+     + optional static ``input_scale`` (``float32 [1]``).
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.export.compressed_tensors.LayerSchemeSpec
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.export.compressed_tensors.pack_linear_tensors
+   neural_compressor.torch.export.compressed_tensors.build_compressed_tensors_config
+   neural_compressor.torch.export.compressed_tensors.dequantize_compressed_tensors_layer
+   neural_compressor.torch.export.compressed_tensors.pack_model_to_compressed_tensors
+
+
+Module Contents
+---------------
+
+.. py:class:: LayerSchemeSpec
+
+   Canonical ``compressed-tensors`` scheme descriptor for a single Linear module.
+
+
+.. py:function:: pack_linear_tensors(module_name: str, weight: torch.Tensor, bias: Optional[torch.Tensor], weight_quantizer: neural_compressor.torch.algorithms.fake_quant.tensor_quantizer.TensorQuantizer, input_quantizer: Optional[neural_compressor.torch.algorithms.fake_quant.tensor_quantizer.TensorQuantizer] = None, *, tensor_prefix: Optional[str] = None, dtype: torch.dtype = torch.bfloat16) -> tuple[dict[str, torch.Tensor], Optional[LayerSchemeSpec]]
+
+   Pack a single linear module's weight/bias/scales into ``compressed-tensors`` keys.
+
+   :param module_name: Logical module path inside the model (used for diagnostics).
+   :param weight: Dense weight tensor ``[out_features, in_features]`` (already LoRA-merged if needed).
+   :param bias: Optional dense bias tensor ``[out_features]``.
+   :param weight_quantizer: Module's ``weight_quantizer``.
+   :param input_quantizer: Optional module's ``input_quantizer``.
+   :param tensor_prefix: Optional target key prefix (defaults to ``module_name``).
+   :param dtype: Dense fallback dtype for unquantized/bias tensors.
+
+   :returns: ``(tensors_dict, scheme_spec)`` where ``scheme_spec`` is ``None`` when the
+             layer is unquantized (e.g. ``bf16`` or disabled ``weight_quantizer``).
+
+
+.. py:function:: build_compressed_tensors_config(layer_schemes: dict[str, LayerSchemeSpec], *, ignore_targets: Optional[list[str]] = None) -> dict[str, Any]
+
+   Assemble ``config.json['quantization_config']`` in ``compressed-tensors`` schema.
+
+   ``targets`` in each ``config_group`` are always expanded to sorted concrete module
+   paths (never broad regexes such as ``re:.*mlp.*``) so vision-tower MLPs or GDN
+   auxiliary projections in hybrid/multimodal architectures are never accidentally matched.
+
+
+.. py:function:: dequantize_compressed_tensors_layer(prefix: str, tensors: dict[str, torch.Tensor], scheme_format: str, *, original_shape: Optional[tuple[int, int]] = None, dtype: torch.dtype = torch.bfloat16) -> torch.Tensor
+
+   Dequantize an exported ``compressed-tensors`` layer back to dense floating-point.
+
+
+.. py:function:: pack_model_to_compressed_tensors(model: torch.nn.Module, *, target_prefix: str = '', extra_ignore: Optional[list[str]] = None, dtype: torch.dtype = torch.bfloat16) -> tuple[dict[str, torch.Tensor], dict[str, Any]]
+
+   Pack an in-memory ``QuantLinear`` model into ``(compressed_state_dict, quantization_config)``.
+
+   Any ``QuantLoraLinear`` or PEFT wrapper on ``model`` should be merged beforehand via
+   :func:`merge_lora_into_quant_linear` (handled automatically by ``export_hf_checkpoint``).
+
+

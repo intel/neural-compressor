@@ -1,0 +1,86 @@
+neural_compressor.torch.algorithms.fake_quant.trainer
+=====================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.trainer
+
+.. autoapi-nested-parse::
+
+   Standalone HuggingFace ``Trainer`` subclass for Quantization-Aware Training (QAT).
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.trainer.QATTrainer
+   neural_compressor.torch.algorithms.fake_quant.trainer.QuantizationTrainingArguments
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.trainer.unwrap_model
+   neural_compressor.torch.algorithms.fake_quant.trainer.is_peft_model
+   neural_compressor.torch.algorithms.fake_quant.trainer.ensure_peft_gradient_checkpointing_delegation
+   neural_compressor.torch.algorithms.fake_quant.trainer.save_fsdp2_peft_adapter
+   neural_compressor.torch.algorithms.fake_quant.trainer.save_fsdp2_full_model
+
+
+Module Contents
+---------------
+
+.. py:function:: unwrap_model(model: Any) -> torch.nn.Module
+
+   Unwrap DDP / FSDP ``.module`` wrappers to access the underlying ``nn.Module``.
+
+
+.. py:function:: is_peft_model(model: torch.nn.Module) -> bool
+
+   Return True when ``model`` is a PEFT ``PeftModel`` wrapper.
+
+
+.. py:function:: ensure_peft_gradient_checkpointing_delegation(model: torch.nn.Module) -> None
+
+   Ensure ``PeftModel`` delegates gradient checkpointing and preserves adapter gradients under FSDP2 AC.
+
+   Besides forwarding ``gradient_checkpointing_enable`` / ``disable`` to the inner backbone, this
+   registers an idempotent forward hook on the input embedding module that marks its output
+   ``requires_grad_(True)`` whenever ``torch.is_grad_enabled()`` is ``True``. Without this hook,
+   FSDP2 ``activation_checkpointing: true`` (which wraps decoder layers in reentrant
+   ``checkpoint_wrapper`` without calling ``Trainer.gradient_checkpointing_enable``) receives
+   ``requires_grad=False`` hidden states from frozen base embeddings and drops adapter gradients.
+
+
+.. py:function:: save_fsdp2_peft_adapter(model: torch.nn.Module, out_dir: Union[str, pathlib.Path], *, should_save: bool) -> bool
+
+   Gather sharded PEFT LoRA adapter parameters under FSDP2 and save a PEFT checkpoint.
+
+
+.. py:function:: save_fsdp2_full_model(model: torch.nn.Module, out_dir: Union[str, pathlib.Path], *, should_save: bool, dtype: Optional[torch.dtype] = None) -> bool
+
+   Gather a full fine-tuned model under FSDP2 to CPU rank 0 and write ``model.safetensors``.
+
+
+.. py:class:: QATTrainer(model: Union[torch.nn.Module, Any] = None, args: Any = None, *pos_args, quant_config: Optional[neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig] = None, calib_batches: int = 0, quantizer_state_path: Optional[Union[str, pathlib.Path]] = None, **kwargs)
+
+
+
+   HuggingFace ``Trainer`` extended with fake-quantization preparation, static ``amax`` calibration,
+   and lossless ``quantizer_state.json`` checkpointing (including FSDP2 + PEFT support).
+
+   Usable standalone for standard SFT / CausalLM Cross-Entropy QAT without any teacher model,
+   and composed with :class:`~neural_compressor.torch.distillation.KDTrainer` to form
+   :class:`~neural_compressor.torch.qad.QADTrainer`.
+
+
+.. py:class:: QuantizationTrainingArguments
+
+
+
+   ``transformers.TrainingArguments`` extended with fake-quantization CLI options.
+
+

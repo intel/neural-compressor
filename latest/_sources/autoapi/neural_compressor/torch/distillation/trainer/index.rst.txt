@@ -1,0 +1,35 @@
+neural_compressor.torch.distillation.trainer
+============================================
+
+.. py:module:: neural_compressor.torch.distillation.trainer
+
+.. autoapi-nested-parse::
+
+   Standalone Knowledge Distillation Trainer with zero full-vocab logit materialization.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.distillation.trainer.KDTrainer
+
+
+Module Contents
+---------------
+
+.. py:class:: KDTrainer(model: Union[torch.nn.Module, Any] = None, args: Any = None, *pos_args, teacher_model: Optional[Union[torch.nn.Module, str]] = None, teacher: Optional[Union[torch.nn.Module, str]] = None, distill_config: Optional[neural_compressor.torch.distillation.config.DistillationConfig] = None, **kwargs)
+
+
+
+   HuggingFace ``Trainer`` subclass implementing chunked Top-K KL / Full KL + Hybrid CE distillation.
+
+   Supports:
+   * Standard ``PreTrainedModel``, VLM ``ForConditionalGeneration``, ``PeftModel``, FSDP2, and DDP.
+   * Zero full-sequence ``[B, S, V]`` logit allocation via ``_identity_lm_head`` + chunked ``lm_head`` projection.
+   * Three teacher modes: online external ``teacher_model``, zero-VRAM LoRA ``teacher_model="self"``, and
+     offline precomputed ``teacher_topk_{values,indices}`` batches.
+
+

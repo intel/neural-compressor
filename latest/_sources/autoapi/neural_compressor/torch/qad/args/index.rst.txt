@@ -1,0 +1,33 @@
+neural_compressor.torch.qad.args
+================================
+
+.. py:module:: neural_compressor.torch.qad.args
+
+.. autoapi-nested-parse::
+
+   QADTrainingArguments combining QuantizationTrainingArguments and DistillationTrainingArguments.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.qad.args.QADTrainingArguments
+
+
+Module Contents
+---------------
+
+.. py:class:: QADTrainingArguments
+
+
+
+   Unified HuggingFace ``TrainingArguments`` for Quantization-Aware Distillation (QAD).
+
+   Inherits all ``transformers.TrainingArguments`` flags (FSDP2, DeepSpeed, gradient
+   checkpointing, ``bf16``, ``lr_scheduler_type``, etc.) plus quantization and distillation
+   CLI options so standard ``HfArgumentParser`` YAML/CLI workflows work out of the box.
+
+

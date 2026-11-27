@@ -1,0 +1,77 @@
+neural_compressor.torch.distillation.config
+===========================================
+
+.. py:module:: neural_compressor.torch.distillation.config
+
+.. autoapi-nested-parse::
+
+   Declarative Knowledge Distillation configuration.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.distillation.config.DistillationConfig
+   neural_compressor.torch.distillation.config.DistillationTrainingArguments
+
+
+Module Contents
+---------------
+
+.. py:class:: DistillationConfig(teacher: Optional[Any] = None, loss: str = 'topk_kl', top_k: int = 4096, temperature: float = 1.0, reverse: bool = False, kd_weight: float = 1.0, ce_weight: float = 0.0, chunk_size: int = 1024, teacher_device: str = 'shard', offline_topk_dir: Optional[str] = None, *, chunk: Optional[int] = None)
+
+   Teacher placement and divergence loss configuration for :class:`KDTrainer` and :class:`QADTrainer`.
+
+   .. attribute:: teacher
+
+      Teacher model specification: ``None``, ``"self"`` (zero-VRAM LoRA self-teacher),
+      a HuggingFace model path/ID string, or a pre-loaded ``torch.nn.Module``.
+
+   .. attribute:: loss
+
+      ``"topk_kl"`` (default, ModelOpt-aligned), ``"kl"`` (full-vocab KL), or ``"ce"``.
+
+   .. attribute:: top_k
+
+      Number of highest-logit teacher vocabulary entries retained per token.
+
+   .. attribute:: temperature
+
+      Logit temperature (applied without any ``T^2`` multiplier, matching ModelOpt).
+
+   .. attribute:: reverse
+
+      Swap ``(student_topk, teacher_topk)`` *after* gathering on teacher Top-K indices.
+
+   .. attribute:: kd_weight
+
+      Scalar multiplier on the knowledge-distillation term.
+
+   .. attribute:: ce_weight
+
+      Scalar multiplier on the next-token Cross-Entropy term (requires ``labels``).
+
+   .. attribute:: chunk_size
+
+      Sequence token chunk size for memory-bounded ``lm_head`` projection (``0`` = unchunked).
+
+   .. attribute:: teacher_device
+
+      ``"shard"`` (FSDP2 sharded), ``"cuda"`` (replicated GPU), ``"cpu"`` (offloaded),
+      ``"self"`` (in-place adapter/fake-quant toggle), or ``"offline"`` (precomputed Top-K shards).
+
+   .. attribute:: offline_topk_dir
+
+      Optional directory containing precomputed teacher Top-K shards.
+
+
+.. py:class:: DistillationTrainingArguments
+
+
+
+   ``transformers.TrainingArguments`` extended with knowledge-distillation CLI options.
+
+

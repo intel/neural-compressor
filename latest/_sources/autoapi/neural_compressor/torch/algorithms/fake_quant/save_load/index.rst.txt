@@ -1,0 +1,69 @@
+neural_compressor.torch.algorithms.fake_quant.save_load
+=======================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.save_load
+
+.. autoapi-nested-parse::
+
+   Lossless hex-float quantizer state persistence and wrapper-prefix canonicalization.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.save_load.get_quantizer_state_dict
+   neural_compressor.torch.algorithms.fake_quant.save_load.canonicalize_module_name
+   neural_compressor.torch.algorithms.fake_quant.save_load.canonicalize_quantizer_key
+   neural_compressor.torch.algorithms.fake_quant.save_load.load_amax_map_from_state
+   neural_compressor.torch.algorithms.fake_quant.save_load.apply_amax_map_to_module_config
+   neural_compressor.torch.algorithms.fake_quant.save_load.load_quantizer_state_dict
+   neural_compressor.torch.algorithms.fake_quant.save_load.save_quantizer_state
+   neural_compressor.torch.algorithms.fake_quant.save_load.load_quantizer_state
+
+
+Module Contents
+---------------
+
+.. py:function:: get_quantizer_state_dict(model: torch.nn.Module) -> dict[str, dict[str, Any]]
+
+   Export calibrated static quantizer ``amax`` buffers with exact IEEE-754 ``amax_hex`` strings.
+
+
+.. py:function:: canonicalize_module_name(name: str) -> str
+
+   Strip DDP, FSDP2, activation-checkpointing, ``torch.compile``, and PEFT wrapper segments.
+
+
+.. py:function:: canonicalize_quantizer_key(key: str) -> str
+
+   Normalize a quantizer key across wrapper prefixes/infixes and legacy slot suffixes.
+
+
+.. py:function:: load_amax_map_from_state(state_or_path: Union[Mapping[str, Any], str, pathlib.Path]) -> dict[str, float]
+
+   Load a calibrated quantizer state mapping or JSON file into ``{canonical_key: float_amax}``.
+
+
+.. py:function:: apply_amax_map_to_module_config(module_name: str, module_cfg: neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig, amax_map: Mapping[str, float]) -> None
+
+   Populate static ``amax`` fields on ``module_cfg`` from a pre-calibrated state map.
+
+
+.. py:function:: load_quantizer_state_dict(model: torch.nn.Module, state: Mapping[str, Any], *, strict: bool = True) -> dict[str, Any]
+
+   Load calibrated ``amax`` values into ``model``'s :class:`TensorQuantizer` modules.
+
+
+.. py:function:: save_quantizer_state(model: torch.nn.Module, path: Union[str, pathlib.Path]) -> pathlib.Path
+
+   Persist calibrated quantizer state as deterministic JSON with 0-ULP ``amax_hex`` fidelity.
+
+
+.. py:function:: load_quantizer_state(model: torch.nn.Module, path: Union[str, pathlib.Path], *, strict: bool = True) -> dict[str, Any]
+
+   Load a JSON quantizer state file written by :func:`save_quantizer_state` into ``model``.
+
+

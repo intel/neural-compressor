@@ -1,0 +1,207 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.algorithms.fake_quant.save_load &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.fake_quant.save_load</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/fake_quant/save_load/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.algorithms.fake_quant.save_load">
+<span id="neural-compressor-torch-algorithms-fake-quant-save-load"></span><h1>neural_compressor.torch.algorithms.fake_quant.save_load<a class="headerlink" href="#module-neural_compressor.torch.algorithms.fake_quant.save_load" title="Link to this heading"></a></h1>
+<p>Lossless hex-float quantizer state persistence and wrapper-prefix canonicalization.</p>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.save_load.get_quantizer_state_dict" title="neural_compressor.torch.algorithms.fake_quant.save_load.get_quantizer_state_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_quantizer_state_dict</span></code></a>(→ dict[str, dict[str, Any]])</p></td>
+<td><p>Export calibrated static quantizer <code class="docutils literal notranslate"><span class="pre">amax</span></code> buffers with exact IEEE-754 <code class="docutils literal notranslate"><span class="pre">amax_hex</span></code> strings.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.save_load.canonicalize_module_name" title="neural_compressor.torch.algorithms.fake_quant.save_load.canonicalize_module_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">canonicalize_module_name</span></code></a>(→ str)</p></td>
+<td><p>Strip DDP, FSDP2, activation-checkpointing, <code class="docutils literal notranslate"><span class="pre">torch.compile</span></code>, and PEFT wrapper segments.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.save_load.canonicalize_quantizer_key" title="neural_compressor.torch.algorithms.fake_quant.save_load.canonicalize_quantizer_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">canonicalize_quantizer_key</span></code></a>(→ str)</p></td>
+<td><p>Normalize a quantizer key across wrapper prefixes/infixes and legacy slot suffixes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.save_load.load_amax_map_from_state" title="neural_compressor.torch.algorithms.fake_quant.save_load.load_amax_map_from_state"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_amax_map_from_state</span></code></a>(→ dict[str, float])</p></td>
+<td><p>Load a calibrated quantizer state mapping or JSON file into <code class="docutils literal notranslate"><span class="pre">{canonical_key:</span> <span class="pre">float_amax}</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.save_load.apply_amax_map_to_module_config" title="neural_compressor.torch.algorithms.fake_quant.save_load.apply_amax_map_to_module_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">apply_amax_map_to_module_config</span></code></a>(→ None)</p></td>
+<td><p>Populate static <code class="docutils literal notranslate"><span class="pre">amax</span></code> fields on <code class="docutils literal notranslate"><span class="pre">module_cfg</span></code> from a pre-calibrated state map.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.save_load.load_quantizer_state_dict" title="neural_compressor.torch.algorithms.fake_quant.save_load.load_quantizer_state_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_quantizer_state_dict</span></code></a>(→ dict[str, Any])</p></td>
+<td><p>Load calibrated <code class="docutils literal notranslate"><span class="pre">amax</span></code> values into <code class="docutils literal notranslate"><span class="pre">model</span></code>'s <code class="xref py py-class docutils literal notranslate"><span class="pre">TensorQuantizer</span></code> modules.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.save_load.save_quantizer_state" title="neural_compressor.torch.algorithms.fake_quant.save_load.save_quantizer_state"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_quantizer_state</span></code></a>(→ pathlib.Path)</p></td>
+<td><p>Persist calibrated quantizer state as deterministic JSON with 0-ULP <code class="docutils literal notranslate"><span class="pre">amax_hex</span></code> fidelity.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.save_load.load_quantizer_state" title="neural_compressor.torch.algorithms.fake_quant.save_load.load_quantizer_state"><code class="xref py py-obj docutils literal notranslate"><span class="pre">load_quantizer_state</span></code></a>(→ dict[str, Any])</p></td>
+<td><p>Load a JSON quantizer state file written by <a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.save_load.save_quantizer_state" title="neural_compressor.torch.algorithms.fake_quant.save_load.save_quantizer_state"><code class="xref py py-func docutils literal notranslate"><span class="pre">save_quantizer_state()</span></code></a> into <code class="docutils literal notranslate"><span class="pre">model</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.save_load.get_quantizer_state_dict">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.save_load.</span></span><span class="sig-name descname"><span class="pre">get_quantizer_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/save_load.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.save_load.get_quantizer_state_dict" title="Link to this definition"></a></dt>
+<dd><p>Export calibrated static quantizer <code class="docutils literal notranslate"><span class="pre">amax</span></code> buffers with exact IEEE-754 <code class="docutils literal notranslate"><span class="pre">amax_hex</span></code> strings.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.save_load.canonicalize_module_name">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.save_load.</span></span><span class="sig-name descname"><span class="pre">canonicalize_module_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/save_load.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.save_load.canonicalize_module_name" title="Link to this definition"></a></dt>
+<dd><p>Strip DDP, FSDP2, activation-checkpointing, <code class="docutils literal notranslate"><span class="pre">torch.compile</span></code>, and PEFT wrapper segments.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.save_load.canonicalize_quantizer_key">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.save_load.</span></span><span class="sig-name descname"><span class="pre">canonicalize_quantizer_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/save_load.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.save_load.canonicalize_quantizer_key" title="Link to this definition"></a></dt>
+<dd><p>Normalize a quantizer key across wrapper prefixes/infixes and legacy slot suffixes.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.save_load.load_amax_map_from_state">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.save_load.</span></span><span class="sig-name descname"><span class="pre">load_amax_map_from_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">state_or_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/save_load.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.save_load.load_amax_map_from_state" title="Link to this definition"></a></dt>
+<dd><p>Load a calibrated quantizer state mapping or JSON file into <code class="docutils literal notranslate"><span class="pre">{canonical_key:</span> <span class="pre">float_amax}</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.save_load.apply_amax_map_to_module_config">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.save_load.</span></span><span class="sig-name descname"><span class="pre">apply_amax_map_to_module_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">module_cfg</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config/index.html#neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig" title="neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig"><span class="pre">neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax_map</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">float</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/save_load.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.save_load.apply_amax_map_to_module_config" title="Link to this definition"></a></dt>
+<dd><p>Populate static <code class="docutils literal notranslate"><span class="pre">amax</span></code> fields on <code class="docutils literal notranslate"><span class="pre">module_cfg</span></code> from a pre-calibrated state map.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.save_load.load_quantizer_state_dict">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.save_load.</span></span><span class="sig-name descname"><span class="pre">load_quantizer_state_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">state</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Mapping</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/save_load.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.save_load.load_quantizer_state_dict" title="Link to this definition"></a></dt>
+<dd><p>Load calibrated <code class="docutils literal notranslate"><span class="pre">amax</span></code> values into <code class="docutils literal notranslate"><span class="pre">model</span></code>’s <code class="xref py py-class docutils literal notranslate"><span class="pre">TensorQuantizer</span></code> modules.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.save_load.save_quantizer_state">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.save_load.</span></span><span class="sig-name descname"><span class="pre">save_quantizer_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">pathlib.Path</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/save_load.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.save_load.save_quantizer_state" title="Link to this definition"></a></dt>
+<dd><p>Persist calibrated quantizer state as deterministic JSON with 0-ULP <code class="docutils literal notranslate"><span class="pre">amax_hex</span></code> fidelity.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.save_load.load_quantizer_state">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.save_load.</span></span><span class="sig-name descname"><span class="pre">load_quantizer_state</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">strict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/save_load.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.save_load.load_quantizer_state" title="Link to this definition"></a></dt>
+<dd><p>Load a JSON quantizer state file written by <a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.save_load.save_quantizer_state" title="neural_compressor.torch.algorithms.fake_quant.save_load.save_quantizer_state"><code class="xref py py-func docutils literal notranslate"><span class="pre">save_quantizer_state()</span></code></a> into <code class="docutils literal notranslate"><span class="pre">model</span></code>.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2f130a60> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

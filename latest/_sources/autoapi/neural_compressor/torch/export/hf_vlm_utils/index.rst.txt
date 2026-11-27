@@ -1,0 +1,103 @@
+neural_compressor.torch.export.hf_vlm_utils
+===========================================
+
+.. py:module:: neural_compressor.torch.export.hf_vlm_utils
+
+.. autoapi-nested-parse::
+
+   Streaming safetensors shard writer and multimodal VLM text-tower surgery utilities.
+
+   Supports exporting large (27B+) text-tower QAT/QAD models back into full multimodal
+   HuggingFace checkpoints (e.g. ``Qwen3_5ForConditionalGeneration`` with ``model.visual.*``
+   and ``mtp.*``) while keeping peak host memory bounded by ``<= 2 * max_shard_size``.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.export.hf_vlm_utils.StreamingSafetensorsWriter
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.export.hf_vlm_utils.parse_shard_size_bytes
+   neural_compressor.torch.export.hf_vlm_utils.is_vlm_checkpoint
+   neural_compressor.torch.export.hf_vlm_utils.iter_safetensor_shards
+   neural_compressor.torch.export.hf_vlm_utils.iter_safetensors_tensors
+   neural_compressor.torch.export.hf_vlm_utils.remap_text_key_to_vlm
+   neural_compressor.torch.export.hf_vlm_utils.remap_vlm_key_to_text
+   neural_compressor.torch.export.hf_vlm_utils.is_vlm_text_key
+   neural_compressor.torch.export.hf_vlm_utils.stream_non_text_tensors_from_vlm
+   neural_compressor.torch.export.hf_vlm_utils.copy_auxiliary_hf_files
+   neural_compressor.torch.export.hf_vlm_utils.normalize_text_config_dict
+
+
+Module Contents
+---------------
+
+.. py:function:: parse_shard_size_bytes(value: str | int) -> int
+
+   Parse human-readable shard sizes like ``'5GB'``, ``'500MB'``, or integer bytes.
+
+
+.. py:class:: StreamingSafetensorsWriter(output_dir: str | pathlib.Path, max_shard_size: str | int = '5GB')
+
+   Bounded-memory sharded ``safetensors`` writer.
+
+   Tensors are accumulated up to ``max_shard_size`` bytes and flushed immediately
+   to temporary shard files; :meth:`finalize` renames them to HuggingFace canonical
+   shard names (``model.safetensors`` or ``model-XXXXX-of-YYYYY.safetensors``) and
+   emits ``model.safetensors.index.json`` when ``num_shards > 1``.
+
+
+.. py:function:: is_vlm_checkpoint(model_dir: Optional[str | pathlib.Path], *, vlm_target_prefix: str = 'model.language_model.') -> bool
+
+   Return ``True`` when ``model_dir`` is a multimodal VLM checkpoint with a nested text tower.
+
+
+.. py:function:: iter_safetensor_shards(model_dir: str | pathlib.Path) -> list[pathlib.Path]
+
+   Return ordered list of safetensor shard paths inside ``model_dir``.
+
+
+.. py:function:: iter_safetensors_tensors(model_dir: str | pathlib.Path) -> Iterator[tuple[str, torch.Tensor]]
+
+   Stream ``(key, cpu_tensor)`` from single or sharded ``safetensors`` in ``model_dir``.
+
+
+.. py:function:: remap_text_key_to_vlm(key: str, vlm_target_prefix: str = 'model.language_model.') -> str
+
+   Remap a standalone CausalLM parameter/module path into a VLM text-tower path.
+
+
+.. py:function:: remap_vlm_key_to_text(key: str, vlm_target_prefix: str = 'model.language_model.') -> Optional[str]
+
+   Map a VLM checkpoint key to standalone CausalLM key, or ``None`` for non-text keys.
+
+
+.. py:function:: is_vlm_text_key(key: str, vlm_target_prefix: str = 'model.language_model.') -> bool
+
+   Return ``True`` if ``key`` belongs to the VLM text tower or ``lm_head``.
+
+
+.. py:function:: stream_non_text_tensors_from_vlm(base_model_path: str | pathlib.Path, writer: StreamingSafetensorsWriter, *, vlm_target_prefix: str = 'model.language_model.', dtype: Optional[torch.dtype] = None) -> list[str]
+
+   Stream non-text tensors (e.g. ``model.visual.*``, ``mtp.*``) from ``base_model_path`` into ``writer``.
+
+
+.. py:function:: copy_auxiliary_hf_files(src_dir: str | pathlib.Path, dst_dir: str | pathlib.Path) -> list[str]
+
+   Copy tokenizer, processor, chat template, and generation configs from ``src_dir`` to ``dst_dir``.
+
+
+.. py:function:: normalize_text_config_dict(cfg_dict: dict) -> dict
+
+   Normalize standalone text ``config.json`` (e.g. ``Qwen3_5TextModel`` -> ``Qwen3_5ForCausalLM``).
+
+

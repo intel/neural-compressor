@@ -1,0 +1,50 @@
+neural_compressor.torch.algorithms.fake_quant.tensor_quantizer
+==============================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.tensor_quantizer
+
+.. autoapi-nested-parse::
+
+   Stateful ``TensorQuantizer`` module for QAT, QAD, and PTQ simulation.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.tensor_quantizer.TensorQuantizer
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.tensor_quantizer.disable_fake_quant
+
+
+Module Contents
+---------------
+
+.. py:class:: TensorQuantizer(config: Optional[neural_compressor.torch.algorithms.fake_quant.config.QuantizerConfig] = None)
+
+
+
+   Per-slot (weight / input / output) fake-quantizer module.
+
+   Guarantees:
+   * ``amax`` buffer is strictly maintained in ``torch.float32`` even if ``model.to(torch.bfloat16)``
+     or ``model.half()`` is called on an ancestor module.
+   * When ``x.requires_grad`` is ``False`` (e.g. frozen base weights under LoRA or teacher/eval runs),
+     QDQ executes directly under ``torch.no_grad()`` without building autograd nodes.
+   * When ``x.requires_grad`` is ``True``, :func:`ste_fake_quant` applies an identity STE backward
+     with zero saved tensors.
+
+
+.. py:function:: disable_fake_quant(model: torch.nn.Module) -> Iterator[None]
+
+   Temporarily disable all :class:`TensorQuantizer` modules inside ``model``.
+
+

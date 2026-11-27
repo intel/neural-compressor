@@ -99,6 +99,7 @@
 <li><p><a class="reference external" href="#quick-start">Quick Start</a></p></li>
 <li><p><a class="reference external" href="#core-components">Core Components</a></p></li>
 <li><p><a class="reference external" href="#configuration-and-key-parameters">Configuration and Key Parameters</a></p></li>
+<li><p><a class="reference external" href="#unified-fake-quant-qat-distillation-kd-qad-and-compressed-tensors-export">Unified Fake-Quant QAT, Distillation (KD), QAD, and <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> Export</a></p></li>
 <li><p><a class="reference external" href="#best-practices-and-troubleshooting">Best Practices and Troubleshooting</a></p></li>
 <li><p><a class="reference external" href="#references">References</a></p></li>
 </ol>
@@ -505,6 +506,153 @@
 </section>
 </section>
 <hr class="docutils" />
+<section id="unified-fake-quant-qat-distillation-kd-qad-and-compressed-tensors-export">
+<h2>Unified Fake-Quant QAT, Distillation (KD), QAD, and <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> Export<a class="headerlink" href="#unified-fake-quant-qat-distillation-kd-qad-and-compressed-tensors-export" title="Link to this heading"></a></h2>
+<p>Intel Neural Compressor also provides a unified, self-contained fake-quantization, knowledge distillation, and Quantization-Aware Distillation (QAD) stack that does not require external quantization toolkits at training time and exports directly to <strong>vLLM</strong>-ready <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> checkpoints.</p>
+<section id="supported-quantization-formats-triton-qdq-kernels">
+<h3>Supported Quantization Formats &amp; Triton QDQ Kernels<a class="headerlink" href="#supported-quantization-formats-triton-qdq-kernels" title="Link to this heading"></a></h3>
+<p><code class="docutils literal notranslate"><span class="pre">FakeQuantConfig</span></code> (<code class="docutils literal notranslate"><span class="pre">neural_compressor.torch.quantization</span></code>) supports mixed per-layer / regex-targeted schemes across 5 native formats:</p>
+<table border="1" class="docutils">
+<thead>
+<tr>
+<th>Format</th>
+<th>Block Size</th>
+<th>Scale Representation</th>
+<th>Dynamic / Static</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>mxfp4</code></td>
+<td>32</td>
+<td><code>E8M0</code> power-of-two (<code>ceil(log2(max / 6.0))</code>)</td>
+<td>Dynamic</td>
+</tr>
+<tr>
+<td><code>mxfp8</code></td>
+<td>32</td>
+<td><code>E8M0</code> power-of-two (<code>ceil(log2(max / 448.0))</code>)</td>
+<td>Dynamic</td>
+</tr>
+<tr>
+<td><code>nvfp4</code></td>
+<td>16</td>
+<td>Two-level FP8 <code>E4M3</code> block scale + global FP32 <code>amax</code></td>
+<td>Dynamic block (+ optional static global <code>amax</code>)</td>
+</tr>
+<tr>
+<td><code>fp8_e4m3</code></td>
+<td>Per-tensor</td>
+<td>FP32 <code>amax / 448.0</code></td>
+<td>Static (<code>amax</code>) or Dynamic</td>
+</tr>
+<tr>
+<td><code>bf16</code></td>
+<td>—</td>
+<td>No-op passthrough</td>
+<td>Explicit layer exemption</td>
+</tr>
+</tbody>
+</table><p>On GPU, <code class="docutils literal notranslate"><span class="pre">backend=&quot;auto&quot;</span></code> dispatches to fused single-pass Triton QDQ kernels (<code class="docutils literal notranslate"><span class="pre">MXFP4</span></code>, <code class="docutils literal notranslate"><span class="pre">MXFP8</span></code>, <code class="docutils literal notranslate"><span class="pre">NVFP4</span></code>, <code class="docutils literal notranslate"><span class="pre">FP8_E4M3</span></code>) with <strong>0-ULP bitwise parity</strong> against reference PyTorch/CUDA implementations and <strong>0 B</strong> temporary workspace.</p>
+</section>
+<section id="composable-python-apis">
+<h3>Composable Python APIs<a class="headerlink" href="#composable-python-apis" title="Link to this heading"></a></h3>
+<section id="mixed-precision-qat-fakequantconfig-prepare-qat-qattrainer">
+<h4>1. Mixed-Precision QAT (<code class="docutils literal notranslate"><span class="pre">FakeQuantConfig</span></code> + <code class="docutils literal notranslate"><span class="pre">prepare_qat</span></code> + <code class="docutils literal notranslate"><span class="pre">QATTrainer</span></code>)<a class="headerlink" href="#mixed-precision-qat-fakequantconfig-prepare-qat-qattrainer" title="Link to this heading"></a></h4>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.quantization</span><span class="w"> </span><span class="kn">import</span> <span class="p">(</span>
+    <span class="n">FakeQuantConfig</span><span class="p">,</span>
+    <span class="n">QATTrainer</span><span class="p">,</span>
+    <span class="n">QuantSchemeRule</span><span class="p">,</span>
+    <span class="n">QuantizationTrainingArguments</span><span class="p">,</span>
+    <span class="n">prepare_qat</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">quant_cfg</span> <span class="o">=</span> <span class="n">FakeQuantConfig</span><span class="p">(</span>
+    <span class="n">backend</span><span class="o">=</span><span class="s2">"auto"</span><span class="p">,</span>
+    <span class="n">config_groups</span><span class="o">=</span><span class="p">[</span>
+        <span class="n">QuantSchemeRule</span><span class="p">(</span>
+            <span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="sa">r</span><span class="s2">"re:.*\.mlp\.(gate_proj|up_proj|down_proj)$"</span><span class="p">],</span>
+            <span class="n">weights</span><span class="o">=</span><span class="s2">"mxfp4"</span><span class="p">,</span>
+            <span class="n">input_activations</span><span class="o">=</span><span class="s2">"mxfp4"</span><span class="p">,</span>
+        <span class="p">),</span>
+        <span class="n">QuantSchemeRule</span><span class="p">(</span>
+            <span class="n">targets</span><span class="o">=</span><span class="p">[</span><span class="sa">r</span><span class="s2">"re:.*\.self_attn\.(q_proj|k_proj|v_proj|o_proj)$"</span><span class="p">],</span>
+            <span class="n">weights</span><span class="o">=</span><span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="s2">"dynamic"</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+            <span class="n">input_activations</span><span class="o">=</span><span class="p">{</span><span class="s2">"format"</span><span class="p">:</span> <span class="s2">"fp8_e4m3"</span><span class="p">,</span> <span class="s2">"dynamic"</span><span class="p">:</span> <span class="kc">False</span><span class="p">},</span>
+        <span class="p">),</span>
+    <span class="p">],</span>
+<span class="p">)</span>
+
+<span class="n">model</span> <span class="o">=</span> <span class="n">prepare_qat</span><span class="p">(</span><span class="n">model</span><span class="p">,</span> <span class="n">quant_cfg</span><span class="p">)</span>
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">QATTrainer</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">model</span><span class="p">,</span>
+    <span class="n">args</span><span class="o">=</span><span class="n">QuantizationTrainingArguments</span><span class="p">(</span><span class="n">output_dir</span><span class="o">=</span><span class="s2">"runs/qat"</span><span class="p">,</span> <span class="n">calib_batches</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span> <span class="n">bf16</span><span class="o">=</span><span class="kc">True</span><span class="p">),</span>
+    <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="standalone-knowledge-distillation-kdtrainer">
+<h4>2. Standalone Knowledge Distillation (<code class="docutils literal notranslate"><span class="pre">KDTrainer</span></code>)<a class="headerlink" href="#standalone-knowledge-distillation-kdtrainer" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">neural_compressor.torch.distillation</span></code> provides <code class="docutils literal notranslate"><span class="pre">KDTrainer</span></code> with chunked <code class="docutils literal notranslate"><span class="pre">lm_head</span></code> evaluation (<code class="docutils literal notranslate"><span class="pre">logits_chunk_size</span></code>), forward/reverse Top-$k$ or full-vocab KL (<code class="docutils literal notranslate"><span class="pre">TopKLogitsKLLoss</span></code>, <code class="docutils literal notranslate"><span class="pre">LogitsKLLoss</span></code>), automatic FSDP2 teacher layer sharding (<code class="docutils literal notranslate"><span class="pre">teacher_placement=&quot;shard&quot;</span></code>), and zero-VRAM <code class="docutils literal notranslate"><span class="pre">teacher_model=&quot;self&quot;</span></code> for LoRA self-distillation.</p>
+</section>
+<section id="quantization-aware-distillation-qadtrainer-peft-quantloralinear">
+<h4>3. Quantization-Aware Distillation (<code class="docutils literal notranslate"><span class="pre">QADTrainer</span></code> &amp; PEFT <code class="docutils literal notranslate"><span class="pre">QuantLoraLinear</span></code>)<a class="headerlink" href="#quantization-aware-distillation-qadtrainer-peft-quantloralinear" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">neural_compressor.torch.qad</span></code> composes <code class="docutils literal notranslate"><span class="pre">KDTrainer</span></code> and <code class="docutils literal notranslate"><span class="pre">QATTrainer</span></code> via cooperative multiple inheritance, plus <code class="docutils literal notranslate"><span class="pre">prepare_qad_model</span></code> for PEFT LoRA integration (<code class="docutils literal notranslate"><span class="pre">lora_merge_before_quant=True</span></code> $\implies y = Q_w(W + s \cdot BA),Q_a(x)$):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.qad</span><span class="w"> </span><span class="kn">import</span> <span class="n">QADTrainer</span><span class="p">,</span> <span class="n">QADTrainingArguments</span><span class="p">,</span> <span class="n">prepare_qad_model</span>
+
+<span class="n">student</span> <span class="o">=</span> <span class="n">prepare_qad_model</span><span class="p">(</span>
+    <span class="n">student</span><span class="p">,</span>
+    <span class="n">quant_cfg</span><span class="p">,</span>
+    <span class="n">lora_config</span><span class="o">=</span><span class="p">{</span>
+        <span class="s2">"r"</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+        <span class="s2">"lora_alpha"</span><span class="p">:</span> <span class="mi">32</span><span class="p">,</span>
+        <span class="s2">"target_modules"</span><span class="p">:</span> <span class="p">[</span><span class="s2">"q_proj"</span><span class="p">,</span> <span class="s2">"k_proj"</span><span class="p">,</span> <span class="s2">"v_proj"</span><span class="p">,</span> <span class="s2">"o_proj"</span><span class="p">,</span> <span class="s2">"gate_proj"</span><span class="p">,</span> <span class="s2">"up_proj"</span><span class="p">,</span> <span class="s2">"down_proj"</span><span class="p">],</span>
+    <span class="p">},</span>
+    <span class="n">lora_merge_before_quant</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+
+<span class="n">trainer</span> <span class="o">=</span> <span class="n">QADTrainer</span><span class="p">(</span>
+    <span class="n">model</span><span class="o">=</span><span class="n">student</span><span class="p">,</span>
+    <span class="n">teacher_model</span><span class="o">=</span><span class="s2">"self"</span><span class="p">,</span>  <span class="c1"># Zero extra teacher VRAM!</span>
+    <span class="n">args</span><span class="o">=</span><span class="n">QADTrainingArguments</span><span class="p">(</span>
+        <span class="n">output_dir</span><span class="o">=</span><span class="s2">"runs/qad_lora"</span><span class="p">,</span>
+        <span class="n">calib_batches</span><span class="o">=</span><span class="mi">32</span><span class="p">,</span>
+        <span class="n">kd_loss_type</span><span class="o">=</span><span class="s2">"topk_kl"</span><span class="p">,</span>
+        <span class="n">kd_top_k</span><span class="o">=</span><span class="mi">4096</span><span class="p">,</span>
+        <span class="n">kd_loss_weight</span><span class="o">=</span><span class="mf">1.0</span><span class="p">,</span>
+        <span class="n">ce_loss_weight</span><span class="o">=</span><span class="mf">0.0</span><span class="p">,</span>
+        <span class="n">logits_chunk_size</span><span class="o">=</span><span class="mi">1024</span><span class="p">,</span>
+        <span class="n">bf16</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+    <span class="p">),</span>
+    <span class="n">train_dataset</span><span class="o">=</span><span class="n">train_dataset</span><span class="p">,</span>
+<span class="p">)</span>
+<span class="n">trainer</span><span class="o">.</span><span class="n">train</span><span class="p">()</span>
+</pre></div>
+</div>
+</section>
+<section id="real-packed-compressed-tensors-export-for-vllm">
+<h4>4. Real Packed <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> Export for vLLM<a class="headerlink" href="#real-packed-compressed-tensors-export-for-vllm" title="Link to this heading"></a></h4>
+<p><code class="docutils literal notranslate"><span class="pre">export_hf_checkpoint</span></code> streams safetensors shards in bounded host RAM, merges optional PEFT LoRA adapters, packs real <code class="docutils literal notranslate"><span class="pre">MXFP4</span></code> (<code class="docutils literal notranslate"><span class="pre">uint8</span></code> nibbles + <code class="docutils literal notranslate"><span class="pre">E8M0</span></code> scales), <code class="docutils literal notranslate"><span class="pre">MXFP8</span></code>, <code class="docutils literal notranslate"><span class="pre">NVFP4</span></code>, or <code class="docutils literal notranslate"><span class="pre">FP8_E4M3</span></code> weights with a <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> <code class="docutils literal notranslate"><span class="pre">quantization_config</span></code> header, and preserves multimodal VLM vision towers (<code class="docutils literal notranslate"><span class="pre">keep_vision=True</span></code>):</p>
+<div class="highlight-python notranslate"><div class="highlight"><pre><span></span><span class="kn">from</span><span class="w"> </span><span class="nn">neural_compressor.torch.export</span><span class="w"> </span><span class="kn">import</span> <span class="n">export_hf_checkpoint</span>
+
+<span class="n">export_hf_checkpoint</span><span class="p">(</span>
+    <span class="s2">"runs/qad_lora/checkpoint-500"</span><span class="p">,</span>
+    <span class="s2">"runs/export-mxfp4-fp8"</span><span class="p">,</span>
+    <span class="n">export_format</span><span class="o">=</span><span class="s2">"compressed_tensors"</span><span class="p">,</span>
+    <span class="n">quant_config</span><span class="o">=</span><span class="n">quant_cfg</span><span class="p">,</span>
+    <span class="n">quant_state_path</span><span class="o">=</span><span class="s2">"runs/qad_lora/checkpoint-500/quantizer_state.json"</span><span class="p">,</span>
+    <span class="n">base_model_path</span><span class="o">=</span><span class="s2">"/path/to/Qwen3.8-27B"</span><span class="p">,</span>
+    <span class="n">keep_vision</span><span class="o">=</span><span class="kc">True</span><span class="p">,</span>
+<span class="p">)</span>
+</pre></div>
+</div>
+<p>See the complete end-to-end 27B recipes and launch scripts in <a class="reference external" href="/examples/pytorch/llm/qwen/qad"><code class="docutils literal notranslate"><span class="pre">examples/pytorch/llm/qwen/qad</span></code></a>.</p>
+</section>
+</section>
+</section>
+<hr class="docutils" />
 <section id="best-practices-and-troubleshooting">
 <h2>Best Practices and Troubleshooting<a class="headerlink" href="#best-practices-and-troubleshooting" title="Link to this heading"></a></h2>
 <section id="recommended-workflow">
@@ -595,7 +743,7 @@
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7c95989be900> 
+   <jinja2.runtime.BlockReference object at 0x75ca2e1e4e50> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

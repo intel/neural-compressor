@@ -1,0 +1,215 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.algorithms.fake_quant.trainer &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.fake_quant.trainer</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/fake_quant/trainer/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.algorithms.fake_quant.trainer">
+<span id="neural-compressor-torch-algorithms-fake-quant-trainer"></span><h1>neural_compressor.torch.algorithms.fake_quant.trainer<a class="headerlink" href="#module-neural_compressor.torch.algorithms.fake_quant.trainer" title="Link to this heading"></a></h1>
+<p>Standalone HuggingFace <code class="docutils literal notranslate"><span class="pre">Trainer</span></code> subclass for Quantization-Aware Training (QAT).</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.trainer.QATTrainer" title="neural_compressor.torch.algorithms.fake_quant.trainer.QATTrainer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QATTrainer</span></code></a></p></td>
+<td><p>HuggingFace <code class="docutils literal notranslate"><span class="pre">Trainer</span></code> extended with fake-quantization preparation, static <code class="docutils literal notranslate"><span class="pre">amax</span></code> calibration,</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.trainer.QuantizationTrainingArguments" title="neural_compressor.torch.algorithms.fake_quant.trainer.QuantizationTrainingArguments"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizationTrainingArguments</span></code></a></p></td>
+<td><p><code class="docutils literal notranslate"><span class="pre">transformers.TrainingArguments</span></code> extended with fake-quantization CLI options.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.trainer.unwrap_model" title="neural_compressor.torch.algorithms.fake_quant.trainer.unwrap_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unwrap_model</span></code></a>(→ torch.nn.Module)</p></td>
+<td><p>Unwrap DDP / FSDP <code class="docutils literal notranslate"><span class="pre">.module</span></code> wrappers to access the underlying <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.trainer.is_peft_model" title="neural_compressor.torch.algorithms.fake_quant.trainer.is_peft_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_peft_model</span></code></a>(→ bool)</p></td>
+<td><p>Return True when <code class="docutils literal notranslate"><span class="pre">model</span></code> is a PEFT <code class="docutils literal notranslate"><span class="pre">PeftModel</span></code> wrapper.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.trainer.ensure_peft_gradient_checkpointing_delegation" title="neural_compressor.torch.algorithms.fake_quant.trainer.ensure_peft_gradient_checkpointing_delegation"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ensure_peft_gradient_checkpointing_delegation</span></code></a>(→ None)</p></td>
+<td><p>Ensure <code class="docutils literal notranslate"><span class="pre">PeftModel</span></code> delegates gradient checkpointing and preserves adapter gradients under FSDP2 AC.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.trainer.save_fsdp2_peft_adapter" title="neural_compressor.torch.algorithms.fake_quant.trainer.save_fsdp2_peft_adapter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_fsdp2_peft_adapter</span></code></a>(→ bool)</p></td>
+<td><p>Gather sharded PEFT LoRA adapter parameters under FSDP2 and save a PEFT checkpoint.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.trainer.save_fsdp2_full_model" title="neural_compressor.torch.algorithms.fake_quant.trainer.save_fsdp2_full_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">save_fsdp2_full_model</span></code></a>(→ bool)</p></td>
+<td><p>Gather a full fine-tuned model under FSDP2 to CPU rank 0 and write <code class="docutils literal notranslate"><span class="pre">model.safetensors</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.trainer.unwrap_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.trainer.</span></span><span class="sig-name descname"><span class="pre">unwrap_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.nn.Module</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/trainer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.trainer.unwrap_model" title="Link to this definition"></a></dt>
+<dd><p>Unwrap DDP / FSDP <code class="docutils literal notranslate"><span class="pre">.module</span></code> wrappers to access the underlying <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.trainer.is_peft_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.trainer.</span></span><span class="sig-name descname"><span class="pre">is_peft_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/trainer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.trainer.is_peft_model" title="Link to this definition"></a></dt>
+<dd><p>Return True when <code class="docutils literal notranslate"><span class="pre">model</span></code> is a PEFT <code class="docutils literal notranslate"><span class="pre">PeftModel</span></code> wrapper.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.trainer.ensure_peft_gradient_checkpointing_delegation">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.trainer.</span></span><span class="sig-name descname"><span class="pre">ensure_peft_gradient_checkpointing_delegation</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/trainer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.trainer.ensure_peft_gradient_checkpointing_delegation" title="Link to this definition"></a></dt>
+<dd><p>Ensure <code class="docutils literal notranslate"><span class="pre">PeftModel</span></code> delegates gradient checkpointing and preserves adapter gradients under FSDP2 AC.</p>
+<p>Besides forwarding <code class="docutils literal notranslate"><span class="pre">gradient_checkpointing_enable</span></code> / <code class="docutils literal notranslate"><span class="pre">disable</span></code> to the inner backbone, this
+registers an idempotent forward hook on the input embedding module that marks its output
+<code class="docutils literal notranslate"><span class="pre">requires_grad_(True)</span></code> whenever <code class="docutils literal notranslate"><span class="pre">torch.is_grad_enabled()</span></code> is <code class="docutils literal notranslate"><span class="pre">True</span></code>. Without this hook,
+FSDP2 <code class="docutils literal notranslate"><span class="pre">activation_checkpointing:</span> <span class="pre">true</span></code> (which wraps decoder layers in reentrant
+<code class="docutils literal notranslate"><span class="pre">checkpoint_wrapper</span></code> without calling <code class="docutils literal notranslate"><span class="pre">Trainer.gradient_checkpointing_enable</span></code>) receives
+<code class="docutils literal notranslate"><span class="pre">requires_grad=False</span></code> hidden states from frozen base embeddings and drops adapter gradients.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.trainer.save_fsdp2_peft_adapter">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.trainer.</span></span><span class="sig-name descname"><span class="pre">save_fsdp2_peft_adapter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_save</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/trainer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.trainer.save_fsdp2_peft_adapter" title="Link to this definition"></a></dt>
+<dd><p>Gather sharded PEFT LoRA adapter parameters under FSDP2 and save a PEFT checkpoint.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.trainer.save_fsdp2_full_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.trainer.</span></span><span class="sig-name descname"><span class="pre">save_fsdp2_full_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">out_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">should_save</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.dtype</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/trainer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.trainer.save_fsdp2_full_model" title="Link to this definition"></a></dt>
+<dd><p>Gather a full fine-tuned model under FSDP2 to CPU rank 0 and write <code class="docutils literal notranslate"><span class="pre">model.safetensors</span></code>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.trainer.QATTrainer">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.trainer.</span></span><span class="sig-name descname"><span class="pre">QATTrainer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">*</span></span><span class="n"><span class="pre">pos_args</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config/index.html#neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig" title="neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig"><span class="pre">neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">calib_batches</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantizer_state_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/trainer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.trainer.QATTrainer" title="Link to this definition"></a></dt>
+<dd><p>HuggingFace <code class="docutils literal notranslate"><span class="pre">Trainer</span></code> extended with fake-quantization preparation, static <code class="docutils literal notranslate"><span class="pre">amax</span></code> calibration,
+and lossless <code class="docutils literal notranslate"><span class="pre">quantizer_state.json</span></code> checkpointing (including FSDP2 + PEFT support).</p>
+<p>Usable standalone for standard SFT / CausalLM Cross-Entropy QAT without any teacher model,
+and composed with <code class="xref py py-class docutils literal notranslate"><span class="pre">KDTrainer</span></code> to form
+<code class="xref py py-class docutils literal notranslate"><span class="pre">QADTrainer</span></code>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.trainer.QuantizationTrainingArguments">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.trainer.</span></span><span class="sig-name descname"><span class="pre">QuantizationTrainingArguments</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/trainer.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.trainer.QuantizationTrainingArguments" title="Link to this definition"></a></dt>
+<dd><p><code class="docutils literal notranslate"><span class="pre">transformers.TrainingArguments</span></code> extended with fake-quantization CLI options.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2f156040> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

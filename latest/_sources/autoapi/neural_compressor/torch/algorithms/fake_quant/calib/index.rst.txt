@@ -1,0 +1,40 @@
+neural_compressor.torch.algorithms.fake_quant.calib
+===================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.calib
+
+.. autoapi-nested-parse::
+
+   Forward observer calibration for static ``TensorQuantizer`` ``amax`` statistics.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.calib.calibrate_static_amax
+   neural_compressor.torch.algorithms.fake_quant.calib.calibrate
+
+
+Module Contents
+---------------
+
+.. py:function:: calibrate_static_amax(model: torch.nn.Module, calib_fn: Optional[Callable[[torch.nn.Module], Any]] = None, *, dataloader: Optional[Iterable[Any]] = None, num_batches: Optional[int] = None, distributed_sync: bool = True) -> dict[str, float]
+
+   Calibrate all enabled static :class:`TensorQuantizer` modules in ``model``.
+
+   Provide either ``calib_fn(model)`` or ``dataloader`` (optionally bounded by ``num_batches``).
+   Enabled dynamic quantizers are temporarily bypassed during the calibration forward pass
+   (matching ModelOpt ``enable_stats_collection``) so static activation quantizers observe clean
+   reference activations, then re-enabled upon completion. Static weight quantizers are also
+   observed directly so MoE experts unvisited by small calibration sets still acquire valid
+   weight ``amax`` buffers.
+
+
+.. py:function:: calibrate(model: torch.nn.Module, run_fn: Callable[Ellipsis, Any], run_args: tuple[Any, Ellipsis] = (), *, distributed: bool = True) -> dict[str, float]
+
+   INC ``quantize(..., run_fn=..., run_args=...)`` compatible calibration entry point.
+
+

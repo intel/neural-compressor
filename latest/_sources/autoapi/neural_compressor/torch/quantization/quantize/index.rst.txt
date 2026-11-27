@@ -89,19 +89,22 @@ Module Contents
    :returns: prepared and calibrated module.
 
 
-.. py:function:: prepare_qat(model: torch.nn.Module, mapping=None, inplace: bool = True)
+.. py:function:: prepare_qat(model: torch.nn.Module, quant_config=None, mapping=None, inplace: bool = True)
 
-   Prepares a copy of the model for quantization calibration or
-   quantization-aware training and converts it to quantized version.
+   Prepare a model for quantization-aware training.
 
-   Quantization configuration should be assigned preemptively
-   to individual submodules in `.qconfig` attribute.
+   The new API takes a :class:`FakeQuantConfig` and is equivalent to
+   ``prepare(model, quant_config)``: quantizers are inserted, static ones wait
+   for :func:`calibrate` or a calibration ``run_fn``. The model may be in eval
+   mode (calibration and QAT do not require training mode).
 
-   :param model: input model to be modified in-place
-   :param quant_config: quantization config that maps float modules to quantized modules to be
-                        replaced.
-   :param inplace: carry out model transformations in-place, the original module
-                   is mutated
+   The legacy ``mapping={nn.Linear: "MXFP8"}`` form is accepted for one
+   release and translated to a config with a deprecation warning.
+
+   :param model: Model to modify (in place when ``inplace=True``).
+   :param quant_config: :class:`FakeQuantConfig` describing the quantizers.
+   :param mapping: Legacy ``{module_type: scheme}`` mapping.
+   :param inplace: Mutate the input model instead of a copy.
 
 
 .. py:function:: convert(model: torch.nn.Module, quant_config: neural_compressor.common.base_config.BaseConfig = None, inplace: bool = True, **kwargs)

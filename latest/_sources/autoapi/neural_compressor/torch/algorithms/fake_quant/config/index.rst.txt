@@ -1,0 +1,89 @@
+neural_compressor.torch.algorithms.fake_quant.config
+====================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.config
+
+.. autoapi-nested-parse::
+
+   Fake-quantization configuration hierarchy (``FakeQuantConfig``, ``QuantSchemeRule``, ``QuantizerConfig``).
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.config.QuantizerConfig
+   neural_compressor.torch.algorithms.fake_quant.config.QuantSchemeRule
+   neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig
+   neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.config.get_default_fake_quant_config
+
+
+Module Contents
+---------------
+
+.. py:class:: QuantizerConfig(format: Union[str, neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat] = 'mxfp4', dynamic: bool = True, enabled: bool = True, observer: ObserverName = 'max', backend: neural_compressor.torch.algorithms.fake_quant.functional.QuantBackendName = 'auto', amax: Optional[float] = None, *, scheme: Optional[Literal['dynamic', 'static']] = None)
+
+   Configuration for a single tensor quantizer (weights, inputs, or outputs).
+
+   :param format: Format name (``"mxfp4"``, ``"nvfp4"``, ``"mxfp8"``, ``"fp8_e4m3"``,
+                  ``"bf16"``) or :class:`QuantFormat`.
+   :param dynamic: Compute scale factors dynamically per forward tensor (``True``) or use a
+                   calibrated per-tensor ``amax`` buffer (``False``).
+   :param enabled: Master switch; ``False`` makes the quantizer an identity pass-through.
+   :param observer: Calibration observer for static quantization (``"max"`` or ``"minmax"``).
+   :param backend: QDQ execution backend (``"auto"``, ``"pytorch"``, or ``"triton"``).
+   :param amax: Optional pre-calibrated static maximum absolute value.
+   :param scheme: Optional alias (``"dynamic"`` or ``"static"``) overriding ``dynamic``.
+
+
+.. py:class:: QuantSchemeRule
+
+   Declarative rule mapping target modules to weight/activation quantizer specs.
+
+   Target patterns follow ``compressed-tensors`` / ``ModelOpt`` conventions:
+   * Class name: ``"Linear"`` matches supported linear module types.
+   * Regex (prefixed with ``"re:"``): ``"re:.*mlp\.(gate|up|down)_proj$"`` (full-string match).
+   * Shell glob: ``"*mlp.experts*"`` (matched via :func:`fnmatch.fnmatchcase`).
+   * Exact or suffix module name: ``"lm_head"`` matches ``"lm_head"`` or ``"*.lm_head"``.
+
+   When multiple rules in :attr:`FakeQuantConfig.config_groups` match a module,
+   later rules override earlier rules.
+
+
+.. py:class:: ModuleQuantConfig(weights: QuantizerSpec = None, input_activations: QuantizerSpec = None, output_activations: QuantizerSpec = None, *, weight: QuantizerSpec = None, input: QuantizerSpec = None, output: QuantizerSpec = None, default_backend: neural_compressor.torch.algorithms.fake_quant.functional.QuantBackendName = 'auto')
+
+   Resolved per-module fake-quantization configuration (weights / inputs / outputs).
+
+
+.. py:class:: FakeQuantConfig(config_groups: Optional[Sequence[Union[QuantSchemeRule, dict[str, Any]]]] = None, ignore: Optional[Sequence[str]] = None, quantizer_state_path: Optional[Union[str, pathlib.Path]] = None, backend: neural_compressor.torch.algorithms.fake_quant.functional.QuantBackendName = 'auto', white_list: Optional[list[Union[str, Callable]]] = DEFAULT_WHITE_LIST)
+
+
+
+   Top-level INC configuration for fake-quantization (QAT / QAD / PTQ simulation).
+
+   Integrates directly with ``neural_compressor.torch.quantization.prepare``,
+   ``quantize``, ``prepare_qat``, and ``convert``.
+
+   :param config_groups: Ordered list of :class:`QuantSchemeRule` entries. Defaults to
+                         MXFP4 dynamic weight + input quantization on all ``Linear`` modules.
+   :param ignore: Module patterns excluded from quantization (checked before ``config_groups``).
+                  Defaults to ``["lm_head", "re:.*embed.*"]``.
+   :param quantizer_state_path: Optional JSON file containing calibrated static ``amax`` values.
+   :param backend: Default QDQ execution backend (``"auto"``, ``"pytorch"``, or ``"triton"``).
+
+
+.. py:function:: get_default_fake_quant_config() -> FakeQuantConfig
+
+   Return the default W4A4 MXFP4 :class:`FakeQuantConfig`.
+
+

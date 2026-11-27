@@ -1,0 +1,248 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.export.hf_vlm_utils &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.export.hf_vlm_utils</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/torch/export/hf_vlm_utils/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.export.hf_vlm_utils">
+<span id="neural-compressor-torch-export-hf-vlm-utils"></span><h1>neural_compressor.torch.export.hf_vlm_utils<a class="headerlink" href="#module-neural_compressor.torch.export.hf_vlm_utils" title="Link to this heading"></a></h1>
+<p>Streaming safetensors shard writer and multimodal VLM text-tower surgery utilities.</p>
+<p>Supports exporting large (27B+) text-tower QAT/QAD models back into full multimodal
+HuggingFace checkpoints (e.g. <code class="docutils literal notranslate"><span class="pre">Qwen3_5ForConditionalGeneration</span></code> with <code class="docutils literal notranslate"><span class="pre">model.visual.*</span></code>
+and <code class="docutils literal notranslate"><span class="pre">mtp.*</span></code>) while keeping peak host memory bounded by <code class="docutils literal notranslate"><span class="pre">&lt;=</span> <span class="pre">2</span> <span class="pre">*</span> <span class="pre">max_shard_size</span></code>.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.export.hf_vlm_utils.StreamingSafetensorsWriter" title="neural_compressor.torch.export.hf_vlm_utils.StreamingSafetensorsWriter"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StreamingSafetensorsWriter</span></code></a></p></td>
+<td><p>Bounded-memory sharded <code class="docutils literal notranslate"><span class="pre">safetensors</span></code> writer.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.export.hf_vlm_utils.parse_shard_size_bytes" title="neural_compressor.torch.export.hf_vlm_utils.parse_shard_size_bytes"><code class="xref py py-obj docutils literal notranslate"><span class="pre">parse_shard_size_bytes</span></code></a>(→ int)</p></td>
+<td><p>Parse human-readable shard sizes like <code class="docutils literal notranslate"><span class="pre">'5GB'</span></code>, <code class="docutils literal notranslate"><span class="pre">'500MB'</span></code>, or integer bytes.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.export.hf_vlm_utils.is_vlm_checkpoint" title="neural_compressor.torch.export.hf_vlm_utils.is_vlm_checkpoint"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_vlm_checkpoint</span></code></a>(→ bool)</p></td>
+<td><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> when <code class="docutils literal notranslate"><span class="pre">model_dir</span></code> is a multimodal VLM checkpoint with a nested text tower.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.export.hf_vlm_utils.iter_safetensor_shards" title="neural_compressor.torch.export.hf_vlm_utils.iter_safetensor_shards"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iter_safetensor_shards</span></code></a>(→ list[pathlib.Path])</p></td>
+<td><p>Return ordered list of safetensor shard paths inside <code class="docutils literal notranslate"><span class="pre">model_dir</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.export.hf_vlm_utils.iter_safetensors_tensors" title="neural_compressor.torch.export.hf_vlm_utils.iter_safetensors_tensors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">iter_safetensors_tensors</span></code></a>(→ Iterator[tuple[str, ...)</p></td>
+<td><p>Stream <code class="docutils literal notranslate"><span class="pre">(key,</span> <span class="pre">cpu_tensor)</span></code> from single or sharded <code class="docutils literal notranslate"><span class="pre">safetensors</span></code> in <code class="docutils literal notranslate"><span class="pre">model_dir</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.export.hf_vlm_utils.remap_text_key_to_vlm" title="neural_compressor.torch.export.hf_vlm_utils.remap_text_key_to_vlm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remap_text_key_to_vlm</span></code></a>(→ str)</p></td>
+<td><p>Remap a standalone CausalLM parameter/module path into a VLM text-tower path.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.export.hf_vlm_utils.remap_vlm_key_to_text" title="neural_compressor.torch.export.hf_vlm_utils.remap_vlm_key_to_text"><code class="xref py py-obj docutils literal notranslate"><span class="pre">remap_vlm_key_to_text</span></code></a>(→ Optional[str])</p></td>
+<td><p>Map a VLM checkpoint key to standalone CausalLM key, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for non-text keys.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.export.hf_vlm_utils.is_vlm_text_key" title="neural_compressor.torch.export.hf_vlm_utils.is_vlm_text_key"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_vlm_text_key</span></code></a>(→ bool)</p></td>
+<td><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if <code class="docutils literal notranslate"><span class="pre">key</span></code> belongs to the VLM text tower or <code class="docutils literal notranslate"><span class="pre">lm_head</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.export.hf_vlm_utils.stream_non_text_tensors_from_vlm" title="neural_compressor.torch.export.hf_vlm_utils.stream_non_text_tensors_from_vlm"><code class="xref py py-obj docutils literal notranslate"><span class="pre">stream_non_text_tensors_from_vlm</span></code></a>(→ list[str])</p></td>
+<td><p>Stream non-text tensors (e.g. <code class="docutils literal notranslate"><span class="pre">model.visual.*</span></code>, <code class="docutils literal notranslate"><span class="pre">mtp.*</span></code>) from <code class="docutils literal notranslate"><span class="pre">base_model_path</span></code> into <code class="docutils literal notranslate"><span class="pre">writer</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.export.hf_vlm_utils.copy_auxiliary_hf_files" title="neural_compressor.torch.export.hf_vlm_utils.copy_auxiliary_hf_files"><code class="xref py py-obj docutils literal notranslate"><span class="pre">copy_auxiliary_hf_files</span></code></a>(→ list[str])</p></td>
+<td><p>Copy tokenizer, processor, chat template, and generation configs from <code class="docutils literal notranslate"><span class="pre">src_dir</span></code> to <code class="docutils literal notranslate"><span class="pre">dst_dir</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.export.hf_vlm_utils.normalize_text_config_dict" title="neural_compressor.torch.export.hf_vlm_utils.normalize_text_config_dict"><code class="xref py py-obj docutils literal notranslate"><span class="pre">normalize_text_config_dict</span></code></a>(→ dict)</p></td>
+<td><p>Normalize standalone text <code class="docutils literal notranslate"><span class="pre">config.json</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">Qwen3_5TextModel</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Qwen3_5ForCausalLM</span></code>).</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.hf_vlm_utils.parse_shard_size_bytes">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.hf_vlm_utils.</span></span><span class="sig-name descname"><span class="pre">parse_shard_size_bytes</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">value</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">int</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/hf_vlm_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.hf_vlm_utils.parse_shard_size_bytes" title="Link to this definition"></a></dt>
+<dd><p>Parse human-readable shard sizes like <code class="docutils literal notranslate"><span class="pre">'5GB'</span></code>, <code class="docutils literal notranslate"><span class="pre">'500MB'</span></code>, or integer bytes.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.hf_vlm_utils.StreamingSafetensorsWriter">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.hf_vlm_utils.</span></span><span class="sig-name descname"><span class="pre">StreamingSafetensorsWriter</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">output_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">max_shard_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'5GB'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/hf_vlm_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.hf_vlm_utils.StreamingSafetensorsWriter" title="Link to this definition"></a></dt>
+<dd><p>Bounded-memory sharded <code class="docutils literal notranslate"><span class="pre">safetensors</span></code> writer.</p>
+<p>Tensors are accumulated up to <code class="docutils literal notranslate"><span class="pre">max_shard_size</span></code> bytes and flushed immediately
+to temporary shard files; <code class="xref py py-meth docutils literal notranslate"><span class="pre">finalize()</span></code> renames them to HuggingFace canonical
+shard names (<code class="docutils literal notranslate"><span class="pre">model.safetensors</span></code> or <code class="docutils literal notranslate"><span class="pre">model-XXXXX-of-YYYYY.safetensors</span></code>) and
+emits <code class="docutils literal notranslate"><span class="pre">model.safetensors.index.json</span></code> when <code class="docutils literal notranslate"><span class="pre">num_shards</span> <span class="pre">&gt;</span> <span class="pre">1</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.hf_vlm_utils.is_vlm_checkpoint">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.hf_vlm_utils.</span></span><span class="sig-name descname"><span class="pre">is_vlm_checkpoint</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">vlm_target_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'model.language_model.'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/hf_vlm_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.hf_vlm_utils.is_vlm_checkpoint" title="Link to this definition"></a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> when <code class="docutils literal notranslate"><span class="pre">model_dir</span></code> is a multimodal VLM checkpoint with a nested text tower.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.hf_vlm_utils.iter_safetensor_shards">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.hf_vlm_utils.</span></span><span class="sig-name descname"><span class="pre">iter_safetensor_shards</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">pathlib.Path</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/hf_vlm_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.hf_vlm_utils.iter_safetensor_shards" title="Link to this definition"></a></dt>
+<dd><p>Return ordered list of safetensor shard paths inside <code class="docutils literal notranslate"><span class="pre">model_dir</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.hf_vlm_utils.iter_safetensors_tensors">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.hf_vlm_utils.</span></span><span class="sig-name descname"><span class="pre">iter_safetensors_tensors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Iterator</span><span class="p"><span class="pre">[</span></span><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/hf_vlm_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.hf_vlm_utils.iter_safetensors_tensors" title="Link to this definition"></a></dt>
+<dd><p>Stream <code class="docutils literal notranslate"><span class="pre">(key,</span> <span class="pre">cpu_tensor)</span></code> from single or sharded <code class="docutils literal notranslate"><span class="pre">safetensors</span></code> in <code class="docutils literal notranslate"><span class="pre">model_dir</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.hf_vlm_utils.remap_text_key_to_vlm">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.hf_vlm_utils.</span></span><span class="sig-name descname"><span class="pre">remap_text_key_to_vlm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vlm_target_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'model.language_model.'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/hf_vlm_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.hf_vlm_utils.remap_text_key_to_vlm" title="Link to this definition"></a></dt>
+<dd><p>Remap a standalone CausalLM parameter/module path into a VLM text-tower path.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.hf_vlm_utils.remap_vlm_key_to_text">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.hf_vlm_utils.</span></span><span class="sig-name descname"><span class="pre">remap_vlm_key_to_text</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vlm_target_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'model.language_model.'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/hf_vlm_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.hf_vlm_utils.remap_vlm_key_to_text" title="Link to this definition"></a></dt>
+<dd><p>Map a VLM checkpoint key to standalone CausalLM key, or <code class="docutils literal notranslate"><span class="pre">None</span></code> for non-text keys.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.hf_vlm_utils.is_vlm_text_key">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.hf_vlm_utils.</span></span><span class="sig-name descname"><span class="pre">is_vlm_text_key</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">key</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">vlm_target_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'model.language_model.'</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/hf_vlm_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.hf_vlm_utils.is_vlm_text_key" title="Link to this definition"></a></dt>
+<dd><p>Return <code class="docutils literal notranslate"><span class="pre">True</span></code> if <code class="docutils literal notranslate"><span class="pre">key</span></code> belongs to the VLM text tower or <code class="docutils literal notranslate"><span class="pre">lm_head</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.hf_vlm_utils.stream_non_text_tensors_from_vlm">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.hf_vlm_utils.</span></span><span class="sig-name descname"><span class="pre">stream_non_text_tensors_from_vlm</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">base_model_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">writer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neural_compressor.torch.export.hf_vlm_utils.StreamingSafetensorsWriter" title="neural_compressor.torch.export.hf_vlm_utils.StreamingSafetensorsWriter"><span class="pre">StreamingSafetensorsWriter</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">vlm_target_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'model.language_model.'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.dtype</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/hf_vlm_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.hf_vlm_utils.stream_non_text_tensors_from_vlm" title="Link to this definition"></a></dt>
+<dd><p>Stream non-text tensors (e.g. <code class="docutils literal notranslate"><span class="pre">model.visual.*</span></code>, <code class="docutils literal notranslate"><span class="pre">mtp.*</span></code>) from <code class="docutils literal notranslate"><span class="pre">base_model_path</span></code> into <code class="docutils literal notranslate"><span class="pre">writer</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.hf_vlm_utils.copy_auxiliary_hf_files">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.hf_vlm_utils.</span></span><span class="sig-name descname"><span class="pre">copy_auxiliary_hf_files</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">src_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dst_dir</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/hf_vlm_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.hf_vlm_utils.copy_auxiliary_hf_files" title="Link to this definition"></a></dt>
+<dd><p>Copy tokenizer, processor, chat template, and generation configs from <code class="docutils literal notranslate"><span class="pre">src_dir</span></code> to <code class="docutils literal notranslate"><span class="pre">dst_dir</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.hf_vlm_utils.normalize_text_config_dict">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.hf_vlm_utils.</span></span><span class="sig-name descname"><span class="pre">normalize_text_config_dict</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">cfg_dict</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/hf_vlm_utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.hf_vlm_utils.normalize_text_config_dict" title="Link to this definition"></a></dt>
+<dd><p>Normalize standalone text <code class="docutils literal notranslate"><span class="pre">config.json</span></code> (e.g. <code class="docutils literal notranslate"><span class="pre">Qwen3_5TextModel</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">Qwen3_5ForCausalLM</span></code>).</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2e9daa50> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

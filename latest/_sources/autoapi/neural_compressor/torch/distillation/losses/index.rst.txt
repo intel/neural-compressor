@@ -1,0 +1,72 @@
+neural_compressor.torch.distillation.losses
+===========================================
+
+.. py:module:: neural_compressor.torch.distillation.losses
+
+.. autoapi-nested-parse::
+
+   ModelOpt-aligned Top-K and full-vocabulary KL distillation losses.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.distillation.losses.TopKLogitsKLLoss
+   neural_compressor.torch.distillation.losses.LogitsKLLoss
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.distillation.losses.teacher_topk
+   neural_compressor.torch.distillation.losses.topk_kl_from_topk
+   neural_compressor.torch.distillation.losses.topk_kl
+   neural_compressor.torch.distillation.losses.full_vocab_kl
+
+
+Module Contents
+---------------
+
+.. py:function:: teacher_topk(teacher_logits: torch.Tensor, k: int) -> tuple[torch.Tensor, torch.Tensor]
+
+   Return the teacher's top-k values and vocabulary indices along ``dim=-1``.
+
+
+.. py:function:: topk_kl_from_topk(student_topk: torch.Tensor, teacher_topk_values: torch.Tensor, *, temperature: float = 1.0) -> torch.Tensor
+
+   Compute per-token KL divergence over pre-gathered Top-K logits in FP32.
+
+   Matches NVIDIA ``ModelOpt``'s ``TopKLogitsKLLoss`` exactly:
+   ``F.kl_div(log_softmax(s / T), log_softmax(t / T), log_target=True).sum(-1)``
+   with no ``T^2`` scaling factor.
+
+
+.. py:function:: topk_kl(student_logits: torch.Tensor, teacher_logits: torch.Tensor, *, k: int = 4096, temperature: float = 1.0, reverse: bool = False) -> torch.Tensor
+
+   Compute per-token Top-K KL; ``reverse=True`` swaps distributions *after* teacher Top-K selection.
+
+
+.. py:function:: full_vocab_kl(student_logits: torch.Tensor, teacher_logits: torch.Tensor, *, temperature: float = 1.0, reverse: bool = False) -> torch.Tensor
+
+   Compute per-token full-vocabulary KL divergence in FP32.
+
+
+.. py:class:: TopKLogitsKLLoss(top_k: int = 4096, temperature: float = 1.0, chunk_size: int = 1024, reverse: bool = False, *, chunk: Optional[int] = None)
+
+
+
+   Sequence-chunked Top-K KL loss supporting both online teacher logits and precomputed ``(values, indices)``.
+
+
+.. py:class:: LogitsKLLoss(temperature: float = 1.0, reverse: bool = False, scale_by_temperature_sq: bool = False)
+
+
+
+   Full-vocabulary KL divergence loss module with optional temperature scaling and reverse KL.
+
+

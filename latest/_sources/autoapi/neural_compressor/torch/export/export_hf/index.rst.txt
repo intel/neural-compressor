@@ -5,7 +5,7 @@ neural_compressor.torch.export.export_hf
 
 .. autoapi-nested-parse::
 
-   Export quantized hf model to compatible formats.
+   Unified HuggingFace checkpoint exporter (``compressed-tensors`` & ``bf16`` + VLM utilities).
 
 
 
@@ -14,16 +14,32 @@ Functions
 
 .. autoapisummary::
 
+   neural_compressor.torch.export.export_hf.export_hf_checkpoint
+   neural_compressor.torch.export.export_hf.export_compressed_tensors
    neural_compressor.torch.export.export_hf.export_hf2compressored_model
 
 
 Module Contents
 ---------------
 
-.. py:function:: export_hf2compressored_model(model: torch.nn.Module, export_dir: pathlib.Path | str = tempfile.gettempdir(), scheme: str = None)
+.. py:function:: export_hf_checkpoint(model_or_checkpoint: Union[torch.nn.Module, str, pathlib.Path], output_dir: Union[str, pathlib.Path], *, export_format: ExportFormat = 'compressed_tensors', quant_config: Optional[neural_compressor.torch.algorithms.fake_quant.FakeQuantConfig] = None, quant_state_path: Optional[Union[str, pathlib.Path]] = None, base_model_path: Optional[Union[str, pathlib.Path]] = None, tokenizer: Any = None, keep_vision: bool = True, vlm_target_prefix: str = 'model.language_model.', max_shard_size: str = '5GB', dtype: torch.dtype = torch.bfloat16, copy_tokenizer_and_processor: bool = True) -> pathlib.Path
 
-   Exports the torch model to the packed checkpoint with original HF naming.
+   Export an in-memory QAT/QAD model or saved checkpoint/adapter directory to HuggingFace format.
 
-   The packed checkpoint will be consumed by the VLLM.
+   Supports all four workflows with bounded host memory:
+   1. In-memory ``QuantLinear`` / ``QuantLoraLinear`` / ``PreTrainedModel``;
+   2. Saved full QAT/QAD checkpoint directory (``model.safetensors`` + ``quantizer_state.json``);
+   3. Saved PEFT LoRA adapter directory (streaming merge ``W + scaling * B @ A`` with ``base_model_path``);
+   4. Multimodal VLM text-tower surgery when ``base_model_path`` is a VLM checkpoint and ``keep_vision=True``.
+
+
+.. py:function:: export_compressed_tensors(model_or_checkpoint: Union[torch.nn.Module, str, pathlib.Path], output_dir: Union[str, pathlib.Path], *, tokenizer: Any = None, base_model: Optional[Union[str, pathlib.Path]] = None, quant_config: Optional[neural_compressor.torch.algorithms.fake_quant.FakeQuantConfig] = None, quant_state_path: Optional[Union[str, pathlib.Path]] = None, keep_vision: bool = True, max_shard_size: str = '5GB', dtype: torch.dtype = torch.bfloat16) -> pathlib.Path
+
+   Convenience wrapper around :func:`export_hf_checkpoint` for ``compressed_tensors`` export.
+
+
+.. py:function:: export_hf2compressored_model(model: torch.nn.Module, export_dir: pathlib.Path | str = tempfile.gettempdir(), scheme: str | None = None) -> pathlib.Path
+
+   Backward-compatible alias exporting ``model`` to a ``compressed-tensors`` directory.
 
 

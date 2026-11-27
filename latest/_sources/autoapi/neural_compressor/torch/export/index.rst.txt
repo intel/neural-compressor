@@ -5,7 +5,7 @@ neural_compressor.torch.export
 
 .. autoapi-nested-parse::
 
-   Export module for quantization.
+   Export subsystem for HuggingFace ``compressed-tensors`` / ``bf16`` and VLM checkpoints.
 
 
 
@@ -15,6 +15,8 @@ Submodules
 .. toctree::
    :maxdepth: 1
 
+   /autoapi/neural_compressor/torch/export/compressed_tensors/index
    /autoapi/neural_compressor/torch/export/export_hf/index
+   /autoapi/neural_compressor/torch/export/hf_vlm_utils/index
 
 

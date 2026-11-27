@@ -1,0 +1,176 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.algorithms.fake_quant.triton_kernels &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.fake_quant.triton_kernels</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/fake_quant/triton_kernels/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.algorithms.fake_quant.triton_kernels">
+<span id="neural-compressor-torch-algorithms-fake-quant-triton-kernels"></span><h1>neural_compressor.torch.algorithms.fake_quant.triton_kernels<a class="headerlink" href="#module-neural_compressor.torch.algorithms.fake_quant.triton_kernels" title="Link to this heading"></a></h1>
+<p>Fused single-pass Triton QDQ kernels for MXFP4, NVFP4, MXFP8, and FP8 E4M3.</p>
+<p>Key properties:
+1. <strong>0-ULP bit-level parity</strong> with <code class="docutils literal notranslate"><span class="pre">functional.py</span></code> (<code class="docutils literal notranslate"><span class="pre">&quot;pytorch&quot;</span></code> backend) and</p>
+<blockquote>
+<div><p>NVIDIA ModelOpt CUDA kernels across random, boundary, midpoint, zero, and
+subnormal inputs by using IEEE-754 <code class="docutils literal notranslate"><span class="pre">tl.div_rn</span></code>, NVIDIA <code class="docutils literal notranslate"><span class="pre">libdevice</span></code>
+<code class="docutils literal notranslate"><span class="pre">log2</span></code>/<code class="docutils literal notranslate"><span class="pre">ceil</span></code>/<code class="docutils literal notranslate"><span class="pre">exp2</span></code>, and exact register-predicated E2M1 round-to-even.</p>
+</div></blockquote>
+<ol class="arabic simple" start="2">
+<li><p><strong>Zero intermediate global memory buffers</strong>: block-wise <code class="docutils literal notranslate"><span class="pre">amax</span></code>, E8M0 / E4M3
+scale quantization, E2M1 / E4M3 element rounding, and rescaling all execute in
+registers within a single kernel pass (1 global read + 1 global write).</p></li>
+<li><p><strong>64-bit pointer safety</strong>: supports activations exceeding <code class="docutils literal notranslate"><span class="pre">2**31</span></code> elements
+(e.g., <code class="docutils literal notranslate"><span class="pre">[B,</span> <span class="pre">8192,</span> <span class="pre">17408]</span></code> on 27B+ models) without 32-bit index overflow.</p></li>
+</ol>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.triton_kernels.is_triton_qdq_available" title="neural_compressor.torch.algorithms.fake_quant.triton_kernels.is_triton_qdq_available"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_triton_qdq_available</span></code></a>(→ bool)</p></td>
+<td><p>Return True when Triton, CUDA, and <code class="docutils literal notranslate"><span class="pre">tl.float8e4nv</span></code> are available.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.triton_kernels.triton_dynamic_qdq" title="neural_compressor.torch.algorithms.fake_quant.triton_kernels.triton_dynamic_qdq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">triton_dynamic_qdq</span></code></a>(→ torch.Tensor)</p></td>
+<td><p>Execute fused single-pass Triton dynamic QDQ on CUDA tensors.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.triton_kernels.triton_fp8_static_amax_qdq" title="neural_compressor.torch.algorithms.fake_quant.triton_kernels.triton_fp8_static_amax_qdq"><code class="xref py py-obj docutils literal notranslate"><span class="pre">triton_fp8_static_amax_qdq</span></code></a>(→ torch.Tensor)</p></td>
+<td><p>Execute fused single-pass Triton static FP8 E4M3 QDQ matching ModelOpt CUDA.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.triton_kernels.is_triton_qdq_available">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.triton_kernels.</span></span><span class="sig-name descname"><span class="pre">is_triton_qdq_available</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/triton_kernels.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.triton_kernels.is_triton_qdq_available" title="Link to this definition"></a></dt>
+<dd><p>Return True when Triton, CUDA, and <code class="docutils literal notranslate"><span class="pre">tl.float8e4nv</span></code> are available.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.triton_kernels.triton_dynamic_qdq">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.triton_kernels.</span></span><span class="sig-name descname"><span class="pre">triton_dynamic_qdq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../formats/index.html#neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat" title="neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat"><span class="pre">neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat</span></a></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">pytorch_fallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/triton_kernels.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.triton_kernels.triton_dynamic_qdq" title="Link to this definition"></a></dt>
+<dd><p>Execute fused single-pass Triton dynamic QDQ on CUDA tensors.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.triton_kernels.triton_fp8_static_amax_qdq">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.triton_kernels.</span></span><span class="sig-name descname"><span class="pre">triton_fp8_static_amax_qdq</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">x</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">pytorch_fallback</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/triton_kernels.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.triton_kernels.triton_fp8_static_amax_qdq" title="Link to this definition"></a></dt>
+<dd><p>Execute fused single-pass Triton static FP8 E4M3 QDQ matching ModelOpt CUDA.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2f1703d0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

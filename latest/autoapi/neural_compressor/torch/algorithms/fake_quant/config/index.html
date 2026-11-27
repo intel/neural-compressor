@@ -1,0 +1,223 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.algorithms.fake_quant.config &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.fake_quant.config</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/fake_quant/config/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.algorithms.fake_quant.config">
+<span id="neural-compressor-torch-algorithms-fake-quant-config"></span><h1>neural_compressor.torch.algorithms.fake_quant.config<a class="headerlink" href="#module-neural_compressor.torch.algorithms.fake_quant.config" title="Link to this heading"></a></h1>
+<p>Fake-quantization configuration hierarchy (<code class="docutils literal notranslate"><span class="pre">FakeQuantConfig</span></code>, <code class="docutils literal notranslate"><span class="pre">QuantSchemeRule</span></code>, <code class="docutils literal notranslate"><span class="pre">QuantizerConfig</span></code>).</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.config.QuantizerConfig" title="neural_compressor.torch.algorithms.fake_quant.config.QuantizerConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantizerConfig</span></code></a></p></td>
+<td><p>Configuration for a single tensor quantizer (weights, inputs, or outputs).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.config.QuantSchemeRule" title="neural_compressor.torch.algorithms.fake_quant.config.QuantSchemeRule"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantSchemeRule</span></code></a></p></td>
+<td><p>Declarative rule mapping target modules to weight/activation quantizer specs.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig" title="neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">ModuleQuantConfig</span></code></a></p></td>
+<td><p>Resolved per-module fake-quantization configuration (weights / inputs / outputs).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig" title="neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig"><code class="xref py py-obj docutils literal notranslate"><span class="pre">FakeQuantConfig</span></code></a></p></td>
+<td><p>Top-level INC configuration for fake-quantization (QAT / QAD / PTQ simulation).</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.config.get_default_fake_quant_config" title="neural_compressor.torch.algorithms.fake_quant.config.get_default_fake_quant_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">get_default_fake_quant_config</span></code></a>(→ FakeQuantConfig)</p></td>
+<td><p>Return the default W4A4 MXFP4 <a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig" title="neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FakeQuantConfig</span></code></a>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.config.QuantizerConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.config.</span></span><span class="sig-name descname"><span class="pre">QuantizerConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../formats/index.html#neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat" title="neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat"><span class="pre">neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mxfp4'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dynamic</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">enabled</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">observer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">ObserverName</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'max'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.torch.algorithms.fake_quant.functional.QuantBackendName</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Literal</span><span class="p"><span class="pre">[</span></span><span class="s"><span class="pre">'dynamic'</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="s"><span class="pre">'static'</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.config.QuantizerConfig" title="Link to this definition"></a></dt>
+<dd><p>Configuration for a single tensor quantizer (weights, inputs, or outputs).</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>format</strong> – Format name (<code class="docutils literal notranslate"><span class="pre">&quot;mxfp4&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;nvfp4&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;mxfp8&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;fp8_e4m3&quot;</span></code>,
+<code class="docutils literal notranslate"><span class="pre">&quot;bf16&quot;</span></code>) or <code class="xref py py-class docutils literal notranslate"><span class="pre">QuantFormat</span></code>.</p></li>
+<li><p><strong>dynamic</strong> – Compute scale factors dynamically per forward tensor (<code class="docutils literal notranslate"><span class="pre">True</span></code>) or use a
+calibrated per-tensor <code class="docutils literal notranslate"><span class="pre">amax</span></code> buffer (<code class="docutils literal notranslate"><span class="pre">False</span></code>).</p></li>
+<li><p><strong>enabled</strong> – Master switch; <code class="docutils literal notranslate"><span class="pre">False</span></code> makes the quantizer an identity pass-through.</p></li>
+<li><p><strong>observer</strong> – Calibration observer for static quantization (<code class="docutils literal notranslate"><span class="pre">&quot;max&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;minmax&quot;</span></code>).</p></li>
+<li><p><strong>backend</strong> – QDQ execution backend (<code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;pytorch&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;triton&quot;</span></code>).</p></li>
+<li><p><strong>amax</strong> – Optional pre-calibrated static maximum absolute value.</p></li>
+<li><p><strong>scheme</strong> – Optional alias (<code class="docutils literal notranslate"><span class="pre">&quot;dynamic&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;static&quot;</span></code>) overriding <code class="docutils literal notranslate"><span class="pre">dynamic</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.config.QuantSchemeRule">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.config.</span></span><span class="sig-name descname"><span class="pre">QuantSchemeRule</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.config.QuantSchemeRule" title="Link to this definition"></a></dt>
+<dd><p>Declarative rule mapping target modules to weight/activation quantizer specs.</p>
+<p>Target patterns follow <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> / <code class="docutils literal notranslate"><span class="pre">ModelOpt</span></code> conventions:
+* Class name: <code class="docutils literal notranslate"><span class="pre">&quot;Linear&quot;</span></code> matches supported linear module types.
+* Regex (prefixed with <code class="docutils literal notranslate"><span class="pre">&quot;re:&quot;</span></code>): <code class="docutils literal notranslate"><span class="pre">&quot;re:.*mlp\.(gate|up|down)_proj$&quot;</span></code> (full-string match).
+* Shell glob: <code class="docutils literal notranslate"><span class="pre">&quot;*mlp.experts*&quot;</span></code> (matched via <code class="xref py py-func docutils literal notranslate"><span class="pre">fnmatch.fnmatchcase()</span></code>).
+* Exact or suffix module name: <code class="docutils literal notranslate"><span class="pre">&quot;lm_head&quot;</span></code> matches <code class="docutils literal notranslate"><span class="pre">&quot;lm_head&quot;</span></code> or <code class="docutils literal notranslate"><span class="pre">&quot;*.lm_head&quot;</span></code>.</p>
+<p>When multiple rules in <code class="xref py py-attr docutils literal notranslate"><span class="pre">FakeQuantConfig.config_groups</span></code> match a module,
+later rules override earlier rules.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.config.</span></span><span class="sig-name descname"><span class="pre">ModuleQuantConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weights</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QuantizerSpec</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_activations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QuantizerSpec</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output_activations</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QuantizerSpec</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QuantizerSpec</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">input</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QuantizerSpec</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">output</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QuantizerSpec</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">default_backend</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.torch.algorithms.fake_quant.functional.QuantBackendName</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig" title="Link to this definition"></a></dt>
+<dd><p>Resolved per-module fake-quantization configuration (weights / inputs / outputs).</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.config.</span></span><span class="sig-name descname"><span class="pre">FakeQuantConfig</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">config_groups</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.config.QuantSchemeRule" title="neural_compressor.torch.algorithms.fake_quant.config.QuantSchemeRule"><span class="pre">QuantSchemeRule</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Sequence</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quantizer_state_path</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">pathlib.Path</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">backend</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.torch.algorithms.fake_quant.functional.QuantBackendName</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'auto'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">white_list</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">Callable</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">DEFAULT_WHITE_LIST</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig" title="Link to this definition"></a></dt>
+<dd><p>Top-level INC configuration for fake-quantization (QAT / QAD / PTQ simulation).</p>
+<p>Integrates directly with <code class="docutils literal notranslate"><span class="pre">neural_compressor.torch.quantization.prepare</span></code>,
+<code class="docutils literal notranslate"><span class="pre">quantize</span></code>, <code class="docutils literal notranslate"><span class="pre">prepare_qat</span></code>, and <code class="docutils literal notranslate"><span class="pre">convert</span></code>.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>config_groups</strong> – Ordered list of <a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.config.QuantSchemeRule" title="neural_compressor.torch.algorithms.fake_quant.config.QuantSchemeRule"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantSchemeRule</span></code></a> entries. Defaults to
+MXFP4 dynamic weight + input quantization on all <code class="docutils literal notranslate"><span class="pre">Linear</span></code> modules.</p></li>
+<li><p><strong>ignore</strong> – Module patterns excluded from quantization (checked before <code class="docutils literal notranslate"><span class="pre">config_groups</span></code>).
+Defaults to <code class="docutils literal notranslate"><span class="pre">[&quot;lm_head&quot;,</span> <span class="pre">&quot;re:.*embed.*&quot;]</span></code>.</p></li>
+<li><p><strong>quantizer_state_path</strong> – Optional JSON file containing calibrated static <code class="docutils literal notranslate"><span class="pre">amax</span></code> values.</p></li>
+<li><p><strong>backend</strong> – Default QDQ execution backend (<code class="docutils literal notranslate"><span class="pre">&quot;auto&quot;</span></code>, <code class="docutils literal notranslate"><span class="pre">&quot;pytorch&quot;</span></code>, or <code class="docutils literal notranslate"><span class="pre">&quot;triton&quot;</span></code>).</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.config.get_default_fake_quant_config">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.config.</span></span><span class="sig-name descname"><span class="pre">get_default_fake_quant_config</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig" title="neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig"><span class="pre">FakeQuantConfig</span></a></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/config.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.config.get_default_fake_quant_config" title="Link to this definition"></a></dt>
+<dd><p>Return the default W4A4 MXFP4 <a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig" title="neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig"><code class="xref py py-class docutils literal notranslate"><span class="pre">FakeQuantConfig</span></code></a>.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2f2241a0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

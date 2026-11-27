@@ -1,0 +1,80 @@
+neural_compressor.torch.algorithms.fake_quant.functional
+========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.functional
+
+.. autoapi-nested-parse::
+
+   Hot-path Quantize-Dequantize (QDQ) kernels, STE autograd wrapper, and backend registry.
+
+   Design invariants for training hot paths:
+   1. Zero bit-packing / unpacking or ``repeat_interleave`` expansion during QDQ.
+   2. Per-device lookup-table caching (zero CPU-to-device H2D transfers per forward).
+   3. Zero host-device synchronization (no ``float(tensor)`` / ``.item()`` branches),
+      enabling ``torch.compile(..., fullgraph=True)`` with zero graph breaks.
+   4. Zero saved tensors in :class:`StraightThroughFakeQuant` backward.
+   5. Exact bit-level numerical parity with ModelOpt's CUDA MXFP4, NVFP4, and FP8 E4M3 kernels.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.functional.StraightThroughFakeQuant
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.functional.register_quant_backend
+   neural_compressor.torch.algorithms.fake_quant.functional.set_quant_backend
+   neural_compressor.torch.algorithms.fake_quant.functional.get_quant_backend
+   neural_compressor.torch.algorithms.fake_quant.functional.fake_quant_dynamic
+   neural_compressor.torch.algorithms.fake_quant.functional.fake_quant_fp8_static_amax
+   neural_compressor.torch.algorithms.fake_quant.functional.ste_fake_quant
+
+
+Module Contents
+---------------
+
+.. py:function:: register_quant_backend(name: str, *, dynamic_fn: Callable[[torch.Tensor, neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat], torch.Tensor], fp8_static_fn: Callable[[torch.Tensor, torch.Tensor], torch.Tensor], is_available_fn: Callable[[], bool] = lambda: True, priority: int = 0) -> None
+
+   Register a QDQ kernel backend (e.g. ``"pytorch"`` or ``"triton"``).
+
+
+.. py:function:: set_quant_backend(backend: QuantBackendName) -> None
+
+   Set the process-wide default QDQ backend (``"auto"``, ``"pytorch"``, or ``"triton"``).
+
+
+.. py:function:: get_quant_backend() -> str
+
+   Return the currently configured default QDQ backend name.
+
+
+.. py:function:: fake_quant_dynamic(x: torch.Tensor, fmt: str | neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat = 'mxfp4', *, backend: QuantBackendName = 'auto') -> torch.Tensor
+
+   Quantize-dequantize ``x`` dynamically without autograd tracking.
+
+
+.. py:function:: fake_quant_fp8_static_amax(x: torch.Tensor, amax: torch.Tensor, *, backend: QuantBackendName = 'auto') -> torch.Tensor
+
+   Quantize-dequantize ``x`` to FP8 E4M3 using calibrated per-tensor ``amax``.
+
+
+.. py:class:: StraightThroughFakeQuant
+
+
+
+   Zero-saved-tensor Straight-Through Estimator (STE) for fake quantization.
+
+
+.. py:function:: ste_fake_quant(x: torch.Tensor, fmt: str | neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat, amax: Optional[torch.Tensor] = None, *, dynamic: bool = True, backend: QuantBackendName = 'auto') -> torch.Tensor
+
+   Apply fake quantization to ``x`` with an identity STE backward.
+
+

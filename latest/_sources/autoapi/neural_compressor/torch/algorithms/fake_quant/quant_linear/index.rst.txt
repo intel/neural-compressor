@@ -1,0 +1,32 @@
+neural_compressor.torch.algorithms.fake_quant.quant_linear
+==========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.quant_linear
+
+.. autoapi-nested-parse::
+
+   Fake-quantized module subclasses (``QuantLinear``).
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.quant_linear.QuantLinear
+
+
+Module Contents
+---------------
+
+.. py:class:: QuantLinear(in_features: int, out_features: int, bias: bool = True, config: neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig | None = None, device=None, dtype=None)
+
+
+
+   Drop-in ``nn.Linear`` subclass with weight, input, and output :class:`TensorQuantizer` slots.
+
+   Shares ``weight`` and ``bias`` ``nn.Parameter`` objects in-place via :meth:`from_float`
+   without duplicating memory or altering ``state_dict`` parameter keys.
+
+

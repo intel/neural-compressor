@@ -1,0 +1,31 @@
+neural_compressor.torch.distillation.seq_packing
+================================================
+
+.. py:module:: neural_compressor.torch.distillation.seq_packing
+
+.. autoapi-nested-parse::
+
+   Document-boundary-aware SFT sequence packing with reset ``position_ids`` and ``loss_mask``.
+
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.distillation.seq_packing.pack_sft_sequences
+
+
+Module Contents
+---------------
+
+.. py:function:: pack_sft_sequences(samples: Iterable[Mapping[str, Any]], seq_length: int, *, pad_token_id: int = 0, drop_tail: bool = False) -> list[dict[str, torch.Tensor]]
+
+   Pack variable-length tokenized SFT samples into ``seq_length`` bins without cross-document RoPE bleed.
+
+   Each packed document receives reset ``position_ids`` starting from ``0`` (``[0..L1-1, 0..L2-1, ...]``),
+   enabling HuggingFace ``flash_attention_2`` varlen boundary detection while masking prompt/padding tokens
+   via ``loss_mask`` and ``labels`` (``-100``).
+
+

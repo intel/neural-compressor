@@ -1,0 +1,20 @@
+neural_compressor.torch.algorithms.fake_quant.plugins
+=====================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.plugins
+
+.. autoapi-nested-parse::
+
+   Optional ecosystem integration plugins for ``fake_quant`` (PEFT LoRA, etc.).
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/algorithms/fake_quant/plugins/peft/index
+
+

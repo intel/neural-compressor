@@ -1,0 +1,112 @@
+neural_compressor.torch.algorithms.fake_quant.conversion
+========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.conversion
+
+.. autoapi-nested-parse::
+
+   Quantized module registry, target pattern matching, and in-place model conversion.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.conversion.register_quant_module
+   neural_compressor.torch.algorithms.fake_quant.conversion.unregister_quant_module
+   neural_compressor.torch.algorithms.fake_quant.conversion.is_supported_module
+   neural_compressor.torch.algorithms.fake_quant.conversion.quantize_module
+   neural_compressor.torch.algorithms.fake_quant.conversion.supported_module_types
+   neural_compressor.torch.algorithms.fake_quant.conversion.matches_target
+   neural_compressor.torch.algorithms.fake_quant.conversion.match_quant_config_from_info
+   neural_compressor.torch.algorithms.fake_quant.conversion.match_quant_config
+   neural_compressor.torch.algorithms.fake_quant.conversion.replace_quant_modules
+   neural_compressor.torch.algorithms.fake_quant.conversion.convert_to_quantized_model
+   neural_compressor.torch.algorithms.fake_quant.conversion.fake_quant_entry
+
+
+Module Contents
+---------------
+
+.. py:function:: register_quant_module(source_cls: Type[torch.nn.Module], factory_fn: Optional[QuantFactory] = None)
+
+   Register ``factory_fn`` (or class exposing ``.from_float(mod, cfg)``) for ``source_cls``.
+
+   Can be used either as a decorator ``@register_quant_module(nn.Linear)`` or a direct function call
+   ``register_quant_module(LoraLinear, QuantLoraLinear.from_lora)``.
+
+
+.. py:function:: unregister_quant_module(source_cls: Type[torch.nn.Module]) -> None
+
+   Remove ``source_cls`` from the fake-quant module registry if present.
+
+
+.. py:function:: is_supported_module(module: torch.nn.Module) -> bool
+
+   Return True if ``module`` is an unwrapped module with a registered fake-quant replacement.
+
+
+.. py:function:: quantize_module(module: torch.nn.Module, config: neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig) -> torch.nn.Module
+
+   Convert ``module`` using the registered factory for ``type(module)``.
+
+
+.. py:function:: supported_module_types() -> Tuple[Type[torch.nn.Module], Ellipsis]
+
+   Return all registered source ``nn.Module`` types.
+
+
+.. py:function:: matches_target(module_name: str, op_type: Any, pattern: str) -> bool
+
+   Match ``(module_name, op_type)`` against a ``compressed-tensors`` / ``ModelOpt`` target pattern.
+
+
+.. py:class:: QuantConversionReport
+
+   Resolved per-module fake-quantization mapping and conversion audit statistics.
+
+
+.. py:function:: match_quant_config_from_info(model_info: Iterable[Tuple[str, Any]], config: neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig) -> QuantConversionReport
+
+   Resolve ``config`` against ``(module_name, op_type)`` tuples without mutating a model.
+
+
+.. py:function:: match_quant_config(model: torch.nn.Module, config: neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig) -> QuantConversionReport
+
+   Inspect ``model`` and produce a :class:`QuantConversionReport` for ``config``.
+
+
+.. py:function:: replace_quant_modules(model: torch.nn.Module, report: QuantConversionReport) -> dict[str, int]
+
+   Replace every matched module in ``model`` with its registered fake-quant counterpart.
+
+
+.. py:function:: convert_to_quantized_model(model: torch.nn.Module, config: neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig) -> QuantConversionReport
+
+   Match ``config`` against ``model`` and replace matched modules in-place.
+
+
+.. py:function:: fake_quant_entry(model: torch.nn.Module, configs_mapping, mode: neural_compressor.common.utils.Mode = Mode.QUANTIZE, run_fn=None, run_args: Any = None, **kwargs) -> torch.nn.Module
+
+   Replace modules with fake-quant subclasses and optionally calibrate.
+
+   :param model: Float model, modified in place.
+   :param configs_mapping: ``{(module_name, op_type): ModuleQuantConfig}`` from
+                           :meth:`FakeQuantConfig.to_config_mapping`.
+   :param mode: ``PREPARE`` inserts quantizers only; ``QUANTIZE`` also calibrates
+                static quantizers when ``run_fn`` is given; ``CONVERT`` finalizes
+                calibration without replacing the fake-quant modules.
+   :param run_fn: Calibration forward loop, called as ``run_fn(model, *run_args)``.
+   :param run_args: Positional arguments for ``run_fn``.
+
+

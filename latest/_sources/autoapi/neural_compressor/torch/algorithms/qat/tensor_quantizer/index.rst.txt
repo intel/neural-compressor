@@ -5,7 +5,13 @@ neural_compressor.torch.algorithms.qat.tensor_quantizer
 
 .. autoapi-nested-parse::
 
-   TensorQuantizer Module.
+   Compatibility shim for the legacy QAT ``TensorQuantizer``.
+
+   The implementation moved to
+   :mod:`neural_compressor.torch.algorithms.fake_quant.tensor_quantizer`. The old
+   constructor (auto_round ``data_type``/``bits`` keyword arguments) is still
+   accepted for one release and translated to a
+   :class:`~neural_compressor.torch.algorithms.fake_quant.config.QuantizerConfig`.
 
 
 
@@ -24,6 +30,6 @@ Module Contents
 
 
 
-   Tensor quantizer module.
+   Deprecated alias with the pre-refactor constructor.
 
 

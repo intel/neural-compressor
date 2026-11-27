@@ -1,0 +1,71 @@
+neural_compressor.torch.algorithms.fake_quant.pack
+==================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.pack
+
+.. autoapi-nested-parse::
+
+   Cold-path weight bit-packing and dequantization utilities for checkpoint export.
+
+   This module is strictly separated from :mod:`.functional` so nibble packing/unpacking
+   never executes during QAT/QAD training forward or activation recomputation.
+   Packed layouts follow ``compressed-tensors`` and ``vLLM`` conventions:
+
+   * MXFP4: ``data`` uint8 ``[out, in // 2]`` (low nibble = even column),
+     ``scale`` uint8 E8M0 ``[out, in // 32]`` (``exponent + 127``).
+   * NVFP4: ``data`` uint8 ``[out, in // 2]``, ``scale`` float8_e4m3fn ``[out, in // 16]``,
+     ``global_scale`` float32 ``[1]``.
+   * MXFP8: ``data`` float8_e4m3fn ``[out, in]``, ``scale`` uint8 E8M0 ``[out, in // 32]``.
+   * Static FP8 E4M3: ``data`` float8_e4m3fn ``[out, in]``, ``scale`` float32 ``[1]``
+     (computed via exact dual-FP32 reciprocal ``1 / (448 / amax)`` so dequantization
+     is 0-ULP identical to training QDQ).
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.pack.pack_nibbles
+   neural_compressor.torch.algorithms.fake_quant.pack.unpack_nibbles
+   neural_compressor.torch.algorithms.fake_quant.pack.pack_weight
+   neural_compressor.torch.algorithms.fake_quant.pack.dequantize_packed_weight
+
+
+Module Contents
+---------------
+
+.. py:class:: PackedWeightTensor
+
+   Packed on-disk representation of a quantized weight tensor.
+
+
+.. py:function:: pack_nibbles(codes: torch.Tensor) -> torch.Tensor
+
+   Pack pairs of 4-bit codes per byte (even column in low nibble, odd column in high nibble).
+
+
+.. py:function:: unpack_nibbles(packed: torch.Tensor) -> torch.Tensor
+
+   Unpack uint8 bytes back into 4-bit codes (inverse of :func:`pack_nibbles`).
+
+
+.. py:function:: pack_weight(weight: torch.Tensor, fmt: str | neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat = 'mxfp4', *, amax: Optional[torch.Tensor] = None) -> PackedWeightTensor
+
+   Pack ``weight`` into the compressed on-disk layout of ``fmt``.
+
+
+.. py:function:: dequantize_packed_weight(packed: PackedWeightTensor, dtype: torch.dtype = torch.bfloat16) -> torch.Tensor
+
+   Dequantize a :class:`PackedWeightTensor` back to dense floating-point.
+
+

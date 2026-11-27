@@ -1,0 +1,54 @@
+neural_compressor.torch.qad.trainer
+===================================
+
+.. py:module:: neural_compressor.torch.qad.trainer
+
+.. autoapi-nested-parse::
+
+   QADTrainer composing KDTrainer + QATTrainer via cooperative multiple inheritance.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.qad.trainer.QADTrainer
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.qad.trainer.prepare_qad_model
+
+
+Module Contents
+---------------
+
+.. py:function:: prepare_qad_model(model: torch.nn.Module, quant_config: neural_compressor.torch.algorithms.fake_quant.FakeQuantConfig, *, lora_config: Optional[Any] = None, lora_merge_before_quant: bool = True) -> torch.nn.Module
+
+   Prepare ``model`` for QAD by inserting fake-quantizers and optionally attaching PEFT LoRA.
+
+   :param model: Standard ``transformers.PreTrainedModel`` (or ``PeftModel``).
+   :param quant_config: :class:`FakeQuantConfig` describing weight and activation fake-quantization.
+   :param lora_config: Optional ``peft.LoraConfig`` instance or ``dict`` of ``LoraConfig`` kwargs.
+   :param lora_merge_before_quant: When ``True`` (Path-B, recommended for inference export parity),
+                                   quantizes ``W + s * B @ A`` before weight fake-quantization.
+
+
+.. py:class:: QADTrainer(model: Union[torch.nn.Module, Any] = None, args: Any = None, *pos_args, teacher_model: Optional[Union[torch.nn.Module, str]] = None, teacher: Optional[Union[torch.nn.Module, str]] = None, distill_config: Optional[neural_compressor.torch.distillation.DistillationConfig] = None, quant_config: Optional[neural_compressor.torch.algorithms.fake_quant.FakeQuantConfig] = None, calib_batches: Optional[int] = None, quantizer_state_path: Optional[Union[str, pathlib.Path]] = None, **kwargs)
+
+
+
+   Unified Quantization-Aware Distillation Trainer composing :class:`KDTrainer` and :class:`QATTrainer`.
+
+   MRO: ``QADTrainer -> KDTrainer -> QATTrainer -> transformers.Trainer``
+   * ``KDTrainer.compute_loss`` provides chunked zero-logit-allocation Top-K KL / Full KL / Hybrid CE
+     across online external teacher, zero-VRAM LoRA ``teacher_model="self"``, and offline Top-K shards.
+   * ``QATTrainer`` provides ``prepare_qat``, automatic static ``amax`` calibration, FSDP2 + PEFT
+     checkpoint gathering, and lossless ``quantizer_state.json`` + ``quant_config.json`` persistence.
+
+

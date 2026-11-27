@@ -5,25 +5,13 @@ neural_compressor.torch.algorithms.qat.quant_linear
 
 .. autoapi-nested-parse::
 
-   Quantized Linear.
+   Compatibility shim for the legacy QAT ``QuantLinear``.
 
+   The implementation moved to
+   :mod:`neural_compressor.torch.algorithms.fake_quant.quant_linear`. Importing the
+   old path keeps downstream code working; new code should use
+   ``neural_compressor.torch.quantization.QuantLinear`` (re-exported here) and
+   ``FakeQuantConfig`` instead of ``prepare_qat(mapping=...)``.
 
-
-Classes
--------
-
-.. autoapisummary::
-
-   neural_compressor.torch.algorithms.qat.quant_linear.QuantLinear
-
-
-Module Contents
----------------
-
-.. py:class:: QuantLinear
-
-
-
-   Quantized version of nn.Linear.
 
 

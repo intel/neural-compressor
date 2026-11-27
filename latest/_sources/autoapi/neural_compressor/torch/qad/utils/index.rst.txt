@@ -1,0 +1,108 @@
+neural_compressor.torch.qad.utils
+=================================
+
+.. py:module:: neural_compressor.torch.qad.utils
+
+.. autoapi-nested-parse::
+
+   QAD training utilities: throughput/memory metrics, callbacks, and FSDP2 layer discovery.
+
+   All FLOPs/MFU numbers report their basis (peak table, per-device vs cluster). Unknown
+   devices return ``mfu=None`` instead of a made-up denominator.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.qad.utils.GradDebugCallback
+   neural_compressor.torch.qad.utils.StopAfterSteps
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.qad.utils.per_token_flops
+   neural_compressor.torch.qad.utils.tflops_and_mfu
+   neural_compressor.torch.qad.utils.reset_peak_memory
+   neural_compressor.torch.qad.utils.device_hardware_name
+   neural_compressor.torch.qad.utils.memory_report
+   neural_compressor.torch.qad.utils.gib
+   neural_compressor.torch.qad.utils.param_counts
+   neural_compressor.torch.qad.utils.decoder_layer_class_names
+   neural_compressor.torch.qad.utils.teacher_placement
+
+
+Module Contents
+---------------
+
+.. py:function:: per_token_flops(params: int, *, mode: str = 'full', teacher: bool = False, recompute: bool = False) -> float
+
+   Approximate training FLOPs per token.
+
+
+.. py:function:: tflops_and_mfu(*, tokens: int, step_seconds: float, params: int, mode: str = 'full', teacher_params: int = 0, device_name: str = '', world_size: int = 1, recompute: bool = False) -> dict
+
+   Return cluster and per-device rates for one optimizer step.
+
+
+.. py:function:: reset_peak_memory(device: torch.device | str) -> None
+
+   Reset peak accelerator memory statistics on ``device`` if supported.
+
+
+.. py:function:: device_hardware_name(device: torch.device | str) -> str
+
+   Query human-readable hardware name for ``device`` via backend module without hardcoding CUDA.
+
+
+.. py:function:: memory_report(device: torch.device | str) -> dict
+
+   Return allocated/peak/reserved bytes with safe fallbacks.
+
+
+.. py:function:: gib(nbytes: Optional[int]) -> Optional[float]
+
+   Convert bytes to GiB (``None`` passes through).
+
+
+.. py:function:: param_counts(model: torch.nn.Module) -> dict
+
+   Total/trainable parameter counts for logging.
+
+
+.. py:function:: decoder_layer_class_names(model: torch.nn.Module) -> List[str]
+
+   Return decoder block class names for ``fsdp_config["transformer_layer_cls_to_wrap"]``.
+
+   Discovers actual decoder layer classes (including hybrid GatedDeltaNet + Attention or MoE
+   blocks) directly from ``model`` while walking ``PeftModel`` / VLM / DDP wrappers, falling
+   back to HuggingFace ``_no_split_modules`` when available.
+
+
+.. py:function:: teacher_placement(model: torch.nn.Module) -> str
+
+   Return a suggested teacher placement for ``model``.
+
+   Models under 8B parameters default to the active local accelerator (e.g. ``"cuda"`` / ``"xpu"``);
+   larger models (such as a 27B teacher alongside a 27B student) default to FSDP2 ``"shard"``.
+
+
+.. py:class:: GradDebugCallback
+
+
+
+   Report non-finite gradients by parameter name before the optimizer step.
+
+
+.. py:class:: StopAfterSteps(step: int)
+
+
+
+   Stop after N optimizer steps while keeping a longer LR schedule.
+
+

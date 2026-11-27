@@ -1,0 +1,225 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.export.compressed_tensors &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.export.compressed_tensors</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/torch/export/compressed_tensors/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.export.compressed_tensors">
+<span id="neural-compressor-torch-export-compressed-tensors"></span><h1>neural_compressor.torch.export.compressed_tensors<a class="headerlink" href="#module-neural_compressor.torch.export.compressed_tensors" title="Link to this heading"></a></h1>
+<p>Pack fake-quantized linear layers into <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> / <code class="docutils literal notranslate"><span class="pre">vLLM</span></code> layout.</p>
+<p>This module bridges <a class="reference internal" href="../../algorithms/fake_quant/index.html#module-neural_compressor.torch.algorithms.fake_quant" title="neural_compressor.torch.algorithms.fake_quant"><code class="xref py py-mod docutils literal notranslate"><span class="pre">neural_compressor.torch.algorithms.fake_quant</span></code></a> and
+<code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> (&gt;= 0.9) / <code class="docutils literal notranslate"><span class="pre">vLLM</span></code> (&gt;= 0.8) without requiring either
+inference package to be installed in the training environment:</p>
+<ul class="simple">
+<li><p><code class="docutils literal notranslate"><span class="pre">mxfp4</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">mxfp4-pack-quantized</span></code>:
+<code class="docutils literal notranslate"><span class="pre">weight_packed</span></code> (<code class="docutils literal notranslate"><span class="pre">uint8</span> <span class="pre">[out,</span> <span class="pre">in</span> <span class="pre">//</span> <span class="pre">2]</span></code>) + <code class="docutils literal notranslate"><span class="pre">weight_scale</span></code> (<code class="docutils literal notranslate"><span class="pre">uint8</span> <span class="pre">[out,</span> <span class="pre">in</span> <span class="pre">//</span> <span class="pre">32]</span></code> E8M0).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">nvfp4</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">nvfp4-pack-quantized</span></code>:
+<code class="docutils literal notranslate"><span class="pre">weight_packed</span></code> (<code class="docutils literal notranslate"><span class="pre">uint8</span> <span class="pre">[out,</span> <span class="pre">in</span> <span class="pre">//</span> <span class="pre">2]</span></code>) + <code class="docutils literal notranslate"><span class="pre">weight_scale</span></code> (<code class="docutils literal notranslate"><span class="pre">float8_e4m3fn</span> <span class="pre">[out,</span> <span class="pre">in</span> <span class="pre">//</span> <span class="pre">16]</span></code>)
++ <code class="docutils literal notranslate"><span class="pre">weight_global_scale</span></code> (<code class="docutils literal notranslate"><span class="pre">float32</span> <span class="pre">[1]</span></code> divisor <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">global_scale</span></code>)
++ optional <code class="docutils literal notranslate"><span class="pre">input_global_scale</span></code> (<code class="docutils literal notranslate"><span class="pre">float32</span> <span class="pre">[1]</span></code> divisor <code class="docutils literal notranslate"><span class="pre">(6</span> <span class="pre">*</span> <span class="pre">448)</span> <span class="pre">/</span> <span class="pre">input_amax</span></code>).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">mxfp8</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">mxfp8-quantized</span></code>:
+<code class="docutils literal notranslate"><span class="pre">weight</span></code> (<code class="docutils literal notranslate"><span class="pre">float8_e4m3fn</span> <span class="pre">[out,</span> <span class="pre">in]</span></code>) + <code class="docutils literal notranslate"><span class="pre">weight_scale</span></code> (<code class="docutils literal notranslate"><span class="pre">uint8</span> <span class="pre">[out,</span> <span class="pre">in</span> <span class="pre">//</span> <span class="pre">32]</span></code> E8M0).</p></li>
+<li><p><code class="docutils literal notranslate"><span class="pre">fp8_e4m3</span></code> -&gt; <code class="docutils literal notranslate"><span class="pre">float-quantized</span></code>:
+<code class="docutils literal notranslate"><span class="pre">weight</span></code> (<code class="docutils literal notranslate"><span class="pre">float8_e4m3fn</span> <span class="pre">[out,</span> <span class="pre">in]</span></code>) + <code class="docutils literal notranslate"><span class="pre">weight_scale</span></code> (<code class="docutils literal notranslate"><span class="pre">float32</span> <span class="pre">[1]</span></code>)
++ optional static <code class="docutils literal notranslate"><span class="pre">input_scale</span></code> (<code class="docutils literal notranslate"><span class="pre">float32</span> <span class="pre">[1]</span></code>).</p></li>
+</ul>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.export.compressed_tensors.LayerSchemeSpec" title="neural_compressor.torch.export.compressed_tensors.LayerSchemeSpec"><code class="xref py py-obj docutils literal notranslate"><span class="pre">LayerSchemeSpec</span></code></a></p></td>
+<td><p>Canonical <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> scheme descriptor for a single Linear module.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.export.compressed_tensors.pack_linear_tensors" title="neural_compressor.torch.export.compressed_tensors.pack_linear_tensors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pack_linear_tensors</span></code></a>(→ tuple[dict[str, torch.Tensor], ...)</p></td>
+<td><p>Pack a single linear module's weight/bias/scales into <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> keys.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.export.compressed_tensors.build_compressed_tensors_config" title="neural_compressor.torch.export.compressed_tensors.build_compressed_tensors_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">build_compressed_tensors_config</span></code></a>(→ dict[str, Any])</p></td>
+<td><p>Assemble <code class="docutils literal notranslate"><span class="pre">config.json['quantization_config']</span></code> in <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> schema.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.export.compressed_tensors.dequantize_compressed_tensors_layer" title="neural_compressor.torch.export.compressed_tensors.dequantize_compressed_tensors_layer"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dequantize_compressed_tensors_layer</span></code></a>(→ torch.Tensor)</p></td>
+<td><p>Dequantize an exported <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> layer back to dense floating-point.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.export.compressed_tensors.pack_model_to_compressed_tensors" title="neural_compressor.torch.export.compressed_tensors.pack_model_to_compressed_tensors"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pack_model_to_compressed_tensors</span></code></a>(→ tuple[dict[str, ...)</p></td>
+<td><p>Pack an in-memory <code class="docutils literal notranslate"><span class="pre">QuantLinear</span></code> model into <code class="docutils literal notranslate"><span class="pre">(compressed_state_dict,</span> <span class="pre">quantization_config)</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.compressed_tensors.LayerSchemeSpec">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.compressed_tensors.</span></span><span class="sig-name descname"><span class="pre">LayerSchemeSpec</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/compressed_tensors.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.compressed_tensors.LayerSchemeSpec" title="Link to this definition"></a></dt>
+<dd><p>Canonical <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> scheme descriptor for a single Linear module.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.compressed_tensors.pack_linear_tensors">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.compressed_tensors.</span></span><span class="sig-name descname"><span class="pre">pack_linear_tensors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">bias</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">weight_quantizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../algorithms/fake_quant/tensor_quantizer/index.html#neural_compressor.torch.algorithms.fake_quant.tensor_quantizer.TensorQuantizer" title="neural_compressor.torch.algorithms.fake_quant.tensor_quantizer.TensorQuantizer"><span class="pre">neural_compressor.torch.algorithms.fake_quant.tensor_quantizer.TensorQuantizer</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">input_quantizer</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../../algorithms/fake_quant/tensor_quantizer/index.html#neural_compressor.torch.algorithms.fake_quant.tensor_quantizer.TensorQuantizer" title="neural_compressor.torch.algorithms.fake_quant.tensor_quantizer.TensorQuantizer"><span class="pre">neural_compressor.torch.algorithms.fake_quant.tensor_quantizer.TensorQuantizer</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensor_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.dtype</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">torch.bfloat16</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#neural_compressor.torch.export.compressed_tensors.LayerSchemeSpec" title="neural_compressor.torch.export.compressed_tensors.LayerSchemeSpec"><span class="pre">LayerSchemeSpec</span></a><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/compressed_tensors.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.compressed_tensors.pack_linear_tensors" title="Link to this definition"></a></dt>
+<dd><p>Pack a single linear module’s weight/bias/scales into <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> keys.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>module_name</strong> – Logical module path inside the model (used for diagnostics).</p></li>
+<li><p><strong>weight</strong> – Dense weight tensor <code class="docutils literal notranslate"><span class="pre">[out_features,</span> <span class="pre">in_features]</span></code> (already LoRA-merged if needed).</p></li>
+<li><p><strong>bias</strong> – Optional dense bias tensor <code class="docutils literal notranslate"><span class="pre">[out_features]</span></code>.</p></li>
+<li><p><strong>weight_quantizer</strong> – Module’s <code class="docutils literal notranslate"><span class="pre">weight_quantizer</span></code>.</p></li>
+<li><p><strong>input_quantizer</strong> – Optional module’s <code class="docutils literal notranslate"><span class="pre">input_quantizer</span></code>.</p></li>
+<li><p><strong>tensor_prefix</strong> – Optional target key prefix (defaults to <code class="docutils literal notranslate"><span class="pre">module_name</span></code>).</p></li>
+<li><p><strong>dtype</strong> – Dense fallback dtype for unquantized/bias tensors.</p></li>
+</ul>
+</dd>
+<dt class="field-even">Returns<span class="colon">:</span></dt>
+<dd class="field-even"><p><code class="docutils literal notranslate"><span class="pre">(tensors_dict,</span> <span class="pre">scheme_spec)</span></code> where <code class="docutils literal notranslate"><span class="pre">scheme_spec</span></code> is <code class="docutils literal notranslate"><span class="pre">None</span></code> when the
+layer is unquantized (e.g. <code class="docutils literal notranslate"><span class="pre">bf16</span></code> or disabled <code class="docutils literal notranslate"><span class="pre">weight_quantizer</span></code>).</p>
+</dd>
+</dl>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.compressed_tensors.build_compressed_tensors_config">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.compressed_tensors.</span></span><span class="sig-name descname"><span class="pre">build_compressed_tensors_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">layer_schemes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><a class="reference internal" href="#neural_compressor.torch.export.compressed_tensors.LayerSchemeSpec" title="neural_compressor.torch.export.compressed_tensors.LayerSchemeSpec"><span class="pre">LayerSchemeSpec</span></a><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">ignore_targets</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/compressed_tensors.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.compressed_tensors.build_compressed_tensors_config" title="Link to this definition"></a></dt>
+<dd><p>Assemble <code class="docutils literal notranslate"><span class="pre">config.json['quantization_config']</span></code> in <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> schema.</p>
+<p><code class="docutils literal notranslate"><span class="pre">targets</span></code> in each <code class="docutils literal notranslate"><span class="pre">config_group</span></code> are always expanded to sorted concrete module
+paths (never broad regexes such as <code class="docutils literal notranslate"><span class="pre">re:.*mlp.*</span></code>) so vision-tower MLPs or GDN
+auxiliary projections in hybrid/multimodal architectures are never accidentally matched.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.compressed_tensors.dequantize_compressed_tensors_layer">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.compressed_tensors.</span></span><span class="sig-name descname"><span class="pre">dequantize_compressed_tensors_layer</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">tensors</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">scheme_format</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">original_shape</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">int</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.dtype</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">torch.bfloat16</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/compressed_tensors.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.compressed_tensors.dequantize_compressed_tensors_layer" title="Link to this definition"></a></dt>
+<dd><p>Dequantize an exported <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> layer back to dense floating-point.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.export.compressed_tensors.pack_model_to_compressed_tensors">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.export.compressed_tensors.</span></span><span class="sig-name descname"><span class="pre">pack_model_to_compressed_tensors</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">target_prefix</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">extra_ignore</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">list</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.dtype</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">torch.bfloat16</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">torch.Tensor</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/export/compressed_tensors.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.export.compressed_tensors.pack_model_to_compressed_tensors" title="Link to this definition"></a></dt>
+<dd><p>Pack an in-memory <code class="docutils literal notranslate"><span class="pre">QuantLinear</span></code> model into <code class="docutils literal notranslate"><span class="pre">(compressed_state_dict,</span> <span class="pre">quantization_config)</span></code>.</p>
+<p>Any <code class="docutils literal notranslate"><span class="pre">QuantLoraLinear</span></code> or PEFT wrapper on <code class="docutils literal notranslate"><span class="pre">model</span></code> should be merged beforehand via
+<code class="xref py py-func docutils literal notranslate"><span class="pre">merge_lora_into_quant_linear()</span></code> (handled automatically by <code class="docutils literal notranslate"><span class="pre">export_hf_checkpoint</span></code>).</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2e9a8280> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

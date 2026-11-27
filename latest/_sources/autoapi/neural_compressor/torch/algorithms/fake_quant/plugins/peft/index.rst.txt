@@ -1,0 +1,74 @@
+neural_compressor.torch.algorithms.fake_quant.plugins.peft
+==========================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.plugins.peft
+
+.. autoapi-nested-parse::
+
+   PEFT LoRA fake-quantization plugin supporting Path-B (merge-before-quant) and Path-A.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.plugins.peft.QuantLoraLinear
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.plugins.peft.is_peft_available
+   neural_compressor.torch.algorithms.fake_quant.plugins.peft.ensure_peft_torchao_compat
+   neural_compressor.torch.algorithms.fake_quant.plugins.peft.register_peft_quant_modules
+   neural_compressor.torch.algorithms.fake_quant.plugins.peft.convert_peft_lora_to_quant_lora
+   neural_compressor.torch.algorithms.fake_quant.plugins.peft.merge_lora_into_quant_linear
+
+
+Module Contents
+---------------
+
+.. py:function:: is_peft_available() -> bool
+
+   Return True if ``peft`` is importable in the active Python environment.
+
+
+.. py:function:: ensure_peft_torchao_compat() -> None
+
+   Guard against PEFT raising ``ImportError`` when an older ``torchao`` (<0.16) is installed.
+
+
+.. py:class:: QuantLoraLinear
+
+
+
+   Fake-quantized PEFT ``LoraLinear`` supporting both deployment-aligned Path-B and Path-A.
+
+   * ``quant_order="lora_then_quant"`` (Path B, default):
+     ``y = Q_out(F.linear(Q_in(x), Q_w(W_base + sum_i ((s_i * B_i) @ A_i)), b))``
+     Matches NVIDIA ``ModelOpt``'s ``_QuantLoraLinear`` and ``Megatron-Bridge``'s ``MergedLoRALinear``
+     bit-for-bit, ensuring zero train-to-export quantization mismatch once adapters are merged.
+   * ``quant_order="quant_then_lora"`` (Path A):
+     ``y = Q_out(F.linear(Q_in(x), Q_w(W_base), b)) + sum_i s_i * B_i(A_i(dropout_i(x)))``
+     Matches standard PEFT wrapping a ``QuantLinear`` base layer.
+
+
+.. py:function:: register_peft_quant_modules() -> bool
+
+   Register ``peft.tuners.lora.Linear -> QuantLoraLinear.from_lora`` in ``fake_quant``'s registry.
+
+
+.. py:function:: convert_peft_lora_to_quant_lora(model: torch.nn.Module, *, quant_order: QuantOrder = 'lora_then_quant') -> int
+
+   Upgrade ``LoraLinear(base_layer=QuantLinear)`` modules in ``model`` into :class:`QuantLoraLinear`.
+
+
+.. py:function:: merge_lora_into_quant_linear(model: torch.nn.Module) -> torch.nn.Module
+
+   Merge all PEFT LoRA adapters in ``model`` into :class:`QuantLinear` (or ``nn.Linear``) and unwrap ``PeftModel``.
+
+

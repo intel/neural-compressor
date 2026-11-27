@@ -106,8 +106,8 @@
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.quantize.prepare" title="neural_compressor.torch.quantization.quantize.prepare"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare</span></code></a>(model, quant_config[, inplace, example_inputs])</p></td>
 <td><p>Prepare the model for calibration.</p></td>
 </tr>
-<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.quantize.prepare_qat" title="neural_compressor.torch.quantization.quantize.prepare_qat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_qat</span></code></a>(model[, mapping, inplace])</p></td>
-<td><p>Prepares a copy of the model for quantization calibration or</p></td>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.quantize.prepare_qat" title="neural_compressor.torch.quantization.quantize.prepare_qat"><code class="xref py py-obj docutils literal notranslate"><span class="pre">prepare_qat</span></code></a>(model[, quant_config, mapping, inplace])</p></td>
+<td><p>Prepare a model for quantization-aware training.</p></td>
 </tr>
 <tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.quantization.quantize.convert" title="neural_compressor.torch.quantization.quantize.convert"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert</span></code></a>(model[, quant_config, inplace])</p></td>
 <td><p>Convert the prepared model to a quantized model.</p></td>
@@ -205,19 +205,21 @@
 
 <dl class="py function">
 <dt class="sig sig-object py" id="neural_compressor.torch.quantization.quantize.prepare_qat">
-<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.quantize.</span></span><span class="sig-name descname"><span class="pre">prepare_qat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/quantization/quantize.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.quantize.prepare_qat" title="Link to this definition"></a></dt>
-<dd><p>Prepares a copy of the model for quantization calibration or
-quantization-aware training and converts it to quantized version.</p>
-<p>Quantization configuration should be assigned preemptively
-to individual submodules in <cite>.qconfig</cite> attribute.</p>
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.quantization.quantize.</span></span><span class="sig-name descname"><span class="pre">prepare_qat</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">quant_config</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mapping</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">inplace</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">True</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/quantization/quantize.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.quantization.quantize.prepare_qat" title="Link to this definition"></a></dt>
+<dd><p>Prepare a model for quantization-aware training.</p>
+<p>The new API takes a <code class="xref py py-class docutils literal notranslate"><span class="pre">FakeQuantConfig</span></code> and is equivalent to
+<code class="docutils literal notranslate"><span class="pre">prepare(model,</span> <span class="pre">quant_config)</span></code>: quantizers are inserted, static ones wait
+for <code class="xref py py-func docutils literal notranslate"><span class="pre">calibrate()</span></code> or a calibration <code class="docutils literal notranslate"><span class="pre">run_fn</span></code>. The model may be in eval
+mode (calibration and QAT do not require training mode).</p>
+<p>The legacy <code class="docutils literal notranslate"><span class="pre">mapping={nn.Linear:</span> <span class="pre">&quot;MXFP8&quot;}</span></code> form is accepted for one
+release and translated to a config with a deprecation warning.</p>
 <dl class="field-list simple">
 <dt class="field-odd">Parameters<span class="colon">:</span></dt>
 <dd class="field-odd"><ul class="simple">
-<li><p><strong>model</strong> – input model to be modified in-place</p></li>
-<li><p><strong>quant_config</strong> – quantization config that maps float modules to quantized modules to be
-replaced.</p></li>
-<li><p><strong>inplace</strong> – carry out model transformations in-place, the original module
-is mutated</p></li>
+<li><p><strong>model</strong> – Model to modify (in place when <code class="docutils literal notranslate"><span class="pre">inplace=True</span></code>).</p></li>
+<li><p><strong>quant_config</strong> – <code class="xref py py-class docutils literal notranslate"><span class="pre">FakeQuantConfig</span></code> describing the quantizers.</p></li>
+<li><p><strong>mapping</strong> – Legacy <code class="docutils literal notranslate"><span class="pre">{module_type:</span> <span class="pre">scheme}</span></code> mapping.</p></li>
+<li><p><strong>inplace</strong> – Mutate the input model instead of a copy.</p></li>
 </ul>
 </dd>
 </dl>
@@ -264,7 +266,7 @@ is mutated</p></li>
   Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
     <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
     provided by <a href="https://readthedocs.org">Read the Docs</a>.
-   <jinja2.runtime.BlockReference object at 0x7c9598d6c130> 
+   <jinja2.runtime.BlockReference object at 0x75ca2e738a60> 
   <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
 
 

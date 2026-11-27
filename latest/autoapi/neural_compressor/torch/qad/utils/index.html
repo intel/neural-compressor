@@ -1,0 +1,248 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.qad.utils &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.qad.utils</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../_sources/autoapi/neural_compressor/torch/qad/utils/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.qad.utils">
+<span id="neural-compressor-torch-qad-utils"></span><h1>neural_compressor.torch.qad.utils<a class="headerlink" href="#module-neural_compressor.torch.qad.utils" title="Link to this heading"></a></h1>
+<p>QAD training utilities: throughput/memory metrics, callbacks, and FSDP2 layer discovery.</p>
+<p>All FLOPs/MFU numbers report their basis (peak table, per-device vs cluster). Unknown
+devices return <code class="docutils literal notranslate"><span class="pre">mfu=None</span></code> instead of a made-up denominator.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.utils.GradDebugCallback" title="neural_compressor.torch.qad.utils.GradDebugCallback"><code class="xref py py-obj docutils literal notranslate"><span class="pre">GradDebugCallback</span></code></a></p></td>
+<td><p>Report non-finite gradients by parameter name before the optimizer step.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.utils.StopAfterSteps" title="neural_compressor.torch.qad.utils.StopAfterSteps"><code class="xref py py-obj docutils literal notranslate"><span class="pre">StopAfterSteps</span></code></a></p></td>
+<td><p>Stop after N optimizer steps while keeping a longer LR schedule.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.utils.per_token_flops" title="neural_compressor.torch.qad.utils.per_token_flops"><code class="xref py py-obj docutils literal notranslate"><span class="pre">per_token_flops</span></code></a>(→ float)</p></td>
+<td><p>Approximate training FLOPs per token.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.utils.tflops_and_mfu" title="neural_compressor.torch.qad.utils.tflops_and_mfu"><code class="xref py py-obj docutils literal notranslate"><span class="pre">tflops_and_mfu</span></code></a>(→ dict)</p></td>
+<td><p>Return cluster and per-device rates for one optimizer step.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.utils.reset_peak_memory" title="neural_compressor.torch.qad.utils.reset_peak_memory"><code class="xref py py-obj docutils literal notranslate"><span class="pre">reset_peak_memory</span></code></a>(→ None)</p></td>
+<td><p>Reset peak accelerator memory statistics on <code class="docutils literal notranslate"><span class="pre">device</span></code> if supported.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.utils.device_hardware_name" title="neural_compressor.torch.qad.utils.device_hardware_name"><code class="xref py py-obj docutils literal notranslate"><span class="pre">device_hardware_name</span></code></a>(→ str)</p></td>
+<td><p>Query human-readable hardware name for <code class="docutils literal notranslate"><span class="pre">device</span></code> via backend module without hardcoding CUDA.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.utils.memory_report" title="neural_compressor.torch.qad.utils.memory_report"><code class="xref py py-obj docutils literal notranslate"><span class="pre">memory_report</span></code></a>(→ dict)</p></td>
+<td><p>Return allocated/peak/reserved bytes with safe fallbacks.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.utils.gib" title="neural_compressor.torch.qad.utils.gib"><code class="xref py py-obj docutils literal notranslate"><span class="pre">gib</span></code></a>(→ Optional[float])</p></td>
+<td><p>Convert bytes to GiB (<code class="docutils literal notranslate"><span class="pre">None</span></code> passes through).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.utils.param_counts" title="neural_compressor.torch.qad.utils.param_counts"><code class="xref py py-obj docutils literal notranslate"><span class="pre">param_counts</span></code></a>(→ dict)</p></td>
+<td><p>Total/trainable parameter counts for logging.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.utils.decoder_layer_class_names" title="neural_compressor.torch.qad.utils.decoder_layer_class_names"><code class="xref py py-obj docutils literal notranslate"><span class="pre">decoder_layer_class_names</span></code></a>(→ List[str])</p></td>
+<td><p>Return decoder block class names for <code class="docutils literal notranslate"><span class="pre">fsdp_config[&quot;transformer_layer_cls_to_wrap&quot;]</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.qad.utils.teacher_placement" title="neural_compressor.torch.qad.utils.teacher_placement"><code class="xref py py-obj docutils literal notranslate"><span class="pre">teacher_placement</span></code></a>(→ str)</p></td>
+<td><p>Return a suggested teacher placement for <code class="docutils literal notranslate"><span class="pre">model</span></code>.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.utils.per_token_flops">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.utils.</span></span><span class="sig-name descname"><span class="pre">per_token_flops</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'full'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">teacher</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recompute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.utils.per_token_flops" title="Link to this definition"></a></dt>
+<dd><p>Approximate training FLOPs per token.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.utils.tflops_and_mfu">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.utils.</span></span><span class="sig-name descname"><span class="pre">tflops_and_mfu</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">tokens</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">step_seconds</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">float</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'full'</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">teacher_params</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">0</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">device_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">''</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">world_size</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">1</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">recompute</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">bool</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">False</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.utils.tflops_and_mfu" title="Link to this definition"></a></dt>
+<dd><p>Return cluster and per-device rates for one optimizer step.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.utils.reset_peak_memory">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.utils.</span></span><span class="sig-name descname"><span class="pre">reset_peak_memory</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.utils.reset_peak_memory" title="Link to this definition"></a></dt>
+<dd><p>Reset peak accelerator memory statistics on <code class="docutils literal notranslate"><span class="pre">device</span></code> if supported.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.utils.device_hardware_name">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.utils.</span></span><span class="sig-name descname"><span class="pre">device_hardware_name</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.utils.device_hardware_name" title="Link to this definition"></a></dt>
+<dd><p>Query human-readable hardware name for <code class="docutils literal notranslate"><span class="pre">device</span></code> via backend module without hardcoding CUDA.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.utils.memory_report">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.utils.</span></span><span class="sig-name descname"><span class="pre">memory_report</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">device</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.device</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.utils.memory_report" title="Link to this definition"></a></dt>
+<dd><p>Return allocated/peak/reserved bytes with safe fallbacks.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.utils.gib">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.utils.</span></span><span class="sig-name descname"><span class="pre">gib</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">nbytes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">float</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.utils.gib" title="Link to this definition"></a></dt>
+<dd><p>Convert bytes to GiB (<code class="docutils literal notranslate"><span class="pre">None</span></code> passes through).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.utils.param_counts">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.utils.</span></span><span class="sig-name descname"><span class="pre">param_counts</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.utils.param_counts" title="Link to this definition"></a></dt>
+<dd><p>Total/trainable parameter counts for logging.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.utils.decoder_layer_class_names">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.utils.</span></span><span class="sig-name descname"><span class="pre">decoder_layer_class_names</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">List</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.utils.decoder_layer_class_names" title="Link to this definition"></a></dt>
+<dd><p>Return decoder block class names for <code class="docutils literal notranslate"><span class="pre">fsdp_config[&quot;transformer_layer_cls_to_wrap&quot;]</span></code>.</p>
+<p>Discovers actual decoder layer classes (including hybrid GatedDeltaNet + Attention or MoE
+blocks) directly from <code class="docutils literal notranslate"><span class="pre">model</span></code> while walking <code class="docutils literal notranslate"><span class="pre">PeftModel</span></code> / VLM / DDP wrappers, falling
+back to HuggingFace <code class="docutils literal notranslate"><span class="pre">_no_split_modules</span></code> when available.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.utils.teacher_placement">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.utils.</span></span><span class="sig-name descname"><span class="pre">teacher_placement</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">str</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.utils.teacher_placement" title="Link to this definition"></a></dt>
+<dd><p>Return a suggested teacher placement for <code class="docutils literal notranslate"><span class="pre">model</span></code>.</p>
+<p>Models under 8B parameters default to the active local accelerator (e.g. <code class="docutils literal notranslate"><span class="pre">&quot;cuda&quot;</span></code> / <code class="docutils literal notranslate"><span class="pre">&quot;xpu&quot;</span></code>);
+larger models (such as a 27B teacher alongside a 27B student) default to FSDP2 <code class="docutils literal notranslate"><span class="pre">&quot;shard&quot;</span></code>.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.utils.GradDebugCallback">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.utils.</span></span><span class="sig-name descname"><span class="pre">GradDebugCallback</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.utils.GradDebugCallback" title="Link to this definition"></a></dt>
+<dd><p>Report non-finite gradients by parameter name before the optimizer step.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.qad.utils.StopAfterSteps">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.qad.utils.</span></span><span class="sig-name descname"><span class="pre">StopAfterSteps</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">step</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">int</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/qad/utils.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.qad.utils.StopAfterSteps" title="Link to this definition"></a></dt>
+<dd><p>Stop after N optimizer steps while keeping a longer LR schedule.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2e7b18d0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

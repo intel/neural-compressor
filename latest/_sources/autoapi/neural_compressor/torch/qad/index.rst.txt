@@ -1,0 +1,26 @@
+neural_compressor.torch.qad
+===========================
+
+.. py:module:: neural_compressor.torch.qad
+
+.. autoapi-nested-parse::
+
+   Quantization-Aware Distillation (QAD).
+
+   Composes ``neural_compressor.torch.quantization`` (``FakeQuantConfig``, ``prepare_qat``, ``QATTrainer``,
+   ``export_hf_checkpoint``) and ``neural_compressor.torch.distillation`` (``DistillationConfig``, ``KDTrainer``)
+   into a single HuggingFace-native :class:`QADTrainer`.
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/qad/args/index
+   /autoapi/neural_compressor/torch/qad/trainer/index
+   /autoapi/neural_compressor/torch/qad/utils/index
+
+

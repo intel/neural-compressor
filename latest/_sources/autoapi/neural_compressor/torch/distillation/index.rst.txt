@@ -1,0 +1,24 @@
+neural_compressor.torch.distillation
+====================================
+
+.. py:module:: neural_compressor.torch.distillation
+
+.. autoapi-nested-parse::
+
+   Knowledge Distillation package (chunked Top-K KL, online/self/offline teacher, KDTrainer).
+
+
+
+Submodules
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   /autoapi/neural_compressor/torch/distillation/config/index
+   /autoapi/neural_compressor/torch/distillation/losses/index
+   /autoapi/neural_compressor/torch/distillation/offline_topk/index
+   /autoapi/neural_compressor/torch/distillation/seq_packing/index
+   /autoapi/neural_compressor/torch/distillation/trainer/index
+
+

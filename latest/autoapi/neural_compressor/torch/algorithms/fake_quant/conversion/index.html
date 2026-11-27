@@ -1,0 +1,266 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.algorithms.fake_quant.conversion &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.fake_quant.conversion</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/fake_quant/conversion/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.algorithms.fake_quant.conversion">
+<span id="neural-compressor-torch-algorithms-fake-quant-conversion"></span><h1>neural_compressor.torch.algorithms.fake_quant.conversion<a class="headerlink" href="#module-neural_compressor.torch.algorithms.fake_quant.conversion" title="Link to this heading"></a></h1>
+<p>Quantized module registry, target pattern matching, and in-place model conversion.</p>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport" title="neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport"><code class="xref py py-obj docutils literal notranslate"><span class="pre">QuantConversionReport</span></code></a></p></td>
+<td><p>Resolved per-module fake-quantization mapping and conversion audit statistics.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.register_quant_module" title="neural_compressor.torch.algorithms.fake_quant.conversion.register_quant_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">register_quant_module</span></code></a>(source_cls[, factory_fn])</p></td>
+<td><p>Register <code class="docutils literal notranslate"><span class="pre">factory_fn</span></code> (or class exposing <code class="docutils literal notranslate"><span class="pre">.from_float(mod,</span> <span class="pre">cfg)</span></code>) for <code class="docutils literal notranslate"><span class="pre">source_cls</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.unregister_quant_module" title="neural_compressor.torch.algorithms.fake_quant.conversion.unregister_quant_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unregister_quant_module</span></code></a>(→ None)</p></td>
+<td><p>Remove <code class="docutils literal notranslate"><span class="pre">source_cls</span></code> from the fake-quant module registry if present.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.is_supported_module" title="neural_compressor.torch.algorithms.fake_quant.conversion.is_supported_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">is_supported_module</span></code></a>(→ bool)</p></td>
+<td><p>Return True if <code class="docutils literal notranslate"><span class="pre">module</span></code> is an unwrapped module with a registered fake-quant replacement.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.quantize_module" title="neural_compressor.torch.algorithms.fake_quant.conversion.quantize_module"><code class="xref py py-obj docutils literal notranslate"><span class="pre">quantize_module</span></code></a>(→ torch.nn.Module)</p></td>
+<td><p>Convert <code class="docutils literal notranslate"><span class="pre">module</span></code> using the registered factory for <code class="docutils literal notranslate"><span class="pre">type(module)</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.supported_module_types" title="neural_compressor.torch.algorithms.fake_quant.conversion.supported_module_types"><code class="xref py py-obj docutils literal notranslate"><span class="pre">supported_module_types</span></code></a>(→ Tuple[Type[torch.nn.Module], ...)</p></td>
+<td><p>Return all registered source <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code> types.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.matches_target" title="neural_compressor.torch.algorithms.fake_quant.conversion.matches_target"><code class="xref py py-obj docutils literal notranslate"><span class="pre">matches_target</span></code></a>(→ bool)</p></td>
+<td><p>Match <code class="docutils literal notranslate"><span class="pre">(module_name,</span> <span class="pre">op_type)</span></code> against a <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> / <code class="docutils literal notranslate"><span class="pre">ModelOpt</span></code> target pattern.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.match_quant_config_from_info" title="neural_compressor.torch.algorithms.fake_quant.conversion.match_quant_config_from_info"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_quant_config_from_info</span></code></a>(→ QuantConversionReport)</p></td>
+<td><p>Resolve <code class="docutils literal notranslate"><span class="pre">config</span></code> against <code class="docutils literal notranslate"><span class="pre">(module_name,</span> <span class="pre">op_type)</span></code> tuples without mutating a model.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.match_quant_config" title="neural_compressor.torch.algorithms.fake_quant.conversion.match_quant_config"><code class="xref py py-obj docutils literal notranslate"><span class="pre">match_quant_config</span></code></a>(→ QuantConversionReport)</p></td>
+<td><p>Inspect <code class="docutils literal notranslate"><span class="pre">model</span></code> and produce a <a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport" title="neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantConversionReport</span></code></a> for <code class="docutils literal notranslate"><span class="pre">config</span></code>.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.replace_quant_modules" title="neural_compressor.torch.algorithms.fake_quant.conversion.replace_quant_modules"><code class="xref py py-obj docutils literal notranslate"><span class="pre">replace_quant_modules</span></code></a>(→ dict[str, int])</p></td>
+<td><p>Replace every matched module in <code class="docutils literal notranslate"><span class="pre">model</span></code> with its registered fake-quant counterpart.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.convert_to_quantized_model" title="neural_compressor.torch.algorithms.fake_quant.conversion.convert_to_quantized_model"><code class="xref py py-obj docutils literal notranslate"><span class="pre">convert_to_quantized_model</span></code></a>(→ QuantConversionReport)</p></td>
+<td><p>Match <code class="docutils literal notranslate"><span class="pre">config</span></code> against <code class="docutils literal notranslate"><span class="pre">model</span></code> and replace matched modules in-place.</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.fake_quant_entry" title="neural_compressor.torch.algorithms.fake_quant.conversion.fake_quant_entry"><code class="xref py py-obj docutils literal notranslate"><span class="pre">fake_quant_entry</span></code></a>(→ torch.nn.Module)</p></td>
+<td><p>Replace modules with fake-quant subclasses and optionally calibrate.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.conversion.register_quant_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.conversion.</span></span><span class="sig-name descname"><span class="pre">register_quant_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_cls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.nn.Module</span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">factory_fn</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">QuantFactory</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/conversion.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.conversion.register_quant_module" title="Link to this definition"></a></dt>
+<dd><p>Register <code class="docutils literal notranslate"><span class="pre">factory_fn</span></code> (or class exposing <code class="docutils literal notranslate"><span class="pre">.from_float(mod,</span> <span class="pre">cfg)</span></code>) for <code class="docutils literal notranslate"><span class="pre">source_cls</span></code>.</p>
+<p>Can be used either as a decorator <code class="docutils literal notranslate"><span class="pre">&#64;register_quant_module(nn.Linear)</span></code> or a direct function call
+<code class="docutils literal notranslate"><span class="pre">register_quant_module(LoraLinear,</span> <span class="pre">QuantLoraLinear.from_lora)</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.conversion.unregister_quant_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.conversion.</span></span><span class="sig-name descname"><span class="pre">unregister_quant_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">source_cls</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.nn.Module</span><span class="p"><span class="pre">]</span></span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">None</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/conversion.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.conversion.unregister_quant_module" title="Link to this definition"></a></dt>
+<dd><p>Remove <code class="docutils literal notranslate"><span class="pre">source_cls</span></code> from the fake-quant module registry if present.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.conversion.is_supported_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.conversion.</span></span><span class="sig-name descname"><span class="pre">is_supported_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/conversion.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.conversion.is_supported_module" title="Link to this definition"></a></dt>
+<dd><p>Return True if <code class="docutils literal notranslate"><span class="pre">module</span></code> is an unwrapped module with a registered fake-quant replacement.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.conversion.quantize_module">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.conversion.</span></span><span class="sig-name descname"><span class="pre">quantize_module</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config/index.html#neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig" title="neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig"><span class="pre">neural_compressor.torch.algorithms.fake_quant.config.ModuleQuantConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.nn.Module</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/conversion.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.conversion.quantize_module" title="Link to this definition"></a></dt>
+<dd><p>Convert <code class="docutils literal notranslate"><span class="pre">module</span></code> using the registered factory for <code class="docutils literal notranslate"><span class="pre">type(module)</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.conversion.supported_module_types">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.conversion.</span></span><span class="sig-name descname"><span class="pre">supported_module_types</span></span><span class="sig-paren">(</span><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">Type</span><span class="p"><span class="pre">[</span></span><span class="pre">torch.nn.Module</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Ellipsis</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/conversion.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.conversion.supported_module_types" title="Link to this definition"></a></dt>
+<dd><p>Return all registered source <code class="docutils literal notranslate"><span class="pre">nn.Module</span></code> types.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.conversion.matches_target">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.conversion.</span></span><span class="sig-name descname"><span class="pre">matches_target</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">module_name</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">op_type</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">pattern</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">bool</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/conversion.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.conversion.matches_target" title="Link to this definition"></a></dt>
+<dd><p>Match <code class="docutils literal notranslate"><span class="pre">(module_name,</span> <span class="pre">op_type)</span></code> against a <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> / <code class="docutils literal notranslate"><span class="pre">ModelOpt</span></code> target pattern.</p>
+</dd></dl>
+
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.conversion.</span></span><span class="sig-name descname"><span class="pre">QuantConversionReport</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/conversion.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport" title="Link to this definition"></a></dt>
+<dd><p>Resolved per-module fake-quantization mapping and conversion audit statistics.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.conversion.match_quant_config_from_info">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.conversion.</span></span><span class="sig-name descname"><span class="pre">match_quant_config_from_info</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model_info</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Iterable</span><span class="p"><span class="pre">[</span></span><span class="pre">Tuple</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">Any</span><span class="p"><span class="pre">]</span></span><span class="p"><span class="pre">]</span></span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config/index.html#neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig" title="neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig"><span class="pre">neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport" title="neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport"><span class="pre">QuantConversionReport</span></a></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/conversion.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.conversion.match_quant_config_from_info" title="Link to this definition"></a></dt>
+<dd><p>Resolve <code class="docutils literal notranslate"><span class="pre">config</span></code> against <code class="docutils literal notranslate"><span class="pre">(module_name,</span> <span class="pre">op_type)</span></code> tuples without mutating a model.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.conversion.match_quant_config">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.conversion.</span></span><span class="sig-name descname"><span class="pre">match_quant_config</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config/index.html#neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig" title="neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig"><span class="pre">neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport" title="neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport"><span class="pre">QuantConversionReport</span></a></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/conversion.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.conversion.match_quant_config" title="Link to this definition"></a></dt>
+<dd><p>Inspect <code class="docutils literal notranslate"><span class="pre">model</span></code> and produce a <a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport" title="neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport"><code class="xref py py-class docutils literal notranslate"><span class="pre">QuantConversionReport</span></code></a> for <code class="docutils literal notranslate"><span class="pre">config</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.conversion.replace_quant_modules">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.conversion.</span></span><span class="sig-name descname"><span class="pre">replace_quant_modules</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">report</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport" title="neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport"><span class="pre">QuantConversionReport</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">dict</span><span class="p"><span class="pre">[</span></span><span class="pre">str</span><span class="p"><span class="pre">,</span></span><span class="w"> </span><span class="pre">int</span><span class="p"><span class="pre">]</span></span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/conversion.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.conversion.replace_quant_modules" title="Link to this definition"></a></dt>
+<dd><p>Replace every matched module in <code class="docutils literal notranslate"><span class="pre">model</span></code> with its registered fake-quant counterpart.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.conversion.convert_to_quantized_model">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.conversion.</span></span><span class="sig-name descname"><span class="pre">convert_to_quantized_model</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">config</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="../config/index.html#neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig" title="neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig"><span class="pre">neural_compressor.torch.algorithms.fake_quant.config.FakeQuantConfig</span></a></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport" title="neural_compressor.torch.algorithms.fake_quant.conversion.QuantConversionReport"><span class="pre">QuantConversionReport</span></a></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/conversion.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.conversion.convert_to_quantized_model" title="Link to this definition"></a></dt>
+<dd><p>Match <code class="docutils literal notranslate"><span class="pre">config</span></code> against <code class="docutils literal notranslate"><span class="pre">model</span></code> and replace matched modules in-place.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.conversion.fake_quant_entry">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.conversion.</span></span><span class="sig-name descname"><span class="pre">fake_quant_entry</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">model</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.nn.Module</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">configs_mapping</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">mode</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">neural_compressor.common.utils.Mode</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">Mode.QUANTIZE</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_fn</span></span><span class="o"><span class="pre">=</span></span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">run_args</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">Any</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em>, <em class="sig-param"><span class="o"><span class="pre">**</span></span><span class="n"><span class="pre">kwargs</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.nn.Module</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/conversion.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.conversion.fake_quant_entry" title="Link to this definition"></a></dt>
+<dd><p>Replace modules with fake-quant subclasses and optionally calibrate.</p>
+<dl class="field-list simple">
+<dt class="field-odd">Parameters<span class="colon">:</span></dt>
+<dd class="field-odd"><ul class="simple">
+<li><p><strong>model</strong> – Float model, modified in place.</p></li>
+<li><p><strong>configs_mapping</strong> – <code class="docutils literal notranslate"><span class="pre">{(module_name,</span> <span class="pre">op_type):</span> <span class="pre">ModuleQuantConfig}</span></code> from
+<code class="xref py py-meth docutils literal notranslate"><span class="pre">FakeQuantConfig.to_config_mapping()</span></code>.</p></li>
+<li><p><strong>mode</strong> – <code class="docutils literal notranslate"><span class="pre">PREPARE</span></code> inserts quantizers only; <code class="docutils literal notranslate"><span class="pre">QUANTIZE</span></code> also calibrates
+static quantizers when <code class="docutils literal notranslate"><span class="pre">run_fn</span></code> is given; <code class="docutils literal notranslate"><span class="pre">CONVERT</span></code> finalizes
+calibration without replacing the fake-quant modules.</p></li>
+<li><p><strong>run_fn</strong> – Calibration forward loop, called as <code class="docutils literal notranslate"><span class="pre">run_fn(model,</span> <span class="pre">*run_args)</span></code>.</p></li>
+<li><p><strong>run_args</strong> – Positional arguments for <code class="docutils literal notranslate"><span class="pre">run_fn</span></code>.</p></li>
+</ul>
+</dd>
+</dl>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2f2446e0> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

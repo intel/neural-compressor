@@ -1,0 +1,200 @@
+
+
+<!DOCTYPE html>
+<html class="writer-html5" lang="en" data-content_root="../../../../../../">
+<head>
+  <meta charset="utf-8" /><meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>neural_compressor.torch.algorithms.fake_quant.pack &mdash; Intel® Neural Compressor 3.11 documentation</title>
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/pygments.css?v=03e43079" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/css/theme.css?v=e59714d7" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/graphviz.css?v=4ae1632d" />
+      <link rel="stylesheet" type="text/css" href="../../../../../../_static/custom.css?v=68dfede1" />
+
+  
+<script type="text/javascript">
+  // Configure TMS settings
+  window.wapProfile = 'profile-microsite'; // This is mapped by WAP authorize value
+  window.wapLocalCode = 'us-en'; // Dynamically set per localized site, see mapping table for values
+  window.wapSection = "neural-compressor"; // WAP team will give you a unique section for your site
+  window.wapEnv = 'prod'; // environment to be use in Adobe Tags.
+  // Load TMS
+  (() => {
+        let url = 'https://www.intel.com/content/dam/www/global/wap/main/wap-microsite.js';
+        let po = document.createElement('script'); po.type = 'text/javascript'; po.async = true; po.src = url;
+        let s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(po, s);
+  }) ();
+</script>
+
+    <link rel="index" title="Index" href="../../../../../../genindex.html" />
+    <link rel="search" title="Search" href="../../../../../../search.html" /> 
+</head>
+
+<body class="wy-body-for-nav"> 
+  <div class="wy-grid-for-nav">
+    <nav data-toggle="wy-nav-shift" class="wy-nav-side">
+      <div class="wy-side-scroll">
+        <div class="wy-side-nav-search" >
+
+          
+          
+          <a href="../../../../../../index.html" class="icon icon-home">
+            Intel® Neural Compressor
+          </a>
+            <div class="version">
+              <a href="../../../../../../../versions.html">latest▼</a>
+              <p>Click link above to switch version</p>
+            </div>
+<div role="search">
+  <form id="rtd-search-form" class="wy-form" action="../../../../../../search.html" method="get">
+    <input type="text" name="q" placeholder="Search docs" aria-label="Search docs" />
+    <input type="hidden" name="check_keywords" value="yes" />
+    <input type="hidden" name="area" value="default" />
+  </form>
+</div>
+        </div><div class="wy-menu wy-menu-vertical" data-spy="affix" role="navigation" aria-label="Navigation menu">
+              <ul>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/get_started.html">Getting Started</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/installation_guide.html">Installation</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/api-doc/apis.html">API</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/legal_information.html">Legal Information</a></li>
+<li class="toctree-l1"><a class="reference internal" href="../../../../../../docs/source/SECURITY.html">Security Policy</a></li>
+<li class="toctree-l1"><a class="reference external" href="https://github.com/intel/neural-compressor">Repo</a></li>
+</ul>
+
+        </div>
+      </div>
+    </nav>
+
+    <section data-toggle="wy-nav-shift" class="wy-nav-content-wrap"><nav class="wy-nav-top" aria-label="Mobile navigation menu" >
+          <i data-toggle="wy-nav-top" class="fa fa-bars"></i>
+          <a href="../../../../../../index.html">Intel® Neural Compressor</a>
+      </nav>
+
+      <div class="wy-nav-content">
+        <div class="rst-content">
+          <div role="navigation" aria-label="Page navigation">
+  <ul class="wy-breadcrumbs">
+      <li><a href="../../../../../../index.html" class="icon icon-home" aria-label="Home"></a></li>
+      <li class="breadcrumb-item active">neural_compressor.torch.algorithms.fake_quant.pack</li>
+      <li class="wy-breadcrumbs-aside">
+            <a href="../../../../../../_sources/autoapi/neural_compressor/torch/algorithms/fake_quant/pack/index.rst.txt" rel="nofollow"> View page source</a>
+      </li>
+  </ul>
+  <hr/>
+</div>
+          <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+           <div itemprop="articleBody">
+             
+  <section id="module-neural_compressor.torch.algorithms.fake_quant.pack">
+<span id="neural-compressor-torch-algorithms-fake-quant-pack"></span><h1>neural_compressor.torch.algorithms.fake_quant.pack<a class="headerlink" href="#module-neural_compressor.torch.algorithms.fake_quant.pack" title="Link to this heading"></a></h1>
+<p>Cold-path weight bit-packing and dequantization utilities for checkpoint export.</p>
+<p>This module is strictly separated from <a class="reference internal" href="../functional/index.html#module-neural_compressor.torch.algorithms.fake_quant.functional" title="neural_compressor.torch.algorithms.fake_quant.functional"><code class="xref py py-mod docutils literal notranslate"><span class="pre">functional</span></code></a> so nibble packing/unpacking
+never executes during QAT/QAD training forward or activation recomputation.
+Packed layouts follow <code class="docutils literal notranslate"><span class="pre">compressed-tensors</span></code> and <code class="docutils literal notranslate"><span class="pre">vLLM</span></code> conventions:</p>
+<ul class="simple">
+<li><p>MXFP4: <code class="docutils literal notranslate"><span class="pre">data</span></code> uint8 <code class="docutils literal notranslate"><span class="pre">[out,</span> <span class="pre">in</span> <span class="pre">//</span> <span class="pre">2]</span></code> (low nibble = even column),
+<code class="docutils literal notranslate"><span class="pre">scale</span></code> uint8 E8M0 <code class="docutils literal notranslate"><span class="pre">[out,</span> <span class="pre">in</span> <span class="pre">//</span> <span class="pre">32]</span></code> (<code class="docutils literal notranslate"><span class="pre">exponent</span> <span class="pre">+</span> <span class="pre">127</span></code>).</p></li>
+<li><p>NVFP4: <code class="docutils literal notranslate"><span class="pre">data</span></code> uint8 <code class="docutils literal notranslate"><span class="pre">[out,</span> <span class="pre">in</span> <span class="pre">//</span> <span class="pre">2]</span></code>, <code class="docutils literal notranslate"><span class="pre">scale</span></code> float8_e4m3fn <code class="docutils literal notranslate"><span class="pre">[out,</span> <span class="pre">in</span> <span class="pre">//</span> <span class="pre">16]</span></code>,
+<code class="docutils literal notranslate"><span class="pre">global_scale</span></code> float32 <code class="docutils literal notranslate"><span class="pre">[1]</span></code>.</p></li>
+<li><p>MXFP8: <code class="docutils literal notranslate"><span class="pre">data</span></code> float8_e4m3fn <code class="docutils literal notranslate"><span class="pre">[out,</span> <span class="pre">in]</span></code>, <code class="docutils literal notranslate"><span class="pre">scale</span></code> uint8 E8M0 <code class="docutils literal notranslate"><span class="pre">[out,</span> <span class="pre">in</span> <span class="pre">//</span> <span class="pre">32]</span></code>.</p></li>
+<li><p>Static FP8 E4M3: <code class="docutils literal notranslate"><span class="pre">data</span></code> float8_e4m3fn <code class="docutils literal notranslate"><span class="pre">[out,</span> <span class="pre">in]</span></code>, <code class="docutils literal notranslate"><span class="pre">scale</span></code> float32 <code class="docutils literal notranslate"><span class="pre">[1]</span></code>
+(computed via exact dual-FP32 reciprocal <code class="docutils literal notranslate"><span class="pre">1</span> <span class="pre">/</span> <span class="pre">(448</span> <span class="pre">/</span> <span class="pre">amax)</span></code> so dequantization
+is 0-ULP identical to training QDQ).</p></li>
+</ul>
+<section id="classes">
+<h2>Classes<a class="headerlink" href="#classes" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor" title="neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor"><code class="xref py py-obj docutils literal notranslate"><span class="pre">PackedWeightTensor</span></code></a></p></td>
+<td><p>Packed on-disk representation of a quantized weight tensor.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="functions">
+<h2>Functions<a class="headerlink" href="#functions" title="Link to this heading"></a></h2>
+<table class="autosummary longtable docutils align-default">
+<tbody>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.pack.pack_nibbles" title="neural_compressor.torch.algorithms.fake_quant.pack.pack_nibbles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pack_nibbles</span></code></a>(→ torch.Tensor)</p></td>
+<td><p>Pack pairs of 4-bit codes per byte (even column in low nibble, odd column in high nibble).</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.pack.unpack_nibbles" title="neural_compressor.torch.algorithms.fake_quant.pack.unpack_nibbles"><code class="xref py py-obj docutils literal notranslate"><span class="pre">unpack_nibbles</span></code></a>(→ torch.Tensor)</p></td>
+<td><p>Unpack uint8 bytes back into 4-bit codes (inverse of <a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.pack.pack_nibbles" title="neural_compressor.torch.algorithms.fake_quant.pack.pack_nibbles"><code class="xref py py-func docutils literal notranslate"><span class="pre">pack_nibbles()</span></code></a>).</p></td>
+</tr>
+<tr class="row-odd"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.pack.pack_weight" title="neural_compressor.torch.algorithms.fake_quant.pack.pack_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">pack_weight</span></code></a>(→ PackedWeightTensor)</p></td>
+<td><p>Pack <code class="docutils literal notranslate"><span class="pre">weight</span></code> into the compressed on-disk layout of <code class="docutils literal notranslate"><span class="pre">fmt</span></code>.</p></td>
+</tr>
+<tr class="row-even"><td><p><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.pack.dequantize_packed_weight" title="neural_compressor.torch.algorithms.fake_quant.pack.dequantize_packed_weight"><code class="xref py py-obj docutils literal notranslate"><span class="pre">dequantize_packed_weight</span></code></a>(→ torch.Tensor)</p></td>
+<td><p>Dequantize a <a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor" title="neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">PackedWeightTensor</span></code></a> back to dense floating-point.</p></td>
+</tr>
+</tbody>
+</table>
+</section>
+<section id="module-contents">
+<h2>Module Contents<a class="headerlink" href="#module-contents" title="Link to this heading"></a></h2>
+<dl class="py class">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor">
+<em class="property"><span class="k"><span class="pre">class</span></span><span class="w"> </span></em><span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.pack.</span></span><span class="sig-name descname"><span class="pre">PackedWeightTensor</span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/pack.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor" title="Link to this definition"></a></dt>
+<dd><p>Packed on-disk representation of a quantized weight tensor.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.pack.pack_nibbles">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.pack.</span></span><span class="sig-name descname"><span class="pre">pack_nibbles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">codes</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/pack.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.pack.pack_nibbles" title="Link to this definition"></a></dt>
+<dd><p>Pack pairs of 4-bit codes per byte (even column in low nibble, odd column in high nibble).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.pack.unpack_nibbles">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.pack.</span></span><span class="sig-name descname"><span class="pre">unpack_nibbles</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">packed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/pack.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.pack.unpack_nibbles" title="Link to this definition"></a></dt>
+<dd><p>Unpack uint8 bytes back into 4-bit codes (inverse of <a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.pack.pack_nibbles" title="neural_compressor.torch.algorithms.fake_quant.pack.pack_nibbles"><code class="xref py py-func docutils literal notranslate"><span class="pre">pack_nibbles()</span></code></a>).</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.pack.pack_weight">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.pack.</span></span><span class="sig-name descname"><span class="pre">pack_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">weight</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span></span></em>, <em class="sig-param"><span class="n"><span class="pre">fmt</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">str</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><a class="reference internal" href="../formats/index.html#neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat" title="neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat"><span class="pre">neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat</span></a></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">'mxfp4'</span></span></em>, <em class="sig-param"><span class="keyword-only-separator o"><abbr title="Keyword-only parameters separator (PEP 3102)"><span class="pre">*</span></abbr></span></em>, <em class="sig-param"><span class="n"><span class="pre">amax</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.Tensor</span><span class="w"> </span><span class="p"><span class="pre">|</span></span><span class="w"> </span><span class="pre">None</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">None</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor" title="neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor"><span class="pre">PackedWeightTensor</span></a></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/pack.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.pack.pack_weight" title="Link to this definition"></a></dt>
+<dd><p>Pack <code class="docutils literal notranslate"><span class="pre">weight</span></code> into the compressed on-disk layout of <code class="docutils literal notranslate"><span class="pre">fmt</span></code>.</p>
+</dd></dl>
+
+<dl class="py function">
+<dt class="sig sig-object py" id="neural_compressor.torch.algorithms.fake_quant.pack.dequantize_packed_weight">
+<span class="sig-prename descclassname"><span class="pre">neural_compressor.torch.algorithms.fake_quant.pack.</span></span><span class="sig-name descname"><span class="pre">dequantize_packed_weight</span></span><span class="sig-paren">(</span><em class="sig-param"><span class="n"><span class="pre">packed</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor" title="neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor"><span class="pre">PackedWeightTensor</span></a></span></em>, <em class="sig-param"><span class="n"><span class="pre">dtype</span></span><span class="p"><span class="pre">:</span></span><span class="w"> </span><span class="n"><span class="pre">torch.dtype</span></span><span class="w"> </span><span class="o"><span class="pre">=</span></span><span class="w"> </span><span class="default_value"><span class="pre">torch.bfloat16</span></span></em><span class="sig-paren">)</span> <span class="sig-return"><span class="sig-return-icon">&#x2192;</span> <span class="sig-return-typehint"><span class="pre">torch.Tensor</span></span></span><a class="reference external" href="https://github.com/intel/neural-compressor/blob/main/neural_compressor/torch/algorithms/fake_quant/pack.py"><span class="viewcode-link"><span class="pre">[source]</span></span></a><a class="headerlink" href="#neural_compressor.torch.algorithms.fake_quant.pack.dequantize_packed_weight" title="Link to this definition"></a></dt>
+<dd><p>Dequantize a <a class="reference internal" href="#neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor" title="neural_compressor.torch.algorithms.fake_quant.pack.PackedWeightTensor"><code class="xref py py-class docutils literal notranslate"><span class="pre">PackedWeightTensor</span></code></a> back to dense floating-point.</p>
+</dd></dl>
+
+</section>
+</section>
+
+
+           </div>
+          </div>
+          <footer>
+
+  <hr/>
+
+  <div role="contentinfo">
+    <p>&#169; Copyright 2022, Intel® Neural Compressor, Intel.</p>
+  </div>
+
+  Built with <a href="https://www.sphinx-doc.org/">Sphinx</a> using a
+    <a href="https://github.com/readthedocs/sphinx_rtd_theme">theme</a>
+    provided by <a href="https://readthedocs.org">Read the Docs</a>.
+   <jinja2.runtime.BlockReference object at 0x75ca2f0d1f60> 
+  <p></p><div><a href='https://www.intel.com/content/www/us/en/privacy/intel-cookie-notice.html' data-cookie-notice='true'>Cookies</a> <a href='https://www.intel.com/content/www/us/en/privacy/intel-privacy-notice.html'>| Privacy</a></div>
+
+
+</footer>
+        </div>
+      </div>
+    </section>
+  </div>
+  <script>
+      jQuery(function () {
+          SphinxRtdTheme.Navigation.enable(true);
+      });
+  </script> 
+
+</body>
+</html>

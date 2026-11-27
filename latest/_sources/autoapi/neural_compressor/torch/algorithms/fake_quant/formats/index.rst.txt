@@ -1,0 +1,92 @@
+neural_compressor.torch.algorithms.fake_quant.formats
+=====================================================
+
+.. py:module:: neural_compressor.torch.algorithms.fake_quant.formats
+
+.. autoapi-nested-parse::
+
+   Quantization format specs shared by QAT and QAD.
+
+   A format is a first-class object instead of ModelOpt's ``num_bits=(E, M)`` tuple:
+   recipes and code both speak ``"mxfp4"`` / ``"fp8_e4m3"``, and every property the
+   quantizer needs (block size, scale kind, element range) is explicit.
+
+
+
+Classes
+-------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.formats.QuantFormat
+
+
+Functions
+---------
+
+.. autoapisummary::
+
+   neural_compressor.torch.algorithms.fake_quant.formats.register_format
+   neural_compressor.torch.algorithms.fake_quant.formats.get_format
+   neural_compressor.torch.algorithms.fake_quant.formats.list_formats
+
+
+Module Contents
+---------------
+
+.. py:class:: QuantFormat
+
+   Immutable specification of one quantization data format.
+
+   .. attribute:: name
+
+      Registry key, e.g. ``"mxfp4"`` or ``"fp8_e4m3"``.
+
+   .. attribute:: element_bits
+
+      Bits per quantized element (4, 8, or 16).
+
+   .. attribute:: block_size
+
+      Elements sharing one block scale factor; ``None`` means per-tensor.
+
+   .. attribute:: scale_format
+
+      Scale representation: ``"e8m0"``, ``"e4m3"``, ``"fp32"``, or ``None``.
+
+   .. attribute:: exponent_bits
+
+      Exponent bits for floating-point formats (E2M1 -> 2).
+
+   .. attribute:: mantissa_bits
+
+      Mantissa bits for floating-point formats (E2M1 -> 1).
+
+   .. attribute:: has_global_scale
+
+      Whether a second-level FP32 per-tensor global scale is used (NVFP4).
+
+   .. attribute:: max_value
+
+      Largest representable positive magnitude.
+
+   .. attribute:: signed
+
+      Whether negative values are representable.
+
+
+.. py:function:: register_format(fmt: QuantFormat) -> QuantFormat
+
+   Register a custom format (used by tests and downstream extensions).
+
+
+.. py:function:: get_format(fmt: str | QuantFormat) -> QuantFormat
+
+   Resolve a format name or pass a :class:`QuantFormat` through.
+
+
+.. py:function:: list_formats() -> list[str]
+
+   Return the registered format names.
+
+
